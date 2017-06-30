@@ -22,7 +22,7 @@ Currently, all functions are described compactly with lists, vectors, and matric
 The function types are:
 * variable-wise: ``x_j``, a (scalar) variable
 * affine: ``A_i x + b_i``, where ``A_i`` is a matrix and ``b_i`` is a vector
-* quadratic: ``q_i(x) + A_i x + b_i``, where ``q_i(x)`` is a scalar quadratic expression of the form``\frac{1}{2} x^T Q_{i,k} x`` (for objective or constraints), or a vector of such quadratic expressions (for constraints only)
+* quadratic: ``q_i(x) + A_i x + b_i``, where ``q_i(x)`` is a scalar quadratic expression of the form ``\frac{1}{2} x^T Q_i x`` (for objective or constraints) with symmetric matrix ``Q_i``, or a vector of such quadratic expressions (for constraints only) with symmetric matrices ``Q_{i,1}, \ldots, Q_{i,K_i}``
 
 This API defines some commonly-used sets, but is extensible to other sets recognized by the solver.
 
@@ -36,7 +36,7 @@ For such conic form minimization problems, the primal is:
 \begin{align}
 & \min_{x \in \mathbb{R}^n} & a_0^T x + b_0
 \\
-& \;\;\text{s.t.} & A_i x + b_i & \in \mathcal{S}_i & i = 1 \ldots m
+& \;\;\text{s.t.} & A_i x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
 \end{align}
 ```
 
@@ -46,9 +46,9 @@ and the dual is:
 \begin{align}
 & \max_{y_1, \ldots, y_m} & -\sum_{i=1}^m b_i^T y_i + b_0
 \\
-& \;\;\text{s.t.} & a_0 - \sum_{i=1}^m A_i^T y_i \in {0}^n
+& \;\;\text{s.t.} & a_0 - \sum_{i=1}^m A_i^T y_i & \in {0}^n
 \\
-& & y_i & \in \mathcal{S}_i^* & i = 1 \ldots m
+& & y_i & \in \mathcal{C}_i^* & i = 1 \ldots m
 \end{align}
 ```
 
