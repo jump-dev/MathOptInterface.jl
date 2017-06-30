@@ -54,7 +54,6 @@ function addconstraint! end
 
 # TODO: method to query if solver supports this type of modification
 
-
 """
     getconstraintconstant(m::AbstractModel, c::ConstraintReference, k::Int)
 
@@ -65,7 +64,7 @@ function getconstraintconstant end
 """
     getconstraintaffine(m::AbstractModel, c::ConstraintReference)
 
-Return the ``A_i`` matrix of the constraint corresponding to ``c`` in triplet form ``(i, v, coef)`, where ``v`` is a ``VariableReference``, and ``coef`` is a coefficient value.
+Return the ``A_i`` matrix of the constraint corresponding to ``c`` in triplet form ``(i, v, coef)``, where ``v`` is a ``VariableReference``, and ``coef`` is a coefficient value.
 Output is a tuple of three vectors.
 
     getconstraintaffine(m::AbstractModel, c::ConstraintReference, k::Int)
@@ -93,27 +92,11 @@ Return the element ``(v_1, v_2)`` of the ``Q_{i,k}`` matrix of the ``k``th row o
 function getconstraintquadratic end
 
 """
-    modifyconstraint!(m::AbstractModel, c::ConstraintReference{Set}, S::Set)
-
-Change the set of constraint ``c`` to the new set ``S`` which should be of the same type as the original set.
-
-### Examples
-
-If ``c`` is a ``ConstraintReference{Interval}``
-
-```julia
-modifyconstraint!(m, c, Interval(0, 5))
-modifyconstraint!(m, c, NonPositive) # errors
-```
-"""
-function modifyconstraint! end
-
-"""
     modifyconstraint!(m::AbstractModel, c::ConstraintReference, k::Int, args...)
 
 Modify elements of the ``k``th row of the constraint ``c`` depending on the arguments ``args``.
-The ``k``th row will have the form ``q_{i,k}(x) + A_{i,k}^T x + b_{i,k}``
-There are three cases.
+The ``k``th row will have the form ``q_{i,k}(x) + A_{i,k}^T x + b_{i,k}``.
+There are four cases.
 
 ## Modify Constant term
 
@@ -158,3 +141,20 @@ If entries for both ``(i,j)`` and ``(j,i)`` are provided, these are considered d
 modifyconstraint!(m, c, v_1, v_2, 1.0)
 modifyconstraint!(m, c, [v_1, v_2], [v_1, v_1], [1.0, 2.0])
 ```
+
+## Modify Set
+
+    modifyconstraint!(m::AbstractModel, c::ConstraintReference{Set}, S::Set)
+
+Change the set of constraint ``c`` to the new set ``S`` which should be of the same type as the original set.
+
+### Examples
+
+If ``c`` is a ``ConstraintReference{Interval}``
+
+```julia
+modifyconstraint!(m, c, Interval(0, 5))
+modifyconstraint!(m, c, NonPositives) # errors
+```
+"""
+function modifyconstraint! end

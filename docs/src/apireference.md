@@ -72,6 +72,32 @@ PrimalStatus
 DualStatus
 ```
 
+### Termination Status
+
+The ``TerminationStatus`` attribute indicates why the solver stopped executing.
+The value of the attribute is of type ``TerminationStatusCode``.
+
+```@docs
+TerminationStatusCode
+```
+
+### Result Status
+
+The ``PrimalStatus`` and ``DualStatus`` attributes indicate how to interpret the result returned by the solver.
+The value of the attribute is of type ``ResultStatusCode``.
+
+```@docs
+ResultStatusCode
+```
+
+### Basis Status
+
+[what? BasisStatus]
+
+```@docs
+BasisStatusCode
+```
+
 ## Sets
 
 List of recognized sets.
@@ -118,7 +144,8 @@ addvariables!
 addvariable!
 ```
 
-List of attributes associated with variables. [category AbstractVariableAttribute] Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
+List of attributes associated with variables. [category AbstractVariableAttribute]
+Calls to ``getattribute`` and ``setattribute!`` should include as an argument a single ``VariableReference`` or a vector of ``VariableReference`` objects.
 
 ```@docs
 VariablePrimalStart
@@ -155,7 +182,8 @@ getconstraintaffine
 getconstraintquadratic
 ```
 
-List of attributes associated with constraints. [category AbstractConstraintAttribute] Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{T}` objects.
+List of attributes associated with constraints. [category AbstractConstraintAttribute]
+Calls to ``getattribute`` and ``setattribute!`` should include as an argument a single ``ConstraintReference`` or a vector of ``ConstraintReference{T}`` objects.
 
 [why is ConstraintBasisStatus under constraint attributes but below we have a basis status attribute separately??]
 ```@docs
@@ -164,34 +192,4 @@ ConstraintDualStart
 ConstraintPrimal
 ConstraintDual
 ConstraintBasisStatus
-```
-
-## Status Codes
-
-### Termination Status
-
-The `TerminationStatus` attribute indicates why the solver stopped executing. The value of the attribute is of type `TerminationStatusCode`.
-
-```@docs
-TerminationStatus
-TerminationStatusCode
-```
-
-### Result Status
-
-The `PrimalStatus` and `DualStatus` attributes indicate how to interpret the result returned by the solver. The value of the attribute is of type `ResultStatusCode`.
-
-```@docs
-PrimalStatus
-DualStatus
-ResultStatusCode
-```
-
-### Basis Status
-
-[what?]
-
-```@docs
-BasisStatus
-BasisStatusCode
 ```
