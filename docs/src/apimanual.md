@@ -20,9 +20,9 @@ where:
 
 Currently, all functions are described compactly with lists, vectors, and matrices.
 The function types are:
-* variable-wise: ``x_j`` (scalar variable)
-* affine: ``A_i x + b_i`` (where ``A_i`` is a matrix and ``b_i`` is a vector)
-* quadratic: ``q(x) + A_i x + b_i`` (where ``q(x)`` is a vector of quadratic expressions each of the form ``x^T Q_{i,k} x``)
+* variable-wise: ``x_j``, a (scalar) variable
+* affine: ``A_i x + b_i``, where ``A_i`` is a matrix and ``b_i`` is a vector
+* quadratic: ``q_i(x) + A_i x + b_i``, where ``q_i(x)`` is a scalar quadratic expression of the form``\frac{1}{2} x^T Q_{i,k} x`` (for objective or constraints), or a vector of such quadratic expressions (for constraints only)
 
 This API defines some commonly-used sets, but is extensible to other sets recognized by the solver.
 
