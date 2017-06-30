@@ -148,6 +148,10 @@ modifyconstraint!(m, c, NonPositive) # errors
 function modifyconstraint! end
 
 """
+    getconstraintconstant(m::AbstractModel, c::ConstraintReference)
+
+Return the ``b`` vector of the constraint corresponding to `c`.
+
     getconstraintconstant(m::AbstractModel, c::ConstraintReference, i::Int)
 
 Return the constant term of the `i`th row of the constraint corresponding to `c`.
