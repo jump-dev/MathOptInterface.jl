@@ -182,6 +182,14 @@ from a model. A solver attribute.
 struct SupportsDeleteConstraint <: AbstractSolverOrModelAttribute end
 
 """
+    SupportsDeleteVariable()
+
+A `Bool` indicating if the solver supports deleting variables
+from a model. A solver attribute.
+"""
+struct SupportsDeleteVariable <: AbstractSolverOrModelAttribute end
+
+"""
     SupportsAddVariableAfterSolve()
 
 A `Bool` indicating if the solver supports adding variables
