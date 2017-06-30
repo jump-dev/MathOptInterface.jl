@@ -145,7 +145,7 @@ addvariable!
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
-Calls to ``getattribute`` and ``setattribute!`` should include as an argument a single ``VariableReference`` or a vector of ``VariableReference`` objects.
+Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
 
 ```@docs
 VariablePrimalStart

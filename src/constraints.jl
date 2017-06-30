@@ -12,7 +12,7 @@ Add the vector quadratic-in-set constraint ``q_i(x) + A_i^T x + b_i \\in \\mathc
 Duplicate indices in either the ``A_i`` matrix or any ``Q_{i,k}`` matrix are accepted and will be summed together.
 Off-diagonal entries of ``Q_{i,k}`` will be mirrored, so either the upper triangular or lower triangular entries of ``Q_{i,k}`` should be provided.
 If entries for both ``(i,j)`` and ``(j,i)`` are provided, these are considered duplicate terms.
-`a_v`, `Q_vari`, `Q_varj` should be collections of ``VariableReference`` objects.
+`a_v`, `Q_vari`, `Q_varj` should be collections of `VariableReference` objects.
 
     addconstraint!(m::AbstractModel, b, a_v::Vector{VariableReference}, a_coef, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, S::AbstractSet)::QuadraticConstraintReference{typeof(S)}
 
@@ -22,6 +22,8 @@ Add the scalar quadratic-in-set constraint ``q_i(x) + a_i^T x + b_i \\in \\mathc
 * ``q_i(x)`` is defined as ``\\frac{1}{2} x^T Q_{i} x``, where the symmetric matrix ``Q_{i}`` is specified in triplet form by `Q_vari, Q_varj, Q_coef`
 * ``\\mathcal{S}_i`` is a pre-defined *scalar* set specified as `S`
 
+Duplicate indices in the ``a_i`` or the ``Q_{i,k}`` are accepted and will be summed together.
+
     addconstraint!(m::AbstractModel, b, a_constridx, a_v::Vector{VariableReference}, a_coef, S::AbstractSet)::AffineConstraintReference{typeof(S)}
 
 Add the vector affine-in-set constraint ``A_i^T x + b_i \\in \\mathcal{S}_i``, where:
@@ -29,7 +31,7 @@ Add the vector affine-in-set constraint ``A_i^T x + b_i \\in \\mathcal{S}_i``, w
 * ``b_i`` is a vector specified by `b`
 * ``\\mathcal{S}_i`` is a pre-defined set specified as `S`
 
-Duplicate indices in ``A_i`` are accepted and will be summed together.
+Duplicate indices in the ``A_i`` are accepted and will be summed together.
 
     addconstraint!(m::AbstractModel, b, a_v::Vector{VariableReference}, a_coef, S::AbstractSet)::AffineConstraintReference{typeof(S)}
 
@@ -38,11 +40,15 @@ Add the scalar affine-in-set constraint ``a_i^T x + b_i \\in \\mathcal{S}_i``, w
 * ``b_i`` is a scalar specified by `b`
 * ``\\mathcal{S}_i`` is a pre-defined *scalar* set specified as `S`
 
+Duplicate indices in the ``a_i`` are accepted and will be summed together.
+
     addconstraint!(m::AbstractModel, vs::Vector{VariableReference}, S::AbstractSet)::VariablewiseConstraintReference{typeof(S)}
 
 Add the vector variable-wise constraint ``(x_j)_{j \\in v_i} \\in \\mathcal{S}_i``, where:
 * ``v_i`` is a list of variable indices specified as a vector of variable references `vs`
 * ``\\mathcal{S}_i`` is a pre-defined set specified as `S`
+
+Behavior is not defined for duplicate indices in the ``v_i``. 
 
     addconstraint!(m::AbstractModel, v::VariableReference, S::AbstractSet)::VariablewiseConstraintReference{typeof(S)}
 
