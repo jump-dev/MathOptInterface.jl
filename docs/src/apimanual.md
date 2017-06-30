@@ -18,13 +18,12 @@ where:
 * constraint functions ``f_i`` is variable-wise, affine, or quadratic
 * constraint sets ``\mathcal{S}_i`` are pre-defined real scalar or vector sets
 
+This API defines some commonly-used sets, but is extensible to other sets recognized by the solver.
 Currently, all functions are described compactly with lists, vectors, and matrices.
 The function types are:
 * variable-wise: ``x_j``, a (scalar) variable
 * affine: ``A_i x + b_i``, where ``A_i`` is a matrix and ``b_i`` is a vector
 * quadratic: ``q_i(x) + A_i x + b_i``, where ``q_i(x)`` is a scalar quadratic expression of the form ``\frac{1}{2} x^T Q_i x`` (for objective or constraints) with symmetric matrix ``Q_i``, or a vector of such quadratic expressions (for constraints only) with symmetric matrices ``Q_{i,1}, \ldots, Q_{i,K_i}``
-
-This API defines some commonly-used sets, but is extensible to other sets recognized by the solver.
 
 ## Duals
 

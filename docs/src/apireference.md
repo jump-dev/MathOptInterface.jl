@@ -74,8 +74,8 @@ DualStatus
 
 ### Termination Status
 
-The ``TerminationStatus`` attribute indicates why the solver stopped executing.
-The value of the attribute is of type ``TerminationStatusCode``.
+The `TerminationStatus` attribute indicates why the solver stopped executing.
+The value of the attribute is of type `TerminationStatusCode`.
 
 ```@docs
 TerminationStatusCode
@@ -83,8 +83,8 @@ TerminationStatusCode
 
 ### Result Status
 
-The ``PrimalStatus`` and ``DualStatus`` attributes indicate how to interpret the result returned by the solver.
-The value of the attribute is of type ``ResultStatusCode``.
+The `PrimalStatus` and `DualStatus` attributes indicate how to interpret the result returned by the solver.
+The value of the attribute is of type `ResultStatusCode`.
 
 ```@docs
 ResultStatusCode
@@ -183,7 +183,7 @@ getconstraintquadratic
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]
-Calls to ``getattribute`` and ``setattribute!`` should include as an argument a single ``ConstraintReference`` or a vector of ``ConstraintReference{T}`` objects.
+Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{T}` objects.
 
 [why is ConstraintBasisStatus under constraint attributes but below we have a basis status attribute separately??]
 ```@docs

@@ -19,7 +19,7 @@ abstract type AbstractModel end
 """
     Model(solver::AbstractSolver)
 
-Create an instance of ``AbstractModel`` using the given solver.
+Create an instance of `AbstractModel` using the given solver.
 """
 function Model end
 
