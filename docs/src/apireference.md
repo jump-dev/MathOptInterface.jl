@@ -4,7 +4,31 @@ CurrentModule = MathOptInterface
 
 # API
 
-Some introduction to API. List basic standalone methods.
+[Some introduction to API. List basic standalone methods.]
+
+## Attributes
+
+List of attribute categories.
+
+```@docs
+AbstractSolverOrModelAttribute
+AbstractVariableAttribute
+AbstractConstraintAttribute
+```
+
+Functions for getting and setting attributes.
+
+```@docs
+cangetattribute
+getattribute
+getattribute!
+cansetattribute
+setattribute!
+```
+
+## Solver and Model
+
+[separate solver and model?]
 
 ```@docs
 AbstractModel
@@ -17,79 +41,8 @@ optimize!
 freemodel!
 ```
 
-## Variables
+List of solver or model attributes. [category AbstractSolverOrModelAttribute]
 
-```@docs
-VariableReference
-candelete(::AbstractModel,::VariableReference)
-isvalid(::AbstractModel,::VariableReference)
-delete!(::AbstractModel,::VariableReference)
-addvariables!
-addvariable!
-```
-
-## Objectives
-
-How to add and set objectives.
-```@docs
-setobjective!
-modifyobjective!
-getobjectiveconstant
-getobjectiveaffine
-```
-
-## Constraints
-
-How to add and modify constraints.
-```@docs
-VariablewiseConstraintReference
-AffineConstraintReference
-QuadraticConstraintReference
-candelete(::AbstractModel,::ConstraintReference)
-isvalid(::AbstractModel,::ConstraintReference)
-delete!(::AbstractModel,::ConstraintReference)
-addconstraint!
-modifyconstraint!
-getconstraintconstant
-getconstraintaffine
-getconstraintquadratic
-```
-
-## Sets
-
-List of sets.
-```@docs
-AbstractSet
-Reals
-Zeros
-NonNegatives
-NonPositives
-GreaterThan
-LessThan
-Interval
-SecondOrderCone
-ExponentialCone
-DualExponentialCone
-PowerCone
-DualPowerCone
-PositiveSemidefiniteConeTriangle
-PositiveSemidefiniteConeScaled
-Integers
-ZeroOne
-SOS1
-SOS2
-```
-
-Functions for getting and setting properties of sets.
-```@docs
-dimension
-```
-
-## Attributes
-
-### Solver or Model Attributes
-
-List of solver or model attributes.
 ```@docs
 ReturnsDuals
 SupportsAddConstraintAfterSolve
@@ -119,30 +72,92 @@ PrimalStatus
 DualStatus
 ```
 
-Functions for getting and setting model or solver attributes.
+## Sets
+
+List of recognized sets.
+
 ```@docs
-AbstractSolverOrModelAttribute
-AbstractVariableAttribute
-AbstractConstraintAttribute
-cangetattribute
-getattribute
-getattribute!
-cansetattribute
-setattribute!
+AbstractSet
+Reals
+Zeros
+NonNegatives
+NonPositives
+GreaterThan
+LessThan
+Interval
+SecondOrderCone
+ExponentialCone
+DualExponentialCone
+PowerCone
+DualPowerCone
+PositiveSemidefiniteConeTriangle
+PositiveSemidefiniteConeScaled
+Integers
+ZeroOne
+SOS1
+SOS2
 ```
 
-### Variable Attributes
+Functions for getting and setting properties of sets.
 
-List of attributes associated with variables. Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
+```@docs
+dimension
+```
+
+## Variables
+
+Variable references and functions for adding and deleting variables.
+
+[attribute that points to the (scalar) variable domain??? eg GreaterThan, NonNegatives, ZeroOne, SemiInteger]
+```@docs
+VariableReference
+candelete(::AbstractModel,::VariableReference)
+isvalid(::AbstractModel,::VariableReference)
+delete!(::AbstractModel,::VariableReference)
+addvariables!
+addvariable!
+```
+
+List of attributes associated with variables. [category AbstractVariableAttribute] Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
+
 ```@docs
 VariablePrimalStart
 VariablePrimal
 VariableBasisStatus
 ```
 
-### Constraint Attributes
+## Objectives
 
-List of attributes associated with constraints. Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstriaintReference{T}` objects.
+Functions for adding and modifying objectives.
+
+```@docs
+setobjective!
+modifyobjective!
+getobjectiveconstant
+getobjectiveaffine
+```
+
+## Constraints
+
+Constraint references and functions for adding, modifying, and removing constraints.
+
+```@docs
+VariablewiseConstraintReference
+AffineConstraintReference
+QuadraticConstraintReference
+candelete(::AbstractModel,::ConstraintReference)
+isvalid(::AbstractModel,::ConstraintReference)
+delete!(::AbstractModel,::ConstraintReference)
+addconstraint!
+modifyconstraint!
+getconstraintconstant
+getconstraintaffine
+getconstraintquadratic
+```
+
+List of attributes associated with constraints. [category AbstractConstraintAttribute] Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{T}` objects.
+
+[why is ConstraintBasisStatus under constraint attributes but below we have a basis status attribute separately??]
 ```@docs
 ConstraintPrimalStart
 ConstraintDualStart
@@ -155,20 +170,28 @@ ConstraintBasisStatus
 
 ### Termination Status
 
-The `TerminationStatus` attribute is meant to explain the reason why the solver stopped executing. The value of the attribute is of type `TerminationStatusCode`.
+The `TerminationStatus` attribute indicates why the solver stopped executing. The value of the attribute is of type `TerminationStatusCode`.
+
 ```@docs
+TerminationStatus
 TerminationStatusCode
 ```
 
 ### Result Status
 
-The `PrimalStatus` and `DualStatus` attributes are meant to explain how to interpret the result returned by the solver. The value of the attributes are of type `ResultStatusCode`.
+The `PrimalStatus` and `DualStatus` attributes indicate how to interpret the result returned by the solver. The value of the attribute is of type `ResultStatusCode`.
+
 ```@docs
+PrimalStatus
+DualStatus
 ResultStatusCode
 ```
 
 ### Basis Status
 
+[what?]
+
 ```@docs
+BasisStatus
 BasisStatusCode
 ```
