@@ -48,7 +48,7 @@ Add the vector variable-wise constraint ``(x_j)_{j \\in v_i} \\in \\mathcal{S}_i
 * ``v_i`` is a list of variable indices specified as a vector of variable references `vs`
 * ``\\mathcal{S}_i`` is a pre-defined set specified as `S`
 
-Behavior is not defined for duplicate indices in the ``v_i``. 
+Behavior is not defined for duplicate indices in the ``v_i``.
 
     addconstraint!(m::AbstractModel, v::VariableReference, S::AbstractSet)::VariablewiseConstraintReference{typeof(S)}
 
@@ -61,6 +61,10 @@ function addconstraint! end
 # TODO: method to query if solver supports this type of modification
 
 """
+    getconstraintconstant(m::AbstractModel, c::ConstraintReference)
+
+Return the ``b`` vector of the constraint `c`.
+
     getconstraintconstant(m::AbstractModel, c::ConstraintReference, k::Int)
 
 Return the constant term of the `k`th row of the constraint `c`.
