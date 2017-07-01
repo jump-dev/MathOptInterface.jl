@@ -11,7 +11,8 @@ CurrentModule = MathOptInterface
 List of attribute categories.
 
 ```@docs
-AbstractSolverOrModelAttribute
+AbstractSolverAttribute
+AbstractInstanceAttribute
 AbstractVariableAttribute
 AbstractConstraintAttribute
 ```
@@ -26,47 +27,52 @@ cansetattribute
 setattribute!
 ```
 
-## Solver and Model
-
-[separate solver and model?]
+## Solver
 
 ```@docs
-AbstractModel
 AbstractSolver
 ```
 
-```@docs
-Model
-optimize!
-freemodel!
-```
-
-List of solver or model attributes. [category AbstractSolverOrModelAttribute]
+List of solver attributes
 
 ```@docs
 ReturnsDuals
 SupportsAddConstraintAfterSolve
 SupportsDeleteConstraint
-SupportsAddVariableAfterSolver
+SupportsAddVariableAfterSolve
 SupportsQuadraticObjective
 SupportsConicThroughQuadratic
-ObjectiveValue
-ObjectiveBound
-RelativeGap
-SolveTime
-Sense
-SimplexIterations
-BarrierIterations
-NodeCount
+```
+
+## Instance
+
+```@docs
+AbstractInstance
+```
+
+```@docs
+Instance
+optimize!
+freeinstance!
+```
+
+List of instance attributes
+
+```@docs
 RawSolver
-ResultCount
+Sense
 NumberOfVariables
 NumberOfVariablewiseConstraints
 NumberOfAffineConstraints
 NumberOfQuadraticConstraints
-SupportsVariablewiseConstraint
-SupportsAffineConstraint
-SupportsQuadraticConstraint
+ResultCount
+ObjectiveValue
+ObjectiveBound
+RelativeGap
+SolveTime
+SimplexIterations
+BarrierIterations
+NodeCount
 TerminationStatus
 PrimalStatus
 DualStatus
@@ -137,9 +143,9 @@ Variable references and functions for adding and deleting variables.
 [attribute that points to the (scalar) variable domain??? eg GreaterThan, NonNegatives, ZeroOne, SemiInteger]
 ```@docs
 VariableReference
-candelete(::AbstractModel,::VariableReference)
-isvalid(::AbstractModel,::VariableReference)
-delete!(::AbstractModel,::VariableReference)
+candelete(::AbstractInstance,::VariableReference)
+isvalid(::AbstractInstance,::VariableReference)
+delete!(::AbstractInstance,::VariableReference)
 addvariables!
 addvariable!
 ```
@@ -172,9 +178,9 @@ Constraint references and functions for adding, modifying, and removing constrai
 VariablewiseConstraintReference
 AffineConstraintReference
 QuadraticConstraintReference
-candelete(::AbstractModel,::ConstraintReference)
-isvalid(::AbstractModel,::ConstraintReference)
-delete!(::AbstractModel,::ConstraintReference)
+candelete(::AbstractInstance,::ConstraintReference)
+isvalid(::AbstractInstance,::ConstraintReference)
+delete!(::AbstractInstance,::ConstraintReference)
 addconstraint!
 modifyconstraint!
 getconstraintconstant

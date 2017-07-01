@@ -10,38 +10,38 @@ It does not store any instance data.
 abstract type AbstractSolver end
 
 """
-    AbstractModel
+    AbstractInstance
 
 Abstract supertype which represents a solver's in-memory representation of an optimization problem.
 """
-abstract type AbstractModel end
+abstract type AbstractInstance end
 
 """
-    Model(solver::AbstractSolver)
+    Instance(solver::AbstractSolver)
 
-Create an instance of `AbstractModel` using the given solver.
+Create an instance of `AbstractInstance` using the given solver.
 """
-function Model end
+function Instance end
 
 """
-    optimize!(m::AbstractModel)
+    optimize!(m::AbstractInstance)
 
 Start the solution procedure.
 """
 function optimize! end
 
 """
-    freemodel!(m::AbstractModel)
+    freeinstance!(m::AbstractInstance)
 
-Release any resources and memory used by the model.
+Release any resources and memory used by the instance.
 Note that the Julia garbage collector takes care of this automatically, but automatic collection cannot always be forced.
 This method is useful for more precise control of resources, especially in the case of commercial solvers with licensing restrictions on the number of concurrent runs.
-Users must discard the model object after this method is invoked.
+Users must discard the instance object after this method is invoked.
 """
-function freemodel! end
+function freeinstance! end
 
 """
-    writeproblem(m::AbstractModel, filename::String)
+    writeproblem(m::AbstractInstance, filename::String)
 
 Writes the current problem data to the given file.
 Supported file types are solver-dependent.
