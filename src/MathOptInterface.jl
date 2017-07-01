@@ -18,7 +18,7 @@ optimization problem.
 abstract type AbstractModel end
 
 """
-    Model(solver::AbstractMathProgSolver)
+    Model(solver::AbstractSolver)
 
 Create an instance of `AbstractModel` using the given solver.
 """
