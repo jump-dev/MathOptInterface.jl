@@ -1,3 +1,5 @@
+# References
+
 """
     VariablewiseConstraintReference{T}
 
@@ -28,7 +30,7 @@ struct QuadraticConstraintReference{T}
     value::UInt64
 end
 
-const ConstraintReference = Union{VariablewiseConstraintReference,AffineConstraintReference,QuadraticConstraintReference}
+const ConstraintReference = Union{VariablewiseConstraintReference, AffineConstraintReference, QuadraticConstraintReference}
 
 """
     candelete(m::AbstractModel, ref::ConstraintReference)::Bool
@@ -40,8 +42,7 @@ candelete(m::AbstractModel, ref::ConstraintReference) = throw(MethodError())
 """
     isvalid(m::AbstractModel, ref::ConstraintReference)::Bool
 
-Return a `Bool` indicating whether this reference is valid
-for an active constraint in the model `m`.
+Return a `Bool` indicating whether this reference is valid for an active constraint in the model `m`.
 """
 isvalid(m::AbstractModel, ref::ConstraintReference) = throw(MethodError())
 
@@ -76,8 +77,7 @@ candelete(m::AbstractModel, ref::VariableReference) = throw(MethodError())
 """
     isvalid(m::AbstractModel, ref::VariableReference)::Bool
 
-Return a `Bool` indicating whether this reference is valid
-for an active variable in the model `m`.
+Return a `Bool` indicating whether this reference is valid for an active variable in the model `m`.
 """
 isvalid(m::AbstractModel, ref::VariableReference) = throw(MethodError())
 
