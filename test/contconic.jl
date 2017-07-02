@@ -1,7 +1,7 @@
 # Continuous conic problems
 
-function contconictest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
-    @testset "Set up model, variables, constraint, objective" begin
+function contconictest(solver::AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "Linear model" begin
         # linear conic problem
         # min -3x - 2y - 4z
         # st    x +  y +  z == 3
@@ -21,9 +21,7 @@ function contconictest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
 
         setattribute!(m, Sense(), MinSense)
         setobjective!(m, 1, 0, v, [-3 -2, -4])
-    end
 
-    @testset "Solve model, check results" begin
         optimize!(m)
 
         @test cangetattribute(m, TerminationStatus())
@@ -35,16 +33,16 @@ function contconictest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
         @test getattribute(m, DualStatus()) == FeasiblePoint
 
         @test cangetattribute(m, ObjectiveValue())
-        @test isapprox(getattribute(m, ObjectiveValue()), -11, atol=eps)
+        @test getattribute(m, ObjectiveValue()) ≈ -11 atol=ε
 
         @test cangetattribute(m, VariablePrimal(), v)
-        @test isapprox(getattribute(m, VariablePrimal(), v), [1, 0, 2], atol=eps)
+        @test getattribute(m, VariablePrimal(), v) ≈ [1, 0, 2] atol=ε
 
         @test cangetattribute(m, ConstraintDual(), c)
-        @test isapprox(getattribute(m, ConstraintDual(), c), [3, 1], atol=eps)
+        @test getattribute(m, ConstraintDual(), c) ≈ [3, 1] atol=ε
 
         # TODO var dual and con primal
     end
 
-    # TODO more test sets here
+    # TODO more models
 end

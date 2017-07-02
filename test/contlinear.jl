@@ -1,7 +1,7 @@
 # Continuous linear problems
 
-function contlineartest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
-    @testset "Set up model, variables, constraint, objective" begin
+function contlineartest(solver::AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "Model 1" begin
         # simple 2 variable, 1 constraint problem
         # min -x
         # st   x + y <= 1   (x + y - 1 ∈ NonPositive)
@@ -12,28 +12,23 @@ function contlineartest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
         v = addvariables!(m, 2)
         @test getattribute(m, VariableCount()) == 2
 
-        @test cansetattribute(m, VariableLowerBound())
-        setattribute!(m, VariableLowerBound(), v, [0, 0])
-        @test cangetattribute(m, VariableLowerBound())
-        @test isapprox(getattribute(m, VariableLowerBound(), v), [0.0, 0.0], atol=eps)
-        @test cangetattribute(m, VariableUpperBound())
-        @test all(getattribute(m, VariableUpperBound(), v) .>= 1e20)
-
         @test getattribute(m, SupportsAffineConstraint{NonPositive}())
         c = addconstraint!(m, -1, v, [1, 1], NonPositive(1))
         @test getattribute(m, ConstraintCount()) == 1
 
-        setattribute!(m, Sense(), MinSense)
-        setobjective!(m, 0.0, v, [-1.0, 0.0])
+        @test getattribute(m, SupportsVariablewiseConstraint{GreaterThan}())
+        vc1 = addconstraint!(m, v[1], GreaterThan(0))
+        vc2 = addconstraint!(m, v[2], GreaterThan(0))
+        @test getattribute(m, ConstraintCount()) == 3
 
+        setattribute!(m, Sense(), MinSense)
+        setobjective!(m, 0, v, [-1, 0])
         # TODO query objective
         # (b, a_varref, a_coef, qi, qj, qc) = getobjective(m)
-        # @test isapprox(b, 0.0, atol=eps)
+        # @test b ≈ 0 atol=ε
         # @test a_varref == v
-        # @test isapprox(a_coef, [-1.0, 0.0], atol=eps)
-    end
+        # @test a_coef ≈ [-1, 0] atol=ε
 
-    @testset "Solve model, check results" begin
         optimize!(m)
 
         @test cangetattribute(m, TerminationStatus())
@@ -45,26 +40,22 @@ function contlineartest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
         @test getattribute(m, DualStatus()) == FeasiblePoint
 
         @test cangetattribute(m, ObjectiveValue())
-        @test isapprox(getattribute(m, ObjectiveValue()), -1, atol=eps)
+        @test getattribute(m, ObjectiveValue()) ≈ -1 atol=ε
 
         @test cangetattribute(m, VariablePrimal(), v)
-        @test isapprox(getattribute(m, VariablePrimal(), v), [1, 0], atol=eps)
-        # TODO variable duals?
-        # @test cangetattribute(m, VariableDual(), v)
-        # @test isapprox(getattribute(m, VariableDual(), v), [1, 0], atol=eps)
-
+        @test getattribute(m, VariablePrimal(), v) ≈ [1, 0] atol=ε
+        # TODO var dual?
+        
         @test cangetattribute(m, ConstraintPrimal(), c)
-        @test isapprox(getattribute(m, ConstraintPrimal(), c), [1], atol=eps)
+        @test getattribute(m, ConstraintPrimal(), c) ≈ [1] atol=ε
         @test cangetattribute(m, ConstraintDual(), c)
-        @test isapprox(getattribute(m, ConstraintDual(), c), [-1], atol=eps)
-    end
+        @test getattribute(m, ConstraintDual(), c) ≈ [-1] atol=ε
 
-    @testset "Modify objective, check results" begin
         # change objective to Max +x
 
         @test cansetattribute(m, Sense())
         setattribute!(m, Sense(), MaxSense)
-        modifyobjective!(m, 1, v[1], 1.0)
+        modifyobjective!(m, 1, v[1], 1)
 
         optimize!(m)
 
@@ -77,21 +68,13 @@ function contlineartest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
         @test getattribute(m, DualStatus()) == FeasiblePoint
 
         @test cangetattribute(m, ObjectiveValue())
-        @test isapprox(getattribute(m, ObjectiveValue()), 1, atol=eps)
+        @test getattribute(m, ObjectiveValue()) ≈ 1 atol=ε
 
         @test cangetattribute(m, VariablePrimal(), v)
-        @test isapprox(getattribute(m, VariablePrimal(), v), [1, 0], atol=eps)
+        @test getattribute(m, VariablePrimal(), v) ≈ [1, 0] atol=ε
 
-        # TODO var duals?
-        # @test cangetattribute(m, VariableUpperBoundDual(), v)
-        # @test isapprox(getattribute(m, VariableUpperBoundDual(), v), [0, -1], atol=eps)
-        # @test cangetattribute(m, VariableLowerBoundDual(), v)
-        # @test isapprox(getattribute(m, VariableLowerBoundDual(), v), [0, 0], atol=eps)
-
-        @test cangetattribute(m, ConstraintPrimal(), c)
-        @test isapprox(getattribute(m, ConstraintPrimal(), c), [1], atol=eps)
         @test cangetattribute(m, ConstraintDual(), c)
-        @test isapprox(getattribute(m, ConstraintDual(), c), [1], atol=eps)
+        @test getattribute(m, ConstraintDual(), c) ≈ [1] atol=ε
     end
 
     # TODO more test sets here

@@ -1,7 +1,7 @@
 # Mixed-integer linear problems
 
 function intlineartest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
-    @testset "Set up model, variables, constraint, objective" begin
+    @testset "Knapsack model" begin
         # integer knapsack problem
         # max 5a + 3b + 2c + 7d + 4e
         # st  2a + 8b + 4c + 2d + 5e <= 10
@@ -20,10 +20,8 @@ function intlineartest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
         @test getattribute(m, ConstraintCount()) == 6
 
         setattribute!(m, Sense(), MaxSense)
-        setobjective!(m, 0.0, v, [5, 3, 2, 7, 4])
-    end
+        setobjective!(m, 0, v, [5, 3, 2, 7, 4])
 
-    @testset "Solve model, check results" begin
         optimize!(m)
 
         @test cangetattribute(m, TerminationStatus())
@@ -33,10 +31,10 @@ function intlineartest(solver::AbstractSolver, eps=Base.rtoldefault(Float64))
         @test getattribute(m, PrimalStatus()) == FeasiblePoint
 
         @test cangetattribute(m, ObjectiveValue())
-        @test isapprox(getattribute(m, ObjectiveValue()), -16, atol=eps)
+        @test getattribute(m, ObjectiveValue()) ≈ -16 atol=eps
 
         @test cangetattribute(m, VariablePrimal(), v)
-        @test isapprox(getattribute(m, VariablePrimal(), v), [1, 0, 0, 1, 1], atol=eps)
+        @test getattribute(m, VariablePrimal(), v) ≈ [1, 0, 0, 1, 1] atol=eps
     end
 
     # TODO more test sets here
