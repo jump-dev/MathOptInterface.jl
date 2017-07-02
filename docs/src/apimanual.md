@@ -3,7 +3,7 @@
 
 ## Concepts
 
-We define the standard form problem as:
+The standard form problem is:
 
 ```math
 \begin{align}
@@ -13,32 +13,47 @@ We define the standard form problem as:
 \end{align}
 ```
 
-At the moment all functions are described compactly with lists, vectors, and matrices. NLP is a special case discussed later. An objective function ``f_0`` can be affine or quadratic. The constraint functions ``f_i`` can be variablewise, affine, or quadratic (to be defined).
+where:
+* objective function ``f_0`` is affine or quadratic
+* constraint functions ``f_i`` is variable-wise, affine, or quadratic
+* constraint sets ``\mathcal{S}_i`` are pre-defined real scalar or vector sets
+
+This API defines some commonly-used sets, but is extensible to other sets recognized by the solver.
+Currently, all functions are described compactly with lists, vectors, and matrices.
+The function types are:
+* variable-wise: ``x_j``, a (scalar) variable
+* affine: ``A_i x + b_i``, where ``A_i`` is a matrix and ``b_i`` is a vector
+* quadratic: ``q_i(x) + A_i x + b_i``, where ``q_i(x)`` is a scalar quadratic expression of the form ``\frac{1}{2} x^T Q_i x`` (for objective or constraints) with symmetric matrix ``Q_i``, or a vector of such quadratic expressions (for constraints only) with symmetric matrices ``Q_{i,1}, \ldots, Q_{i,K_i}``
 
 ## Duals
 
-So far, we define a convention for duals for conic representable problems. We do not define behavior for duals involving quadratic constraints.
-We take the convention that duals on lower bounds (`GreaterThan`) should be nonnegative, duals on upper bounds (`LessThan`) should be nonpositive, and duals on closed convex cones should belong to the dual cone.
+Currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i``. Note that bound constraints are supported by re-interpretation in terms of the nonnegative or nonpositive cones. An affine constraint ``a^T x + b \ge c`` should be interpreted as ``a^T x + b - c \in \mathbb{R}_+``, and similarly ``a^T x + b \le c`` should be interpreted as ``a^T x + b - c \in \mathbb{R}_-``. Variable-wise constraints should be interpreted as affine constraints with the appropriate identity mapping in place of ``A_i``.
 
-For minimization problems in conic form, we can define the primal  as:
-
-```math
-\begin{align}
-& \min_{x \in \mathbb{R}^n} & b_0^Tx
-\\
-& \;\;\text{s.t.} & A_ix + b_i & \in \mathcal{C}_i & \forall i
-\end{align}
-```
-and the dual as:
+For such conic form minimization problems, the primal is:
 
 ```math
 \begin{align}
-& \max_{y_i \forall i} & -\sum_i b_i^T y_i
+& \min_{x \in \mathbb{R}^n} & a_0^T x + b_0
 \\
-& \;\;\text{s.t.} & b_0 - \sum_i A_i^T y_i &= 0
-\\
-& & y_i \in \mathcal{C}_i^* && \forall i
+& \;\;\text{s.t.} & A_i x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
 \end{align}
 ```
 
-``a^Tx + b \ge c`` should be interpreted (for the purposes of duals) as ``a^Tx + b - c \in \mathbb{R}_+``, and similarly ``a^Tx + b \le c`` should be interpreted (for the purposes of duals) as ``a^Tx + b - c \in \mathbb{R}_-``. Variablewise constraints should be interpreted as affine constraints with the appropriate identity mapping in place of ``A_i``.
+and the dual is:
+
+```math
+\begin{align}
+& \max_{y_1, \ldots, y_m} & -\sum_{i=1}^m b_i^T y_i + b_0
+\\
+& \;\;\text{s.t.} & a_0 - \sum_{i=1}^m A_i^T y_i & \in {0}^n
+\\
+& & y_i & \in \mathcal{C}_i^* & i = 1 \ldots m
+\end{align}
+```
+
+where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i`` is its dual cone.
+
+Note:
+* lower bounds have nonnegative duals
+* upper bounds have nonpositive duals
+* closed convex cones have duals belonging to the corresponding dual cones

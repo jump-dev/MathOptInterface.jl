@@ -4,60 +4,110 @@ CurrentModule = MathOptInterface
 
 # API
 
-Some introduction to API. List basic standalone methods.
+[Some introduction to API. List basic standalone methods.]
+
+## Attributes
+
+List of attribute categories.
 
 ```@docs
-AbstractModel
+AbstractSolverAttribute
+AbstractSolverInstanceAttribute
+AbstractVariableAttribute
+AbstractConstraintAttribute
+```
+
+Functions for getting and setting attributes.
+
+```@docs
+cangetattribute
+getattribute
+getattribute!
+cansetattribute
+setattribute!
+```
+
+## Solver
+
+```@docs
 AbstractSolver
 ```
 
+List of solver attributes
+
 ```@docs
-Model
+ReturnsDuals
+SupportsAddConstraintAfterSolve
+SupportsDeleteConstraint
+SupportsAddVariableAfterSolve
+SupportsQuadraticObjective
+SupportsConicThroughQuadratic
+```
+
+## SolverInstance
+
+```@docs
+AbstractSolverInstance
+```
+
+```@docs
+SolverInstance
 optimize!
-freemodel!
+freesolverinstance!
 ```
 
-## Variables
+List of solver instance attributes
 
 ```@docs
-VariableReference
-candelete(::AbstractModel,::VariableReference)
-isvalid(::AbstractModel,::VariableReference)
-delete!(::AbstractModel,::VariableReference)
-addvariables!
-addvariable!
+RawSolver
+Sense
+NumberOfVariables
+NumberOfVariablewiseConstraints
+NumberOfAffineConstraints
+NumberOfQuadraticConstraints
+ResultCount
+ObjectiveValue
+ObjectiveBound
+RelativeGap
+SolveTime
+SimplexIterations
+BarrierIterations
+NodeCount
+TerminationStatus
+PrimalStatus
+DualStatus
 ```
 
-## Objectives
+### Termination Status
 
-How to add and set objectives.
+The `TerminationStatus` attribute indicates why the solver stopped executing.
+The value of the attribute is of type `TerminationStatusCode`.
+
 ```@docs
-setobjective!
-modifyobjective!
-getobjectiveconstant
-getobjectiveaffine
+TerminationStatusCode
 ```
 
-## Constraints
+### Result Status
 
-How to add and modify constraints.
+The `PrimalStatus` and `DualStatus` attributes indicate how to interpret the result returned by the solver.
+The value of the attribute is of type `ResultStatusCode`.
+
 ```@docs
-VariablewiseConstraintReference
-AffineConstraintReference
-QuadraticConstraintReference
-candelete(::AbstractModel,::ConstraintReference)
-isvalid(::AbstractModel,::ConstraintReference)
-delete!(::AbstractModel,::ConstraintReference)
-addconstraint!
-modifyconstraint!
-getconstraintconstant
-getconstraintaffine
-getconstraintquadratic
+ResultStatusCode
+```
+
+### Basis Status
+
+[what? BasisStatus]
+
+```@docs
+BasisStatusCode
 ```
 
 ## Sets
 
-List of sets.
+List of recognized sets.
+
 ```@docs
 AbstractSet
 Reals
@@ -81,94 +131,71 @@ SOS2
 ```
 
 Functions for getting and setting properties of sets.
+
 ```@docs
 dimension
 ```
 
-## Attributes
+## Variables
 
-### Solver or Model Attributes
+Variable references and functions for adding and deleting variables.
 
-List of solver or model attributes.
+[attribute that points to the (scalar) variable domain??? eg GreaterThan, NonNegatives, ZeroOne, SemiInteger]
 ```@docs
-ReturnsDuals
-SupportsAddConstraintAfterSolve
-SupportsDeleteConstraint
-SupportsAddVariableAfterSolver
-SupportsQuadraticObjective
-SupportsConicThroughQuadratic
-ObjectiveValue
-ObjectiveBound
-RelativeGap
-SolveTime
-Sense
-SimplexIterations
-BarrierIterations
-NodeCount
-RawSolver
-ResultCount
-NumberOfVariables
-NumberOfVariablewiseConstraints
-NumberOfAffineConstraints
-NumberOfQuadraticConstraints
-SupportsVariablewiseConstraint
-SupportsAffineConstraint
-SupportsQuadraticConstraint
-TerminationStatus
-PrimalStatus
-DualStatus
+VariableReference
+candelete(::AbstractSolverInstance,::VariableReference)
+isvalid(::AbstractSolverInstance,::VariableReference)
+delete!(::AbstractSolverInstance,::VariableReference)
+addvariables!
+addvariable!
 ```
 
-Functions for getting and setting model or solver attributes.
-```@docs
-AbstractSolverOrModelAttribute
-AbstractVariableAttribute
-AbstractConstraintAttribute
-cangetattribute
-getattribute
-getattribute!
-cansetattribute
-setattribute!
-```
+List of attributes associated with variables. [category AbstractVariableAttribute]
+Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
 
-### Variable Attributes
-
-List of attributes associated with variables. Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
 ```@docs
 VariablePrimalStart
 VariablePrimal
 VariableBasisStatus
 ```
 
-### Constraint Attributes
+## Objectives
 
-List of attributes associated with constraints. Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstriaintReference{T}` objects.
+Functions for adding and modifying objectives.
+
+```@docs
+setobjective!
+modifyobjective!
+getobjectiveconstant
+getobjectiveaffine
+```
+
+## Constraints
+
+Constraint references and functions for adding, modifying, and removing constraints.
+
+```@docs
+VariablewiseConstraintReference
+AffineConstraintReference
+QuadraticConstraintReference
+candelete(::AbstractSolverInstance,::ConstraintReference)
+isvalid(::AbstractSolverInstance,::ConstraintReference)
+delete!(::AbstractSolverInstance,::ConstraintReference)
+addconstraint!
+modifyconstraint!
+getconstraintconstant
+getconstraintaffine
+getconstraintquadratic
+```
+
+List of attributes associated with constraints. [category AbstractConstraintAttribute]
+Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{T}` objects.
+
+[why is ConstraintBasisStatus under constraint attributes but below we have a basis status attribute separately??]
 ```@docs
 ConstraintPrimalStart
 ConstraintDualStart
 ConstraintPrimal
 ConstraintDual
 ConstraintBasisStatus
-```
-
-## Status Codes
-
-### Termination Status
-
-The `TerminationStatus` attribute is meant to explain the reason why the solver stopped executing. The value of the attribute is of type `TerminationStatusCode`.
-```@docs
-TerminationStatusCode
-```
-
-### Result Status
-
-The `PrimalStatus` and `DualStatus` attributes are meant to explain how to interpret the result returned by the solver. The value of the attributes are of type `ResultStatusCode`.
-```@docs
-ResultStatusCode
-```
-
-### Basis Status
-
-```@docs
-BasisStatusCode
 ```
