@@ -1,54 +1,61 @@
 # Attributes
 
 """
-    AbstractSolverOrModelAttribute
+    AbstractSolverAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the model or solver.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the solver.
 """
-abstract type AbstractSolverOrModelAttribute end
+abstract type AbstractSolverAttribute end
+
+"""
+    AbstractSolverInstanceAttribute
+
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the solver instance.
+"""
+abstract type AbstractSolverInstanceAttribute end
 
 """
     AbstractVariableAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the model.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the solver instance.
 """
 abstract type AbstractVariableAttribute end
 
 """
     AbstractConstraintAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the model.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the solver instance.
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractSolverOrModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyAttribute = Union{AbstractSolverAttribute, AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
-    getattribute(s::AbstractSolver, attr::AbstractSolverOrModelAttribute)
+    getattribute(s::AbstractSolver, attr::AbstractSolverAttribute)
 
 Return an attribute `attr` of the solver `s`.
 
-    getattribute(m::AbstractModel, attr::AbstractSolverOrModelAttribute)
+    getattribute(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute)
 
-Return an attribute `attr` of the model `m`.
+Return an attribute `attr` of the solver instance `m`.
 
-    getattribute(m::AbstractModel, attr::AbstractVariableAttribute, v::VariableReference)
+    getattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference)
 
-Return an attribute `attr` of the variable `v` in model `m`.
+Return an attribute `attr` of the variable `v` in solver instance `m`.
 
-    getattribute(m::AbstractModel, attr::AbstractVariableAttribute, v::Vector{VariableReference})
+    getattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
 
-Return a vector of attributes corresponding to each variable in the collection `v` in the model `m`.
+Return a vector of attributes corresponding to each variable in the collection `v` in the solver instance `m`.
 
-    getattribute(m::AbstractModel, attr::AbstractConstraintAttribute, c::ConstraintReference)
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
 
-Return an attribute `attr` of the constraint `c` in model `m`.
+Return an attribute `attr` of the constraint `c` in solver instance `m`.
 
-    getattribute(m::AbstractModel, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
-    getattribute(m::AbstractModel, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
-    getattribute(m::AbstractModel, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
 
-Return a vector of attributes corresponding to each constraint in the collection `c` in the model `m`.
+Return a vector of attributes corresponding to each constraint in the collection `c` in the solver instance `m`.
 
 ### Examples
 
@@ -62,31 +69,31 @@ getattribute(m, OtherAttribute("something specific to cplex"))
 function getattribute end
 
 function getattribute(m, attr::AnyAttribute, args...)
-    throw(ArgumentError("Model of type $(typeof(m)) does not support accessing the attribute $attr"))
+    throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support accessing the attribute $attr"))
 end
 
 """
-    getattribute!(output, m::AbstractModel, args...)
+    getattribute!(output, m::AbstractSolverInstance, args...)
 
 An in-place version of `getattribute`.
 The signature matches that of `getattribute` except that the the result is placed in the vector `output`.
 """
 function getattribute! end
 function getattribute!(output, m, attr::AnyAttribute, args...)
-    throw(ArgumentError("Model of type $(typeof(m)) does not support accessing the attribute $attr"))
+    throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support accessing the attribute $attr"))
 end
 
 """
-    cangetattribute(s::AbstractSolver, attr::AbstractSolverOrModelAttribute)::Bool
+    cangetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
 
 Return a `Bool` indicating whether it is possible to query attribute `attr` from the solver `s`.
 
-    cangetattribute(m::AbstractModel, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cangetattribute(m::AbstractModel, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
-    cangetattribute(m::AbstractModel, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
-    cangetattribute(m::AbstractModel, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
 
-Return a `Bool` indicating whether the model `m` currently has a value for the attributed specified by attribute type `attr` applied to the reference type `R`.
+Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the reference type `R`.
 
 ### Examples
 
@@ -98,19 +105,19 @@ cangetattribute(m, ConstraintPrimal(), conref)
 ```
 """
 function cangetattribute end
-cangetattribute(m::AbstractModel, attr::AnyAttribute) = false
+cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
 
 """
-    cansetattribute(s::AbstractSolver, attr::AbstractSolverOrModelAttribute)::Bool
+    cansetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` in the solver `s`.
 
-    cansetattribute(m::AbstractModel, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cansetattribute(m::AbstractModel, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
-    cangetattribute(m::AbstractModel, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
-    cangetattribute(m::AbstractModel, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
 
-Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the model `m`.
+Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the solver instance `m`.
 
 ### Examples
 
@@ -122,83 +129,78 @@ cansetattribute(m, ConstraintPrimal(), AffineConstraintReference{NonNegative})
 ```
 """
 function cansetattribute end
-cansetattribute(m::AbstractModel, attr::AnyAttribute) = false
+cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
 
 """
-    setattribute!(s::AbstractSolver, attr::AbstractSolverOrModelAttribute, value)
+    setattribute!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
 
 Assign `value` to the attribute `attr` of the solver `s`.
 
-    setattribute!(m::AbstractModel, attr::AbstractSolverOrModelAttribute, value)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute, value)
 
-Assign `value` to the attribute `attr` of the model `m`.
+Assign `value` to the attribute `attr` of the solver instance `m`.
 
-    setattribute!(m::AbstractModel, attr::AbstractVariableAttribute, v::VariableReference, value)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
 
-Assign `value` to the attribute `attr` of variable `v` in model `m`.
+Assign `value` to the attribute `attr` of variable `v` in solver instance `m`.
 
-    setattribute!(m::AbstractModel, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
 
-Assign a value respectively to the attribute `attr` of each variable in the collection `v` in model `m`.
+Assign a value respectively to the attribute `attr` of each variable in the collection `v` in solver instance `m`.
 
-    setattribute!(m::AbstractModel, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
 
-Assign a value to the attribute `attr` of constraint `c` in model `m`.
+Assign a value to the attribute `attr` of constraint `c` in solver instance `m`.
 
-    setattribute!(m::AbstractModel, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
-    setattribute!(m::AbstractModel, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
-    setattribute!(m::AbstractModel, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
 
-Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `m`.
+Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in solver instance `m`.
 """
 function setattribute! end
 function setattribute!(m, attr::AnyAttribute, args...)
-    throw(ArgumentError("Model of type $(typeof(m)) does not support setting the attribute $attr"))
+    throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support setting the attribute $attr"))
 end
 
-## Solver or model attributes
+## Solver or solver instance attributes
 
 """
     ReturnsDuals()
 
 A `Bool` indicating if the solver should be expected to return dual solutions when appropriate.
-A solver attribute.
 """
-struct ReturnsDuals <: AbstractSolverOrModelAttribute end
+struct ReturnsDuals <: AbstractSolverAttribute end
 
 """
-    SupportsAddConstraintAfterSolver()
+    SupportsAddConstraintAfterSolve()
 
 A `Bool` indicating if the solver supports adding constraints after a solve.
-If `false`, then a new model should be constructed instead.
-A solver attribute.
+If `false`, then a new solver instance should be constructed instead.
 """
-struct SupportsAddConstraintAfterSolve <: AbstractSolverOrModelAttribute end
+struct SupportsAddConstraintAfterSolve <: AbstractSolverAttribute end
 
 """
     SupportsDeleteConstraint()
 
-A `Bool` indicating if the solver supports deleting constraints from a model.
-A solver attribute.
+A `Bool` indicating if the solver supports deleting constraints from a solver instance.
 """
-struct SupportsDeleteConstraint <: AbstractSolverOrModelAttribute end
+struct SupportsDeleteConstraint <: AbstractSolverAttribute end
 
 """
     SupportsDeleteVariable()
 
-A `Bool` indicating if the solver supports deleting variables from a model.
-A solver attribute.
+A `Bool` indicating if the solver supports deleting variables from a solver instance.
 """
-struct SupportsDeleteVariable <: AbstractSolverOrModelAttribute end
+struct SupportsDeleteVariable <: AbstractSolverAttribute end
 
 """
     SupportsAddVariableAfterSolve()
 
 A `Bool` indicating if the solver supports adding variables after a solve.
 In the context of linear programming, this is known as column generation.
-A solver attribute.
 """
-struct SupportsAddVariableAfterSolver <: AbstractSolverOrModelAttribute end
+struct SupportsAddVariableAfterSolve <: AbstractSolverAttribute end
 
 # TODO: solver-independent parameters
 
@@ -208,27 +210,24 @@ struct SupportsAddVariableAfterSolver <: AbstractSolverOrModelAttribute end
     SupportsQuadraticObjective()
 
 A `Bool` indicating if the solver supports quadratic objectives.
-A solver attribute.
 """
-struct SupportsQuadraticObjective <: AbstractSolverOrModelAttribute end
+struct SupportsQuadraticObjective <: AbstractSolverAttribute end
 
 """
     SupportsConicThroughQuadratic()
 
 A `Bool` indicating if the solver interprets certain quadratic constraints as second-order cone constraints.
-A solver attribute.
 """
-struct SupportsConicThroughQuadratic <: AbstractSolverOrModelAttribute end
+struct SupportsConicThroughQuadratic <: AbstractSolverAttribute end
 
 """
     ObjectiveValue(resultidx::Int=1, objectiveindex::Int=1)
 
 The objective value of the `resultindex`th primal result of the `objectiveindex`th objective.
-A model attribute.
 
 Both `resultindex` and `objectiveindex` default to 1.
 """
-struct ObjectiveValue <: AbstractSolverOrModelAttribute
+struct ObjectiveValue <: AbstractSolverInstanceAttribute
     resultindex::Int
     objectiveindex::Int
     (::Type{ObjectiveValue})(resultindex=1, objectiveindex=1) = new(resultindex, objectiveindex)
@@ -238,33 +237,29 @@ end
     ObjectiveBound()
 
 The best known bound on the optimal objective value.
-A model attribute.
 """
-struct ObjectiveBound <: AbstractSolverOrModelAttribute end
+struct ObjectiveBound <: AbstractSolverInstanceAttribute end
 
 """
     RelativeGap()
 
 The final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
-A model attribute.
 """
-struct RelativeGap <: AbstractSolverOrModelAttribute  end
+struct RelativeGap <: AbstractSolverInstanceAttribute  end
 
 """
     SolveTime()
 
 The total elapsed solution time (in seconds) as reported by the solver.
-A model attribute.
 """
-struct SolveTime <: AbstractSolverOrModelAttribute end
+struct SolveTime <: AbstractSolverInstanceAttribute end
 
 """
     Sense()
 
-The optimization sense of the model, an `OptimizationSense` with value `MinSense` or `MaxSense`.
-A model attribute.
+The optimization sense of the solver instance, an `OptimizationSense` with value `MinSense` or `MaxSense`.
 """
-struct Sense <: AbstractSolverOrModelAttribute end
+struct Sense <: AbstractSolverInstanceAttribute end
 
 @enum OptimizationSense MinSense MaxSense
 
@@ -273,97 +268,64 @@ struct Sense <: AbstractSolverOrModelAttribute end
 
 The cumulative number of simplex iterations during the optimization process.
 In particular, for a mixed-integer program (MIP), the total simplex iterations for all nodes.
-A model attribute.
 """
-struct SimplexIterations <: AbstractSolverOrModelAttribute end
+struct SimplexIterations <: AbstractSolverInstanceAttribute end
 
 """
     BarrierIterations()
 
 The cumulative number of barrier iterations while solving a problem.
-A model attribute.
 """
-struct BarrierIterations <: AbstractSolverOrModelAttribute end
+struct BarrierIterations <: AbstractSolverInstanceAttribute end
 
 """
     NodeCount()
 
 The total number of branch-and-bound nodes explored while solving a mixed-integer program (MIP).
-A model attribute.
 """
-struct NodeCount <: AbstractSolverOrModelAttribute end
+struct NodeCount <: AbstractSolverInstanceAttribute end
 
 """
     RawSolver()
 
-An object that may be used to access a solver-specific API for this model.
-A model attribute.
+An object that may be used to access a solver-specific API for this solver instance.
 """
-struct RawSolver <: AbstractSolverOrModelAttribute end
+struct RawSolver <: AbstractSolverInstanceAttribute end
 
 """
     ResultCount()
 
 The number of results available.
-A model attribute.
 """
-struct ResultCount <: AbstractSolverOrModelAttribute end
+struct ResultCount <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfVariables()
 
-The number of variables in the model.
-A model attribute.
+The number of variables in the solver instance.
 """
-struct NumberOfVariables <: AbstractSolverOrModelAttribute end
+struct NumberOfVariables <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfVariablewiseConstraints{T}()
 
-The number of variablewise constraints of type `T` in the model.
-A model attribute.
+The number of variablewise constraints of type `T` in the solver instance.
 """
-struct NumberOfVariablewiseConstraints{T} <: AbstractSolverOrModelAttribute end
+struct NumberOfVariablewiseConstraints{T} <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfAffineConstraints{T}()
 
-The number of affine constraints of type `T` in the model.
-A model attribute.
+The number of affine constraints of type `T` in the solver instance.
 """
-struct NumberOfAffineConstraints{T} <: AbstractSolverOrModelAttribute end
+struct NumberOfAffineConstraints{T} <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfQuadraticConstraints{T}()
 
-The number of quadratic constraints of type `T` in the model.
-A model attribute.
+The number of quadratic constraints of type `T` in the solver instance.
 """
-struct NumberOfQuadraticConstraints{T} <: AbstractSolverOrModelAttribute end
-
-"""
-    SupportsVariablewiseConstraint{T}()
-
-A `Bool` indicating whether the solver or model supports a variable-wise constraint in the set `s` of type `T`.
-A solver and model attribute.
-"""
-struct SupportsVariablewiseConstraint{T} <: AbstractSolverOrModelAttribute end
-
-"""
-    SupportsAffineConstraint{T}()
-
-A `Bool` indicating whether the solver or model supports an affine constraint in the set `s` of type `T`.
-A solver and model attribute.
-"""
-struct SupportsAffineConstraint{T} <: AbstractSolverOrModelAttribute end
-
-"""
-    SupportsQuadraticConstraint{T}()
-
-A `Bool` indicating whether the solver or model supports a quadratic constraint in the set `s` of type `T`.
-A solver and model attribute.
-"""
-struct SupportsQuadraticConstraint{T} <: AbstractSolverOrModelAttribute end
+struct NumberOfQuadraticConstraints{T} <: AbstractSolverInstanceAttribute end
 
 ## Variable attributes
 
@@ -459,9 +421,8 @@ struct ConstraintBasisStatus <: AbstractConstraintAttribute end
     TerminationStatus()
 
 A `TerminationStatusCode` explaining why the solver stopped.
-A model attribute.
 """
-struct TerminationStatus <: AbstractSolverOrModelAttribute end
+struct TerminationStatus <: AbstractSolverInstanceAttribute end
 
 """
     TerminationStatusCode
@@ -491,10 +452,10 @@ This group of statuses means that something unexpected or problematic happened.
 * `SlowProgress`: the algorithm stopped because it was unable to continue making progress towards the solution
 * `AlmostSuccess` should be used if there is additional information that relaxed convergence tolerances are satisfied
 
-To be documented: `NumericalError`, `InvalidModel`, `InvalidOption`, `Interrupted`, `OtherError`.
+To be documented: `NumericalError`, `InvalidSolverInstance`, `InvalidOption`, `Interrupted`, `OtherError`.
 
 """
-@enum TerminationStatusCode Success AlmostSuccess InfeasibleNoResult UnboundedNoResult InfeasibleOrUnbounded IterationLimit TimeLimit NodeLimit SolutionLimit MemoryLimit ObjectiveLimit NormLimit OtherLimit SlowProgress NumericalError InvalidModel InvalidOption Interrupted OtherError
+@enum TerminationStatusCode Success AlmostSuccess InfeasibleNoResult UnboundedNoResult InfeasibleOrUnbounded IterationLimit TimeLimit NodeLimit SolutionLimit MemoryLimit ObjectiveLimit NormLimit OtherLimit SlowProgress NumericalError InvalidSolverInstance InvalidOption Interrupted OtherError
 
 ## Result status
 
@@ -522,9 +483,8 @@ The values indicate how to interpret the result vector.
 
 The `ResultStatusCode` of the primal result `N`.
 If `N` is omitted, it defaults to 1.
-A model attribute.
 """
-struct PrimalStatus <: AbstractSolverOrModelAttribute
+struct PrimalStatus <: AbstractSolverInstanceAttribute
     N::Int
 end
 PrimalStatus() = PrimalStatus(1)
@@ -535,9 +495,8 @@ PrimalStatus() = PrimalStatus(1)
 
 The `ResultStatusCode` of the dual result `N`.
 If `N` is omitted, it defaults to 1.
-A model attribute.
 """
-struct DualStatus <: AbstractSolverOrModelAttribute
+struct DualStatus <: AbstractSolverInstanceAttribute
     N::Int
 end
 DualStatus() = DualStatus(1)

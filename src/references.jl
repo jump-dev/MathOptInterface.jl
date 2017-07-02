@@ -3,7 +3,7 @@
 """
     VariablewiseConstraintReference{T}
 
-A lightweight object used to reference variablewise constraints in a model.
+A lightweight object used to reference variablewise constraints in a solver instance.
 The parameter `T` is the type of set constraint referenced.
 """
 struct VariablewiseConstraintReference{T}
@@ -13,7 +13,7 @@ end
 """
     AffineConstraintReference{T}
 
-A lightweight object used to reference affine-in-set constraints in a model.
+A lightweight object used to reference affine-in-set constraints in a solver instance.
 The parameter `T` is the type of set constraint referenced.
 """
 struct AffineConstraintReference{T}
@@ -23,7 +23,7 @@ end
 """
     QuadraticConstraintReference{T}
 
-A lightweight object used to reference quadratic-in-set constraints in a model.
+A lightweight object used to reference quadratic-in-set constraints in a solver instance.
 The parameter `T` is the type of set constraint referenced.
 """
 struct QuadraticConstraintReference{T}
@@ -33,62 +33,62 @@ end
 const ConstraintReference = Union{VariablewiseConstraintReference, AffineConstraintReference, QuadraticConstraintReference}
 
 """
-    candelete(m::AbstractModel, ref::ConstraintReference)::Bool
+    candelete(m::AbstractSolverInstance, ref::ConstraintReference)::Bool
 
-Return a `Bool` indicating whether this constraint can be removed from the model `m`.
+Return a `Bool` indicating whether this constraint can be removed from the solver instance `m`.
 """
-candelete(m::AbstractModel, ref::ConstraintReference) = throw(MethodError())
-
-"""
-    isvalid(m::AbstractModel, ref::ConstraintReference)::Bool
-
-Return a `Bool` indicating whether this reference is valid for an active constraint in the model `m`.
-"""
-isvalid(m::AbstractModel, ref::ConstraintReference) = throw(MethodError())
+candelete(m::AbstractSolverInstance, ref::ConstraintReference) = throw(MethodError())
 
 """
-    delete!(m::AbstractModel, ref::ConstraintReference)
+    isvalid(m::AbstractSolverInstance, ref::ConstraintReference)::Bool
 
-Delete the referenced constraint from the model.
-
-    delete!(m::AbstractModel, refs::Vector{ConstraintReference})
-
-Delete the referenced constraints in the vector `refs` from the model.
+Return a `Bool` indicating whether this reference is valid for an active constraint in the solver instance `m`.
 """
-Base.delete!(m::AbstractModel, ref::ConstraintReference) = throw(MethodError())
-Base.delete!(m::AbstractModel, refs::Vector{ConstraintReference}) = throw(MethodError())
+isvalid(m::AbstractSolverInstance, ref::ConstraintReference) = throw(MethodError())
+
+"""
+    delete!(m::AbstractSolverInstance, ref::ConstraintReference)
+
+Delete the referenced constraint from the solver instance.
+
+    delete!(m::AbstractSolverInstance, refs::Vector{ConstraintReference})
+
+Delete the referenced constraints in the vector `refs` from the solver instance.
+"""
+Base.delete!(m::AbstractSolverInstance, ref::ConstraintReference) = throw(MethodError())
+Base.delete!(m::AbstractSolverInstance, refs::Vector{ConstraintReference}) = throw(MethodError())
 
 """
     VariableReference
 
-A lightweight object used to reference variables in a model.
+A lightweight object used to reference variables in a solver instance.
 """
 struct VariableReference
     value::UInt64
 end
 
 """
-    candelete(m::AbstractModel, ref::VariableReference)::Bool
+    candelete(m::AbstractSolverInstance, ref::VariableReference)::Bool
 
-Return a `Bool` indicating whether this variable can be removed from the model `m`.
+Return a `Bool` indicating whether this variable can be removed from the solver instance `m`.
 """
-candelete(m::AbstractModel, ref::VariableReference) = throw(MethodError())
-
-"""
-    isvalid(m::AbstractModel, ref::VariableReference)::Bool
-
-Return a `Bool` indicating whether this reference is valid for an active variable in the model `m`.
-"""
-isvalid(m::AbstractModel, ref::VariableReference) = throw(MethodError())
+candelete(m::AbstractSolverInstance, ref::VariableReference) = throw(MethodError())
 
 """
-    delete!(m::AbstractModel, ref::VariableReference)
+    isvalid(m::AbstractSolverInstance, ref::VariableReference)::Bool
 
-Delete the referenced variable from the model.
-
-    delete!(m::AbstractModel, refs::Vector{VariableReference})
-
-Delete the referenced variables in the vector `refs` from the model.
+Return a `Bool` indicating whether this reference is valid for an active variable in the solver instance `m`.
 """
-Base.delete!(m::AbstractModel, ref::VariableReference) = throw(MethodError())
-Base.delete!(m::AbstractModel, refs::Vector{VariableReference}) = throw(MethodError())
+isvalid(m::AbstractSolverInstance, ref::VariableReference) = throw(MethodError())
+
+"""
+    delete!(m::AbstractSolverInstance, ref::VariableReference)
+
+Delete the referenced variable from the solver instance.
+
+    delete!(m::AbstractSolverInstance, refs::Vector{VariableReference})
+
+Delete the referenced variables in the vector `refs` from the solver instance.
+"""
+Base.delete!(m::AbstractSolverInstance, ref::VariableReference) = throw(MethodError())
+Base.delete!(m::AbstractSolverInstance, refs::Vector{VariableReference}) = throw(MethodError())
