@@ -1,9 +1,9 @@
 # Objectives
 
 """
-    setobjective!(m::AbstractInstance, b, a_varref::Vector{VariableReference}, a_coef, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, N::Int=1)
+    setobjective!(m::AbstractSolverInstance, b, a_varref::Vector{VariableReference}, a_coef, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, N::Int=1)
 
-Set the `N`th objective in the instance `m` to be ``\\frac{1}{2} x^T Q_0 x + a_0^T x + b_0``, where:
+Set the `N`th objective in the solver instance `m` to be ``\\frac{1}{2} x^T Q_0 x + a_0^T x + b_0``, where:
 * ``a_0`` is a sparse vector specified in tuple form by `a_varref, a_coef`
 * ``b_0`` is a scalar
 * the symmetric matrix ``Q_0`` is defined by the triplets in `Q_vari, Q_varj, Q_coef`
@@ -13,9 +13,9 @@ Off-diagonal entries of ``Q_0`` will be mirrored, so either the upper triangular
 If entries for both ``(i,j)`` and ``(j,i)`` are provided, these are considered duplicate terms.
 `a_varref`, `Q_vari`, `Q_varj` should be collections of `VariableReference` objects.
 
-    setobjective!(m::AbstractInstance, b, a_varref::Vector{VariableReference}, a_coef, N::Int=1)
+    setobjective!(m::AbstractSolverInstance, b, a_varref::Vector{VariableReference}, a_coef, N::Int=1)
 
-Set the `N`th objective in the instance `m` to be ``a_0^T x + b_0``, where:
+Set the `N`th objective in the solver instance `m` to be ``a_0^T x + b_0``, where:
 * ``a_0`` is a sparse vector specified in tuple form by `a_varref, a_coef`
 * ``b_0`` is a scalar
 
@@ -45,7 +45,7 @@ function getobjectiveaffine end
 ## TODO: getobjectivequadratic
 
 """
-    modifyobjective!(m::AbstractInstance, N::Int, args...)
+    modifyobjective!(m::AbstractSolverInstance, N::Int, args...)
 
 Modify elements of the `N`th objective depending on the arguments `args`.
 The `N`th objective has the form ``\\frac{1}{2} x^T Q_0 x + a_0^T x + b_0``.
@@ -54,7 +54,7 @@ There are three cases, below.
 
 ## Modify Constant term
 
-    modifyobjective!(m::AbstractInstance, N::Int, b)
+    modifyobjective!(m::AbstractSolverInstance, N::Int, b)
 
 Set the constant term ``b_0`` of the `N`th objective to `b`.
 
@@ -66,7 +66,7 @@ modifyobjective!(m, 1, 1.0)
 
 ## Modify Linear term
 
-    modifyobjective!(m::AbstractInstance, N::Int, a_varidx, a_coef)
+    modifyobjective!(m::AbstractSolverInstance, N::Int, a_varidx, a_coef)
 
 Set elements given by `a_varidx` in the linear term of the `N`th objective to `a_coef`.
 Either `a_varidx` and `a_coef` are both singletons, or they should be collections with equal length.
@@ -81,7 +81,7 @@ modifyobjective!(m, 1, [v1, v2], [1.0, 2.0])
 
 ## Modify Quadratic term
 
-    modifyobjective!(m::AbstractInstance, N::Int, Q_vari, Q_varj, Q_coef)
+    modifyobjective!(m::AbstractSolverInstance, N::Int, Q_vari, Q_varj, Q_coef)
 
 Set the elements in the quadratic term of the `N`th objective specified by the triplets `Q_vari, Q_varj, Q_coef`.
 Off-diagonal entries will be mirrored.

@@ -1,7 +1,7 @@
 # Constraints
 
 """
-    addconstraint!(m::AbstractInstance, b, a_constridx, a_v::Vector{VariableReference}, a_coef, Q_constridx, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, S::AbstractSet)::QuadraticConstraintReference{typeof(S)}
+    addconstraint!(m::AbstractSolverInstance, b, a_constridx, a_v::Vector{VariableReference}, a_coef, Q_constridx, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, S::AbstractSet)::QuadraticConstraintReference{typeof(S)}
 
 Add the vector quadratic-in-set constraint ``q_i(x) + A_i^T x + b_i \\in \\mathcal{S}_i``, where:
 * ``A_i`` is a sparse matrix specified in triplet form by `a_constridx, a_v, a_coef`
@@ -14,7 +14,7 @@ Off-diagonal entries of ``Q_{i,k}`` will be mirrored, so either the upper triang
 If entries for both ``(i,j)`` and ``(j,i)`` are provided, these are considered duplicate terms.
 `a_v`, `Q_vari`, `Q_varj` should be collections of `VariableReference` objects.
 
-    addconstraint!(m::AbstractInstance, b, a_v::Vector{VariableReference}, a_coef, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, S::AbstractSet)::QuadraticConstraintReference{typeof(S)}
+    addconstraint!(m::AbstractSolverInstance, b, a_v::Vector{VariableReference}, a_coef, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, S::AbstractSet)::QuadraticConstraintReference{typeof(S)}
 
 Add the scalar quadratic-in-set constraint ``q_i(x) + a_i^T x + b_i \\in \\mathcal{S}_i``, where:
 * ``a_i`` is a sparse vector specified in tuple form by `a_v, a_coef`
@@ -24,7 +24,7 @@ Add the scalar quadratic-in-set constraint ``q_i(x) + a_i^T x + b_i \\in \\mathc
 
 Duplicate indices in the ``a_i`` or the ``Q_{i,k}`` are accepted and will be summed together.
 
-    addconstraint!(m::AbstractInstance, b, a_constridx, a_v::Vector{VariableReference}, a_coef, S::AbstractSet)::AffineConstraintReference{typeof(S)}
+    addconstraint!(m::AbstractSolverInstance, b, a_constridx, a_v::Vector{VariableReference}, a_coef, S::AbstractSet)::AffineConstraintReference{typeof(S)}
 
 Add the vector affine-in-set constraint ``A_i^T x + b_i \\in \\mathcal{S}_i``, where:
 * ``A_i`` is a sparse matrix specified in triplet form by `a_constridx, a_v, a_coef`
@@ -33,7 +33,7 @@ Add the vector affine-in-set constraint ``A_i^T x + b_i \\in \\mathcal{S}_i``, w
 
 Duplicate indices in the ``A_i`` are accepted and will be summed together.
 
-    addconstraint!(m::AbstractInstance, b, a_v::Vector{VariableReference}, a_coef, S::AbstractSet)::AffineConstraintReference{typeof(S)}
+    addconstraint!(m::AbstractSolverInstance, b, a_v::Vector{VariableReference}, a_coef, S::AbstractSet)::AffineConstraintReference{typeof(S)}
 
 Add the scalar affine-in-set constraint ``a_i^T x + b_i \\in \\mathcal{S}_i``, where:
 * ``a_i`` is a sparse vector specified in tuple form by `a_v, a_coef`
@@ -42,7 +42,7 @@ Add the scalar affine-in-set constraint ``a_i^T x + b_i \\in \\mathcal{S}_i``, w
 
 Duplicate indices in the ``a_i`` are accepted and will be summed together.
 
-    addconstraint!(m::AbstractInstance, vs::Vector{VariableReference}, S::AbstractSet)::VariablewiseConstraintReference{typeof(S)}
+    addconstraint!(m::AbstractSolverInstance, vs::Vector{VariableReference}, S::AbstractSet)::VariablewiseConstraintReference{typeof(S)}
 
 Add the vector variable-wise constraint ``(x_j)_{j \\in v_i} \\in \\mathcal{S}_i``, where:
 * ``v_i`` is a list of variable indices specified as a vector of variable references `vs`
@@ -50,7 +50,7 @@ Add the vector variable-wise constraint ``(x_j)_{j \\in v_i} \\in \\mathcal{S}_i
 
 Behavior is not defined for duplicate indices in the ``v_i``.
 
-    addconstraint!(m::AbstractInstance, v::VariableReference, S::AbstractSet)::VariablewiseConstraintReference{typeof(S)}
+    addconstraint!(m::AbstractSolverInstance, v::VariableReference, S::AbstractSet)::VariablewiseConstraintReference{typeof(S)}
 
 Add the scalar variable-wise constraint ``x_j \\in \\mathcal{S}_i``, where:
 * ``x_j`` is variable specified as a variable reference `v`
@@ -61,48 +61,48 @@ function addconstraint! end
 # TODO: method to query if solver supports this type of modification
 
 """
-    getconstraintconstant(m::AbstractInstance, c::ConstraintReference)
+    getconstraintconstant(m::AbstractSolverInstance, c::ConstraintReference)
 
 Return the ``b`` vector of the constraint `c`.
 
-    getconstraintconstant(m::AbstractInstance, c::ConstraintReference, k::Int)
+    getconstraintconstant(m::AbstractSolverInstance, c::ConstraintReference, k::Int)
 
 Return the constant term of the `k`th row of the constraint `c`.
 """
 function getconstraintconstant end
 
 """
-    getconstraintaffine(m::AbstractInstance, c::ConstraintReference)
+    getconstraintaffine(m::AbstractSolverInstance, c::ConstraintReference)
 
 Return the ``A_i`` matrix of the constraint corresponding to `c` in triplet form `(i, v, coef)`, where `v` is a `VariableReference`, and `coef` is a coefficient value.
 Output is a tuple of three vectors.
 
-    getconstraintaffine(m::AbstractInstance, c::ConstraintReference, k::Int)
+    getconstraintaffine(m::AbstractSolverInstance, c::ConstraintReference, k::Int)
 
 Return the `k`th row of the ``A_k`` matrix of the constraint corresponding to `c` in tuple form `(v, coef)`, where `v` is a `VariableReference`, and `coef` is a coefficient value.
 Output is a tuple of two vectors.
 
-    getconstraintaffine(m::AbstractInstance, c::ConstraintReference, k::Int, v::VariableReference)
+    getconstraintaffine(m::AbstractSolverInstance, c::ConstraintReference, k::Int, v::VariableReference)
 
 Return the element of the ``A_k`` matrix of the constraint corresponding to `c` in row `k` and variable `v`.
 """
 function getconstraintaffine end
 
 """
-    getconstraintquadratic(m::AbstractInstance, c::ConstraintReference, k::Int)
+    getconstraintquadratic(m::AbstractSolverInstance, c::ConstraintReference, k::Int)
 
 Return the ``Q_{i,k}`` matrix of the `k`th row of the constraint corresponding to `c` in triplet form `(v_1, v_2, coef)`, where `v_1, v_2` are `VariableReference`s, and `coef` is a coefficient value.
 Output is a tuple of three vectors.
 The ``Q_{i,k}`` matrix must be symmetric, and only one element is returned.
 
-    getconstraintquadratic(m::AbstractInstance, c::ConstraintReference, k::Int, v_1::VariableReference, v_2::VariableReference)
+    getconstraintquadratic(m::AbstractSolverInstance, c::ConstraintReference, k::Int, v_1::VariableReference, v_2::VariableReference)
 
 Return the element corresponding to `(v_1, v_2)` of the ``Q_{i,k}`` matrix of the `k`th row of the constraint corresponding to `c`.
 """
 function getconstraintquadratic end
 
 """
-    modifyconstraint!(m::AbstractInstance, c::ConstraintReference, k::Int, args...)
+    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, k::Int, args...)
 
 Modify elements of the `k`th row of the constraint `c` depending on the arguments `args`.
 The `k`th row will have the form ``q_{i,k}(x) + A_{i,k}^T x + b_{i,k}``.
@@ -110,7 +110,7 @@ There are four cases.
 
 ## Modify Constant term
 
-    modifyconstraint!(m::AbstractInstance, c::ConstraintReference, k::Int, b)
+    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, k::Int, b)
 
 Set the constant term of the `k`th row in the constraint `c` to `b`.
 
@@ -122,7 +122,7 @@ modifyconstraint!(m, c, 1, 1.0)
 
 ## Modify Linear term
 
-    modifyconstraint!(m::AbstractInstance, c::ConstraintReference, k::Int, a_v::Vector{VariableReference}, a_coef)
+    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, k::Int, a_v::Vector{VariableReference}, a_coef)
 
 Set elements given by `a_v` in the linear term of the `k`th row in the constraint `c` to `a_coef`.
 Either `a_v` and `a_coef` are both singletons, or they should be collections with equal length.
@@ -137,7 +137,7 @@ modifyconstraint!(m, c, [v_1, v_2], [1.0, 2.0])
 
 ## Modify Quadratic term
 
-    modifyconstraint!(m::AbstractInstance, c::ConstraintReference, k::Int, Q_vari, Q_varj, Q_coef)
+    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, k::Int, Q_vari, Q_varj, Q_coef)
 
 Set the elements in the quadratic term of the `k`th row of the constraint `c` specified by the triplets `Q_vari, Q_varj, Q_coef`.
 Off-diagonal entries will be mirrored.
@@ -154,7 +154,7 @@ modifyconstraint!(m, c, [v_1, v_2], [v_1, v_1], [1.0, 2.0])
 
 ## Modify Set
 
-    modifyconstraint!(m::AbstractInstance, c::ConstraintReference{Set}, S::Set)
+    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference{Set}, S::Set)
 
 Change the set of constraint `c` to the new set `S` which should be of the same type as the original set.
 

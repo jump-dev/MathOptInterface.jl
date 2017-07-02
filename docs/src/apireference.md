@@ -12,7 +12,7 @@ List of attribute categories.
 
 ```@docs
 AbstractSolverAttribute
-AbstractInstanceAttribute
+AbstractSolverInstanceAttribute
 AbstractVariableAttribute
 AbstractConstraintAttribute
 ```
@@ -44,19 +44,19 @@ SupportsQuadraticObjective
 SupportsConicThroughQuadratic
 ```
 
-## Instance
+## SolverInstance
 
 ```@docs
-AbstractInstance
+AbstractSolverInstance
 ```
 
 ```@docs
-Instance
+SolverInstance
 optimize!
-freeinstance!
+freesolverinstance!
 ```
 
-List of instance attributes
+List of solver instance attributes
 
 ```@docs
 RawSolver
@@ -143,9 +143,9 @@ Variable references and functions for adding and deleting variables.
 [attribute that points to the (scalar) variable domain??? eg GreaterThan, NonNegatives, ZeroOne, SemiInteger]
 ```@docs
 VariableReference
-candelete(::AbstractInstance,::VariableReference)
-isvalid(::AbstractInstance,::VariableReference)
-delete!(::AbstractInstance,::VariableReference)
+candelete(::AbstractSolverInstance,::VariableReference)
+isvalid(::AbstractSolverInstance,::VariableReference)
+delete!(::AbstractSolverInstance,::VariableReference)
 addvariables!
 addvariable!
 ```
@@ -178,9 +178,9 @@ Constraint references and functions for adding, modifying, and removing constrai
 VariablewiseConstraintReference
 AffineConstraintReference
 QuadraticConstraintReference
-candelete(::AbstractInstance,::ConstraintReference)
-isvalid(::AbstractInstance,::ConstraintReference)
-delete!(::AbstractInstance,::ConstraintReference)
+candelete(::AbstractSolverInstance,::ConstraintReference)
+isvalid(::AbstractSolverInstance,::ConstraintReference)
+delete!(::AbstractSolverInstance,::ConstraintReference)
 addconstraint!
 modifyconstraint!
 getconstraintconstant

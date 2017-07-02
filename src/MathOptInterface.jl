@@ -5,43 +5,43 @@ module MathOptInterface
 
 Abstract supertype for "solver" objects.
 A solver is a lightweight object used for selecting solvers and parameters.
-It does not store any instance data.
+It does not store any solver instance data.
 """
 abstract type AbstractSolver end
 
 """
-    AbstractInstance
+    AbstractSolverInstance
 
 Abstract supertype which represents a solver's in-memory representation of an optimization problem.
 """
-abstract type AbstractInstance end
+abstract type AbstractSolverInstance end
 
 """
-    Instance(solver::AbstractSolver)
+    SolverInstance(solver::AbstractSolver)
 
-Create an instance of `AbstractInstance` using the given solver.
+Create a solver instance of `AbstractSolverInstance` using the given solver.
 """
-function Instance end
+function SolverInstance end
 
 """
-    optimize!(m::AbstractInstance)
+    optimize!(m::AbstractSolverInstance)
 
 Start the solution procedure.
 """
 function optimize! end
 
 """
-    freeinstance!(m::AbstractInstance)
+    freesolver instance!(m::AbstractSolverInstance)
 
-Release any resources and memory used by the instance.
+Release any resources and memory used by the solver instance.
 Note that the Julia garbage collector takes care of this automatically, but automatic collection cannot always be forced.
 This method is useful for more precise control of resources, especially in the case of commercial solvers with licensing restrictions on the number of concurrent runs.
-Users must discard the instance object after this method is invoked.
+Users must discard the solver instance object after this method is invoked.
 """
-function freeinstance! end
+function freesolverinstance! end
 
 """
-    writeproblem(m::AbstractInstance, filename::String)
+    writeproblem(m::AbstractSolverInstance, filename::String)
 
 Writes the current problem data to the given file.
 Supported file types are solver-dependent.

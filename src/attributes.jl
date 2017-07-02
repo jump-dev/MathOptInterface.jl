@@ -8,54 +8,54 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 abstract type AbstractSolverAttribute end
 
 """
-    AbstractInstanceAttribute
+    AbstractSolverInstanceAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the instance.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the solver instance.
 """
-abstract type AbstractInstanceAttribute end
+abstract type AbstractSolverInstanceAttribute end
 
 """
     AbstractVariableAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the instance.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the solver instance.
 """
 abstract type AbstractVariableAttribute end
 
 """
     AbstractConstraintAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the instance.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the solver instance.
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractSolverAttribute, AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyAttribute = Union{AbstractSolverAttribute, AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
     getattribute(s::AbstractSolver, attr::AbstractSolverAttribute)
 
 Return an attribute `attr` of the solver `s`.
 
-    getattribute(m::AbstractInstance, attr::AbstractInstanceAttribute)
+    getattribute(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute)
 
-Return an attribute `attr` of the instance `m`.
+Return an attribute `attr` of the solver instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)
+    getattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference)
 
-Return an attribute `attr` of the variable `v` in instance `m`.
+Return an attribute `attr` of the variable `v` in solver instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
+    getattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
 
-Return a vector of attributes corresponding to each variable in the collection `v` in the instance `m`.
+Return a vector of attributes corresponding to each variable in the collection `v` in the solver instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
 
-Return an attribute `attr` of the constraint `c` in instance `m`.
+Return an attribute `attr` of the constraint `c` in solver instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
-    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
-    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
 
-Return a vector of attributes corresponding to each constraint in the collection `c` in the instance `m`.
+Return a vector of attributes corresponding to each constraint in the collection `c` in the solver instance `m`.
 
 ### Examples
 
@@ -69,18 +69,18 @@ getattribute(m, OtherAttribute("something specific to cplex"))
 function getattribute end
 
 function getattribute(m, attr::AnyAttribute, args...)
-    throw(ArgumentError("Instance of type $(typeof(m)) does not support accessing the attribute $attr"))
+    throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support accessing the attribute $attr"))
 end
 
 """
-    getattribute!(output, m::AbstractInstance, args...)
+    getattribute!(output, m::AbstractSolverInstance, args...)
 
 An in-place version of `getattribute`.
 The signature matches that of `getattribute` except that the the result is placed in the vector `output`.
 """
 function getattribute! end
 function getattribute!(output, m, attr::AnyAttribute, args...)
-    throw(ArgumentError("Instance of type $(typeof(m)) does not support accessing the attribute $attr"))
+    throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support accessing the attribute $attr"))
 end
 
 """
@@ -88,12 +88,12 @@ end
 
 Return a `Bool` indicating whether it is possible to query attribute `attr` from the solver `s`.
 
-    cangetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
 
-Return a `Bool` indicating whether the instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the reference type `R`.
+Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the reference type `R`.
 
 ### Examples
 
@@ -105,19 +105,19 @@ cangetattribute(m, ConstraintPrimal(), conref)
 ```
 """
 function cangetattribute end
-cangetattribute(m::AbstractInstance, attr::AnyAttribute) = false
+cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
 
 """
     cansetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` in the solver `s`.
 
-    cansetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cansetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
 
-Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the instance `m`.
+Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the solver instance `m`.
 
 ### Examples
 
@@ -129,41 +129,41 @@ cansetattribute(m, ConstraintPrimal(), AffineConstraintReference{NonNegative})
 ```
 """
 function cansetattribute end
-cansetattribute(m::AbstractInstance, attr::AnyAttribute) = false
+cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
 
 """
     setattribute!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
 
 Assign `value` to the attribute `attr` of the solver `s`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractInstanceAttribute, value)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute, value)
 
-Assign `value` to the attribute `attr` of the instance `m`.
+Assign `value` to the attribute `attr` of the solver instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
 
-Assign `value` to the attribute `attr` of variable `v` in instance `m`.
+Assign `value` to the attribute `attr` of variable `v` in solver instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
 
-Assign a value respectively to the attribute `attr` of each variable in the collection `v` in instance `m`.
+Assign a value respectively to the attribute `attr` of each variable in the collection `v` in solver instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
 
-Assign a value to the attribute `attr` of constraint `c` in instance `m`.
+Assign a value to the attribute `attr` of constraint `c` in solver instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
-    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
-    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
 
-Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `m`.
+Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in solver instance `m`.
 """
 function setattribute! end
 function setattribute!(m, attr::AnyAttribute, args...)
-    throw(ArgumentError("Instance of type $(typeof(m)) does not support setting the attribute $attr"))
+    throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support setting the attribute $attr"))
 end
 
-## Solver or instance attributes
+## Solver or solver instance attributes
 
 """
     ReturnsDuals()
@@ -176,21 +176,21 @@ struct ReturnsDuals <: AbstractSolverAttribute end
     SupportsAddConstraintAfterSolve()
 
 A `Bool` indicating if the solver supports adding constraints after a solve.
-If `false`, then a new instance should be constructed instead.
+If `false`, then a new solver instance should be constructed instead.
 """
 struct SupportsAddConstraintAfterSolve <: AbstractSolverAttribute end
 
 """
     SupportsDeleteConstraint()
 
-A `Bool` indicating if the solver supports deleting constraints from a instance.
+A `Bool` indicating if the solver supports deleting constraints from a solver instance.
 """
 struct SupportsDeleteConstraint <: AbstractSolverAttribute end
 
 """
     SupportsDeleteVariable()
 
-A `Bool` indicating if the solver supports deleting variables from a instance.
+A `Bool` indicating if the solver supports deleting variables from a solver instance.
 """
 struct SupportsDeleteVariable <: AbstractSolverAttribute end
 
@@ -227,7 +227,7 @@ The objective value of the `resultindex`th primal result of the `objectiveindex`
 
 Both `resultindex` and `objectiveindex` default to 1.
 """
-struct ObjectiveValue <: AbstractInstanceAttribute
+struct ObjectiveValue <: AbstractSolverInstanceAttribute
     resultindex::Int
     objectiveindex::Int
     (::Type{ObjectiveValue})(resultindex=1, objectiveindex=1) = new(resultindex, objectiveindex)
@@ -238,28 +238,28 @@ end
 
 The best known bound on the optimal objective value.
 """
-struct ObjectiveBound <: AbstractInstanceAttribute end
+struct ObjectiveBound <: AbstractSolverInstanceAttribute end
 
 """
     RelativeGap()
 
 The final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
 """
-struct RelativeGap <: AbstractInstanceAttribute  end
+struct RelativeGap <: AbstractSolverInstanceAttribute  end
 
 """
     SolveTime()
 
 The total elapsed solution time (in seconds) as reported by the solver.
 """
-struct SolveTime <: AbstractInstanceAttribute end
+struct SolveTime <: AbstractSolverInstanceAttribute end
 
 """
     Sense()
 
-The optimization sense of the instance, an `OptimizationSense` with value `MinSense` or `MaxSense`.
+The optimization sense of the solver instance, an `OptimizationSense` with value `MinSense` or `MaxSense`.
 """
-struct Sense <: AbstractInstanceAttribute end
+struct Sense <: AbstractSolverInstanceAttribute end
 
 @enum OptimizationSense MinSense MaxSense
 
@@ -269,63 +269,63 @@ struct Sense <: AbstractInstanceAttribute end
 The cumulative number of simplex iterations during the optimization process.
 In particular, for a mixed-integer program (MIP), the total simplex iterations for all nodes.
 """
-struct SimplexIterations <: AbstractInstanceAttribute end
+struct SimplexIterations <: AbstractSolverInstanceAttribute end
 
 """
     BarrierIterations()
 
 The cumulative number of barrier iterations while solving a problem.
 """
-struct BarrierIterations <: AbstractInstanceAttribute end
+struct BarrierIterations <: AbstractSolverInstanceAttribute end
 
 """
     NodeCount()
 
 The total number of branch-and-bound nodes explored while solving a mixed-integer program (MIP).
 """
-struct NodeCount <: AbstractInstanceAttribute end
+struct NodeCount <: AbstractSolverInstanceAttribute end
 
 """
     RawSolver()
 
-An object that may be used to access a solver-specific API for this instance.
+An object that may be used to access a solver-specific API for this solver instance.
 """
-struct RawSolver <: AbstractInstanceAttribute end
+struct RawSolver <: AbstractSolverInstanceAttribute end
 
 """
     ResultCount()
 
 The number of results available.
 """
-struct ResultCount <: AbstractInstanceAttribute end
+struct ResultCount <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfVariables()
 
-The number of variables in the instance.
+The number of variables in the solver instance.
 """
-struct NumberOfVariables <: AbstractInstanceAttribute end
+struct NumberOfVariables <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfVariablewiseConstraints{T}()
 
-The number of variablewise constraints of type `T` in the instance.
+The number of variablewise constraints of type `T` in the solver instance.
 """
-struct NumberOfVariablewiseConstraints{T} <: AbstractInstanceAttribute end
+struct NumberOfVariablewiseConstraints{T} <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfAffineConstraints{T}()
 
-The number of affine constraints of type `T` in the instance.
+The number of affine constraints of type `T` in the solver instance.
 """
-struct NumberOfAffineConstraints{T} <: AbstractInstanceAttribute end
+struct NumberOfAffineConstraints{T} <: AbstractSolverInstanceAttribute end
 
 """
     NumberOfQuadraticConstraints{T}()
 
-The number of quadratic constraints of type `T` in the instance.
+The number of quadratic constraints of type `T` in the solver instance.
 """
-struct NumberOfQuadraticConstraints{T} <: AbstractInstanceAttribute end
+struct NumberOfQuadraticConstraints{T} <: AbstractSolverInstanceAttribute end
 
 ## Variable attributes
 
@@ -422,7 +422,7 @@ struct ConstraintBasisStatus <: AbstractConstraintAttribute end
 
 A `TerminationStatusCode` explaining why the solver stopped.
 """
-struct TerminationStatus <: AbstractInstanceAttribute end
+struct TerminationStatus <: AbstractSolverInstanceAttribute end
 
 """
     TerminationStatusCode
@@ -452,10 +452,10 @@ This group of statuses means that something unexpected or problematic happened.
 * `SlowProgress`: the algorithm stopped because it was unable to continue making progress towards the solution
 * `AlmostSuccess` should be used if there is additional information that relaxed convergence tolerances are satisfied
 
-To be documented: `NumericalError`, `InvalidInstance`, `InvalidOption`, `Interrupted`, `OtherError`.
+To be documented: `NumericalError`, `InvalidSolverInstance`, `InvalidOption`, `Interrupted`, `OtherError`.
 
 """
-@enum TerminationStatusCode Success AlmostSuccess InfeasibleNoResult UnboundedNoResult InfeasibleOrUnbounded IterationLimit TimeLimit NodeLimit SolutionLimit MemoryLimit ObjectiveLimit NormLimit OtherLimit SlowProgress NumericalError InvalidInstance InvalidOption Interrupted OtherError
+@enum TerminationStatusCode Success AlmostSuccess InfeasibleNoResult UnboundedNoResult InfeasibleOrUnbounded IterationLimit TimeLimit NodeLimit SolutionLimit MemoryLimit ObjectiveLimit NormLimit OtherLimit SlowProgress NumericalError InvalidSolverInstance InvalidOption Interrupted OtherError
 
 ## Result status
 
@@ -484,7 +484,7 @@ The values indicate how to interpret the result vector.
 The `ResultStatusCode` of the primal result `N`.
 If `N` is omitted, it defaults to 1.
 """
-struct PrimalStatus <: AbstractInstanceAttribute
+struct PrimalStatus <: AbstractSolverInstanceAttribute
     N::Int
 end
 PrimalStatus() = PrimalStatus(1)
@@ -496,7 +496,7 @@ PrimalStatus() = PrimalStatus(1)
 The `ResultStatusCode` of the dual result `N`.
 If `N` is omitted, it defaults to 1.
 """
-struct DualStatus <: AbstractInstanceAttribute
+struct DualStatus <: AbstractSolverInstanceAttribute
     N::Int
 end
 DualStatus() = DualStatus(1)
