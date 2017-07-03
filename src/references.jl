@@ -1,36 +1,14 @@
 # References
 
 """
-    VariablewiseConstraintReference{T}
+    ConstraintReference{F,S}
 
-A lightweight object used to reference variablewise constraints in a solver instance.
-The parameter `T` is the type of set constraint referenced.
+A lightweight object used to reference `F`-in-`S` constraints in a solver instance.
+The parameter `F` is the type of the function in the constraint, and the parameter `S` is the type of set in the constraint.
 """
-struct VariablewiseConstraintReference{T}
+struct ConstraintReference{F,S}
     value::UInt64
 end
-
-"""
-    AffineConstraintReference{T}
-
-A lightweight object used to reference affine-in-set constraints in a solver instance.
-The parameter `T` is the type of set constraint referenced.
-"""
-struct AffineConstraintReference{T}
-    value::UInt64
-end
-
-"""
-    QuadraticConstraintReference{T}
-
-A lightweight object used to reference quadratic-in-set constraints in a solver instance.
-The parameter `T` is the type of set constraint referenced.
-"""
-struct QuadraticConstraintReference{T}
-    value::UInt64
-end
-
-const ConstraintReference = Union{VariablewiseConstraintReference, AffineConstraintReference, QuadraticConstraintReference}
 
 """
     candelete(m::AbstractSolverInstance, ref::ConstraintReference)::Bool

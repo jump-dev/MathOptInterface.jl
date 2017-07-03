@@ -207,11 +207,15 @@ struct SupportsAddVariableAfterSolve <: AbstractSolverAttribute end
 # TODO: supports modify objective
 
 """
-    SupportsQuadraticObjective()
+    SupportsObjective{F}()
 
-A `Bool` indicating if the solver supports quadratic objectives.
+A `Bool` indicating if the solver supports objectives with functions of the type `F`.
+
+### Examples
+
+`SupportsObjective{ScalarQuadraticFunction}` would be `true` if the solver supports quadratic objective functions.
 """
-struct SupportsQuadraticObjective <: AbstractSolverAttribute end
+struct SupportsObjective{F} <: AbstractSolverAttribute end
 
 """
     SupportsConicThroughQuadratic()
@@ -307,25 +311,11 @@ The number of variables in the solver instance.
 struct NumberOfVariables <: AbstractSolverInstanceAttribute end
 
 """
-    NumberOfVariablewiseConstraints{T}()
+    NumberOfConstraints{F,S}()
 
-The number of variablewise constraints of type `T` in the solver instance.
+The number of constraints of the type `F`-in-`S`.
 """
-struct NumberOfVariablewiseConstraints{T} <: AbstractSolverInstanceAttribute end
-
-"""
-    NumberOfAffineConstraints{T}()
-
-The number of affine constraints of type `T` in the solver instance.
-"""
-struct NumberOfAffineConstraints{T} <: AbstractSolverInstanceAttribute end
-
-"""
-    NumberOfQuadraticConstraints{T}()
-
-The number of quadratic constraints of type `T` in the solver instance.
-"""
-struct NumberOfQuadraticConstraints{T} <: AbstractSolverInstanceAttribute end
+struct NumberOfConstraints{F,S} <: AbstractSolverInstanceAttribute end
 
 ## Variable attributes
 

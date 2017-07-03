@@ -40,7 +40,7 @@ ReturnsDuals
 SupportsAddConstraintAfterSolve
 SupportsDeleteConstraint
 SupportsAddVariableAfterSolve
-SupportsQuadraticObjective
+SupportsObjective
 SupportsConicThroughQuadratic
 ```
 
@@ -62,9 +62,7 @@ List of solver instance attributes
 RawSolver
 Sense
 NumberOfVariables
-NumberOfVariablewiseConstraints
-NumberOfAffineConstraints
-NumberOfQuadraticConstraints
+NumberOfConstraints
 ResultCount
 ObjectiveValue
 ObjectiveBound
@@ -135,9 +133,7 @@ VariableBasisStatus
 Constraint references and functions for adding, modifying, and removing constraints.
 
 ```@docs
-VariablewiseConstraintReference
-AffineConstraintReference
-QuadraticConstraintReference
+ConstraintReference
 candelete(::AbstractSolverInstance,::ConstraintReference)
 isvalid(::AbstractSolverInstance,::ConstraintReference)
 delete!(::AbstractSolverInstance,::ConstraintReference)
@@ -159,7 +155,20 @@ ConstraintDual
 ConstraintBasisStatus
 ```
 
-### Sets
+## Functions
+
+List of recognized functions.
+```@docs
+AbstractFunction
+ScalarVariablewiseFunction
+VectorVariablewiseFunction
+ScalarAffineFunction
+VectorAffineFunction
+ScalarQuadraticFunction
+VectorQuadraticFunction
+```
+
+## Sets
 
 List of recognized sets.
 

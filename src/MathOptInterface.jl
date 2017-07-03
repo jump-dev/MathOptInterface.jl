@@ -53,6 +53,7 @@ include("attributes.jl")
 include("constraints.jl")
 include("objectives.jl")
 include("references.jl")
+include("functions.jl")
 include("sets.jl")
 include("variables.jl")
 

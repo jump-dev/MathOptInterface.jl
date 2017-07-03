@@ -1,25 +1,9 @@
 # Objectives
 
 """
-    setobjective!(m::AbstractSolverInstance, b, a_varref::Vector{VariableReference}, a_coef, Q_vari::Vector{VariableReference}, Q_varj::Vector{VariableReference}, Q_coef, N::Int=1)
+    setobjective!(m::AbstractSolverInstance, func::F, N::Int=1)
 
-Set the `N`th objective in the solver instance `m` to be ``\\frac{1}{2} x^T Q_0 x + a_0^T x + b_0``, where:
-* ``a_0`` is a sparse vector specified in tuple form by `a_varref, a_coef`
-* ``b_0`` is a scalar
-* the symmetric matrix ``Q_0`` is defined by the triplets in `Q_vari, Q_varj, Q_coef`
-
-Duplicate indices (sparse) in either the ``a_0`` vector or the ``Q_0`` matrix are accepted and will be summed together.
-Off-diagonal entries of ``Q_0`` will be mirrored, so either the upper triangular or lower triangular entries of ``Q_0`` should be provided.
-If entries for both ``(i,j)`` and ``(j,i)`` are provided, these are considered duplicate terms.
-`a_varref`, `Q_vari`, `Q_varj` should be collections of `VariableReference` objects.
-
-    setobjective!(m::AbstractSolverInstance, b, a_varref::Vector{VariableReference}, a_coef, N::Int=1)
-
-Set the `N`th objective in the solver instance `m` to be ``a_0^T x + b_0``, where:
-* ``a_0`` is a sparse vector specified in tuple form by `a_varref, a_coef`
-* ``b_0`` is a scalar
-
-Duplicate indices (sparse) in either the ``a_0`` vector or the ``Q_0`` matrix are accepted and will be summed together.
+Set the `N`th objective in the solver instance `m` to be ``f(x)`` where ``f`` is a function specified by ``func``.
 """
 function setobjective! end
 
