@@ -53,7 +53,7 @@ AbstractSolverInstance
 ```@docs
 SolverInstance
 optimize!
-freesolverinstance!
+free!
 ```
 
 List of solver instance attributes

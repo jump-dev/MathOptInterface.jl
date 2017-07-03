@@ -31,14 +31,14 @@ Start the solution procedure.
 function optimize! end
 
 """
-    freesolverinstance!(m::AbstractSolverInstance)
+    free!(m::AbstractSolverInstance)
 
 Release any resources and memory used by the solver instance.
 Note that the Julia garbage collector takes care of this automatically, but automatic collection cannot always be forced.
 This method is useful for more precise control of resources, especially in the case of commercial solvers with licensing restrictions on the number of concurrent runs.
 Users must discard the solver instance object after this method is invoked.
 """
-function freesolverinstance! end
+function free! end
 
 """
     writeproblem(m::AbstractSolverInstance, filename::String)
