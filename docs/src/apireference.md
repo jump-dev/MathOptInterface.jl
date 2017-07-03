@@ -44,7 +44,7 @@ SupportsQuadraticObjective
 SupportsConicThroughQuadratic
 ```
 
-## SolverInstance
+## Solver Instance
 
 ```@docs
 AbstractSolverInstance
@@ -96,15 +96,70 @@ The value of the attribute is of type `ResultStatusCode`.
 ResultStatusCode
 ```
 
+## Variables and Constraints
+
 ### Basis Status
 
-[what? BasisStatus]
+The `BasisStatus` attribute of a variable or constraint indicates its presence in a basis.
+The value of the attribute is of type `BasisStatusCode`.
 
 ```@docs
 BasisStatusCode
 ```
 
-## Sets
+### Variables
+
+Variable references and functions for adding and deleting variables.
+
+[attribute that points to the (scalar) variable domain??? eg GreaterThan, NonNegatives, ZeroOne, SemiInteger]
+```@docs
+VariableReference
+candelete(::AbstractSolverInstance,::VariableReference)
+isvalid(::AbstractSolverInstance,::VariableReference)
+delete!(::AbstractSolverInstance,::VariableReference)
+addvariables!
+addvariable!
+```
+
+List of attributes associated with variables. [category AbstractVariableAttribute]
+Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
+
+```@docs
+VariablePrimalStart
+VariablePrimal
+VariableBasisStatus
+```
+
+### Constraints
+
+Constraint references and functions for adding, modifying, and removing constraints.
+
+```@docs
+VariablewiseConstraintReference
+AffineConstraintReference
+QuadraticConstraintReference
+candelete(::AbstractSolverInstance,::ConstraintReference)
+isvalid(::AbstractSolverInstance,::ConstraintReference)
+delete!(::AbstractSolverInstance,::ConstraintReference)
+addconstraint!
+modifyconstraint!
+getconstraintconstant
+getconstraintaffine
+getconstraintquadratic
+```
+
+List of attributes associated with constraints. [category AbstractConstraintAttribute]
+Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{T}` objects.
+
+```@docs
+ConstraintPrimalStart
+ConstraintDualStart
+ConstraintPrimal
+ConstraintDual
+ConstraintBasisStatus
+```
+
+### Sets
 
 List of recognized sets.
 
@@ -136,29 +191,6 @@ Functions for getting and setting properties of sets.
 dimension
 ```
 
-## Variables
-
-Variable references and functions for adding and deleting variables.
-
-[attribute that points to the (scalar) variable domain??? eg GreaterThan, NonNegatives, ZeroOne, SemiInteger]
-```@docs
-VariableReference
-candelete(::AbstractSolverInstance,::VariableReference)
-isvalid(::AbstractSolverInstance,::VariableReference)
-delete!(::AbstractSolverInstance,::VariableReference)
-addvariables!
-addvariable!
-```
-
-List of attributes associated with variables. [category AbstractVariableAttribute]
-Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
-
-```@docs
-VariablePrimalStart
-VariablePrimal
-VariableBasisStatus
-```
-
 ## Objectives
 
 Functions for adding and modifying objectives.
@@ -168,34 +200,4 @@ setobjective!
 modifyobjective!
 getobjectiveconstant
 getobjectiveaffine
-```
-
-## Constraints
-
-Constraint references and functions for adding, modifying, and removing constraints.
-
-```@docs
-VariablewiseConstraintReference
-AffineConstraintReference
-QuadraticConstraintReference
-candelete(::AbstractSolverInstance,::ConstraintReference)
-isvalid(::AbstractSolverInstance,::ConstraintReference)
-delete!(::AbstractSolverInstance,::ConstraintReference)
-addconstraint!
-modifyconstraint!
-getconstraintconstant
-getconstraintaffine
-getconstraintquadratic
-```
-
-List of attributes associated with constraints. [category AbstractConstraintAttribute]
-Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{T}` objects.
-
-[why is ConstraintBasisStatus under constraint attributes but below we have a basis status attribute separately??]
-```@docs
-ConstraintPrimalStart
-ConstraintDualStart
-ConstraintPrimal
-ConstraintDual
-ConstraintBasisStatus
 ```

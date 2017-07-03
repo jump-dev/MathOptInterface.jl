@@ -31,7 +31,7 @@ Start the solution procedure.
 function optimize! end
 
 """
-    freesolver instance!(m::AbstractSolverInstance)
+    freesolverinstance!(m::AbstractSolverInstance)
 
 Release any resources and memory used by the solver instance.
 Note that the Julia garbage collector takes care of this automatically, but automatic collection cannot always be forced.
