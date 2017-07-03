@@ -100,7 +100,7 @@ ResultStatusCode
 
 ### Basis Status
 
-The `BasisStatus` attribute of a variable or constraint indicates its presence in a basis.
+The `BasisStatus` attribute of a variable or constraint describes its status with respect to a basis, if one is known.
 The value of the attribute is of type `BasisStatusCode`.
 
 ```@docs
