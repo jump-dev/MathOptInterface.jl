@@ -216,16 +216,13 @@ struct SupportsConicThroughQuadratic <: AbstractSolverAttribute end
 ## Solver instance attributes
 
 """
-    ObjectiveValue(resultidx::Int=1, objectiveindex::Int=1)
+    ObjectiveValue(resultidx::Int=1)
 
-The objective value of the `resultindex`th primal result of the `objectiveindex`th objective.
-
-Both `resultindex` and `objectiveindex` default to 1.
+The objective value of the `resultindex`th primal result.
 """
 struct ObjectiveValue <: AbstractSolverInstanceAttribute
     resultindex::Int
-    objectiveindex::Int
-    (::Type{ObjectiveValue})(resultindex=1, objectiveindex=1) = new(resultindex, objectiveindex)
+    (::Type{ObjectiveValue})(resultindex=1) = new(resultindex)
 end
 
 """
@@ -316,6 +313,13 @@ and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
 struct ListOfPresentConstraints <: AbstractSolverInstanceAttribute end
+
+"""
+    ObjectiveFunction()
+
+An `AbstractFunction` instance which represents the objective function.
+"""
+struct ObjectiveFunction <: AbstractSolverInstanceAttribute end
 ## Variable attributes
 
 """
@@ -404,6 +408,20 @@ ConstraintDual() = ConstraintDual(1)
 Returns the `BasisStatusCode` of a given constraint, with respect to an available optimal solution basis.
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute end
+
+"""
+    ConstraintFunction()
+
+Return the `AbstractFunction` object used to define the constraint.
+"""
+struct ConstraintFunction <: AbstractConstraintAttribute end
+
+"""
+    ConstraintSet()
+
+Return the `AbstractSet` object used to define the constraint.
+"""
+struct ConstraintSet <: AbstractConstraintAttribute end
 
 ## Termination status
 """

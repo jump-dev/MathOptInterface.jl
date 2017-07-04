@@ -100,5 +100,26 @@ struct VectorQuadraticFunction{T} <: AbstractFunction
     constant::Vector{T}
 end
 
+# Function modifications
+
+
+"""
+    AbstractFunctionModification
+
+An abstract supertype for structs which specify partial modifications
+to functions, to be used for making small modifications instead of
+replacing the functions entirely.
+"""
+abstract type AbstractFunctionModification end
+
+"""
+    ScalarConstantChange{T}(new_constant)
+
+A struct used to request a change in the constant term of a scalar-valued
+function. Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
+"""
+struct ScalarConstantChange{T} <: AbstractFunctionModification
+    new_constant::T
+end
 
 

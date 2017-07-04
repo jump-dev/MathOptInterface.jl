@@ -49,10 +49,6 @@ Supported file types are solver-dependent.
 function writeproblem end
 
 """
-    supportsproblem(s::AbstractSolver, objective_types::Vector, constriant_types::Vector)::Bool
-
-Return `true` if the solver supports optimizing a problem with objective types listed in `objective_types` (which should have one element except for the case of multiobjective optimization) and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
-
     supportsproblem(s::AbstractSolver, objective_type::F, constriant_types::Vector)::Bool
 
 Return `true` if the solver supports optimizing a problem with objective type `F` and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
@@ -64,7 +60,7 @@ supportsproblem(s, ScalarAffineFunction{Float64},
     (ScalarAffineFunction{Float64},LessThan),
     (ScalarAffineFunction{Float64},GreaterThan)])
 ```
-should be `true` for a linear programming solver.
+should be `true` for a linear programming solver `s`.
 
 ```julia
 supportsproblem(s, ScalarQuadraticFunction{Float64},
@@ -72,7 +68,7 @@ supportsproblem(s, ScalarQuadraticFunction{Float64},
     (ScalarAffineFunction{Float64},LessThan),
     (ScalarAffineFunction{Float64},GreaterThan)])
 ```
-should be `true` for a quadratic programming solver.
+should be `true` for a quadratic programming solver `s`.
 
 ```julia
 supportsproblem(s, ScalarAffineFunction{Float64},
@@ -81,7 +77,7 @@ supportsproblem(s, ScalarAffineFunction{Float64},
     (ScalarAffineFunction{Float64},GreaterThan),
     (ScalarVariablewiseFunction{Float64},ZeroOne)])
 ```
-should be `true` for a mixed-integer linear programming solver.
+should be `true` for a mixed-integer linear programming solver `s`.
 
 ```julia
 supportsproblem(s, ScalarAffineFunction{Float64},
@@ -90,7 +86,7 @@ supportsproblem(s, ScalarAffineFunction{Float64},
     (ScalarAffineFunction{Float64},GreaterThan),
     (VectorAffineFunction{Float64},SecondOrderCone)])
 ```
-should be `true` for a second-order cone solver.
+should be `true` for a second-order cone solver `s`.
 
 """
 function supportsproblem end
