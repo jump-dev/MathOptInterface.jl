@@ -59,36 +59,36 @@ Return `true` if the solver supports optimizing a problem with objective type `F
 ### Examples
 
 ```julia
-supportsproblem(s, ScalarAffineFunction,
-    [(ScalarAffineFunction,Zeros),
-    (ScalarAffineFunction,LessThan),
-    (ScalarAffineFunction,GreaterThan)])
+supportsproblem(s, ScalarAffineFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan)])
 ```
 should be `true` for a linear programming solver.
 
 ```julia
-supportsproblem(s, ScalarQuadraticFunction,
-    [(ScalarAffineFunction,Zeros),
-    (ScalarAffineFunction,LessThan),
-    (ScalarAffineFunction,GreaterThan)])
+supportsproblem(s, ScalarQuadraticFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan)])
 ```
 should be `true` for a quadratic programming solver.
 
 ```julia
-supportsproblem(s, ScalarAffineFunction,
-    [(ScalarAffineFunction,Zeros),
-    (ScalarAffineFunction,LessThan),
-    (ScalarAffineFunction,GreaterThan),
-    (ScalarVariablewiseFunction,ZeroOne)])
+supportsproblem(s, ScalarAffineFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan),
+    (ScalarVariablewiseFunction{Float64},ZeroOne)])
 ```
 should be `true` for a mixed-integer linear programming solver.
 
 ```julia
-supportsproblem(s, ScalarAffineFunction,
-    [(ScalarAffineFunction,Zeros),
-    (ScalarAffineFunction,LessThan),
-    (ScalarAffineFunction,GreaterThan),
-    (VectorAffineFunction,SecondOrderCone)])
+supportsproblem(s, ScalarAffineFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan),
+    (VectorAffineFunction{Float64},SecondOrderCone)])
 ```
 should be `true` for a second-order cone solver.
 
