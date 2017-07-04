@@ -19,7 +19,7 @@ abstract type AbstractSolverInstance end
 """
     SolverInstance(solver::AbstractSolver)
 
-Create a solver instance of `AbstractSolverInstance` using the given solver.
+Create a solver instance from the given solver.
 """
 function SolverInstance end
 
@@ -48,6 +48,52 @@ Supported file types are solver-dependent.
 """
 function writeproblem end
 
+"""
+    supportsproblem(s::AbstractSolver, objective_types::Vector, constriant_types::Vector)::Bool
+
+Return `true` if the solver supports optimizing a problem with objective types listed in `objective_types` (which should have one element except for the case of multiobjective optimization) and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
+
+    supportsproblem(s::AbstractSolver, objective_type::F, constriant_types::Vector)::Bool
+
+Return `true` if the solver supports optimizing a problem with objective type `F` and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
+### Examples
+
+```julia
+supportsproblem(s, ScalarAffineFunction,
+    [(ScalarAffineFunction,Zeros),
+    (ScalarAffineFunction,LessThan),
+    (ScalarAffineFunction,GreaterThan)])
+```
+should be `true` for a linear programming solver.
+
+```julia
+supportsproblem(s, ScalarQuadraticFunction,
+    [(ScalarAffineFunction,Zeros),
+    (ScalarAffineFunction,LessThan),
+    (ScalarAffineFunction,GreaterThan)])
+```
+should be `true` for a quadratic programming solver.
+
+```julia
+supportsproblem(s, ScalarAffineFunction,
+    [(ScalarAffineFunction,Zeros),
+    (ScalarAffineFunction,LessThan),
+    (ScalarAffineFunction,GreaterThan),
+    (ScalarVariablewiseFunction,ZeroOne)])
+```
+should be `true` for a mixed-integer linear programming solver.
+
+```julia
+supportsproblem(s, ScalarAffineFunction,
+    [(ScalarAffineFunction,Zeros),
+    (ScalarAffineFunction,LessThan),
+    (ScalarAffineFunction,GreaterThan),
+    (VectorAffineFunction,SecondOrderCone)])
+```
+should be `true` for a second-order cone solver.
+
+"""
+function supportsproblem end
 
 include("attributes.jl")
 include("constraints.jl")

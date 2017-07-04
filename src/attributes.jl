@@ -163,7 +163,7 @@ function setattribute!(m, attr::AnyAttribute, args...)
     throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support setting the attribute $attr"))
 end
 
-## Solver or solver instance attributes
+## Solver attributes
 
 """
     ReturnsDuals()
@@ -207,22 +207,13 @@ struct SupportsAddVariableAfterSolve <: AbstractSolverAttribute end
 # TODO: supports modify objective
 
 """
-    SupportsObjective{F}()
-
-A `Bool` indicating if the solver supports objectives with functions of the type `F`.
-
-### Examples
-
-`SupportsObjective{ScalarQuadraticFunction}` would be `true` if the solver supports quadratic objective functions.
-"""
-struct SupportsObjective{F} <: AbstractSolverAttribute end
-
-"""
     SupportsConicThroughQuadratic()
 
 A `Bool` indicating if the solver interprets certain quadratic constraints as second-order cone constraints.
 """
 struct SupportsConicThroughQuadratic <: AbstractSolverAttribute end
+
+## Solver instance attributes
 
 """
     ObjectiveValue(resultidx::Int=1, objectiveindex::Int=1)
@@ -313,10 +304,18 @@ struct NumberOfVariables <: AbstractSolverInstanceAttribute end
 """
     NumberOfConstraints{F,S}()
 
-The number of constraints of the type `F`-in-`S`.
+The number of constraints of the type `F`-in-`S` present in the solver instance.
 """
 struct NumberOfConstraints{F,S} <: AbstractSolverInstanceAttribute end
 
+"""
+    ListOfPresentConstraints()
+
+A list of tuples of the form `(F,S)`, where `F` is a function type
+and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
+has value greater than zero.
+"""
+struct ListOfPresentConstraints <: AbstractSolverInstanceAttribute end
 ## Variable attributes
 
 """

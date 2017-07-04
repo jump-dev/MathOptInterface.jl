@@ -22,7 +22,7 @@ end
 
 The function that extracts the vector of variables referenced by `variables`, a `Vector{VariableReference}`.
 This function would naturally be used for constraints that apply to groups of variables, such
-as an "all different" constraint from constraint programming.
+as an "all different" constraint, an indicator constraint, or a complementarity constraint.
 """
 struct VectorVariablewiseFunction <: AbstractFunction
     variables::Vector{VariableReference}

@@ -31,6 +31,7 @@ setattribute!
 
 ```@docs
 AbstractSolver
+supportsproblem
 ```
 
 List of solver attributes
@@ -40,7 +41,6 @@ ReturnsDuals
 SupportsAddConstraintAfterSolve
 SupportsDeleteConstraint
 SupportsAddVariableAfterSolve
-SupportsObjective
 SupportsConicThroughQuadratic
 ```
 
@@ -63,6 +63,7 @@ RawSolver
 Sense
 NumberOfVariables
 NumberOfConstraints
+ListOfPresentConstraints
 ResultCount
 ObjectiveValue
 ObjectiveBound
