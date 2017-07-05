@@ -5,7 +5,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # simple 2 variable, 1 constraint problem
         # min -x
         # st   x + y <= 1   (x + y - 1 ∈ NonPositive)
-        #       x, y >= 0   (x, y ∈ MOI.NonNegative)
+        #       x, y >= 0   (x, y ∈ NonNegative)
 
         m = MOI.SolverInstance(solver)
 
