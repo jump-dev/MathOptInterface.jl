@@ -1,6 +1,6 @@
 # Continuous conic problems
 
-function contconictest(solver::AbstractSolver, ε=Base.rtoldefault(Float64))
+function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Linear model" begin
         # linear conic problem
         # min -3x - 2y - 4z
@@ -9,37 +9,37 @@ function contconictest(solver::AbstractSolver, ε=Base.rtoldefault(Float64))
         #       x>=0 y>=0 z>=0
         # Opt obj = -11, soln x = 1, y = 0, z = 2
 
-        m = Model(solver)
+        m = MOI.Model(solver)
 
-        v = addvariables!(m, 3)
-        @test getattribute(m, VariableCount()) == 3
+        v = MOI.addvariables!(m, 3)
+        @test MOI.getattribute(m, MOI.VariableCount()) == 3
 
-        @test getattribute(m, SupportsAffineConstraint{NonNegative}())
-        vc = addconstraint!(m, v, NonNegative(3))
-        c = addconstraint!(m, [3, 2], -[1 1 1; 0 1 1], Zero(2))
-        @test getattribute(m, ConstraintCount()) == 4
+        @test MOI.getattribute(m, MOI.SupportsAffineConstraint{MOI.NonNegative}())
+        vc = MOI.addconstraint!(m, v, MOI.NonNegative(3))
+        c = MOI.addconstraint!(m, [3, 2], -[1 1 1; 0 1 1], MOI.Zero(2))
+        @test MOI.getattribute(m, MOI.ConstraintCount()) == 4
 
-        setattribute!(m, Sense(), MinSense)
-        setobjective!(m, 1, 0, v, [-3 -2, -4])
+        setattribute!(m, MOI.Sense(), MOI.MinSense)
+        setobjective!(m, 1, 0, v, [-3, -2, -4])
 
-        optimize!(m)
+        MOI.optimize!(m)
 
-        @test cangetattribute(m, TerminationStatus())
-        @test getattribute(m, TerminationStatus()) == Success
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
-        @test cangetattribute(m, PrimalStatus())
-        @test getattribute(m, PrimalStatus()) == FeasiblePoint
-        @test cangetattribute(m, DualStatus())
-        @test getattribute(m, DualStatus()) == FeasiblePoint
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.cangetattribute(m, MOI.DualStatus())
+        @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
 
-        @test cangetattribute(m, ObjectiveValue())
-        @test getattribute(m, ObjectiveValue()) ≈ -11 atol=ε
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -11 atol=ε
 
-        @test cangetattribute(m, VariablePrimal(), v)
-        @test getattribute(m, VariablePrimal(), v) ≈ [1, 0, 2] atol=ε
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=ε
 
-        @test cangetattribute(m, ConstraintDual(), c)
-        @test getattribute(m, ConstraintDual(), c) ≈ [3, 1] atol=ε
+        @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+        @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [3, 1] atol=ε
 
         # TODO var dual and con primal
     end
