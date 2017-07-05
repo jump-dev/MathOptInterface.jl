@@ -62,8 +62,8 @@ When possible, the MOI wrapper for a solver should avoid storing an extra copy o
 ## Variables
 
 MOI has a concept of a scalar variable (only).
-New scalar variables are created with `addvariable!` or `addvariables!`, which return a `VariableReference` or `Vector{VariableReference}` respectively (integer indices are never used to reference variables).
-A variable can be deleted from a model with `delete!(::VariableReference)`, if this functionality is supported by the solver.
+New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableReference`](@ref MathOptInterface.VariableReference) or `Vector{VariableReference}` respectively (integer indices are never used to reference variables).
+A variable can be deleted from a model with [`delete!(::AbstractSolverInstance, ::VariableReference)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractSolverInstance, ::MathOptInterface.AnyReference)), if this functionality is supported by the solver.
 
 ## Functions
 
