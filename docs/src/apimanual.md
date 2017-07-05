@@ -21,7 +21,7 @@ MOI is designed to:
 - Enable adding and removing both variables and constraints by using reference objects instead of integer indices
 - Enable any modification that the solver supports to an existing instance
 
-This manual introduces the concepts needed to understand MOI and give a high-level picture of how all of the pieces fit together.
+This manual introduces the concepts needed to understand MOI and give a high-level picture of how all of the pieces fit together. The primary focus is on MOI from the perspective of a user of the interface. At the end of the manual we have a section on [Implementing a solver interface](@ref).
 The reference page lists the complete API.
 
 ## Standard form problem
@@ -37,8 +37,8 @@ The standard form problem is:
 ```
 
 where:
-* the functions ``f_0, f_1, \ldots, f_m`` are specified by [`AbstractFunction`](@ref) objects [why doesn't this reference work?]
-* the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by `AbstractSet` objects
+* the functions ``f_0, f_1, \ldots, f_m`` are specified by [`AbstractFunction`](@ref MathOptInterface.AbstractFunction) objects
+* the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by [`AbstractSet`](@ref MathOptInterface.AbstractSet) objects
 
 The current function types are:
 * **scalar-valued variable-wise**: ``x_j``, a scalar variable defined by a variable reference
