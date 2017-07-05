@@ -1,4 +1,4 @@
-
+# Functions
 
 """
     AbstractFunction
@@ -67,7 +67,7 @@ The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
 * ``Q`` is a symmetric matrix is specified in triplet form by `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients`
 
 Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together.
-"Mirrored" indices `(r,q)` and `(q,r)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
+"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
 """
 struct ScalarQuadraticFunction{T} <: AbstractFunction
     affine_variables::Vector{VariableReference}
@@ -107,17 +107,14 @@ end
 """
     AbstractFunctionModification
 
-An abstract supertype for structs which specify partial modifications
-to functions, to be used for making small modifications instead of
-replacing the functions entirely.
+An abstract supertype for structs which specify partial modifications to functions, to be used for making small modifications instead of replacing the functions entirely.
 """
 abstract type AbstractFunctionModification end
 
 """
     ScalarConstantChange{T}(new_constant)
 
-A struct used to request a change in the constant term of a scalar-valued
-function.
+A struct used to request a change in the constant term of a scalar-valued function.
 Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
 """
 struct ScalarConstantChange{T} <: AbstractFunctionModification
