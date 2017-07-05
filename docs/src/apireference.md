@@ -107,7 +107,6 @@ The value of the attribute is of type `BasisStatusCode`.
 BasisStatusCode
 ```
 
-
 ### References
 
 ```@docs

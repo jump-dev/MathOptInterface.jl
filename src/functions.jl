@@ -21,8 +21,7 @@ end
     VectorVariablewiseFunction(variables)
 
 The function that extracts the vector of variables referenced by `variables`, a `Vector{VariableReference}`.
-This function would naturally be used for constraints that apply to groups of variables, such
-as an "all different" constraint, an indicator constraint, or a complementarity constraint.
+This function would naturally be used for constraints that apply to groups of variables, such as an "all different" constraint, an indicator constraint, or a complementarity constraint.
 """
 struct VectorVariablewiseFunction <: AbstractFunction
     variables::Vector{VariableReference}
@@ -30,7 +29,7 @@ end
 
 """
     ScalarAffineFunction{T}(variables, coefficients, constant)
-    
+
 The scalar-valued affine function ``a^T x + b``, where:
 * ``a`` is a sparse vector specified in tuple form by `variables::Vector{VariableReference}` and `coefficients::Vector{T}`
 * ``b`` is a scalar specified by `constant::T`
@@ -67,7 +66,8 @@ The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
 * ``b`` is a scalar specified by `constant`
 * ``Q`` is a symmetric matrix is specified in triplet form by `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients`
 
-Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together. "Mirrored" indices `(r,q)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
+Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together.
+"Mirrored" indices `(r,q)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
 """
 struct ScalarQuadraticFunction{T} <: AbstractFunction
     affine_variables::Vector{VariableReference}
@@ -87,7 +87,8 @@ The vector-valued quadratic function with i`th` component ("output index") defin
 * ``b_i`` is a scalar specified by `constant[i]`
 * ``Q_i`` is a symmetric matrix is specified in triplet form by the subset of `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients` for the indices `k` where `quadratic_outputindex[k] == i`
 
-Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding coefficients are summed together. "Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
+Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding coefficients are summed together.
+"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
 """
 struct VectorQuadraticFunction{T} <: AbstractFunction
     affine_outputindex::Vector{Int}
@@ -116,10 +117,9 @@ abstract type AbstractFunctionModification end
     ScalarConstantChange{T}(new_constant)
 
 A struct used to request a change in the constant term of a scalar-valued
-function. Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
+function.
+Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
 """
 struct ScalarConstantChange{T} <: AbstractFunctionModification
     new_constant::T
 end
-
-
