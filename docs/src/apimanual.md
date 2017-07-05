@@ -3,7 +3,7 @@
 
 ## Purpose
 
-Each mathematical optimization solver API has its own concepts and data structures for representing optimization instances and obtaining results; in many cases, however, it is desireable to represent an instance of an optimization problem at a higher level so that it is easy to try more than one solver. MathOptInterface (MOI) is an abstraction layer designed to provide a unified interface to mathematical optimization solvers so that, most of the time, no specific knowlege of a solver's API is needed in order to access it through MOI or a modeling interface like [JuMP](https://github.com/JuliaOpt/JuMP.jl).
+Each mathematical optimization solver API has its own concepts and data structures for representing optimization instances and obtaining results; in many cases, however, it is desirable to represent an instance of an optimization problem at a higher level so that it is easy to try more than one solver. MathOptInterface (MOI) is an abstraction layer designed to provide a unified interface to mathematical optimization solvers so that, most of the time, no specific knowledge of a solver's API is needed in order to access it through MOI or a modeling interface like [JuMP](https://github.com/JuliaOpt/JuMP.jl).
 
 MOI has been designed to replace [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl), which has been used by [JuMP](https://github.com/JuliaOpt/JuMP.jl) and [Convex.jl](https://github.com/JuliaOpt/Convex.jl), among others for a number of years. This second-generation abstraction layer addresses a number of limitations of MathProgBase. MOI is designed to:
 
@@ -43,7 +43,7 @@ The current function types are:
 * **vector-valued variable-wise**: a vector of variables defined by a list of variable references
 * **scalar-valued affine**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
 * **vector-valued affine**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
-* **scalar-valued quadratic**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmtric matrix, ``a`` is a vector, and ``b`` is a constant
+* **scalar-valued quadratic**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
 * **vector-valued quadratic**: a vector of scalar-valued quadratic expressions
 
 The interface could be extended to cover functions defined by evaluation oracles (e.g., for nonlinear derivative-based optimization), but this will not be in the first version of MOI.
