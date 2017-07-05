@@ -7,22 +7,22 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # st   x + y <= 1   (x + y - 1 ∈ NonPositive)
         #       x, y >= 0   (x, y ∈ MOI.NonNegative)
 
-        m = MOI.Model(solver)
+        m = MOI.SolverInstance(solver)
+
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Float64},MOI.NonPositive),(MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])
 
         v = MOI.addvariables!(m, 2)
         @test MOI.getattribute(m, MOI.VariableCount()) == 2
 
-        @test MOI.getattribute(m, MOI.SupportsAffineConstraint{MOI.NonPositive}())
-        c = MOI.addconstraint!(m, -1, v, [1, 1], MOI.NonPositive(1))
+        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], -1.0), MOI.NonPositive(1))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
 
-        @test MOI.getattribute(m, MOI.SupportsVariablewiseConstraint{MOI.GreaterThan}())
-        vc1 = MOI.addconstraint!(m, v[1], MOI.GreaterThan(0))
-        vc2 = MOI.addconstraint!(m, v[2], MOI.GreaterThan(0))
+        vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[1]), MOI.GreaterThan(0))
+        vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 3
 
         MOI.setattribute!(m, MOI.Sense(), MOI.MinSense)
-        MOI.setobjective!(m, 0, v, [-1, 0])
+        MOI.setobjective!(m, MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0))
         # TODO query objective
         # (b, a_varref, a_coef, qi, qj, qc) = getobjective(m)
         # @test b ≈ 0 atol=ε
@@ -55,7 +55,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         @test MOI.cansetattribute(m, MOI.Sense())
         MOI.setattribute!(m, MOI.Sense(), MOI.MaxSense)
-        MOI.modifyobjective!(m, 1, v[1], 1)
+        MOI.setobjective!(m, MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0))
 
         MOI.optimize!(m)
 

@@ -7,20 +7,21 @@ function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64)
         # st  2a + 8b + 4c + 2d + 5e <= 10
         #                  a,b,c,d,e ∈ binary
 
-        m = MOI.Model(solver)
+        m = MOI.SolverInstance(solver)
+
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarVariablewiseFunction,MOI.ZeroOne),(MOI.ScalarAffineFunction{Float64},MOI.LessThan)])
 
         v = MOI.addvariables!(m, 5)
         @test MOI.getattribute(m, MOI.VariableCount()) == 5
 
-        @test MOI.getattribute(m, MOI.SupportsVariablewiseConstraint{MOI.ZeroOne}())
         for vi in v
             MOI.addconstraint!(m, vi, MOI.ZeroOne())
         end
-        c = MOI.addconstraint!(m, 10, v, -[2, 8, 4, 2, 5], MOI.NonNegative(1))
+        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [2.0, 8.0, 4.0, 2.0, 5.0], 0.0), MOI.LessThan(10))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 6
 
         MOI.setattribute!(m, MOI.Sense(), MOI.MaxSense)
-        MOI.setobjective!(m, 0, v, [5, 3, 2, 7, 4])
+        MOI.setobjective!(m, MOI.ScalarAffineFunction(v, [5.0, 3.0, 2.0, 7.0, 4.0], 0.0))
 
         MOI.optimize!(m)
 

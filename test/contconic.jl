@@ -9,18 +9,19 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         #       x>=0 y>=0 z>=0
         # Opt obj = -11, soln x = 1, y = 0, z = 2
 
-        m = MOI.Model(solver)
+        @test MOI.supportsproblem(solver, ScalarAffineFunction, [(MOI.VectorVariablewiseFunction,MOI.NonNegative),(MOI.VectorAffineFunction{Float64},MOI.NonNegative)])
+
+        m = MOI.SolverInstance(solver)
 
         v = MOI.addvariables!(m, 3)
         @test MOI.getattribute(m, MOI.VariableCount()) == 3
 
-        @test MOI.getattribute(m, MOI.SupportsAffineConstraint{MOI.NonNegative}())
-        vc = MOI.addconstraint!(m, v, MOI.NonNegative(3))
-        c = MOI.addconstraint!(m, [3, 2], -[1 1 1; 0 1 1], MOI.Zero(2))
-        @test MOI.getattribute(m, MOI.ConstraintCount()) == 4
+        vc = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction(v), MOI.NonNegative(3))
+        c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zero(2))
+        @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
 
         setattribute!(m, MOI.Sense(), MOI.MinSense)
-        setobjective!(m, 1, 0, v, [-3, -2, -4])
+        setobjective!(m, ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
         MOI.optimize!(m)
 
