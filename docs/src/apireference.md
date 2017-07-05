@@ -31,6 +31,7 @@ setattribute!
 
 ```@docs
 AbstractSolver
+supportsproblem
 ```
 
 List of solver attributes
@@ -40,7 +41,6 @@ ReturnsDuals
 SupportsAddConstraintAfterSolve
 SupportsDeleteConstraint
 SupportsAddVariableAfterSolve
-SupportsQuadraticObjective
 SupportsConicThroughQuadratic
 ```
 
@@ -62,10 +62,10 @@ List of solver instance attributes
 RawSolver
 Sense
 NumberOfVariables
-NumberOfVariablewiseConstraints
-NumberOfAffineConstraints
-NumberOfQuadraticConstraints
+NumberOfConstraints
+ListOfPresentConstraints
 ResultCount
+ObjectiveFunction
 ObjectiveValue
 ObjectiveBound
 RelativeGap
@@ -107,16 +107,22 @@ The value of the attribute is of type `BasisStatusCode`.
 BasisStatusCode
 ```
 
-### Variables
 
-Variable references and functions for adding and deleting variables.
+### References
 
-[attribute that points to the (scalar) variable domain??? eg GreaterThan, NonNegatives, ZeroOne, SemiInteger]
 ```@docs
 VariableReference
-candelete(::AbstractSolverInstance,::VariableReference)
-isvalid(::AbstractSolverInstance,::VariableReference)
-delete!(::AbstractSolverInstance,::VariableReference)
+ConstraintReference
+candelete
+isvalid
+delete!(::AbstractSolverInstance,::AnyReference)
+```
+
+### Variables
+
+Functions for adding variables. For deleting, see references section.
+
+```@docs
 addvariables!
 addvariable!
 ```
@@ -132,24 +138,16 @@ VariableBasisStatus
 
 ### Constraints
 
-Constraint references and functions for adding, modifying, and removing constraints.
+Functions for adding and modifying constraints.
 
 ```@docs
-VariablewiseConstraintReference
-AffineConstraintReference
-QuadraticConstraintReference
-candelete(::AbstractSolverInstance,::ConstraintReference)
 isvalid(::AbstractSolverInstance,::ConstraintReference)
-delete!(::AbstractSolverInstance,::ConstraintReference)
 addconstraint!
 modifyconstraint!
-getconstraintconstant
-getconstraintaffine
-getconstraintquadratic
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]
-Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{T}` objects.
+Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{F,S}` objects.
 
 ```@docs
 ConstraintPrimalStart
@@ -157,9 +155,29 @@ ConstraintDualStart
 ConstraintPrimal
 ConstraintDual
 ConstraintBasisStatus
+ConstraintFunction
+ConstraintSet
 ```
 
-### Sets
+## Functions
+
+List of recognized functions.
+```@docs
+AbstractFunction
+ScalarVariablewiseFunction
+VectorVariablewiseFunction
+ScalarAffineFunction
+VectorAffineFunction
+ScalarQuadraticFunction
+VectorQuadraticFunction
+```
+
+List of function modifications.
+```@docs
+ScalarConstantChange
+```
+
+## Sets
 
 List of recognized sets.
 
@@ -198,6 +216,4 @@ Functions for adding and modifying objectives.
 ```@docs
 setobjective!
 modifyobjective!
-getobjectiveconstant
-getobjectiveaffine
 ```

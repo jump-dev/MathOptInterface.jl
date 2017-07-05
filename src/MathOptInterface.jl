@@ -19,7 +19,7 @@ abstract type AbstractSolverInstance end
 """
     SolverInstance(solver::AbstractSolver)
 
-Create a solver instance of `AbstractSolverInstance` using the given solver.
+Create a solver instance from the given solver.
 """
 function SolverInstance end
 
@@ -48,11 +48,54 @@ Supported file types are solver-dependent.
 """
 function writeproblem end
 
+"""
+    supportsproblem(s::AbstractSolver, objective_type::F, constriant_types::Vector)::Bool
+
+Return `true` if the solver supports optimizing a problem with objective type `F` and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
+### Examples
+
+```julia
+supportsproblem(s, ScalarAffineFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan)])
+```
+should be `true` for a linear programming solver `s`.
+
+```julia
+supportsproblem(s, ScalarQuadraticFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan)])
+```
+should be `true` for a quadratic programming solver `s`.
+
+```julia
+supportsproblem(s, ScalarAffineFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan),
+    (ScalarVariablewiseFunction{Float64},ZeroOne)])
+```
+should be `true` for a mixed-integer linear programming solver `s`.
+
+```julia
+supportsproblem(s, ScalarAffineFunction{Float64},
+    [(ScalarAffineFunction{Float64},Zeros),
+    (ScalarAffineFunction{Float64},LessThan),
+    (ScalarAffineFunction{Float64},GreaterThan),
+    (VectorAffineFunction{Float64},SecondOrderCone)])
+```
+should be `true` for a second-order cone solver `s`.
+
+"""
+function supportsproblem end
 
 include("attributes.jl")
 include("constraints.jl")
 include("objectives.jl")
 include("references.jl")
+include("functions.jl")
 include("sets.jl")
 include("variables.jl")
 

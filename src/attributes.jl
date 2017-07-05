@@ -163,7 +163,7 @@ function setattribute!(m, attr::AnyAttribute, args...)
     throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support setting the attribute $attr"))
 end
 
-## Solver or solver instance attributes
+## Solver attributes
 
 """
     ReturnsDuals()
@@ -207,30 +207,22 @@ struct SupportsAddVariableAfterSolve <: AbstractSolverAttribute end
 # TODO: supports modify objective
 
 """
-    SupportsQuadraticObjective()
-
-A `Bool` indicating if the solver supports quadratic objectives.
-"""
-struct SupportsQuadraticObjective <: AbstractSolverAttribute end
-
-"""
     SupportsConicThroughQuadratic()
 
 A `Bool` indicating if the solver interprets certain quadratic constraints as second-order cone constraints.
 """
 struct SupportsConicThroughQuadratic <: AbstractSolverAttribute end
 
+## Solver instance attributes
+
 """
-    ObjectiveValue(resultidx::Int=1, objectiveindex::Int=1)
+    ObjectiveValue(resultidx::Int=1)
 
-The objective value of the `resultindex`th primal result of the `objectiveindex`th objective.
-
-Both `resultindex` and `objectiveindex` default to 1.
+The objective value of the `resultindex`th primal result.
 """
 struct ObjectiveValue <: AbstractSolverInstanceAttribute
     resultindex::Int
-    objectiveindex::Int
-    (::Type{ObjectiveValue})(resultindex=1, objectiveindex=1) = new(resultindex, objectiveindex)
+    (::Type{ObjectiveValue})(resultindex=1) = new(resultindex)
 end
 
 """
@@ -307,26 +299,27 @@ The number of variables in the solver instance.
 struct NumberOfVariables <: AbstractSolverInstanceAttribute end
 
 """
-    NumberOfVariablewiseConstraints{T}()
+    NumberOfConstraints{F,S}()
 
-The number of variablewise constraints of type `T` in the solver instance.
+The number of constraints of the type `F`-in-`S` present in the solver instance.
 """
-struct NumberOfVariablewiseConstraints{T} <: AbstractSolverInstanceAttribute end
-
-"""
-    NumberOfAffineConstraints{T}()
-
-The number of affine constraints of type `T` in the solver instance.
-"""
-struct NumberOfAffineConstraints{T} <: AbstractSolverInstanceAttribute end
+struct NumberOfConstraints{F,S} <: AbstractSolverInstanceAttribute end
 
 """
-    NumberOfQuadraticConstraints{T}()
+    ListOfPresentConstraints()
 
-The number of quadratic constraints of type `T` in the solver instance.
+A list of tuples of the form `(F,S)`, where `F` is a function type
+and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
+has value greater than zero.
 """
-struct NumberOfQuadraticConstraints{T} <: AbstractSolverInstanceAttribute end
+struct ListOfPresentConstraints <: AbstractSolverInstanceAttribute end
 
+"""
+    ObjectiveFunction()
+
+An `AbstractFunction` instance which represents the objective function.
+"""
+struct ObjectiveFunction <: AbstractSolverInstanceAttribute end
 ## Variable attributes
 
 """
@@ -415,6 +408,20 @@ ConstraintDual() = ConstraintDual(1)
 Returns the `BasisStatusCode` of a given constraint, with respect to an available optimal solution basis.
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute end
+
+"""
+    ConstraintFunction()
+
+Return the `AbstractFunction` object used to define the constraint.
+"""
+struct ConstraintFunction <: AbstractConstraintAttribute end
+
+"""
+    ConstraintSet()
+
+Return the `AbstractSet` object used to define the constraint.
+"""
+struct ConstraintSet <: AbstractConstraintAttribute end
 
 ## Termination status
 """
