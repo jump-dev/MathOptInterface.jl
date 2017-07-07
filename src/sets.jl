@@ -33,20 +33,20 @@ struct Zeros <: AbstractSet
 end
 
 """
-    NonNegatives(dim)
+    Nonnegatives(dim)
 
 The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\ge 0 \\}`` of dimension `dim`.
 """
-struct NonNegatives <: AbstractSet
+struct Nonnegatives <: AbstractSet
     dim::Int
 end
 
 """
-    NonPositives(dim)
+    Nonpositives(dim)
 
 The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\le 0 \\}`` of dimension `dim`.
 """
-struct NonPositives <: AbstractSet
+struct Nonpositives <: AbstractSet
     dim::Int
 end
 

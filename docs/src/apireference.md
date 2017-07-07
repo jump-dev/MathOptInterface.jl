@@ -184,8 +184,8 @@ List of recognized sets.
 AbstractSet
 Reals
 Zeros
-NonNegatives
-NonPositives
+Nonnegatives
+Nonpositives
 GreaterThan
 LessThan
 Interval
