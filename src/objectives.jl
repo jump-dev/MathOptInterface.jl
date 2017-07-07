@@ -1,9 +1,9 @@
 # Objectives
 
 """
-    setobjective!(m::AbstractSolverInstance, func::F)
+    setobjective!(m::AbstractSolverInstance, sense::OptimizationSense, func::F)
 
-Set the objective function in the solver instance `m` to be ``f(x)`` where ``f`` is a function specified by `func`.
+Set the objective function in the solver instance `m` to be ``f(x)`` where ``f`` is a function specified by `func` with the optimization sense (`MinSense` or `MaxSense`) specified by `sense`.
 """
 function setobjective! end
 

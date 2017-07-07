@@ -20,8 +20,7 @@ function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64)
         c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [2.0, 8.0, 4.0, 2.0, 5.0], 0.0), MOI.LessThan(10))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 6
 
-        MOI.setattribute!(m, MOI.Sense(), MOI.MaxSense)
-        MOI.setobjective!(m, MOI.ScalarAffineFunction(v, [5.0, 3.0, 2.0, 7.0, 4.0], 0.0))
+        MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(v, [5.0, 3.0, 2.0, 7.0, 4.0], 0.0))
 
         MOI.optimize!(m)
 

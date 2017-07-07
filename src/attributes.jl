@@ -249,11 +249,11 @@ struct SolveTime <: AbstractSolverInstanceAttribute end
 """
     Sense()
 
-The optimization sense of the solver instance, an `OptimizationSense` with value `MinSense` or `MaxSense`.
+The optimization sense of the solver instance, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
 """
 struct Sense <: AbstractSolverInstanceAttribute end
 
-@enum OptimizationSense MinSense MaxSense
+@enum OptimizationSense MinSense MaxSense FeasibilitySense
 
 """
     SimplexIterations()
