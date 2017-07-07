@@ -158,7 +158,7 @@ ConstraintFunction
 ConstraintSet
 ```
 
-## Functions
+## Functions and function modifications
 
 List of recognized functions.
 ```@docs

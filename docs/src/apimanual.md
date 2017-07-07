@@ -59,15 +59,55 @@ Solvers are "factories" used to specify solver-specific parameters and create ne
 Solver instances should be understood as the representation of the problem *in the solver's API*, just as if one were using its API directly.
 When possible, the MOI wrapper for a solver should avoid storing an extra copy of the problem data.
 
+Through the rest of the manual, `m` is used as a generic solver instance.
+
 ## Variables
 
 MOI has a concept of a scalar variable (only).
-New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableReference`](@ref MathOptInterface.VariableReference) or `Vector{VariableReference}` respectively (integer indices are never used to reference variables).
+New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableReference`](@ref MathOptInterface.VariableReference) or `Vector{VariableReference}` respectively. Integer indices are never used to reference variables.
+
+One uses `VariableReference` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
+```julia
+v = addvariable!(m)
+setattribute!(m, VariablePrimalStart(), v, 10.5)
+v2 = addvariables!(m, 3)
+setattribute!(m, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
+```
+
 A variable can be deleted from a model with [`delete!(::AbstractSolverInstance, ::VariableReference)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractSolverInstance, ::MathOptInterface.AnyReference)), if this functionality is supported by the solver.
 
 ## Functions
 
-[Examples of functions and how to use them. How to set the objective function.]
+MOI defines six functions as listed in the definition of the [Standard form problem](@ref). The simplest function is [`ScalarVariablewiseFunction`](@ref MathOptInterface.ScalarVariablewiseFunction) defined as:
+```julia
+struct ScalarVariablewiseFunction <: AbstractFunction
+    variable::VariableReference
+end
+```
+
+If `v` is a `VariableReference` object, then `ScalarVariablewiseFunction(v)` is simply the scalar-valued function from the complete set of variables in an instance that returns the value of variable `v`. This function is useful for defining variablewise constraints.
+
+
+A more interesting function is [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction), defined as
+```julia
+struct ScalarAffineFunction{T} <: AbstractFunction
+    varables::Vector{VariableReference}
+    coefficients::Vector{T}
+    constant::T
+end
+```
+
+If `x` is a vector of `VariableReference` objects, then `ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0)` represents the function ``5x_1 - 2.3x_2 + 1``.
+
+Objective functions are assigned to an instance by calling [`setobjective!`](@ref MathOptInterface.setobjective!). For example,
+```julia
+x = addvariables!(m, 2)
+setobjective!(m, ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+setattribute!(m, Sense, MinSense)
+```
+sets the objective to the function just discussed in the minimization sense.
+
+See [Functions and function modifications](@ref) for the complete list of functions.
 
 ## Sets
 
