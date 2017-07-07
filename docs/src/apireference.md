@@ -107,7 +107,6 @@ The value of the attribute is of type `BasisStatusCode`.
 BasisStatusCode
 ```
 
-
 ### References
 
 ```@docs
@@ -159,7 +158,7 @@ ConstraintFunction
 ConstraintSet
 ```
 
-## Functions
+## Functions and function modifications
 
 List of recognized functions.
 ```@docs

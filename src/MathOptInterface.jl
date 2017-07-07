@@ -52,6 +52,7 @@ function writeproblem end
     supportsproblem(s::AbstractSolver, objective_type::F, constriant_types::Vector)::Bool
 
 Return `true` if the solver supports optimizing a problem with objective type `F` and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
+
 ### Examples
 
 ```julia
