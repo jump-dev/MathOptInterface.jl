@@ -102,8 +102,7 @@ If `x` is a vector of `VariableReference` objects, then `ScalarAffineFunction([x
 Objective functions are assigned to an instance by calling [`setobjective!`](@ref MathOptInterface.setobjective!). For example,
 ```julia
 x = addvariables!(m, 2)
-setobjective!(m, ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
-setattribute!(m, Sense, MinSense)
+setobjective!(m, MinSense, ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
 ```
 sets the objective to the function just discussed in the minimization sense.
 

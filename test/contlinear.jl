@@ -21,8 +21,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 3
 
-        MOI.setattribute!(m, MOI.Sense(), MOI.MinSense)
-        MOI.setobjective!(m, MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0))
+        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0))
         # TODO query objective
         # (b, a_varref, a_coef, qi, qj, qc) = getobjective(m)
         # @test b ≈ 0 atol=ε
@@ -53,9 +52,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         # change objective to Max +x
 
-        @test MOI.cansetattribute(m, MOI.Sense())
-        MOI.setattribute!(m, MOI.Sense(), MOI.MaxSense)
-        MOI.setobjective!(m, MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0))
+        MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0))
 
         MOI.optimize!(m)
 

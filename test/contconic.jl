@@ -9,7 +9,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         #       x>=0 y>=0 z>=0
         # Opt obj = -11, soln x = 1, y = 0, z = 2
 
-        @test MOI.supportsproblem(solver, ScalarAffineFunction, [(MOI.VectorVariablewiseFunction,MOI.NonNegative),(MOI.VectorAffineFunction{Float64},MOI.NonNegative)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorVariablewiseFunction,MOI.NonNegative),(MOI.VectorAffineFunction{Float64},MOI.NonNegative)])
 
         m = MOI.SolverInstance(solver)
 
@@ -20,8 +20,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zero(2))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
 
-        setattribute!(m, MOI.Sense(), MOI.MinSense)
-        setobjective!(m, ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
+        setobjective!(m, MOI.MinSense, MPI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
         MOI.optimize!(m)
 
