@@ -37,7 +37,7 @@ The scalar-valued affine function ``a^T x + b``, where:
 Duplicate variable references in `variables` are accepted, and the corresponding coefficients are summed together.
 """
 struct ScalarAffineFunction{T} <: AbstractFunction
-    varables::Vector{VariableReference}
+    variables::Vector{VariableReference}
     coefficients::Vector{T}
     constant::T
 end

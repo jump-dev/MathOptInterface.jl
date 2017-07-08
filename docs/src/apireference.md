@@ -199,6 +199,8 @@ PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeScaled
 Integers
 ZeroOne
+Semicontinuous
+SemiInteger
 SOS1
 SOS2
 ```

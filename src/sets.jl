@@ -200,6 +200,26 @@ struct ZeroOne <: AbstractSet end
 dimension(s::Union{Integers,ZeroOne}) = 1
 
 """
+    Semicontinuous(l,u)
+
+The set ``\\{0\\} \\cup [l,u]``.
+"""
+struct Semicontinuous{T <: Real} <: AbstractSet
+    l::T
+    u::T
+end
+
+"""
+    SemiInteger(l,u)
+
+The set ``\\{0\\} \\cup \\{l,l+1,\\ldots,u-1,u\\}``.
+"""
+struct SemiInteger{T <: Real} <: AbstractSet
+    l::T
+    u::T
+end
+
+"""
     SOS1(weights)
 
 The set corresponding to the special ordered set (SOS) constraint of type 1.

@@ -91,7 +91,7 @@ If `v` is a `VariableReference` object, then `ScalarVariablewiseFunction(v)` is 
 A more interesting function is [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction), defined as
 ```julia
 struct ScalarAffineFunction{T} <: AbstractFunction
-    varables::Vector{VariableReference}
+    variables::Vector{VariableReference}
     coefficients::Vector{T}
     constant::T
 end
@@ -143,7 +143,45 @@ addconstraint!(m, ScalarVariablewiseFunction(x[2]), GreaterThan(-1.0))
 
 [Example with vector-valued set.]
 
-[Table of common constraints and which pair of function/set they correspond to. Linear constraints, bounds, nonnegativity, second-order cone, PSD, quadratic, bilinear matrix inequality, indicator, SOS, ...]
+### Table of constraints
+
+[This needs formatting help.]
+
+#### Linear
+- ``a^Tx \le u``: `ScalarAffineFunction`, `LessThan`
+- ``a^Tx \ge l``: `ScalarAffineFunction`, `GreaterThan`
+- ``a^Tx = b``: `ScalarAffineFunction`, `EqualTo`
+- ``l \le a^Tx \le u``: `ScalarAffineFunction`, `Interval`
+- ``x_i \le u``: `ScalarVariablewiseFunction`, `LessThan`
+- ``x_i \ge l``: `ScalarVariablewiseFunction`, `GreaterThan`
+- ``x_i = b``: `ScalarVariablewiseFunction`, `EqualTo`
+- ``l \le x_i \le u``: `ScalarVariablewiseFunction`, `Interval`
+- ``Ax + b \in \mathbb{R}_+^n``: `VectorAffineFunction`, `Nonnegative`
+- ``Ax + b \in \mathbb{R}_-^n``: `VectorAffineFunction`, `Nonpositive`
+- ``Ax + b = 0``: `VectorAffineFunction`, `Zero`
+
+[Define ``\mathbb{R}_+, \mathbb{R}_-``]
+
+#### Conic
+- ``||Ax + b|| \le c^Tx + b``: `VectorAffineFunction`, `SecondOrderCone`
+- ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``: `VectorAffineFunction`, `ExponentialCone`
+- ``A(x) \in \mathbb{S}_+``: `VectorAffineFunction`, `PositiveSemidefiniteConeTriangle` or `PositiveSemidefiniteConeScaled`
+
+[Define ``\mathcal{E}`` (exponential cone), ``\mathbb{S}_+``. ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
+
+#### Quadratic
+- ``x^TQx + a^Tx + b \ge 0``: `ScalarQuadraticFunction`, `GreaterThan`
+- ``x^TQx + a^Tx + b \le 0``: `ScalarQuadraticFunction`, `LessThan`
+- ``x^TQx + a^Tx + b = 0``: `ScalarQuadraticFunction`, `EqualTo`
+- Bilinear matrix inequality: `VectorQuadraticFunction`, `PositiveSemidefiniteConeTriangle` or `PositiveSemidefiniteConeScaled`
+
+#### Discrete/logical
+- ``x_i \in \mathbb{Z}``: `ScalarVariablewiseFunction`, `Integers`
+- ``x_i \in \{0,1\}``: `ScalarVariablewiseFunction`, `Binaries`
+- ``x_i \in \{0\} \cup [l,u]``: `ScalarVariablewiseFunction`, `Semicontinous`
+- ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``: `ScalarVariablewiseFunction`, `SemiInteger`
+- At most one component of ``x`` can be nonzero: `VectorVariablewiseFunction`, `SOS1`
+- At most two components of ``x`` can be nonzero, and if two are nonzero they must be adjacent components: `VectorVariablewiseFuncion`, `SOS2`
 
 ## Solving and retrieving the results
 
@@ -269,7 +307,7 @@ end
 """
     solveintegerlinear(c, Ale, ble, Aeq, beq, lb, ub, integerindices, solver)
 
-Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns a `MixintprogSolution`.
+Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns an `IntegerLinearResult`.
 """
 function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
     if !supportsproblem(solver, ScalarAffineFunction,
