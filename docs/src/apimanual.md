@@ -181,6 +181,65 @@ See also the attributes [`ConstraintPrimal`](@ref MathOptInterface.ConstraintPri
 
 ## A complete example: `solveknapsack`
 
+
+The `solveknapsack` function below demonstrates the complete process from data to solver instance to result vector using MOI.
+
+[ needs formatting help ]
+
+```julia
+"""
+    solveknapsack(c, w, C)
+
+Solve the binary-constrained knapsack problem: max c'x: w'x <= C, x binary.
+Returns the optimal weights and objective value. Throws an error if the solver
+does not terminate with a `Success` status.
+"""
+function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solver::AbstractSolver)
+    if !supportsproblem(solver, ScalarAffineFunction,
+            [(ScalarAffineFunction,LessThan),
+             (ScalarVariablewiseFunction,ZeroOne)])
+        error("Provided solver cannot solve binary knapsack problems")
+    end
+    numvar = length(c)
+    @assert numvar == length(w)
+
+    m = SolverInstance(solver)
+
+    # create the variables in the problem
+    x = addvariables!(m, numvar)
+
+    # set the objective function
+    setobjective!(m, MaxSense, ScalarAffineFunction(x, c, 0.0))
+
+    # add the knapsack constraint
+    addconstraint!(m, ScalarAffineFunction(x, w, 0.0), LessThan(C))
+
+    # add integrality constraints
+    for i in 1:numvar
+        addconstraint!(m, ScalarVariablewiseFunction(x[i]), ZeroOne())
+    end
+
+    # all set
+    optimize!(m)
+
+    termination_status = getattribute(m, TerminationStatus())
+    objvalue = cangetattribute(m, ObjectiveValue()) ? getattribute(m, ObjectiveValue()) : NaN
+    if termination_status != Success
+        error("Solver terminated with status $termination_status")
+    end
+
+    @assert getattribute(m, ResultCount()) > 0
+
+    result_status = getattribute(m, PrimalStatus())
+    if result_status != FeasiblePoint
+        error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
+    end
+    primal_variable_result = getattribute(m, VariableResult(), x)
+
+    return (objvalue, primal_variable_result)
+end
+```
+
 ## A more complex example: `solveintegerlinear`
 
 
@@ -262,34 +321,34 @@ function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC,
             push!(coefficients_by_row[I[p]], V[p])
         end
         return [ScalarAffineFunction(variables_by_row[k], coefficients_by_row[k], 0.0) for k in 1:nrow]
-     end
+    end
 
-     # add inequality constraints
-     Ale_affine = csc_to_affine(Ale)
-     for k in 1:length(Ale_affine)
+    # add inequality constraints
+    Ale_affine = csc_to_affine(Ale)
+    for k in 1:length(Ale_affine)
         addconstraint!(m, Ale_affine[k], LessThan(ble[k]))
-     end
+    end
 
-     # add equality constraints
-     Aeq_affine = csc_to_affine(Aeq)
-     for k in 1:length(Aeq_affine)
+    # add equality constraints
+    Aeq_affine = csc_to_affine(Aeq)
+    for k in 1:length(Aeq_affine)
         addconstraint!(m, Aeq_affine[k], EqualTo(beq[k]))
-     end
+    end
 
-     # all set
-     optimize!(m)
+    # all set
+    optimize!(m)
 
-     termination_status = getattribute(m, TerminationStatus())
-     objbound = cangetattribute(m, ObjectiveBound()) ? getattribute(m, ObjectiveBound()) : NaN
-     objvalue = cangetattribute(m, ObjectiveValue()) ? getattribute(m, ObjectiveValue()) : NaN
+    termination_status = getattribute(m, TerminationStatus())
+    objbound = cangetattribute(m, ObjectiveBound()) ? getattribute(m, ObjectiveBound()) : NaN
+    objvalue = cangetattribute(m, ObjectiveValue()) ? getattribute(m, ObjectiveValue()) : NaN
 
-     if getattribute(m, ResultCount()) > 0
+    if getattribute(m, ResultCount()) > 0
         result_status = getattribute(m, PrimalStatus())
         primal_variable_result = getattribute(m, VariableResult(), x)
         return IntegerLinearResult(termination_status, result_status, primal_variable_result, objvalue, objbound)
-     else
+    else
         return IntegerLinearResult(termination_status, UnknownResultStatus, Float64[], objvalue, objbound)
-     end
+    end
 end
 ```
 
