@@ -31,7 +31,7 @@ function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -16 atol=eps
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 16 atol=eps
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
         @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0, 0, 1, 1] atol=eps

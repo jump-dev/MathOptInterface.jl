@@ -120,3 +120,38 @@ Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
 struct ScalarConstantChange{T} <: AbstractFunctionModification
     new_constant::T
 end
+
+"""
+    VectorConstantChange{T}(new_constant)
+
+A struct used to request a change in the constant vector of a vector-valued function.
+Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
+"""
+struct VectorConstantChange{T} <: AbstractFunctionModification
+    new_constant::Vector{T}
+end
+
+"""
+    ScalarCoefficientChange{T}(variable, new_coefficient)
+
+A struct used to request a change in the linear coefficient of a single variable
+in a scalar-valued function.
+Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
+"""
+struct ScalarCoefficientChange{T} <: AbstractFunctionModification
+    variable::VariableReference
+    new_coefficient::T
+end
+
+"""
+    MultirowChange{T}(variable, rows, new_coefficients)
+
+A struct used to request a change in the linear coefficients of a single variable
+in a vector-valued function.
+Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
+"""
+struct MultirowChange{T} <: AbstractFunctionModification
+    variable::VariableReference
+    rows::Vector{Int}
+    new_coefficients::Vector{T}
+end
