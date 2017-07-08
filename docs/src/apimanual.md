@@ -273,10 +273,7 @@ function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC,
      # add equality constraints
      Aeq_affine = csc_to_affine(Aeq)
      for k in 1:length(Aeq_affine)
-        affine = Aeq_affine[k]
-        # subtract constant so that we can impose "== 0" constraint
-        affine = ScalarAffineFunction(Aeq_affine[k].variables, Aeq_affine[k].coefficients, -beq[k])
-        addconstraint!(m, affine, Zeros(1))
+        addconstraint!(m, Aeq_affine[k], EqualTo(beq[k]))
      end
 
      # all set

@@ -69,6 +69,15 @@ struct LessThan{T <: Real} <: AbstractSet
 end
 
 """
+    EqualTo(value)
+
+The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
+"""
+struct EqualTo{T <: Real} <: AbstractSet
+    value::T
+end
+
+"""
     Interval(lower,upper)
 
 The interval ``[lower, upper] \\subseteq \\mathbb{R}``.
@@ -79,7 +88,7 @@ struct Interval{T <: Real} <: AbstractSet
     upper::T
 end
 
-dimension(s::Union{Interval,GreaterThan,LessThan}) = 1
+dimension(s::Union{Interval,GreaterThan,LessThan,EqualTo}) = 1
 
 """
     SecondOrderCone(dim)

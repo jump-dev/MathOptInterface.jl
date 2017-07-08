@@ -188,6 +188,7 @@ Nonnegatives
 Nonpositives
 GreaterThan
 LessThan
+EqualTo
 Interval
 SecondOrderCone
 ExponentialCone
