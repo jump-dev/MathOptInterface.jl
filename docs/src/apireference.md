@@ -184,10 +184,11 @@ List of recognized sets.
 AbstractSet
 Reals
 Zeros
-NonNegatives
-NonPositives
+Nonnegatives
+Nonpositives
 GreaterThan
 LessThan
+EqualTo
 Interval
 SecondOrderCone
 ExponentialCone
@@ -198,6 +199,8 @@ PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeScaled
 Integers
 ZeroOne
+Semicontinuous
+SemiInteger
 SOS1
 SOS2
 ```

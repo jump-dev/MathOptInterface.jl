@@ -33,20 +33,20 @@ struct Zeros <: AbstractSet
 end
 
 """
-    NonNegatives(dim)
+    Nonnegatives(dim)
 
 The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\ge 0 \\}`` of dimension `dim`.
 """
-struct NonNegatives <: AbstractSet
+struct Nonnegatives <: AbstractSet
     dim::Int
 end
 
 """
-    NonPositives(dim)
+    Nonpositives(dim)
 
 The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\le 0 \\}`` of dimension `dim`.
 """
-struct NonPositives <: AbstractSet
+struct Nonpositives <: AbstractSet
     dim::Int
 end
 
@@ -69,6 +69,15 @@ struct LessThan{T <: Real} <: AbstractSet
 end
 
 """
+    EqualTo(value)
+
+The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
+"""
+struct EqualTo{T <: Real} <: AbstractSet
+    value::T
+end
+
+"""
     Interval(lower,upper)
 
 The interval ``[lower, upper] \\subseteq \\mathbb{R}``.
@@ -79,7 +88,7 @@ struct Interval{T <: Real} <: AbstractSet
     upper::T
 end
 
-dimension(s::Union{Interval,GreaterThan,LessThan}) = 1
+dimension(s::Union{Interval,GreaterThan,LessThan,EqualTo}) = 1
 
 """
     SecondOrderCone(dim)
@@ -189,6 +198,26 @@ The set ``\\{ 0, 1 \\}``.
 struct ZeroOne <: AbstractSet end
 
 dimension(s::Union{Integers,ZeroOne}) = 1
+
+"""
+    Semicontinuous(l,u)
+
+The set ``\\{0\\} \\cup [l,u]``.
+"""
+struct Semicontinuous{T <: Real} <: AbstractSet
+    l::T
+    u::T
+end
+
+"""
+    SemiInteger(l,u)
+
+The set ``\\{0\\} \\cup \\{l,l+1,\\ldots,u-1,u\\}``.
+"""
+struct SemiInteger{T <: Real} <: AbstractSet
+    l::T
+    u::T
+end
 
 """
     SOS1(weights)
