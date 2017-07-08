@@ -166,11 +166,11 @@ end
 ## Solver attributes
 
 """
-    ReturnsDuals()
+    SupportsDuals()
 
 A `Bool` indicating if the solver should be expected to return dual solutions when appropriate.
 """
-struct ReturnsDuals <: AbstractSolverAttribute end
+struct SupportsDuals <: AbstractSolverAttribute end
 
 """
     SupportsAddConstraintAfterSolve()

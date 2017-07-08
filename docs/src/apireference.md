@@ -37,7 +37,7 @@ supportsproblem
 List of solver attributes
 
 ```@docs
-ReturnsDuals
+SupportsDuals
 SupportsAddConstraintAfterSolve
 SupportsDeleteConstraint
 SupportsAddVariableAfterSolve
