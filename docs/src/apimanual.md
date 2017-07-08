@@ -179,15 +179,18 @@ If `x` is a `VariableRefrence` then the function call returns a scalar, and if `
 
 See also the attributes [`ConstraintPrimal`](@ref MathOptInterface.ConstraintPrimal), and [`ConstraintDual`](@ref MathOptInterface.ConstraintDual).
 
-## A complete example: `mixintopt`
+## A complete example: `solveknapsack`
+
+## A more complex example: `solveintegerlinear`
+
 
 [this needs formatting help]
 
 ```julia
 """
-    MixintoptSolution
+    IntegerLinearResult
 
-A `struct` returned by `mixintopt` containing solution information.
+A `struct` returned by `solverintegerlinear` containing solution information.
 The fields are as follows:
 
   - `termination_status`: the `TerminationStatusCode` returned by the solver
@@ -196,7 +199,7 @@ The fields are as follows:
   - `objective_value`: the objective value of the result vector as reported by the solver
   - `objective_bound`: the best known bound on the optimal objective value
 """
-struct MixtintoptSolution
+struct IntegerLinearResult
     termination_status::TerminationStatusCode
     result_status::ResultStatusCode
     primal_variable_result::Vector{Float64}
@@ -205,11 +208,11 @@ struct MixtintoptSolution
 end
 
 """
-    mixintopt(c, Ale, ble, Aeq, beq, lb, ub, integerindices, solver)
+    solveintegerlinear(c, Ale, ble, Aeq, beq, lb, ub, integerindices, solver)
 
-Solve the optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns a `MixintprogSolution`.
+Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns a `MixintprogSolution`.
 """
-function mixintopt(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
+function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
     if !supportsproblem(solver, ScalarAffineFunction,
             [(ScalarAffineFunction,LessThan),
              (ScalarAffineFunction,Zero),
@@ -281,14 +284,14 @@ function mixintopt(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, 
 
      termination_status = getattribute(m, TerminationStatus())
      objbound = cangetattribute(m, ObjectiveBound()) ? getattribute(m, ObjectiveBound()) : NaN
-     objvalue = cangtattribute(m, ObjectiveValue()) ? getattribute(m, ObjectiveValue()) : NaN
+     objvalue = cangetattribute(m, ObjectiveValue()) ? getattribute(m, ObjectiveValue()) : NaN
 
      if getattribute(m, ResultCount()) > 0
         result_status = getattribute(m, PrimalStatus())
         primal_variable_result = getattribute(m, VariableResult(), x)
-        return MixintoptSolution(termination_status, result_status, primal_variable_result, objvalue, objbound)
+        return IntegerLinearResult(termination_status, result_status, primal_variable_result, objvalue, objbound)
      else
-        return MixintoptSolution(termination_status, UnknownResultStatus, Float64[], objvalue, objbound)
+        return IntegerLinearResult(termination_status, UnknownResultStatus, Float64[], objvalue, objbound)
      end
 end
 ```
