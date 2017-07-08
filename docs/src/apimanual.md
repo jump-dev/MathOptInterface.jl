@@ -20,6 +20,7 @@ MOI is designed to:
 - Enable both primal and dual warm starts
 - Enable adding and removing both variables and constraints by using reference objects instead of integer indices
 - Enable any modification that the solver supports to an existing instance
+- Avoid requiring the solver wrapper to store an additional copy of the problem data
 
 This manual introduces the concepts needed to understand MOI and give a high-level picture of how all of the pieces fit together. The primary focus is on MOI from the perspective of a user of the interface. At the end of the manual we have a section on [Implementing a solver interface](@ref).
 The reference page lists the complete API.
@@ -444,3 +445,5 @@ There is no special interface for column generation. If the solver has a special
 coefficients in existing constraints when adding a new variable, it is possible
 to queue modifications and new variables and then call the solver's API once all of the
 new coefficients are known.
+
+Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution.
