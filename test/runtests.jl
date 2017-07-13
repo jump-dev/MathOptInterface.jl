@@ -8,6 +8,11 @@ include("contlinear.jl")
     # contlineartest(GLPKSolverLP())
 end
 
+include("contquadratic.jl")
+@testset "Continuous quadratic problems" begin
+    # contquadratictest(GurobiSolver())
+end
+
 include("contconic.jl")
 @testset "Continuous conic problems" begin
     # contconictest(SCSSolver(verbose=0))
