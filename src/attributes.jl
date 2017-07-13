@@ -318,6 +318,7 @@ struct ListOfPresentConstraints <: AbstractSolverInstanceAttribute end
     ObjectiveFunction()
 
 An `AbstractFunction` instance which represents the objective function.
+It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ObjectiveFunction <: AbstractSolverInstanceAttribute end
 ## Variable attributes
@@ -413,6 +414,7 @@ struct ConstraintBasisStatus <: AbstractConstraintAttribute end
     ConstraintFunction()
 
 Return the `AbstractFunction` object used to define the constraint.
+It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
