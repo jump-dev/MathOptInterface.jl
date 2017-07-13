@@ -14,29 +14,25 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         v = MOI.addvariables!(m, 2)
         @test MOI.getattribute(m, MOI.VariableCount()) == 2
 
-        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.LessThan(1.0))
+        cf = MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0)
+        c = MOI.addconstraint!(m, cf, MOI.LessThan(1.0))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
 
         vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[1]), MOI.GreaterThan(0.0))
         vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0.0))
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 3
 
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0))
+        objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
+        MOI.setobjective!(m, MOI.MinSense, obj)
 
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-            obj = MPI.getattribute(m, MOI.ObjectiveFunction())
-            @test obj.variables == v
-            @test obj.coefficients == [-1.0,0.0]
-            @test obj.constant == 0.0
+            @test objf ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
         end
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
-            aff = MOI.getattribute(m, MOI.ConstraintFunction(), c)
-            @test aff.variables == v
-            @test aff.coeffcients == [1.0,1.0]
-            @test aff.constant == 0.0
+            @test cf ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c)
         end
 
         if MOI.cangetattribute(m, MOI.ConstraintSet(), c)
@@ -85,13 +81,11 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         # change objective to Max +x
 
-        MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0))
+        objf = MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0)
+        MOI.setobjective!(m, MOI.MaxSense, objf)
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-            obj = MPI.getattribute(m, MOI.ObjectiveFunction())
-            @test obj.variables == v
-            @test obj.coefficients == [1.0,0.0]
-            @test obj.constant == 0.0
+            @test objf ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
         end
 
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
