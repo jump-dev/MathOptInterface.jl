@@ -28,7 +28,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-            @test objf ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
+            @test objf ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
         end
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
@@ -85,7 +85,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         MOI.setobjective!(m, MOI.MaxSense, objf)
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-            @test objf ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
+            @test objf ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
         end
 
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense

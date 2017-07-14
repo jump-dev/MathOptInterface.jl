@@ -20,7 +20,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zero(2))
             @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
 
-            setobjective!(m, MOI.MinSense, MPI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
+            setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
             MOI.optimize!(m)
 
@@ -59,7 +59,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zero(2))
             @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
 
-            setobjective!(m, MOI.MinSense, MPI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
+            setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
             MOI.optimize!(m)
 
@@ -105,7 +105,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariableCount()) == 4
 
 
-            MOI.setobjective!(m, MOI.MinSense, MPI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
 
 
             c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zero(3))
@@ -163,7 +163,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariableCount()) == 4
 
 
-            MOI.setobjective!(m, MOI.MinSense, MPI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
 
 
             c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zero(3))
