@@ -1,21 +1,6 @@
 # Utilities for comparing functions
 # Define isapprox so that we can use ≈ in tests
 
-import Base: ==
-function (==)(f1::MOI.VectorVariablewiseFunction, f2::MOI.VectorVariablewiseFunction)
-    function canonicalize(f)
-        s = Set{MOI.VariableReference}()
-        for v in f.variables
-            if v in s
-                error("Repeated variable references in variablewise function")
-            end
-            push!(s,v)
-        end
-        return s
-    end
-    return canonicalize(d1) == canonicalize(d2)
-end
-
 function Base.isapprox(f1::MOI.ScalarAffineFunction{T}, f2::MOI.ScalarAffineFunction{T}; rtol = sqrt(eps), atol = 0, nans = false) where {T}
     function canonicalize(f)
         d = Dict{MOI.VariableReference,T}()
