@@ -23,7 +23,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.ConstraintCount()) == 3
 
         objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
-        MOI.setobjective!(m, MOI.MinSense, obj)
+        MOI.setobjective!(m, MOI.MinSense, objf)
 
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
 
