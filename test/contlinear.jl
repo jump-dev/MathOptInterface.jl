@@ -12,15 +12,15 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         m = MOI.SolverInstance(solver)
 
         v = MOI.addvariables!(m, 2)
-        @test MOI.getattribute(m, MOI.VariableCount()) == 2
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 2
 
         cf = MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0)
         c = MOI.addconstraint!(m, cf, MOI.LessThan(1.0))
-        @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan}()) == 1
 
         vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[1]), MOI.GreaterThan(0.0))
         vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.ConstraintCount()) == 3
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan}()) == 2
 
         objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)

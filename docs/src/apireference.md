@@ -63,7 +63,7 @@ RawSolver
 Sense
 NumberOfVariables
 NumberOfConstraints
-ListOfPresentConstraints
+ListOfConstraints
 ResultCount
 ObjectiveFunction
 ObjectiveValue
