@@ -147,7 +147,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             #       x + y >= 0 (c1[2])
             #     0.5x^2 + y <= 2 (c2)
 
-            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.NonPositive),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.NonNegative),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
 
             m = MOI.SolverInstance(solver)
 
@@ -180,22 +180,150 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
             @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.25 atol=ε
 
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5,1.75] atol=ε
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
+            @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.5,1.75] atol=ε
         end
     end
     @testset "Testing QP duals with $solver" begin
         @testset "QP1" begin
             # Max x
-            # s.t. x^2 <= 2
+            # s.t. x^2 <= 2 (c)
+
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+
+            m = MOI.SolverInstance(solver)
+
+            x = MOI.addvariable!(m)
+            @test MOI.getattribute(m, MOI.VariableCount()) == 1
+
+            cf = MOI.ScalarQuadraticFunction([],Float64[],[x],[x],[1.0], 0.0)
+            c = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
+            @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+
+            MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([x], [1.0], 0.0))
+            @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+
+            if MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
+                @test cf ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c)
+            end
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ sqrt(2) atol=ε
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=ε
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 0.5/sqrt(2) atol=ε
         end
 
         @testset "QP1" begin
             # Min -x
             # s.t. x^2 <= 2
+
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+
+            m = MOI.SolverInstance(solver)
+
+            x = MOI.addvariable!(m)
+            @test MOI.getattribute(m, MOI.VariableCount()) == 1
+
+            cf = MOI.ScalarQuadraticFunction([],Float64[],[x],[x],[1.0], 0.0)
+            c = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
+            @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x], [-1.0], 0.0))
+            @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+
+            if MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
+                @test cf ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c)
+            end
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -sqrt(2) atol=ε
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=ε
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -0.5/sqrt(2) atol=ε
         end
     end
     @testset "Testing SOCP interface with $solver" begin
+        # min t
+        # s.t. x + y >= 1 (c1)
+        #      x^2 + y^2 <= t^2 (c2)
+        #      t >= 0 (bound)
+
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan), (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan), (MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])
+
+        m = MOI.SolverInstance(solver)
+
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+        t = MOI.addvariable!(m)
+        @test MOI.getattribute(m, MOI.VariableCount()) == 3
+
+        c1f = MOI.ScalarAffineFunction([x,y],[1.0, 1.0], 0.0)
+        c1 = MOI.addconstraint!(m, c1f, MOI.GreaterThan(1.0))
+        @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+
+        c2f = MOI.ScalarQuadraticFunction([],Float64[],[x,y,t],[x,y,t],[1.0,1.0,-1.0], 0.0)
+        c2 = MOI.addconstraint!(m, c2f, MOI.LessThan(0.0))
+        @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
+
+        bound = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(t), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.ConstraintCount()) == 3
+
+        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([t], [1.0], 0.0))
+        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+
+        if MOI.cangetattribute(m, MOI.ConstraintFunction(), c1)
+            @test c1f ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c1)
+        end
+
+        if MOI.cangetattribute(m, MOI.ConstraintFunction(), c2)
+            @test c2f ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c2)
+        end
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ sqrt(1/2) atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y,t])
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y,t]) ≈ [0.5,0.5,sqrt(1/2)] atol=1e-3
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), [t,x,y,t])
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [t,x,y,t]) ≈ [sqrt(1/2),0.5,0.5,sqrt(1/2)] atol=ε
     end
     # TODO more test sets here
 end
