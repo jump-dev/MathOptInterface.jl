@@ -306,13 +306,13 @@ The number of constraints of the type `F`-in-`S` present in the solver instance.
 struct NumberOfConstraints{F,S} <: AbstractSolverInstanceAttribute end
 
 """
-    ListOfPresentConstraints()
+    ListOfConstraints()
 
 A list of tuples of the form `(F,S)`, where `F` is a function type
 and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
-struct ListOfPresentConstraints <: AbstractSolverInstanceAttribute end
+struct ListOfConstraints <: AbstractSolverInstanceAttribute end
 
 """
     ObjectiveFunction()

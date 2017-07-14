@@ -12,13 +12,14 @@ function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64)
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarVariablewiseFunction,MOI.ZeroOne),(MOI.ScalarAffineFunction{Float64},MOI.LessThan)])
 
         v = MOI.addvariables!(m, 5)
-        @test MOI.getattribute(m, MOI.VariableCount()) == 5
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 5
 
         for vi in v
-            MOI.addconstraint!(m, vi, MOI.ZeroOne())
+            MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(vi), MOI.ZeroOne())
         end
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.ZeroOne}()) == 5
         c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [2.0, 8.0, 4.0, 2.0, 5.0], 0.0), MOI.LessThan(10))
-        @test MOI.getattribute(m, MOI.ConstraintCount()) == 6
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.ZeroOne}()) == 1
 
         MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(v, [5.0, 3.0, 2.0, 7.0, 4.0], 0.0))
 
