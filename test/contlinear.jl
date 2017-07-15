@@ -211,6 +211,10 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # x,y >= 0, z = 0
 
         MOI.modifyconstraint!(m, c, MOI.EqualTo(2.0))
+        MOI.delete!(m, c)
+        cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
+        c = MOI.addconstraint!(m, cf, MOI.EqualTo(2.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan}()) == 1
 
         MOI.optimize!(m)
 
