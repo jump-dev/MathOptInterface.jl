@@ -9,7 +9,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             #     x +  y      >= 1 (c2)
             #     x,y \in R
 
-            @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan)])
+            @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan)])
 
             m = MOI.SolverInstance(solver)
 
@@ -71,7 +71,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             #     x +  y      >= 1 (c2)
             #     x,y \in R
 
-            @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan)])
+            @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan)])
 
             m = MOI.SolverInstance(solver)
 
@@ -147,7 +147,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             #       x + y >= 0 (c1[2])
             #     0.5x^2 + y <= 2 (c2)
 
-            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
 
             m = MOI.SolverInstance(solver)
 
@@ -189,7 +189,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             # Max x
             # s.t. x^2 <= 2 (c)
 
-            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
 
             m = MOI.SolverInstance(solver)
 
@@ -233,7 +233,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             # Min -x
             # s.t. x^2 <= 2
 
-            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
 
             m = MOI.SolverInstance(solver)
 
@@ -279,7 +279,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
         #      x^2 + y^2 <= t^2 (c2)
         #      t >= 0 (bound)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan), (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan), (MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuaFunction{Float64},MOI.LessThan), (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan), (MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])dratic
 
         m = MOI.SolverInstance(solver)
 
