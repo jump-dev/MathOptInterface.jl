@@ -125,17 +125,14 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         push!(v, z)
         @test v[3] == z
 
-        vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan}()) == 3
+        vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[3]), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan}()) == 3
 
-        cf2 = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
-        MOI.modifyconstraint!(m, c, cf2)
-
-        objf = MOI.ScalarAffineFunction(v, [1.0,0.0,2.0], 0.0)
-        MOI.setobjective!(m, MOI.MaxSense, objf)
+        MOI.modifyconstraint!(m, c, ScalarCoefficientChange{Float64}(z, 1.0))
+        MOI.modifyobjective!(m, ScalarCoefficientChange{Float64}(z, 2.0))
 
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan}()) == 1
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan}()) == 3
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan}()) == 3
 
         MOI.optimize!(m)
 
@@ -161,9 +158,9 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 2 atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ -1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 1 atol=ε
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ -2 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 2 atol=ε
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
             @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ 0 atol=ε
         end
@@ -193,7 +190,9 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # x, y >= 0, z = 0
 
         MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(0.0))
-        MOI.modifyconstraint!(m, vc3, MOI.EqualTo(0.0))
+        MOI.delete!(m, vc3)
+        vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[3]), MOI.EqualTo(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan}()) == 3                
 
         MOI.optimize!(m)
 
@@ -286,7 +285,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
             @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 0 atol=ε
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ -1.5 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ 1.5 atol=ε
         end
     end
 
