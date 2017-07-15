@@ -571,24 +571,24 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
             xv = MOI.getattribute(m, MOI.VariablePrimal(), x)
 
-            y = MathProgBase.getdual(m)
-            # Check primal objective
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c1)
+            y1 = MOI.getattribute(m, MOI.ConstraintDual(), c1)
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
+            y2 = MOI.getattribute(m, MOI.ConstraintDual(), c2)
+            y = [y1, y2]
+
             #    X11 X21 X31 X22 X32 X33  x1  x2  x3
             c = [  2,  2,  0,  2,  2,  2,  1,  0,  0]
             A = [  1   0   0   1   0   1   1   0   0;
                    1   2   2   1   2   1   0   1   1]
             b = [1, 1/2]
+            # Check primal objective
             comp_pobj = dot(c, [Xv; xv])
             # Check dual objective
             comp_dobj = -dot(y, b)
             @test comp_pobj ≈ comp_dobj atol=ε
 
-            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c1)
-            y1 = MOI.getattribute(m, MOI.ConstraintDual(), c1)
-            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
-            y2 = MOI.getattribute(m, MOI.ConstraintDual(), c2)
-
-            var = c + A' * [y1, y2]
+            var = c + A' * y
             var[[2, 3, 5]] /= 2
             Xd = var[1:6]
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), cX)
