@@ -587,9 +587,9 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), cX)
             Xdv = MOI.getattribute(m, MOI.ConstraintDual(), cX)
-            Xd = [Xd[1] Xd[2] Xd[3];
-                  Xd[2] Xd[4] Xd[5];
-                  Xd[3] Xd[5] Xd[6]]
+            Xd = [Xdv[1] Xdv[2] Xdv[3];
+                  Xdv[2] Xdv[4] Xdv[5];
+                  Xdv[3] Xdv[5] Xdv[6]]
 
             C = [2 1 0;
                  1 2 1;
