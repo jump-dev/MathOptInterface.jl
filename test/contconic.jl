@@ -503,7 +503,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Float64}, EqualTo{Float64}), (MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorVariablewiseFunction, MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, EqualTo{Float64}), (MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorVariablewiseFunction, MOI.SecondOrderCone)])
         @testset "SDP1" begin
             # Problem SDP1 - sdo1 from MOSEK docs
             # From Mosek.jl/test/mathprogtestextra.jl, under license:
