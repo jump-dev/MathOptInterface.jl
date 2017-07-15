@@ -192,7 +192,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(0.0))
         MOI.delete!(m, vc3)
         vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[3]), MOI.EqualTo(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan}()) == 3                
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan}()) == 3
 
         MOI.optimize!(m)
 
@@ -210,7 +210,6 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # s.t. x + y + z == 2
         # x,y >= 0, z = 0
 
-        MOI.modifyconstraint!(m, c, MOI.EqualTo(2.0))
         MOI.delete!(m, c)
         cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
         c = MOI.addconstraint!(m, cf, MOI.EqualTo(2.0))
