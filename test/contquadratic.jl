@@ -223,9 +223,10 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
             @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=ε
-
-            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 0.5/sqrt(2) atol=ε
+    
+            # TODO - duals
+            # @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            # @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 0.5/sqrt(2) atol=ε
         end
 
         @testset "QP1" begin
@@ -266,9 +267,10 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
             @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=ε
-
-            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -0.5/sqrt(2) atol=ε
+            
+            # TODO - duals
+            # @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            # @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -0.5/sqrt(2) atol=ε
         end
     end
     @testset "Testing SOCP interface with $solver" begin
