@@ -144,45 +144,68 @@ addconstraint!(m, ScalarVariablewiseFunction(x[2]), GreaterThan(-1.0))
 
 [Example with vector-valued set.]
 
-### Table of constraints
+### Constraints by function-set pairs
 
-[This needs formatting help.]
+Below is a list of common constraint types and how they are represented
+as function-set pairs in MOI. In the notation below, ``x`` is a vector of decision variables,
+``x_i`` is a scalar decision variable, and all other terms are fixed constants.
 
-#### Linear
-- ``a^Tx \le u``: `ScalarAffineFunction`, `LessThan`
-- ``a^Tx \ge l``: `ScalarAffineFunction`, `GreaterThan`
-- ``a^Tx = b``: `ScalarAffineFunction`, `EqualTo`
-- ``l \le a^Tx \le u``: `ScalarAffineFunction`, `Interval`
-- ``x_i \le u``: `ScalarVariablewiseFunction`, `LessThan`
-- ``x_i \ge l``: `ScalarVariablewiseFunction`, `GreaterThan`
-- ``x_i = b``: `ScalarVariablewiseFunction`, `EqualTo`
-- ``l \le x_i \le u``: `ScalarVariablewiseFunction`, `Interval`
-- ``Ax + b \in \mathbb{R}_+^n``: `VectorAffineFunction`, `Nonnegative`
-- ``Ax + b \in \mathbb{R}_-^n``: `VectorAffineFunction`, `Nonpositive`
-- ``Ax + b = 0``: `VectorAffineFunction`, `Zero`
+[Define notation more precisely. ``a`` vector; ``A`` matrix; don't reuse ``u,l,b`` as scalar and vector]
+
+#### Linear constraints
+
+| Mathematical Constraint       | MOI Function                 | MOI Set       |
+|-------------------------------|------------------------------|---------------|
+| ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`    |
+| ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan` |
+| ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`     |
+| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`    |
+| ``x_i \le u``                 | `ScalarVariablewiseFunction` | `LessThan`    |
+| ``x_i \ge l``                 | `ScalarVariablewiseFunction` | `GreaterThan` |
+| ``x_i = b``                   | `ScalarVariablewiseFunction` | `EqualTo`     |
+| ``l \le x_i \le u``           | `ScalarVariablewiseFunction` | `Interval`    |
+| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegative` |
+| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositive` |
+| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zero`        |
+
 
 [Define ``\mathbb{R}_+, \mathbb{R}_-``]
 
-#### Conic
-- ``||Ax + b|| \le c^Tx + b``: `VectorAffineFunction`, `SecondOrderCone`
-- ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``: `VectorAffineFunction`, `ExponentialCone`
-- ``A(x) \in \mathbb{S}_+``: `VectorAffineFunction`, `PositiveSemidefiniteConeTriangle` or `PositiveSemidefiniteConeScaled`
+#### Conic constraints
 
-[Define ``\mathcal{E}`` (exponential cone), ``\mathbb{S}_+``. ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
 
-#### Quadratic
-- ``x^TQx + a^Tx + b \ge 0``: `ScalarQuadraticFunction`, `GreaterThan`
-- ``x^TQx + a^Tx + b \le 0``: `ScalarQuadraticFunction`, `LessThan`
-- ``x^TQx + a^Tx + b = 0``: `ScalarQuadraticFunction`, `EqualTo`
-- Bilinear matrix inequality: `VectorQuadraticFunction`, `PositiveSemidefiniteConeTriangle` or `PositiveSemidefiniteConeScaled`
+| Mathematical Constraint                                       | MOI Function                 | MOI Set                            |
+|---------------------------------------------------------------|------------------------------|------------------------------------|
+| ``\lVert Ax + b\rVert_2 \le c^Tx + b``                        | `VectorAffineFunction`       | `SecondOrderCone`                  |
+| ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``  | `VectorAffineFunction`       | `ExponentialCone`                  |
+| ``A(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeTriangle` |
+| ``A(x) \in \mathcal{S}'_+``                                   | `VectorAffineFunction`       | `PositiveSemidefiniteConeScaled`   |
 
-#### Discrete/logical
-- ``x_i \in \mathbb{Z}``: `ScalarVariablewiseFunction`, `Integers`
-- ``x_i \in \{0,1\}``: `ScalarVariablewiseFunction`, `Binaries`
-- ``x_i \in \{0\} \cup [l,u]``: `ScalarVariablewiseFunction`, `Semicontinous`
-- ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``: `ScalarVariablewiseFunction`, `SemiInteger`
-- At most one component of ``x`` can be nonzero: `VectorVariablewiseFunction`, `SOS1`
-- At most two components of ``x`` can be nonzero, and if two are nonzero they must be adjacent components: `VectorVariablewiseFuncion`, `SOS2`
+
+[Define ``\mathcal{E}`` (exponential cone), ``\mathcal{S}_+`` (smat), ``\mathcal{S}'_+`` (svec). ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
+
+#### Quadratic constraints
+
+
+| Mathematical Constraint       | MOI Function                 | MOI Set                       |
+|-------------------------------|------------------------------|-------------------------------|
+| ``x^TQx + a^Tx + b \ge 0``    | `ScalarQuadraticFunction`    | `GreaterThan`                 |
+| ``x^TQx + a^Tx + b \le 0``    | `ScalarQuadraticFunction`    | `LessThan`                    |
+| ``x^TQx + a^Tx + b = 0``      | `ScalarQuadraticFunction`    | `EqualTo`                     |
+| Bilinear matrix inequality    | `VectorQuadraticFunction`    | `PositiveSemidefiniteCone...` |
+
+
+#### Discrete and logical constraints
+
+
+| Mathematical Constraint                                                                    | MOI Function                 | MOI Set                            |
+|--------------------------------------------------------------------------------------------|------------------------------|------------------------------------|
+| ``x_i \in \mathbb{Z}``                                                                     | `ScalarVariablewiseFunction` | `Integers`                         |
+| ``x_i \in \{0,1\}``                                                                        | `ScalarVariablewiseFunction` | `ZeroOne`                          |
+| ``x_i \in \{0\} \cup [l,u]``                                                               | `ScalarVariablewiseFunction` | `Semicontinuous`                   |
+| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `ScalarVariablewiseFunction` | `SemiInteger`                      |
+| At most one component of ``x`` can be nonzero                                              | `VectorVariablewiseFunction` | `SOS1`                             |
+| At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorVariablewiseFunction` | `SOS2`                             |
 
 ## Solving and retrieving the results
 
