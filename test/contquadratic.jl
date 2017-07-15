@@ -147,7 +147,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             #       x + y >= 0 (c1[2])
             #     0.5x^2 + y <= 2 (c2)
 
-            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.NonNegative),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
 
             m = MOI.SolverInstance(solver)
 
@@ -155,7 +155,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             y = MOI.addvariable!(m)
             @test MOI.getattribute(m, MOI.VariableCount()) == 2
 
-            c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2], [x,y,x,y],[-1.0,1.0,1.0,1.0], [0.0,0.0]), MOI.NonNegative(2))
+            c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2], [x,y,x,y],[-1.0,1.0,1.0,1.0], [0.0,0.0]), MOI.Nonnegative(2))
             @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
 
             c2f = MOI.ScalarQuadraticFunction([y],[1.0],[x],[x],[1.0], 0.0)
