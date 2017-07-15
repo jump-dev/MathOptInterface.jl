@@ -503,7 +503,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Int}, EqualTo{Int}), (MOI.ScalarAffineFunction{Int}, EqualTo{Rational{Int}}), (MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorVariablewiseFunction, MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Float64}, EqualTo{Float64}), (MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorVariablewiseFunction, MOI.SecondOrderCone)])
         @testset "SDP1" begin
             # Problem SDP1 - sdo1 from MOSEK docs
             # From Mosek.jl/test/mathprogtestextra.jl, under license:
@@ -542,15 +542,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             cX = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction(x), MOI.PositiveSemidefiniteConeTriangle(3))
             cx = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction(X), MOI.SecondOrderCone(3))
 
-            c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1, 1, 1, 1], 0), MOI.EqualTo(1))
-            c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1, 2, 2, 1, 2, 1, 1, 1], 0), MOI.EqualTo(1//2))
+            c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
+            c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2, 2, 1, 2, 1, 1, 1], 0.), MOI.EqualTo(1/2))
 
 
-            MOI.setobjective!(m, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2, 2, 0, 2, 2, 2, 1], 0))
+            MOI.setobjective!(m, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2, 0, 2, 2, 2, 1], 0.))
 
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Int}, EqualTo{Int}}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Int}, EqualTo{Rational{Int}}}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, EqualTo{Float64}}()) == 2
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction, MOI.SecondOrderCone}()) == 1
 
