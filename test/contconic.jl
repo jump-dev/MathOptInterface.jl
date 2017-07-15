@@ -25,7 +25,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test (MOI.VectorVariablewiseFunction,MOI.Nonnegative) in loc
             @test (MOI.VectorAffineFunction{Float64},MOI.Zero) in loc
 
-            setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
             MOI.optimize!(m)
 
@@ -65,7 +65,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zero}()) == 1
 
-            setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
             MOI.optimize!(m)
 
