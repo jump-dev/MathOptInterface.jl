@@ -2,7 +2,7 @@
 CurrentModule = MathOptInterface
 ```
 
-# API
+# API Reference
 
 [Some introduction to API. List basic standalone methods.]
 
