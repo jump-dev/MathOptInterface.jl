@@ -503,5 +503,106 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Int}, EqualTo{Int}), (MOI.ScalarAffineFunction{Int}, EqualTo{Rational{Int}}), (MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorVariablewiseFunction, MOI.SecondOrderCone)])
+        @testset "SDP1" begin
+            # Problem SDP1 - sdo1 from MOSEK docs
+            # From Mosek.jl/test/mathprogtestextra.jl, under license:
+            #   Copyright (c) 2013 Ulf Worsoe, Mosek ApS
+            #   Permission is hereby granted, free of charge, to any person obtaining a copy of this
+            #   software and associated documentation files (the "Software"), to deal in the Software
+            #   without restriction, including without limitation the rights to use, copy, modify, merge,
+            #   publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+            #   to whom the Software is furnished to do so, subject to the following conditions:
+            #   The above copyright notice and this permission notice shall be included in all copies or
+            #   substantial portions of the Software.
+            #
+            #     | 2 1 0 |
+            # min | 1 2 1 | . X + x1
+            #     | 0 1 2 |
+            #
+            #
+            # s.t. | 1 0 0 |
+            #      | 0 1 0 | . X + x1 = 1
+            #      | 0 0 1 |
+            #
+            #      | 1 1 1 |
+            #      | 1 1 1 | . X + x2 + x3 = 1/2
+            #      | 1 1 1 |
+            #
+            #      (x1,x2,x3) in C^3_q
+            #      X in C_sdp
+
+            m = MOI.SolverInstance(solver)
+
+            X = MOI.addvariables!(m, 6)
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 6
+            x = MOI.addvariables!(m, 3)
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 9
+
+            cX = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction(x), MOI.PositiveSemidefiniteConeTriangle(3))
+            cx = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction(X), MOI.SecondOrderCone(3))
+
+            c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1, 1, 1, 1], 0), MOI.EqualTo(1))
+            c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1, 2, 2, 1, 2, 1, 1, 1], 0), MOI.EqualTo(1//2))
+
+
+            MOI.setobjective!(m, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2, 2, 0, 2, 2, 2, 1], 0))
+
+
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Int}, EqualTo{Int}}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Int}, EqualTo{Rational{Int}}}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction, MOI.SecondOrderCone}()) == 1
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.705710509 atol=ε
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), X)
+            Xv = MOI.getattribute(m, MOI.VariablePrimal(), X)
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+            xv = MOI.getattribute(m, MOI.VariablePrimal(), x)
+
+            y = MathProgBase.getdual(m)
+            # Check primal objective
+            #    X11 X21 X31 X22 X32 X33  x1  x2  x3
+            c = [  2,  2,  0,  2,  2,  2,  1,  0,  0]
+            A = [  1   0   0   1   0   1   1   0   0;
+                   1   2   2   1   2   1   0   1   1]
+            b = [1, 1/2]
+            comp_pobj = dot(c, [Xv; xv])
+            # Check dual objective
+            comp_dobj = -dot(y, b)
+            @test comp_pobj ≈ comp_dobj atol=ε
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c1)
+            y1 = MOI.getattribute(m, MOI.ConstraintDual(), c1)
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
+            y2 = MOI.getattribute(m, MOI.ConstraintDual(), c2)
+
+            var = c + A' * [y1, y2]
+            var[[2, 3, 5]] /= 2
+            Xd = var[1:6]
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), cX)
+            dX = MOI.getattribute(m, MOI.ConstraintDual(), cX)
+            @test -ɛ < norm(Xd - dX) < ɛ
+
+            M = [dX[1] dX[2] dX[3];
+                 dX[2] dX[4] dX[5];
+                 dX[3] dX[5] dX[6]]
+
+            @test eigmin(M) > -ɛ
+        end
+    end
+
     # TODO more models
 end
