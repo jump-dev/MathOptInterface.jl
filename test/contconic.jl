@@ -575,31 +575,35 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             y1 = MOI.getattribute(m, MOI.ConstraintDual(), c1)
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
             y2 = MOI.getattribute(m, MOI.ConstraintDual(), c2)
-            y = [y1, y2]
 
             #    X11 X21 X31 X22 X32 X33  x1  x2  x3
             c = [  2,  2,  0,  2,  2,  2,  1,  0,  0]
-            A = [  1   0   0   1   0   1   1   0   0;
-                   1   2   2   1   2   1   0   1   1]
             b = [1, 1/2]
             # Check primal objective
             comp_pobj = dot(c, [Xv; xv])
             # Check dual objective
-            comp_dobj = -dot(y, b)
+            comp_dobj = -dot([y1, y2], b)
             @test comp_pobj ≈ comp_dobj atol=ε
 
-            var = c + A' * y
-            var[[2, 3, 5]] /= 2
-            Xd = var[1:6]
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), cX)
-            dX = MOI.getattribute(m, MOI.ConstraintDual(), cX)
-            @test -ɛ < norm(Xd - dX) < ɛ
+            Xdv = MOI.getattribute(m, MOI.ConstraintDual(), cX)
+            Xd = [Xd[1] Xd[2] Xd[3];
+                  Xd[2] Xd[4] Xd[5];
+                  Xd[3] Xd[5] Xd[6]]
 
-            M = [dX[1] dX[2] dX[3];
-                 dX[2] dX[4] dX[5];
-                 dX[3] dX[5] dX[6]]
+            C = [2 1 0;
+                 1 2 1;
+                 0 1 2]
+            A1 = [1 0 0;
+                  0 1 0;
+                  0 0 1]
+            A2 = [1 1 1;
+                  1 1 1;
+                  1 1 1]
 
-            @test eigmin(M) > -ɛ
+            @test C ≈ y1 * A1 + y2 * A2 + Xd atol=ɛ
+
+            @test eigmin(Xd) > -ɛ
         end
     end
 
