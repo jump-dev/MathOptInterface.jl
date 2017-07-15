@@ -116,6 +116,178 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
             @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=ε
         end
 
+        # add new variable to get :
+        # max x + 2z
+        # s.t. x + y + z <= 1
+        # x,y,z >= 0
+
+        z = MOI.addvariable!(m)
+        push!(v, z)
+        @test v[3] == z
+
+        vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan}()) == 3
+
+        cf2 = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
+        MOI.modifyconstraint!(m, c, cf2)
+
+        objf = MOI.ScalarAffineFunction(v, [1.0,0.0,2.0], 0.0)
+        MOI.setobjective!(m, MOI.MaxSense, objf)
+
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan}()) == 3
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0, 0, 1] atol=ε
+
+        @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=ε
+
+        if MOI.getattribute(solver, MOI.SupportsDuals())
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 2 atol=ε
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ -1 atol=ε
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ -2 atol=ε
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ 0 atol=ε
+        end
+
+        # setting lb of x to -1 to get :
+        # max x + 2z
+        # s.t. x + y + z <= 1
+        # x >= -1
+        # y,z >= 0
+
+        MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(-1.0))
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+
+        # put lb of x back to 0 and fix z to zero to get :
+        # max x + 2z
+        # s.t. x + y + z <= 1
+        # x, y >= 0, z = 0
+
+        MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(0.0))
+        MOI.modifyconstraint!(m, vc3, MOI.EqualTo(0.0))
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=ε
+
+        # modify affine linear constraint set to be == 2 to get :
+        # max x + 2z
+        # s.t. x + y + z == 2
+        # x,y >= 0, z = 0
+
+        MOI.modifyconstraint!(m, c, MOI.EqualTo(2.0))
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+
+        # modify objective function to x + 2y to get :
+        # max x + 2y
+        # s.t. x + y + z == 2
+        # x,y >= 0, z = 0
+
+        objf = MOI.ScalarAffineFunction(v, [1.0,2.0,0.0], 0.0)
+        MOI.setobjective!(m, MOI.MaxSense, objf)
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 4 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0, 2, 0] atol=ε
+
+        # add constraint x - y >= 0 to get :
+        # max x+2y
+        # s.t. x + y + z == 2
+        # x - y >= 0
+        # x,y >= 0, z = 0
+
+        cf2 = MOI.ScalarAffineFunction(v, [1.0, -1.0, 0.0], 0.0)
+        c2 = MOI.addconstraint!(m, cf, MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan}()) == 2
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 1, 0] atol=ε
+
+        @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=ε
+
+        if MOI.getattribute(solver, MOI.SupportsDuals())
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 1.5 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -0.5 atol=ε
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=ε
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 0 atol=ε
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ -1.5 atol=ε
+        end
     end
 
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
