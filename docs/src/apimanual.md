@@ -458,7 +458,7 @@ and the dual is:
 \end{align}
 ```
 
-where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i`` is its dual cone.
+where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i^*`` is its dual cone.
 
 For conic-form maximization problems, the primal is:
 ```math
