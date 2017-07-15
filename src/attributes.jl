@@ -375,7 +375,7 @@ struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 """
     ConstraintDualStart()
 
-An initial assignment of the constriant duals that the solver may use to warm-start the solve.
+An initial assignment of the constraint duals that the solver may use to warm-start the solve.
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
