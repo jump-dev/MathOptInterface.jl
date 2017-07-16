@@ -3,6 +3,8 @@ using MathOptInterface, Base.Test
 
 const MOI = MathOptInterface
 
+include("function_utilities.jl")
+
 include("contlinear.jl")
 @testset "Continuous linear problems" begin
     # contlineartest(GLPKSolverLP())

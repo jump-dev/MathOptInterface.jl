@@ -12,7 +12,7 @@ MOI has been designed to replace [MathProgBase](https://github.com/JuliaOpt/Math
 This second-generation abstraction layer addresses a number of limitations of MathProgBase.
 MOI is designed to:
 - Be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions)
-- Be fast by allowing access to a solver's in-memory representation of a problem without writing intermediate files (when possible) and by using multiple dispatch and concrete types
+- Be fast by allowing access to a solver's in-memory representation of a problem without writing intermediate files (when possible) and by using multiple dispatch and avoiding requiring containers of nonconcrete types
 - Allow a solver to return multiple results (e.g., a pool of solutions)
 - Allow a solver to return extra arbitrary information via attributes (e.g., variable- and constraint-wise membership in an irreducible inconsistent subset for infeasibility analysis)
 - Provide a greatly expanded set of status codes explaining what happened during the optimization procedure
@@ -23,7 +23,7 @@ MOI is designed to:
 - Avoid requiring the solver wrapper to store an additional copy of the problem data
 
 This manual introduces the concepts needed to understand MOI and give a high-level picture of how all of the pieces fit together. The primary focus is on MOI from the perspective of a user of the interface. At the end of the manual we have a section on [Implementing a solver interface](@ref).
-The reference page lists the complete API.
+The [API Reference](@ref) page lists the complete API.
 
 ## Standard form problem
 
@@ -113,7 +113,7 @@ See [Functions and function modifications](@ref) for the complete list of functi
 
 All constraints are specified with [`addconstraint!`](@ref MathOptInterface.addconstraint!)
 by restricting the output of some function to a set.
-The interface allows an arbitrary combination of functions at sets, but of course
+The interface allows an arbitrary combination of functions and sets, but of course
 solvers may decide to support only a small number of combinations (see [`supportsproblem`](@ref MathOptInterface.supportsproblem)).
 
 For example, linear programming solvers should support, at least, combinations of affine functions with
@@ -144,45 +144,68 @@ addconstraint!(m, ScalarVariablewiseFunction(x[2]), GreaterThan(-1.0))
 
 [Example with vector-valued set.]
 
-### Table of constraints
+### Constraints by function-set pairs
 
-[This needs formatting help.]
+Below is a list of common constraint types and how they are represented
+as function-set pairs in MOI. In the notation below, ``x`` is a vector of decision variables,
+``x_i`` is a scalar decision variable, and all other terms are fixed constants.
 
-#### Linear
-- ``a^Tx \le u``: `ScalarAffineFunction`, `LessThan`
-- ``a^Tx \ge l``: `ScalarAffineFunction`, `GreaterThan`
-- ``a^Tx = b``: `ScalarAffineFunction`, `EqualTo`
-- ``l \le a^Tx \le u``: `ScalarAffineFunction`, `Interval`
-- ``x_i \le u``: `ScalarVariablewiseFunction`, `LessThan`
-- ``x_i \ge l``: `ScalarVariablewiseFunction`, `GreaterThan`
-- ``x_i = b``: `ScalarVariablewiseFunction`, `EqualTo`
-- ``l \le x_i \le u``: `ScalarVariablewiseFunction`, `Interval`
-- ``Ax + b \in \mathbb{R}_+^n``: `VectorAffineFunction`, `Nonnegative`
-- ``Ax + b \in \mathbb{R}_-^n``: `VectorAffineFunction`, `Nonpositive`
-- ``Ax + b = 0``: `VectorAffineFunction`, `Zero`
+[Define notation more precisely. ``a`` vector; ``A`` matrix; don't reuse ``u,l,b`` as scalar and vector]
+
+#### Linear constraints
+
+| Mathematical Constraint       | MOI Function                 | MOI Set       |
+|-------------------------------|------------------------------|---------------|
+| ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`    |
+| ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan` |
+| ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`     |
+| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`    |
+| ``x_i \le u``                 | `ScalarVariablewiseFunction` | `LessThan`    |
+| ``x_i \ge l``                 | `ScalarVariablewiseFunction` | `GreaterThan` |
+| ``x_i = b``                   | `ScalarVariablewiseFunction` | `EqualTo`     |
+| ``l \le x_i \le u``           | `ScalarVariablewiseFunction` | `Interval`    |
+| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegative` |
+| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositive` |
+| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zero`        |
+
 
 [Define ``\mathbb{R}_+, \mathbb{R}_-``]
 
-#### Conic
-- ``||Ax + b|| \le c^Tx + b``: `VectorAffineFunction`, `SecondOrderCone`
-- ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``: `VectorAffineFunction`, `ExponentialCone`
-- ``A(x) \in \mathbb{S}_+``: `VectorAffineFunction`, `PositiveSemidefiniteConeTriangle` or `PositiveSemidefiniteConeScaled`
+#### Conic constraints
 
-[Define ``\mathcal{E}`` (exponential cone), ``\mathbb{S}_+``. ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
 
-#### Quadratic
-- ``x^TQx + a^Tx + b \ge 0``: `ScalarQuadraticFunction`, `GreaterThan`
-- ``x^TQx + a^Tx + b \le 0``: `ScalarQuadraticFunction`, `LessThan`
-- ``x^TQx + a^Tx + b = 0``: `ScalarQuadraticFunction`, `EqualTo`
-- Bilinear matrix inequality: `VectorQuadraticFunction`, `PositiveSemidefiniteConeTriangle` or `PositiveSemidefiniteConeScaled`
+| Mathematical Constraint                                       | MOI Function                 | MOI Set                            |
+|---------------------------------------------------------------|------------------------------|------------------------------------|
+| ``\lVert Ax + b\rVert_2 \le c^Tx + b``                        | `VectorAffineFunction`       | `SecondOrderCone`                  |
+| ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``  | `VectorAffineFunction`       | `ExponentialCone`                  |
+| ``A(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeTriangle` |
+| ``A(x) \in \mathcal{S}'_+``                                   | `VectorAffineFunction`       | `PositiveSemidefiniteConeScaled`   |
 
-#### Discrete/logical
-- ``x_i \in \mathbb{Z}``: `ScalarVariablewiseFunction`, `Integers`
-- ``x_i \in \{0,1\}``: `ScalarVariablewiseFunction`, `Binaries`
-- ``x_i \in \{0\} \cup [l,u]``: `ScalarVariablewiseFunction`, `Semicontinous`
-- ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``: `ScalarVariablewiseFunction`, `SemiInteger`
-- At most one component of ``x`` can be nonzero: `VectorVariablewiseFunction`, `SOS1`
-- At most two components of ``x`` can be nonzero, and if two are nonzero they must be adjacent components: `VectorVariablewiseFuncion`, `SOS2`
+
+[Define ``\mathcal{E}`` (exponential cone), ``\mathcal{S}_+`` (smat), ``\mathcal{S}'_+`` (svec). ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
+
+#### Quadratic constraints
+
+
+| Mathematical Constraint       | MOI Function                 | MOI Set                       |
+|-------------------------------|------------------------------|-------------------------------|
+| ``x^TQx + a^Tx + b \ge 0``    | `ScalarQuadraticFunction`    | `GreaterThan`                 |
+| ``x^TQx + a^Tx + b \le 0``    | `ScalarQuadraticFunction`    | `LessThan`                    |
+| ``x^TQx + a^Tx + b = 0``      | `ScalarQuadraticFunction`    | `EqualTo`                     |
+| Bilinear matrix inequality    | `VectorQuadraticFunction`    | `PositiveSemidefiniteCone...` |
+
+
+#### Discrete and logical constraints
+
+
+| Mathematical Constraint                                                                    | MOI Function                 | MOI Set                            |
+|--------------------------------------------------------------------------------------------|------------------------------|------------------------------------|
+| ``x_i \in \mathbb{Z}``                                                                     | `ScalarVariablewiseFunction` | `Integers`                         |
+| ``x_i \in \{0,1\}``                                                                        | `ScalarVariablewiseFunction` | `ZeroOne`                          |
+| ``x_i \in \{0\} \cup [l,u]``                                                               | `ScalarVariablewiseFunction` | `Semicontinuous`                   |
+| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `ScalarVariablewiseFunction` | `SemiInteger`                      |
+| At most one component of ``x`` can be nonzero                                              | `VectorVariablewiseFunction` | `SOS1`                             |
+| At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorVariablewiseFunction` | `SOS2`                             |
 
 ## Solving and retrieving the results
 
@@ -204,19 +227,35 @@ end
 
 The `Success` status code specifically implies that the solver has a "result" to return. In the case that the solver converged to an optimal solution, this result will just be the optimal solution vector. The [`PrimalStatus`](@ref MathOptInterface.PrimalStatus) attribute returns a [`ResultStatusCode`](@ref MathOptInterface.ResultStatusCode) that explains how to interpret the result. In the case that the solver is known to return globally optimal solutions (up to numerical tolerances), the combination of `Success` termination status and `FeasiblePoint` primal result status implies that the primal result vector should be interpreted as a globally optimal solution. A result may be available even if the status is not `Success`, for example, if the solver stopped because of a time limit and has a feasible but nonoptimal solution. Use the [`ResultCount`](@ref MathOptInterface.ResultCount) attribute to check if one or more results are available.
 
-In addition to the primal status, the [`DualStatus`](@ref MathOptInterface.DualStatus) provides important information for primal-dual solvers. The following table lists common situations and the corresponding termination and result statuses.
+In addition to the primal status, the [`DualStatus`](@ref MathOptInterface.DualStatus) provides important information for primal-dual solvers.
 
-[Table of common situations and termination/primal/dual status]
-
-See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs and certificates.
-
-Finally, to retrieve the values of each variable in the result, use the [`VariablePrimal`](@ref MathOptInterface.VariablePrimal) attribute:
+If a result is available, it may be retrieved with the [`VariablePrimal`](@ref MathOptInterface.VariablePrimal) attribute:
 ```julia
 getattribute(m, VariablePrimal(), x)
 ```
 If `x` is a `VariableRefrence` then the function call returns a scalar, and if `x` is a `Vector{VariableReference}` then the call returns a vector of scalars. `VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th result.
 
 See also the attributes [`ConstraintPrimal`](@ref MathOptInterface.ConstraintPrimal), and [`ConstraintDual`](@ref MathOptInterface.ConstraintDual).
+See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs and certificates.
+
+
+
+### Common status situations
+
+The sections below describe how to interpret different status cases for three common classes of solvers. Most importantly, it is essential to know if a solver is expected to provide a global or only locally optimal solution when interpreting the result statuses. Solver wrappers may provide additional information on how the solver's statuses map to MOI statuses.
+
+#### Primal-dual convex solver
+
+A typical primal-dual solver is capable of certifiying optimality of a solution to a convex optimization problem by providing a primal-dual feasible solution with matching objective values. It may also certify that either the primal or dual problem is infeasible by providing a certain ray of the dual or primal, respectively. Typically two solves are required to cerify unboundedness, one to find a ray and a second to find a feasible point. A solver may also provide a [facial reduction certificate](http://www.optimization-online.org/DB_FILE/2015/09/5104.pdf). When a primal-dual solver terminates with `Success` status, it is reasonable to assume that a primal and dual statuses of `FeasiblePoint` imply that the corresponding primal-dual results are a (numerically) optimal primal-dual pair. The `AlmostSuccess` status implies that the solve has completed to relaxed tolerances, so in this case `FeasiblePoint` or `NearlyFeasiblePoint` statuses would imply a near-optimal primal-dual pair. For all other termination statuses, there are no specific guarantees on the results returned.
+
+#### Global mixed-integer or nonconvex solver
+
+When a global solver returns `Success` and the primal result is a `FeasiblePoint`, then it is implied that the primal result is indeed a globally optimal solution up to the specified tolerances. Typically, no dual certificate is available to certify optimality. The [`ObjectiveBound`](@ref MathOptInterface.ObjectiveBound) should provide extra information on the optimality gap.
+
+#### Local solver
+
+For solvers which perform a search based only on local criteria (for example, gradient descent), without additional knowledge of the structure of the problem, we can say only that `Success` and `FeasiblePoint` imply that the primal result belongs to the class of points which the chosen algorithm is known to converge to. Gradient descent algorithms may converge to saddle points, for example. It is also possible for such algorithms to converge to infeasible points, in which case the termination status would be `Success` and the primal result status would be `InfeasiblePoint`. This does not imply that the problem is infeasible and so cannot be called a certificate of infeasibility.
+
 
 ## A complete example: `solveknapsack`
 
@@ -395,12 +434,9 @@ end
 
 ### Duals
 
-Currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i``.
-Note that bound constraints are supported by re-interpretation in terms of the nonnegative or nonpositive cones.
-An affine constraint ``a^T x + b \ge c`` should be interpreted as ``a^T x + b - c \in \mathbb{R}_+``, and similarly ``a^T x + b \le c`` should be interpreted as ``a^T x + b - c \in \mathbb{R}_-``.
-Variable-wise constraints should be interpreted as affine constraints with the appropriate identity mapping in place of ``A_i``.
 
-For such conic form minimization problems, the primal is:
+Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or variablewise), and all constraint sets are closed convex cone, the instance may be called a conic optimization problem.
+For conic-form minimization problems, the primal is:
 
 ```math
 \begin{align}
@@ -416,18 +452,94 @@ and the dual is:
 \begin{align}
 & \max_{y_1, \ldots, y_m} & -\sum_{i=1}^m b_i^T y_i + b_0
 \\
-& \;\;\text{s.t.} & a_0 - \sum_{i=1}^m A_i^T y_i & \in {0}^n
+& \;\;\text{s.t.} & a_0 - \sum_{i=1}^m A_i^T y_i & = 0
 \\
 & & y_i & \in \mathcal{C}_i^* & i = 1 \ldots m
 \end{align}
 ```
 
-where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i`` is its dual cone.
+where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i^*`` is its dual cone.
 
-Note:
-* lower bounds have nonnegative duals
-* upper bounds have nonpositive duals
-* closed convex cones have duals belonging to the corresponding dual cones
+For conic-form maximization problems, the primal is:
+```math
+\begin{align}
+& \max_{x \in \mathbb{R}^n} & a_0^T x + b_0
+\\
+& \;\;\text{s.t.} & A_i x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
+\end{align}
+```
+
+and the dual is:
+
+```math
+\begin{align}
+& \min_{y_1, \ldots, y_m} & \sum_{i=1}^m b_i^T y_i + b_0
+\\
+& \;\;\text{s.t.} & a_0 + \sum_{i=1}^m A_i^T y_i & = 0
+\\
+& & y_i & \in \mathcal{C}_i^* & i = 1 \ldots m
+\end{align}
+```
+
+
+
+A linear inequality constraint ``a^T x + b \ge c`` should be interpreted as ``a^T x + b - c \in \mathbb{R}_+``, and similarly ``a^T x + b \le c`` should be interpreted as ``a^T x + b - c \in \mathbb{R}_-``.
+Variable-wise constraints should be interpreted as affine constraints with the appropriate identity mapping in place of ``A_i``.
+
+For the special case of minimization LPs, the MOI primal form can be stated as
+```math
+\begin{align}
+& \min_{x \in \mathbb{R}^n} & a_0^T x &+ b_0
+\\
+& \;\;\text{s.t.}
+&A_1 x & \ge b_1\\
+&& A_2 x & \le b_2\\
+&& A_3 x & = b_3
+\end{align}
+```
+
+By applying the stated transformations to conic form, taking the dual, and transforming back into linear inequality form, one obtains the following dual:
+
+```math
+\begin{align}
+& \max_{y_1,y_2,y_3} & b_1^Ty_1 + b_2^Ty_2 + b_3^Ty_3 &+ b_0
+\\
+& \;\;\text{s.t.}
+&A_1^Ty_1 + A_2^Ty_2 + A_3^Ty_3 & = a_0\\
+&& y_1 &\ge 0\\
+&& y_2 &\le 0
+\end{align}
+```
+
+For maximization LPs, the MOI primal form can be stated as:
+```math
+\begin{align}
+& \max_{x \in \mathbb{R}^n} & a_0^T x &+ b_0
+\\
+& \;\;\text{s.t.}
+&A_1 x & \ge b_1\\
+&& A_2 x & \le b_2\\
+&& A_3 x & = b_3
+\end{align}
+```
+
+and similarly, the dual is:
+```math
+\begin{align}
+& \min_{y_1,y_2,y_3} & -b_1^Ty_1 - b_2^Ty_2 - b_3^Ty_3 &+ b_0
+\\
+& \;\;\text{s.t.}
+&A_1^Ty_1 + A_2^Ty_2 + A_3^Ty_3 & = -a_0\\
+&& y_1 &\ge 0\\
+&& y_2 &\le 0
+\end{align}
+```
+
+An important note for the LP case is that the signs of the feasible duals depend only on the sense of the inequality and not on the objective sense.
+
+
+Currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i``.
+
 
 ### Modifying an instance
 
@@ -446,4 +558,6 @@ coefficients in existing constraints when adding a new variable, it is possible
 to queue modifications and new variables and then call the solver's API once all of the
 new coefficients are known.
 
-Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution.
+Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NearlyFeasiblePoint`, `InfeasiblePoint`, `NearlyInfeasiblePoint`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
+
+MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example). In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.

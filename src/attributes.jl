@@ -51,9 +51,7 @@ Return a vector of attributes corresponding to each variable in the collection `
 
 Return an attribute `attr` of the constraint `c` in solver instance `m`.
 
-    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
-    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
-    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
+    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
 
 Return a vector of attributes corresponding to each constraint in the collection `c` in the solver instance `m`.
 
@@ -89,9 +87,7 @@ end
 Return a `Bool` indicating whether it is possible to query attribute `attr` from the solver `s`.
 
     cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
 
 Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the reference type `R`.
 
@@ -113,19 +109,16 @@ cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
 Return a `Bool` indicating whether it is possible to set attribute `attr` in the solver `s`.
 
     cansetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cansetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{VariablewiseConstraintReference{T})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{AffineConstraintReference{T})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{QuadraticConstraintReference{T})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the solver instance `m`.
 
 ### Examples
 
 ```julia
-cansetattribute(GurobiSolver(), SupportsAffineConstraint{Zero}())
 cansetattribute(m, ObjectiveValue())
 cansetattribute(m, VariablePrimalStart(), VariableReference)
-cansetattribute(m, ConstraintPrimal(), AffineConstraintReference{NonNegative})
+cansetattribute(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{Float64},Nonnegative})
 ```
 """
 function cansetattribute end
@@ -152,9 +145,7 @@ Assign a value respectively to the attribute `attr` of each variable in the coll
 
 Assign a value to the attribute `attr` of constraint `c` in solver instance `m`.
 
-    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{VariablewiseConstraintReference{T}})
-    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{AffineConstraintReference{T}})
-    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{QuadraticConstraintReference{T}})
+    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in solver instance `m`.
 """
@@ -306,18 +297,19 @@ The number of constraints of the type `F`-in-`S` present in the solver instance.
 struct NumberOfConstraints{F,S} <: AbstractSolverInstanceAttribute end
 
 """
-    ListOfPresentConstraints()
+    ListOfConstraints()
 
 A list of tuples of the form `(F,S)`, where `F` is a function type
 and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
-struct ListOfPresentConstraints <: AbstractSolverInstanceAttribute end
+struct ListOfConstraints <: AbstractSolverInstanceAttribute end
 
 """
     ObjectiveFunction()
 
 An `AbstractFunction` instance which represents the objective function.
+It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ObjectiveFunction <: AbstractSolverInstanceAttribute end
 ## Variable attributes
@@ -374,7 +366,7 @@ struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 """
     ConstraintDualStart()
 
-An initial assignment of the constriant duals that the solver may use to warm-start the solve.
+An initial assignment of the constraint duals that the solver may use to warm-start the solve.
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
@@ -413,6 +405,7 @@ struct ConstraintBasisStatus <: AbstractConstraintAttribute end
     ConstraintFunction()
 
 Return the `AbstractFunction` object used to define the constraint.
+It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
