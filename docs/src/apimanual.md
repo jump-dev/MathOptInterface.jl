@@ -176,7 +176,7 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 
 | Mathematical Constraint                                       | MOI Function                 | MOI Set                            |
 |---------------------------------------------------------------|------------------------------|------------------------------------|
-| ``\lVert Ax + b\rVert_2 \le c^Tx + b``                        | `VectorAffineFunction`       | `SecondOrderCone`                  |
+| ``\lVert Ax + b\rVert_2 \le c^Tx + d``                        | `VectorAffineFunction`       | `SecondOrderCone`                  |
 | ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``  | `VectorAffineFunction`       | `ExponentialCone`                  |
 | ``A(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeTriangle` |
 | ``A(x) \in \mathcal{S}'_+``                                   | `VectorAffineFunction`       | `PositiveSemidefiniteConeScaled`   |
