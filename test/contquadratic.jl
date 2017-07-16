@@ -14,13 +14,13 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             m = MOI.SolverInstance(solver)
 
             v = MOI.addvariables!(m, 3)
-            @test MOI.getattribute(m, MOI.VariableCount()) == 3
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
 
             c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0), MOI.GreaterThan(4.0))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 1
 
             c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 2
 
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[2], v[2], v[3]], [v[1], v[2], v[2], v[3], v[3]], [2.0, 1.0, 2.0, 1.0, 2.0], 0.0))
             @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
@@ -76,14 +76,14 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             m = MOI.SolverInstance(solver)
 
             v = MOI.addvariables!(m, 3)
-            @test MOI.getattribute(m, MOI.VariableCount()) == 3
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
 
             c1f = MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0)
             c1 = MOI.addconstraint!(m, c1f, MOI.GreaterThan(4.0))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 1
 
             c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 2
 
             obj = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]], [2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], 0.0)
             MOI.setobjective!(m, MOI.MinSense, obj)
@@ -153,14 +153,14 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
 
             x = MOI.addvariable!(m)
             y = MOI.addvariable!(m)
-            @test MOI.getattribute(m, MOI.VariableCount()) == 2
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 2
 
             c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2], [x,y,x,y],[-1.0,1.0,1.0,1.0], [0.0,0.0]), MOI.Nonnegative(2))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonnegative}()) == 1
 
             c2f = MOI.ScalarQuadraticFunction([y],[1.0],[x],[x],[1.0], 0.0)
             c2 = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
             @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
@@ -194,11 +194,11 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             m = MOI.SolverInstance(solver)
 
             x = MOI.addvariable!(m)
-            @test MOI.getattribute(m, MOI.VariableCount()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
             cf = MOI.ScalarQuadraticFunction([],Float64[],[x],[x],[1.0], 0.0)
             c = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
             MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([x], [1.0], 0.0))
             @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
@@ -238,11 +238,11 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             m = MOI.SolverInstance(solver)
 
             x = MOI.addvariable!(m)
-            @test MOI.getattribute(m, MOI.VariableCount()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
             cf = MOI.ScalarQuadraticFunction([],Float64[],[x],[x],[1.0], 0.0)
             c = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
-            @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x], [-1.0], 0.0))
             @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
@@ -286,18 +286,18 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
         x = MOI.addvariable!(m)
         y = MOI.addvariable!(m)
         t = MOI.addvariable!(m)
-        @test MOI.getattribute(m, MOI.VariableCount()) == 3
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
 
         c1f = MOI.ScalarAffineFunction([x,y],[1.0, 1.0], 0.0)
         c1 = MOI.addconstraint!(m, c1f, MOI.GreaterThan(1.0))
-        @test MOI.getattribute(m, MOI.ConstraintCount()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 1
 
         c2f = MOI.ScalarQuadraticFunction([],Float64[],[x,y,t],[x,y,t],[1.0,1.0,-1.0], 0.0)
         c2 = MOI.addconstraint!(m, c2f, MOI.LessThan(0.0))
-        @test MOI.getattribute(m, MOI.ConstraintCount()) == 2
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
         bound = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(t), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.ConstraintCount()) == 3
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction, MOI.GreaterThan}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([t], [1.0], 0.0))
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
