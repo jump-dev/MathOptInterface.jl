@@ -551,7 +551,11 @@ Currently, a convention for duals is not defined for problems with non-conic set
 
 [Avoid storing extra copies of the problem when possible.]
 
-[It would be nice if solvers supported the multiple different ways to write the same constraint, e.g., `GreaterThan` and `Nonnegative`, second-order cone and rotated second-order cone.]
+MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) For example, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessThan` constraints, then users will not be able to write: `@constraint(m, 2x + y <= 10)` in JuMP. That said, from the perspective of JuMP, solvers can safely choose to not support the following constraints:
+
+- `ScalarAffineFunction` in `GreaterThan`, `LessThan`, or `EqualTo` with a nonzero constant in the function. Constants in the affine function should instead be moved into the parameters of the corresponding sets.
+
+- `ScalarAffineFunction` in `Nonnegative`, `Nonpositive` or `Zeros`. Alternative constraints are available by using a `VectorAffineFunction` with one output row or `ScalarAffineFunction` with `GreaterThan`, `LessThan`, or `EqualTo`.
 
 There is no special interface for column generation. If the solver has a special API for setting
 coefficients in existing constraints when adding a new variable, it is possible
