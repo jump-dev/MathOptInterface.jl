@@ -831,9 +831,6 @@ and similarly, the dual is:
 
 An important note for the LP case is that the signs of the feasible duals depend only on the sense of the inequality and not on the objective sense.
 
-
-Currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i``.
-
 #### Duality and scalar product
 
 The scalar product is different from the canonical one for the sets
@@ -845,6 +842,20 @@ twice the value of the `coefficients` field in the `VectorAffineFunction` for
 the corresponding rows. See [`PositiveSemidefiniteConeTriangle`](@ref) for
 details.
 
+#### Dual for convex problem with quadratic functions
+
+If ``Q`` is positive semidefinite, then the constraint ``x^TQx + a^Tx + b \le 0`` can be rewritten as an equivalent SOS constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
+We define the constraint value as ``x^TQx + a^Tx + b`` and the constraint dual as ``\lVert y \rVert_2 - s``.
+Note that these scalar values are always nonpositive for feasible solutions and that complementary slackness holds, i.e. their product is always zero for an optimal primal-dual pair (indeed if two vectors in the second order cone are orthogonal then they are either both on the boundary or one of them is zero).
+
+Similarly, if ``Q`` is negative semidefinite, then the constraint ``x^TQx + a^Tx + b \ge 0`` can be rewritten as an equivalent SOS constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
+In this case, we define the constraint value as ``x^TQx + a^Tx + b`` and the constraint dual as ``s - \lVert y \rVert_2``.
+Note that these scalar values are always nonnegative for feasible solutions and that complementary slackness holds.
+
+If the objective is a minimization of a convex quadratic function or the maximization of a concave quadratic function then it can be transformed into a linear objective and a second order cone constraint.
+Therefore if the constraints are convex, their dual can be queried as usual.
+
+However, currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i`` that do not enter into one of the cases discussed in this question.
 
 ### Constraint bridges
 
