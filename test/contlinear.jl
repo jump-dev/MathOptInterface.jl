@@ -7,7 +7,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # st   x + y <= 1   (x + y - 1 ∈ NonPositive)
         #       x, y >= 0   (x, y ∈ NonNegative)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan),(MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan),(MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])
 
         m = MOI.SolverInstance(solver)
 
@@ -294,7 +294,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarVariablewiseFunction{Float64},MOI.NonPositive),(MOI.ScalarVariablewiseFunction{Float64},MOI.LessThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarVariablewiseFunction{Float64},MOI.NonPositive),(MOI.ScalarVariablewiseFunction{Float64},MOI.LessThan)])
 
         m = MOI.SolverInstance(solver)
 
@@ -348,7 +348,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     @testset "Modify GreaterThan and LessThan sets as linear constraints" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Float64},MOI.NonPositive),(MOI.ScalarAffineFunction{Float64},MOI.LessThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.NonPositive),(MOI.ScalarAffineFunction{Float64},MOI.LessThan)])
 
         m = MOI.SolverInstance(solver)
 
@@ -401,7 +401,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     @testset "Modify constants in Nonnegative and Nonpositive" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositive),(MOI.VectorAffineFunction{Float64},MOI.Nonpositive)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositive),(MOI.VectorAffineFunction{Float64},MOI.Nonpositive)])
 
         m = MOI.SolverInstance(solver)
 
