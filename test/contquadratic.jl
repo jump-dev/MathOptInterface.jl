@@ -16,35 +16,27 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             v = MOI.addvariables!(m, 3)
             @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
 
-            c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0), MOI.GreaterThan(4.0))
+            cf1 = MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0)
+            c1 = MOI.addconstraint!(m, cf1, MOI.GreaterThan(4.0))
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 1
 
             c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 2
 
-            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[2], v[2], v[3]], [v[1], v[2], v[2], v[3], v[3]], [2.0, 1.0, 2.0, 1.0, 2.0], 0.0))
+            obj = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[2], v[2], v[3]], [v[1], v[2], v[2], v[3], v[3]], [2.0, 1.0, 2.0, 1.0, 2.0], 0.0)
+            MOI.setobjective!(m, MOI.MinSense, obj)
             @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
 
             if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-                obj = MPI.getattribute(m, MOI.ObjectiveFunction())
-                @test obj.affine_variables == v
-                @test obj.affine_coefficients == [0.0,0.0,0.0]
-                @test obj.quadratic_rowvariables == [v[1], v[1], v[2], v[2], v[3]]
-                @test obj.quadratic_colvariables == [v[1], v[2], v[2], v[3], v[3]]
-                @test obj.quadratic_coefficients == [2.0, 1.0, 2.0, 1.0, 2.0]
-                @test obj.constant == 0.0
+                @test obj ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
             end
 
             if MOI.cangetattribute(m, MOI.ConstraintFunction(), c1)
-                aff = MOI.getattribute(m, MOI.ConstraintFunction(), c1)
-                @test aff.variables == v
-                @test aff.coeffcients == [1.0,2.0,3.0]
-                @test aff.constant == 0.0
+                @test cf1 ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c1)
             end
 
             if MOI.cangetattribute(m, MOI.ConstraintSet(), c1)
-                s = MOI.getattribute(m, MOI.ConstraintSet(), c1)
-                @test s == MOI.GreaterThan(4.0)
+                @test MOI.GreaterThan(4.0) == MOI.getattribute(m, MOI.ConstraintSet(), c1)
             end
 
             MOI.optimize!(m)
@@ -98,8 +90,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
             end
 
             if MOI.cangetattribute(m, MOI.ConstraintSet(), c1)
-                s = MOI.getattribute(m, MOI.ConstraintSet(), c1)
-                @test s == MOI.GreaterThan(4.0)
+                @test MOI.GreaterThan(4.0) == MOI.getattribute(m, MOI.ConstraintSet(), c1)
             end
 
             MOI.optimize!(m)
