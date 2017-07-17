@@ -1,3 +1,6 @@
+using MathOptInterface
+MOI = MathOptInterface
+
 # Continuous linear problems
 
 function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
