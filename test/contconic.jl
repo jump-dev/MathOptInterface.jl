@@ -6,7 +6,6 @@ MOI = MathOptInterface
 function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorVariablewiseFunction,MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
-
         @testset "LIN1" begin
             # linear conic problem
             # min -3x - 2y - 4z
