@@ -51,7 +51,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     end
 
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.NonNegative),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative)])
         @testset "LIN1A" begin
             # Same as LIN1 but variable bounds enforced with VectorAffineFunction
 
