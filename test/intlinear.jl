@@ -1,3 +1,6 @@
+using MathOptInterface
+MOI = MathOptInterface
+
 # Mixed-integer linear problems
 
 function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))

@@ -1,3 +1,6 @@
+using MathOptInterface
+MOI = MathOptInterface
+
 # Continuous conic problems
 
 function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
@@ -51,7 +54,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     end
 
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.NonNegative),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative)])
         @testset "LIN1A" begin
             # Same as LIN1 but variable bounds enforced with VectorAffineFunction
 
@@ -227,7 +230,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             x = MOI.addvariable!(m)
 
             MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegative(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[1.0]), MOI.Nonpositve(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[1.0]), MOI.Nonpositive(1))
 
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositive}()) == 1
@@ -261,7 +264,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             x = MOI.addvariable!(m)
 
             MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegative(1))
-            MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([x]), MOI.Nonpositve(1))
+            MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([x]), MOI.Nonpositive(1))
 
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonpositive}()) == 1
