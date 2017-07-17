@@ -168,6 +168,7 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositive` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zero`        |
 
+By convention, solvers are not expected to support nonzero constant terms in the `ScalarAffineFunction`s the first four rows above, because they are redundant with the parameters of the sets. For example, ``2x + 1 \le 2`` should be encoded as ``2x \le 1``.
 
 [Define ``\mathbb{R}_+, \mathbb{R}_-``]
 
