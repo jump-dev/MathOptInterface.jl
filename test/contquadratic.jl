@@ -1,3 +1,6 @@
+using MathOptInterface
+MOI = MathOptInterface
+
 # Continuous quadratic problems
 
 function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))

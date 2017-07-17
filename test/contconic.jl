@@ -1,3 +1,6 @@
+using MathOptInterface
+MOI = MathOptInterface
+
 # Continuous conic problems
 
 function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
