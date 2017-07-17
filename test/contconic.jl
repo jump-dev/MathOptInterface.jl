@@ -5,7 +5,7 @@ MOI = MathOptInterface
 
 function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorVariablewiseFunction,MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorVariablewiseFunction,MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN1" begin
             # linear conic problem
             # min -3x - 2y - 4z
@@ -53,8 +53,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN1A" begin
             # Same as LIN1 but variable bounds enforced with VectorAffineFunction
 
@@ -93,7 +92,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorVariablewiseFunction,MOI.Nonnegatives),(MOI.VectorVariablewiseFunction,MOI.Nonpositives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorVariablewiseFunction,MOI.Nonnegatives),(MOI.VectorVariablewiseFunction,MOI.Nonpositives)])
         @testset "LIN2" begin
             # mixed cones
             # min  3x + 2y - 4z + 0s
@@ -153,7 +152,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
         @testset "LIN2A" begin
             # mixed cones
             # same as LIN2 but with variable bounds enforced with VectorAffineFunction
@@ -214,7 +213,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN3 - infeasible" begin
             # Problem LIN3 - Infeasible LP
             # min  0
@@ -248,7 +247,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorVariablewiseFunction,MOI.Nonpositives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorVariablewiseFunction,MOI.Nonpositives)])
         @testset "LIN4 - infeasible" begin
             # Problem LIN4 - Infeasible LP
             # min  0
@@ -282,7 +281,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorVariablewiseFunction,MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorVariablewiseFunction,MOI.SecondOrderCone)])
         @testset "SOC1" begin
             # Problem SOC1
             # max 0x + 1y + 1z
@@ -332,7 +331,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC1A" begin
             # Problem SOC1A
             # max 0x + 1y + 1z
@@ -379,7 +378,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC2" begin
             # Problem SOC2
             # min  x
@@ -426,7 +425,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC2A" begin
             # Problem SOC2A
             # Same as SOC2 but with nonpostive instead of nonnegative
@@ -470,7 +469,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC3 - infeasible" begin
             # Problem SOC3 - Infeasible
             # min 0

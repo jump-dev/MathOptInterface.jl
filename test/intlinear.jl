@@ -12,7 +12,7 @@ function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64)
 
         m = MOI.SolverInstance(solver)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarVariablewiseFunction,MOI.ZeroOne),(MOI.ScalarAffineFunction{Float64},MOI.LessThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarVariablewiseFunction,MOI.ZeroOne),(MOI.ScalarAffineFunction{Float64},MOI.LessThan)])
 
         v = MOI.addvariables!(m, 5)
         @test MOI.getattribute(m, MOI.NumberOfVariables()) == 5

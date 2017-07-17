@@ -392,8 +392,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=eps
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=eps
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -404,8 +404,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=eps
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=eps
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
 
     end
 
@@ -446,8 +446,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=eps
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=eps
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -458,8 +458,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=eps
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=eps
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
 
     end
 
@@ -499,8 +499,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=eps
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=eps
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -511,8 +511,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=eps
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=eps
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
 
     end
 
