@@ -356,6 +356,68 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         end
     end
 
+    @testset "Issue #40 from Gurobi.jl" begin
+        # min  x
+        # s.t. x >= 0
+        #      x >= 3
+
+        m = MOI.SolverInstance(solver)
+
+        x = MOI.addvariables!(m)
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
+
+        MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
+        cf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
+        MOI.addconstraint!(m, cf, MOI.GreaterThan(3.0))
+
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 1
+
+        objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
+        MOI.setobjective!(m, MOI.MinSense, objf)
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+
+        # max  x
+        # s.t. x <= 0
+        #      x <= 3
+
+        m = MOI.SolverInstance(solver)
+
+        x = MOI.addvariables!(m)
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
+
+        MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.LessThan(0.0))
+        cf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
+        MOI.addconstraint!(m, cf, MOI.LessThan(3.0))
+
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.LessThan{Float64}}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
+
+        objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
+        MOI.setobjective!(m, MOI.MaxSense, objf)
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0 atol=ε
+    end
+
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarVariablewiseFunction{Float64},MOI.NonPositive),(MOI.ScalarVariablewiseFunction{Float64},MOI.LessThan{Float64})])
