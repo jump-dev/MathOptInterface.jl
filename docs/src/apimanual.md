@@ -154,19 +154,19 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 
 #### Linear constraints
 
-| Mathematical Constraint       | MOI Function                 | MOI Set       |
-|-------------------------------|------------------------------|---------------|
-| ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`    |
-| ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan` |
-| ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`     |
-| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`    |
-| ``x_i \le u``                 | `ScalarVariablewiseFunction` | `LessThan`    |
-| ``x_i \ge l``                 | `ScalarVariablewiseFunction` | `GreaterThan` |
-| ``x_i = b``                   | `ScalarVariablewiseFunction` | `EqualTo`     |
-| ``l \le x_i \le u``           | `ScalarVariablewiseFunction` | `Interval`    |
-| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegative` |
-| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositive` |
-| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zero`        |
+| Mathematical Constraint       | MOI Function                 | MOI Set        |
+|-------------------------------|------------------------------|----------------|
+| ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`     |
+| ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan`  |
+| ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`      |
+| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`     |
+| ``x_i \le u``                 | `ScalarVariablewiseFunction` | `LessThan`     |
+| ``x_i \ge l``                 | `ScalarVariablewiseFunction` | `GreaterThan`  |
+| ``x_i = b``                   | `ScalarVariablewiseFunction` | `EqualTo`      |
+| ``l \le x_i \le u``           | `ScalarVariablewiseFunction` | `Interval`     |
+| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
+| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
+| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
 
 By convention, solvers are not expected to support nonzero constant terms in the `ScalarAffineFunction`s the first four rows above, because they are redundant with the parameters of the sets. For example, ``2x + 1 \le 2`` should be encoded as ``2x \le 1``.
 
@@ -353,7 +353,7 @@ Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `bl
 function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
     if !supportsproblem(solver, ScalarAffineFunction,
             [(ScalarAffineFunction,LessThan),
-             (ScalarAffineFunction,Zero),
+             (ScalarAffineFunction,Zeros),
              (ScalarVariablewiseFunction,LessThan),
              (ScalarVariablewiseFunction,GreaterThan),
              (ScalarVariablewiseFunction,Integers)])

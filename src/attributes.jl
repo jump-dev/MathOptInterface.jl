@@ -94,7 +94,6 @@ Return a `Bool` indicating whether the solver instance `m` currently has a value
 ### Examples
 
 ```julia
-cangetattribute(GurobiSolver(), SupportsAffineConstraint{Zero}())
 cangetattribute(m, ObjectiveValue())
 cangetattribute(m, VariablePrimalStart(), varref)
 cangetattribute(m, ConstraintPrimal(), conref)
@@ -118,7 +117,7 @@ Return a `Bool` indicating whether it is possible to set attribute `attr` applie
 ```julia
 cansetattribute(m, ObjectiveValue())
 cansetattribute(m, VariablePrimalStart(), VariableReference)
-cansetattribute(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{Float64},Nonnegative})
+cansetattribute(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{Float64},Nonnegatives})
 ```
 """
 function cansetattribute end
