@@ -371,8 +371,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
 
-        c1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), GreaterThan(0.0))
-        c2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), LessThan(0.0))
+        c1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
+        c2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), MOI.LessThan(0.0))
 
         MOI.optimize!(m)
 
@@ -425,8 +425,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
 
-        c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x],[1.0],0.0), GreaterThan(0.0))
-        c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([y],[1.0],0.0), LessThan(0.0))
+        c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x],[1.0],0.0), MOI.GreaterThan(0.0))
+        c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([y],[1.0],0.0), MOI.LessThan(0.0))
 
         MOI.optimize!(m)
 
@@ -478,8 +478,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
 
-        c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],0.0), Nonnegatives(1))
-        c2 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],0.0), Nonpositives(1))
+        c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],0.0), MOI.Nonnegatives(1))
+        c2 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],0.0), MOI.Nonpositives(1))
 
         MOI.optimize!(m)
 
