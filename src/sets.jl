@@ -184,11 +184,11 @@ struct PositiveSemidefiniteConeScaled <: AbstractSet
 end
 
 """
-    Integers()
+    Integer()
 
 The set of integers ``\\mathbb{Z}``.
 """
-struct Integers <: AbstractSet end
+struct Integer <: AbstractSet end
 
 """
     ZeroOne()
@@ -197,7 +197,7 @@ The set ``\\{ 0, 1 \\}``.
 """
 struct ZeroOne <: AbstractSet end
 
-dimension(s::Union{Integers,ZeroOne}) = 1
+dimension(s::Union{Integer,ZeroOne}) = 1
 
 """
     Semicontinuous(l,u)

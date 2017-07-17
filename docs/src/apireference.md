@@ -197,7 +197,7 @@ PowerCone
 DualPowerCone
 PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeScaled
-Integers
+Integer
 ZeroOne
 Semicontinuous
 SemiInteger
