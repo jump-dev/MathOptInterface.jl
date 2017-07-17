@@ -373,7 +373,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 1
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 1
 
-        objf = MOI.ScalarVariablewiseFunction(x)
+        objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)
 
         MOI.optimize!(m)
@@ -403,7 +403,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.LessThan{Float64}}()) == 1
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
-        objf = MOI.ScalarVariablewiseFunction(x)
+        objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, objf)
 
         MOI.optimize!(m)
