@@ -178,8 +178,8 @@ By convention, solvers are not expected to support nonzero constant terms in the
 | Mathematical Constraint                                       | MOI Function                 | MOI Set                            |
 |---------------------------------------------------------------|------------------------------|------------------------------------|
 | ``\lVert Ax + b\rVert_2 \le c^Tx + d``                        | `VectorAffineFunction`       | `SecondOrderCone`                  |
-| ``\lVert x[2:end] \rVert_2 \le x[1]``                         | `ScalarVariablewiseFunction` | `SecondOrderCone`                  |
-| ``\lVert x[3:end] \rVert_2^2 \le 2x[1]x[2]``                  | `ScalarVariablewiseFunction` | `RotatedSecondOrderCone`           |
+| ``y \ge\lVert x \rVert_2``                                    | `ScalarVariablewiseFunction` | `SecondOrderCone`                  |
+| ``2yz \ge \lVert x \rVert_2^2, y,z \ge 0``                    | `ScalarVariablewiseFunction` | `RotatedSecondOrderCone`           |
 | ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``  | `VectorAffineFunction`       | `ExponentialCone`                  |
 | ``A(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeTriangle` |
 | ``A(x) \in \mathcal{S}'_+``                                   | `VectorAffineFunction`       | `PositiveSemidefiniteConeScaled`   |
