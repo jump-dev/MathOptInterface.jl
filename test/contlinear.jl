@@ -476,7 +476,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         #   solution: x = 0, y = 2, objv = 2
 
 
-        MOI.modifyconstraint!(m, c1, ScalarCoefficientChange{T}(y, 2))
+        MOI.modifyconstraint!(m, c1, ScalarCoefficientChange(y, 2))
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
