@@ -542,7 +542,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.SecondOrderCone}()) == 1
 
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(x,c,0.0))
-            MOI.optimize!(m)            
+            MOI.optimize!(m)
 
             @test MOI.cangetattribute(m, MOI.TerminationStatus())
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
@@ -563,10 +563,10 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test x_dual[3] ≈ 0.0 atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c1)
-            c1_dual = MOI.getattribute(m, MOI.ConstraintDual(), c1) 
+            c1_dual = MOI.getattribute(m, MOI.ConstraintDual(), c1)
 
             @test dot(c,x_primal) ≈ -dot(c1_dual,b) atol=ε
-            @test norm((c+A'c1_dual) - x_dual) ≈ 0.0 atol=ε            
+            @test norm((c+A'c1_dual) - x_dual) ≈ 0.0 atol=ε
         end
     end
 
