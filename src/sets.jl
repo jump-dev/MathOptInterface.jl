@@ -100,6 +100,15 @@ struct SecondOrderCone <: AbstractSet
 end
 
 """
+    RotatedSecondOrderCone(dim)
+
+The rotated second-order cone ``\\{ (t,u,x) \\mathbb{R}^{dim} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dim`.
+"""
+struct RotatedSecondOrderCone <: AbstractSet
+    dim::Int
+end
+
+"""
     ExponentialCone()
 
 The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x/y) \\le z, y > 0 \\}``.
