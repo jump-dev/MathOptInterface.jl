@@ -94,7 +94,6 @@ Return a `Bool` indicating whether the solver instance `m` currently has a value
 ### Examples
 
 ```julia
-cangetattribute(GurobiSolver(), SupportsAffineConstraint{Zeros}())
 cangetattribute(m, ObjectiveValue())
 cangetattribute(m, VariablePrimalStart(), varref)
 cangetattribute(m, ConstraintPrimal(), conref)
