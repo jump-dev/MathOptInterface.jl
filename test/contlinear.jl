@@ -292,6 +292,67 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         end
     end
 
+    @testset "addvariable! (one by one) interface" begin
+        # Min -x
+        # s.t. x + y <= 1
+        # x, y >= 0
+
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan),(MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])
+
+        m = MOI.SolverInstance(solver)
+
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 2
+
+        cf = MOI.ScalarAffineFunction([x, y], [1.0,1.0], 0.0)
+        c = MOI.addconstraint!(m, cf, MOI.LessThan(1.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan}()) == 1
+
+        vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
+        vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan}()) == 2
+
+        objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
+        MOI.setobjective!(m, MOI.MinSense, objf)
+
+        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+
+        MOI.optimize(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -1 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 1 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), y)
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=ε
+
+        if MOI.getattribute(solver, MOI.SupportsDuals())
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+
+            # reduced costs
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=ε
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=ε
+        end
+    end
+
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarVariablewiseFunction{Float64},MOI.NonPositive),(MOI.ScalarVariablewiseFunction{Float64},MOI.LessThan)])
