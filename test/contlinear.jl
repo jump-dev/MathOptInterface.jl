@@ -4,8 +4,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
     @testset "Basic solve, query, resolve" begin
         # simple 2 variable, 1 constraint problem
         # min -x
-        # st   x + y <= 1   (x + y - 1 ∈ NonPositive)
-        #       x, y >= 0   (x, y ∈ NonNegative)
+        # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
+        #       x, y >= 0   (x, y ∈ Nonnegatives)
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan),(MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])
 
@@ -399,9 +399,9 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     end
 
-    @testset "Modify constants in Nonnegative and Nonpositive" begin
+    @testset "Modify constants in Nonnegatives and Nonpositives" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositive),(MOI.VectorAffineFunction{Float64},MOI.Nonpositive)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
 
         m = MOI.SolverInstance(solver)
 
@@ -414,8 +414,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
 
-        c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],0.0), Nonnegative(1))
-        c2 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],0.0), Nonpositive(1))
+        c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],0.0), Nonnegatives(1))
+        c2 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],0.0), Nonpositives(1))
 
         MOI.optimize!(m)
 

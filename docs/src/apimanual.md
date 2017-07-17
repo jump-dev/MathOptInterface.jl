@@ -154,19 +154,19 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 
 #### Linear constraints
 
-| Mathematical Constraint       | MOI Function                 | MOI Set       |
-|-------------------------------|------------------------------|---------------|
-| ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`    |
-| ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan` |
-| ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`     |
-| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`    |
-| ``x_i \le u``                 | `ScalarVariablewiseFunction` | `LessThan`    |
-| ``x_i \ge l``                 | `ScalarVariablewiseFunction` | `GreaterThan` |
-| ``x_i = b``                   | `ScalarVariablewiseFunction` | `EqualTo`     |
-| ``l \le x_i \le u``           | `ScalarVariablewiseFunction` | `Interval`    |
-| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegative` |
-| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositive` |
-| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zero`        |
+| Mathematical Constraint       | MOI Function                 | MOI Set        |
+|-------------------------------|------------------------------|----------------|
+| ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`     |
+| ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan`  |
+| ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`      |
+| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`     |
+| ``x_i \le u``                 | `ScalarVariablewiseFunction` | `LessThan`     |
+| ``x_i \ge l``                 | `ScalarVariablewiseFunction` | `GreaterThan`  |
+| ``x_i = b``                   | `ScalarVariablewiseFunction` | `EqualTo`      |
+| ``l \le x_i \le u``           | `ScalarVariablewiseFunction` | `Interval`     |
+| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
+| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
+| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
 
 
 [Define ``\mathbb{R}_+, \mathbb{R}_-``]
@@ -352,7 +352,7 @@ Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `bl
 function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
     if !supportsproblem(solver, ScalarAffineFunction,
             [(ScalarAffineFunction,LessThan),
-             (ScalarAffineFunction,Zero),
+             (ScalarAffineFunction,Zeros),
              (ScalarVariablewiseFunction,LessThan),
              (ScalarVariablewiseFunction,GreaterThan),
              (ScalarVariablewiseFunction,Integers)])
@@ -551,7 +551,7 @@ Currently, a convention for duals is not defined for problems with non-conic set
 
 [Avoid storing extra copies of the problem when possible.]
 
-[It would be nice if solvers supported the multiple different ways to write the same constraint, e.g., `GreaterThan` and `Nonnegative`, second-order cone and rotated second-order cone.]
+[It would be nice if solvers supported the multiple different ways to write the same constraint, e.g., `GreaterThan` and `Nonnegatives`, second-order cone and rotated second-order cone.]
 
 There is no special interface for column generation. If the solver has a special API for setting
 coefficients in existing constraints when adding a new variable, it is possible
