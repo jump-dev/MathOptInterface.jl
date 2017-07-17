@@ -556,8 +556,8 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             x_primal = MOI.getattribute(m, MOI.VariablePrimal(), x)
             @test x_primal[1]^2 ≥ x_primal[4]^2 + x_primal[5]^2 - ε
 
-            @test MOI.cangetattribute(m, MOI.VariableDual(), x)
-            x_dual = MOI.getattribute(m, MOI.VariableDual(), x)
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
+            x_dual = MOI.getattribute(m, MOI.ConstraintDual(), c2)
             @test x_dual[1]^2 ≥ x_dual[4]^2 + x_dual[5]^2 - ε
             @test x_dual[2] ≈ 0.0 atol=ε
             @test x_dual[3] ≈ 0.0 atol=ε
