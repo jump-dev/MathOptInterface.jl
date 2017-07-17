@@ -201,7 +201,7 @@ By convention, solvers are not expected to support nonzero constant terms in the
 
 | Mathematical Constraint                                                                    | MOI Function                 | MOI Set                            |
 |--------------------------------------------------------------------------------------------|------------------------------|------------------------------------|
-| ``x_i \in \mathbb{Z}``                                                                     | `ScalarVariablewiseFunction` | `Integers`                         |
+| ``x_i \in \mathbb{Z}``                                                                     | `ScalarVariablewiseFunction` | `Integer`                          |
 | ``x_i \in \{0,1\}``                                                                        | `ScalarVariablewiseFunction` | `ZeroOne`                          |
 | ``x_i \in \{0\} \cup [l,u]``                                                               | `ScalarVariablewiseFunction` | `Semicontinuous`                   |
 | ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `ScalarVariablewiseFunction` | `SemiInteger`                      |
@@ -351,12 +351,12 @@ end
 Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns an `IntegerLinearResult`.
 """
 function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
-    if !supportsproblem(solver, ScalarAffineFunction,
-            [(ScalarAffineFunction,LessThan),
+    if !supportsproblem(solver, ScalarAffineFunction{Float64},
+            [(ScalarAffineFunction,LessThan{Float64}),
              (ScalarAffineFunction,Zeros),
-             (ScalarVariablewiseFunction,LessThan),
-             (ScalarVariablewiseFunction,GreaterThan),
-             (ScalarVariablewiseFunction,Integers)])
+             (ScalarVariablewiseFunction,LessThan{Float64}),
+             (ScalarVariablewiseFunction,GreaterThan{Float64}),
+             (ScalarVariablewiseFunction,Integer)])
         error("Provided solver does not support mixed-integer linear optimization")
     end
     numvar = size(Ale,2)
@@ -384,7 +384,7 @@ function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC,
     # add integrality constraints
     for i in integerindices
         @assert 1 <= i <= numvar
-        addconstraint!(m, ScalarVariablewiseFunction(x[i]), Integers())
+        addconstraint!(m, ScalarVariablewiseFunction(x[i]), Integer())
     end
 
     # convert a SparseMatrixCSC into a vector of scalar affine functions
