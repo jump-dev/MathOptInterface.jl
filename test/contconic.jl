@@ -1,8 +1,12 @@
+using MathOptInterface
+MOI = MathOptInterface
+
 # Continuous conic problems
 
 function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorVariablewiseFunction,MOI.Nonnegative),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorVariablewiseFunction,MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
+
         @testset "LIN1" begin
             # linear conic problem
             # min -3x - 2y - 4z
@@ -16,14 +20,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             v = MOI.addvariables!(m, 3)
             @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
 
-            vc = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction(v), MOI.Nonnegative(3))
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zero(2))
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonnegative}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zero}()) == 1
+            vc = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction(v), MOI.Nonnegatives(3))
+            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonnegatives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
             loc = MOI.getattribute(m, MOI.ListOfConstraints())
             @test length(loc) == 2
-            @test (MOI.VectorVariablewiseFunction,MOI.Nonnegative) in loc
-            @test (MOI.VectorAffineFunction{Float64},MOI.Zero) in loc
+            @test (MOI.VectorVariablewiseFunction,MOI.Nonnegatives) in loc
+            @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
 
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
@@ -50,8 +54,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.NonNegative),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN1A" begin
             # Same as LIN1 but variable bounds enforced with VectorAffineFunction
 
@@ -60,10 +63,10 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             v = MOI.addvariables!(m, 3)
             @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
 
-            vc = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3], v, ones(3), zeros(3)), MOI.Nonnegative(3))
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zero(2))
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zero}()) == 1
+            vc = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3], v, ones(3), zeros(3)), MOI.Nonnegatives(3))
+            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
 
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
 
@@ -90,7 +93,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zero),(MOI.VectorVariablewiseFunction,MOI.Nonnegative),(MOI.VectorVariablewiseFunction,MOI.Nonpositive)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorVariablewiseFunction,MOI.Nonnegatives),(MOI.VectorVariablewiseFunction,MOI.Nonpositives)])
         @testset "LIN2" begin
             # mixed cones
             # min  3x + 2y - 4z + 0s
@@ -114,14 +117,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
 
 
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zero(3))
+            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
 
-            vy = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([y]), MOI.Nonpositive(1))
-            vz = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([z]), MOI.Nonnegative(1))
+            vy = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([y]), MOI.Nonpositives(1))
+            vz = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([z]), MOI.Nonnegatives(1))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zero}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositive}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
 
             MOI.optimize!(m)
 
@@ -150,7 +153,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zero),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.VectorAffineFunction{Float64},MOI.Nonpositive)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
         @testset "LIN2A" begin
             # mixed cones
             # same as LIN2 but with variable bounds enforced with VectorAffineFunction
@@ -174,14 +177,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
 
 
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zero(3))
+            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
 
-            vy = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), Nonpositive(1))
-            vz = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[z],[1.0],[0.0]), Nonnegative(1))
+            vy = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), Nonpositives(1))
+            vz = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[z],[1.0],[0.0]), Nonnegatives(1))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zero}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositive}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
 
 
             MOI.optimize!(m)
@@ -211,7 +214,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositive),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN3 - infeasible" begin
             # Problem LIN3 - Infeasible LP
             # min  0
@@ -226,11 +229,11 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             x = MOI.addvariable!(m)
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegative(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[1.0]), MOI.Nonpositve(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegatives(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[1.0]), MOI.Nonpositives(1))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositive}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
 
             MOI.optimize!(m)
 
@@ -245,7 +248,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.VectorVariablewiseFunction,MOI.Nonpositive)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorVariablewiseFunction,MOI.Nonpositives)])
         @testset "LIN4 - infeasible" begin
             # Problem LIN4 - Infeasible LP
             # min  0
@@ -260,11 +263,11 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             x = MOI.addvariable!(m)
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegative(1))
-            MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([x]), MOI.Nonpositve(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegatives(1))
+            MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([x]), MOI.Nonpositives(1))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonpositive}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonpositives}()) == 1
 
             MOI.optimize!(m)
 
@@ -376,7 +379,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC2" begin
             # Problem SOC2
             # min  x
@@ -390,15 +393,15 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             m = MOI.SolverInstance(solver)
 
-            x,y,t = MOI.addvariables!(m, 2)
+            x,y,t = MOI.addvariables!(m, 3)
 
-            MOI.setobjective!(m, MinSense, MOI.ScalarAffineExpression([x],[1.0],0.0))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x],[1.0],0.0))
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[-1/sqrt(2)]), MOI.Nonnegative(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[-1/sqrt(2)]), MOI.Nonnegatives(1))
             MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[t],[-1.0],[1.0]), MOI.Zeros(1))
             MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3],[t,x,y],ones(3),zeros(3)), MOI.SecondOrderCone(3))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
@@ -423,7 +426,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonpositive),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC2A" begin
             # Problem SOC2A
             # Same as SOC2 but with nonpostive instead of nonnegative
@@ -436,13 +439,13 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             x,y,t = MOI.addvariables!(m, 2)
 
-            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineExpression([x],[1.0],0.0))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x],[1.0],0.0))
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[-1.0],[1/sqrt(2)]), MOI.Nonpositive(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[-1.0],[1/sqrt(2)]), MOI.Nonpositives(1))
             MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[t],[-1.0],[1.0]), MOI.Zeros(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3],[t,x,y],ones(3),zeros9(3)), MOI.SecondOrderCone(3))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3],[t,x,y],ones(3),zeros(3)), MOI.SecondOrderCone(3))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositive}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
@@ -467,7 +470,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegative),(MOI.VectorAffineFunction{Float64},MOI.Nonpositive),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC3 - infeasible" begin
             # Problem SOC3 - Infeasible
             # min 0
@@ -484,12 +487,12 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             x,y = MOI.addvariables!(m, 2)
 
-            MOI.addconstraint!(m, VectorAffineFunction([1],[y],[1.0],[-2.0]), MOI.Nonnegative(1))
-            MOI.addconstraint!(m, VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonpositive(1))
-            MOI.addconstraint!(m, VectorAffineFunction([1,2],[x,y],ones(2),zeros(2)), MOI.SecondOrderCone(2))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[-2.0]), MOI.Nonnegatives(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonpositives(1))
+            MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2],[x,y],ones(2),zeros(2)), MOI.SecondOrderCone(2))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegative}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositive}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
             @test MOI.cangetattribute(m, MOI.TerminationStatus())
@@ -503,7 +506,71 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         end
     end
 
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, EqualTo{Float64}), (MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorVariablewiseFunction, MOI.SecondOrderCone)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.Zeros),(MOI.VectorVariablewiseFunction,MOI.SecondOrderCone)])
+        @testset "SOC4" begin
+            # Problem SOC4
+            # min 0x[1] - 2x[2] - 1x[3]
+            #  st  x[1]                                == 1 (c1a)
+            #              x[2]         - x[4]         == 0 (c1b)
+            #                      x[3]         - x[5] == 0 (c1c)
+            #      x[1] >= ||(x[4],x[5])||                  (c2)
+            # in conic form:
+            # min  c^Tx
+            # s.t. Ax + b ∈ {0}₃
+            #      (x[1],x[4],x[5]) ∈ SOC₃
+            # Like SOCINT1 but with copies of variables and integrality relaxed
+            # Tests out-of-order indices in cones
+
+            b = [1.0,0.0,0.0]
+            A = [1.0 0.0 0.0 0.0 0.0
+                0.0 1.0 0.0 -1.0 0.0
+                0.0 0.0 1.0 0.0 -1.0]
+            c = [0.0,-2.0,-1.0,0.0,0.0]
+
+            m = MOI.SolverInstance(solver)
+
+            x = MOI.addvariables!(m, 5)
+            
+            A_cols = x
+            A_rows = [1,2,3,2,3]
+            A_vals = [1.0,1.0,1.0,-1.0,-1.0]
+
+            c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction(A_rows,A_cols,A_vals,b), MOI.Zeros(3))
+            c2 = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([x[1],x[4],x[5]]), MOI.SecondOrderCone(3))
+
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.SecondOrderCone}()) == 1
+
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(x,c,0.0))
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+            x_primal = MOI.getattribute(m, MOI.VariablePrimal(), x)
+            @test x_primal[1]^2 ≥ x_primal[4]^2 + x_primal[5]^2 - ε
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
+            x_dual = MOI.getattribute(m, MOI.ConstraintDual(), c2)
+            @test x_dual[1]^2 ≥ x_dual[4]^2 + x_dual[5]^2 - ε
+            @test x_dual[2] ≈ 0.0 atol=ε
+            @test x_dual[3] ≈ 0.0 atol=ε
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c1)
+            c1_dual = MOI.getattribute(m, MOI.ConstraintDual(), c1)
+
+            @test dot(c,x_primal) ≈ -dot(c1_dual,b) atol=ε
+            @test norm((c+A'c1_dual) - x_dual) ≈ 0.0 atol=ε
+        end
+    end
+
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorVariablewiseFunction, MOI.SecondOrderCone)])
         @testset "SDP1" begin
             # Problem SDP1 - sdo1 from MOSEK docs
             # From Mosek.jl/test/mathprogtestextra.jl, under license:
@@ -549,7 +616,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             MOI.setobjective!(m, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2, 0, 2, 2, 2, 1], 0.))
 
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, EqualTo{Float64}}()) == 2
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction, MOI.PositiveSemidefiniteConeTriangle}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction, MOI.SecondOrderCone}()) == 1
 
