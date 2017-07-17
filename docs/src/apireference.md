@@ -191,6 +191,7 @@ LessThan
 EqualTo
 Interval
 SecondOrderCone
+RotatedSecondOrderCone
 ExponentialCone
 DualExponentialCone
 PowerCone
