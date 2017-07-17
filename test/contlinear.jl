@@ -409,6 +409,134 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     end
 
+    @testset "Change coeffs, del constr, del var" begin
+        #####################################
+        # Start from simple LP
+        # Solve it
+        # Copy and solve again
+        # Chg coeff, solve, change back solve
+        # del constr and solve
+        # del var and solve
+
+        #   maximize x + y
+        #
+        #   s.t. 2 x + 1 y <= 4
+        #        1 x + 2 y <= 4
+        #        x >= 0, y >= 0
+        #
+        #   solution: x = 1.3333333, y = 1.3333333, objv = 2.66666666
+
+        m = MOI.SolverInstance(solver)
+
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 2
+
+        cf1 = MOI.ScalarAffineFunction([x, y], [2.0,1.0], 0.0)
+        cf2 = MOI.ScalarAffineFunction([x, y], [1.0,2.0], 0.0)
+
+        c1 = MOI.addconstraint!(m, cf, MOI.LessThan(4.0))
+        c2 = MOI.addconstraint!(m, cf, MOI.LessThan(4.0))
+
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 2
+
+        vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
+        vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), MOI.GreaterThan(0.0))
+
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 2
+
+        objf = MOI.ScalarAffineFunction([x, y], [1.0,1.0], 0.0)
+        MOI.setobjective!(m, MOI.MaxSense, objf)
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.66666666 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [1.3333333, 1.3333333] atol=ε
+
+        # copy and solve again
+        # missing test
+
+        # change coeff
+        #   maximize x + y
+        #
+        #   s.t. 2 x + 2 y <= 4
+        #        1 x + 2 y <= 4
+        #        x >= 0, y >= 0
+        #
+        #   solution: x = 0, y = 2, objv = 2
+
+
+        MOI.modifyconstraint!(m, c1, ScalarCoefficientChange{T}(y, 2))
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [0.0, 2.0] atol=ε
+
+        # delconstrs and solve
+        #   maximize x + y
+        #
+        #   s.t. 1 x + 2 y <= 4
+        #        x >= 0, y >= 0
+        #
+        #   solution: x = 4, y = 0, objv = 4
+
+        MOI.delete!(m, c1)
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 4 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [4.0, 0.0] atol=ε
+
+        # delvars and solve
+        #   maximize y
+        #
+        #   s.t.  2 y <= 4
+        #           y >= 0
+        #
+        #   solution: y = 2, objv = 2
+
+        MOI.delete!(m, x)
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), y)
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 2.0 atol=ε
+    end
 
     @testset "Modify GreaterThan and LessThan sets as linear constraints" begin
 
