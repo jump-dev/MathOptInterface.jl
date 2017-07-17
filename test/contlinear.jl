@@ -357,7 +357,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
     end
 
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
-    
+
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarVariablewiseFunction{Float64},MOI.NonPositive),(MOI.ScalarVariablewiseFunction{Float64},MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
