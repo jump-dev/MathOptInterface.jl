@@ -668,8 +668,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
 
-        c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],0.0), MOI.Nonnegatives(1))
-        c2 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],0.0), MOI.Nonpositives(1))
+        c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
+        c2 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
 
         MOI.optimize!(m)
 
