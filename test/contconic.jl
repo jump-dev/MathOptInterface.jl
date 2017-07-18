@@ -122,8 +122,8 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             vz = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([z]), MOI.Nonnegatives(1))
 
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonpositives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonnegatives}()) == 1
 
             MOI.optimize!(m)
 
@@ -529,7 +529,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             m = MOI.SolverInstance(solver)
 
             x = MOI.addvariables!(m, 5)
-            
+
             A_cols = x
             A_rows = [1,2,3,2,3]
             A_vals = [1.0,1.0,1.0,-1.0,-1.0]
