@@ -120,6 +120,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             vy = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([y]), MOI.Nonpositives(1))
             vz = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([z]), MOI.Nonnegatives(1))
+            vz = MOI.addconstraint!(m, MOI.VectorVariablewiseFunction([s]), MOI.Zeros(1))
 
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorVariablewiseFunction,MOI.Nonpositives}()) == 1
