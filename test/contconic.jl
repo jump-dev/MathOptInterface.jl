@@ -47,7 +47,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [3, 1] atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [-3, -1] atol=ε
 
             # TODO var dual and con primal
         end
@@ -86,7 +86,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [3, 1] atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [-3, -1] atol=ε
 
             # TODO var dual and con primal
         end
@@ -146,7 +146,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariablePrimal(), s) ≈ 0 atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [-7, -2, 4] atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=ε
 
             # TODO var dual and con primal
 
@@ -208,7 +208,7 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariablePrimal(), s) ≈ 0 atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [-7, -2, 4] atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=ε
 
             # TODO var dual and con primal
 
