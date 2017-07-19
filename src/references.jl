@@ -45,5 +45,5 @@ Delete the referenced object from the solver instance.
 Delete the referenced objects in the vector `refs` from the solver instance.
 It may be assumed that `R` is a concrete type.
 """
-Base.delete!(m::AbstractSolverInstance, ref::AnyReference) = throw(MethodError())
-Base.delete!(m::AbstractSolverInstance, refs::Vector{<:AnyReference}) = throw(MethodError())
+Base.delete!(m::AbstractSolverInstance, ref::AnyReference) = throw(MethodError(Base.delete!, (m, ref)))
+Base.delete!(m::AbstractSolverInstance, refs::Vector{<:AnyReference}) = throw(MethodError(Base.delete!, (m, refs)))
