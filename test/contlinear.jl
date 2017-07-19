@@ -131,8 +131,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[3]), MOI.GreaterThan(0.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 3
 
-        MOI.modifyconstraint!(m, c, ScalarCoefficientChange{Float64}(z, 1.0))
-        MOI.modifyobjective!(m, ScalarCoefficientChange{Float64}(z, 2.0))
+        MOI.modifyconstraint!(m, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
+        MOI.modifyobjective!(m, MOI.ScalarCoefficientChange{Float64}(z, 2.0))
 
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 3
