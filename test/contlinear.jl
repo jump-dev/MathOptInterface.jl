@@ -23,7 +23,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[1]), MOI.GreaterThan(0.0))
         vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 2
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)
@@ -315,7 +315,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
         vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 2
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction([x, y], [-1.0,0.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)
@@ -393,7 +393,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         m = MOI.SolverInstance(solver)
 
-        x = MOI.addvariables!(m)
+        x = MOI.addvariable!(m)
         @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
         MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.LessThan(0.0))
@@ -448,7 +448,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= 0.0
-        MOI.modifyconstraint!(m, c1, GreaterThan(100.0))
+        MOI.modifyconstraint!(m, c1, MOI.GreaterThan(100.0))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -538,7 +538,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         #   solution: x = 0, y = 2, objv = 2
 
 
-        MOI.modifyconstraint!(m, c1, ScalarCoefficientChange(y, 2))
+        MOI.modifyconstraint!(m, c1, MOI.ScalarCoefficientChange(y, 2))
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
