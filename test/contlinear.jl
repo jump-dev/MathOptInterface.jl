@@ -460,7 +460,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= -100.0
-        MOI.modifyconstraint!(m, c2, LessThan(-100.0))
+        MOI.modifyconstraint!(m, c2, MOI.LessThan(-100.0))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
