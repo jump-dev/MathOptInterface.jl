@@ -420,7 +420,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarVariablewiseFunction{Float64},MOI.NonPositive),(MOI.ScalarVariablewiseFunction{Float64},MOI.LessThan{Float64})])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarVariablewiseFunction{Float64},MOI.Nonpositives),(MOI.ScalarVariablewiseFunction{Float64},MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -602,7 +602,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     @testset "Modify GreaterThan and LessThan sets as linear constraints" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.NonPositive),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.Nonpositives),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
