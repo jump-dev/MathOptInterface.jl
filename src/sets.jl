@@ -8,18 +8,33 @@ Abstract supertype for set objects used to encode constraints.
 abstract type AbstractSet end
 
 """
-    dimension(s::AbstractSet)
+    AbstractScalarSet
 
-Return the dimension (number of vector components) in the set `s`.
+Abstract supertype for subsets of ``\\mathbb{R}``.
 """
-dimension(s::AbstractSet) = s.dim
+abstract type AbstractScalarSet <: AbstractSet end
+
+"""
+    AbstractVectorSet
+
+Abstract supertype for subsets of ``\\mathbb{R}^n`` for some ``n``.
+"""
+abstract type AbstractVectorSet <: AbstractSet end
+
+"""
+    dimension(s::AbstractVectorSet)
+
+Return the underlying dimension (number of vector components) in the set `s`, i.e.,
+``n`` if the set is a subset of ``\\mathbb{R}^n``.
+"""
+dimension(s::AbstractVectorSet) = s.dim # .dim field is conventional, overwrite this method if not applicable
 
 """
     Reals(dim)
 
 The set ``\\mathbb{R}^{dim}`` (containing all points) of dimension `dim`.
 """
-struct Reals <: AbstractSet
+struct Reals <: AbstractVectorSet
     dim::Int
 end
 
@@ -28,7 +43,7 @@ end
 
 The set ``\\{ 0 \\}^{dim}`` (containing only the origin) of dimension `dim`.
 """
-struct Zeros <: AbstractSet
+struct Zeros <: AbstractVectorSet
     dim::Int
 end
 
@@ -37,7 +52,7 @@ end
 
 The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\ge 0 \\}`` of dimension `dim`.
 """
-struct Nonnegatives <: AbstractSet
+struct Nonnegatives <: AbstractVectorSet
     dim::Int
 end
 
@@ -46,7 +61,7 @@ end
 
 The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\le 0 \\}`` of dimension `dim`.
 """
-struct Nonpositives <: AbstractSet
+struct Nonpositives <: AbstractVectorSet
     dim::Int
 end
 
@@ -55,7 +70,7 @@ end
 
 The set ``[lower,\\infty) \\subseteq \\mathbb{R}``.
 """
-struct GreaterThan{T <: Real} <: AbstractSet
+struct GreaterThan{T <: Real} <: AbstractScalarSet
     lower::T
 end
 
@@ -64,7 +79,7 @@ end
 
 The set ``(-\\infty,upper] \\subseteq \\mathbb{R}``.
 """
-struct LessThan{T <: Real} <: AbstractSet
+struct LessThan{T <: Real} <: AbstractScalarSet
     upper::T
 end
 
@@ -73,7 +88,7 @@ end
 
 The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
 """
-struct EqualTo{T <: Real} <: AbstractSet
+struct EqualTo{T <: Real} <: AbstractScalarSet
     value::T
 end
 
@@ -83,19 +98,17 @@ end
 The interval ``[lower, upper] \\subseteq \\mathbb{R}``.
 If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted as a one-sided interval.
 """
-struct Interval{T <: Real} <: AbstractSet
+struct Interval{T <: Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
-
-dimension(s::Union{Interval,GreaterThan,LessThan,EqualTo}) = 1
 
 """
     SecondOrderCone(dim)
 
 The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dim} : t \\ge || x ||_2 \\}`` of dimension `dim`.
 """
-struct SecondOrderCone <: AbstractSet
+struct SecondOrderCone <: AbstractVectorSet
     dim::Int
 end
 
@@ -104,7 +117,7 @@ end
 
 The rotated second-order cone ``\\{ (t,u,x) \\mathbb{R}^{dim} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dim`.
 """
-struct RotatedSecondOrderCone <: AbstractSet
+struct RotatedSecondOrderCone <: AbstractVectorSet
     dim::Int
 end
 
@@ -113,7 +126,7 @@ end
 
 The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x/y) \\le z, y > 0 \\}``.
 """
-struct ExponentialCone <: AbstractSet
+struct ExponentialCone <: AbstractVectorSet
 end
 
 """
@@ -121,7 +134,7 @@ end
 
 The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\exp (v/u) \\le \\exp(1) w, u < 0 \\}``.
 """
-struct DualExponentialCone <: AbstractSet
+struct DualExponentialCone <: AbstractVectorSet
 end
 
 """
@@ -129,7 +142,7 @@ end
 
 The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{a} y^{1-a} >= |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `a`.
 """
-struct PowerCone{T <: Real} <: AbstractSet
+struct PowerCone{T <: Real} <: AbstractVectorSet
     a::T
 end
 
@@ -138,7 +151,7 @@ end
 
 The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{a})^a (\\frac{v}/{1-a})^{1-a} >= |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `a`.
 """
-struct DualPowerCone{T <: Real} <: AbstractSet
+struct DualPowerCone{T <: Real} <: AbstractVectorSet
     a::T
 end
 
@@ -164,7 +177,7 @@ The matrix
 ```
 corresponds to ``(1, 2, 3, 4, 5, 6)`` for `PositiveSemidefiniteConeTriangle`
 """
-struct PositiveSemidefiniteConeTriangle <: AbstractSet
+struct PositiveSemidefiniteConeTriangle <: AbstractVectorSet
     dim::Int
 end
 
@@ -188,7 +201,7 @@ The matrix
 ```
 and to ``(1, 2\\sqrt{2}, 3\\sqrt{2}, 4, 5\\sqrt{2}, 6)`` for `PositiveSemidefiniteConeScaled`.
 """
-struct PositiveSemidefiniteConeScaled <: AbstractSet
+struct PositiveSemidefiniteConeScaled <: AbstractVectorSet
     dim::Int
 end
 
@@ -197,23 +210,21 @@ end
 
 The set of integers ``\\mathbb{Z}``.
 """
-struct Integer <: AbstractSet end
+struct Integer <: AbstractScalarSet end
 
 """
     ZeroOne()
 
 The set ``\\{ 0, 1 \\}``.
 """
-struct ZeroOne <: AbstractSet end
-
-dimension(s::Union{Integer,ZeroOne}) = 1
+struct ZeroOne <: AbstractScalarSet end
 
 """
     Semicontinuous(l,u)
 
 The set ``\\{0\\} \\cup [l,u]``.
 """
-struct Semicontinuous{T <: Real} <: AbstractSet
+struct Semicontinuous{T <: Real} <: AbstractScalarSet
     l::T
     u::T
 end
@@ -223,7 +234,7 @@ end
 
 The set ``\\{0\\} \\cup \\{l,l+1,\\ldots,u-1,u\\}``.
 """
-struct SemiInteger{T <: Real} <: AbstractSet
+struct SemiInteger{T <: Real} <: AbstractScalarSet
     l::T
     u::T
 end
@@ -237,7 +248,7 @@ The `weights` induce an ordering of the variables; as such, they should be uniqu
 The *k*th element in the set corresponds to the *k*th weight in `weights`.
 See [here](http://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
 """
-struct SOS1{T <: Real} <: AbstractSet
+struct SOS1{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
@@ -250,7 +261,7 @@ The `weights` induce an ordering of the variables; as such, they should be uniqu
 The *k*th element in the set corresponds to the *k*th weight in `weights`.
 See [here](http://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
 """
-struct SOS2{T <: Real} <: AbstractSet
+struct SOS2{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 

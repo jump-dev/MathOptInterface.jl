@@ -8,12 +8,27 @@ Abstract supertype for function objects.
 abstract type AbstractFunction end
 
 """
+    AbstractScalarFunction
+
+Abstract supertype for scalar-valued function objects.
+"""
+abstract type AbstractScalarFunction <: AbstractFunction end
+
+"""
+    AbstractVectorFunction
+
+Abstract supertype for vector-valued function objects.
+"""
+abstract type AbstractVectorFunction <: AbstractFunction end
+
+
+"""
     ScalarVariablewiseFunction(variable)
 
 The function that extracts the scalar variable referenced by `variable`, a `VariableReference`.
 This function would naturally be used for single variable bounds or integrality constraints.
 """
-struct ScalarVariablewiseFunction <: AbstractFunction
+struct ScalarVariablewiseFunction <: AbstractScalarFunction
     variable::VariableReference
 end
 
@@ -23,7 +38,7 @@ end
 The function that extracts the vector of variables referenced by `variables`, a `Vector{VariableReference}`.
 This function would naturally be used for constraints that apply to groups of variables, such as an "all different" constraint, an indicator constraint, or a complementarity constraint.
 """
-struct VectorVariablewiseFunction <: AbstractFunction
+struct VectorVariablewiseFunction <: AbstractVectorFunction
     variables::Vector{VariableReference}
 end
 
@@ -36,7 +51,7 @@ The scalar-valued affine function ``a^T x + b``, where:
 
 Duplicate variable references in `variables` are accepted, and the corresponding coefficients are summed together.
 """
-struct ScalarAffineFunction{T} <: AbstractFunction
+struct ScalarAffineFunction{T} <: AbstractScalarFunction
     variables::Vector{VariableReference}
     coefficients::Vector{T}
     constant::T
@@ -51,7 +66,7 @@ The vector-valued affine function ``A x + b``, where:
 
 Duplicate indices in the ``A`` are accepted, and the corresponding coefficients are summed together.
 """
-struct VectorAffineFunction{T} <: AbstractFunction
+struct VectorAffineFunction{T} <: AbstractVectorFunction
     outputindex::Vector{Int}
     variables::Vector{VariableReference}
     coefficients::Vector{T}
@@ -69,7 +84,7 @@ The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
 Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together.
 "Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
 """
-struct ScalarQuadraticFunction{T} <: AbstractFunction
+struct ScalarQuadraticFunction{T} <: AbstractScalarFunction
     affine_variables::Vector{VariableReference}
     affine_coefficients::Vector{T}
     quadratic_rowvariables::Vector{VariableReference}
@@ -90,7 +105,7 @@ The vector-valued quadratic function with i`th` component ("output index") defin
 Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding coefficients are summed together.
 "Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
 """
-struct VectorQuadraticFunction{T} <: AbstractFunction
+struct VectorQuadraticFunction{T} <: AbstractVectorFunction
     affine_outputindex::Vector{Int}
     affine_variables::Vector{VariableReference}
     affine_coefficients::Vector{T}
