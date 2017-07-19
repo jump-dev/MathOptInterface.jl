@@ -363,7 +363,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         m = MOI.SolverInstance(solver)
 
-        x = MOI.addvariables!(m)
+        x = MOI.addvariable!(m)
         @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
         MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
