@@ -10,7 +10,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
         #       x, y >= 0   (x, y ∈ Nonnegatives)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64})])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -21,9 +21,9 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         c = MOI.addconstraint!(m, cf, MOI.LessThan(1.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
-        vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[1]), MOI.GreaterThan(0.0))
-        vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[2]), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 2
+        vc1 = MOI.addconstraint!(m, MOI.SingleVariable(v[1]), MOI.GreaterThan(0.0))
+        vc2 = MOI.addconstraint!(m, MOI.SingleVariable(v[2]), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)
@@ -128,14 +128,14 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         push!(v, z)
         @test v[3] == z
 
-        vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[3]), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 3
+        vc3 = MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
 
         MOI.modifyconstraint!(m, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
         MOI.modifyobjective!(m, MOI.ScalarCoefficientChange{Float64}(z, 2.0))
 
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 3
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
 
         MOI.optimize!(m)
 
@@ -194,8 +194,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(0.0))
         MOI.delete!(m, vc3)
-        vc3 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(v[3]), MOI.EqualTo(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 3
+        vc3 = MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.EqualTo(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
 
         MOI.optimize!(m)
 
@@ -300,7 +300,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # s.t. x + y <= 1
         # x, y >= 0
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64})])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -313,9 +313,9 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         c = MOI.addconstraint!(m, cf, MOI.LessThan(1.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
-        vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
-        vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 2
+        vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        vc2 = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction([x, y], [-1.0,0.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)
@@ -366,11 +366,11 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         x = MOI.addvariable!(m)
         @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
-        MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
         cf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
         MOI.addconstraint!(m, cf, MOI.GreaterThan(3.0))
 
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 1
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 1
 
         objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
@@ -396,11 +396,11 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         x = MOI.addvariable!(m)
         @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
-        MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.LessThan(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
         cf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
         MOI.addconstraint!(m, cf, MOI.LessThan(3.0))
 
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.LessThan{Float64}}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()) == 1
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
         objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
@@ -420,7 +420,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}),(MOI.ScalarVariablewiseFunction,MOI.LessThan{Float64})])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.SingleVariable,MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -433,8 +433,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
 
-        c1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
-        c2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), MOI.LessThan(0.0))
+        c1 = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        c2 = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.LessThan(0.0))
 
         MOI.optimize!(m)
 
@@ -503,10 +503,10 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 2
 
-        vc1 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(x), MOI.GreaterThan(0.0))
-        vc2 = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(y), MOI.GreaterThan(0.0))
+        vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        vc2 = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
 
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction,MOI.GreaterThan{Float64}}()) == 2
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction([x, y], [1.0,1.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, objf)

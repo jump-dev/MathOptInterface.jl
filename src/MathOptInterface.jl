@@ -76,7 +76,7 @@ supportsproblem(s, ScalarAffineFunction{Float64},
     [(ScalarAffineFunction{Float64},Zeros),
     (ScalarAffineFunction{Float64},LessThan),
     (ScalarAffineFunction{Float64},GreaterThan),
-    (ScalarVariablewiseFunction{Float64},ZeroOne)])
+    (SingleVariable,ZeroOne)])
 ```
 should be `true` for a mixed-integer linear programming solver `s`.
 
