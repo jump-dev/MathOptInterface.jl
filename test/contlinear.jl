@@ -498,8 +498,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         cf1 = MOI.ScalarAffineFunction([x, y], [2.0,1.0], 0.0)
         cf2 = MOI.ScalarAffineFunction([x, y], [1.0,2.0], 0.0)
 
-        c1 = MOI.addconstraint!(m, cf, MOI.LessThan(4.0))
-        c2 = MOI.addconstraint!(m, cf, MOI.LessThan(4.0))
+        c1 = MOI.addconstraint!(m, cf1, MOI.LessThan(4.0))
+        c2 = MOI.addconstraint!(m, cf2, MOI.LessThan(4.0))
 
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 2
 
