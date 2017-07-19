@@ -322,7 +322,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
 
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
 
-        MOI.optimize(m)
+        MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
