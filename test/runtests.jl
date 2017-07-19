@@ -5,6 +5,8 @@ const MOI = MathOptInterface
 
 include("function_utilities.jl")
 
+include("function_modification.jl")
+
 include("contlinear.jl")
 @testset "Continuous linear problems" begin
     # contlineartest(GLPKSolverLP())
