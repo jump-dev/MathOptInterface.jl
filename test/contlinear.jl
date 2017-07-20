@@ -125,7 +125,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # x,y,z >= 0
 
         z = MOI.addvariable!(m)
-        push!(v, z)
+        v = [v; z]
         @test v[3] == z
 
         vc3 = MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.GreaterThan(0.0))
