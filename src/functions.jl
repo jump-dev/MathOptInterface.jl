@@ -23,22 +23,22 @@ abstract type AbstractVectorFunction <: AbstractFunction end
 
 
 """
-    ScalarVariablewiseFunction(variable)
+    SingleVariable(variable)
 
 The function that extracts the scalar variable referenced by `variable`, a `VariableReference`.
-This function would naturally be used for single variable bounds or integrality constraints.
+This function is naturally be used for single variable bounds or integrality constraints.
 """
-struct ScalarVariablewiseFunction <: AbstractScalarFunction
+struct SingleVariable <: AbstractScalarFunction
     variable::VariableReference
 end
 
 """
-    VectorVariablewiseFunction(variables)
+    VectorOfVariables(variables)
 
 The function that extracts the vector of variables referenced by `variables`, a `Vector{VariableReference}`.
-This function would naturally be used for constraints that apply to groups of variables, such as an "all different" constraint, an indicator constraint, or a complementarity constraint.
+This function is naturally be used for constraints that apply to groups of variables, such as an "all different" constraint, an indicator constraint, or a complementarity constraint.
 """
-struct VectorVariablewiseFunction <: AbstractVectorFunction
+struct VectorOfVariables <: AbstractVectorFunction
     variables::Vector{VariableReference}
 end
 

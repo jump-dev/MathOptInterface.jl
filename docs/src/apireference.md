@@ -163,8 +163,8 @@ ConstraintSet
 List of recognized functions.
 ```@docs
 AbstractFunction
-ScalarVariablewiseFunction
-VectorVariablewiseFunction
+SingleVariable
+VectorOfVariables
 ScalarAffineFunction
 VectorAffineFunction
 ScalarQuadraticFunction

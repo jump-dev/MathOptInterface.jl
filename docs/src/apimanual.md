@@ -42,8 +42,8 @@ where:
 * the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by [`AbstractSet`](@ref MathOptInterface.AbstractSet) objects
 
 The current function types are:
-* **scalar-valued variable-wise**: ``x_j``, a scalar variable defined by a variable reference
-* **vector-valued variable-wise**: a vector of variables defined by a list of variable references
+* **projection onto a single coordinate**: ``x_j``, a single variable defined by a variable reference
+* **projection onto multiple coordinates**: a subvector of variables defined by a list of variable references
 * **scalar-valued affine**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
 * **vector-valued affine**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
 * **scalar-valued quadratic**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
@@ -79,14 +79,14 @@ A variable can be deleted from a model with [`delete!(::AbstractSolverInstance, 
 
 ## Functions
 
-MOI defines six functions as listed in the definition of the [Standard form problem](@ref). The simplest function is [`ScalarVariablewiseFunction`](@ref MathOptInterface.ScalarVariablewiseFunction) defined as:
+MOI defines six functions as listed in the definition of the [Standard form problem](@ref). The simplest function is [`SingleVariable`](@ref MathOptInterface.SingleVariable) defined as:
 ```julia
-struct ScalarVariablewiseFunction <: AbstractFunction
+struct SingleVariable <: AbstractFunction
     variable::VariableReference
 end
 ```
 
-If `v` is a `VariableReference` object, then `ScalarVariablewiseFunction(v)` is simply the scalar-valued function from the complete set of variables in an instance that returns the value of variable `v`. This function is useful for defining variablewise constraints.
+If `v` is a `VariableReference` object, then `SingleVariable(v)` is simply the scalar-valued function from the complete set of variables in an instance that returns the value of variable `v`. One may also call this function a coordinate projection, which is more useful for defining constraints than as an objective function.
 
 
 A more interesting function is [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction), defined as
@@ -119,7 +119,7 @@ solvers may decide to support only a small number of combinations (see [`support
 For example, linear programming solvers should support, at least, combinations of affine functions with
 the [`LessThan`](@ref MathOptInterface.LessThan) and [`GreaterThan`](@ref MathOptInterface.GreaterThan)
 sets. These are simply linear constraints.
-Scalar variablewise functions combined with these same sets are used to specify upper and lower bounds on variables.
+`SingleVariable` functions combined with these same sets are used to specify upper and lower bounds on variables.
 
 The code example below encodes the linear optimization problem:
 ```math
@@ -138,8 +138,8 @@ The code example below encodes the linear optimization problem:
 x = addvariables!(m, 2)
 setobjective!(m, MaxSense, ScalarAffineFunction(x, [3.0,2.0], 0.0))
 addconstraint!(m, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
-addconstraint!(m, ScalarVariablewiseFunction(x[1]), GreaterThan(0.0))
-addconstraint!(m, ScalarVariablewiseFunction(x[2]), GreaterThan(-1.0))
+addconstraint!(m, SingleVariable(x[1]), GreaterThan(0.0))
+addconstraint!(m, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
 [Example with vector-valued set.]
@@ -160,17 +160,17 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 | ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan`  |
 | ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`      |
 | ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`     |
-| ``x_i \le u``                 | `ScalarVariablewiseFunction` | `LessThan`     |
-| ``x_i \ge l``                 | `ScalarVariablewiseFunction` | `GreaterThan`  |
-| ``x_i = b``                   | `ScalarVariablewiseFunction` | `EqualTo`      |
-| ``l \le x_i \le u``           | `ScalarVariablewiseFunction` | `Interval`     |
+| ``x_i \le u``                 | `SingleVariable`             | `LessThan`     |
+| ``x_i \ge l``                 | `SingleVariable`             | `GreaterThan`  |
+| ``x_i = b``                   | `SingleVariable`             | `EqualTo`      |
+| ``l \le x_i \le u``           | `SingleVariable`             | `Interval`     |
 | ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
 
 By convention, solvers are not expected to support nonzero constant terms in the `ScalarAffineFunction`s the first four rows above, because they are redundant with the parameters of the sets. For example, ``2x + 1 \le 2`` should be encoded as ``2x \le 1``.
 
-Constraints with `ScalarVariablewiseFunction` in `LessThan`, `GreaterThan`, `EqualTo`, or `Interval` sets have a natural interpretation as variable bounds. As such, it is typically not natural to impose multiple lower or upper bounds on the same variable, and by convention we do not ask solver interfaces to support this. It is natural, however, to impose upper and lower bounds separately as two different constraints on a single variable. The difference between imposing bounds by using a single `Interval` constraint and by using separate `LessThan` and `GreaterThan` constraints is that the latter will allow the solver to return separate dual multipliers for the two bounds, while the former will allow the solver to return only a single dual for the interval constraint.
+Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `Interval` sets have a natural interpretation as variable bounds. As such, it is typically not natural to impose multiple lower or upper bounds on the same variable, and by convention we do not ask solver interfaces to support this. It is natural, however, to impose upper and lower bounds separately as two different constraints on a single variable. The difference between imposing bounds by using a single `Interval` constraint and by using separate `LessThan` and `GreaterThan` constraints is that the latter will allow the solver to return separate dual multipliers for the two bounds, while the former will allow the solver to return only a single dual for the interval constraint.
 
 [Define ``\mathbb{R}_+, \mathbb{R}_-``]
 
@@ -180,13 +180,13 @@ Constraints with `ScalarVariablewiseFunction` in `LessThan`, `GreaterThan`, `Equ
 | Mathematical Constraint                                       | MOI Function                 | MOI Set                            |
 |---------------------------------------------------------------|------------------------------|------------------------------------|
 | ``\lVert Ax + b\rVert_2 \le c^Tx + d``                        | `VectorAffineFunction`       | `SecondOrderCone`                  |
-| ``y \ge \lVert x \rVert_2``                                   | `VectorVariablewiseFunction` | `SecondOrderCone`                  |
-| ``2yz \ge \lVert x \rVert_2^2, y,z \ge 0``                    | `VectorVariablewiseFunction` | `RotatedSecondOrderCone`           |
+| ``y \ge \lVert x \rVert_2``                                   | `VectorOfVariables`          | `SecondOrderCone`                  |
+| ``2yz \ge \lVert x \rVert_2^2, y,z \ge 0``                    | `VectorOfVariables`          | `RotatedSecondOrderCone`           |
 | ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``  | `VectorAffineFunction`       | `ExponentialCone`                  |
 | ``A(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeTriangle` |
 | ``A(x) \in \mathcal{S}'_+``                                   | `VectorAffineFunction`       | `PositiveSemidefiniteConeScaled`   |
-| ``x \in \mathcal{S}_+``                                       | `VectorVariablewiseFunction` | `PositiveSemidefiniteConeTriangle` |
-| ``x \in \mathcal{S}'_+``                                      | `VectorVariablewiseFunction` | `PositiveSemidefiniteConeScaled`   |
+| ``x \in \mathcal{S}_+``                                       | `VectorOfVariables`          | `PositiveSemidefiniteConeTriangle` |
+| ``x \in \mathcal{S}'_+``                                      | `VectorOfVariables`          | `PositiveSemidefiniteConeScaled`   |
 
 
 [Define ``\mathcal{E}`` (exponential cone), ``\mathcal{S}_+`` (smat), ``\mathcal{S}'_+`` (svec). ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
@@ -205,14 +205,14 @@ Constraints with `ScalarVariablewiseFunction` in `LessThan`, `GreaterThan`, `Equ
 #### Discrete and logical constraints
 
 
-| Mathematical Constraint                                                                    | MOI Function                 | MOI Set                            |
-|--------------------------------------------------------------------------------------------|------------------------------|------------------------------------|
-| ``x_i \in \mathbb{Z}``                                                                     | `ScalarVariablewiseFunction` | `Integer`                          |
-| ``x_i \in \{0,1\}``                                                                        | `ScalarVariablewiseFunction` | `ZeroOne`                          |
-| ``x_i \in \{0\} \cup [l,u]``                                                               | `ScalarVariablewiseFunction` | `Semicontinuous`                   |
-| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `ScalarVariablewiseFunction` | `SemiInteger`                      |
-| At most one component of ``x`` can be nonzero                                              | `VectorVariablewiseFunction` | `SOS1`                             |
-| At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorVariablewiseFunction` | `SOS2`                             |
+| Mathematical Constraint                                                                    | MOI Function        | MOI Set                            |
+|--------------------------------------------------------------------------------------------|---------------------|------------------------------------|
+| ``x_i \in \mathbb{Z}``                                                                     | `SingleVariable`    | `Integer`                          |
+| ``x_i \in \{0,1\}``                                                                        | `SingleVariable`    | `ZeroOne`                          |
+| ``x_i \in \{0\} \cup [l,u]``                                                               | `SingleVariable`    | `Semicontinuous`                   |
+| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `SingleVariable`    | `SemiInteger`                      |
+| At most one component of ``x`` can be nonzero                                              | `VectorOfVariables` | `SOS1`                             |
+| At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorOfVariables` | `SOS2`                             |
 
 ## Solving and retrieving the results
 
@@ -282,7 +282,7 @@ does not terminate with a `Success` status.
 function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solver::AbstractSolver)
     if !supportsproblem(solver, ScalarAffineFunction,
             [(ScalarAffineFunction,LessThan),
-             (ScalarVariablewiseFunction,ZeroOne)])
+             (SingleVariable,ZeroOne)])
         error("Provided solver cannot solve binary knapsack problems")
     end
     numvar = length(c)
@@ -301,7 +301,7 @@ function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solve
 
     # add integrality constraints
     for i in 1:numvar
-        addconstraint!(m, ScalarVariablewiseFunction(x[i]), ZeroOne())
+        addconstraint!(m, SingleVariable(x[i]), ZeroOne())
     end
 
     # all set
@@ -360,9 +360,9 @@ function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC,
     if !supportsproblem(solver, ScalarAffineFunction{Float64},
             [(ScalarAffineFunction,LessThan{Float64}),
              (ScalarAffineFunction,Zeros),
-             (ScalarVariablewiseFunction,LessThan{Float64}),
-             (ScalarVariablewiseFunction,GreaterThan{Float64}),
-             (ScalarVariablewiseFunction,Integer)])
+             (SingleVariable,LessThan{Float64}),
+             (SingleVariable,GreaterThan{Float64}),
+             (SingleVariable,Integer)])
         error("Provided solver does not support mixed-integer linear optimization")
     end
     numvar = size(Ale,2)
@@ -380,17 +380,17 @@ function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC,
     # add variable bound constraints
     for i in 1:numvar
         if isfinite(lb[i])
-            addconstraint!(m, ScalarVariablewiseFunction(x[i]), GreaterThan(lb[i]))
+            addconstraint!(m, SingleVariable(x[i]), GreaterThan(lb[i]))
         end
         if isfinite(ub[i])
-            addconstraint!(m, ScalarVariablewiseFunction(x[i]), LessThan(ub[i]))
+            addconstraint!(m, SingleVariable(x[i]), LessThan(ub[i]))
         end
     end
 
     # add integrality constraints
     for i in integerindices
         @assert 1 <= i <= numvar
-        addconstraint!(m, ScalarVariablewiseFunction(x[i]), Integer())
+        addconstraint!(m, SingleVariable(x[i]), Integer())
     end
 
     # convert a SparseMatrixCSC into a vector of scalar affine functions
@@ -442,7 +442,7 @@ end
 ### Duals
 
 
-Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or variablewise), and all constraint sets are closed convex cone, the instance may be called a conic optimization problem.
+Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cone, the instance may be called a conic optimization problem.
 For conic-form minimization problems, the primal is:
 
 ```math
@@ -564,7 +564,7 @@ MOI defines a very general interface, with multiple possible ways to describe th
 
 - `ScalarAffineFunction` in `Nonnegative`, `Nonpositive` or `Zeros`. Alternative constraints are available by using a `VectorAffineFunction` with one output row or `ScalarAffineFunction` with `GreaterThan`, `LessThan`, or `EqualTo`.
 
-- Two `ScalarVariablewiseFunction`-in-`LessThan` constraints applied to the same variable (similarly with `GreaterThan`). These should be interpreted as variable bounds, and each variable naturally has at most one upper or lower bound.
+- Two `SingleVariable`-in-`LessThan` constraints applied to the same variable (similarly with `GreaterThan`). These should be interpreted as variable bounds, and each variable naturally has at most one upper or lower bound.
 
 There is no special interface for column generation. If the solver has a special API for setting
 coefficients in existing constraints when adding a new variable, it is possible

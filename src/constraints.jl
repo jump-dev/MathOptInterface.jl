@@ -23,7 +23,7 @@ If `c` is a `ConstraintReference{ScalarAffineFunction,S}` and `v1` and `v2` are 
 
 ```julia
 modifyconstraint!(m, c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
-modifyconstraint!(m, c, ScalarVariablewiseFunction(v1)) # Error
+modifyconstraint!(m, c, SingleVariable(v1)) # Error
 ```
 
 ## Modify Set

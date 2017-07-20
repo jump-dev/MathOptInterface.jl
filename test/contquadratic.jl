@@ -273,7 +273,7 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
         #      x^2 + y^2 <= t^2 (c2)
         #      t >= 0 (bound)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuaFunction{Float64},MOI.LessThan), (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan), (MOI.ScalarVariablewiseFunction,MOI.GreaterThan)])dratic
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuaFunction{Float64},MOI.LessThan), (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan), (MOI.SingleVariable,MOI.GreaterThan)])dratic
 
         m = MOI.SolverInstance(solver)
 
@@ -290,8 +290,8 @@ function contquadratictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float
         c2 = MOI.addconstraint!(m, c2f, MOI.LessThan(0.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
-        bound = MOI.addconstraint!(m, MOI.ScalarVariablewiseFunction(t), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarVariablewiseFunction, MOI.GreaterThan}()) == 1
+        bound = MOI.addconstraint!(m, MOI.SingleVariable(t), MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.GreaterThan}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([t], [1.0], 0.0))
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
