@@ -158,7 +158,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 2 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -2 atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
             @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 1 atol=ε
@@ -195,7 +195,7 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(0.0))
         MOI.delete!(m, vc3)
         vc3 = MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.EqualTo(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         MOI.optimize!(m)
 
@@ -216,7 +216,8 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         MOI.delete!(m, c)
         cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
         c = MOI.addconstraint!(m, cf, MOI.EqualTo(2.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}()) == 1
 
         MOI.optimize!(m)
 
@@ -258,8 +259,10 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         # x,y >= 0, z = 0
 
         cf2 = MOI.ScalarAffineFunction(v, [1.0, -1.0, 0.0], 0.0)
-        c2 = MOI.addconstraint!(m, cf, MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 2
+        c2 = MOI.addconstraint!(m, cf2, MOI.GreaterThan(0.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
 
         MOI.optimize!(m)
 
@@ -276,15 +279,15 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 1, 0] atol=ε
 
         @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
-        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=ε
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 2 atol=ε
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 1.5 atol=ε
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -0.5 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1.5 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c2) ≈ 0.5 atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
             @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=ε
