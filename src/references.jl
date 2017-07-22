@@ -40,7 +40,7 @@ isvalid(m::AbstractSolverInstance, ref::AnyReference) = throw(MethodError())
 
 Delete the referenced object from the solver instance.
 
-    delete!(m::AbstractSolverInstance, refs::Vector{<:AnyReference})
+    delete!{R}(m::AbstractSolverInstance, refs::Vector{R<:AnyReference})
 
 Delete the referenced objects in the vector `refs` from the solver instance.
 It may be assumed that `R` is a concrete type.
