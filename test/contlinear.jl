@@ -421,57 +421,57 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0 atol=ε
     end
 
-    @testset "Modify GreaterThan and LessThan sets as bounds" begin
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.SingleVariable,MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.LessThan{Float64})])
+        @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.SingleVariable,MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.LessThan{Float64})])
+            m = MOI.SolverInstance(solver)
 
-        m = MOI.SolverInstance(solver)
+            x = MOI.addvariable!(m)
+            y = MOI.addvariable!(m)
 
-        x = MOI.addvariable!(m)
-        y = MOI.addvariable!(m)
+            # Min  x - y
+            # s.t. 0.0 <= x          (c1)
+            #             y <= 0.0   (c2)
 
-        # Min  x - y
-        # s.t. 0.0 <= x          (c1)
-        #             y <= 0.0   (c2)
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
 
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
+            c1 = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+            c2 = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.LessThan(0.0))
 
-        c1 = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
-        c2 = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.LessThan(0.0))
+            MOI.optimize!(m)
 
-        MOI.optimize!(m)
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+            # Min  x - y
+            # s.t. 100.0 <= x
+            #               y <= 0.0
+            MOI.modifyconstraint!(m, c1, MOI.GreaterThan(100.0))
+            MOI.optimize!(m)
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        # Min  x - y
-        # s.t. 100.0 <= x
-        #               y <= 0.0
-        MOI.modifyconstraint!(m, c1, MOI.GreaterThan(100.0))
-        MOI.optimize!(m)
-        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+            # Min  x - y
+            # s.t. 100.0 <= x
+            #               y <= -100.0
+            MOI.modifyconstraint!(m, c2, MOI.LessThan(-100.0))
+            MOI.optimize!(m)
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        # Min  x - y
-        # s.t. 100.0 <= x
-        #               y <= -100.0
-        MOI.modifyconstraint!(m, c2, MOI.LessThan(-100.0))
-        MOI.optimize!(m)
-        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
-
+        end
     end
 
     @testset "Change coeffs, del constr, del var" begin
