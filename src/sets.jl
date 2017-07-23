@@ -220,11 +220,11 @@ The set ``\\{ 0, 1 \\}``.
 struct ZeroOne <: AbstractScalarSet end
 
 """
-    Semicontinuous(l,u)
+    SemiContinuous(l,u)
 
 The set ``\\{0\\} \\cup [l,u]``.
 """
-struct Semicontinuous{T <: Real} <: AbstractScalarSet
+struct SemiContinuous{T <: Real} <: AbstractScalarSet
     l::T
     u::T
 end
