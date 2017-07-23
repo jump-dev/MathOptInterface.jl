@@ -3,8 +3,7 @@ MOI = MathOptInterface
 
 # Continuous conic problems
 
-function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
-
+function lin1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN1" begin
             # linear conic problem
@@ -52,7 +51,9 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO var dual and con primal
         end
     end
+end
 
+function lin1atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN1A" begin
             # Same as LIN1 but variable bounds enforced with VectorAffineFunction
@@ -91,7 +92,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO var dual and con primal
         end
     end
+end
 
+function lin1tests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    lin1test(solver, ɛ)
+    lin1atest(solver, ɛ)
+end
+
+function lin2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorOfVariables,MOI.Nonnegatives),(MOI.VectorOfVariables,MOI.Nonpositives)])
         @testset "LIN2" begin
             # mixed cones
@@ -149,10 +157,11 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=ε
 
             # TODO var dual and con primal
-
         end
     end
+end
 
+function lin2atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
         @testset "LIN2A" begin
             # mixed cones
@@ -211,10 +220,16 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=ε
 
             # TODO var dual and con primal
-
         end
     end
+end
 
+function lin2tests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    lin2test(solver, ɛ)
+    lin2atest(solver, ɛ)
+end
+
+function lin3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
         @testset "LIN3 - infeasible" begin
             # Problem LIN3 - Infeasible LP
@@ -248,7 +263,9 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO test dual feasibility and objective sign
         end
     end
+end
 
+function lin4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorOfVariables,MOI.Nonpositives)])
         @testset "LIN4 - infeasible" begin
             # Problem LIN4 - Infeasible LP
@@ -282,7 +299,17 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO test dual feasibility and objective sign
         end
     end
+end
 
+function lintests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    lin1tests(solver, ε)
+    lin2tests(solver, ε)
+    lin3test(solver, ε)
+    lin4test(solver, ε)
+end
+
+
+function soc1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorOfVariables,MOI.SecondOrderCone)])
         @testset "SOC1" begin
             # Problem SOC1
@@ -332,7 +359,9 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO con primal
         end
     end
+end
 
+function soc1atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC1A" begin
             # Problem SOC1A
@@ -379,7 +408,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO con primal
         end
     end
+end
 
+function soc1tests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    soc1test(solver, ɛ)
+    soc1atest(solver, ɛ)
+end
+
+function soc2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC2" begin
             # Problem SOC2
@@ -426,7 +462,9 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO constraint primal and duals
         end
     end
+end
 
+function soc2atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC2A" begin
             # Problem SOC2A
@@ -470,7 +508,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO constraint primal and duals
         end
     end
+end
 
+function soc2tests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    soc2test(solver, ε)
+    soc2atest(solver, ε)
+end
+
+function soc3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC3 - infeasible" begin
             # Problem SOC3 - Infeasible
@@ -506,7 +551,9 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # TODO test dual feasibility and objective sign
         end
     end
+end
 
+function soc4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.Zeros),(MOI.VectorOfVariables,MOI.SecondOrderCone)])
         @testset "SOC4" begin
             # Problem SOC4
@@ -570,7 +617,16 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test norm((c+A'c1_dual) - x_dual) ≈ 0.0 atol=ε
         end
     end
+end
 
+function soctests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    soc1tests(solver, ε)
+    soc2tests(solver, ε)
+    soc3test(solver, ε)
+    soc4test(solver, ε)
+end
+
+function sdp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorOfVariables, MOI.SecondOrderCone)])
         @testset "SDP1" begin
             # Problem SDP1 - sdo1 from MOSEK docs
@@ -674,6 +730,14 @@ function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test eigmin(Xd) > -ɛ
         end
     end
+end
 
-    # TODO more models
+function sdptests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    sdp1test(solver, ε)
+end
+
+function contconictest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    lintests(solver, ɛ)
+    soctests(solver, ɛ)
+    sdptests(solver, ɛ)
 end
