@@ -3,7 +3,7 @@ MOI = MathOptInterface
 
 # Mixed-integer linear problems
 
-function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
+function knapsacktest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
     @testset "Knapsack model" begin
         # integer knapsack problem
         # max 5a + 3b + 2c + 7d + 4e
@@ -40,6 +40,10 @@ function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64)
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
         @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0, 0, 1, 1] atol=eps
     end
+end
+
+function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
+    knapsacktest(solver, ɛ)
 
     # TODO more test sets here
 end
