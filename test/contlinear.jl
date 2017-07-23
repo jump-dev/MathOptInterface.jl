@@ -3,7 +3,7 @@ MOI = MathOptInterface
 
 # Continuous linear problems
 
-function contlineartest1(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Basic solve, query, resolve" begin
         # simple 2 variable, 1 constraint problem
         # min -x
@@ -299,7 +299,7 @@ function contlineartest1(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64
     end
 end
 
-function contlineartest2(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "addvariable! (one by one) interface" begin
         # Min -x
         # s.t. x + y <= 1
@@ -362,7 +362,7 @@ function contlineartest2(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64
     end
 end
 
-function contlineartest3(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Issue #40 from Gurobi.jl" begin
         # min  x
         # s.t. x >= 0
@@ -426,7 +426,7 @@ function contlineartest3(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64
     end
 end
 
-function contlineartest4(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.SingleVariable,MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.LessThan{Float64})])
@@ -481,7 +481,7 @@ function contlineartest4(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64
     end
 end
 
-function contlineartest5(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Change coeffs, del constr, del var" begin
 
         #####################################
@@ -614,7 +614,7 @@ function contlineartest5(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64
     end
 end
 
-function contlineartest6(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear6test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Modify GreaterThan and LessThan sets as linear constraints" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.Nonpositives),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
@@ -669,7 +669,7 @@ function contlineartest6(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64
     end
 end
 
-function contlineartest7(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear7test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Modify constants in Nonnegatives and Nonpositives" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
@@ -725,11 +725,11 @@ function contlineartest7(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64
 end
 
 function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
-    contlineartest1(solver, ε)
-    contlineartest2(solver, ε)
-    contlineartest3(solver, ε)
-    contlineartest4(solver, ε)
-    contlineartest5(solver, ε)
-    contlineartest6(solver, ε)
-    contlineartest7(solver, ε)
+    linear1test(solver, ε)
+    linear2test(solver, ε)
+    linear3test(solver, ε)
+    linear4test(solver, ε)
+    linear5test(solver, ε)
+    linear6test(solver, ε)
+    linear7test(solver, ε)
 end
