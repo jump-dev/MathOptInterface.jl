@@ -16,6 +16,9 @@ This call is equivalent to `addconstraint!.(m, funcs, sets)` but may be more eff
 """
 function addconstraints! end
 
+# default fallback
+addconstraints!(m::AbstractSolverInstance, funcs, sets) = addconstraint!.(m, funcs, sets)
+
 # TODO: method to query if solver supports this type of modification
 
 """
