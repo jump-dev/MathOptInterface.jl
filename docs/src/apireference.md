@@ -40,6 +40,7 @@ List of solver attributes
 SupportsDuals
 SupportsAddConstraintAfterSolve
 SupportsDeleteConstraint
+SupportsDeleteVariable
 SupportsAddVariableAfterSolve
 SupportsConicThroughQuadratic
 ```
