@@ -670,7 +670,7 @@ function sdp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2, 2, 1, 2, 1, 1, 1], 0.), MOI.EqualTo(1/2))
 
 
-            MOI.setobjective!(m, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2, 0, 2, 2, 2, 1], 0.))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2, 0, 2, 2, 2, 1], 0.))
 
 
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
