@@ -224,7 +224,7 @@ struct ZeroOne <: AbstractScalarSet end
 
 The set ``\\{0\\} \\cup [l,u]``.
 """
-struct SemiContinuous{T <: Real} <: AbstractScalarSet
+struct Semicontinuous{T <: Real} <: AbstractScalarSet
     l::T
     u::T
 end
@@ -234,7 +234,7 @@ end
 
 The set ``\\{0\\} \\cup \\{l,l+1,\\ldots,u-1,u\\}``.
 """
-struct SemiInteger{T <: Real} <: AbstractScalarSet
+struct Semiinteger{T <: Real} <: AbstractScalarSet
     l::T
     u::T
 end
