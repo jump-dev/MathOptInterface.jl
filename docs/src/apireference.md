@@ -143,6 +143,7 @@ Functions for adding and modifying constraints.
 ```@docs
 isvalid(::AbstractSolverInstance,::ConstraintReference)
 addconstraint!
+addconstraints!
 modifyconstraint!
 ```
 
