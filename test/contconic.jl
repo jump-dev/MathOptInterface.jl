@@ -352,7 +352,7 @@ function soc1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariablePrimal(), z) ≈ 1/sqrt(2) atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), ceq)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), ceq) ≈ [sqrt(2)] atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), ceq) ≈ [-sqrt(2)] atol=ε
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), csoc)
             @test MOI.getattribute(m, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), -1.0, -1.0] atol=ε
 
