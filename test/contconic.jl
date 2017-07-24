@@ -321,7 +321,7 @@ function soc1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             x,y,z = MOI.addvariables!(m, 3)
 
-            MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([y,z],[-1.0,-1.0],0.0))
+            MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([y,z],[1.0,1.0],0.0))
 
             ceq = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
             csoc = MOI.addconstraint!(m, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))
