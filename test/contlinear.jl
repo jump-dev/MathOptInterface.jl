@@ -543,14 +543,14 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         # change coeff
         #   maximize x + y
         #
-        #   s.t. 2 x + 2 y <= 4
+        #   s.t. 2 x + 3 y <= 4
         #        1 x + 2 y <= 4
         #        x >= 0, y >= 0
         #
-        #   solution: x = 0, y = 2, objv = 2
+        #   solution: x = 2, y = 0, objv = 2
 
 
-        MOI.modifyconstraint!(m, c1, MOI.ScalarCoefficientChange(y, 2))
+        MOI.modifyconstraint!(m, c1, MOI.ScalarCoefficientChange(y, 3))
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
@@ -563,7 +563,7 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [0.0, 2.0] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [2.0, 0.0] atol=ɛ
 
         # delconstrs and solve
         #   maximize x + y
