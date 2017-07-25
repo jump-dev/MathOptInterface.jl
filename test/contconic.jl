@@ -476,7 +476,7 @@ function soc2atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             m = MOI.SolverInstance(solver)
 
-            x,y,t = MOI.addvariables!(m, 2)
+            x,y,t = MOI.addvariables!(m, 3)
 
             MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x],[1.0],0.0))
 
