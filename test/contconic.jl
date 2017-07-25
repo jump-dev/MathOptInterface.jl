@@ -571,11 +571,11 @@ function soc4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # Like SOCINT1 but with copies of variables and integrality relaxed
             # Tests out-of-order indices in cones
 
-            b = [1.0,0.0,0.0]
-            A = [1.0 0.0 0.0 0.0 0.0
-                0.0 1.0 0.0 -1.0 0.0
-                0.0 0.0 1.0 0.0 -1.0]
-            c = [0.0,-2.0,-1.0,0.0,0.0]
+            b = [-1.0, 0.0, 0.0]
+            A = [ 1.0  0.0  0.0  0.0  0.0
+                  0.0  1.0  0.0 -1.0  0.0
+                  0.0  0.0  1.0  0.0 -1.0]
+            c = [ 0.0,-2.0,-1.0, 0.0, 0.0]
 
             m = MOI.SolverInstance(solver)
 
@@ -608,15 +608,13 @@ function soc4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
             x_dual = MOI.getattribute(m, MOI.ConstraintDual(), c2)
-            @test x_dual[1]^2 ≥ x_dual[4]^2 + x_dual[5]^2 - ε
-            @test x_dual[2] ≈ 0.0 atol=ε
-            @test x_dual[3] ≈ 0.0 atol=ε
+            @test x_dual[1]^2 ≥ x_dual[2]^2 + x_dual[3]^2 - ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c1)
             c1_dual = MOI.getattribute(m, MOI.ConstraintDual(), c1)
 
             @test dot(c,x_primal) ≈ -dot(c1_dual,b) atol=ε
-            @test norm((c+A'c1_dual) - x_dual) ≈ 0.0 atol=ε
+            @test (c-A'c1_dual) ≈ [x_dual[1], 0, 0, x_dual[2], x_dual[3]] atol=ε
         end
     end
 end
