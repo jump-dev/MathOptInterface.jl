@@ -1,12 +1,23 @@
 # Constraints
 
 """
-    addconstraint!(m::AbstractSolverInstance, func::F, set::S)::ConstraintReference{F,S}
+    addconstraint!(m::AbstractSolverInstance, func::F, set::S)::ConstraintReference{F,S} where {F,S}
 
 Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
 
 """
 function addconstraint! end
+
+"""
+    addconstraints!(m::AbstractSolverInstance, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintReference{F,S}} where {F,S}
+
+Add the set of constraints specified by each function-set pair in `funcs` and `sets`. `F` and `S` should be concrete types.
+This call is equivalent to `addconstraint!.(m, funcs, sets)` but may be more efficient.
+"""
+function addconstraints! end
+
+# default fallback
+addconstraints!(m::AbstractSolverInstance, funcs, sets) = addconstraint!.(m, funcs, sets)
 
 # TODO: method to query if solver supports this type of modification
 
