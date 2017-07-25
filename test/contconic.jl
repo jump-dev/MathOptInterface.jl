@@ -541,6 +541,8 @@ function soc3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
+            MOI.optimize!(m)
+
             @test MOI.cangetattribute(m, MOI.TerminationStatus())
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
