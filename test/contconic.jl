@@ -468,7 +468,7 @@ function soc2atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)])
         @testset "SOC2A" begin
             # Problem SOC2A
-            # Same as SOC2 but with nonpostive instead of nonnegative
+            # Same as SOC2 but with nonpositive instead of nonnegative
             # min  x
             # s.t.  1/√2 - y ∈ R₋
             #        1 - t ∈ {0}
