@@ -665,14 +665,14 @@ function sdp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             x = MOI.addvariables!(m, 3)
             @test MOI.getattribute(m, MOI.NumberOfVariables()) == 9
 
-            cX = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.PositiveSemidefiniteConeTriangle(3))
-            cx = MOI.addconstraint!(m, MOI.VectorOfVariables(X), MOI.SecondOrderCone(3))
+            cX = MOI.addconstraint!(m, MOI.VectorOfVariables(X), MOI.PositiveSemidefiniteConeTriangle(3))
+            cx = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
 
             c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
             c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2, 2, 1, 2, 1, 1, 1], 0.), MOI.EqualTo(1/2))
 
 
-            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2, 0, 2, 2, 2, 1], 0.))
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2, 2, 2, 2, 1], 0.))
 
 
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
@@ -708,7 +708,7 @@ function sdp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             # Check primal objective
             comp_pobj = dot(c, [Xv; xv])
             # Check dual objective
-            comp_dobj = -dot([y1, y2], b)
+            comp_dobj = dot([y1, y2], b)
             @test comp_pobj ≈ comp_dobj atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), cX)
