@@ -374,7 +374,7 @@ function soc1atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             x,y,z = MOI.addvariables!(m, 3)
 
-            MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([y,z],[-1.0,-1.0],0.0))
+            MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([y,z],[1.0,1.0],0.0))
 
             ceq = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
             csoc = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3],[x,y,z],ones(3),zeros(3)), MOI.SecondOrderCone(3))
@@ -401,7 +401,7 @@ function soc1atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.VariablePrimal(), z) ≈ 1/sqrt(2) atol=ε
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), ceq)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), ceq) ≈ [sqrt(2)] atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), ceq) ≈ [-sqrt(2)] atol=ε
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), csoc)
             @test MOI.getattribute(m, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), -1.0, -1.0] atol=ε
 
