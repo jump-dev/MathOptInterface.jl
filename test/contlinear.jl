@@ -617,7 +617,7 @@ end
 function linear6test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Modify GreaterThan and LessThan sets as linear constraints" begin
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.Nonpositives),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
