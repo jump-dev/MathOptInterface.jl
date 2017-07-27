@@ -550,7 +550,7 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         #   solution: x = 2, y = 0, objv = 2
 
 
-        MOI.modifyconstraint!(m, c1, MOI.ScalarCoefficientChange(y, 3))
+        MOI.modifyconstraint!(m, c1, MOI.ScalarCoefficientChange(y, 3.0))
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
