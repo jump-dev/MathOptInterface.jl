@@ -101,6 +101,7 @@ cangetattribute(m, ConstraintPrimal(), conref)
 """
 function cangetattribute end
 cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
+cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, ref::AnyReference) = false
 
 """
     cansetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
