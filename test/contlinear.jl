@@ -532,10 +532,10 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.66666666 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 8/3 atol=ε
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [1.3333333, 1.3333333] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [4/3, 4/3] atol=ε
 
         # copy and solve again
         # missing test
