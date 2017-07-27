@@ -289,6 +289,22 @@ The number of variables in the solver instance.
 struct NumberOfVariables <: AbstractSolverInstanceAttribute end
 
 """
+    ListOfVariableReferences()
+
+A `Vector{VariableReference}` with references to all variables present
+in the solver instance (i.e., of length equal to the value of `NumberOfVariables()`).
+"""
+struct ListOfVariableReferences <: AbstractSolverInstanceAttribute end
+
+"""
+    ListOfConstraintReferences{F,S}()
+
+A `Vector{ConstraintReferences{F,S}}` with references to all constraints of
+type `F`-in`S` in the solver instance (i.e., of length equal to the value of `NumberOfConstraints{F,S}()`).
+"""
+struct ListOfConstraintReferences{F,S} <: AbstractSolverInstanceAttribute end
+
+"""
     NumberOfConstraints{F,S}()
 
 The number of constraints of the type `F`-in-`S` present in the solver instance.
