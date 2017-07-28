@@ -1,6 +1,8 @@
 using MathOptInterface
 MOI = MathOptInterface
 
+using MathOptInterfaceUtilities # Defines isapprox for ScalarQuadraticFunction
+
 # Continuous quadratic problems
 
 function qpp0test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))

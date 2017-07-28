@@ -1,6 +1,8 @@
 using MathOptInterface
 MOI = MathOptInterface
 
+using MathOptInterfaceUtilities # Defines isapprox for ScalarAffineFunction
+
 # Continuous linear problems
 
 function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
