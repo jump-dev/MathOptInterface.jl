@@ -201,7 +201,7 @@ PositiveSemidefiniteConeScaled
 Integer
 ZeroOne
 Semicontinuous
-SemiInteger
+Semiinteger
 SOS1
 SOS2
 ```
