@@ -18,16 +18,20 @@ git:
 #  - julia: nightly
 
 ## uncomment and modify the following lines to manually install system packages
-#addons:
-#  apt: # apt-get for linux
-#    packages:
-#    - gfortran
+addons:
+  apt: # apt-get for linux
+    packages:
+    - liblapack-dev # Needed for CSDP
+    - libblas-dev # Needed for CSDP
 #before_script: # homebrew for mac
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 ## uncomment the following lines to override the default test script
 script:
-  - julia -e 'Pkg.clone(pwd()); Pkg.clone("https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl.git"); Pkg.build("MathOptInterface"); Pkg.test("MathOptInterface"; coverage=true)'
+  - julia -e 'Pkg.clone(pwd());
+    Pkg.clone("https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl.git");
+    Pkg.clone("https://github.com/JuliaOpt/CSDP.jl.git");
+    Pkg.build("MathOptInterface"); Pkg.test("MathOptInterface"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
   #- julia -e 'cd(Pkg.dir("MathOptInterface")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
