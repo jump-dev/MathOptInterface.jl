@@ -319,7 +319,7 @@ function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solve
     if result_status != FeasiblePoint
         error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
     end
-    primal_variable_result = getattribute(m, VariableResult(), x)
+    primal_variable_result = getattribute(m, VariablePrimal(), x)
 
     return (objvalue, primal_variable_result)
 end
@@ -429,7 +429,7 @@ function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC,
 
     if getattribute(m, ResultCount()) > 0
         result_status = getattribute(m, PrimalStatus())
-        primal_variable_result = getattribute(m, VariableResult(), x)
+        primal_variable_result = getattribute(m, VariablePrimal(), x)
         return IntegerLinearResult(termination_status, result_status, primal_variable_result, objvalue, objbound)
     else
         return IntegerLinearResult(termination_status, UnknownResultStatus, Float64[], objvalue, objbound)

@@ -59,8 +59,8 @@ Return a vector of attributes corresponding to each constraint in the collection
 
 ```julia
 getattribute(m, ObjectiveValue())
-getattribute(m, VariableResult(), ref)
-getattribute(m, VariableResult(5), [ref1, ref2])
+getattribute(m, VariablePrimal(), ref)
+getattribute(m, VariablePrimal(5), [ref1, ref2])
 getattribute(m, OtherAttribute("something specific to cplex"))
 ```
 """
