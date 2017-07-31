@@ -108,9 +108,7 @@ cangetattribute(m, VariablePrimal(), [ref1, ref2])
 function cangetattribute end
 cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
 cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, ref::AnyReference) = false
-function cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, refs::Vector{T}) where T <: AnyReference
-    false
-end
+cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
     cansetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
@@ -122,6 +120,11 @@ Return a `Bool` indicating whether it is possible to set attribute `attr` in the
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the solver instance `m`.
 
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+
+Return a `Bool` indicating whether it is possible to set attribute `attr`applied to *every* variable reference in `v` or constraint reference in `c` in the solver instance `m`.
+
 ### Examples
 
 ```julia
@@ -132,6 +135,8 @@ cansetattribute(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{
 """
 function cansetattribute end
 cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
+cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute, ref::AnyReference) = false
+cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
     setattribute!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
