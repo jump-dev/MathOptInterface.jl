@@ -27,8 +27,8 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         c = MOI.addconstraint!(m, cf, MOI.LessThan(10.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
-        cf2 = MOI.ScalarAffineFunction(v, [1.0,3.0,1.0], 0.0)
-        c2 = MOI.addconstraint!(m, cf, MOI.LessThan(15.0))
+        cf2 = MOI.ScalarAffineFunction(v, [1.0,2.0,1.0], 0.0)
+        c2 = MOI.addconstraint!(m, cf2, MOI.LessThan(15.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 2
 
 
@@ -42,7 +42,6 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.ZeroOne())
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}()) == 1
-
 
         objf = MOI.ScalarAffineFunction(v, [1.0, 2.0, 5.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, objf)
