@@ -144,8 +144,11 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.cangetattribute(m, MOI.PrimalStatus())
-        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus(1))
+        @test MOI.getattribute(m, MOI.PrimalStatus(1)) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
@@ -183,6 +186,9 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -203,6 +209,9 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -226,6 +235,9 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -244,6 +256,9 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -271,6 +286,9 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -284,8 +302,8 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 2 atol=ε
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
-            @test MOI.cangetattribute(m, MOI.DualStatus())
-            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.DualStatus(1))
+            @test MOI.getattribute(m, MOI.DualStatus(1)) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1.5 atol=ε
@@ -390,6 +408,9 @@ function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -419,6 +440,9 @@ function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        @test MOI.getattribute(m, MOI.ResultCount()) == 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -726,6 +750,100 @@ function linear7test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     end
 end
 
+function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "test infeasible problem" begin
+        # min x
+        # s.t. 2x+y <= -1
+        # x,y >= 0
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+        m = MOI.SolverInstance(solver)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [2.0,1.0], 0.0), MOI.LessThan(-1.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x], [1.0], 0.0))
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        if MOI.getattribute(m, MOI.ResultCount()) == 1
+            # solver returned an infeasibility ray
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
+            @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
+            @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ -1 atol=ε
+        else
+            # solver returned nothing
+            @test MOI.getattribute(m, MOI.ResultCount()) == 0
+            @test MOI.cangetattribute(m, MOI.PrimalStatus(1)) == false
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.InfeasibleNoResult ||
+                MOI.getattribute(m, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
+        end
+    end
+    @testset "test unbounded problem" begin
+        # min -x-y
+        # s.t. -x+2y <= 0
+        # x,y >= 0
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+        m = MOI.SolverInstance(solver)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+        MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [-1.0,2.0], 0.0), MOI.LessThan(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x, y], [-1.0, -1.0], 0.0))
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        if MOI.getattribute(m, MOI.ResultCount()) == 1
+            # solver returned an unbounded ray
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.ReductionCertificate
+
+        else
+            # solver returned nothing
+            @test MOI.getattribute(m, MOI.ResultCount()) == 0
+            @test MOI.cangetattribute(m, MOI.PrimalStatus(1)) == false
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.UnboundedNoResult ||
+                MOI.getattribute(m, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
+        end
+    end
+    @testset "unbounded problem with unique ray" begin
+        # min -x-y
+        # s.t. x-y == 0
+        # x,y >= 0
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+        m = MOI.SolverInstance(solver)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+        MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [1.0,-1.0], 0.0), MOI.EqualTo(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x, y], [-1.0, -1.0], 0.0))
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.ResultCount())
+        if MOI.getattribute(m, MOI.ResultCount()) == 1
+            # solver returned an unbounded ray
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.ReductionCertificate
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
+            ray = MOI.getattribute(m, MOI.VariablePrimal(), [x,y])
+            @test ray[1] ≈ ray[2] atol=ε
+
+        else
+            # solver returned nothing
+            @test MOI.getattribute(m, MOI.ResultCount()) == 0
+            @test MOI.cangetattribute(m, MOI.PrimalStatus(1)) == false
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.UnboundedNoResult ||
+                MOI.getattribute(m, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
+        end
+    end
+end
+
 function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     linear1test(solver, ε)
     linear2test(solver, ε)
@@ -734,4 +852,5 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
     linear5test(solver, ε)
     linear6test(solver, ε)
     linear7test(solver, ε)
+    linear8test(solver, ε)
 end
