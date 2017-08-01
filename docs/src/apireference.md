@@ -63,8 +63,10 @@ List of solver instance attributes
 RawSolver
 Sense
 NumberOfVariables
-NumberOfConstraints
+ListOfVariableReferences
 ListOfConstraints
+NumberOfConstraints
+ListOfConstraintReferences
 ResultCount
 ObjectiveFunction
 ObjectiveValue
