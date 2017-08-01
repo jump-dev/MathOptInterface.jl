@@ -40,7 +40,7 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         MOI.addconstraint!(m, MOI.SingleVariable(v[2]), MOI.Integer())
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}()) == 1
 
-        MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.ZeroOne()))
+        MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.ZeroOne())
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}()) == 1
 
 
