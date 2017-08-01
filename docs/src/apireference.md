@@ -61,7 +61,7 @@ List of solver instance attributes
 
 ```@docs
 RawSolver
-Sense
+ObjectiveSense
 NumberOfVariables
 ListOfVariableReferences
 ListOfConstraints
