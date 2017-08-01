@@ -178,6 +178,9 @@ VectorQuadraticFunction
 List of function modifications.
 ```@docs
 ScalarConstantChange
+VectorConstantChange
+ScalarCoefficientChange
+MultirowChange
 ```
 
 ## Sets
