@@ -145,7 +145,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus(1))
         @test MOI.getattribute(m, MOI.PrimalStatus(1)) == MOI.FeasiblePoint
@@ -187,7 +187,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -211,7 +211,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -236,7 +236,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -258,7 +258,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -287,7 +287,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -409,7 +409,7 @@ function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
@@ -442,7 +442,7 @@ function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        @test MOI.getattribute(m, MOI.ResultCount()) == 1
+        @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint

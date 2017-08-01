@@ -7,7 +7,7 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "MIP01 from CPLEX.jl" begin
         # an example on mixed integer programming
         #
-        #   maximize x + 2 y + 5 z
+        #   maximize 1.1x + 2 y + 5 z
         #
         #   s.t.  x + y + z <= 10
         #         x + 2 y + z <= 15
@@ -43,7 +43,7 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.ZeroOne())
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}()) == 1
 
-        objf = MOI.ScalarAffineFunction(v, [1.0, 2.0, 5.0], 0.0)
+        objf = MOI.ScalarAffineFunction(v, [1.1, 2.0, 5.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, objf)
 
         @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
@@ -60,7 +60,7 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 19 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 19.4 atol=ε
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
         @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [4,5,1] atol=ε
@@ -72,6 +72,134 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.ConstraintPrimal(), c2) ≈ 15 atol=ε
 
         @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+    end
+end
+
+function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "sos from CPLEX.jl" begin
+        @testset "SOSI" begin
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.SOS1)])
+
+            m = MOI.SolverInstance(solver)
+
+            v = MOI.addvariables!(m, 3)
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
+
+            MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[2]]), MOI.SOS1([1.0, 2.0]))
+            MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[3]]), MOI.SOS1([1.0, 2.0]))
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1}()) == 2
+
+            objf = MOI.ScalarAffineFunction(v, [2.0, 1.0, 1.0], 0.0)
+            MOI.setobjective!(m, MOI.MaxSense, objf)
+            @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.ResultCount())
+            @test MOI.getattribute(m, MOI.ResultCount()) >= 1
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0,1,2] atol=ε
+
+            @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+        end
+        @testset "SOSII" begin
+            @test MOI.supportsproblem(solver,
+                MOI.ScalarAffineFunction{Float64},
+                [
+                    (MOI.VectorOfVariables,MOI.SOS1),
+                    (MOI.VectorOfVariables,MOI.SOS2),
+                    (MOI.SingleVariable, MOI.ZeroOne),
+                    (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+                    ]
+            )
+
+            m = MOI.SolverInstance(solver)
+
+            v = MOI.addvariables!(m, 10)
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 10
+
+            bin_constraints = []
+            for i in 1:8
+                MOI.addconstraint!(m, MOI.SingleVariable(v[i]), MOI.Interval(0.0, 2.0))
+                push!(bin_constraints, MOI.addconstraint!(m, MOI.SingleVariable(v[i]), MOI.ZeroOne()))
+            end
+
+            MOI.addconstraint!(m,
+                MOI.ScalarAffineFunction(v[[1,2,3,9]], [1.0,2.0,3.0,-1.0], 0.0),
+                MOI.EqualTo(0.0)
+            )
+
+            MOI.addconstraint!(m,
+                MOI.ScalarAffineFunction(v[[4,5,6,7,8,10]], [5,4,7,2,1,-1.0], 0.0),
+                MOI.EqualTo(0.0)
+            )
+
+            MOI.addconstraint!(m,
+                MOI.VectorOfVariables(v[[1,2,3]]),
+                MOI.SOS1([1.0,2.0,3.0])
+            )
+
+            MOI.addconstraint!(m,
+                MOI.VectorOfVariables(v[[4,5,6,7,8]]),
+                MOI.SOS2([5.0, 4.0, 7.0, 2.0, 1.0])
+            )
+
+            objf = MOI.ScalarAffineFunction([v[9], v[10]], [1.0, 1.0], 0.0)
+            MOI.setobjective!(m, MOI.MaxSense, objf)
+            @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.ResultCount())
+            @test MOI.getattribute(m, MOI.ResultCount()) >= 1
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=ε
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v[9:10])
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v[9:10]) ≈ [3.0, 12.0] atol=ε
+
+            @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+
+            for i in 1:8
+                MOI.delete!(m, bin_constraints[i])
+            end
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.ResultCount())
+            @test MOI.getattribute(m, MOI.ResultCount()) >= 1
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 30.0 atol=ε
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v[9:10])
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v[9:10]) ≈ [6.0, 24.0] atol=ε
+
+            @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+        end
     end
 end
 
