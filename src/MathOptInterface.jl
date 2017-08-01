@@ -93,10 +93,10 @@ should be `true` for a second-order cone solver `s`.
 """
 function supportsproblem end
 
+include("references.jl")
 include("attributes.jl")
 include("constraints.jl")
 include("objectives.jl")
-include("references.jl")
 include("functions.jl")
 include("sets.jl")
 include("variables.jl")

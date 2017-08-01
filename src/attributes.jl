@@ -86,10 +86,15 @@ end
 
 Return a `Bool` indicating whether it is possible to query attribute `attr` from the solver `s`.
 
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference)::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference{F,S})::Bool
 
-Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the reference type `R`.
+Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the variable reference `v` or constraint reference `c`.
+
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
+    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+
+Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable references in `v` or constraint reference in `c`.
 
 ### Examples
 
@@ -97,10 +102,13 @@ Return a `Bool` indicating whether the solver instance `m` currently has a value
 cangetattribute(m, ObjectiveValue())
 cangetattribute(m, VariablePrimalStart(), varref)
 cangetattribute(m, ConstraintPrimal(), conref)
+cangetattribute(m, VariablePrimal(), [ref1, ref2])
 ```
 """
 function cangetattribute end
 cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
+cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, ref::AnyReference) = false
+cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
     cansetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
@@ -112,6 +120,11 @@ Return a `Bool` indicating whether it is possible to set attribute `attr` in the
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the solver instance `m`.
 
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
+    cansetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+
+Return a `Bool` indicating whether it is possible to set attribute `attr`applied to *every* variable reference in `v` or constraint reference in `c` in the solver instance `m`.
+
 ### Examples
 
 ```julia
@@ -122,6 +135,8 @@ cansetattribute(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{
 """
 function cansetattribute end
 cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
+cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute, ref::AnyReference) = false
+cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
     setattribute!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
