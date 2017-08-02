@@ -14,6 +14,10 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
 
+        @test MOI.getattribute(solver, MOI.SupportsAddConstraintAfterSolve())
+        @test MOI.getattribute(solver, MOI.SupportsAddVariableAfterSolve())
+        @test MOI.getattribute(solver, MOI.SupportsDeleteConstraint())
+
         m = MOI.SolverInstance(solver)
 
         v = MOI.addvariables!(m, 2)
@@ -509,7 +513,7 @@ end
 
 function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "Change coeffs, del constr, del var" begin
-
+        @test MOI.getattribute(solver, MOI.SupportsDeleteVariable())
         #####################################
         # Start from simple LP
         # Solve it
