@@ -72,6 +72,26 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.ConstraintPrimal(), c2) ≈ 15 atol=ε
 
         @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+
+        if MOI.cangetattribute(m, MOI.ObjectiveBound())
+            @test MOI.getattribute(m, MOI.ObjectiveBound()) >= 19.4
+        end
+        if MOI.cangetattribute(m, MOI.RelativeGap())
+            @test MOI.getattribute(m, MOI.RelativeGap()) >= 0.0
+        end
+        if MOI.cangetattribute(m, MOI.SolveTime())
+            @test MOI.getattribute(m, MOI.SolveTime()) >= 0.0
+        end
+        if MOI.cangetattribute(m, MOI.SimplexIterations())
+            @test MOI.getattribute(m, MOI.SimplexIterations()) >= 0
+        end
+        if MOI.cangetattribute(m, MOI.BarrierIterations())
+            @test MOI.getattribute(m, MOI.BarrierIterations()) >= 0
+        end
+        if MOI.cangetattribute(m, MOI.NodeCount())
+            @test MOI.getattribute(m, MOI.NodeCount()) >= 0
+        end
+
     end
 end
 
