@@ -770,9 +770,9 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         if MOI.getattribute(m, MOI.ResultCount()) == 1
             # solver returned an infeasibility ray
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
-            @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
-            @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ -1 atol=ε
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
         else
             # solver returned nothing
             @test MOI.getattribute(m, MOI.ResultCount()) == 0
