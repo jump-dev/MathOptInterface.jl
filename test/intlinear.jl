@@ -78,12 +78,15 @@ end
 function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "sos from CPLEX.jl" begin
         @testset "SOSI" begin
-            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.SOS1)])
+            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.SOS1), (MOI.SingleVariable,MOI.LessThan{Float64})])
 
             m = MOI.SolverInstance(solver)
 
             v = MOI.addvariables!(m, 3)
             @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
+            MOI.addconstraint!(m, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
+            MOI.addconstraint!(m, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
+            MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.LessThan(2.0))
 
             MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[2]]), MOI.SOS1([1.0, 2.0]))
             MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[3]]), MOI.SOS1([1.0, 2.0]))
