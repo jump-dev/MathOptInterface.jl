@@ -252,11 +252,11 @@ The total elapsed solution time (in seconds) as reported by the solver.
 struct SolveTime <: AbstractSolverInstanceAttribute end
 
 """
-    Sense()
+    ObjectiveSense()
 
-The optimization sense of the solver instance, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
+The sense of the objective function, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
 """
-struct Sense <: AbstractSolverInstanceAttribute end
+struct ObjectiveSense <: AbstractSolverInstanceAttribute end
 
 @enum OptimizationSense MinSense MaxSense FeasibilitySense
 

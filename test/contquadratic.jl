@@ -29,7 +29,7 @@ function qpp0test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         obj = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[2], v[2], v[3]], [v[1], v[2], v[2], v[3], v[3]], [2.0, 1.0, 2.0, 1.0, 2.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, obj)
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
             @test obj ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
@@ -85,7 +85,7 @@ function qpp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         obj = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]], [2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, obj)
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
             @test obj ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
@@ -116,7 +116,7 @@ function qpp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         # change objective to Max -2(x^2 + xy + y^2 + yz + z^2)
         obj2 = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]], [-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, obj2)
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
             @test obj2 ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
@@ -162,7 +162,7 @@ function qpp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c2)
             @test c2f ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c2)
@@ -207,7 +207,7 @@ function qpd0test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
         MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([x], [1.0], 0.0))
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
             @test cf ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c)
@@ -253,7 +253,7 @@ function qpd1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x], [-1.0], 0.0))
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
             @test cf ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c)
@@ -322,7 +322,7 @@ function socptest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.GreaterThan}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([t], [1.0], 0.0))
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c1)
             @test c1f ≈ MOI.getattribute(m, MOI.ConstraintFunction(), c1)

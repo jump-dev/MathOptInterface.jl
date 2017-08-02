@@ -30,7 +30,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)
 
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
             @test objf ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
@@ -93,7 +93,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test objf ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
         end
 
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         MOI.optimize!(m)
 
@@ -327,7 +327,7 @@ function linear2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         objf = MOI.ScalarAffineFunction([x, y], [-1.0,0.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, objf)
 
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MinSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         MOI.optimize!(m)
 
