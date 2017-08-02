@@ -59,6 +59,57 @@ function qpp0test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     end
 end
 
+function QP01test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "QP01 - Linear Quadratic objective" begin
+        # simple quadratic objective
+        #    minimize 2 x^2 + y^2 + xy + x + y + 1
+        #       s.t.  x, y >= 0
+        #             x + y = 1
+
+        @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction{Float64},
+            [
+                (MOI.SingleVariable,MOI.GreaterThan{Float64}),
+                (MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64})
+            ]
+        )
+
+        m = MOI.SolverInstance(solver)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+
+        MOI.addconstraint!(m,
+            MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0),
+            MOI.EqualTo(1.0)
+        )
+
+        MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+
+        MOI.setobjective!(m,
+            MOI.MinSense,
+            MOI.ScalarQuadraticFunction(
+                [x,y], [1.0,1.0],
+                [x,y,x], [x,y,y], [4.0, 2.0, 1.0],
+                1.0
+            )
+        )
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.875 atol=ε
+        @show MOI.getattribute(m, MOI.VariablePrimal(), [x,y])
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.25, 0.75] atol=ε
+    end
+end
+
 function qpp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     @testset "QP1" begin
         # same as QP0 but with duplicate terms
