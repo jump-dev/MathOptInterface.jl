@@ -13,7 +13,7 @@ function qpp0test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         #     x +  y      >= 1 (c2)
         #     x,y \in R
 
-        @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -22,17 +22,17 @@ function qpp0test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         cf1 = MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0)
         c1 = MOI.addconstraint!(m, cf1, MOI.GreaterThan(4.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 1
 
         c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 2
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 2
 
-        obj = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[2], v[2], v[3]], [v[1], v[2], v[2], v[3], v[3]], [2.0, 1.0, 2.0, 1.0, 2.0], 0.0)
+        obj = MOI.ScalarQuadraticFunction(MOI.VariableReference[], Float64[], v[[1,1,2,2,3]], v[[1,2,2,3,3]], [2.0, 1.0, 2.0, 1.0, 2.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, obj)
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-            @test obj ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
+            @test obj ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
         end
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c1)
@@ -69,7 +69,7 @@ function qpp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         #     x +  y      >= 1 (c2)
         #     x,y \in R
 
-        @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarQuadraticFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -78,17 +78,17 @@ function qpp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         c1f = MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0)
         c1 = MOI.addconstraint!(m, c1f, MOI.GreaterThan(4.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 1
 
         c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 2
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 2
 
         obj = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]], [2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], 0.0)
         MOI.setobjective!(m, MOI.MinSense, obj)
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-            @test obj ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
+            @test obj ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
         end
 
         if MOI.cangetattribute(m, MOI.ConstraintFunction(), c1)
@@ -119,7 +119,7 @@ function qpp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
-            @test obj2 ≈ MPI.getattribute(m, MOI.ObjectiveFunction())
+            @test obj2 ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
         end
 
         MOI.optimize!(m)
@@ -131,7 +131,7 @@ function qpp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2*130/70 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -2*130/70 atol=ε
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
         @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=ε
@@ -146,7 +146,7 @@ function qpp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         #       x + y >= 0 (c1[2])
         #     0.5x^2 + y <= 2 (c2)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -159,7 +159,7 @@ function qpp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         c2f = MOI.ScalarQuadraticFunction([y],[1.0],[x],[x],[1.0], 0.0)
         c2 = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
@@ -195,16 +195,16 @@ function qpd0test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         # Max x
         # s.t. x^2 <= 2 (c)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
         x = MOI.addvariable!(m)
         @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
-        cf = MOI.ScalarQuadraticFunction([],Float64[],[x],[x],[1.0], 0.0)
-        c = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
+        cf = MOI.ScalarQuadraticFunction(MOI.VariableReference[x],Float64[0.0],[x],[x],[1.0], 0.0)
+        c = MOI.addconstraint!(m, cf, MOI.LessThan(2.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
         MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([x], [1.0], 0.0))
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
@@ -241,16 +241,16 @@ function qpd1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         # Min -x
         # s.t. x^2 <= 2
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan)])
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
         x = MOI.addvariable!(m)
         @test MOI.getattribute(m, MOI.NumberOfVariables()) == 1
 
-        cf = MOI.ScalarQuadraticFunction([],Float64[],[x],[x],[1.0], 0.0)
-        c = MOI.addconstraint!(m, c2f, MOI.LessThan(2.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
+        cf = MOI.ScalarQuadraticFunction(MOI.VariableReference[],Float64[],[x],[x],[1.0], 0.0)
+        c = MOI.addconstraint!(m, cf, MOI.LessThan(2.0))
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x], [-1.0], 0.0))
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
@@ -301,7 +301,7 @@ function socptest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         #      x^2 + y^2 <= t^2 (c2)
         #      t >= 0 (bound)
 
-        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuaFunction{Float64},MOI.LessThan), (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan), (MOI.SingleVariable,MOI.GreaterThan)])dratic
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64}), (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}), (MOI.SingleVariable,MOI.GreaterThan{Float64})])
 
         m = MOI.SolverInstance(solver)
 
@@ -312,14 +312,14 @@ function socptest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         c1f = MOI.ScalarAffineFunction([x,y],[1.0, 1.0], 0.0)
         c1 = MOI.addconstraint!(m, c1f, MOI.GreaterThan(1.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 1
 
-        c2f = MOI.ScalarQuadraticFunction([],Float64[],[x,y,t],[x,y,t],[1.0,1.0,-1.0], 0.0)
+        c2f = MOI.ScalarQuadraticFunction(MOI.VariableReference[],Float64[],[x,y,t],[x,y,t],[1.0,1.0,-1.0], 0.0)
         c2 = MOI.addconstraint!(m, c2f, MOI.LessThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
         bound = MOI.addconstraint!(m, MOI.SingleVariable(t), MOI.GreaterThan(0.0))
-        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.GreaterThan}()) == 1
+        @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == 1
 
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([t], [1.0], 0.0))
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
