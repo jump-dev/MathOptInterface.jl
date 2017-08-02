@@ -761,18 +761,21 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         x = MOI.addvariable!(m)
         y = MOI.addvariable!(m)
         c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [2.0,1.0], 0.0), MOI.LessThan(-1.0))
-        MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
-        MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+        bndx = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        bndy = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x], [1.0], 0.0))
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        if MOI.getattribute(m, MOI.ResultCount()) == 1
+        if MOI.getattribute(m, MOI.ResultCount()) >= 1
             # solver returned an infeasibility ray
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+            # TODO: farkas dual on bounds
+            # @test MOI.getattribute(m, MOI.ConstraintDual(), x) ≈ ? atol=ε
+            # @test MOI.getattribute(m, MOI.ConstraintDual(), y) ≈ ? atol=ε
         else
             # solver returned nothing
             @test MOI.getattribute(m, MOI.ResultCount()) == 0
@@ -800,8 +803,7 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         if MOI.getattribute(m, MOI.ResultCount()) == 1
             # solver returned an unbounded ray
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.ReductionCertificate
-
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
         else
             # solver returned nothing
             @test MOI.getattribute(m, MOI.ResultCount()) == 0
@@ -829,7 +831,7 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         if MOI.getattribute(m, MOI.ResultCount()) == 1
             # solver returned an unbounded ray
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.ReductionCertificate
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
             ray = MOI.getattribute(m, MOI.VariablePrimal(), [x,y])
             @test ray[1] ≈ ray[2] atol=ε
@@ -844,6 +846,67 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     end
 end
 
+function linear9test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "addconstraints" begin
+        #   maximize 1000 x + 350 y
+        #
+        #       s.t.                x >= 30
+        #                           y >= 0
+        #                 x -   1.5 y >= 0
+        #            12   x +   8   y <= 1000
+        #            1000 x + 300   y <= 70000
+        #
+        #   solution: (59.0909, 36.3636)
+        #   objv: 71818.1818
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+            [
+                (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),
+                (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),
+                (MOI.SingleVariable,MOI.GreaterThan{Float64})
+            ]
+        )
+
+        m = MOI.SolverInstance(solver)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+
+        MOI.addconstraints!(m,
+            [MOI.SingleVariable(x), MOI.SingleVariable(y)],
+            [MOI.GreaterThan(30.0), MOI.GreaterThan(0.0)]
+        )
+
+        MOI.addconstraints!(m,
+            [MOI.ScalarAffineFunction([x, y], [1.0, -1.5], 0.0)],
+            [MOI.GreaterThan(0.0)]
+        )
+
+        MOI.addconstraints!(m,
+            [
+                MOI.ScalarAffineFunction([x, y], [12.0, 8.0], 0.0),
+                MOI.ScalarAffineFunction([x, y], [1_000.0, 300.0], 0.0)
+            ],
+            [
+                MOI.LessThan(1_000.0),
+                MOI.LessThan(70_000.0)
+            ]
+        )
+
+        MOI.setobjective!(m, MOI.MaxSense,
+            MOI.ScalarAffineFunction([x, y], [1_000.0, 350.0], 0.0)
+        )
+
+        MOI.optimize!(m)
+
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 79e4/11 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 650/11 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 400/11 atol=ε
+    end
+
+end
+
 function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     linear1test(solver, ε)
     linear2test(solver, ε)
@@ -853,4 +916,5 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
     linear6test(solver, ε)
     linear7test(solver, ε)
     linear8test(solver, ε)
+    linear9test(solver, ε)
 end
