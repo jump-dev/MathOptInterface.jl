@@ -143,13 +143,13 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             )
 
             MOI.addconstraint!(m,
-                MOI.ScalarAffineFunction(v[[4,5,6,7,8,10]], [5,4,7,2,1,-1.0], 0.0),
+                MOI.ScalarAffineFunction(v[[4,5,6,7,8,10]], [5.0,4.0,7.0,2.0,1.0,-1.0], 0.0),
                 MOI.EqualTo(0.0)
             )
 
             MOI.addconstraint!(m,
-                MOI.VectorOfVariables(v[[1,2,3]]),
-                MOI.SOS1([1.0,2.0,3.0])
+                MOI.VectorOfVariables(v[[1, 2, 3]]),
+                MOI.SOS1([1.0, 2.0, 3.0])
             )
 
             MOI.addconstraint!(m,
@@ -175,8 +175,8 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
             @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=ε
 
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v[9:10])
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v[9:10]) ≈ [3.0, 12.0] atol=ε
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=ε
 
             @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
@@ -198,8 +198,8 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
             @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 30.0 atol=ε
 
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v[9:10])
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v[9:10]) ≈ [6.0, 24.0] atol=ε
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol=ε
 
             @test MOI.cangetattribute(m, MOI.DualStatus()) == false
         end
