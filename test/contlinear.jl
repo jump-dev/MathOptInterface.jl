@@ -829,7 +829,7 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         if MOI.getattribute(m, MOI.ResultCount()) == 1
             # solver returned an unbounded ray
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.ReductionCertificate
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.ReductionCertificate
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
             ray = MOI.getattribute(m, MOI.VariablePrimal(), [x,y])
             @test ray[1] ≈ ray[2] atol=ε
