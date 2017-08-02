@@ -104,7 +104,6 @@ function QP01test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.875 atol=ε
-        @show MOI.getattribute(m, MOI.VariablePrimal(), [x,y])
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
         @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.25, 0.75] atol=ε
     end
