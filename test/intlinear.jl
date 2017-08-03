@@ -298,6 +298,10 @@ function knapsacktest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
 
         MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(v, [5.0, 3.0, 2.0, 7.0, 4.0], 0.0))
 
+        if MOI.cansetattribute(m, MOI.VariablePrimalStart(), v)
+            MOI.setattribute!(m, MOI.VariablePrimalStart(), v, [0.0, 0.0, 0.0, 0.0, 0.0])
+        end
+
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
