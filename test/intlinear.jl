@@ -46,7 +46,7 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         objf = MOI.ScalarAffineFunction(v, [1.1, 2.0, 5.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, objf)
 
-        @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         MOI.optimize!(m)
 
@@ -130,7 +130,7 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             objf = MOI.ScalarAffineFunction(v, [2.0, 1.0, 1.0], 0.0)
             MOI.setobjective!(m, MOI.MaxSense, objf)
-            @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+            @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
             MOI.optimize!(m)
 
@@ -226,7 +226,7 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
             objf = MOI.ScalarAffineFunction([v[9], v[10]], [1.0, 1.0], 0.0)
             MOI.setobjective!(m, MOI.MaxSense, objf)
-            @test MOI.getattribute(m, MOI.Sense()) == MOI.MaxSense
+            @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
             MOI.optimize!(m)
 
