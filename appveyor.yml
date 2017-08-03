@@ -42,7 +42,6 @@ build_script:
   - IF EXIST .git\shallow (git fetch --unshallow)
   - C:\projects\julia\bin\julia -e "versioninfo();
       Pkg.clone(pwd(), \"MathOptInterface\");
-      Pkg.clone(\"https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl.git\");
       Pkg.build(\"MathOptInterface\")"
 
 test_script:
