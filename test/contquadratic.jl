@@ -106,6 +106,28 @@ function QP01test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.875 atol=ε
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
         @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.25, 0.75] atol=ε
+
+        # change back to linear
+        #        max 2x + y + 1
+        #       s.t.  x, y >= 0
+        #             x + y = 1
+        # (x,y) = (1,0), obj = 3
+        objf = MOI.ScalarAffineFunction([x,y], [2.0,1.0], 1.0)
+        MOI.setobjective!(m, MOI.MaxSense, objf)
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3.0 atol=ε
+        @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [1.0, 0.0] atol=ε
+
     end
 end
 
