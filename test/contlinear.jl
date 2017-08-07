@@ -933,7 +933,7 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             [MOI.GreaterThan(0.0), MOI.GreaterThan(0.0)]
         )
 
-        MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [1.0, 1.0], 0.0), MOI.Interval(5.0, 10.0))
+        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [1.0, 1.0], 0.0), MOI.Interval(5.0, 10.0))
 
         MOI.setobjective!(m, MOI.MaxSense,
             MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
@@ -945,6 +945,13 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 10.0 atol=ε
 
+        if MOI.getattribute(solver, MOI.SupportsDuals())
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+        end
+
         MOI.setobjective!(m, MOI.MinSense,
             MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
         )
@@ -954,6 +961,13 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5.0 atol=ε
+
+        if MOI.getattribute(solver, MOI.SupportsDuals())
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 1 atol=ε
+        end
     end
 
 end
