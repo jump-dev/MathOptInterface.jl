@@ -911,6 +911,53 @@ function linear9test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
 end
 
+function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "ranged constraints" begin
+        #   maximize x + y
+        #
+        #       s.t.  5 <= x + y <= 10
+        #                  x,  y >= 0
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+            [
+                (MOI.ScalarAffineFunction{Float64},MOI.Interval{Float64}),
+                (MOI.SingleVariable,MOI.GreaterThan{Float64})
+            ]
+        )
+
+        m = MOI.SolverInstance(solver)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+
+        MOI.addconstraints!(m,
+            [MOI.SingleVariable(x), MOI.SingleVariable(y)],
+            [MOI.GreaterThan(0.0), MOI.GreaterThan(0.0)]
+        )
+
+        MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [1.0, 1.0], 0.0), MOI.Interval(5.0, 10.0))
+
+        MOI.setobjective!(m, MOI.MaxSense,
+            MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
+        )
+
+        MOI.optimize!(m)
+
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 10.0 atol=ε
+
+        MOI.setobjective!(m, MOI.MinSense,
+            MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
+        )
+
+        MOI.optimize!(m)
+
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5.0 atol=ε
+    end
+
+end
+
 function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     linear1test(solver, ε)
     linear2test(solver, ε)
@@ -921,4 +968,5 @@ function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64)
     linear7test(solver, ε)
     linear8test(solver, ε)
     linear9test(solver, ε)
+    linear10test(solver, ε)
 end
