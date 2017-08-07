@@ -4,7 +4,14 @@ MOI = MathOptInterface
 # Continuous conic problems
 
 function lin1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
+    if MOI.supportsproblem(solver,
+        MOI.ScalarAffineFunction{Float64},
+        [
+            (MOI.VectorOfVariables,MOI.Nonnegatives),
+            (MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),
+            (MOI.VectorAffineFunction{Float64},MOI.Zeros)
+        ]
+    )
         @testset "LIN1" begin
             # linear conic problem
             # min -3x - 2y - 4z
@@ -54,7 +61,12 @@ function lin1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 end
 
 function lin1atest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),(MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+        [
+            (MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),
+            (MOI.VectorAffineFunction{Float64},MOI.Nonnegatives),
+            (MOI.VectorAffineFunction{Float64},MOI.Zeros)
+        ])
         @testset "LIN1A" begin
             # Same as LIN1 but variable bounds enforced with VectorAffineFunction
 
@@ -100,7 +112,12 @@ function lin1tests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 end
 
 function lin2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Zeros),(MOI.VectorOfVariables,MOI.Nonnegatives),(MOI.VectorOfVariables,MOI.Nonpositives)])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+        [
+            (MOI.VectorAffineFunction{Float64},MOI.Zeros),
+            (MOI.VectorOfVariables,MOI.Nonnegatives),
+            (MOI.VectorOfVariables,MOI.Nonpositives)
+        ])
         @testset "LIN2" begin
             # mixed cones
             # min  3x + 2y - 4z + 0s
