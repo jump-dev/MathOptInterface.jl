@@ -968,6 +968,23 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 1 atol=ε
         end
+
+        MOI.modifyconstraint!(m, c, MOI.Interval(2.0, 12.0))
+        MOI.optimize!(m)
+
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=ε
+
+        MOI.setobjective!(m, MOI.MaxSense,
+            MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
+        )
+
+        MOI.optimize!(m)
+
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 12.0 atol=ε
     end
 
 end

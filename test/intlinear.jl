@@ -327,7 +327,6 @@ function int3test(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @show MOI.getattribute(m, MOI.ObjectiveValue())
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=eps
     end
 end
