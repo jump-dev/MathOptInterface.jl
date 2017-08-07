@@ -273,6 +273,66 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     end
 end
 
+function int3test(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
+    @testset "CPLEX #76" begin
+        # integer knapsack problem
+        # max   z - 0.5 ( b1 + b2 + b3) / 40
+        # s.t.  0 <= z - 0.5 eᵀ b / 40 <= 0.999
+        #       b1, b2, ... b10 ∈ {0, 1}
+        #       z in {0, 1, 2, ..., 100}
+
+        m = MOI.SolverInstance(solver)
+
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+            [
+                (MOI.SingleVariable,MOI.ZeroOne),
+                (MOI.SingleVariable,MOI.Integer),
+                (MOI.SingleVariable,MOI.Interval{Float64}),
+                (MOI.ScalarAffineFunction{Float64},MOI.Interval{Float64})
+            ]
+        )
+
+        z = MOI.addvariable!(m)
+        MOI.addconstraint!(m, MOI.SingleVariable(z), MOI.Integer())
+        MOI.addconstraint!(m, MOI.SingleVariable(z), MOI.Interval(0.0, 100.0))
+
+        b = MOI.addvariables!(m, 10)
+
+        for bi in b
+            MOI.addconstraint!(m, MOI.SingleVariable(bi), MOI.ZeroOne())
+        end
+
+        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(vcat(z, b), vcat(1.0, fill(-0.5 / 40, 10)), 0.0), MOI.Interval(0.0, 0.999))
+
+        MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(vcat(z, b[1:3]), vcat(1.0, fill(-0.5 / 40, 3)), 0.0))
+
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=eps
+
+        # test for CPLEX.jl #76
+        MOI.optimize!(m)
+
+        @test MOI.cangetattribute(m, MOI.TerminationStatus())
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.cangetattribute(m, MOI.PrimalStatus())
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+        @show MOI.getattribute(m, MOI.ObjectiveValue())
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=eps
+    end
+end
+
+
 # Mixed-integer linear problems
 
 function knapsacktest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
@@ -322,4 +382,5 @@ function intlineartest(solver::MOI.AbstractSolver, ɛ=Base.rtoldefault(Float64))
     knapsacktest(solver, ɛ)
     int1test(solver, ɛ)
     int2test(solver, ɛ)
+    int3test(solver, ɛ)
 end
