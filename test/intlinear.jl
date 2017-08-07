@@ -240,15 +240,15 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test_broken MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=ε
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=ε
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test_broken MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=ε
 
             @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
-            for i in 1:8
-                MOI.delete!(m, bin_constraints[i])
+            for cref in bin_constraints
+                MOI.delete!(m, cref)
             end
 
             MOI.optimize!(m)
