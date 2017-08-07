@@ -318,8 +318,8 @@ function knapsacktest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
     end
 end
 
-function intlineartest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
+function intlineartest(solver::MOI.AbstractSolver, ɛ=Base.rtoldefault(Float64))
     knapsacktest(solver, ɛ)
-
-    # TODO more test sets here
+    int1test(solver, ɛ)
+    int2test(solver, ɛ)
 end
