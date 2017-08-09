@@ -3,7 +3,7 @@ MOI = MathOptInterface
 
 using MathOptInterfaceUtilities
 
-function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function int1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "MIP01 from CPLEX.jl" begin
         # an example on mixed integer programming
         #
@@ -60,16 +60,16 @@ function int1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 19.4 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 19.4 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [4,5,1] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [4,5,1] atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
-        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 10 atol=ε
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 10 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c2)
-        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c2) ≈ 15 atol=ε
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c2) ≈ 15 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
@@ -98,7 +98,7 @@ end
 Base.isapprox(a::T, b::T; kwargs...) where T <: Union{MOI.SOS1, MOI.SOS2} = isapprox(a.weights, b.weights; kwargs...)
 Base.:(==)(a::MOI.VectorOfVariables, b::MOI.VectorOfVariables) = (a.variables == b.variables)
 
-function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function int2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "sos from CPLEX.jl" begin
         @testset "SOSI" begin
             @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.SOS1), (MOI.SingleVariable,MOI.LessThan{Float64})])
@@ -125,7 +125,7 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             cs_sos = MOI.getattribute(m, MOI.ConstraintSet(), c2)
             cf_sos = MOI.getattribute(m, MOI.ConstraintFunction(), c2)
             p = sortperm(cs_sos.weights)
-            @test cs_sos.weights[p] ≈ [1.0, 2.0] atol=ε
+            @test cs_sos.weights[p] ≈ [1.0, 2.0] atol=atol rtol=rtol
             @test cf_sos.variables[p] == v[[1,3]]
 
             objf = MOI.ScalarAffineFunction(v, [2.0, 1.0, 1.0], 0.0)
@@ -144,10 +144,10 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0,1,2] atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0,1,2] atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
@@ -166,10 +166,10 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5 atol=ε
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1,1,2] atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1,1,2] atol=atol rtol=rtol
         end
         @testset "SOSII" begin
             @test MOI.supportsproblem(solver,
@@ -221,7 +221,7 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             cs_sos = MOI.getattribute(m, MOI.ConstraintSet(), c)
             cf_sos = MOI.getattribute(m, MOI.ConstraintFunction(), c)
             p = sortperm(cs_sos.weights)
-            @test cs_sos.weights[p] ≈ [1.0, 2.0, 4.0, 5.0, 7.0] atol=ε
+            @test cs_sos.weights[p] ≈ [1.0, 2.0, 4.0, 5.0, 7.0] atol=atol rtol=rtol
             @test cf_sos.variables[p] == v[[8,7,5,4,6]]
 
             objf = MOI.ScalarAffineFunction([v[9], v[10]], [1.0, 1.0], 0.0)
@@ -240,10 +240,10 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=ε
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
@@ -263,17 +263,17 @@ function int2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 30.0 atol=ε
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 30.0 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol=ε
+            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.DualStatus()) == false
         end
     end
 end
 
-function int3test(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
+function int3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "CPLEX #76" begin
         # integer knapsack problem
         # max   z - 0.5 ( b1 + b2 + b3) / 40
@@ -315,7 +315,7 @@ function int3test(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=eps
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
 
         # test for CPLEX.jl #76
         MOI.optimize!(m)
@@ -327,14 +327,14 @@ function int3test(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=eps
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
     end
 end
 
 
 # Mixed-integer linear problems
 
-function knapsacktest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
+function knapsacktest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Knapsack model" begin
         # integer knapsack problem
         # max 5a + 3b + 2c + 7d + 4e
@@ -370,16 +370,16 @@ function knapsacktest(solver::MOI.AbstractSolver, eps=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 16 atol=eps
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 16 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0, 0, 1, 1] atol=eps
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0, 0, 1, 1] atol=atol rtol=rtol
     end
 end
 
-function intlineartest(solver::MOI.AbstractSolver, ɛ=Base.rtoldefault(Float64))
-    knapsacktest(solver, ɛ)
-    int1test(solver, ɛ)
-    int2test(solver, ɛ)
-    int3test(solver, ɛ)
+function intlineartest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    knapsacktest(solver, atol=atol, rtol=rtol)
+    int1test(solver, atol=atol, rtol=rtol)
+    int2test(solver, atol=atol, rtol=rtol)
+    int3test(solver, atol=atol, rtol=rtol)
 end

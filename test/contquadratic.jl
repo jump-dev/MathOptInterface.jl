@@ -5,7 +5,7 @@ using MathOptInterfaceUtilities # Defines isapprox for ScalarQuadraticFunction
 
 # Continuous quadratic problems
 
-function qp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "QP1 - Quadratic objective" begin
         # simple quadratic objective
         # Min x^2 + xy + y^2 + yz + z^2
@@ -52,14 +52,14 @@ function qp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 130/70 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 130/70 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=atol rtol=rtol
     end
 end
 
-function qp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qp2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "QP2" begin
         # same as QP0 but with duplicate terms
         # then change the objective and sense
@@ -108,10 +108,10 @@ function qp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 130/70 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 130/70 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=atol rtol=rtol
 
         # change objective to Max -2(x^2 + xy + y^2 + yz + z^2)
         obj2 = MOI.ScalarQuadraticFunction(v, [0.0,0.0,0.0],[v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]], [-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0], 0.0)
@@ -131,14 +131,14 @@ function qp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -2*130/70 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -2*130/70 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=atol rtol=rtol
     end
 end
 
-function qp3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qp3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "qp3test - Linear Quadratic objective" begin
         # simple quadratic objective
         #    minimize 2 x^2 + y^2 + xy + x + y + 1
@@ -182,9 +182,9 @@ function qp3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.875 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.875 atol=atol rtol=rtol
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.25, 0.75] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.25, 0.75] atol=atol rtol=rtol
 
         # change back to linear
         #        max 2x + y + 1
@@ -203,19 +203,19 @@ function qp3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [1.0, 0.0] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [1.0, 0.0] atol=atol rtol=rtol
 
     end
 end
 
 
-function qptests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qptests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Quadratic Programs (quad. objective)" begin
-        qp1test(solver, ε)
-        qp2test(solver, ε)
-        qp3test(solver, ε)
+        qp1test(solver, atol=atol, rtol=rtol)
+        qp2test(solver, atol=atol, rtol=rtol)
+        qp3test(solver, atol=atol, rtol=rtol)
     end
 end
 
@@ -223,7 +223,7 @@ end
     Quadratically constrained programs
 =#
 
-function qcp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qcp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "qcp1" begin
         # quadratic constraint
         # Max x + y
@@ -262,10 +262,10 @@ function qcp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.25 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.25 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.5,1.75] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y]) ≈ [0.5,1.75] atol=atol rtol=rtol
 
         # try delete quadratic constraint and go back to linear
 
@@ -280,12 +280,12 @@ function qcp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         # @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
         #
         # @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        # @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=ε
+        # @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
     end
 end
 
 
-function qcp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qcp2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "qcp2" begin
         # Max x
         # s.t. x^2 <= 2 (c)
@@ -320,18 +320,18 @@ function qcp2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ sqrt(2) atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=atol rtol=rtol
 
         # TODO - duals
         # @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-        # @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 0.5/sqrt(2) atol=ε
+        # @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 0.5/sqrt(2) atol=atol rtol=rtol
     end
 end
 
-function qcp3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qcp3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "qcp3" begin
         # Min -x
         # s.t. x^2 <= 2
@@ -366,22 +366,22 @@ function qcp3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -sqrt(2) atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -sqrt(2) atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=atol rtol=rtol
 
         # TODO - duals
         # @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-        # @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -0.5/sqrt(2) atol=ε
+        # @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -0.5/sqrt(2) atol=atol rtol=rtol
     end
 end
 
-function qcptests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function qcptests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Quadratic Constrainted Programs (quad. constraints only)" begin
-        qcp1test(solver, ε)
-        qcp2test(solver, ε)
-        qcp3test(solver, ε)
+        qcp1test(solver, atol=atol, rtol=rtol)
+        qcp2test(solver, atol=atol, rtol=rtol)
+        qcp3test(solver, atol=atol, rtol=rtol)
     end
 end
 
@@ -389,7 +389,7 @@ end
     SOCP
 =#
 
-function socp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function socp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "socp1" begin
         # min t
         # s.t. x + y >= 1 (c1)
@@ -436,24 +436,24 @@ function socp1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ sqrt(1/2) atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ sqrt(1/2) atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x,y,t])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y,t]) ≈ [0.5,0.5,sqrt(1/2)] atol=1e-3
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x,y,t]) ≈ [0.5,0.5,sqrt(1/2)] atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [t,x,y,t])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [t,x,y,t]) ≈ [sqrt(1/2),0.5,0.5,sqrt(1/2)] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [t,x,y,t]) ≈ [sqrt(1/2),0.5,0.5,sqrt(1/2)] atol=atol rtol=rtol
     end
 end
 
-function socptests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function socptests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Second Order Cone Programs" begin
-        socp1test(solver, ε)
+        socp1test(solver, atol=atol, rtol=rtol)
     end
 end
 
-function contquadratictests(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
-    qptests(solver, ɛ)
-    qcptests(solver, ɛ)
-    socptests(solver, ɛ)
+function contquadratictests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    qptests(solver, atol=atol, rtol=rtol)
+    qcptests(solver, atol=atol, rtol=rtol)
+    socptests(solver, atol=atol, rtol=rtol)
 end

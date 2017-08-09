@@ -5,7 +5,7 @@ using MathOptInterfaceUtilities # Defines isapprox for ScalarAffineFunction
 
 # Continuous linear problems
 
-function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Basic solve, query, resolve" begin
         # simple 2 variable, 1 constraint problem
         # min -x
@@ -67,25 +67,25 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -1 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -1 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0] atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
-        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=ε
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=atol rtol=rtol
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=atol rtol=rtol
         end
 
         # change objective to Max +x
@@ -108,21 +108,21 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 0] atol=atol rtol=rtol
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=atol rtol=rtol
         end
 
         # add new variable to get :
@@ -155,26 +155,26 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus(1)) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0, 0, 1] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0, 0, 1] atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
-        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=ε
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=atol rtol=rtol
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -2 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -2 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 1 atol=atol rtol=rtol
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 2 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 2 atol=atol rtol=rtol
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ 0 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ 0 atol=atol rtol=rtol
         end
 
         # setting lb of x to -1 to get :
@@ -197,7 +197,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
         # put lb of x back to 0 and fix z to zero to get :
         # max x + 2z
@@ -221,7 +221,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
 
         # modify affine linear constraint set to be == 2 to get :
         # max x + 2z
@@ -246,7 +246,7 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
 
         # modify objective function to x + 2y to get :
         # max x + 2y
@@ -268,10 +268,10 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 4 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 4 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0, 2, 0] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0, 2, 0] atol=atol rtol=rtol
 
         # add constraint x - y >= 0 to get :
         # max x+2y
@@ -297,33 +297,33 @@ function linear1test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 1, 0] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1, 1, 0] atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
-        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 2 atol=ε
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus(1))
             @test MOI.getattribute(m, MOI.DualStatus(1)) == MOI.FeasiblePoint
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1.5 atol=ε
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c2) ≈ 0.5 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1.5 atol=atol rtol=rtol
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c2) ≈ 0.5 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 0 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 0 atol=atol rtol=rtol
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ 1.5 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc3) ≈ 1.5 atol=atol rtol=rtol
         end
     end
 end
 
-function linear2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "addvariable! (one by one) interface" begin
         # Min -x
         # s.t. x + y <= 1
@@ -360,33 +360,33 @@ function linear2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -1 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -1 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 1 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), y)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c)
-        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=ε
+        @test MOI.getattribute(m, MOI.ConstraintPrimal(), c) ≈ 1 atol=atol rtol=rtol
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), vc2) ≈ 1 atol=atol rtol=rtol
         end
     end
 end
 
-function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Issue #40 from Gurobi.jl" begin
         # min  x
         # s.t. x >= 0
@@ -419,7 +419,7 @@ function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
         # max  x
         # s.t. x <= 0
@@ -452,11 +452,11 @@ function linear3test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0 atol=atol rtol=rtol
     end
 end
 
-function linear4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear4test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Modify GreaterThan and LessThan sets as bounds" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.SingleVariable,MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.LessThan{Float64})])
@@ -480,9 +480,9 @@ function linear4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=atol rtol=rtol
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -492,9 +492,9 @@ function linear4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=atol rtol=rtol
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -504,14 +504,14 @@ function linear4test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=atol rtol=rtol
 
     end
 end
 
-function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear5test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Change coeffs, del constr, del var" begin
         @test MOI.getattribute(solver, MOI.SupportsDeleteVariable())
         #####################################
@@ -562,10 +562,10 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 8/3 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 8/3 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [4/3, 4/3] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [4/3, 4/3] atol=atol rtol=rtol
 
         # copy and solve again
         # missing test
@@ -590,10 +590,10 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [2.0, 0.0] atol=ɛ
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [2.0, 0.0] atol=atol rtol=rtol
 
         # delconstrs and solve
         #   maximize x + y
@@ -613,10 +613,10 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 4 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 4 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
-        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [4.0, 0.0] atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), [x, y]) ≈ [4.0, 0.0] atol=atol rtol=rtol
 
         # delvars and solve
         #   maximize y
@@ -636,15 +636,15 @@ function linear5test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
 
         @test MOI.cangetattribute(m, MOI.VariablePrimal(), y)
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 2.0 atol=ε
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 2.0 atol=atol rtol=rtol
 
     end
 end
 
-function linear6test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear6test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Modify GreaterThan and LessThan sets as linear constraints" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
@@ -668,9 +668,9 @@ function linear6test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=atol rtol=rtol
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -680,9 +680,9 @@ function linear6test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=atol rtol=rtol
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -692,14 +692,14 @@ function linear6test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=atol rtol=rtol
 
     end
 end
 
-function linear7test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear7test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Modify constants in Nonnegatives and Nonpositives" begin
 
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
@@ -723,9 +723,9 @@ function linear7test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=atol rtol=rtol
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -735,9 +735,9 @@ function linear7test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 0.0 atol=atol rtol=rtol
 
         # Min  x - y
         # s.t. 100.0 <= x
@@ -747,14 +747,14 @@ function linear7test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 200.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 100.0 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ -100.0 atol=atol rtol=rtol
 
     end
 end
 
-function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "test infeasible problem" begin
         # min x
         # s.t. 2x+y <= -1
@@ -776,10 +776,10 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
             # TODO: farkas dual on bounds
-            # @test MOI.getattribute(m, MOI.ConstraintDual(), x) ≈ ? atol=ε
-            # @test MOI.getattribute(m, MOI.ConstraintDual(), y) ≈ ? atol=ε
+            # @test MOI.getattribute(m, MOI.ConstraintDual(), x) ≈ ? atol=atol rtol=rtol
+            # @test MOI.getattribute(m, MOI.ConstraintDual(), y) ≈ ? atol=atol rtol=rtol
         else
             # solver returned nothing
             @test MOI.getattribute(m, MOI.ResultCount()) == 0
@@ -838,7 +838,7 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), [x, y])
             ray = MOI.getattribute(m, MOI.VariablePrimal(), [x,y])
-            @test ray[1] ≈ ray[2] atol=ε
+            @test ray[1] ≈ ray[2] atol=atol rtol=rtol
 
         else
             # solver returned nothing
@@ -850,7 +850,7 @@ function linear8test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
     end
 end
 
-function linear9test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear9test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "addconstraints" begin
         #   maximize 1000 x + 350 y
         #
@@ -904,14 +904,14 @@ function linear9test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 79e4/11 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 650/11 atol=ε
-        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 400/11 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 79e4/11 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 650/11 atol=atol rtol=rtol
+        @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 400/11 atol=atol rtol=rtol
     end
 
 end
 
-function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear10test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "ranged constraints" begin
         #   maximize x + y
         #
@@ -943,13 +943,13 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 10.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 10.0 atol=atol rtol=rtol
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
         end
 
         MOI.setobjective!(m, MOI.MinSense,
@@ -960,13 +960,13 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5.0 atol=atol rtol=rtol
 
         if MOI.getattribute(solver, MOI.SupportsDuals())
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 1 atol=ε
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 1 atol=atol rtol=rtol
         end
 
         MOI.modifyconstraint!(m, c, MOI.Interval(2.0, 12.0))
@@ -974,7 +974,7 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
 
         MOI.setobjective!(m, MOI.MaxSense,
             MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
@@ -984,20 +984,20 @@ function linear10test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 12.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 12.0 atol=atol rtol=rtol
     end
 
 end
 
-function contlineartest(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
-    linear1test(solver, ε)
-    linear2test(solver, ε)
-    linear3test(solver, ε)
-    linear4test(solver, ε)
-    linear5test(solver, ε)
-    linear6test(solver, ε)
-    linear7test(solver, ε)
-    linear8test(solver, ε)
-    linear9test(solver, ε)
-    linear10test(solver, ε)
+function contlineartest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    linear1test(solver, atol=atol, rtol=rtol)
+    linear2test(solver, atol=atol, rtol=rtol)
+    linear3test(solver, atol=atol, rtol=rtol)
+    linear4test(solver, atol=atol, rtol=rtol)
+    linear5test(solver, atol=atol, rtol=rtol)
+    linear6test(solver, atol=atol, rtol=rtol)
+    linear7test(solver, atol=atol, rtol=rtol)
+    linear8test(solver, atol=atol, rtol=rtol)
+    linear9test(solver, atol=atol, rtol=rtol)
+    linear10test(solver, atol=atol, rtol=rtol)
 end
