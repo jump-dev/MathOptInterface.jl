@@ -273,7 +273,9 @@ function lin3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             @test MOI.cangetattribute(m, MOI.TerminationStatus())
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
-            @test !MOI.cangetattribute(m, MOI.PrimalStatus())
+            if MOI.cangetattribute(m, MOI.PrimalStatus())
+                @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasiblePoint
+            end
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
 
@@ -309,7 +311,9 @@ function lin4test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             @test MOI.cangetattribute(m, MOI.TerminationStatus())
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
-            @test !MOI.cangetattribute(m, MOI.PrimalStatus())
+            if MOI.cangetattribute(m, MOI.PrimalStatus())
+                @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasiblePoint
+            end
             @test MOI.cangetattribute(m, MOI.DualStatus())
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
 
