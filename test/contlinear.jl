@@ -1017,8 +1017,12 @@ function linear11test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=ε
 
-        MOI.transformconstraint!(m, c2, MOI.LessThan(2.0))
+        c3 = MOI.transformconstraint!(m, c2, MOI.LessThan(2.0))
 
+        @test isa(c3, MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}})
+        @test MOI.isvalid(m, c2) == false
+        @test MOI.isvalid(m, c3) == true
+        
         MOI.optimize!(m)
 
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
