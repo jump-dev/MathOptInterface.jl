@@ -127,7 +127,8 @@ function lin2test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
             c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
 
             vy = MOI.addconstraint!(m, MOI.VectorOfVariables([y]), MOI.Nonpositives(1))
-            vz = MOI.addconstraint!(m, MOI.VectorOfVariables([z]), MOI.Nonnegatives(1))
+            # test fallback
+            vz = MOI.addconstraint!(m, [z], MOI.Nonnegatives(1))
             vz = MOI.addconstraint!(m, MOI.VectorOfVariables([s]), MOI.Zeros(1))
 
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1

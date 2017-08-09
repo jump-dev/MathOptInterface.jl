@@ -8,6 +8,10 @@ Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, 
 """
 function addconstraint! end
 
+# fallbacks
+addconstraint!(m::AbstractSolverInstance, v::VariableReference, set) = addconstraint!(m, SingleVariable(v), set)
+addconstraint!(m::AbstractSolverInstance, v::Vector{VariableReference}, set) = addconstraint!(m, VectorOfVariables(v), set)
+
 """
     addconstraints!(m::AbstractSolverInstance, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintReference{F,S}} where {F,S}
 
