@@ -73,3 +73,31 @@ modifyconstraint!(m, c, ScalarConstantChange(10.0))
 ```
 """
 function modifyconstraint! end
+
+
+"""
+## Transform Constraint Set
+
+    transformconstraint!(m::AbstractSolverInstance, c::ConstraintReference{F,S1}, newset::S2)::ConstraintReference{F,S2}
+
+Replace the set in constraint `c` with `newset`. The constraint reference `c`
+will no longer be valid, and the function returns a new constraint reference.
+
+Solvers may only support a subset of constraint transforms that they perform
+efficiently (for example, changing from a `LessThan` to `GreaterThan` set). In
+addition, set modification (where `S1 = S2`) should be performed via the
+`modifyconstraint!` function.
+
+
+Typically, the user should delete the constraint and add a new one.
+
+### Examples
+
+If `c` is a `ConstraintReference{ScalarAffineFunction{Float64},LessThan{Float64}}`,
+
+```julia
+c2 = transformconstraint!(m, c, GreaterThan(0.0))
+transformconstraint!(m, c, LessThan(0.0)) # errors
+```
+"""
+function transformconstraint! end
