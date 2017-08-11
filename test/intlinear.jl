@@ -49,7 +49,7 @@ function int1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         MOI.optimize!(m)
-
+        
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
@@ -57,7 +57,7 @@ function int1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
         @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
-        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.PrimalStatus()) in [ MOI.FeasiblePoint, MOI.NearlyFeasiblePoint ]
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 19.4 atol=atol rtol=rtol
@@ -99,176 +99,179 @@ Base.isapprox(a::T, b::T; kwargs...) where T <: Union{MOI.SOS1, MOI.SOS2} = isap
 Base.:(==)(a::MOI.VectorOfVariables, b::MOI.VectorOfVariables) = (a.variables == b.variables)
 
 function int2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    @testset "sos from CPLEX.jl" begin
-        @testset "SOSI" begin
-            @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.SOS1), (MOI.SingleVariable,MOI.LessThan{Float64})])
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [ (MOI.VectorOfVariables, MOI.SOS1),
+                                                                        (MOI.VectorOfVariables, MOI.SOS2) ])
+        @testset "sos from CPLEX.jl" begin
+            @testset "SOSI" begin
+                @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.SOS1), (MOI.SingleVariable,MOI.LessThan{Float64})])
 
-            m = MOI.SolverInstance(solver)
+                m = MOI.SolverInstance(solver)
 
-            v = MOI.addvariables!(m, 3)
-            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
-            MOI.addconstraint!(m, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
-            MOI.addconstraint!(m, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
-            MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.LessThan(2.0))
+                v = MOI.addvariables!(m, 3)
+                @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
+                MOI.addconstraint!(m, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
+                MOI.addconstraint!(m, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
+                MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.LessThan(2.0))
 
-            c1 = MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[2]]), MOI.SOS1([1.0, 2.0]))
-            c2 = MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[3]]), MOI.SOS1([1.0, 2.0]))
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1}()) == 2
+                c1 = MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[2]]), MOI.SOS1([1.0, 2.0]))
+                c2 = MOI.addconstraint!(m, MOI.VectorOfVariables([v[1], v[3]]), MOI.SOS1([1.0, 2.0]))
+                @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1}()) == 2
 
 
-            @test MOI.cangetattribute(m, MOI.ConstraintSet(), c2)
-            @test MOI.cangetattribute(m, MOI.ConstraintFunction(), c2)
-            #=
-                To allow for permutations in the sets and variable vectors
-                we're going to sort according to the weights
-            =#
-            cs_sos = MOI.getattribute(m, MOI.ConstraintSet(), c2)
-            cf_sos = MOI.getattribute(m, MOI.ConstraintFunction(), c2)
-            p = sortperm(cs_sos.weights)
-            @test cs_sos.weights[p] ≈ [1.0, 2.0] atol=atol rtol=rtol
-            @test cf_sos.variables[p] == v[[1,3]]
+                @test MOI.cangetattribute(m, MOI.ConstraintSet(), c2)
+                @test MOI.cangetattribute(m, MOI.ConstraintFunction(), c2)
+                #=
+                    To allow for permutations in the sets and variable vectors
+                    we're going to sort according to the weights
+                =#
+                cs_sos = MOI.getattribute(m, MOI.ConstraintSet(), c2)
+                cf_sos = MOI.getattribute(m, MOI.ConstraintFunction(), c2)
+                p = sortperm(cs_sos.weights)
+                @test cs_sos.weights[p] ≈ [1.0, 2.0] atol=atol rtol=rtol
+                @test cf_sos.variables[p] == v[[1,3]]
 
-            objf = MOI.ScalarAffineFunction(v, [2.0, 1.0, 1.0], 0.0)
-            MOI.setobjective!(m, MOI.MaxSense, objf)
-            @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
+                objf = MOI.ScalarAffineFunction(v, [2.0, 1.0, 1.0], 0.0)
+                MOI.setobjective!(m, MOI.MaxSense, objf)
+                @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
-            MOI.optimize!(m)
+                MOI.optimize!(m)
 
-            @test MOI.cangetattribute(m, MOI.TerminationStatus())
-            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+                @test MOI.cangetattribute(m, MOI.TerminationStatus())
+                @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.cangetattribute(m, MOI.ResultCount())
-            @test MOI.getattribute(m, MOI.ResultCount()) >= 1
+                @test MOI.cangetattribute(m, MOI.ResultCount())
+                @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
-            @test MOI.cangetattribute(m, MOI.PrimalStatus())
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+                @test MOI.cangetattribute(m, MOI.PrimalStatus())
+                @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
+                @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+                @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0,1,2] atol=atol rtol=rtol
+                @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+                @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0,1,2] atol=atol rtol=rtol
 
-            @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+                @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
-            MOI.delete!(m, c1)
-            MOI.delete!(m, c2)
+                MOI.delete!(m, c1)
+                MOI.delete!(m, c2)
 
-            MOI.optimize!(m)
+                MOI.optimize!(m)
 
-            @test MOI.cangetattribute(m, MOI.TerminationStatus())
-            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+                @test MOI.cangetattribute(m, MOI.TerminationStatus())
+                @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.cangetattribute(m, MOI.ResultCount())
-            @test MOI.getattribute(m, MOI.ResultCount()) >= 1
+                @test MOI.cangetattribute(m, MOI.ResultCount())
+                @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
-            @test MOI.cangetattribute(m, MOI.PrimalStatus())
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+                @test MOI.cangetattribute(m, MOI.PrimalStatus())
+                @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5 atol=atol rtol=rtol
+                @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+                @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 5 atol=atol rtol=rtol
 
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1,1,2] atol=atol rtol=rtol
-        end
-        @testset "SOSII" begin
-            @test MOI.supportsproblem(solver,
-                MOI.ScalarAffineFunction{Float64},
-                [
-                    (MOI.VectorOfVariables,MOI.SOS1),
-                    (MOI.VectorOfVariables,MOI.SOS2),
-                    (MOI.SingleVariable, MOI.ZeroOne),
-                    (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
-                    ]
-            )
-
-            m = MOI.SolverInstance(solver)
-
-            v = MOI.addvariables!(m, 10)
-            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 10
-
-            bin_constraints = []
-            for i in 1:8
-                MOI.addconstraint!(m, MOI.SingleVariable(v[i]), MOI.Interval(0.0, 2.0))
-                push!(bin_constraints, MOI.addconstraint!(m, MOI.SingleVariable(v[i]), MOI.ZeroOne()))
+                @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+                @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [1,1,2] atol=atol rtol=rtol
             end
+            @testset "SOSII" begin
+                @test MOI.supportsproblem(solver,
+                    MOI.ScalarAffineFunction{Float64},
+                    [
+                        (MOI.VectorOfVariables,MOI.SOS1),
+                        (MOI.VectorOfVariables,MOI.SOS2),
+                        (MOI.SingleVariable, MOI.ZeroOne),
+                        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+                        ]
+                )
 
-            MOI.addconstraint!(m,
-                MOI.ScalarAffineFunction(v[[1,2,3,9]], [1.0,2.0,3.0,-1.0], 0.0),
-                MOI.EqualTo(0.0)
-            )
+                m = MOI.SolverInstance(solver)
 
-            MOI.addconstraint!(m,
-                MOI.ScalarAffineFunction(v[[4,5,6,7,8,10]], [5.0,4.0,7.0,2.0,1.0,-1.0], 0.0),
-                MOI.EqualTo(0.0)
-            )
+                v = MOI.addvariables!(m, 10)
+                @test MOI.getattribute(m, MOI.NumberOfVariables()) == 10
 
-            MOI.addconstraint!(m,
-                MOI.VectorOfVariables(v[[1, 2, 3]]),
-                MOI.SOS1([1.0, 2.0, 3.0])
-            )
+                bin_constraints = []
+                for i in 1:8
+                    MOI.addconstraint!(m, MOI.SingleVariable(v[i]), MOI.Interval(0.0, 2.0))
+                    push!(bin_constraints, MOI.addconstraint!(m, MOI.SingleVariable(v[i]), MOI.ZeroOne()))
+                end
 
-            vv   = MOI.VectorOfVariables(v[[4,5,6,7,8]])
-            sos2 = MOI.SOS2([5.0, 4.0, 7.0, 2.0, 1.0])
-            c = MOI.addconstraint!(m, vv, sos2)
+                MOI.addconstraint!(m,
+                    MOI.ScalarAffineFunction(v[[1,2,3,9]], [1.0,2.0,3.0,-1.0], 0.0),
+                    MOI.EqualTo(0.0)
+                )
 
-            @test MOI.cangetattribute(m, MOI.ConstraintSet(), c)
-            @test MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
-            #=
-                To allow for permutations in the sets and variable vectors
-                we're going to sort according to the weights
-            =#
-            cs_sos = MOI.getattribute(m, MOI.ConstraintSet(), c)
-            cf_sos = MOI.getattribute(m, MOI.ConstraintFunction(), c)
-            p = sortperm(cs_sos.weights)
-            @test cs_sos.weights[p] ≈ [1.0, 2.0, 4.0, 5.0, 7.0] atol=atol rtol=rtol
-            @test cf_sos.variables[p] == v[[8,7,5,4,6]]
+                MOI.addconstraint!(m,
+                    MOI.ScalarAffineFunction(v[[4,5,6,7,8,10]], [5.0,4.0,7.0,2.0,1.0,-1.0], 0.0),
+                    MOI.EqualTo(0.0)
+                )
 
-            objf = MOI.ScalarAffineFunction([v[9], v[10]], [1.0, 1.0], 0.0)
-            MOI.setobjective!(m, MOI.MaxSense, objf)
-            @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
+                MOI.addconstraint!(m,
+                    MOI.VectorOfVariables(v[[1, 2, 3]]),
+                    MOI.SOS1([1.0, 2.0, 3.0])
+                )
 
-            MOI.optimize!(m)
+                vv   = MOI.VectorOfVariables(v[[4,5,6,7,8]])
+                sos2 = MOI.SOS2([5.0, 4.0, 7.0, 2.0, 1.0])
+                c = MOI.addconstraint!(m, vv, sos2)
 
-            @test MOI.cangetattribute(m, MOI.TerminationStatus())
-            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+                @test MOI.cangetattribute(m, MOI.ConstraintSet(), c)
+                @test MOI.cangetattribute(m, MOI.ConstraintFunction(), c)
+                #=
+                    To allow for permutations in the sets and variable vectors
+                    we're going to sort according to the weights
+                =#
+                cs_sos = MOI.getattribute(m, MOI.ConstraintSet(), c)
+                cf_sos = MOI.getattribute(m, MOI.ConstraintFunction(), c)
+                p = sortperm(cs_sos.weights)
+                @test cs_sos.weights[p] ≈ [1.0, 2.0, 4.0, 5.0, 7.0] atol=atol rtol=rtol
+                @test cf_sos.variables[p] == v[[8,7,5,4,6]]
 
-            @test MOI.cangetattribute(m, MOI.ResultCount())
-            @test MOI.getattribute(m, MOI.ResultCount()) >= 1
+                objf = MOI.ScalarAffineFunction([v[9], v[10]], [1.0, 1.0], 0.0)
+                MOI.setobjective!(m, MOI.MaxSense, objf)
+                @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
-            @test MOI.cangetattribute(m, MOI.PrimalStatus())
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+                MOI.optimize!(m)
 
-            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=atol rtol=rtol
+                @test MOI.cangetattribute(m, MOI.TerminationStatus())
+                @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=atol rtol=rtol
+                @test MOI.cangetattribute(m, MOI.ResultCount())
+                @test MOI.getattribute(m, MOI.ResultCount()) >= 1
 
-            @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+                @test MOI.cangetattribute(m, MOI.PrimalStatus())
+                @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            for cref in bin_constraints
-                MOI.delete!(m, cref)
+                @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+                @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 15.0 atol=atol rtol=rtol
+
+                @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+                @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=atol rtol=rtol
+
+                @test MOI.cangetattribute(m, MOI.DualStatus()) == false
+
+                for cref in bin_constraints
+                    MOI.delete!(m, cref)
+                end
+
+                MOI.optimize!(m)
+
+                @test MOI.cangetattribute(m, MOI.TerminationStatus())
+                @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+                @test MOI.cangetattribute(m, MOI.ResultCount())
+                @test MOI.getattribute(m, MOI.ResultCount()) >= 1
+
+                @test MOI.cangetattribute(m, MOI.PrimalStatus())
+                @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+                @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+                @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 30.0 atol=atol rtol=rtol
+
+                @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
+                @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol=atol rtol=rtol
+
+                @test MOI.cangetattribute(m, MOI.DualStatus()) == false
             end
-
-            MOI.optimize!(m)
-
-            @test MOI.cangetattribute(m, MOI.TerminationStatus())
-            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
-
-            @test MOI.cangetattribute(m, MOI.ResultCount())
-            @test MOI.getattribute(m, MOI.ResultCount()) >= 1
-
-            @test MOI.cangetattribute(m, MOI.PrimalStatus())
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-
-            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 30.0 atol=atol rtol=rtol
-
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), v)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol=atol rtol=rtol
-
-            @test MOI.cangetattribute(m, MOI.DualStatus()) == false
         end
     end
 end
@@ -367,7 +370,7 @@ function knapsacktest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
         @test MOI.cangetattribute(m, MOI.PrimalStatus())
-        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.PrimalStatus()) in [ MOI.FeasiblePoint, MOI.NearlyFeasiblePoint ]
 
         @test MOI.cangetattribute(m, MOI.ObjectiveValue())
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 16 atol=atol rtol=rtol

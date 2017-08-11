@@ -832,7 +832,7 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
-        if MOI.getattribute(m, MOI.ResultCount()) == 1
+        if MOI.getattribute(m, MOI.ResultCount()) > 0
             # solver returned an unbounded ray
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
             @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
