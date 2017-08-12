@@ -147,7 +147,6 @@ isvalid(::AbstractSolverInstance,::ConstraintReference)
 addconstraint!
 addconstraints!
 modifyconstraint!
-canmodifyconstraint
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]
