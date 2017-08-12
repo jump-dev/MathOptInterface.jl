@@ -28,7 +28,8 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
         vc1 = MOI.addconstraint!(m, MOI.SingleVariable(v[1]), MOI.GreaterThan(0.0))
-        vc2 = MOI.addconstraint!(m, MOI.SingleVariable(v[2]), MOI.GreaterThan(0.0))
+        # test fallback
+        vc2 = MOI.addconstraint!(m, v[2], MOI.GreaterThan(0.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
