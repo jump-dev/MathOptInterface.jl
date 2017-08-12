@@ -1,6 +1,8 @@
 using MathOptInterface
 MOI = MathOptInterface
 
+using MathOptInterfaceUtilities # Defines isapprox for ScalarAffineFunction
+
 # Continuous conic problems
 
 function lin1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
