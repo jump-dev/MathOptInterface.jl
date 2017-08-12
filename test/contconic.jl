@@ -719,10 +719,82 @@ function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
     end
 end
 
+# function rotatedsoc1atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+# end
+
+function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, 
+        [(MOI.SingleVariable,MOI.EqualTo{Float64}),
+         (MOI.SingleVariable,MOI.LessThan{Float64}),
+         (MOI.SingleVariable,MOI.GreaterThan{Float64}),
+         (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)]) 
+        @testset "SOCRotated2 infeasible" begin
+            # Problem SOCRotated2 - Infeasible
+            # min 0
+            # s.t. 
+            #      x ≤ 1
+            #      y = 1/2
+            #      z ≥ 2
+            #      z^2 ≤ 2x*y
+            # in conic form:
+            # min 0
+            # s.t. 
+            #      -1 + x ∈ R₋
+            #     1/2 - y ∈ {0}
+            #      -2 + z ∈ R₊
+            #       (x,y,z) ∈ SOCRoated
+            b = [-2, -1, 1/2]
+            A = [0 0 -1; -1 0 0; 0 1 0]
+            c = [0.0,0.0,0.0]
+
+            m = MOI.SolverInstance(solver)
+            
+            x = MOI.addvariables!(m, 3)
+
+            vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
+            vc2 = MOI.addconstraint!(m, MOI.SingleVariable(x[2]), MOI.EqualTo(0.5))
+            vc3 = MOI.addconstraint!(m, MOI.SingleVariable(x[3]), MOI.GreaterThan(2.0))
+
+            rsoc = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
+
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}()) == 1
+
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(x,c,0.0))
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) in [MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
+
+            if MOI.getattribute(m, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded && MOI.getattribute(solver, MOI.SupportsDuals())
+                @test MOI.cangetattribute(m, MOI.DualStatus())
+                @test MOI.getattribute(m, MOI.DualStatus()) in [InfeasibilityCertificate, NearlyInfeasibilityCertificate]
+
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
+                y1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
+                @test y1 > 0
+
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
+                y1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
+                @test y2 < 0
+
+                y = [y1, y2]
+
+                vardual = MOI.getattribute(m, MOI.ConstraintDual(), rsoc)
+                
+                @test vardual ≈ (A'y) atol=atol rtol=rtol
+                @test 2*vardual[1]*vardual[2] ≥ vardual[3]^2 - atol
+                @test -dot(b,y) > 0
+            end
+        end
+    end
+end
 function soctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     rotatedsoc1test(solver, atol=atol, rtol=rtol)
-    #rotatedsoc2test(solver, atol=atol, rtol=rtol)
-    #rotatedsoc3test(solver, atol=atol, rtol=rtol)
+    #rotatedsoc1atest(solver, atol=atol, rtol=rtol)
+    rotatedsoc2test(solver, atol=atol, rtol=rtol)
 end
 
 function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
