@@ -27,7 +27,7 @@ git:
 
 ## uncomment the following lines to override the default test script
 script:
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("MathOptInterface"); Pkg.test("MathOptInterface"; coverage=true)'
+  - julia -e 'Pkg.clone(pwd());
     Pkg.clone("https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl.git");
     Pkg.build("MathOptInterface"); Pkg.test("MathOptInterface"; coverage=true)'
 after_success:
