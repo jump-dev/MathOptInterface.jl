@@ -24,6 +24,52 @@ addconstraints!(m::AbstractSolverInstance, funcs, sets) = addconstraint!.(m, fun
 """
 ## Modify Function
 
+    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, func::F)::Bool
+
+Return a `Bool` indicating whether it is possible to replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
+
+### Examples
+
+If `c` is a `ConstraintReference{ScalarAffineFunction,S}` and `v1` and `v2` are `VariableReference` objects,
+
+```julia
+canmodifyconstraint(m, c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
+canmodifyconstraint(m, c, SingleVariable(v1)) # false
+```
+
+## Modify Set
+
+    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, S::S)::Bool
+
+Return a `Bool` indicating whether it is possible to change the set of constraint `c` to the new set `S` which should be of the same type as the original set.
+
+### Examples
+
+If `c` is a `ConstraintReference{F,Interval}`
+
+```julia
+canmodifyconstraint(m, c, Interval(0, 5))
+canmodifyconstraint(m, c, NonPositives) # false
+```
+
+## Partial Modifications
+
+    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, change::AbstractFunctionModification)::Bool
+
+Return a `Bool` indicating whether it is possible to apply the modification specified by `change` to the function of constraint `c`.
+
+### Examples
+
+```julia
+canmodifyconstraint(m, c, ScalarConstantChange(10.0))
+```
+"""
+function canmodifyconstraint end
+canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, change) = false
+
+"""
+## Modify Function
+
     modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, func::F)
 
 Replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
