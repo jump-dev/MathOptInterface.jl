@@ -647,6 +647,84 @@ function soctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
     soc4test(solver, atol=atol, rtol=rtol)
 end
 
+function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, 
+        [(MOI.SingleVariable,MOI.EqualTo{Float64}),
+         (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)]) 
+        @testset "SOCRotated1" begin
+            # Problem SOCRotated1
+            # min 0a + 0b - 1x - 1y
+            #  st  a            == 1/2
+            #  st  b            == 1
+            #      2a*b >= x^2+y^2
+            c = [ 0.0, 0.0, -1.0, -1.0]
+            A = [ 1.0  0.0   0.0   0.0
+                  0.0  1.0   0.0   0.0]
+            b = [ 0.5, 1.0]
+
+            m = MOI.SolverInstance(solver)
+            
+            x = MOI.addvariables!(m, 4)
+
+            vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x[1]), MOI.EqualTo(0.5))
+            vc2 = MOI.addconstraint!(m, MOI.SingleVariable(x[2]), MOI.EqualTo(1.0))
+
+            rsoc = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(4))
+
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 2
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}()) == 1
+
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(x,c,0.0))
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -sqrt(2.0) atol=atol rtol=rtol
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+
+            if MOI.getattribute(solver, MOI.SupportsDuals())
+                @test MOI.cangetattribute(m, MOI.DualStatus(1))
+                @test MOI.getattribute(m, MOI.DualStatus(1)) == MOI.FeasiblePoint
+
+                dualobj = -dot(b,d)
+                @test dualobj ≈ -sqrt(2.0)atol=atol rtol=rtol
+    
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
+                d1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
+                d2 = MOI.getattribute(m, MOI.ConstraintDual(), vc2)
+
+                d = [d1, d2]
+                dualobj = -dot(b, d)
+                @test dualobj ≈ -sqrt(2.0) atol=tol rtol=rtol
+                @test d1 >= 0.0
+                @test d2 >= 0.0
+                
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), rsoc)
+                vardual = MOI.getattribute(m, MOI.ConstraintDual(), rsoc)
+
+                @test vardual ≈ (c+ A'd)) atol=atol rtol=rtol
+                @test 2*vardual[1]*vardual[2] ≥ vardual[3]^2 + vardual[4]^2 - atol
+            end
+        end
+    end
+end
+
+function soctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    rotatedsoc1test(solver, atol=atol, rtol=rtol)
+    #rotatedsoc2test(solver, atol=atol, rtol=rtol)
+    #rotatedsoc3test(solver, atol=atol, rtol=rtol)
+end
+
 function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorOfVariables, MOI.SecondOrderCone)])
         @testset "SDP1" begin
