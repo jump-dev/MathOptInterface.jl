@@ -741,7 +741,6 @@ function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
             #      -2 + z ∈ R₊
             #       (x,y,z) ∈ SOCRoated
             b = [-2, -1, 1/2]
-            A = [0 0 -1; -1 0 0; 0 1 0]
             c = [0.0,0.0,0.0]
 
             m = MOI.SolverInstance(solver)
@@ -765,25 +764,28 @@ function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
             @test MOI.cangetattribute(m, MOI.TerminationStatus())
             @test MOI.getattribute(m, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
 
-            if MOI.getattribute(m, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded && MOI.getattribute(solver, MOI.SupportsDuals())
+            if MOI.getattribute(m, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleOrUnbounded] && MOI.getattribute(solver, MOI.SupportsDuals())
                 @test MOI.cangetattribute(m, MOI.DualStatus())
-                @test MOI.getattribute(m, MOI.DualStatus()) in [InfeasibilityCertificate, NearlyInfeasibilityCertificate]
+                @test MOI.getattribute(m, MOI.DualStatus()) in [MOI.InfeasibilityCertificate, MOI.NearlyInfeasibilityCertificate]
 
                 @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
                 y1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
-                @test y1 > 0
+                @test y1 < -atol # Should be strictly negative
 
-                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-                y1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
-                @test y2 < 0
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
+                y2 = MOI.getattribute(m, MOI.ConstraintDual(), vc2)
 
-                y = [y1, y2]
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
+                y3 = MOI.getattribute(m, MOI.ConstraintDual(), vc3)
+                @test y3 > atol # Should be strictly positive
+
+                y = [y1, y2, y3]
 
                 vardual = MOI.getattribute(m, MOI.ConstraintDual(), rsoc)
 
-                @test vardual ≈ (A'y) atol=atol rtol=rtol
+                @test vardual ≈ -y atol=atol rtol=rtol
                 @test 2*vardual[1]*vardual[2] ≥ vardual[3]^2 - atol
-                @test -dot(b,y) > 0
+                @test dot(b,y) > atol
             end
         end
     end
