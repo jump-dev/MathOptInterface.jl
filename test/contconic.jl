@@ -747,9 +747,9 @@ function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
                   1 1 1;
                   1 1 1]
 
-            @test C ≈ y1 * A1 + y2 * A2 + Xd atol=ɛ
+            @test C ≈ y1 * A1 + y2 * A2 + Xd atol=atol rtol=rtol
 
-            @test eigmin(Xd) > -ɛ
+            @test eigmin(Xd) > -max(atol, rtol)
         end
     end
 end
