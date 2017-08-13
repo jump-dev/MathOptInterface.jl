@@ -433,8 +433,8 @@ function soc1atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), r
 end
 
 function soc1tests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    soc1test(solver, ɛ)
-    soc1atest(solver, ɛ)
+    soc1test(solver, atol=atol, rtol=rtol)
+    soc1atest(solver, atol=atol, rtol=rtol)
 end
 
 function soc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
@@ -533,8 +533,8 @@ function soc2atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), r
 end
 
 function soc2tests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    soc2test(solver, atol)
-    soc2atest(solver, atol)
+    soc2test(solver, atol=atol,rtol=rtol)
+    soc2atest(solver, atol=atol,rtol=rtol)
 end
 
 function soc3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
