@@ -648,9 +648,9 @@ function soctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
 end
 
 function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, 
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
         [(MOI.SingleVariable,MOI.EqualTo{Float64}),
-         (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)]) 
+         (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)])
         @testset "SOCRotated1" begin
             # Problem SOCRotated1
             # min 0a + 0b - 1x - 1y
@@ -663,7 +663,7 @@ function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
             b = [ 0.5, 1.0]
 
             m = MOI.SolverInstance(solver)
-            
+
             x = MOI.addvariables!(m, 4)
 
             vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x[1]), MOI.EqualTo(0.5))
@@ -695,24 +695,21 @@ function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
                 @test MOI.cangetattribute(m, MOI.DualStatus(1))
                 @test MOI.getattribute(m, MOI.DualStatus(1)) == MOI.FeasiblePoint
 
-                dualobj = -dot(b,d)
-                @test dualobj ≈ -sqrt(2.0)atol=atol rtol=rtol
-    
                 @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
                 d1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
                 @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
                 d2 = MOI.getattribute(m, MOI.ConstraintDual(), vc2)
 
                 d = [d1, d2]
-                dualobj = -dot(b, d)
-                @test dualobj ≈ -sqrt(2.0) atol=tol rtol=rtol
-                @test d1 >= 0.0
-                @test d2 >= 0.0
-                
+                dualobj = dot(b, d)
+                @test dualobj ≈ -sqrt(2.0) atol=atol rtol=rtol
+                @test d1 <= atol
+                @test d2 <= atol
+
                 @test MOI.cangetattribute(m, MOI.ConstraintDual(), rsoc)
                 vardual = MOI.getattribute(m, MOI.ConstraintDual(), rsoc)
 
-                @test vardual ≈ (c+ A'd)) atol=atol rtol=rtol
+                @test vardual ≈ (c - A'd) atol=atol rtol=rtol
                 @test 2*vardual[1]*vardual[2] ≥ vardual[3]^2 + vardual[4]^2 - atol
             end
         end
@@ -723,32 +720,31 @@ end
 # end
 
 function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, 
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
         [(MOI.SingleVariable,MOI.EqualTo{Float64}),
          (MOI.SingleVariable,MOI.LessThan{Float64}),
          (MOI.SingleVariable,MOI.GreaterThan{Float64}),
-         (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)]) 
+         (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)])
         @testset "SOCRotated2 infeasible" begin
             # Problem SOCRotated2 - Infeasible
             # min 0
-            # s.t. 
+            # s.t.
             #      x ≤ 1
             #      y = 1/2
             #      z ≥ 2
             #      z^2 ≤ 2x*y
             # in conic form:
             # min 0
-            # s.t. 
+            # s.t.
             #      -1 + x ∈ R₋
             #     1/2 - y ∈ {0}
             #      -2 + z ∈ R₊
             #       (x,y,z) ∈ SOCRoated
             b = [-2, -1, 1/2]
-            A = [0 0 -1; -1 0 0; 0 1 0]
             c = [0.0,0.0,0.0]
 
             m = MOI.SolverInstance(solver)
-            
+
             x = MOI.addvariables!(m, 3)
 
             vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
@@ -766,27 +762,30 @@ function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
             MOI.optimize!(m)
 
             @test MOI.cangetattribute(m, MOI.TerminationStatus())
-            @test MOI.getattribute(m, MOI.TerminationStatus()) in [MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
+            @test MOI.getattribute(m, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
 
-            if MOI.getattribute(m, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded && MOI.getattribute(solver, MOI.SupportsDuals())
+            if MOI.getattribute(m, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleOrUnbounded] && MOI.getattribute(solver, MOI.SupportsDuals())
                 @test MOI.cangetattribute(m, MOI.DualStatus())
-                @test MOI.getattribute(m, MOI.DualStatus()) in [InfeasibilityCertificate, NearlyInfeasibilityCertificate]
+                @test MOI.getattribute(m, MOI.DualStatus()) in [MOI.InfeasibilityCertificate, MOI.NearlyInfeasibilityCertificate]
 
                 @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
                 y1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
-                @test y1 > 0
+                @test y1 < -atol # Should be strictly negative
 
-                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc1)
-                y1 = MOI.getattribute(m, MOI.ConstraintDual(), vc1)
-                @test y2 < 0
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc2)
+                y2 = MOI.getattribute(m, MOI.ConstraintDual(), vc2)
 
-                y = [y1, y2]
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), vc3)
+                y3 = MOI.getattribute(m, MOI.ConstraintDual(), vc3)
+                @test y3 > atol # Should be strictly positive
+
+                y = [y1, y2, y3]
 
                 vardual = MOI.getattribute(m, MOI.ConstraintDual(), rsoc)
-                
-                @test vardual ≈ (A'y) atol=atol rtol=rtol
+
+                @test vardual ≈ -y atol=atol rtol=rtol
                 @test 2*vardual[1]*vardual[2] ≥ vardual[3]^2 - atol
-                @test -dot(b,y) > 0
+                @test dot(b,y) > atol
             end
         end
     end
