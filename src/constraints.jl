@@ -5,6 +5,10 @@
 
 Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
 
+    addconstraint!(m::AbstractSolverInstance, v::VariableReference, set::S)::ConstraintReference{SingleVariable,S} where {S}
+    addconstraint!(m::AbstractSolverInstance, vec::Vector{VariableReference}, set::S)::ConstraintReference{VectorOfVariables,S} where {S}
+
+Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
 """
 function addconstraint! end
 
