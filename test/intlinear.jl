@@ -49,7 +49,7 @@ function int1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         MOI.optimize!(m)
-        
+
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
 
