@@ -987,7 +987,48 @@ function linear10test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 12.0 atol=atol rtol=rtol
     end
+end
 
+function linear11test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+    @testset "Test changing constraint sense" begin
+        # simple 2 variable, 1 constraint problem
+        # min x + y
+        # st   x + y >= 1
+        #      x + y >= 2
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+            [
+                (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),
+                (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64})
+            ]
+        )
+
+        m = MOI.SolverInstance(solver)
+
+        v = MOI.addvariables!(m, 2)
+
+        c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
+        c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.GreaterThan(2.0))
+
+        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0))
+
+        MOI.optimize!(m)
+
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=ε
+
+        c3 = MOI.transformconstraint!(m, c2, MOI.LessThan(2.0))
+
+        @test isa(c3, MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}})
+        @test MOI.isvalid(m, c2) == false
+        @test MOI.isvalid(m, c3) == true
+        
+        MOI.optimize!(m)
+
+        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1.0 atol=ε
+    end
 end
 
 function contlineartest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
@@ -1001,4 +1042,5 @@ function contlineartest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float6
     linear8test(solver, atol=atol, rtol=rtol)
     linear9test(solver, atol=atol, rtol=rtol)
     linear10test(solver, atol=atol, rtol=rtol)
+    linear11test(solver, atol=atol, rtol=rtol)
 end
