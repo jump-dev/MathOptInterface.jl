@@ -791,7 +791,7 @@ function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
         end
     end
 end
-function soctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+function rsoctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     rotatedsoc1test(solver, atol=atol, rtol=rtol)
     #rotatedsoc1atest(solver, atol=atol, rtol=rtol)
     rotatedsoc2test(solver, atol=atol, rtol=rtol)
@@ -910,5 +910,6 @@ end
 function contconictest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     lintests(solver, atol=atol, rtol=rtol)
     soctests(solver, atol=atol, rtol=rtol)
+    rsoctests(solver, atol=atol, rtol=rtol)
     sdptests(solver, atol=atol, rtol=rtol)
 end
