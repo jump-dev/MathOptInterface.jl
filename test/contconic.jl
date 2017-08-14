@@ -1,6 +1,8 @@
 using MathOptInterface
 MOI = MathOptInterface
 
+using MathOptInterfaceUtilities # Defines getindex for VectorAffineFunction
+
 # Continuous conic problems
 
 function lin1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
@@ -970,6 +972,97 @@ sdp1tftest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base
 sdp1svtest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp1test(solver, true, MOI.PositiveSemidefiniteConeScaled; atol=atol, rtol=rtol)
 sdp1sftest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp1test(solver, false, MOI.PositiveSemidefiniteConeScaled; atol=atol, rtol=rtol)
 
+function sdp2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeScaled)])
+        @testset "SDP2" begin
+            # Caused getdual to fail on SCS and Mosek
+            m = MOI.SolverInstance(solver)
+
+            x = MOI.addvariables!(m, 7)
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 7
+
+            c = [0.0,0.0,0.0,0.0,0.0,0.0,1.0]
+            b = [10.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+            I = [1,2,8,9,10,11,1,3,8,9,10,11,1,4,8,9,10,11,1,5,8,1,6,8,9,10,11,1,7,8,9,10,11,8,10]
+            J = [1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,5,5,5,5,5,5,6,6,6,6,6,6,7,7]
+            V = -[1.0,1.0,-0.44999999999999996,0.45000000000000007,-0.4500000000000001,0.0,1.0,1.0,-0.7681980515339464,0.31819805153394654,-0.13180194846605373,0.0,1.0,1.0,-0.9000000000000001,0.0,0.0,0.0,1.0,1.0,-0.22500000000000003,1.0,1.0,-0.11250000000000003,0.1125,-0.11249999999999999,0.0,1.0,1.0,0.0,0.0,-0.22500000000000003,0.0,1.0,1.0]
+
+            A = sparse(I, J, V, length(b), length(c))
+
+            f = MOI.VectorAffineFunction(I, x[J], V, b)
+
+            c1 = MOI.addconstraint!(m, f[1], MOI.GreaterThan(0.0))
+            c2 = MOI.addconstraint!(m, f[2:7], MOI.Nonpositives(6))
+            c3 = MOI.addconstraint!(m, f[8:10], MOI.PositiveSemidefiniteConeScaled(2))
+            c4 = MOI.addconstraint!(m, f[11], MOI.EqualTo(0.))
+
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonpositives}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeScaled}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
+
+            MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction([x[7]], [1.], 0.))
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+            xv = MOI.getattribute(m, MOI.VariablePrimal(), x)
+            @test all(xv[1:6] .> -atol)
+
+            con = A * xv + b
+
+            @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c1)
+            @test MOI.getattribute(m, MOI.ConstraintPrimal(), c1) ≈ con[1] atol=atol rtol=rtol
+            @test MOI.getattribute(m, MOI.ConstraintPrimal(), c1) ≈ 0.0 atol=atol rtol=rtol
+            @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c2)
+            @test MOI.getattribute(m, MOI.ConstraintPrimal(), c2) ≈ con[2:7] atol=atol rtol=rtol
+            @test all(MOI.getattribute(m, MOI.ConstraintPrimal(), c2) .< atol)
+            @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c3)
+            Xv = MOI.getattribute(m, MOI.ConstraintPrimal(), c3)
+            @test Xv ≈ con[8:10] atol=atol rtol=rtol
+            s2 = sqrt(2)
+            Xm = [Xv[1]    Xv[2]/s2
+                  Xv[2]/s2 Xv[3]]
+            @test eigmin(Xm) > -atol
+            @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), c4)
+            @test MOI.getattribute(m, MOI.ConstraintPrimal(), c4) ≈ con[11] atol=atol rtol=rtol
+            @test MOI.getattribute(m, MOI.ConstraintPrimal(), c4) ≈ 0.0 atol=atol rtol=rtol
+
+            if MOI.getattribute(solver, MOI.SupportsDuals())
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), c1)
+                y1 = MOI.getattribute(m, MOI.ConstraintDual(), c1)
+                @test y1 > -atol
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
+                y2 = MOI.getattribute(m, MOI.ConstraintDual(), c2)
+                @test all(MOI.getattribute(m, MOI.ConstraintDual(), c2) .< atol)
+
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), c3)
+                y3 = MOI.getattribute(m, MOI.ConstraintDual(), c3)
+                s2 = sqrt(2)
+                Ym = [y3[1]    y3[2]/s2
+                      y3[2]/s2 y3[3]]
+                @test eigmin(Ym) > -atol
+
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), c4)
+                y4 = MOI.getattribute(m, MOI.ConstraintDual(), c4)
+
+                y = [y1; y2; y3; y4]
+                @test dot(c, xv) ≈ dot(b, y) atol=atol rtol=rtol
+                @test A' * y ≈ -c atol=atol rtol=rtol
+            end
+        end
+    end
+end
+
+
 function sdptests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     sdp0tvtest(solver, atol=atol, rtol=rtol)
     sdp0tftest(solver, atol=atol, rtol=rtol)
@@ -979,6 +1072,7 @@ function sdptests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
     sdp1tftest(solver, atol=atol, rtol=rtol)
     sdp1svtest(solver, atol=atol, rtol=rtol)
     sdp1sftest(solver, atol=atol, rtol=rtol)
+    sdp2test(solver, atol=atol, rtol=rtol)
 end
 
 function contconictest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
