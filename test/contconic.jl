@@ -797,9 +797,65 @@ function rsoctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), r
     rotatedsoc2test(solver, atol=atol, rtol=rtol)
 end
 
-function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorOfVariables, MOI.SecondOrderCone)])
-        @testset "SDP1" begin
+function _sdp0test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    scaled = sdpcone == MOI.PositiveSemidefiniteConeScaled
+    s = scaled ? sqrt(2) : 1
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, sdpcone)])
+        @testset "SDP0$(scaled ? " scaled" : "")" begin
+            # min X[1,1] + X[2,2]    max y
+            #     X[2,1] = 1         [0   y/2     [ 1  0
+            #                         y/2 0    <=   0  1]
+            #     X >= 0              y free
+
+            m = MOI.SolverInstance(solver)
+
+            X = MOI.addvariables!(m, 3)
+            @test MOI.getattribute(m, MOI.NumberOfVariables()) == 3
+
+            if vecofvars
+                cX = MOI.addconstraint!(m, MOI.VectorOfVariables(X), sdpcone(2))
+            else
+                cX = MOI.addconstraint!(m, MOI.VectorAffineFunction(collect(1:3), X, ones(3), zeros(3)), sdpcone(2))
+            end
+
+            c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[2]], [1/s], 0.), MOI.EqualTo(1.))
+
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
+
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([X[1], X[3]], ones(2), 0.))
+
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), X)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), X) ≈ [1, s, 1]
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 2 atol=atol rtol=rtol
+
+            @test MOI.cangetattribute(m, MOI.ConstraintDual(), cX)
+            @test MOI.getattribute(m, MOI.ConstraintDual(), cX) ≈ [1, -s, 1] atol=atol rtol=rtol
+        end
+    end
+end
+
+
+function _sdp1test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    scaled = sdpcone == MOI.PositiveSemidefiniteConeScaled
+    s = scaled ? sqrt(2) : 1.
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, sdpcone), (MOI.VectorOfVariables, MOI.SecondOrderCone)])
+        @testset "SDP1$(scaled ? " scaled" : "")" begin
             # Problem SDP1 - sdo1 from MOSEK docs
             # From Mosek.jl/test/mathprogtestextra.jl, under license:
             #   Copyright (c) 2013 Ulf Worsoe, Mosek ApS
@@ -834,18 +890,20 @@ function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             x = MOI.addvariables!(m, 3)
             @test MOI.getattribute(m, MOI.NumberOfVariables()) == 9
 
-            cX = MOI.addconstraint!(m, MOI.VectorOfVariables(X), MOI.PositiveSemidefiniteConeTriangle(3))
+            if vecofvars
+                cX = MOI.addconstraint!(m, MOI.VectorOfVariables(X), sdpcone(3))
+            else
+                cX = MOI.addconstraint!(m, MOI.VectorAffineFunction(collect(1:6), X, ones(6), zeros(6)), sdpcone(3))
+            end
             cx = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
 
             c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
-            c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2, 2, 1, 2, 1, 1, 1], 0.), MOI.EqualTo(1/2))
+            c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2/s, 2/s, 1, 2/s, 1, 1, 1], 0.), MOI.EqualTo(1/2))
 
+            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2/s, 2, 2/s, 2, 1], 0.))
 
-            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2, 2, 2, 2, 1], 0.))
-
-
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle}()) == 1
             @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables, MOI.SecondOrderCone}()) == 1
 
             MOI.optimize!(m)
@@ -871,8 +929,8 @@ function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c2)
             y2 = MOI.getattribute(m, MOI.ConstraintDual(), c2)
 
-            #    X11 X21 X31 X22 X32 X33  x1  x2  x3
-            c = [  2,  2,  0,  2,  2,  2,  1,  0,  0]
+            #     X11  X21  X31  X22  X32  X33  x1  x2  x3
+            c = [   2, 2/s,   0,   2, 2/s,   2,  1,  0,  0]
             b = [1, 1/2]
             # Check primal objective
             comp_pobj = dot(c, [Xv; xv])
@@ -882,9 +940,9 @@ function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), cX)
             Xdv = MOI.getattribute(m, MOI.ConstraintDual(), cX)
-            Xd = [Xdv[1] Xdv[2] Xdv[3];
-                  Xdv[2] Xdv[4] Xdv[5];
-                  Xdv[3] Xdv[5] Xdv[6]]
+            Xd = [Xdv[1]   Xdv[2]/s Xdv[3]/s;
+                  Xdv[2]/s Xdv[4]   Xdv[5]/s;
+                  Xdv[3]/s Xdv[5]/s Xdv[6]]
 
             C = [2 1 0;
                  1 2 1;
@@ -903,8 +961,24 @@ function sdp1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
     end
 end
 
+sdp0tvtest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp0test(solver, true, MOI.PositiveSemidefiniteConeTriangle; atol=atol, rtol=rtol)
+sdp0tftest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp0test(solver, false, MOI.PositiveSemidefiniteConeTriangle; atol=atol, rtol=rtol)
+sdp0svtest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp0test(solver, true, MOI.PositiveSemidefiniteConeScaled; atol=atol, rtol=rtol)
+sdp0sftest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp0test(solver, false, MOI.PositiveSemidefiniteConeScaled; atol=atol, rtol=rtol)
+sdp1tvtest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp1test(solver, true, MOI.PositiveSemidefiniteConeTriangle; atol=atol, rtol=rtol)
+sdp1tftest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp1test(solver, false, MOI.PositiveSemidefiniteConeTriangle; atol=atol, rtol=rtol)
+sdp1svtest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp1test(solver, true, MOI.PositiveSemidefiniteConeScaled; atol=atol, rtol=rtol)
+sdp1sftest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64)) = _sdp1test(solver, false, MOI.PositiveSemidefiniteConeScaled; atol=atol, rtol=rtol)
+
 function sdptests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    sdp1test(solver, atol=atol, rtol=rtol)
+    sdp0tvtest(solver, atol=atol, rtol=rtol)
+    sdp0tftest(solver, atol=atol, rtol=rtol)
+    sdp0svtest(solver, atol=atol, rtol=rtol)
+    sdp0sftest(solver, atol=atol, rtol=rtol)
+    sdp1tvtest(solver, atol=atol, rtol=rtol)
+    sdp1tftest(solver, atol=atol, rtol=rtol)
+    sdp1svtest(solver, atol=atol, rtol=rtol)
+    sdp1sftest(solver, atol=atol, rtol=rtol)
 end
 
 function contconictest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
