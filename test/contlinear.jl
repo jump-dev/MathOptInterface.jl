@@ -989,7 +989,7 @@ function linear10test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
     end
 end
 
-function linear11test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
+function linear11test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "Test changing constraint sense" begin
         # simple 2 variable, 1 constraint problem
         # min x + y
@@ -1015,19 +1015,19 @@ function linear11test(solver::MOI.AbstractSolver, ε=Base.rtoldefault(Float64))
 
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
 
         c3 = MOI.transformconstraint!(m, c2, MOI.LessThan(2.0))
 
         @test isa(c3, MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}})
         @test MOI.isvalid(m, c2) == false
         @test MOI.isvalid(m, c3) == true
-        
+
         MOI.optimize!(m)
 
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1.0 atol=ε
+        @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 1.0 atol=atol rtol=rtol
     end
 end
 
