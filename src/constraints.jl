@@ -22,7 +22,7 @@ addconstraints!(m::AbstractSolverInstance, funcs, sets) = addconstraint!.(m, fun
 """
 ## Modify Function
 
-    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, func::F)::Bool
+    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference{F,S}, func::F)::Bool
 
 Return a `Bool` indicating whether it is possible to replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
 
@@ -37,9 +37,9 @@ canmodifyconstraint(m, c, SingleVariable(v1)) # false
 
 ## Modify Set
 
-    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, S::S)::Bool
+    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference{F,S}, set::S)::Bool
 
-Return a `Bool` indicating whether it is possible to change the set of constraint `c` to the new set `S` which should be of the same type as the original set.
+Return a `Bool` indicating whether it is possible to change the set of constraint `c` to the new set `set` which should be of the same type as the original set.
 
 ### Examples
 
@@ -68,7 +68,7 @@ canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, change) =
 """
 ## Modify Function
 
-    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, func::F)
+    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference{F,S}, func::F)
 
 Replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
 
@@ -83,9 +83,9 @@ modifyconstraint!(m, c, SingleVariable(v1)) # Error
 
 ## Modify Set
 
-    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, S::S)
+    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference{F,S}, set::S)
 
-Change the set of constraint `c` to the new set `S` which should be of the same type as the original set.
+Change the set of constraint `c` to the new set `set` which should be of the same type as the original set.
 
 ### Examples
 
