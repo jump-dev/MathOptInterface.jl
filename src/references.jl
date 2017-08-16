@@ -26,14 +26,14 @@ const AnyReference = Union{ConstraintReference,VariableReference}
 
 Return a `Bool` indicating whether the object referred to by `ref` can be removed from the solver instance `m`.
 """
-candelete(m::AbstractSolverInstance, ref::AnyReference) = throw(MethodError(candelete, (m, ref)))
+candelete(m::AbstractSolverInstance, ref::AnyReference) = false
 
 """
     isvalid(m::AbstractSolverInstance, ref::AnyReference)::Bool
 
 Return a `Bool` indicating whether this reference refers to a valid object in the solver instance `m`.
 """
-isvalid(m::AbstractSolverInstance, ref::AnyReference) = throw(MethodError(isvalid, (m, ref)))
+isvalid(m::AbstractSolverInstance, ref::AnyReference) = false
 
 """
     delete!(m::AbstractSolverInstance, ref::AnyReference)

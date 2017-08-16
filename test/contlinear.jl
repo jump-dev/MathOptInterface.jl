@@ -138,7 +138,9 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         vc3 = MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.GreaterThan(0.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
 
+        @test MOI.canmodifyconstraint(m, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
         MOI.modifyconstraint!(m, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
+
         MOI.modifyobjective!(m, MOI.ScalarCoefficientChange{Float64}(z, 2.0))
 
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
@@ -183,7 +185,7 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # s.t. x + y + z <= 1
         # x >= -1
         # y,z >= 0
-
+        @test MOI.canmodifyconstraint(m, vc1, MOI.GreaterThan(-1.0))
         MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(-1.0))
 
         MOI.optimize!(m)
@@ -204,9 +206,12 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # max x + 2z
         # s.t. x + y + z <= 1
         # x, y >= 0, z = 0
-
+        @test MOI.canmodifyconstraint(m, vc1, MOI.GreaterThan(0.0))
         MOI.modifyconstraint!(m, vc1, MOI.GreaterThan(0.0))
+
+        @test MOI.candelete(m, vc3)
         MOI.delete!(m, vc3)
+
         vc3 = MOI.addconstraint!(m, MOI.SingleVariable(v[3]), MOI.EqualTo(0.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
@@ -228,7 +233,7 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # max x + 2z
         # s.t. x + y + z == 2
         # x,y >= 0, z = 0
-
+        @test MOI.candelete(m, c)
         MOI.delete!(m, c)
         cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
         c = MOI.addconstraint!(m, cf, MOI.EqualTo(2.0))
@@ -488,6 +493,7 @@ function linear4test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= 0.0
+        @test MOI.canmodifyconstraint(m, c1, MOI.GreaterThan(100.0))
         MOI.modifyconstraint!(m, c1, MOI.GreaterThan(100.0))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
@@ -500,6 +506,7 @@ function linear4test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= -100.0
+        @test MOI.canmodifyconstraint(m, c2, MOI.LessThan(-100.0))
         MOI.modifyconstraint!(m, c2, MOI.LessThan(-100.0))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
@@ -580,7 +587,7 @@ function linear5test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         #
         #   solution: x = 2, y = 0, objv = 2
 
-
+        @test MOI.canmodifyconstraint(m, c1, MOI.ScalarCoefficientChange(y, 3.0))
         MOI.modifyconstraint!(m, c1, MOI.ScalarCoefficientChange(y, 3.0))
         MOI.optimize!(m)
 
@@ -603,8 +610,9 @@ function linear5test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         #        x >= 0, y >= 0
         #
         #   solution: x = 4, y = 0, objv = 4
-
+        @test MOI.candelete(m, c1)
         MOI.delete!(m, c1)
+
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
@@ -626,8 +634,9 @@ function linear5test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         #           y >= 0
         #
         #   solution: y = 2, objv = 2
-
+        @test MOI.candelete(m, x)
         MOI.delete!(m, x)
+        
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
@@ -676,6 +685,7 @@ function linear6test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= 0.0
+        @test MOI.canmodifyconstraint(m, c1, MOI.GreaterThan(100.0))
         MOI.modifyconstraint!(m, c1, MOI.GreaterThan(100.0))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
@@ -688,6 +698,7 @@ function linear6test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= -100.0
+        @test MOI.canmodifyconstraint(m, c2, MOI.LessThan(-100.0))
         MOI.modifyconstraint!(m, c2, MOI.LessThan(-100.0))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
@@ -731,6 +742,7 @@ function linear7test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= 0.0
+        @test MOI.canmodifyconstraint(m, c1, MOI.VectorConstantChange([-100.0]))
         MOI.modifyconstraint!(m, c1, MOI.VectorConstantChange([-100.0]))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
@@ -743,6 +755,7 @@ function linear7test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # Min  x - y
         # s.t. 100.0 <= x
         #               y <= -100.0
+        @test MOI.canmodifyconstraint(m, c2, MOI.VectorConstantChange([100.0]))
         MOI.modifyconstraint!(m, c2, MOI.VectorConstantChange([100.0]))
         MOI.optimize!(m)
         @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
@@ -970,6 +983,7 @@ function linear10test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 1 atol=atol rtol=rtol
         end
 
+        @test MOI.canmodifyconstraint(m, c, MOI.Interval(2.0, 12.0))
         MOI.modifyconstraint!(m, c, MOI.Interval(2.0, 12.0))
         MOI.optimize!(m)
 
