@@ -20,3 +20,18 @@ modifyobjective!(m, ScalarConstantChange(10.0))
 ```
 """
 function modifyobjective! end
+
+"""
+    canmodifyobjective(m::AbstractSolverInstance, change::AbstractFunctionModification)::Bool
+
+Return a `Bool` indicating whether it is possible to apply the modification
+specified by `change` to the objective function of `m`.
+
+### Examples
+
+```julia
+canmodifyobjective!(m, ScalarConstantChange(10.0))
+```
+"""
+function canmodifyobjective! end
+canmodifyobjective(m::AbstractSolverInstance, change) = false

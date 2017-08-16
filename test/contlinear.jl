@@ -141,6 +141,7 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         @test MOI.canmodifyconstraint(m, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
         MOI.modifyconstraint!(m, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
 
+        @test MOI.canmodifyobjective(m, MOI.ScalarCoefficientChange{Float64}(z, 2.0))
         MOI.modifyobjective!(m, MOI.ScalarCoefficientChange{Float64}(z, 2.0))
 
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
@@ -636,7 +637,7 @@ function linear5test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         #   solution: y = 2, objv = 2
         @test MOI.candelete(m, x)
         MOI.delete!(m, x)
-        
+
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.TerminationStatus())
