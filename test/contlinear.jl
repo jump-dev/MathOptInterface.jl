@@ -1032,6 +1032,7 @@ function linear11test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
 
+        @test MOI.cantransformconstraint(m, c2, MOI.LessThan(2.0))
         c3 = MOI.transformconstraint!(m, c2, MOI.LessThan(2.0))
 
         @test isa(c3, MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}})
