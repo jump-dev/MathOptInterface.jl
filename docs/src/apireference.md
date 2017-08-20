@@ -118,6 +118,7 @@ ConstraintReference
 candelete
 isvalid
 delete!(::AbstractSolverInstance,::AnyReference)
+candelete
 ```
 
 ### Variables
@@ -148,6 +149,8 @@ addconstraint!
 addconstraints!
 modifyconstraint!
 canmodifyconstraint
+transformconstraint!
+cantransformconstraint
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]
@@ -227,4 +230,5 @@ Functions for adding and modifying objectives.
 ```@docs
 setobjective!
 modifyobjective!
+canmodifyobjective
 ```
