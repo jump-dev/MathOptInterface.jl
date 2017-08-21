@@ -145,3 +145,22 @@ transformconstraint!(m, c, LessThan(0.0)) # errors
 ```
 """
 function transformconstraint! end
+
+"""
+## Transform Constraint Set
+
+    cantransformconstraint(m::AbstractSolverInstance, c::ConstraintReference{F,S1}, newset::S2)::Bool
+
+Return a `Bool` is the set in constraint `c` can be replaced with `newset`.
+
+### Examples
+
+If `c` is a `ConstraintReference{ScalarAffineFunction{Float64},LessThan{Float64}}`,
+
+```julia
+cantransformconstraint(m, c, GreaterThan(0.0)) # true
+cantransformconstraint(m, c, ZeroOne())        # false
+```
+"""
+function cantransformconstraint end
+cantransformconstraint(m::AbstractSolverInstance, c::ConstraintReference, newset) = false

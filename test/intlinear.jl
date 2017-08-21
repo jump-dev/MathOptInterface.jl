@@ -153,7 +153,9 @@ function int2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
 
                 @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
+                @test MOI.candelete(m, c1)
                 MOI.delete!(m, c1)
+                @test MOI.candelete(m, c2)
                 MOI.delete!(m, c2)
 
                 MOI.optimize!(m)
@@ -250,6 +252,7 @@ function int2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
                 @test MOI.cangetattribute(m, MOI.DualStatus()) == false
 
                 for cref in bin_constraints
+                    @test MOI.candelete(m, cref)
                     MOI.delete!(m, cref)
                 end
 
