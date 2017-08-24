@@ -146,6 +146,13 @@ transformconstraint!(m, c, LessThan(0.0)) # errors
 """
 function transformconstraint! end
 
+# default fallback
+function transformconstraint!(m::AbstractSolverInstance, c::ConstraintReference, newset)
+    f = getattribute(m, ConstraintFunction(), c)
+    delete!(m, c)
+    addconstraint!(m, f, newset)
+end
+
 """
 ## Transform Constraint Set
 
