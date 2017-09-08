@@ -95,10 +95,10 @@ function supportsproblem end
 
 include("references.jl")
 include("attributes.jl")
-include("constraints.jl")
-include("objectives.jl")
 include("functions.jl")
 include("sets.jl")
+include("constraints.jl")
+include("objectives.jl")
 include("variables.jl")
 
 end
