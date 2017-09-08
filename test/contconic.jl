@@ -841,7 +841,7 @@ function _sdp0test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Ba
             @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.VariablePrimal(), X)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), X) ≈ [1, s, 1]
+            @test MOI.getattribute(m, MOI.VariablePrimal(), X) ≈ [1, s, 1] atol=atol rtol=rtol
 
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ 2 atol=atol rtol=rtol
