@@ -170,4 +170,10 @@ cantransformconstraint(m, c, ZeroOne())        # false
 ```
 """
 function cantransformconstraint end
-cantransformconstraint(m::AbstractSolverInstance, c::ConstraintReference, newset) = false
+
+# default fallback
+function cantransformconstraint(m::AbstractSolverInstance, c::ConstraintReference, newset)
+    # TODO: add "&& canaddconstraint(m, getattribute(m, ConstraintFunction(), c), newset)"
+    #       when candaddconstraint is defined
+    cangetattribute(m, ConstraintFunction(), c) && candelete(m, c)
+end
