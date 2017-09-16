@@ -793,7 +793,7 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
             cd = MOI.getattribute(m, MOI.ConstraintDual(), c)
             @test cd < -atol
-            # TODO: farkas dual on bounds
+            # TODO: farkas dual on bounds - see #127
             # xd = MOI.getattribute(m, MOI.ConstraintDual(), bndx)
             # yd = MOI.getattribute(m, MOI.ConstraintDual(), bndy)
             # @test xd > atol
