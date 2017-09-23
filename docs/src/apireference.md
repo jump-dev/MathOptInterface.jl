@@ -118,7 +118,6 @@ ConstraintReference
 candelete
 isvalid
 delete!(::AbstractSolverInstance,::AnyReference)
-candelete
 ```
 
 ### Variables

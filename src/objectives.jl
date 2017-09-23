@@ -30,8 +30,8 @@ specified by `change` to the objective function of `m`.
 ### Examples
 
 ```julia
-canmodifyobjective!(m, ScalarConstantChange(10.0))
+canmodifyobjective(m, ScalarConstantChange(10.0))
 ```
 """
-function canmodifyobjective! end
+function canmodifyobjective end
 canmodifyobjective(m::AbstractSolverInstance, change) = false
