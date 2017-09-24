@@ -11,11 +11,31 @@ It does not store any solver instance data.
 abstract type AbstractSolver end
 
 """
+    AbstractInstance
+
+Abstract supertype for objects representing an instance of an optimization problem.
+"""
+abstract type AbstractInstance end
+
+"""
+    AbstractStandaloneInstance
+
+Abstract supertype for objects representing an instance of an optimization problem
+unattached to any particular solver. Does not have methods for solving
+or querying results.
+"""
+abstract type AbstractStandaloneInstance <: AbstractInstance end
+
+
+"""
     AbstractSolverInstance
 
-Abstract supertype which represents a solver's in-memory representation of an optimization problem.
+Abstract supertype for objects representing an instance of an optimization problem
+tied to a particular solver. This is typically a solver's in-memory representation.
+In addition to `AbstractInstance`, `AbstractSolverInstance` objects let you
+solve the instance and query the solution.
 """
-abstract type AbstractSolverInstance end
+abstract type AbstractSolverInstance <: AbstractInstance end
 
 """
     SolverInstance(solver::AbstractSolver)
@@ -42,10 +62,10 @@ Users must discard the solver instance object after this method is invoked.
 function free! end
 
 """
-    writeproblem(m::AbstractSolverInstance, filename::String)
+    writeproblem(m::AbstractInstance, filename::String)
 
 Writes the current problem data to the given file.
-Supported file types are solver-dependent.
+Supported file types depend on the solver or standalone instance type.
 """
 function writeproblem end
 
