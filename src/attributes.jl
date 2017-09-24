@@ -262,7 +262,7 @@ struct ListOfVariableReferences <: AbstractInstanceAttribute end
 A `Vector{ConstraintReferences{F,S}}` with references to all constraints of
 type `F`-in`S` in the instance (i.e., of length equal to the value of `NumberOfConstraints{F,S}()`).
 """
-struct ListOfConstraintReferences{F,S} <: AbstractSolverInstanceAttribute end
+struct ListOfConstraintReferences{F,S} <: AbstractInstanceAttribute end
 
 """
     NumberOfConstraints{F,S}()
