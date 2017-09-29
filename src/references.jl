@@ -3,7 +3,7 @@
 """
     ConstraintReference{F,S}
 
-A lightweight object used to reference `F`-in-`S` constraints in a solver instance.
+A lightweight object used to reference `F`-in-`S` constraints in an instance.
 The parameter `F` is the type of the function in the constraint, and the parameter `S` is the type of set in the constraint.
 """
 struct ConstraintReference{F,S}
@@ -13,7 +13,7 @@ end
 """
     VariableReference
 
-A lightweight object used to reference variables in a solver instance.
+A lightweight object used to reference variables in an instance.
 """
 struct VariableReference
     value::UInt64
@@ -22,28 +22,28 @@ end
 const AnyReference = Union{ConstraintReference,VariableReference}
 
 """
-    candelete(m::AbstractSolverInstance, ref::AnyReference)::Bool
+    candelete(m::AbstractInstance, ref::AnyReference)::Bool
 
-Return a `Bool` indicating whether the object referred to by `ref` can be removed from the solver instance `m`.
+Return a `Bool` indicating whether the object referred to by `ref` can be removed from the instance `m`.
 """
-candelete(m::AbstractSolverInstance, ref::AnyReference) = false
-
-"""
-    isvalid(m::AbstractSolverInstance, ref::AnyReference)::Bool
-
-Return a `Bool` indicating whether this reference refers to a valid object in the solver instance `m`.
-"""
-isvalid(m::AbstractSolverInstance, ref::AnyReference) = false
+candelete(m::AbstractInstance, ref::AnyReference) = false
 
 """
-    delete!(m::AbstractSolverInstance, ref::AnyReference)
+    isvalid(m::AbstractInstance, ref::AnyReference)::Bool
 
-Delete the referenced object from the solver instance.
+Return a `Bool` indicating whether this reference refers to a valid object in the instance `m`.
+"""
+isvalid(m::AbstractInstance, ref::AnyReference) = false
 
-    delete!{R}(m::AbstractSolverInstance, refs::Vector{R<:AnyReference})
+"""
+    delete!(m::AbstractInstance, ref::AnyReference)
 
-Delete the referenced objects in the vector `refs` from the solver instance.
+Delete the referenced object from the instance.
+
+    delete!{R}(m::AbstractInstance, refs::Vector{R<:AnyReference})
+
+Delete the referenced objects in the vector `refs` from the instance.
 It may be assumed that `R` is a concrete type.
 """
-Base.delete!(m::AbstractSolverInstance, ref::AnyReference) = throw(MethodError(Base.delete!, (m, ref)))
-Base.delete!(m::AbstractSolverInstance, refs::Vector{<:AnyReference}) = throw(MethodError(Base.delete!, (m, refs)))
+Base.delete!(m::AbstractInstance, ref::AnyReference) = throw(MethodError(Base.delete!, (m, ref)))
+Base.delete!(m::AbstractInstance, refs::Vector{<:AnyReference}) = throw(MethodError(Base.delete!, (m, refs)))
