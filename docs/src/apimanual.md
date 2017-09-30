@@ -286,8 +286,8 @@ Returns the optimal weights and objective value. Throws an error if the solver
 does not terminate with a `Success` status.
 """
 function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solver::AbstractSolver)
-    if !supportsproblem(solver, ScalarAffineFunction,
-            [(ScalarAffineFunction,LessThan),
+    if !supportsproblem(solver, ScalarAffineFunction{Float64},
+            [(ScalarAffineFunction{Float64},LessThan{Float64}),
              (SingleVariable,ZeroOne)])
         error("Provided solver cannot solve binary knapsack problems")
     end

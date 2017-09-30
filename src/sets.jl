@@ -66,7 +66,7 @@ struct Nonpositives <: AbstractVectorSet
 end
 
 """
-    GreaterThan(lower)
+    GreaterThan{T <: Real}(lower::T)
 
 The set ``[lower,\\infty) \\subseteq \\mathbb{R}``.
 """
@@ -75,7 +75,7 @@ struct GreaterThan{T <: Real} <: AbstractScalarSet
 end
 
 """
-    LessThan(upper)
+    LessThan{T <: Real}(upper::T)
 
 The set ``(-\\infty,upper] \\subseteq \\mathbb{R}``.
 """
@@ -84,7 +84,7 @@ struct LessThan{T <: Real} <: AbstractScalarSet
 end
 
 """
-    EqualTo(value)
+    EqualTo{T <: Real}(value::T)
 
 The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
 """
@@ -93,7 +93,7 @@ struct EqualTo{T <: Real} <: AbstractScalarSet
 end
 
 """
-    Interval(lower,upper)
+    Interval{T <: Real}(lower::T,upper::T)
 
 The interval ``[lower, upper] \\subseteq \\mathbb{R}``.
 If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted as a one-sided interval.
@@ -138,7 +138,7 @@ struct DualExponentialCone <: AbstractVectorSet
 end
 
 """
-    PowerCone(a)
+    PowerCone{T <: Real}(a::T)
 
 The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{a} y^{1-a} >= |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `a`.
 """
@@ -147,7 +147,7 @@ struct PowerCone{T <: Real} <: AbstractVectorSet
 end
 
 """
-    DualPowerCone(a)
+    DualPowerCone{T <: Real}(a::T)
 
 The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{a})^a (\\frac{v}/{1-a})^{1-a} >= |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `a`.
 """
@@ -220,7 +220,7 @@ The set ``\\{ 0, 1 \\}``.
 struct ZeroOne <: AbstractScalarSet end
 
 """
-    Semicontinuous(l,u)
+    Semicontinuous{T <: Real}(l::T,u::T)
 
 The set ``\\{0\\} \\cup [l,u]``.
 """
@@ -230,7 +230,7 @@ struct Semicontinuous{T <: Real} <: AbstractScalarSet
 end
 
 """
-    Semiinteger(l,u)
+    Semiinteger{T <: Real}(l::T,u::T)
 
 The set ``\\{0\\} \\cup \\{l,l+1,\\ldots,u-1,u\\}``.
 """
@@ -240,7 +240,7 @@ struct Semiinteger{T <: Real} <: AbstractScalarSet
 end
 
 """
-    SOS1(weights)
+    SOS1{T <: Real}(weights::Vector{T})
 
 The set corresponding to the special ordered set (SOS) constraint of type 1.
 Of the variables in the set, at most one can be nonzero.
@@ -253,7 +253,7 @@ struct SOS1{T <: Real} <: AbstractVectorSet
 end
 
 """
-    SOS2(weights)
+    SOS2{T <: Real}(weights::Vector{T})
 
 The set corresponding to the special ordered set (SOS) constraint of type 2.
 Of the variables in the set, at most two can be nonzero, and if two are nonzero, they must be adjacent in the ordering of the set.
