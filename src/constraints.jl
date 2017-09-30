@@ -8,23 +8,23 @@ Return a `Bool` indicating whether it is possible to add the constraint ``f(x) \
 canaddconstraint(m::AbstractSolverInstance, func::AbstractFunction, set::AbstractSet) = false
 
 """
-    addconstraint!(m::AbstractSolverInstance, func::F, set::S)::ConstraintReference{F,S} where {F,S}
+    addconstraint!(m::AbstractInstance, func::F, set::S)::ConstraintReference{F,S} where {F,S}
 
 Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
 
-    addconstraint!(m::AbstractSolverInstance, v::VariableReference, set::S)::ConstraintReference{SingleVariable,S} where {S}
-    addconstraint!(m::AbstractSolverInstance, vec::Vector{VariableReference}, set::S)::ConstraintReference{VectorOfVariables,S} where {S}
+    addconstraint!(m::AbstractInstance, v::VariableReference, set::S)::ConstraintReference{SingleVariable,S} where {S}
+    addconstraint!(m::AbstractInstance, vec::Vector{VariableReference}, set::S)::ConstraintReference{VectorOfVariables,S} where {S}
 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
 """
 function addconstraint! end
 
-# fallbacks
-addconstraint!(m::AbstractSolverInstance, v::VariableReference, set) = addconstraint!(m, SingleVariable(v), set)
-addconstraint!(m::AbstractSolverInstance, v::Vector{VariableReference}, set) = addconstraint!(m, VectorOfVariables(v), set)
+# convenient shorthands TODO: document
+addconstraint!(m::AbstractInstance, v::VariableReference, set) = addconstraint!(m, SingleVariable(v), set)
+addconstraint!(m::AbstractInstance, v::Vector{VariableReference}, set) = addconstraint!(m, VectorOfVariables(v), set)
 
 """
-    addconstraints!(m::AbstractSolverInstance, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintReference{F,S}} where {F,S}
+    addconstraints!(m::AbstractInstance, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintReference{F,S}} where {F,S}
 
 Add the set of constraints specified by each function-set pair in `funcs` and `sets`. `F` and `S` should be concrete types.
 This call is equivalent to `addconstraint!.(m, funcs, sets)` but may be more efficient.
@@ -32,12 +32,12 @@ This call is equivalent to `addconstraint!.(m, funcs, sets)` but may be more eff
 function addconstraints! end
 
 # default fallback
-addconstraints!(m::AbstractSolverInstance, funcs, sets) = addconstraint!.(m, funcs, sets)
+addconstraints!(m::AbstractInstance, funcs, sets) = addconstraint!.(m, funcs, sets)
 
 """
 ## Modify Function
 
-    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference{F,S}, func::F)::Bool
+    canmodifyconstraint(m::AbstractInstance, c::ConstraintReference{F,S}, func::F)::Bool
 
 Return a `Bool` indicating whether it is possible to replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
 
@@ -52,7 +52,7 @@ canmodifyconstraint(m, c, SingleVariable(v1)) # false
 
 ## Modify Set
 
-    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference{F,S}, set::S)::Bool
+    canmodifyconstraint(m::AbstractInstance, c::ConstraintReference{F,S}, set::S)::Bool
 
 Return a `Bool` indicating whether it is possible to change the set of constraint `c` to the new set `set` which should be of the same type as the original set.
 
@@ -67,7 +67,7 @@ canmodifyconstraint(m, c, NonPositives) # false
 
 ## Partial Modifications
 
-    canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, change::AbstractFunctionModification)::Bool
+    canmodifyconstraint(m::AbstractInstance, c::ConstraintReference, change::AbstractFunctionModification)::Bool
 
 Return a `Bool` indicating whether it is possible to apply the modification specified by `change` to the function of constraint `c`.
 
@@ -78,12 +78,12 @@ canmodifyconstraint(m, c, ScalarConstantChange(10.0))
 ```
 """
 function canmodifyconstraint end
-canmodifyconstraint(m::AbstractSolverInstance, c::ConstraintReference, change) = false
+canmodifyconstraint(m::AbstractInstance, c::ConstraintReference, change) = false
 
 """
 ## Modify Function
 
-    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference{F,S}, func::F)
+    modifyconstraint!(m::AbstractInstance, c::ConstraintReference{F,S}, func::F)
 
 Replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
 
@@ -98,7 +98,7 @@ modifyconstraint!(m, c, SingleVariable(v1)) # Error
 
 ## Modify Set
 
-    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference{F,S}, set::S)
+    modifyconstraint!(m::AbstractInstance, c::ConstraintReference{F,S}, set::S)
 
 Change the set of constraint `c` to the new set `set` which should be of the same type as the original set.
 
@@ -113,7 +113,7 @@ modifyconstraint!(m, c, NonPositives) # Error
 
 ## Partial Modifications
 
-    modifyconstraint!(m::AbstractSolverInstance, c::ConstraintReference, change::AbstractFunctionModification)
+    modifyconstraint!(m::AbstractInstance, c::ConstraintReference, change::AbstractFunctionModification)
 
 Apply the modification specified by `change` to the function of constraint `c`.
 
@@ -129,7 +129,7 @@ function modifyconstraint! end
 """
 ## Transform Constraint Set
 
-    transformconstraint!(m::AbstractSolverInstance, c::ConstraintReference{F,S1}, newset::S2)::ConstraintReference{F,S2}
+    transformconstraint!(m::AbstractInstance, c::ConstraintReference{F,S1}, newset::S2)::ConstraintReference{F,S2}
 
 Replace the set in constraint `c` with `newset`. The constraint reference `c`
 will no longer be valid, and the function returns a new constraint reference.
@@ -154,7 +154,7 @@ transformconstraint!(m, c, LessThan(0.0)) # errors
 function transformconstraint! end
 
 # default fallback
-function transformconstraint!(m::AbstractSolverInstance, c::ConstraintReference, newset)
+function transformconstraint!(m::AbstractInstance, c::ConstraintReference, newset)
     f = getattribute(m, ConstraintFunction(), c)
     delete!(m, c)
     addconstraint!(m, f, newset)
@@ -163,7 +163,7 @@ end
 """
 ## Transform Constraint Set
 
-    cantransformconstraint(m::AbstractSolverInstance, c::ConstraintReference{F,S1}, newset::S2)::Bool
+    cantransformconstraint(m::AbstractInstance, c::ConstraintReference{F,S1}, newset::S2)::Bool
 
 Return a `Bool` is the set in constraint `c` can be replaced with `newset`.
 
@@ -177,4 +177,10 @@ cantransformconstraint(m, c, ZeroOne())        # false
 ```
 """
 function cantransformconstraint end
-cantransformconstraint(m::AbstractSolverInstance, c::ConstraintReference, newset) = false
+
+# default fallback
+function cantransformconstraint(m::AbstractInstance, c::ConstraintReference, newset)
+    # TODO: add "&& canaddconstraint(m, getattribute(m, ConstraintFunction(), c), newset)"
+    #       when candaddconstraint is defined
+    cangetattribute(m, ConstraintFunction(), c) && candelete(m, c)
+end

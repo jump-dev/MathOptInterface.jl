@@ -54,11 +54,17 @@ In a future version, MOI could be extended to cover functions defined by evaluat
 MOI defines some commonly used sets, but the interface is extensible to other sets recognized by the solver.
 [Describe currently supported sets.]
 
-## Solvers and solver instances
+## Instances and solvers
 
-Solvers are "factories" used to specify solver-specific parameters and create new instances of a solver API.
-Solver instances should be understood as the representation of the problem *in the solver's API*, just as if one were using its API directly.
-When possible, the MOI wrapper for a solver should avoid storing an extra copy of the problem data.
+An **Instance** ([`AbstractInstance`](@ref MathOptInterface.AbstractInstance)) is a representation of a concrete instance of an optimization problem, i.e., with all data specified.  Instances are either **standalone instances** or **solver instances**:
+
+- A **Standalone Instance** ([`AbstractStandaloneInstance`](@ref MathOptInterface.AbstractSolverInstance)) is unattached to any particular solver. It is simply a type that stores the data for an instance, which may be used for reading or writing optimization problems to files or manipulating a problem before providing it to a solver. The [MathOptInterfaceUtilities](https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl) package provides an implementation of a standalone instance.
+
+- A **Solver Instance** ([`AbstractSolverInstance`](@ref MathOptInterface.AbstractSolverInstance)) should be understood as the representation of an instance of an optimization problem *loaded in the solver's API*. That is, the instance data is often (i.e., whenever possible) stored exclusively in the external API, not duplicated in the MOI translation layer (called the *MOI wrapper*). Hence, the ability to modify data in a solver instance depends on whether the solver's own API supports such modifications.
+
+Instances share a common API for constructing the problem and querying its data. Solver instances, additionally, provide methods to solve the attached instance and query the results.
+
+A **Solver** ([`AbstractSolver`](@ref MathOptInterface.AbstractSolver)) is a "factory" used to specify solver-specific parameters (e.g., algorithmic parameters, license keys, etc.) and create new solver instances. These are typically very lightweight objects.
 
 Through the rest of the manual, `m` is used as a generic solver instance.
 
@@ -75,7 +81,7 @@ v2 = addvariables!(m, 3)
 setattribute!(m, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
-A variable can be deleted from a model with [`delete!(::AbstractSolverInstance, ::VariableReference)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractSolverInstance, ::MathOptInterface.AnyReference)), if this functionality is supported by the solver.
+A variable can be deleted from an instance with [`delete!(::AbstractInstance, ::VariableReference)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractInstance, ::MathOptInterface.AnyReference)), if this functionality is supported.
 
 ## Functions
 

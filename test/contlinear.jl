@@ -791,10 +791,15 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
             @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
             @test MOI.getattribute(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
             @test MOI.cangetattribute(m, MOI.ConstraintDual(), c)
-            @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
-            # TODO: farkas dual on bounds
-            # @test MOI.getattribute(m, MOI.ConstraintDual(), x) ≈ ? atol=atol rtol=rtol
-            # @test MOI.getattribute(m, MOI.ConstraintDual(), y) ≈ ? atol=atol rtol=rtol
+            cd = MOI.getattribute(m, MOI.ConstraintDual(), c)
+            @test cd < -atol
+            # TODO: farkas dual on bounds - see #127
+            # xd = MOI.getattribute(m, MOI.ConstraintDual(), bndx)
+            # yd = MOI.getattribute(m, MOI.ConstraintDual(), bndy)
+            # @test xd > atol
+            # @test yd > atol
+            # @test yd ≈ -cd atol=atol rtol=rtol
+            # @test xd ≈ -2cd atol=atol rtol=rtol
         else
             # solver returned nothing
             @test MOI.getattribute(m, MOI.ResultCount()) == 0

@@ -8,23 +8,31 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 abstract type AbstractSolverAttribute end
 
 """
+    AbstractInstanceAttribute
+
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the instance.
+"""
+abstract type AbstractInstanceAttribute end
+
+"""
     AbstractSolverInstanceAttribute
 
 Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the solver instance.
+These attributes do not apply to standalone instances.
 """
-abstract type AbstractSolverInstanceAttribute end
+abstract type AbstractSolverInstanceAttribute <: AbstractInstanceAttribute end
 
 """
     AbstractVariableAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the solver instance.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the instance.
 """
 abstract type AbstractVariableAttribute end
 
 """
     AbstractConstraintAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the solver instance.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the instance.
 """
 abstract type AbstractConstraintAttribute end
 
@@ -35,25 +43,29 @@ const AnyAttribute = Union{AbstractSolverAttribute, AbstractSolverInstanceAttrib
 
 Return an attribute `attr` of the solver `s`.
 
+    getattribute(m::AbstractInstance, attr::AbstractInstanceAttribute)
+
+Return an attribute `attr` of the instance `m`.
+
     getattribute(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute)
 
 Return an attribute `attr` of the solver instance `m`.
 
-    getattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference)
+    getattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)
 
-Return an attribute `attr` of the variable `v` in solver instance `m`.
+Return an attribute `attr` of the variable `v` in instance `m`.
 
-    getattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
+    getattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
 
-Return a vector of attributes corresponding to each variable in the collection `v` in the solver instance `m`.
+Return a vector of attributes corresponding to each variable in the collection `v` in the instance `m`.
 
-    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
+    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
 
-Return an attribute `attr` of the constraint `c` in solver instance `m`.
+Return an attribute `attr` of the constraint `c` in instance `m`.
 
-    getattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
+    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
 
-Return a vector of attributes corresponding to each constraint in the collection `c` in the solver instance `m`.
+Return a vector of attributes corresponding to each constraint in the collection `c` in the instance `m`.
 
 ### Examples
 
@@ -71,7 +83,7 @@ function getattribute(m, attr::AnyAttribute, args...)
 end
 
 """
-    getattribute!(output, m::AbstractSolverInstance, args...)
+    getattribute!(output, m::AbstractInstance, args...)
 
 An in-place version of `getattribute`.
 The signature matches that of `getattribute` except that the the result is placed in the vector `output`.
@@ -86,15 +98,15 @@ end
 
 Return a `Bool` indicating whether it is possible to query attribute `attr` from the solver `s`.
 
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference)::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference{F,S})::Bool
+    cangetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)::Bool
+    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference{F,S})::Bool
 
-Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the variable reference `v` or constraint reference `c`.
+Return a `Bool` indicating whether the instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the variable reference `v` or constraint reference `c`.
 
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+    cangetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
+    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
 
-Return a `Bool` indicating whether the solver instance `m` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable references in `v` or constraint reference in `c`.
+Return a `Bool` indicating whether the instance `m` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable references in `v` or constraint reference in `c`.
 
 ### Examples
 
@@ -106,24 +118,24 @@ cangetattribute(m, VariablePrimal(), [ref1, ref2])
 ```
 """
 function cangetattribute end
-cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
-cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, ref::AnyReference) = false
-cangetattribute(m::AbstractSolverInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
+cangetattribute(m::AbstractInstance, attr::AnyAttribute) = false
+cangetattribute(m::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
+cangetattribute(m::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
     cansetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` in the solver `s`.
 
-    cansetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cangetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
+    cansetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
+    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
 
-Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the solver instance `m`.
+Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the instance `m`.
 
-    cansetattribute(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
-    cansetattribute(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+    cansetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
+    cansetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
 
-Return a `Bool` indicating whether it is possible to set attribute `attr`applied to *every* variable reference in `v` or constraint reference in `c` in the solver instance `m`.
+Return a `Bool` indicating whether it is possible to set attribute `attr`applied to *every* variable reference in `v` or constraint reference in `c` in the instance `m`.
 
 ### Examples
 
@@ -134,34 +146,34 @@ cansetattribute(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{
 ```
 """
 function cansetattribute end
-cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute) = false
-cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute, ref::AnyReference) = false
-cansetattribute(m::AbstractSolverInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
+cansetattribute(m::AbstractInstance, attr::AnyAttribute) = false
+cansetattribute(m::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
+cansetattribute(m::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
     setattribute!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
 
 Assign `value` to the attribute `attr` of the solver `s`.
 
-    setattribute!(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute, value)
+    setattribute!(m::AbstractInstance, attr::AbstractInstanceAttribute, value)
 
-Assign `value` to the attribute `attr` of the solver instance `m`.
+Assign `value` to the attribute `attr` of the instance `m`.
 
-    setattribute!(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
+    setattribute!(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
 
-Assign `value` to the attribute `attr` of variable `v` in solver instance `m`.
+Assign `value` to the attribute `attr` of variable `v` in instance `m`.
 
-    setattribute!(m::AbstractSolverInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
+    setattribute!(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
 
-Assign a value respectively to the attribute `attr` of each variable in the collection `v` in solver instance `m`.
+Assign a value respectively to the attribute `attr` of each variable in the collection `v` in instance `m`.
 
-    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
+    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
 
-Assign a value to the attribute `attr` of constraint `c` in solver instance `m`.
+Assign a value to the attribute `attr` of constraint `c` in instance `m`.
 
-    setattribute!(m::AbstractSolverInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
+    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
 
-Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in solver instance `m`.
+Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `m`.
 """
 function setattribute! end
 function setattribute!(m, attr::AnyAttribute, args...)
@@ -218,6 +230,64 @@ A `Bool` indicating if the solver interprets certain quadratic constraints as se
 """
 struct SupportsConicThroughQuadratic <: AbstractSolverAttribute end
 
+## Instance attributes
+
+"""
+    ObjectiveSense()
+
+The sense of the objective function, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
+"""
+struct ObjectiveSense <: AbstractInstanceAttribute end
+
+@enum OptimizationSense MinSense MaxSense FeasibilitySense
+
+"""
+    NumberOfVariables()
+
+The number of variables in the instance.
+"""
+struct NumberOfVariables <: AbstractInstanceAttribute end
+
+"""
+    ListOfVariableReferences()
+
+A `Vector{VariableReference}` with references to all variables present
+in the instance (i.e., of length equal to the value of `NumberOfVariables()`).
+"""
+struct ListOfVariableReferences <: AbstractInstanceAttribute end
+
+"""
+    ListOfConstraintReferences{F,S}()
+
+A `Vector{ConstraintReferences{F,S}}` with references to all constraints of
+type `F`-in`S` in the instance (i.e., of length equal to the value of `NumberOfConstraints{F,S}()`).
+"""
+struct ListOfConstraintReferences{F,S} <: AbstractInstanceAttribute end
+
+"""
+    NumberOfConstraints{F,S}()
+
+The number of constraints of the type `F`-in-`S` present in the instance.
+"""
+struct NumberOfConstraints{F,S} <: AbstractInstanceAttribute end
+
+"""
+    ListOfConstraints()
+
+A list of tuples of the form `(F,S)`, where `F` is a function type
+and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
+has value greater than zero.
+"""
+struct ListOfConstraints <: AbstractInstanceAttribute end
+
+"""
+    ObjectiveFunction()
+
+An `AbstractFunction` instance which represents the objective function.
+It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
+"""
+struct ObjectiveFunction <: AbstractInstanceAttribute end
+
 ## Solver instance attributes
 
 """
@@ -250,15 +320,6 @@ struct RelativeGap <: AbstractSolverInstanceAttribute  end
 The total elapsed solution time (in seconds) as reported by the solver.
 """
 struct SolveTime <: AbstractSolverInstanceAttribute end
-
-"""
-    ObjectiveSense()
-
-The sense of the objective function, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
-"""
-struct ObjectiveSense <: AbstractSolverInstanceAttribute end
-
-@enum OptimizationSense MinSense MaxSense FeasibilitySense
 
 """
     SimplexIterations()
@@ -296,52 +357,6 @@ The number of results available.
 """
 struct ResultCount <: AbstractSolverInstanceAttribute end
 
-"""
-    NumberOfVariables()
-
-The number of variables in the solver instance.
-"""
-struct NumberOfVariables <: AbstractSolverInstanceAttribute end
-
-"""
-    ListOfVariableReferences()
-
-A `Vector{VariableReference}` with references to all variables present
-in the solver instance (i.e., of length equal to the value of `NumberOfVariables()`).
-"""
-struct ListOfVariableReferences <: AbstractSolverInstanceAttribute end
-
-"""
-    ListOfConstraintReferences{F,S}()
-
-A `Vector{ConstraintReferences{F,S}}` with references to all constraints of
-type `F`-in`S` in the solver instance (i.e., of length equal to the value of `NumberOfConstraints{F,S}()`).
-"""
-struct ListOfConstraintReferences{F,S} <: AbstractSolverInstanceAttribute end
-
-"""
-    NumberOfConstraints{F,S}()
-
-The number of constraints of the type `F`-in-`S` present in the solver instance.
-"""
-struct NumberOfConstraints{F,S} <: AbstractSolverInstanceAttribute end
-
-"""
-    ListOfConstraints()
-
-A list of tuples of the form `(F,S)`, where `F` is a function type
-and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
-has value greater than zero.
-"""
-struct ListOfConstraints <: AbstractSolverInstanceAttribute end
-
-"""
-    ObjectiveFunction()
-
-An `AbstractFunction` instance which represents the objective function.
-It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
-"""
-struct ObjectiveFunction <: AbstractSolverInstanceAttribute end
 ## Variable attributes
 
 """

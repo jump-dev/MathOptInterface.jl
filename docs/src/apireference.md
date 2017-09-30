@@ -12,6 +12,7 @@ List of attribute categories.
 
 ```@docs
 AbstractSolverAttribute
+AbstractInstanceAttribute
 AbstractSolverInstanceAttribute
 AbstractVariableAttribute
 AbstractConstraintAttribute
@@ -45,11 +46,28 @@ SupportsAddVariableAfterSolve
 SupportsConicThroughQuadratic
 ```
 
-## Solver Instance
+## Instance
 
 ```@docs
+AbstractInstance
+AbstractStandaloneInstance
 AbstractSolverInstance
 ```
+
+List of instance attributes
+
+```@docs
+ObjectiveSense
+NumberOfVariables
+ListOfVariableReferences
+ListOfConstraints
+NumberOfConstraints
+ListOfConstraintReferences
+```
+
+There are no attributes specific to a standalone instance.
+
+## Solver instance
 
 ```@docs
 SolverInstance
@@ -59,14 +77,9 @@ free!
 
 List of solver instance attributes
 
+
 ```@docs
 RawSolver
-ObjectiveSense
-NumberOfVariables
-ListOfVariableReferences
-ListOfConstraints
-NumberOfConstraints
-ListOfConstraintReferences
 ResultCount
 ObjectiveFunction
 ObjectiveValue
@@ -118,7 +131,6 @@ ConstraintReference
 candelete
 isvalid
 delete!(::AbstractSolverInstance,::AnyReference)
-candelete
 ```
 
 ### Variables
