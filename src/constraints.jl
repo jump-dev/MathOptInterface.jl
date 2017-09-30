@@ -1,11 +1,11 @@
 # Constraints
 
 """
-    canaddconstraint(m::AbstractSolverInstance, func::AbstractFunction, set::AbstractSet)::Bool
+    canaddconstraint(m::AbstractInstance, func::AbstractFunction, set::AbstractSet)::Bool
 
 Return a `Bool` indicating whether it is possible to add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
 """
-canaddconstraint(m::AbstractSolverInstance, func::AbstractFunction, set::AbstractSet) = false
+canaddconstraint(m::AbstractInstance, func::AbstractFunction, set::AbstractSet) = false
 
 """
     addconstraint!(m::AbstractInstance, func::F, set::S)::ConstraintReference{F,S} where {F,S}
