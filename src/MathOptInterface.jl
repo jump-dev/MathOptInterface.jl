@@ -79,24 +79,24 @@ Return `true` if the solver supports optimizing a problem with objective type `F
 ```julia
 supportsproblem(s, ScalarAffineFunction{Float64},
     [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan),
-    (ScalarAffineFunction{Float64},GreaterThan)])
+    (ScalarAffineFunction{Float64},LessThan{Float64}),
+    (ScalarAffineFunction{Float64},GreaterThan{Float64})])
 ```
 should be `true` for a linear programming solver `s`.
 
 ```julia
 supportsproblem(s, ScalarQuadraticFunction{Float64},
     [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan),
-    (ScalarAffineFunction{Float64},GreaterThan)])
+    (ScalarAffineFunction{Float64},LessThan{Float64}),
+    (ScalarAffineFunction{Float64},GreaterThan{Float64})])
 ```
 should be `true` for a quadratic programming solver `s`.
 
 ```julia
 supportsproblem(s, ScalarAffineFunction{Float64},
     [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan),
-    (ScalarAffineFunction{Float64},GreaterThan),
+    (ScalarAffineFunction{Float64},LessThan{Float64}),
+    (ScalarAffineFunction{Float64},GreaterThan{Float64}),
     (SingleVariable,ZeroOne)])
 ```
 should be `true` for a mixed-integer linear programming solver `s`.
@@ -104,8 +104,8 @@ should be `true` for a mixed-integer linear programming solver `s`.
 ```julia
 supportsproblem(s, ScalarAffineFunction{Float64},
     [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan),
-    (ScalarAffineFunction{Float64},GreaterThan),
+    (ScalarAffineFunction{Float64},LessThan{Float64}),
+    (ScalarAffineFunction{Float64},GreaterThan{Float64}),
     (VectorAffineFunction{Float64},SecondOrderCone)])
 ```
 should be `true` for a second-order cone solver `s`.
