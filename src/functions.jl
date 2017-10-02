@@ -1,10 +1,16 @@
 """
     variable
 
+Refer to a variable in the model. Other fields:
+
+ - `name`: Must be a string that refers the a unique name of the variable in the
+ model.
+
 ### Example
+
     {
         "head": "variable",
-        "value": "x1"
+        "name": "x1"
     }
 """
 variable(name::String) = Object("head"=>"variable", "name"=> name)
@@ -13,11 +19,15 @@ variable(name::String) = Object("head"=>"variable", "name"=> name)
 """
     variableset
 
+Refer to an ordered set of variables in the model.
+ - `names`: Must be an array of strings. Each element must refer to a unique
+ name of the variable in the model. Duplicate names are not allowed.
+
 ### Example
 
     {
         "head": "variableset",
-        "value": ["x1", "x2"]
+        "names": ["x1", "x2"]
     }
 """
 variableset(names::Vector{String}) = Object("head"=>"variableset", "names"=>names)
