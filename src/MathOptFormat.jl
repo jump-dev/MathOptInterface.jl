@@ -21,6 +21,8 @@ MOFFile() = MOFFile(
     ),
     Dict{MOI.VariableReference, String}()
 )
+Base.getindex(m, key) = getindex(m.d, key)
+Base.setindex!(m, key, value) = setindex!(m.d, key, value)
 
 save(f::IO, m::MOFFile) = write(io, JSON.json(m.d))
 function save(f::String, m::MOFFile)
@@ -29,16 +31,21 @@ function save(f::String, m::MOFFile)
     end
 end
 
+Object(::MOI.MaxSense) = "max"
+Object(::MOI.MinSense) = "min"
 function MOI.setobjective!(m::MOFFile, sense, func)
-
+    m["sense"] = Object(sense)
+    m["objective"] = Object(m, func)
 end
 
 function MOI.addconstraint!(m::MOFFile, func, set)
-    Dict(
-        "set" => getset(set),
-        "function" => getfunction!(func)
+    push!(
+        m["constraints"],
+        Dict(
+            "set" => Object(set),
+            "function" => Object!(m, func)
+        )
     )
-
 end
 
 #=
@@ -53,17 +60,16 @@ function getvariable!(m::MOFFile, v::VariableReference)
     m.variables[v]
 end
 
-getfunction!(m::MOFFile, func::MOI.SingleVariable) = Object("head"=>"variable", "name"=>getvariable!(m, func.variable))
+Object!(m::MOFFile, func::MOI.SingleVariable) = Object("head"=>"variable", "name"=>getvariable!(m, func.variable))
 
-getfunction!(m::MOFFile, func::MOI.VectorOfVariables) = Object("head"=>"variable", "names"=>getvariable!.(m, func.variables))
-
+Object!(m::MOFFile, func::MOI.VectorOfVariables) = Object("head"=>"variable", "names"=>getvariable!.(m, func.variables))
 
 #=
     SETS
 =#
 
-getset(set::MOI.EqualTo) = Object("head" => "EqualTo", "value"=>set.value)
-getset(set::MOI.LessThan) = Object("head" => "LessThan", "value"=>set.upper)
-getset(set::MOI.GreaterThan) = Object("head" => "GreaterThan", "value"=>set.lower)
+Object(set::MOI.EqualTo) = Object("head" => "EqualTo", "value"=>set.value)
+Object(set::MOI.LessThan) = Object("head" => "LessThan", "value"=>set.upper)
+Object(set::MOI.GreaterThan) = Object("head" => "GreaterThan", "value"=>set.lower)
 
 end # module
