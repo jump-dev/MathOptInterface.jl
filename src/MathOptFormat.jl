@@ -34,6 +34,29 @@ end
 
 include("sets.jl")
 include("functions.jl")
+
+function addvariable!(m::MOFFile, name::String)
+    push!(m["variables"], name)
+end
+
+function addconstraint!(m::MOFFile, func::Object, set::Object)
+    push!(m["constraints"],
+        Object(
+            "set" => set,
+            "function" => func
+        )
+    )
+end
+
+function setobjective!(m::MOFFile, sense::String, func::Object)
+    if sense != "min" && sense != "max"
+        error("Sense $(sense) must be min or max")
+    end
+    m["sense"] = sense
+    m["objective"] = func
+end
+
+
 include("mathoptinterface.jl")
 
 end # module

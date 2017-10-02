@@ -36,9 +36,33 @@ end
             @test JSON.json(MOF.linear(["x1", "x1"], [1.0, 2.0], 3.0)) == "{\"head\":\"linear\",\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":3.0}"
         end
     end
+
+    @testset "Examples" begin
+        @testset "1.mof.json" begin
+            m = MOF.MOFFile()
+            MOF.addvariable!(m, "x1")
+            MOF.setobjective!(m, "min", MOF.linear(["x1", "x1"], [1.0, 2.0], 3.0))
+            MOF.addconstraint!(m, MOF.linear(["x1"], [1.0], 0.0), MOF.lessthan(3.0))
+            io = IOBuffer()
+            MOF.save(io, m)
+            @test String(take!(io)) == problem("1.mof.json")
+        end
+        @testset "2.mof.json" begin
+            m = MOF.MOFFile()
+            MOF.addvariable!(m, "x1")
+            MOF.addvariable!(m, "x2")
+            MOF.setobjective!(m, "max", MOF.linear(["x1", "x2"], [2.0, -1.0], 0.0))
+            MOF.addconstraint!(m, MOF.linear(["x1"], [2.0], 1.0), MOF.equalto(3.0))
+            MOF.addconstraint!(m, MOF.variable("x1"), MOF.integer())
+            io = IOBuffer()
+            MOF.save(io, m)
+            @test String(take!(io)) == problem("2.mof.json")
+        end
+
+    end
 end
 
-@testset "MOI Inteface" begin
+@testset "MOI Interface" begin
 
     @testset "getvariable!" begin
         v = MOI.VariableReference(1)
@@ -84,20 +108,34 @@ end
             @test JSON.json(MOF.Object!(m, f)) == "{\"head\":\"linear\",\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":3.0}"
         end
     end
-end
 
+    @testset "Examples" begin
 
+        @testset "1.mof.json" begin
+            v = MOI.VariableReference(1)
+            m = MOF.MOFFile()
+            f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
+            MOI.setobjective!(m, MOI.MinSense, f)
+            f2 = MOI.ScalarAffineFunction([v], [1.0], 0.0)
+            MOI.addconstraint!(m, f2, MOI.LessThan(3.0))
+            io = IOBuffer()
+            MOF.save(io, m)
+            @test String(take!(io)) == problem("1.mof.json")
+        end
 
-@testset "Examples" begin
-    @testset "1.mof.json" begin
-        v = MOI.VariableReference(1)
-        m = MOF.MOFFile()
-        f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
-        MOI.setobjective!(m, MOI.MinSense, f)
-        f2 = MOI.ScalarAffineFunction([v], [1.0], 0.0)
-        MOI.addconstraint!(m, f2, MOI.LessThan(3.0))
-        io = IOBuffer()
-        MOF.save(io, m)
-        @test String(take!(io)) == problem("1.mof.json")
+        @testset "2.mof.json" begin
+            x = MOI.VariableReference(1)
+            y = MOI.VariableReference(2)
+            m = MOF.MOFFile()
+            c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
+            MOI.setobjective!(m, MOI.MaxSense, c)
+            a1 = MOI.ScalarAffineFunction([x], [2.0], 1.0)
+            MOI.addconstraint!(m, a1, MOI.EqualTo(3.0))
+            MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Integer())
+
+            io = IOBuffer()
+            MOF.save(io, m)
+            @test String(take!(io)) == problem("2.mof.json")
+        end
     end
 end

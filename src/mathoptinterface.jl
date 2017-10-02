@@ -24,6 +24,10 @@ Object(set::MOI.LessThan) = lessthan(set.upper)
 
 Object(set::MOI.GreaterThan) = greaterthan(set.lower)
 
+Object(::MOI.Integer) = integer()
+
+Object(::MOI.ZeroOne) = zeroone()
+
 #=
     Other MathOptInterface methods
 =#
@@ -46,16 +50,9 @@ function Object(sense::MOI.OptimizationSense)
 end
 
 function MOI.setobjective!(m::MOFFile, sense, func)
-    m["sense"] = Object(sense)
-    m["objective"] = Object!(m, func)
+    setobjective!(m, Object(sense), Object!(m, func))
 end
 
 function MOI.addconstraint!(m::MOFFile, func, set)
-    push!(
-        m["constraints"],
-        Object(
-            "set" => Object(set),
-            "function" => Object!(m, func)
-        )
-    )
+    addconstraint!(m, Object!(m, func), Object(set))
 end

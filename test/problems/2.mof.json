@@ -1,0 +1,47 @@
+{
+ "version": "0.0",
+ "sense": "max",
+ "variables": [
+  "x1",
+  "x2"
+ ],
+ "objective": {
+  "head": "linear",
+  "variables": [
+   "x1",
+   "x2"
+  ],
+  "coefficients": [
+   2.0,
+   -1.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "set": {
+    "head": "EqualTo",
+    "value": 3.0
+   },
+   "function": {
+    "head": "linear",
+    "variables": [
+     "x1"
+    ],
+    "coefficients": [
+     2.0
+    ],
+    "constant": 1.0
+   }
+  },
+  {
+   "set": {
+    "head": "Integer"
+   },
+   "function": {
+    "head": "variable",
+    "name": "x1"
+   }
+  }
+ ]
+}

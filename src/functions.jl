@@ -1,3 +1,8 @@
+#=
+    Functions defined by MathOptFormat. These are largely inspired by
+    https://github.com/JuliaOpt/MathOptInterface.jl/blob/master/src/functions.jl
+=#
+
 """
     variable
 
@@ -20,6 +25,7 @@ variable(name::String) = Object("head"=>"variable", "name"=> name)
     variableset
 
 Refer to an ordered set of variables in the model.
+
  - `names`: Must be an array of strings. Each element must refer to a unique
  name of the variable in the model. Duplicate names are not allowed.
 
@@ -45,7 +51,7 @@ constant. Other fields are:
  value. Objects and strings are illegal.
  - `constant`: This must be a numeric value. Objects and strings are illegal.
 
-### Example: x + y + 3
+### Example
 
     {
       head: "linear",
