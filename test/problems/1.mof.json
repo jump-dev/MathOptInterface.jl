@@ -1,0 +1,37 @@
+{
+ "version": "0.0",
+ "sense": "min",
+ "variables": [
+  "x1"
+ ],
+ "objective": {
+  "head": "linear",
+  "variables": [
+   "x1",
+   "x1"
+  ],
+  "coefficients": [
+   1.0,
+   2.0
+  ],
+  "constant": 3.0
+ },
+ "constraints": [
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 3.0
+   },
+   "function": {
+    "head": "linear",
+    "variables": [
+     "x1"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": 0.0
+   }
+  }
+ ]
+}
