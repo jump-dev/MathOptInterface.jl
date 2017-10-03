@@ -42,6 +42,15 @@
     "head": "variable",
     "name": "x1"
    }
+  },
+  {
+   "set": {
+    "head": "ZeroOne"
+   },
+   "function": {
+    "head": "variable",
+    "name": "x2"
+   }
   }
  ]
 }

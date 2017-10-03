@@ -1,0 +1,76 @@
+{
+ "version": "0.0",
+ "sense": "min",
+ "variables": [
+  "x1",
+  "x2",
+  "x3"
+ ],
+ "objective": {
+  "head": "quadratic",
+  "affine_variables": [],
+  "affine_coefficients": [],
+  "quadratic_rowvariables": [
+   "x1",
+   "x1",
+   "x2",
+   "x2",
+   "x3"
+  ],
+  "quadratic_colvariables": [
+   "x1",
+   "x2",
+   "x2",
+   "x3",
+   "x3"
+  ],
+  "quadratic_coefficients": [
+   2.0,
+   1.0,
+   2.0,
+   1.0,
+   2.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "set": {
+    "head": "GreaterThan",
+    "value": 4.0
+   },
+   "function": {
+    "head": "affine",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ],
+    "coefficients": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "constant": 0.0
+   }
+  },
+  {
+   "set": {
+    "head": "GreaterThan",
+    "value": 1.0
+   },
+   "function": {
+    "head": "affine",
+    "variables": [
+     "x1",
+     "x2"
+    ],
+    "coefficients": [
+     1.0,
+     1.0
+    ],
+    "constant": 0.0
+   }
+  }
+ ]
+}

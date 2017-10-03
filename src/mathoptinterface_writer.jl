@@ -29,32 +29,51 @@ Object!(m::MOFFile, func::MOI.ScalarQuadraticFunction) = quadratic(
     func.constant
 )
 
+Object!(m::MOFFile, func::MOI.VectorQuadraticFunction) = vectorquadratic(
+    func.affine_outputindex,
+    getvariable!.(m, func.affine_variables),
+    func.affine_coefficients,
+    func.quadratic_outputindex,
+    getvariable!.(m, func.quadratic_rowvariables),
+    getvariable!.(m, func.quadratic_colvariables),
+    func.quadratic_coefficients,
+    func.constant
+)
 
 #=
     This file contains the logic to convert MathOptInterface sets
     to MathOptFormat objects.
 =#
 
-Object(set::MOI.EqualTo) = equalto(set.value)
-
-Object(set::MOI.LessThan) = lessthan(set.upper)
-
+Object(set::MOI.EqualTo)     = equalto(set.value)
+Object(set::MOI.LessThan)    = lessthan(set.upper)
 Object(set::MOI.GreaterThan) = greaterthan(set.lower)
+Object(set::MOI.Interval)    = interval(set.lower, set.upper)
 
 Object(::MOI.Integer) = integer()
-
 Object(::MOI.ZeroOne) = zeroone()
+
+Object(set::MOI.Reals)        = reals(set.dim)
+Object(set::MOI.Zeros)        = zeros(set.dim)
+Object(set::MOI.Nonnegatives) = nonnegatives(set.dim)
+Object(set::MOI.Nonpositives) = nonpositives(set.dim)
+
+Object(set::MOI.Semicontinuous) = semicontinuous(set.l, set.u)
+Object(set::MOI.Semiinteger)    = semiinteger(set.l, set.u)
+
+Object(set::MOI.SOS1) = sos1(set.weights)
+Object(set::MOI.SOS2) = sos2(set.weights)
 
 #=
     Other MathOptInterface methods
 =#
 
 function getvariable!(m::MOFFile, v::MOI.VariableReference)
-    if !haskey(m.variables, v)
-        m.variables[v] = "x$(v.value)"
-        push!(m.d["variables"], m.variables[v])
+    if !haskey(m.ext, v)
+        m.ext[v] = "x$(v.value)"
+        push!(m.d["variables"], m.ext[v])
     end
-    m.variables[v]
+    m.ext[v]::String
 end
 
 function Object(sense::MOI.OptimizationSense)

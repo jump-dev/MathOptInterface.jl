@@ -19,7 +19,7 @@
  "constraints": [
   {
    "set": {
-    "head": "LessThan",
+    "head": "GreaterThan",
     "value": 3.0
    },
    "function": {

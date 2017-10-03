@@ -153,7 +153,7 @@ The set `{0} ∪ [lower, upper]`.
     {
         "head": "Semicontinuous",
         "lower": 1,
-        "upper": 1
+        "upper": 2
     }
 """
 semicontinuous(lower, upper) = Object("head" => "Semicontinuous", "lower" => lower, "upper" => upper)
@@ -168,7 +168,7 @@ The set `{0} ∪ [lower, lower+1, ..., upper-1, upper]`.
     {
         "head": "Semiinteger",
         "lower": 1,
-        "upper": 1
+        "upper": 2
     }
 """
 semiinteger(lower, upper) = Object("head" => "Semiinteger", "lower" => lower, "upper" => upper)
@@ -188,7 +188,7 @@ element in the set corresponds to the kth weight in weights
         "lower": [1.0, 2.0, 3.0]
     }
 """
-sos1(weights) = Object("head" => "SOSI", "weights" => weights)
+sos1(weights::Vector) = Object("head" => "SOSI", "weights" => weights)
 
 """
     sos2(weights)
@@ -206,7 +206,7 @@ set corresponds to the kth weight in weights
         "lower": [1.0, 2.0, 3.0]
     }
 """
-sos2(weights) = Object("head" => "SOSII", "weights" => weights)
+sos2(weights::Vector) = Object("head" => "SOSII", "weights" => weights)
 
 #=
 TODO: the following sets have not yet been copied over

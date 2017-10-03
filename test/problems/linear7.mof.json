@@ -1,0 +1,64 @@
+{
+ "version": "0.0",
+ "sense": "min",
+ "variables": [
+  "x",
+  "y"
+ ],
+ "objective": {
+  "head": "affine",
+  "variables": [
+   "x",
+   "y"
+  ],
+  "coefficients": [
+   1.0,
+   -1.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "set": {
+    "head": "Nonnegatives",
+    "dimension": 1
+   },
+   "function": {
+    "head": "vectoraffine",
+    "outputindex": [
+     1
+    ],
+    "variables": [
+     "x"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": [
+     0.0
+    ]
+   }
+  },
+  {
+   "set": {
+    "head": "Nonpositives",
+    "dimension": 1
+   },
+   "function": {
+    "head": "vectoraffine",
+    "outputindex": [
+     1
+    ],
+    "variables": [
+     "y"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": [
+     0.0
+    ]
+   }
+  }
+ ]
+}

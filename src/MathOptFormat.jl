@@ -10,7 +10,9 @@ const Object = OrderedDict{String, Any}
 
 immutable MOFFile
     d::Object
-    variables::Dict{Any, String}
+    # an extension dictionary to help MOI reading/writing
+    # should be improved later
+    ext::Dict
 end
 MOFFile() = MOFFile(
     OrderedDict(
@@ -20,8 +22,26 @@ MOFFile() = MOFFile(
         "objective" => Object(),
         "constraints" => Object[]
     ),
-    Dict{Any, String}()
+    Dict()
 )
+
+"""
+    MOFFile(file::String)
+
+Read a MOF file located at `file`
+
+### Example
+
+    MOFFile("path/to/model.mof.json")
+"""
+function MOFFile(file::String)
+    d = open(file, "r") do io
+        JSON.parse(io, dicttype=OrderedDict{String, Any})
+    end
+    MOFFile(d, Dict{Any, Any}())
+end
+
+# overload getset for m.d
 Base.getindex(m, key) = getindex(m.d, key)
 Base.setindex!(m, key, value) = setindex!(m.d, key, value)
 
@@ -34,9 +54,11 @@ function save(io::IO, m::MOFFile, indent::Int=0)
 end
 function save(f::String, m::MOFFile, indent::Int=0)
     open(f, "w") do io
-        write(io, m, indent)
+        save(io, m, indent)
     end
 end
+
+
 
 include("sets.jl")
 include("functions.jl")
@@ -63,6 +85,7 @@ function setobjective!(m::MOFFile, sense::String, func::Object)
 end
 
 
-include("mathoptinterface.jl")
+include("mathoptinterface_writer.jl")
+include("mathoptinterface_reader.jl")
 
 end # module

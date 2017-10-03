@@ -119,9 +119,55 @@ The scalar-valued quadratic function 0.5xᵀQx + aᵀx + b, where:
 """
 quadratic(affine_variables, affine_coefficients, quadratic_rowvariables,
     quadratic_colvariables, quadratic_coefficients, constant) = Object(
-    "head"         => "quadratic",
+    "head"                   => "quadratic",
+    "affine_variables"       => affine_variables,
+    "affine_coefficients"    => affine_coefficients,
+    "quadratic_rowvariables" => quadratic_rowvariables,
+    "quadratic_colvariables" => quadratic_colvariables,
+    "quadratic_coefficients" => quadratic_coefficients,
+    "constant"               => constant
+)
+
+"""
+    vectorquadratic(affine_outputindex, affine_variables, affine_coefficients,
+        quadratic_outputindex, quadratic_rowvariables, quadratic_colvariables,
+        quadratic_coefficients, constant)
+
+The vector-valued quadratic function with i`th` component ("output index")
+defined as ``\\frac{1}{2}x^TQ_ix + a_i^T x + b_i``, where:
+* ``a_i`` is a sparse vector specified in tuple form by the subset of
+`affine_variables, affine_coefficients` for the indices `k` where
+`affine_outputindex[k] == i`.
+* ``b_i`` is a scalar specified by `constant[i]`
+* ``Q_i`` is a symmetric matrix is specified in triplet form by the subset
+of `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients`
+for the indices `k` where `quadratic_outputindex[k] == i`
+
+### Example
+
+    1x + 2y + x^2 +     + 2y^2 + 0
+    3x + 4y +       x*y        + 3
+
+    {
+      head: "vectorquadratic",
+      affine_outputindex: [1, 1, 2, 2]
+      affine_variables: ["x", "y", "x", "y"],
+      affine_coefficients: [1.0, 2.0, 3.0, 4.0],
+      quadratic_outputindex: [1, 1, 2],
+      quadratic_rowvariables: ["x", "y", "x"],
+      quadratic_colvariables: ["x", "y", "y"],
+      quadratic_coefficients: [2.0, 4.0, 1.0],
+      constant: [0.0, 3.0]
+    }
+"""
+vectorquadratic(affine_outputindex, affine_variables, affine_coefficients,
+    quadratic_outputindex, quadratic_rowvariables, quadratic_colvariables,
+    quadratic_coefficients, constant) = Object(
+    "head"         => "vectorquadratic",
+    "affine_outputindex" => affine_outputindex,
     "affine_variables"    => affine_variables,
     "affine_coefficients" => affine_coefficients,
+    "quadratic_outputindex" => quadratic_outputindex,
     "quadratic_rowvariables" => quadratic_rowvariables,
     "quadratic_colvariables" => quadratic_colvariables,
     "quadratic_coefficients" => quadratic_coefficients,
