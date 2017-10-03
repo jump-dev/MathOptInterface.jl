@@ -1,0 +1,87 @@
+{
+ "version": "0.0",
+ "sense": "max",
+ "variables": [
+  "x1",
+  "x2",
+  "x3"
+ ],
+ "objective": {
+  "head": "affine",
+  "variables": [
+   "x1",
+   "x2",
+   "x3"
+  ],
+  "coefficients": [
+   2.0,
+   1.0,
+   1.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 1.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "x1"
+   }
+  },
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 1.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "x2"
+   }
+  },
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 2.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "x3"
+   }
+  },
+  {
+   "set": {
+    "head": "SOSI",
+    "weights": [
+     1.0,
+     2.0
+    ]
+   },
+   "function": {
+    "head": "variableset",
+    "names": [
+     "x1",
+     "x2"
+    ]
+   }
+  },
+  {
+   "set": {
+    "head": "SOSI",
+    "weights": [
+     1.0,
+     2.0
+    ]
+   },
+   "function": {
+    "head": "variableset",
+    "names": [
+     "x1",
+     "x3"
+    ]
+   }
+  }
+ ]
+}

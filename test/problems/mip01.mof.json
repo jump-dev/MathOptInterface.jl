@@ -1,0 +1,85 @@
+{
+ "version": "0.0",
+ "sense": "max",
+ "variables": [
+  "x1",
+  "x2",
+  "x3"
+ ],
+ "objective": {
+  "head": "affine",
+  "variables": [
+   "x1",
+   "x2",
+   "x3"
+  ],
+  "coefficients": [
+   1.1,
+   2.0,
+   5.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 10.0
+   },
+   "function": {
+    "head": "affine",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ],
+    "coefficients": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "constant": 0.0
+   }
+  },
+  {
+   "set": {
+    "head": "Interval",
+    "lower": 0.0,
+    "upper": 5.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "x1"
+   }
+  },
+  {
+   "set": {
+    "head": "Interval",
+    "lower": 0.0,
+    "upper": 10.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "x2"
+   }
+  },
+  {
+   "set": {
+    "head": "Integer"
+   },
+   "function": {
+    "head": "variable",
+    "name": "x2"
+   }
+  },
+  {
+   "set": {
+    "head": "ZeroOne"
+   },
+   "function": {
+    "head": "variable",
+    "name": "x3"
+   }
+  }
+ ]
+}

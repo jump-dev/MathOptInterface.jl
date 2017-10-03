@@ -64,6 +64,15 @@ Object(set::MOI.Semiinteger)    = semiinteger(set.l, set.u)
 Object(set::MOI.SOS1) = sos1(set.weights)
 Object(set::MOI.SOS2) = sos2(set.weights)
 
+Object(set::MOI.SecondOrderCone) = secondordercone(set.dim)
+Object(set::MOI.RotatedSecondOrderCone) = rotatedsecondordercone(set.dim)
+Object(set::MOI.ExponentialCone) = exponentialcone()
+Object(set::MOI.DualExponentialCone) = dualexponentialcone()
+Object(set::MOI.PowerCone) = powercone(set.a)
+Object(set::MOI.DualPowerCone) = dualpowercone(set.a)
+Object(set::MOI.PositiveSemidefiniteConeTriangle) = positivesemidefiniteconetriangle(set.dim)
+Object(set::MOI.PositiveSemidefiniteConeScaled) = positivesemidefiniteconescaled(set.dim)
+
 #=
     Other MathOptInterface methods
 =#
@@ -85,10 +94,19 @@ function Object(sense::MOI.OptimizationSense)
     error("Sense $(sense) not recognised.")
 end
 
-function MOI.setobjective!(m::MOFFile, sense, func)
+function MOI.addvariable!(m::MOFFile)
+    i = length(m["variables"]) + 1
+    v = MOI.VariableReference(i)
+    push!(m["variables"], "x$(i)")
+    m.ext[v] = "x$(i)"
+    v
+end
+MOI.addvariables!(m::MOFFile, n::Int) = [MOI.addvariable!(m) for i in 1:n]
+
+function MOI.setobjective!(m::MOFFile, sense, func::MOI.AbstractFunction)
     setobjective!(m, Object(sense), Object!(m, func))
 end
 
-function MOI.addconstraint!(m::MOFFile, func, set)
+function MOI.addconstraint!(m::MOFFile, func::MOI.AbstractFunction, set::MOI.AbstractSet)
     addconstraint!(m, Object!(m, func), Object(set))
 end
