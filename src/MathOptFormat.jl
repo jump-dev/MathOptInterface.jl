@@ -42,8 +42,8 @@ function MOFFile(file::String)
 end
 
 # overload getset for m.d
-Base.getindex(m, key) = getindex(m.d, key)
-Base.setindex!(m, key, value) = setindex!(m.d, key, value)
+Base.getindex(m::MOFFile, key) = getindex(m.d, key)
+Base.setindex!(m::MOFFile, key, value) = setindex!(m.d, key, value)
 
 function save(io::IO, m::MOFFile, indent::Int=0)
     if indent > 0
