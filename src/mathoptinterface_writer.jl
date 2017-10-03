@@ -79,10 +79,10 @@ Object(set::MOI.PositiveSemidefiniteConeScaled) = positivesemidefiniteconescaled
 
 function getvariable!(m::MOFFile, v::MOI.VariableReference)
     if !haskey(m.ext, v)
-        m.ext[v] = "x$(v.value)"
-        push!(m.d["variables"], m.ext[v])
+        push!(m.d["variables"], "x$(v.value)")
+        m.ext[v] = length(m.d["variables"])
     end
-    m.ext[v]::String
+    m.d["variables"][m.ext[v]]
 end
 
 function Object(sense::MOI.OptimizationSense)
@@ -98,7 +98,7 @@ function MOI.addvariable!(m::MOFFile)
     i = length(m["variables"]) + 1
     v = MOI.VariableReference(i)
     push!(m["variables"], "x$(i)")
-    m.ext[v] = "x$(i)"
+    m.ext[v] = i
     v
 end
 MOI.addvariables!(m::MOFFile, n::Int) = [MOI.addvariable!(m) for i in 1:n]

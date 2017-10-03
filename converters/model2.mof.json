@@ -1,0 +1,210 @@
+{
+ "version": "0.0",
+ "sense": "min",
+ "variables": [
+  "V5",
+  "V4",
+  "V1",
+  "V2",
+  "V3",
+  "V7",
+  "V6",
+  "V8"
+ ],
+ "objective": {
+  "head": "affine",
+  "variables": [
+   "V5",
+   "V4",
+   "V1",
+   "V2",
+   "V3",
+   "V7",
+   "V6",
+   "V8"
+  ],
+  "coefficients": [
+   1.0,
+   -1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "set": {
+    "head": "GreaterThan",
+    "value": 0.0
+   },
+   "function": {
+    "head": "affine",
+    "variables": [
+     "V1"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": 0.0
+   }
+  },
+  {
+   "set": {
+    "head": "GreaterThan",
+    "value": 2.0
+   },
+   "function": {
+    "head": "affine",
+    "variables": [
+     "V2"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": 0.0
+   }
+  },
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 2.5
+   },
+   "function": {
+    "head": "affine",
+    "variables": [
+     "V3"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": 0.0
+   }
+  },
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 1.0
+   },
+   "function": {
+    "head": "affine",
+    "variables": [
+     "V5",
+     "V7",
+     "V6"
+    ],
+    "coefficients": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "constant": 0.0
+   }
+  },
+  {
+   "set": {
+    "head": "Interval",
+    "lower": 0.0,
+    "upper": 1.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "V5"
+   }
+  },
+  {
+   "set": {
+    "head": "GreaterThan",
+    "value": 5.5
+   },
+   "function": {
+    "head": "variable",
+    "name": "V4"
+   }
+  },
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 3.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "V1"
+   }
+  },
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 3.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "V2"
+   }
+  },
+  {
+   "set": {
+    "head": "LessThan",
+    "value": 3.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "V3"
+   }
+  },
+  {
+   "set": {
+    "head": "Interval",
+    "lower": 0.0,
+    "upper": 1.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "V7"
+   }
+  },
+  {
+   "set": {
+    "head": "Interval",
+    "lower": 0.0,
+    "upper": 1.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "V6"
+   }
+  },
+  {
+   "set": {
+    "head": "Interval",
+    "lower": 0.0,
+    "upper": 1.0
+   },
+   "function": {
+    "head": "variable",
+    "name": "V8"
+   }
+  },
+  {
+   "set": {
+    "head": "Integer"
+   },
+   "function": {
+    "head": "variable",
+    "name": "V4"
+   }
+  },
+  {
+   "set": {
+    "head": "ZeroOne"
+   },
+   "function": {
+    "head": "variable",
+    "name": "V8"
+   }
+  }
+ ]
+}
