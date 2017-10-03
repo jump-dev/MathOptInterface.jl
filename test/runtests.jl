@@ -32,8 +32,8 @@ end
             @test JSON.json(MOF.variableset(["x1", "x1"])) == "{\"head\":\"variableset\",\"names\":[\"x1\",\"x1\"]}"
         end
 
-        @testset "linear" begin
-            @test JSON.json(MOF.linear(["x1", "x1"], [1.0, 2.0], 3.0)) == "{\"head\":\"linear\",\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":3.0}"
+        @testset "affine" begin
+            @test JSON.json(MOF.affine(["x1", "x1"], [1.0, 2.0], 3.0)) == "{\"head\":\"affine\",\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":3.0}"
         end
     end
 
@@ -41,21 +41,21 @@ end
         @testset "1.mof.json" begin
             m = MOF.MOFFile()
             MOF.addvariable!(m, "x1")
-            MOF.setobjective!(m, "min", MOF.linear(["x1", "x1"], [1.0, 2.0], 3.0))
-            MOF.addconstraint!(m, MOF.linear(["x1"], [1.0], 0.0), MOF.lessthan(3.0))
+            MOF.setobjective!(m, "min", MOF.affine(["x1", "x1"], [1.0, 2.0], 3.0))
+            MOF.addconstraint!(m, MOF.affine(["x1"], [1.0], 0.0), MOF.lessthan(3.0))
             io = IOBuffer()
-            MOF.save(io, m)
+            MOF.save(io, m, 1)
             @test String(take!(io)) == problem("1.mof.json")
         end
         @testset "2.mof.json" begin
             m = MOF.MOFFile()
             MOF.addvariable!(m, "x1")
             MOF.addvariable!(m, "x2")
-            MOF.setobjective!(m, "max", MOF.linear(["x1", "x2"], [2.0, -1.0], 0.0))
-            MOF.addconstraint!(m, MOF.linear(["x1"], [2.0], 1.0), MOF.equalto(3.0))
+            MOF.setobjective!(m, "max", MOF.affine(["x1", "x2"], [2.0, -1.0], 0.0))
+            MOF.addconstraint!(m, MOF.affine(["x1"], [2.0], 1.0), MOF.equalto(3.0))
             MOF.addconstraint!(m, MOF.variable("x1"), MOF.integer())
             io = IOBuffer()
-            MOF.save(io, m)
+            MOF.save(io, m, 1)
             @test String(take!(io)) == problem("2.mof.json")
         end
 
@@ -105,7 +105,7 @@ end
             m = MOF.MOFFile()
             f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
 
-            @test JSON.json(MOF.Object!(m, f)) == "{\"head\":\"linear\",\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":3.0}"
+            @test JSON.json(MOF.Object!(m, f)) == "{\"head\":\"affine\",\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":3.0}"
         end
     end
 
@@ -119,7 +119,7 @@ end
             f2 = MOI.ScalarAffineFunction([v], [1.0], 0.0)
             MOI.addconstraint!(m, f2, MOI.LessThan(3.0))
             io = IOBuffer()
-            MOF.save(io, m)
+            MOF.save(io, m, 1)
             @test String(take!(io)) == problem("1.mof.json")
         end
 
@@ -134,7 +134,7 @@ end
             MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Integer())
 
             io = IOBuffer()
-            MOF.save(io, m)
+            MOF.save(io, m, 1)
             @test String(take!(io)) == problem("2.mof.json")
         end
     end

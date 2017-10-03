@@ -25,10 +25,16 @@ MOFFile() = MOFFile(
 Base.getindex(m, key) = getindex(m.d, key)
 Base.setindex!(m, key, value) = setindex!(m.d, key, value)
 
-save(io::IO, m::MOFFile) = write(io, JSON.json(m.d, 1))
-function save(f::String, m::MOFFile)
+function save(io::IO, m::MOFFile, indent::Int=0)
+    if indent > 0
+        write(io, JSON.json(m.d, indent))
+    else
+        write(io, JSON.json(m.d))
+    end
+end
+function save(f::String, m::MOFFile, indent::Int=0)
     open(f, "w") do io
-        write(io, m)
+        write(io, m, indent)
     end
 end
 

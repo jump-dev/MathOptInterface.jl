@@ -6,7 +6,7 @@
   "x2"
  ],
  "objective": {
-  "head": "linear",
+  "head": "affine",
   "variables": [
    "x1",
    "x2"
@@ -24,7 +24,7 @@
     "value": 3.0
    },
    "function": {
-    "head": "linear",
+    "head": "affine",
     "variables": [
      "x1"
     ],

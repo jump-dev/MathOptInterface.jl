@@ -7,11 +7,28 @@ Object!(m::MOFFile, func::MOI.SingleVariable) = variable(getvariable!(m, func.va
 
 Object!(m::MOFFile, func::MOI.VectorOfVariables) = variableset(getvariable!.(m, func.variables))
 
-Object!(m::MOFFile, func::MOI.ScalarAffineFunction) = linear(
+Object!(m::MOFFile, func::MOI.ScalarAffineFunction) = affine(
     getvariable!.(m, func.variables),
     func.coefficients,
     func.constant
 )
+
+Object!(m::MOFFile, func::MOI.VectorAffineFunction) = vectoraffine(
+    func.outputindex,
+    getvariable!.(m, func.variables),
+    func.coefficients,
+    func.constant
+)
+
+Object!(m::MOFFile, func::MOI.ScalarQuadraticFunction) = quadratic(
+    getvariable!.(m, func.affine_variables),
+    func.affine_coefficients,
+    getvariable!.(m, func.quadratic_rowvariables),
+    getvariable!.(m, func.quadratic_colvariables),
+    func.quadratic_coefficients,
+    func.constant
+)
+
 
 #=
     This file contains the logic to convert MathOptInterface sets

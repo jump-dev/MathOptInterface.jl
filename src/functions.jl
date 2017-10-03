@@ -40,7 +40,7 @@ variableset(names::Vector{String}) = Object("head"=>"variableset", "names"=>name
 
 
 """
-    linear
+    affine
 
 A special case to express an affine expression <variables, coefficients> +
 constant. Other fields are:
@@ -54,15 +54,76 @@ constant. Other fields are:
 ### Example
 
     {
-      head: "linear",
+      head: "affine",
       variables: ["x", "y"],
       coefficients: [1.0, 2.0],
       constant: 3.0
     }
 """
-linear(variables, coefficients, constant) = Object(
-    "head"         => "linear",
+affine(variables, coefficients, constant) = Object(
+    "head"         => "affine",
     "variables"    => variables,
     "coefficients" => coefficients,
+    "constant"     => constant
+)
+
+"""
+    vectoraffine(outputindex, variables, coefficients, constant)
+
+The vector-valued affine function Ax+b, where:
+ - A is a sparse matrix specified in triplet form by `outputindex`,
+ `variables`, `coefficients`
+ - b is a vector specified by `constant`
+
+### Example
+    |1 2|   |x|   |3|
+    |4 3| * |y| + |4|
+    {
+      head: "vectoraffine",
+      outputindex: [1, 1, 2, 2]
+      variables: ["x", "y", "x", "y"],
+      coefficients: [1.0, 2.0, 4.0, 3.0],
+      constant: [3.0, 4.0]
+    }
+"""
+vectoraffine(outputindex, variables, coefficients, constant) = Object(
+    "head"         => "vectoraffine",
+    "outputindex"  => outputindex,
+    "variables"    => variables,
+    "coefficients" => coefficients,
+    "constant"     => constant
+)
+
+"""
+    quadratic(affine_variables, affine_coefficients, quadratic_rowvariables,
+        quadratic_colvariables, quadratic_coefficients, constant)
+
+The scalar-valued quadratic function 0.5xᵀQx + aᵀx + b, where:
+ - a is a sparse vector specified in tuple form by `affine_variables`,
+ `affine_coefficients`
+ - b is a scalar specified by `constant`
+ - Q is a symmetric matrix is specified in triplet form by
+ `quadratic_rowvariables`, `quadratic_colvariables`, `quadratic_coefficients`
+
+### Example
+
+    {
+      head: "quadratic",
+      affine_variables: ["x", "y"],
+      affine_coefficients: [1.0, 2.0],
+      quadratic_rowvariables: ["x", "y"],
+      quadratic_colvariables: ["x", "y"],
+      quadratic_coefficients: [1.0, 2.0],
+      constant: 3.0
+    }
+"""
+quadratic(affine_variables, affine_coefficients, quadratic_rowvariables,
+    quadratic_colvariables, quadratic_coefficients, constant) = Object(
+    "head"         => "quadratic",
+    "affine_variables"    => affine_variables,
+    "affine_coefficients" => affine_coefficients,
+    "quadratic_rowvariables" => quadratic_rowvariables,
+    "quadratic_colvariables" => quadratic_colvariables,
+    "quadratic_coefficients" => quadratic_coefficients,
     "constant"     => constant
 )
