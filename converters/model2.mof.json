@@ -12,7 +12,7 @@
   "V8"
  ],
  "objective": {
-  "head": "affine",
+  "head": "ScalarAffineFunction",
   "variables": [
    "V5",
    "V4",
@@ -39,10 +39,10 @@
   {
    "set": {
     "head": "GreaterThan",
-    "value": 0.0
+    "lower": 0.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "V1"
     ],
@@ -55,10 +55,10 @@
   {
    "set": {
     "head": "GreaterThan",
-    "value": 2.0
+    "lower": 2.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "V2"
     ],
@@ -71,10 +71,10 @@
   {
    "set": {
     "head": "LessThan",
-    "value": 2.5
+    "upper": 2.5
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "V3"
     ],
@@ -87,10 +87,10 @@
   {
    "set": {
     "head": "LessThan",
-    "value": 1.0
+    "upper": 1.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "V5",
      "V7",
@@ -111,48 +111,48 @@
     "upper": 1.0
    },
    "function": {
-    "head": "variable",
-    "name": "V5"
+    "head": "SingleVariable",
+    "variable": "V5"
    }
   },
   {
    "set": {
     "head": "GreaterThan",
-    "value": 5.5
+    "lower": 5.5
    },
    "function": {
-    "head": "variable",
-    "name": "V4"
+    "head": "SingleVariable",
+    "variable": "V4"
    }
   },
   {
    "set": {
     "head": "LessThan",
-    "value": 3.0
+    "upper": 3.0
    },
    "function": {
-    "head": "variable",
-    "name": "V1"
+    "head": "SingleVariable",
+    "variable": "V1"
    }
   },
   {
    "set": {
     "head": "LessThan",
-    "value": 3.0
+    "upper": 3.0
    },
    "function": {
-    "head": "variable",
-    "name": "V2"
+    "head": "SingleVariable",
+    "variable": "V2"
    }
   },
   {
    "set": {
     "head": "LessThan",
-    "value": 3.0
+    "upper": 3.0
    },
    "function": {
-    "head": "variable",
-    "name": "V3"
+    "head": "SingleVariable",
+    "variable": "V3"
    }
   },
   {
@@ -162,8 +162,8 @@
     "upper": 1.0
    },
    "function": {
-    "head": "variable",
-    "name": "V7"
+    "head": "SingleVariable",
+    "variable": "V7"
    }
   },
   {
@@ -173,8 +173,8 @@
     "upper": 1.0
    },
    "function": {
-    "head": "variable",
-    "name": "V6"
+    "head": "SingleVariable",
+    "variable": "V6"
    }
   },
   {
@@ -184,8 +184,8 @@
     "upper": 1.0
    },
    "function": {
-    "head": "variable",
-    "name": "V8"
+    "head": "SingleVariable",
+    "variable": "V8"
    }
   },
   {
@@ -193,8 +193,8 @@
     "head": "Integer"
    },
    "function": {
-    "head": "variable",
-    "name": "V4"
+    "head": "SingleVariable",
+    "variable": "V4"
    }
   },
   {
@@ -202,8 +202,8 @@
     "head": "ZeroOne"
    },
    "function": {
-    "head": "variable",
-    "name": "V8"
+    "head": "SingleVariable",
+    "variable": "V8"
    }
   }
  ]

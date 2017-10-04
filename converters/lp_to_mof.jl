@@ -9,8 +9,7 @@ function LPtoMOF(inputfile::String, outputfile::String)
         colnames, rownames) = LPWriter.readlp(inputfile)
 
     m = MOF.MOFFile()
-    v = MOI.addvariables!(m, length(c))
-    m["variables"] .= colnames
+    v = MOI.addvariables!(m, length(c), colnames)
 
     #=
         Objective
