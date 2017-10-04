@@ -45,47 +45,10 @@ end
 Base.getindex(m::MOFFile, key) = getindex(m.d, key)
 Base.setindex!(m::MOFFile, key, value) = setindex!(m.d, key, value)
 
-function save(io::IO, m::MOFFile, indent::Int=0)
-    if indent > 0
-        write(io, JSON.json(m.d, indent))
-    else
-        write(io, JSON.json(m.d))
-    end
-end
-function save(f::String, m::MOFFile, indent::Int=0)
-    open(f, "w") do io
-        save(io, m, indent)
-    end
-end
-
-
-
 include("sets.jl")
 include("functions.jl")
 
-function addvariable!(m::MOFFile, name::String)
-    push!(m["variables"], name)
-end
-
-function addconstraint!(m::MOFFile, func::Object, set::Object)
-    push!(m["constraints"],
-        Object(
-            "set" => set,
-            "function" => func
-        )
-    )
-end
-
-function setobjective!(m::MOFFile, sense::String, func::Object)
-    if sense != "min" && sense != "max"
-        error("Sense $(sense) must be min or max")
-    end
-    m["sense"] = sense
-    m["objective"] = func
-end
-
-
-include("mathoptinterface_writer.jl")
-include("mathoptinterface_reader.jl")
+include("writer.jl")
+include("reader.jl")
 
 end # module

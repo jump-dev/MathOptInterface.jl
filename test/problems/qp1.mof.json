@@ -7,7 +7,7 @@
   "x3"
  ],
  "objective": {
-  "head": "quadratic",
+  "head": "ScalarQuadraticFunction",
   "affine_variables": [],
   "affine_coefficients": [],
   "quadratic_rowvariables": [
@@ -37,10 +37,10 @@
   {
    "set": {
     "head": "GreaterThan",
-    "value": 4.0
+    "lower": 4.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "x1",
      "x2",
@@ -57,10 +57,10 @@
   {
    "set": {
     "head": "GreaterThan",
-    "value": 1.0
+    "lower": 1.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "x1",
      "x2"

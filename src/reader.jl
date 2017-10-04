@@ -47,19 +47,19 @@ floatify(x) = Float64(x)
 # dispatch on "head" Val types to avoid a big if .. elseif ... elseif ... end
 parse!(m, mf::MOFFile, obj::Object) = parse!(Val{Symbol(obj["head"])}(), m, mf, obj)
 
-function parse!(::Val{:variable}, m, mf::MOFFile, f::Object)
+function parse!(::Val{:SingleVariable}, m, mf::MOFFile, f::Object)
     MOI.SingleVariable(
-        mf.ext[f["name"]]
+        mf.ext[f["variable"]]
     )
 end
 
-function parse!(::Val{:variableset}, m, mf::MOFFile, f::Object)
+function parse!(::Val{:VectorOfVariables}, m, mf::MOFFile, f::Object)
     MOI.VectorOfVariables(
-        vvec(mf, f["names"])
+        vvec(mf, f["variables"])
     )
 end
 
-function parse!(::Val{:affine}, m, mf::MOFFile, f::Object)
+function parse!(::Val{:ScalarAffineFunction}, m, mf::MOFFile, f::Object)
     MOI.ScalarAffineFunction(
         vvec(mf, f["variables"]),
         floatify(f["coefficients"]),
@@ -67,7 +67,7 @@ function parse!(::Val{:affine}, m, mf::MOFFile, f::Object)
     )
 end
 
-function parse!(::Val{:vectoraffine}, m, mf::MOFFile, f::Object)
+function parse!(::Val{:VectorAffineFunction}, m, mf::MOFFile, f::Object)
     MOI.VectorAffineFunction(
         Int.(f["outputindex"]),
         vvec(mf, f["variables"]),
@@ -76,7 +76,7 @@ function parse!(::Val{:vectoraffine}, m, mf::MOFFile, f::Object)
     )
 end
 
-function parse!(::Val{:quadratic}, m, mf::MOFFile, f::Object)
+function parse!(::Val{:ScalarQuadraticFunction}, m, mf::MOFFile, f::Object)
     MOI.ScalarQuadraticFunction(
         vvec(mf, f["affine_variables"]),
         floatify(f["affine_coefficients"]),
@@ -87,7 +87,7 @@ function parse!(::Val{:quadratic}, m, mf::MOFFile, f::Object)
     )
 end
 
-function parse!(::Val{:vectorquadratic}, m, mf::MOFFile, f::Object)
+function parse!(::Val{:VectorQuadraticFunction}, m, mf::MOFFile, f::Object)
     MOI.VectorQuadraticFunction(
         Int.(f["affine_outputindex"]),
         vvec(mf, f["affine_variables"]),
@@ -100,22 +100,21 @@ function parse!(::Val{:vectorquadratic}, m, mf::MOFFile, f::Object)
     )
 end
 
-
 #=
     Parse Set objects to MathOptInterface representation
 =#
 
-parse!(::Val{:EqualTo}, m, mf, set) = MOI.EqualTo(set["value"])
-parse!(::Val{:LessThan}, m, mf, set) = MOI.LessThan(set["value"])
-parse!(::Val{:GreaterThan}, m, mf, set) = MOI.GreaterThan(set["value"])
-parse!(::Val{:Interval}, m, mf, set) = MOI.Interval(set["lower"], set["upper"])
-parse!(::Val{:Integer}, m, mf, set) = MOI.Integer()
-parse!(::Val{:ZeroOne}, m, mf, set) = MOI.ZeroOne()
-parse!(::Val{:Reals}, m, mf, set) = MOI.Reals(set["dimension"])
-parse!(::Val{:Zeros}, m, mf, set) = MOI.Zeros(set["dimension"])
-parse!(::Val{:Nonnegatives}, m, mf, set) = MOI.Nonnegatives(set["dimension"])
-parse!(::Val{:Nonpositives}, m, mf, set) = MOI.Nonpositives(set["dimension"])
-parse!(::Val{:Semicontinuous}, m, mf, set) = MOI.Semicontinuous(set["lower"], set["upper"])
-parse!(::Val{:Semiinteger}, m, mf, set) = MOI.Semiinteger(set["lower"], set["upper"])
-parse!(::Val{:SOSI}, m, mf, set) = MOI.SOS1(floatify(set["weights"]))
-parse!(::Val{:SOSII}, m, mf, set) = MOI.SOS2(floatify(set["weights"]))
+parse!(::Val{:EqualTo}, m, mf, set)        = MOI.EqualTo(set["value"])
+parse!(::Val{:LessThan}, m, mf, set)       = MOI.LessThan(set["upper"])
+parse!(::Val{:GreaterThan}, m, mf, set)    = MOI.GreaterThan(set["lower"])
+parse!(::Val{:Interval}, m, mf, set)       = MOI.Interval(set["lower"], set["upper"])
+parse!(::Val{:Integer}, m, mf, set)        = MOI.Integer()
+parse!(::Val{:ZeroOne}, m, mf, set)        = MOI.ZeroOne()
+parse!(::Val{:Reals}, m, mf, set)          = MOI.Reals(set["dim"])
+parse!(::Val{:Zeros}, m, mf, set)          = MOI.Zeros(set["dim"])
+parse!(::Val{:Nonnegatives}, m, mf, set)   = MOI.Nonnegatives(set["dim"])
+parse!(::Val{:Nonpositives}, m, mf, set)   = MOI.Nonpositives(set["dim"])
+parse!(::Val{:Semicontinuous}, m, mf, set) = MOI.Semicontinuous(set["l"], set["u"])
+parse!(::Val{:Semiinteger}, m, mf, set)    = MOI.Semiinteger(set["l"], set["u"])
+parse!(::Val{:SOSI}, m, mf, set)           = MOI.SOS1(floatify(set["weights"]))
+parse!(::Val{:SOSII}, m, mf, set)          = MOI.SOS2(floatify(set["weights"]))

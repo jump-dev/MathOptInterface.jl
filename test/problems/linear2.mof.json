@@ -6,7 +6,7 @@
   "x2"
  ],
  "objective": {
-  "head": "affine",
+  "head": "ScalarAffineFunction",
   "variables": [
    "x1",
    "x2"
@@ -21,10 +21,10 @@
   {
    "set": {
     "head": "LessThan",
-    "value": 1.0
+    "upper": 1.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "x1",
      "x2"
@@ -39,21 +39,21 @@
   {
    "set": {
     "head": "GreaterThan",
-    "value": 0.0
+    "lower": 0.0
    },
    "function": {
-    "head": "variable",
-    "name": "x1"
+    "head": "SingleVariable",
+    "variable": "x1"
    }
   },
   {
    "set": {
     "head": "GreaterThan",
-    "value": 0.0
+    "lower": 0.0
    },
    "function": {
-    "head": "variable",
-    "name": "x2"
+    "head": "SingleVariable",
+    "variable": "x2"
    }
   }
  ]

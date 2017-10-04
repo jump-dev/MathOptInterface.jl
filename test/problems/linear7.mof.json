@@ -6,7 +6,7 @@
   "y"
  ],
  "objective": {
-  "head": "affine",
+  "head": "ScalarAffineFunction",
   "variables": [
    "x",
    "y"
@@ -21,10 +21,10 @@
   {
    "set": {
     "head": "Nonnegatives",
-    "dimension": 1
+    "dim": 1
    },
    "function": {
-    "head": "vectoraffine",
+    "head": "VectorAffineFunction",
     "outputindex": [
      1
     ],
@@ -42,10 +42,10 @@
   {
    "set": {
     "head": "Nonpositives",
-    "dimension": 1
+    "dim": 1
    },
    "function": {
-    "head": "vectoraffine",
+    "head": "VectorAffineFunction",
     "outputindex": [
      1
     ],

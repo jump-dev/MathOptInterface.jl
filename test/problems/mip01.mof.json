@@ -7,7 +7,7 @@
   "x3"
  ],
  "objective": {
-  "head": "affine",
+  "head": "ScalarAffineFunction",
   "variables": [
    "x1",
    "x2",
@@ -24,10 +24,10 @@
   {
    "set": {
     "head": "LessThan",
-    "value": 10.0
+    "upper": 10.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "x1",
      "x2",
@@ -48,8 +48,8 @@
     "upper": 5.0
    },
    "function": {
-    "head": "variable",
-    "name": "x1"
+    "head": "SingleVariable",
+    "variable": "x1"
    }
   },
   {
@@ -59,8 +59,8 @@
     "upper": 10.0
    },
    "function": {
-    "head": "variable",
-    "name": "x2"
+    "head": "SingleVariable",
+    "variable": "x2"
    }
   },
   {
@@ -68,8 +68,8 @@
     "head": "Integer"
    },
    "function": {
-    "head": "variable",
-    "name": "x2"
+    "head": "SingleVariable",
+    "variable": "x2"
    }
   },
   {
@@ -77,8 +77,8 @@
     "head": "ZeroOne"
    },
    "function": {
-    "head": "variable",
-    "name": "x3"
+    "head": "SingleVariable",
+    "variable": "x3"
    }
   }
  ]

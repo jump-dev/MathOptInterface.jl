@@ -8,7 +8,7 @@
   "x4"
  ],
  "objective": {
-  "head": "affine",
+  "head": "ScalarAffineFunction",
   "variables": [
    "x1",
    "x2",
@@ -25,10 +25,10 @@
   {
    "set": {
     "head": "Zeros",
-    "dimension": 3
+    "dim": 3
    },
    "function": {
-    "head": "vectoraffine",
+    "head": "VectorAffineFunction",
     "outputindex": [
      1,
      1,
@@ -60,11 +60,11 @@
   {
    "set": {
     "head": "Nonpositives",
-    "dimension": 1
+    "dim": 1
    },
    "function": {
-    "head": "variableset",
-    "names": [
+    "head": "VectorOfVariables",
+    "variables": [
      "x2"
     ]
    }
@@ -72,11 +72,11 @@
   {
    "set": {
     "head": "Nonnegatives",
-    "dimension": 1
+    "dim": 1
    },
    "function": {
-    "head": "variableset",
-    "names": [
+    "head": "VectorOfVariables",
+    "variables": [
      "x3"
     ]
    }
@@ -84,11 +84,11 @@
   {
    "set": {
     "head": "Zeros",
-    "dimension": 1
+    "dim": 1
    },
    "function": {
-    "head": "variableset",
-    "names": [
+    "head": "VectorOfVariables",
+    "variables": [
      "x4"
     ]
    }

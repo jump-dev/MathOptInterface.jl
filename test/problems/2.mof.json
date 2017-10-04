@@ -6,7 +6,7 @@
   "x2"
  ],
  "objective": {
-  "head": "affine",
+  "head": "ScalarAffineFunction",
   "variables": [
    "x1",
    "x2"
@@ -24,7 +24,7 @@
     "value": 3.0
    },
    "function": {
-    "head": "affine",
+    "head": "ScalarAffineFunction",
     "variables": [
      "x1"
     ],
@@ -39,8 +39,8 @@
     "head": "Integer"
    },
    "function": {
-    "head": "variable",
-    "name": "x1"
+    "head": "SingleVariable",
+    "variable": "x1"
    }
   },
   {
@@ -48,8 +48,8 @@
     "head": "ZeroOne"
    },
    "function": {
-    "head": "variable",
-    "name": "x2"
+    "head": "SingleVariable",
+    "variable": "x2"
    }
   }
  ]

@@ -5,301 +5,58 @@
 =#
 
 """
-    equalto(value)
+    Object(set::MOI.AbstractSet)
 
-The set containing the single point `value ∈ R`.
+Convert a MOI set to the MathOptFormat JSON representation. All MathOptFormat
+set objects have a key `head` with the corresponding value that matches the name
+of the MathOptFormat set (i.e. `GreaterThan`, `ZeroOne` etc.).
 
-### Examples
+Any fields inside the set `set` are also copied. For example:
 
-    {
-        "head": "EqualTo",
-        "value": 3.0
-    }
+    Object(set::LessThan) = Object("head"=>"LessThan", "upper"=>set.upper)
 """
-equalto(value) = Object("head" => "EqualTo", "value"=> value)
+Object(set::MOI.AbstractSet) = error("Set $set not defined in MathOptFormat")
 
-"""
-    lessthan(value)
+Object(set::MOI.EqualTo) = Object("head" => "EqualTo", "value"=> set.value)
 
-The set `(-∞, value] ⊆ R`.
+Object(set::MOI.LessThan) = Object("head" => "LessThan", "upper"=> set.upper)
 
-### Examples
+Object(set::MOI.GreaterThan) = Object("head" => "GreaterThan", "lower"=> set.lower)
 
-    {
-        "head": "LessThan",
-        "value": 3.0
-    }
-"""
-lessthan(value) = Object("head" => "LessThan", "value"=> value)
+Object(set::MOI.Interval) = Object("head" => "Interval", "lower" => set.lower, "upper" => set.upper)
 
-"""
-    greaterthan(value)
+Object(::MOI.Integer) = Object("head" => "Integer")
 
-The set `[value, ∞) ⊆ R`.
+Object(::MOI.ZeroOne) = Object("head" => "ZeroOne")
 
-### Examples
+Object(set::MOI.Reals) = Object("head" => "Reals", "dim" => set.dim)
 
-    {
-        "head": "GreaterThan",
-        "value": 3.0
-    }
-"""
-greaterthan(value) = Object("head" => "GreaterThan", "value"=> value)
+Object(set::MOI.Zeros) = Object("head" => "Zeros", "dim" => set.dim)
 
-"""
-    interval(lower, upper)
+Object(set::MOI.Nonnegatives) = Object("head" => "Nonnegatives", "dim" => set.dim)
 
-The set `[lower, upper] ⊆ R`.
+Object(set::MOI.Nonpositives) = Object("head" => "Nonpositives", "dim" => set.dim)
 
-### Examples
+Object(set::MOI.Semicontinuous) = Object("head" => "Semicontinuous", "l" => set.l, "u" => set.u)
 
-    {
-        "head": "Interval",
-        "lower": 1.0,
-        "upper": 2.0
-    }
-"""
-interval(lower, upper) = Object("head" => "Interval", "lower" => lower, "upper" => upper)
+Object(set::MOI.Semiinteger) = Object("head" => "Semiinteger", "l" => set.l, "u" => set.u)
 
-"""
-    integer()
+Object(set::MOI.SOS1) = Object("head" => "SOSI", "weights" => set.weights)
 
-The set of integers `Z`.
+Object(set::MOI.SOS2) = Object("head" => "SOSII", "weights" => set.weights)
 
-### Examples
+Object(set::MOI.SecondOrderCone) = Object("head" => "SecondOrderCone", "dim" => set.dim)
 
-    {
-        "head": "Integer"
-    }
-"""
-integer() = Object("head" => "Integer")
+Object(set::MOI.RotatedSecondOrderCone) = Object("head" => "RotatedSecondOrderCone", "dim" => set.dim)
 
-"""
-    zeroone()
+Object(set::MOI.ExponentialCone) = Object("head" => "ExponentialCone")
 
-The set `{0, 1}`.
+Object(set::MOI.DualExponentialCone) = Object("head" => "DualExponentialCone")
 
-### Examples
+Object(set::MOI.PowerCone) = Object("head" => "PowerCone", "a" => set.a)
 
-    {
-        "head": "ZeroOne"
-    }
-"""
-zeroone() = Object("head" => "ZeroOne")
+Object(set::MOI.DualPowerCone) = Object("head" => "DualPowerCone", "a" => set.a)
 
-"""
-    reals(dim)
+Object(set::MOI.PositiveSemidefiniteConeTriangle) = Object("head" => "PositiveSemidefiniteConeTriangle", "dim" => set.dim)
 
-The set `R^{dim}`.
-
-### Examples
-
-    {
-        "head": "Reals",
-        "dimension": 1
-    }
-"""
-reals(dim::Int) = Object("head" => "Reals", "dimension" => dim)
-
-"""
-    zeros(dim)
-
-The set `{0}^{dim}`.
-
-### Examples
-
-    {
-        "head": "Zeros",
-        "dimension": 1
-    }
-"""
-zeros(dim::Int) = Object("head" => "Zeros", "dimension" => dim)
-
-"""
-    nonnegatives(dim)
-
-The set `{x ∈ R^{dim}: x ≤ 0}`.
-
-### Examples
-
-    {
-        "head": "Nonnegatives",
-        "dimension": 1
-    }
-"""
-nonnegatives(dim::Int) = Object("head" => "Nonnegatives", "dimension" => dim)
-
-"""
-    nonpositives(dim)
-
-The set `{x ∈ R^{dim}: x ≥ 0}`.
-
-### Examples
-
-    {
-        "head": "Nonpositives",
-        "dimension": 1
-    }
-"""
-nonpositives(dim::Int) = Object("head" => "Nonpositives", "dimension" => dim)
-
-"""
-    semicontinuous(lower, upper)
-
-The set `{0} ∪ [lower, upper]`.
-
-### Examples
-
-    {
-        "head": "Semicontinuous",
-        "lower": 1,
-        "upper": 2
-    }
-"""
-semicontinuous(lower, upper) = Object("head" => "Semicontinuous", "lower" => lower, "upper" => upper)
-
-"""
-    semiinteger(lower, upper)
-
-The set `{0} ∪ [lower, lower+1, ..., upper-1, upper]`.
-
-### Examples
-
-    {
-        "head": "Semiinteger",
-        "lower": 1,
-        "upper": 2
-    }
-"""
-semiinteger(lower, upper) = Object("head" => "Semiinteger", "lower" => lower, "upper" => upper)
-
-"""
-    sos1(weights)
-
-The set corresponding to the special ordered set (SOS) constraint of type 1. Of
-the variables in the set, at most one can be nonzero. The weights induce an
-ordering of the variables; as such, they should be unique values. The kth
-element in the set corresponds to the kth weight in weights
-
-### Examples
-
-    {
-        "head": "SOSI",
-        "lower": [1.0, 2.0, 3.0]
-    }
-"""
-sos1(weights::Vector) = Object("head" => "SOSI", "weights" => weights)
-
-"""
-    sos2(weights)
-
-The set corresponding to the special ordered set (SOS) constraint of type 2. Of
-the variables in the set, at most two can be nonzero, and if two are nonzero,
-they must be adjacent in the ordering of the set. The weights induce an ordering
-of the variables; as such, they should be unique values. The kth element in the
-set corresponds to the kth weight in weights
-
-### Examples
-
-    {
-        "head": "SOSII",
-        "lower": [1.0, 2.0, 3.0]
-    }
-"""
-sos2(weights::Vector) = Object("head" => "SOSII", "weights" => weights)
-
-"""
-    secondordercone(dim)
-
-The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dim} : t \\ge || x ||_2 \\}`` of dimension `dim`.
-"""
-secondordercone(dim) = Object("head" => "SecondOrderCone", "dimension" => dim)
-
-"""
-    rotatedsecondordercone(dim)
-
-The rotated second-order cone ``\\{ (t,u,x) \\mathbb{R}^{dim} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dim`.
-"""
-rotatedsecondordercone(dim) = Object("head" => "RotatedSecondOrderCone", "dimension" => dim)
-
-"""
-    exponentialcone()
-
-The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x/y) \\le z, y > 0 \\}``.
-"""
-exponentialcone() = Object("head" => "ExponentialCone")
-
-"""
-    dualexponentialcone()
-The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\exp (v/u) \\le \\exp(1) w, u < 0 \\}``.
-"""
-dualexponentialcone() = Object("head" => "DualExponentialCone")
-
-"""
-    powercone{T <: Real}(a::T)
-The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{a} y^{1-a} >= |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `a`.
-"""
-powercone(a) = Object("head" => "PowerCone", "a" => a)
-
-"""
-    dualpowercone{T <: Real}(a::T)
-The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{a})^a (\\frac{v}/{1-a})^{1-a} >= |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `a`.
-"""
-dualpowercone(a) = Object("head" => "DualPowerCone", "a" => a)
-
-"""
-    positivesemidefiniteconetriangle(dim)
-
-The (vectorized) cone of symmetric positive semidefinite matrices, with
-off-diagonals unscaled. The entries of the upper triangular part of the matrix
-are given row by row (or equivalently, the entries of the lower triangular part
-are given column by column).
-
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the
-vectorized cone of dimension `dim`, the corresponding symmetric matrix has side
-dimension ``\\sqrt (1/4 + 2 dim) - 1/2`` elements.
-
-The scalar product is the sum of the pairwise product of the diagonal entries
-plus twice the sum of the pairwise product of the upper diagonal entries.
-
-### Examples
-
-The matrix
-```math
-\\begin{bmatrix}
-  1 & 2 & 3\\\\
-  2 & 4 & 5\\\\
-  3 & 5 & 6
-\\end{bmatrix}
-```
-corresponds to ``(1, 2, 3, 4, 5, 6)`` for `PositiveSemidefiniteConeTriangle`
-"""
-positivesemidefiniteconetriangle(dim) = Object("head" => "PositiveSemidefiniteConeTriangle", "dimension" => dim)
-
-"""
-    positivesemidefiniteconescaled(dim)
-
-The (vectorized) cone of symmetric positive semidefinite matrices, with
-off-diagonals scaled. The entries of the upper triangular part of the matrix are
-given row by row (or equivalently, the entries of the lower triangular part are
-given column by column).
-
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the
-vectorized cone of dimension `dim`, the corresponding symmetric matrix has side
-dimension ``\\sqrt (1/4 + 2 dim) - 1/2`` elements. The off-diagonal entries of
-the matrices of both the cone and its dual are scaled by ``\\sqrt{2}`` and the
-scalar product is simply the sum of the pairwise product of the entries.
-
-### Examples
-
-The matrix
-```math
-\\begin{bmatrix}
-  1 & 2 & 3\\\\
-  2 & 4 & 5\\\\
-  3 & 5 & 6
-\\end{bmatrix}
-```
-and to ``(1, 2\\sqrt{2}, 3\\sqrt{2}, 4, 5\\sqrt{2}, 6)`` for `PositiveSemidefiniteConeScaled`.
-"""
-positivesemidefiniteconescaled(dim) = Object("head" => "PositiveSemidefiniteConeScaled", "dimension" => dim)
+Object(set::MOI.PositiveSemidefiniteConeScaled)  = Object("head" => "PositiveSemidefiniteConeScaled", "dim" => set.dim)
