@@ -38,12 +38,18 @@ function rename!(m::MOFFile, v::MOI.VariableReference, name::String)
     m["variables"][i] = name
 end
 
-function MOI.setobjective!(m::MOFFile, sense, func::MOI.AbstractFunction)
-    setobjective!(m, Object(sense), Object!(m, func))
+function MOI.setobjective!(m::MOFFile, sense::MOI.OptimizationSense, func::MOI.AbstractFunction)
+    m["sense"] = Object(sense)
+    m["objective"] = Object!(m, func)
 end
 
 function MOI.addconstraint!(m::MOFFile, func::MOI.AbstractFunction, set::MOI.AbstractSet)
-    addconstraint!(m, Object!(m, func), Object(set))
+    push!(m["constraints"],
+        Object(
+            "set" => Object(set),
+            "function" =>  Object!(m, func)
+        )
+    )
 end
 
 function Object(sense::MOI.OptimizationSense)
@@ -53,25 +59,4 @@ function Object(sense::MOI.OptimizationSense)
         return "min"
     end
     error("Sense $(sense) not recognised.")
-end
-
-function addvariable!(m::MOFFile, name::String)
-    push!(m["variables"], name)
-end
-
-function addconstraint!(m::MOFFile, func::Object, set::Object)
-    push!(m["constraints"],
-        Object(
-            "set" => set,
-            "function" => func
-        )
-    )
-end
-
-function setobjective!(m::MOFFile, sense::String, func::Object)
-    if sense != "min" && sense != "max"
-        error("Sense $(sense) must be min or max")
-    end
-    m["sense"] = sense
-    m["objective"] = func
 end
