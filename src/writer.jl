@@ -1,13 +1,13 @@
-function save(io::IO, m::MOFFile, indent::Int=0)
+function MOI.writeproblem(m::MOFFile, io::IO, indent::Int=0)
     if indent > 0
         write(io, JSON.json(m.d, indent))
     else
         write(io, JSON.json(m.d))
     end
 end
-function save(f::String, m::MOFFile, indent::Int=0)
+function MOI.writeproblem(m::MOFFile, f::String, indent::Int=0)
     open(f, "w") do io
-        save(io, m, indent)
+        MOI.writeproblem(m, io, indent)
     end
 end
 

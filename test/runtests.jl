@@ -5,7 +5,7 @@ const JSON = MOF.JSON
 
 function stringify(m::MOF.MOFFile)
     io = IOBuffer()
-    MOF.save(io, m, 1)
+    MOI.writeproblem(m, io, 1)
     String(take!(io))
 end
 
