@@ -220,23 +220,23 @@ The set ``\\{ 0, 1 \\}``.
 struct ZeroOne <: AbstractScalarSet end
 
 """
-    Semicontinuous{T <: Real}(l::T,u::T)
+    Semicontinuous{T <: Real}(lower::T,upper::T)
 
-The set ``\\{0\\} \\cup [l,u]``.
+The set ``\\{0\\} \\cup [lower,upper]``.
 """
 struct Semicontinuous{T <: Real} <: AbstractScalarSet
-    l::T
-    u::T
+    lower::T
+    upper::T
 end
 
 """
-    Semiinteger{T <: Real}(l::T,u::T)
+    Semiinteger{T <: Real}(lower::T,upper::T)
 
-The set ``\\{0\\} \\cup \\{l,l+1,\\ldots,u-1,u\\}``.
+The set ``\\{0\\} \\cup \\{lower,lower+1,\\ldots,upper-1,upper\\}``.
 """
 struct Semiinteger{T <: Real} <: AbstractScalarSet
-    l::T
-    u::T
+    lower::T
+    upper::T
 end
 
 """
