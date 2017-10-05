@@ -34,8 +34,8 @@ end
     @test JSON.json(MOF.Object(MOI.Nonnegatives(2)))          == "{\"head\":\"Nonnegatives\",\"dim\":2}"
     @test JSON.json(MOF.Object(MOI.Semicontinuous(2.5, 3.0))) == "{\"head\":\"Semicontinuous\",\"l\":2.5,\"u\":3.0}"
     @test JSON.json(MOF.Object(MOI.Semiinteger(2, 5)))        == "{\"head\":\"Semiinteger\",\"l\":2,\"u\":5}"
-    @test JSON.json(MOF.Object(MOI.SOS1([1,2])))            == "{\"head\":\"SOSI\",\"weights\":[1,2]}"
-    @test JSON.json(MOF.Object(MOI.SOS2([3,4,5])))            == "{\"head\":\"SOSII\",\"weights\":[3,4,5]}"
+    @test JSON.json(MOF.Object(MOI.SOS1([1,2])))            == "{\"head\":\"SOS1\",\"weights\":[1,2]}"
+    @test JSON.json(MOF.Object(MOI.SOS2([3,4,5])))            == "{\"head\":\"SOS2\",\"weights\":[3,4,5]}"
     # test cones
 end
 

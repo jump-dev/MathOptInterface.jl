@@ -41,9 +41,9 @@ Object(set::MOI.Semicontinuous) = Object("head" => "Semicontinuous", "l" => set.
 
 Object(set::MOI.Semiinteger) = Object("head" => "Semiinteger", "l" => set.l, "u" => set.u)
 
-Object(set::MOI.SOS1) = Object("head" => "SOSI", "weights" => set.weights)
+Object(set::MOI.SOS1) = Object("head" => "SOS1", "weights" => set.weights)
 
-Object(set::MOI.SOS2) = Object("head" => "SOSII", "weights" => set.weights)
+Object(set::MOI.SOS2) = Object("head" => "SOS2", "weights" => set.weights)
 
 Object(set::MOI.SecondOrderCone) = Object("head" => "SecondOrderCone", "dim" => set.dim)
 
