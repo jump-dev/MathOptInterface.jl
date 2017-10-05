@@ -138,21 +138,21 @@ struct DualExponentialCone <: AbstractVectorSet
 end
 
 """
-    PowerCone{T <: Real}(a::T)
+    PowerCone{T <: Real}(exponent::T)
 
-The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{a} y^{1-a} >= |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `a`.
+The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{exponent} y^{1-exponent} >= |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `exponent`.
 """
 struct PowerCone{T <: Real} <: AbstractVectorSet
-    a::T
+    exponent::T
 end
 
 """
-    DualPowerCone{T <: Real}(a::T)
+    DualPowerCone{T <: Real}(exponent::T)
 
-The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{a})^a (\\frac{v}/{1-a})^{1-a} >= |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `a`.
+The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{exponent})^exponent (\\frac{v}/{1-exponent})^{1-exponent} >= |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `exponent`.
 """
 struct DualPowerCone{T <: Real} <: AbstractVectorSet
-    a::T
+    exponent::T
 end
 
 dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
