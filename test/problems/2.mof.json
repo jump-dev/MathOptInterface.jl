@@ -19,6 +19,7 @@
  },
  "constraints": [
   {
+   "name": "c1",
    "set": {
     "head": "EqualTo",
     "value": 3.0
@@ -35,6 +36,7 @@
    }
   },
   {
+   "name": "c2",
    "set": {
     "head": "Integer"
    },
@@ -44,6 +46,7 @@
    }
   },
   {
+   "name": "c3",
    "set": {
     "head": "ZeroOne"
    },

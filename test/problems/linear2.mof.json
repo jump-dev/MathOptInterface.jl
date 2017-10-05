@@ -19,6 +19,7 @@
  },
  "constraints": [
   {
+   "name": "c1",
    "set": {
     "head": "LessThan",
     "upper": 1.0
@@ -37,6 +38,7 @@
    }
   },
   {
+   "name": "c2",
    "set": {
     "head": "GreaterThan",
     "lower": 0.0
@@ -47,6 +49,7 @@
    }
   },
   {
+   "name": "c3",
    "set": {
     "head": "GreaterThan",
     "lower": 0.0

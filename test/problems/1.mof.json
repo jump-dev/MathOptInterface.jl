@@ -18,6 +18,7 @@
  },
  "constraints": [
   {
+   "name": "firstconstraint",
    "set": {
     "head": "GreaterThan",
     "lower": 3.0

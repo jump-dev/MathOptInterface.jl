@@ -25,6 +25,9 @@ MOFFile() = MOFFile(
     Dict()
 )
 
+immutable MOFWriter <: MOI.AbstractSolver end
+MOI.SolverInstance(::MOFWriter) = MOFFile()
+
 """
     MOFFile(file::String)
 

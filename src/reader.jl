@@ -5,7 +5,7 @@ Create a new MathOptInterface solver instance using `solver` from the MOFFile `m
 """
 function MOI.SolverInstance(mf::MOFFile, solver)
     m = MOI.SolverInstance(solver)
-    v = MOI.addvariables!(m, length(mf["variables"]))
+    v = MOI.addvariables!(m, length(mf["variables"]), String.(mf["variables"]))
     for (s, vf) in zip(mf["variables"], v)
         mf.ext[s] = vf
     end
@@ -13,7 +13,7 @@ function MOI.SolverInstance(mf::MOFFile, solver)
 
     MOI.setobjective!(m, sense, parse!(m, mf, mf["objective"]))
     for con in mf["constraints"]
-        MOI.addconstraint!(m, parse!(m, mf, con["function"]), parse!(m, mf, con["set"]))
+        MOI.addconstraint!(m, parse!(m, mf, con["function"]), parse!(m, mf, con["set"]), con["name"])
     end
     m
 end

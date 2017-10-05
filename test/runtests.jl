@@ -89,7 +89,8 @@ end
 
         MOI.addconstraint!(m,
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
-            MOI.GreaterThan(3.0)
+            MOI.GreaterThan(3.0),
+            "firstconstraint"
         )
 
         @test stringify(m) == getproblem("1.mof.json")
@@ -187,13 +188,18 @@ end
     end
 end
 
-
 @testset "Read-Write Examples" begin
     for prob in [
             "1", "2", "3", "linear7", "qp1", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1"
             ]
         @testset "$(prob)" begin
-            @test stringify(MOF.MOFFile(problempath("$(prob).mof.json"))) == getproblem("$(prob).mof.json")
+            file_representation = getproblem("$(prob).mof.json")
+            moffile = MOF.MOFFile(problempath("$(prob).mof.json"))
+            @test stringify(moffile) == file_representation
+            model =  MOI.SolverInstance(moffile, MOF.MOFWriter())
+            @test stringify(model) == file_representation
+            model2 =  MOI.SolverInstance(problempath("$(prob).mof.json"), MOF.MOFWriter())
+            @test stringify(model2) == file_representation
         end
     end
 end

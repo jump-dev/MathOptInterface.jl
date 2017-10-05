@@ -43,10 +43,15 @@ function MOI.setobjective!(m::MOFFile, sense::MOI.OptimizationSense, func::MOI.A
     m["objective"] = Object!(m, func)
 end
 
-function MOI.addconstraint!(m::MOFFile, func::MOI.AbstractFunction, set::MOI.AbstractSet)
+function MOI.addconstraint!(m::MOFFile, func::MOI.AbstractFunction, set::MOI.AbstractSet, name::String="")
+    if name == ""
+        ci = length(m["constraints"])
+        name = "c$(ci + 1)"
+    end
     push!(m["constraints"],
         Object(
-            "set" => Object(set),
+            "name"     => name,
+            "set"      => Object(set),
             "function" =>  Object!(m, func)
         )
     )

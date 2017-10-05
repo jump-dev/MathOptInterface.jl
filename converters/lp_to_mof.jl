@@ -47,7 +47,7 @@ function LPtoMOF(inputfile::String, outputfile::String)
         end
         idx = [i for i  in nzrange(At, row)]
         func = MOI.ScalarAffineFunction(v[Acv[idx]], Anz[idx], 0.0)
-        MOI.addconstraint!(m, func, set)
+        MOI.addconstraint!(m, func, set, rownames[row])
     end
 
     #=

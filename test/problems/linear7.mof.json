@@ -19,6 +19,7 @@
  },
  "constraints": [
   {
+   "name": "c1",
    "set": {
     "head": "Nonnegatives",
     "dim": 1
@@ -40,6 +41,7 @@
    }
   },
   {
+   "name": "c2",
    "set": {
     "head": "Nonpositives",
     "dim": 1

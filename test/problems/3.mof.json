@@ -29,6 +29,7 @@
  },
  "constraints": [
   {
+   "name": "c1",
    "set": {
     "head": "SOSII",
     "weights": [

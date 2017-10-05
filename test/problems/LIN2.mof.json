@@ -23,6 +23,7 @@
  },
  "constraints": [
   {
+   "name": "c1",
    "set": {
     "head": "Zeros",
     "dim": 3
@@ -58,6 +59,7 @@
    }
   },
   {
+   "name": "c2",
    "set": {
     "head": "Nonpositives",
     "dim": 1
@@ -70,6 +72,7 @@
    }
   },
   {
+   "name": "c3",
    "set": {
     "head": "Nonnegatives",
     "dim": 1
@@ -82,6 +85,7 @@
    }
   },
   {
+   "name": "c4",
    "set": {
     "head": "Zeros",
     "dim": 1
