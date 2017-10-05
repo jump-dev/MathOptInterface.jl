@@ -50,7 +50,8 @@ Base.setindex!(m::MOFFile, key, value) = setindex!(m.d, key, value)
 
 include("sets.jl")
 include("functions.jl")
-
+include("variables.jl")
+include("constraints.jl")
 include("writer.jl")
 include("reader.jl")
 

@@ -118,16 +118,18 @@ end
     @testset "1.mof.json" begin
         # min 1x + 2x + 3
         # s.t        x >= 3
-        m = MOF.MOFFile()
+        solver = MOF.MOFWriter()
+        m = MOI.SolverInstance(solver)
         v = MOI.VariableReference(1)
         f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
         MOI.setobjective!(m, MOI.MinSense, f)
 
-        MOI.addconstraint!(m,
+        c1 = MOI.addconstraint!(m,
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
             MOI.GreaterThan(3.0),
             "firstconstraint"
         )
+        @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
 
         @test stringify(m) == getproblem("1.mof.json")
     end
@@ -142,10 +144,11 @@ end
         y = MOI.VariableReference(2)
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, c)
-        MOI.addconstraint!(m,
+        c1 = MOI.addconstraint!(m,
             MOI.ScalarAffineFunction([x], [2.0], 1.0),
             MOI.EqualTo(3.0)
         )
+        @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}
         MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Integer())
         MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.ZeroOne())
 
@@ -168,10 +171,11 @@ end
             )
         )
 
-        MOI.addconstraint!(m,
+        c1 = MOI.addconstraint!(m,
             MOI.VectorOfVariables([x1, x2, x3]),
             MOI.SOS2([1.0, 2.0, 3.0])
         )
+        @test typeof(c1) == MOI.ConstraintReference{MOI.VectorOfVariables, MOI.SOS2{Float64}}
 
         @test stringify(m) == getproblem("3.mof.json")
     end

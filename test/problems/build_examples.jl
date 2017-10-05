@@ -6,8 +6,10 @@ using MathOptInterface, MathOptFormat
 const MOF = MathOptFormat
 const MOI = MathOptInterface
 
+solver = MOF.MOFWriter()
+
 # linear1
-m = MOF.MOFFile()
+m = MOI.SolverInstance(solver)
 v = MOI.addvariables!(m, 2)
 MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.LessThan(1.0))
 MOI.addconstraint!(m, MOI.SingleVariable(v[1]), MOI.GreaterThan(0.0))
@@ -16,7 +18,7 @@ MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0))
 MOI.writeproblem(m, joinpath(Pkg.dir("MathOptFormat"), "test", "problems", "linear1.mof.json"), 1)
 
 # linear2
-m = MOF.MOFFile()
+m = MOI.SolverInstance(solver)
 x = MOI.addvariable!(m)
 y = MOI.addvariable!(m)
 MOI.addconstraint!(m, MOI.ScalarAffineFunction([x, y], [1.0,1.0], 0.0), MOI.LessThan(1.0))
@@ -26,7 +28,7 @@ MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x, y], [-1.0,0.0], 
 MOI.writeproblem(m, joinpath(Pkg.dir("MathOptFormat"), "test", "problems", "linear2.mof.json"), 1)
 
 # LIN1
-m = MOF.MOFFile()
+m = MOI.SolverInstance(solver)
 v = MOI.addvariables!(m, 3)
 MOI.addconstraint!(m, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
 MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
@@ -44,7 +46,7 @@ MOI.writeproblem(m, joinpath(Pkg.dir("MathOptFormat"), "test", "problems", "LIN1
 #       s zero
 # Opt solution = -82
 # x = -4, y = -3, z = 16, s == 0
-m = MOF.MOFFile()
+m = MOI.SolverInstance(solver)
 x,y,z,s = MOI.addvariables!(m, 4)
 MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
 MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
@@ -63,7 +65,7 @@ MOI.writeproblem(m, joinpath(Pkg.dir("MathOptFormat"), "test", "problems", "LIN2
 #         x is continuous: 0 <= x <= 5
 #         y is integer: 0 <= y <= 10
 #         z is binary
-m = MOF.MOFFile()
+m = MOI.SolverInstance(solver)
 v = MOI.addvariables!(m, 3)
 cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
 MOI.addconstraint!(m, cf, MOI.LessThan(10.0))
@@ -77,7 +79,7 @@ MOI.setobjective!(m, MOI.MaxSense, objf)
 MOI.writeproblem(m, joinpath(Pkg.dir("MathOptFormat"), "test", "problems", "mip01.mof.json"), 1)
 
 # SOS1 from CPLEX.jl
-m = MOF.MOFFile()
+m = MOI.SolverInstance(solver)
 v = MOI.addvariables!(m, 3)
 MOI.addconstraint!(m, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
 MOI.addconstraint!(m, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
