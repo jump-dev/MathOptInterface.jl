@@ -27,42 +27,42 @@ abstract type AbstractVectorSet <: AbstractSet end
 Return the underlying dimension (number of vector components) in the set `s`, i.e.,
 ``n`` if the set is a subset of ``\\mathbb{R}^n``.
 """
-dimension(s::AbstractVectorSet) = s.dim # .dim field is conventional, overwrite this method if not applicable
+dimension(s::AbstractVectorSet) = s.dimension # .dimension field is conventional, overwrite this method if not applicable
 
 """
-    Reals(dim)
+    Reals(dimension)
 
-The set ``\\mathbb{R}^{dim}`` (containing all points) of dimension `dim`.
+The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension `dimension`.
 """
 struct Reals <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
-    Zeros(dim)
+    Zeros(dimension)
 
-The set ``\\{ 0 \\}^{dim}`` (containing only the origin) of dimension `dim`.
+The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension `dimension`.
 """
 struct Zeros <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
-    Nonnegatives(dim)
+    Nonnegatives(dimension)
 
-The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\ge 0 \\}`` of dimension `dim`.
+The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of dimension `dimension`.
 """
 struct Nonnegatives <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
-    Nonpositives(dim)
+    Nonpositives(dimension)
 
-The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dim} : x \\le 0 \\}`` of dimension `dim`.
+The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of dimension `dimension`.
 """
 struct Nonpositives <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
@@ -104,21 +104,21 @@ struct Interval{T <: Real} <: AbstractScalarSet
 end
 
 """
-    SecondOrderCone(dim)
+    SecondOrderCone(dimension)
 
-The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dim} : t \\ge || x ||_2 \\}`` of dimension `dim`.
+The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_2 \\}`` of dimension `dimension`.
 """
 struct SecondOrderCone <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
-    RotatedSecondOrderCone(dim)
+    RotatedSecondOrderCone(dimension)
 
-The rotated second-order cone ``\\{ (t,u,x) \\mathbb{R}^{dim} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dim`.
+The rotated second-order cone ``\\{ (t,u,x) \\mathbb{R}^{dimension} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
@@ -158,11 +158,11 @@ end
 dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
 
 """
-    PositiveSemidefiniteConeTriangle(dim)
+    PositiveSemidefiniteConeTriangle(dimension)
 
 The (vectorized) cone of symmetric positive semidefinite matrices, with off-diagonals unscaled.
 The entries of the upper triangular part of the matrix are given row by row (or equivalently, the entries of the lower triangular part are given column by column).
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension `dim`, the corresponding symmetric matrix has side dimension ``\\sqrt (1/4 + 2 dim) - 1/2`` elements.
+An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension `dimension`, the corresponding symmetric matrix has side dimension ``\\sqrt (1/4 + 2 dimension) - 1/2`` elements.
 The scalar product is the sum of the pairwise product of the diagonal entries plus twice the sum of the pairwise product of the upper diagonal entries.
 
 ### Examples
@@ -178,15 +178,15 @@ The matrix
 corresponds to ``(1, 2, 3, 4, 5, 6)`` for `PositiveSemidefiniteConeTriangle`
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
-    PositiveSemidefiniteConeScaled(dim)
+    PositiveSemidefiniteConeScaled(dimension)
 
 The (vectorized) cone of symmetric positive semidefinite matrices, with off-diagonals scaled.
 The entries of the upper triangular part of the matrix are given row by row (or equivalently, the entries of the lower triangular part are given column by column).
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension `dim`, the corresponding symmetric matrix has side dimension ``\\sqrt (1/4 + 2 dim) - 1/2`` elements.
+An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension `dimension`, the corresponding symmetric matrix has side dimension ``\\sqrt (1/4 + 2 dimension) - 1/2`` elements.
 The off-diagonal entries of the matrices of both the cone and its dual are scaled by ``\\sqrt{2}`` and the scalar product is simply the sum of the pairwise product of the entries.
 
 ### Examples
@@ -202,7 +202,7 @@ The matrix
 and to ``(1, 2\\sqrt{2}, 3\\sqrt{2}, 4, 5\\sqrt{2}, 6)`` for `PositiveSemidefiniteConeScaled`.
 """
 struct PositiveSemidefiniteConeScaled <: AbstractVectorSet
-    dim::Int
+    dimension::Int
 end
 
 """
