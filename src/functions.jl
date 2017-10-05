@@ -49,8 +49,8 @@ Object!(m::MOFFile, f::MOI.ScalarQuadraticFunction) = Object(
 
 Object!(m::MOFFile, f::MOI.VectorQuadraticFunction) = Object(
     "head"                   => "VectorQuadraticFunction",
-    "affine_outputindex"     => getname!.(m, f.affine_outputindex),
-    "affine_variables"       => f.affine_variables,
+    "affine_outputindex"     => f.affine_outputindex,
+    "affine_variables"       => getname!.(m, f.affine_variables),
     "affine_coefficients"    => f.affine_coefficients,
     "quadratic_outputindex"  => f.quadratic_outputindex,
     "quadratic_rowvariables" => getname!.(m, f.quadratic_rowvariables),

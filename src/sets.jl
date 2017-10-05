@@ -4,6 +4,16 @@
     In most cases, the doc-strings are copied verbatim
 =#
 
+function checkinf(x)
+    if x == -Inf
+        return "-inf"
+    elseif x == Inf
+        return "+inf"
+    else
+        return x
+    end
+end
+
 """
     Object(set::MOI.AbstractSet)
 
@@ -23,7 +33,7 @@ Object(set::MOI.LessThan) = Object("head" => "LessThan", "upper"=> set.upper)
 
 Object(set::MOI.GreaterThan) = Object("head" => "GreaterThan", "lower"=> set.lower)
 
-Object(set::MOI.Interval) = Object("head" => "Interval", "lower" => set.lower, "upper" => set.upper)
+Object(set::MOI.Interval) = Object("head" => "Interval", "lower" => checkinf(set.lower), "upper" => checkinf(set.upper))
 
 Object(::MOI.Integer) = Object("head" => "Integer")
 
@@ -37,9 +47,11 @@ Object(set::MOI.Nonnegatives) = Object("head" => "Nonnegatives", "dim" => set.di
 
 Object(set::MOI.Nonpositives) = Object("head" => "Nonpositives", "dim" => set.dim)
 
-Object(set::MOI.Semicontinuous) = Object("head" => "Semicontinuous", "l" => set.l, "u" => set.u)
+# NOTE: field names are "lower" and "upper" not "l" and "u"
+Object(set::MOI.Semicontinuous) = Object("head" => "Semicontinuous", "lower" => checkinf(set.l), "upper" => checkinf(set.u))
 
-Object(set::MOI.Semiinteger) = Object("head" => "Semiinteger", "l" => set.l, "u" => set.u)
+# NOTE: field names are "lower" and "upper" not "l" and "u"
+Object(set::MOI.Semiinteger) = Object("head" => "Semiinteger", "lower" => checkinf(set.l), "upper" => checkinf(set.u))
 
 Object(set::MOI.SOS1) = Object("head" => "SOS1", "weights" => set.weights)
 
