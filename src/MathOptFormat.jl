@@ -13,6 +13,8 @@ immutable MOFFile <: MOI.AbstractStandaloneInstance
     # an extension dictionary to help MOI reading/writing
     # should be improved later
     ext::Dict
+    # constrmap
+    constrmap::Dict{UInt64, Int}
 end
 MOFFile() = MOFFile(
     OrderedDict(
@@ -22,7 +24,8 @@ MOFFile() = MOFFile(
         "objective" => Object(),
         "constraints" => Object[]
     ),
-    Dict()
+    Dict(),
+    Dict{UInt64, Int}()
 )
 
 immutable MOFWriter <: MOI.AbstractSolver end
@@ -41,7 +44,7 @@ function MOFFile(file::String)
     d = open(file, "r") do io
         JSON.parse(io, dicttype=OrderedDict{String, Any})
     end
-    MOFFile(d, Dict{Any, Any}())
+    MOFFile(d, Dict{Any, Any}(), Dict{UInt64, Int}())
 end
 
 # overload getset for m.d

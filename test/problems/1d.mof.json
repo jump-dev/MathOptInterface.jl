@@ -1,0 +1,20 @@
+{
+ "version": "0.0",
+ "sense": "min",
+ "variables": [
+  "x1"
+ ],
+ "objective": {
+  "head": "ScalarAffineFunction",
+  "variables": [
+   "x1",
+   "x1"
+  ],
+  "coefficients": [
+   1.0,
+   2.0
+  ],
+  "constant": 3.0
+ },
+ "constraints": []
+}

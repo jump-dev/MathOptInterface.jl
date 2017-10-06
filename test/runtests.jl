@@ -130,8 +130,15 @@ end
             "firstconstraint"
         )
         @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
-
         @test stringify(m) == getproblem("1.mof.json")
+        MOI.modifyconstraint!(m, c1, MOI.GreaterThan(4.0))
+        @test stringify(m) == getproblem("1a.mof.json")
+        MOI.modifyconstraint!(m, c1, MOI.ScalarAffineFunction([v], [2.0], 1.0))
+        @test stringify(m) == getproblem("1b.mof.json")
+        MOI.modifyconstraint!(m, c1, MOI.ScalarConstantChange(1.5))
+        @test stringify(m) == getproblem("1c.mof.json")
+        MOI.delete!(m, c1)
+        @test stringify(m) == getproblem("1d.mof.json")
     end
 
     @testset "2.mof.json" begin
