@@ -10,7 +10,7 @@ function stringify(m::MOF.MOFFile)
 end
 
 function getproblem(file::String)
-    replace(readstring(problempath(file)), "\r\n", "\n")
+    replace(read(problempath(file), String), "\r\n", "\n")
 end
 problempath(prob::String) = joinpath(@__DIR__, "problems", prob)
 

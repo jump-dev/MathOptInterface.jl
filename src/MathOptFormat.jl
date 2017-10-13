@@ -8,7 +8,7 @@ const MOI = MathOptInterface
 # we use an ordered dict to make the JSON printing nicer
 const Object = OrderedDict{String, Any}
 
-immutable MOFFile <: MOI.AbstractStandaloneInstance
+struct MOFFile <: MOI.AbstractStandaloneInstance
     d::Object
     # an extension dictionary to help MOI reading/writing
     # should be improved later
@@ -28,7 +28,7 @@ MOFFile() = MOFFile(
     Dict{UInt64, Int}()
 )
 
-immutable MOFWriter <: MOI.AbstractSolver end
+struct MOFWriter <: MOI.AbstractSolver end
 MOI.SolverInstance(::MOFWriter) = MOFFile()
 
 """
