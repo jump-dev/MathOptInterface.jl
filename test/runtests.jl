@@ -120,7 +120,7 @@ end
         # s.t        x >= 3
         solver = MOF.MOFWriter()
         m = MOI.SolverInstance(solver)
-        v = MOI.VariableReference(1)
+        v = MOI.addvariable!(m)
         f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
         MOI.setobjective!(m, MOI.MinSense, f)
         @test MOI.canaddconstraint(m,
@@ -145,6 +145,27 @@ end
         @test MOI.candelete(m, c1)
         MOI.delete!(m, c1)
         @test stringify(m) == getproblem("1d.mof.json")
+        @test MOI.canaddconstraint(m,
+            MOI.SingleVariable(v),
+            MOI.Semicontinuous(1.0, 5.0)
+        )
+        c2 = MOI.addconstraint!(m,
+            MOI.SingleVariable(v),
+            MOI.Semicontinuous(1.0, 5.0)
+        )
+        u = MOI.addvariable!(m)
+        @test MOI.canaddconstraint(m,
+            MOI.SingleVariable(u),
+            MOI.Semiinteger(2, 6)
+        )
+        c3 = MOI.addconstraint!(m,
+            MOI.SingleVariable(u),
+            MOI.Semiinteger(2, 6)
+        )
+        @test stringify(m) == getproblem("1e.mof.json")
+        @test MOI.candelete(m, c2)
+        MOI.delete!(m, c2)
+        @test stringify(m) == getproblem("1f.mof.json")
     end
 
     @testset "2.mof.json" begin
@@ -264,7 +285,7 @@ end
 
 @testset "Read-Write Examples" begin
     for prob in [
-            "1", "2", "3", "linear7", "qp1", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1"
+            "1","1a","1b","1c","1d","1e","1f", "2", "3", "linear7", "qp1", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1"
             ]
         @testset "$(prob)" begin
             file_representation = getproblem("$(prob).mof.json")
