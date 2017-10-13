@@ -68,8 +68,8 @@ MathOptInterface.
 
 [1] Gassmann, H., Ma, J., Martin, K., 2010. Instance Formats for Mathematical Optimization Models. Wiley Encyclopedia of Operations Research and Management Science.
 
-[build-img]: https://travis-ci.org/MathOptFormat/SDDP.jl.svg?branch=master
-[build-url]: https://travis-ci.org/MathOptFormat/SDDP.jl
+[build-img]: https://travis-ci.org/odow/MathOptFormat.jl.svg?branch=master
+[build-url]: https://travis-ci.org/odow/MathOptFormat.jl
 
 [codecov-img]: https://codecov.io/github/odow/MathOptFormat.jl/coverage.svg?branch=master
 [codecov-url]: https://codecov.io/github/odow/MathOptFormat.jl?branch=master
