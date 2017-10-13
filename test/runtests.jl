@@ -281,11 +281,109 @@ end
 
         @test stringify(m) == getproblem("qp1.mof.json")
     end
+
+    @testset "conic.mof.json" begin
+        # an unrealistic model to test functionality
+        m = MOF.MOFFile()
+
+        v = MOI.addvariables!(m, 3)
+        # reals
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.Reals(3)
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.Reals(3)
+        )
+        # second order
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.SecondOrderCone(3)
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.SecondOrderCone(3)
+        )
+        # rotated second order
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.RotatedSecondOrderCone(3)
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.RotatedSecondOrderCone(3)
+        )
+        # exponential
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.ExponentialCone()
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.ExponentialCone()
+        )
+        # dual exponential
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.DualExponentialCone()
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.DualExponentialCone()
+        )
+        # power
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.PowerCone(1.5)
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.PowerCone(1.5)
+        )
+        # dual power
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.DualPowerCone(1.5)
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.DualPowerCone(1.5)
+        )
+        # psd triangle
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.PositiveSemidefiniteConeTriangle(3)
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.PositiveSemidefiniteConeTriangle(3)
+        )
+        # psd triangle scales
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables(v),
+            MOI.PositiveSemidefiniteConeScaled(3)
+        )
+        MOI.addconstraint!(m,
+            MOI.VectorOfVariables(v),
+            MOI.PositiveSemidefiniteConeScaled(3)
+        )
+
+        MOI.setobjective!(m, MOI.MinSense,
+            MOI.ScalarAffineFunction(
+                MOI.VariableReference[],
+                Float64[],
+                0.0
+            )
+        )
+        # MOI.writeproblem(m, "test/problems/conic.mof.json", 1)
+        @test stringify(m) == getproblem("conic.mof.json")
+    end
 end
 
 @testset "Read-Write Examples" begin
     for prob in [
-            "1","1a","1b","1c","1d","1e","1f", "2", "3", "linear7", "qp1", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1"
+            "1","1a","1b","1c","1d","1e","1f", "2", "3", "linear7", "qp1", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
             ]
         @testset "$(prob)" begin
             file_representation = getproblem("$(prob).mof.json")

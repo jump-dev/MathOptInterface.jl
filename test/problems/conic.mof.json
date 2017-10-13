@@ -1,0 +1,150 @@
+{
+ "version": "0.0",
+ "sense": "min",
+ "variables": [
+  "x1",
+  "x2",
+  "x3"
+ ],
+ "objective": {
+  "head": "ScalarAffineFunction",
+  "variables": [],
+  "coefficients": [],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "name": "c1",
+   "set": {
+    "head": "Reals",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c2",
+   "set": {
+    "head": "SecondOrderCone",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c3",
+   "set": {
+    "head": "RotatedSecondOrderCone",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c4",
+   "set": {
+    "head": "ExponentialCone"
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c5",
+   "set": {
+    "head": "DualExponentialCone"
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c6",
+   "set": {
+    "head": "PowerCone",
+    "exponent": 1.5
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c7",
+   "set": {
+    "head": "DualPowerCone",
+    "exponent": 1.5
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c8",
+   "set": {
+    "head": "PositiveSemidefiniteConeTriangle",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c9",
+   "set": {
+    "head": "PositiveSemidefiniteConeScaled",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  }
+ ]
+}
