@@ -106,10 +106,13 @@ end
 
 If `x` is a vector of `VariableReference` objects, then `ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0)` represents the function ``5x_1 - 2.3x_2 + 1``.
 
-Objective functions are assigned to an instance by calling [`setobjective!`](@ref MathOptInterface.setobjective!). For example,
+Objective functions are assigned to an instance by setting the [`ObjectiveFunction`](@ref MathOptInterface.ObjectiveFunction) attribute.
+The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used for setting the optimization sense.
+For example,
 ```julia
 x = addvariables!(m, 2)
-setobjective!(m, MinSense, ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+setattribute!(m, ObjectiveFunction(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+setattribute!(m, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
 
@@ -142,7 +145,8 @@ The code example below encodes the linear optimization problem:
 
 ```julia
 x = addvariables!(m, 2)
-setobjective!(m, MaxSense, ScalarAffineFunction(x, [3.0,2.0], 0.0))
+setattribute!(m, ObjectiveFunction(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
+setattribute!(m, ObjectiveSense(), MaxSense)
 addconstraint!(m, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
 addconstraint!(m, SingleVariable(x[1]), GreaterThan(0.0))
 addconstraint!(m, SingleVariable(x[2]), GreaterThan(-1.0))
@@ -300,7 +304,8 @@ function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solve
     x = addvariables!(m, numvar)
 
     # set the objective function
-    setobjective!(m, MaxSense, ScalarAffineFunction(x, c, 0.0))
+    setattribute!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
+    setattribute!(m, ObjectiveSense(), MaxSense)
 
     # add the knapsack constraint
     addconstraint!(m, ScalarAffineFunction(x, w, 0.0), LessThan(C))
@@ -340,7 +345,7 @@ end
 """
     IntegerLinearResult
 
-A `struct` returned by `solverintegerlinear` containing solution information.
+A `struct` returned by `solveintegerlinear` containing solution information.
 The fields are as follows:
 
   - `termination_status`: the `TerminationStatusCode` returned by the solver
@@ -362,7 +367,7 @@ end
 
 Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns an `IntegerLinearResult`.
 """
-function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
+function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
     if !supportsproblem(solver, ScalarAffineFunction{Float64},
             [(ScalarAffineFunction,LessThan{Float64}),
              (ScalarAffineFunction,Zeros),
@@ -381,7 +386,8 @@ function solverintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC,
     x = addvariables!(m, numvar)
 
     # set the objective function
-    setobjective!(m, MinSense, ScalarAffineFunction(x, c, 0.0))
+    setattribute!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
+    setattribute!(m, ObjectiveSense(), MinSense)
 
     # add variable bound constraints
     for i in 1:numvar

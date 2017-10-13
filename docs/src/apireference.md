@@ -236,12 +236,11 @@ Functions for getting and setting properties of sets.
 dimension
 ```
 
-## Objectives
+## Objective modifications
 
-Functions for adding and modifying objectives.
+Functions for modifying objective functions. Use `ObjectiveFunction` and `ObjectiveSense` to set and query the objective function.
 
 ```@docs
-setobjective!
 modifyobjective!
 canmodifyobjective
 ```

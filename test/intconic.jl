@@ -20,7 +20,8 @@ function intsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
 
             x,y,z = MOI.addvariables!(m, 3)
 
-            MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([y,z],[-2.0,-1.0],0.0))
+            MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([y,z],[-2.0,-1.0],0.0))
+            MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
             ceq = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
             csoc = MOI.addconstraint!(m, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))

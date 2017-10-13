@@ -33,7 +33,8 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
-        MOI.setobjective!(m, MOI.MinSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
@@ -92,7 +93,8 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # change objective to Max +x
 
         objf = MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0)
-        MOI.setobjective!(m, MOI.MaxSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         if MOI.cangetattribute(m, MOI.ObjectiveFunction())
             @test objf ≈ MOI.getattribute(m, MOI.ObjectiveFunction())
@@ -261,7 +263,8 @@ function linear1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # x,y >= 0, z = 0
 
         objf = MOI.ScalarAffineFunction(v, [1.0,2.0,0.0], 0.0)
-        MOI.setobjective!(m, MOI.MaxSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
 
@@ -354,7 +357,8 @@ function linear2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction([x, y], [-1.0,0.0], 0.0)
-        MOI.setobjective!(m, MOI.MinSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
 
@@ -412,7 +416,8 @@ function linear3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 1
 
         objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
-        MOI.setobjective!(m, MOI.MinSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         MOI.optimize!(m)
 
@@ -445,7 +450,8 @@ function linear3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
         objf = MOI.ScalarAffineFunction([x], [1.0], 0.0)
-        MOI.setobjective!(m, MOI.MaxSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
 
@@ -477,7 +483,8 @@ function linear4test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # s.t. 0.0 <= x          (c1)
         #             y <= 0.0   (c2)
 
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         c1 = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
         c2 = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.LessThan(0.0))
@@ -560,7 +567,8 @@ function linear5test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
         objf = MOI.ScalarAffineFunction([x, y], [1.0,1.0], 0.0)
-        MOI.setobjective!(m, MOI.MaxSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
 
@@ -669,7 +677,8 @@ function linear6test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # s.t. 0.0 <= x          (c1)
         #             y <= 0.0   (c2)
 
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x],[1.0],0.0), MOI.GreaterThan(0.0))
         c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([y],[1.0],0.0), MOI.LessThan(0.0))
@@ -726,7 +735,8 @@ function linear7test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         # s.t. 0.0 <= x          (c1)
         #             y <= 0.0   (c2)
 
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
         c2 = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
@@ -782,7 +792,8 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [2.0,1.0], 0.0), MOI.LessThan(-1.0))
         bndx = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
         bndy = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x], [1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x], [1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
@@ -820,7 +831,8 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [-1.0,2.0], 0.0), MOI.LessThan(0.0))
         MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
         MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x, y], [-1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x, y], [-1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
@@ -848,7 +860,8 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [1.0,-1.0], 0.0), MOI.EqualTo(0.0))
         MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
         MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x, y], [-1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(),MOI.ScalarAffineFunction([x, y], [-1.0, -1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
         MOI.optimize!(m)
 
         @test MOI.cangetattribute(m, MOI.ResultCount())
@@ -915,9 +928,9 @@ function linear9test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
             ]
         )
 
-        MOI.setobjective!(m, MOI.MaxSense,
-            MOI.ScalarAffineFunction([x, y], [1_000.0, 350.0], 0.0)
-        )
+        MOI.setattribute!(m, MOI.ObjectiveFunction(),
+                          MOI.ScalarAffineFunction([x, y], [1_000.0, 350.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
 
@@ -955,9 +968,8 @@ function linear10test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
 
         c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [1.0, 1.0], 0.0), MOI.Interval(5.0, 10.0))
 
-        MOI.setobjective!(m, MOI.MaxSense,
-            MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
-        )
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
 
@@ -972,9 +984,8 @@ function linear10test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
             @test MOI.getattribute(m, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
         end
 
-        MOI.setobjective!(m, MOI.MinSense,
-            MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
-        )
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         MOI.optimize!(m)
 
@@ -997,9 +1008,8 @@ function linear10test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
         @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
 
-        MOI.setobjective!(m, MOI.MaxSense,
-            MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0)
-        )
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x, y], [1.0, 1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
 
@@ -1029,7 +1039,8 @@ function linear11test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
         c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
         c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.GreaterThan(2.0))
 
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         MOI.optimize!(m)
 
