@@ -25,7 +25,7 @@ Any fields inside the set `set` are also copied. For example:
 
     Object(set::LessThan) = Object("head"=>"LessThan", "upper"=>set.upper)
 """
-Object(set::MOI.AbstractSet) = error("Set $set not defined in MathOptFormat")
+function Object end
 
 Object(set::MOI.EqualTo) = Object("head" => "EqualTo", "value"=> set.value)
 
@@ -39,36 +39,34 @@ Object(::MOI.Integer) = Object("head" => "Integer")
 
 Object(::MOI.ZeroOne) = Object("head" => "ZeroOne")
 
-Object(set::MOI.Reals) = Object("head" => "Reals", "dim" => set.dim)
+Object(set::MOI.Reals) = Object("head" => "Reals", "dimension" => set.dimension)
 
-Object(set::MOI.Zeros) = Object("head" => "Zeros", "dim" => set.dim)
+Object(set::MOI.Zeros) = Object("head" => "Zeros", "dimension" => set.dimension)
 
-Object(set::MOI.Nonnegatives) = Object("head" => "Nonnegatives", "dim" => set.dim)
+Object(set::MOI.Nonnegatives) = Object("head" => "Nonnegatives", "dimension" => set.dimension)
 
-Object(set::MOI.Nonpositives) = Object("head" => "Nonpositives", "dim" => set.dim)
+Object(set::MOI.Nonpositives) = Object("head" => "Nonpositives", "dimension" => set.dimension)
 
-# NOTE: field names are "lower" and "upper" not "l" and "u"
-Object(set::MOI.Semicontinuous) = Object("head" => "Semicontinuous", "lower" => checkinf(set.l), "upper" => checkinf(set.u))
+Object(set::MOI.Semicontinuous) = Object("head" => "Semicontinuous", "lower" => checkinf(set.lower), "upper" => checkinf(set.upper))
 
-# NOTE: field names are "lower" and "upper" not "l" and "u"
-Object(set::MOI.Semiinteger) = Object("head" => "Semiinteger", "lower" => checkinf(set.l), "upper" => checkinf(set.u))
+Object(set::MOI.Semiinteger) = Object("head" => "Semiinteger", "lower" => checkinf(set.lower), "upper" => checkinf(set.upper))
 
 Object(set::MOI.SOS1) = Object("head" => "SOS1", "weights" => set.weights)
 
 Object(set::MOI.SOS2) = Object("head" => "SOS2", "weights" => set.weights)
 
-Object(set::MOI.SecondOrderCone) = Object("head" => "SecondOrderCone", "dim" => set.dim)
+Object(set::MOI.SecondOrderCone) = Object("head" => "SecondOrderCone", "dimension" => set.dimension)
 
-Object(set::MOI.RotatedSecondOrderCone) = Object("head" => "RotatedSecondOrderCone", "dim" => set.dim)
+Object(set::MOI.RotatedSecondOrderCone) = Object("head" => "RotatedSecondOrderCone", "dimension" => set.dimension)
 
 Object(set::MOI.ExponentialCone) = Object("head" => "ExponentialCone")
 
 Object(set::MOI.DualExponentialCone) = Object("head" => "DualExponentialCone")
 
-Object(set::MOI.PowerCone) = Object("head" => "PowerCone", "a" => set.a)
+Object(set::MOI.PowerCone) = Object("head" => "PowerCone", "exponent" => set.exponent)
 
-Object(set::MOI.DualPowerCone) = Object("head" => "DualPowerCone", "a" => set.a)
+Object(set::MOI.DualPowerCone) = Object("head" => "DualPowerCone", "exponent" => set.exponent)
 
-Object(set::MOI.PositiveSemidefiniteConeTriangle) = Object("head" => "PositiveSemidefiniteConeTriangle", "dim" => set.dim)
+Object(set::MOI.PositiveSemidefiniteConeTriangle) = Object("head" => "PositiveSemidefiniteConeTriangle", "dimension" => set.dimension)
 
-Object(set::MOI.PositiveSemidefiniteConeScaled)  = Object("head" => "PositiveSemidefiniteConeScaled", "dim" => set.dim)
+Object(set::MOI.PositiveSemidefiniteConeScaled)  = Object("head" => "PositiveSemidefiniteConeScaled", "dimension" => set.dimension)

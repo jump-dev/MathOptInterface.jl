@@ -25,7 +25,7 @@
    "name": "c1",
    "set": {
     "head": "Nonnegatives",
-    "dim": 3
+    "dimension": 3
    },
    "function": {
     "head": "VectorOfVariables",
@@ -40,7 +40,7 @@
    "name": "c2",
    "set": {
     "head": "Zeros",
-    "dim": 2
+    "dimension": 2
    },
    "function": {
     "head": "VectorAffineFunction",

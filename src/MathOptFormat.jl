@@ -51,11 +51,24 @@ end
 Base.getindex(m::MOFFile, key) = getindex(m.d, key)
 Base.setindex!(m::MOFFile, key, value) = setindex!(m.d, key, value)
 
+function MOI.writeproblem(m::MOFFile, io::IO, indent::Int=0)
+    if indent > 0
+        write(io, JSON.json(m.d, indent))
+    else
+        write(io, JSON.json(m.d))
+    end
+end
+function MOI.writeproblem(m::MOFFile, f::String, indent::Int=0)
+    open(f, "w") do io
+        MOI.writeproblem(m, io, indent)
+    end
+end
+
 include("sets.jl")
 include("functions.jl")
 include("variables.jl")
 include("constraints.jl")
-include("writer.jl")
+include("objectives.jl")
 include("reader.jl")
 
 end # module

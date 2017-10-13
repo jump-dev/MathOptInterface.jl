@@ -28,10 +28,10 @@ end
     @test JSON.json(MOF.Object(MOI.LessThan(3.0)))            == "{\"head\":\"LessThan\",\"upper\":3.0}"
     @test JSON.json(MOF.Object(MOI.GreaterThan(3.0)))         == "{\"head\":\"GreaterThan\",\"lower\":3.0}"
     @test JSON.json(MOF.Object(MOI.Interval(3.0, 4.0)))       == "{\"head\":\"Interval\",\"lower\":3.0,\"upper\":4.0}"
-    @test JSON.json(MOF.Object(MOI.Reals(2)))                 == "{\"head\":\"Reals\",\"dim\":2}"
-    @test JSON.json(MOF.Object(MOI.Zeros(2)))                 == "{\"head\":\"Zeros\",\"dim\":2}"
-    @test JSON.json(MOF.Object(MOI.Nonpositives(2)))          == "{\"head\":\"Nonpositives\",\"dim\":2}"
-    @test JSON.json(MOF.Object(MOI.Nonnegatives(2)))          == "{\"head\":\"Nonnegatives\",\"dim\":2}"
+    @test JSON.json(MOF.Object(MOI.Reals(2)))                 == "{\"head\":\"Reals\",\"dimension\":2}"
+    @test JSON.json(MOF.Object(MOI.Zeros(2)))                 == "{\"head\":\"Zeros\",\"dimension\":2}"
+    @test JSON.json(MOF.Object(MOI.Nonpositives(2)))          == "{\"head\":\"Nonpositives\",\"dimension\":2}"
+    @test JSON.json(MOF.Object(MOI.Nonnegatives(2)))          == "{\"head\":\"Nonnegatives\",\"dimension\":2}"
     @test JSON.json(MOF.Object(MOI.Semicontinuous(2.5, 3.0))) == "{\"head\":\"Semicontinuous\",\"lower\":2.5,\"upper\":3.0}"
     @test JSON.json(MOF.Object(MOI.Semiinteger(2, 5)))        == "{\"head\":\"Semiinteger\",\"lower\":2,\"upper\":5}"
     @test JSON.json(MOF.Object(MOI.SOS1([1,2])))            == "{\"head\":\"SOS1\",\"weights\":[1,2]}"
@@ -41,17 +41,17 @@ end
     @test JSON.json(MOF.Object(MOI.Semicontinuous(-Inf, Inf)))       == "{\"head\":\"Semicontinuous\",\"lower\":\"-inf\",\"upper\":\"+inf\"}"
     @test JSON.json(MOF.Object(MOI.Semiinteger(-Inf, Inf)))       == "{\"head\":\"Semiinteger\",\"lower\":\"-inf\",\"upper\":\"+inf\"}"
 
-    @test JSON.json(MOF.Object(MOI.SecondOrderCone(2)))       == "{\"head\":\"SecondOrderCone\",\"dim\":2}"
-    @test JSON.json(MOF.Object(MOI.RotatedSecondOrderCone(2)))       == "{\"head\":\"RotatedSecondOrderCone\",\"dim\":2}"
+    @test JSON.json(MOF.Object(MOI.SecondOrderCone(2)))       == "{\"head\":\"SecondOrderCone\",\"dimension\":2}"
+    @test JSON.json(MOF.Object(MOI.RotatedSecondOrderCone(2)))       == "{\"head\":\"RotatedSecondOrderCone\",\"dimension\":2}"
 
     @test JSON.json(MOF.Object(MOI.ExponentialCone()))       == "{\"head\":\"ExponentialCone\"}"
     @test JSON.json(MOF.Object(MOI.DualExponentialCone()))       == "{\"head\":\"DualExponentialCone\"}"
 
-    @test JSON.json(MOF.Object(MOI.PowerCone(0.5)))       == "{\"head\":\"PowerCone\",\"a\":0.5}"
-    @test JSON.json(MOF.Object(MOI.DualPowerCone(0.5)))       == "{\"head\":\"DualPowerCone\",\"a\":0.5}"
+    @test JSON.json(MOF.Object(MOI.PowerCone(0.5)))       == "{\"head\":\"PowerCone\",\"exponent\":0.5}"
+    @test JSON.json(MOF.Object(MOI.DualPowerCone(0.5)))       == "{\"head\":\"DualPowerCone\",\"exponent\":0.5}"
 
-    @test JSON.json(MOF.Object(MOI.PositiveSemidefiniteConeTriangle(2)))       == "{\"head\":\"PositiveSemidefiniteConeTriangle\",\"dim\":2}"
-    @test JSON.json(MOF.Object(MOI.PositiveSemidefiniteConeScaled(2)))       == "{\"head\":\"PositiveSemidefiniteConeScaled\",\"dim\":2}"
+    @test JSON.json(MOF.Object(MOI.PositiveSemidefiniteConeTriangle(2)))       == "{\"head\":\"PositiveSemidefiniteConeTriangle\",\"dimension\":2}"
+    @test JSON.json(MOF.Object(MOI.PositiveSemidefiniteConeScaled(2)))       == "{\"head\":\"PositiveSemidefiniteConeScaled\",\"dimension\":2}"
 end
 
 @testset "Functions" begin
@@ -123,7 +123,9 @@ end
         v = MOI.VariableReference(1)
         f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
         MOI.setobjective!(m, MOI.MinSense, f)
-
+        @test MOI.canaddconstraint(m,
+            MOI.ScalarAffineFunction([v], [1.0], 0.0),
+            MOI.GreaterThan(3.0))
         c1 = MOI.addconstraint!(m,
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
             MOI.GreaterThan(3.0),
@@ -131,12 +133,16 @@ end
         )
         @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
         @test stringify(m) == getproblem("1.mof.json")
+        @test MOI.canmodifyconstraint(m, c1, MOI.GreaterThan(4.0))
         MOI.modifyconstraint!(m, c1, MOI.GreaterThan(4.0))
         @test stringify(m) == getproblem("1a.mof.json")
+        @test MOI.canmodifyconstraint(m, c1, MOI.ScalarAffineFunction([v], [2.0], 1.0))
         MOI.modifyconstraint!(m, c1, MOI.ScalarAffineFunction([v], [2.0], 1.0))
         @test stringify(m) == getproblem("1b.mof.json")
+        @test MOI.canmodifyconstraint(m, c1, MOI.ScalarConstantChange(1.5))
         MOI.modifyconstraint!(m, c1, MOI.ScalarConstantChange(1.5))
         @test stringify(m) == getproblem("1c.mof.json")
+        @test MOI.candelete(m, c1)
         MOI.delete!(m, c1)
         @test stringify(m) == getproblem("1d.mof.json")
     end
@@ -151,12 +157,18 @@ end
         y = MOI.VariableReference(2)
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
         MOI.setobjective!(m, MOI.MaxSense, c)
+        @test MOI.canaddconstraint(m,
+            MOI.ScalarAffineFunction([x], [2.0], 1.0),
+            MOI.EqualTo(3.0)
+        )
         c1 = MOI.addconstraint!(m,
             MOI.ScalarAffineFunction([x], [2.0], 1.0),
             MOI.EqualTo(3.0)
         )
         @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}
+        @test MOI.canaddconstraint(m, MOI.SingleVariable(x), MOI.Integer())
         MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Integer())
+        @test MOI.canaddconstraint(m, MOI.SingleVariable(y), MOI.ZeroOne())
         MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.ZeroOne())
 
         @test stringify(m) == getproblem("2.mof.json")
@@ -177,7 +189,10 @@ end
                 0.0
             )
         )
-
+        @test MOI.canaddconstraint(m,
+            MOI.VectorOfVariables([x1, x2, x3]),
+            MOI.SOS2([1.0, 2.0, 3.0])
+        )
         c1 = MOI.addconstraint!(m,
             MOI.VectorOfVariables([x1, x2, x3]),
             MOI.SOS2([1.0, 2.0, 3.0])
@@ -195,8 +210,13 @@ end
         x = MOI.addvariable!(m, "x")
         y = MOI.addvariable!(m, "y")
         MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0))
+
+        @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
         MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
+
+        @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
         MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
+
         @test stringify(m) == getproblem("linear7.mof.json")
     end
 
@@ -210,11 +230,18 @@ end
 
         v = MOI.addvariables!(m, 3)
 
+        @test MOI.canaddconstraint(m,
+            MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0),
+            MOI.GreaterThan(4.0)
+        )
         MOI.addconstraint!(m,
             MOI.ScalarAffineFunction(v, [1.0,2.0,3.0], 0.0),
             MOI.GreaterThan(4.0)
         )
-
+        @test MOI.canaddconstraint(m,
+            MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0),
+            MOI.GreaterThan(1.0)
+        )
         MOI.addconstraint!(m,
             MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0),
             MOI.GreaterThan(1.0)

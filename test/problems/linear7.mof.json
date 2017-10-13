@@ -22,7 +22,7 @@
    "name": "c1",
    "set": {
     "head": "Nonnegatives",
-    "dim": 1
+    "dimension": 1
    },
    "function": {
     "head": "VectorAffineFunction",
@@ -44,7 +44,7 @@
    "name": "c2",
    "set": {
     "head": "Nonpositives",
-    "dim": 1
+    "dimension": 1
    },
    "function": {
     "head": "VectorAffineFunction",
