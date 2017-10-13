@@ -44,7 +44,8 @@ function int1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}()) == 1
 
         objf = MOI.ScalarAffineFunction(v, [1.1, 2.0, 5.0], 0.0)
-        MOI.setobjective!(m, MOI.MaxSense, objf)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
@@ -131,7 +132,8 @@ function int2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
                 @test cf_sos.variables[p] == v[[1,3]]
 
                 objf = MOI.ScalarAffineFunction(v, [2.0, 1.0, 1.0], 0.0)
-                MOI.setobjective!(m, MOI.MaxSense, objf)
+                MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+                MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
                 @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
                 MOI.optimize!(m)
@@ -229,7 +231,8 @@ function int2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
                 @test cf_sos.variables[p] == v[[8,7,5,4,6]]
 
                 objf = MOI.ScalarAffineFunction([v[9], v[10]], [1.0, 1.0], 0.0)
-                MOI.setobjective!(m, MOI.MaxSense, objf)
+                MOI.setattribute!(m, MOI.ObjectiveFunction(), objf)
+                MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
                 @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
                 MOI.optimize!(m)
@@ -310,7 +313,8 @@ function int3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
 
         c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(vcat(z, b), vcat(1.0, fill(-0.5 / 40, 10)), 0.0), MOI.Interval(0.0, 0.999))
 
-        MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(vcat(z, b[1:3]), vcat(1.0, fill(-0.5 / 40, 3)), 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(vcat(z, b[1:3]), vcat(1.0, fill(-0.5 / 40, 3)), 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
 
@@ -361,7 +365,8 @@ function knapsacktest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
         c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [2.0, 8.0, 4.0, 2.0, 5.0], 0.0), MOI.LessThan(10.0))
         @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
-        MOI.setobjective!(m, MOI.MaxSense, MOI.ScalarAffineFunction(v, [5.0, 3.0, 2.0, 7.0, 4.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(v, [5.0, 3.0, 2.0, 7.0, 4.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         if MOI.cansetattribute(m, MOI.VariablePrimalStart(), v)
             MOI.setattribute!(m, MOI.VariablePrimalStart(), v, [0.0, 0.0, 0.0, 0.0, 0.0])
