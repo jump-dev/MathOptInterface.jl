@@ -34,7 +34,7 @@ MOI.candelete(m::MOFFile, c::MOI.ConstraintReference) = MOI.isvalid(m, c)
 function MOI.transformconstraint!(m::MOFFile, c::MOI.ConstraintReference{F,S}, newset::S2) where F where S where S2<:MOI.AbstractSet
     con = getconstraint(m, c)
     con["set"] = Object(newset)
-    idx = m.constrmap(c.value)
+    idx = m.constrmap[c.value]
     delete!(m.constrmap, c.value)
     MOI.ConstraintReference{F,S2}(idx)
 end

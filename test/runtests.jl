@@ -166,6 +166,15 @@ end
         @test MOI.candelete(m, c2)
         MOI.delete!(m, c2)
         @test stringify(m) == getproblem("1f.mof.json")
+        @test MOI.cantransformconstraint(m,
+            c3,
+            MOI.Integer()
+        )
+        c4 = MOI.transformconstraint!(m,
+            c3,
+            MOI.Integer()
+        )
+        @test stringify(m) == getproblem("1g.mof.json")
     end
 
     @testset "2.mof.json" begin

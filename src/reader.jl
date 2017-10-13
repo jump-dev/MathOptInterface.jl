@@ -9,7 +9,7 @@ function MOI.SolverInstance(mf::MOFFile, solver)
     for (s, vf) in zip(mf["variables"], v)
         mf.ext[s] = vf
     end
-    sense = (mf["sense"] == "min")?MOI.MinSense:MOI.MaxSense
+    sense = (mf["sense"] == "min") ? MOI.MinSense : MOI.MaxSense
 
     MOI.setobjective!(m, sense, parse!(m, mf, mf["objective"]))
     for con in mf["constraints"]
