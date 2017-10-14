@@ -5,6 +5,7 @@
 |:--------------------:|:----------------:|
 | [![Build Status][build-img]][build-url] | [![Codecov branch][codecov-img]][codecov-url]
 
+**The file format is under active development. No backward compatibility yet!**
 
 ### Background
 
