@@ -1,6 +1,9 @@
-function MOI.setobjective!(m::MOFFile, sense::MOI.OptimizationSense, func::MOI.AbstractScalarFunction)
-    m["sense"] = Object(sense)
+function MOI.setattribute!(m::MOFFile, ::MOI.ObjectiveFunction, func::MOI.AbstractScalarFunction)
     m["objective"] = Object!(m, func)
+end
+
+function MOI.setattribute!(m::MOFFile, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+    m["sense"] = Object(sense)
 end
 
 function Object(sense::MOI.OptimizationSense)

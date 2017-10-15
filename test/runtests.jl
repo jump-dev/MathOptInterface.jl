@@ -122,7 +122,8 @@ end
         m = MOI.SolverInstance(solver)
         v = MOI.addvariable!(m)
         f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
-        MOI.setobjective!(m, MOI.MinSense, f)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(),f)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
         @test MOI.canaddconstraint(m,
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
             MOI.GreaterThan(3.0))
@@ -186,7 +187,8 @@ end
         x = MOI.VariableReference(1)
         y = MOI.VariableReference(2)
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
-        MOI.setobjective!(m, MOI.MaxSense, c)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), c)
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
         @test MOI.canaddconstraint(m,
             MOI.ScalarAffineFunction([x], [2.0], 1.0),
             MOI.EqualTo(3.0)
@@ -208,8 +210,7 @@ end
         m = MOF.MOFFile()
 
         (x1, x2, x3) = MOI.addvariables!(m, 3)
-
-        MOI.setobjective!(m, MOI.MaxSense,
+        MOI.setattribute!(m, MOI.ObjectiveFunction(),
             MOI.ScalarQuadraticFunction(
                 [x1, x2],
                 [2.0, -1.0],
@@ -219,6 +220,8 @@ end
                 0.0
             )
         )
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+
         @test MOI.canaddconstraint(m,
             MOI.VectorOfVariables([x1, x2, x3]),
             MOI.SOS2([1.0, 2.0, 3.0])
@@ -239,8 +242,10 @@ end
         m = MOF.MOFFile()
         x = MOI.addvariable!(m, "x")
         y = MOI.addvariable!(m, "y")
-        MOI.setobjective!(m, MOI.MinSense, MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0))
-
+        MOI.setattribute!(m, MOI.ObjectiveFunction(),
+            MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
+        )
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
         @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
         MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
 
@@ -276,8 +281,7 @@ end
             MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0),
             MOI.GreaterThan(1.0)
         )
-
-        MOI.setobjective!(m, MOI.MinSense,
+        MOI.setattribute!(m, MOI.ObjectiveFunction(),
             MOI.ScalarQuadraticFunction(
                 MOI.VariableReference[],
                 Float64[],
@@ -287,7 +291,7 @@ end
                 0.0
             )
         )
-
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
         @test stringify(m) == getproblem("qp1.mof.json")
     end
 
@@ -377,14 +381,15 @@ end
             MOI.VectorOfVariables(v),
             MOI.PositiveSemidefiniteConeScaled(3)
         )
-
-        MOI.setobjective!(m, MOI.MinSense,
+        MOI.setattribute!(m, MOI.ObjectiveFunction(),
             MOI.ScalarAffineFunction(
                 MOI.VariableReference[],
                 Float64[],
                 0.0
             )
         )
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+
         # MOI.writeproblem(m, "test/problems/conic.mof.json", 1)
         @test stringify(m) == getproblem("conic.mof.json")
     end

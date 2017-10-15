@@ -10,8 +10,8 @@ function MOI.SolverInstance(mf::MOFFile, solver)
         mf.ext[s] = vf
     end
     sense = (mf["sense"] == "min") ? MOI.MinSense : MOI.MaxSense
-
-    MOI.setobjective!(m, sense, parse!(m, mf, mf["objective"]))
+    MOI.setattribute!(m, MOI.ObjectiveFunction(), parse!(m, mf, mf["objective"]))
+    MOI.setattribute!(m, MOI.ObjectiveSense(), sense)
     for con in mf["constraints"]
         MOI.addconstraint!(m, parse!(m, mf, con["function"]), parse!(m, mf, con["set"]), con["name"])
     end
