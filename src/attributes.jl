@@ -413,7 +413,7 @@ Possible values are:
 
 The name of the variable.
 """
-struct ConstraintName <: MOI.AbstractConstraintAttribute end
+struct ConstraintName <: AbstractConstraintAttribute end
 
 """
     ConstraintPrimalStart()
