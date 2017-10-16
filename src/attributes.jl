@@ -59,9 +59,9 @@ end
 function hasattr(m::MOFFile, c::MOI.ConstraintReference, key::String)
     MOI.isvalid(m, c) && haskey(m["constraints"][m.constrmap[c.value]], key)
 end
-MOI.getattribute(m::MOFFile, ::MOI.ConstraintName, c::MOI.ConstraintReference) = getattr(m, v, "name")
-MOI.getattribute(m::MOFFile, ::MOI.ConstraintPrimalStart, c::MOI.ConstraintReference) = getattr(m, v, "ConstraintPrimalStart")
-MOI.getattribute(m::MOFFile, ::MOI.ConstraintDualStart, c::MOI.ConstraintReference) = getattr(m, v, "ConstraintDualStart")
+MOI.getattribute(m::MOFFile, ::MOI.ConstraintName, c::MOI.ConstraintReference) = getattr(m, c, "name")
+MOI.getattribute(m::MOFFile, ::MOI.ConstraintPrimalStart, c::MOI.ConstraintReference) = getattr(m, c, "ConstraintPrimalStart")
+MOI.getattribute(m::MOFFile, ::MOI.ConstraintDualStart, c::MOI.ConstraintReference) = getattr(m, c, "ConstraintDualStart")
 
 MOI.cansetattribute(m::MOFFile, ::MOI.ConstraintName, c::MOI.ConstraintReference) = MOI.isvalid(m, c)
 MOI.cansetattribute(m::MOFFile, ::MOI.ConstraintPrimalStart, c::MOI.ConstraintReference) = MOI.isvalid(m, c)

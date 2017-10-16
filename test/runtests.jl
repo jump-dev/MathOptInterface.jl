@@ -7,9 +7,9 @@ const JSON = MOF.JSON
 # if the format changes
 const WRITEFILES = false
 
-function stringify(m::MOF.MOFFile)
+function stringify(m::MOF.MOFFile, indent::Int=1)
     io = IOBuffer()
-    MOI.writeproblem(m, io, 1)
+    MOI.writeproblem(m, io, indent)
     String(take!(io))
 end
 
@@ -22,7 +22,9 @@ problempath(prob::String) = joinpath(@__DIR__, "problems", prob)
 
     @testset "JSON.json(::MOFFile)" begin
         m = MOF.MOFFile()
-        @test JSON.json(m.d) == "{\"version\":\"0.0\",\"sense\":\"min\",\"variables\":[],\"objective\":{},\"constraints\":[]}"
+        MOI.writeproblem(m, problempath("test.mof.json"))
+        @test getproblem("test.mof.json") == "{\"version\":\"0.0\",\"sense\":\"min\",\"variables\":[],\"objective\":{},\"constraints\":[]}"
+        rm(problempath("test.mof.json"))
     end
 
 end
@@ -229,6 +231,17 @@ end
         MOI.setattribute!(m, MOI.ConstraintDualStart(), c1, -1.0)
         WRITEFILES && MOI.writeproblem(m, problempath("2c.mof.json"), 1)
         @test stringify(m) == getproblem("2c.mof.json")
+
+        @test MOI.cangetattribute(m, MOI.VariablePrimalStart(), x)
+        @test MOI.getattribute(m, MOI.VariablePrimalStart(), x) == 1.0
+        @test MOI.cangetattribute(m, MOI.VariableName(), x)
+        @test MOI.getattribute(m, MOI.VariableName(), x) == "x1"
+        @test MOI.cangetattribute(m, MOI.ConstraintName(), c1)
+        @test MOI.getattribute(m, MOI.ConstraintName(), c1) == "c1"
+        @test MOI.cangetattribute(m, MOI.ConstraintPrimalStart(), c1)
+        @test MOI.getattribute(m, MOI.ConstraintPrimalStart(), c1) == 1.0
+        @test MOI.cangetattribute(m, MOI.ConstraintDualStart(), c1)
+        @test MOI.getattribute(m, MOI.ConstraintDualStart(), c1) == -1.0
     end
 
     @testset "3.mof.json" begin
@@ -458,7 +471,7 @@ end
 
 @testset "Read-Write Examples" begin
     for prob in [
-            "1","1a","1b","1c","1d","1e","1f", "2", "2a", "3", "linear7", "linear7a", "qp1", "qcp", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
+            "1","1a","1b","1c","1d","1e","1f", "2", "2a", "2b", "2c", "3", "linear7", "linear7a", "qp1", "qcp", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
             ]
         @testset "$(prob)" begin
             file_representation = getproblem("$(prob).mof.json")
