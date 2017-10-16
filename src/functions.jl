@@ -159,13 +159,13 @@ struct ScalarCoefficientChange{T} <: AbstractFunctionModification
 end
 
 """
-    MultirowChange{T}(variable, rows, new_coefficients)
+    VectorCoefficientChange{T}(variable, rows, new_coefficients)
 
 A struct used to request a change in the linear coefficients of a single variable
 in a vector-valued function.
 Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
 """
-struct MultirowChange{T} <: AbstractFunctionModification
+struct VectorCoefficientChange{T} <: AbstractFunctionModification
     variable::VariableReference
     rows::Vector{Int}
     new_coefficients::Vector{T}
