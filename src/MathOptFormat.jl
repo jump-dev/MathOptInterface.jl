@@ -20,7 +20,7 @@ MOFFile() = MOFFile(
     OrderedDict(
         "version" => "0.0",
         "sense"   => "min",
-        "variables" => String[],
+        "variables" => Object[],
         "objective" => Object(),
         "constraints" => Object[]
     ),
@@ -64,11 +64,11 @@ function MOI.writeproblem(m::MOFFile, f::String, indent::Int=0)
     end
 end
 
+include("variables.jl")
 include("sets.jl")
 include("functions.jl")
-include("variables.jl")
 include("constraints.jl")
-include("objectives.jl")
+include("attributes.jl")
 include("reader.jl")
 
 end # module

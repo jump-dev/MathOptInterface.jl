@@ -3,20 +3,14 @@
     https://github.com/JuliaOpt/MathOptInterface.jl/blob/master/src/functions.jl
 =#
 
-function getname!(m::MOFFile, v::MOI.VariableReference)
-    if !haskey(m.ext, v)
-        push!(m.d["variables"], "x$(v.value)")
-        m.ext[v] = length(m.d["variables"])
-    end
-    m.d["variables"][m.ext[v]]
-end
-
 """
     Object!(m::MOFFile, f::MOI.AbstractFunction)
 
 Convert a MOI function into the MathOptFormat representation.
 """
 function Object! end
+
+getname!(m::MOFFile, v::MOI.VariableReference) = MOI.getattribute(m, MOI.VariableName(), v)
 
 Object!(m::MOFFile, f::MOI.SingleVariable) = Object("head"=>"SingleVariable", "variable"=> getname!(m, f.variable))
 

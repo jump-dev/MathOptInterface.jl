@@ -2,8 +2,12 @@
  "version": "0.0",
  "sense": "min",
  "variables": [
-  "x",
-  "y"
+  {
+   "name": "x"
+  },
+  {
+   "name": "y"
+  }
  ],
  "objective": {
   "head": "ScalarAffineFunction",

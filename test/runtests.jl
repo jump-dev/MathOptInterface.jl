@@ -3,6 +3,10 @@ const MOF = MathOptFormat
 const MOI = MathOptFormat.MathOptInterface
 const JSON = MOF.JSON
 
+# a switch to update the example files
+# if the format changes
+const WRITEFILES = false
+
 function stringify(m::MOF.MOFFile)
     io = IOBuffer()
     MOI.writeproblem(m, io, 1)
@@ -57,49 +61,49 @@ end
 @testset "Functions" begin
 
     @testset "SingleVariable" begin
-        v = MOI.VariableReference(1)
         m = MOF.MOFFile()
+        v = MOI.addvariable!(m)
         @test JSON.json(MOF.Object!(m, MOI.SingleVariable(v))) == "{\"head\":\"SingleVariable\",\"variable\":\"x1\"}"
     end
 
     @testset "VectorOfVariables" begin
-        v = MOI.VariableReference(1)
         m = MOF.MOFFile()
+        v = MOI.addvariable!(m)
         @test JSON.json(MOF.Object!(m, MOI.VectorOfVariables([v,v]))) == "{\"head\":\"VectorOfVariables\",\"variables\":[\"x1\",\"x1\"]}"
     end
 
     @testset "ScalarAffineFunction" begin
-        v = MOI.VariableReference(1)
         m = MOF.MOFFile()
+        v = MOI.addvariable!(m)
         f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
         @test JSON.json(MOF.Object!(m, f)) == "{\"head\":\"ScalarAffineFunction\",\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":3.0}"
     end
 
     @testset "VectorAffineFunction" begin
-        v = MOI.VariableReference(1)
         m = MOF.MOFFile()
+        v = MOI.addvariable!(m)
         f = MOI.VectorAffineFunction([1, 1], [v, v], [1.0, 2.0], [3.0])
         @test JSON.json(MOF.Object!(m, f)) == "{\"head\":\"VectorAffineFunction\",\"outputindex\":[1,1],\"variables\":[\"x1\",\"x1\"],\"coefficients\":[1.0,2.0],\"constant\":[3.0]}"
     end
 
     @testset "ScalarQuadraticFunction" begin
-        v = MOI.VariableReference(1)
         m = MOF.MOFFile()
+        v = MOI.addvariable!(m)
         f = MOI.ScalarQuadraticFunction([v], [1.0], [v], [v], [2.0], 3.0)
         @test JSON.json(MOF.Object!(m, f)) == "{\"head\":\"ScalarQuadraticFunction\",\"affine_variables\":[\"x1\"],\"affine_coefficients\":[1.0],\"quadratic_rowvariables\":[\"x1\"],\"quadratic_colvariables\":[\"x1\"],\"quadratic_coefficients\":[2.0],\"constant\":3.0}"
     end
 
     @testset "VectorQuadraticFunction" begin
-        v = MOI.VariableReference(1)
         m = MOF.MOFFile()
+        v = MOI.addvariable!(m)
         f = MOI.VectorQuadraticFunction([1], [v], [1.0], [1], [v], [v], [2.0], [3.0])
         @test JSON.json(MOF.Object!(m, f)) == "{\"head\":\"VectorQuadraticFunction\",\"affine_outputindex\":[1],\"affine_variables\":[\"x1\"],\"affine_coefficients\":[1.0],\"quadratic_outputindex\":[1],\"quadratic_rowvariables\":[\"x1\"],\"quadratic_colvariables\":[\"x1\"],\"quadratic_coefficients\":[2.0],\"constant\":[3.0]}"
     end
 end
 
 @testset "getname!" begin
-    v = MOI.VariableReference(1)
     m = MOF.MOFFile()
+    v = MOI.addvariable!(m)
     @test MOF.getname!(m, v) == "x1"
     @test length(m.d["variables"]) == 1
     @test length(keys(m.ext)) == 1
@@ -129,22 +133,28 @@ end
             MOI.GreaterThan(3.0))
         c1 = MOI.addconstraint!(m,
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
-            MOI.GreaterThan(3.0),
-            "firstconstraint"
+            MOI.GreaterThan(3.0)
         )
+        @test MOI.cansetattribute(m, MOI.ConstraintName(), c1)
+        MOI.setattribute!(m, MOI.ConstraintName(), c1, "firstconstraint")
         @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
+        WRITEFILES && MOI.writeproblem(m, problempath("1.mof.json"), 1)
         @test stringify(m) == getproblem("1.mof.json")
         @test MOI.canmodifyconstraint(m, c1, MOI.GreaterThan(4.0))
         MOI.modifyconstraint!(m, c1, MOI.GreaterThan(4.0))
+        WRITEFILES && MOI.writeproblem(m, problempath("1a.mof.json"), 1)
         @test stringify(m) == getproblem("1a.mof.json")
         @test MOI.canmodifyconstraint(m, c1, MOI.ScalarAffineFunction([v], [2.0], 1.0))
         MOI.modifyconstraint!(m, c1, MOI.ScalarAffineFunction([v], [2.0], 1.0))
+        WRITEFILES && MOI.writeproblem(m, problempath("1b.mof.json"), 1)
         @test stringify(m) == getproblem("1b.mof.json")
         @test MOI.canmodifyconstraint(m, c1, MOI.ScalarConstantChange(1.5))
         MOI.modifyconstraint!(m, c1, MOI.ScalarConstantChange(1.5))
+        WRITEFILES && MOI.writeproblem(m, problempath("1c.mof.json"), 1)
         @test stringify(m) == getproblem("1c.mof.json")
         @test MOI.candelete(m, c1)
         MOI.delete!(m, c1)
+        WRITEFILES && MOI.writeproblem(m, problempath("1d.mof.json"), 1)
         @test stringify(m) == getproblem("1d.mof.json")
         @test MOI.canaddconstraint(m,
             MOI.SingleVariable(v),
@@ -163,9 +173,11 @@ end
             MOI.SingleVariable(u),
             MOI.Semiinteger(2, 6)
         )
+        WRITEFILES && MOI.writeproblem(m, problempath("1e.mof.json"), 1)
         @test stringify(m) == getproblem("1e.mof.json")
         @test MOI.candelete(m, c2)
         MOI.delete!(m, c2)
+        WRITEFILES && MOI.writeproblem(m, problempath("1f.mof.json"), 1)
         @test stringify(m) == getproblem("1f.mof.json")
         @test MOI.cantransformconstraint(m,
             c3,
@@ -175,6 +187,7 @@ end
             c3,
             MOI.Integer()
         )
+        WRITEFILES && MOI.writeproblem(m, problempath("1g.mof.json"), 1)
         @test stringify(m) == getproblem("1g.mof.json")
     end
 
@@ -184,8 +197,8 @@ end
         #      x ∈ Z
         #      y ∈ {0, 1}
         m = MOF.MOFFile()
-        x = MOI.VariableReference(1)
-        y = MOI.VariableReference(2)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
         MOI.setattribute!(m, MOI.ObjectiveFunction(), c)
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
@@ -202,8 +215,20 @@ end
         MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Integer())
         @test MOI.canaddconstraint(m, MOI.SingleVariable(y), MOI.ZeroOne())
         MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.ZeroOne())
-
+        WRITEFILES && MOI.writeproblem(m, problempath("2.mof.json"), 1)
         @test stringify(m) == getproblem("2.mof.json")
+        @test MOI.cansetattribute(m, MOI.VariablePrimalStart(), x)
+        MOI.setattribute!(m, MOI.VariablePrimalStart(), x, 1.0)
+        WRITEFILES && MOI.writeproblem(m, problempath("2a.mof.json"), 1)
+        @test stringify(m) == getproblem("2a.mof.json")
+        @test MOI.cansetattribute(m, MOI.ConstraintPrimalStart(), c1)
+        MOI.setattribute!(m, MOI.ConstraintPrimalStart(), c1, 1.0)
+        WRITEFILES && MOI.writeproblem(m, problempath("2b.mof.json"), 1)
+        @test stringify(m) == getproblem("2b.mof.json")
+        @test MOI.cansetattribute(m, MOI.ConstraintDualStart(), c1)
+        MOI.setattribute!(m, MOI.ConstraintDualStart(), c1, -1.0)
+        WRITEFILES && MOI.writeproblem(m, problempath("2c.mof.json"), 1)
+        @test stringify(m) == getproblem("2c.mof.json")
     end
 
     @testset "3.mof.json" begin
@@ -231,7 +256,7 @@ end
             MOI.SOS2([1.0, 2.0, 3.0])
         )
         @test typeof(c1) == MOI.ConstraintReference{MOI.VectorOfVariables, MOI.SOS2{Float64}}
-
+        WRITEFILES && MOI.writeproblem(m, problempath("3.mof.json"), 1)
         @test stringify(m) == getproblem("3.mof.json")
     end
 
@@ -240,8 +265,13 @@ end
         # s.t. 0.0 <= x          (c1)
         #             y <= 0.0   (c2)
         m = MOF.MOFFile()
-        x = MOI.addvariable!(m, "x")
-        y = MOI.addvariable!(m, "y")
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+        @test MOI.cansetattribute(m, MOI.VariableName(), x)
+        MOI.setattribute!(m, MOI.VariableName(), x, "x")
+        @test MOI.cansetattribute(m, MOI.VariableName(), y)
+        MOI.setattribute!(m, MOI.VariableName(), y, "y")
+
         MOI.setattribute!(m, MOI.ObjectiveFunction(),
             MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
         )
@@ -251,12 +281,12 @@ end
 
         @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
         c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
-        MOI.writeproblem(m, problempath("linear7.mof.json"), 1)
+        WRITEFILES && MOI.writeproblem(m, problempath("linear7.mof.json"), 1)
         @test stringify(m) == getproblem("linear7.mof.json")
 
         @test MOI.canmodifyconstraint(m, c, MOI.VectorConstantChange([1.0]))
         MOI.modifyconstraint!(m, c, MOI.VectorConstantChange([1.0]))
-        MOI.writeproblem(m, problempath("linear7a.mof.json"), 1)
+        WRITEFILES && MOI.writeproblem(m, problempath("linear7a.mof.json"), 1)
         @test stringify(m) == getproblem("linear7a.mof.json")
     end
 
@@ -297,6 +327,7 @@ end
             )
         )
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+        WRITEFILES && MOI.writeproblem(m, problempath("qp1.mof.json"), 1)
         @test stringify(m) == getproblem("qp1.mof.json")
     end
 
@@ -321,7 +352,7 @@ end
 
         MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
-        # MOI.writeproblem(m, "test/problems/qcp.mof.json",1)
+        WRITEFILES && MOI.writeproblem(m, problempath("qcp.mof.json"), 1)
         @test stringify(m) == getproblem("qcp.mof.json")
     end
 
@@ -420,14 +451,14 @@ end
         )
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
-        # MOI.writeproblem(m, "test/problems/conic.mof.json", 1)
+        WRITEFILES && MOI.writeproblem(m, problempath("conic.mof.json"), 1)
         @test stringify(m) == getproblem("conic.mof.json")
     end
 end
 
 @testset "Read-Write Examples" begin
     for prob in [
-            "1","1a","1b","1c","1d","1e","1f", "2", "3", "linear7", "linear7a", "qp1", "qcp", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
+            "1","1a","1b","1c","1d","1e","1f", "2", "2a", "3", "linear7", "linear7a", "qp1", "qcp", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
             ]
         @testset "$(prob)" begin
             file_representation = getproblem("$(prob).mof.json")

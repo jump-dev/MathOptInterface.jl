@@ -5,15 +5,26 @@ Create a new MathOptInterface solver instance using `solver` from the MOFFile `m
 """
 function MOI.SolverInstance(mf::MOFFile, solver)
     m = MOI.SolverInstance(solver)
-    v = MOI.addvariables!(m, length(mf["variables"]), String.(mf["variables"]))
-    for (s, vf) in zip(mf["variables"], v)
-        mf.ext[s] = vf
+    v = MOI.addvariables!(m, length(mf["variables"]))
+    for (i, dict) in enumerate(mf["variables"])
+        mf.ext[dict["name"]] = v[i]
+        MOI.setattribute!(m, MOI.VariableName(), v[i], dict["name"])
+        if haskey(dict, "VariablePrimalStart")
+            MOI.setattribute!(m, MOI.VariablePrimalStart(), v[i], dict["VariablePrimalStart"])
+        end
     end
     sense = (mf["sense"] == "min") ? MOI.MinSense : MOI.MaxSense
     MOI.setattribute!(m, MOI.ObjectiveFunction(), parse!(m, mf, mf["objective"]))
     MOI.setattribute!(m, MOI.ObjectiveSense(), sense)
     for con in mf["constraints"]
-        MOI.addconstraint!(m, parse!(m, mf, con["function"]), parse!(m, mf, con["set"]), con["name"])
+        c = MOI.addconstraint!(m, parse!(m, mf, con["function"]), parse!(m, mf, con["set"]))
+        MOI.setattribute!(m, MOI.ConstraintName(), c, con["name"])
+        if haskey(con, "ConstraintPrimalStart")
+            MOI.setattribute!(m, MOI.ConstraintPrimalStart(), c, con["ConstraintPrimalStart"])
+        end
+        if haskey(con, "ConstraintDualStart")
+            MOI.setattribute!(m, MOI.ConstraintDualStart(), c, con["ConstraintDualStart"])
+        end
     end
     m
 end

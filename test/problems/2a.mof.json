@@ -3,26 +3,22 @@
  "sense": "max",
  "variables": [
   {
-   "name": "x1"
+   "name": "x1",
+   "VariablePrimalStart": 1.0
   },
   {
    "name": "x2"
-  },
-  {
-   "name": "x3"
   }
  ],
  "objective": {
   "head": "ScalarAffineFunction",
   "variables": [
    "x1",
-   "x2",
-   "x3"
+   "x2"
   ],
   "coefficients": [
-   1.1,
    2.0,
-   5.0
+   -1.0
   ],
   "constant": 0.0
  },
@@ -30,30 +26,24 @@
   {
    "name": "c1",
    "set": {
-    "head": "LessThan",
-    "upper": 10.0
+    "head": "EqualTo",
+    "value": 3.0
    },
    "function": {
     "head": "ScalarAffineFunction",
     "variables": [
-     "x1",
-     "x2",
-     "x3"
+     "x1"
     ],
     "coefficients": [
-     1.0,
-     1.0,
-     1.0
+     2.0
     ],
-    "constant": 0.0
+    "constant": 1.0
    }
   },
   {
    "name": "c2",
    "set": {
-    "head": "Interval",
-    "lower": 0.0,
-    "upper": 5.0
+    "head": "Integer"
    },
    "function": {
     "head": "SingleVariable",
@@ -63,33 +53,11 @@
   {
    "name": "c3",
    "set": {
-    "head": "Interval",
-    "lower": 0.0,
-    "upper": 10.0
-   },
-   "function": {
-    "head": "SingleVariable",
-    "variable": "x2"
-   }
-  },
-  {
-   "name": "c4",
-   "set": {
-    "head": "Integer"
-   },
-   "function": {
-    "head": "SingleVariable",
-    "variable": "x2"
-   }
-  },
-  {
-   "name": "c5",
-   "set": {
     "head": "ZeroOne"
    },
    "function": {
     "head": "SingleVariable",
-    "variable": "x3"
+    "variable": "x2"
    }
   }
  ]

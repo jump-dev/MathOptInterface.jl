@@ -2,9 +2,15 @@
  "version": "0.0",
  "sense": "min",
  "variables": [
-  "x1",
-  "x2",
-  "x3"
+  {
+   "name": "x1"
+  },
+  {
+   "name": "x2"
+  },
+  {
+   "name": "x3"
+  }
  ],
  "objective": {
   "head": "ScalarAffineFunction",
