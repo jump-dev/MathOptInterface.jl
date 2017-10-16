@@ -8,13 +8,20 @@ const MOI = MathOptInterface
 # we use an ordered dict to make the JSON printing nicer
 const Object = OrderedDict{String, Any}
 
+mutable struct CurrentReference
+    variable::UInt64
+    constraint::UInt64
+end
 struct MOFFile <: MOI.AbstractStandaloneInstance
     d::Object
     # an extension dictionary to help MOI reading/writing
     # should be improved later
-    ext::Dict
+    namemap::Dict{String, MOI.VariableReference}
+    # varmap
+    varmap::Dict{MOI.VariableReference, Int}
     # constrmap
     constrmap::Dict{UInt64, Int}
+    current_reference::CurrentReference
 end
 MOFFile() = MOFFile(
     OrderedDict(
@@ -24,8 +31,10 @@ MOFFile() = MOFFile(
         "objective" => Object(),
         "constraints" => Object[]
     ),
-    Dict(),
-    Dict{UInt64, Int}()
+    Dict{String, MOI.VariableReference}(),
+    Dict{MOI.VariableReference, Int}(),
+    Dict{UInt64, Int}(),
+    CurrentReference(UInt64(0), UInt64(0))
 )
 
 struct MOFWriter <: MOI.AbstractSolver end
@@ -44,7 +53,7 @@ function MOFFile(file::String)
     d = open(file, "r") do io
         JSON.parse(io, dicttype=OrderedDict{String, Any})
     end
-    MOFFile(d, Dict{Any, Any}(), Dict{UInt64, Int}())
+    MOFFile(d, Dict{String, MOI.VariableReference}(), Dict{MOI.VariableReference, Int}(), Dict{UInt64, Int}(), CurrentReference(UInt64(0), UInt64(0)))
 end
 
 # overload getset for m.d

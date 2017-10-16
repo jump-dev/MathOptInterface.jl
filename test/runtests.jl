@@ -5,7 +5,7 @@ const JSON = MOF.JSON
 
 # a switch to update the example files
 # if the format changes
-const WRITEFILES = false
+const WRITEFILES = true
 
 function stringify(m::MOF.MOFFile, indent::Int=1)
     io = IOBuffer()
@@ -103,17 +103,6 @@ end
     end
 end
 
-@testset "getname!" begin
-    m = MOF.MOFFile()
-    v = MOI.addvariable!(m)
-    @test MOF.getname!(m, v) == "x1"
-    @test length(m.d["variables"]) == 1
-    @test length(keys(m.ext)) == 1
-    @test MOF.getname!(m, v) == "x1"
-    @test length(m.d["variables"]) == 1
-    @test length(keys(m.ext)) == 1
-end
-
 @testset "OptimizationSense" begin
     @test MOF.Object(MOI.MinSense) == "min"
     @test MOF.Object(MOI.MaxSense) == "max"
@@ -189,6 +178,10 @@ end
             c3,
             MOI.Integer()
         )
+        @test MOI.cangetattribute(m, MOI.ConstraintSet(), c4)
+        @test MOI.getattribute(m, MOI.ConstraintSet(), c4) == MOI.Integer()
+        @test MOI.cangetattribute(m, MOI.ConstraintFunction(), c4)
+        @test MOI.getattribute(m, MOI.ConstraintFunction(), c4) == MOI.SingleVariable(u)
         WRITEFILES && MOI.writeproblem(m, problempath("1g.mof.json"), 1)
         @test stringify(m) == getproblem("1g.mof.json")
     end
@@ -201,6 +194,8 @@ end
         m = MOF.MOFFile()
         x = MOI.addvariable!(m)
         y = MOI.addvariable!(m)
+        @test MOI.cangetattribute(m, MOI.NumberOfVariables())
+        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 2
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
         MOI.setattribute!(m, MOI.ObjectiveFunction(), c)
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
@@ -258,7 +253,10 @@ end
                 0.0
             )
         )
+        @test MOI.cansetattribute(m, MOI.ObjectiveSense(), MOI.MaxSense)
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+        @test MOI.cangetattribute(m, MOI.ObjectiveSense())
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         @test MOI.canaddconstraint(m,
             MOI.VectorOfVariables([x1, x2, x3]),
@@ -285,10 +283,20 @@ end
         @test MOI.cansetattribute(m, MOI.VariableName(), y)
         MOI.setattribute!(m, MOI.VariableName(), y, "y")
 
-        MOI.setattribute!(m, MOI.ObjectiveFunction(),
+        @test MOI.cansetattribute(m, MOI.ObjectiveFunction(),
             MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
         )
+        obj = MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), obj)
+        @test MOI.cangetattribute(m, MOI.ObjectiveFunction())
+        obj2 = MOI.getattribute(m, MOI.ObjectiveFunction())
+        @test obj.variables == obj2.variables
+        @test obj.coefficients == obj2.coefficients
+        @test obj.constant == obj2.constant
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+        @test MOI.cangetattribute(m, MOI.ObjectiveSense())
+        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
+
         @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
         MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
 

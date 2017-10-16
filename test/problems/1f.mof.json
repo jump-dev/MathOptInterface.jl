@@ -23,7 +23,7 @@
  },
  "constraints": [
   {
-   "name": "c2",
+   "name": "c3",
    "set": {
     "head": "Semiinteger",
     "lower": 2,

@@ -1,10 +1,29 @@
+MOI.getattribute(m::MOFFile, ::MOI.NumberOfVariables) = length(m["variables"])
+MOI.cangetattribute(m::MOFFile, ::MOI.NumberOfVariables) = true
+
 function MOI.setattribute!(m::MOFFile, ::MOI.ObjectiveFunction, func::MOI.AbstractScalarFunction)
     m["objective"] = Object!(m, func)
 end
+MOI.cansetattribute(m::MOFFile, ::MOI.ObjectiveFunction, func::MOI.AbstractScalarFunction) = true
+
+MOI.getattribute(m::MOFFile, ::MOI.ObjectiveFunction) = parse!(m, m["objective"])
+MOI.cangetattribute(m::MOFFile, ::MOI.ObjectiveFunction) = true
 
 function MOI.setattribute!(m::MOFFile, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
     m["sense"] = Object(sense)
 end
+MOI.cansetattribute(m::MOFFile, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense) = true
+
+function MOI.getattribute(m::MOFFile, ::MOI.ObjectiveSense)
+    if m["sense"] == "min"
+        return MOI.MinSense
+    elseif m["sense"] == "max"
+        return MOI.MaxSense
+    else
+        error("Unknown objective sense $(m["sense"])")
+    end
+end
+MOI.cangetattribute(m::MOFFile, ::MOI.ObjectiveSense) = true
 
 function Object(sense::MOI.OptimizationSense)
     if sense == MOI.MaxSense
@@ -24,17 +43,22 @@ immediately after introducing a variable and before it is used in any constraint
 If the variable has already been used, this function will _not_ update the
 previous references.
 """
-MOI.setattribute!(m::MOFFile, ::MOI.VariableName, v::MOI.VariableReference, name::String) = setattr!(m, v, "name", name)
+function MOI.setattribute!(m::MOFFile, ::MOI.VariableName, v::MOI.VariableReference, name::String)
+    current_name = MOI.getattribute(m, MOI.VariableName(), v)
+    delete!(m.namemap, current_name)
+    setattr!(m, v, "name", name)
+    m.namemap[name] = v
+end
 MOI.setattribute!(m::MOFFile, ::MOI.VariablePrimalStart, v::MOI.VariableReference, value) = setattr!(m, v, "VariablePrimalStart", value)
 
 function setattr!(m::MOFFile, v::MOI.VariableReference, key::String, val)
-    m["variables"][m.ext[v]][key] = val
+    m[v][key] = val
 end
 function getattr(m::MOFFile, v::MOI.VariableReference, key::String)
-    m["variables"][m.ext[v]][key]
+    m[v][key]
 end
 function hasattr(m::MOFFile, v::MOI.VariableReference, key::String)
-    MOI.isvalid(m, v) && haskey(m["variables"][m.ext[v]], key)
+    MOI.isvalid(m, v) && haskey(m[v], key)
 end
 
 MOI.getattribute(m::MOFFile, ::MOI.VariableName, v::MOI.VariableReference) = getattr(m, v, "name")
@@ -70,3 +94,12 @@ MOI.cansetattribute(m::MOFFile, ::MOI.ConstraintDualStart, c::MOI.ConstraintRefe
 MOI.cangetattribute(m::MOFFile, ::MOI.ConstraintName, c::MOI.ConstraintReference) = hasattr(m, c, "name")
 MOI.cangetattribute(m::MOFFile, ::MOI.ConstraintPrimalStart, c::MOI.ConstraintReference) = hasattr(m, c, "ConstraintPrimalStart")
 MOI.cangetattribute(m::MOFFile, ::MOI.ConstraintDualStart, c::MOI.ConstraintReference) = hasattr(m, c, "ConstraintDualStart")
+
+function MOI.getattribute(m::MOFFile, ::MOI.ConstraintFunction, c::MOI.ConstraintReference)
+    parse!(m, m[c]["function"])
+end
+MOI.cangetattribute(m::MOFFile, ::MOI.ConstraintFunction, c::MOI.ConstraintReference) = MOI.isvalid(m, c)
+function MOI.getattribute(m::MOFFile, ::MOI.ConstraintSet, c::MOI.ConstraintReference)
+    parse!(m, m[c]["set"])
+end
+MOI.cangetattribute(m::MOFFile, ::MOI.ConstraintSet, c::MOI.ConstraintReference) = MOI.isvalid(m, c)
