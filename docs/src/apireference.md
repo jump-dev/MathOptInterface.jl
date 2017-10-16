@@ -146,6 +146,7 @@ List of attributes associated with variables. [category AbstractVariableAttribut
 Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
 
 ```@docs
+VariableName
 VariablePrimalStart
 VariablePrimal
 VariableBasisStatus
@@ -170,6 +171,7 @@ List of attributes associated with constraints. [category AbstractConstraintAttr
 Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{F,S}` objects.
 
 ```@docs
+ConstraintName
 ConstraintPrimalStart
 ConstraintDualStart
 ConstraintPrimal
