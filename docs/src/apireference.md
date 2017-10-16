@@ -179,6 +179,7 @@ ConstraintDual
 ConstraintBasisStatus
 ConstraintFunction
 ConstraintSet
+ConstraintPrimalTolerance
 ```
 
 ## Functions and function modifications
