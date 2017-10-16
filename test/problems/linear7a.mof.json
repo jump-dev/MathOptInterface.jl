@@ -1,0 +1,66 @@
+{
+ "version": "0.0",
+ "sense": "min",
+ "variables": [
+  "x",
+  "y"
+ ],
+ "objective": {
+  "head": "ScalarAffineFunction",
+  "variables": [
+   "x",
+   "y"
+  ],
+  "coefficients": [
+   1.0,
+   -1.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "name": "c1",
+   "set": {
+    "head": "Nonnegatives",
+    "dimension": 1
+   },
+   "function": {
+    "head": "VectorAffineFunction",
+    "outputindex": [
+     1
+    ],
+    "variables": [
+     "x"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": [
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "c2",
+   "set": {
+    "head": "Nonpositives",
+    "dimension": 1
+   },
+   "function": {
+    "head": "VectorAffineFunction",
+    "outputindex": [
+     1
+    ],
+    "variables": [
+     "y"
+    ],
+    "coefficients": [
+     1.0
+    ],
+    "constant": [
+     1.0
+    ]
+   }
+  }
+ ]
+}

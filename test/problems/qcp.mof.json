@@ -1,0 +1,88 @@
+{
+ "version": "0.0",
+ "sense": "max",
+ "variables": [
+  "x1",
+  "x2"
+ ],
+ "objective": {
+  "head": "ScalarAffineFunction",
+  "variables": [
+   "x1",
+   "x2"
+  ],
+  "coefficients": [
+   1.0,
+   1.0
+  ],
+  "constant": 0.0
+ },
+ "constraints": [
+  {
+   "name": "c1",
+   "set": {
+    "head": "Nonnegatives",
+    "dimension": 2
+   },
+   "function": {
+    "head": "VectorAffineFunction",
+    "outputindex": [
+     1,
+     1,
+     2,
+     2
+    ],
+    "variables": [
+     "x1",
+     "x2",
+     "x1",
+     "x2"
+    ],
+    "coefficients": [
+     -1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "constant": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "c2",
+   "set": {
+    "head": "LessThan",
+    "upper": 2.0
+   },
+   "function": {
+    "head": "VectorQuadraticFunction",
+    "affine_outputindex": [
+     1
+    ],
+    "affine_variables": [
+     "x2"
+    ],
+    "affine_coefficients": [
+     1.0
+    ],
+    "quadratic_outputindex": [
+     1
+    ],
+    "quadratic_rowvariables": [
+     "x1"
+    ],
+    "quadratic_colvariables": [
+     "x1"
+    ],
+    "quadratic_coefficients": [
+     1.0
+    ],
+    "constant": [
+     0.0
+    ]
+   }
+  }
+ ]
+}

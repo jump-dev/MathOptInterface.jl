@@ -32,7 +32,7 @@ MOI.SolverInstance(file::String, solver) = MOI.SolverInstance(MOFFile(file), sol
 
 vvec(mf::MOFFile, names::Vector) = MOI.VariableReference[mf.ext[n] for n in names]
 
-# we need to do this because float.(Any[]) returns Any[] rahter than Float64[]
+# we need to do this because float.(Any[]) returns Any[] rather than Float64[]
 floatify(x::Vector{Float64}) = x
 floatify(x::Float64) = x
 function floatify(x::Vector)

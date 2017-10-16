@@ -250,9 +250,14 @@ end
         MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
 
         @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
-        MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
-
+        c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
+        MOI.writeproblem(m, problempath("linear7.mof.json"), 1)
         @test stringify(m) == getproblem("linear7.mof.json")
+
+        @test MOI.canmodifyconstraint(m, c, MOI.VectorConstantChange([1.0]))
+        MOI.modifyconstraint!(m, c, MOI.VectorConstantChange([1.0]))
+        MOI.writeproblem(m, problempath("linear7a.mof.json"), 1)
+        @test stringify(m) == getproblem("linear7a.mof.json")
     end
 
     @testset "qp1.mof.json" begin
@@ -293,6 +298,31 @@ end
         )
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
         @test stringify(m) == getproblem("qp1.mof.json")
+    end
+
+    @testset "qcp.mof.json" begin
+        # quadratic constraint
+        # Max x + y
+        # st  - x + y >= 0 (c1[1])
+        #       x + y >= 0 (c1[2])
+        #     0.5x^2 + y <= 2 (c2)
+
+        m = MOF.MOFFile()
+
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+
+        @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1,1,2,2], [x,y,x,y],[-1.0,1.0,1.0,1.0], [0.0,0.0]), MOI.Nonnegatives(2))
+        MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,2], [x,y,x,y],[-1.0,1.0,1.0,1.0], [0.0,0.0]), MOI.Nonnegatives(2))
+
+        f = MOI.VectorQuadraticFunction([1], [y],[1.0], [1], [x],[x],[1.0], [0.0])
+        @test MOI.canaddconstraint(m, f, MOI.LessThan(2.0))
+        MOI.addconstraint!(m, f, MOI.LessThan(2.0))
+
+        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
+        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+        # MOI.writeproblem(m, "test/problems/qcp.mof.json",1)
+        @test stringify(m) == getproblem("qcp.mof.json")
     end
 
     @testset "conic.mof.json" begin
@@ -397,7 +427,7 @@ end
 
 @testset "Read-Write Examples" begin
     for prob in [
-            "1","1a","1b","1c","1d","1e","1f", "2", "3", "linear7", "qp1", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
+            "1","1a","1b","1c","1d","1e","1f", "2", "3", "linear7", "linear7a", "qp1", "qcp", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
             ]
         @testset "$(prob)" begin
             file_representation = getproblem("$(prob).mof.json")
