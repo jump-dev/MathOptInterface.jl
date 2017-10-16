@@ -360,6 +360,13 @@ struct ResultCount <: AbstractSolverInstanceAttribute end
 ## Variable attributes
 
 """
+    VariableName()
+
+The name of the variable.
+"""
+struct VariableName <: AbstractVariableAttribute end
+
+"""
     VariablePrimalStart()
 
 An initial assignment of the variables that the solver may use to warm-start the solve.
@@ -400,6 +407,13 @@ Possible values are:
 @enum BasisStatusCode Basic Nonbasic NonbasicAtLower NonbasicAtUpper SuperBasic
 
 ## Constraint attributes
+
+"""
+    ConstraintName()
+
+The name of the variable.
+"""
+struct ConstraintName <: MOI.AbstractConstraintAttribute end
 
 """
     ConstraintPrimalStart()
