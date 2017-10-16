@@ -475,6 +475,24 @@ Return the `AbstractSet` object used to define the constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
+"""
+    PrimalFeasibilityTolerance()
+
+For scalar functions `f ∈ S`, this tolerance corresponds to the amount by which
+primal constraint solution can lie outside the set and still be considered
+feasible.For vector functions, this is applied row-wise.
+
+#### Special Cases
+
+For sets `ZeroOne`, `Integer`, and `Semiinteger`: specify the amount by which an
+integer variable can differ from an integer value and still be considered
+feasible.
+
+For sets `SOS1` and `SOS2`, this corresponds to the maximum value that a zero
+element can take and still be considered feasible.
+"""
+struct PrimalFeasibilityTolerance  <: AbstractConstraintAttribute end
+
 ## Termination status
 """
     TerminationStatus()
