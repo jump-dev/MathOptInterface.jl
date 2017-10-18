@@ -62,12 +62,12 @@ Users must discard the solver instance object after this method is invoked.
 function free! end
 
 """
-    writeproblem(m::AbstractInstance, filename::String)
+    writeinstance(m::AbstractInstance, filename::String)
 
-Writes the current problem data to the given file.
+Writes the current instance data to the given file.
 Supported file types depend on the solver or standalone instance type.
 """
-function writeproblem end
+function writeinstance end
 
 """
     supportsproblem(s::AbstractSolver, objective_type::F, constraint_types::Vector)::Bool
