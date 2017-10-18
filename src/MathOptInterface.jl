@@ -113,6 +113,13 @@ should be `true` for a second-order cone solver `s`.
 """
 function supportsproblem end
 
+"""
+    coefficienttype(m::AbstractInstance)
+
+Returns the coefficient type used by the solver instance. Defaults to Float64.
+"""
+function coefficienttype(s::AbstractInstance); Float64; end
+
 include("references.jl")
 include("attributes.jl")
 include("functions.jl")
