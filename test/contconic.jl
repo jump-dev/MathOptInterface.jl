@@ -727,8 +727,60 @@ function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
     end
 end
 
-# function rotatedsoc1atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-# end
+function rotatedsoc1atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+        [(MOI.VectorAffineFunction{Float64},MOI.RotatedSecondOrderCone)])
+        @testset "SOCRotated1A" begin
+            # Problem SOCRotated1A - Problem SOCRotated1 with a and b substituted
+            # min          -y - z
+            #  st [0.5] - [      ] SOCRotated
+            #     [1.0] - [      ] SOCRotated
+            #     [0.0] - [-y    ] SOCRotated
+            #     [0.0] - [    -z] SOCRotated
+            b = [0.5, 1.0, 0.0, 0.0]
+
+            m = MOI.SolverInstance(solver)
+
+            x = MOI.addvariables!(m, 2)
+
+            rsoc = MOI.addconstraint!(m, MOI.VectorAffineFunction([3, 4], x, [1., 1.], b), MOI.RotatedSecondOrderCone(4))
+            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.RotatedSecondOrderCone}()) == 1
+
+            MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, [-1.0,-1.0], 0.0))
+            MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.optimize!(m)
+
+            @test MOI.cangetattribute(m, MOI.TerminationStatus())
+            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.cangetattribute(m, MOI.PrimalStatus())
+            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.cangetattribute(m, MOI.DualStatus())
+            @test MOI.getattribute(m, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
+            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -sqrt(2.0) atol=atol rtol=rtol
+
+            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
+            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ [1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+
+            if MOI.getattribute(solver, MOI.SupportsDuals())
+                @test MOI.cangetattribute(m, MOI.DualStatus(1))
+                @test MOI.getattribute(m, MOI.DualStatus(1)) == MOI.FeasiblePoint
+
+                @test MOI.cangetattribute(m, MOI.ConstraintPrimal(), rsoc)
+                @test MOI.getattribute(m, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+
+                @test MOI.cangetattribute(m, MOI.ConstraintDual(), rsoc)
+                d = MOI.getattribute(m, MOI.ConstraintDual(), rsoc)
+                @test 2*d[1]*d[2] ≥ d[3]^2 + d[4]^2 - atol
+
+                dualobj = -dot(b, d)
+                @test dualobj ≈ -sqrt(2.0) atol=atol rtol=rtol
+            end
+        end
+    end
+end
 
 function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
@@ -804,7 +856,7 @@ function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
 end
 function rsoctests(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     rotatedsoc1test(solver, atol=atol, rtol=rtol)
-    #rotatedsoc1atest(solver, atol=atol, rtol=rtol)
+    rotatedsoc1atest(solver, atol=atol, rtol=rtol)
     rotatedsoc2test(solver, atol=atol, rtol=rtol)
 end
 
