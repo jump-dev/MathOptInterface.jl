@@ -1,8 +1,11 @@
+MOI.getattribute(m::MOFFile, ::MOI.ListOfVariableReferences) = [m.namemap[v["name"]] for v in m["variables"]]
+MOI.cangetattribute(m::MOFFile, ::MOI.ListOfVariableReferences) = true
+
 MOI.getattribute(m::MOFFile, ::MOI.NumberOfVariables) = length(m["variables"])
 MOI.cangetattribute(m::MOFFile, ::MOI.NumberOfVariables) = true
 
 function MOI.setattribute!(m::MOFFile, ::MOI.ObjectiveFunction, func::MOI.AbstractScalarFunction)
-    m["objective"] = Object!(m, func)
+    m["objective"] = object!(m, func)
 end
 MOI.cansetattribute(m::MOFFile, ::MOI.ObjectiveFunction, func::MOI.AbstractScalarFunction) = true
 
@@ -10,7 +13,7 @@ MOI.getattribute(m::MOFFile, ::MOI.ObjectiveFunction) = parse!(m, m["objective"]
 MOI.cangetattribute(m::MOFFile, ::MOI.ObjectiveFunction) = true
 
 function MOI.setattribute!(m::MOFFile, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
-    m["sense"] = Object(sense)
+    m["sense"] = object(sense)
 end
 MOI.cansetattribute(m::MOFFile, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense) = true
 
@@ -20,12 +23,13 @@ function MOI.getattribute(m::MOFFile, ::MOI.ObjectiveSense)
     elseif m["sense"] == "max"
         return MOI.MaxSense
     else
+        # what about feasibility sense?
         error("Unknown objective sense $(m["sense"])")
     end
 end
 MOI.cangetattribute(m::MOFFile, ::MOI.ObjectiveSense) = true
 
-function Object(sense::MOI.OptimizationSense)
+function object(sense::MOI.OptimizationSense)
     if sense == MOI.MaxSense
         return "max"
     elseif sense == MOI.MinSense

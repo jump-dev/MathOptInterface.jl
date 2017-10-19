@@ -4,8 +4,8 @@ function MOI.addconstraint!(m::MOFFile, func::F, set::S) where F<:MOI.AbstractFu
     push!(m["constraints"],
         Object(
             "name"     => "c$(idx)",
-            "set"      => Object(set),
-            "function" =>  Object!(m, func),
+            "set"      => object(set),
+            "function" =>  object!(m, func),
             # "ConstraintPrimalStart" => NaN,
             # "ConstraintDualStart" => NaN,
         )
@@ -14,7 +14,7 @@ function MOI.addconstraint!(m::MOFFile, func::F, set::S) where F<:MOI.AbstractFu
     return MOI.ConstraintReference{F,S}(idx)
 end
 
-MOI.canaddconstraint(m::MOFFile, func::MOI.AbstractFunction, set::MOI.AbstractSet) = Base.applicable(Object!, m, func) && Base.applicable(Object, set)
+MOI.canaddconstraint(m::MOFFile, func::MOI.AbstractFunction, set::MOI.AbstractSet) = Base.applicable(object!, m, func) && Base.applicable(object, set)
 
 MOI.isvalid(m::MOFFile, ref::MOI.ConstraintReference) = haskey(m.constrmap, ref.value)
 
@@ -32,21 +32,21 @@ end
 MOI.candelete(m::MOFFile, c::MOI.ConstraintReference) = MOI.isvalid(m, c)
 
 function MOI.transformconstraint!(m::MOFFile, c::MOI.ConstraintReference{F,S}, newset::S2) where F where S where S2<:MOI.AbstractSet
-    m[c]["set"] = Object(newset)
+    m[c]["set"] = object(newset)
     idx = m.constrmap[c.value]
     delete!(m.constrmap, c.value)
     MOI.ConstraintReference{F,S2}(idx)
 end
 
-MOI.cantransformconstraint(m::MOFFile, c::MOI.ConstraintReference, set::MOI.AbstractSet) = Base.applicable(Object, set)
+MOI.cantransformconstraint(m::MOFFile, c::MOI.ConstraintReference, set::MOI.AbstractSet) = Base.applicable(object, set)
 
 function MOI.modifyconstraint!(m::MOFFile, c::MOI.ConstraintReference{F,S}, newfunc::F) where F where S
-    m[c]["function"] = Object!(m, newfunc)
+    m[c]["function"] = object!(m, newfunc)
     c
 end
 
 function MOI.modifyconstraint!(m::MOFFile, c::MOI.ConstraintReference{F,S}, newset::S) where F where S
-    m[c]["set"] = Object(newset)
+    m[c]["set"] = object(newset)
     c
 end
 
@@ -58,8 +58,8 @@ function MOI.modifyconstraint!(m::MOFFile, c::MOI.ConstraintReference{F,S}, chg:
     m[c]["function"]["constant"] = chg.new_constant
 end
 
-MOI.canmodifyconstraint(m::MOFFile, c::MOI.ConstraintReference, set::MOI.AbstractSet) = Base.applicable(Object, set)
-MOI.canmodifyconstraint(m::MOFFile, c::MOI.ConstraintReference, func::MOI.AbstractFunction) = Base.applicable(Object!, m, func)
+MOI.canmodifyconstraint(m::MOFFile, c::MOI.ConstraintReference, set::MOI.AbstractSet) = Base.applicable(object, set)
+MOI.canmodifyconstraint(m::MOFFile, c::MOI.ConstraintReference, func::MOI.AbstractFunction) = Base.applicable(object!, m, func)
 
 function MOI.canmodifyconstraint(m::MOFFile, c::MOI.ConstraintReference{F,S}, chg::MOI.VectorConstantChange) where F<:MOI.AbstractVectorFunction where S
     true
