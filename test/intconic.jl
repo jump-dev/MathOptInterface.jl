@@ -20,15 +20,15 @@ function intsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
 
             x,y,z = MOI.addvariables!(m, 3)
 
-            MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([y,z],[-2.0,-1.0],0.0))
-            MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([y,z],[-2.0,-1.0],0.0))
+            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
             ceq = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
             csoc = MOI.addconstraint!(m, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))
 
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.getattribute(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
-            loc = MOI.getattribute(m, MOI.ListOfConstraints())
+            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
+            loc = MOI.get(m, MOI.ListOfConstraints())
             @test length(loc) == 2
             @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
             @test (MOI.VectorOfVariables,MOI.SecondOrderCone) in loc
@@ -38,19 +38,19 @@ function intsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
 
             MOI.optimize!(m)
 
-            @test MOI.cangetattribute(m, MOI.TerminationStatus())
-            @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(m, MOI.TerminationStatus())
+            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.cangetattribute(m, MOI.PrimalStatus())
-            @test MOI.getattribute(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(m, MOI.PrimalStatus())
+            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            @test MOI.cangetattribute(m, MOI.ObjectiveValue())
-            @test MOI.getattribute(m, MOI.ObjectiveValue()) ≈ -2 atol=atol rtol=rtol
+            @test MOI.canget(m, MOI.ObjectiveValue())
+            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -2 atol=atol rtol=rtol
 
-            @test MOI.cangetattribute(m, MOI.VariablePrimal(), x)
-            @test MOI.getattribute(m, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
-            @test MOI.getattribute(m, MOI.VariablePrimal(), y) ≈ 1 atol=atol rtol=rtol
-            @test MOI.getattribute(m, MOI.VariablePrimal(), z) ≈ 0 atol=atol rtol=rtol
+            @test MOI.canget(m, MOI.VariablePrimal(), x)
+            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
+            @test MOI.get(m, MOI.VariablePrimal(), y) ≈ 1 atol=atol rtol=rtol
+            @test MOI.get(m, MOI.VariablePrimal(), z) ≈ 0 atol=atol rtol=rtol
 
         end
     end

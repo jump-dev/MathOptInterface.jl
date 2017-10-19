@@ -25,6 +25,13 @@ MOI is designed to:
 This manual introduces the concepts needed to understand MOI and give a high-level picture of how all of the pieces fit together. The primary focus is on MOI from the perspective of a user of the interface. At the end of the manual we have a section on [Implementing a solver interface](@ref).
 The [API Reference](@ref) page lists the complete API.
 
+MOI does not export functions, but for brevity we often omit qualifying names with the MOI module. Best practice is to have
+```julia
+using MathOptInterface
+const MOI = MathOptInterface
+```
+and prefix all MOI methods with `MOI.` in user code. If a name is also available in base Julia, we always use explicitly use the module prefix, for example, with `MOI.get`.
+
 ## Standard form problem
 
 The standard form problem is:
@@ -76,9 +83,9 @@ New scalar variables are created with [`addvariable!`](@ref MathOptInterface.add
 One uses `VariableReference` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
 ```julia
 v = addvariable!(m)
-setattribute!(m, VariablePrimalStart(), v, 10.5)
+set!(m, VariablePrimalStart(), v, 10.5)
 v2 = addvariables!(m, 3)
-setattribute!(m, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
+set!(m, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
 A variable can be deleted from an instance with [`delete!(::AbstractInstance, ::VariableReference)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractInstance, ::MathOptInterface.AnyReference)), if this functionality is supported.
@@ -111,8 +118,8 @@ The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used f
 For example,
 ```julia
 x = addvariables!(m, 2)
-setattribute!(m, ObjectiveFunction(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
-setattribute!(m, ObjectiveSense(), MinSense)
+set!(m, ObjectiveFunction(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+set!(m, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
 
@@ -145,8 +152,8 @@ The code example below encodes the linear optimization problem:
 
 ```julia
 x = addvariables!(m, 2)
-setattribute!(m, ObjectiveFunction(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
-setattribute!(m, ObjectiveSense(), MaxSense)
+set!(m, ObjectiveFunction(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
+set!(m, ObjectiveSense(), MaxSense)
 addconstraint!(m, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
 addconstraint!(m, SingleVariable(x[1]), GreaterThan(0.0))
 addconstraint!(m, SingleVariable(x[2]), GreaterThan(-1.0))
@@ -233,7 +240,7 @@ optimize!(m)
 
 The optimization procedure may terminate for a number of reasons. The [`TerminationStatus`](@ref MathOptInterface.TerminationStatus) attribute of the solver instance returns a [`TerminationStatusCode`](@ref MathOptInterface.TerminationStatusCode) object which explains why the solver stopped. Some statuses indicate generally successful termination, some termination because of limit, and some termination because of something unexpected like invalid problem data or failure to converge. A typical usage of the `TerminationStatus` attribute is as follows:
 ```julia
-status = getattribute(m, TerminationStatus())
+status = MOI.get(m, TerminationStatus())
 if status == Success
     # Ok, the solver has a result to return
 else
@@ -248,7 +255,7 @@ In addition to the primal status, the [`DualStatus`](@ref MathOptInterface.DualS
 
 If a result is available, it may be retrieved with the [`VariablePrimal`](@ref MathOptInterface.VariablePrimal) attribute:
 ```julia
-getattribute(m, VariablePrimal(), x)
+MOI.get(m, VariablePrimal(), x)
 ```
 If `x` is a `VariableRefrence` then the function call returns a scalar, and if `x` is a `Vector{VariableReference}` then the call returns a vector of scalars. `VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th result.
 
@@ -304,8 +311,8 @@ function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solve
     x = addvariables!(m, numvar)
 
     # set the objective function
-    setattribute!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
-    setattribute!(m, ObjectiveSense(), MaxSense)
+    set!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
+    set!(m, ObjectiveSense(), MaxSense)
 
     # add the knapsack constraint
     addconstraint!(m, ScalarAffineFunction(x, w, 0.0), LessThan(C))
@@ -318,19 +325,19 @@ function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solve
     # all set
     optimize!(m)
 
-    termination_status = getattribute(m, TerminationStatus())
-    objvalue = cangetattribute(m, ObjectiveValue()) ? getattribute(m, ObjectiveValue()) : NaN
+    termination_status = MOI.get(m, TerminationStatus())
+    objvalue = canget(m, ObjectiveValue()) ? MOI.get(m, ObjectiveValue()) : NaN
     if termination_status != Success
         error("Solver terminated with status $termination_status")
     end
 
-    @assert getattribute(m, ResultCount()) > 0
+    @assert MOI.get(m, ResultCount()) > 0
 
-    result_status = getattribute(m, PrimalStatus())
+    result_status = MOI.get(m, PrimalStatus())
     if result_status != FeasiblePoint
         error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
     end
-    primal_variable_result = getattribute(m, VariablePrimal(), x)
+    primal_variable_result = MOI.get(m, VariablePrimal(), x)
 
     return (objvalue, primal_variable_result)
 end
@@ -386,8 +393,8 @@ function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, 
     x = addvariables!(m, numvar)
 
     # set the objective function
-    setattribute!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
-    setattribute!(m, ObjectiveSense(), MinSense)
+    set!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
+    set!(m, ObjectiveSense(), MinSense)
 
     # add variable bound constraints
     for i in 1:numvar
@@ -435,13 +442,13 @@ function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, 
     # all set
     optimize!(m)
 
-    termination_status = getattribute(m, TerminationStatus())
-    objbound = cangetattribute(m, ObjectiveBound()) ? getattribute(m, ObjectiveBound()) : NaN
-    objvalue = cangetattribute(m, ObjectiveValue()) ? getattribute(m, ObjectiveValue()) : NaN
+    termination_status = MOI.get(m, TerminationStatus())
+    objbound = canget(m, ObjectiveBound()) ? MOI.get(m, ObjectiveBound()) : NaN
+    objvalue = canget(m, ObjectiveValue()) ? MOI.get(m, ObjectiveValue()) : NaN
 
-    if getattribute(m, ResultCount()) > 0
-        result_status = getattribute(m, PrimalStatus())
-        primal_variable_result = getattribute(m, VariablePrimal(), x)
+    if MOI.get(m, ResultCount()) > 0
+        result_status = MOI.get(m, PrimalStatus())
+        primal_variable_result = MOI.get(m, VariablePrimal(), x)
         return IntegerLinearResult(termination_status, result_status, primal_variable_result, objvalue, objbound)
     else
         return IntegerLinearResult(termination_status, UnknownResultStatus, Float64[], objvalue, objbound)
@@ -583,7 +590,7 @@ coefficients in existing constraints when adding a new variable, it is possible
 to queue modifications and new variables and then call the solver's API once all of the
 new coefficients are known.
 
-All data passed to the solver should be copied immediately to internal data structures. Solvers may not modify any input vectors and should not assume that input vectors will not be modified by users in the future. This applies, for example, to the coefficient vector in `ScalarAffineFunction`. Vectors returned to the user, e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes should not be modified by the solver afterwards. The in-place version of `getattribute!` can be used by users to avoid extra copies in this case.
+All data passed to the solver should be copied immediately to internal data structures. Solvers may not modify any input vectors and should not assume that input vectors will not be modified by users in the future. This applies, for example, to the coefficient vector in `ScalarAffineFunction`. Vectors returned to the user, e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes should not be modified by the solver afterwards. The in-place version of `get!` can be used by users to avoid extra copies in this case.
 
 Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NearlyFeasiblePoint`, `InfeasiblePoint`, `NearlyInfeasiblePoint`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
 

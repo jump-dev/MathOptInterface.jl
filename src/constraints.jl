@@ -155,7 +155,7 @@ function transformconstraint! end
 
 # default fallback
 function transformconstraint!(m::AbstractInstance, c::ConstraintReference, newset)
-    f = getattribute(m, ConstraintFunction(), c)
+    f = get(m, ConstraintFunction(), c)
     delete!(m, c)
     addconstraint!(m, f, newset)
 end
@@ -180,7 +180,7 @@ function cantransformconstraint end
 
 # default fallback
 function cantransformconstraint(m::AbstractInstance, c::ConstraintReference, newset)
-    # TODO: add "&& canaddconstraint(m, getattribute(m, ConstraintFunction(), c), newset)"
+    # TODO: add "&& canaddconstraint(m, get(m, ConstraintFunction(), c), newset)"
     #       when candaddconstraint is defined
-    cangetattribute(m, ConstraintFunction(), c) && candelete(m, c)
+    canget(m, ConstraintFunction(), c) && candelete(m, c)
 end
