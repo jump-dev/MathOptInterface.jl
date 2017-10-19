@@ -9,7 +9,7 @@ const WRITEFILES = true
 
 function stringify(m::MOF.MOFFile, indent::Int=1)
     io = IOBuffer()
-    MOI.writeproblem(m, io, indent)
+    MOI.writeinstance(m, io, indent)
     String(take!(io))
 end
 
@@ -22,7 +22,7 @@ problempath(prob::String) = joinpath(@__DIR__, "problems", prob)
 
     @testset "JSON.json(::MOFFile)" begin
         m = MOF.MOFFile()
-        MOI.writeproblem(m, problempath("test.mof.json"))
+        MOI.writeinstance(m, problempath("test.mof.json"))
         @test getproblem("test.mof.json") == "{\"version\":\"0.0\",\"sense\":\"min\",\"variables\":[],\"objective\":{},\"constraints\":[]}"
         rm(problempath("test.mof.json"))
     end
@@ -129,23 +129,23 @@ end
         @test MOI.cansetattribute(m, MOI.ConstraintName(), c1)
         MOI.setattribute!(m, MOI.ConstraintName(), c1, "firstconstraint")
         @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
-        WRITEFILES && MOI.writeproblem(m, problempath("1.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1.mof.json"), 1)
         @test stringify(m) == getproblem("1.mof.json")
         @test MOI.canmodifyconstraint(m, c1, MOI.GreaterThan(4.0))
         MOI.modifyconstraint!(m, c1, MOI.GreaterThan(4.0))
-        WRITEFILES && MOI.writeproblem(m, problempath("1a.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1a.mof.json"), 1)
         @test stringify(m) == getproblem("1a.mof.json")
         @test MOI.canmodifyconstraint(m, c1, MOI.ScalarAffineFunction([v], [2.0], 1.0))
         MOI.modifyconstraint!(m, c1, MOI.ScalarAffineFunction([v], [2.0], 1.0))
-        WRITEFILES && MOI.writeproblem(m, problempath("1b.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1b.mof.json"), 1)
         @test stringify(m) == getproblem("1b.mof.json")
         @test MOI.canmodifyconstraint(m, c1, MOI.ScalarConstantChange(1.5))
         MOI.modifyconstraint!(m, c1, MOI.ScalarConstantChange(1.5))
-        WRITEFILES && MOI.writeproblem(m, problempath("1c.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1c.mof.json"), 1)
         @test stringify(m) == getproblem("1c.mof.json")
         @test MOI.candelete(m, c1)
         MOI.delete!(m, c1)
-        WRITEFILES && MOI.writeproblem(m, problempath("1d.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1d.mof.json"), 1)
         @test stringify(m) == getproblem("1d.mof.json")
         @test MOI.canaddconstraint(m,
             MOI.SingleVariable(v),
@@ -164,11 +164,11 @@ end
             MOI.SingleVariable(u),
             MOI.Semiinteger(2, 6)
         )
-        WRITEFILES && MOI.writeproblem(m, problempath("1e.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1e.mof.json"), 1)
         @test stringify(m) == getproblem("1e.mof.json")
         @test MOI.candelete(m, c2)
         MOI.delete!(m, c2)
-        WRITEFILES && MOI.writeproblem(m, problempath("1f.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1f.mof.json"), 1)
         @test stringify(m) == getproblem("1f.mof.json")
         @test MOI.cantransformconstraint(m,
             c3,
@@ -182,7 +182,7 @@ end
         @test MOI.getattribute(m, MOI.ConstraintSet(), c4) == MOI.Integer()
         @test MOI.cangetattribute(m, MOI.ConstraintFunction(), c4)
         @test MOI.getattribute(m, MOI.ConstraintFunction(), c4) == MOI.SingleVariable(u)
-        WRITEFILES && MOI.writeproblem(m, problempath("1g.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("1g.mof.json"), 1)
         @test stringify(m) == getproblem("1g.mof.json")
     end
 
@@ -212,19 +212,19 @@ end
         MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Integer())
         @test MOI.canaddconstraint(m, MOI.SingleVariable(y), MOI.ZeroOne())
         MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.ZeroOne())
-        WRITEFILES && MOI.writeproblem(m, problempath("2.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("2.mof.json"), 1)
         @test stringify(m) == getproblem("2.mof.json")
         @test MOI.cansetattribute(m, MOI.VariablePrimalStart(), x)
         MOI.setattribute!(m, MOI.VariablePrimalStart(), x, 1.0)
-        WRITEFILES && MOI.writeproblem(m, problempath("2a.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("2a.mof.json"), 1)
         @test stringify(m) == getproblem("2a.mof.json")
         @test MOI.cansetattribute(m, MOI.ConstraintPrimalStart(), c1)
         MOI.setattribute!(m, MOI.ConstraintPrimalStart(), c1, 1.0)
-        WRITEFILES && MOI.writeproblem(m, problempath("2b.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("2b.mof.json"), 1)
         @test stringify(m) == getproblem("2b.mof.json")
         @test MOI.cansetattribute(m, MOI.ConstraintDualStart(), c1)
         MOI.setattribute!(m, MOI.ConstraintDualStart(), c1, -1.0)
-        WRITEFILES && MOI.writeproblem(m, problempath("2c.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("2c.mof.json"), 1)
         @test stringify(m) == getproblem("2c.mof.json")
 
         @test MOI.cangetattribute(m, MOI.VariablePrimalStart(), x)
@@ -267,7 +267,7 @@ end
             MOI.SOS2([1.0, 2.0, 3.0])
         )
         @test typeof(c1) == MOI.ConstraintReference{MOI.VectorOfVariables, MOI.SOS2{Float64}}
-        WRITEFILES && MOI.writeproblem(m, problempath("3.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("3.mof.json"), 1)
         @test stringify(m) == getproblem("3.mof.json")
     end
 
@@ -302,12 +302,12 @@ end
 
         @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
         c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
-        WRITEFILES && MOI.writeproblem(m, problempath("linear7.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("linear7.mof.json"), 1)
         @test stringify(m) == getproblem("linear7.mof.json")
 
         @test MOI.canmodifyconstraint(m, c, MOI.VectorConstantChange([1.0]))
         MOI.modifyconstraint!(m, c, MOI.VectorConstantChange([1.0]))
-        WRITEFILES && MOI.writeproblem(m, problempath("linear7a.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("linear7a.mof.json"), 1)
         @test stringify(m) == getproblem("linear7a.mof.json")
     end
 
@@ -348,7 +348,7 @@ end
             )
         )
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
-        WRITEFILES && MOI.writeproblem(m, problempath("qp1.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("qp1.mof.json"), 1)
         @test stringify(m) == getproblem("qp1.mof.json")
     end
 
@@ -373,7 +373,7 @@ end
 
         MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
-        WRITEFILES && MOI.writeproblem(m, problempath("qcp.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("qcp.mof.json"), 1)
         @test stringify(m) == getproblem("qcp.mof.json")
     end
 
@@ -472,7 +472,7 @@ end
         )
         MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
-        WRITEFILES && MOI.writeproblem(m, problempath("conic.mof.json"), 1)
+        WRITEFILES && MOI.writeinstance(m, problempath("conic.mof.json"), 1)
         @test stringify(m) == getproblem("conic.mof.json")
     end
 end
