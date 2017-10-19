@@ -233,6 +233,13 @@ struct SupportsConicThroughQuadratic <: AbstractSolverAttribute end
 ## Instance attributes
 
 """
+    Name()
+
+A string identifying the instance.
+"""
+struct Name <: AbstractInstanceAttribute end
+
+"""
     ObjectiveSense()
 
 The sense of the objective function, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
@@ -362,7 +369,7 @@ struct ResultCount <: AbstractSolverInstanceAttribute end
 """
     VariableName()
 
-The name of the variable.
+A string identifying the variable.
 """
 struct VariableName <: AbstractVariableAttribute end
 
@@ -411,7 +418,7 @@ Possible values are:
 """
     ConstraintName()
 
-The name of the variable.
+A string identifying the constraint.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 

@@ -58,6 +58,7 @@ writeinstance
 List of instance attributes
 
 ```@docs
+Name
 ObjectiveSense
 NumberOfVariables
 ListOfVariableReferences
