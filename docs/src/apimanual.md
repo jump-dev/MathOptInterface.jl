@@ -30,7 +30,7 @@ MOI does not export functions, but for brevity we often omit qualifying names wi
 using MathOptInterface
 const MOI = MathOptInterface
 ```
-and prefix all MOI methods with `MOI.` in user code. If a name is also available in base Julia, we always use explicitly use the module prefix, for example, with `MOI.get`.
+and prefix all MOI methods with `MOI.` in user code. If a name is also available in base Julia, we always explicitly use the module prefix, for example, with `MOI.get`.
 
 ## Standard form problem
 
