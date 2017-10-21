@@ -21,11 +21,11 @@ AbstractConstraintAttribute
 Functions for getting and setting attributes.
 
 ```@docs
-cangetattribute
-getattribute
-getattribute!
-cansetattribute
-setattribute!
+canget
+get
+get!
+canset
+set!
 ```
 
 ## Solver
@@ -145,7 +145,7 @@ addvariable!
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
-Calls to `getattribute` and `setattribute!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
+Calls to `get` and `set!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
 
 ```@docs
 VariableName
@@ -170,7 +170,7 @@ cantransformconstraint
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]
-Calls to `getattribute` and `setattribute!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{F,S}` objects.
+Calls to `get` and `set!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{F,S}` objects.
 
 ```@docs
 ConstraintName

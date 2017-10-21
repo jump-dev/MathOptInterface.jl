@@ -39,144 +39,144 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractSolverAttribute, AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
-    getattribute(s::AbstractSolver, attr::AbstractSolverAttribute)
+    get(s::AbstractSolver, attr::AbstractSolverAttribute)
 
 Return an attribute `attr` of the solver `s`.
 
-    getattribute(m::AbstractInstance, attr::AbstractInstanceAttribute)
+    get(m::AbstractInstance, attr::AbstractInstanceAttribute)
 
 Return an attribute `attr` of the instance `m`.
 
-    getattribute(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute)
+    get(m::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute)
 
 Return an attribute `attr` of the solver instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)
+    get(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)
 
 Return an attribute `attr` of the variable `v` in instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
+    get(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
 
 Return a vector of attributes corresponding to each variable in the collection `v` in the instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
+    get(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
 
 Return an attribute `attr` of the constraint `c` in instance `m`.
 
-    getattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
+    get(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
 
 Return a vector of attributes corresponding to each constraint in the collection `c` in the instance `m`.
 
 ### Examples
 
 ```julia
-getattribute(m, ObjectiveValue())
-getattribute(m, VariablePrimal(), ref)
-getattribute(m, VariablePrimal(5), [ref1, ref2])
-getattribute(m, OtherAttribute("something specific to cplex"))
+get(m, ObjectiveValue())
+get(m, VariablePrimal(), ref)
+get(m, VariablePrimal(5), [ref1, ref2])
+get(m, OtherAttribute("something specific to cplex"))
 ```
 """
-function getattribute end
+function get end
 
-function getattribute(m, attr::AnyAttribute, args...)
+function get(m, attr::AnyAttribute, args...)
     throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support accessing the attribute $attr"))
 end
 
 """
-    getattribute!(output, m::AbstractInstance, args...)
+    get!(output, m::AbstractInstance, args...)
 
-An in-place version of `getattribute`.
-The signature matches that of `getattribute` except that the the result is placed in the vector `output`.
+An in-place version of `get`.
+The signature matches that of `get` except that the the result is placed in the vector `output`.
 """
-function getattribute! end
-function getattribute!(output, m, attr::AnyAttribute, args...)
+function get! end
+function get!(output, m, attr::AnyAttribute, args...)
     throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support accessing the attribute $attr"))
 end
 
 """
-    cangetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
+    canget(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
 
 Return a `Bool` indicating whether it is possible to query attribute `attr` from the solver `s`.
 
-    cangetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference{F,S})::Bool
+    canget(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)::Bool
+    canget(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference{F,S})::Bool
 
 Return a `Bool` indicating whether the instance `m` currently has a value for the attributed specified by attribute type `attr` applied to the variable reference `v` or constraint reference `c`.
 
-    cangetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+    canget(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
+    canget(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
 
 Return a `Bool` indicating whether the instance `m` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable references in `v` or constraint reference in `c`.
 
 ### Examples
 
 ```julia
-cangetattribute(m, ObjectiveValue())
-cangetattribute(m, VariablePrimalStart(), varref)
-cangetattribute(m, ConstraintPrimal(), conref)
-cangetattribute(m, VariablePrimal(), [ref1, ref2])
+canget(m, ObjectiveValue())
+canget(m, VariablePrimalStart(), varref)
+canget(m, ConstraintPrimal(), conref)
+canget(m, VariablePrimal(), [ref1, ref2])
 ```
 """
-function cangetattribute end
-cangetattribute(m::AbstractInstance, attr::AnyAttribute) = false
-cangetattribute(m::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
-cangetattribute(m::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
+function canget end
+canget(m::AbstractInstance, attr::AnyAttribute) = false
+canget(m::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
+canget(m::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
-    cansetattribute(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
+    canset(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` in the solver `s`.
 
-    cansetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    cangetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
+    canset(m::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
+    canget(m::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the instance `m`.
 
-    cansetattribute(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
-    cansetattribute(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+    canset(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
+    canset(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
 
 Return a `Bool` indicating whether it is possible to set attribute `attr`applied to *every* variable reference in `v` or constraint reference in `c` in the instance `m`.
 
 ### Examples
 
 ```julia
-cansetattribute(m, ObjectiveValue())
-cansetattribute(m, VariablePrimalStart(), VariableReference)
-cansetattribute(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{Float64},Nonnegatives})
+canset(m, ObjectiveValue())
+canset(m, VariablePrimalStart(), VariableReference)
+canset(m, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{Float64},Nonnegatives})
 ```
 """
-function cansetattribute end
-cansetattribute(m::AbstractInstance, attr::AnyAttribute) = false
-cansetattribute(m::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
-cansetattribute(m::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
+function canset end
+canset(m::AbstractInstance, attr::AnyAttribute) = false
+canset(m::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
+canset(m::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
-    setattribute!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
+    set!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
 
 Assign `value` to the attribute `attr` of the solver `s`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractInstanceAttribute, value)
+    set!(m::AbstractInstance, attr::AbstractInstanceAttribute, value)
 
 Assign `value` to the attribute `attr` of the instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
+    set!(m::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
 
 Assign `value` to the attribute `attr` of variable `v` in instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
+    set!(m::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each variable in the collection `v` in instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
+    set!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
 
 Assign a value to the attribute `attr` of constraint `c` in instance `m`.
 
-    setattribute!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
+    set!(m::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `m`.
 """
-function setattribute! end
-function setattribute!(m, attr::AnyAttribute, args...)
+function set! end
+function set!(m, attr::AnyAttribute, args...)
     throw(ArgumentError("SolverInstance of type $(typeof(m)) does not support setting the attribute $attr"))
 end
 
