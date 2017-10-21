@@ -286,7 +286,7 @@ For solvers which perform a search based only on local criteria (for example, gr
 
 The `solveknapsack` function below demonstrates the complete process from data to solver instance to result vector using MOI.
 
-[ needs formatting help ]
+[ needs formatting help, doc tests ]
 
 ```julia
 """
@@ -296,48 +296,48 @@ Solve the binary-constrained knapsack problem: max c'x: w'x <= C, x binary.
 Returns the optimal weights and objective value. Throws an error if the solver
 does not terminate with a `Success` status.
 """
-function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solver::AbstractSolver)
-    if !supportsproblem(solver, ScalarAffineFunction{Float64},
-            [(ScalarAffineFunction{Float64},LessThan{Float64}),
-             (SingleVariable,ZeroOne)])
+function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solver::MOI.AbstractSolver)
+    if !MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+            [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),
+             (MOI.SingleVariable,MOI.ZeroOne)])
         error("Provided solver cannot solve binary knapsack problems")
     end
     numvar = length(c)
     @assert numvar == length(w)
 
-    m = SolverInstance(solver)
+    m = MOI.SolverInstance(solver)
 
     # create the variables in the problem
-    x = addvariables!(m, numvar)
+    x = MOI.addvariables!(m, numvar)
 
     # set the objective function
-    set!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
-    set!(m, ObjectiveSense(), MaxSense)
+    MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
+    MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
     # add the knapsack constraint
-    addconstraint!(m, ScalarAffineFunction(x, w, 0.0), LessThan(C))
+    MOI.addconstraint!(m, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
 
     # add integrality constraints
     for i in 1:numvar
-        addconstraint!(m, SingleVariable(x[i]), ZeroOne())
+        MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.ZeroOne())
     end
 
     # all set
-    optimize!(m)
+    MOI.optimize!(m)
 
     termination_status = MOI.get(m, TerminationStatus())
-    objvalue = canget(m, ObjectiveValue()) ? MOI.get(m, ObjectiveValue()) : NaN
-    if termination_status != Success
+    objvalue = MOI.canget(m, MOI.ObjectiveValue()) ? MOI.get(m, MOI.ObjectiveValue()) : NaN
+    if termination_status != MOI.Success
         error("Solver terminated with status $termination_status")
     end
 
-    @assert MOI.get(m, ResultCount()) > 0
+    @assert MOI.get(m, MOI.ResultCount()) > 0
 
-    result_status = MOI.get(m, PrimalStatus())
-    if result_status != FeasiblePoint
+    result_status = MOI.get(m, MOI.PrimalStatus())
+    if result_status != MOI.FeasiblePoint
         error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
     end
-    primal_variable_result = MOI.get(m, VariablePrimal(), x)
+    primal_variable_result = MOI.get(m, MOI.VariablePrimal(), x)
 
     return (objvalue, primal_variable_result)
 end
@@ -362,8 +362,8 @@ The fields are as follows:
   - `objective_bound`: the best known bound on the optimal objective value
 """
 struct IntegerLinearResult
-    termination_status::TerminationStatusCode
-    result_status::ResultStatusCode
+    termination_status::MOI.TerminationStatusCode
+    result_status::MOI.ResultStatusCode
     primal_variable_result::Vector{Float64}
     objective_value::Float64
     objective_bound::Float64
@@ -375,41 +375,41 @@ end
 Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns an `IntegerLinearResult`.
 """
 function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
-    if !supportsproblem(solver, ScalarAffineFunction{Float64},
-            [(ScalarAffineFunction,LessThan{Float64}),
-             (ScalarAffineFunction,Zeros),
-             (SingleVariable,LessThan{Float64}),
-             (SingleVariable,GreaterThan{Float64}),
-             (SingleVariable,Integer)])
+    if !MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
+            [(MOI.ScalarAffineFunction,MOI.LessThan{Float64}),
+             (MOI.ScalarAffineFunction,MOI.Zeros),
+             (MOI.SingleVariable,MOI.LessThan{Float64}),
+             (MOI.SingleVariable,MOI.GreaterThan{Float64}),
+             (MOI.SingleVariable,MOI.Integer)])
         error("Provided solver does not support mixed-integer linear optimization")
     end
     numvar = size(Ale,2)
     @assert numvar == size(Aeq,2) == length(lb) == length(ub)
 
 
-    m = SolverInstance(solver)
+    m = MOI.SolverInstance(solver)
 
     # create the variables in the problem
-    x = addvariables!(m, numvar)
+    x = MOI.addvariables!(m, numvar)
 
     # set the objective function
-    set!(m, ObjectiveFunction(), ScalarAffineFunction(x, c, 0.0))
-    set!(m, ObjectiveSense(), MinSense)
+    MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
+    MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
     # add variable bound constraints
     for i in 1:numvar
         if isfinite(lb[i])
-            addconstraint!(m, SingleVariable(x[i]), GreaterThan(lb[i]))
+            MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.GreaterThan(lb[i]))
         end
         if isfinite(ub[i])
-            addconstraint!(m, SingleVariable(x[i]), LessThan(ub[i]))
+            MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.LessThan(ub[i]))
         end
     end
 
     # add integrality constraints
     for i in integerindices
         @assert 1 <= i <= numvar
-        addconstraint!(m, SingleVariable(x[i]), Integer())
+        MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.Integer())
     end
 
     # convert a SparseMatrixCSC into a vector of scalar affine functions
@@ -424,34 +424,34 @@ function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, 
             push!(variables_by_row[I[p]], x[J[p]])
             push!(coefficients_by_row[I[p]], V[p])
         end
-        return [ScalarAffineFunction(variables_by_row[k], coefficients_by_row[k], 0.0) for k in 1:nrow]
+        return [MOI.ScalarAffineFunction(variables_by_row[k], coefficients_by_row[k], 0.0) for k in 1:nrow]
     end
 
     # add inequality constraints
     Ale_affine = csc_to_affine(Ale)
     for k in 1:length(Ale_affine)
-        addconstraint!(m, Ale_affine[k], LessThan(ble[k]))
+        MOI.addconstraint!(m, Ale_affine[k], MOI.LessThan(ble[k]))
     end
 
     # add equality constraints
     Aeq_affine = csc_to_affine(Aeq)
     for k in 1:length(Aeq_affine)
-        addconstraint!(m, Aeq_affine[k], EqualTo(beq[k]))
+        MOI.addconstraint!(m, Aeq_affine[k], MOI.EqualTo(beq[k]))
     end
 
     # all set
-    optimize!(m)
+    MOI.optimize!(m)
 
-    termination_status = MOI.get(m, TerminationStatus())
-    objbound = canget(m, ObjectiveBound()) ? MOI.get(m, ObjectiveBound()) : NaN
-    objvalue = canget(m, ObjectiveValue()) ? MOI.get(m, ObjectiveValue()) : NaN
+    termination_status = MOI.get(m, MOI.TerminationStatus())
+    objbound = MOI.canget(m, MOI.ObjectiveBound()) ? MOI.get(m, MOI.ObjectiveBound()) : NaN
+    objvalue = MOI.canget(m, MOI.ObjectiveValue()) ? MOI.get(m, MOI.ObjectiveValue()) : NaN
 
-    if MOI.get(m, ResultCount()) > 0
-        result_status = MOI.get(m, PrimalStatus())
-        primal_variable_result = MOI.get(m, VariablePrimal(), x)
+    if MOI.get(m, MOI.ResultCount()) > 0
+        result_status = MOI.get(m, MOI.PrimalStatus())
+        primal_variable_result = MOI.get(m, MOI.VariablePrimal(), x)
         return IntegerLinearResult(termination_status, result_status, primal_variable_result, objvalue, objbound)
     else
-        return IntegerLinearResult(termination_status, UnknownResultStatus, Float64[], objvalue, objbound)
+        return IntegerLinearResult(termination_status, MOI.UnknownResultStatus, Float64[], objvalue, objbound)
     end
 end
 ```
