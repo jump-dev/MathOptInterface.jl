@@ -194,7 +194,7 @@ function qp3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rto
         #             x + y = 1
         # (x,y) = (1,0), obj = 3
         objf = MOI.ScalarAffineFunction([x,y], [2.0,1.0], 1.0)
-        MOI.set!(m, MOI.ObjectiveFunction(), obj)
+        MOI.set!(m, MOI.ObjectiveFunction(), objf)
         MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
 
         MOI.optimize!(m)
