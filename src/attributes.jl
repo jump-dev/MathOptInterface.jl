@@ -67,6 +67,18 @@ Return an attribute `attr` of the constraint `c` in instance `m`.
 
 Return a vector of attributes corresponding to each constraint in the collection `c` in the instance `m`.
 
+    get(m::AbstractInstance, ::Type{VariableReference}, name::String)
+
+If a variable with name `name` exists in the instance `m`, return the corresponding reference object, otherwise throw a `KeyError`.
+
+    get(m::AbstractInstance, ::Type{ConstraintReference{F,S}}, name::String) where {F<:AbstractFunction,S<:AbstractSet}
+
+If an `F`-in-`S` constraint with name `name` exists in the instance `m`, return the corresponding reference object, otherwise throw a `KeyError`.
+
+    get(m::AbstractInstance, ::Type{ConstraintReference}, name::String)
+
+If *any* constraint with name `name` exists in the instance `m`, return the corresponding reference object, otherwise throw a `KeyError`. This version is available for convenience but may incur a performance penalty because it is not type stable.
+
 ### Examples
 
 ```julia
@@ -74,6 +86,9 @@ get(m, ObjectiveValue())
 get(m, VariablePrimal(), ref)
 get(m, VariablePrimal(5), [ref1, ref2])
 get(m, OtherAttribute("something specific to cplex"))
+get(m, VariableReference, "var1")
+get(m, ConstraintReference{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
+get(m, ConstraintReference, "con1")
 ```
 """
 function get end
@@ -108,6 +123,19 @@ Return a `Bool` indicating whether the instance `m` currently has a value for th
 
 Return a `Bool` indicating whether the instance `m` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable references in `v` or constraint reference in `c`.
 
+    canget(m::AbstractInstance, ::Type{VariableReference}, name::String)::Bool
+
+Return a `Bool` indicating if a variable with the name `name` exists in the instance.
+
+    canget(m::AbstractInstance, ::Type{ConstraintReference{F,S}}, name::String)::Bool where {F<:AbstractFunction,S<:AbstractSet}
+
+Return a `Bool` indicating if an `F`-in-`S` constraint with the name `name` exists in the instance `m`.
+
+    canget(m::AbstractInstance, ::Type{ConstraintReference}, name::String)::Bool
+
+Return a `Bool` indicating if a constraint of any kind with the name `name` exists in the instance `m`.
+
+
 ### Examples
 
 ```julia
@@ -115,6 +143,9 @@ canget(m, ObjectiveValue())
 canget(m, VariablePrimalStart(), varref)
 canget(m, ConstraintPrimal(), conref)
 canget(m, VariablePrimal(), [ref1, ref2])
+canget(m, VariableReference, "var1")
+canget(m, ConstraintReference{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
+canget(m, ConstraintReference, "con1")
 ```
 """
 function canget end
@@ -369,7 +400,7 @@ struct ResultCount <: AbstractSolverInstanceAttribute end
 """
     VariableName()
 
-A string identifying the variable.
+A string identifying the variable. It is invalid for two variables to have the same name.
 """
 struct VariableName <: AbstractVariableAttribute end
 
@@ -418,7 +449,7 @@ Possible values are:
 """
     ConstraintName()
 
-A string identifying the constraint.
+A string identifying the constraint. It is invalid for two constraints of any kind to have the same name.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
