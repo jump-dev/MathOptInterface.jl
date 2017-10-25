@@ -16,6 +16,6 @@ for prob in [
     @testset "$(prob)" begin
         m = MOI.SolverInstance(joinpath(@__DIR__, prob), solver)
         MOI.optimize!(m)
-        @test MOI.getattribute(m, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
     end
 end

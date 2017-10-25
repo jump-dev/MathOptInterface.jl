@@ -118,7 +118,7 @@ end
     @test_throws Exception MOF.object(MOI.FeasibilitySense)
     m = MOF.MOFFile()
     m["sense"] = "Max"
-    @test_throws Exception MOI.getattribute(m, MOI.ObjectiveSense())
+    @test_throws Exception MOI.get(m, MOI.ObjectiveSense())
 end
 
 @testset "Write Examples" begin
@@ -138,8 +138,8 @@ end
         m = MOI.SolverInstance(solver)
         v = MOI.addvariable!(m)
         f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
-        MOI.setattribute!(m, MOI.ObjectiveFunction(),f)
-        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+        MOI.set!(m, MOI.ObjectiveFunction(),f)
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
         @test MOI.canaddconstraint(m,
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
             MOI.GreaterThan(3.0))
@@ -147,8 +147,8 @@ end
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
             MOI.GreaterThan(3.0)
         )
-        @test MOI.cansetattribute(m, MOI.ConstraintName(), c1)
-        MOI.setattribute!(m, MOI.ConstraintName(), c1, "firstconstraint")
+        @test MOI.canset(m, MOI.ConstraintName(), c1)
+        MOI.set!(m, MOI.ConstraintName(), c1, "firstconstraint")
         @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
         WRITEFILES && MOI.writeinstance(m, problempath("1.mof.json"), 1)
         @test stringify(m) == getproblem("1.mof.json")
@@ -199,10 +199,10 @@ end
             c3,
             MOI.Integer()
         )
-        @test MOI.cangetattribute(m, MOI.ConstraintSet(), c4)
-        @test MOI.getattribute(m, MOI.ConstraintSet(), c4) == MOI.Integer()
-        @test MOI.cangetattribute(m, MOI.ConstraintFunction(), c4)
-        @test MOI.getattribute(m, MOI.ConstraintFunction(), c4) == MOI.SingleVariable(u)
+        @test MOI.canget(m, MOI.ConstraintSet(), c4)
+        @test MOI.get(m, MOI.ConstraintSet(), c4) == MOI.Integer()
+        @test MOI.canget(m, MOI.ConstraintFunction(), c4)
+        @test MOI.get(m, MOI.ConstraintFunction(), c4) == MOI.SingleVariable(u)
         WRITEFILES && MOI.writeinstance(m, problempath("1g.mof.json"), 1)
         @test stringify(m) == getproblem("1g.mof.json")
     end
@@ -215,15 +215,15 @@ end
         m = MOF.MOFFile()
         x = MOI.addvariable!(m)
         y = MOI.addvariable!(m)
-        @test MOI.cangetattribute(m, MOI.NumberOfVariables())
-        @test MOI.getattribute(m, MOI.NumberOfVariables()) == 2
+        @test MOI.canget(m, MOI.NumberOfVariables())
+        @test MOI.get(m, MOI.NumberOfVariables()) == 2
 
-        @test MOI.cangetattribute(m, MOI.ListOfVariableReferences())
-        @test MOI.getattribute(m, MOI.ListOfVariableReferences()) == [x,y]
+        @test MOI.canget(m, MOI.ListOfVariableReferences())
+        @test MOI.get(m, MOI.ListOfVariableReferences()) == [x,y]
 
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
-        MOI.setattribute!(m, MOI.ObjectiveFunction(), c)
-        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set!(m, MOI.ObjectiveFunction(), c)
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
         @test MOI.canaddconstraint(m,
             MOI.ScalarAffineFunction([x], [2.0], 1.0),
             MOI.EqualTo(3.0)
@@ -239,36 +239,36 @@ end
         MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.ZeroOne())
         WRITEFILES && MOI.writeinstance(m, problempath("2.mof.json"), 1)
         @test stringify(m) == getproblem("2.mof.json")
-        @test MOI.cansetattribute(m, MOI.VariablePrimalStart(), x)
-        MOI.setattribute!(m, MOI.VariablePrimalStart(), x, 1.0)
+        @test MOI.canset(m, MOI.VariablePrimalStart(), x)
+        MOI.set!(m, MOI.VariablePrimalStart(), x, 1.0)
         WRITEFILES && MOI.writeinstance(m, problempath("2a.mof.json"), 1)
         @test stringify(m) == getproblem("2a.mof.json")
-        @test MOI.cansetattribute(m, MOI.ConstraintPrimalStart(), c1)
-        MOI.setattribute!(m, MOI.ConstraintPrimalStart(), c1, 1.0)
+        @test MOI.canset(m, MOI.ConstraintPrimalStart(), c1)
+        MOI.set!(m, MOI.ConstraintPrimalStart(), c1, 1.0)
         WRITEFILES && MOI.writeinstance(m, problempath("2b.mof.json"), 1)
         @test stringify(m) == getproblem("2b.mof.json")
-        @test MOI.cansetattribute(m, MOI.ConstraintDualStart(), c1)
-        MOI.setattribute!(m, MOI.ConstraintDualStart(), c1, -1.0)
+        @test MOI.canset(m, MOI.ConstraintDualStart(), c1)
+        MOI.set!(m, MOI.ConstraintDualStart(), c1, -1.0)
         WRITEFILES && MOI.writeinstance(m, problempath("2c.mof.json"), 1)
         @test stringify(m) == getproblem("2c.mof.json")
 
-        @test MOI.cangetattribute(m, MOI.VariablePrimalStart(), x)
-        @test MOI.getattribute(m, MOI.VariablePrimalStart(), x) == 1.0
-        @test MOI.cangetattribute(m, MOI.VariableName(), x)
-        @test MOI.getattribute(m, MOI.VariableName(), x) == "x1"
-        @test MOI.cangetattribute(m, MOI.ConstraintName(), c1)
-        @test MOI.getattribute(m, MOI.ConstraintName(), c1) == "c1"
-        @test MOI.cangetattribute(m, MOI.ConstraintPrimalStart(), c1)
-        @test MOI.getattribute(m, MOI.ConstraintPrimalStart(), c1) == 1.0
-        @test MOI.cangetattribute(m, MOI.ConstraintDualStart(), c1)
-        @test MOI.getattribute(m, MOI.ConstraintDualStart(), c1) == -1.0
+        @test MOI.canget(m, MOI.VariablePrimalStart(), x)
+        @test MOI.get(m, MOI.VariablePrimalStart(), x) == 1.0
+        @test MOI.canget(m, MOI.VariableName(), x)
+        @test MOI.get(m, MOI.VariableName(), x) == "x1"
+        @test MOI.canget(m, MOI.ConstraintName(), c1)
+        @test MOI.get(m, MOI.ConstraintName(), c1) == "c1"
+        @test MOI.canget(m, MOI.ConstraintPrimalStart(), c1)
+        @test MOI.get(m, MOI.ConstraintPrimalStart(), c1) == 1.0
+        @test MOI.canget(m, MOI.ConstraintDualStart(), c1)
+        @test MOI.get(m, MOI.ConstraintDualStart(), c1) == -1.0
     end
 
     @testset "3.mof.json" begin
         m = MOF.MOFFile()
 
         (x1, x2, x3) = MOI.addvariables!(m, 3)
-        MOI.setattribute!(m, MOI.ObjectiveFunction(),
+        MOI.set!(m, MOI.ObjectiveFunction(),
             MOI.ScalarQuadraticFunction(
                 [x1, x2],
                 [2.0, -1.0],
@@ -278,10 +278,10 @@ end
                 0.0
             )
         )
-        @test MOI.cansetattribute(m, MOI.ObjectiveSense(), MOI.MaxSense)
-        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
-        @test MOI.cangetattribute(m, MOI.ObjectiveSense())
-        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MaxSense
+        @test MOI.canset(m, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+        @test MOI.canget(m, MOI.ObjectiveSense())
+        @test MOI.get(m, MOI.ObjectiveSense()) == MOI.MaxSense
 
         @test MOI.canaddconstraint(m,
             MOI.VectorOfVariables([x1, x2, x3]),
@@ -303,24 +303,24 @@ end
         m = MOF.MOFFile()
         x = MOI.addvariable!(m)
         y = MOI.addvariable!(m)
-        @test MOI.cansetattribute(m, MOI.VariableName(), x)
-        MOI.setattribute!(m, MOI.VariableName(), x, "x")
-        @test MOI.cansetattribute(m, MOI.VariableName(), y)
-        MOI.setattribute!(m, MOI.VariableName(), y, "y")
+        @test MOI.canset(m, MOI.VariableName(), x)
+        MOI.set!(m, MOI.VariableName(), x, "x")
+        @test MOI.canset(m, MOI.VariableName(), y)
+        MOI.set!(m, MOI.VariableName(), y, "y")
 
-        @test MOI.cansetattribute(m, MOI.ObjectiveFunction(),
+        @test MOI.canset(m, MOI.ObjectiveFunction(),
             MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
         )
         obj = MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
-        MOI.setattribute!(m, MOI.ObjectiveFunction(), obj)
-        @test MOI.cangetattribute(m, MOI.ObjectiveFunction())
-        obj2 = MOI.getattribute(m, MOI.ObjectiveFunction())
+        MOI.set!(m, MOI.ObjectiveFunction(), obj)
+        @test MOI.canget(m, MOI.ObjectiveFunction())
+        obj2 = MOI.get(m, MOI.ObjectiveFunction())
         @test obj.variables == obj2.variables
         @test obj.coefficients == obj2.coefficients
         @test obj.constant == obj2.constant
-        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
-        @test MOI.cangetattribute(m, MOI.ObjectiveSense())
-        @test MOI.getattribute(m, MOI.ObjectiveSense()) == MOI.MinSense
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+        @test MOI.canget(m, MOI.ObjectiveSense())
+        @test MOI.get(m, MOI.ObjectiveSense()) == MOI.MinSense
 
         @test MOI.canaddconstraint(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
         MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
@@ -362,7 +362,7 @@ end
             MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0),
             MOI.GreaterThan(1.0)
         )
-        MOI.setattribute!(m, MOI.ObjectiveFunction(),
+        MOI.set!(m, MOI.ObjectiveFunction(),
             MOI.ScalarQuadraticFunction(
                 MOI.VariableReference[],
                 Float64[],
@@ -372,7 +372,7 @@ end
                 0.0
             )
         )
-        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
         WRITEFILES && MOI.writeinstance(m, problempath("qp1.mof.json"), 1)
         @test stringify(m) == getproblem("qp1.mof.json")
     end
@@ -396,8 +396,8 @@ end
         @test MOI.canaddconstraint(m, f, MOI.LessThan(2.0))
         MOI.addconstraint!(m, f, MOI.LessThan(2.0))
 
-        MOI.setattribute!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
-        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
         WRITEFILES && MOI.writeinstance(m, problempath("qcp.mof.json"), 1)
         @test stringify(m) == getproblem("qcp.mof.json")
     end
@@ -488,14 +488,14 @@ end
             MOI.VectorOfVariables(v),
             MOI.PositiveSemidefiniteConeScaled(3)
         )
-        MOI.setattribute!(m, MOI.ObjectiveFunction(),
+        MOI.set!(m, MOI.ObjectiveFunction(),
             MOI.ScalarAffineFunction(
                 MOI.VariableReference[],
                 Float64[],
                 0.0
             )
         )
-        MOI.setattribute!(m, MOI.ObjectiveSense(), MOI.MinSense)
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
 
         WRITEFILES && MOI.writeinstance(m, problempath("conic.mof.json"), 1)
         @test stringify(m) == getproblem("conic.mof.json")

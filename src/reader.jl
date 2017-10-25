@@ -9,22 +9,22 @@ function MOI.SolverInstance(mf::MOFFile, solver)
     empty!(mf.namemap)
     for (i, dict) in enumerate(mf["variables"])
         mf.namemap[dict["name"]] = v[i]
-        MOI.setattribute!(m, MOI.VariableName(), v[i], dict["name"])
+        MOI.set!(m, MOI.VariableName(), v[i], dict["name"])
         if haskey(dict, "VariablePrimalStart")
-            MOI.setattribute!(m, MOI.VariablePrimalStart(), v[i], dict["VariablePrimalStart"])
+            MOI.set!(m, MOI.VariablePrimalStart(), v[i], dict["VariablePrimalStart"])
         end
     end
-    sense = MOI.getattribute(mf, MOI.ObjectiveSense())
-    MOI.setattribute!(m, MOI.ObjectiveFunction(), parse!(mf, mf["objective"]))
-    MOI.setattribute!(m, MOI.ObjectiveSense(), sense)
+    sense = MOI.get(mf, MOI.ObjectiveSense())
+    MOI.set!(m, MOI.ObjectiveFunction(), parse!(mf, mf["objective"]))
+    MOI.set!(m, MOI.ObjectiveSense(), sense)
     for con in mf["constraints"]
         c = MOI.addconstraint!(m, parse!(mf, con["function"]), parse!(mf, con["set"]))
-        MOI.setattribute!(m, MOI.ConstraintName(), c, con["name"])
+        MOI.set!(m, MOI.ConstraintName(), c, con["name"])
         if haskey(con, "ConstraintPrimalStart")
-            MOI.setattribute!(m, MOI.ConstraintPrimalStart(), c, con["ConstraintPrimalStart"])
+            MOI.set!(m, MOI.ConstraintPrimalStart(), c, con["ConstraintPrimalStart"])
         end
         if haskey(con, "ConstraintDualStart")
-            MOI.setattribute!(m, MOI.ConstraintDualStart(), c, con["ConstraintDualStart"])
+            MOI.set!(m, MOI.ConstraintDualStart(), c, con["ConstraintDualStart"])
         end
     end
     m
