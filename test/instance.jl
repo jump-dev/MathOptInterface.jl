@@ -23,7 +23,7 @@ function nametest(instance::MOI.AbstractInstance)
         @test MOI.get(instance, MOI.VariableReference, "Var2") == v[2]
         @test_throws KeyError MOI.get(instance, MOI.VariableReference, "Var3")
 
-        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.LessThan(1.0))
+        c = MOI.addconstraint!(instance, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.LessThan(1.0))
         @test MOI.canset(instance, MOI.ConstraintName(), c)
         @test MOI.canget(instance, MOI.ConstraintName(), c)
         @test MOI.get(instance, MOI.ConstraintName(), c) == ""
