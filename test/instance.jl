@@ -6,7 +6,7 @@ MOI = MathOptInterface
 function nametest(instance::MOI.AbstractInstance)
     @testset "Name test" begin
         @test MOI.get(instance, MOI.NumberOfVariables()) == 0
-        @test MOI.get(instance, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}) == 0
+        @test MOI.get(instance, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
 
         v = MOI.addvariables!(instance, 2)
         @test MOI.canset(instance, MOI.VariableName(), v[1])
