@@ -20,8 +20,8 @@ Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vecto
 function addconstraint! end
 
 # convenient shorthands TODO: document
-addconstraint!(m::AbstractInstance, v::VariableReference, set) = addconstraint!(m, SingleVariable(v), set)
-addconstraint!(m::AbstractInstance, v::Vector{VariableReference}, set) = addconstraint!(m, VectorOfVariables(v), set)
+addconstraint!(m::AbstractInstance, v::VariableReference, set::AbstractScalarSet) = addconstraint!(m, SingleVariable(v), set)
+addconstraint!(m::AbstractInstance, v::Vector{VariableReference}, set::AbstractVectorSet) = addconstraint!(m, VectorOfVariables(v), set)
 
 """
     addconstraints!(m::AbstractInstance, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintReference{F,S}} where {F,S}
