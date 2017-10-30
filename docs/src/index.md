@@ -13,9 +13,9 @@ to address. For example, we retain the rigid input format of the MPS file that
 was designed for 1960's punchcards and inspired by the column-row input notation
 of FORTRAN despite the (near) obsolescence of these technologies.[^2] Although
 it has since been  extended to problem classes such as nonlinear and stochastic
-linear programming, MPS is also restrictive in the problems it can represent.
-This led to the development of the Conic Benchmark Format[^3], rather than a new
-extension of the MPS format.
+linear programming, MPS was not designed with extensibility in mind. This has
+led some authors (such as [^3]) to conclude that developing a new format is
+easier than extending the existing MPS format.
 
 The LP file-format also dates back to the work of Orchard-Hays who attempted to
 correct the ''mistakes'' of the MPS file-format by creating a human-readable,
@@ -23,7 +23,8 @@ row-oriented format for mathematicians.[^2] However, due to its age, there is no
 longer a single standard for the LP file-format. This has led to subtle
 differences between implementations in different readers that hampers the
 usefulness of the format as a format for interchange. Much like the MPS file, it
-is also limited in the types of problems it can represent.
+is also limited in the types of problems it can represent and was not designed
+for extensibility.
 
 In constrast to the LP file, the .NL file explicitly aims for machine-readability
 at the expense of human-readability.[^5] It is also considerably more flexible in
@@ -32,7 +33,7 @@ functions are supported). However, once again, the format is not extensible to
 new problem formats, and lacks support for conic problems.
 
 More recently, considerable work has been put into developing the OSiL format.[^4]
- In developing their format, its authors idenfied many of the challenges an
+In developing OSiL, Fourer et al. idenfied many of the challenges and
 limitations of previous formats and attempted to overcome them. In particular,
 they choose to use XML as the basis for their format. This removed the burden of
 writing custom readers and writers for each programming language that wished to
@@ -45,11 +46,16 @@ classes including nonlinear, stochastic, and conic.
 However, despite the many apparent advantages of the OSiL format, we believe it
 has enough short-comings to justify the development of a new instance format.
 Two of the main reasons are the verbosity of the XML format, and the lack of a
-strong, extensible standard form.
+strong, extensible standard form. We now address each of these two points and
+give our solutions.
 
-#### Javascript Standard Object Notation (JSON)
+#### JavaScript Object Notation (JSON)
+
+https://www.json.org/xml.html
 
 #### The MathOptInterface Standard Form
+
+http://www.juliaopt.org/MathOptInterface.jl/latest/
 
 The standard form problem is:
 
