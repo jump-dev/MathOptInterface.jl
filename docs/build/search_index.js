@@ -29,7 +29,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "The MathOptInterface Standard Form",
     "category": "section",
-    "text": "MathOptInterface is a solver abstraction layer for mathematical optimization solvers.[6] One if the core design goals of MathOptInterface is for it to\"be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions)\"The MathOptInterface standard form problem is:beginalign\n     min_x in mathbbR^n  f_0(x)\n    \n     textst  f_i(x)  in mathcalS_i  i = 1 ldots m\nendalignwhere f_i(x) is an arbitrary function and mathcalS_i is an arbitrary set.For example, instead of a le constraint (for example 3x + y le 1), we can consider the function 3x + y in the set (-infty 1."
+    "text": "MathOptInterface is a solver abstraction layer for mathematical optimization solvers.[6] One if the core design goals of MathOptInterface is for it to\"be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions).\"The MathOptInterface standard form problem is:beginalign\n     min_x in mathbbR^n  f_0(x)\n    \n     textst  f_i(x)  in mathcalS_i  i = 1 ldots m\nendalignwhere f_i(x) is an arbitrary function and mathcalS_i is an arbitrary set.For example, instead of a le constraint (for example 3x + y le 1), we can consider the function 3x + y in the set (-infty 1."
 },
 
 {
@@ -41,9 +41,9 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#The-format-1",
+    "location": "index.html#The-Format-1",
     "page": "MathOptFormat",
-    "title": "The format",
+    "title": "The Format",
     "category": "section",
     "text": ""
 },
@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Versioning",
     "category": "section",
-    "text": "{\n    \"version\": \"0\"\n}"
+    "text": "The version field stores number of the earliest version of MathOptFormat that supported all the features in the instance.\"version\": 0"
 },
 
 {
@@ -61,7 +61,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Optimization Sense",
     "category": "section",
-    "text": "{\n    \"sense\": \"min\"\n}"
+    "text": "The sense field must contain a string that is either \"min\" or \"max\". No other values are allowed.\"sense\": \"min\""
 },
 
 {
@@ -69,7 +69,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Variables",
     "category": "section",
-    "text": "{\n    \"variables\": [\n        {\"name\": \"x\"},\n        {\"name\": \"y\"}\n    ]\n}"
+    "text": "The variables field contains a list of objects (one for each variable in the model). Each variable object must contain at least the field name which records a unique string. Duplicate names are not allowed. In addition, the variable object can optionally contain any MathOptInterface variable attributes (for example VariablePrimalStart).\"variables\": [\n    {\"name\": \"x\"},\n    {\"name\": \"y\", \"VariablePrimalStart\": 1.0}\n]"
 },
 
 {
@@ -77,7 +77,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "MathOptInterface Functions",
     "category": "section",
-    "text": "{\n    \"head\": \"SingleVariable\",\n    \"variable\": \"x\"\n}"
+    "text": "A MathOptInterface function can be represented by a JSON object. Every function must have the field head which contains a string that is identical to the name of the MathOptInterface function ( SingleVariable, VectorOfVariables, ScalarAffineFunction, VectorAffineFunction, ScalarQuadraticFunction, and VectorQuadraticFunction).For example, the SingleVariable function has a single field variable. However, instead of containing a VariableReference, the MathOptFormat version contains a string that corresonds to the name of a variable in the list variables (defined above). For example:{\n    \"head\": \"SingleVariable\",\n    \"variable\": \"x\"\n}"
 },
 
 {
@@ -85,7 +85,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "MathOptInterface Sets",
     "category": "section",
-    "text": "{\n    \"head\": \"LessThan\",\n    \"upper\": 1.0\n}"
+    "text": "MathOptInterface Sets are represented in a similar manner to MathOptInterface functions.{\n    \"head\": \"LessThan\",\n    \"upper\": 1.0\n}"
 },
 
 {
@@ -93,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Objective Function",
     "category": "section",
-    "text": "{\n    \"objective\": {\n        \"head\": \"ScalarAffineFunction\",\n        \"variables\": [\"x\"],\n        \"coefficients\": [2.0],\n        \"constant\": 1.0\n    }\n}"
+    "text": "The objective field contains a MathOptInterface function (f_0(x)).\"objective\": {\n    \"head\": \"ScalarAffineFunction\",\n    \"variables\": [\"x\"],\n    \"coefficients\": [2.0],\n    \"constant\": 1.0\n}"
 },
 
 {
@@ -101,7 +101,15 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Constraints",
     "category": "section",
-    "text": "{\n    \"constraints\": [\n        {\n            \"name\": \"c1\",\n            \"set\": {\n                \"head\": \"LessThan\", \"upper\": 1.0\n            },\n            \"function\": {\n                \"head\": \"ScalarAffineFunction\",\n                \"variables\": [\"x\"],\n                \"coefficients\": [2.0],\n                \"constant\": 1.0\n\n            }\n        }\n\n    ]\n}"
+    "text": "Required: set, function. Optional: other constraint attributes. name, ConstraintPrimalStart, ConstraintDualStart{\n    \"constraints\": [\n        {\n            \"name\": \"c1\",\n            \"set\": {\n                \"head\": \"LessThan\", \"upper\": 1.0\n            },\n            \"function\": {\n                \"head\": \"ScalarAffineFunction\",\n                \"variables\": [\"x\"],\n                \"coefficients\": [2.0],\n                \"constant\": 1.0\n\n            }\n        }\n\n    ]\n}"
+},
+
+{
+    "location": "index.html#Example-1",
+    "page": "MathOptFormat",
+    "title": "Example",
+    "category": "section",
+    "text": "Consider the following LP:beginalign\n     min_xy  2x + y\n    \n     textst  x + y = 1\n    \n                      x Binary\nendalignWe can represent this in the MathOptFormat as{\n    \"author\": \"Oscar Dowson\",\n    \"description\": \"A simple example for the MathOptFormat documentation\",\n    \"version\": 0,\n    \"sense\": \"min\",\n    \"variables\": [{\"name\": \"x\"}, {\"name\": \"y\"}],\n    \"objective\": {\n        \"head\": \"ScalarAffineFunction\",\n        \"variables\": [\"x\", \"y\"],\n        \"coefficients\": [2, 1],\n        \"constant\": 0\n    }\n    \"constraints\": [\n        {\n            \"name\": \"x+y≥1\",\n            \"set\": {\"head\": \"GreaterThan\", \"lower\": 1}\n            \"function\": {\n                \"head\": \"ScalarAffineFunction\",\n                \"variables\": [\"x\", \"y\"],\n                \"coefficients\": [1, 1],\n                \"constant\": 0\n            }\n        },\n        {\n            \"name\": \"x ∈ {0,1}\",\n            \"set\": {\"head\": \"ZeroOne\"}\n            \"function\": {\n                \"head\": \"SingleVariable\",\n                \"variable\": \"x\",\n            }\n        }\n    ]\n\n}Note that in addition to the required fields, we can store additional information (such as the author and a description of the model) that is not necessary to define the model instance, but is useful human-readable metadata.Compared to the LP formulation (below), the MathOptFormat vesion is verbose and less human-readable. However, it does not require a specialised parser to read, conforms to a well standardized specification, and is extensible./ Author: Oscar Dowson\n/ Description: A simple example for the MathOptFormat documentation\nMinimize\nobj: 2x + y\nSubject To\nc1: x + y >= 1\nBounds\ny free\nBinary\nx\nEndCompared to the OSiL version (below), we would argue that the MathOptFormat is more human-readable, better standardized, and more extensible.<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osil xmlns=\"os.optimizationservices.org\">\n    <instanceHeader>\n        <name>MathOptFormat Example</name>\n        <source>Oscar Dowson</source>\n        <description>A simple example for the MathOptFormat documentation</description>\n    </instanceHeader>\n    <instanceData>\n        <variables numberOfVariables=\"2\">\n            <var lb=\"-INF\" name=\"x\" type=\"B\"/>\n            <var lb=\"-INF\" name=\"y\"/>\n        </variables>\n        <objectives numberOfObjectives=\"1\">\n            <obj maxOrMin=\"min\" numberOfObjCoef=\"2\">\n                <coef idx=\"1\">2</coef>\n                <coef idx=\"2\">1</coef>\n            </obj>\n        </objectives>\n        <constraints numberOfConstraints=\"1\">\n            <con lb=\"1.0\"/>\n        </constraints>\n        <linearConstraintCoefficients numberOfValues=\"2\">\n            <start>\n                <el>0</el><el>1</el>\n            </start>\n            <colIdx>\n                <el>0</el><el>1</el>\n            </colIdx>\n            <value>\n                <el>1</el><el>1</el>\n            </value>\n        </linearConstraintCoefficients>\n    </instanceData>\n</osil>"
 },
 
 {

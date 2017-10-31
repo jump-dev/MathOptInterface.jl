@@ -69,7 +69,7 @@ solvers.[^6] One if the core design goals of MathOptInterface is for it to
 > *"be simple and extensible, unifying linear, quadratic, and conic optimization,
 > and seamlessly facilitate extensions to essentially arbitrary constraints and
 > functions (e.g., indicator constraints, complementarity constraints, and
-> piecewise linear functions)"*
+> piecewise linear functions)."*
 
 The MathOptInterface standard form problem is:
 
@@ -90,30 +90,54 @@ we can consider the function $3x + y$ in the set $(-\infty, 1]$.
 
 https://www.json.org/xml.html
 
-## The format
+## The Format
 
 ### Versioning
 
-    {
-        "version": "0"
-    }
+The `version` field stores number of the earliest version of MathOptFormat that
+supported all the features in the instance.
+
+    "version": 0
 
 ### Optimization Sense
 
-    {
-        "sense": "min"
-    }
+The `sense` field must contain a string that is either `"min"` or `"max"`. No
+other values are allowed.
+
+    "sense": "min"
 
 ### Variables
 
-    {
-        "variables": [
-            {"name": "x"},
-            {"name": "y"}
-        ]
-    }
+The `variables` field contains a list of objects (one for each variable in the
+model). Each variable object must contain at least the field `name` which
+records a unique string. Duplicate names are not allowed. In addition, the
+variable object can optionally contain any MathOptInterface variable attributes
+(for example `VariablePrimalStart`).
+
+    "variables": [
+        {"name": "x"},
+        {"name": "y", "VariablePrimalStart": 1.0}
+    ]
 
 ### MathOptInterface Functions
+
+A MathOptInterface function can be represented by a JSON object. Every function
+must have the field `head` which contains a string that is identical to the name
+of the MathOptInterface function (
+[`SingleVariable`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.SingleVariable),
+[`VectorOfVariables`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.VectorOfVariables),
+[`ScalarAffineFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.ScalarAffineFunction),
+[`VectorAffineFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.VectorAffineFunction),
+[`ScalarQuadraticFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.ScalarQuadraticFunction),
+and
+[`VectorQuadraticFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.VectorQuadraticFunction)).
+
+
+
+For example, the [`SingleVariable`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.SingleVariable)
+function has a single field `variable`. However, instead of containing a `VariableReference`,
+the MathOptFormat version contains a string that corresonds to the name of a
+variable in the list `variables` (defined above). For example:
 
     {
         "head": "SingleVariable",
@@ -122,6 +146,9 @@ https://www.json.org/xml.html
 
 ### MathOptInterface Sets
 
+MathOptInterface Sets are represented in a similar manner to MathOptInterface
+functions.
+
     {
         "head": "LessThan",
         "upper": 1.0
@@ -129,16 +156,19 @@ https://www.json.org/xml.html
 
 ### Objective Function
 
-    {
-        "objective": {
-            "head": "ScalarAffineFunction",
-            "variables": ["x"],
-            "coefficients": [2.0],
-            "constant": 1.0
-        }
+The `objective` field contains a MathOptInterface function ($f_0(x)$).
+
+    "objective": {
+        "head": "ScalarAffineFunction",
+        "variables": ["x"],
+        "coefficients": [2.0],
+        "constant": 1.0
     }
 
 ### Constraints
+
+Required: `set`, `function`.
+Optional: other constraint attributes. `name`, `ConstraintPrimalStart`, `ConstraintDualStart`
 
     {
         "constraints": [
@@ -158,6 +188,115 @@ https://www.json.org/xml.html
 
         ]
     }
+
+## Example
+
+Consider the following LP:
+
+```math
+\begin{align}
+    & \min_{x,y} & 2x + y
+    \\
+    & \;\;\text{s.t.} & x + y >= 1
+    \\
+    &                 & x, Binary
+\end{align}
+```
+
+We can represent this in the MathOptFormat as
+
+    {
+        "author": "Oscar Dowson",
+        "description": "A simple example for the MathOptFormat documentation",
+        "version": 0,
+        "sense": "min",
+        "variables": [{"name": "x"}, {"name": "y"}],
+        "objective": {
+            "head": "ScalarAffineFunction",
+            "variables": ["x", "y"],
+            "coefficients": [2, 1],
+            "constant": 0
+        }
+        "constraints": [
+            {
+                "name": "x+y≥1",
+                "set": {"head": "GreaterThan", "lower": 1}
+                "function": {
+                    "head": "ScalarAffineFunction",
+                    "variables": ["x", "y"],
+                    "coefficients": [1, 1],
+                    "constant": 0
+                }
+            },
+            {
+                "name": "x ∈ {0,1}",
+                "set": {"head": "ZeroOne"}
+                "function": {
+                    "head": "SingleVariable",
+                    "variable": "x",
+                }
+            }
+        ]
+
+    }
+
+Note that in addition to the required fields, we can store additional information
+(such as the `author` and a `description` of the model) that is not necessary
+to define the model instance, but is useful human-readable metadata.
+
+Compared to the LP formulation (below), the MathOptFormat vesion is verbose and
+less human-readable. However, it does not require a specialised parser to read,
+conforms to a well standardized specification, and is extensible.
+
+    / Author: Oscar Dowson
+    / Description: A simple example for the MathOptFormat documentation
+    Minimize
+    obj: 2x + y
+    Subject To
+    c1: x + y >= 1
+    Bounds
+    y free
+    Binary
+    x
+    End
+
+Compared to the OSiL version (below), we would argue that the MathOptFormat is
+more human-readable, better standardized, and more extensible.
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <osil xmlns="os.optimizationservices.org">
+        <instanceHeader>
+            <name>MathOptFormat Example</name>
+            <source>Oscar Dowson</source>
+            <description>A simple example for the MathOptFormat documentation</description>
+        </instanceHeader>
+        <instanceData>
+            <variables numberOfVariables="2">
+                <var lb="-INF" name="x" type="B"/>
+                <var lb="-INF" name="y"/>
+            </variables>
+            <objectives numberOfObjectives="1">
+                <obj maxOrMin="min" numberOfObjCoef="2">
+                    <coef idx="1">2</coef>
+                    <coef idx="2">1</coef>
+                </obj>
+            </objectives>
+            <constraints numberOfConstraints="1">
+                <con lb="1.0"/>
+            </constraints>
+            <linearConstraintCoefficients numberOfValues="2">
+                <start>
+                    <el>0</el><el>1</el>
+                </start>
+                <colIdx>
+                    <el>0</el><el>1</el>
+                </colIdx>
+                <value>
+                    <el>1</el><el>1</el>
+                </value>
+            </linearConstraintCoefficients>
+        </instanceData>
+    </osil>
 
 ## References
 
