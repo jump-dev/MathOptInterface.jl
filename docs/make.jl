@@ -3,9 +3,9 @@ using Documenter, MathOptFormat
 makedocs(
     clean = false,
     format = :html,
-    sitename = "MathOptFormat.jl",
+    sitename = "MathOptFormat",
     pages = [
-        "Manual" => "index.md"
+        "MathOptFormat" => "index.md"
     ],
     assets = ["assets/custom.css"]
 )

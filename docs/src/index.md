@@ -1,8 +1,6 @@
-## MathOptFormat.jl
-
 *The file format is under active development. No backward compatibility yet!*
 
-### Background
+## Background
 
 In order to use an optimization solver, it is necessary to communicate a model
 instance to the solver.[^1] Many different instance formats have been proposed
@@ -46,28 +44,9 @@ classes including nonlinear, stochastic, and conic.
 However, despite the many apparent advantages of the OSiL format, we believe it
 has enough short-comings to justify the development of a new instance format.
 Two of the main reasons are the verbosity of the XML format, and the lack of a
-strong, extensible standard form. We now address each of these two points and
-give our solutions.
+strong, extensible standard form.
 
-#### JavaScript Object Notation (JSON)
-
-https://www.json.org/xml.html
-
-#### The MathOptInterface Standard Form
-
-http://www.juliaopt.org/MathOptInterface.jl/latest/
-
-The standard form problem is:
-
-```math
-\begin{align}
-    & \min_{x \in \mathbb{R}^n} & f_0(x)
-    \\
-    & \;\;\text{s.t.} & f_i(x) & \in \mathcal{S}_i & i = 1 \ldots m
-\end{align}
-```
-
-#### Project Goals
+### Project Goals
 
 With this understanding of the history and evolution of different file-formats,
 the following goals guided our development of the MathOptFormat:
@@ -82,19 +61,105 @@ the following goals guided our development of the MathOptFormat:
  - **Extensible**: the format should be able to be easily extended to incorporate
     new problem-classes as they arise.
 
-### The format
+## The MathOptInterface Standard Form
 
-We choose the "function-in-set" standard form approach of MathOptInterface.jl.
+MathOptInterface is a solver abstraction layer for mathematical optimization
+solvers.[^6] One if the core design goals of MathOptInterface is for it to
 
-This is a high-level standard form that enables a high degree of flexibility,
-yet allows a detailed description of the individual components.
+> *"be simple and extensible, unifying linear, quadratic, and conic optimization,
+> and seamlessly facilitate extensions to essentially arbitrary constraints and
+> functions (e.g., indicator constraints, complementarity constraints, and
+> piecewise linear functions)"*
 
-This allows new functions and sets to be added in a compatible way.
+The MathOptInterface standard form problem is:
 
-The choice of a markup language (JSON) also allows arbitrary fields to be added
-to extend the format.
+```math
+\begin{align}
+    & \min_{x \in \mathbb{R}^n} & f_0(x)
+    \\
+    & \;\;\text{s.t.} & f_i(x) & \in \mathcal{S}_i & i = 1 \ldots m
+\end{align}
+```
 
-### References
+where $f_i(x)$ is an arbitrary function and $\mathcal{S}_i$ is an arbitrary set.
+
+For example, instead of a $\le$ constraint (for example $3x + y \le 1$),
+we can consider the function $3x + y$ in the set $(-\infty, 1]$.
+
+## JavaScript Object Notation (JSON)
+
+https://www.json.org/xml.html
+
+## The format
+
+### Versioning
+
+    {
+        "version": "0"
+    }
+
+### Optimization Sense
+
+    {
+        "sense": "min"
+    }
+
+### Variables
+
+    {
+        "variables": [
+            {"name": "x"},
+            {"name": "y"}
+        ]
+    }
+
+### MathOptInterface Functions
+
+    {
+        "head": "SingleVariable",
+        "variable": "x"
+    }
+
+### MathOptInterface Sets
+
+    {
+        "head": "LessThan",
+        "upper": 1.0
+    }
+
+### Objective Function
+
+    {
+        "objective": {
+            "head": "ScalarAffineFunction",
+            "variables": ["x"],
+            "coefficients": [2.0],
+            "constant": 1.0
+        }
+    }
+
+### Constraints
+
+    {
+        "constraints": [
+            {
+                "name": "c1",
+                "set": {
+                    "head": "LessThan", "upper": 1.0
+                },
+                "function": {
+                    "head": "ScalarAffineFunction",
+                    "variables": ["x"],
+                    "coefficients": [2.0],
+                    "constant": 1.0
+
+                }
+            }
+
+        ]
+    }
+
+## References
 
 [^1]: Gassmann, H., Ma, J., Martin, K. (2010). [Instance Formats for Mathematical Optimization Models](https://www.coin-or.org/OS/publications/instanceformats_encyclopedia2009.pdf). In *Wiley Encyclopedia of Operations Research and Management Science*.
 
@@ -105,3 +170,5 @@ to extend the format.
 [^4]: Fourer, R., Jun M., Kipp M. (2010). [OSiL: An Instance Language for Optimization](https://www.coin-or.org/OS/publications/OSiL%201_0%20FINAL.pdf). *Computational Optimization and Applications 45*(1): 181–203.
 
 [^5]: Gay, D. (1995). [*Writing .nl Files*](https://cfwebprod.sandia.gov/cfdocs/CompResearch/docs/nlwrite20051130.pdf) (SAND2005-7907P). Sandia National Laboratories, Albuquerque, NM.
+
+[^6]: Lubin, M. et al. (2017). [MathOptInterface.jl](http://www.juliaopt.org/MathOptInterface.jl/latest/). URL:[MathOptInterface.jl](http://www.juliaopt.org/MathOptInterface.jl/latest/)
