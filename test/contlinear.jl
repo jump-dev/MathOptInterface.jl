@@ -791,7 +791,7 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
         x = MOI.addvariable!(m)
         y = MOI.addvariable!(m)
         c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [2.0,-3.0], 0.0), MOI.LessThan(-7.0))
-        c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([y], [1.0], 0.0), MOI.LessThan(0.0))
+        c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([y], [1.0], 0.0), MOI.LessThan(2.0))
         bndx = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
         bndy = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
         MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x], [1.0], 0.0))
