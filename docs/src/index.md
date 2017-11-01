@@ -8,12 +8,11 @@ over the years, but only a few (such as MPS) have become the industry standard.
 
 Each format is a product of its time in history, and the problem class it tried
 to address. For example, we retain the rigid input format of the MPS file that
-was designed for 1960's punchcards and inspired by the column-row input notation
-of FORTRAN despite the (near) obsolescence of these technologies.[^2] Although
-it has since been  extended to problem classes such as nonlinear and stochastic
-linear programming, MPS was not designed with extensibility in mind. This has
-led some authors (such as [^3]) to conclude that developing a new format is
-easier than extending the existing MPS format.
+was designed for 1960's punchcards despite the obsolescence of this
+technology.[^2] Although it has since been  extended to problem classes such as
+nonlinear and stochastic linear programming, MPS was not designed with
+extensibility in mind. This has led some authors (such as [^3]) to conclude that
+developing a new format is easier than extending the existing MPS format.
 
 The LP file-format also dates back to the work of Orchard-Hays who attempted to
 correct the ''mistakes'' of the MPS file-format by creating a human-readable,
@@ -92,6 +91,12 @@ https://www.json.org/xml.html
 
 ## The Format
 
+A MathOptFormat instance is a text representation of the model as a JSON object.
+The object must have the following fields: `version`, `sense`, `variables`,
+`objective` and `constraints`. Users may also choose to add optional fields
+such as `author` to provide contextual information for humans reading the instance.
+Parsers may choose to ignore these fields.
+
 ### Versioning
 
 The `version` field stores number of the earliest version of MathOptFormat that
@@ -132,12 +137,14 @@ of the MathOptInterface function (
 and
 [`VectorQuadraticFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.VectorQuadraticFunction)).
 
-
+In addition, there must be a one-to-one mapping between the field names of the
+MathOptInterface type, and the fields in the JSON object. However, instead of
+refering to variables in the model using `VariableReference`s, the MathOptFormat
+version uses the string that corresonds to the name of the variable in the list
+`variables` (defined above).
 
 For example, the [`SingleVariable`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.SingleVariable)
-function has a single field `variable`. However, instead of containing a `VariableReference`,
-the MathOptFormat version contains a string that corresonds to the name of a
-variable in the list `variables` (defined above). For example:
+function has a single field `variable`. For example:
 
     {
         "head": "SingleVariable",
@@ -167,8 +174,10 @@ The `objective` field contains a MathOptInterface function ($f_0(x)$).
 
 ### Constraints
 
-Required: `set`, `function`.
-Optional: other constraint attributes. `name`, `ConstraintPrimalStart`, `ConstraintDualStart`
+Each constraint is a JSON object with two required fields: `set`, and `function`.
+The values associated with these fields must be a valid MathOptInterface set and
+function respectively. In addition, the object can contain MathOptInterface
+constraint attributes such as `name`, `ConstraintPrimalStart`, and `ConstraintDualStart`.
 
     {
         "constraints": [
