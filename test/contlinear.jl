@@ -782,14 +782,16 @@ end
 function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     @testset "test infeasible problem" begin
         # min x
-        # s.t. 2x+y <= -1
+        # s.t. 2x-3y <= -7
+        #      y <= 2
         # x,y >= 0
         @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
 
         m = MOI.SolverInstance(solver)
         x = MOI.addvariable!(m)
         y = MOI.addvariable!(m)
-        c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [2.0,1.0], 0.0), MOI.LessThan(-1.0))
+        c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [2.0,-3.0], 0.0), MOI.LessThan(-7.0))
+        c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([y], [1.0], 0.0), MOI.LessThan(2.0))
         bndx = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
         bndy = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
         MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x], [1.0], 0.0))
@@ -801,9 +803,10 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
             # solver returned an infeasibility ray
             @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
             @test MOI.get(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
-            @test MOI.canget(m, MOI.ConstraintDual(), c)
-            cd = MOI.get(m, MOI.ConstraintDual(), c)
-            @test cd < -atol
+            @test MOI.canget(m, MOI.ConstraintDual(), c1)
+            cd1 = MOI.get(m, MOI.ConstraintDual(), c1)
+            cd2 = MOI.get(m, MOI.ConstraintDual(), c2)
+            @test cd2/cd1 ≈ 3 atol=atol
             # TODO: farkas dual on bounds - see #127
             # xd = MOI.get(m, MOI.ConstraintDual(), bndx)
             # yd = MOI.get(m, MOI.ConstraintDual(), bndy)
