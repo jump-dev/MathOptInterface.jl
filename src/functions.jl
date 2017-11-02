@@ -1,70 +1,26 @@
 # Functions
 
 """
-    AbstractFunction{V}
+    AbstractFunction
 
-Abstract supertype for function objects. The parameter `V` indicates the variable type, usually `VariableReference`.
+Abstract supertype for function objects.
 """
-abstract type AbstractFunction{V} end
-
-"""
-    AbstractScalarFunction{V}
-
-Abstract supertype for scalar-valued function objects. The parameter `V` indicates the variable type, usually `VariableReference`.
+abstract type AbstractFunction end
 
 """
-abstract type AbstractScalarFunction{V} <: AbstractFunction{V} end
+    AbstractScalarFunction
+
+Abstract supertype for scalar-valued function objects.
+"""
+abstract type AbstractScalarFunction <: AbstractFunction end
 
 """
-    AbstractVectorFunction{V}
+    AbstractVectorFunction
 
-Abstract supertype for vector-valued function objects. The parameter `V` indicates the variable type, usually `VariableReference`.
-
+Abstract supertype for vector-valued function objects.
 """
-abstract type AbstractVectorFunction{V} <: AbstractFunction{V} end
+abstract type AbstractVectorFunction <: AbstractFunction end
 
-# These generic functions are not used directly in MOI, but are useful in related interfaces where other objects stand in for VariableReference.
-
-struct GenericSingleVariable{V} <: AbstractScalarFunction{V}
-    variable::V
-end
-
-struct GenericVectorOfVariables{V} <: AbstractVectorFunction{V}
-    variables::Vector{V}
-end
-
-struct GenericScalarAffineFunction{V,T} <: AbstractScalarFunction{V}
-    variables::Vector{V}
-    coefficients::Vector{T}
-    constant::T
-end
-
-struct GenericVectorAffineFunction{V,T} <: AbstractVectorFunction{V}
-    outputindex::Vector{Int}
-    variables::Vector{V}
-    coefficients::Vector{T}
-    constant::Vector{T}
-end
-
-struct GenericScalarQuadraticFunction{V,T} <: AbstractScalarFunction{V}
-    affine_variables::Vector{V}
-    affine_coefficients::Vector{T}
-    quadratic_rowvariables::Vector{V}
-    quadratic_colvariables::Vector{V}
-    quadratic_coefficients::Vector{T}
-    constant::T
-end
-
-struct GenericVectorQuadraticFunction{V,T} <: AbstractVectorFunction{V}
-    affine_outputindex::Vector{Int}
-    affine_variables::Vector{V}
-    affine_coefficients::Vector{T}
-    quadratic_outputindex::Vector{Int}
-    quadratic_rowvariables::Vector{V}
-    quadratic_colvariables::Vector{V}
-    quadratic_coefficients::Vector{T}
-    constant::Vector{T}
-end
 
 """
     SingleVariable(variable)
@@ -72,7 +28,9 @@ end
 The function that extracts the scalar variable referenced by `variable`, a `VariableReference`.
 This function is naturally be used for single variable bounds or integrality constraints.
 """
-const SingleVariable = GenericSingleVariable{VariableReference}
+struct SingleVariable <: AbstractScalarFunction
+    variable::VariableReference
+end
 
 """
     VectorOfVariables(variables)
@@ -80,7 +38,9 @@ const SingleVariable = GenericSingleVariable{VariableReference}
 The function that extracts the vector of variables referenced by `variables`, a `Vector{VariableReference}`.
 This function is naturally be used for constraints that apply to groups of variables, such as an "all different" constraint, an indicator constraint, or a complementarity constraint.
 """
-const VectorOfVariables = GenericVectorOfVariables{VariableReference}
+struct VectorOfVariables <: AbstractVectorFunction
+    variables::Vector{VariableReference}
+end
 
 """
     ScalarAffineFunction{T}(variables, coefficients, constant)
@@ -91,7 +51,11 @@ The scalar-valued affine function ``a^T x + b``, where:
 
 Duplicate variable references in `variables` are accepted, and the corresponding coefficients are summed together.
 """
-const ScalarAffineFunction = GenericScalarAffineFunction{VariableReference}
+struct ScalarAffineFunction{T} <: AbstractScalarFunction
+    variables::Vector{VariableReference}
+    coefficients::Vector{T}
+    constant::T
+end
 
 """
     VectorAffineFunction{T}(outputindex, variables, coefficients, constant)
@@ -102,7 +66,12 @@ The vector-valued affine function ``A x + b``, where:
 
 Duplicate indices in the ``A`` are accepted, and the corresponding coefficients are summed together.
 """
-const VectorAffineFunction = GenericVectorAffineFunction{VariableReference}
+struct VectorAffineFunction{T} <: AbstractVectorFunction
+    outputindex::Vector{Int}
+    variables::Vector{VariableReference}
+    coefficients::Vector{T}
+    constant::Vector{T}
+end
 
 """
     ScalarQuadraticFunction{T}(affine_variables, affine_coefficients, quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients, constant)
@@ -115,7 +84,14 @@ The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
 Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together.
 "Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
 """
-const ScalarQuadraticFunction = GenericScalarQuadraticFunction{VariableReference}
+struct ScalarQuadraticFunction{T} <: AbstractScalarFunction
+    affine_variables::Vector{VariableReference}
+    affine_coefficients::Vector{T}
+    quadratic_rowvariables::Vector{VariableReference}
+    quadratic_colvariables::Vector{VariableReference}
+    quadratic_coefficients::Vector{T}
+    constant::T
+end
 
 
 """
@@ -129,8 +105,16 @@ The vector-valued quadratic function with i`th` component ("output index") defin
 Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding coefficients are summed together.
 "Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
 """
-const VectorQuadraticFunction = GenericVectorQuadraticFunction{VariableReference}
-
+struct VectorQuadraticFunction{T} <: AbstractVectorFunction
+    affine_outputindex::Vector{Int}
+    affine_variables::Vector{VariableReference}
+    affine_coefficients::Vector{T}
+    quadratic_outputindex::Vector{Int}
+    quadratic_rowvariables::Vector{VariableReference}
+    quadratic_colvariables::Vector{VariableReference}
+    quadratic_coefficients::Vector{T}
+    constant::Vector{T}
+end
 
 # Function modifications
 
@@ -138,28 +122,9 @@ const VectorQuadraticFunction = GenericVectorQuadraticFunction{VariableReference
 """
     AbstractFunctionModification
 
-An abstract supertype for structs which specify partial modifications to functions, to be used for making small modifications instead of replacing the functions entirely. The parameter `V` indicates the variable type, usually `VariableReference`.
+An abstract supertype for structs which specify partial modifications to functions, to be used for making small modifications instead of replacing the functions entirely.
 """
-abstract type AbstractFunctionModification{V} end
-
-struct GenericScalarConstantChange{V,T} <: AbstractFunctionModification{V}
-    new_constant::T
-end
-
-struct GenericVectorConstantChange{V,T} <: AbstractFunctionModification{V}
-    new_constant::Vector{T}
-end
-
-struct GenericScalarCoefficientChange{V,T} <: AbstractFunctionModification{V}
-    variable::V
-    new_coefficient::T
-end
-
-struct GenericMultirowChange{V,T} <: AbstractFunctionModification{V}
-    variable::V
-    rows::Vector{Int}
-    new_coefficients::Vector{T}
-end
+abstract type AbstractFunctionModification end
 
 """
     ScalarConstantChange{T}(new_constant)
@@ -167,7 +132,9 @@ end
 A struct used to request a change in the constant term of a scalar-valued function.
 Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
 """
-const ScalarConstantChange = GenericScalarConstantChange{VariableReference}
+struct ScalarConstantChange{T} <: AbstractFunctionModification
+    new_constant::T
+end
 
 """
     VectorConstantChange{T}(new_constant)
@@ -175,7 +142,9 @@ const ScalarConstantChange = GenericScalarConstantChange{VariableReference}
 A struct used to request a change in the constant vector of a vector-valued function.
 Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
 """
-const VectorConstantChange = GenericVectorConstantChange{VariableReference}
+struct VectorConstantChange{T} <: AbstractFunctionModification
+    new_constant::Vector{T}
+end
 
 """
     ScalarCoefficientChange{T}(variable, new_coefficient)
@@ -184,7 +153,10 @@ A struct used to request a change in the linear coefficient of a single variable
 in a scalar-valued function.
 Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
 """
-const ScalarCoefficientChange = GenericScalarCoefficientChange{VariableReference}
+struct ScalarCoefficientChange{T} <: AbstractFunctionModification
+    variable::VariableReference
+    new_coefficient::T
+end
 
 """
     MultirowChange{T}(variable, rows, new_coefficients)
@@ -193,4 +165,8 @@ A struct used to request a change in the linear coefficients of a single variabl
 in a vector-valued function.
 Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
 """
-const MultirowChange = GenericMultirowChange{VariableReference}
+struct MultirowChange{T} <: AbstractFunctionModification
+    variable::VariableReference
+    rows::Vector{Int}
+    new_coefficients::Vector{T}
+end
