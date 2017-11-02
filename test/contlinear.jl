@@ -1090,11 +1090,12 @@ function linear12test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
             @test MOI.canget(m, MOI.ConstraintDual(), c1)
             cd1 = MOI.get(m, MOI.ConstraintDual(), c1)
             cd2 = MOI.get(m, MOI.ConstraintDual(), c2)
+            bndxd = MOI.get(m, MOI.ConstraintDual(), bndx)
             bndyd = MOI.get(m, MOI.ConstraintDual(), bndy)
             @test cd1 < atol
             @test cd2 < atol
-            @test - 3 * cd1 + cd2 ≈ bndyd atol=atol rtol=rtol
-            @test 2 * cd1 ≈ bndxd atol=atol rtol=rtol
+            @test - 3 * cd1 + cd2 ≈ -bndyd atol=atol rtol=rtol
+            @test 2 * cd1 ≈ -bndxd atol=atol rtol=rtol
             @test -7 * cd1 + 2 * cd2 > -atol 
         else
             # solver returned nothing
@@ -1118,4 +1119,5 @@ function contlineartest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float6
     linear9test(solver, atol=atol, rtol=rtol)
     linear10test(solver, atol=atol, rtol=rtol)
     linear11test(solver, atol=atol, rtol=rtol)
+    linear12test(solver, atol=atol, rtol=rtol)
 end
