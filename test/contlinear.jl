@@ -1093,9 +1093,9 @@ function linear12test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
             bndyd = MOI.get(m, MOI.ConstraintDual(), bndy)
             @test cd1 < atol
             @test cd2 < atol
-            @test - 3 cd1 + cd2 ≈ bndyd atol=atol rtol=rtol
-            @test 2 cd1 ≈ bndxd atol=atol rtol=rtol
-            @test cd1 + cd2 > -atol 
+            @test - 3 * cd1 + cd2 ≈ bndyd atol=atol rtol=rtol
+            @test 2 * cd1 ≈ bndxd atol=atol rtol=rtol
+            @test -7 * cd1 + 2 * cd2 > -atol 
         else
             # solver returned nothing
             @test MOI.get(m, MOI.ResultCount()) == 0
