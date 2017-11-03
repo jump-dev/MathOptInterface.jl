@@ -1063,6 +1063,50 @@ function linear11test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64)
     end
 end
 
+function linear12test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
+    @testset "test infeasible problem with 2 linear constraints" begin
+        # min x
+        # s.t. 2x-3y <= -7
+        #      y <= 2
+        # x,y >= 0
+        @test MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+        m = MOI.SolverInstance(solver)
+        x = MOI.addvariable!(m)
+        y = MOI.addvariable!(m)
+        c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([x,y], [2.0,-3.0], 0.0), MOI.LessThan(-7.0))
+        c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([y], [1.0], 0.0), MOI.LessThan(2.0))
+        bndx = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        bndy = MOI.addconstraint!(m, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+        MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x], [1.0], 0.0))
+        MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+        MOI.optimize!(m)
+
+        @test MOI.canget(m, MOI.ResultCount())
+        if MOI.get(m, MOI.ResultCount()) >= 1
+            # solver returned an infeasibility ray
+            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.get(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            @test MOI.canget(m, MOI.ConstraintDual(), c1)
+            cd1 = MOI.get(m, MOI.ConstraintDual(), c1)
+            cd2 = MOI.get(m, MOI.ConstraintDual(), c2)
+            bndxd = MOI.get(m, MOI.ConstraintDual(), bndx)
+            bndyd = MOI.get(m, MOI.ConstraintDual(), bndy)
+            @test cd1 < - atol
+            @test cd2 < - atol
+            @test - 3 * cd1 + cd2 ≈ -bndyd atol=atol rtol=rtol
+            @test 2 * cd1 ≈ -bndxd atol=atol rtol=rtol
+            @test -7 * cd1 + 2 * cd2 > atol 
+        else
+            # solver returned nothing
+            @test MOI.get(m, MOI.ResultCount()) == 0
+            @test MOI.canget(m, MOI.PrimalStatus(1)) == false
+            @test MOI.get(m, MOI.TerminationStatus()) == MOI.InfeasibleNoResult ||
+                MOI.get(m, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
+        end
+    end
+end
+
 function contlineartest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
     linear1test(solver, atol=atol, rtol=rtol)
     linear2test(solver, atol=atol, rtol=rtol)
@@ -1075,4 +1119,5 @@ function contlineartest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float6
     linear9test(solver, atol=atol, rtol=rtol)
     linear10test(solver, atol=atol, rtol=rtol)
     linear11test(solver, atol=atol, rtol=rtol)
+    linear12test(solver, atol=atol, rtol=rtol)
 end
