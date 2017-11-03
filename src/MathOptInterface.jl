@@ -82,7 +82,7 @@ Supported file types depend on the instance type.
 Read the model from the instance `src` into the instance `m`. If `m` is
 non-empty, this may throw an error.
 """
-function readinstance end
+function readinstance! end
 
 """
     supportsproblem(s::AbstractSolver, objective_type::F, constraint_types::Vector)::Bool
