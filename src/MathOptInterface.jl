@@ -70,10 +70,17 @@ Supported file types depend on the solver or standalone instance type.
 function writeinstance end
 
 """
-    readinstance(solver::AbstractSolver, filename::String)
+    readinstance!(m::AbstractInstance, filename::String)
 
-Create a new solver instance from the file `filename` using the solver `solver`.
-Supported file types depend on the solver.
+Read the file `filename` into the instance `m`. If `m` is non-empty, this may
+throw an error.
+
+Supported file types depend on the instance type.
+
+    readinstance!(m::AbstractInstance, src::AbstractInstance)
+
+Read the model from the instance `src` into the instance `m`. If `m` is
+non-empty, this may throw an error.
 """
 function readinstance end
 
