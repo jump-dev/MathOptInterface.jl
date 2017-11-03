@@ -52,8 +52,9 @@ SupportsConicThroughQuadratic
 AbstractInstance
 AbstractStandaloneInstance
 AbstractSolverInstance
-writeinstance
-readinstance!
+write
+read!
+copy!
 ```
 
 List of instance attributes

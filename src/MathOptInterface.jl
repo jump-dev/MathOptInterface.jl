@@ -62,27 +62,30 @@ Users must discard the solver instance object after this method is invoked.
 function free! end
 
 """
-    writeinstance(m::AbstractInstance, filename::String)
+    write(m::AbstractInstance, filename::String)
 
 Writes the current instance data to the given file.
 Supported file types depend on the solver or standalone instance type.
 """
-function writeinstance end
+function write end
 
 """
-    readinstance!(m::AbstractInstance, filename::String)
+    read!(m::AbstractInstance, filename::String)
 
 Read the file `filename` into the instance `m`. If `m` is non-empty, this may
 throw an error.
 
 Supported file types depend on the instance type.
+"""
+function read! end
 
-    readinstance!(m::AbstractInstance, src::AbstractInstance)
+"""
+    copy!(dest::AbstractInstance, src::AbstractInstance)
 
-Read the model from the instance `src` into the instance `m`. If `m` is
+Copy the model from the instance `src` into the instance `dest`. If `dest` is
 non-empty, this may throw an error.
 """
-function readinstance! end
+function copy! end
 
 """
     supportsproblem(s::AbstractSolver, objective_type::F, constraint_types::Vector)::Bool
