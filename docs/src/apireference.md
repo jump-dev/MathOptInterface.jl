@@ -53,6 +53,7 @@ AbstractInstance
 AbstractStandaloneInstance
 AbstractSolverInstance
 writeinstance
+readinstance
 ```
 
 List of instance attributes

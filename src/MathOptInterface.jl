@@ -70,6 +70,14 @@ Supported file types depend on the solver or standalone instance type.
 function writeinstance end
 
 """
+    readinstance(solver::AbstractSolver, filename::String)
+
+Create a new solver instance from the file `filename` using the solver `solver`.
+Supported file types depend on the solver.
+"""
+function readinstance end
+
+"""
     supportsproblem(s::AbstractSolver, objective_type::F, constraint_types::Vector)::Bool
 
 Return `true` if the solver supports optimizing a problem with objective type `F` and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
