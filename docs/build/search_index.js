@@ -29,15 +29,15 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "The MathOptInterface Standard Form",
     "category": "section",
-    "text": "MathOptInterface is a solver abstraction layer for mathematical optimization solvers.[6] One if the core design goals of MathOptInterface is for it to\"be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions).\"The MathOptInterface standard form problem is:beginalign\n     min_x in mathbbR^n  f_0(x)\n    \n     textst  f_i(x)  in mathcalS_i  i = 1 ldots m\nendalignwhere f_i(x) is an arbitrary function and mathcalS_i is an arbitrary set.For example, instead of a le constraint (for example 3x + y le 1), we can consider the function 3x + y in the set (-infty 1."
+    "text": "MathOptInterface is a solver abstraction layer for mathematical optimization solvers.[6] One if the core design goals of MathOptInterface is for it to\"be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions).\"The MathOptInterface standard form problem is:beginalign\n     min_x in mathbbR^n  f_0(x)\n    \n     textst  f_i(x)  in mathcalS_i  i = 1 ldots m\nendalignwhere f_i(x) is an arbitrary function and mathcalS_i is an arbitrary set.For example, instead of thinking of the constraint 3x + y le 1 as a ''less than or equal to\" constraint, we can think of the constraint as enforcing the function 3x + y to be inside the set (-infty 1.This approach turns out to be very general, as instead of thinking of variable as being ''binary'', we say the function x belongs to the set 0 1. Instead of a variable being semicontinuous, we say the function x belongs to the set 0 cup l u."
 },
 
 {
-    "location": "index.html#JavaScript-Object-Notation-(JSON)-1",
+    "location": "index.html#Why-JSON?-1",
     "page": "MathOptFormat",
-    "title": "JavaScript Object Notation (JSON)",
+    "title": "Why JSON?",
     "category": "section",
-    "text": "https://www.json.org/xml.html"
+    "text": "One reason for developing a new instance format rather than improving OSiL is its use of XML. Although XML has many advantages (a strictly defined schema for example), the format is almost too general (and too verbose) for our purposes.In constrast, JSON is a much simpler format, and is only able to store six different data types: string, number, object, array, boolean and null.In almost all programming languages, these map directly to native language constructs (object being a dictionary or a key-value mapping).https://www.json.org/xml.html"
 },
 
 {
@@ -109,7 +109,39 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Example",
     "category": "section",
-    "text": "Consider the following LP:beginalign\n     min_xy  2x + y\n    \n     textst  x + y = 1\n    \n                      x Binary\nendalignWe can represent this in the MathOptFormat as{\n    \"author\": \"Oscar Dowson\",\n    \"description\": \"A simple example for the MathOptFormat documentation\",\n    \"version\": 0,\n    \"sense\": \"min\",\n    \"variables\": [{\"name\": \"x\"}, {\"name\": \"y\"}],\n    \"objective\": {\n        \"head\": \"ScalarAffineFunction\",\n        \"variables\": [\"x\", \"y\"],\n        \"coefficients\": [2, 1],\n        \"constant\": 0\n    }\n    \"constraints\": [\n        {\n            \"name\": \"x+y≥1\",\n            \"set\": {\"head\": \"GreaterThan\", \"lower\": 1}\n            \"function\": {\n                \"head\": \"ScalarAffineFunction\",\n                \"variables\": [\"x\", \"y\"],\n                \"coefficients\": [1, 1],\n                \"constant\": 0\n            }\n        },\n        {\n            \"name\": \"x ∈ {0,1}\",\n            \"set\": {\"head\": \"ZeroOne\"}\n            \"function\": {\n                \"head\": \"SingleVariable\",\n                \"variable\": \"x\",\n            }\n        }\n    ]\n\n}Note that in addition to the required fields, we can store additional information (such as the author and a description of the model) that is not necessary to define the model instance, but is useful human-readable metadata.Compared to the LP formulation (below), the MathOptFormat vesion is verbose and less human-readable. However, it does not require a specialised parser to read, conforms to a well standardized specification, and is extensible./ Author: Oscar Dowson\n/ Description: A simple example for the MathOptFormat documentation\nMinimize\nobj: 2x + y\nSubject To\nc1: x + y >= 1\nBounds\ny free\nBinary\nx\nEndCompared to the OSiL version (below), we would argue that the MathOptFormat is more human-readable, better standardized, and more extensible.<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osil xmlns=\"os.optimizationservices.org\">\n    <instanceHeader>\n        <name>MathOptFormat Example</name>\n        <source>Oscar Dowson</source>\n        <description>A simple example for the MathOptFormat documentation</description>\n    </instanceHeader>\n    <instanceData>\n        <variables numberOfVariables=\"2\">\n            <var lb=\"-INF\" name=\"x\" type=\"B\"/>\n            <var lb=\"-INF\" name=\"y\"/>\n        </variables>\n        <objectives numberOfObjectives=\"1\">\n            <obj maxOrMin=\"min\" numberOfObjCoef=\"2\">\n                <coef idx=\"1\">2</coef>\n                <coef idx=\"2\">1</coef>\n            </obj>\n        </objectives>\n        <constraints numberOfConstraints=\"1\">\n            <con lb=\"1.0\"/>\n        </constraints>\n        <linearConstraintCoefficients numberOfValues=\"2\">\n            <start>\n                <el>0</el><el>1</el>\n            </start>\n            <colIdx>\n                <el>0</el><el>1</el>\n            </colIdx>\n            <value>\n                <el>1</el><el>1</el>\n            </value>\n        </linearConstraintCoefficients>\n    </instanceData>\n</osil>"
+    "text": "Consider the following LP:beginalign\n     min_xy  2x + y\n    \n     textst  x + y = 1\n    \n                      x Binary\nendalign"
+},
+
+{
+    "location": "index.html#MathOptFormat-1",
+    "page": "MathOptFormat",
+    "title": "MathOptFormat",
+    "category": "section",
+    "text": "We can represent this in the MathOptFormat as{\n    \"author\": \"Oscar Dowson\",\n    \"description\": \"A simple example for the MathOptFormat documentation\",\n    \"version\": 0,\n    \"sense\": \"min\",\n    \"variables\": [{\"name\": \"x\"}, {\"name\": \"y\"}],\n    \"objective\": {\n        \"head\": \"ScalarAffineFunction\",\n        \"variables\": [\"x\", \"y\"],\n        \"coefficients\": [2, 1],\n        \"constant\": 0\n    }\n    \"constraints\": [\n        {\n            \"name\": \"x+y≥1\",\n            \"set\": {\"head\": \"GreaterThan\", \"lower\": 1}\n            \"function\": {\n                \"head\": \"ScalarAffineFunction\",\n                \"variables\": [\"x\", \"y\"],\n                \"coefficients\": [1, 1],\n                \"constant\": 0\n            }\n        },\n        {\n            \"name\": \"x ∈ {0,1}\",\n            \"set\": {\"head\": \"ZeroOne\"}\n            \"function\": {\n                \"head\": \"SingleVariable\",\n                \"variable\": \"x\",\n            }\n        }\n    ]\n\n}Note that in addition to the required fields, we can store additional information (such as the author and a description of the model) that is not necessary to define the model instance, but is useful human-readable metadata."
+},
+
+{
+    "location": "index.html#LP-1",
+    "page": "MathOptFormat",
+    "title": "LP",
+    "category": "section",
+    "text": "Compared to the LP formulation (below), the MathOptFormat vesion is verbose and less human-readable. However, it does not require a specialised parser to read, conforms to a well standardized specification, and is extensible./ Author: Oscar Dowson\n/ Description: A simple example for the MathOptFormat documentation\nMinimize\nobj: 2x + y\nSubject To\nc1: x + y >= 1\nBounds\ny free\nBinary\nx\nEnd"
+},
+
+{
+    "location": "index.html#OSiL-1",
+    "page": "MathOptFormat",
+    "title": "OSiL",
+    "category": "section",
+    "text": "Compared to the OSiL version (below), we would argue that the MathOptFormat is more human-readable, better standardized, and more extensible.<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<osil xmlns=\"os.optimizationservices.org\">\n    <instanceHeader>\n        <name>MathOptFormat Example</name>\n        <source>Oscar Dowson</source>\n        <description>A simple example for the MathOptFormat documentation</description>\n    </instanceHeader>\n    <instanceData>\n        <variables numberOfVariables=\"2\">\n            <var lb=\"-INF\" name=\"x\" type=\"B\"/>\n            <var lb=\"-INF\" name=\"y\"/>\n        </variables>\n        <objectives numberOfObjectives=\"1\">\n            <obj maxOrMin=\"min\" numberOfObjCoef=\"2\">\n                <coef idx=\"1\">2</coef>\n                <coef idx=\"2\">1</coef>\n            </obj>\n        </objectives>\n        <constraints numberOfConstraints=\"1\">\n            <con lb=\"1.0\"/>\n        </constraints>\n        <linearConstraintCoefficients numberOfValues=\"2\">\n            <start>\n                <el>0</el><el>1</el>\n            </start>\n            <colIdx>\n                <el>0</el><el>1</el>\n            </colIdx>\n            <value>\n                <el>1</el><el>1</el>\n            </value>\n        </linearConstraintCoefficients>\n    </instanceData>\n</osil>"
+},
+
+{
+    "location": "index.html#MathOptFormat.jl-1",
+    "page": "MathOptFormat",
+    "title": "MathOptFormat.jl",
+    "category": "section",
+    "text": "using MathOptFormat, MathOptInterface\nconst MOI = MathOptInterface\n\nm = MathOptFormat.MOFFile()\n\n# Add in extra metadata\nm[\"author\"] = \"Oscar Dowson\"\nm[\"description\"] = \"A simple example for the MathOptFormat documentation\"\n\n# Create variables\n[x, y] = MOI.addvariables!(m, 2)\nMOI.set!(m, MOI.VariableName(), x, \"x\")\nMOI.set!(m, MOI.VariableName(), y, \"y\")\n\n# Set objective\nMOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)\nMOI.set!(m,\n    MOI.ObjectiveFunction(),\n    MOI.ScalarAffineFunction([x,y],[2,1],0)\n)\n\n# The constraint: x+y≥1 becomes x+y ∈ [1, ∞)\nc1 = MOI.addconstraint!(m,\n    MOI.ScalarAffineFunction([x,y],[1,1],0),\n    MOI.GreaterThan(1)\n)\nMOI.set!(m, MOI.ConstraintName(), c1, \"x+y≥1\")\n\n# The constraint: x, Binary becomes x ∈ {0, 1}\nc2 = MOI.addconstraint!(m,\n    MOI.SingleVariable(x),\n    MOI.ZeroOne()\n)\nMOI.set!(m, MOI.ConstraintName(), c2, \"x ∈ {0,1}\")\n\n# Write the instance to file\nMOI.writeinstance(m, \"example.mof.json\")"
 },
 
 {

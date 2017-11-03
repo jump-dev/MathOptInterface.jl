@@ -82,10 +82,26 @@ The MathOptInterface standard form problem is:
 
 where $f_i(x)$ is an arbitrary function and $\mathcal{S}_i$ is an arbitrary set.
 
-For example, instead of a $\le$ constraint (for example $3x + y \le 1$),
-we can consider the function $3x + y$ in the set $(-\infty, 1]$.
+For example, instead of thinking of the constraint $3x + y \le 1$ as a ''less
+than or equal to" constraint, we can think of the constraint as enforcing the
+function $3x + y$ to be inside the set $(-\infty, 1]$.
 
-## JavaScript Object Notation (JSON)
+This approach turns out to be very general, as instead of thinking of variable
+as being ''binary'', we say the function $x$ belongs to the set $\{0, 1\}$.
+Instead of a variable being semicontinuous, we say the function $x$ belongs to
+the set ${0} \cup [l, u]$.
+
+## Why JSON?
+
+One reason for developing a new instance format rather than improving OSiL is
+its use of XML. Although XML has many advantages (a strictly defined schema for
+example), the format is almost too general (and too verbose) for our purposes.
+
+In constrast, JSON is a much simpler format, and is only able to store six
+different data types: `string`, `number`, `object`, `array`, `boolean` and `null`.
+
+In almost all programming languages, these map directly to native language
+constructs (`object` being a dictionary or a key-value mapping).
 
 https://www.json.org/xml.html
 
@@ -212,6 +228,8 @@ Consider the following LP:
 \end{align}
 ```
 
+### MathOptFormat
+
 We can represent this in the MathOptFormat as
 
     {
@@ -253,6 +271,8 @@ Note that in addition to the required fields, we can store additional informatio
 (such as the `author` and a `description` of the model) that is not necessary
 to define the model instance, but is useful human-readable metadata.
 
+### LP
+
 Compared to the LP formulation (below), the MathOptFormat vesion is verbose and
 less human-readable. However, it does not require a specialised parser to read,
 conforms to a well standardized specification, and is extensible.
@@ -268,6 +288,8 @@ conforms to a well standardized specification, and is extensible.
     Binary
     x
     End
+
+### OSiL
 
 Compared to the OSiL version (below), we would argue that the MathOptFormat is
 more human-readable, better standardized, and more extensible.
@@ -306,6 +328,48 @@ more human-readable, better standardized, and more extensible.
             </linearConstraintCoefficients>
         </instanceData>
     </osil>
+
+
+### MathOptFormat.jl
+```julia
+using MathOptFormat, MathOptInterface
+const MOI = MathOptInterface
+
+m = MathOptFormat.MOFFile()
+
+# Add in extra metadata
+m["author"] = "Oscar Dowson"
+m["description"] = "A simple example for the MathOptFormat documentation"
+
+# Create variables
+[x, y] = MOI.addvariables!(m, 2)
+MOI.set!(m, MOI.VariableName(), x, "x")
+MOI.set!(m, MOI.VariableName(), y, "y")
+
+# Set objective
+MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+MOI.set!(m,
+    MOI.ObjectiveFunction(),
+    MOI.ScalarAffineFunction([x,y],[2,1],0)
+)
+
+# The constraint: x+y≥1 becomes x+y ∈ [1, ∞)
+c1 = MOI.addconstraint!(m,
+    MOI.ScalarAffineFunction([x,y],[1,1],0),
+    MOI.GreaterThan(1)
+)
+MOI.set!(m, MOI.ConstraintName(), c1, "x+y≥1")
+
+# The constraint: x, Binary becomes x ∈ {0, 1}
+c2 = MOI.addconstraint!(m,
+    MOI.SingleVariable(x),
+    MOI.ZeroOne()
+)
+MOI.set!(m, MOI.ConstraintName(), c2, "x ∈ {0,1}")
+
+# Write the instance to file
+MOI.writeinstance(m, "example.mof.json")
+```
 
 ## References
 
