@@ -22,41 +22,41 @@ function lin1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             #       x>=0 y>=0 z>=0
             # Opt obj = -11, soln x = 1, y = 0, z = 2
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            v = MOI.addvariables!(m, 3)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 3
+            v = MOI.addvariables!(instance, 3)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 3
 
-            vc = MOI.addconstraint!(m, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            loc = MOI.get(m, MOI.ListOfConstraints())
+            vc = MOI.addconstraint!(instance, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
+            c = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            loc = MOI.get(instance, MOI.ListOfConstraints())
             @test length(loc) == 2
             @test (MOI.VectorOfVariables,MOI.Nonnegatives) in loc
             @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -11 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -11 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), v)
-            @test MOI.get(m, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), v)
+            @test MOI.get(instance, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c)
-            @test MOI.get(m, MOI.ConstraintDual(), c) ≈ [-3, -1] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), c)
+            @test MOI.get(instance, MOI.ConstraintDual(), c) ≈ [-3, -1] atol=atol rtol=rtol
 
             # TODO var dual and con primal
         end
@@ -73,37 +73,37 @@ function lin1atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), r
         @testset "LIN1A" begin
             # Same as LIN1 but variable bounds enforced with VectorAffineFunction
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            v = MOI.addvariables!(m, 3)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 3
+            v = MOI.addvariables!(instance, 3)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 3
 
-            vc = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3], v, ones(3), zeros(3)), MOI.Nonnegatives(3))
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            vc = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,2,3], v, ones(3), zeros(3)), MOI.Nonnegatives(3))
+            c = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -11 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -11 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), v)
-            @test MOI.get(m, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), v)
+            @test MOI.get(instance, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c)
-            @test MOI.get(m, MOI.ConstraintDual(), c) ≈ [-3, -1] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), c)
+            @test MOI.get(instance, MOI.ConstraintDual(), c) ≈ [-3, -1] atol=atol rtol=rtol
 
             # TODO var dual and con primal
         end
@@ -136,46 +136,46 @@ function lin2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             # x = -4, y = -3, z = 16, s == 0
 
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x,y,z,s = MOI.addvariables!(m, 4)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 4
+            x,y,z,s = MOI.addvariables!(instance, 4)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 4
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
+            c = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
 
-            vy = MOI.addconstraint!(m, MOI.VectorOfVariables([y]), MOI.Nonpositives(1))
+            vy = MOI.addconstraint!(instance, MOI.VectorOfVariables([y]), MOI.Nonpositives(1))
             # test fallback
-            vz = MOI.addconstraint!(m, [z], MOI.Nonnegatives(1))
-            vz = MOI.addconstraint!(m, MOI.VectorOfVariables([s]), MOI.Zeros(1))
+            vz = MOI.addconstraint!(instance, [z], MOI.Nonnegatives(1))
+            vz = MOI.addconstraint!(instance, MOI.VectorOfVariables([s]), MOI.Zeros(1))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -82 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -82 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ -4 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), y) ≈ -3 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), z) ≈ 16 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), s) ≈ 0 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ -4 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), y) ≈ -3 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), z) ≈ 16 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), s) ≈ 0 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c)
-            @test MOI.get(m, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), c)
+            @test MOI.get(instance, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=atol rtol=rtol
 
             # TODO var dual and con primal
         end
@@ -198,48 +198,48 @@ function lin2atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), r
             # Opt solution = -82
             # x = -4, y = -3, z = 16, s == 0
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x,y,z,s = MOI.addvariables!(m, 4)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 4
-
-
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            x,y,z,s = MOI.addvariables!(instance, 4)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 4
 
 
-            c = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
-
-            vy = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
-            vz = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[z],[1.0],[0.0]), MOI.Nonnegatives(1))
-            vz = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[s],[1.0],[0.0]), MOI.Zeros(1))
-
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 2
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y,z], [3.0, 2.0, -4.0], 0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
 
-            MOI.optimize!(m)
+            c = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,1,2,3,3], [x,s,y,x,z], [1.0,-1.0,1.0,1.0,1.0], [4.0,3.0,-12.0]), MOI.Zeros(3))
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            vy = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
+            vz = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[z],[1.0],[0.0]), MOI.Nonnegatives(1))
+            vz = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[s],[1.0],[0.0]), MOI.Zeros(1))
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 2
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -82 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ -4 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), y) ≈ -3 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), z) ≈ 16 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), s) ≈ 0 atol=atol rtol=rtol
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c)
-            @test MOI.get(m, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
+
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
+
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -82 atol=atol rtol=rtol
+
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ -4 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), y) ≈ -3 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), z) ≈ 16 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), s) ≈ 0 atol=atol rtol=rtol
+
+            @test MOI.canget(instance, MOI.ConstraintDual(), c)
+            @test MOI.get(instance, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol=atol rtol=rtol
 
             # TODO var dual and con primal
         end
@@ -263,26 +263,26 @@ function lin3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             # s.t. -1 + x ∈ R₊
             #       1 + x ∈ R₋
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x = MOI.addvariable!(m)
+            x = MOI.addvariable!(instance)
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegatives(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[1.0]), MOI.Nonpositives(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegatives(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[x],[1.0],[1.0]), MOI.Nonpositives(1))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            if MOI.canget(m, MOI.PrimalStatus())
-                @test MOI.get(m, MOI.PrimalStatus()) == MOI.InfeasiblePoint
+            if MOI.canget(instance, MOI.PrimalStatus())
+                @test MOI.get(instance, MOI.PrimalStatus()) == MOI.InfeasiblePoint
             end
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.InfeasibilityCertificate
 
             # TODO test dual feasibility and objective sign
         end
@@ -301,26 +301,26 @@ function lin4test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             # s.t. -1 + x ∈ R₊
             #           x ∈ R₋
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x = MOI.addvariable!(m)
+            x = MOI.addvariable!(instance)
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegatives(1))
-            MOI.addconstraint!(m, MOI.VectorOfVariables([x]), MOI.Nonpositives(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonnegatives(1))
+            MOI.addconstraint!(instance, MOI.VectorOfVariables([x]), MOI.Nonpositives(1))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            if MOI.canget(m, MOI.PrimalStatus())
-                @test MOI.get(m, MOI.PrimalStatus()) == MOI.InfeasiblePoint
+            if MOI.canget(instance, MOI.PrimalStatus())
+                @test MOI.get(instance, MOI.PrimalStatus()) == MOI.InfeasiblePoint
             end
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.InfeasibilityCertificate
 
             # TODO test dual feasibility and objective sign
         end
@@ -343,45 +343,45 @@ function soc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             #  st  x            == 1
             #      x >= ||(y,z)||
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x,y,z = MOI.addvariables!(m, 3)
+            x,y,z = MOI.addvariables!(instance, 3)
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([y,z],[1.0,1.0],0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([y,z],[1.0,1.0],0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
 
-            ceq = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
-            csoc = MOI.addconstraint!(m, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))
+            ceq = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
+            csoc = MOI.addconstraint!(instance, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
-            loc = MOI.get(m, MOI.ListOfConstraints())
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
+            loc = MOI.get(instance, MOI.ListOfConstraints())
             @test length(loc) == 2
             @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
             @test (MOI.VectorOfVariables,MOI.SecondOrderCone) in loc
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), z) ≈ 1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), z) ≈ 1/sqrt(2) atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), ceq)
-            @test MOI.get(m, MOI.ConstraintDual(), ceq) ≈ [-sqrt(2)] atol=atol rtol=rtol
-            @test MOI.canget(m, MOI.ConstraintDual(), csoc)
-            @test MOI.get(m, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), -1.0, -1.0] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), ceq)
+            @test MOI.get(instance, MOI.ConstraintDual(), ceq) ≈ [-sqrt(2)] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), csoc)
+            @test MOI.get(instance, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), -1.0, -1.0] atol=atol rtol=rtol
 
             # TODO con primal
         end
@@ -397,41 +397,41 @@ function soc1atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), r
             #      x >= ||(y,z)||
             # same as SOC1 but with soc constraint enforced with VectorAffineFunction
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x,y,z = MOI.addvariables!(m, 3)
+            x,y,z = MOI.addvariables!(instance, 3)
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([y,z],[1.0,1.0],0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([y,z],[1.0,1.0],0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
 
-            ceq = MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
-            csoc = MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3],[x,y,z],ones(3),zeros(3)), MOI.SecondOrderCone(3))
+            ceq = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
+            csoc = MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,2,3],[x,y,z],ones(3),zeros(3)), MOI.SecondOrderCone(3))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), z) ≈ 1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), z) ≈ 1/sqrt(2) atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), ceq)
-            @test MOI.get(m, MOI.ConstraintDual(), ceq) ≈ [-sqrt(2)] atol=atol rtol=rtol
-            @test MOI.canget(m, MOI.ConstraintDual(), csoc)
-            @test MOI.get(m, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), -1.0, -1.0] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), ceq)
+            @test MOI.get(instance, MOI.ConstraintDual(), ceq) ≈ [-sqrt(2)] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), csoc)
+            @test MOI.get(instance, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), -1.0, -1.0] atol=atol rtol=rtol
 
             # TODO con primal
         end
@@ -456,37 +456,37 @@ function soc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             #        1 - t ∈ {0}
             #      (t,x,y) ∈ SOC₃
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x,y,t = MOI.addvariables!(m, 3)
+            x,y,t = MOI.addvariables!(instance, 3)
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x],[1.0],0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x],[1.0],0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[-1/sqrt(2)]), MOI.Nonnegatives(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[t],[-1.0],[1.0]), MOI.Zeros(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3],[t,x,y],ones(3),zeros(3)), MOI.SecondOrderCone(3))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[y],[1.0],[-1/sqrt(2)]), MOI.Nonnegatives(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[t],[-1.0],[1.0]), MOI.Zeros(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,2,3],[t,x,y],ones(3),zeros(3)), MOI.SecondOrderCone(3))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -1/sqrt(2) atol=atol rtol=rtol
 
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ -1/sqrt(2) atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), t) ≈ 1 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ -1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), t) ≈ 1 atol=atol rtol=rtol
 
             # TODO constraint primal and duals
         end
@@ -503,37 +503,37 @@ function soc2atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), r
             #        1 - t ∈ {0}
             #      (t,x,y) ∈ SOC₃
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x,y,t = MOI.addvariables!(m, 3)
+            x,y,t = MOI.addvariables!(instance, 3)
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x],[1.0],0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x],[1.0],0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[-1.0],[1/sqrt(2)]), MOI.Nonpositives(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[t],[-1.0],[1.0]), MOI.Zeros(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2,3],[t,x,y],ones(3),zeros(3)), MOI.SecondOrderCone(3))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[y],[-1.0],[1/sqrt(2)]), MOI.Nonpositives(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[t],[-1.0],[1.0]), MOI.Zeros(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,2,3],[t,x,y],ones(3),zeros(3)), MOI.SecondOrderCone(3))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -1/sqrt(2) atol=atol rtol=rtol
 
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ -1/sqrt(2) atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
-            @test MOI.get(m, MOI.VariablePrimal(), t) ≈ 1 atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ -1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.VariablePrimal(), t) ≈ 1 atol=atol rtol=rtol
 
             # TODO constraint primal and duals
         end
@@ -559,26 +559,26 @@ function soc3test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
             #      -1 + x ∈ R₋
             #       (x,y) ∈ SOC₂
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x,y = MOI.addvariables!(m, 2)
+            x,y = MOI.addvariables!(instance, 2)
 
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[y],[1.0],[-2.0]), MOI.Nonnegatives(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonpositives(1))
-            MOI.addconstraint!(m, MOI.VectorAffineFunction([1,2],[x,y],ones(2),zeros(2)), MOI.SecondOrderCone(2))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[y],[1.0],[-2.0]), MOI.Nonnegatives(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Nonpositives(1))
+            MOI.addconstraint!(instance, MOI.VectorAffineFunction([1,2],[x,y],ones(2),zeros(2)), MOI.SecondOrderCone(2))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test !MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            @test !MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.InfeasibilityCertificate
 
             # TODO test dual feasibility and objective sign
         end
@@ -607,42 +607,42 @@ function soc4test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
                   0.0  0.0  1.0  0.0 -1.0]
             c = [ 0.0,-2.0,-1.0, 0.0, 0.0]
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x = MOI.addvariables!(m, 5)
+            x = MOI.addvariables!(instance, 5)
 
             A_cols = x
             A_rows = [1,2,3,2,3]
             A_vals = [1.0,1.0,1.0,-1.0,-1.0]
 
-            c1 = MOI.addconstraint!(m, MOI.VectorAffineFunction(A_rows,A_cols,A_vals,b), MOI.Zeros(3))
-            c2 = MOI.addconstraint!(m, MOI.VectorOfVariables([x[1],x[4],x[5]]), MOI.SecondOrderCone(3))
+            c1 = MOI.addconstraint!(instance, MOI.VectorAffineFunction(A_rows,A_cols,A_vals,b), MOI.Zeros(3))
+            c2 = MOI.addconstraint!(instance, MOI.VectorOfVariables([x[1],x[4],x[5]]), MOI.SecondOrderCone(3))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x,c,0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
-            MOI.optimize!(m)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x,c,0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            x_primal = MOI.get(m, MOI.VariablePrimal(), x)
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            x_primal = MOI.get(instance, MOI.VariablePrimal(), x)
             @test x_primal[1]^2 ≥ x_primal[4]^2 + x_primal[5]^2 - atol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c2)
-            x_dual = MOI.get(m, MOI.ConstraintDual(), c2)
+            @test MOI.canget(instance, MOI.ConstraintDual(), c2)
+            x_dual = MOI.get(instance, MOI.ConstraintDual(), c2)
             @test x_dual[1]^2 ≥ x_dual[2]^2 + x_dual[3]^2 - atol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c1)
-            c1_dual = MOI.get(m, MOI.ConstraintDual(), c1)
+            @test MOI.canget(instance, MOI.ConstraintDual(), c1)
+            c1_dual = MOI.get(instance, MOI.ConstraintDual(), c1)
 
             @test dot(c,x_primal) ≈ -dot(c1_dual,b) atol=atol rtol=rtol
             @test (c-A'c1_dual) ≈ [x_dual[1], 0, 0, x_dual[2], x_dual[3]] atol=atol rtol=rtol
@@ -672,44 +672,44 @@ function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
                   0.0  1.0   0.0   0.0]
             b = [ 0.5, 1.0]
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x = MOI.addvariables!(m, 4)
+            x = MOI.addvariables!(instance, 4)
 
-            vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x[1]), MOI.EqualTo(0.5))
-            vc2 = MOI.addconstraint!(m, MOI.SingleVariable(x[2]), MOI.EqualTo(1.0))
+            vc1 = MOI.addconstraint!(instance, MOI.SingleVariable(x[1]), MOI.EqualTo(0.5))
+            vc2 = MOI.addconstraint!(instance, MOI.SingleVariable(x[2]), MOI.EqualTo(1.0))
 
-            rsoc = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(4))
+            rsoc = MOI.addconstraint!(instance, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(4))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 2
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 2
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}()) == 1
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x,c,0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
-            MOI.optimize!(m)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x,c,0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -sqrt(2.0) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -sqrt(2.0) atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
 
             if MOI.get(solver, MOI.SupportsDuals())
-                @test MOI.canget(m, MOI.DualStatus(1))
-                @test MOI.get(m, MOI.DualStatus(1)) == MOI.FeasiblePoint
+                @test MOI.canget(instance, MOI.DualStatus(1))
+                @test MOI.get(instance, MOI.DualStatus(1)) == MOI.FeasiblePoint
 
-                @test MOI.canget(m, MOI.ConstraintDual(), vc1)
-                d1 = MOI.get(m, MOI.ConstraintDual(), vc1)
-                @test MOI.canget(m, MOI.ConstraintDual(), vc2)
-                d2 = MOI.get(m, MOI.ConstraintDual(), vc2)
+                @test MOI.canget(instance, MOI.ConstraintDual(), vc1)
+                d1 = MOI.get(instance, MOI.ConstraintDual(), vc1)
+                @test MOI.canget(instance, MOI.ConstraintDual(), vc2)
+                d2 = MOI.get(instance, MOI.ConstraintDual(), vc2)
 
                 d = [d1, d2]
                 dualobj = dot(b, d)
@@ -717,8 +717,8 @@ function rotatedsoc1test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
                 @test d1 <= atol
                 @test d2 <= atol
 
-                @test MOI.canget(m, MOI.ConstraintDual(), rsoc)
-                vardual = MOI.get(m, MOI.ConstraintDual(), rsoc)
+                @test MOI.canget(instance, MOI.ConstraintDual(), rsoc)
+                vardual = MOI.get(instance, MOI.ConstraintDual(), rsoc)
 
                 @test vardual ≈ (c - A'd) atol=atol rtol=rtol
                 @test 2*vardual[1]*vardual[2] ≥ vardual[3]^2 + vardual[4]^2 - atol
@@ -739,40 +739,40 @@ function rotatedsoc1atest(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Floa
             #     [0.0] - [    -z] SOCRotated
             b = [0.5, 1.0, 0.0, 0.0]
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x = MOI.addvariables!(m, 2)
+            x = MOI.addvariables!(instance, 2)
 
-            rsoc = MOI.addconstraint!(m, MOI.VectorAffineFunction([3, 4], x, [1., 1.], b), MOI.RotatedSecondOrderCone(4))
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.RotatedSecondOrderCone}()) == 1
+            rsoc = MOI.addconstraint!(instance, MOI.VectorAffineFunction([3, 4], x, [1., 1.], b), MOI.RotatedSecondOrderCone(4))
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.RotatedSecondOrderCone}()) == 1
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, [-1.0,-1.0], 0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
-            MOI.optimize!(m)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, [-1.0,-1.0], 0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ -sqrt(2.0) atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ -sqrt(2.0) atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            @test MOI.get(m, MOI.VariablePrimal(), x) ≈ [1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            @test MOI.get(instance, MOI.VariablePrimal(), x) ≈ [1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
 
             if MOI.get(solver, MOI.SupportsDuals())
-                @test MOI.canget(m, MOI.DualStatus(1))
-                @test MOI.get(m, MOI.DualStatus(1)) == MOI.FeasiblePoint
+                @test MOI.canget(instance, MOI.DualStatus(1))
+                @test MOI.get(instance, MOI.DualStatus(1)) == MOI.FeasiblePoint
 
-                @test MOI.canget(m, MOI.ConstraintPrimal(), rsoc)
-                @test MOI.get(m, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+                @test MOI.canget(instance, MOI.ConstraintPrimal(), rsoc)
+                @test MOI.get(instance, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
 
-                @test MOI.canget(m, MOI.ConstraintDual(), rsoc)
-                d = MOI.get(m, MOI.ConstraintDual(), rsoc)
+                @test MOI.canget(instance, MOI.ConstraintDual(), rsoc)
+                d = MOI.get(instance, MOI.ConstraintDual(), rsoc)
                 @test 2*d[1]*d[2] ≥ d[3]^2 + d[4]^2 - atol
 
                 dualobj = -dot(b, d)
@@ -806,46 +806,46 @@ function rotatedsoc2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float
             b = [-2, -1, 1/2]
             c = [0.0,0.0,0.0]
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x = MOI.addvariables!(m, 3)
+            x = MOI.addvariables!(instance, 3)
 
-            vc1 = MOI.addconstraint!(m, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
-            vc2 = MOI.addconstraint!(m, MOI.SingleVariable(x[2]), MOI.EqualTo(0.5))
-            vc3 = MOI.addconstraint!(m, MOI.SingleVariable(x[3]), MOI.GreaterThan(2.0))
+            vc1 = MOI.addconstraint!(instance, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
+            vc2 = MOI.addconstraint!(instance, MOI.SingleVariable(x[2]), MOI.EqualTo(0.5))
+            vc3 = MOI.addconstraint!(instance, MOI.SingleVariable(x[3]), MOI.GreaterThan(2.0))
 
-            rsoc = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
+            rsoc = MOI.addconstraint!(instance, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}()) == 1
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x,c,0.0))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
-            MOI.optimize!(m)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x,c,0.0))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
 
-            if MOI.get(m, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleOrUnbounded] && MOI.get(solver, MOI.SupportsDuals())
-                @test MOI.canget(m, MOI.DualStatus())
-                @test MOI.get(m, MOI.DualStatus()) in [MOI.InfeasibilityCertificate, MOI.NearlyInfeasibilityCertificate]
+            if MOI.get(instance, MOI.TerminationStatus()) in [MOI.Success, MOI.InfeasibleOrUnbounded] && MOI.get(solver, MOI.SupportsDuals())
+                @test MOI.canget(instance, MOI.DualStatus())
+                @test MOI.get(instance, MOI.DualStatus()) in [MOI.InfeasibilityCertificate, MOI.NearlyInfeasibilityCertificate]
 
-                @test MOI.canget(m, MOI.ConstraintDual(), vc1)
-                y1 = MOI.get(m, MOI.ConstraintDual(), vc1)
+                @test MOI.canget(instance, MOI.ConstraintDual(), vc1)
+                y1 = MOI.get(instance, MOI.ConstraintDual(), vc1)
                 @test y1 < -atol # Should be strictly negative
 
-                @test MOI.canget(m, MOI.ConstraintDual(), vc2)
-                y2 = MOI.get(m, MOI.ConstraintDual(), vc2)
+                @test MOI.canget(instance, MOI.ConstraintDual(), vc2)
+                y2 = MOI.get(instance, MOI.ConstraintDual(), vc2)
 
-                @test MOI.canget(m, MOI.ConstraintDual(), vc3)
-                y3 = MOI.get(m, MOI.ConstraintDual(), vc3)
+                @test MOI.canget(instance, MOI.ConstraintDual(), vc3)
+                y3 = MOI.get(instance, MOI.ConstraintDual(), vc3)
                 @test y3 > atol # Should be strictly positive
 
                 y = [y1, y2, y3]
 
-                vardual = MOI.get(m, MOI.ConstraintDual(), rsoc)
+                vardual = MOI.get(instance, MOI.ConstraintDual(), rsoc)
 
                 @test vardual ≈ -y atol=atol rtol=rtol
                 @test 2*vardual[1]*vardual[2] ≥ vardual[3]^2 - atol
@@ -870,45 +870,45 @@ function _sdp0test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Ba
             #                         y/2 0    <=   0  1]
             #     X >= 0              y free
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            X = MOI.addvariables!(m, 3)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 3
+            X = MOI.addvariables!(instance, 3)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 3
 
             if vecofvars
-                cX = MOI.addconstraint!(m, MOI.VectorOfVariables(X), sdpcone(2))
+                cX = MOI.addconstraint!(instance, MOI.VectorOfVariables(X), sdpcone(2))
             else
-                cX = MOI.addconstraint!(m, MOI.VectorAffineFunction(collect(1:3), X, ones(3), zeros(3)), sdpcone(2))
+                cX = MOI.addconstraint!(instance, MOI.VectorAffineFunction(collect(1:3), X, ones(3), zeros(3)), sdpcone(2))
             end
 
-            c = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[2]], [1/s], 0.), MOI.EqualTo(1.))
+            c = MOI.addconstraint!(instance, MOI.ScalarAffineFunction([X[2]], [1/s], 0.), MOI.EqualTo(1.))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([X[1], X[3]], ones(2), 0.))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
-            MOI.optimize!(m)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([X[1], X[3]], ones(2), 0.))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), X)
-            @test MOI.get(m, MOI.VariablePrimal(), X) ≈ [1, s, 1] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.VariablePrimal(), X)
+            @test MOI.get(instance, MOI.VariablePrimal(), X) ≈ [1, s, 1] atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c)
-            @test MOI.get(m, MOI.ConstraintDual(), c) ≈ 2 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), c)
+            @test MOI.get(instance, MOI.ConstraintDual(), c) ≈ 2 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), cX)
-            @test MOI.get(m, MOI.ConstraintDual(), cX) ≈ [1, -s, 1] atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintDual(), cX)
+            @test MOI.get(instance, MOI.ConstraintDual(), cX) ≈ [1, -s, 1] atol=atol rtol=rtol
         end
     end
 end
@@ -946,52 +946,52 @@ function _sdp1test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Ba
             #      (x1,x2,x3) in C^3_q
             #      X in C_sdp
 
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            X = MOI.addvariables!(m, 6)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 6
-            x = MOI.addvariables!(m, 3)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 9
+            X = MOI.addvariables!(instance, 6)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 6
+            x = MOI.addvariables!(instance, 3)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 9
 
             if vecofvars
-                cX = MOI.addconstraint!(m, MOI.VectorOfVariables(X), sdpcone(3))
+                cX = MOI.addconstraint!(instance, MOI.VectorOfVariables(X), sdpcone(3))
             else
-                cX = MOI.addconstraint!(m, MOI.VectorAffineFunction(collect(1:6), X, ones(6), zeros(6)), sdpcone(3))
+                cX = MOI.addconstraint!(instance, MOI.VectorAffineFunction(collect(1:6), X, ones(6), zeros(6)), sdpcone(3))
             end
-            cx = MOI.addconstraint!(m, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
+            cx = MOI.addconstraint!(instance, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
 
-            c1 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
-            c2 = MOI.addconstraint!(m, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2/s, 2/s, 1, 2/s, 1, 1, 1], 0.), MOI.EqualTo(1/2))
+            c1 = MOI.addconstraint!(instance, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
+            c2 = MOI.addconstraint!(instance, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2/s, 2/s, 1, 2/s, 1, 1, 1], 0.), MOI.EqualTo(1/2))
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2/s, 2, 2/s, 2, 1], 0.))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2/s, 2, 2/s, 2, 1], 0.))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
-            @test MOI.get(m, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorOfVariables, MOI.SecondOrderCone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorOfVariables, MOI.SecondOrderCone}()) == 1
 
-            MOI.optimize!(m)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.ObjectiveValue())
-            @test MOI.get(m, MOI.ObjectiveValue()) ≈ 0.705710509 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ObjectiveValue())
+            @test MOI.get(instance, MOI.ObjectiveValue()) ≈ 0.705710509 atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.VariablePrimal(), X)
-            Xv = MOI.get(m, MOI.VariablePrimal(), X)
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            xv = MOI.get(m, MOI.VariablePrimal(), x)
+            @test MOI.canget(instance, MOI.VariablePrimal(), X)
+            Xv = MOI.get(instance, MOI.VariablePrimal(), X)
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            xv = MOI.get(instance, MOI.VariablePrimal(), x)
 
-            @test MOI.canget(m, MOI.ConstraintDual(), c1)
-            y1 = MOI.get(m, MOI.ConstraintDual(), c1)
-            @test MOI.canget(m, MOI.ConstraintDual(), c2)
-            y2 = MOI.get(m, MOI.ConstraintDual(), c2)
+            @test MOI.canget(instance, MOI.ConstraintDual(), c1)
+            y1 = MOI.get(instance, MOI.ConstraintDual(), c1)
+            @test MOI.canget(instance, MOI.ConstraintDual(), c2)
+            y2 = MOI.get(instance, MOI.ConstraintDual(), c2)
 
             #     X11  X21  X31  X22  X32  X33  x1  x2  x3
             c = [   2, 2/s,   0,   2, 2/s,   2,  1,  0,  0]
@@ -1002,8 +1002,8 @@ function _sdp1test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Ba
             comp_dobj = dot([y1, y2], b)
             @test comp_pobj ≈ comp_dobj atol=atol rtol=rtol
 
-            @test MOI.canget(m, MOI.ConstraintDual(), cX)
-            Xdv = MOI.get(m, MOI.ConstraintDual(), cX)
+            @test MOI.canget(instance, MOI.ConstraintDual(), cX)
+            Xdv = MOI.get(instance, MOI.ConstraintDual(), cX)
             Xd = [Xdv[1]   Xdv[2]/s Xdv[3]/s;
                   Xdv[2]/s Xdv[4]   Xdv[5]/s;
                   Xdv[3]/s Xdv[5]/s Xdv[6]]
@@ -1038,10 +1038,10 @@ function sdp2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
     if MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeScaled)])
         @testset "SDP2" begin
             # Caused getdual to fail on SCS and Mosek
-            m = MOI.SolverInstance(solver)
+            instance = MOI.SolverInstance(solver)
 
-            x = MOI.addvariables!(m, 7)
-            @test MOI.get(m, MOI.NumberOfVariables()) == 7
+            x = MOI.addvariables!(instance, 7)
+            @test MOI.get(instance, MOI.NumberOfVariables()) == 7
 
             c = [0.0,0.0,0.0,0.0,0.0,0.0,1.0]
             b = [10.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
@@ -1053,68 +1053,68 @@ function sdp2test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64), rt
 
             f = MOI.VectorAffineFunction(I, x[J], V, b)
 
-            c1 = MOI.addconstraint!(m, f[1], MOI.GreaterThan(0.0))
-            c2 = MOI.addconstraint!(m, f[2:7], MOI.Nonpositives(6))
-            c3 = MOI.addconstraint!(m, f[8:10], MOI.PositiveSemidefiniteConeScaled(2))
-            c4 = MOI.addconstraint!(m, f[11], MOI.EqualTo(0.))
+            c1 = MOI.addconstraint!(instance, f[1], MOI.GreaterThan(0.0))
+            c2 = MOI.addconstraint!(instance, f[2:7], MOI.Nonpositives(6))
+            c3 = MOI.addconstraint!(instance, f[8:10], MOI.PositiveSemidefiniteConeScaled(2))
+            c4 = MOI.addconstraint!(instance, f[11], MOI.EqualTo(0.))
 
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonpositives}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeScaled}()) == 1
-            @test MOI.get(m, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonpositives}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeScaled}()) == 1
+            @test MOI.get(instance, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
 
-            MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x[7]], [1.], 0.))
-            MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
-            MOI.optimize!(m)
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x[7]], [1.], 0.))
+            MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
+            MOI.optimize!(instance)
 
-            @test MOI.canget(m, MOI.TerminationStatus())
-            @test MOI.get(m, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(instance, MOI.TerminationStatus())
+            @test MOI.get(instance, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(m, MOI.PrimalStatus())
-            @test MOI.get(m, MOI.PrimalStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(m, MOI.DualStatus())
-            @test MOI.get(m, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.PrimalStatus())
+            @test MOI.get(instance, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(instance, MOI.DualStatus())
+            @test MOI.get(instance, MOI.DualStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(m, MOI.VariablePrimal(), x)
-            xv = MOI.get(m, MOI.VariablePrimal(), x)
+            @test MOI.canget(instance, MOI.VariablePrimal(), x)
+            xv = MOI.get(instance, MOI.VariablePrimal(), x)
             @test all(xv[1:6] .> -atol)
 
             con = A * xv + b
 
-            @test MOI.canget(m, MOI.ConstraintPrimal(), c1)
-            @test MOI.get(m, MOI.ConstraintPrimal(), c1) ≈ con[1] atol=atol rtol=rtol
-            @test MOI.get(m, MOI.ConstraintPrimal(), c1) ≈ 0.0 atol=atol rtol=rtol
-            @test MOI.canget(m, MOI.ConstraintPrimal(), c2)
-            @test MOI.get(m, MOI.ConstraintPrimal(), c2) ≈ con[2:7] atol=atol rtol=rtol
-            @test all(MOI.get(m, MOI.ConstraintPrimal(), c2) .< atol)
-            @test MOI.canget(m, MOI.ConstraintPrimal(), c3)
-            Xv = MOI.get(m, MOI.ConstraintPrimal(), c3)
+            @test MOI.canget(instance, MOI.ConstraintPrimal(), c1)
+            @test MOI.get(instance, MOI.ConstraintPrimal(), c1) ≈ con[1] atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.ConstraintPrimal(), c1) ≈ 0.0 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintPrimal(), c2)
+            @test MOI.get(instance, MOI.ConstraintPrimal(), c2) ≈ con[2:7] atol=atol rtol=rtol
+            @test all(MOI.get(instance, MOI.ConstraintPrimal(), c2) .< atol)
+            @test MOI.canget(instance, MOI.ConstraintPrimal(), c3)
+            Xv = MOI.get(instance, MOI.ConstraintPrimal(), c3)
             @test Xv ≈ con[8:10] atol=atol rtol=rtol
             s2 = sqrt(2)
             Xm = [Xv[1]    Xv[2]/s2
                   Xv[2]/s2 Xv[3]]
             @test eigmin(Xm) > -atol
-            @test MOI.canget(m, MOI.ConstraintPrimal(), c4)
-            @test MOI.get(m, MOI.ConstraintPrimal(), c4) ≈ con[11] atol=atol rtol=rtol
-            @test MOI.get(m, MOI.ConstraintPrimal(), c4) ≈ 0.0 atol=atol rtol=rtol
+            @test MOI.canget(instance, MOI.ConstraintPrimal(), c4)
+            @test MOI.get(instance, MOI.ConstraintPrimal(), c4) ≈ con[11] atol=atol rtol=rtol
+            @test MOI.get(instance, MOI.ConstraintPrimal(), c4) ≈ 0.0 atol=atol rtol=rtol
 
             if MOI.get(solver, MOI.SupportsDuals())
-                @test MOI.canget(m, MOI.ConstraintDual(), c1)
-                y1 = MOI.get(m, MOI.ConstraintDual(), c1)
+                @test MOI.canget(instance, MOI.ConstraintDual(), c1)
+                y1 = MOI.get(instance, MOI.ConstraintDual(), c1)
                 @test y1 > -atol
-                @test MOI.canget(m, MOI.ConstraintDual(), c2)
-                y2 = MOI.get(m, MOI.ConstraintDual(), c2)
-                @test all(MOI.get(m, MOI.ConstraintDual(), c2) .< atol)
+                @test MOI.canget(instance, MOI.ConstraintDual(), c2)
+                y2 = MOI.get(instance, MOI.ConstraintDual(), c2)
+                @test all(MOI.get(instance, MOI.ConstraintDual(), c2) .< atol)
 
-                @test MOI.canget(m, MOI.ConstraintDual(), c3)
-                y3 = MOI.get(m, MOI.ConstraintDual(), c3)
+                @test MOI.canget(instance, MOI.ConstraintDual(), c3)
+                y3 = MOI.get(instance, MOI.ConstraintDual(), c3)
                 s2 = sqrt(2)
                 Ym = [y3[1]    y3[2]/s2
                       y3[2]/s2 y3[3]]
                 @test eigmin(Ym) > -atol
 
-                @test MOI.canget(m, MOI.ConstraintDual(), c4)
-                y4 = MOI.get(m, MOI.ConstraintDual(), c4)
+                @test MOI.canget(instance, MOI.ConstraintDual(), c4)
+                y4 = MOI.get(instance, MOI.ConstraintDual(), c4)
 
                 y = [y1; y2; y3; y4]
                 @test dot(c, xv) ≈ dot(b, y) atol=atol rtol=rtol

@@ -22,28 +22,28 @@ end
 const AnyReference = Union{ConstraintReference,VariableReference}
 
 """
-    candelete(m::AbstractInstance, ref::AnyReference)::Bool
+    candelete(instance::AbstractInstance, ref::AnyReference)::Bool
 
 Return a `Bool` indicating whether the object referred to by `ref` can be removed from the instance `m`.
 """
-candelete(m::AbstractInstance, ref::AnyReference) = false
+candelete(instance::AbstractInstance, ref::AnyReference) = false
 
 """
-    isvalid(m::AbstractInstance, ref::AnyReference)::Bool
+    isvalid(instance::AbstractInstance, ref::AnyReference)::Bool
 
 Return a `Bool` indicating whether this reference refers to a valid object in the instance `m`.
 """
-isvalid(m::AbstractInstance, ref::AnyReference) = false
+isvalid(instance::AbstractInstance, ref::AnyReference) = false
 
 """
-    delete!(m::AbstractInstance, ref::AnyReference)
+    delete!(instance::AbstractInstance, ref::AnyReference)
 
 Delete the referenced object from the instance.
 
-    delete!{R}(m::AbstractInstance, refs::Vector{R<:AnyReference})
+    delete!{R}(instance::AbstractInstance, refs::Vector{R<:AnyReference})
 
 Delete the referenced objects in the vector `refs` from the instance.
 It may be assumed that `R` is a concrete type.
 """
-Base.delete!(m::AbstractInstance, ref::AnyReference) = throw(MethodError(Base.delete!, (m, ref)))
-Base.delete!(m::AbstractInstance, refs::Vector{<:AnyReference}) = throw(MethodError(Base.delete!, (m, refs)))
+Base.delete!(instance::AbstractInstance, ref::AnyReference) = throw(MethodError(Base.delete!, (instance, ref)))
+Base.delete!(instance::AbstractInstance, refs::Vector{<:AnyReference}) = throw(MethodError(Base.delete!, (instance, refs)))

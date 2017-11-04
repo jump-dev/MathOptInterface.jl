@@ -73,7 +73,7 @@ Instances share a common API for constructing the problem and querying its data.
 
 A **Solver** ([`AbstractSolver`](@ref MathOptInterface.AbstractSolver)) is a "factory" used to specify solver-specific parameters (e.g., algorithmic parameters, license keys, etc.) and create new solver instances. These are typically very lightweight objects.
 
-Through the rest of the manual, `m` is used as a generic solver instance.
+Through the rest of the manual, `instance` is used as a generic solver instance.
 
 ## Variables
 
@@ -82,10 +82,10 @@ New scalar variables are created with [`addvariable!`](@ref MathOptInterface.add
 
 One uses `VariableReference` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
 ```julia
-v = addvariable!(m)
-set!(m, VariablePrimalStart(), v, 10.5)
-v2 = addvariables!(m, 3)
-set!(m, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
+v = addvariable!(instance)
+set!(instance, VariablePrimalStart(), v, 10.5)
+v2 = addvariables!(instance, 3)
+set!(instance, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
 A variable can be deleted from an instance with [`delete!(::AbstractInstance, ::VariableReference)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractInstance, ::MathOptInterface.AnyReference)), if this functionality is supported.
@@ -117,9 +117,9 @@ Objective functions are assigned to an instance by setting the [`ObjectiveFuncti
 The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used for setting the optimization sense.
 For example,
 ```julia
-x = addvariables!(m, 2)
-set!(m, ObjectiveFunction(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
-set!(m, ObjectiveSense(), MinSense)
+x = addvariables!(instance, 2)
+set!(instance, ObjectiveFunction(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+set!(instance, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
 
@@ -151,12 +151,12 @@ The code example below encodes the linear optimization problem:
 ```
 
 ```julia
-x = addvariables!(m, 2)
-set!(m, ObjectiveFunction(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
-set!(m, ObjectiveSense(), MaxSense)
-addconstraint!(m, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
-addconstraint!(m, SingleVariable(x[1]), GreaterThan(0.0))
-addconstraint!(m, SingleVariable(x[2]), GreaterThan(-1.0))
+x = addvariables!(instance, 2)
+set!(instance, ObjectiveFunction(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
+set!(instance, ObjectiveSense(), MaxSense)
+addconstraint!(instance, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
+addconstraint!(instance, SingleVariable(x[1]), GreaterThan(0.0))
+addconstraint!(instance, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
 [Example with vector-valued set.]
@@ -235,12 +235,12 @@ Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `I
 
 Once a solver instance is loaded with the objective function and all of the constraints, we can ask the solver to solve the instance by calling [`optimize!`](@ref MathOptInterface.optimize!).
 ```julia
-optimize!(m)
+optimize!(instance)
 ```
 
 The optimization procedure may terminate for a number of reasons. The [`TerminationStatus`](@ref MathOptInterface.TerminationStatus) attribute of the solver instance returns a [`TerminationStatusCode`](@ref MathOptInterface.TerminationStatusCode) object which explains why the solver stopped. Some statuses indicate generally successful termination, some termination because of limit, and some termination because of something unexpected like invalid problem data or failure to converge. A typical usage of the `TerminationStatus` attribute is as follows:
 ```julia
-status = MOI.get(m, TerminationStatus())
+status = MOI.get(instance, TerminationStatus())
 if status == Success
     # Ok, the solver has a result to return
 else
@@ -255,7 +255,7 @@ In addition to the primal status, the [`DualStatus`](@ref MathOptInterface.DualS
 
 If a result is available, it may be retrieved with the [`VariablePrimal`](@ref MathOptInterface.VariablePrimal) attribute:
 ```julia
-MOI.get(m, VariablePrimal(), x)
+MOI.get(instance, VariablePrimal(), x)
 ```
 If `x` is a `VariableRefrence` then the function call returns a scalar, and if `x` is a `Vector{VariableReference}` then the call returns a vector of scalars. `VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th result.
 
@@ -305,39 +305,39 @@ function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solve
     numvar = length(c)
     @assert numvar == length(w)
 
-    m = MOI.SolverInstance(solver)
+    instance = MOI.SolverInstance(solver)
 
     # create the variables in the problem
-    x = MOI.addvariables!(m, numvar)
+    x = MOI.addvariables!(instance, numvar)
 
     # set the objective function
-    MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
-    MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
+    MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
 
     # add the knapsack constraint
-    MOI.addconstraint!(m, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
+    MOI.addconstraint!(instance, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
 
     # add integrality constraints
     for i in 1:numvar
-        MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.ZeroOne())
+        MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.ZeroOne())
     end
 
     # all set
-    MOI.optimize!(m)
+    MOI.optimize!(instance)
 
-    termination_status = MOI.get(m, TerminationStatus())
-    objvalue = MOI.canget(m, MOI.ObjectiveValue()) ? MOI.get(m, MOI.ObjectiveValue()) : NaN
+    termination_status = MOI.get(instance, TerminationStatus())
+    objvalue = MOI.canget(instance, MOI.ObjectiveValue()) ? MOI.get(instance, MOI.ObjectiveValue()) : NaN
     if termination_status != MOI.Success
         error("Solver terminated with status $termination_status")
     end
 
-    @assert MOI.get(m, MOI.ResultCount()) > 0
+    @assert MOI.get(instance, MOI.ResultCount()) > 0
 
-    result_status = MOI.get(m, MOI.PrimalStatus())
+    result_status = MOI.get(instance, MOI.PrimalStatus())
     if result_status != MOI.FeasiblePoint
         error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
     end
-    primal_variable_result = MOI.get(m, MOI.VariablePrimal(), x)
+    primal_variable_result = MOI.get(instance, MOI.VariablePrimal(), x)
 
     return (objvalue, primal_variable_result)
 end
@@ -387,29 +387,29 @@ function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, 
     @assert numvar == size(Aeq,2) == length(lb) == length(ub)
 
 
-    m = MOI.SolverInstance(solver)
+    instance = MOI.SolverInstance(solver)
 
     # create the variables in the problem
-    x = MOI.addvariables!(m, numvar)
+    x = MOI.addvariables!(instance, numvar)
 
     # set the objective function
-    MOI.set!(m, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
-    MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
+    MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
     # add variable bound constraints
     for i in 1:numvar
         if isfinite(lb[i])
-            MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.GreaterThan(lb[i]))
+            MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.GreaterThan(lb[i]))
         end
         if isfinite(ub[i])
-            MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.LessThan(ub[i]))
+            MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.LessThan(ub[i]))
         end
     end
 
     # add integrality constraints
     for i in integerindices
         @assert 1 <= i <= numvar
-        MOI.addconstraint!(m, MOI.SingleVariable(x[i]), MOI.Integer())
+        MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.Integer())
     end
 
     # convert a SparseMatrixCSC into a vector of scalar affine functions
@@ -430,25 +430,25 @@ function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, 
     # add inequality constraints
     Ale_affine = csc_to_affine(Ale)
     for k in 1:length(Ale_affine)
-        MOI.addconstraint!(m, Ale_affine[k], MOI.LessThan(ble[k]))
+        MOI.addconstraint!(instance, Ale_affine[k], MOI.LessThan(ble[k]))
     end
 
     # add equality constraints
     Aeq_affine = csc_to_affine(Aeq)
     for k in 1:length(Aeq_affine)
-        MOI.addconstraint!(m, Aeq_affine[k], MOI.EqualTo(beq[k]))
+        MOI.addconstraint!(instance, Aeq_affine[k], MOI.EqualTo(beq[k]))
     end
 
     # all set
-    MOI.optimize!(m)
+    MOI.optimize!(instance)
 
-    termination_status = MOI.get(m, MOI.TerminationStatus())
-    objbound = MOI.canget(m, MOI.ObjectiveBound()) ? MOI.get(m, MOI.ObjectiveBound()) : NaN
-    objvalue = MOI.canget(m, MOI.ObjectiveValue()) ? MOI.get(m, MOI.ObjectiveValue()) : NaN
+    termination_status = MOI.get(instance, MOI.TerminationStatus())
+    objbound = MOI.canget(instance, MOI.ObjectiveBound()) ? MOI.get(instance, MOI.ObjectiveBound()) : NaN
+    objvalue = MOI.canget(instance, MOI.ObjectiveValue()) ? MOI.get(instance, MOI.ObjectiveValue()) : NaN
 
-    if MOI.get(m, MOI.ResultCount()) > 0
-        result_status = MOI.get(m, MOI.PrimalStatus())
-        primal_variable_result = MOI.get(m, MOI.VariablePrimal(), x)
+    if MOI.get(instance, MOI.ResultCount()) > 0
+        result_status = MOI.get(instance, MOI.PrimalStatus())
+        primal_variable_result = MOI.get(instance, MOI.VariablePrimal(), x)
         return IntegerLinearResult(termination_status, result_status, primal_variable_result, objvalue, objbound)
     else
         return IntegerLinearResult(termination_status, MOI.UnknownResultStatus, Float64[], objvalue, objbound)
