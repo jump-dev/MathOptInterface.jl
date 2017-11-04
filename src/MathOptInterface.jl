@@ -45,14 +45,14 @@ Create a solver instance from the given solver.
 function SolverInstance end
 
 """
-    optimize!(m::AbstractSolverInstance)
+    optimize!(instance::AbstractSolverInstance)
 
 Start the solution procedure.
 """
 function optimize! end
 
 """
-    free!(m::AbstractSolverInstance)
+    free!(instance::AbstractSolverInstance)
 
 Release any resources and memory used by the solver instance.
 Note that the Julia garbage collector takes care of this automatically, but automatic collection cannot always be forced.
@@ -62,7 +62,7 @@ Users must discard the solver instance object after this method is invoked.
 function free! end
 
 """
-    write(m::AbstractInstance, filename::String)
+    write(instance::AbstractInstance, filename::String)
 
 Writes the current instance data to the given file.
 Supported file types depend on the solver or standalone instance type.
@@ -70,9 +70,9 @@ Supported file types depend on the solver or standalone instance type.
 function write end
 
 """
-    read!(m::AbstractInstance, filename::String)
+    read!(instance::AbstractInstance, filename::String)
 
-Read the file `filename` into the instance `m`. If `m` is non-empty, this may
+Read the file `filename` into the instance `instance`. If `m` is non-empty, this may
 throw an error.
 
 Supported file types depend on the instance type.

@@ -1,30 +1,30 @@
 # Objectives
 
 """
-    modifyobjective!(m::AbstractInstance, change::AbstractFunctionModification)
+    modifyobjective!(instance::AbstractInstance, change::AbstractFunctionModification)
 
-Apply the modification specified by `change` to the objective function of `m`.
+Apply the modification specified by `change` to the objective function of `instance`.
 To change the function completely, call `setobjective!` instead.
 
 ### Examples
 
 ```julia
-modifyobjective!(m, ScalarConstantChange(10.0))
+modifyobjective!(instance, ScalarConstantChange(10.0))
 ```
 """
 function modifyobjective! end
 
 """
-    canmodifyobjective(m::AbstractInstance, change::AbstractFunctionModification)::Bool
+    canmodifyobjective(instance::AbstractInstance, change::AbstractFunctionModification)::Bool
 
 Return a `Bool` indicating whether it is possible to apply the modification
-specified by `change` to the objective function of `m`.
+specified by `change` to the objective function of `instance`.
 
 ### Examples
 
 ```julia
-canmodifyobjective(m, ScalarConstantChange(10.0))
+canmodifyobjective(instance, ScalarConstantChange(10.0))
 ```
 """
 function canmodifyobjective end
-canmodifyobjective(m::AbstractSolverInstance, change) = false
+canmodifyobjective(instance::AbstractSolverInstance, change) = false
