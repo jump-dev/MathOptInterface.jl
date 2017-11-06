@@ -804,13 +804,12 @@ function linear8test(solver::MOI.AbstractSolver; atol=Base.rtoldefault(Float64),
             @test MOI.canget(instance, MOI.ConstraintDual(), c)
             cd = MOI.get(instance, MOI.ConstraintDual(), c)
             @test cd < -atol
-            # TODO: farkas dual on bounds - see #127
-            # xd = MOI.get(instance, MOI.ConstraintDual(), bndx)
-            # yd = MOI.get(instance, MOI.ConstraintDual(), bndy)
-            # @test xd > atol
-            # @test yd > atol
-            # @test yd ≈ -cd atol=atol rtol=rtol
-            # @test xd ≈ -2cd atol=atol rtol=rtol
+            xd = MOI.get(instance, MOI.ConstraintDual(), bndx)
+            @test xd > atol
+            yd = MOI.get(instance, MOI.ConstraintDual(), bndy)
+            @test yd > atol
+            @test yd ≈ -cd atol=atol rtol=rtol
+            @test xd ≈ -2cd atol=atol rtol=rtol
         else
             # solver returned nothing
             @test MOI.get(instance, MOI.ResultCount()) == 0
