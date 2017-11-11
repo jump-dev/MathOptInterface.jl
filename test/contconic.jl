@@ -960,10 +960,10 @@ function _sdp1test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Ba
             end
             cx = MOI.addconstraint!(instance, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
 
-            c1 = MOI.addconstraint!(instance, MOI.ScalarAffineFunction([X[1], X[4], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
-            c2 = MOI.addconstraint!(instance, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2/s, 2/s, 1, 2/s, 1, 1, 1], 0.), MOI.EqualTo(1/2))
+            c1 = MOI.addconstraint!(instance, MOI.ScalarAffineFunction([X[1], X[3], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
+            c2 = MOI.addconstraint!(instance, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2/s, 1, 2/s, 2/s, 1, 1, 1], 0.), MOI.EqualTo(1/2))
 
-            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([X[1:2]; X[4:6]; x[1]], [2., 2/s, 2, 2/s, 2, 1], 0.))
+            MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([X[1:3]; X[5:6]; x[1]], [2., 2/s, 2, 2/s, 2, 1], 0.))
             MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
 
             @test MOI.get(instance, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
@@ -993,8 +993,8 @@ function _sdp1test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Ba
             @test MOI.canget(instance, MOI.ConstraintDual(), c2)
             y2 = MOI.get(instance, MOI.ConstraintDual(), c2)
 
-            #     X11  X21  X31  X22  X32  X33  x1  x2  x3
-            c = [   2, 2/s,   0,   2, 2/s,   2,  1,  0,  0]
+            #     X11  X21  X22  X31  X32  X33  x1  x2  x3
+            c = [   2, 2/s,   2,   0, 2/s,   2,  1,  0,  0]
             b = [1, 1/2]
             # Check primal objective
             comp_pobj = dot(c, [Xv; xv])
@@ -1004,9 +1004,9 @@ function _sdp1test(solver::MOI.AbstractSolver, vecofvars::Bool, sdpcone; atol=Ba
 
             @test MOI.canget(instance, MOI.ConstraintDual(), cX)
             Xdv = MOI.get(instance, MOI.ConstraintDual(), cX)
-            Xd = [Xdv[1]   Xdv[2]/s Xdv[3]/s;
-                  Xdv[2]/s Xdv[4]   Xdv[5]/s;
-                  Xdv[3]/s Xdv[5]/s Xdv[6]]
+            Xd = [Xdv[1]   Xdv[2]/s Xdv[4]/s;
+                  Xdv[2]/s Xdv[3]   Xdv[5]/s;
+                  Xdv[4]/s Xdv[5]/s Xdv[6]]
 
             C = [2 1 0;
                  1 2 1;

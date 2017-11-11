@@ -161,8 +161,8 @@ dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCon
     PositiveSemidefiniteConeTriangle(dimension)
 
 The (vectorized) cone of symmetric positive semidefinite matrices, with off-diagonals unscaled.
-The entries of the upper triangular part of the matrix are given row by row (or equivalently, the entries of the lower triangular part are given column by column).
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension `dimension`, the corresponding symmetric matrix has side dimension ``\\sqrt (1/4 + 2 dimension) - 1/2`` elements.
+The entries of the upper triangular part of the matrix are given column by column (or equivalently, the entries of the lower triangular part are given row by row).
+An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``d``, the corresponding symmetric matrix has side dimension ``\\sqrt{1/4 + 2 d} - 1/2`` elements.
 The scalar product is the sum of the pairwise product of the diagonal entries plus twice the sum of the pairwise product of the upper diagonal entries.
 
 ### Examples
@@ -170,12 +170,23 @@ The scalar product is the sum of the pairwise product of the diagonal entries pl
 The matrix
 ```math
 \\begin{bmatrix}
-  1 & 2 & 3\\\\
-  2 & 4 & 5\\\\
-  3 & 5 & 6
+  1 & 2 & 4\\\\
+  2 & 3 & 5\\\\
+  4 & 5 & 6
 \\end{bmatrix}
 ```
 corresponds to ``(1, 2, 3, 4, 5, 6)`` for `PositiveSemidefiniteConeTriangle`
+
+### Note
+
+Two packed storage formats exist for symmetric matrices, the respective orders of the entries are:
+- upper triangular column by column (or lower triangular row by row);
+- lower triangular column by column (or upper triangular row by row).
+
+The advantage of the first format is the mapping between the `(i, j)` matrix indices and the `k` index of the vectorized form. It is simpler and does not depend on the dimension of the matrix.
+Indeed,
+- the entry of matrix indices `(i, j)` has vectorized index `k = div((j-1)*j, 2) + i` if ``i \\leq j`` and `k = div((i-1)*i, 2) + j` if ``j \\leq i``;
+- and the entry with vectorized index `k` has matrix indices `i = isqrt(2k)` and `j = k - div((i-1)*i, 2)` or `j = isqrt(2k)` and `i = k - div((j-1)*j, 2)`.
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractVectorSet
     dimension::Int
@@ -185,8 +196,8 @@ end
     PositiveSemidefiniteConeScaled(dimension)
 
 The (vectorized) cone of symmetric positive semidefinite matrices, with off-diagonals scaled.
-The entries of the upper triangular part of the matrix are given row by row (or equivalently, the entries of the lower triangular part are given column by column).
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension `dimension`, the corresponding symmetric matrix has side dimension ``\\sqrt (1/4 + 2 dimension) - 1/2`` elements.
+The entries of the upper triangular part of the matrix are given column by column (or equivalently, the entries of the lower triangular part are given row by row).
+An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``d``, the corresponding symmetric matrix has side dimension ``\\sqrt{1/4 + 2 d} - 1/2`` elements.
 The off-diagonal entries of the matrices of both the cone and its dual are scaled by ``\\sqrt{2}`` and the scalar product is simply the sum of the pairwise product of the entries.
 
 ### Examples
@@ -194,9 +205,9 @@ The off-diagonal entries of the matrices of both the cone and its dual are scale
 The matrix
 ```math
 \\begin{bmatrix}
-  1 & 2 & 3\\\\
-  2 & 4 & 5\\\\
-  3 & 5 & 6
+  1 & 2 & 4\\\\
+  2 & 3 & 5\\\\
+  4 & 5 & 6
 \\end{bmatrix}
 ```
 and to ``(1, 2\\sqrt{2}, 3\\sqrt{2}, 4, 5\\sqrt{2}, 6)`` for `PositiveSemidefiniteConeScaled`.
