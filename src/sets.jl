@@ -149,7 +149,7 @@ end
 """
     DualPowerCone{T <: Real}(exponent::T)
 
-The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{exponent})^exponent (\\frac{v}/{1-exponent})^{1-exponent} >= |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `exponent`.
+The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{exponent})^{exponent} (\\frac{v}{1-exponent})^{1-exponent} \\ge |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `exponent`.
 """
 struct DualPowerCone{T <: Real} <: AbstractVectorSet
     exponent::T
