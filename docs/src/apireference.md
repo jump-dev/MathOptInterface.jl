@@ -11,7 +11,6 @@ CurrentModule = MathOptInterface
 List of attribute categories.
 
 ```@docs
-AbstractSolverAttribute
 AbstractInstanceAttribute
 AbstractSolverInstanceAttribute
 AbstractVariableAttribute
@@ -26,24 +25,6 @@ get
 get!
 canset
 set!
-```
-
-## Solver
-
-```@docs
-AbstractSolver
-supportsproblem
-```
-
-List of solver attributes
-
-```@docs
-SupportsDuals
-SupportsAddConstraintAfterSolve
-SupportsDeleteConstraint
-SupportsDeleteVariable
-SupportsAddVariableAfterSolve
-SupportsConicThroughQuadratic
 ```
 
 ## Instance
@@ -74,7 +55,6 @@ There are no attributes specific to a standalone instance.
 ## Solver instance
 
 ```@docs
-SolverInstance
 optimize!
 free!
 ```

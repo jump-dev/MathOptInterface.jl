@@ -61,23 +61,23 @@ In a future version, MOI could be extended to cover functions defined by evaluat
 MOI defines some commonly used sets, but the interface is extensible to other sets recognized by the solver.
 [Describe currently supported sets.]
 
-## Instances and solvers
+## Instances
 
 An **Instance** ([`AbstractInstance`](@ref MathOptInterface.AbstractInstance)) is a representation of a concrete instance of an optimization problem, i.e., with all data specified.  Instances are either **standalone instances** or **solver instances**:
 
 - A **Standalone Instance** ([`AbstractStandaloneInstance`](@ref MathOptInterface.AbstractSolverInstance)) is unattached to any particular solver. It is simply a type that stores the data for an instance, which may be used for reading or writing optimization problems to files or manipulating a problem before providing it to a solver. The [MathOptInterfaceUtilities](https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl) package provides an implementation of a standalone instance.
 
-- A **Solver Instance** ([`AbstractSolverInstance`](@ref MathOptInterface.AbstractSolverInstance)) should be understood as the representation of an instance of an optimization problem *loaded in the solver's API*. That is, the instance data is often (i.e., whenever possible) stored exclusively in the external API, not duplicated in the MOI translation layer (called the *MOI wrapper*). Hence, the ability to modify data in a solver instance depends on whether the solver's own API supports such modifications.
+- A **Solver Instance** ([`AbstractSolverInstance`](@ref MathOptInterface.AbstractSolverInstance)) should be understood as the representation of an instance of an optimization problem *loaded in the solver's API*. That is, the instance data is often (i.e., whenever possible) stored exclusively in the external API, not duplicated in the MOI translation layer (called the *MOI wrapper*). Hence, the ability to modify data in a solver instance depends on whether the solver's own API supports such modifications. Solver instances were designed to allow efficient incremental instance construction and modification, e.g., when solving in a loop.
 
 Instances share a common API for constructing the problem and querying its data. Solver instances, additionally, provide methods to solve the attached instance and query the results.
 
-A **Solver** ([`AbstractSolver`](@ref MathOptInterface.AbstractSolver)) is a "factory" used to specify solver-specific parameters (e.g., algorithmic parameters, license keys, etc.) and create new solver instances. These are typically very lightweight objects.
-
 Through the rest of the manual, `instance` is used as a generic solver instance.
+
+[Discuss how instances are constructed, solver parameters.]
 
 ## Variables
 
-MOI has a concept of a scalar variable (only).
+All variables in MOI are scalar variables.
 New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableReference`](@ref MathOptInterface.VariableReference) or `Vector{VariableReference}` respectively. Integer indices are never used to reference variables.
 
 One uses `VariableReference` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
@@ -130,7 +130,7 @@ See [Functions and function modifications](@ref) for the complete list of functi
 All constraints are specified with [`addconstraint!`](@ref MathOptInterface.addconstraint!)
 by restricting the output of some function to a set.
 The interface allows an arbitrary combination of functions and sets, but of course
-solvers may decide to support only a small number of combinations (see [`supportsproblem`](@ref MathOptInterface.supportsproblem)).
+solvers may decide to support only a small number of combinations.
 
 For example, linear programming solvers should support, at least, combinations of affine functions with
 the [`LessThan`](@ref MathOptInterface.LessThan) and [`GreaterThan`](@ref MathOptInterface.GreaterThan)
@@ -281,179 +281,59 @@ When a global solver returns `Success` and the primal result is a `FeasiblePoint
 For solvers which perform a search based only on local criteria (for example, gradient descent), without additional knowledge of the structure of the problem, we can say only that `Success` and `FeasiblePoint` imply that the primal result belongs to the class of points which the chosen algorithm is known to converge to. Gradient descent algorithms may converge to saddle points, for example. It is also possible for such algorithms to converge to infeasible points, in which case the termination status would be `Success` and the primal result status would be `InfeasiblePoint`. This does not imply that the problem is infeasible and so cannot be called a certificate of infeasibility.
 
 
-## A complete example: `solveknapsack`
+## A complete example: solving a knapsack problem
 
-
-The `solveknapsack` function below demonstrates the complete process from data to solver instance to result vector using MOI.
 
 [ needs formatting help, doc tests ]
 
 ```julia
-"""
-    solveknapsack(c, w, C)
+using MathOptInterface
+const MOI = MathOptInterface
+using MathOptInterfaceGLPK
 
-Solve the binary-constrained knapsack problem: max c'x: w'x <= C, x binary.
-Returns the optimal weights and objective value. Throws an error if the solver
-does not terminate with a `Success` status.
-"""
-function solveknapsack(c::Vector{Float64}, w::Vector{Float64}, C::Float64, solver::MOI.AbstractSolver)
-    if !MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
-            [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),
-             (MOI.SingleVariable,MOI.ZeroOne)])
-        error("Provided solver cannot solve binary knapsack problems")
-    end
-    numvar = length(c)
-    @assert numvar == length(w)
+# Solve the binary-constrained knapsack problem: max c'x: w'x <= C, x binary using GLPK.
 
-    instance = MOI.SolverInstance(solver)
+c = [1.0, 2.0, 3.0]
+w = [0.3, 0.5, 1.0]
 
-    # create the variables in the problem
-    x = MOI.addvariables!(instance, numvar)
+numvariables = length(c)
 
-    # set the objective function
-    MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
-    MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
+instance = GLPKInstance() # TODO: match with actual name in GLPK wrapper
 
-    # add the knapsack constraint
-    MOI.addconstraint!(instance, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
+# create the variables in the problem
+x = MOI.addvariables!(instance, numvariables)
 
-    # add integrality constraints
-    for i in 1:numvar
-        MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.ZeroOne())
-    end
+# set the objective function
+MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
+MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
 
-    # all set
-    MOI.optimize!(instance)
+# add the knapsack constraint
+MOI.addconstraint!(instance, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
 
-    termination_status = MOI.get(instance, TerminationStatus())
-    objvalue = MOI.canget(instance, MOI.ObjectiveValue()) ? MOI.get(instance, MOI.ObjectiveValue()) : NaN
-    if termination_status != MOI.Success
-        error("Solver terminated with status $termination_status")
-    end
-
-    @assert MOI.get(instance, MOI.ResultCount()) > 0
-
-    result_status = MOI.get(instance, MOI.PrimalStatus())
-    if result_status != MOI.FeasiblePoint
-        error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
-    end
-    primal_variable_result = MOI.get(instance, MOI.VariablePrimal(), x)
-
-    return (objvalue, primal_variable_result)
-end
-```
-
-## A more complex example: `solveintegerlinear`
-
-
-[this needs formatting help]
-
-```julia
-"""
-    IntegerLinearResult
-
-A `struct` returned by `solveintegerlinear` containing solution information.
-The fields are as follows:
-
-  - `termination_status`: the `TerminationStatusCode` returned by the solver
-  - `result_status`: the `ResultStatusCode` returned by the solver (if any results are available)
-  - `primal_variable_result`: the primal result vector returned by the solver; if no result is returned then this vector has length zero
-  - `objective_value`: the objective value of the result vector as reported by the solver
-  - `objective_bound`: the best known bound on the optimal objective value
-"""
-struct IntegerLinearResult
-    termination_status::MOI.TerminationStatusCode
-    result_status::MOI.ResultStatusCode
-    primal_variable_result::Vector{Float64}
-    objective_value::Float64
-    objective_bound::Float64
+# add integrality constraints
+for i in 1:numvariables
+    MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.ZeroOne())
 end
 
-"""
-    solveintegerlinear(c, Ale, ble, Aeq, beq, lb, ub, integerindices, solver)
+# all set
+MOI.optimize!(instance)
 
-Solve the mixed-integer linear optimization problem: min c'x s.t. `Ale*x` <= `ble`, `Aeq*x` = `beq`, `lb` <= `x` <= `ub`, and`x[i]` is integer for `i` in `integerindices` using the solver specified by `solver`. Returns an `IntegerLinearResult`.
-"""
-function solveintegerlinear(c, Ale::SparseMatrixCSC, ble, Aeq::SparseMatrixCSC, beq, lb, ub, integerindices, solver)
-    if !MOI.supportsproblem(solver, MOI.ScalarAffineFunction{Float64},
-            [(MOI.ScalarAffineFunction,MOI.LessThan{Float64}),
-             (MOI.ScalarAffineFunction,MOI.Zeros),
-             (MOI.SingleVariable,MOI.LessThan{Float64}),
-             (MOI.SingleVariable,MOI.GreaterThan{Float64}),
-             (MOI.SingleVariable,MOI.Integer)])
-        error("Provided solver does not support mixed-integer linear optimization")
-    end
-    numvar = size(Ale,2)
-    @assert numvar == size(Aeq,2) == length(lb) == length(ub)
-
-
-    instance = MOI.SolverInstance(solver)
-
-    # create the variables in the problem
-    x = MOI.addvariables!(instance, numvar)
-
-    # set the objective function
-    MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
-    MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
-
-    # add variable bound constraints
-    for i in 1:numvar
-        if isfinite(lb[i])
-            MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.GreaterThan(lb[i]))
-        end
-        if isfinite(ub[i])
-            MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.LessThan(ub[i]))
-        end
-    end
-
-    # add integrality constraints
-    for i in integerindices
-        @assert 1 <= i <= numvar
-        MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.Integer())
-    end
-
-    # convert a SparseMatrixCSC into a vector of scalar affine functions
-    # meant to be illustrative, not the fastest possible
-    function csc_to_affine(A::SparseMatrixCSC)
-        nrow = size(A,1)
-        variables_by_row = [Vector{VariableReference}(0) for k in 1:nrow]
-        coefficients_by_row = [Vector{Float64}(0) for k in 1:nrow]
-
-        I,J,V = findnz(A) # convert the sparse matrix to triplet form
-        for p in 1:length(I)
-            push!(variables_by_row[I[p]], x[J[p]])
-            push!(coefficients_by_row[I[p]], V[p])
-        end
-        return [MOI.ScalarAffineFunction(variables_by_row[k], coefficients_by_row[k], 0.0) for k in 1:nrow]
-    end
-
-    # add inequality constraints
-    Ale_affine = csc_to_affine(Ale)
-    for k in 1:length(Ale_affine)
-        MOI.addconstraint!(instance, Ale_affine[k], MOI.LessThan(ble[k]))
-    end
-
-    # add equality constraints
-    Aeq_affine = csc_to_affine(Aeq)
-    for k in 1:length(Aeq_affine)
-        MOI.addconstraint!(instance, Aeq_affine[k], MOI.EqualTo(beq[k]))
-    end
-
-    # all set
-    MOI.optimize!(instance)
-
-    termination_status = MOI.get(instance, MOI.TerminationStatus())
-    objbound = MOI.canget(instance, MOI.ObjectiveBound()) ? MOI.get(instance, MOI.ObjectiveBound()) : NaN
-    objvalue = MOI.canget(instance, MOI.ObjectiveValue()) ? MOI.get(instance, MOI.ObjectiveValue()) : NaN
-
-    if MOI.get(instance, MOI.ResultCount()) > 0
-        result_status = MOI.get(instance, MOI.PrimalStatus())
-        primal_variable_result = MOI.get(instance, MOI.VariablePrimal(), x)
-        return IntegerLinearResult(termination_status, result_status, primal_variable_result, objvalue, objbound)
-    else
-        return IntegerLinearResult(termination_status, MOI.UnknownResultStatus, Float64[], objvalue, objbound)
-    end
+termination_status = MOI.get(instance, TerminationStatus())
+objvalue = MOI.canget(instance, MOI.ObjectiveValue()) ? MOI.get(instance, MOI.ObjectiveValue()) : NaN
+if termination_status != MOI.Success
+    error("Solver terminated with status $termination_status")
 end
+
+@assert MOI.get(instance, MOI.ResultCount()) > 0
+
+result_status = MOI.get(instance, MOI.PrimalStatus())
+if result_status != MOI.FeasiblePoint
+    error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
+end
+primal_variable_result = MOI.get(instance, MOI.VariablePrimal(), x)
+
+@show objvalue
+@show primal_variable_result
 ```
 
 ## Advanced
