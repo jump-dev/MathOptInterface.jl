@@ -30,13 +30,27 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 abstract type AbstractVariableAttribute end
 
 """
+    AbstractSolverVariableAttribute
+
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the solver instance.
+"""
+abstract type AbstractSolverVariableAttribute <: AbstractVariableAttribute end
+
+"""
     AbstractConstraintAttribute
 
 Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the instance.
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractSolverAttribute, AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+"""
+    AbstractSolverConstraintAttribute
+
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the solver instance.
+"""
+abstract type AbstractSolverConstraintAttribute <: AbstractConstraintAttribute end
+
+const AnyAttribute = Union{AbstractSolverAttribute, AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
     get(s::AbstractSolver, attr::AbstractSolverAttribute)
@@ -55,6 +69,10 @@ Return an attribute `attr` of the solver instance `instance`.
 
 Return an attribute `attr` of the variable `v` in instance `instance`.
 
+    get(instance::AbstractSolverInstance, attr::AbstractSolverVariableAttribute, v::VariableReference)
+
+Return an attribute `attr` of the variable `v` in solver instance `instance`.
+
     get(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
 
 Return a vector of attributes corresponding to each variable in the collection `v` in the instance `instance`.
@@ -62,6 +80,10 @@ Return a vector of attributes corresponding to each variable in the collection `
     get(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
 
 Return an attribute `attr` of the constraint `c` in instance `instance`.
+
+    get(instance::AbstractSolverInstance, attr::AbstractSolverConstraintAttribute, c::ConstraintReference)
+
+Return an attribute `attr` of the constraint `c` in solver instance `instance`.
 
     get(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
 
@@ -409,7 +431,7 @@ struct VariableName <: AbstractVariableAttribute end
 
 An initial assignment of the variables that the solver may use to warm-start the solve.
 """
-struct VariablePrimalStart <: AbstractVariableAttribute end
+struct VariablePrimalStart <: AbstractSolverVariableAttribute end
 
 """
     VariablePrimal(N)
@@ -418,7 +440,7 @@ struct VariablePrimalStart <: AbstractVariableAttribute end
 The assignment to the primal variables in result `N`.
 If `N` is omitted, it is 1 by default.
 """
-struct VariablePrimal <: AbstractVariableAttribute
+struct VariablePrimal <: AbstractSolverVariableAttribute
     N::Int
 end
 VariablePrimal() = VariablePrimal(1)
@@ -428,7 +450,7 @@ VariablePrimal() = VariablePrimal(1)
 
 Returns the `BasisStatusCode` of a given variable, with respect to an available optimal solution basis.
 """
-struct VariableBasisStatus <: AbstractVariableAttribute end
+struct VariableBasisStatus <: AbstractSolverVariableAttribute end
 
 """
     BasisStatusCode
@@ -458,14 +480,14 @@ struct ConstraintName <: AbstractConstraintAttribute end
 
 An initial assignment of the constraint primal values that the solver may use to warm-start the solve.
 """
-struct ConstraintPrimalStart <: AbstractConstraintAttribute end
+struct ConstraintPrimalStart <: AbstractSolverConstraintAttribute end
 
 """
     ConstraintDualStart()
 
 An initial assignment of the constraint duals that the solver may use to warm-start the solve.
 """
-struct ConstraintDualStart <: AbstractConstraintAttribute end
+struct ConstraintDualStart <: AbstractSolverConstraintAttribute end
 
 """
     ConstraintPrimal(N)
@@ -474,7 +496,7 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
 The assignment to the constraint primal values in result `N`.
 If `N` is omitted, it is 1 by default.
 """
-struct ConstraintPrimal <: AbstractConstraintAttribute
+struct ConstraintPrimal <: AbstractSolverConstraintAttribute
     N::Int
 end
 ConstraintPrimal() = ConstraintPrimal(1)
@@ -486,7 +508,7 @@ ConstraintPrimal() = ConstraintPrimal(1)
 The assignment to the constraint dual values in result `N`.
 If `N` is omitted, it is 1 by default.
 """
-struct ConstraintDual <: AbstractConstraintAttribute
+struct ConstraintDual <: AbstractSolverConstraintAttribute
     N::Int
 end
 ConstraintDual() = ConstraintDual(1)
@@ -496,7 +518,7 @@ ConstraintDual() = ConstraintDual(1)
 
 Returns the `BasisStatusCode` of a given constraint, with respect to an available optimal solution basis.
 """
-struct ConstraintBasisStatus <: AbstractConstraintAttribute end
+struct ConstraintBasisStatus <: AbstractSolverConstraintAttribute end
 
 """
     ConstraintFunction()
