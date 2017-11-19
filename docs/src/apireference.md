@@ -203,7 +203,7 @@ List of function modifications.
 ScalarConstantChange
 VectorConstantChange
 ScalarCoefficientChange
-MultirowChange
+VectorCoefficientChange
 ```
 
 ## Sets
