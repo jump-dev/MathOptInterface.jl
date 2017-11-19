@@ -29,7 +29,7 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
