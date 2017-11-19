@@ -2,15 +2,6 @@ __precompile__()
 module MathOptInterface
 
 """
-    AbstractSolver
-
-Abstract supertype for "solver" objects.
-A solver is a lightweight object used for selecting solvers and parameters.
-It does not store any solver instance data.
-"""
-abstract type AbstractSolver end
-
-"""
     AbstractInstance
 
 Abstract supertype for objects representing an instance of an optimization problem.
@@ -26,7 +17,6 @@ or querying results.
 """
 abstract type AbstractStandaloneInstance <: AbstractInstance end
 
-
 """
     AbstractSolverInstance
 
@@ -36,13 +26,6 @@ In addition to `AbstractInstance`, `AbstractSolverInstance` objects let you
 solve the instance and query the solution.
 """
 abstract type AbstractSolverInstance <: AbstractInstance end
-
-"""
-    SolverInstance(solver::AbstractSolver)
-
-Create a solver instance from the given solver.
-"""
-function SolverInstance end
 
 """
     optimize!(instance::AbstractSolverInstance)
@@ -86,50 +69,6 @@ Copy the model from the instance `src` into the instance `dest`. If `dest` is
 non-empty, this may throw an error.
 """
 function copy! end
-
-"""
-    supportsproblem(s::AbstractSolver, objective_type::F, constraint_types::Vector)::Bool
-
-Return `true` if the solver supports optimizing a problem with objective type `F` and constraints of the types specified by `constraint_types` which is a list of tuples `(F,S)` for `F`-in-`S` constraints. Return false if the solver does not support this problem class.
-
-### Examples
-
-```julia
-supportsproblem(s, ScalarAffineFunction{Float64},
-    [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan{Float64}),
-    (ScalarAffineFunction{Float64},GreaterThan{Float64})])
-```
-should be `true` for a linear programming solver `s`.
-
-```julia
-supportsproblem(s, ScalarQuadraticFunction{Float64},
-    [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan{Float64}),
-    (ScalarAffineFunction{Float64},GreaterThan{Float64})])
-```
-should be `true` for a quadratic programming solver `s`.
-
-```julia
-supportsproblem(s, ScalarAffineFunction{Float64},
-    [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan{Float64}),
-    (ScalarAffineFunction{Float64},GreaterThan{Float64}),
-    (SingleVariable,ZeroOne)])
-```
-should be `true` for a mixed-integer linear programming solver `s`.
-
-```julia
-supportsproblem(s, ScalarAffineFunction{Float64},
-    [(ScalarAffineFunction{Float64},Zeros),
-    (ScalarAffineFunction{Float64},LessThan{Float64}),
-    (ScalarAffineFunction{Float64},GreaterThan{Float64}),
-    (VectorAffineFunction{Float64},SecondOrderCone)])
-```
-should be `true` for a second-order cone solver `s`.
-
-"""
-function supportsproblem end
 
 include("references.jl")
 include("attributes.jl")

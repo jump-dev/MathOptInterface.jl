@@ -1,13 +1,6 @@
 # Attributes
 
 """
-    AbstractSolverAttribute
-
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the solver.
-"""
-abstract type AbstractSolverAttribute end
-
-"""
     AbstractInstanceAttribute
 
 Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the instance.
@@ -36,13 +29,9 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractSolverAttribute, AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyAttribute = Union{AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
-    get(s::AbstractSolver, attr::AbstractSolverAttribute)
-
-Return an attribute `attr` of the solver `s`.
-
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
 
 Return an attribute `attr` of the instance `instance`.
@@ -109,10 +98,6 @@ function get!(output, instance::AbstractInstance, attr::AnyAttribute, args...)
 end
 
 """
-    canget(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
-
-Return a `Bool` indicating whether it is possible to query attribute `attr` from the solver `s`.
-
     canget(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)::Bool
     canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference{F,S})::Bool
 
@@ -154,10 +139,6 @@ canget(instance::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = fals
 canget(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
-    canset(s::AbstractSolver, attr::AbstractSolverAttribute)::Bool
-
-Return a `Bool` indicating whether it is possible to set attribute `attr` in the solver `s`.
-
     canset(instance::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
     canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
 
@@ -182,10 +163,6 @@ canset(instance::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = fals
 canset(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
 
 """
-    set!(s::AbstractSolver, attr::AbstractSolverAttribute, value)
-
-Assign `value` to the attribute `attr` of the solver `s`.
-
     set!(instance::AbstractInstance, attr::AbstractInstanceAttribute, value)
 
 Assign `value` to the attribute `attr` of the instance `instance`.
@@ -211,55 +188,7 @@ function set!(instance::AbstractInstance, attr::AnyAttribute, args...)
     throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support setting the attribute $attr"))
 end
 
-## Solver attributes
-
-"""
-    SupportsDuals()
-
-A `Bool` indicating if the solver should be expected to return dual solutions when appropriate.
-"""
-struct SupportsDuals <: AbstractSolverAttribute end
-
-"""
-    SupportsAddConstraintAfterSolve()
-
-A `Bool` indicating if the solver supports adding constraints after a solve.
-If `false`, then a new solver instance should be constructed instead.
-"""
-struct SupportsAddConstraintAfterSolve <: AbstractSolverAttribute end
-
-"""
-    SupportsDeleteConstraint()
-
-A `Bool` indicating if the solver supports deleting constraints from a solver instance.
-"""
-struct SupportsDeleteConstraint <: AbstractSolverAttribute end
-
-"""
-    SupportsDeleteVariable()
-
-A `Bool` indicating if the solver supports deleting variables from a solver instance.
-"""
-struct SupportsDeleteVariable <: AbstractSolverAttribute end
-
-"""
-    SupportsAddVariableAfterSolve()
-
-A `Bool` indicating if the solver supports adding variables after a solve.
-In the context of linear programming, this is known as column generation.
-"""
-struct SupportsAddVariableAfterSolve <: AbstractSolverAttribute end
-
 # TODO: solver-independent parameters
-
-# TODO: supports modify objective
-
-"""
-    SupportsConicThroughQuadratic()
-
-A `Bool` indicating if the solver interprets certain quadratic constraints as second-order cone constraints.
-"""
-struct SupportsConicThroughQuadratic <: AbstractSolverAttribute end
 
 ## Instance attributes
 
