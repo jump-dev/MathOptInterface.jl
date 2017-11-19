@@ -335,7 +335,7 @@ more human-readable, better standardized, and more extensible.
 using MathOptFormat, MathOptInterface
 const MOI = MathOptInterface
 
-m = MathOptFormat.MOFFile()
+m = MathOptFormat.MOFInstance()
 
 # Add in extra metadata
 m["author"] = "Oscar Dowson"

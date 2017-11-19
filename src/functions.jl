@@ -4,26 +4,26 @@
 =#
 
 """
-    object!(m::MOFFile, f::MOI.AbstractFunction)
+    object!(m::MOFInstance, f::MOI.AbstractFunction)
 
 Convert a MOI function into the MathOptFormat representation.
 """
 function object! end
 
-getname!(m::MOFFile, v::MOI.VariableReference) = MOI.get(m, MOI.VariableName(), v)
+getname!(m::MOFInstance, v::MOI.VariableReference) = MOI.get(m, MOI.VariableName(), v)
 
-object!(m::MOFFile, f::MOI.SingleVariable) = Object("head"=>"SingleVariable", "variable"=> getname!(m, f.variable))
+object!(m::MOFInstance, f::MOI.SingleVariable) = Object("head"=>"SingleVariable", "variable"=> getname!(m, f.variable))
 
-object!(m::MOFFile, f::MOI.VectorOfVariables) = Object("head"=>"VectorOfVariables", "variables"=>getname!.(m, f.variables))
+object!(m::MOFInstance, f::MOI.VectorOfVariables) = Object("head"=>"VectorOfVariables", "variables"=>getname!.(m, f.variables))
 
-object!(m::MOFFile, f::MOI.ScalarAffineFunction) = Object(
+object!(m::MOFInstance, f::MOI.ScalarAffineFunction) = Object(
     "head"         => "ScalarAffineFunction",
     "variables"    => getname!.(m, f.variables),
     "coefficients" => f.coefficients,
     "constant"     => f.constant
 )
 
-object!(m::MOFFile, f::MOI.VectorAffineFunction) = Object(
+object!(m::MOFInstance, f::MOI.VectorAffineFunction) = Object(
     "head"         => "VectorAffineFunction",
     "outputindex"  => f.outputindex,
     "variables"    => getname!.(m, f.variables),
@@ -31,7 +31,7 @@ object!(m::MOFFile, f::MOI.VectorAffineFunction) = Object(
     "constant"     => f.constant
 )
 
-object!(m::MOFFile, f::MOI.ScalarQuadraticFunction) = Object(
+object!(m::MOFInstance, f::MOI.ScalarQuadraticFunction) = Object(
     "head"                   => "ScalarQuadraticFunction",
     "affine_variables"       => getname!.(m, f.affine_variables),
     "affine_coefficients"    => f.affine_coefficients,
@@ -41,7 +41,7 @@ object!(m::MOFFile, f::MOI.ScalarQuadraticFunction) = Object(
     "constant"               => f.constant
 )
 
-object!(m::MOFFile, f::MOI.VectorQuadraticFunction) = Object(
+object!(m::MOFInstance, f::MOI.VectorQuadraticFunction) = Object(
     "head"                   => "VectorQuadraticFunction",
     "affine_outputindex"     => f.affine_outputindex,
     "affine_variables"       => getname!.(m, f.affine_variables),
