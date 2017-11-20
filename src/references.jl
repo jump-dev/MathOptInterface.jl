@@ -24,14 +24,14 @@ const AnyReference = Union{ConstraintReference,VariableReference}
 """
     candelete(instance::AbstractInstance, ref::AnyReference)::Bool
 
-Return a `Bool` indicating whether the object referred to by `ref` can be removed from the instance `m`.
+Return a `Bool` indicating whether the object referred to by `ref` can be removed from the instance `instance`.
 """
 candelete(instance::AbstractInstance, ref::AnyReference) = false
 
 """
     isvalid(instance::AbstractInstance, ref::AnyReference)::Bool
 
-Return a `Bool` indicating whether this reference refers to a valid object in the instance `m`.
+Return a `Bool` indicating whether this reference refers to a valid object in the instance `instance`.
 """
 isvalid(instance::AbstractInstance, ref::AnyReference) = false
 
