@@ -8,14 +8,6 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 abstract type AbstractInstanceAttribute end
 
 """
-    AbstractSolverInstanceAttribute
-
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the solver instance.
-These attributes do not apply to standalone instances.
-"""
-abstract type AbstractSolverInstanceAttribute <: AbstractInstanceAttribute end
-
-"""
     AbstractVariableAttribute
 
 Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the instance.
@@ -29,16 +21,12 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractSolverInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
 
 Return an attribute `attr` of the instance `instance`.
-
-    get(instance::AbstractSolverInstance, attr::AbstractSolverInstanceAttribute)
-
-Return an attribute `attr` of the solver instance `instance`.
 
     get(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)
 
@@ -262,7 +250,7 @@ struct ObjectiveFunction <: AbstractInstanceAttribute end
 
 The objective value of the `resultindex`th primal result.
 """
-struct ObjectiveValue <: AbstractSolverInstanceAttribute
+struct ObjectiveValue <: AbstractInstanceAttribute
     resultindex::Int
     (::Type{ObjectiveValue})(resultindex=1) = new(resultindex)
 end
@@ -272,21 +260,21 @@ end
 
 The best known bound on the optimal objective value.
 """
-struct ObjectiveBound <: AbstractSolverInstanceAttribute end
+struct ObjectiveBound <: AbstractInstanceAttribute end
 
 """
     RelativeGap()
 
 The final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
 """
-struct RelativeGap <: AbstractSolverInstanceAttribute  end
+struct RelativeGap <: AbstractInstanceAttribute  end
 
 """
     SolveTime()
 
 The total elapsed solution time (in seconds) as reported by the solver.
 """
-struct SolveTime <: AbstractSolverInstanceAttribute end
+struct SolveTime <: AbstractInstanceAttribute end
 
 """
     SimplexIterations()
@@ -294,35 +282,35 @@ struct SolveTime <: AbstractSolverInstanceAttribute end
 The cumulative number of simplex iterations during the optimization process.
 In particular, for a mixed-integer program (MIP), the total simplex iterations for all nodes.
 """
-struct SimplexIterations <: AbstractSolverInstanceAttribute end
+struct SimplexIterations <: AbstractInstanceAttribute end
 
 """
     BarrierIterations()
 
 The cumulative number of barrier iterations while solving a problem.
 """
-struct BarrierIterations <: AbstractSolverInstanceAttribute end
+struct BarrierIterations <: AbstractInstanceAttribute end
 
 """
     NodeCount()
 
 The total number of branch-and-bound nodes explored while solving a mixed-integer program (MIP).
 """
-struct NodeCount <: AbstractSolverInstanceAttribute end
+struct NodeCount <: AbstractInstanceAttribute end
 
 """
     RawSolver()
 
 An object that may be used to access a solver-specific API for this solver instance.
 """
-struct RawSolver <: AbstractSolverInstanceAttribute end
+struct RawSolver <: AbstractInstanceAttribute end
 
 """
     ResultCount()
 
 The number of results available.
 """
-struct ResultCount <: AbstractSolverInstanceAttribute end
+struct ResultCount <: AbstractInstanceAttribute end
 
 ## Variable attributes
 
@@ -448,7 +436,7 @@ struct ConstraintSet <: AbstractConstraintAttribute end
 
 A `TerminationStatusCode` explaining why the solver stopped.
 """
-struct TerminationStatus <: AbstractSolverInstanceAttribute end
+struct TerminationStatus <: AbstractInstanceAttribute end
 
 """
     TerminationStatusCode
@@ -509,7 +497,7 @@ The values indicate how to interpret the result vector.
 The `ResultStatusCode` of the primal result `N`.
 If `N` is omitted, it defaults to 1.
 """
-struct PrimalStatus <: AbstractSolverInstanceAttribute
+struct PrimalStatus <: AbstractInstanceAttribute
     N::Int
 end
 PrimalStatus() = PrimalStatus(1)
@@ -521,7 +509,7 @@ PrimalStatus() = PrimalStatus(1)
 The `ResultStatusCode` of the dual result `N`.
 If `N` is omitted, it defaults to 1.
 """
-struct DualStatus <: AbstractSolverInstanceAttribute
+struct DualStatus <: AbstractInstanceAttribute
     N::Int
 end
 DualStatus() = DualStatus(1)

@@ -12,7 +12,6 @@ List of attribute categories.
 
 ```@docs
 AbstractInstanceAttribute
-AbstractSolverInstanceAttribute
 AbstractVariableAttribute
 AbstractConstraintAttribute
 ```
