@@ -70,6 +70,21 @@ non-empty, this may throw an error.
 """
 function copy! end
 
+"""
+    coefficienttype(m::AbstractSolver)
+
+Returns the coefficient type used by the solver. Defaults to Float64.
+"""
+function coefficienttype(::AbstractSolver); Float64; end
+
+"""
+    coefficienttype(m::AbstractInstance)
+
+Returns the coefficient type used by the instance. Defaults to Float64.
+"""
+function coefficienttype(::AbstractInstance); Float64; end
+
+
 include("references.jl")
 include("attributes.jl")
 include("functions.jl")
