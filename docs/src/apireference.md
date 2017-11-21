@@ -207,6 +207,13 @@ PowerCone
 DualPowerCone
 PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeScaled
+PositiveSemidefiniteConeSquare
+LogDetConeTriangle
+LogDetConeScaled
+LogDetConeSquare
+RootDetConeTriangle
+RootDetConeScaled
+RootDetConeSquare
 Integer
 ZeroOne
 Semicontinuous

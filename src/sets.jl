@@ -216,6 +216,100 @@ struct PositiveSemidefiniteConeScaled <: AbstractVectorSet
     dimension::Int
 end
 
+dimension(s::Union{PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeScaled}) = div(s.dimension * (s.dimension + 1), 2)
+
+"""
+    PositiveSemidefiniteConeSquare(dimension)
+
+The cone of symmetric positive semidefinite matrices.
+The entries of the matrix are given column by column (or equivalently, row by row).
+The matrix is both constrained to be symmetric and and to be positive semidefinite.
+That is, if the functions in entries ``(i, j)`` and ``(j, i)`` are different, then a constraint will be added to make sure that the entries are equal.
+
+### Examples
+
+Constraining the matrix
+```math
+\\begin{bmatrix}
+  1 & -y\\\\
+  -z & 0\\\\
+\\end{bmatrix}
+```
+to be symmetric positive semidefinite can be achieved by constraining the vector ``(1, -z, -y, 0)`` (or ``(1, -y, -z, 0)``)
+to belong to the `PositiveSemidefiniteConeSquare(2)`.
+It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `PositiveSemidefiniteConeTriangle`.
+"""
+struct PositiveSemidefiniteConeSquare <: AbstractVectorSet
+    dimension::Int
+end
+
+dimension(s::PositiveSemidefiniteConeSquare) = s.dimension^2
+
+"""
+    LogDetConeTriangle(dimension)
+
+The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\log(\\det(X)) \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
+The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+"""
+struct LogDetConeTriangle <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    LogDetConeScaled(dimension)
+
+The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\log(\\det(X)) \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeScaled`.
+The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+"""
+struct LogDetConeScaled <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    LogDetConeSquare(dimension)
+
+The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\log(\\det(X)), X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
+Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
+The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+"""
+struct LogDetConeSquare <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    RootDetConeTriangle(dimension)
+
+The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
+The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+"""
+struct RootDetConeTriangle <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    RootDetConeScaled(dimension)
+
+The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeScaled`.
+The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+"""
+struct RootDetConeScaled <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    RootDetConeSquare(dimension)
+
+The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
+Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
+The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+"""
+struct RootDetConeSquare <: AbstractVectorSet
+    dimension::Int
+end
+
+dimension(s::Union{LogDetConeTriangle, LogDetConeScaled, RootDetConeTriangle, RootDetConeScaled}) = 1 + div(s.dimension * (s.dimension + 1), 2)
+dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.dimension^2
+
 """
     Integer()
 
