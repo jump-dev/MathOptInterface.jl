@@ -172,7 +172,6 @@ dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCon
 The (vectorized) cone of symmetric positive semidefinite matrices, with off-diagonals unscaled.
 The entries of the upper triangular part of the matrix are given column by column (or equivalently, the entries of the lower triangular part are given row by row).
 An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``d``, the corresponding symmetric matrix has side dimension ``\\sqrt{1/4 + 2 d} - 1/2`` elements.
-The scalar product is the sum of the pairwise product of the diagonal entries plus twice the sum of the pairwise product of the upper diagonal entries.
 
 ### Examples
 
@@ -196,36 +195,54 @@ The advantage of the first format is the mapping between the `(i, j)` matrix ind
 Indeed,
 - the entry of matrix indices `(i, j)` has vectorized index `k = div((j-1)*j, 2) + i` if ``i \\leq j`` and `k = div((i-1)*i, 2) + j` if ``j \\leq i``;
 - and the entry with vectorized index `k` has matrix indices `i = isqrt(2k)` and `j = k - div((i-1)*i, 2)` or `j = isqrt(2k)` and `i = k - div((j-1)*j, 2)`.
+
+### Duality note
+The scalar product for the symmetric matrix in its vectorized form is the sum of the pairwise product of the diagonal entries plus twice the sum of the pairwise product of the upper diagonal entries.
+This has important consequence for duality.
+Consider for example the following problem
+```math
+\\begin{align*}
+    & \\min_{x \\in \\mathbb{R}^3} & x_1 + x_3
+    \\\\
+    & \\;\\;\\text{s.t.} & x_2 & = 1\\\\
+    & & x & \\in \\text{PositiveSemidefiniteConeTriangle}(2).
+\\end{align*}
+```
+The dual is the following problem
+```math
+\\begin{align*}
+    & \\max_{y \\in \\mathbb{R}} & y
+    \\\\
+    & \\;\\;\\text{s.t.} &
+    (1, -y/2, 1) & \\in \\text{PositiveSemidefiniteConeTriangle}(2).
+\\end{align*}
+```
+Why do we use ``-y/2`` in the dual constraint instead of ``-y`` ?
+The reason is that ``x_2`` is the scalar product between ``x`` and the symmetric matrix whose vectorized form is ``(0, 1/2, 0)``. Indeed, with our modified scalar products we have
+```math
+\\langle
+(0, 1/2, 0),
+(x_1, x_2, x_3)
+\\rangle
+=
+\\langle
+\\begin{pmatrix}
+  0 & 1/2\\\\
+  1/2 & 0
+\\end{pmatrix},
+\\begin{pmatrix}
+  x_1 & x_2\\\\
+  x_2 & x_3
+\\end{pmatrix}
+\\rangle = x_2.
+```
+
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractVectorSet
     dimension::Int
 end
 
-"""
-    PositiveSemidefiniteConeScaled(dimension)
-
-The (vectorized) cone of symmetric positive semidefinite matrices, with off-diagonals scaled.
-The entries of the upper triangular part of the matrix are given column by column (or equivalently, the entries of the lower triangular part are given row by row).
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``d``, the corresponding symmetric matrix has side dimension ``\\sqrt{1/4 + 2 d} - 1/2`` elements.
-The off-diagonal entries of the matrices of both the cone and its dual are scaled by ``\\sqrt{2}`` and the scalar product is simply the sum of the pairwise product of the entries.
-
-### Examples
-
-The matrix
-```math
-\\begin{bmatrix}
-  1 & 2 & 4\\\\
-  2 & 3 & 5\\\\
-  4 & 5 & 6
-\\end{bmatrix}
-```
-and to ``(1, 2\\sqrt{2}, 3\\sqrt{2}, 4, 5\\sqrt{2}, 6)`` for `PositiveSemidefiniteConeScaled`.
-"""
-struct PositiveSemidefiniteConeScaled <: AbstractVectorSet
-    dimension::Int
-end
-
-dimension(s::Union{PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeScaled}) = div(s.dimension * (s.dimension + 1), 2)
+dimension(s::PositiveSemidefiniteConeTriangle) = div(s.dimension * (s.dimension + 1), 2)
 
 """
     PositiveSemidefiniteConeSquare(dimension)
@@ -265,16 +282,6 @@ struct LogDetConeTriangle <: AbstractVectorSet
 end
 
 """
-    LogDetConeScaled(dimension)
-
-The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\log(\\det(X)) \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeScaled`.
-The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
-"""
-struct LogDetConeScaled <: AbstractVectorSet
-    dimension::Int
-end
-
-"""
     LogDetConeSquare(dimension)
 
 The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\log(\\det(X)), X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
@@ -296,16 +303,6 @@ struct RootDetConeTriangle <: AbstractVectorSet
 end
 
 """
-    RootDetConeScaled(dimension)
-
-The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeScaled`.
-The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
-"""
-struct RootDetConeScaled <: AbstractVectorSet
-    dimension::Int
-end
-
-"""
     RootDetConeSquare(dimension)
 
 The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
@@ -316,7 +313,7 @@ struct RootDetConeSquare <: AbstractVectorSet
     dimension::Int
 end
 
-dimension(s::Union{LogDetConeTriangle, LogDetConeScaled, RootDetConeTriangle, RootDetConeScaled}) = 1 + div(s.dimension * (s.dimension + 1), 2)
+dimension(s::Union{LogDetConeTriangle, RootDetConeTriangle}) = 1 + div(s.dimension * (s.dimension + 1), 2)
 dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.dimension^2
 
 """
