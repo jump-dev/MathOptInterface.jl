@@ -201,6 +201,7 @@ EqualTo
 Interval
 SecondOrderCone
 RotatedSecondOrderCone
+GeometricMeanCone
 ExponentialCone
 DualExponentialCone
 PowerCone

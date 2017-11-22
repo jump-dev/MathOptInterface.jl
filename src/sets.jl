@@ -115,9 +115,18 @@ end
 """
     RotatedSecondOrderCone(dimension)
 
-The rotated second-order cone ``\\{ (t,u,x) \\mathbb{R}^{dimension} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
+The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    GeometricMeanCone(dimension)
+
+The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}`` of dimension `dimension```{}=n+1``.
+"""
+struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
 end
 
