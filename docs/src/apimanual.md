@@ -446,6 +446,12 @@ An important note for the LP case is that the signs of the feasible duals depend
 
 Currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i``.
 
+#### Duality and scalar product
+
+The nonzero entries of the matrix ``A_i`` of the section [Duals](@ref) may be different from the `coefficients` field in the `VectorAffineFunction`.
+The row of ``A_i`` should the vector such that its scalar product with the vector ``x`` is equal to the function defined in the `VectorAffineFunction`.
+The scalar product is different from the canonical one for the sets [PositiveSemidefiniteConeTriangle](@ref), [LogDetConeTriangle](@ref), [RootDetConeTriangle](@ref).
+See [PositiveSemidefiniteConeTriangle](@ref) for details.
 
 ### Modifying an instance
 
