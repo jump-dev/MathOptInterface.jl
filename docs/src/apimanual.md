@@ -448,9 +448,9 @@ Currently, a convention for duals is not defined for problems with non-conic set
 
 #### Duality and scalar product
 
-The nonzero entries of the matrix ``A_i`` of the section [Duals](@ref) may be different from the `coefficients` field in the `VectorAffineFunction`.
-The row of ``A_i`` should the vector such that its scalar product with the vector ``x`` is equal to the function defined in the `VectorAffineFunction`.
 The scalar product is different from the canonical one for the sets [PositiveSemidefiniteConeTriangle](@ref), [LogDetConeTriangle](@ref), [RootDetConeTriangle](@ref).
+For these cones, the nonzero entries of the matrix ``A_i`` of the section [Duals](@ref) may be different from the `coefficients` field in the `VectorAffineFunction`.
+The row of ``A_i`` should be the vector such that its scalar product with the vector ``x`` is equal to the function defined in the `VectorAffineFunction`.
 See [PositiveSemidefiniteConeTriangle](@ref) for details.
 
 ### Modifying an instance

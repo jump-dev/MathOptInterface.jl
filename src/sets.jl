@@ -197,7 +197,7 @@ Indeed,
 - and the entry with vectorized index `k` has matrix indices `i = isqrt(2k)` and `j = k - div((i-1)*i, 2)` or `j = isqrt(2k)` and `i = k - div((j-1)*j, 2)`.
 
 ### Duality note
-The scalar product for the symmetric matrix in its vectorized form is the sum of the pairwise product of the diagonal entries plus twice the sum of the pairwise product of the upper diagonal entries.
+The scalar product for the symmetric matrix in its vectorized form is the sum of the pairwise product of the diagonal entries plus twice the sum of the pairwise product of the upper diagonal entries; see [p. 634, 1].
 This has important consequence for duality.
 Consider for example the following problem
 ```math
@@ -225,18 +225,21 @@ The reason is that ``x_2`` is the scalar product between ``x`` and the symmetric
 (x_1, x_2, x_3)
 \\rangle
 =
-\\langle
+\\mathrm{trace}
 \\begin{pmatrix}
   0 & 1/2\\\\
   1/2 & 0
-\\end{pmatrix},
+\\end{pmatrix}
 \\begin{pmatrix}
   x_1 & x_2\\\\
   x_2 & x_3
 \\end{pmatrix}
-\\rangle = x_2.
+= x_2.
 ```
 
+### References
+
+[1] Boyd, S. and Vandenberghe, L.. *Convex optimization*. Cambridge university press, 2004.
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractVectorSet
     dimension::Int
