@@ -202,39 +202,39 @@ This has important consequence for duality.
 Consider for example the following problem
 ```math
 \\begin{align*}
-    & \\min_{x \\in \\mathbb{R}^3} & x_1 + x_3
+    & \\max_{x \\in \\mathbb{R}} & x
     \\\\
-    & \\;\\;\\text{s.t.} & x_2 & = 1\\\\
-    & & x & \\in \\text{PositiveSemidefiniteConeTriangle}(2).
+    & \\;\\;\\text{s.t.} &
+    (1, -x, 1) & \\in \\text{PositiveSemidefiniteConeTriangle}(2).
 \\end{align*}
 ```
 The dual is the following problem
 ```math
 \\begin{align*}
-    & \\max_{y \\in \\mathbb{R}} & y
+    & \\min_{x \\in \\mathbb{R}^3} & y_1 + y_3
     \\\\
-    & \\;\\;\\text{s.t.} &
-    (1, -y/2, 1) & \\in \\text{PositiveSemidefiniteConeTriangle}(2).
+    & \\;\\;\\text{s.t.} & 2y_2 & = 1\\\\
+    & & y & \\in \\text{PositiveSemidefiniteConeTriangle}(2).
 \\end{align*}
 ```
-Why do we use ``-y/2`` in the dual constraint instead of ``-y`` ?
-The reason is that ``x_2`` is the scalar product between ``x`` and the symmetric matrix whose vectorized form is ``(0, 1/2, 0)``. Indeed, with our modified scalar products we have
+Why do we use ``2y_2`` in the dual constraint instead of ``y_2`` ?
+The reason is that ``2y_2`` is the scalar product between ``y`` and the symmetric matrix whose vectorized form is ``(0, 1, 0)``. Indeed, with our modified scalar products we have
 ```math
 \\langle
-(0, 1/2, 0),
-(x_1, x_2, x_3)
+(0, 1, 0),
+(y_1, y_2, y_3)
 \\rangle
 =
 \\mathrm{trace}
 \\begin{pmatrix}
-  0 & 1/2\\\\
-  1/2 & 0
+  0 & 1\\\\
+  1 & 0
 \\end{pmatrix}
 \\begin{pmatrix}
-  x_1 & x_2\\\\
-  x_2 & x_3
+  y_1 & y_2\\\\
+  y_2 & y_3
 \\end{pmatrix}
-= x_2.
+= 2y_2.
 ```
 
 ### References
