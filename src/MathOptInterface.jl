@@ -67,6 +67,9 @@ function read! end
 
 Copy the model from the instance `src` into the instance `dest`. If `dest` is
 non-empty, this may throw an error.
+
+All data is copied rather than passed by reference, and all valid variable and
+constraint references in `src` must become valid instances in `dest`.
 """
 function copy! end
 
