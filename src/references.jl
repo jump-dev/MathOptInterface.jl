@@ -5,8 +5,12 @@
 
 A lightweight object used to reference `F`-in-`S` constraints in an instance.
 The parameter `F` is the type of the function in the constraint, and the parameter `S` is the type of set in the constraint.
+
+The `instance` field is used to help validate the ownership of the reference by a
+particular instance.
 """
 struct ConstraintReference{F,S}
+    instance::UInt64
     value::UInt64
 end
 
@@ -14,8 +18,12 @@ end
     VariableReference
 
 A lightweight object used to reference variables in an instance.
+
+The `instance` field is used to help validate the ownership of the reference by a
+particular instance.
 """
 struct VariableReference
+    instance::UInt64
     value::UInt64
 end
 
