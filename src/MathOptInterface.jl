@@ -65,8 +65,23 @@ function read! end
 """
     copy!(dest::AbstractInstance, src::AbstractInstance)
 
-Copy the model from the instance `src` into the instance `dest`. If `dest` is
-non-empty, this may throw an error.
+Copy the model from the instance `src` into the instance `dest`. The target instance `dest` must be empty. Returns a dictionary-like object that translates variable and constraint references from the `src` instance to the corresponding references in the `dest` instance.
+
+### Example
+
+```julia
+# Given `AbstractInstance`s `src` and `dest`.
+# `dest` must be empty.
+
+x = addvariable!(src)
+isvalid(src, x)   # true
+isvalid(dest, x)  # false (`dest` has no variables)
+
+reference_map = copy!(dest, src)
+
+isvalid(dest, x) # false (unless x == reference_map[x])
+isvalid(dest, reference_map[x]) # true
+```
 """
 function copy! end
 

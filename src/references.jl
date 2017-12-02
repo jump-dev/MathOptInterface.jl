@@ -32,6 +32,8 @@ candelete(instance::AbstractInstance, ref::AnyReference) = false
     isvalid(instance::AbstractInstance, ref::AnyReference)::Bool
 
 Return a `Bool` indicating whether this reference refers to a valid object in the instance `instance`.
+
+**Note:** References are only valid for the instances from which they are created. However, because references have a single integer `value` field (for performance reasons), it is possible for a reference to be incorrectly reported as valid for different instance. For this reason, we recommend that instances do not use predictable or common sequences for the `value` field. See further discussion in the "Implementing a solver interface" section of the manual.
 """
 isvalid(instance::AbstractInstance, ref::AnyReference) = false
 
