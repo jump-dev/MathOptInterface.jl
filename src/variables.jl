@@ -1,15 +1,15 @@
 # Variables
 
 """
-    addvariables!(instance::AbstractInstance, n::Int)::Vector{VariableReference}
+    addvariables!(instance::AbstractInstance, n::Int)::Vector{VariableIndex}
 
-Add `n` scalar variables to the instance, returning a vector of variable references.
+Add `n` scalar variables to the instance, returning a vector of variable indices.
 """
 function addvariables! end
 
 """
-    addvariable!(instance::AbstractInstance)::VariableReference
+    addvariable!(instance::AbstractInstance)::VariableIndex
 
-Add a scalar variable to the instance, returning a variable reference.
+Add a scalar variable to the instance, returning a variable index.
 """
 function addvariable! end

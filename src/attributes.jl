@@ -28,33 +28,33 @@ const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute,
 
 Return an attribute `attr` of the instance `instance`.
 
-    get(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)
+    get(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableIndex)
 
 Return an attribute `attr` of the variable `v` in instance `instance`.
 
-    get(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})
+    get(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableIndex})
 
 Return a vector of attributes corresponding to each variable in the collection `v` in the instance `instance`.
 
-    get(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference)
+    get(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintIndex)
 
 Return an attribute `attr` of the constraint `c` in instance `instance`.
 
-    get(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
+    get(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})
 
 Return a vector of attributes corresponding to each constraint in the collection `c` in the instance `instance`.
 
-    get(instance::AbstractInstance, ::Type{VariableReference}, name::String)
+    get(instance::AbstractInstance, ::Type{VariableIndex}, name::String)
 
-If a variable with name `name` exists in the instance `instance`, return the corresponding reference object, otherwise throw a `KeyError`.
+If a variable with name `name` exists in the instance `instance`, return the corresponding index, otherwise throw a `KeyError`.
 
-    get(instance::AbstractInstance, ::Type{ConstraintReference{F,S}}, name::String) where {F<:AbstractFunction,S<:AbstractSet}
+    get(instance::AbstractInstance, ::Type{ConstraintIndex{F,S}}, name::String) where {F<:AbstractFunction,S<:AbstractSet}
 
-If an `F`-in-`S` constraint with name `name` exists in the instance `instance`, return the corresponding reference object, otherwise throw a `KeyError`.
+If an `F`-in-`S` constraint with name `name` exists in the instance `instance`, return the corresponding index, otherwise throw a `KeyError`.
 
-    get(instance::AbstractInstance, ::Type{ConstraintReference}, name::String)
+    get(instance::AbstractInstance, ::Type{ConstraintIndex}, name::String)
 
-If *any* constraint with name `name` exists in the instance `instance`, return the corresponding reference object, otherwise throw a `KeyError`. This version is available for convenience but may incur a performance penalty because it is not type stable.
+If *any* constraint with name `name` exists in the instance `instance`, return the corresponding index, otherwise throw a `KeyError`. This version is available for convenience but may incur a performance penalty because it is not type stable.
 
 ### Examples
 
@@ -63,9 +63,9 @@ get(instance, ObjectiveValue())
 get(instance, VariablePrimal(), ref)
 get(instance, VariablePrimal(5), [ref1, ref2])
 get(instance, OtherAttribute("something specific to cplex"))
-get(instance, VariableReference, "var1")
-get(instance, ConstraintReference{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
-get(instance, ConstraintReference, "con1")
+get(instance, VariableIndex, "var1")
+get(instance, ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
+get(instance, ConstraintIndex, "con1")
 ```
 """
 function get end
@@ -86,25 +86,25 @@ function get!(output, instance::AbstractInstance, attr::AnyAttribute, args...)
 end
 
 """
-    canget(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference)::Bool
-    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference{F,S})::Bool
+    canget(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableIndex)::Bool
+    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintIndex{F,S})::Bool
 
-Return a `Bool` indicating whether the instance `instance` currently has a value for the attributed specified by attribute type `attr` applied to the variable reference `v` or constraint reference `c`.
+Return a `Bool` indicating whether the instance `instance` currently has a value for the attributed specified by attribute type `attr` applied to the variable indexed by `v` or constraint indexed by `c`.
 
-    canget(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
-    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+    canget(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableIndex})::Bool
+    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})::Bool
 
-Return a `Bool` indicating whether the instance `instance` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable references in `v` or constraint reference in `c`.
+Return a `Bool` indicating whether the instance `instance` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable indexed by `v` or constraint indexed by `c`.
 
-    canget(instance::AbstractInstance, ::Type{VariableReference}, name::String)::Bool
+    canget(instance::AbstractInstance, ::Type{VariableIndex}, name::String)::Bool
 
 Return a `Bool` indicating if a variable with the name `name` exists in the instance.
 
-    canget(instance::AbstractInstance, ::Type{ConstraintReference{F,S}}, name::String)::Bool where {F<:AbstractFunction,S<:AbstractSet}
+    canget(instance::AbstractInstance, ::Type{ConstraintIndex{F,S}}, name::String)::Bool where {F<:AbstractFunction,S<:AbstractSet}
 
 Return a `Bool` indicating if an `F`-in-`S` constraint with the name `name` exists in the instance `instance`.
 
-    canget(instance::AbstractInstance, ::Type{ConstraintReference}, name::String)::Bool
+    canget(instance::AbstractInstance, ::Type{ConstraintIndex}, name::String)::Bool
 
 Return a `Bool` indicating if a constraint of any kind with the name `name` exists in the instance `instance`.
 
@@ -116,58 +116,61 @@ canget(instance, ObjectiveValue())
 canget(instance, VariablePrimalStart(), varref)
 canget(instance, ConstraintPrimal(), conref)
 canget(instance, VariablePrimal(), [ref1, ref2])
-canget(instance, VariableReference, "var1")
-canget(instance, ConstraintReference{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
-canget(instance, ConstraintReference, "con1")
+canget(instance, VariableIndex, "var1")
+canget(instance, ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
+canget(instance, ConstraintIndex, "con1")
 ```
 """
 function canget end
 canget(instance::AbstractInstance, attr::AnyAttribute) = false
-canget(instance::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
-canget(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
+canget(instance::AbstractInstance, attr::AnyAttribute, ref::Index) = false
+canget(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:Index}) = false
 
+# TODO: Consider moving from `canset(instance, VariablePrimalStart(), VariableIndex)` to `canset(instance, VariablePrimalStart())`
+# and from `canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float64},Nonnegatives})` to
+# `canset(instance, ConstraintPrimal(), VectorAffineFunction{Float64},Nonnegatives)`.
 """
-    canset(instance::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableReference})::Bool
-    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintReference{F,S})::Bool
+    canset(instance::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableIndex})::Bool
+    canset(instance::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintIndex{F,S})::Bool
 
-Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the reference type `R` in the instance `instance`.
+Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the index type `R` in the instance `instance`.
 
-    canset(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference})::Bool
-    canset(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})::Bool
+    canset(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableIndex})::Bool
+    canset(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})::Bool
 
-Return a `Bool` indicating whether it is possible to set attribute `attr`applied to *every* variable reference in `v` or constraint reference in `c` in the instance `instance`.
+Return a `Bool` indicating whether it is possible to set attribute `attr` applied to *every* variable in `v` or constraint in `c` in the instance `instance`.
 
 ### Examples
 
 ```julia
 canset(instance, ObjectiveValue())
-canset(instance, VariablePrimalStart(), VariableReference)
-canset(instance, ConstraintPrimal(), ConstraintReference{VectorAffineFunction{Float64},Nonnegatives})
+canset(instance, VariablePrimalStart(), VariableIndex)
+canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float64},Nonnegatives})
 ```
 """
 function canset end
 canset(instance::AbstractInstance, attr::AnyAttribute) = false
-canset(instance::AbstractInstance, attr::AnyAttribute, ref::AnyReference) = false
-canset(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:AnyReference}) = false
+canset(instance::AbstractInstance, attr::AnyAttribute, ref::Index) = false
+canset(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:Index}) = false
 
 """
     set!(instance::AbstractInstance, attr::AbstractInstanceAttribute, value)
 
 Assign `value` to the attribute `attr` of the instance `instance`.
 
-    set!(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableReference, value)
+    set!(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableIndex, value)
 
 Assign `value` to the attribute `attr` of variable `v` in instance `instance`.
 
-    set!(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableReference}, vector_of_values)
+    set!(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableIndex}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each variable in the collection `v` in instance `instance`.
 
-    set!(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintReference, value)
+    set!(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintIndex, value)
 
 Assign a value to the attribute `attr` of constraint `c` in instance `instance`.
 
-    set!(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintReference{F,S}})
+    set!(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `instance`.
 """
@@ -204,20 +207,20 @@ The number of variables in the instance.
 struct NumberOfVariables <: AbstractInstanceAttribute end
 
 """
-    ListOfVariableReferences()
+    ListOfVariableIndices()
 
-A `Vector{VariableReference}` with references to all variables present
+A `Vector{VariableIndex}` indexing all variables present
 in the instance (i.e., of length equal to the value of `NumberOfVariables()`).
 """
-struct ListOfVariableReferences <: AbstractInstanceAttribute end
+struct ListOfVariableIndices <: AbstractInstanceAttribute end
 
 """
-    ListOfConstraintReferences{F,S}()
+    ListOfConstraintIndices{F,S}()
 
-A `Vector{ConstraintReferences{F,S}}` with references to all constraints of
+A `Vector{ConstraintIndex{F,S}}` indexing all constraints of
 type `F`-in`S` in the instance (i.e., of length equal to the value of `NumberOfConstraints{F,S}()`).
 """
-struct ListOfConstraintReferences{F,S} <: AbstractInstanceAttribute end
+struct ListOfConstraintIndices{F,S} <: AbstractInstanceAttribute end
 
 """
     NumberOfConstraints{F,S}()
