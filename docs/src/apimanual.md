@@ -18,7 +18,7 @@ MOI is designed to:
 - Provide a greatly expanded set of status codes explaining what happened during the optimization procedure
 - Enable a solver to more precisely specify which problem classes it supports
 - Enable both primal and dual warm starts
-- Enable adding and removing both variables and constraints by using reference objects instead of integer indices
+- Enable adding and removing both variables and constraints by indices that are not required to be consecutive
 - Enable any modification that the solver supports to an existing instance
 - Avoid requiring the solver wrapper to store an additional copy of the problem data
 
@@ -49,8 +49,8 @@ where:
 * the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by [`AbstractSet`](@ref MathOptInterface.AbstractSet) objects
 
 The current function types are:
-* **projection onto a single coordinate**: ``x_j``, a single variable defined by a variable reference
-* **projection onto multiple coordinates**: a subvector of variables defined by a list of variable references
+* **projection onto a single coordinate**: ``x_j``, a single variable defined by a variable index
+* **projection onto multiple coordinates**: a subvector of variables defined by a list of variable indices
 * **scalar-valued affine**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
 * **vector-valued affine**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
 * **scalar-valued quadratic**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
@@ -78,9 +78,9 @@ Through the rest of the manual, `instance` is used as a generic solver instance.
 ## Variables
 
 All variables in MOI are scalar variables.
-New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableReference`](@ref MathOptInterface.VariableReference) or `Vector{VariableReference}` respectively. Integer indices are never used to reference variables.
+New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableIndex`](@ref MathOptInterface.VariableIndex) or `Vector{VariableIndex}` respectively. `VariableIndex` objects are type-safe wrappers around integers that refer to a variable in a particular instance.
 
-One uses `VariableReference` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
+One uses `VariableIndex` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
 ```julia
 v = addvariable!(instance)
 set!(instance, VariablePrimalStart(), v, 10.5)
@@ -88,30 +88,30 @@ v2 = addvariables!(instance, 3)
 set!(instance, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
-A variable can be deleted from an instance with [`delete!(::AbstractInstance, ::VariableReference)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractInstance, ::MathOptInterface.AnyReference)), if this functionality is supported.
+A variable can be deleted from an instance with [`delete!(::AbstractInstance, ::VariableIndex)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractInstance, ::MathOptInterface.Index)), if this functionality is supported.
 
 ## Functions
 
 MOI defines six functions as listed in the definition of the [Standard form problem](@ref). The simplest function is [`SingleVariable`](@ref MathOptInterface.SingleVariable) defined as:
 ```julia
 struct SingleVariable <: AbstractFunction
-    variable::VariableReference
+    variable::VariableIndex
 end
 ```
 
-If `v` is a `VariableReference` object, then `SingleVariable(v)` is simply the scalar-valued function from the complete set of variables in an instance that returns the value of variable `v`. One may also call this function a coordinate projection, which is more useful for defining constraints than as an objective function.
+If `v` is a `VariableIndex` object, then `SingleVariable(v)` is simply the scalar-valued function from the complete set of variables in an instance that returns the value of variable `v`. One may also call this function a coordinate projection, which is more useful for defining constraints than as an objective function.
 
 
 A more interesting function is [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction), defined as
 ```julia
 struct ScalarAffineFunction{T} <: AbstractFunction
-    variables::Vector{VariableReference}
+    variables::Vector{VariableIndex}
     coefficients::Vector{T}
     constant::T
 end
 ```
 
-If `x` is a vector of `VariableReference` objects, then `ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0)` represents the function ``5x_1 - 2.3x_2 + 1``.
+If `x` is a vector of `VariableIndex` objects, then `ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0)` represents the function ``5x_1 - 2.3x_2 + 1``.
 
 Objective functions are assigned to an instance by setting the [`ObjectiveFunction`](@ref MathOptInterface.ObjectiveFunction) attribute.
 The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used for setting the optimization sense.
@@ -160,6 +160,8 @@ addconstraint!(instance, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
 [Example with vector-valued set.]
+
+[Describe `ConstraintIndex` objects.]
 
 ### Constraints by function-set pairs
 
@@ -257,7 +259,7 @@ If a result is available, it may be retrieved with the [`VariablePrimal`](@ref M
 ```julia
 MOI.get(instance, VariablePrimal(), x)
 ```
-If `x` is a `VariableRefrence` then the function call returns a scalar, and if `x` is a `Vector{VariableReference}` then the call returns a vector of scalars. `VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th result.
+If `x` is a `VariableIndex` then the function call returns a scalar, and if `x` is a `Vector{VariableIndex}` then the call returns a vector of scalars. `VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th result.
 
 See also the attributes [`ConstraintPrimal`](@ref MathOptInterface.ConstraintPrimal), and [`ConstraintDual`](@ref MathOptInterface.ConstraintDual).
 See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs and certificates.

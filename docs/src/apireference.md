@@ -43,10 +43,10 @@ List of instance attributes
 Name
 ObjectiveSense
 NumberOfVariables
-ListOfVariableReferences
+ListOfVariableIndices
 ListOfConstraints
 NumberOfConstraints
-ListOfConstraintReferences
+ListOfConstraintIndices
 ```
 
 There are no attributes specific to a standalone instance.
@@ -106,19 +106,19 @@ The value of the attribute is of type `BasisStatusCode`.
 BasisStatusCode
 ```
 
-### References
+### Index types
 
 ```@docs
-VariableReference
-ConstraintReference
+VariableIndex
+ConstraintIndex
 candelete
 isvalid
-delete!(::AbstractSolverInstance,::AnyReference)
+delete!(::AbstractSolverInstance,::Index)
 ```
 
 ### Variables
 
-Functions for adding variables. For deleting, see references section.
+Functions for adding variables. For deleting, see index types section.
 
 ```@docs
 addvariables!
@@ -126,7 +126,7 @@ addvariable!
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
-Calls to `get` and `set!` should include as an argument a single `VariableReference` or a vector of `VariableReference` objects.
+Calls to `get` and `set!` should include as an argument a single `VariableIndex` or a vector of `VariableIndex` objects.
 
 ```@docs
 VariableName
@@ -140,7 +140,7 @@ VariableBasisStatus
 Functions for adding and modifying constraints.
 
 ```@docs
-isvalid(::AbstractSolverInstance,::ConstraintReference)
+isvalid(::AbstractSolverInstance,::ConstraintIndex)
 canaddconstraint
 addconstraint!
 addconstraints!
@@ -151,7 +151,7 @@ cantransformconstraint
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]
-Calls to `get` and `set!` should include as an argument a single `ConstraintReference` or a vector of `ConstraintReference{F,S}` objects.
+Calls to `get` and `set!` should include as an argument a single `ConstraintIndex` or a vector of `ConstraintIndex{F,S}` objects.
 
 ```@docs
 ConstraintName

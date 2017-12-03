@@ -25,34 +25,34 @@ abstract type AbstractVectorFunction <: AbstractFunction end
 """
     SingleVariable(variable)
 
-The function that extracts the scalar variable referenced by `variable`, a `VariableReference`.
+The function that extracts the scalar variable referenced by `variable`, a `VariableIndex`.
 This function is naturally be used for single variable bounds or integrality constraints.
 """
 struct SingleVariable <: AbstractScalarFunction
-    variable::VariableReference
+    variable::VariableIndex
 end
 
 """
     VectorOfVariables(variables)
 
-The function that extracts the vector of variables referenced by `variables`, a `Vector{VariableReference}`.
+The function that extracts the vector of variables referenced by `variables`, a `Vector{VariableIndex}`.
 This function is naturally be used for constraints that apply to groups of variables, such as an "all different" constraint, an indicator constraint, or a complementarity constraint.
 """
 struct VectorOfVariables <: AbstractVectorFunction
-    variables::Vector{VariableReference}
+    variables::Vector{VariableIndex}
 end
 
 """
     ScalarAffineFunction{T}(variables, coefficients, constant)
 
 The scalar-valued affine function ``a^T x + b``, where:
-* ``a`` is a sparse vector specified in tuple form by `variables::Vector{VariableReference}` and `coefficients::Vector{T}`
+* ``a`` is a sparse vector specified in tuple form by `variables::Vector{VariableIndex}` and `coefficients::Vector{T}`
 * ``b`` is a scalar specified by `constant::T`
 
-Duplicate variable references in `variables` are accepted, and the corresponding coefficients are summed together.
+Duplicate variable indices in `variables` are accepted, and the corresponding coefficients are summed together.
 """
 struct ScalarAffineFunction{T} <: AbstractScalarFunction
-    variables::Vector{VariableReference}
+    variables::Vector{VariableIndex}
     coefficients::Vector{T}
     constant::T
 end
@@ -68,7 +68,7 @@ Duplicate indices in the ``A`` are accepted, and the corresponding coefficients 
 """
 struct VectorAffineFunction{T} <: AbstractVectorFunction
     outputindex::Vector{Int}
-    variables::Vector{VariableReference}
+    variables::Vector{VariableIndex}
     coefficients::Vector{T}
     constant::Vector{T}
 end
@@ -82,13 +82,13 @@ The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
 * ``Q`` is a symmetric matrix is specified in triplet form by `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients`
 
 Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together.
-"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
+"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be specified.
 """
 struct ScalarQuadraticFunction{T} <: AbstractScalarFunction
-    affine_variables::Vector{VariableReference}
+    affine_variables::Vector{VariableIndex}
     affine_coefficients::Vector{T}
-    quadratic_rowvariables::Vector{VariableReference}
-    quadratic_colvariables::Vector{VariableReference}
+    quadratic_rowvariables::Vector{VariableIndex}
+    quadratic_colvariables::Vector{VariableIndex}
     quadratic_coefficients::Vector{T}
     constant::T
 end
@@ -103,15 +103,15 @@ The vector-valued quadratic function with i`th` component ("output index") defin
 * ``Q_i`` is a symmetric matrix is specified in triplet form by the subset of `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients` for the indices `k` where `quadratic_outputindex[k] == i`
 
 Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding coefficients are summed together.
-"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableReferences`) are considered duplicates; only one need be specified.
+"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be specified.
 """
 struct VectorQuadraticFunction{T} <: AbstractVectorFunction
     affine_outputindex::Vector{Int}
-    affine_variables::Vector{VariableReference}
+    affine_variables::Vector{VariableIndex}
     affine_coefficients::Vector{T}
     quadratic_outputindex::Vector{Int}
-    quadratic_rowvariables::Vector{VariableReference}
-    quadratic_colvariables::Vector{VariableReference}
+    quadratic_rowvariables::Vector{VariableIndex}
+    quadratic_colvariables::Vector{VariableIndex}
     quadratic_coefficients::Vector{T}
     constant::Vector{T}
 end
@@ -154,7 +154,7 @@ in a scalar-valued function.
 Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
 """
 struct ScalarCoefficientChange{T} <: AbstractFunctionModification
-    variable::VariableReference
+    variable::VariableIndex
     new_coefficient::T
 end
 
@@ -166,7 +166,7 @@ in a vector-valued function.
 Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
 """
 struct MultirowChange{T} <: AbstractFunctionModification
-    variable::VariableReference
+    variable::VariableIndex
     rows::Vector{Int}
     new_coefficients::Vector{T}
 end

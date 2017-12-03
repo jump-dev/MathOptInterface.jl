@@ -70,7 +70,7 @@ non-empty, this may throw an error.
 """
 function copy! end
 
-include("references.jl")
+include("indextypes.jl")
 include("attributes.jl")
 include("functions.jl")
 include("sets.jl")
