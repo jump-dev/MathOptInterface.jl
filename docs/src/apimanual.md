@@ -844,11 +844,11 @@ details.
 
 #### Dual for convex problem with quadratic functions
 
-If ``Q`` is positive semidefinite, then the constraint ``x^TQx + a^Tx + b \le 0`` can be rewritten as an equivalent SOS constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
+If ``Q`` is positive semidefinite, then the constraint ``x^TQx + a^Tx + b \le 0`` can be rewritten as an equivalent SOC constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
 We define the constraint value as ``x^TQx + a^Tx + b`` and the constraint dual as ``\lVert y \rVert_2 - s``.
 Note that these scalar values are always nonpositive for feasible solutions and that complementary slackness holds, i.e. their product is always zero for an optimal primal-dual pair (indeed if two vectors in the second order cone are orthogonal then they are either both on the boundary or one of them is zero).
 
-Similarly, if ``Q`` is negative semidefinite, then the constraint ``x^TQx + a^Tx + b \ge 0`` can be rewritten as an equivalent SOS constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
+Similarly, if ``Q`` is negative semidefinite, then the constraint ``x^TQx + a^Tx + b \ge 0`` can be rewritten as an equivalent SOC constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
 In this case, we define the constraint value as ``x^TQx + a^Tx + b`` and the constraint dual as ``s - \lVert y \rVert_2``.
 Note that these scalar values are always nonnegative for feasible solutions and that complementary slackness holds.
 
