@@ -35,6 +35,7 @@ AbstractSolverInstance
 write
 read!
 copy!
+cancopy
 ```
 
 List of instance attributes
