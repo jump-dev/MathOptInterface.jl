@@ -65,7 +65,7 @@ function read! end
 """
     isempty(instance::AbstractInstance)
 
-Returns whether the `instance` has an objective set or has any variables or constraints its model.
+Returns whether the `instance` has any attribute set or has any variables or constraints its model.
 """
 function isempty end
 
