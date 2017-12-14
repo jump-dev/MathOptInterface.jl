@@ -5,7 +5,7 @@ const JSON = MOF.JSON
 
 # a switch to update the example files
 # if the format changes
-const WRITEFILES = false
+const WRITEFILES = true
 
 function stringify(instance::MOF.MOFInstance, indent::Int=1)
     io = IOBuffer()
@@ -70,7 +70,13 @@ end
     @test JSON.json(MOF.object(MOI.DualPowerCone(0.5)))       == "{\"head\":\"DualPowerCone\",\"exponent\":0.5}"
 
     @test JSON.json(MOF.object(MOI.PositiveSemidefiniteConeTriangle(2)))       == "{\"head\":\"PositiveSemidefiniteConeTriangle\",\"dimension\":2}"
-    @test JSON.json(MOF.object(MOI.PositiveSemidefiniteConeScaled(2)))       == "{\"head\":\"PositiveSemidefiniteConeScaled\",\"dimension\":2}"
+    @test JSON.json(MOF.object(MOI.PositiveSemidefiniteConeSquare(2)))       == "{\"head\":\"PositiveSemidefiniteConeSquare\",\"dimension\":2}"
+
+    @test JSON.json(MOF.object(MOI.GeometricMeanCone(2)))       == "{\"head\":\"GeometricMeanCone\",\"dimension\":2}"
+    @test JSON.json(MOF.object(MOI.LogDetConeTriangle(2)))       == "{\"head\":\"LogDetConeTriangle\",\"dimension\":2}"
+    @test JSON.json(MOF.object(MOI.LogDetConeSquare(2)))       == "{\"head\":\"LogDetConeSquare\",\"dimension\":2}"
+    @test JSON.json(MOF.object(MOI.RootDetConeTriangle(2)))       == "{\"head\":\"RootDetConeTriangle\",\"dimension\":2}"
+    @test JSON.json(MOF.object(MOI.RootDetConeSquare(2)))       == "{\"head\":\"RootDetConeSquare\",\"dimension\":2}"
 end
 
 @testset "Functions" begin
@@ -144,7 +150,7 @@ end
         )
         @test MOI.canset(instance, MOI.ConstraintName(), c1)
         MOI.set!(instance, MOI.ConstraintName(), c1, "firstconstraint")
-        @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
+        @test typeof(c1) == MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}
         WRITEFILES && MOI.write(instance, problempath("1.mof.json"), 1)
         @test stringify(instance) == getproblem("1.mof.json")
         @test MOI.canmodifyconstraint(instance, c1, MOI.GreaterThan(4.0))
@@ -213,8 +219,8 @@ end
         @test MOI.canget(instance, MOI.NumberOfVariables())
         @test MOI.get(instance, MOI.NumberOfVariables()) == 2
 
-        @test MOI.canget(instance, MOI.ListOfVariableReferences())
-        @test MOI.get(instance, MOI.ListOfVariableReferences()) == [x,y]
+        @test MOI.canget(instance, MOI.ListOfVariableIndices())
+        @test MOI.get(instance, MOI.ListOfVariableIndices()) == [x,y]
 
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
         MOI.set!(instance, MOI.ObjectiveFunction(), c)
@@ -227,7 +233,7 @@ end
             MOI.ScalarAffineFunction([x], [2.0], 1.0),
             MOI.EqualTo(3.0)
         )
-        @test typeof(c1) == MOI.ConstraintReference{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}
+        @test typeof(c1) == MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}
         @test MOI.canaddconstraint(instance, MOI.SingleVariable(x), MOI.Integer())
         MOI.addconstraint!(instance, MOI.SingleVariable(x), MOI.Integer())
         @test MOI.canaddconstraint(instance, MOI.SingleVariable(y), MOI.ZeroOne())
@@ -251,13 +257,13 @@ end
         @test MOI.get(instance, MOI.VariablePrimalStart(), x) == 1.0
         @test MOI.canget(instance, MOI.VariableName(), x)
         @test MOI.get(instance, MOI.VariableName(), x) == "x1"
-        @test MOI.canget(instance, MOI.VariableReference, "x1")
-        @test MOI.get(instance, MOI.VariableReference, "x1") == x
+        @test MOI.canget(instance, MOI.VariableIndex, "x1")
+        @test MOI.get(instance, MOI.VariableIndex, "x1") == x
         @test MOI.canset(instance, MOI.VariableName(), x)
         MOI.set!(instance, MOI.VariableName(), x, "y")
-        @test MOI.canget(instance, MOI.VariableReference, "y")
-        @test MOI.canget(instance, MOI.VariableReference, "x1") == false
-        @test MOI.get(instance, MOI.VariableReference, "y") == x
+        @test MOI.canget(instance, MOI.VariableIndex, "y")
+        @test MOI.canget(instance, MOI.VariableIndex, "x1") == false
+        @test MOI.get(instance, MOI.VariableIndex, "y") == x
 
         @test MOI.canget(instance, MOI.ConstraintName(), c1)
         @test MOI.get(instance, MOI.ConstraintName(), c1) == "c1"
@@ -297,7 +303,7 @@ end
             MOI.VectorOfVariables([x1, x2, x3]),
             MOI.SOS2([1.0, 2.0, 3.0])
         )
-        @test typeof(c1) == MOI.ConstraintReference{MOI.VectorOfVariables, MOI.SOS2{Float64}}
+        @test typeof(c1) == MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SOS2{Float64}}
         WRITEFILES && MOI.write(instance, problempath("3.mof.json"), 1)
         @test stringify(instance) == getproblem("3.mof.json")
     end
@@ -370,7 +376,7 @@ end
         )
         MOI.set!(instance, MOI.ObjectiveFunction(),
             MOI.ScalarQuadraticFunction(
-                MOI.VariableReference[],
+                MOI.VariableIndex[],
                 Float64[],
                 v[[1,1,2,2,3]],
                 v[[1,2,2,3,3]],
@@ -485,18 +491,64 @@ end
             MOI.VectorOfVariables(v),
             MOI.PositiveSemidefiniteConeTriangle(3)
         )
-        # psd triangle scales
+        # psd square
         @test MOI.canaddconstraint(instance,
             MOI.VectorOfVariables(v),
-            MOI.PositiveSemidefiniteConeScaled(3)
+            MOI.PositiveSemidefiniteConeSquare(3)
         )
         MOI.addconstraint!(instance,
             MOI.VectorOfVariables(v),
-            MOI.PositiveSemidefiniteConeScaled(3)
+            MOI.PositiveSemidefiniteConeSquare(3)
         )
+        # geom mean
+        @test MOI.canaddconstraint(instance,
+            MOI.VectorOfVariables(v),
+            MOI.GeometricMeanCone(3)
+        )
+        MOI.addconstraint!(instance,
+            MOI.VectorOfVariables(v),
+            MOI.GeometricMeanCone(3)
+        )
+        # logdet
+        @test MOI.canaddconstraint(instance,
+            MOI.VectorOfVariables(v),
+            MOI.LogDetConeTriangle(3)
+        )
+        MOI.addconstraint!(instance,
+            MOI.VectorOfVariables(v),
+            MOI.LogDetConeTriangle(3)
+        )
+        # logdet square
+        @test MOI.canaddconstraint(instance,
+            MOI.VectorOfVariables(v),
+            MOI.LogDetConeSquare(3)
+        )
+        MOI.addconstraint!(instance,
+            MOI.VectorOfVariables(v),
+            MOI.LogDetConeSquare(3)
+        )
+        # rootdet
+        @test MOI.canaddconstraint(instance,
+            MOI.VectorOfVariables(v),
+            MOI.RootDetConeTriangle(3)
+        )
+        MOI.addconstraint!(instance,
+            MOI.VectorOfVariables(v),
+            MOI.RootDetConeTriangle(3)
+        )
+        # rootdet square
+        @test MOI.canaddconstraint(instance,
+            MOI.VectorOfVariables(v),
+            MOI.RootDetConeSquare(3)
+        )
+        MOI.addconstraint!(instance,
+            MOI.VectorOfVariables(v),
+            MOI.RootDetConeSquare(3)
+        )
+
         MOI.set!(instance, MOI.ObjectiveFunction(),
             MOI.ScalarAffineFunction(
-                MOI.VariableReference[],
+                MOI.VariableIndex[],
                 Float64[],
                 0.0
             )

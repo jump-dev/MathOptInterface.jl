@@ -69,4 +69,14 @@ object(set::MOI.DualPowerCone) = Object("head" => "DualPowerCone", "exponent" =>
 
 object(set::MOI.PositiveSemidefiniteConeTriangle) = Object("head" => "PositiveSemidefiniteConeTriangle", "dimension" => set.dimension)
 
-object(set::MOI.PositiveSemidefiniteConeScaled)  = Object("head" => "PositiveSemidefiniteConeScaled", "dimension" => set.dimension)
+object(set::MOI.PositiveSemidefiniteConeSquare) = Object("head" => "PositiveSemidefiniteConeSquare", "dimension" => set.dimension)
+
+object(set::MOI.GeometricMeanCone)              = Object("head" => "GeometricMeanCone", "dimension" => set.dimension)
+
+object(set::MOI.LogDetConeTriangle)             = Object("head" => "LogDetConeTriangle", "dimension" => set.dimension)
+
+object(set::MOI.LogDetConeSquare)               = Object("head" => "LogDetConeSquare", "dimension" => set.dimension)
+
+object(set::MOI.RootDetConeTriangle)            = Object("head" => "RootDetConeTriangle", "dimension" => set.dimension)
+
+object(set::MOI.RootDetConeSquare)              = Object("head" => "RootDetConeSquare", "dimension" => set.dimension)

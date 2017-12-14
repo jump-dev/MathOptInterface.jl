@@ -20,10 +20,10 @@ function MOI.read!(m::MOFInstance, file::String)
     if length(m["variables"]) > 0
         error("Unable to load the model from $(file). Instance is not empty!")
     end
-    src = MOFInstance(d, Dict{String, MOI.VariableReference}(), Dict{MOI.VariableReference, Int}(), Dict{UInt64, Int}(), CurrentReference(UInt64(0), UInt64(0)))
+    src = MOFInstance(d, Dict{String, MOI.VariableIndex}(), Dict{MOI.VariableIndex, Int}(), Dict{UInt64, Int}(), CurrentReference(UInt64(0), UInt64(0)))
     for (i, v) in enumerate(src["variables"])
-        src.namemap[v["name"]] = MOI.VariableReference(UInt64(i))
-        src.varmap[MOI.VariableReference(UInt64(i))] = i
+        src.namemap[v["name"]] = MOI.VariableIndex(UInt64(i))
+        src.varmap[MOI.VariableIndex(UInt64(i))] = i
         src.current_reference.variable += 1
     end
     for (i, c) in enumerate(src["constraints"])
@@ -52,7 +52,7 @@ function getset!(dest, destref, src, srcref, attr)
     end
 end
 
-function rereference!(x::Vector{MOI.VariableReference}, vmap::Dict{MOI.VariableReference, MOI.VariableReference})
+function rereference!(x::Vector{MOI.VariableIndex}, vmap::Dict{MOI.VariableIndex, MOI.VariableIndex})
     for (i, v) in enumerate(x)
         x[i] = vmap[v]
     end
@@ -78,22 +78,22 @@ function rereference!(f::Union{
     f
 end
 
-function MOI.get(m::MOFInstance, ::Type{MOI.ListOfConstraintReferences})
-    c = Vector{MOI.ConstraintReference}(length(m["constraints"]))
+function MOI.get(m::MOFInstance, ::Type{MOI.ListOfConstraintIndices})
+    c = Vector{MOI.ConstraintIndex}(length(m["constraints"]))
     for (uid, row) in m.constrmap
         con = m["constraints"][row]
         (F, S) = (functiontype!(m, con["function"]), settype!(m, con["set"]))
-         c[row] = MOI.ConstraintReference{F,S}(uid)
+         c[row] = MOI.ConstraintIndex{F,S}(uid)
     end
     c
 end
-MOI.canget(m::MOFInstance, ::Type{MOI.ListOfConstraintReferences}) = true
+MOI.canget(m::MOFInstance, ::Type{MOI.ListOfConstraintIndices}) = true
 
 function MOI.copy!(dest::MOI.AbstractInstance, src::MOFInstance)
     numvar = MOI.get(src, MOI.NumberOfVariables())
     destv = MOI.addvariables!(dest, numvar)
-    srcv  = MOI.get(src, MOI.ListOfVariableReferences())
-    variablemap = Dict{MOI.VariableReference, MOI.VariableReference}()
+    srcv  = MOI.get(src, MOI.ListOfVariableIndices())
+    variablemap = Dict{MOI.VariableIndex, MOI.VariableIndex}()
     for i in 1:numvar
         getset!(dest, destv[i], src, srcv[i], MOI.VariableName())
         getset!(dest, destv[i], src, srcv[i], MOI.VariablePrimalStart())
@@ -110,7 +110,7 @@ function MOI.copy!(dest::MOI.AbstractInstance, src::MOFInstance)
     # ============
     #   Find a way to loop through constraint references
     # ============
-    for srcc in MOI.get(src, MOI.ListOfConstraintReferences)
+    for srcc in MOI.get(src, MOI.ListOfConstraintIndices)
         func = MOI.get(src, MOI.ConstraintFunction(), srcc)
         func = rereference!(func, variablemap)
         set  = MOI.get(src, MOI.ConstraintSet(), srcc)
@@ -131,7 +131,7 @@ end
     Parse Function objects to MathOptInterface representation
 =#
 
-vvec(m::MOFInstance, names::Vector) = MOI.VariableReference[m.namemap[n] for n in names]
+vvec(m::MOFInstance, names::Vector) = MOI.VariableIndex[m.namemap[n] for n in names]
 
 # we need to do this because float.(Any[]) returns Any[] rather than Float64[]
 floatify(x::Vector{Float64}) = x
@@ -228,7 +228,12 @@ parse!(::Val{:DualExponentialCone}, m, set)              = MOI.DualExponentialCo
 parse!(::Val{:PowerCone}, m, set)                        = MOI.PowerCone(floatify(set["exponent"]))
 parse!(::Val{:DualPowerCone}, m, set)                    = MOI.DualPowerCone(floatify(set["exponent"]))
 parse!(::Val{:PositiveSemidefiniteConeTriangle}, m, set) = MOI.PositiveSemidefiniteConeTriangle(set["dimension"])
-parse!(::Val{:PositiveSemidefiniteConeScaled}, m, set)   = MOI.PositiveSemidefiniteConeScaled(set["dimension"])
+parse!(::Val{:PositiveSemidefiniteConeSquare}, m, set)   = MOI.PositiveSemidefiniteConeSquare(set["dimension"])
+parse!(::Val{:GeometricMeanCone}, m, set)   = MOI.GeometricMeanCone(set["dimension"])
+parse!(::Val{:LogDetConeTriangle}, m, set)  = MOI.LogDetConeTriangle(set["dimension"])
+parse!(::Val{:LogDetConeSquare}, m, set)    = MOI.LogDetConeSquare(set["dimension"])
+parse!(::Val{:RootDetConeTriangle}, m, set) = MOI.RootDetConeTriangle(set["dimension"])
+parse!(::Val{:RootDetConeSquare}, m, set)   = MOI.RootDetConeSquare(set["dimension"])
 
 settype!(m::MOFInstance, set::Object) = typeof(parse!(m, set))
 functiontype!(m::MOFInstance, func::Object) = typeof(parse!(m, func))

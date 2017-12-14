@@ -140,7 +140,82 @@
   {
    "name": "c9",
    "set": {
-    "head": "PositiveSemidefiniteConeScaled",
+    "head": "PositiveSemidefiniteConeSquare",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c10",
+   "set": {
+    "head": "GeometricMeanCone",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c11",
+   "set": {
+    "head": "LogDetConeTriangle",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c12",
+   "set": {
+    "head": "LogDetConeSquare",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c13",
+   "set": {
+    "head": "RootDetConeTriangle",
+    "dimension": 3
+   },
+   "function": {
+    "head": "VectorOfVariables",
+    "variables": [
+     "x1",
+     "x2",
+     "x3"
+    ]
+   }
+  },
+  {
+   "name": "c14",
+   "set": {
+    "head": "RootDetConeSquare",
     "dimension": 3
    },
    "function": {

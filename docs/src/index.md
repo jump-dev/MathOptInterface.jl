@@ -155,7 +155,7 @@ and
 
 In addition, there must be a one-to-one mapping between the field names of the
 MathOptInterface type, and the fields in the JSON object. However, instead of
-refering to variables in the model using `VariableReference`s, the MathOptFormat
+refering to variables in the model using `VariableIndex`s, the MathOptFormat
 version uses the string that corresonds to the name of the variable in the list
 `variables` (defined above).
 

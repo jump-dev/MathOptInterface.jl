@@ -16,9 +16,9 @@ struct MOFInstance <: MOI.AbstractStandaloneInstance
     d::Object
     # an extension dictionary to help MOI reading/writing
     # should be improved later
-    namemap::Dict{String, MOI.VariableReference}
+    namemap::Dict{String, MOI.VariableIndex}
     # varmap
-    varmap::Dict{MOI.VariableReference, Int}
+    varmap::Dict{MOI.VariableIndex, Int}
     # constrmap
     constrmap::Dict{UInt64, Int}
     current_reference::CurrentReference
@@ -32,8 +32,8 @@ MOFInstance() = MOFInstance(
         "objective" => Object("head"=>"ScalarAffineFunction", "variables"=>String[], "coefficients"=>Float64[], "constant"=>0.0),
         "constraints" => Object[]
     ),
-    Dict{String, MOI.VariableReference}(),
-    Dict{MOI.VariableReference, Int}(),
+    Dict{String, MOI.VariableIndex}(),
+    Dict{MOI.VariableIndex, Int}(),
     Dict{UInt64, Int}(),
     CurrentReference(UInt64(0), UInt64(0))
 )
