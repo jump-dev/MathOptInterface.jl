@@ -63,6 +63,20 @@ Supported file types depend on the instance type.
 function read! end
 
 """
+    isempty(instance::AbstractInstance)
+
+Returns whether the `instance` has any attribute set or has any variables or constraints its model.
+"""
+function isempty end
+
+"""
+    empty!(instance::AbstractInstance)
+
+Empty the instance, that is, remove the objective and all variables and constraints from the instance `instance`.
+"""
+function empty! end
+
+"""
     copy!(dest::AbstractInstance, src::AbstractInstance)
 
 Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
