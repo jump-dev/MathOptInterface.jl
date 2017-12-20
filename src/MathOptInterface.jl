@@ -99,6 +99,13 @@ isvalid(dest, index_map[x]) # true
 """
 function copy! end
 
+"""
+    cancopy(dest::AbstractInstance, src::AbstractInstance)::Bool
+
+Return `true` if the instance `src` can be copied into `dest`, `false` otherwise. The latter case implies that `src` contains an objective, constraint, or attribute that `dest` does not support.
+"""
+function cancopy end
+
 include("indextypes.jl")
 include("attributes.jl")
 include("functions.jl")
