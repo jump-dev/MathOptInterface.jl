@@ -170,7 +170,7 @@ Assign a value respectively to the attribute `attr` of each variable in the coll
 
 Assign a value to the attribute `attr` of constraint `c` in instance `instance`.
 
-    set!(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})
+    set!(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `instance`.
 """
