@@ -185,6 +185,13 @@ end
 ## Instance attributes
 
 """
+    ListOfInstanceAttributesSet()
+
+A `Vector{AbstractInstanceAttribute}` of all instance attributes that were set to the instance and are not instance-specific.
+"""
+struct ListOfInstanceAttributesSet <: AbstractInstanceAttribute end
+
+"""
     Name()
 
 A string identifying the instance.
@@ -319,6 +326,13 @@ struct ResultCount <: AbstractInstanceAttribute end
 ## Variable attributes
 
 """
+    ListOfVariableAttributesSet()
+
+A `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the variable and are not instance-specific.
+"""
+struct ListOfVariableAttributesSet <: AbstractVariableAttribute end
+
+"""
     VariableName()
 
 A string identifying the variable. It is invalid for two variables to have the same name.
@@ -366,6 +380,13 @@ Possible values are:
 @enum BasisStatusCode Basic Nonbasic NonbasicAtLower NonbasicAtUpper SuperBasic
 
 ## Constraint attributes
+
+"""
+    ListOfConstraintAttributesSet()
+
+A `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to the constraint and are not instance-specific.
+"""
+struct ListOfConstraintAttributesSet <: AbstractVariableAttribute end
 
 """
     ConstraintName()
