@@ -34,8 +34,14 @@ AbstractStandaloneInstance
 AbstractSolverInstance
 write
 read!
+```
+
+Copying
+
+```@docs
 copy!
-cancopy
+CopyResult
+CopyStatusCode
 ```
 
 List of instance attributes
