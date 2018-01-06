@@ -94,18 +94,18 @@ In the failure cases:
 @enum CopyStatusCode CopySuccess CopyUnsupportedAttribute CopyUnsupportedConstraint CopyOtherError
 
 """
-    struct CopyResult{DictLike}
+    struct CopyResult{T}
         status::CopyStatusCode
-        message::String    # Human-friendly explanation why the copy failed
-        indexmap::DictLike # Only valid if status is CopySuccess
+        message::String # Human-friendly explanation why the copy failed
+        indexmap::T     # Only valid if status is CopySuccess
     end
 
 A struct returned by `copy!` to indicate success or failure. If success, also exposes a map between the variable and constraint indices of the two instances.
 """
-struct CopyResult{DictLike}
+struct CopyResult{T}
     status::CopyStatusCode
-    message::String    # Human-friendly explanation why the copy failed
-    indexmap::DictLike # Only valid if status is CopySuccess
+    message::String # Human-friendly explanation why the copy failed
+    indexmap::T     # Only valid if status is CopySuccess
 end
 
 """
