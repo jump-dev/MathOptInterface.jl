@@ -77,9 +77,38 @@ Empty the instance, that is, remove the objective and all variables and constrai
 function empty! end
 
 """
-    copy!(dest::AbstractInstance, src::AbstractInstance)
+    CopyStatusCode
 
-Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
+An Enum of possible statuses returned by a `copy!` operation through the `CopyResult` struct.
+
+* `CopySuccess`: The copy was successful.
+* `CopyUnsupportedAttribute`: The copy failed because the destination does not support an attribute present in the source.
+* `CopyUnsupportedConstraint`: The copy failed because the destination does not support a constraint present in the source.
+* `CopyOtherError`: The copy failed for a different reason.
+
+In the failure cases, see the corresponding `message` field of the `CopyResult` for more details.
+"""
+@enum CopyStatusCode CopySuccess CopyUnsupportedAttribute CopyUnsupportedConstraint CopyOtherError
+
+"""
+    struct CopyResult{DictLike}
+        status::CopyStatusCode
+        message::String    # Human-friendly explanation why the copy failed
+        indexmap::DictLike # Only valid if status is CopySuccess
+    end
+
+A struct returned by `copy!` to indicate success or failure. If success, also exposes a map between the variable and constraint indices of the two instances.
+"""
+struct CopyResult{DictLike}
+    status::CopyStatusCode
+    message::String    # Human-friendly explanation why the copy failed
+    indexmap::DictLike # Only valid if status is CopySuccess
+end
+
+"""
+    copy!(dest::AbstractInstance, src::AbstractInstance)::CopyResult
+
+Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a `CopyResult` object. If the copy is successfuly, the `CopyResult` contains a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
 
 ### Example
 
@@ -91,20 +120,18 @@ x = addvariable!(src)
 isvalid(src, x)   # true
 isvalid(dest, x)  # false (`dest` has no variables)
 
-index_map = copy!(dest, src)
-
-isvalid(dest, x) # false (unless index_map[x] == x)
-isvalid(dest, index_map[x]) # true
+copy_result = copy!(dest, src)
+if copy_result.status == CopySuccess
+    index_map = copy_result.indexmap
+    isvalid(dest, x) # false (unless index_map[x] == x)
+    isvalid(dest, index_map[x]) # true
+else
+    println("Copy failed with status ", copy_result.status)
+    println("Failure message: ", copy_result.message)
+end
 ```
 """
 function copy! end
-
-"""
-    cancopy(dest::AbstractInstance, src::AbstractInstance)::Bool
-
-Return `true` if the instance `src` can be copied into `dest`, `false` otherwise. The latter case implies that `src` contains an objective, constraint, or attribute that `dest` does not support.
-"""
-function cancopy end
 
 include("indextypes.jl")
 include("attributes.jl")
