@@ -86,7 +86,10 @@ An Enum of possible statuses returned by a `copy!` operation through the `CopyRe
 * `CopyUnsupportedConstraint`: The copy failed because the destination does not support a constraint present in the source.
 * `CopyOtherError`: The copy failed for a different reason.
 
-In the failure cases, see the corresponding `message` field of the `CopyResult` for more details.
+In the failure cases:
+
+- See the corresponding `message` field of the `CopyResult` for an explanation of the failure.
+- The state of the destination instance is undefined.
 """
 @enum CopyStatusCode CopySuccess CopyUnsupportedAttribute CopyUnsupportedConstraint CopyOtherError
 
