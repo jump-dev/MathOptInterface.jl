@@ -108,7 +108,7 @@ end
 """
     copy!(dest::AbstractInstance, src::AbstractInstance)::CopyResult
 
-Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a `CopyResult` object. If the copy is successfuly, the `CopyResult` contains a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
+Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a `CopyResult` object. If the copy is successfully, the `CopyResult` contains a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
 
 ### Example
 
