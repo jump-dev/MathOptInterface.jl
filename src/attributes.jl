@@ -24,6 +24,13 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
+    mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
+
+Returns whether the attribute affects the instance is thus mandatory to copy in `MOI.copy!` or whether it only affects how the instance is solved.
+"""
+function mustcopy end
+
+"""
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
 
 Return an attribute `attr` of the instance `instance`.
@@ -187,7 +194,7 @@ end
 """
     ListOfInstanceAttributesSet()
 
-A `Vector{AbstractInstanceAttribute}` of all instance attributes that were set to the instance and are not instance-specific.
+A `Vector{AbstractInstanceAttribute}` of all instance attributes that were set to the instance.
 """
 struct ListOfInstanceAttributesSet <: AbstractInstanceAttribute end
 
@@ -328,7 +335,7 @@ struct ResultCount <: AbstractInstanceAttribute end
 """
     ListOfVariableAttributesSet()
 
-A `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the variable and are not instance-specific.
+A `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the variable.
 """
 struct ListOfVariableAttributesSet <: AbstractVariableAttribute end
 
@@ -384,7 +391,7 @@ Possible values are:
 """
     ListOfConstraintAttributesSet()
 
-A `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to the constraint and are not instance-specific.
+A `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to the constraint.
 """
 struct ListOfConstraintAttributesSet <: AbstractVariableAttribute end
 
