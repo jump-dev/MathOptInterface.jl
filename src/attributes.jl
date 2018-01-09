@@ -86,36 +86,38 @@ function get!(output, instance::AbstractInstance, attr::AnyAttribute, args...)
 end
 
 """
-    canget(instance::AbstractInstance, attr::AbstractVariableAttribute, v::VariableIndex)::Bool
-    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::ConstraintIndex{F,S})::Bool
+    canget(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
 
-Return a `Bool` indicating whether the instance `instance` currently has a value for the attributed specified by attribute type `attr` applied to the variable indexed by `v` or constraint indexed by `c`.
+Return a `Bool` indicating whether `instance` currently has a value for the attribute specified by attribute type `attr`.
 
-    canget(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableIndex})::Bool
-    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})::Bool
+    canget(instance::AbstractInstance, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
 
-Return a `Bool` indicating whether the instance `instance` currently has a value for the attributed specified by attribute type `attr` applied to *every* variable indexed by `v` or constraint indexed by `c`.
+Return a `Bool` indicating whether `instance` currently has a value for the attribute specified by attribute type `attr` applied to *every* variable of the instance.
+
+    canget(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F<:AbstractFunction,S<:AbstractSet}
+
+Return a `Bool` indicating whether `instance` currently has a value for the attribute specified by attribute type `attr` applied to *every* `F`-in-`S` constraint.
 
     canget(instance::AbstractInstance, ::Type{VariableIndex}, name::String)::Bool
 
-Return a `Bool` indicating if a variable with the name `name` exists in the instance.
+Return a `Bool` indicating if a variable with the name `name` exists in `instance`.
 
     canget(instance::AbstractInstance, ::Type{ConstraintIndex{F,S}}, name::String)::Bool where {F<:AbstractFunction,S<:AbstractSet}
 
-Return a `Bool` indicating if an `F`-in-`S` constraint with the name `name` exists in the instance `instance`.
+Return a `Bool` indicating if an `F`-in-`S` constraint with the name `name` exists in `instance`.
 
     canget(instance::AbstractInstance, ::Type{ConstraintIndex}, name::String)::Bool
 
-Return a `Bool` indicating if a constraint of any kind with the name `name` exists in the instance `instance`.
+Return a `Bool` indicating if a constraint of any kind with the name `name` exists in `instance`.
 
 
 ### Examples
 
 ```julia
 canget(instance, ObjectiveValue())
-canget(instance, VariablePrimalStart(), varref)
-canget(instance, ConstraintPrimal(), conref)
-canget(instance, VariablePrimal(), [ref1, ref2])
+canget(instance, VariablePrimalStart(), VariableIndex)
+canget(instance, VariablePrimal(), VariableIndex)
+canget(instance, ConstraintPrimal(), ConstraintIndex{SingleVariable,EqualTo{Float64}})
 canget(instance, VariableIndex, "var1")
 canget(instance, ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
 canget(instance, ConstraintIndex, "con1")
@@ -123,8 +125,7 @@ canget(instance, ConstraintIndex, "con1")
 """
 function canget end
 canget(instance::AbstractInstance, attr::AnyAttribute) = false
-canget(instance::AbstractInstance, attr::AnyAttribute, ref::Index) = false
-canget(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:Index}) = false
+canget(instance::AbstractInstance, attr::AnyAttribute, ::Type{<:Index}) = false
 
 # TODO: Consider moving from `canset(instance, VariablePrimalStart(), VariableIndex)` to `canset(instance, VariablePrimalStart())`
 # and from `canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float64},Nonnegatives})` to
