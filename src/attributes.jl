@@ -337,7 +337,7 @@ struct ResultCount <: AbstractInstanceAttribute end
 
 A `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the instance.
 """
-struct ListOfVariableAttributesSet <: AbstractVariableAttribute end
+struct ListOfVariableAttributesSet <: AbstractInstanceAttribute end
 
 """
     VariableName()
@@ -389,11 +389,11 @@ Possible values are:
 ## Constraint attributes
 
 """
-    ListOfConstraintAttributesSet()
+    ListOfConstraintAttributesSet{F, S}()
 
-A `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to the instance.
+A `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to `F`-in-`S` constraints.
 """
-struct ListOfConstraintAttributesSet <: AbstractVariableAttribute end
+struct ListOfConstraintAttributesSet{F,S} <: AbstractInstanceAttribute end
 
 """
     ConstraintName()
