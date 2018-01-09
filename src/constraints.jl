@@ -183,5 +183,5 @@ function cantransformconstraint end
 function cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex, newset)
     # TODO: add "&& canaddconstraint(m, get(m, ConstraintFunction(), c), newset)"
     #       when candaddconstraint is defined
-    canget(instance, ConstraintFunction(), c) && candelete(instance, c)
+    canget(instance, ConstraintFunction(), typeof(c)) && candelete(instance, c)
 end
