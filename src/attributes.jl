@@ -416,7 +416,6 @@ An initial assignment of the constraint primal values that the solver may use to
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 
-
 """
     ConstraintDualStart()
 
