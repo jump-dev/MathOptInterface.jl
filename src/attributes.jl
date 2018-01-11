@@ -32,7 +32,7 @@ Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `fals
 
 The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but a hypothetical attribute such as `GurobiLogLevel` is not mandatory.
 """
-function mustcopy end
+mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}}) = true
 
 """
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
@@ -216,7 +216,6 @@ mustcopy(::Name) = false
 The sense of the objective function, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
 """
 struct ObjectiveSense <: AbstractInstanceAttribute end
-mustcopy(::ObjectiveSense) = true
 
 @enum OptimizationSense MinSense MaxSense FeasibilitySense
 
@@ -266,7 +265,6 @@ An `AbstractFunction` instance which represents the objective function.
 It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ObjectiveFunction <: AbstractInstanceAttribute end
-mustcopy(::ObjectiveFunction) = true
 
 ## Solver instance attributes
 
@@ -360,7 +358,6 @@ mustcopy(::VariableName) = false
 An initial assignment of the variables that the solver may use to warm-start the solve.
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
-mustcopy(::VariablePrimalStart) = false
 
 """
     VariablePrimal(N)
