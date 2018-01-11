@@ -32,7 +32,7 @@ Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `fals
 
 The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but a hypothetical attribute such as `GurobiLogLevel` is not mandatory.
 """
-function mustcopy end
+mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}}) = true
 
 """
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
@@ -356,6 +356,7 @@ struct VariableName <: AbstractVariableAttribute end
 An initial assignment of the variables that the solver may use to warm-start the solve.
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
+mustcopy(::VariablePrimalStart) = false
 
 """
     VariablePrimal(N)
@@ -412,6 +413,8 @@ struct ConstraintName <: AbstractConstraintAttribute end
 An initial assignment of the constraint primal values that the solver may use to warm-start the solve.
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
+mustcopy(::ConstraintPrimalStart) = false
+
 
 """
     ConstraintDualStart()
@@ -419,6 +422,7 @@ struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 An initial assignment of the constraint duals that the solver may use to warm-start the solve.
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
+mustcopy(::ConstraintDualStart) = false
 
 """
     ConstraintPrimal(N)
