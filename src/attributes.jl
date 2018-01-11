@@ -415,7 +415,6 @@ mustcopy(::ConstraintName) = false
 An initial assignment of the constraint primal values that the solver may use to warm-start the solve.
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
-mustcopy(::ConstraintPrimalStart) = false
 
 
 """
@@ -424,7 +423,6 @@ mustcopy(::ConstraintPrimalStart) = false
 An initial assignment of the constraint duals that the solver may use to warm-start the solve.
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
-mustcopy(::ConstraintDualStart) = false
 
 """
     ConstraintPrimal(N)
