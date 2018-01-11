@@ -42,6 +42,7 @@ Copying
 copy!
 CopyResult
 CopyStatusCode
+mustcopy
 ```
 
 List of instance attributes
@@ -54,6 +55,9 @@ ListOfVariableIndices
 ListOfConstraints
 NumberOfConstraints
 ListOfConstraintIndices
+ListOfInstanceAttributesSet
+ListOfVariableAttributesSet
+ListOfConstraintAttributesSet
 ```
 
 There are no attributes specific to a standalone instance.

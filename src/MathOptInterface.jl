@@ -109,9 +109,15 @@ struct CopyResult{T}
 end
 
 """
-    copy!(dest::AbstractInstance, src::AbstractInstance)::CopyResult
+    copy!(dest::AbstractInstance, src::AbstractInstance, warnattributes=true)::CopyResult
 
 Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a `CopyResult` object. If the copy is successfully, the `CopyResult` contains a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
+
+If an attribute `attr` cannot be copied from `src` to `dest` then:
+
+* If `mustcopy(attr)` is `true` then an error is thrown, otherwise,
+* If `warnattributes` is `true`, a warning is displayed, otherwise,
+* The attribute is silently ignored.
 
 ### Example
 

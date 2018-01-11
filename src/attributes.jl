@@ -24,6 +24,17 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
+    mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
+
+Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `false` if the attribute only affects how the instance is solved.
+
+### Examples
+
+The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but a hypothetical attribute such as `GurobiLogLevel` is not mandatory.
+"""
+function mustcopy end
+
+"""
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
 
 Return an attribute `attr` of the instance `instance`.
@@ -185,6 +196,13 @@ end
 ## Instance attributes
 
 """
+    ListOfInstanceAttributesSet()
+
+A `Vector{AbstractInstanceAttribute}` of all instance attributes that were set to the instance.
+"""
+struct ListOfInstanceAttributesSet <: AbstractInstanceAttribute end
+
+"""
     Name()
 
 A string identifying the instance.
@@ -319,6 +337,13 @@ struct ResultCount <: AbstractInstanceAttribute end
 ## Variable attributes
 
 """
+    ListOfVariableAttributesSet()
+
+A `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the instance.
+"""
+struct ListOfVariableAttributesSet <: AbstractInstanceAttribute end
+
+"""
     VariableName()
 
 A string identifying the variable. It is invalid for two variables to have the same name.
@@ -366,6 +391,13 @@ Possible values are:
 @enum BasisStatusCode Basic Nonbasic NonbasicAtLower NonbasicAtUpper SuperBasic
 
 ## Constraint attributes
+
+"""
+    ListOfConstraintAttributesSet{F, S}()
+
+A `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to `F`-in-`S` constraints.
+"""
+struct ListOfConstraintAttributesSet{F,S} <: AbstractInstanceAttribute end
 
 """
     ConstraintName()
