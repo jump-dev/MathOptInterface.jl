@@ -32,7 +32,7 @@ Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `fals
 
 The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but a hypothetical attribute such as `GurobiLogLevel` is not mandatory.
 """
-function mustcopy end
+mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}}) = true
 
 """
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
