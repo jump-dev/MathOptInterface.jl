@@ -208,7 +208,6 @@ struct ListOfInstanceAttributesSet <: AbstractInstanceAttribute end
 A string identifying the instance.
 """
 struct Name <: AbstractInstanceAttribute end
-mustcopy(::Name) = false
 
 """
     ObjectiveSense()
@@ -350,7 +349,6 @@ struct ListOfVariableAttributesSet <: AbstractInstanceAttribute end
 A string identifying the variable. It is invalid for two variables to have the same name.
 """
 struct VariableName <: AbstractVariableAttribute end
-mustcopy(::VariableName) = false
 
 """
     VariablePrimalStart()
@@ -407,7 +405,6 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractInstanceAttribute end
 A string identifying the constraint. It is invalid for two constraints of any kind to have the same name.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
-mustcopy(::ConstraintName) = false
 
 """
     ConstraintPrimalStart()
