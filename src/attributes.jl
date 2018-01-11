@@ -32,7 +32,7 @@ Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `fals
 
 The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but a hypothetical attribute such as `GurobiLogLevel` is not mandatory.
 """
-mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}}) = true
+function mustcopy end
 
 """
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
@@ -208,6 +208,7 @@ struct ListOfInstanceAttributesSet <: AbstractInstanceAttribute end
 A string identifying the instance.
 """
 struct Name <: AbstractInstanceAttribute end
+mustcopy(::Name) = false
 
 """
     ObjectiveSense()
@@ -215,6 +216,7 @@ struct Name <: AbstractInstanceAttribute end
 The sense of the objective function, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
 """
 struct ObjectiveSense <: AbstractInstanceAttribute end
+mustcopy(::ObjectiveSense) = true
 
 @enum OptimizationSense MinSense MaxSense FeasibilitySense
 
@@ -264,6 +266,7 @@ An `AbstractFunction` instance which represents the objective function.
 It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ObjectiveFunction <: AbstractInstanceAttribute end
+mustcopy(::ObjectiveFunction) = true
 
 ## Solver instance attributes
 
@@ -349,6 +352,7 @@ struct ListOfVariableAttributesSet <: AbstractInstanceAttribute end
 A string identifying the variable. It is invalid for two variables to have the same name.
 """
 struct VariableName <: AbstractVariableAttribute end
+mustcopy(::VariableName) = false
 
 """
     VariablePrimalStart()
@@ -406,6 +410,7 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractInstanceAttribute end
 A string identifying the constraint. It is invalid for two constraints of any kind to have the same name.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
+mustcopy(::ConstraintName) = false
 
 """
     ConstraintPrimalStart()
