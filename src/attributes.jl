@@ -26,11 +26,11 @@ const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute,
 """
     mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
 
-Returns is mandatory to copy in `MOI.copy!` or whether it only affects how the instance is solved.
+Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `false` if the attribute only affects how the instance is solved.
 
 ### Examples
 
-The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but an hypothetical attribute such as `GurobiLogLevel` is not mandatory.
+The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but a hypothetical attribute such as `GurobiLogLevel` is not mandatory.
 """
 function mustcopy end
 
