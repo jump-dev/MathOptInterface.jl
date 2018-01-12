@@ -162,7 +162,7 @@ canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float6
 """
 function canset end
 canset(instance::AbstractInstance, attr::AnyAttribute) = false
-canset(instance::AbstractInstance, attr::AnyAttribute, ref::Index) = false
+canset(instance::AbstractInstance, attr::AnyAttribute, ref::Type{<:Index}) = false
 canset(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:Index}) = false
 
 """
