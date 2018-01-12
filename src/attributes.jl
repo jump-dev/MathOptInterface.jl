@@ -147,11 +147,6 @@ canget(instance::AbstractInstance, attr::AnyAttribute, ::Type{<:Index}) = false
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the index type `R` in the instance `instance`.
 
-    canset(instance::AbstractInstance, attr::AbstractVariableAttribute, v::Vector{VariableIndex})::Bool
-    canset(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})::Bool
-
-Return a `Bool` indicating whether it is possible to set attribute `attr` applied to *every* variable in `v` or constraint in `c` in the instance `instance`.
-
 ### Examples
 
 ```julia
@@ -162,8 +157,7 @@ canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float6
 """
 function canset end
 canset(instance::AbstractInstance, attr::AnyAttribute) = false
-canset(instance::AbstractInstance, attr::AnyAttribute, ref::Index) = false
-canset(instance::AbstractInstance, attr::AnyAttribute, refs::Vector{<:Index}) = false
+canset(instance::AbstractInstance, attr::AnyAttribute, ref::Type{<:Index}) = false
 
 """
     set!(instance::AbstractInstance, attr::AbstractInstanceAttribute, value)
