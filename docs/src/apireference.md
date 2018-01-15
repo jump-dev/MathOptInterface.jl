@@ -24,6 +24,7 @@ get
 get!
 canset
 set!
+supportsattribute
 ```
 
 ## Instance
@@ -159,6 +160,7 @@ modifyconstraint!
 canmodifyconstraint
 transformconstraint!
 cantransformconstraint
+supportsconstraint
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]

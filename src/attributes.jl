@@ -24,6 +24,23 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
+    supportsattribute(instance::AbstractInstance, attr::AbstractInstanceAttribute, ::Type{V}) where V
+
+Return a `Bool` indicating whether there exists an instance `src` that contains the attribute `attr` and `get(src, attr)` is of type `V` such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
+
+    supportsattribute(instance::AbstractInstance, attr::AbstractVariableAttribute, ::Type{VariableIndex}, ::Type{V}) where V
+
+Return a `Bool` indicating whether there exists an instance `src` that contains the attribute `attr` and `get(src, attr, get(src, ListOfVariableIndices()))` is of type `Vector{V}` such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
+
+    supportsattribute(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}}, ::Type{V})::Bool where {F<:AbstractFunction,S<:AbstractSet,V}
+
+Return a `Bool` indicating whether there exists an instance `src` that contains the attribute `attr` and `get(src, attr, ListOfConstraintIndices{F,S}())` is of type `Vector{V}` such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
+"""
+function supportsattribute end
+supportsattribute(::AbstractInstance, ::AnyAttribute, ::Type{<:Any}) = false
+supportsattribute(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}, ::Type{<:Any}) = false
+
+"""
     mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
 
 Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `false` if the attribute only affects how the instance is solved.

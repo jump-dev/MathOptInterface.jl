@@ -1,6 +1,14 @@
 # Constraints
 
 """
+    supportsconstraint(instance::AbstractInstance, ::Type{S<:AbstractFunction}, ::Type{<:AbstractSet}) where {F<:AbstractFunction,S<:AbstractSet}
+
+Return a `Bool` indicating whether there exists an instance `src` that contains an `F`-in-`S` constraint such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
+That is, if the constraint is supported but cannot be mixed with specific other constraints, then it should return `true`.
+"""
+supportsconstraint(instance::AbstractInstance, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
+
+"""
     canaddconstraint(instance::AbstractInstance, func::AbstractFunction, set::AbstractSet)::Bool
 
 Return a `Bool` indicating whether it is possible to add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
