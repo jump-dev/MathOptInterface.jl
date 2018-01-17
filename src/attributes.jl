@@ -1,3 +1,8 @@
+MOI.get(m::MOFInstance, ::MOI.Name) = m["name"]
+MOI.canget(m::MOFInstance, ::MOI.Name) = haskey(m.d, "name")
+MOI.set!(m::MOFInstance, ::MOI.Name, name::String) = (m["name"] = name)
+MOI.canset(m::MOFInstance, ::MOI.Name) = true
+
 function MOI.get(m::MOFInstance, ::Type{MOI.VariableIndex}, name::String)
     m.namemap[name]
 end

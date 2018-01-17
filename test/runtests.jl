@@ -29,7 +29,7 @@ end
         instance = MOF.MOFInstance()
         MOI.addvariable!(instance)
         MOI.write(instance, problempath("test.mof.json"))
-        @test getproblem("test.mof.json") == "{\"version\":\"0.0\",\"sense\":\"min\",\"variables\":[{\"name\":\"x1\"}],\"objective\":{\"head\":\"ScalarAffineFunction\",\"variables\":[],\"coefficients\":[],\"constant\":0.0},\"constraints\":[]}"
+        @test getproblem("test.mof.json") == "{\"name\":\"MathOptFormat Model\",\"version\":\"0.0\",\"sense\":\"min\",\"variables\":[{\"name\":\"x1\"}],\"objective\":{\"head\":\"ScalarAffineFunction\",\"variables\":[],\"coefficients\":[],\"constant\":0.0},\"constraints\":[]}"
         # test different ways to read a model from file
         m2 = MOF.MOFInstance(problempath("test.mof.json"))
         m3 = MOF.MOFInstance()
@@ -306,6 +306,16 @@ end
         @test typeof(c1) == MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SOS2{Float64}}
         WRITEFILES && MOI.write(instance, problempath("3.mof.json"), 1)
         @test stringify(instance) == getproblem("3.mof.json")
+
+        @test MOI.canget(instance, MOI.Name())
+        @test MOI.get(instance, MOI.Name()) == "MathOptFormat Model"
+        @test MOI.canset(instance, MOI.Name())
+        MOI.set!(instance, MOI.Name(), "Model 3")
+        @test MOI.canget(instance, MOI.Name())
+        @test MOI.get(instance, MOI.Name()) == "Model 3"
+
+        WRITEFILES && MOI.write(instance, problempath("3a.mof.json"), 1)
+        @test stringify(instance) == getproblem("3a.mof.json")
     end
 
     @testset "linear7.mof.json" begin
@@ -562,7 +572,7 @@ end
 
 @testset "Read-Write Examples" begin
     for prob in [
-            "1","1a","1b","1c","1d","1e","1f", "2", "2a", "2b", "2c", "2d", "3", "linear7", "linear7a", "qp1", "qcp", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
+            "1","1a","1b","1c","1d","1e","1f", "2", "2a", "2b", "2c", "2d", "3", "3a", "linear7", "linear7a", "qp1", "qcp", "LIN1", "LIN2", "linear1", "linear2", "mip01", "sos1", "conic"
             ]
         @testset "$(prob)" begin
             file_representation = getproblem("$(prob).mof.json")

@@ -32,6 +32,7 @@ function MOI.read!(m::MOFInstance, file::String)
     end
     # delete everything in the current instance
     empty!(m.d)
+    m.d["name"]        = "MathOptFormat Model"
     m.d["version"]     = "0.0"
     m.d["sense"]       = "min"
     m.d["variables"]   = Object[]
@@ -98,6 +99,11 @@ function MOI.copy!(dest::MOI.AbstractInstance, src::MOFInstance)
         getset!(dest, destv[i], src, srcv[i], MOI.VariableName())
         getset!(dest, destv[i], src, srcv[i], MOI.VariablePrimalStart())
         variablemap[srcv[i]] = destv[i]
+    end
+
+    if MOI.canget(src, MOI.Name())
+        name = MOI.get(src, MOI.Name())
+        MOI.set!(dest, MOI.Name(), name)
     end
 
     sense = MOI.get(src, MOI.ObjectiveSense())

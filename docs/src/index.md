@@ -3,20 +3,20 @@
 ## Background
 
 In order to use an optimization solver, it is necessary to communicate a model
-instance to the solver.[^1] Many different instance formats have been proposed
+instance to the solver [^1]. Many different instance formats have been proposed
 over the years, but only a few (such as MPS) have become the industry standard.
 
 Each format is a product of its time in history, and the problem class it tried
 to address. For example, we retain the rigid input format of the MPS file that
 was designed for 1960's punchcards despite the obsolescence of this
-technology.[^2] Although it has since been  extended to problem classes such as
+technology [^2]. Although it has since been  extended to problem classes such as
 nonlinear and stochastic linear programming, MPS was not designed with
 extensibility in mind. This has led some authors (such as [^3]) to conclude that
 developing a new format is easier than extending the existing MPS format.
 
 The LP file-format also dates back to the work of Orchard-Hays who attempted to
 correct the ''mistakes'' of the MPS file-format by creating a human-readable,
-row-oriented format for mathematicians.[^2] However, due to its age, there is no
+row-oriented format for mathematicians [^2]. However, due to its age, there is no
 longer a single standard for the LP file-format. This has led to subtle
 differences between implementations in different readers that hampers the
 usefulness of the format as a format for interchange. Much like the MPS file, it
@@ -24,12 +24,12 @@ is also limited in the types of problems it can represent and was not designed
 for extensibility.
 
 In constrast to the LP file, the .NL file explicitly aims for machine-readability
-at the expense of human-readability.[^5] It is also considerably more flexible in
+at the expense of human-readability [^5]. It is also considerably more flexible in
 the problem classes it can represent (in particular, arbitrary nonlinear
 functions are supported). However, once again, the format is not extensible to
 new problem formats, and lacks support for conic problems.
 
-More recently, considerable work has been put into developing the OSiL format.[^4]
+More recently, considerable work has been put into developing the OSiL format [^4].
 In developing OSiL, Fourer et al. idenfied many of the challenges and
 limitations of previous formats and attempted to overcome them. In particular,
 they choose to use XML as the basis for their format. This removed the burden of
@@ -63,7 +63,7 @@ the following goals guided our development of the MathOptFormat:
 ## The MathOptInterface Standard Form
 
 MathOptInterface is a solver abstraction layer for mathematical optimization
-solvers.[^6] One if the core design goals of MathOptInterface is for it to
+solvers [^6]. One if the core design goals of MathOptInterface is for it to
 
 > *"be simple and extensible, unifying linear, quadratic, and conic optimization,
 > and seamlessly facilitate extensions to essentially arbitrary constraints and

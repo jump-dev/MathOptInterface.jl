@@ -1,4 +1,5 @@
 {
+ "name": "MathOptFormat Model",
  "version": "0.0",
  "sense": "max",
  "variables": [

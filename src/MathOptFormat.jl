@@ -26,6 +26,7 @@ end
 
 MOFInstance() = MOFInstance(
     OrderedDict(
+        "name"    => "MathOptFormat Model",
         "version" => "0.0",
         "sense"   => "min",
         "variables" => Object[],
