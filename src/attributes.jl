@@ -34,7 +34,7 @@ Return a `Bool` indicating whether `instance` supports the variable attribute `a
 
     supports(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
 
-Return a `Bool` indicating whether `instance` supports the constraint attribute `attr`.
+Return a `Bool` indicating whether `instance` supports the constraint attribute `attr` applied to an `F`-in-`S` constraint.
 
 In other words, it should return `true` if `copy!(instance, src)` does not return `CopyUnsupportedAttribute` when the attribute `attr` is set to `src`.
 If the attribute is only not supported in specific circumstances, it should still return `true`.
