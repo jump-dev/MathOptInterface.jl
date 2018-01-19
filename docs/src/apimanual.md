@@ -306,7 +306,7 @@ instance = GLPKInstance() # TODO: match with actual name in GLPK wrapper
 x = MOI.addvariables!(instance, numvariables)
 
 # set the objective function
-MOI.set!(instance, MOI.ObjectiveFunction{ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x, c, 0.0))
+MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x, c, 0.0))
 MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
 
 # add the knapsack constraint
