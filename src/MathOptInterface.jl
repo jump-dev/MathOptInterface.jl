@@ -143,10 +143,10 @@ end
 function copy! end
 
 include("indextypes.jl")
-include("attributes.jl")
 include("functions.jl")
 include("sets.jl")
 include("constraints.jl")
+include("attributes.jl")
 include("objectives.jl")
 include("variables.jl")
 
