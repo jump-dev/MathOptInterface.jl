@@ -40,8 +40,8 @@ In other words, it should return `true` if `copy!(instance, src)` does not retur
 If the attribute is only not supported in specific circumstances, it should still return `true`.
 """
 function supports end
-supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Any}) = false
-supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}, ::Type{<:Any}) = false
+supports(::AbstractInstance, ::AnyAttribute) = false
+supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}) = false
 
 """
     mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
