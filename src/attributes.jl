@@ -24,17 +24,20 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
-    supportsattribute(instance::AbstractInstance, attr::AbstractInstanceAttribute, ::Type{V}) where V
+    supportsattribute(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
 
-Return a `Bool` indicating whether there exists an instance `src` that contains the attribute `attr` and `get(src, attr)` is of type `V` such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
+Return a `Bool` indicating whether `instance` supports the instance attribute `attr`.
 
-    supportsattribute(instance::AbstractInstance, attr::AbstractVariableAttribute, ::Type{VariableIndex}, ::Type{V}) where V
+    supportsattribute(instance::AbstractInstance, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
 
-Return a `Bool` indicating whether there exists an instance `src` that contains the attribute `attr` and `get(src, attr, get(src, ListOfVariableIndices()))` is of type `Vector{V}` such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
+Return a `Bool` indicating whether `instance` supports the variable attribute `attr`.
 
-    supportsattribute(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}}, ::Type{V})::Bool where {F<:AbstractFunction,S<:AbstractSet,V}
+    supportsattribute(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
 
-Return a `Bool` indicating whether there exists an instance `src` that contains the attribute `attr` and `get(src, attr, ListOfConstraintIndices{F,S}())` is of type `Vector{V}` such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
+Return a `Bool` indicating whether `instance` supports the constraint attribute `attr`.
+
+In other words, it should return `true` if `copy!(instance, src)` does not return `CopyUnsupportedAttribute` when the attribute `attr` is set to `src`.
+If the attribute is not supported in specific circumstances, it should still return `true`.
 """
 function supportsattribute end
 supportsattribute(::AbstractInstance, ::AnyAttribute, ::Type{<:Any}) = false

@@ -1,10 +1,11 @@
 # Constraints
 
 """
-    supportsconstraint(instance::AbstractInstance, ::Type{S<:AbstractFunction}, ::Type{<:AbstractSet}) where {F<:AbstractFunction,S<:AbstractSet}
+    supportsconstraint(instance::AbstractInstance, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
 
-Return a `Bool` indicating whether there exists an instance `src` that contains an `F`-in-`S` constraint such that `copy!(instance, src)` returns a `CopyResult` object with a status `CopySuccess`.
-That is, if the constraint is supported but cannot be mixed with specific other constraints, then it should return `true`.
+Return a `Bool` indicating whether `instance` supports `F`-in-`S` constraints, that is,
+`copy!(instance, src)` does not return `CopyUnsupportedConstraint` when `src` contains `F`-in-`S` constraints.
+If `F`-in-`S` constraints are not supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be combined with another type of constraint, it should still return `true`.
 """
 supportsconstraint(instance::AbstractInstance, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
