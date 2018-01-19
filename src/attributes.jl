@@ -37,7 +37,7 @@ Return a `Bool` indicating whether `instance` supports the variable attribute `a
 Return a `Bool` indicating whether `instance` supports the constraint attribute `attr`.
 
 In other words, it should return `true` if `copy!(instance, src)` does not return `CopyUnsupportedAttribute` when the attribute `attr` is set to `src`.
-If the attribute is not supported in specific circumstances, it should still return `true`.
+If the attribute is only not supported in specific circumstances, it should still return `true`.
 """
 function supportsattribute end
 supportsattribute(::AbstractInstance, ::AnyAttribute, ::Type{<:Any}) = false
