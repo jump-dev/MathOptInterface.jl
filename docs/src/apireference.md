@@ -24,7 +24,7 @@ get
 get!
 canset
 set!
-supportsattribute
+supports
 ```
 
 ## Instance

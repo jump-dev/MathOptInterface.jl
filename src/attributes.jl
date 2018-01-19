@@ -24,24 +24,24 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
-    supportsattribute(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
+    supports(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
 
 Return a `Bool` indicating whether `instance` supports the instance attribute `attr`.
 
-    supportsattribute(instance::AbstractInstance, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
+    supports(instance::AbstractInstance, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
 
 Return a `Bool` indicating whether `instance` supports the variable attribute `attr`.
 
-    supportsattribute(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
+    supports(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
 
 Return a `Bool` indicating whether `instance` supports the constraint attribute `attr`.
 
 In other words, it should return `true` if `copy!(instance, src)` does not return `CopyUnsupportedAttribute` when the attribute `attr` is set to `src`.
 If the attribute is only not supported in specific circumstances, it should still return `true`.
 """
-function supportsattribute end
-supportsattribute(::AbstractInstance, ::AnyAttribute, ::Type{<:Any}) = false
-supportsattribute(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}, ::Type{<:Any}) = false
+function supports end
+supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Any}) = false
+supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}, ::Type{<:Any}) = false
 
 """
     mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
