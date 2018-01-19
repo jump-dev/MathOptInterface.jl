@@ -24,6 +24,26 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
+    supports(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
+
+Return a `Bool` indicating whether `instance` supports the instance attribute `attr`.
+
+    supports(instance::AbstractInstance, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
+
+Return a `Bool` indicating whether `instance` supports the variable attribute `attr`.
+
+    supports(instance::AbstractInstance, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
+
+Return a `Bool` indicating whether `instance` supports the constraint attribute `attr` applied to an `F`-in-`S` constraint.
+
+In other words, it should return `true` if `copy!(instance, src)` does not return `CopyUnsupportedAttribute` when the attribute `attr` is set to `src`.
+If the attribute is only not supported in specific circumstances, it should still return `true`.
+"""
+function supports end
+supports(::AbstractInstance, ::AnyAttribute) = false
+supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}) = false
+
+"""
     mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
 
 Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `false` if the attribute only affects how the instance is solved.

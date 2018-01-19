@@ -1,6 +1,15 @@
 # Constraints
 
 """
+    supportsconstraint(instance::AbstractInstance, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
+
+Return a `Bool` indicating whether `instance` supports `F`-in-`S` constraints, that is,
+`copy!(instance, src)` does not return `CopyUnsupportedConstraint` when `src` contains `F`-in-`S` constraints.
+If `F`-in-`S` constraints are only not supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be combined with another type of constraint, it should still return `true`.
+"""
+supportsconstraint(instance::AbstractInstance, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
+
+"""
     canaddconstraint(instance::AbstractInstance, func::AbstractFunction, set::AbstractSet)::Bool
 
 Return a `Bool` indicating whether it is possible to add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
