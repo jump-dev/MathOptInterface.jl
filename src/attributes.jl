@@ -252,7 +252,7 @@ has value greater than zero.
 struct ListOfConstraints <: AbstractInstanceAttribute end
 
 """
-    ObjectiveFunction{F<:AbstractFunction}()
+    ObjectiveFunction{F<:AbstractScalarFunction}()
 
 An `F` instance which represents the objective function.
 It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
