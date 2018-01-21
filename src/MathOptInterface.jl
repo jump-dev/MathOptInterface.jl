@@ -72,7 +72,7 @@ function isempty end
 """
     empty!(instance::AbstractInstance)
 
-Empty the instance, that is, remove the objective and all variables and constraints from the instance `instance`.
+Empty the instance, that is, remove from the instance `instance` all variables, constraints and instance attributes `attr` for which `mustcopy(attr)` is `true`.
 """
 function empty! end
 
