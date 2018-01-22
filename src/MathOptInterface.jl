@@ -73,7 +73,7 @@ function isempty end
 """
     empty!(instance::AbstractInstance)
 
-Empty the instance, that is, remove from the instance `instance` all variables, constraints and instance attributes `attr` but not solver parameters.
+Empty the instance, that is, remove from the instance `instance` all variables, constraints and instance attributes but not solver parameters.
 """
 function empty! end
 
