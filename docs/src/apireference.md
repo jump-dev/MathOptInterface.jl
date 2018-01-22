@@ -11,6 +11,7 @@ CurrentModule = MathOptInterface
 List of attribute categories.
 
 ```@docs
+AbstractSolverParameter
 AbstractInstanceAttribute
 AbstractVariableAttribute
 AbstractConstraintAttribute
@@ -43,7 +44,6 @@ Copying
 copy!
 CopyResult
 CopyStatusCode
-mustcopy
 ```
 
 List of instance attributes

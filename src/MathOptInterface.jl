@@ -65,14 +65,15 @@ function read! end
 """
     isempty(instance::AbstractInstance)
 
-Returns `false` if the `instance` has any attribute set or has any variables, constraints, or objective function.
+Returns `false` if the `instance` has any instance attribute set or has any variables or constraints.
+Note that an empty instance can have solver parameters set.
 """
 function isempty end
 
 """
     empty!(instance::AbstractInstance)
 
-Empty the instance, that is, remove from the instance `instance` all variables, constraints and instance attributes `attr` for which `mustcopy(attr)` is `true`.
+Empty the instance, that is, remove from the instance `instance` all variables, constraints and instance attributes `attr` but not solver parameters.
 """
 function empty! end
 
@@ -113,9 +114,8 @@ end
 
 Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a `CopyResult` object. If the copy is successfully, the `CopyResult` contains a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
 
-If an attribute `attr` cannot be copied from `src` to `dest` then:
+If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If a solver parameter cannot be copied then:
 
-* If `mustcopy(attr)` is `true` then an error is thrown, otherwise,
 * If `warnattributes` is `true`, a warning is displayed, otherwise,
 * The attribute is silently ignored.
 
