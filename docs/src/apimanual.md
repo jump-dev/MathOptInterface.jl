@@ -118,7 +118,7 @@ The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used f
 For example,
 ```julia
 x = addvariables!(instance, 2)
-set!(instance, ObjectiveFunction(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+set!(instance, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
 set!(instance, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
@@ -152,7 +152,7 @@ The code example below encodes the linear optimization problem:
 
 ```julia
 x = addvariables!(instance, 2)
-set!(instance, ObjectiveFunction(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
+set!(instance, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
 set!(instance, ObjectiveSense(), MaxSense)
 addconstraint!(instance, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
 addconstraint!(instance, SingleVariable(x[1]), GreaterThan(0.0))
@@ -306,7 +306,7 @@ instance = GLPKInstance() # TODO: match with actual name in GLPK wrapper
 x = MOI.addvariables!(instance, numvariables)
 
 # set the objective function
-MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction(x, c, 0.0))
+MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x, c, 0.0))
 MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
 
 # add the knapsack constraint
