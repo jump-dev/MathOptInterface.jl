@@ -34,6 +34,7 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 abstract type AbstractConstraintAttribute end
 
 const AnyAttribute = Union{AbstractSolverParameter, AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyProperty = Union{AbstractSolverParameter, AnyAttribute}
 
 """
     supports(instance::AbstractInstance, param::AbstractSolverParameter)::Bool
@@ -56,7 +57,7 @@ In other words, it should return `true` if `copy!(instance, src)` does not retur
 If the attribute is only not supported in specific circumstances, it should still return `true`.
 """
 function supports end
-supports(::AbstractInstance, ::AnyAttribute) = false
+supports(::AbstractInstance, ::AnyProperty) = false
 supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}) = false
 
 """
@@ -110,8 +111,10 @@ get(instance, ConstraintIndex, "con1")
 """
 function get end
 
-function get(instance::AbstractInstance, attr::AnyAttribute, args...)
-    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the attribute $attr"))
+_name(attr::AnyAttribute) = "attribute $attr"
+_name(attr::AbstractSolverParameter) = "parameter $attr"
+function get(instance::AbstractInstance, attr::AnyProperty, args...)
+    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the $(_name(attr))"))
 end
 
 """
@@ -121,8 +124,8 @@ An in-place version of `get`.
 The signature matches that of `get` except that the the result is placed in the vector `output`.
 """
 function get! end
-function get!(output, instance::AbstractInstance, attr::AnyAttribute, args...)
-    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the attribute $attr"))
+function get!(output, instance::AbstractInstance, attr::AnyProperty, args...)
+    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the $(_name(attr))"))
 end
 
 """
@@ -168,7 +171,7 @@ canget(instance, ConstraintIndex, "con1")
 ```
 """
 function canget end
-canget(instance::AbstractInstance, attr::AnyAttribute) = false
+canget(instance::AbstractInstance, attr::AnyProperty) = false
 canget(instance::AbstractInstance, attr::AnyAttribute, ::Type{<:Index}) = false
 
 # TODO: Consider moving from `canset(instance, VariablePrimalStart(), VariableIndex)` to `canset(instance, VariablePrimalStart())`
@@ -197,7 +200,7 @@ canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float6
 ```
 """
 function canset end
-canset(instance::AbstractInstance, attr::AnyAttribute) = false
+canset(instance::AbstractInstance, attr::AnyProperty) = false
 canset(instance::AbstractInstance, attr::AnyAttribute, ref::Type{<:Index}) = false
 
 """
@@ -226,8 +229,8 @@ Assign a value to the attribute `attr` of constraint `c` in instance `instance`.
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `instance`.
 """
 function set! end
-function set!(instance::AbstractInstance, attr::AnyAttribute, args...)
-    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support setting the attribute $attr"))
+function set!(instance::AbstractInstance, attr::AnyProperty, args...)
+    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support setting the $(_name(attr))"))
 end
 
 ## Solver parameters
