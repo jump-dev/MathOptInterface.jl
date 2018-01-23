@@ -238,7 +238,7 @@ end
 """
     ListOfSolverParametersSet()
 
-A `Vector{AbstractSolverParameters}` of all solver parameters that were set to the instance.
+A `Vector{AbstractSolverParameter}` of all solver parameters that were set to the instance.
 """
 struct ListOfSolverParametersSet <: AbstractSolverParameter end
 
