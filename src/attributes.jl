@@ -1,6 +1,18 @@
 # Attributes
 
 """
+    AbstractSolverParameter
+
+Abstract supertype for parameter objects that can be used to set or get parameters of the solver.
+
+### Note
+
+The difference between `AbstractSolverParameter` and `AbstractInstanceAttribute` lies in the behavior of `isempty`, `empty!` and `copy!`.
+Typically solver parameters only affect how the instance is solved.
+"""
+abstract type AbstractSolverParameter end
+
+"""
     AbstractInstanceAttribute
 
 Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the instance.
@@ -21,9 +33,14 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyAttribute = Union{AbstractSolverParameter, AbstractInstanceAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyProperty = Union{AbstractSolverParameter, AnyAttribute}
 
 """
+    supports(instance::AbstractInstance, param::AbstractSolverParameter)::Bool
+
+Return a `Bool` indicating whether `instance` supports the solver parameter `param`.
+
     supports(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
 
 Return a `Bool` indicating whether `instance` supports the instance attribute `attr`.
@@ -40,21 +57,14 @@ In other words, it should return `true` if `copy!(instance, src)` does not retur
 If the attribute is only not supported in specific circumstances, it should still return `true`.
 """
 function supports end
-supports(::AbstractInstance, ::AnyAttribute) = false
+supports(::AbstractInstance, ::AnyProperty) = false
 supports(::AbstractInstance, ::AnyAttribute, ::Type{<:Index}) = false
 
 """
-    mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}})
+    get(instance::AbstractInstance, param::AbstractSolverParameter)
 
-Returns `true` if it is mandatory to copy the attribute in `MOI.copy!` and `false` if the attribute only affects how the instance is solved.
+Return a parameter `param` of the instance `instance`.
 
-### Examples
-
-The attributes `ObjectiveFunction` and `ObjectiveSense` are mandatory but a hypothetical attribute such as `GurobiLogLevel` is not mandatory.
-"""
-mustcopy(attr::Union{Type{AbstractInstanceAttribute}, Type{AbstractVariableAttribute}, Type{AbstractConstraintAttribute}}) = true
-
-"""
     get(instance::AbstractInstance, attr::AbstractInstanceAttribute)
 
 Return an attribute `attr` of the instance `instance`.
@@ -101,8 +111,10 @@ get(instance, ConstraintIndex, "con1")
 """
 function get end
 
-function get(instance::AbstractInstance, attr::AnyAttribute, args...)
-    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the attribute $attr"))
+_name(attr::AnyAttribute) = "attribute $attr"
+_name(attr::AbstractSolverParameter) = "parameter $attr"
+function get(instance::AbstractInstance, attr::AnyProperty, args...)
+    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the $(_name(attr))"))
 end
 
 """
@@ -112,11 +124,15 @@ An in-place version of `get`.
 The signature matches that of `get` except that the the result is placed in the vector `output`.
 """
 function get! end
-function get!(output, instance::AbstractInstance, attr::AnyAttribute, args...)
-    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the attribute $attr"))
+function get!(output, instance::AbstractInstance, attr::AnyProperty, args...)
+    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support accessing the $(_name(attr))"))
 end
 
 """
+    canget(instance::AbstractInstance, param::AbstractSolverParameter)::Bool
+
+Return a `Bool` indicating whether `instance` currently has a value for the parameter specified by parameter type `param`.
+
     canget(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
 
 Return a `Bool` indicating whether `instance` currently has a value for the attribute specified by attribute type `attr`.
@@ -155,13 +171,21 @@ canget(instance, ConstraintIndex, "con1")
 ```
 """
 function canget end
-canget(instance::AbstractInstance, attr::AnyAttribute) = false
+canget(instance::AbstractInstance, attr::AnyProperty) = false
 canget(instance::AbstractInstance, attr::AnyAttribute, ::Type{<:Index}) = false
 
 # TODO: Consider moving from `canset(instance, VariablePrimalStart(), VariableIndex)` to `canset(instance, VariablePrimalStart())`
 # and from `canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float64},Nonnegatives})` to
 # `canset(instance, ConstraintPrimal(), VectorAffineFunction{Float64},Nonnegatives)`.
 """
+    canset(instance::AbstractInstance, param::AbstractSolverParameter)::Bool
+
+Return a `Bool` indicating whether it is possible to set the parameter `param` to the instance `instance`.
+
+    canset(instance::AbstractInstance, attr::AbstractInstanceAttribute)::Bool
+
+Return a `Bool` indicating whether it is possible to set the attribute `attr` to the instance `instance`.
+
     canset(instance::AbstractInstance, attr::AbstractVariableAttribute, R::Type{VariableIndex})::Bool
     canset(instance::AbstractInstance, attr::AbstractConstraintAttribute, R::Type{ConstraintIndex{F,S})::Bool
 
@@ -176,10 +200,14 @@ canset(instance, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float6
 ```
 """
 function canset end
-canset(instance::AbstractInstance, attr::AnyAttribute) = false
+canset(instance::AbstractInstance, attr::AnyProperty) = false
 canset(instance::AbstractInstance, attr::AnyAttribute, ref::Type{<:Index}) = false
 
 """
+    set!(instance::AbstractInstance, param::AbstractSolverParameter, value)
+
+Assign `value` to the parameter `param` of the instance `instance`.
+
     set!(instance::AbstractInstance, attr::AbstractInstanceAttribute, value)
 
 Assign `value` to the attribute `attr` of the instance `instance`.
@@ -201,11 +229,18 @@ Assign a value to the attribute `attr` of constraint `c` in instance `instance`.
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `instance`.
 """
 function set! end
-function set!(instance::AbstractInstance, attr::AnyAttribute, args...)
-    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support setting the attribute $attr"))
+function set!(instance::AbstractInstance, attr::AnyProperty, args...)
+    throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support setting the $(_name(attr))"))
 end
 
-# TODO: solver-independent parameters
+## Solver parameters
+
+"""
+    ListOfSolverParametersSet()
+
+A `Vector{AbstractSolverParameter}` of all solver parameters that were set to the instance.
+"""
+struct ListOfSolverParametersSet <: AbstractSolverParameter end
 
 ## Instance attributes
 
