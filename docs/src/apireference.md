@@ -70,6 +70,12 @@ optimize!
 free!
 ```
 
+List of attributes optimizers attributes
+
+```@docs
+SolverName
+```
+
 List of attributes useful for optimizers
 
 
