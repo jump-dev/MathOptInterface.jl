@@ -149,5 +149,6 @@ include("constraints.jl")
 include("attributes.jl")
 include("objectives.jl")
 include("variables.jl")
+include("nlp.jl")
 
 end
