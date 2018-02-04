@@ -14,7 +14,7 @@ supportsconstraint(instance::AbstractInstance, ::Type{<:AbstractFunction}, ::Typ
 
 Return a `Bool` indicating whether it is possible to add a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
 """
-canaddconstraint(instance::AbstractInstance, func::AbstractFunction, set::AbstractSet) = false
+canaddconstraint(instance::AbstractInstance, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
 """
     addconstraint!(instance::AbstractInstance, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
@@ -46,13 +46,13 @@ addconstraints!(instance::AbstractInstance, funcs, sets) = addconstraint!.(insta
 """
 ## Modify Function
 
-    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S})::Bool
+    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S}, ::Type{F})::Bool
 
 Return a `Bool` indicating whether the function in constraint `c` can be replaced by another function of the same type `F` as the original function.
 
 ## Modify Set
 
-    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S})::Bool
+    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S}, ::Type{S})::Bool
 
 Return a `Bool` indicating whether the set in constraint `c` can be replaced by another set of the same type `S` as the original set.
 
@@ -171,6 +171,6 @@ cantransformconstraint(instance, c, ZeroOne())        # false
 function cantransformconstraint end
 
 # default fallback
-function cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex, newset)
-    canget(instance, ConstraintFunction(), typeof(c)) && candelete(instance, c) && canaddconstraint(instance, get(instance, ConstraintFunction(), c), typeof(newset))
+function cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex, ::Type{S}) where S<:AbstractSet
+    canget(instance, ConstraintFunction(), typeof(c)) && candelete(instance, c) && canaddconstraint(instance, get(instance, ConstraintFunction(), c), S)
 end
