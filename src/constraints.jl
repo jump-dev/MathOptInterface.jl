@@ -10,9 +10,9 @@ If `F`-in-`S` constraints are only not supported in specific circumstances, e.g.
 supportsconstraint(instance::AbstractInstance, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
 """
-    canaddconstraint(instance::AbstractInstance, func::AbstractFunction, set::AbstractSet)::Bool
+    canaddconstraint(instance::AbstractInstance, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
 
-Return a `Bool` indicating whether it is possible to add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
+Return a `Bool` indicating whether it is possible to add a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
 """
 canaddconstraint(instance::AbstractInstance, func::AbstractFunction, set::AbstractSet) = false
 
@@ -46,44 +46,26 @@ addconstraints!(instance::AbstractInstance, funcs, sets) = addconstraint!.(insta
 """
 ## Modify Function
 
-    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S}, func::F)::Bool
+    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S})::Bool
 
-Return a `Bool` indicating whether it is possible to replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
-
-### Examples
-
-If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are `VariableIndex` objects,
-
-```julia
-canmodifyconstraint(instance, c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
-canmodifyconstraint(instance, c, SingleVariable(v1)) # false
-```
+Return a `Bool` indicating whether the function in constraint `c` can be replaced by another function of the same type `F` as the original function.
 
 ## Modify Set
 
-    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S}, set::S)::Bool
+    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S})::Bool
 
-Return a `Bool` indicating whether it is possible to change the set of constraint `c` to the new set `set` which should be of the same type as the original set.
-
-### Examples
-
-If `c` is a `ConstraintIndex{F,Interval}`
-
-```julia
-canmodifyconstraint(instance, c, Interval(0, 5))
-canmodifyconstraint(instance, c, NonPositives) # false
-```
+Return a `Bool` indicating whether the set in constraint `c` can be replaced by another set of the same type `S` as the original set.
 
 ## Partial Modifications
 
-    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex, change::AbstractFunctionModification)::Bool
+    canmodifyconstraint(instance::AbstractInstance, c::ConstraintIndex, ::Type{M})::Bool where M<:AbstractFunctionModification
 
-Return a `Bool` indicating whether it is possible to apply the modification specified by `change` to the function of constraint `c`.
+Return a `Bool` indicating whether it is possible to apply a modification of type `M` to the function of constraint `c`.
 
 ### Examples
 
 ```julia
-canmodifyconstraint(instance, c, ScalarConstantChange(10.0))
+canmodifyconstraint(instance, c, ScalarConstantChange{Float64})
 ```
 """
 function canmodifyconstraint end
@@ -173,9 +155,9 @@ end
 """
 ## Transform Constraint Set
 
-    cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S1}, newset::S2)::Bool
+    cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex{F,S1}, ::Type{S2})::Bool where S2<:AbstractSet
 
-Return a `Bool` is the set in constraint `c` can be replaced with `newset`.
+Return a `Bool` indicating whether the set of type `S1` in constraint `c` can be replaced by a set of type `S2`.
 
 ### Examples
 
@@ -190,5 +172,5 @@ function cantransformconstraint end
 
 # default fallback
 function cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex, newset)
-    canget(instance, ConstraintFunction(), typeof(c)) && candelete(instance, c) && canaddconstraint(instance, get(instance, ConstraintFunction(), c), newset)
+    canget(instance, ConstraintFunction(), typeof(c)) && candelete(instance, c) && canaddconstraint(instance, get(instance, ConstraintFunction(), c), typeof(newset))
 end
