@@ -195,12 +195,12 @@ _dicts(f::ScalarAffineFunction) = sum_dict(Pair.(f.variables, f.coefficients))
 _dicts(f::VectorAffineFunction) = sum_dict(Pair.(tuple.(f.outputindex, f.variables), f.coefficients))
 
 # For quadratic terms, x*y == y*x
-_sort(v1::VariableIndex, v2::VariableIndex) = VariableIndex.(extrema((v1.value, v2.value)))
+_canonicalize(v1::VariableIndex, v2::VariableIndex) = VariableIndex.(extrema((v1.value, v2.value)))
 
 _dicts(f::ScalarQuadraticFunction) = (sum_dict(Pair.(f.affine_variables, f.affine_coefficients)),
-                                      sum_dict(Pair.(_sort.(f.quadratic_rowvariables, f.quadratic_colvariables), f.quadratic_coefficients)))
+                                      sum_dict(Pair.(_canonicalize.(f.quadratic_rowvariables, f.quadratic_colvariables), f.quadratic_coefficients)))
 _dicts(f::VectorQuadraticFunction) = (sum_dict(Pair.(tuple.(f.affine_outputindex, f.affine_variables), f.affine_coefficients)),
-                                      sum_dict(Pair.(tuple.(f.quadratic_outputindex, _sort.(f.quadratic_rowvariables, f.quadratic_colvariables)), f.quadratic_coefficients)))
+                                      sum_dict(Pair.(tuple.(f.quadratic_outputindex, _canonicalize.(f.quadratic_rowvariables, f.quadratic_colvariables)), f.quadratic_coefficients)))
 
 function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction},
                                                      G<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction}}
