@@ -135,16 +135,14 @@ end
 
 The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x/y) \\le z, y > 0 \\}``.
 """
-struct ExponentialCone <: AbstractVectorSet
-end
+struct ExponentialCone <: AbstractVectorSet end
 
 """
     DualExponentialCone()
 
 The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\exp (v/u) \\le \\exp(1) w, u < 0 \\}``.
 """
-struct DualExponentialCone <: AbstractVectorSet
-end
+struct DualExponentialCone <: AbstractVectorSet end
 
 """
     PowerCone{T <: Real}(exponent::T)
