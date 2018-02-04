@@ -170,3 +170,39 @@ struct MultirowChange{T} <: AbstractFunctionModification
     rows::Vector{Int}
     new_coefficients::Vector{T}
 end
+
+# Implementation of comparison for MOI functions
+import Base: ==
+
+==(f::VectorOfVariables, g::VectorOfVariables) = f.variables == g.variables
+
+# For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_isapprox`
+function dict_isapprox(d1::Dict, d2::Dict{<:Any, T}; kwargs...) where T
+    all(kv -> isapprox(kv.second, Base.get(d2, kv.first, zero(T)); kwargs...), d1)
+end
+
+# Build a dictionary where the duplicate keys are summed
+function sum_dict(kvs::Vector{Pair{K, V}}) where {K, V}
+    d = Dict{K, V}()
+    for kv in kvs
+        key = kv.first
+        d[key] = kv.second + Base.get(d, key, zero(V))
+    end
+    d
+end
+
+_dicts(f::ScalarAffineFunction) = sum_dict(Pair.(f.variables, f.coefficients))
+_dicts(f::VectorAffineFunction) = sum_dict(Pair.(tuple.(f.outputindex, f.variables), f.coefficients))
+
+# For quadratic terms, x*y == y*x
+_sort(v1::VariableIndex, v2::VariableIndex) = VariableIndex.(extrema((v1.value, v2.value)))
+
+_dicts(f::ScalarQuadraticFunction) = (sum_dict(Pair.(f.affine_variables, f.affine_coefficients)),
+                                      sum_dict(Pair.(_sort.(f.quadratic_rowvariables, f.quadratic_colvariables), f.quadratic_coefficients)))
+_dicts(f::VectorQuadraticFunction) = (sum_dict(Pair.(tuple.(f.affine_outputindex, f.affine_variables), f.affine_coefficients)),
+                                      sum_dict(Pair.(tuple.(f.quadratic_outputindex, _sort.(f.quadratic_rowvariables, f.quadratic_colvariables)), f.quadratic_coefficients)))
+
+function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction},
+                                                     G<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction}}
+    isapprox(f.constant, g.constant; kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
+end
