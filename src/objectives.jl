@@ -27,4 +27,4 @@ canmodifyobjective(instance, ScalarConstantChange(10.0))
 ```
 """
 function canmodifyobjective end
-canmodifyobjective(instance::AbstractSolverInstance, change) = false
+canmodifyobjective(instance::AbstractInstance, change) = false
