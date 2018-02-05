@@ -172,9 +172,10 @@ struct MultirowChange{T} <: AbstractFunctionModification
 end
 
 # Implementation of comparison for MOI functions
-import Base: ==
+Base.:(==)(f::VectorOfVariables, g::VectorOfVariables) = f.variables == g.variables
 
-==(f::VectorOfVariables, g::VectorOfVariables) = f.variables == g.variables
+Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{SingleVariable, VectorOfVariables},
+                                            G<:Union{SingleVariable, VectorOfVariables}} = f == g
 
 # For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_isapprox`
 function dict_isapprox(d1::Dict, d2::Dict{<:Any, T}; kwargs...) where T
