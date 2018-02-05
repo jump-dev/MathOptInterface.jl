@@ -171,6 +171,6 @@ cantransformconstraint(instance, c, ZeroOne())        # false
 function cantransformconstraint end
 
 # default fallback
-function cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex, ::Type{S}) where S<:AbstractSet
-    canget(instance, ConstraintFunction(), typeof(c)) && candelete(instance, c) && canaddconstraint(instance, get(instance, ConstraintFunction(), c), S)
+function cantransformconstraint(instance::AbstractInstance, c::ConstraintIndex{F}, ::Type{S}) where {F<:AbstractFunction, S<:AbstractSet}
+    canget(instance, ConstraintFunction(), typeof(c)) && candelete(instance, c) && canaddconstraint(instance, F, S)
 end
