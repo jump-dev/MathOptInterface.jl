@@ -91,30 +91,30 @@ list of symbols in the same format as in `initialize`.
 function features_available end
 
 """
-    eval_f(d::AbstractNLPEvaluator, x)
+    eval_objective(d::AbstractNLPEvaluator, x)
 
-Evaluate ``f(x)``, returning a scalar value.
+Evaluate the objective ``f(x)``, returning a scalar value.
 """
-function eval_f end
+function eval_objective end
 
 """
-    eval_g(d::AbstractNLPEvaluator, g, x)
+    eval_constraint(d::AbstractNLPEvaluator, g, x)
 
-Evaluate ``g(x)``, storing the result in the vector `g` which must be of the
+Evaluate the constraint function ``g(x)``, storing the result in the vector `g` which must be of the
 appropriate size.
 """
-function eval_g end
+function eval_constraint end
 
 """
-    eval_grad_f(d::AbstractNLPEvaluator, g, x)
+    eval_objective_gradient(d::AbstractNLPEvaluator, g, x)
 
 Evaluate ``\\nabla f(x)`` as a dense vector, storing the result in the vector
 `g` which must be of the appropriate size.
 """
-function eval_grad_f end
+function eval_objective_gradient end
 
 """
-    jac_structure(d::AbstractNLPEvaluator)
+    jacobian_structure(d::AbstractNLPEvaluator)
 
 Returns the sparsity structure of the Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``
@@ -125,10 +125,10 @@ structurally nonzero element. These indices are not required to be sorted and ca
 duplicates, in which case the solver should combine the corresponding elements by
 adding them together.
 """
-function jac_structure end
+function jacobian_structure end
 
 """
-    hesslag_structure(d::AbstractNLPEvaluator)
+    hessian_lagrangian_structure(d::AbstractNLPEvaluator)
 
 Returns the sparsity structure of the Hessian-of-the-Lagrangian matrix
 ``\\nabla^2 f + \\sum_{i=1}^m \\nabla^2 g_i`` as a tuple `(I,J)`
@@ -138,45 +138,45 @@ duplicates, in which case the solver should combine the corresponding elements b
 adding them together. Any mix of lower and upper-triangular indices is valid.
 Elements `(i,j)` and `(j,i)`, if both present, should be treated as duplicates.
 """
-function hesslag_structure end
+function hessian_lagrangian_structure end
 
 """
-    eval_jac_g(d::AbstractNLPEvaluator, J, x)
+    eval_constraint_jacobian(d::AbstractNLPEvaluator, J, x)
 
 Evaluates the sparse Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]`.
 The result is stored in the vector `J` in the same order as the indices returned
 by `jac_structure`.
 """
-function eval_jac_g end
+function eval_constraint_jacobian end
 
 """
-    eval_jac_prod(d::AbstractNLPEvaluator, y, x, w)
+    eval_constraint_jacobian_product(d::AbstractNLPEvaluator, y, x, w)
 
 Computes the Jacobian-vector product ``J_g(x)w``, storing the result in the vector `y`.
 """
-function eval_jac_prod end
+function eval_constraint_jacobian_product end
 
 """
-    eval_jac_prod_t(d::AbstractNLPEvaluator, y, x, w)
+    eval_constraint_jacobian_transpose_product(d::AbstractNLPEvaluator, y, x, w)
 
 Computes the Jacobian-transpose-vector product ``J_g(x)^Tw``, storing the result
 in the vector `y`.
 """
-function eval_jac_prod_t end
+function eval_constraint_jacobian_transpose_product end
 
 """
-    eval_hesslag_prod(d::AbstractNLPEvaluator, h, x, v, σ, μ)
+    eval_hessian_lagrangian_prod(d::AbstractNLPEvaluator, h, x, v, σ, μ)
 
 Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the Hessian-of-the-Lagrangian-vector product
 ``\\left(\\sigma\\nabla^2 f(x) + \\sum_{i=1}^m \\mu_i \\nabla^2 g_i(x)\\right)v``,
 storing the result in the vector `h`.
 """
-function eval_hesslag_prod end
+function eval_hessian_lagrangian_product end
 
 """
-    eval_hesslag(d::AbstractNLPEvaluator, H, x, σ, μ)
+    eval_hessian_lagrangian(d::AbstractNLPEvaluator, H, x, σ, μ)
 
 Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the sparse Hessian-of-the-Lagrangian matrix
@@ -184,10 +184,10 @@ computes the sparse Hessian-of-the-Lagrangian matrix
 storing the result in the vector `H` in the same order as the indices
 returned by `hesslag_structure`.
 """
-function eval_hesslag end
+function eval_hessian_lagrangian end
 
 """
-    obj_expr(d::AbstractNLPEvaluator)
+    objective_expr(d::AbstractNLPEvaluator)
 
 Returns an expression graph for the objective function as a standard Julia `Expr`
 object. All sums and products are flattened out as simple `Expr(:+,...)` and
@@ -202,10 +202,10 @@ recognized functions; typically these will be built-in Julia functions like
 `^`, `exp`, `log`, `cos`, `tan`, `sqrt`, etc., but modeling
 interfaces may choose to extend these basic functions.
 """
-function obj_expr end
+function objective_expr end
 
 """
-    constr_expr(d::AbstractNLPEvaluator, i)
+    constraint_expr(d::AbstractNLPEvaluator, i)
 
 Returns an expression graph for the ``i\\text{th}`` constraint in the same
 format as described above, with an additional comparison operator indicating
@@ -215,4 +215,4 @@ must be a constant; that is, `:(x[1]^3 <= 1)` is allowed, while
 case both the lower bound and upper bounds should be constants; for example,
 `:(-1 <= cos(x[1]) + sin(x[2]) <= 1)` is valid.
 """
-function constr_expr end
+function constraint_expr end
