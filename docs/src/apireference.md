@@ -137,6 +137,7 @@ delete!(::AbstractSolverInstance,::Index)
 Functions for adding variables. For deleting, see index types section.
 
 ```@docs
+canaddvariable
 addvariables!
 addvariable!
 ```
