@@ -97,6 +97,11 @@ If an `F`-in-`S` constraint with name `name` exists in the instance `instance`, 
 
 If *any* constraint with name `name` exists in the instance `instance`, return the corresponding index, otherwise throw a `KeyError`. This version is available for convenience but may incur a performance penalty because it is not type stable.
 
+### Note
+
+It is the user's responsibility to check that `canget` returns `true` prior to calling `get`. 
+Calling `get` when `canget` returns `false` may throw an error or return an incorrect result.
+
 ### Examples
 
 ```julia
@@ -227,6 +232,11 @@ Assign a value to the attribute `attr` of constraint `c` in instance `instance`.
     set!(instance::AbstractInstance, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `instance`.
+
+### Note
+
+It is the user's responsibility to check that `canset` returns `true` prior to calling `set!`. 
+Calling `set!` when `canset` returns `false` may throw an error or do nothing.
 """
 function set! end
 function set!(instance::AbstractInstance, attr::AnyProperty, args...)
