@@ -110,6 +110,10 @@ get(instance, ConstraintIndex, "con1")
 ```
 """
 function get end
+# We want to avoid being too specific in the type arguments to avoid method ambiguity.
+# For instance, get(::AbstractInstance, ::AbstractVariableAttribute, ::Vector{VariableIndex}) would not allow
+# to define get(::SomeInstance, ::AnyProperty, ::Vector)
+get(instance::AbstractInstance, attr::AnyProperty, idxs::Vector) = get.(instance, attr, idxs)
 
 _name(attr::AnyAttribute) = "attribute $attr"
 _name(attr::AbstractSolverParameter) = "parameter $attr"
@@ -229,6 +233,9 @@ Assign a value to the attribute `attr` of constraint `c` in instance `instance`.
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in instance `instance`.
 """
 function set! end
+# See note with get
+set!(instance::AbstractInstance, attr::AnyProperty, idxs::Vector, vector_of_values::Vector) = set!.(instance, attr, idxs, vector_of_values)
+
 function set!(instance::AbstractInstance, attr::AnyProperty, args...)
     throw(ArgumentError("AbstractInstance of type $(typeof(instance)) does not support setting the $(_name(attr))"))
 end
