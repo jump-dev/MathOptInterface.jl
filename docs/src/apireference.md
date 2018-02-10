@@ -38,6 +38,8 @@ supports
 AbstractInstance
 AbstractStandaloneInstance
 AbstractSolverInstance
+isempty
+empty!
 write
 read!
 ```
