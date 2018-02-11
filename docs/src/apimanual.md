@@ -93,7 +93,7 @@ v2 = addvariables!(model, 3)
 set!(model, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
-A variable can be deleted from a model with [`delete!(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete!(::MathOptInterface.ModelLike, ::MathOptInterface.Index)), if this functionality is supported.
+A variable can be deleted from a model with [`delete!(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete!(::MathOptInterface.ModelLike, ::MathOptInterface.Index)). Not all models support deleting variables; the [`candelete`](@ref MathOptInterface.candelete) method is used to check if this is supported.
 
 ## Functions
 
@@ -348,7 +348,7 @@ primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 ### Duals
 
 
-Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cone, the model may be called a conic optimization problem.
+Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cones, the model may be called a conic optimization problem.
 For conic-form minimization problems, the primal is:
 
 ```math
