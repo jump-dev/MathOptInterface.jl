@@ -66,7 +66,7 @@ struct NLPBlockData
 end
 
 """
-    initialize(d::AbstractNLPEvaluator, requested_features::Vector{Symbol}, variable_order::Vector{VariableIndex})
+    initialize!(d::AbstractNLPEvaluator, requested_features::Vector{Symbol}, variable_order::Vector{VariableIndex})
 
 Must be called before any other methods. The vector `requested_features`
 lists features requested by the solver. These may include `:Grad` for gradients
@@ -80,7 +80,7 @@ exactly once in `variable_order`, but the indices may appear in any order.
 All subsequent references to the vector ``x`` follow this index mapping; the
 `i`th index of ``x`` corresponds to `variable_order[i]`.
 """
-function initialize end
+function initialize! end
 
 """
     features_available(d::AbstractNLPEvaluator)
