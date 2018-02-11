@@ -228,7 +228,7 @@ Assign a value respectively to the attribute `attr` of each constraint in the co
 """
 function set! end
 # See note with get
-set!(model::ModelLike, attr::AnyAttribute, idxs::Vector, vector_of_values::Vector) = set!.(model, attr, idxs, vector_of_values)
+set!(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, idxs::Vector, vector_of_values::Vector) = set!.(model, attr, idxs, vector_of_values)
 
 function set!(model::ModelLike, attr::AnyAttribute, args...)
     throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute $attr"))
