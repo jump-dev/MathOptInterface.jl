@@ -1,16 +1,16 @@
 # Attributes
 
 """
-    AbstractOptimizerParameter
+    AbstractOptimizerAttribute
 
-Abstract supertype for parameter objects that can be used to set or get parameters of the optimizer.
+Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the optimizer.
 
 ### Note
 
-The difference between `AbstractOptimizerParameter` and `AbstractModelAttribute` lies in the behavior of `isempty`, `empty!` and `copy!`.
-Typically optimizer parameters only affect how the model is solved.
+The difference between `AbstractOptimizerAttribute` and `AbstractModelAttribute` lies in the behavior of `isempty`, `empty!` and `copy!`.
+Typically optimizer attributes only affect how the model is solved.
 """
-abstract type AbstractOptimizerParameter end
+abstract type AbstractOptimizerAttribute end
 
 """
     AbstractModelAttribute
@@ -33,13 +33,12 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 """
 abstract type AbstractConstraintAttribute end
 
-const AnyAttribute = Union{AbstractOptimizerParameter, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
-const AnyProperty = Union{AbstractOptimizerParameter, AnyAttribute}
+const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
-    supports(model::ModelLike, param::AbstractOptimizerParameter)::Bool
+    supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
 
-Return a `Bool` indicating whether `model` supports the optimizer parameter `param`.
+Return a `Bool` indicating whether `model` supports the optimizer attribute `attr`.
 
     supports(model::ModelLike, attr::AbstractModelAttribute)::Bool
 
@@ -57,13 +56,13 @@ In other words, it should return `true` if `copy!(model, src)` does not return `
 If the attribute is only not supported in specific circumstances, it should still return `true`.
 """
 function supports end
-supports(::ModelLike, ::AnyProperty) = false
-supports(::ModelLike, ::AnyAttribute, ::Type{<:Index}) = false
+supports(::ModelLike, ::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
+supports(::ModelLike, ::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
 
 """
-    get(model::ModelLike, param::AbstractOptimizerParameter)
+    get(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)
 
-Return a parameter `param` of the model `model`.
+Return an attribute `attr` of the optimizer `optimizer`.
 
     get(model::ModelLike, attr::AbstractModelAttribute)
 
@@ -112,13 +111,11 @@ get(model, ConstraintIndex, "con1")
 function get end
 # We want to avoid being too specific in the type arguments to avoid method ambiguity.
 # For model, get(::ModelLike, ::AbstractVariableAttribute, ::Vector{VariableIndex}) would not allow
-# to define get(::SomeModel, ::AnyProperty, ::Vector)
-get(model::ModelLike, attr::AnyProperty, idxs::Vector) = get.(model, attr, idxs)
+# to define get(::SomeModel, ::AnyAttribute, ::Vector)
+get(model::ModelLike, attr::AnyAttribute, idxs::Vector) = get.(model, attr, idxs)
 
-_name(attr::AnyAttribute) = "attribute $attr"
-_name(attr::AbstractOptimizerParameter) = "parameter $attr"
-function get(model::ModelLike, attr::AnyProperty, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the $(_name(attr))"))
+function get(model::ModelLike, attr::AnyAttribute, args...)
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
 end
 
 """
@@ -128,14 +125,14 @@ An in-place version of `get`.
 The signature matches that of `get` except that the the result is placed in the vector `output`.
 """
 function get! end
-function get!(output, model::ModelLike, attr::AnyProperty, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the $(_name(attr))"))
+function get!(output, model::ModelLike, attr::AnyAttribute, args...)
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
 end
 
 """
-    canget(model::ModelLike, param::AbstractOptimizerParameter)::Bool
+    canget(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)::Bool
 
-Return a `Bool` indicating whether `model` currently has a value for the parameter specified by parameter type `param`.
+Return a `Bool` indicating whether `optimizer` currently has a value for the attribute specified by attr type `attr`.
 
     canget(model::ModelLike, attr::AbstractModelAttribute)::Bool
 
@@ -175,13 +172,13 @@ canget(model, ConstraintIndex, "con1")
 ```
 """
 function canget end
-canget(model::ModelLike, attr::AnyProperty) = false
-canget(model::ModelLike, attr::AnyAttribute, ::Type{<:Index}) = false
+canget(model::ModelLike, attr::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
+canget(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
 
 """
-    canset(model::ModelLike, param::AbstractOptimizerParameter)::Bool
+    canset(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)::Bool
 
-Return a `Bool` indicating whether it is possible to set the parameter `param` to the model `model`.
+Return a `Bool` indicating whether it is possible to set the attribute `attr` to the optimizer `optimizer`.
 
     canset(model::ModelLike, attr::AbstractModelAttribute)::Bool
 
@@ -201,13 +198,13 @@ canset(model, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float64},
 ```
 """
 function canset end
-canset(model::ModelLike, attr::AnyProperty) = false
-canset(model::ModelLike, attr::AnyAttribute, ref::Type{<:Index}) = false
+canset(model::ModelLike, attr::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
+canset(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ref::Type{<:Index}) = false
 
 """
-    set!(model::ModelLike, param::AbstractOptimizerParameter, value)
+    set!(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute, value)
 
-Assign `value` to the parameter `param` of the model `model`.
+Assign `value` to the attribute `attr` of the optimizer `optimizer`.
 
     set!(model::ModelLike, attr::AbstractModelAttribute, value)
 
@@ -231,20 +228,20 @@ Assign a value respectively to the attribute `attr` of each constraint in the co
 """
 function set! end
 # See note with get
-set!(model::ModelLike, attr::AnyProperty, idxs::Vector, vector_of_values::Vector) = set!.(model, attr, idxs, vector_of_values)
+set!(model::ModelLike, attr::AnyAttribute, idxs::Vector, vector_of_values::Vector) = set!.(model, attr, idxs, vector_of_values)
 
-function set!(model::ModelLike, attr::AnyProperty, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the $(_name(attr))"))
+function set!(model::ModelLike, attr::AnyAttribute, args...)
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute $attr"))
 end
 
-## Optimizer parameters
+## Optimizer attributes
 
 """
-    ListOfOptimizerParametersSet()
+    ListOfOptimizerAttributesSet()
 
-A `Vector{AbstractOptimizerParameter}` of all optimizer parameters that were set to the model.
+A `Vector{AbstractOptimizerAttribute}` of all optimizer attributes that were set.
 """
-struct ListOfOptimizerParametersSet <: AbstractOptimizerParameter end
+struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 
 ## Model attributes
 

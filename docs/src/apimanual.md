@@ -78,7 +78,7 @@ provide methods to solve the model.
 Through the rest of the manual, `model` is used as a generic `ModelLike`, and
 `optimizer` is used as a generic `AbstractOptimizer`.
 
-[Discuss how models are constructed, optimizer parameters.]
+[Discuss how models are constructed, optimizer attributes.]
 
 ## Variables
 

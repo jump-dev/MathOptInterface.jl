@@ -57,15 +57,15 @@ function read! end
 """
     isempty(model::ModelLike)
 
-Returns `false` if the `model` has any instance attribute set or has any variables or constraints.
-Note that an empty model can have optimizer parameters set.
+Returns `false` if the `model` has any model attribute set or has any variables or constraints.
+Note that an empty model can have optimizer attributes set.
 """
 function isempty end
 
 """
     empty!(model::ModelLike)
 
-Empty the model, that is, remove all variables, constraints and model attributes but not optimizer parameters.
+Empty the model, that is, remove all variables, constraints and model attributes but not optimizer attributes.
 """
 function empty! end
 
@@ -110,7 +110,7 @@ a `CopyResult` object. If the copy is successful, the `CopyResult` contains a
 dictionary-like object that translates variable and constraint indices from the
 `src` model to the corresponding indices in the `dest` model.
 
-If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If an optimizer parameter cannot be copied then:
+If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If an optimizer attribute cannot be copied then:
 
 * If `warnattributes` is `true`, a warning is displayed, otherwise,
 * The attribute is silently ignored.

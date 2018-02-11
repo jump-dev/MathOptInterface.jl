@@ -6,22 +6,18 @@ CurrentModule = MathOptInterface
 
 [Some introduction to API. List basic standalone methods.]
 
-## Parameters and Attributes
-
-Parameter abstract type.
-```@docs
-AbstractOptimizerParameter
-```
+## Attributes
 
 List of attribute categories.
 
 ```@docs
+AbstractOptimizerAttribute
 AbstractModelAttribute
 AbstractVariableAttribute
 AbstractConstraintAttribute
 ```
 
-Functions for getting and setting parameters and attributes.
+Functions for getting and setting attributes.
 
 ```@docs
 canget
