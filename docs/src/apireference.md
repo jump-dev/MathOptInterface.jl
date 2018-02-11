@@ -254,3 +254,33 @@ Functions for modifying objective functions. Use `ObjectiveFunction` and `Object
 modifyobjective!
 canmodifyobjective
 ```
+
+## Nonlinear programming (NLP)
+
+### Attributes
+
+```@docs
+NLPBlock
+NLPBlockData
+NLPBlockDual
+NLPBlockDualStart
+```
+### NLP evaluator methods
+
+```@docs
+AbstractNLPEvaluator
+initialize!
+features_available
+eval_objective
+eval_constraint
+eval_objective_gradient
+jacobian_structure
+hessian_lagrangian_structure
+eval_constraint_jacobian
+eval_constraint_jacobian_product
+eval_constraint_jacobian_transpose_product
+eval_hessian_lagrangian
+eval_hessian_lagrangian_product
+objective_expr
+constraint_expr
+```
