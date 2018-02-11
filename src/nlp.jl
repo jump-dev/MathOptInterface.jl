@@ -19,7 +19,7 @@ abstract type AbstractNLPEvaluator end
 Holds the `NLPBlockData` that represents a set of nonlinear constraints, and
 optionally a nonlinear objective.
 """
-struct NLPBlock <: MathOptInterface.AbstractInstanceAttribute end
+struct NLPBlock <: AbstractModelAttribute end
 
 """
     NLPBlockDual(N)
@@ -28,7 +28,7 @@ struct NLPBlock <: MathOptInterface.AbstractInstanceAttribute end
 The Lagrange multipliers on the constraints from the `NLPBlock` in result `N`.
 If `N` is omitted, it is 1 by default.
 """
-struct NLPBlockDual <: MathOptInterface.AbstractInstanceAttribute
+struct NLPBlockDual <: AbstractModelAttribute
     N::Int
 end
 NLPBlockDual() = NLPBlockDual(1)
@@ -39,7 +39,7 @@ NLPBlockDual() = NLPBlockDual(1)
 An initial assignment of the Lagrange multipliers on the constraints from the
 `NLPBlock` that the solver may use to warm-start the solve.
 """
-struct NLPBlockDualStart <: MathOptInterface.AbstractInstanceAttribute end
+struct NLPBlockDualStart <: AbstractModelAttribute end
 
 """
     struct NLPBlockData

@@ -1,29 +1,29 @@
 # Objectives
 
 """
-    modifyobjective!(instance::AbstractInstance, change::AbstractFunctionModification)
+    modifyobjective!(model::ModekLike, change::AbstractFunctionModification)
 
-Apply the modification specified by `change` to the objective function of `instance`.
+Apply the modification specified by `change` to the objective function of `model`.
 To change the function completely, call `setobjective!` instead.
 
 ### Examples
 
 ```julia
-modifyobjective!(instance, ScalarConstantChange(10.0))
+modifyobjective!(model, ScalarConstantChange(10.0))
 ```
 """
 function modifyobjective! end
 
 """
-    canmodifyobjective(instance::AbstractInstance, ::Type{M})::Bool where M<:AbstractFunctionModification
+    canmodifyobjective(model::ModelLike, ::Type{M})::Bool where M<:AbstractFunctionModification
 
-Return a `Bool` indicating whether it is possible to apply a modification of type `M` to the objective function of instance `instance`.
+Return a `Bool` indicating whether it is possible to apply a modification of type `M` to the objective function of model `model`.
 
 ### Examples
 
 ```julia
-canmodifyobjective(instance, ScalarConstantChange{Float64})
+canmodifyobjective(model, ScalarConstantChange{Float64})
 ```
 """
 function canmodifyobjective end
-canmodifyobjective(instance::AbstractInstance, change) = false
+canmodifyobjective(model::ModelLike, change) = false

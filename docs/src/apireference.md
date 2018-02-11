@@ -10,13 +10,13 @@ CurrentModule = MathOptInterface
 
 Parameter abstract type.
 ```@docs
-AbstractSolverParameter
+AbstractOptimizerParameter
 ```
 
 List of attribute categories.
 
 ```@docs
-AbstractInstanceAttribute
+AbstractModelAttribute
 AbstractVariableAttribute
 AbstractConstraintAttribute
 ```
@@ -32,12 +32,10 @@ set!
 supports
 ```
 
-## Instance
+## Model Interface
 
 ```@docs
-AbstractInstance
-AbstractStandaloneInstance
-AbstractSolverInstance
+ModelLike
 isempty
 empty!
 write
@@ -52,7 +50,7 @@ CopyResult
 CopyStatusCode
 ```
 
-List of instance attributes
+List of model attributes
 
 ```@docs
 Name
@@ -62,21 +60,21 @@ ListOfVariableIndices
 ListOfConstraints
 NumberOfConstraints
 ListOfConstraintIndices
-ListOfInstanceAttributesSet
+ListOfModelAttributesSet
 ListOfVariableAttributesSet
 ListOfConstraintAttributesSet
 ```
 
-There are no attributes specific to a standalone instance.
 
-## Solver instance
+## Optimizers
 
 ```@docs
+AbstractOptimizer
 optimize!
 free!
 ```
 
-List of solver instance attributes
+List of attributes useful for optimizers
 
 
 ```@docs
@@ -97,7 +95,7 @@ DualStatus
 
 ### Termination Status
 
-The `TerminationStatus` attribute indicates why the solver stopped executing.
+The `TerminationStatus` attribute indicates why the optimizer stopped executing.
 The value of the attribute is of type `TerminationStatusCode`.
 
 ```@docs
@@ -131,7 +129,7 @@ VariableIndex
 ConstraintIndex
 candelete
 isvalid
-delete!(::AbstractSolverInstance,::Index)
+delete!(::ModelLike,::Index)
 ```
 
 ### Variables
@@ -159,7 +157,7 @@ VariableBasisStatus
 Functions for adding and modifying constraints.
 
 ```@docs
-isvalid(::AbstractSolverInstance,::ConstraintIndex)
+isvalid(::ModelLike,::ConstraintIndex)
 canaddconstraint
 addconstraint!
 addconstraints!
