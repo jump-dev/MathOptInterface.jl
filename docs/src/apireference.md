@@ -266,7 +266,7 @@ NLPBlockDualStart
 
 ```@docs
 AbstractNLPEvaluator
-initialize
+initialize!
 features_available
 eval_objective
 eval_constraint
