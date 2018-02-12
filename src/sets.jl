@@ -102,6 +102,9 @@ struct Interval{T <: Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
+Interval(s::GreaterThan) = Interval(s.lower, typemax(s.lower))
+Interval(s::LessThan) = Interval(typemin(s.upper), s.upper)
+Interval(s::EqualTo) = Interval(s.value, s.value)
 
 """
     SecondOrderCone(dimension)

@@ -5,3 +5,4 @@ const MOI = MathOptInterface
 # Tests for solvers are located in MathOptInterfaceTests.
 
 include("isapprox.jl")
+include("interval.jl")
