@@ -3,7 +3,7 @@
 
 ## Purpose
 
-Each mathematical optimization solver API has its own concepts and data structures for representing optimization instances and obtaining results.
+Each mathematical optimization solver API has its own concepts and data structures for representing optimization models and obtaining results.
 However, it is often desirable to represent an instance of an optimization problem at a higher level so that it is easy to try using different solvers.
 MathOptInterface (MOI) is an abstraction layer designed to provide a unified interface to mathematical optimization solvers so that users do not need to understand multiple solver-specific APIs.
 MOI can be used directly, or through a higher-level modeling interface like [JuMP](https://github.com/JuliaOpt/JuMP.jl).
@@ -19,7 +19,7 @@ MOI is designed to:
 - Enable a solver to more precisely specify which problem classes it supports
 - Enable both primal and dual warm starts
 - Enable adding and removing both variables and constraints by indices that are not required to be consecutive
-- Enable any modification that the solver supports to an existing instance
+- Enable any modification that the solver supports to an existing model
 - Avoid requiring the solver wrapper to store an additional copy of the problem data
 
 This manual introduces the concepts needed to understand MOI and give a high-level picture of how all of the pieces fit together. The primary focus is on MOI from the perspective of a user of the interface. At the end of the manual we have a section on [Implementing a solver interface](@ref).
@@ -56,39 +56,44 @@ The current function types are:
 * **scalar-valued quadratic**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
 * **vector-valued quadratic**: a vector of scalar-valued quadratic expressions
 
-In a future version, MOI could be extended to cover functions defined by evaluation oracles (e.g., for nonlinear derivative-based optimization).
+Extensions for nonlinear programming are present but not yet well documented.
 
 MOI defines some commonly used sets, but the interface is extensible to other sets recognized by the solver.
 [Describe currently supported sets.]
 
-## Instances
+## The `ModelLike` and `AbstractOptimizer` APIs
 
-An **Instance** ([`AbstractInstance`](@ref MathOptInterface.AbstractInstance)) is a representation of a concrete instance of an optimization problem, i.e., with all data specified.  Instances are either **standalone instances** or **solver instances**:
+The most significant part of MOI is the definition of the **model API** that is
+used to specify an instance of an optimization problem (e.g., by adding
+variables and constraints). Objects that implement the model API should inherit
+from the [`ModelLike`](@ref MathOptInterface.ModelLike) abstract type.
 
-- A **Standalone Instance** ([`AbstractStandaloneInstance`](@ref MathOptInterface.AbstractSolverInstance)) is unattached to any particular solver. It is simply a type that stores the data for an instance, which may be used for reading or writing optimization problems to files or manipulating a problem before providing it to a solver. The [MathOptInterfaceUtilities](https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl) package provides an implementation of a standalone instance.
+Notably missing from the model API is the method to solve an optimization problem.
+`ModelLike` objects may store an instance (e.g., in memory or backed by a file format)
+without being linked to a particular solver. In addition to the model API, MOI
+defines [`AbstractOptimizer`](@ref MathOptInterface.AbstractOptimizer). *Optimizers*
+(or solvers) implement the model API (inheriting from `ModelLike`) and additionally
+provide methods to solve the model.
 
-- A **Solver Instance** ([`AbstractSolverInstance`](@ref MathOptInterface.AbstractSolverInstance)) should be understood as the representation of an instance of an optimization problem *loaded in the solver's API*. That is, the instance data is often (i.e., whenever possible) stored exclusively in the external API, not duplicated in the MOI translation layer (called the *MOI wrapper*). Hence, the ability to modify data in a solver instance depends on whether the solver's own API supports such modifications. Solver instances were designed to allow efficient incremental instance construction and modification, e.g., when solving in a loop.
+Through the rest of the manual, `model` is used as a generic `ModelLike`, and
+`optimizer` is used as a generic `AbstractOptimizer`.
 
-Instances share a common API for constructing the problem and querying its data. Solver instances, additionally, provide methods to solve the attached instance and query the results.
-
-Through the rest of the manual, `instance` is used as a generic solver instance.
-
-[Discuss how instances are constructed, solver parameters.]
+[Discuss how models are constructed, optimizer attributes.]
 
 ## Variables
 
 All variables in MOI are scalar variables.
-New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableIndex`](@ref MathOptInterface.VariableIndex) or `Vector{VariableIndex}` respectively. `VariableIndex` objects are type-safe wrappers around integers that refer to a variable in a particular instance.
+New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableIndex`](@ref MathOptInterface.VariableIndex) or `Vector{VariableIndex}` respectively. `VariableIndex` objects are type-safe wrappers around integers that refer to a variable in a particular model.
 
 One uses `VariableIndex` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
 ```julia
-v = addvariable!(instance)
-set!(instance, VariablePrimalStart(), v, 10.5)
-v2 = addvariables!(instance, 3)
-set!(instance, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
+v = addvariable!(model)
+set!(model, VariablePrimalStart(), v, 10.5)
+v2 = addvariables!(model, 3)
+set!(model, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
-A variable can be deleted from an instance with [`delete!(::AbstractInstance, ::VariableIndex)`](@ref MathOptInterface.delete!(::MathOptInterface.AbstractInstance, ::MathOptInterface.Index)), if this functionality is supported.
+A variable can be deleted from a model with [`delete!(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete!(::MathOptInterface.ModelLike, ::MathOptInterface.Index)). Not all models support deleting variables; the [`candelete`](@ref MathOptInterface.candelete) method is used to check if this is supported.
 
 ## Functions
 
@@ -99,7 +104,7 @@ struct SingleVariable <: AbstractFunction
 end
 ```
 
-If `v` is a `VariableIndex` object, then `SingleVariable(v)` is simply the scalar-valued function from the complete set of variables in an instance that returns the value of variable `v`. One may also call this function a coordinate projection, which is more useful for defining constraints than as an objective function.
+If `v` is a `VariableIndex` object, then `SingleVariable(v)` is simply the scalar-valued function from the complete set of variables in a model that returns the value of variable `v`. One may also call this function a coordinate projection, which is more useful for defining constraints than as an objective function.
 
 
 A more interesting function is [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction), defined as
@@ -113,13 +118,13 @@ end
 
 If `x` is a vector of `VariableIndex` objects, then `ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0)` represents the function ``5x_1 - 2.3x_2 + 1``.
 
-Objective functions are assigned to an instance by setting the [`ObjectiveFunction`](@ref MathOptInterface.ObjectiveFunction) attribute.
+Objective functions are assigned to a model by setting the [`ObjectiveFunction`](@ref MathOptInterface.ObjectiveFunction) attribute.
 The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used for setting the optimization sense.
 For example,
 ```julia
-x = addvariables!(instance, 2)
-set!(instance, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
-set!(instance, ObjectiveSense(), MinSense)
+x = addvariables!(model, 2)
+set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+set!(model, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
 
@@ -151,12 +156,12 @@ The code example below encodes the linear optimization problem:
 ```
 
 ```julia
-x = addvariables!(instance, 2)
-set!(instance, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
-set!(instance, ObjectiveSense(), MaxSense)
-addconstraint!(instance, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
-addconstraint!(instance, SingleVariable(x[1]), GreaterThan(0.0))
-addconstraint!(instance, SingleVariable(x[2]), GreaterThan(-1.0))
+x = addvariables!(model, 2)
+set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
+set!(model, ObjectiveSense(), MaxSense)
+addconstraint!(model, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
+addconstraint!(model, SingleVariable(x[1]), GreaterThan(0.0))
+addconstraint!(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
 [Example with vector-valued set.]
@@ -235,14 +240,14 @@ Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `I
 
 ## Solving and retrieving the results
 
-Once a solver instance is loaded with the objective function and all of the constraints, we can ask the solver to solve the instance by calling [`optimize!`](@ref MathOptInterface.optimize!).
+Once an optimizer is loaded with the objective function and all of the constraints, we can ask the solver to solve the model by calling [`optimize!`](@ref MathOptInterface.optimize!).
 ```julia
-optimize!(instance)
+optimize!(optimizer)
 ```
 
-The optimization procedure may terminate for a number of reasons. The [`TerminationStatus`](@ref MathOptInterface.TerminationStatus) attribute of the solver instance returns a [`TerminationStatusCode`](@ref MathOptInterface.TerminationStatusCode) object which explains why the solver stopped. Some statuses indicate generally successful termination, some termination because of limit, and some termination because of something unexpected like invalid problem data or failure to converge. A typical usage of the `TerminationStatus` attribute is as follows:
+The optimization procedure may terminate for a number of reasons. The [`TerminationStatus`](@ref MathOptInterface.TerminationStatus) attribute of the optimizer returns a [`TerminationStatusCode`](@ref MathOptInterface.TerminationStatusCode) object which explains why the solver stopped. Some statuses indicate generally successful termination, some termination because of limit, and some termination because of something unexpected like invalid problem data or failure to converge. A typical usage of the `TerminationStatus` attribute is as follows:
 ```julia
-status = MOI.get(instance, TerminationStatus())
+status = MOI.get(optimizer, TerminationStatus())
 if status == Success
     # Ok, the solver has a result to return
 else
@@ -257,7 +262,7 @@ In addition to the primal status, the [`DualStatus`](@ref MathOptInterface.DualS
 
 If a result is available, it may be retrieved with the [`VariablePrimal`](@ref MathOptInterface.VariablePrimal) attribute:
 ```julia
-MOI.get(instance, VariablePrimal(), x)
+MOI.get(optimizer, VariablePrimal(), x)
 ```
 If `x` is a `VariableIndex` then the function call returns a scalar, and if `x` is a `Vector{VariableIndex}` then the call returns a vector of scalars. `VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th result.
 
@@ -300,39 +305,39 @@ w = [0.3, 0.5, 1.0]
 
 numvariables = length(c)
 
-instance = GLPKInstance() # TODO: match with actual name in GLPK wrapper
+optimizer = GLPKOptimizer() # TODO: match with actual name in GLPK wrapper
 
 # create the variables in the problem
-x = MOI.addvariables!(instance, numvariables)
+x = MOI.addvariables!(optimizer, numvariables)
 
 # set the objective function
-MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x, c, 0.0))
-MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
+MOI.set!(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x, c, 0.0))
+MOI.set!(optimizer, MOI.ObjectiveSense(), MOI.MaxSense)
 
 # add the knapsack constraint
-MOI.addconstraint!(instance, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
+MOI.addconstraint!(optimizer, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
 
 # add integrality constraints
 for i in 1:numvariables
-    MOI.addconstraint!(instance, MOI.SingleVariable(x[i]), MOI.ZeroOne())
+    MOI.addconstraint!(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
 end
 
 # all set
-MOI.optimize!(instance)
+MOI.optimize!(optimizer)
 
-termination_status = MOI.get(instance, TerminationStatus())
-objvalue = MOI.canget(instance, MOI.ObjectiveValue()) ? MOI.get(instance, MOI.ObjectiveValue()) : NaN
+termination_status = MOI.get(optimizer, TerminationStatus())
+objvalue = MOI.canget(optimizer, MOI.ObjectiveValue()) ? MOI.get(optimizer, MOI.ObjectiveValue()) : NaN
 if termination_status != MOI.Success
     error("Solver terminated with status $termination_status")
 end
 
-@assert MOI.get(instance, MOI.ResultCount()) > 0
+@assert MOI.get(optimizer, MOI.ResultCount()) > 0
 
-result_status = MOI.get(instance, MOI.PrimalStatus())
+result_status = MOI.get(optimizer, MOI.PrimalStatus())
 if result_status != MOI.FeasiblePoint
     error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
 end
-primal_variable_result = MOI.get(instance, MOI.VariablePrimal(), x)
+primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 
 @show objvalue
 @show primal_variable_result
@@ -343,7 +348,7 @@ primal_variable_result = MOI.get(instance, MOI.VariablePrimal(), x)
 ### Duals
 
 
-Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cone, the instance may be called a conic optimization problem.
+Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cones, the model may be called a conic optimization problem.
 For conic-form minimization problems, the primal is:
 
 ```math
@@ -455,7 +460,7 @@ If the set ``C_i`` of the section [Duals](@ref) is one of these three cones,
 then the rows of the matrix ``A_i`` corresponding to off-diagonal entries are twice the value of the `coefficients` field in the `VectorAffineFunction` for the corresponding rows.
 See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle) for details.
 
-### Modifying an instance
+### Modifying a model
 
 [Explain `modifyconstraint!` and `modifyobjective!`.]
 
@@ -465,7 +470,7 @@ See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefin
 
 [Avoid storing extra copies of the problem when possible.]
 
-MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) For example, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessThan` constraints, then users will not be able to write: `@constraint(m, 2x + y <= 10)` in JuMP. That said, from the perspective of JuMP, solvers can safely choose to not support the following constraints:
+MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) For example, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessThan` constraints, then users will not be able to write: `@constraint(m, 2x + y <= 10)` in JuMP. With this in mind, developers should attempt to support as many constraint types as possible if it makes sense on the solver side. For example, if the solver only supports constraints of the form `l <= f(x) <= u`, where `l` or `u` can be `inf` or `-inf`, the wrapper should support `ScalarAffineFunction`-in-`LessThan`/`GreaterThan`/`EqualTo` instead of just `Interval`. That said, from the perspective of JuMP, solvers can safely choose to not support the following constraints:
 
 - `ScalarAffineFunction` in `GreaterThan`, `LessThan`, or `EqualTo` with a nonzero constant in the function. Constants in the affine function should instead be moved into the parameters of the corresponding sets.
 

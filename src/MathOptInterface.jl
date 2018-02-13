@@ -2,58 +2,50 @@ __precompile__()
 module MathOptInterface
 
 """
-    AbstractInstance
+    ModelLike
 
-Abstract supertype for objects representing an instance of an optimization problem.
+Abstract supertype for objects that implement the "Model" interface for defining
+an optimization problem.
 """
-abstract type AbstractInstance end
-
-"""
-    AbstractStandaloneInstance
-
-Abstract supertype for objects representing an instance of an optimization problem
-unattached to any particular solver. Does not have methods for solving
-or querying results.
-"""
-abstract type AbstractStandaloneInstance <: AbstractInstance end
+abstract type ModelLike end
 
 """
-    AbstractSolverInstance
+    AbstractOptimizer
 
 Abstract supertype for objects representing an instance of an optimization problem
 tied to a particular solver. This is typically a solver's in-memory representation.
-In addition to `AbstractInstance`, `AbstractSolverInstance` objects let you
-solve the instance and query the solution.
+In addition to `ModelLike`, `AbstractOptimizer` objects let you solve the
+instance and query the solution.
 """
-abstract type AbstractSolverInstance <: AbstractInstance end
+abstract type AbstractOptimizer <: ModelLike end
 
 """
-    optimize!(instance::AbstractSolverInstance)
+    optimize!(optimizer::AbstractOptimizer)
 
 Start the solution procedure.
 """
 function optimize! end
 
 """
-    free!(instance::AbstractSolverInstance)
+    free!(optimizer::AbstractOptimizer)
 
-Release any resources and memory used by the solver instance.
+Release any resources and memory used by the optimizer.
 Note that the Julia garbage collector takes care of this automatically, but automatic collection cannot always be forced.
 This method is useful for more precise control of resources, especially in the case of commercial solvers with licensing restrictions on the number of concurrent runs.
-Users must discard the solver instance object after this method is invoked.
+Users must discard the optimizer object after this method is invoked.
 """
 function free! end
 
 """
-    write(instance::AbstractInstance, filename::String)
+    write(model::ModelLike, filename::String)
 
-Writes the current instance data to the given file.
+Writes the current model data to the given file.
 Supported file types depend on the solver or standalone instance type.
 """
 function write end
 
 """
-    read!(instance::AbstractInstance, filename::String)
+    read!(model::ModelLike, filename::String)
 
 Read the file `filename` into the instance `instance`. If `m` is non-empty, this may
 throw an error.
@@ -63,17 +55,17 @@ Supported file types depend on the instance type.
 function read! end
 
 """
-    isempty(instance::AbstractInstance)
+    isempty(model::ModelLike)
 
-Returns `false` if the `instance` has any instance attribute set or has any variables or constraints.
-Note that an empty instance can have solver parameters set.
+Returns `false` if the `model` has any model attribute set or has any variables or constraints.
+Note that an empty model can have optimizer attributes set.
 """
 function isempty end
 
 """
-    empty!(instance::AbstractInstance)
+    empty!(model::ModelLike)
 
-Empty the instance, that is, remove from the instance `instance` all variables, constraints and instance attributes but not solver parameters.
+Empty the model, that is, remove all variables, constraints and model attributes but not optimizer attributes.
 """
 function empty! end
 
@@ -110,11 +102,15 @@ struct CopyResult{T}
 end
 
 """
-    copy!(dest::AbstractInstance, src::AbstractInstance, warnattributes=true)::CopyResult
+    copy!(dest::ModelLike, src::ModelLike, warnattributes=true)::CopyResult
 
-Copy the model from the instance `src` into the instance `dest`. The target instance `dest` is emptied, and all previous indices to variables or constraints in `dest` are invalidated. Returns a `CopyResult` object. If the copy is successfully, the `CopyResult` contains a dictionary-like object that translates variable and constraint indices from the `src` instance to the corresponding indices in the `dest` instance.
+Copy the model from `src` into `dest`. The target `dest` is emptied, and all
+previous indices to variables or constraints in `dest` are invalidated. Returns
+a `CopyResult` object. If the copy is successful, the `CopyResult` contains a
+dictionary-like object that translates variable and constraint indices from the
+`src` model to the corresponding indices in the `dest` model.
 
-If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If a solver parameter cannot be copied then:
+If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If an optimizer attribute cannot be copied then:
 
 * If `warnattributes` is `true`, a warning is displayed, otherwise,
 * The attribute is silently ignored.
@@ -122,7 +118,7 @@ If an attribute `attr` cannot be copied from `src` to `dest` then an error is th
 ### Example
 
 ```julia
-# Given empty `AbstractInstance`s `src` and `dest`.
+# Given empty `ModelLike` objects `src` and `dest`.
 
 x = addvariable!(src)
 
@@ -149,5 +145,6 @@ include("constraints.jl")
 include("attributes.jl")
 include("objectives.jl")
 include("variables.jl")
+include("nlp.jl")
 
 end
