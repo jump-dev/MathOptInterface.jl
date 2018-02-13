@@ -100,7 +100,7 @@ If *any* constraint with name `name` exists in the instance `instance`, return t
 ### Note
 
 It is the user's responsibility to check that `canget` returns `true` prior to calling `get`. 
-Calling `get` when `canget` returns `false` may throw an error or return an incorrect result.
+Calling `get` when `canget` returns `false` will throw an error.
 
 ### Examples
 
@@ -236,7 +236,7 @@ Assign a value respectively to the attribute `attr` of each constraint in the co
 ### Note
 
 It is the user's responsibility to check that `canset` returns `true` prior to calling `set!`. 
-Calling `set!` when `canset` returns `false` may throw an error or do nothing.
+Calling `set!` when `canset` returns `false` will throw an error.
 """
 function set! end
 function set!(instance::AbstractInstance, attr::AnyProperty, args...)
