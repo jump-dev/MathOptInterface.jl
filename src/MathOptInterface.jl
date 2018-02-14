@@ -40,7 +40,7 @@ function free! end
     write(model::ModelLike, filename::String)
 
 Writes the current model data to the given file.
-Supported file types depend on the model.
+Supported file types depend on the model type.
 """
 function write end
 
