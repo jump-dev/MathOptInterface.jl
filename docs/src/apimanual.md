@@ -470,12 +470,19 @@ See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefin
 
 [Avoid storing extra copies of the problem when possible.]
 
-MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) The following bullet points show examples of how JuMP expressions are translated into MOI sets:
+MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) The following bullet points show examples of how JuMP constraints are translated into MOI function-set pairs:
  - `@constraint(m, 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`LessThan`;
  - `@constraint(m, 2x + y >= 10)` becomes `ScalarAffineFunction`-in-`GreaterThan`;
  - `@constraint(m, 2x + y == 10)` becomes `ScalarAffineFunction`-in-`EqualTo`;
  - `@constraint(m, 0 <= 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`Interval`;
  - `@constraint(m, 2x + y in ArbitrarySet())` becomes `ScalarAffineFunction`-in-`ArbitrarySet`.
+ 
+Variable bounds are handled in a similar fashion:
+ - `@variable(m, x <= 1)` becomes `SingleVariable`-in-`LessThan`;
+ - `@variable(m, x >= 1)` becomes `SingleVariable`-in-`GreaterThan`.
+
+One notable difference is that a variable with an upper and lower bound is translated into two constraints, rather than an interval. i.e.:
+ - `@variable(m, 0 <= x <= 1)` becomes `SingleVariable`-in-`LessThan` *and* `SingleVariable`-in-`GreaterThan`.
  
 Therefore, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessThan` constraints, users will not be able to write: `@constraint(m, 2x + y <= 10)` in JuMP. With this in mind, developers should support all the constraint types that they want to be usable from JuMP. That said, from the perspective of JuMP, solvers can safely choose to not support the following constraints:
 
