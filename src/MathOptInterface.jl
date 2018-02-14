@@ -51,6 +51,13 @@ Read the file `filename` into the instance `instance`. If `m` is non-empty, this
 throw an error.
 
 Supported file types depend on the instance type.
+
+### Note
+
+Once the model is loaded into the model, users can query the variables via
+`get(model, ListOfVariableIndices())`. However, this could return the variables
+in any order. Therefore, users should look up up each variable index by name:
+`get(model, VariableIndex, "name")`.
 """
 function read! end
 
