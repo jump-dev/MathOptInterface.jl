@@ -464,11 +464,15 @@ See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefin
 
 [Explain `modifyconstraint!` and `modifyobjective!`.]
 
-### Implementing a solver interface
+## Implementing a solver interface
 
 [The interface is designed for multiple dispatch, e.g., attributes, combinations of sets and functions.]
 
 [Avoid storing extra copies of the problem when possible.]
+
+[`copy!`]
+
+### JuMP mapping
 
 MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) The following bullet points show examples of how JuMP constraints are translated into MOI function-set pairs:
  - `@constraint(m, 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`LessThan`;
@@ -492,13 +496,27 @@ Therefore, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessT
 
 - Two `SingleVariable`-in-`LessThan` constraints applied to the same variable (similarly with `GreaterThan`). These should be interpreted as variable bounds, and each variable naturally has at most one upper or lower bound.
 
+### Column Generation
+
 There is no special interface for column generation. If the solver has a special API for setting
 coefficients in existing constraints when adding a new variable, it is possible
 to queue modifications and new variables and then call the solver's API once all of the
 new coefficients are known.
 
+### Problem data
+
 All data passed to the solver should be copied immediately to internal data structures. Solvers may not modify any input vectors and should not assume that input vectors will not be modified by users in the future. This applies, for example, to the coefficient vector in `ScalarAffineFunction`. Vectors returned to the user, e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes should not be modified by the solver afterwards. The in-place version of `get!` can be used by users to avoid extra copies in this case.
 
+### Statuses
+
 Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NearlyFeasiblePoint`, `InfeasiblePoint`, `NearlyInfeasiblePoint`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
+
+### canXXX
+
+For most operations, MOI provides a function `canXXX` that can be used to check if the operation `XXX` is allowed. 
+For example, `addconstraint!(model::ModelLike, func::F, set::S)` has the corresponding function `canaddconstraint(model, ::Type{F}, ::Type{S})::Bool`. 
+If `canaddconstraint` returns `false`, then calling `addconstraint!` must throw an error (likewise with all `XXX` and `canXXX` pairs). Note that even if `canaddconstraint` returns `true`, `addconstraint!` may still throw an error if, for example, the constraint function does not meet some sparsity conditions.
+
+### Package Naming
 
 MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example). In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.
