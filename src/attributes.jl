@@ -96,6 +96,11 @@ If an `F`-in-`S` constraint with name `name` exists in the model `model`, return
 
 If *any* constraint with name `name` exists in the model `model`, return the corresponding index, otherwise throw a `KeyError`. This version is available for convenience but may incur a performance penalty because it is not type stable.
 
+### Note
+
+It is the user's responsibility to check that `canget` returns `true` prior to calling `get`. 
+Calling `get` when `canget` returns `false` will throw an error.
+
 ### Examples
 
 ```julia
@@ -225,6 +230,11 @@ Assign a value to the attribute `attr` of constraint `c` in model `model`.
     set!(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `model`.
+
+### Note
+
+It is the user's responsibility to check that `canset` returns `true` prior to calling `set!`. 
+Calling `set!` when `canset` returns `false` will throw an error.
 """
 function set! end
 # See note with get
