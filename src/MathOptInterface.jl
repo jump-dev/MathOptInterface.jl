@@ -147,4 +147,7 @@ include("objectives.jl")
 include("variables.jl")
 include("nlp.jl")
 
+# submodules
+include("Test/Test.jl") # MOI.Test
+
 end
