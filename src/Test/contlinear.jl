@@ -34,7 +34,8 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     vc2 = MOI.addconstraint!(model, v[2], MOI.GreaterThan(0.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
 
-    objf = MOI.ScalarAffineFunction(v, [-1.0,0.0], 0.0)
+    # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
+    objf = MOI.ScalarAffineFunction([v; v; v], [0.0,0.0,-1.0,0.0,0.0,0.0], 0.0)
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
     @test MOI.canset(model, MOI.ObjectiveSense())
@@ -270,7 +271,8 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # x,y >= 0, z = 0
     @test MOI.candelete(model, c)
     MOI.delete!(model, c)
-    cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
+    # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
+    cf = MOI.ScalarAffineFunction([v; v; v], [0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0], 0.0)
     @test MOI.canaddconstraint(model, typeof(cf), MOI.EqualTo{Float64})
     c = MOI.addconstraint!(model, cf, MOI.EqualTo(2.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
