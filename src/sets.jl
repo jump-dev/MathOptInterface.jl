@@ -97,6 +97,18 @@ end
 
 The interval ``[lower, upper] \\subseteq \\mathbb{R}``.
 If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted as a one-sided interval.
+
+    Interval(s::GreaterThan{<:AbstractFloat})
+
+Construct a (right-unbounded) `Interval` equivalent to the given [`GreaterThan`](@ref) set.
+
+    Interval(s::LessThan{<:AbstractFloat})
+
+Construct a (left-unbounded) `Interval` equivalent to the given [`LessThan`](@ref) set.
+
+    Interval(s::EqualTo{<:Real})
+
+Construct a (degenerate) `Interval` equivalent to the given [`EqualTo`](@ref) set.
 """
 struct Interval{T <: Real} <: AbstractScalarSet
     lower::T
