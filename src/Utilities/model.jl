@@ -400,7 +400,7 @@ mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     sense::MOI.OptimizationSense
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
     nextvariableid::Int64
-    varindices::Vector{MOI.VariableIndex}
+    varindices::Set{MOI.VariableIndex}
     varnames::Dict{MOI.VariableIndex, String}
     namesvar::Dict{String, MOI.VariableIndex}
     nextconstraintid::Int64
