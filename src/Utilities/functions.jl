@@ -1,5 +1,22 @@
 using Base.Test
 
+"""
+    evalvariables(varval::Function, f::AbstractFunction)
+
+Returns the value of function `f` if each variable index `vi` is evaluate as `varval(vi)`.
+"""
+function evalvariables end
+evalvariables(varval::Function, f::MOI.SingleVariable) = varval(f.variable)
+evalvariables(varval::Function, f::MOI.VectorOfVariables) = varval.(f.variables)
+evalvariables(varval::Function, f::MOI.ScalarAffineFunction) = dot(varval.(f.variables), f.coefficients) + f.constant
+function evalvariables(varval::Function, f::MOI.VectorAffineFunction)
+    out = f.constant
+    for i in eachindex(f.variables)
+        out[f.outputindex[i]] += varval(f.variables[i]) * f.coefficients[i]
+    end
+    out
+end
+
 mapvariables(varmap::Function, f::MOI.SingleVariable) = MOI.SingleVariable(varmap(f.variable))
 mapvariables(varmap::Function, f::MOI.VectorOfVariables) = MOI.VectorOfVariables(varmap.(f.variables))
 mapvariables(varmap::Function, f::MOI.ScalarAffineFunction) = MOI.ScalarAffineFunction(varmap.(f.variables), f.coefficients, f.constant)

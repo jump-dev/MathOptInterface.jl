@@ -1,7 +1,25 @@
+# Sets variable primal to varprim
+function mock_optimize!(optimizer::MOIU.MockOptimizer, varprim::Vector)
+    MOI.set!(optimizer, MOI.TerminationStatus(), MOI.Success)
+    MOI.set!(optimizer, MOI.ResultCount(), 1)
+    MOI.set!(optimizer, MOI.PrimalStatus(), MOI.FeasiblePoint)
+    MOI.set!(optimizer, MOI.VariablePrimal(), MOI.get(optimizer, MOI.ListOfVariableIndices()), varprim)
+end
+
 @testset "Mock optimizer continuous linear tests" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
     config = MOIT.TestConfig(solve=false)
     MOIT.contlineartest(optimizer, config)
+end
+
+# This both tests the ConstraintPrimal value requested in the tests and the ConstraintPrimal implemented in MockOptimizer
+@testset "Mock optimizer automatic constraint primal" begin
+    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
+    config = MOIT.TestConfig(duals=false)
+    optimizer.evalobjective = true
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0])
+    MOIT.lin1vtest(optimizer, config)
+    MOIT.lin1ftest(optimizer, config)
 end
 
 @testset "Mock optimizer optimizer attributes" begin
