@@ -107,9 +107,11 @@ The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3,
 """
 function canonical{T}(f::SAF{T})
     σ = sortperm(f.variables)
-    outputindex = Int[]
+    n = length(f.variables)
     variables = VI[]
     coefficients = T[]
+    sizehint!(variables, n)
+    sizehint!(coefficients, n)
     prev = 0
     for i in σ
         if !isempty(variables) && f.variables[i] == last(variables)
@@ -131,10 +133,14 @@ function canonical{T}(f::SAF{T})
     SAF{T}(variables, coefficients, f.constant)
 end
 function canonical{T}(f::VAF{T})
-    σ = sortperm(1:length(f.variables), by = i -> (f.outputindex[i], f.variables[i]))
+    n = length(f.variables)
+    σ = sortperm(1:n, by = i -> (f.outputindex[i], f.variables[i]))
     outputindex = Int[]
     variables = VI[]
     coefficients = T[]
+    sizehint!(outputindex, n)
+    sizehint!(variables, n)
+    sizehint!(coefficients, n)
     prev = 0
     for i in σ
         if !isempty(variables) && f.outputindex[i] == last(outputindex) && f.variables[i] == last(variables)
