@@ -84,11 +84,11 @@ struct LessThan{T <: Real} <: AbstractScalarSet
 end
 
 """
-    EqualTo{T <: Real}(value::T)
+    EqualTo{T <: Number}(value::T)
 
 The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
 """
-struct EqualTo{T <: Real} <: AbstractScalarSet
+struct EqualTo{T <: Number} <: AbstractScalarSet
     value::T
 end
 
