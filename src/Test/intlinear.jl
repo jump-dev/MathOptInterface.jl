@@ -131,7 +131,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         c1 = MOI.addconstraint!(model, MOI.VectorOfVariables([v[1], v[2]]), MOI.SOS1([1.0, 2.0]))
         @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.SOS1{Float64})
         c2 = MOI.addconstraint!(model, MOI.VectorOfVariables([v[1], v[3]]), MOI.SOS1([1.0, 2.0]))
-        @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1}()) == 2
+        @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1{Float64}}()) == 2
 
 
         @test MOI.canget(model, MOI.ConstraintSet(), typeof(c2))
