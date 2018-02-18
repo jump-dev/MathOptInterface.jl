@@ -123,7 +123,11 @@ function MOI.isvalid(model::AbstractModel, ci::CI{F, S}) where {F, S}
 end
 MOI.isvalid(model::AbstractModel, vi::VI) = in(vi, model.varindices)
 
-MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices) = collect(model.varindices)
+function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
+    vis = collect(model.varindices)
+    sort!(vis, by=vi->vi.value) # It needs to be sorted by order of creation
+    vis
+end
 
 # Names
 MOI.canset(model::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true

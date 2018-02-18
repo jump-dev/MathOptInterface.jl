@@ -17,14 +17,14 @@ end
     MOIT.canaddconstrainttest(Model{Int}(), Int, Float64)
 end
 
-# Only config.query is true as MOI.optimize! is not implemented
-const config = MOIT.TestConfig(solve=false)
 
 @testset "Continuous Linear tests" begin
+    config = MOIT.TestConfig(solve=false)
     MOIT.contlineartest(Model{Float64}(), config)
 end
 
 @testset "Continuous Conic tests" begin
+    config = MOIT.TestConfig(solve=false)
     MOIT.contconictest(Model{Float64}(), config)
 end
 
