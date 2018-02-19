@@ -1368,6 +1368,57 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+# feasibility problem
+function linear13test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # find x
+    # s.t. 2x + 3y >= 1
+    #      x - y == 0
+
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+    @test MOI.canaddvariable(model)
+    x = MOI.addvariable!(model)
+    @test MOI.canaddvariable(model)
+    y = MOI.addvariable!(model)
+    @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [2.0,3.0], 0.0), MOI.GreaterThan(1.0))
+    @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [1.0,-1.0], 0.0), MOI.EqualTo(0.0))
+    @test MOI.canset(model, MOI.ObjectiveSense())
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
+
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.canget(model, MOI.ResultCount())
+        @test MOI.get(model, MOI.ResultCount()) > 0
+
+        @test MOI.canget(model, MOI.TerminationStatus())
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.canget(model, MOI.PrimalStatus())
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        xsol = MOI.get(model, MOI.VariablePrimal(), x)
+        ysol = MOI.get(model, MOI.VariablePrimal(), y)
+
+        c1sol = 2 * xsol + 3 * ysol
+        @test c1sol >= 1 || isapprox(c1sol, 1.0, atol=atol, rtol=rtol)
+        @test xsol - ysol ≈ 0 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.canget(model, MOI.DualStatus())
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ 0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0 atol=atol rtol=rtol
+        end
+    end
+end
+
 const contlineartests = Dict("linear1" => linear1test,
                               "linear2" => linear2test,
                               "linear3" => linear3test,
@@ -1381,6 +1432,7 @@ const contlineartests = Dict("linear1" => linear1test,
                               "linear9" => linear9test,
                               "linear10" => linear10test,
                               "linear11" => linear11test,
-                              "linear12" => linear12test)
+                              "linear12" => linear12test,
+                              "linear13" => linear13test)
 
 @moitestset contlinear
