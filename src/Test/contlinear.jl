@@ -18,7 +18,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
@@ -148,7 +148,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x + y + z <= 1
     # x,y,z >= 0
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     z = MOI.addvariable!(model)
     push!(v, z)
     @test v[3] == z
@@ -414,9 +414,9 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -487,7 +487,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
@@ -529,7 +529,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
@@ -575,9 +575,9 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     # Min  x - y
@@ -660,9 +660,9 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -799,9 +799,9 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     # Min  x - y
@@ -870,9 +870,9 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     # Min  x - y
@@ -943,9 +943,9 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     c = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [2.0,1.0], 0.0), MOI.LessThan(-1.0))
@@ -1000,9 +1000,9 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [-1.0,2.0], 0.0), MOI.LessThan(0.0))
@@ -1047,9 +1047,9 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
     MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [1.0,-1.0], 0.0), MOI.EqualTo(0.0))
@@ -1111,9 +1111,9 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     MOI.addconstraints!(model,
@@ -1173,9 +1173,9 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     MOI.addconstraints!(model,
@@ -1271,7 +1271,7 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 2)
 
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -1321,9 +1321,9 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [2.0,-3.0], 0.0), MOI.LessThan(-7.0))
