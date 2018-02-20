@@ -1372,7 +1372,7 @@ end
 function linear13test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
-    # find x
+    # find x, y
     # s.t. 2x + 3y >= 1
     #      x - y == 0
 
@@ -1408,6 +1408,13 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
         c1sol = 2 * xsol + 3 * ysol
         @test c1sol >= 1 || isapprox(c1sol, 1.0, atol=atol, rtol=rtol)
         @test xsol - ysol ≈ 0 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
+        c1primval = MOI.get(model, MOI.ConstraintPrimal(), c1)
+        @test c1primval >= 1 || isapprox(c1sol, 1.0, atol=atol, rtol=rtol)
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 0 atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.DualStatus())
