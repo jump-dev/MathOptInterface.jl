@@ -1,9 +1,20 @@
 # Sets variable primal to varprim
-function mock_optimize!(optimizer::MOIU.MockOptimizer, varprim::Vector)
+function mock_dual!(optimizer::MOIU.MockOptimizer) end
+function mock_dual!(optimizer::MOIU.MockOptimizer, condual::Pair, conduals...)
+    F, S = condual.first
+    duals = condual.second
+    for (i, ci) in enumerate(MOI.get(optimizer, MOI.ListOfConstraintIndices{F, S}()))
+        MOI.set!(optimizer, MOI.ConstraintDual(), ci, duals[i])
+    end
+    mock_dual!(optimizer, conduals...)
+end
+function mock_optimize!(optimizer::MOIU.MockOptimizer, varprim::Vector, conduals...)
     MOI.set!(optimizer, MOI.TerminationStatus(), MOI.Success)
     MOI.set!(optimizer, MOI.ResultCount(), 1)
     MOI.set!(optimizer, MOI.PrimalStatus(), MOI.FeasiblePoint)
     MOI.set!(optimizer, MOI.VariablePrimal(), MOI.get(optimizer, MOI.ListOfVariableIndices()), varprim)
+    MOI.set!(optimizer, MOI.DualStatus(), MOI.FeasiblePoint)
+    mock_dual!(optimizer, conduals...)
 end
 
 @testset "Mock optimizer continuous linear tests" begin
@@ -15,10 +26,11 @@ end
 # This both tests the ConstraintPrimal value requested in the tests and the ConstraintPrimal implemented in MockOptimizer
 @testset "Mock optimizer automatic constraint primal" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
-    config = MOIT.TestConfig(duals=false)
+    config = MOIT.TestConfig()
     optimizer.evalobjective = true
-    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0])
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0], (MOI.VectorOfVariables, MOI.Nonnegatives) => [[0, 2, 0]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]])
     MOIT.lin1vtest(optimizer, config)
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0], (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0, 2, 0]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]])
     MOIT.lin1ftest(optimizer, config)
 end
 
