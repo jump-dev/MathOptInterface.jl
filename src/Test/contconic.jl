@@ -650,7 +650,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ sqrt(2.0) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
 
         if abvars
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
@@ -659,7 +659,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
             @test MOI.get(model, MOI.VariablePrimal(), b) ≈ 1.0 atol=atol rtol=rtol
         end
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1/√2, 1/√2] atol=atol rtol=rtol
 
         if abvars
             @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(vc1))
@@ -669,7 +669,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         end
 
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(rsoc))
-        @test MOI.get(model, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1/√2, 1/√2] atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.DualStatus(1))
@@ -857,8 +857,8 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
         @test MOI.get(model, MOI.ConstraintPrimal(), cu2) ≈ ub atol=atol rtol=rtol
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ct1))
         @test MOI.get(model, MOI.ConstraintPrimal(), ct1) ≈ 1.0 atol=atol rtol=rtol
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ct1))
-        @test MOI.get(model, MOI.ConstraintPrimal(), ct1) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ct2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), ct2) ≈ 1.0 atol=atol rtol=rtol
 
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
         @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ [1/√2; 1/√2; 1.0; zeros(n-1)] atol=atol rtol=rtol
@@ -874,8 +874,8 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
             @test MOI.get(model, MOI.ConstraintDual(), cu2) ≈ -1/(2*√ub) atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(ct1))
             @test MOI.get(model, MOI.ConstraintDual(), ct1) ≈ -√ub/4 atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(ct1))
-            @test MOI.get(model, MOI.ConstraintDual(), ct1) ≈ -√ub/4 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(ct2))
+            @test MOI.get(model, MOI.ConstraintDual(), ct2) ≈ -√ub/4 atol=atol rtol=rtol
 
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ [√ub/(2*√2); √ub/(2*√2); -√ub/2; zeros(n-1)] atol=atol rtol=rtol

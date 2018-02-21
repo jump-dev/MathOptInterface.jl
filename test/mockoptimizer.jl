@@ -55,7 +55,7 @@ end
 
 # This both tests the ConstraintPrimal value requested in the tests and the ConstraintPrimal implemented in MockOptimizer
 @testset "Mock optimizer automatic constraint primal" begin
-    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
+    optimizer = MOIU.MockOptimizer(Model{Float64}())
     config = MOIT.TestConfig()
     optimizer.evalobjective = true
 
@@ -109,6 +109,24 @@ end
                               (MOI.VectorAffineFunction{Float64}, MOI.Zeros)           => [[-√5, -2.0, -1.0]],
                               (MOI.VectorOfVariables,             MOI.SecondOrderCone) => [[√5, -2.0, -1.0]])
         MOIT.soc4test(optimizer, config)
+    end
+    @testset "Conic RSOC tests" begin
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1/√2, 1/√2, 0.5, 1.0],
+                              (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√2, -1/√2],
+                              (MOI.VectorOfVariables,             MOI.RotatedSecondOrderCone) => [[√2, 1/√2, -1.0, -1.0]])
+        MOIT.rotatedsoc1vtest(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1/√2, 1/√2],
+                              (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√2, 1/√2, -1.0, -1.0]])
+        MOIT.rotatedsoc1ftest(optimizer, config)
+        n = 2
+        ub = 3.0
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0; zeros(n-1); ub; √ub; ones(2)],
+                              (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√ub/4, -√ub/4],
+                              (MOI.VectorOfVariables,             MOI.Nonnegatives)           => [zeros(n)],
+                              (MOI.SingleVariable,                MOI.GreaterThan{Float64})   => [0.0],
+                              (MOI.SingleVariable,                MOI.LessThan{Float64})      => [-1/(2*√ub)],
+                              (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√ub/(2*√2); √ub/(2*√2); -√ub/2; zeros(n-1)], [√ub/√2, 1/√(2*ub), -1.0]])
+        MOIT.rotatedsoc3test(optimizer, config)
     end
 end
 
