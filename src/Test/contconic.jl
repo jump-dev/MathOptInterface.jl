@@ -81,7 +81,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     end
 end
 
-lin1vtest(model::MOI.ModelLike, config::TestConfig) = _lin1test(model, config, false)
+lin1vtest(model::MOI.ModelLike, config::TestConfig) = _lin1test(model, config, true)
 lin1ftest(model::MOI.ModelLike, config::TestConfig) = _lin1test(model, config, false)
 
 function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
