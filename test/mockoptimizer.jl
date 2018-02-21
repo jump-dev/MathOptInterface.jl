@@ -8,13 +8,41 @@ function mock_dual!(optimizer::MOIU.MockOptimizer, condual::Pair, conduals...)
     end
     mock_dual!(optimizer, conduals...)
 end
-function mock_optimize!(optimizer::MOIU.MockOptimizer, varprim::Vector, conduals...)
+function mock_dual!(optimizer::MOIU.MockOptimizer, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
+    MOI.set!(optimizer, MOI.DualStatus(), dualstatus)
+    mock_dual!(optimizer, conduals...)
+end
+dual_args(dualstatus::MOI.ResultStatusCode, conduals::Pair...) = dualstatus, conduals...
+function dual_args(conduals::Pair...)
+    # Feasible dual solution
+    MOI.FeasiblePoint, conduals...
+end
+function mock_primal!(optimizer::MOIU.MockOptimizer, primstatus::MOI.ResultStatusCode, varprim::Vector, dual...)
+    MOI.set!(optimizer, MOI.PrimalStatus(), primstatus)
+    MOI.set!(optimizer, MOI.VariablePrimal(), MOI.get(optimizer, MOI.ListOfVariableIndices()), varprim)
+    mock_dual!(optimizer, dual_args(dual...)...)
+end
+function mock_primal!(optimizer::MOIU.MockOptimizer, varprim::Vector, dual...)
+    # Feasible primal solution
+    mock_primal!(optimizer, MOI.FeasiblePoint, varprim, dual...)
+end
+function mock_primal!(optimizer::MOIU.MockOptimizer, conduals::Pair...)
+    # No primal solution
+    MOI.set!(optimizer, MOI.PrimalStatus(), MOI.InfeasiblePoint)
+    mock_dual!(optimizer, MOI.InfeasibilityCertificate, conduals...)
+end
+
+"""
+    mock_optimize!(optimizer::MOIU.MockOptimizer, primstatus::MOI.ResultStatusCode, varprim::Vector, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
+
+Sets the termination status of `optimizer` to `MOI.Success`, the result count to 1, the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
+The primal values of the variables in the order returned by `ListOfVariableIndices` are set to `varprim`.
+The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
+"""
+function mock_optimize!(optimizer::MOIU.MockOptimizer, primdual...)
     MOI.set!(optimizer, MOI.TerminationStatus(), MOI.Success)
     MOI.set!(optimizer, MOI.ResultCount(), 1)
-    MOI.set!(optimizer, MOI.PrimalStatus(), MOI.FeasiblePoint)
-    MOI.set!(optimizer, MOI.VariablePrimal(), MOI.get(optimizer, MOI.ListOfVariableIndices()), varprim)
-    MOI.set!(optimizer, MOI.DualStatus(), MOI.FeasiblePoint)
-    mock_dual!(optimizer, conduals...)
+    mock_primal!(optimizer, primdual...)
 end
 
 @testset "Mock optimizer continuous linear tests" begin
@@ -32,6 +60,14 @@ end
     MOIT.lin1vtest(optimizer, config)
     optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0], (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0, 2, 0]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]])
     MOIT.lin1ftest(optimizer, config)
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [-4, -3, 16, 0], (MOI.VectorOfVariables, MOI.Nonnegatives) => [[0]], (MOI.VectorOfVariables, MOI.Nonpositives) => [[0]], (MOI.VectorOfVariables, MOI.Zeros) => [[7]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[7, 2, -4]])
+    MOIT.lin2vtest(optimizer, config)
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [-4, -3, 16, 0], (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0]], (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[7, 2, -4], [7]], )
+    MOIT.lin2ftest(optimizer, config)
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer)
+    MOIT.lin3test(optimizer, config)
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer)
+    MOIT.lin4test(optimizer, config)
 end
 
 @testset "Mock optimizer optimizer attributes" begin
