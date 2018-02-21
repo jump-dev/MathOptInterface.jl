@@ -37,7 +37,9 @@ end
 
 Sets the termination status of `optimizer` to `MOI.Success`, the result count to 1, the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
 The primal values of the variables in the order returned by `ListOfVariableIndices` are set to `varprim`.
+If `primstatus` (resp. `dualstatus`) is missing, it is assumed to be `MOI.FeasiblePoint`.
 The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
+If `primstatus`, `varprim` and `dualstatus`, the problem is assumed to be infeasible with the infeasibility certificate contained in `conduals`.
 """
 function mock_optimize!(optimizer::MOIU.MockOptimizer, primdual...)
     MOI.set!(optimizer, MOI.TerminationStatus(), MOI.Success)
