@@ -528,24 +528,14 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     # Like SOCINT1 but with copies of variables and integrality relaxed
     # Tests out-of-order indices in cones
 
-    b = [-1.0, 0.0, 0.0]
-    A = [ 1.0  0.0  0.0  0.0  0.0
-          0.0  1.0  0.0 -1.0  0.0
-          0.0  0.0  1.0  0.0 -1.0]
-    c = [ 0.0,-2.0,-1.0, 0.0, 0.0]
-
     MOI.empty!(model)
     @test MOI.isempty(model)
 
     MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 5)
 
-    A_cols = x
-    A_rows = [1,2,3,2,3]
-    A_vals = [1.0,1.0,1.0,-1.0,-1.0]
-
     @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
-    c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(A_rows,A_cols,A_vals,b), MOI.Zeros(3))
+    c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1,2,3,2,3],x,[1.0,1.0,1.0,-1.0,-1.0],[-1.0, 0.0, 0.0]), MOI.Zeros(3))
     @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
     c2 = MOI.addconstraint!(model, MOI.VectorOfVariables([x[1],x[4],x[5]]), MOI.SecondOrderCone(3))
 
@@ -553,7 +543,7 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x,c,0.0))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x,[0.0,-2.0,-1.0, 0.0, 0.0],0.0))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     if config.solve
@@ -569,20 +559,22 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
         end
 
+        @test MOI.canget(model, MOI.ObjectiveValue())
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
+
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        x_primal = MOI.get(model, MOI.VariablePrimal(), x)
-        @test x_primal[1]^2 ≥ x_primal[4]^2 + x_primal[5]^2 - atol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0, 2/√5, 1/√5, 2/√5, 1/√5] atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ zeros(3) atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ [1.0, 2/√5, 1/√5] atol=atol rtol=rtol
 
         if config.duals
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
-            x_dual = MOI.get(model, MOI.ConstraintDual(), c2)
-            @test x_dual[1]^2 ≥ x_dual[2]^2 + x_dual[3]^2 - atol
-
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
-            c1_dual = MOI.get(model, MOI.ConstraintDual(), c1)
-
-            @test dot(c,x_primal) ≈ -dot(c1_dual,b) atol=atol rtol=rtol
-            @test (c-A'c1_dual) ≈ [x_dual[1], 0, 0, x_dual[2], x_dual[3]] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ [-√5, -2.0, -1.0] atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ [√5, -2.0, -1.0] atol=atol rtol=rtol
         end
     end
 end

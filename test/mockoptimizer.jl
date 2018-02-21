@@ -105,6 +105,10 @@ end
         MOIT.soc2ptest(optimizer, config)
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer)
         MOIT.soc3test(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 2/√5, 1/√5, 2/√5, 1/√5],
+                              (MOI.VectorAffineFunction{Float64}, MOI.Zeros)           => [[-√5, -2.0, -1.0]],
+                              (MOI.VectorOfVariables,             MOI.SecondOrderCone) => [[√5, -2.0, -1.0]])
+        MOIT.soc4test(optimizer, config)
     end
 end
 
