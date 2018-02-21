@@ -58,13 +58,20 @@ end
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
     config = MOIT.TestConfig()
     optimizer.evalobjective = true
-    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0], (MOI.VectorOfVariables, MOI.Nonnegatives) => [[0, 2, 0]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]])
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0], (MOI.VectorOfVariables,             MOI.Nonnegatives) => [[0, 2, 0]],
+                                                                                                        (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[-3, -1]])
     MOIT.lin1vtest(optimizer, config)
-    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0], (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0, 2, 0]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]])
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0, 0.0, 2.0], (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0, 2, 0]],
+                                                                                                        (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[-3, -1]])
     MOIT.lin1ftest(optimizer, config)
-    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [-4, -3, 16, 0], (MOI.VectorOfVariables, MOI.Nonnegatives) => [[0]], (MOI.VectorOfVariables, MOI.Nonpositives) => [[0]], (MOI.VectorOfVariables, MOI.Zeros) => [[7]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[7, 2, -4]])
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [-4, -3, 16, 0], (MOI.VectorOfVariables,             MOI.Nonnegatives) => [[0]],
+                                                                                                        (MOI.VectorOfVariables,             MOI.Nonpositives) => [[0]],
+                                                                                                        (MOI.VectorOfVariables,             MOI.Zeros)        => [[7]],
+                                                                                                        (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[7, 2, -4]])
     MOIT.lin2vtest(optimizer, config)
-    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [-4, -3, 16, 0], (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0]], (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]], (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[7, 2, -4], [7]], )
+    optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [-4, -3, 16, 0], (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0]],
+                                                                                                        (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]],
+                                                                                                        (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[7, 2, -4], [7]])
     MOIT.lin2ftest(optimizer, config)
     optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer)
     MOIT.lin3test(optimizer, config)
