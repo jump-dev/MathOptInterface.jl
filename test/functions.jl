@@ -3,6 +3,28 @@
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
+    @testset "evalvariables" begin
+        # We do tests twice to make sure the function is not modified
+        vals = Dict(w=>0, x=>3, y=>1, z=>5)
+        fsv = MOI.SingleVariable(z)
+        @test MOIU.evalvariables(vi -> vals[vi], fsv) ≈ 5
+        @test MOIU.evalvariables(vi -> vals[vi], fsv) ≈ 5
+        fvv = MOI.VectorOfVariables([x, z, y])
+        @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
+        @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
+        fsa = MOI.ScalarAffineFunction([x, z, y], [1., 3., 2.], 2.)
+        @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
+        @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
+        fva = MOI.VectorAffineFunction([2, 1, 2], [x, z, y], [1., 3., 2.], [-3., 2.])
+        @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
+        @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
+        fsq = MOI.ScalarQuadraticFunction([x, y], ones(2), [x, w, w], [z, z, y], ones(3), -3.0)
+        @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
+        @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
+        fvq = MOI.VectorQuadraticFunction([2, 1], [x, y], ones(2), [1, 2, 2], [x, w, w], [z, z, y], ones(3), [-3.0, -2.0])
+        @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
+        @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
+    end
     @testset "mapvariables" begin
         fsq = MOI.ScalarQuadraticFunction([x, y], ones(2), [x, w, w], [z, z, y], ones(3), -3.0)
         gsq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fsq)
