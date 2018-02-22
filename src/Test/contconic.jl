@@ -995,7 +995,6 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
     vov = MOI.VectorOfVariables(v)
-    vov = MOI.VectorOfVariables(v)
     if vecofvars
         @test MOI.canaddconstraint(model, typeof(vov), MOI.ExponentialCone)
         vc = MOI.addconstraint!(model, vov, MOI.ExponentialCone())
