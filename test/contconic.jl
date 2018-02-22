@@ -78,4 +78,14 @@
                               (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√ub/(2*√2); √ub/(2*√2); -√ub/2; zeros(n-1)], [√ub/√2, 1/√(2*ub), -1.0]])
         MOIT.rotatedsoc3test(optimizer, config)
     end
+    @testset "Conic GeoMean tests" begin
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, ones(4))
+        MOIT.geomeantest(optimizer, config)
+    end
+    @testset "Conic LogDet and RootDet tests" begin
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [0, 1, 0, 1])
+        MOIT.logdettest(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [1, 1, 0, 1])
+        MOIT.rootdettest(optimizer, config)
+    end
 end
