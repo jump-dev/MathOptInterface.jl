@@ -3,7 +3,6 @@ const MOI = MathOptInterface
 const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 
-# There is no standalone code in this package to test.
 # Tests for solvers are located in MOI.Test.
 
 include("isapprox.jl")
@@ -23,6 +22,7 @@ MOIU.@model(Model,
 # Model supporting only SecondOrderCone as non-LP cone.
 @MOIU.model ModelForMock (ZeroOne, Integer) (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 
+# Utilities submodule tests
 include("functions.jl")
 include("sets.jl")
 include("model.jl")
@@ -30,3 +30,8 @@ include("parser.jl")
 include("mockoptimizer.jl")
 include("cachingoptimizer.jl")
 include("copy.jl")
+
+# Test submodule tests
+# It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
+include("contlinear.jl")
+include("contconic.jl")
