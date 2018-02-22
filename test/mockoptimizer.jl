@@ -118,6 +118,12 @@ end
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1/√2, 1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√2, 1/√2, -1.0, -1.0]])
         MOIT.rotatedsoc1ftest(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer,
+                              (MOI.SingleVariable,                MOI.LessThan{Float64})      => [-1],
+                              (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-1],
+                              (MOI.SingleVariable,                MOI.GreaterThan{Float64})   => [1],
+                              (MOI.VectorOfVariables            , MOI.RotatedSecondOrderCone) => [[1, 1, -1]])
+        MOIT.rotatedsoc2test(optimizer, config)
         n = 2
         ub = 3.0
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> mock_optimize!(optimizer, [1.0; zeros(n-1); ub; √ub; ones(2)],
