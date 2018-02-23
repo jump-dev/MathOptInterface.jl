@@ -1316,6 +1316,22 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
     #
     #      (x1,x2,x3) in C^3_q
     #      X in C_sdp
+    #
+    # The solution is rank one of the form
+    # X = [α, β, α] * [α, β, α]'
+    # with x1 = √2*a and x2, x3 = a
+    # The problem reduces to
+    # min  4α^2+4αβ+2β^2+√2*a
+    # s.t. 2α^2    + β^2+√2*a = 1
+    #      8α^2+8αβ+2β^2+ 4 a = 1
+    # With the second equation, we find a = 1/4 - 2α^2 - 2αβ - β^2/2, so we have
+    # min  (4-2√2)α^2+(4-2√2)αβ+(2-√2/2)β^2+√2/4
+    # s.t. (2-2√2)α^2-   2√2 αβ+(1-√2/2)β^2+√2/4 = 1
+    # Solving the system of 3 equations made of the constraint and
+    # the 2 derivatives of the Lagrangian to zero, we get:
+    α = 0.46610217596436515
+    β = -0.5577541324175729
+    a = 1/4 - 2α^2 - 2α*β - β^2/2
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1366,22 +1382,18 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.705710509 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4α^2+4α*β+2β^2+√2*a atol=atol rtol=rtol
 
+        Xv = [α^2, α*β, β^2, α^2, α*β, α^2]
+        xv = [√2*a, a, a]
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        Xv = MOI.get(model, MOI.VariablePrimal(), X)
-        Xp = [Xv[1] Xv[2] Xv[4]
-              Xv[2] Xv[3] Xv[5]
-              Xv[4] Xv[5] Xv[6]]
-        @test eigmin(Xp) > -atol
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        xv = MOI.get(model, MOI.VariablePrimal(), x)
-        @test xv[2]^2 + xv[3]^2 - xv[1]^2 < atol
+        @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ xv atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ xv atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ Xv[1]+Xv[3]+Xv[6]+xv[1] atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ Xv[1]+2Xv[2]+Xv[3]+2Xv[4]+2Xv[5]+Xv[6]+xv[2]+xv[3] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 2α^2+β^2+√2*a atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 4α^2+4α*β+β^2+2a atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
