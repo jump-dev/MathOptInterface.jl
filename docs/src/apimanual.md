@@ -49,17 +49,27 @@ where:
 * the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by [`AbstractSet`](@ref MathOptInterface.AbstractSet) objects
 
 The current function types are:
-* **projection onto a single coordinate**: ``x_j``, a single variable defined by a variable index
-* **projection onto multiple coordinates**: a subvector of variables defined by a list of variable indices
-* **scalar-valued affine**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
-* **vector-valued affine**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
-* **scalar-valued quadratic**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
-* **vector-valued quadratic**: a vector of scalar-valued quadratic expressions
+* **[`SingleVariable`](@ref MathOptInterface.SingleVariable)**: ``x_j``, i.e., projection onto a single coordinate defined by a variable index ``j``
+* **[`VectorOfVariables`](@ref MathOptInterface.VectorOfVariables)**: projection onto multiple coordinates (i.e., extracting a subvector)
+* **[`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction)**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
+* **[`VectorAffineFunction`](@ref MathOptInterface.VectorAffineFunction)**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
+* **[`ScalarQuadraticFunction`](@ref MathOptInterface.ScalarQuadraticFunction)**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
+* **[`VectorQuadraticFunction`](@ref MathOptInterface.VectorQuadraticFunction)**: a vector of scalar-valued quadratic functions
 
 Extensions for nonlinear programming are present but not yet well documented.
 
 MOI defines some commonly used sets, but the interface is extensible to other sets recognized by the solver.
-[Describe currently supported sets.]
+
+[TODO: finish list of currently supported sets, or at least important ones.]
+
+* **[`LessThan(upper)`](@ref MathOptInterface.LessThan)**: ``\{ x \in \mathbb{R} : x \le \mbox{upper} \}``
+* **[`GreaterThan(lower)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x \ge \mbox{lower} \}``
+* **[`EqualTo(value)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x = \mbox{value} \}``
+* **[`Interval(lower, upper)`](@ref MathOptInterface.Interval)**: ``\{ x \in \mathbb{R} : x \in [\mbox{lower},\mbox{upper}] \}``
+* **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**: ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
+* **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
+* **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
+
 
 ## The `ModelLike` and `AbstractOptimizer` APIs
 
