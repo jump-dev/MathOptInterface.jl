@@ -103,6 +103,27 @@
                               (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)   => [[-1., log(5)-1, 1/5]])
         MOIT.exp3test(optimizer, config)
     end
+    @testset "Conic SDP tests" begin
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, ones(3),
+                              (MOI.VectorOfVariables,             MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
+        MOIT.sdp0tvtest(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, ones(3),
+                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
+        MOIT.sdp0tftest(optimizer, config)
+        #MOIT.sdp1tvtest(optimizer, config)
+        #MOIT.sdp1tftest(optimizer, config)
+        η = 10.0
+        α = 0.8
+        δ = 0.9
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [2η/3, 0, η/3, 0, 0, 0, η*δ*(1 - 1/√3)/2],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})             => [δ*(1-1/√3)/2],
+                              (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)                     => [[0, -α/√3+δ/(2*√6)*(2*√2-1), 0, -3δ*(1-1/√3)/8, -3δ*(1-1/√3)/8, -δ*(3 - 2*√3 + 1/√3)/8]],
+                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[(1-1/√3)/2, 1/√6, (1+1/√3)/2]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [0])
+        MOIT.sdp2test(optimizer, config)
+    end
     @testset "Conic LogDet and RootDet tests" begin
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [0, 1, 0, 1])
         MOIT.logdettest(optimizer, config)
