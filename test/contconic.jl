@@ -82,6 +82,27 @@
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, ones(4))
         MOIT.geomeantest(optimizer, config)
     end
+    @testset "Conic exponential tests" begin
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [1., 2., 2exp(1/2)],
+                              (MOI.VectorOfVariables,             MOI.ExponentialCone)   => [[-exp(1/2), -exp(1/2)/2, 1.]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [1 + exp(1/2), 1 + exp(1/2)/2])
+        MOIT.exp1vtest(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [1., 2., 2exp(1/2)],
+                              (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)   => [[-exp(1/2), -exp(1/2)/2, 1.]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [1 + exp(1/2), 1 + exp(1/2)/2])
+        MOIT.exp1ftest(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [0., -0.3, 0., exp(-0.3), exp(-0.3), exp(-0.3), 0., 1.0, 0.],
+                              (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)   => [[-exp(-0.3)/2, -1.3exp(-0.3)/2, 0.5], [-exp(-0.3)/2, -1.3exp(-0.3)/2, 0.5]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1.0, exp(-0.3)*0.3],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-exp(-0.3)*0.3],
+                              (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)      => [[0.0, exp(-0.3), exp(-0.3)/2], [0.0, 0.0, exp(-0.3)/2]])
+        MOIT.exp2test(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [log(5), 5.],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [0.],
+                              (MOI.SingleVariable,                MOI.LessThan{Float64}) => [-1/5],
+                              (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)   => [[-1., log(5)-1, 1/5]])
+        MOIT.exp3test(optimizer, config)
+    end
     @testset "Conic LogDet and RootDet tests" begin
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [0, 1, 0, 1])
         MOIT.logdettest(optimizer, config)
