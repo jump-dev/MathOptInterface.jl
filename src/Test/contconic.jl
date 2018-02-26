@@ -1396,39 +1396,19 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 4α^2+4α*β+β^2+2a atol=atol rtol=rtol
 
         if config.duals
+            cc = -2α/β
+            δ = √(1 + (3*√2+2)*√(-116*√2+166) / 14) / 2
+            ε = √((1 - 2*(√2-1)*δ^2) / (2-√2))
+            y2 = 1 - ε*δ
+            y1 = 1 - √2*y2
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
-            y1 = MOI.get(model, MOI.ConstraintDual(), c1)
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ y1 atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
-            y2 = MOI.get(model, MOI.ConstraintDual(), c2)
-
-            #     X11  X21  X22  X31  X32  X33  x1  x2  x3
-            c = [   2,   2,   2,   0,   2,   2,  1,  0,  0]
-            b = [1, 1/2]
-            # Check primal objective
-            comp_pobj = dot(c, [Xv; xv])
-            # Check dual objective
-            comp_dobj = dot([y1, y2], b)
-            @test comp_pobj ≈ comp_dobj atol=atol rtol=rtol
-
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ y2 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cx))
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1-y1, -y2, -y2] atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(cX))
-            Xdv = MOI.get(model, MOI.ConstraintDual(), cX)
-            Xd = [Xdv[1] Xdv[2] Xdv[4];
-                  Xdv[2] Xdv[3] Xdv[5];
-                  Xdv[4] Xdv[5] Xdv[6]]
-
-            C = [2 1 0;
-                 1 2 1;
-                 0 1 2]
-            A1 = [1 0 0;
-                  0 1 0;
-                  0 0 1]
-            A2 = [1 1 1;
-                  1 1 1;
-                  1 1 1]
-
-            @test C ≈ y1 * A1 + y2 * A2 + Xd atol=atol rtol=rtol
-
-            @test eigmin(Xd) > -atol
+            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ [1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2] atol=atol rtol=rtol
         end
     end
 end
