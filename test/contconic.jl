@@ -112,8 +112,8 @@
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
                               (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
         MOIT.sdp0tftest(optimizer, config)
-        #MOIT.sdp1tvtest(optimizer, config)
-        #MOIT.sdp1tftest(optimizer, config)
+        #MOIT.sdp1tvtest(optimizer, config) # TODO but needs to find analytic solution first
+        #MOIT.sdp1tftest(optimizer, config) # TODO
         η = 10.0
         α = 0.8
         δ = 0.9
