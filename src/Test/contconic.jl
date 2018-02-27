@@ -1423,14 +1423,14 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ .5 atol=atol rtol=rtol
 
         if config.duals
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cX))
+            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ [1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2] atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cx))
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1-y1, -y2, -y2] atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ y1 atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
             @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ y2 atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cx))
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1-y1, -y2, -y2] atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cX))
-            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ [1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2] atol=atol rtol=rtol
         end
     end
 end
