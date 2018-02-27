@@ -247,19 +247,21 @@ loadconstraint!(mock::MockOptimizer, ci::CI, f::MOI.AbstractFunction, s::MOI.Abs
 canloadconstraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = canloadconstraint(mock.inner_model, F, S)
 
 """
-    mock_optimize!(optimizer::MockOptimizer, primstatus::MOI.ResultStatusCode, varprim::Vector, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
+    mock_optimize!(optimizer::MockOptimizer, termstatus::MOI.TerminationStatusCode, primstatus::MOI.ResultStatusCode, varprim::Vector, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
 
-Sets the termination status of `optimizer` to `MOI.Success`, the result count to 1, the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
+Sets the termination status of `optimizer` to `termstatus`, the result count to 1, the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
 The primal values of the variables in the order returned by `ListOfVariableIndices` are set to `varprim`.
+If `termstatus` is missing, it is assumed to be `MOI.Success`.
 If `primstatus` (resp. `dualstatus`) is missing, it is assumed to be `MOI.FeasiblePoint`.
 The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
 If `primstatus`, `varprim` and `dualstatus`, the problem is assumed to be infeasible with the infeasibility certificate contained in `conduals`.
 """
-function mock_optimize!(optimizer::MockOptimizer, primdual...)
-    MOI.set!(optimizer, MOI.TerminationStatus(), MOI.Success)
+function mock_optimize!(optimizer::MockOptimizer, termstatus::MOI.TerminationStatusCode, primdual...)
+    MOI.set!(optimizer, MOI.TerminationStatus(), termstatus)
     MOI.set!(optimizer, MOI.ResultCount(), 1)
     mock_primal!(optimizer, primdual...)
 end
+mock_optimize!(optimizer::MockOptimizer, primdual...) = mock_optimize!(optimizer, MOI.Success, primdual...)
 
 # Sets variable primal to varprim
 function mock_primal!(optimizer::MockOptimizer, primstatus::MOI.ResultStatusCode, varprim::Vector, dual...)
