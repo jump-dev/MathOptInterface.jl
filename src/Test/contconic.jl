@@ -1316,6 +1316,49 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
     #
     #      (x1,x2,x3) in C^3_q
     #      X in C_sdp
+    #
+    # The dual is
+    # max y1 + y2/2
+    #
+    # s.t. | y1+y2    y2    y2 |
+    #      |    y2 y1+y2    y2 | in C_sdp
+    #      |    y2    y2 y1+y2 |
+    #
+    #      (1-y1, -y2, -y2) in C^3_q
+    #
+    # The dual of the SDP constraint is rank two of the form
+    # [γ, 0, -γ] * [γ, 0, γ'] + [δ, ε, δ] * [δ, ε, δ]'
+    # and the dual of the SOC constraint is of the form (√2*y2, -y2, -y2)
+    #
+    # The feasible set of the constraint dual contains only four points.
+    # Eliminating, y1, y2 and γ from the dual constraints gives
+    # -ε^2 + -εδ + 2δ^2 + 1
+    # (√2-2)ε^2 + (-2√2+2)δ^2 + 1
+    # Eliminating ε from this set of equation give
+    # (-6√2+4)δ^4 + (3√2-2)δ^2 + (2√2-3)
+    # from which we find the solution
+    δ = √(1 + (3*√2+2)*√(-116*√2+166) / 14) / 2
+    # which is optimal
+    ε = √((1 - 2*(√2-1)*δ^2) / (2-√2))
+    y2 = 1 - ε*δ
+    y1 = 1 - √2*y2
+    obj = y1 + y2/2
+    # The primal solution is rank one of the form
+    # X = [α, β, α] * [α, β, α]'
+    # and by complementary slackness, x is of the form (√2*x2, x2, x2)
+    # The primal reduces to
+    #      4α^2+4αβ+2β^2+√2*x2= obj
+    #      2α^2    + β^2+√2*x2 = 1 (1)
+    #      8α^2+8αβ+2β^2+ 4 x2 = 1
+    # Eliminating β, we get
+    # 4α^2 + 4x2 = 3 - 2obj (2)
+    # By complementary slackness, we have β = kα where
+    k = -2*δ/ε
+    # Replacing β by kα in (1) allows to eliminate α^2 in (2) to get
+    x2 = ((3-2obj)*(2+k^2)-4) / (4*(2+k^2)-4*√2)
+    # With (2) we get
+    α = √(3-2obj-4x2)/2
+    β = k*α
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1366,57 +1409,28 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.705710509 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol=atol rtol=rtol
 
+        Xv = [α^2, α*β, β^2, α^2, α*β, α^2]
+        xv = [√2*x2, x2, x2]
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        Xv = MOI.get(model, MOI.VariablePrimal(), X)
-        Xp = [Xv[1] Xv[2] Xv[4]
-              Xv[2] Xv[3] Xv[5]
-              Xv[4] Xv[5] Xv[6]]
-        @test eigmin(Xp) > -atol
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        xv = MOI.get(model, MOI.VariablePrimal(), x)
-        @test xv[2]^2 + xv[3]^2 - xv[1]^2 < atol
+        @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ xv atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ xv atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ Xv[1]+Xv[3]+Xv[6]+xv[1] atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ Xv[1]+2Xv[2]+Xv[3]+2Xv[4]+2Xv[5]+Xv[6]+xv[2]+xv[3] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 1. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ .5 atol=atol rtol=rtol
 
         if config.duals
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
-            y1 = MOI.get(model, MOI.ConstraintDual(), c1)
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
-            y2 = MOI.get(model, MOI.ConstraintDual(), c2)
-
-            #     X11  X21  X22  X31  X32  X33  x1  x2  x3
-            c = [   2,   2,   2,   0,   2,   2,  1,  0,  0]
-            b = [1, 1/2]
-            # Check primal objective
-            comp_pobj = dot(c, [Xv; xv])
-            # Check dual objective
-            comp_dobj = dot([y1, y2], b)
-            @test comp_pobj ≈ comp_dobj atol=atol rtol=rtol
-
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(cX))
-            Xdv = MOI.get(model, MOI.ConstraintDual(), cX)
-            Xd = [Xdv[1] Xdv[2] Xdv[4];
-                  Xdv[2] Xdv[3] Xdv[5];
-                  Xdv[4] Xdv[5] Xdv[6]]
-
-            C = [2 1 0;
-                 1 2 1;
-                 0 1 2]
-            A1 = [1 0 0;
-                  0 1 0;
-                  0 0 1]
-            A2 = [1 1 1;
-                  1 1 1;
-                  1 1 1]
-
-            @test C ≈ y1 * A1 + y2 * A2 + Xd atol=atol rtol=rtol
-
-            @test eigmin(Xd) > -atol
+            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ [1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2] atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cx))
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1-y1, -y2, -y2] atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ y1 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ y2 atol=atol rtol=rtol
         end
     end
 end

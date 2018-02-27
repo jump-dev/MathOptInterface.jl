@@ -112,8 +112,27 @@
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
                               (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
         MOIT.sdp0tftest(optimizer, config)
-        #MOIT.sdp1tvtest(optimizer, config) # TODO but needs to find analytic solution first
-        #MOIT.sdp1tftest(optimizer, config) # TODO
+        δ = √(1 + (3*√2+2)*√(-116*√2+166) / 14) / 2
+        ε = √((1 - 2*(√2-1)*δ^2) / (2-√2))
+        y2 = 1 - ε*δ
+        y1 = 1 - √2*y2
+        obj = y1 + y2/2
+        k = -2*δ/ε
+        x2 = ((3-2obj)*(2+k^2)-4) / (4*(2+k^2)-4*√2)
+        α = √(3-2obj-4x2)/2
+        β = k*α
+        Xv = [α^2, α*β, β^2, α^2, α*β, α^2]
+        xv = [√2*x2, x2, x2]
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [Xv; xv],
+                              (MOI.VectorOfVariables,             MOI.PositiveSemidefiniteConeTriangle) => [[1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2]],
+                              (MOI.VectorOfVariables,             MOI.SecondOrderCone                 ) => [[1-y1, -y2, -y2]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}                ) => [y1, y2])
+        MOIT.sdp1tvtest(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [Xv; xv],
+                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2]],
+                              (MOI.VectorOfVariables,             MOI.SecondOrderCone                 ) => [[1-y1, -y2, -y2]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}                ) => [y1, y2])
+        MOIT.sdp1tftest(optimizer, config)
         η = 10.0
         α = 0.8
         δ = 0.9
