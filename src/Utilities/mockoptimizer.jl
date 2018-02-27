@@ -21,6 +21,8 @@ mutable struct MockOptimizer <: MOI.AbstractOptimizer
     canaddvar::Bool
     optimize!::Function
     solved::Bool
+    hasprimal::Bool
+    hasdual::Bool
     terminationstatus::MOI.TerminationStatusCode
     resultcount::Int
     evalobjective::Bool # Computes ObjectiveValue by evaluation ObjectiveFunction with VariablePrimal
@@ -47,6 +49,8 @@ MockOptimizer(inner_model::MOI.ModelLike) =
                        true,
                        (::MockOptimizer) -> begin end,
                        false,
+                       false,
+                       false,
                        MOI.Success,
                        0,
                        false,
@@ -62,8 +66,10 @@ MOI.addvariables!(mock::MockOptimizer, n::Int) = xor_index.(MOI.addvariables!(mo
 MOI.canaddconstraint(mock::MockOptimizer, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = MOI.canaddconstraint(mock.inner_model, F, S)
 MOI.addconstraint!(mock::MockOptimizer, F::MOI.AbstractFunction, S::MOI.AbstractSet) = xor_index(MOI.addconstraint!(mock.inner_model, xor_variables(F), S))
 function MOI.optimize!(mock::MockOptimizer)
-    mock.optimize!(mock)
     mock.solved = true
+    mock.hasprimal = true
+    mock.hasdual = true
+    mock.optimize!(mock)
 end
 
 MOI.canset(mock::MockOptimizer, ::Union{MOI.ResultCount,MOI.TerminationStatus,MOI.ObjectiveValue,MOI.PrimalStatus,MOI.DualStatus,MOI.ObjectiveSense,MOI.ObjectiveFunction,MockModelAttribute}) = true
@@ -91,8 +97,8 @@ MOI.set!(mock::MockOptimizer, ::MOI.ConstraintDual, idx::MOI.ConstraintIndex, va
 MOI.canget(mock::MockOptimizer, ::MOI.ResultCount) = mock.solved
 MOI.canget(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.solved
 MOI.canget(mock::MockOptimizer, ::MOI.ObjectiveValue) = mock.solved # TODO: may want to simulate false
-MOI.canget(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.solved && (mock.resultcount > 0)
-MOI.canget(mock::MockOptimizer, ::MOI.DualStatus) = mock.solved && (mock.resultcount > 0)
+MOI.canget(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.hasprimal && (mock.resultcount > 0)
+MOI.canget(mock::MockOptimizer, ::MOI.DualStatus) = mock.hasdual && (mock.resultcount > 0)
 MOI.canget(mock::MockOptimizer, ::MockModelAttribute) = true
 
 MOI.canget(mock::MockOptimizer, attr::Union{MOI.NumberOfVariables,
@@ -118,9 +124,9 @@ MOI.canget(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, IdxT::Type{
 MOI.canget(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute, IdxT::Type{<:MOI.ConstraintIndex}) = MOI.canget(mock.inner_model, attr, IdxT)
 
 # We assume that a full result is loaded if resultcount > 0
-MOI.canget(mock::MockOptimizer, ::MOI.VariablePrimal, ::Type{MOI.VariableIndex}) = mock.solved && (mock.resultcount > 0)
+MOI.canget(mock::MockOptimizer, ::MOI.VariablePrimal, ::Type{MOI.VariableIndex}) = mock.hasprimal && (mock.resultcount > 0)
 MOI.canget(mock::MockOptimizer, ::MOI.ConstraintPrimal, IdxT::Type{<:MOI.ConstraintIndex}) = MOI.canget(mock, MOI.ConstraintFunction(), IdxT) && MOI.canget(mock, MOI.VariablePrimal(), MOI.VariableIndex)
-MOI.canget(mock::MockOptimizer, ::MOI.ConstraintDual, ::Type{<:MOI.ConstraintIndex}) = mock.solved && (mock.resultcount > 0) && mock.dualstatus != MOI.UnknownResultStatus
+MOI.canget(mock::MockOptimizer, ::MOI.ConstraintDual, ::Type{<:MOI.ConstraintIndex}) = mock.hasdual && (mock.resultcount > 0) && mock.dualstatus != MOI.UnknownResultStatus
 
 MOI.canget(mock::MockOptimizer, ::MockVariableAttribute, ::Type{MOI.VariableIndex}) = length(mock.varattribute) > 0
 MOI.canget(mock::MockOptimizer, ::MockConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = length(mock.conattribute) > 0
@@ -162,6 +168,8 @@ function MOI.empty!(mock::MockOptimizer)
     mock.varattribute = Dict{MOI.VariableIndex,Int}()
     mock.conattribute = Dict{MOI.ConstraintIndex,Int}()
     mock.solved = false
+    mock.hasprimal = false
+    mock.hasdual = false
     mock.terminationstatus = MOI.Success
     mock.resultcount = 0
     mock.objectivevalue = NaN
@@ -177,7 +185,8 @@ function MOI.isempty(mock::MockOptimizer)
     # mock.inner_model is empty.
     # TODO: Default values are currently copied in three places, not good.
     return MOI.isempty(mock.inner_model) && mock.attribute == 0 &&
-        mock.solved == false && mock.terminationstatus == MOI.Success &&
+        !mock.solved && !mock.hasprimal && !mock.hasdual &&
+        mock.terminationstatus == MOI.Success &&
         mock.resultcount == 0 && isnan(mock.objectivevalue) &&
         mock.primalstatus == MOI.UnknownResultStatus &&
         mock.dualstatus == MOI.UnknownResultStatus
@@ -275,28 +284,33 @@ function mock_primal!(optimizer::MockOptimizer, varprim::Vector, dual...)
 end
 function mock_primal!(optimizer::MockOptimizer, conduals::Pair...)
     # No primal solution
+    optimizer.hasprimal = false
     MOI.set!(optimizer, MOI.PrimalStatus(), MOI.InfeasiblePoint)
     mock_dual!(optimizer, MOI.InfeasibilityCertificate, conduals...)
 end
 
 # Adds default dual status if its is missing
 dual_args(dualstatus::MOI.ResultStatusCode, conduals::Pair...) = dualstatus, conduals...
+dual_args() = tuple()
 function dual_args(conduals::Pair...)
     # Feasible dual solution
     MOI.FeasiblePoint, conduals...
 end
 
 # Sets constraint dual to conduals
-function mock_dual!(optimizer::MockOptimizer) end
-function mock_dual!(optimizer::MockOptimizer, condual::Pair, conduals...)
+function _mock_dual!(optimizer::MockOptimizer) end
+function _mock_dual!(optimizer::MockOptimizer, condual::Pair, conduals...)
     F, S = condual.first
     duals = condual.second
     for (i, ci) in enumerate(MOI.get(optimizer, MOI.ListOfConstraintIndices{F, S}()))
         MOI.set!(optimizer, MOI.ConstraintDual(), ci, duals[i])
     end
-    mock_dual!(optimizer, conduals...)
+    _mock_dual!(optimizer, conduals...)
+end
+function mock_dual!(optimizer::MockOptimizer)
+    optimizer.hasdual = false
 end
 function mock_dual!(optimizer::MockOptimizer, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
     MOI.set!(optimizer, MOI.DualStatus(), dualstatus)
-    mock_dual!(optimizer, conduals...)
+    _mock_dual!(optimizer, conduals...)
 end
