@@ -25,8 +25,16 @@
         MOIT.lin2ftest(optimizer, config)
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer)
         MOIT.lin3test(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, MOI.InfeasibleNoResult)
+        MOIT.lin3test(optimizer, MOIT.TestConfig(infeas_certificates=false))
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, MOI.InfeasibleOrUnbounded)
+        MOIT.lin3test(optimizer, MOIT.TestConfig(infeas_certificates=false))
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer)
         MOIT.lin4test(optimizer, config)
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, MOI.InfeasibleNoResult)
+        MOIT.lin4test(optimizer, MOIT.TestConfig(infeas_certificates=false))
+        optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, MOI.InfeasibleOrUnbounded)
+        MOIT.lin4test(optimizer, MOIT.TestConfig(infeas_certificates=false))
     end
     @testset "Conic SOC tests" begin
         optimizer.optimize! = (optimizer::MOIU.MockOptimizer) -> MOIU.mock_optimize!(optimizer, [1.0, 1/√2, 1/√2],
