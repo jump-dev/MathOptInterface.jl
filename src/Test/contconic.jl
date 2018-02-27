@@ -1317,21 +1317,48 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
     #      (x1,x2,x3) in C^3_q
     #      X in C_sdp
     #
-    # The solution is rank one of the form
+    # The dual is
+    # max y1 + y2/2
+    #
+    # s.t. | y1+y2    y2    y2 |
+    #      |    y2 y1+y2    y2 | in C_sdp
+    #      |    y2    y2 y1+y2 |
+    #
+    #      (1-y1, -y2, -y2) in C^3_q
+    #
+    # The dual of the SDP constraint is rank two of the form
+    # [γ, 0, -γ] * [γ, 0, γ'] + [δ, ε, δ] * [δ, ε, δ]'
+    # and the dual of the SOC constraint is of the form (√2*y2, -y2, -y2)
+    #
+    # The feasible set of the constraint dual contains only four points.
+    # Eliminating, y1, y2 and γ from the dual constraints gives
+    # -ε^2 + -εδ + 2δ^2 + 1
+    # (√2-2)ε^2 + (-2√2+2)δ^2 + 1
+    # Eliminating ε from this set of equation give
+    # (-6√2+4)δ^4 + (3√2-2)δ^2 + (2√2-3)
+    # from which we find the solution
+    δ = √(1 + (3*√2+2)*√(-116*√2+166) / 14) / 2
+    # which is optimal
+    ε = √((1 - 2*(√2-1)*δ^2) / (2-√2))
+    y2 = 1 - ε*δ
+    y1 = 1 - √2*y2
+    obj = y1 + y2/2
+    # The primal solution is rank one of the form
     # X = [α, β, α] * [α, β, α]'
-    # with x1 = √2*a and x2, x3 = a
-    # The problem reduces to
-    # min  4α^2+4αβ+2β^2+√2*a
-    # s.t. 2α^2    + β^2+√2*a = 1
-    #      8α^2+8αβ+2β^2+ 4 a = 1
-    # With the second equation, we find a = 1/4 - 2α^2 - 2αβ - β^2/2, so we have
-    # min  (4-2√2)α^2+(4-2√2)αβ+(2-√2/2)β^2+√2/4
-    # s.t. (2-2√2)α^2-   2√2 αβ+(1-√2/2)β^2+√2/4 = 1
-    # Solving the system of 3 equations made of the constraint and
-    # the 2 derivatives of the Lagrangian to zero, we get:
-    α = 0.46610217596436515
-    β = -0.5577541324175729
-    a = 1/4 - 2α^2 - 2α*β - β^2/2
+    # and by complementary slackness, x is of the form (√2*x2, x2, x2)
+    # The primal reduces to
+    #      4α^2+4αβ+2β^2+√2*x2= obj
+    #      2α^2    + β^2+√2*x2 = 1 (1)
+    #      8α^2+8αβ+2β^2+ 4 x2 = 1
+    # Eliminating β, we get
+    # 4α^2 + 4x2 = 3 - 2obj (2)
+    # By complementary slackness, we have β = kα where
+    k = -2*δ/ε
+    # Replacing β by kα in (1) allows to eliminate α^2 in (2) to get
+    x2 = ((3-2obj)*(2+k^2)-4) / (4*(2+k^2)-4*√2)
+    # With (2) we get
+    α = √(3-2obj-4x2)/2
+    β = k*α
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1382,25 +1409,20 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4α^2+4α*β+2β^2+√2*a atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol=atol rtol=rtol
 
         Xv = [α^2, α*β, β^2, α^2, α*β, α^2]
-        xv = [√2*a, a, a]
+        xv = [√2*x2, x2, x2]
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ xv atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ xv atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 2α^2+β^2+√2*a atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 4α^2+4α*β+β^2+2a atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 1. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ .5 atol=atol rtol=rtol
 
         if config.duals
-            cc = -2α/β
-            δ = √(1 + (3*√2+2)*√(-116*√2+166) / 14) / 2
-            ε = √((1 - 2*(√2-1)*δ^2) / (2-√2))
-            y2 = 1 - ε*δ
-            y1 = 1 - √2*y2
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ y1 atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
