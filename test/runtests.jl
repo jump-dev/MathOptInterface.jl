@@ -11,11 +11,11 @@ include("interval.jl")
 # Needed by test spread over several files, defining it here make it easier to comment out tests
 # Model supporting every MOI functions and sets
 MOIU.@model(Model,
-               (), # <- example of giving no set
+               (ZeroOne,),
                (EqualTo, GreaterThan, LessThan, Interval),
                (Reals, Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, RootDetConeTriangle, LogDetConeTriangle),
                (PowerCone, DualPowerCone),
-               (SingleVariable,), # <- example of giving only one set
+               (SingleVariable,),
                (ScalarAffineFunction, ScalarQuadraticFunction),
                (VectorOfVariables,),
                (VectorAffineFunction, VectorQuadraticFunction))
@@ -35,3 +35,5 @@ include("copy.jl")
 # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
 include("contlinear.jl")
 include("contconic.jl")
+
+include("intconic.jl")
