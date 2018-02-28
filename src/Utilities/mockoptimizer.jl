@@ -256,6 +256,19 @@ loadconstraint!(mock::MockOptimizer, ci::CI, f::MOI.AbstractFunction, s::MOI.Abs
 canloadconstraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = canloadconstraint(mock.inner_model, F, S)
 
 """
+    set_mock_optimize!(mock::MockOptimizer, opt::Function...)
+
+Sets multiple optimize! function. The first is to be used the first time `MOI.optimize!(mock)` is called, the second function is to be used the second time, ...
+"""
+function set_mock_optimize!(mock::MockOptimizer, opts::Function...)
+    mock.optimize! = rec_mock_optimize(mock, opts...)
+end
+function rec_mock_optimize(mock::MockOptimizer, opt::Function, opts::Function...)
+    (mock::MockOptimizer) -> (opt(mock); mock.optimize! = rec_mock_optimize(mock, opts...))
+end
+rec_mock_optimize(mock::MockOptimizer, opt::Function) = opt
+
+"""
     mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primstatus::MOI.ResultStatusCode, varprim::Vector, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
 
 Sets the termination status of `mock` to `termstatus`, the result count to 1, the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
