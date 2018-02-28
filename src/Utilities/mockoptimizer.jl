@@ -300,6 +300,11 @@ function mock_primal!(mock::MockOptimizer, conduals::Pair...)
     mock.hasprimal = false
     mock_dual!(mock, MOI.InfeasibilityCertificate, conduals...)
 end
+function mock_primal!(mock::MockOptimizer, primstatus::MOI.ResultStatusCode, conduals::Pair...)
+    # No variable primal but a primal status
+    MOI.set!(mock, MOI.PrimalStatus(), primstatus)
+    mock_dual!(mock, MOI.InfeasibilityCertificate, conduals...)
+end
 
 # Sets constraint dual to conduals
 function mock_condual!(mock::MockOptimizer) end
