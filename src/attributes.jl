@@ -279,8 +279,8 @@ struct NumberOfVariables <: AbstractModelAttribute end
     ListOfVariableIndices()
 
 A `Vector{VariableIndex}` containing all variable indices present in the model
-(i.e., of length equal to the value of `NumberOfVariables()`), ordered by
-creation time.
+(i.e., of length equal to the value of `NumberOfVariables()`) in the order in
+which they were added.
 """
 struct ListOfVariableIndices <: AbstractModelAttribute end
 
@@ -289,7 +289,7 @@ struct ListOfVariableIndices <: AbstractModelAttribute end
 
 A `Vector{ConstraintIndex{F,S}}` containing all constraint indices of type
 `F`-in`S` in the model (i.e., of length equal to the value of
-`NumberOfConstraints{F,S}()`), ordered by creation time.
+`NumberOfConstraints{F,S}()`) in the order in which they were added.
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
