@@ -235,3 +235,33 @@ function canaddconstrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT})
     @test !MOI.canaddconstraint(model, MOI.SingleVariable, MOI.Zeros) # scalar in vector
     @test !MOI.canaddconstraint(model, MOI.VectorOfVariables, UnknownSet) # set not supported
 end
+
+"""
+    orderedindicestest(model::MOI.ModelLike)
+
+Test whether the model returns ListOfVariableIndices sorted by creation time.
+"""
+function orderedindicestest(model::MOI.ModelLike)
+    MOI.empty!(model)
+    v1 = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]
+    v2 = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1, v2]
+    MOI.delete!(model, v1)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2]
+    v3 = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3]
+
+    # Note: there are too many combinations to
+    # test, so we're just going to check
+    # SingleVariable-in-LessThan and hope it
+    # works for the rest
+    c1 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1]
+    c2 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(2.0))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1, c2]
+    MOI.delete!(model, c1)
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2]
+    c3 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(3.0))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]
+end
