@@ -276,7 +276,7 @@ mock_optimize!(optimizer::MockOptimizer, primdual...) = mock_optimize!(optimizer
 function mock_primal!(optimizer::MockOptimizer, primstatus::MOI.ResultStatusCode, varprim::Vector, dual...)
     MOI.set!(optimizer, MOI.PrimalStatus(), primstatus)
     MOI.set!(optimizer, MOI.VariablePrimal(), MOI.get(optimizer, MOI.ListOfVariableIndices()), varprim)
-    mock_dual!(optimizer, dual_args(dual...)...)
+    mock_dual!(optimizer, dual...)
 end
 function mock_primal!(optimizer::MockOptimizer, varprim::Vector, dual...)
     # Feasible primal solution
@@ -285,16 +285,7 @@ end
 function mock_primal!(optimizer::MockOptimizer, conduals::Pair...)
     # No primal solution
     optimizer.hasprimal = false
-    MOI.set!(optimizer, MOI.PrimalStatus(), MOI.InfeasiblePoint)
     mock_dual!(optimizer, MOI.InfeasibilityCertificate, conduals...)
-end
-
-# Adds default dual status if its is missing
-dual_args(dualstatus::MOI.ResultStatusCode, conduals::Pair...) = dualstatus, conduals...
-dual_args() = tuple()
-function dual_args(conduals::Pair...)
-    # Feasible dual solution
-    MOI.FeasiblePoint, conduals...
 end
 
 # Sets constraint dual to conduals
@@ -307,10 +298,15 @@ function _mock_dual!(optimizer::MockOptimizer, condual::Pair, conduals...)
     end
     _mock_dual!(optimizer, conduals...)
 end
-function mock_dual!(optimizer::MockOptimizer)
-    optimizer.hasdual = false
-end
 function mock_dual!(optimizer::MockOptimizer, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
     MOI.set!(optimizer, MOI.DualStatus(), dualstatus)
     _mock_dual!(optimizer, conduals...)
+end
+function mock_dual!(optimizer::MockOptimizer, conduals::Pair...)
+    # Feasible dual solution
+    mock_dual!(optimizer, MOI.FeasiblePoint, conduals...)
+end
+function mock_dual!(optimizer::MockOptimizer)
+    # No dual solution
+    optimizer.hasdual = false
 end
