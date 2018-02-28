@@ -15,7 +15,7 @@ abstract type ModelLike end
 Abstract supertype for objects representing an instance of an optimization problem
 tied to a particular solver. This is typically a solver's in-memory representation.
 In addition to `ModelLike`, `AbstractOptimizer` objects let you solve the
-instance and query the solution.
+model and query the solution.
 """
 abstract type AbstractOptimizer <: ModelLike end
 
@@ -40,17 +40,17 @@ function free! end
     write(model::ModelLike, filename::String)
 
 Writes the current model data to the given file.
-Supported file types depend on the solver or standalone instance type.
+Supported file types depend on the model type.
 """
 function write end
 
 """
     read!(model::ModelLike, filename::String)
 
-Read the file `filename` into the instance `instance`. If `m` is non-empty, this may
+Read the file `filename` into the model `model`. If `m` is non-empty, this may
 throw an error.
 
-Supported file types depend on the instance type.
+Supported file types depend on the model type.
 
 ### Note
 
@@ -90,7 +90,7 @@ An Enum of possible statuses returned by a `copy!` operation through the `CopyRe
 In the failure cases:
 
 - See the corresponding `message` field of the `CopyResult` for an explanation of the failure.
-- The state of the destination instance is undefined.
+- The state of the destination model is undefined.
 """
 @enum CopyStatusCode CopySuccess CopyUnsupportedAttribute CopyUnsupportedConstraint CopyOtherError
 
@@ -101,7 +101,7 @@ In the failure cases:
         indexmap::T     # Only valid if status is CopySuccess
     end
 
-A struct returned by `copy!` to indicate success or failure. If success, also exposes a map between the variable and constraint indices of the two instances.
+A struct returned by `copy!` to indicate success or failure. If success, also exposes a map between the variable and constraint indices of the two models.
 """
 struct CopyResult{T}
     status::CopyStatusCode
@@ -154,5 +154,9 @@ include("attributes.jl")
 include("objectives.jl")
 include("variables.jl")
 include("nlp.jl")
+
+# submodules
+include("Test/Test.jl")           # MOI.Test
+include("Utilities/Utilities.jl") # MOI.Utilities
 
 end

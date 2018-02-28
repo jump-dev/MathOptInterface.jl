@@ -49,17 +49,27 @@ where:
 * the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by [`AbstractSet`](@ref MathOptInterface.AbstractSet) objects
 
 The current function types are:
-* **projection onto a single coordinate**: ``x_j``, a single variable defined by a variable index
-* **projection onto multiple coordinates**: a subvector of variables defined by a list of variable indices
-* **scalar-valued affine**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
-* **vector-valued affine**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
-* **scalar-valued quadratic**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
-* **vector-valued quadratic**: a vector of scalar-valued quadratic expressions
+* **[`SingleVariable`](@ref MathOptInterface.SingleVariable)**: ``x_j``, i.e., projection onto a single coordinate defined by a variable index ``j``
+* **[`VectorOfVariables`](@ref MathOptInterface.VectorOfVariables)**: projection onto multiple coordinates (i.e., extracting a subvector)
+* **[`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction)**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
+* **[`VectorAffineFunction`](@ref MathOptInterface.VectorAffineFunction)**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
+* **[`ScalarQuadraticFunction`](@ref MathOptInterface.ScalarQuadraticFunction)**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
+* **[`VectorQuadraticFunction`](@ref MathOptInterface.VectorQuadraticFunction)**: a vector of scalar-valued quadratic functions
 
 Extensions for nonlinear programming are present but not yet well documented.
 
 MOI defines some commonly used sets, but the interface is extensible to other sets recognized by the solver.
-[Describe currently supported sets.]
+
+[TODO: finish list of currently supported sets, or at least important ones.]
+
+* **[`LessThan(upper)`](@ref MathOptInterface.LessThan)**: ``\{ x \in \mathbb{R} : x \le \mbox{upper} \}``
+* **[`GreaterThan(lower)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x \ge \mbox{lower} \}``
+* **[`EqualTo(value)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x = \mbox{value} \}``
+* **[`Interval(lower, upper)`](@ref MathOptInterface.Interval)**: ``\{ x \in \mathbb{R} : x \in [\mbox{lower},\mbox{upper}] \}``
+* **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**: ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
+* **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
+* **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
+
 
 ## The `ModelLike` and `AbstractOptimizer` APIs
 
@@ -464,11 +474,15 @@ See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefin
 
 [Explain `modifyconstraint!` and `modifyobjective!`.]
 
-### Implementing a solver interface
+## Implementing a solver interface
 
 [The interface is designed for multiple dispatch, e.g., attributes, combinations of sets and functions.]
 
 [Avoid storing extra copies of the problem when possible.]
+
+[`copy!`]
+
+### JuMP mapping
 
 MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) The following bullet points show examples of how JuMP constraints are translated into MOI function-set pairs:
  - `@constraint(m, 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`LessThan`;
@@ -492,13 +506,27 @@ Therefore, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessT
 
 - Two `SingleVariable`-in-`LessThan` constraints applied to the same variable (similarly with `GreaterThan`). These should be interpreted as variable bounds, and each variable naturally has at most one upper or lower bound.
 
+### Column Generation
+
 There is no special interface for column generation. If the solver has a special API for setting
 coefficients in existing constraints when adding a new variable, it is possible
 to queue modifications and new variables and then call the solver's API once all of the
 new coefficients are known.
 
+### Problem data
+
 All data passed to the solver should be copied immediately to internal data structures. Solvers may not modify any input vectors and should not assume that input vectors will not be modified by users in the future. This applies, for example, to the coefficient vector in `ScalarAffineFunction`. Vectors returned to the user, e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes should not be modified by the solver afterwards. The in-place version of `get!` can be used by users to avoid extra copies in this case.
 
+### Statuses
+
 Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NearlyFeasiblePoint`, `InfeasiblePoint`, `NearlyInfeasiblePoint`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
+
+### canXXX
+
+For most operations, MOI provides a function `canXXX` that can be used to check if the operation `XXX` is allowed. 
+For example, `addconstraint!(model::ModelLike, func::F, set::S)` has the corresponding function `canaddconstraint(model, ::Type{F}, ::Type{S})::Bool`. 
+If `canaddconstraint` returns `false`, then calling `addconstraint!` must throw an error (likewise with all `XXX` and `canXXX` pairs). Note that even if `canaddconstraint` returns `true`, `addconstraint!` may still throw an error if, for example, the constraint function does not meet some sparsity conditions, one of the coefficients is `NaN`, or an invalid variable index is provided. This is because (in most cases) the `canXXX` method receives type information instead of the actual arguments.
+
+### Package Naming
 
 MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example). In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.
