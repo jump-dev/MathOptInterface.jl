@@ -289,18 +289,18 @@ function mock_primal!(optimizer::MockOptimizer, conduals::Pair...)
 end
 
 # Sets constraint dual to conduals
-function _mock_dual!(optimizer::MockOptimizer) end
-function _mock_dual!(optimizer::MockOptimizer, condual::Pair, conduals...)
+function mock_condual!(optimizer::MockOptimizer) end
+function mock_condual!(optimizer::MockOptimizer, condual::Pair, conduals...)
     F, S = condual.first
     duals = condual.second
     for (i, ci) in enumerate(MOI.get(optimizer, MOI.ListOfConstraintIndices{F, S}()))
         MOI.set!(optimizer, MOI.ConstraintDual(), ci, duals[i])
     end
-    _mock_dual!(optimizer, conduals...)
+    mock_condual!(optimizer, conduals...)
 end
 function mock_dual!(optimizer::MockOptimizer, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
     MOI.set!(optimizer, MOI.DualStatus(), dualstatus)
-    _mock_dual!(optimizer, conduals...)
+    mock_condual!(optimizer, conduals...)
 end
 function mock_dual!(optimizer::MockOptimizer, conduals::Pair...)
     # Feasible dual solution
