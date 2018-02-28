@@ -239,7 +239,8 @@ end
 """
     orderedindicestest(model::MOI.ModelLike)
 
-Test whether the model returns ListOfVariableIndices sorted by creation time.
+Test whether the model returns ListOfVariableIndices and ListOfConstraintIndices
+sorted by creation time.
 """
 function orderedindicestest(model::MOI.ModelLike)
     MOI.empty!(model)
