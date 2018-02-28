@@ -17,6 +17,9 @@ end
     MOIT.canaddconstrainttest(Model{Int}(), Int, Float64)
 end
 
+@testset "OrderedIndices" begin
+    MOIT.orderedindicestest(Model{Float64}())
+end
 
 @testset "Continuous Linear tests" begin
     config = MOIT.TestConfig(solve=false)
