@@ -1427,19 +1427,19 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
 end
 
 const contlineartests = Dict("linear1" => linear1test,
-                              "linear2" => linear2test,
-                              "linear3" => linear3test,
-                              "linear4" => linear4test,
-                              "linear5" => linear5test,
-                              "linear6" => linear6test,
-                              "linear7" => linear7test,
-                              "linear8a" => linear8atest,
-                              "linear8b" => linear8btest,
-                              "linear8c" => linear8ctest,
-                              "linear9" => linear9test,
-                              "linear10" => linear10test,
-                              "linear11" => linear11test,
-                              "linear12" => linear12test,
-                              "linear13" => linear13test)
+                             "linear2" => linear2test,
+                             "linear3" => linear3test,
+                             "linear4" => linear4test,
+                             "linear5" => linear5test,
+                             "linear6" => linear6test,
+                             "linear7" => linear7test,
+                             "linear8a" => linear8atest,
+                             "linear8b" => linear8btest,
+                             "linear8c" => linear8ctest,
+                             "linear9" => linear9test,
+                             "linear10" => linear10test,
+                             "linear11" => linear11test,
+                             "linear12" => linear12test,
+                             "linear13" => linear13test)
 
 @moitestset contlinear
