@@ -57,8 +57,8 @@ Supported file types depend on the model type.
 Once the contents of the file are loaded into the model, users can query the variables via
 `get(model, ListOfVariableIndices())`. However, some filetypes, such as LP files, do not
 maintain an explicit ordering of the variables. Therefore, the returned list may be in an
-arbitrary order. To guarantee the ordering of the returned indices, users should look up
-up each variable index by name: `get(model, VariableIndex, "name")`.
+arbitrary order. To avoid depending on the order of the indices, users should look up each
+variable index by name: `get(model, VariableIndex, "name")`.
 """
 function read! end
 
