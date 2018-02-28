@@ -233,6 +233,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [-1, 0, 2] atol=atol rtol=rtol
     end
 
     # put lb of x back to 0 and fix z to zero to get :
@@ -263,6 +266,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0, 0] atol=atol rtol=rtol
     end
 
     # modify affine linear constraint set to be == 2 to get :
@@ -292,6 +298,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2, 0, 0] atol=atol rtol=rtol
     end
 
     # modify objective function to x + 2y to get :
@@ -520,6 +529,9 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 3 atol=atol rtol=rtol
     end
 
     # max  x
@@ -562,6 +574,9 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 0 atol=atol rtol=rtol
     end
 end
 
