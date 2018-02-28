@@ -11,10 +11,10 @@ include("interval.jl")
 # Needed by test spread over several files, defining it here make it easier to comment out tests
 # Model supporting every MOI functions and sets
 MOIU.@model(Model,
-               (ZeroOne,),
+               (ZeroOne, Integer),
                (EqualTo, GreaterThan, LessThan, Interval),
                (Reals, Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, RootDetConeTriangle, LogDetConeTriangle),
-               (PowerCone, DualPowerCone),
+               (PowerCone, DualPowerCone, SOS1, SOS2),
                (SingleVariable,),
                (ScalarAffineFunction, ScalarQuadraticFunction),
                (VectorOfVariables,),
@@ -36,4 +36,5 @@ include("copy.jl")
 include("contlinear.jl")
 include("contconic.jl")
 
+include("intlinear.jl")
 include("intconic.jl")
