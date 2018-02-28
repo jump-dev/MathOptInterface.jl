@@ -269,51 +269,57 @@ end
 rec_mock_optimize(mock::MockOptimizer, opt::Function) = opt
 
 """
-    mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primstatus::MOI.ResultStatusCode, varprim::Vector, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
+    mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, (primstatus::MOI.ResultStatusCode, varprim::Vector), dualstatus::MOI.ResultStatusCode, conduals::Pair...)
 
-Sets the termination status of `mock` to `termstatus`, the result count to 1, the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
+Sets the termination status of `mock` to `termstatus` and the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
 The primal values of the variables in the order returned by `ListOfVariableIndices` are set to `varprim`.
 If `termstatus` is missing, it is assumed to be `MOI.Success`.
-If `primstatus` (resp. `dualstatus`) is missing, it is assumed to be `MOI.FeasiblePoint`.
+If `primstatus` is missing, it is assumed to be `MOI.FeasiblePoint`.
+If `dualstatus` is missing, it is assumed to be `MOI.FeasiblePoint` if there is a primal solution and `primstatus` is not `MOI.InfeasiblePoint`, otherwise it is `MOI.InfeasibilityCertificate`.
 The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
-If `primstatus`, `varprim` and `dualstatus`, the problem is assumed to be infeasible with the infeasibility certificate contained in `conduals`.
 """
-function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primdual...)
+function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primal, dual...)
     MOI.set!(mock, MOI.TerminationStatus(), termstatus)
     MOI.set!(mock, MOI.ResultCount(), 1)
-    mock_primal!(mock, primdual...)
-end
-mock_optimize!(mock::MockOptimizer, primdual...) = mock_optimize!(mock, MOI.Success, primdual...)
-
-# Sets variable primal to varprim
-function mock_primal!(mock::MockOptimizer, primstatus::MOI.ResultStatusCode, varprimdual...)
-    MOI.set!(mock, MOI.PrimalStatus(), primstatus)
-    mock_varprimal!(mock, varprimdual...)
-end
-# Shortcut for feasible primal solution
-mock_primal!(mock::MockOptimizer, varprim::Vector, dual...) = mock_primal!(mock, MOI.FeasiblePoint, varprim, dual...)
-function mock_primal!(mock::MockOptimizer, conduals::Pair...)
-    # No primal solution
-    mock.hasprimal = false
-    mock_varprimal!(mock, conduals...)
-end
-
-# Sets variable primal to varprim
-function mock_varprimal!(mock::MockOptimizer, varprim::Vector, dual...)
-    MOI.set!(mock, MOI.VariablePrimal(), MOI.get(mock, MOI.ListOfVariableIndices()), varprim)
+    mock_primal!(mock, primal)
     mock_dual!(mock, dual...)
 end
-function mock_varprimal!(mock::MockOptimizer, conduals::Pair...)
-    # No variable primal
-    mock_dual!(mock, MOI.InfeasibilityCertificate, conduals...)
+# Default termination status
+mock_optimize!(mock::MockOptimizer, primdual...) = mock_optimize!(mock, MOI.Success, primdual...)
+function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode)
+    MOI.set!(mock, MOI.TerminationStatus(), termstatus)
+    MOI.set!(mock, MOI.ResultCount(), 0)
 end
 
+# Primal
+mock_primal!(mock, primal::Tuple) = mock_primal!(mock, primal...)
+function mock_primal!(mock::MockOptimizer, primstatus::MOI.ResultStatusCode, varprim::Vector...)
+    MOI.set!(mock, MOI.PrimalStatus(), primstatus)
+    mock_varprimal!(mock, varprim...)
+end
+# Default primal status
+mock_primal!(mock::MockOptimizer, varprim::Vector) = mock_primal!(mock, MOI.FeasiblePoint, varprim)
+function mock_primal!(mock::MockOptimizer)
+    # No primal solution
+    mock.hasprimal = false
+end
+
+# Sets variable primal to varprim
+function mock_varprimal!(mock::MockOptimizer) end
+function mock_varprimal!(mock::MockOptimizer, varprim::Vector)
+    MOI.set!(mock, MOI.VariablePrimal(), MOI.get(mock, MOI.ListOfVariableIndices()), varprim)
+end
+
+# Dual
 function mock_dual!(mock::MockOptimizer, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
     MOI.set!(mock, MOI.DualStatus(), dualstatus)
     mock_condual!(mock, conduals...)
 end
-# Shortcut for feasible dual solution
-mock_dual!(mock::MockOptimizer, conduals::Pair...) = mock_dual!(mock, MOI.FeasiblePoint, conduals...)
+# Default dual status
+function mock_dual!(mock::MockOptimizer, conduals::Pair...)
+    status = !mock.hasprimal || MOI.get(mock, MOI.PrimalStatus()) == MOI.InfeasiblePoint ? MOI.InfeasibilityCertificate : MOI.FeasiblePoint
+    mock_dual!(mock, status, conduals...)
+end
 function mock_dual!(mock::MockOptimizer)
     # No dual solution
     mock.hasdual = false
