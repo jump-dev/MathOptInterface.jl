@@ -8,24 +8,31 @@ Returns the value of function `f` if each variable index `vi` is evaluate as `va
 function evalvariables end
 evalvariables(varval::Function, f::MOI.SingleVariable) = varval(f.variable)
 evalvariables(varval::Function, f::MOI.VectorOfVariables) = varval.(f.variables)
-evalvariables(varval::Function, f::MOI.ScalarAffineFunction) = dot(varval.(f.variables), f.coefficients) + f.constant
+evalvariables(varval::Function, f::MOI.ScalarAffineFunction) = sum(evalterm.(varval, f.variables, f.coefficients)) + f.constant
 function evalvariables(varval::Function, f::MOI.VectorAffineFunction)
     out = copy(f.constant)
     for i in eachindex(f.variables)
-        out[f.outputindex[i]] += varval(f.variables[i]) * f.coefficients[i]
+        out[f.outputindex[i]] += evalterm(varval, f.variables[i], f.coefficients[i])
     end
     out
 end
-evalvariables(varval::Function, f::MOI.ScalarQuadraticFunction) = dot(varval.(f.affine_variables), f.affine_coefficients) + dot(varval.(f.quadratic_rowvariables) .* varval.(f.quadratic_colvariables), f.quadratic_coefficients) + f.constant
+evalvariables(varval::Function, f::MOI.ScalarQuadraticFunction) = sum(evalterm.(varval, f.affine_variables, f.affine_coefficients)) + sum(evalterm.(varval, f.quadratic_rowvariables, f.quadratic_colvariables, f.quadratic_coefficients)) + f.constant
 function evalvariables(varval::Function, f::MOI.VectorQuadraticFunction)
     out = copy(f.constant)
     for i in eachindex(f.affine_variables)
         out[f.affine_outputindex[i]] += varval(f.affine_variables[i]) * f.affine_coefficients[i]
     end
     for i in eachindex(f.quadratic_outputindex)
-        out[f.quadratic_outputindex[i]] += varval(f.quadratic_rowvariables[i]) * varval(f.quadratic_colvariables[i]) * f.quadratic_coefficients[i]
+        out[f.quadratic_outputindex[i]] += evalterm(varval, f.quadratic_rowvariables[i], f.quadratic_colvariables[i], f.quadratic_coefficients[i])
     end
     out
+end
+# Affine term
+evalterm(varval::Function, vi::MOI.VariableIndex, coefficient) = varval(vi) * coefficient
+# Quadratic term
+function evalterm(varval::Function, virow::MOI.VariableIndex, vicol::MOI.VariableIndex, coefficient)
+    t = varval(virow) * varval(vicol) * coefficient
+    virow == vicol ? t/2 : t
 end
 
 mapvariables(varmap::Function, f::MOI.SingleVariable) = MOI.SingleVariable(varmap(f.variable))
