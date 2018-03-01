@@ -1593,6 +1593,14 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
             @test Qv[3] ≈ 0. atol=atol rtol=rtol
         end
         @test Qv[end] ≈ 1. atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(cX))
+        tQv = MOI.get(model, MOI.ConstraintPrimal(), cX)
+        @test tQv[1] ≈ expectedobjval atol=atol rtol=rtol
+        @test tQv[2:end] ≈ Qv atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ [0., 0.] atol=atol rtol=rtol
     end
 end
 
