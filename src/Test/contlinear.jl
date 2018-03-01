@@ -1212,6 +1212,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 10.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 10 atol=atol rtol=rtol
 
         if config.duals
             @test MOI.get(model, MOI.ResultCount()) >= 1
@@ -1233,6 +1235,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 5.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 5 atol=atol rtol=rtol
 
         if config.duals
             @test MOI.get(model, MOI.ResultCount()) >= 1
@@ -1252,6 +1256,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
     end
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1265,6 +1271,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 12.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 12 atol=atol rtol=rtol
     end
 end
 
