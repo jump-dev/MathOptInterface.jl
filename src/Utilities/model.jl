@@ -3,7 +3,7 @@ const C{F, S} = Tuple{CI{F, S}, F, S}
 const EMPTYSTRING = ""
 
 # Implementation of MOI for vector of constraint
-function _addconstraint!{F, S}(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S)
+function _addconstraint!(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S) where {F, S}
     push!(constrs, (ci, f, s))
     length(constrs)
 end
