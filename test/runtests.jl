@@ -33,6 +33,8 @@ include("copy.jl")
 
 # Test submodule tests
 # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
+include("config.jl")
+
 include("contlinear.jl")
 include("contconic.jl")
 include("contquadratic.jl")
