@@ -253,6 +253,8 @@ function MOI.isempty(model::AbstractModel)
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
 
+MOI.supports(::AbstractModel, ::MOI.ObjectiveFunction) = true
+MOI.supportsconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 MOI.copy!(dest::AbstractModel, src::MOI.ModelLike) = defaultcopy!(dest, src)
 
 # Allocate-Load Interface

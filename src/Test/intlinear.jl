@@ -13,7 +13,11 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     #         y is integer: 0 <= y <= 10
     #         z is binary
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64}), (MOI.SingleVariable, MOI.ZeroOne), (MOI.SingleVariable, MOI.Integer)])
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.Integer)
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -109,10 +113,10 @@ Base.isapprox(a::T, b::T; kwargs...) where T <: Union{MOI.SOS1, MOI.SOS2} = isap
 function int2test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [ (MOI.VectorOfVariables, MOI.SOS1),
-    #                                                                    (MOI.VectorOfVariables, MOI.SOS2) ])
     @testset "SOSI" begin
-        #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorOfVariables,MOI.SOS1), (MOI.SingleVariable,MOI.LessThan{Float64})])
+        @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+        @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.SOS1{Float64})
+        @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
 
         MOI.empty!(model)
         @test MOI.isempty(model)
@@ -199,15 +203,11 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         end
     end
     @testset "SOSII" begin
-        #@test MOI.supportsproblem(model,
-        #    MOI.ScalarAffineFunction{Float64},
-        #    [
-        #        (MOI.VectorOfVariables,MOI.SOS1),
-        #        (MOI.VectorOfVariables,MOI.SOS2),
-        #        (MOI.SingleVariable, MOI.ZeroOne),
-        #        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
-        #        ]
-        #)
+        @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+        @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.SOS1{Float64})
+        @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.SOS2{Float64})
+        @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
+        @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
         MOI.empty!(model)
         @test MOI.isempty(model)
@@ -325,14 +325,11 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
-    #    [
-    #        (MOI.SingleVariable,MOI.ZeroOne),
-    #        (MOI.SingleVariable,MOI.Integer),
-    #        (MOI.SingleVariable,MOI.Interval{Float64}),
-    #        (MOI.ScalarAffineFunction{Float64},MOI.Interval{Float64})
-    #    ]
-    #)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.Integer)
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.Interval{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
 
     MOI.canaddvariable(model)
     z = MOI.addvariable!(model)
@@ -397,7 +394,9 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.SingleVariable,MOI.ZeroOne),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 5)

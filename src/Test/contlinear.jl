@@ -9,7 +9,12 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
     #       x, y >= 0   (x, y ∈ Nonnegatives)
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     #@test MOI.get(model, MOI.SupportsAddConstraintAfterSolve())
     #@test MOI.get(model, MOI.SupportsAddVariableAfterSolve())
@@ -418,7 +423,9 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x + y <= 1
     # x, y >= 0
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -492,6 +499,12 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     # min  x
     # s.t. x >= 0
     #      x >= 3
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -585,7 +598,9 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.SingleVariable,MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.LessThan{Float64})])
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -671,6 +686,10 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     #        x >= 0, y >= 0
     #
     #   solution: x = 1.3333333, y = 1.3333333, objv = 2.66666666
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -809,7 +828,9 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64})])
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -880,7 +901,9 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives),(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)])
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
+    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -953,7 +976,10 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
     # min x
     # s.t. 2x+y <= -1
     # x,y >= 0
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1010,7 +1036,10 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
     # min -x-y
     # s.t. -x+2y <= 0
     # x,y >= 0
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1057,7 +1086,10 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
     # min -x-y
     # s.t. x-y == 0
     # x,y >= 0
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1115,13 +1147,11 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
     #
     #   solution: (59.0909, 36.3636)
     #   objv: 71818.1818
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
-    #    [
-    #        (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),
-    #        (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),
-    #        (MOI.SingleVariable,MOI.GreaterThan{Float64})
-    #    ]
-    #)
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1178,12 +1208,10 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     #
     #       s.t.  5 <= x + y <= 10
     #                  x,  y >= 0
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
-    #    [
-    #        (MOI.ScalarAffineFunction{Float64},MOI.Interval{Float64}),
-    #        (MOI.SingleVariable,MOI.GreaterThan{Float64})
-    #    ]
-    #)
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1289,12 +1317,10 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     # min x + y
     # st   x + y >= 1
     #      x + y >= 2
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
-    #    [
-    #        (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}),
-    #        (MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64})
-    #    ]
-    #)
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1344,7 +1370,10 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
     # s.t. 2x-3y <= -7
     #      y <= 2
     # x,y >= 0
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}),(MOI.SingleVariable,MOI.GreaterThan{Float64})])
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -1404,8 +1433,12 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
     # s.t. 2x + 3y >= 1
     #      x - y == 0
 
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+
     MOI.empty!(model)
     @test MOI.isempty(model)
+
     @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.canaddvariable(model)

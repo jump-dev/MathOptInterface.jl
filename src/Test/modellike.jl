@@ -165,10 +165,22 @@ function failcopytest(dest::MOI.ModelLike, src::MOI.ModelLike, expected_status)
     @test copyresult.status == expected_status
 end
 
-failcopytestc(dest::MOI.ModelLike) = failcopytest(dest, BadConstraintModel(), MOI.CopyUnsupportedConstraint)
-failcopytestia(dest::MOI.ModelLike) = failcopytest(dest, BadModelAttributeModel(), MOI.CopyUnsupportedAttribute)
-failcopytestva(dest::MOI.ModelLike) = failcopytest(dest, BadVariableAttributeModel(), MOI.CopyUnsupportedAttribute)
-failcopytestca(dest::MOI.ModelLike) = failcopytest(dest, BadConstraintAttributeModel(), MOI.CopyUnsupportedAttribute)
+function failcopytestc(dest::MOI.ModelLike)
+    @test !MOI.supportsconstraint(dest, MOI.SingleVariable, UnknownSet)
+    failcopytest(dest, BadConstraintModel(), MOI.CopyUnsupportedConstraint)
+end
+function failcopytestia(dest::MOI.ModelLike)
+    @test !MOI.supports(dest, BadModelAttribute())
+    failcopytest(dest, BadModelAttributeModel(), MOI.CopyUnsupportedAttribute)
+end
+function failcopytestva(dest::MOI.ModelLike)
+    @test !MOI.supports(dest, BadVariableAttribute(), MOI.VariableIndex)
+    failcopytest(dest, BadVariableAttributeModel(), MOI.CopyUnsupportedAttribute)
+end
+function failcopytestca(dest::MOI.ModelLike)
+    @test !MOI.supports(dest, BadConstraintAttribute(), MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
+    failcopytest(dest, BadConstraintAttributeModel(), MOI.CopyUnsupportedAttribute)
+end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.canaddvariable(src)
@@ -179,6 +191,12 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     cva = MOI.addconstraint!(src, MOI.VectorAffineFunction([1, 2], [v[3], v[2]], ones(2), [-3.0,-2.0]), MOI.Zeros(2))
     MOI.set!(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
     MOI.set!(src, MOI.ObjectiveSense(), MOI.MinSense)
+
+    @test MOI.supports(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(dest, MOI.SingleVariable, MOI.EqualTo{Float64})
+    @test MOI.supportsconstraint(dest, MOI.VectorOfVariables, MOI.Nonnegatives)
+    @test MOI.supportsconstraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
     copyresult = MOI.copy!(dest, src)
     @test copyresult.status == MOI.CopySuccess
