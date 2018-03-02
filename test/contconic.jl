@@ -112,14 +112,24 @@
         MOIT.exp3test(mock, config)
     end
     @testset "PSD" begin
+        # PSD0
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(3),
                               (MOI.VectorOfVariables,             MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
                               (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
-        MOIT.sdp0tvtest(mock, config)
+        MOIT.psdt0vtest(mock, config)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(3),
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
                               (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
-        MOIT.sdp0tftest(mock, config)
+        MOIT.psdt0ftest(mock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+                              (MOI.VectorOfVariables,             MOI.PositiveSemidefiniteConeSquare)   => [[1, -1, -1, 1]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
+        MOIT.psds0vtest(mock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare)   => [[1, -1, -1, 1]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
+        MOIT.psds0ftest(mock, config)
+        # PSD1
         δ = √(1 + (3*√2+2)*√(-116*√2+166) / 14) / 2
         ε = √((1 - 2*(√2-1)*δ^2) / (2-√2))
         y2 = 1 - ε*δ
@@ -131,16 +141,33 @@
         β = k*α
         Xv = [α^2, α*β, β^2, α^2, α*β, α^2]
         xv = [√2*x2, x2, x2]
+        cX0 = 1+(√2-1)*y2
+        cX1 = 1-y2
+        cX2 = -y2
+        cXv = [cX0, cX1, cX0, cX2, cX1, cX0]
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [Xv; xv],
-                              (MOI.VectorOfVariables,             MOI.PositiveSemidefiniteConeTriangle) => [[1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2]],
-                              (MOI.VectorOfVariables,             MOI.SecondOrderCone                 ) => [[1-y1, -y2, -y2]],
-                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}                ) => [y1, y2])
-        MOIT.sdp1tvtest(mock, config)
+                              (MOI.VectorOfVariables,             MOI.PositiveSemidefiniteConeTriangle) => [cXv],
+                              (MOI.VectorOfVariables,             MOI.SecondOrderCone)                  => [[1-y1, -y2, -y2]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [y1, y2])
+        MOIT.psdt1vtest(mock, config)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [Xv; xv],
-                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1+(√2-1)*y2, 1-y2, 1+(√2-1)*y2, -y2, 1-y2, 1+(√2-1)*y2]],
-                              (MOI.VectorOfVariables,             MOI.SecondOrderCone                 ) => [[1-y1, -y2, -y2]],
-                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}                ) => [y1, y2])
-        MOIT.sdp1tftest(mock, config)
+                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [cXv],
+                              (MOI.VectorOfVariables,             MOI.SecondOrderCone)                  => [[1-y1, -y2, -y2]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [y1, y2])
+        MOIT.psdt1ftest(mock, config)
+        Xv = [α^2, α*β, α^2, α*β, β^2, α*β, α^2, α*β, α^2]
+        cXv = [cX0, cX1, cX2, cX1, cX0, cX1, cX2, cX1, cX0]
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [Xv; xv],
+                              (MOI.VectorOfVariables,             MOI.PositiveSemidefiniteConeSquare)   => [cXv],
+                              (MOI.VectorOfVariables,             MOI.SecondOrderCone)                  => [[1-y1, -y2, -y2]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [y1, y2])
+        MOIT.psds1vtest(mock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [Xv; xv],
+                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare)   => [cXv],
+                              (MOI.VectorOfVariables,             MOI.SecondOrderCone)                  => [[1-y1, -y2, -y2]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [y1, y2])
+        MOIT.psds1ftest(mock, config)
+        # PSD2
         η = 10.0
         α = 0.8
         δ = 0.9
@@ -149,12 +176,17 @@
                               (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)                     => [[0, -α/√3+δ/(2*√6)*(2*√2-1), 0, -3δ*(1-1/√3)/8, -3δ*(1-1/√3)/8, -δ*(3 - 2*√3 + 1/√3)/8]],
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[(1-1/√3)/2, 1/√6, (1+1/√3)/2]],
                               (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [0])
-        MOIT.sdp2test(mock, config)
+        MOIT.psdt2test(mock, config)
     end
     @testset "LogDet and RootDet" begin
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1])
-        MOIT.logdettest(mock, config)
+        MOIT.logdetttest(mock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 0, 1])
+        MOIT.logdetstest(mock, config)
+
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1])
-        MOIT.rootdettest(mock, config)
+        MOIT.rootdetttest(mock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 0, 1])
+        MOIT.rootdetstest(mock, config)
     end
 end

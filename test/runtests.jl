@@ -13,7 +13,7 @@ include("interval.jl")
 MOIU.@model(Model,
                (ZeroOne, Integer),
                (EqualTo, GreaterThan, LessThan, Interval),
-               (Reals, Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, RootDetConeTriangle, LogDetConeTriangle),
+               (Reals, Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare, RootDetConeTriangle, RootDetConeSquare, LogDetConeTriangle, LogDetConeSquare),
                (PowerCone, DualPowerCone, SOS1, SOS2),
                (SingleVariable,),
                (ScalarAffineFunction, ScalarQuadraticFunction),
