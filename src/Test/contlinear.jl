@@ -1250,6 +1250,11 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.canmodifyconstraint(model, c, MOI.Interval{Float64})
     MOI.modifyconstraint!(model, c, MOI.Interval(2.0, 12.0))
 
+    if config.query
+        @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.Interval(2.0, 12.0)
+    end
+
     if config.solve
         MOI.optimize!(model)
 
