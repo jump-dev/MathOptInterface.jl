@@ -142,16 +142,22 @@ MOI.get(src::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVari
 struct BadModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
 MOI.canget(src::BadModelAttributeModel, ::BadModelAttribute) = true
+# During copy(dest, src::BadModelAttributeModel), canget(src, ...) will return true but canset(dest, ...) will return false.
+# In this case, a correct implementation of copy shouldn't call get(src, ...) since the result will not be used as it won't do set!(dest, ...).
+# If get(src::BadModelAttributeModel, ::BadModelAttribute) is defined here, a bad implementation of copy would pass the test.
+# As it is not defined, the bad implementation will get UndefinedMethod
 MOI.get(src::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[BadModelAttribute()]
 
 struct BadVariableAttribute <: MOI.AbstractVariableAttribute end
 struct BadVariableAttributeModel <: BadModel end
 MOI.canget(src::BadVariableAttributeModel, ::BadVariableAttribute, ::Type{MOI.VariableIndex}) = true
+# MOI.get is not defined for BadVariableAttribute for the same reason get is not defined BadModelAttribute
 MOI.get(src::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[BadVariableAttribute()]
 
 struct BadConstraintAttribute <: MOI.AbstractConstraintAttribute end
 struct BadConstraintAttributeModel <: BadModel end
 MOI.canget(src::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
+# MOI.get is not defined for BadConstraintAttribute for the same reason get is not defined BadModelAttribute
 MOI.get(src::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[BadConstraintAttribute()]
 
 function failcopytest(dest::MOI.ModelLike, src::MOI.ModelLike, expected_status)
