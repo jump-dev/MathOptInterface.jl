@@ -142,19 +142,16 @@ MOI.get(src::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVari
 struct BadModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
 MOI.canget(src::BadModelAttributeModel, ::BadModelAttribute) = true
-MOI.get(src::BadModelAttributeModel, ::BadModelAttribute) = 0
 MOI.get(src::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[BadModelAttribute()]
 
 struct BadVariableAttribute <: MOI.AbstractVariableAttribute end
 struct BadVariableAttributeModel <: BadModel end
 MOI.canget(src::BadVariableAttributeModel, ::BadVariableAttribute, ::Type{MOI.VariableIndex}) = true
-MOI.get(src::BadVariableAttributeModel, ::BadVariableAttribute, ::Vector{MOI.VariableIndex}) = [0]
 MOI.get(src::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[BadVariableAttribute()]
 
 struct BadConstraintAttribute <: MOI.AbstractConstraintAttribute end
 struct BadConstraintAttributeModel <: BadModel end
 MOI.canget(src::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
-MOI.get(src::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Vector{<:MOI.ConstraintIndex}) = [0]
 MOI.get(src::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[BadConstraintAttribute()]
 
 function failcopytest(dest::MOI.ModelLike, src::MOI.ModelLike, expected_status)
