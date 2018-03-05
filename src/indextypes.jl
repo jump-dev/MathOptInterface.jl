@@ -48,8 +48,10 @@ Delete the referenced objects in the vector `indices` from the model.
 It may be assumed that `R` is a concrete type.
 """
 Base.delete!(model::ModelLike, index::Index) = throw(MethodError(Base.delete!, (model, index)))
+
+candelete(model::ModelLike, indices::Vector{<:Index}) = all(candelete.(model, indices))
 function Base.delete!(model::ModelLike, indices::Vector{<:Index})
     for index in indices
-        Base.delete!(model, indices)
+        Base.delete!(model, index)
     end
 end
