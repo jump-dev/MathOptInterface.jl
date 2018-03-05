@@ -33,8 +33,8 @@ macro moitestset(setname, subsets=false)
     else
         runtest = :( f(model, config) )
     end
-    :(
-        function $testname(model::MOI.ModelLike, config::TestConfig, exclude::Vector{String} = String[])
+    esc(:(
+        function $testname(model::$MOI.ModelLike, config::$MOI.Test.TestConfig, exclude::Vector{String} = String[])
             for (name,f) in $testdict
                 if name in exclude
                     continue
@@ -44,5 +44,5 @@ macro moitestset(setname, subsets=false)
                 end
             end
         end
-    )
+    ))
 end

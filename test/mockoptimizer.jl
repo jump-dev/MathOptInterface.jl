@@ -1,9 +1,3 @@
-@testset "Mock optimizer continuous linear tests" begin
-    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
-    config = MOIT.TestConfig(solve=false)
-    MOIT.contlineartest(optimizer, config)
-end
-
 @testset "Mock optimizer optimizer attributes" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.canset(optimizer, MOIU.MockModelAttribute())

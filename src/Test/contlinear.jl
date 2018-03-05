@@ -18,7 +18,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
@@ -148,7 +148,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x + y + z <= 1
     # x,y,z >= 0
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     z = MOI.addvariable!(model)
     push!(v, z)
     @test v[3] == z
@@ -233,6 +233,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [-1, 0, 2] atol=atol rtol=rtol
     end
 
     # put lb of x back to 0 and fix z to zero to get :
@@ -263,6 +266,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0, 0] atol=atol rtol=rtol
     end
 
     # modify affine linear constraint set to be == 2 to get :
@@ -292,6 +298,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2, 0, 0] atol=atol rtol=rtol
     end
 
     # modify objective function to x + 2y to get :
@@ -434,9 +443,9 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -507,7 +516,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
@@ -540,6 +549,9 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 3 atol=atol rtol=rtol
     end
 
     # max  x
@@ -549,7 +561,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
@@ -582,6 +594,9 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 0 atol=atol rtol=rtol
     end
 end
 
@@ -595,9 +610,9 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     # Min  x - y
@@ -680,9 +695,9 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -819,9 +834,9 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     # Min  x - y
@@ -890,9 +905,9 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     # Min  x - y
@@ -963,9 +978,9 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     c = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [2.0,1.0], 0.0), MOI.LessThan(-1.0))
@@ -1020,9 +1035,9 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [-1.0,2.0], 0.0), MOI.LessThan(0.0))
@@ -1067,9 +1082,9 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
     MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [1.0,-1.0], 0.0), MOI.EqualTo(0.0))
@@ -1131,9 +1146,9 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     MOI.addconstraints!(model,
@@ -1193,9 +1208,9 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     MOI.addconstraints!(model,
@@ -1217,6 +1232,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 10.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 10 atol=atol rtol=rtol
 
         if config.duals
             @test MOI.get(model, MOI.ResultCount()) >= 1
@@ -1238,6 +1255,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 5.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 5 atol=atol rtol=rtol
 
         if config.duals
             @test MOI.get(model, MOI.ResultCount()) >= 1
@@ -1251,12 +1270,19 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.canmodifyconstraint(model, c, MOI.Interval{Float64})
     MOI.modifyconstraint!(model, c, MOI.Interval(2.0, 12.0))
 
+    if config.query
+        @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.Interval(2.0, 12.0)
+    end
+
     if config.solve
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
     end
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1270,6 +1296,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 12.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 12 atol=atol rtol=rtol
     end
 end
 
@@ -1291,7 +1319,7 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 2)
 
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -1341,9 +1369,9 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [2.0,-3.0], 0.0), MOI.LessThan(-7.0))
@@ -1388,19 +1416,78 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+# feasibility problem
+function linear13test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # find x, y
+    # s.t. 2x + 3y >= 1
+    #      x - y == 0
+
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+    @test MOI.canaddvariable(model)
+    x = MOI.addvariable!(model)
+    @test MOI.canaddvariable(model)
+    y = MOI.addvariable!(model)
+    @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [2.0,3.0], 0.0), MOI.GreaterThan(1.0))
+    @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x,y], [1.0,-1.0], 0.0), MOI.EqualTo(0.0))
+    @test MOI.canset(model, MOI.ObjectiveSense())
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
+
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.canget(model, MOI.ResultCount())
+        @test MOI.get(model, MOI.ResultCount()) > 0
+
+        @test MOI.canget(model, MOI.TerminationStatus())
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.canget(model, MOI.PrimalStatus())
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        xsol = MOI.get(model, MOI.VariablePrimal(), x)
+        ysol = MOI.get(model, MOI.VariablePrimal(), y)
+
+        c1sol = 2 * xsol + 3 * ysol
+        @test c1sol >= 1 || isapprox(c1sol, 1.0, atol=atol, rtol=rtol)
+        @test xsol - ysol ≈ 0 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
+        c1primval = MOI.get(model, MOI.ConstraintPrimal(), c1)
+        @test c1primval >= 1 || isapprox(c1sol, 1.0, atol=atol, rtol=rtol)
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 0 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.canget(model, MOI.DualStatus())
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ 0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0 atol=atol rtol=rtol
+        end
+    end
+end
+
 const contlineartests = Dict("linear1" => linear1test,
-                              "linear2" => linear2test,
-                              "linear3" => linear3test,
-                              "linear4" => linear4test,
-                              "linear5" => linear5test,
-                              "linear6" => linear6test,
-                              "linear7" => linear7test,
-                              "linear8a" => linear8atest,
-                              "linear8b" => linear8btest,
-                              "linear8c" => linear8ctest,
-                              "linear9" => linear9test,
-                              "linear10" => linear10test,
-                              "linear11" => linear11test,
-                              "linear12" => linear12test)
+                             "linear2" => linear2test,
+                             "linear3" => linear3test,
+                             "linear4" => linear4test,
+                             "linear5" => linear5test,
+                             "linear6" => linear6test,
+                             "linear7" => linear7test,
+                             "linear8a" => linear8atest,
+                             "linear8b" => linear8btest,
+                             "linear8c" => linear8ctest,
+                             "linear9" => linear9test,
+                             "linear10" => linear10test,
+                             "linear11" => linear11test,
+                             "linear12" => linear12test,
+                             "linear13" => linear13test)
 
 @moitestset contlinear

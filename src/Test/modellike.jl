@@ -142,19 +142,22 @@ MOI.get(src::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVari
 struct BadModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
 MOI.canget(src::BadModelAttributeModel, ::BadModelAttribute) = true
-MOI.get(src::BadModelAttributeModel, ::BadModelAttribute) = 0
+# During copy(dest, src::BadModelAttributeModel), canget(src, ...) will return true but canset(dest, ...) will return false.
+# In this case, a correct implementation of copy shouldn't call get(src, ...) since the result will not be used as it won't do set!(dest, ...).
+# If get(src::BadModelAttributeModel, ::BadModelAttribute) is defined here, a bad implementation of copy would pass the test.
+# As it is not defined, the bad implementation will get UndefinedMethod
 MOI.get(src::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[BadModelAttribute()]
 
 struct BadVariableAttribute <: MOI.AbstractVariableAttribute end
 struct BadVariableAttributeModel <: BadModel end
 MOI.canget(src::BadVariableAttributeModel, ::BadVariableAttribute, ::Type{MOI.VariableIndex}) = true
-MOI.get(src::BadVariableAttributeModel, ::BadVariableAttribute, ::Vector{MOI.VariableIndex}) = [0]
+# MOI.get is not defined for BadVariableAttribute for the same reason get is not defined BadModelAttribute
 MOI.get(src::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[BadVariableAttribute()]
 
 struct BadConstraintAttribute <: MOI.AbstractConstraintAttribute end
 struct BadConstraintAttributeModel <: BadModel end
 MOI.canget(src::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
-MOI.get(src::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Vector{<:MOI.ConstraintIndex}) = [0]
+# MOI.get is not defined for BadConstraintAttribute for the same reason get is not defined BadModelAttribute
 MOI.get(src::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[BadConstraintAttribute()]
 
 function failcopytest(dest::MOI.ModelLike, src::MOI.ModelLike, expected_status)
@@ -234,4 +237,35 @@ function canaddconstrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT})
     @test !MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.EqualTo{GoodT}) # vector in scalar
     @test !MOI.canaddconstraint(model, MOI.SingleVariable, MOI.Zeros) # scalar in vector
     @test !MOI.canaddconstraint(model, MOI.VectorOfVariables, UnknownSet) # set not supported
+end
+
+"""
+    orderedindicestest(model::MOI.ModelLike)
+
+Test whether the model returns ListOfVariableIndices and ListOfConstraintIndices
+sorted by creation time.
+"""
+function orderedindicestest(model::MOI.ModelLike)
+    MOI.empty!(model)
+    v1 = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]
+    v2 = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1, v2]
+    MOI.delete!(model, v1)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2]
+    v3 = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3]
+
+    # Note: there are too many combinations to
+    # test, so we're just going to check
+    # SingleVariable-in-LessThan and hope it
+    # works for the rest
+    c1 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1]
+    c2 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(2.0))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1, c2]
+    MOI.delete!(model, c1)
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2]
+    c3 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(3.0))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]
 end

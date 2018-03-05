@@ -56,10 +56,10 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.canget(model, MOI.ObjectiveValue())
-            @test MOI.get(model, MOI.ObjectiveValue()) ≈ 130/70 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ObjectiveValue()) ≈ 13/7 atol=atol rtol=rtol
 
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [4/7,3/7,6/7] atol=atol rtol=rtol
         end
     end
 end
@@ -122,10 +122,10 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.canget(model, MOI.ObjectiveValue())
-            @test MOI.get(model, MOI.ObjectiveValue()) ≈ 130/70 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ObjectiveValue()) ≈ 13/7 atol=atol rtol=rtol
 
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [4/7,3/7,6/7] atol=atol rtol=rtol
         end
 
         # change objective to Max -2(x^2 + xy + y^2 + yz + z^2)
@@ -151,10 +151,10 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
             @test MOI.canget(model, MOI.ObjectiveValue())
-            @test MOI.get(model, MOI.ObjectiveValue()) ≈ -2*130/70 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ObjectiveValue()) ≈ -2*13/7 atol=atol rtol=rtol
 
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0.5714285714285715,0.4285714285714285,0.8571428571428572] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [4/7,3/7,6/7] atol=atol rtol=rtol
         end
     end
 end
@@ -247,14 +247,11 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+const qptests = Dict("qp1" => qp1test,
+                     "qp2" => qp2test,
+                     "qp3" => qp3test)
 
-function qptests(model::MOI.ModelLike; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    @testset "Quadratic Programs (quad. objective)" begin
-        qp1test(model, atol=atol, rtol=rtol)
-        qp2test(model, atol=atol, rtol=rtol)
-        qp3test(model, atol=atol, rtol=rtol)
-    end
-end
+@moitestset qp
 
 #=
     Quadratically constrained programs
@@ -453,13 +450,11 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function qcptests(model::MOI.ModelLike; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    @testset "Quadratic Constrainted Programs (quad. constraints only)" begin
-        qcp1test(model, atol=atol, rtol=rtol)
-        qcp2test(model, atol=atol, rtol=rtol)
-        qcp3test(model, atol=atol, rtol=rtol)
-    end
-end
+const qcptests = Dict("qcp1" => qcp1test,
+                      "qcp2" => qcp2test,
+                      "qcp3" => qcp3test)
+
+@moitestset qcp
 
 #=
     SOCP
@@ -536,18 +531,12 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function socptests(model::MOI.ModelLike; atol=Base.rtoldefault(Float64), rtol=Base.rtoldefault(Float64))
-    @testset "Second Order Cone Programs" begin
-        socp1test(model, atol=atol, rtol=rtol)
-    end
-end
+const socptests = Dict("socp1" => socp1test)
 
-const contquadratictests = Dict("quadratic1" => qp1test,
-                                "quadratic2" => qp2test,
-                                "quadratic3" => qp3test,
-                                "quadratic4" => qcp1test,
-                                "quadratic5" => qcp2test,
-                                "quadratic6" => qcp3test,
-                                "quadratic7" => socp1test)
+@moitestset socp
 
-@moitestset contquadratic
+const contquadratictests = Dict("qp" => qptest,
+                                "qcp" => qcptest,
+                                "socp" => socptest)
+
+@moitestset contquadratic true

@@ -3,7 +3,7 @@ const C{F, S} = Tuple{CI{F, S}, F, S}
 const EMPTYSTRING = ""
 
 # Implementation of MOI for vector of constraint
-function _addconstraint!{F, S}(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S)
+function _addconstraint!(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S) where {F, S}
     push!(constrs, (ci, f, s))
     length(constrs)
 end
@@ -123,7 +123,11 @@ function MOI.isvalid(model::AbstractModel, ci::CI{F, S}) where {F, S}
 end
 MOI.isvalid(model::AbstractModel, vi::VI) = in(vi, model.varindices)
 
-MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices) = collect(model.varindices)
+function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
+    vis = collect(model.varindices)
+    sort!(vis, by=vi->vi.value) # It needs to be sorted by order of creation
+    vis
+end
 
 # Names
 MOI.canset(model::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
@@ -234,9 +238,6 @@ MOI.canget(model::AbstractModel, ::Union{MOI.NumberOfVariables,
                                          MOI.ListOfConstraints,
                                          MOI.ListOfConstraintIndices,
                                          MOI.ObjectiveSense}) = true
-
-MOI.canget(model::AbstractModel, ::Union{MOI.ConstraintFunction,
-                                         MOI.ConstraintSet}, ::Type{<:MOI.Index}) = true
 
 function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)
     _getfunction(model, ci, getconstrloc(model, ci))
@@ -532,6 +533,13 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                    0, Dict{$CI, String}(), Dict{String, $CI}(), Int[],
                    $(_getCV.(funs)...))
         end
+
+        $MOI.canget(model::$modelname{T}, ::Union{MOI.ConstraintFunction,
+                                                  MOI.ConstraintSet}, ::Type{$CI{F, S}}) where {T, F<:Union{$(_typedfun.(scalarfuns)...)},
+                                                                                                   S<:Union{$(_typedset.(scalarsets)...)}} = true
+        $MOI.canget(model::$modelname{T}, ::Union{MOI.ConstraintFunction,
+                                                  MOI.ConstraintSet}, ::Type{$CI{F, S}}) where {T, F<:Union{$(_typedfun.(vectorfuns)...)},
+                                                                                                   S<:Union{$(_typedset.(vectorsets)...)}} = true
 
         $MOI.canaddconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
         $MOI.canaddconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true

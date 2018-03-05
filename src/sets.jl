@@ -265,7 +265,7 @@ dimension(s::PositiveSemidefiniteConeTriangle) = div(s.dimension * (s.dimension 
 
 The cone of symmetric positive semidefinite matrices.
 The entries of the matrix are given column by column (or equivalently, row by row).
-The matrix is both constrained to be symmetric and and to be positive semidefinite.
+The matrix is both constrained to be symmetric and to be positive semidefinite.
 That is, if the functions in entries ``(i, j)`` and ``(j, i)`` are different, then a constraint will be added to make sure that the entries are equal.
 
 ### Examples

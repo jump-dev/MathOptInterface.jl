@@ -81,7 +81,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     end
 end
 
-lin1vtest(model::MOI.ModelLike, config::TestConfig) = _lin1test(model, config, false)
+lin1vtest(model::MOI.ModelLike, config::TestConfig) = _lin1test(model, config, true)
 lin1ftest(model::MOI.ModelLike, config::TestConfig) = _lin1test(model, config, false)
 
 function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
@@ -353,25 +353,25 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
 
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/√2 atol=atol rtol=rtol
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1/sqrt(2) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1/√2 atol=atol rtol=rtol
 
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ceq))
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq) ≈ [0.] atol=atol rtol=rtol
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(csoc))
-        @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈ [1., 1/sqrt(2), 1/sqrt(2)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈ [1., 1/√2, 1/√2] atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(ceq))
-            @test MOI.get(model, MOI.ConstraintDual(), ceq) ≈ [-sqrt(2)] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), ceq) ≈ [-√2] atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(csoc))
-            @test MOI.get(model, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), -1.0, -1.0] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), csoc) ≈ [√2, -1.0, -1.0] atol=atol rtol=rtol
         end
     end
 end
@@ -406,10 +406,10 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
 
     if nonneg
         @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
-        cnon = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[y],[1.0],[-1/sqrt(2)]), MOI.Nonnegatives(1))
+        cnon = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[y],[1.0],[-1/√2]), MOI.Nonnegatives(1))
     else
         @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
-        cnon = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[y],[-1.0],[1/sqrt(2)]), MOI.Nonpositives(1))
+        cnon = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[y],[-1.0],[1/√2]), MOI.Nonpositives(1))
     end
     @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
     ceq = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[t],[-1.0],[1.0]), MOI.Zeros(1))
@@ -434,10 +434,10 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -1/sqrt(2) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -1/√2 atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -1/sqrt(2) atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/sqrt(2) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -1/√2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/√2 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1 atol=atol rtol=rtol
 
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(cnon))
@@ -445,15 +445,15 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ceq))
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq) ≈ [0.0] atol=atol rtol=rtol
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(csoc))
-        @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈ [1., -1/sqrt(2), 1/sqrt(2)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈ [1., -1/√2, 1/√2] atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(cnon))
             @test MOI.get(model, MOI.ConstraintDual(), cnon) ≈ [nonneg ? 1.0 : -1.0] atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(ceq))
-            @test MOI.get(model, MOI.ConstraintDual(), ceq) ≈ [sqrt(2)] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), ceq) ≈ [√2] atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(csoc))
-            @test MOI.get(model, MOI.ConstraintDual(), csoc) ≈ [sqrt(2), 1.0, -1.0] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), csoc) ≈ [√2, 1.0, -1.0] atol=atol rtol=rtol
         end
     end
 end
@@ -528,24 +528,14 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     # Like SOCINT1 but with copies of variables and integrality relaxed
     # Tests out-of-order indices in cones
 
-    b = [-1.0, 0.0, 0.0]
-    A = [ 1.0  0.0  0.0  0.0  0.0
-          0.0  1.0  0.0 -1.0  0.0
-          0.0  0.0  1.0  0.0 -1.0]
-    c = [ 0.0,-2.0,-1.0, 0.0, 0.0]
-
     MOI.empty!(model)
     @test MOI.isempty(model)
 
     MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 5)
 
-    A_cols = x
-    A_rows = [1,2,3,2,3]
-    A_vals = [1.0,1.0,1.0,-1.0,-1.0]
-
     @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
-    c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(A_rows,A_cols,A_vals,b), MOI.Zeros(3))
+    c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1,2,3,2,3],x,[1.0,1.0,1.0,-1.0,-1.0],[-1.0, 0.0, 0.0]), MOI.Zeros(3))
     @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
     c2 = MOI.addconstraint!(model, MOI.VectorOfVariables([x[1],x[4],x[5]]), MOI.SecondOrderCone(3))
 
@@ -553,7 +543,7 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}()) == 1
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x,c,0.0))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x,[0.0,-2.0,-1.0, 0.0, 0.0],0.0))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     if config.solve
@@ -569,20 +559,22 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
         end
 
+        @test MOI.canget(model, MOI.ObjectiveValue())
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
+
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        x_primal = MOI.get(model, MOI.VariablePrimal(), x)
-        @test x_primal[1]^2 ≥ x_primal[4]^2 + x_primal[5]^2 - atol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0, 2/√5, 1/√5, 2/√5, 1/√5] atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ zeros(3) atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ [1.0, 2/√5, 1/√5] atol=atol rtol=rtol
 
         if config.duals
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
-            x_dual = MOI.get(model, MOI.ConstraintDual(), c2)
-            @test x_dual[1]^2 ≥ x_dual[2]^2 + x_dual[3]^2 - atol
-
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
-            c1_dual = MOI.get(model, MOI.ConstraintDual(), c1)
-
-            @test dot(c,x_primal) ≈ -dot(c1_dual,b) atol=atol rtol=rtol
-            @test (c-A'c1_dual) ≈ [x_dual[1], 0, 0, x_dual[2], x_dual[3]] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ [-√5, -2.0, -1.0] atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ [√5, -2.0, -1.0] atol=atol rtol=rtol
         end
     end
 end
@@ -658,7 +650,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ sqrt(2.0) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
 
         if abvars
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
@@ -667,7 +659,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
             @test MOI.get(model, MOI.VariablePrimal(), b) ≈ 1.0 atol=atol rtol=rtol
         end
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1/√2, 1/√2] atol=atol rtol=rtol
 
         if abvars
             @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(vc1))
@@ -677,7 +669,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         end
 
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(rsoc))
-        @test MOI.get(model, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1.0/sqrt(2.0), 1.0/sqrt(2.0)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1/√2, 1/√2] atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.DualStatus(1))
@@ -685,13 +677,13 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
 
             if abvars
                 @test MOI.canget(model, MOI.ConstraintDual(), typeof(vc1))
-                @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ -sqrt(2) atol=atol rtol=rtol
+                @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ -√2 atol=atol rtol=rtol
                 @test MOI.canget(model, MOI.ConstraintDual(), typeof(vc2))
-                @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ -1/sqrt(2) atol=atol rtol=rtol
+                @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ -1/√2 atol=atol rtol=rtol
             end
 
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(rsoc))
-            @test MOI.get(model, MOI.ConstraintDual(), rsoc) ≈ [sqrt(2), 1/sqrt(2), -1.0, -1.0] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), rsoc) ≈ [√2, 1/√2, -1.0, -1.0] atol=atol rtol=rtol
         end
     end
 end
@@ -865,8 +857,8 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
         @test MOI.get(model, MOI.ConstraintPrimal(), cu2) ≈ ub atol=atol rtol=rtol
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ct1))
         @test MOI.get(model, MOI.ConstraintPrimal(), ct1) ≈ 1.0 atol=atol rtol=rtol
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ct1))
-        @test MOI.get(model, MOI.ConstraintPrimal(), ct1) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(ct2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), ct2) ≈ 1.0 atol=atol rtol=rtol
 
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
         @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ [1/√2; 1/√2; 1.0; zeros(n-1)] atol=atol rtol=rtol
@@ -882,8 +874,8 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
             @test MOI.get(model, MOI.ConstraintDual(), cu2) ≈ -1/(2*√ub) atol=atol rtol=rtol
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(ct1))
             @test MOI.get(model, MOI.ConstraintDual(), ct1) ≈ -√ub/4 atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(ct1))
-            @test MOI.get(model, MOI.ConstraintDual(), ct1) ≈ -√ub/4 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(ct2))
+            @test MOI.get(model, MOI.ConstraintDual(), ct2) ≈ -√ub/4 atol=atol rtol=rtol
 
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ [√ub/(2*√2); √ub/(2*√2); -√ub/2; zeros(n-1)] atol=atol rtol=rtol
@@ -1002,7 +994,6 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     v = MOI.addvariables!(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
-    vov = MOI.VectorOfVariables(v)
     vov = MOI.VectorOfVariables(v)
     if vecofvars
         @test MOI.canaddconstraint(model, typeof(vov), MOI.ExponentialCone)
@@ -1227,39 +1218,44 @@ exptests = Dict("exp1v" => exp1vtest,
 
 @moitestset exp
 
-function _sdp0test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestConfig)
+function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, sdpcone)])
+    square = psdcone == MOI.PositiveSemidefiniteConeSquare
+    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, psdcone)])
     # min X[1,1] + X[2,2]    max y
     #     X[2,1] = 1         [0   y/2     [ 1  0
     #                         y/2 0    <=   0  1]
     #     X >= 0              y free
+    # Optimal solution:
+    #     ⎛ 1   1 ⎞
+    # X = ⎜       ⎟           y = 2
+    #     ⎝ 1   1 ⎠
 
     MOI.empty!(model)
     @test MOI.isempty(model)
 
     MOI.canaddvariable(model)
-    X = MOI.addvariables!(model, 3)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 3
+    X = MOI.addvariables!(model, square ? 4 : 3)
+    @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)
 
     vov = MOI.VectorOfVariables(X)
     if vecofvars
-        @test MOI.canaddconstraint(model, typeof(vov), sdpcone)
-        cX = MOI.addconstraint!(model, vov, sdpcone(2))
+        @test MOI.canaddconstraint(model, typeof(vov), psdcone)
+        cX = MOI.addconstraint!(model, vov, psdcone(2))
     else
-        @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, sdpcone)
-        cX = MOI.addconstraint!(model, MOI.VectorAffineFunction{Float64}(vov), sdpcone(2))
+        @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, psdcone)
+        cX = MOI.addconstraint!(model, MOI.VectorAffineFunction{Float64}(vov), psdcone(2))
     end
 
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
     c = MOI.addconstraint!(model, MOI.ScalarAffineFunction([X[2]], [1.], 0.), MOI.EqualTo(1.))
 
-    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, psdcone}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([X[1], X[3]], ones(2), 0.))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([X[1], X[end]], ones(2), 0.))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     if config.solve
@@ -1278,27 +1274,33 @@ function _sdp0test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
         @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
 
+        Xv = square ? ones(4) : ones(3)
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        @test MOI.get(model, MOI.VariablePrimal(), X) ≈ [1, 1, 1] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol=atol rtol=rtol
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(cX))
-        @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ [1, 1, 1] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 2 atol=atol rtol=rtol
 
+            cXv = square ? [1, -1, -1, 1] : [1, -1, 1]
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(cX))
-            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ [1, -1, 1] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ cXv atol=atol rtol=rtol
         end
     end
 end
 
+psdt0vtest(model::MOI.ModelLike, config::TestConfig) = _psd0test(model, true, MOI.PositiveSemidefiniteConeTriangle, config)
+psdt0ftest(model::MOI.ModelLike, config::TestConfig) = _psd0test(model, false, MOI.PositiveSemidefiniteConeTriangle, config)
+psds0vtest(model::MOI.ModelLike, config::TestConfig) = _psd0test(model, true, MOI.PositiveSemidefiniteConeSquare, config)
+psds0ftest(model::MOI.ModelLike, config::TestConfig) = _psd0test(model, false, MOI.PositiveSemidefiniteConeSquare, config)
 
-function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestConfig)
+function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, sdpcone), (MOI.VectorOfVariables, MOI.SecondOrderCone)])
+    square = psdcone == MOI.PositiveSemidefiniteConeSquare
+    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, psdcone), (MOI.VectorOfVariables, MOI.SecondOrderCone)])
     # Problem SDP1 - sdo1 from MOSEK docs
     # From Mosek.jl/test/mathprogtestextra.jl, under license:
     #   Copyright (c) 2013 Ulf Worsoe, Mosek ApS
@@ -1324,40 +1326,85 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
     #      | 1 1 1 |
     #
     #      (x1,x2,x3) in C^3_q
-    #      X in C_sdp
+    #      X in C_psd
+    #
+    # The dual is
+    # max y1 + y2/2
+    #
+    # s.t. | y1+y2    y2    y2 |
+    #      |    y2 y1+y2    y2 | in C_psd
+    #      |    y2    y2 y1+y2 |
+    #
+    #      (1-y1, -y2, -y2) in C^3_q
+    #
+    # The dual of the SDP constraint is rank two of the form
+    # [γ, 0, -γ] * [γ, 0, γ'] + [δ, ε, δ] * [δ, ε, δ]'
+    # and the dual of the SOC constraint is of the form (√2*y2, -y2, -y2)
+    #
+    # The feasible set of the constraint dual contains only four points.
+    # Eliminating, y1, y2 and γ from the dual constraints gives
+    # -ε^2 + -εδ + 2δ^2 + 1
+    # (√2-2)ε^2 + (-2√2+2)δ^2 + 1
+    # Eliminating ε from this set of equation give
+    # (-6√2+4)δ^4 + (3√2-2)δ^2 + (2√2-3)
+    # from which we find the solution
+    δ = √(1 + (3*√2+2)*√(-116*√2+166) / 14) / 2
+    # which is optimal
+    ε = √((1 - 2*(√2-1)*δ^2) / (2-√2))
+    y2 = 1 - ε*δ
+    y1 = 1 - √2*y2
+    obj = y1 + y2/2
+    # The primal solution is rank one of the form
+    # X = [α, β, α] * [α, β, α]'
+    # and by complementary slackness, x is of the form (√2*x2, x2, x2)
+    # The primal reduces to
+    #      4α^2+4αβ+2β^2+√2*x2= obj
+    #      2α^2    + β^2+√2*x2 = 1 (1)
+    #      8α^2+8αβ+2β^2+ 4 x2 = 1
+    # Eliminating β, we get
+    # 4α^2 + 4x2 = 3 - 2obj (2)
+    # By complementary slackness, we have β = kα where
+    k = -2*δ/ε
+    # Replacing β by kα in (1) allows to eliminate α^2 in (2) to get
+    x2 = ((3-2obj)*(2+k^2)-4) / (4*(2+k^2)-4*√2)
+    # With (2) we get
+    α = √(3-2obj-4x2)/2
+    β = k*α
 
     MOI.empty!(model)
     @test MOI.isempty(model)
 
     MOI.canaddvariable(model)
-    X = MOI.addvariables!(model, 6)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 6
+    X = MOI.addvariables!(model, square ? 9 : 6)
+    @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 9 : 6)
     MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 3)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 9
+    @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 12 : 9)
 
     vov = MOI.VectorOfVariables(X)
     if vecofvars
-        @test MOI.canaddconstraint(model, typeof(vov), sdpcone)
-        cX = MOI.addconstraint!(model, vov, sdpcone(3))
+        @test MOI.canaddconstraint(model, typeof(vov), psdcone)
+        cX = MOI.addconstraint!(model, vov, psdcone(3))
     else
-        @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, sdpcone)
-        cX = MOI.addconstraint!(model, MOI.VectorAffineFunction{Float64}(vov), sdpcone(3))
+        @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, psdcone)
+        cX = MOI.addconstraint!(model, MOI.VectorAffineFunction{Float64}(vov), psdcone(3))
     end
     @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
     cx = MOI.addconstraint!(model, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
 
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
-    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([X[1], X[3], X[6], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
+    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([X[1], X[square ? 5 : 3], X[end], x[1]], [1., 1, 1, 1], 0.), MOI.EqualTo(1.))
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
-    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([X; x[2]; x[3]], [1., 2, 1, 2, 2, 1, 1, 1], 0.), MOI.EqualTo(1/2))
+    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([X; x[2]; x[3]], square ? ones(11) : [1., 2, 1, 2, 2, 1, 1, 1], 0.), MOI.EqualTo(1/2))
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([X[1:3]; X[5:6]; x[1]], [2., 2, 2, 2, 2, 1], 0.))
+    objXidx = square ? [1:2; 4:6; 8:9] : [1:3; 5:6]
+    objXcoefs = square ? [2., 1., 1., 2., 1., 1., 2.] : 2*ones(5)
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([X[objXidx]; x[1]], [objXcoefs; 1.], 0.))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
-    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, sdpcone}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, psdcone}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables, MOI.SecondOrderCone}()) == 1
 
@@ -1375,67 +1422,42 @@ function _sdp1test(model::MOI.ModelLike, vecofvars::Bool, sdpcone, config::TestC
         end
 
         @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.705710509 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol=atol rtol=rtol
 
+        Xv = square ? [α^2, α*β, α^2, α*β, β^2, α*β, α^2, α*β, α^2] : [α^2, α*β, β^2, α^2, α*β, α^2]
+        xv = [√2*x2, x2, x2]
         @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        Xv = MOI.get(model, MOI.VariablePrimal(), X)
-        Xp = [Xv[1] Xv[2] Xv[4]
-              Xv[2] Xv[3] Xv[5]
-              Xv[4] Xv[5] Xv[6]]
-        @test eigmin(Xp) > -atol
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        xv = MOI.get(model, MOI.VariablePrimal(), x)
-        @test xv[2]^2 + xv[3]^2 - xv[1]^2 < atol
+        @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ xv atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ xv atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ Xv[1]+Xv[3]+Xv[6]+xv[1] atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ Xv[1]+2Xv[2]+Xv[3]+2Xv[4]+2Xv[5]+Xv[6]+xv[2]+xv[3] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 1. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ .5 atol=atol rtol=rtol
 
         if config.duals
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
-            y1 = MOI.get(model, MOI.ConstraintDual(), c1)
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
-            y2 = MOI.get(model, MOI.ConstraintDual(), c2)
-
-            #     X11  X21  X22  X31  X32  X33  x1  x2  x3
-            c = [   2,   2,   2,   0,   2,   2,  1,  0,  0]
-            b = [1, 1/2]
-            # Check primal objective
-            comp_pobj = dot(c, [Xv; xv])
-            # Check dual objective
-            comp_dobj = dot([y1, y2], b)
-            @test comp_pobj ≈ comp_dobj atol=atol rtol=rtol
-
+            cX0 = 1+(√2-1)*y2
+            cX1 = 1-y2
+            cX2 = -y2
+            cXv = square ? [cX0, cX1, cX2, cX1, cX0, cX1, cX2, cX1, cX0] : [cX0, cX1, cX0, cX2, cX1, cX0]
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(cX))
-            Xdv = MOI.get(model, MOI.ConstraintDual(), cX)
-            Xd = [Xdv[1] Xdv[2] Xdv[4];
-                  Xdv[2] Xdv[3] Xdv[5];
-                  Xdv[4] Xdv[5] Xdv[6]]
-
-            C = [2 1 0;
-                 1 2 1;
-                 0 1 2]
-            A1 = [1 0 0;
-                  0 1 0;
-                  0 0 1]
-            A2 = [1 1 1;
-                  1 1 1;
-                  1 1 1]
-
-            @test C ≈ y1 * A1 + y2 * A2 + Xd atol=atol rtol=rtol
-
-            @test eigmin(Xd) > -atol
+            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ cXv atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cx))
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1-y1, -y2, -y2] atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c1))
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ y1 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c2))
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ y2 atol=atol rtol=rtol
         end
     end
 end
 
-sdp0tvtest(model::MOI.ModelLike, config::TestConfig) = _sdp0test(model, true, MOI.PositiveSemidefiniteConeTriangle, config)
-sdp0tftest(model::MOI.ModelLike, config::TestConfig) = _sdp0test(model, false, MOI.PositiveSemidefiniteConeTriangle, config)
-sdp1tvtest(model::MOI.ModelLike, config::TestConfig) = _sdp1test(model, true, MOI.PositiveSemidefiniteConeTriangle, config)
-sdp1tftest(model::MOI.ModelLike, config::TestConfig) = _sdp1test(model, false, MOI.PositiveSemidefiniteConeTriangle, config)
+psdt1vtest(model::MOI.ModelLike, config::TestConfig) = _psd1test(model, true, MOI.PositiveSemidefiniteConeTriangle, config)
+psdt1ftest(model::MOI.ModelLike, config::TestConfig) = _psd1test(model, false, MOI.PositiveSemidefiniteConeTriangle, config)
+psds1vtest(model::MOI.ModelLike, config::TestConfig) = _psd1test(model, true, MOI.PositiveSemidefiniteConeSquare, config)
+psds1ftest(model::MOI.ModelLike, config::TestConfig) = _psd1test(model, false, MOI.PositiveSemidefiniteConeSquare, config)
 
-function sdp2test(model::MOI.ModelLike, config::TestConfig)
+function psdt2test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64}, [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}), (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle)])
@@ -1509,13 +1531,27 @@ function sdp2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-const sdptests = Dict("sdp0tv" => sdp0tvtest,
-                      "sdp0tf" => sdp0tftest,
-                      "sdp1tv" => sdp1tvtest,
-                      "sdp1tf" => sdp1tftest,
-                      "sdp2"   => sdp2test)
+# PSDConeTriangle
+const psdttests = Dict("psdt0v" => psdt0vtest,
+                       "psdt0f" => psdt0ftest,
+                       "psdt1v" => psdt1vtest,
+                       "psdt1f" => psdt1ftest,
+                       "psdt2"  => psdt2test)
 
-@moitestset sdp
+# PSDConeSquare
+@moitestset psdt
+
+const psdstests = Dict("psds0v" => psdt0vtest,
+                       "psds0v" => psdt0vtest,
+                       "psds1v" => psds1vtest,
+                       "psds1f" => psds1ftest)
+
+@moitestset psds
+
+const sdptests = Dict("psdt" => psdttest,
+                      "psds" => psdstest)
+
+@moitestset sdp true
 
 function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, detcone)
     atol = config.atol
@@ -1588,24 +1624,56 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
             @test Qv[3] ≈ 0. atol=atol rtol=rtol
         end
         @test Qv[end] ≈ 1. atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(cX))
+        tQv = MOI.get(model, MOI.ConstraintPrimal(), cX)
+        @test tQv[1] ≈ expectedobjval atol=atol rtol=rtol
+        @test tQv[2:end] ≈ Qv atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ [0., 0.] atol=atol rtol=rtol
     end
 end
 
-logdet1tvtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.LogDetConeTriangle)
-logdet1tftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.LogDetConeTriangle)
+logdett1vtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.LogDetConeTriangle)
+logdett1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.LogDetConeTriangle)
+logdets1vtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.LogDetConeSquare)
+logdets1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.LogDetConeSquare)
 
-const logdettests = Dict("logdet1tv" => logdet1tvtest,
-                         "logdet1tf" => logdet1tftest)
+const logdetttests = Dict("logdett1v" => logdett1vtest,
+                          "logdett1f" => logdett1ftest)
 
-@moitestset logdet
+@moitestset logdett
 
-rootdet1tvtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.RootDetConeTriangle)
-rootdet1tftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.RootDetConeTriangle)
+const logdetstests = Dict("logdets1v" => logdets1vtest,
+                          "logdets1f" => logdets1ftest)
 
-const rootdettests = Dict("rootdet1tv" => rootdet1tvtest,
-                          "rootdet1tf" => rootdet1tftest)
+@moitestset logdets
 
-@moitestset rootdet
+const logdettests = Dict("logdett" => logdetttest,
+                         "logdets" => logdetstest)
+
+@moitestset logdet true
+
+rootdett1vtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.RootDetConeTriangle)
+rootdett1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.RootDetConeTriangle)
+rootdets1vtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.RootDetConeSquare)
+rootdets1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.RootDetConeSquare)
+
+const rootdetttests = Dict("rootdett1v" => rootdett1vtest,
+                           "rootdett1f" => rootdett1ftest)
+
+@moitestset rootdett
+
+const rootdetstests = Dict("rootdets1v" => rootdets1vtest,
+                           "rootdets1f" => rootdets1ftest)
+
+@moitestset rootdets
+
+const rootdettests = Dict("rootdett" => rootdetttest,
+                          "rootdets" => rootdetstest)
+
+@moitestset rootdet true
 
 const contconictests = Dict("lin" => lintest,
                             "soc" => soctest,
