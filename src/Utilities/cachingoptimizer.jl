@@ -190,6 +190,10 @@ function MOI.addvariables!(m::CachingOptimizer, n)
     return vindices
 end
 
+function MOI.supportsconstraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+    MOI.supportsconstraint(m.model_cache, F, S) && (m.state == NoOptimizer || MOI.supportsconstraint(m.optimizer, F, S))
+end
+
 function MOI.canaddconstraint(m::CachingOptimizer, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     MOI.canaddconstraint(m.model_cache, F, S) || return false
     if m.state == AttachedOptimizer && m.mode == Manual
@@ -326,6 +330,10 @@ function MOI.set!(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute
         MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[index], attribute_value_map(m.model_to_optimizer_map,value))
     end
     MOI.set!(m.model_cache, attr, index, value)
+end
+
+function MOI.supports(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
+    MOI.supports(m.model_cache, attr) && (m.state == NoOptimizer || MOI.supports(m.optimizer, attr))
 end
 
 # TODO: Automatic mode is broken in the case that the user tries to set

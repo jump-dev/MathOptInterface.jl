@@ -3,15 +3,17 @@
 function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
-    #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
-    #    [(MOI.VectorAffineFunction{Float64},MOI.Zeros),
-    #     (MOI.SingleVariable,MOI.ZeroOne),
-    #     (MOI.VectorOfVariables,MOI.SecondOrderCone)])
+
     # Problem SINTSOC1
     # min 0x - 2y - 1z
     #  st  x            == 1
     #      x >= ||(y,z)||
     #      (y,z) binary
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
 
     MOI.empty!(model)
     @test MOI.isempty(model)
