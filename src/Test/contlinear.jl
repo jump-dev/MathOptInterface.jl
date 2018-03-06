@@ -1487,6 +1487,121 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+# Deletion of vector of variables
+function linear14test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # max x + 2y + 3z + 4
+    # s.t. 3x + 2y + z <= 2
+    #      x, y, z >= 0
+    #      z <= 1
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
+
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+
+    @test MOI.canaddvariable(model)
+    x, y, z = MOI.addvariables!(model, 3)
+    @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    c = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x, y, z], [3.0, 2.0, 1.0], 0.0), MOI.LessThan(2.0))
+    @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    clbx = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    clby = MOI.addconstraint!(model, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+    clbz = MOI.addconstraint!(model, MOI.SingleVariable(z), MOI.GreaterThan(0.0))
+    @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
+    cubz = MOI.addconstraint!(model, MOI.SingleVariable(z), MOI.LessThan(1.0))
+
+    @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([x, y, z], [1.0, 2.0, 3.0], 4.0))
+    @test MOI.canset(model, MOI.ObjectiveSense())
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.canget(model, MOI.TerminationStatus())
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.canget(model, MOI.PrimalStatus())
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.canget(model, MOI.ObjectiveValue())
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 8 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbx))
+        @test MOI.get(model, MOI.ConstraintPrimal(), clbx) ≈ 0 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clby))
+        @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1/2 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbz))
+        @test MOI.get(model, MOI.ConstraintPrimal(), clbz) ≈ 1 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(cubz))
+        @test MOI.get(model, MOI.ConstraintPrimal(), cubz) ≈ 1 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.canget(model, MOI.DualStatus())
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
+
+            # reduced costs
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbx))
+            @test MOI.get(model, MOI.ConstraintPrimal(), clbx) ≈ 0 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clby))
+            @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1/2 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbz))
+            @test MOI.get(model, MOI.ConstraintPrimal(), clbz) ≈ 1 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(cubz))
+            @test MOI.get(model, MOI.ConstraintPrimal(), cubz) ≈ 1 atol=atol rtol=rtol
+        end
+    end
+
+    @test MOI.candelete(model, [x, z])
+    MOI.delete!(model, [x, z])
+
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.canget(model, MOI.TerminationStatus())
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.canget(model, MOI.PrimalStatus())
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.canget(model, MOI.ObjectiveValue())
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 6 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clby))
+        @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.canget(model, MOI.DualStatus())
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
+
+            # reduced costs
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbx))
+            @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1 atol=atol rtol=rtol
+        end
+    end
+end
+
 const contlineartests = Dict("linear1" => linear1test,
                              "linear2" => linear2test,
                              "linear3" => linear3test,
@@ -1501,6 +1616,7 @@ const contlineartests = Dict("linear1" => linear1test,
                              "linear10" => linear10test,
                              "linear11" => linear11test,
                              "linear12" => linear12test,
-                             "linear13" => linear13test)
+                             "linear13" => linear13test,
+                             "linear14" => linear14test)
 
 @moitestset contlinear
