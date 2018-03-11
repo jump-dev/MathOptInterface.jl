@@ -66,9 +66,25 @@ MOI defines some commonly used sets, but the interface is extensible to other se
 * **[`GreaterThan(lower)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x \ge \mbox{lower} \}``
 * **[`EqualTo(value)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x = \mbox{value} \}``
 * **[`Interval(lower, upper)`](@ref MathOptInterface.Interval)**: ``\{ x \in \mathbb{R} : x \in [\mbox{lower},\mbox{upper}] \}``
+* **[`Reals(dimension)`](@ref MathOptInterface.Reals)**: ``\mathbb{R}^\mbox{dimension}``
+* **[`Zeros(dimension)`](@ref MathOptInterface.Zeros)**: ``0^\mbox{dimension}``
+* **[`Nonnegatives(dimension)`](@ref MathOptInterface.Nonnegatives)**: ``\{ x \in \mathbb{R}^\mbox{dimension} : x \ge 0 \}``
+* **[`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives)**: ``\{ x \in \mathbb{R}^\mbox{dimension} : x \le 0 \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**: ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
+* **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**: ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge ||x||_2^2, t,u \ge 0 \}``
+* **[`GeometricMeanCone(dimension)`](@ref MathOptInterface.GeometricMeanCone)**: ``\{ (t,x) \in \mathbb{R}^\mbox{n+1} : x \ge 0, t \le sqrt[n]{x_1 x_2 \\cdots x_n} \}`` of dimensiton ``dimension = n+1``
+* **[`ExponentialCone()`](@ref MathOptInterface.ExponentialCone)**: ``\{ (x,y,z) \in \mathbb{R}^\mbox{3} : y \exp (x/y) \le z, y > 0 \}``
+* **[`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone)**: ``\{ (u,v,w) \in \mathbb{R}^\mbox{3} : -u \exp (v/u) \le exp(1) w, u < 0 \}``
+* **[`PowerCone(exponent)`](@ref MathOptInterface.PowerCone)**: ``\{ (x,y,z) \in \mathbb{R}^\mbox{3} : x^\mbox{exponent} y^\mbox{1-exponent} \ge |z|, x,y \ge 0 \}``
+* **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**: ``\{ (u,v,w) \in \mathbb{R}^\mbox{3} : \frac{u}{exponent}^\mbox{exponent} \frac{v}{1-exponent}^\mbox{1-exponent} \ge |w|, u,v \ge 0 \}``
+* **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**: ``\{ X \in \mathbb{R}^\mbox{dimension} : X \textit{is the upper triangle of a PSD matrix with side dimension:} sqrt{1/4 + 2 dimension} - 1/2\}``
+* **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**: ``\{ X \in \mathbb{R}^\mbox{dimension} : X \textit{is  a PSD matrix with side dimension:} dimension\}``
 * **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
 * **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
+* **[`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous)**: ``\{ 0\} \cup [lower,upper]``
+* **[`Semiinteger(lower,upper)`](@ref MathOptInterface.Semiinteger)**: ``\{ 0\} \cup \{lower,lower+1,\ldots,upper-1,upper\}``
+* **[`SOS1(weights)`](@ref MathOptInterface.SOS1)**: [Special ordered set of type one](http://lpsolve.sourceforge.net/5.5/SOS.htm)
+* **[`SOS2(weights)`](@ref MathOptInterface.SOS2)**: [Special ordered set of type two](http://lpsolve.sourceforge.net/5.5/SOS.htm)
 
 
 ## The `ModelLike` and `AbstractOptimizer` APIs
