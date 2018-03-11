@@ -312,10 +312,11 @@ using MathOptInterfaceGLPK
 
 c = [1.0, 2.0, 3.0]
 w = [0.3, 0.5, 1.0]
+C = 3.2
 
 numvariables = length(c)
 
-optimizer = GLPKOptimizer() # TODO: match with actual name in GLPK wrapper
+optimizer = MathOptInterfaceGLPK.GLPKOptimizerMIP()
 
 # create the variables in the problem
 x = MOI.addvariables!(optimizer, numvariables)
