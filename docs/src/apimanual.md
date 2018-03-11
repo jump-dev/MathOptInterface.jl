@@ -174,7 +174,26 @@ addconstraint!(model, SingleVariable(x[1]), GreaterThan(0.0))
 addconstraint!(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
-[Example with vector-valued set.]
+Besides scalar-valued functions in scalar-valued sets it possible to use vector-valued functions and sets.
+
+The code example below encodes the convex optimization problem:
+```math
+\begin{align}
+& \max_{x,y,z \in \mathbb{R}} & y + z &
+\\
+& \;\;\text{s.t.} & 3x &= 2
+\\
+&& x & \ge ||(y,z)||_2
+\end{align}
+```
+
+```julia
+x,y,z = addvariables!(model, 3)
+set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction([y,z], [1.0,1.0], 0.0))
+set!(model, ObjectiveSense(), MaxSense)
+addconstraint!(model, VectorAffineFunction([1],[x],[3.0],[-2.0]), Zeros(1))
+addconstraint!(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
+```
 
 [Describe `ConstraintIndex` objects.]
 
