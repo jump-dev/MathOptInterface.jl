@@ -78,7 +78,7 @@ MOI defines some commonly used sets, but the interface is extensible to other se
 * **[`PowerCone(exponent)`](@ref MathOptInterface.PowerCone)**: ``\{ (x,y,z) \in \mathbb{R}^\mbox{3} : x^\mbox{exponent} y^\mbox{1-exponent} \ge |z|, x,y \ge 0 \}``
 * **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**: ``\{ (u,v,w) \in \mathbb{R}^\mbox{3} : \frac{u}{exponent}^\mbox{exponent} \frac{v}{1-exponent}^\mbox{1-exponent} \ge |w|, u,v \ge 0 \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**: ``\{ X \in \mathbb{R}^\mbox{dimension} : X \textit{is the upper triangle of a PSD matrix with side dimension:} sqrt{1/4 + 2 dimension} - 1/2\}``
-* **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**: ``\{ X \in \mathbb{R}^\mbox{dimension} : X \textit{is  a PSD matrix with side dimension:} dimension\}``
+* **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**: ``\{ X \in \mathbb{R}^\mbox{dimension} : X \textit{is  a PSD matrix with side dimension:} \sqrt{dimension}\}``
 * **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
 * **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
 * **[`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous)**: ``\{ 0\} \cup [lower,upper]``
