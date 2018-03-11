@@ -144,7 +144,7 @@ function hessian_lagrangian_structure end
     eval_constraint_jacobian(d::AbstractNLPEvaluator, J, x)
 
 Evaluates the sparse Jacobian matrix
-``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]`.
+``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``.
 The result is stored in the vector `J` in the same order as the indices returned
 by `jac_structure`.
 """
