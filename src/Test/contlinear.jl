@@ -246,7 +246,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # put lb of x back to 0 and fix z to zero to get :
     # max x + 2z
     # s.t. x + y + z <= 1
-    # x, y >= 0, z = 0
+    # x, y >= 0, z = 0 (vc3)
     @test MOI.canmodifyconstraint(model, vc1, MOI.GreaterThan{Float64})
     MOI.modifyconstraint!(model, vc1, MOI.GreaterThan(0.0))
 
@@ -278,7 +278,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
     # modify affine linear constraint set to be == 2 to get :
     # max x + 2z
-    # s.t. x + y + z == 2
+    # s.t. x + y + z == 2 (c)
     # x,y >= 0, z = 0
     @test MOI.candelete(model, c)
     MOI.delete!(model, c)
@@ -310,7 +310,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
     # modify objective function to x + 2y to get :
     # max x + 2y
-    # s.t. x + y + z == 2
+    # s.t. x + y + z == 2 (c)
     # x,y >= 0, z = 0
 
     objf = MOI.ScalarAffineFunction(v, [1.0,2.0,0.0], 0.0)
@@ -318,6 +318,11 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+
+    if config.query
+        @test MOI.canget(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+        @test objf ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    end
 
     if config.solve
         MOI.optimize!(model)
@@ -338,11 +343,11 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 2, 0] atol=atol rtol=rtol
     end
 
-    # add constraint x - y >= 0 to get :
+    # add constraint x - y >= 0 (c2) to get :
     # max x+2y
-    # s.t. x + y + z == 2
-    # x - y >= 0
-    # x,y >= 0, z = 0
+    # s.t. x + y + z == 2 (c)
+    # x - y >= 0 (c2)
+    # x,y >= 0 (vc1,vc2), z = 0 (vc3)
 
     cf2 = MOI.ScalarAffineFunction(v, [1.0, -1.0, 0.0], 0.0)
     @test MOI.canaddconstraint(model, typeof(cf2), MOI.GreaterThan{Float64})
@@ -350,6 +355,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()) == 0
 
     if config.solve
         MOI.optimize!(model)
@@ -371,6 +379,18 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 0 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(vc1))
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc1) ≈ 1 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(vc2))
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ 1 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(vc3))
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc3) ≈ 0 atol=atol rtol=rtol
 
         if config.duals
             @test MOI.canget(model, MOI.DualStatus(1))
