@@ -243,6 +243,13 @@ A `Vector{AbstractOptimizerAttribute}` of all optimizer attributes that were set
 """
 struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 
+"""
+    SolverName()
+
+A string identifying the solver.
+"""
+struct SolverName <: AbstractOptimizerAttribute end
+
 ## Model attributes
 
 """
