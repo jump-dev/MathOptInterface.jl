@@ -174,9 +174,9 @@ addconstraint!(model, SingleVariable(x[1]), GreaterThan(0.0))
 addconstraint!(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
-Besides scalar valued functions in scalar valued sets it possible to use vector valued functions and sets.
+Besides scalar valued functions in scalar-valued sets it possible to use vector-valued functions and sets.
 
-The code example below encodes the linear optimization problem:
+The code example below encodes the convex optimization problem:
 ```math
 \begin{align}
 & \max_{x,y,z \in \mathbb{R}} & y + z &
