@@ -60,8 +60,6 @@ Extensions for nonlinear programming are present but not yet well documented.
 
 MOI defines some commonly used sets, but the interface is extensible to other sets recognized by the solver.
 
-[TODO: finish list of currently supported sets, or at least important ones.]
-
 * **[`LessThan(upper)`](@ref MathOptInterface.LessThan)**: ``\{ x \in \mathbb{R} : x \le \mbox{upper} \}``
 * **[`GreaterThan(lower)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x \ge \mbox{lower} \}``
 * **[`EqualTo(value)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x = \mbox{value} \}``
@@ -75,7 +73,7 @@ MOI defines some commonly used sets, but the interface is extensible to other se
 * **[`GeometricMeanCone(dimension)`](@ref MathOptInterface.GeometricMeanCone)**: ``\{ (t,x) \in \mathbb{R}^{n+1} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}`` where ``n`` is ``dimension - 1``
 * **[`ExponentialCone()`](@ref MathOptInterface.ExponentialCone)**: ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}``
 * **[`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone)**: ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le exp(1) w, u < 0 \}``
-* **[`PowerCone(exponent)`](@ref MathOptInterface.PowerCone)**: ``\{ (x,y,z) \in \mathbb{R}^3 : x^\mbox{exponent} y^\{1-mbox{exponent}} \ge |z|, x,y \ge 0 \}``
+* **[`PowerCone(exponent)`](@ref MathOptInterface.PowerCone)**: ``\{ (x,y,z) \in \mathbb{R}^3 : x^\mbox{exponent} y^{1-\mbox{exponent}} \ge |z|, x,y \ge 0 \}``
 * **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**: ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent} \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \textit{is the upper triangle of a PSD matrix with side dimension:} \mbox{dimension}\}``
 * **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \textit{is a PSD matrix with side dimension:} \sqrt{\mbox{dimension}}\}``
