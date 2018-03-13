@@ -80,7 +80,7 @@ MOI defines some commonly used sets, but the interface is extensible to other se
 * **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le \log(\det(X)), X \mbox{is the upper triangle of a PSD matrix}\}``
 * **[`LogDetConeSquare(dimension)`](@ref MathOptInterface.LogDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \log(\det(X)), X \mbox{is a PSD matrix}\}``
 * **[`RootDetConeTriangle(dimension)`](@ref MathOptInterface.RootDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le det(X)^{1/\mbox{dimension}}, X \mbox{is the upper triangle of a PSD matrix}\}``
-* **[`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \det(X)^{1/\mbox{dimension}}, X \textit{is a PSD matrix}\}``
+* **[`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \det(X)^{1/\mbox{dimension}}, X \mbox{is a PSD matrix}\}``
 * **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
 * **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
 * **[`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous)**: ``\{ 0\} \cup [lower,upper]``
