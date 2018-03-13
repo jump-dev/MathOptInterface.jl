@@ -182,9 +182,9 @@ dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCon
 """
     PositiveSemidefiniteConeTriangle(dimension)
 
-The (vectorized) cone of symmetric positive semidefinite matrices, with off-diagonals unscaled.
+The (vectorized) cone of symmetric positive semidefinite matrices, with side length `dimension` and with off-diagonals unscaled.
 The entries of the upper triangular part of the matrix are given column by column (or equivalently, the entries of the lower triangular part are given row by row).
-An ``n \\times n`` matrix has ``n(n+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``d``, the corresponding symmetric matrix has side dimension ``\\sqrt{1/4 + 2 d} - 1/2`` elements.
+An ``dimension \\times dimension`` matrix has ``dimension(dimension+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``n``, the corresponding symmetric matrix has side dimension ``\\sqrt{1/4 + 2 n} - 1/2`` elements.
 
 ### Examples
 
@@ -196,7 +196,7 @@ The matrix
   4 & 5 & 6
 \\end{bmatrix}
 ```
-corresponds to ``(1, 2, 3, 4, 5, 6)`` for `PositiveSemidefiniteConeTriangle`
+corresponds to ``(1, 2, 3, 4, 5, 6)`` for `PositiveSemidefiniteConeTriangle(3)`
 
 ### Note
 
@@ -263,7 +263,7 @@ dimension(s::PositiveSemidefiniteConeTriangle) = div(s.dimension * (s.dimension 
 """
     PositiveSemidefiniteConeSquare(dimension)
 
-The cone of symmetric positive semidefinite matrices.
+The cone of symmetric positive semidefinite matrices, with side length `dimension`.
 The entries of the matrix are given column by column (or equivalently, row by row).
 The matrix is both constrained to be symmetric and to be positive semidefinite.
 That is, if the functions in entries ``(i, j)`` and ``(j, i)`` are different, then a constraint will be added to make sure that the entries are equal.
@@ -279,7 +279,7 @@ Constraining the matrix
 ```
 to be symmetric positive semidefinite can be achieved by constraining the vector ``(1, -z, -y, 0)`` (or ``(1, -y, -z, 0)``)
 to belong to the `PositiveSemidefiniteConeSquare(2)`.
-It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `PositiveSemidefiniteConeTriangle`.
+It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `PositiveSemidefiniteConeTriangle(2)`.
 """
 struct PositiveSemidefiniteConeSquare <: AbstractVectorSet
     dimension::Int
@@ -291,7 +291,7 @@ dimension(s::PositiveSemidefiniteConeSquare) = s.dimension^2
     LogDetConeTriangle(dimension)
 
 The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\log(\\det(X)) \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
-The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct LogDetConeTriangle <: AbstractVectorSet
     dimension::Int
@@ -302,7 +302,7 @@ end
 
 The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\log(\\det(X)), X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
 Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
-The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct LogDetConeSquare <: AbstractVectorSet
     dimension::Int
@@ -312,7 +312,7 @@ end
     RootDetConeTriangle(dimension)
 
 The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
-The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeTriangle <: AbstractVectorSet
     dimension::Int
@@ -323,7 +323,7 @@ end
 
 The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
 Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
-The argument `dimension` is the dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeSquare <: AbstractVectorSet
     dimension::Int
