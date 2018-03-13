@@ -140,7 +140,7 @@ sets the objective to the function just discussed in the minimization sense.
 
 See [Functions and function modifications](@ref) for the complete list of functions.
 
-## Sets
+## Sets and Constraints
 
 All constraints are specified with [`addconstraint!`](@ref MathOptInterface.addconstraint!)
 by restricting the output of some function to a set.
