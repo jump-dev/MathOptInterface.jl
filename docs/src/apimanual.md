@@ -75,12 +75,12 @@ MOI defines some commonly used sets, but the interface is extensible to other se
 * **[`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone)**: ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le exp(1) w, u < 0 \}``
 * **[`PowerCone(exponent)`](@ref MathOptInterface.PowerCone)**: ``\{ (x,y,z) \in \mathbb{R}^3 : x^\mbox{exponent} y^{1-\mbox{exponent}} \ge |z|, x,y \ge 0 \}``
 * **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**: ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent} \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
-* **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \textit{is the upper triangle of a PSD matrix with side dimension:} \mbox{dimension}\}``
-* **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \textit{is a PSD matrix with side dimension:} \mbox{dimension}\}``
-* **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le \log(\det(X)), X \textit{is the upper triangle of a PSD matrix with side dimension:} \mbox{dimension}\}``
-* **[`LogDetConeSquare(dimension)`](@ref MathOptInterface.LogDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \log(\det(X)), X \textit{is a PSD matrix with side dimension:} \mbox{dimension}\}``
-* **[`RootDetConeTriangle(dimension)`](@ref MathOptInterface.RootDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le det(X)^{1/\mbox{dimension}}, X \textit{is the upper triangle of a PSD matrix with side dimension:} \mbox{dimension}\}``
-* **[`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \det(X)^{1/\mbox{dimension}}, X \textit{is a PSD matrix with side dimension:} \mbox{dimension}\}``
+* **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is the upper triangle of a PSD matrix}\}``
+* **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix}\}``
+* **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le \log(\det(X)), X \mbox{is the upper triangle of a PSD matrix}\}``
+* **[`LogDetConeSquare(dimension)`](@ref MathOptInterface.LogDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \log(\det(X)), X \mbox{is a PSD matrix}\}``
+* **[`RootDetConeTriangle(dimension)`](@ref MathOptInterface.RootDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le det(X)^{1/\mbox{dimension}}, X \mbox{is the upper triangle of a PSD matrix}\}``
+* **[`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \det(X)^{1/\mbox{dimension}}, X \mbox{is a PSD matrix}\}``
 * **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
 * **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
 * **[`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous)**: ``\{ 0\} \cup [lower,upper]``
