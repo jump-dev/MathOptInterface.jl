@@ -146,7 +146,7 @@ function hessian_lagrangian_structure end
 Evaluates the sparse Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``.
 The result is stored in the vector `J` in the same order as the indices returned
-by `jac_structure`.
+by `jacobian_structure`.
 """
 function eval_constraint_jacobian end
 
@@ -182,7 +182,7 @@ Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the sparse Hessian-of-the-Lagrangian matrix
 ``\\sigma\\nabla^2 f(x) + \\sum_{i=1}^m \\mu_i \\nabla^2 g_i(x)``,
 storing the result in the vector `H` in the same order as the indices
-returned by `hesslag_structure`.
+returned by `hessian_lagrangian_structure`.
 """
 function eval_hessian_lagrangian end
 
