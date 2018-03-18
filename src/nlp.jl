@@ -57,6 +57,8 @@ and another objective function using an `ObjectiveFunction` attribute. The
 derivatives, and expression graphs. If `has_objective == false`, then it is an
 error to query properties of the objective function, and in
 Hessian-of-the-Lagrangian queries, `σ` must be set to zero.
+Throughout the evaluator, all variables are ordered according to
+ListOfVariableIndices().
 """
 struct NLPBlockData
     lb::Vector{Float64}
@@ -66,7 +68,7 @@ struct NLPBlockData
 end
 
 """
-    initialize!(d::AbstractNLPEvaluator, requested_features::Vector{Symbol}, variable_order::Vector{VariableIndex})
+    initialize!(d::AbstractNLPEvaluator, requested_features::Vector{Symbol})
 
 Must be called before any other methods. The vector `requested_features`
 lists features requested by the solver. These may include `:Grad` for gradients
@@ -74,11 +76,6 @@ of ``f``, `:Jac` for explicit Jacobians of ``g``, `:JacVec` for
 Jacobian-vector products, `:HessVec` for Hessian-vector
 and Hessian-of-Lagrangian-vector products, `:Hess` for explicit Hessians and
 Hessian-of-Lagrangians, and `:ExprGraph` for expression graphs.
-The vector `variable_order` provides a ordering on the variable indices in the
-instance. Each variable index (i.e., `ListOfVariableIndices`) must appear
-exactly once in `variable_order`, but the indices may appear in any order.
-All subsequent references to the vector ``x`` follow this index mapping; the
-`i`th index of ``x`` corresponds to `variable_order[i]`.
 """
 function initialize! end
 
