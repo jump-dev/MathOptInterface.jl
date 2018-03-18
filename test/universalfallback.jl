@@ -103,4 +103,10 @@ struct BadOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         attr = MOIT.BadConstraintAttribute()
         test_varconattrs(uf, model, attr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
     end
+    @testset "Continuous Linear tests" begin
+        config = MOIT.TestConfig(solve=false)
+        MOI.empty!(uf)
+        @test MOI.isempty(uf)
+        MOIT.contlineartest(uf, config)
+    end
 end
