@@ -172,8 +172,8 @@ canget(model, ConstraintIndex, "con1")
 ```
 """
 function canget end
-canget(model::ModelLike, attr::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
-canget(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
+canget(::ModelLike, ::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
+canget(::ModelLike, ::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
 
 """
     canset(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)::Bool
@@ -198,8 +198,8 @@ canset(model, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float64},
 ```
 """
 function canset end
-canset(model::ModelLike, attr::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
-canset(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ref::Type{<:Index}) = false
+canset(::ModelLike, ::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
+canset(::ModelLike, ::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
 
 """
     set!(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute, value)
