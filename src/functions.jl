@@ -174,8 +174,7 @@ end
 # Implementation of comparison for MOI functions
 Base.:(==)(f::VectorOfVariables, g::VectorOfVariables) = f.variables == g.variables
 
-Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{SingleVariable, VectorOfVariables},
-                                            G<:Union{SingleVariable, VectorOfVariables}} = f == g
+Base.isapprox(f::Union{SingleVariable, VectorOfVariables}, g::Union{SingleVariable, VectorOfVariables}; kwargs...) = f == g
 
 # For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_isapprox`
 function dict_isapprox(d1::Dict, d2::Dict{<:Any, T}; kwargs...) where T
