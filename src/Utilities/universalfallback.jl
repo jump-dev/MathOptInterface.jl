@@ -76,6 +76,10 @@ function MOI.get(uf::UniversalFallback, attr::Union{MOI.AbstractVariableAttribut
     end
 end
 
+# Name
+MOI.canget(uf::UniversalFallback, IdxT::Type{<:MOI.Index}, name::String) = MOI.canget(uf.model, IdxT, name)
+MOI.get(uf::UniversalFallback, IdxT::Type{<:MOI.Index}, name::String) = MOI.get(uf.model, IdxT, name)
+
 _set!(uf, attr::MOI.AbstractOptimizerAttribute, value) = uf.optattr[attr] = value
 _set!(uf, attr::MOI.AbstractModelAttribute, value)     = uf.modattr[attr] = value
 function _set!(uf, attr::MOI.AbstractVariableAttribute, vi::VI, value)

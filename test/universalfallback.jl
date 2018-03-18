@@ -36,7 +36,10 @@ function test_varconattrs(uf, model, attr, I::Type{<:MOI.Index}, addfun, x, y, z
     w = addfun(uf)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
+    @test MOI.candelete(uf, u)
+    @test MOI.isvalid(uf, u)
     MOI.delete!(uf, u)
+    @test !MOI.isvalid(uf, u)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
 
@@ -61,6 +64,22 @@ struct BadOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         MOI.empty!(uf)
         @test MOI.isempty(uf)
     end
+    @testset "Valid Test" begin
+        MOIT.validtest(uf)
+        @test !MOI.isempty(uf)
+        MOI.empty!(uf)
+        @test MOI.isempty(uf)
+    end
+    @testset "Empty Test" begin
+        MOIT.emptytest(uf)
+        @test MOI.isempty(uf)
+    end
+    @testset "Name Test" begin
+        MOIT.nametest(uf)
+        @test !MOI.isempty(uf)
+        MOI.empty!(uf)
+        @test MOI.isempty(uf)
+    end
     @testset "Optimizer Attribute" begin
         attr = BadOptimizerAttribute()
         test_optmodattrs(uf, model, attr)
@@ -69,8 +88,8 @@ struct BadOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         attr = MOIT.BadModelAttribute()
         test_optmodattrs(uf, model, attr)
     end
-    x = MOI.addvariable!(model)
-    y, z = MOI.addvariables!(model, 2)
+    x = MOI.addvariable!(uf)
+    y, z = MOI.addvariables!(uf, 2)
     @testset "Variable Attribute" begin
         VI = MOI.VariableIndex
         attr = MOIT.BadVariableAttribute()
