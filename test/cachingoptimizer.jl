@@ -163,11 +163,30 @@ end
 end
 
 @testset "CachingOptimizer constructor with optimizer" begin
-    s = MOIU.MockOptimizer(ModelForMock{Float64}())
-    m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), s)
-    @test MOI.isempty(m)
-    @test MOIU.state(m) == MOIU.AttachedOptimizer
-    @test MOIU.mode(m) == MOIU.Automatic
+    @testset "Empty model and optimizer" begin
+        s = MOIU.MockOptimizer(ModelForMock{Float64}())
+        model = ModelForCachingOptimizer{Float64}()
+        m = MOIU.CachingOptimizer(model, s)
+        @test MOI.isempty(m)
+        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        @test MOIU.mode(m) == MOIU.Automatic
+    end
+    @testset "Non-empty optimizer" begin
+        s = MOIU.MockOptimizer(ModelForMock{Float64}())
+        MOI.addvariable!(s)
+        model = ModelForCachingOptimizer{Float64}()
+        @test MOI.isempty(model)
+        @test !MOI.isempty(s)
+        @test_throws AssertionError MOIU.CachingOptimizer(model, s)
+    end
+    @testset "Non-empty model" begin
+        s = MOIU.MockOptimizer(ModelForMock{Float64}())
+        model = ModelForCachingOptimizer{Float64}()
+        MOI.addvariable!(model)
+        @test !MOI.isempty(model)
+        @test MOI.isempty(s)
+        @test_throws AssertionError MOIU.CachingOptimizer(model, s)
+    end
 end
 
 for state in (MOIU.NoOptimizer, MOIU.EmptyOptimizer, MOIU.AttachedOptimizer)

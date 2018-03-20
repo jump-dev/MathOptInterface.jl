@@ -43,7 +43,11 @@ Creates an `CachingOptimizer` in `Automatic` mode, with the optimizer `optimizer
 The model_cache manager returned behaves like an `AbstractOptimizer` as long as no
 `CachingOptimizer`-specific functions (e.g. `dropoptimizer!`) are called on it.
 """
-CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer) = CachingOptimizer(model_cache, optimizer, AttachedOptimizer, Automatic, IndexMap(), IndexMap())
+function CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer)
+    @assert MOI.isempty(model_cache)
+    @assert MOI.isempty(optimizer)
+    CachingOptimizer(model_cache, optimizer, AttachedOptimizer, Automatic, IndexMap(), IndexMap())
+end
 
 ## Methods for managing the state of CachingOptimizer.
 
