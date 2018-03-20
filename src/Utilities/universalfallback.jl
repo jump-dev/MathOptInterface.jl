@@ -1,9 +1,9 @@
 """
     UniversalFallback
 
-The `UniversalFallback` can be applied on a `ModelLike` `model` to create the model `UniversalFallback(model)` supporting *any* constraints and attributes.
-This allows to have a specialized implementation in `model` for performance critical constraints and attributes while still supporting other constraints and attributes with a small performance penalty.
-Note that `model` is unaware of constraints and attributes stored by `UniversalFallback` so this is not appropriate if `model` is an optimizer (for this reason, `optimize!` have not been implemented). In that case, optimizer bridges should be used instead.
+The `UniversalFallback` can be applied on a `ModelLike` `model` to create the model `UniversalFallback(model)` supporting *any* attributes.
+This allows to have a specialized implementation in `model` for performance critical attributes while still supporting other attributes with a small performance penalty.
+Note that `model` is unaware of attributes stored by `UniversalFallback` so this is not appropriate if `model` is an optimizer (for this reason, `optimize!` have not been implemented). In that case, optimizer bridges should be used instead.
 """
 struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
