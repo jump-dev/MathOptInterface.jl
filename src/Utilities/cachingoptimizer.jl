@@ -44,6 +44,7 @@ The model_cache manager returned behaves like an `AbstractOptimizer` as long as 
 `CachingOptimizer`-specific functions (e.g. `dropoptimizer!`) are called on it.
 """
 function CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer)
+    @assert MOI.isempty(model_cache)
     @assert MOI.isempty(optimizer)
     CachingOptimizer(model_cache, optimizer, AttachedOptimizer, Automatic, IndexMap(), IndexMap())
 end
