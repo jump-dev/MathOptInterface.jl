@@ -168,6 +168,9 @@ end
     @test MOI.isempty(m)
     @test MOIU.state(m) == MOIU.AttachedOptimizer
     @test MOIU.mode(m) == MOIU.Automatic
+    MOI.addvariable!(s)
+    # s is not empty
+    @test_throws AssertionError MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), s)
 end
 
 for state in (MOIU.NoOptimizer, MOIU.EmptyOptimizer, MOIU.AttachedOptimizer)
