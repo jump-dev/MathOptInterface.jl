@@ -26,6 +26,7 @@ MOIU.@model(Model,
 include("functions.jl")
 include("sets.jl")
 include("model.jl")
+include("universalfallback.jl")
 include("parser.jl")
 include("mockoptimizer.jl")
 include("cachingoptimizer.jl")
