@@ -144,6 +144,7 @@ MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.varnames, 
 MOI.canget(model::AbstractModel, ::Type{VI}, name::String) = haskey(model.namesvar, name)
 MOI.get(model::AbstractModel, ::Type{VI}, name::String) = model.namesvar[name]
 
+MOI.canget(::AbstractModel, ::MOI.ListOfVariableAttributesSet) = true
 function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vector{MOI.AbstractVariableAttribute}
     isempty(model.varnames) ? [] : [MOI.VariableName()]
 end
@@ -162,6 +163,7 @@ MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.connames
 MOI.canget(model::AbstractModel, ::Type{<:CI}, name::String) = haskey(model.namescon, name)
 MOI.get(model::AbstractModel, ::Type{<:CI}, name::String) = model.namescon[name]
 
+MOI.canget(::AbstractModel, ::MOI.ListOfConstraintAttributesSet) = true
 function MOI.get(model::AbstractModel, ::MOI.ListOfConstraintAttributesSet)::Vector{MOI.AbstractConstraintAttribute}
     isempty(model.connames) ? [] : [MOI.ConstraintName()]
 end
@@ -190,6 +192,7 @@ function MOI.modifyobjective!(model::AbstractModel, change::MOI.AbstractFunction
     model.objective = modifyfunction(model.objective, change)
 end
 
+MOI.canget(::AbstractModel, ::MOI.ListOfModelAttributesSet) = true
 function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{MOI.AbstractModelAttribute}
     [MOI.ObjectiveSense(), MOI.ObjectiveFunction{typeof(model.objective)}()]
 end
