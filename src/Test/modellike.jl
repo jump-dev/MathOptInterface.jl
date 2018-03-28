@@ -124,41 +124,41 @@ function emptytest(model::MOI.ModelLike)
 end
 
 abstract type BadModel <: MOI.ModelLike end
-MOI.get(src::BadModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[]
-MOI.get(src::BadModel, ::MOI.NumberOfVariables) = 1
-MOI.get(src::BadModel, ::MOI.ListOfVariableIndices) = [MOI.VariableIndex(1)]
-MOI.get(src::BadModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[]
-MOI.get(src::BadModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64})]
-MOI.get(src::BadModel, ::MOI.ListOfConstraintIndices{F,S}) where {F,S} = [MOI.ConstraintIndex{F,S}(1)]
-MOI.get(src::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.SingleVariable(MOI.VariableIndex(1))
-MOI.get(src::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.EqualTo(0.0)
-MOI.get(src::BadModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[]
+MOI.get(::BadModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[]
+MOI.get(::BadModel, ::MOI.NumberOfVariables) = 1
+MOI.get(::BadModel, ::MOI.ListOfVariableIndices) = [MOI.VariableIndex(1)]
+MOI.get(::BadModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[]
+MOI.get(::BadModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64})]
+MOI.get(::BadModel, ::MOI.ListOfConstraintIndices{F,S}) where {F,S} = [MOI.ConstraintIndex{F,S}(1)]
+MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.SingleVariable(MOI.VariableIndex(1))
+MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.EqualTo(0.0)
+MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[]
 
 struct BadConstraintModel <: BadModel end
-MOI.get(src::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownSet)]
-MOI.get(src::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
-MOI.get(src::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = UnknownSet()
+MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownSet)]
+MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
+MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = UnknownSet()
 
 struct BadModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
-MOI.canget(src::BadModelAttributeModel, ::BadModelAttribute) = true
+MOI.canget(::BadModelAttributeModel, ::BadModelAttribute) = true
 # During copy(dest, src::BadModelAttributeModel), canget(src, ...) will return true but canset(dest, ...) will return false.
 # In this case, a correct implementation of copy shouldn't call get(src, ...) since the result will not be used as it won't do set!(dest, ...).
 # If get(src::BadModelAttributeModel, ::BadModelAttribute) is defined here, a bad implementation of copy would pass the test.
 # As it is not defined, the bad implementation will get UndefinedMethod
-MOI.get(src::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[BadModelAttribute()]
+MOI.get(::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[BadModelAttribute()]
 
 struct BadVariableAttribute <: MOI.AbstractVariableAttribute end
 struct BadVariableAttributeModel <: BadModel end
-MOI.canget(src::BadVariableAttributeModel, ::BadVariableAttribute, ::Type{MOI.VariableIndex}) = true
+MOI.canget(::BadVariableAttributeModel, ::BadVariableAttribute, ::Type{MOI.VariableIndex}) = true
 # MOI.get is not defined for BadVariableAttribute for the same reason get is not defined BadModelAttribute
-MOI.get(src::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[BadVariableAttribute()]
+MOI.get(::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[BadVariableAttribute()]
 
 struct BadConstraintAttribute <: MOI.AbstractConstraintAttribute end
 struct BadConstraintAttributeModel <: BadModel end
-MOI.canget(src::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
+MOI.canget(::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
 # MOI.get is not defined for BadConstraintAttribute for the same reason get is not defined BadModelAttribute
-MOI.get(src::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[BadConstraintAttribute()]
+MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[BadConstraintAttribute()]
 
 function failcopytest(dest::MOI.ModelLike, src::MOI.ModelLike, expected_status)
     copyresult = MOI.copy!(dest, src)
