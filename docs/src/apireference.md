@@ -261,6 +261,7 @@ canmodifyobjective
 
 ```@docs
 NLPBlock
+NLPBoundsPair
 NLPBlockData
 NLPBlockDual
 NLPBlockDualStart
@@ -274,6 +275,7 @@ features_available
 eval_objective
 eval_constraint
 eval_objective_gradient
+IndexPair
 jacobian_structure
 hessian_lagrangian_structure
 eval_constraint_jacobian

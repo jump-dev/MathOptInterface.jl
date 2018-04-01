@@ -42,27 +42,36 @@ An initial assignment of the Lagrange multipliers on the constraints from the
 struct NLPBlockDualStart <: AbstractModelAttribute end
 
 """
+    NLPBoundsPair(lower,upper)
+
+A struct holding a pair of lower and upper bounds. `-Inf` and `Inf`
+can be used to indicate no lower or upper bound, respectively.
+"""
+struct NLPBoundsPair
+    lower::Float64
+    upper::Float64
+end
+
+
+"""
     struct NLPBlockData
-        lb::Vector{Float64}
-        ub::Vector{Float64}
+        constraint_bounds::Vector{NLPBoundsPair}
         evaluator::AbstractNLPEvaluator
         has_objective::Bool
     end
 
-A `struct` encoding a set of nonlinear constraints of the form
-``lb \\le g(x) \\le ub`` and, if `has_objective == true`, a nonlinear objective
-function ``f(x)``. It is an error to set both a nonlinear objective function
-and another objective function using an `ObjectiveFunction` attribute. The
-`evaluator` is a callback object that is used to query function values,
-derivatives, and expression graphs. If `has_objective == false`, then it is an
-error to query properties of the objective function, and in
-Hessian-of-the-Lagrangian queries, `σ` must be set to zero.
-Throughout the evaluator, all variables are ordered according to
-ListOfVariableIndices().
-"""
+A `struct` encoding a set of nonlinear constraints of the form ``lb \\le g(x)
+\\le ub`` and, if `has_objective == true`, a nonlinear objective function
+``f(x)``. `constraint_bounds` holds the pairs of ``lb`` and ``ub`` elements. It
+is an error to set both a nonlinear objective function and another objective
+function using an `ObjectiveFunction` attribute. The `evaluator` is a callback
+object that is used to query function values, derivatives, and expression
+graphs. If `has_objective == false`, then it is an error to query properties of
+the objective function, and in Hessian-of-the-Lagrangian queries, `σ` must be
+set to zero. Throughout the evaluator, all variables are ordered according to
+ListOfVariableIndices(). """
 struct NLPBlockData
-    lb::Vector{Float64}
-    ub::Vector{Float64}
+    constraint_bounds::Vector{NLPBoundsPair}
     evaluator::AbstractNLPEvaluator
     has_objective::Bool
 end
@@ -111,30 +120,40 @@ Evaluate ``\\nabla f(x)`` as a dense vector, storing the result in the vector
 function eval_objective_gradient end
 
 """
-    jacobian_structure(d::AbstractNLPEvaluator)
+    struct IndexPair
+        row::Int64
+        column::Int64
+    end
+"""
+struct IndexPair
+    row::Int64
+    column::Int64
+end
+
+"""
+    jacobian_structure(d::AbstractNLPEvaluator)::Vector{IndexPair}
 
 Returns the sparsity structure of the Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``
 where ``g_i`` is the ``i\\text{th}`` component of ``g``. The sparsity structure
-is assumed to be independent of the point ``x``. Returns a tuple `(I,J)`
-where `I` contains the row indices and `J` contains the column indices of each
-structurally nonzero element. These indices are not required to be sorted and can contain
+is assumed to be independent of the point ``x``. Returns a vector of `IndexPair`s,
+where each indicates the position of a structurally nonzero element.
+These indices are not required to be sorted and can contain
 duplicates, in which case the solver should combine the corresponding elements by
 adding them together.
 """
 function jacobian_structure end
 
 """
-    hessian_lagrangian_structure(d::AbstractNLPEvaluator)
+    hessian_lagrangian_structure(d::AbstractNLPEvaluator)::Vector{IndexPair}
 
 Returns the sparsity structure of the Hessian-of-the-Lagrangian matrix
-``\\nabla^2 f + \\sum_{i=1}^m \\nabla^2 g_i`` as a tuple `(I,J)`
-where `I` contains the row indices and `J` contains the column indices of each
-structurally nonzero element. These indices are not required to be sorted and can contain
-duplicates, in which case the solver should combine the corresponding elements by
-adding them together. Any mix of lower and upper-triangular indices is valid.
-Elements `(i,j)` and `(j,i)`, if both present, should be treated as duplicates.
-"""
+``\\nabla^2 f + \\sum_{i=1}^m \\nabla^2 g_i`` as a vector of `IndexPair`s, where
+each indicates the position of a structurally nonzero element. These indices are
+not required to be sorted and can contain duplicates, in which case the solver
+should combine the corresponding elements by adding them together. Any mix of
+lower and upper-triangular indices is valid. Elements `IndexPair(i,j)` and
+`IndexPair(j,i)`, if both present, should be treated as duplicates. """
 function hessian_lagrangian_structure end
 
 """
