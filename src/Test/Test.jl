@@ -16,4 +16,6 @@ include("contquadratic.jl")
 include("intlinear.jl")
 include("intconic.jl")
 
+include("nlp.jl")
+
 end # module
