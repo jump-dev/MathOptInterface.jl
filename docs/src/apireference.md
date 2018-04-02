@@ -261,6 +261,7 @@ canmodifyobjective
 
 ```@docs
 NLPBlock
+NLPBoundsPair
 NLPBlockData
 NLPBlockDual
 NLPBlockDualStart
