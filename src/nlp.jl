@@ -120,40 +120,29 @@ Evaluate ``\\nabla f(x)`` as a dense vector, storing the result in the vector
 function eval_objective_gradient end
 
 """
-    struct IndexPair
-        row::Int64
-        column::Int64
-    end
-"""
-struct IndexPair
-    row::Int64
-    column::Int64
-end
-
-"""
-    jacobian_structure(d::AbstractNLPEvaluator)::Vector{IndexPair}
+    jacobian_structure(d::AbstractNLPEvaluator)::Vector{Tuple{Int64,Int64}}
 
 Returns the sparsity structure of the Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``
 where ``g_i`` is the ``i\\text{th}`` component of ``g``. The sparsity structure
-is assumed to be independent of the point ``x``. Returns a vector of `IndexPair`s,
-where each indicates the position of a structurally nonzero element.
-These indices are not required to be sorted and can contain
-duplicates, in which case the solver should combine the corresponding elements by
-adding them together.
+is assumed to be independent of the point ``x``. Returns a vector of tuples,
+`(row, column)`, where each indicates the position of a structurally nonzero element.
+These indices are not required to be sorted and can contain duplicates, in which
+case the solver should combine the corresponding elements by adding them together.
 """
 function jacobian_structure end
 
 """
-    hessian_lagrangian_structure(d::AbstractNLPEvaluator)::Vector{IndexPair}
+    hessian_lagrangian_structure(d::AbstractNLPEvaluator)::Vector{Tuple{Int64,Int64}}
 
 Returns the sparsity structure of the Hessian-of-the-Lagrangian matrix
-``\\nabla^2 f + \\sum_{i=1}^m \\nabla^2 g_i`` as a vector of `IndexPair`s, where
+``\\nabla^2 f + \\sum_{i=1}^m \\nabla^2 g_i`` as a vector of tuples, where
 each indicates the position of a structurally nonzero element. These indices are
 not required to be sorted and can contain duplicates, in which case the solver
 should combine the corresponding elements by adding them together. Any mix of
-lower and upper-triangular indices is valid. Elements `IndexPair(i,j)` and
-`IndexPair(j,i)`, if both present, should be treated as duplicates. """
+lower and upper-triangular indices is valid. Elements `(i,j)` and
+`(j,i)`, if both present, should be treated as duplicates.
+"""
 function hessian_lagrangian_structure end
 
 """
