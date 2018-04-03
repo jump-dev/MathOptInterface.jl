@@ -142,26 +142,26 @@ MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, M
 MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
 MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = UnknownSet()
 
-struct BadModelAttribute <: MOI.AbstractModelAttribute end
+struct UnknownModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
-MOI.canget(::BadModelAttributeModel, ::BadModelAttribute) = true
+MOI.canget(::BadModelAttributeModel, ::UnknownModelAttribute) = true
 # During copy(dest, src::BadModelAttributeModel), canget(src, ...) will return true but canset(dest, ...) will return false.
 # In this case, a correct implementation of copy shouldn't call get(src, ...) since the result will not be used as it won't do set!(dest, ...).
-# If get(src::BadModelAttributeModel, ::BadModelAttribute) is defined here, a bad implementation of copy would pass the test.
+# If get(src::BadModelAttributeModel, ::UnknownModelAttribute) is defined here, a bad implementation of copy would pass the test.
 # As it is not defined, the bad implementation will get UndefinedMethod
-MOI.get(::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[BadModelAttribute()]
+MOI.get(::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[UnknownModelAttribute()]
 
-struct BadVariableAttribute <: MOI.AbstractVariableAttribute end
+struct UnknownVariableAttribute <: MOI.AbstractVariableAttribute end
 struct BadVariableAttributeModel <: BadModel end
-MOI.canget(::BadVariableAttributeModel, ::BadVariableAttribute, ::Type{MOI.VariableIndex}) = true
-# MOI.get is not defined for BadVariableAttribute for the same reason get is not defined BadModelAttribute
-MOI.get(::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[BadVariableAttribute()]
+MOI.canget(::BadVariableAttributeModel, ::UnknownVariableAttribute, ::Type{MOI.VariableIndex}) = true
+# MOI.get is not defined for BadVariableAttribute for the same reason get is not defined UnknownModelAttribute
+MOI.get(::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[UnknownVariableAttribute()]
 
-struct BadConstraintAttribute <: MOI.AbstractConstraintAttribute end
+struct UnknownConstraintAttribute <: MOI.AbstractConstraintAttribute end
 struct BadConstraintAttributeModel <: BadModel end
-MOI.canget(::BadConstraintAttributeModel, ::BadConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
-# MOI.get is not defined for BadConstraintAttribute for the same reason get is not defined BadModelAttribute
-MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[BadConstraintAttribute()]
+MOI.canget(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
+# MOI.get is not defined for UnknownConstraintAttribute for the same reason get is not defined UnknownModelAttribute
+MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[UnknownConstraintAttribute()]
 
 function failcopytest(dest::MOI.ModelLike, src::MOI.ModelLike, expected_status)
     copyresult = MOI.copy!(dest, src)
@@ -173,15 +173,15 @@ function failcopytestc(dest::MOI.ModelLike)
     failcopytest(dest, BadConstraintModel(), MOI.CopyUnsupportedConstraint)
 end
 function failcopytestia(dest::MOI.ModelLike)
-    @test !MOI.supports(dest, BadModelAttribute())
+    @test !MOI.supports(dest, UnknownModelAttribute())
     failcopytest(dest, BadModelAttributeModel(), MOI.CopyUnsupportedAttribute)
 end
 function failcopytestva(dest::MOI.ModelLike)
-    @test !MOI.supports(dest, BadVariableAttribute(), MOI.VariableIndex)
+    @test !MOI.supports(dest, UnknownVariableAttribute(), MOI.VariableIndex)
     failcopytest(dest, BadVariableAttributeModel(), MOI.CopyUnsupportedAttribute)
 end
 function failcopytestca(dest::MOI.ModelLike)
-    @test !MOI.supports(dest, BadConstraintAttribute(), MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
+    @test !MOI.supports(dest, UnknownConstraintAttribute(), MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
     failcopytest(dest, BadConstraintAttributeModel(), MOI.CopyUnsupportedAttribute)
 end
 
