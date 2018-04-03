@@ -52,7 +52,7 @@ function test_varconattrs(uf, model, attr, I::Type{<:MOI.Index}, addfun, x, y, z
     @test MOI.get(uf, attr, y) == 0
 end
 
-struct BadOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
+struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 
 @testset "UniversalFallback" begin
     model = Model{Float64}()
@@ -81,18 +81,18 @@ struct BadOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         @test MOI.isempty(uf)
     end
     @testset "Optimizer Attribute" begin
-        attr = BadOptimizerAttribute()
+        attr = UnknownOptimizerAttribute()
         test_optmodattrs(uf, model, attr)
     end
     @testset "Model Attribute" begin
-        attr = MOIT.BadModelAttribute()
+        attr = MOIT.UnknownModelAttribute()
         test_optmodattrs(uf, model, attr)
     end
     x = MOI.addvariable!(uf)
     y, z = MOI.addvariables!(uf, 2)
     @testset "Variable Attribute" begin
         VI = MOI.VariableIndex
-        attr = MOIT.BadVariableAttribute()
+        attr = MOIT.UnknownVariableAttribute()
         test_varconattrs(uf, model, attr, VI, MOI.addvariable!, x, y, z)
     end
     cx = MOI.addconstraint!(uf, x, MOI.EqualTo(0.))
@@ -100,7 +100,7 @@ struct BadOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
     cz = MOI.addconstraint!(uf, z, MOI.EqualTo(2.))
     @testset "Constraint Attribute" begin
         CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
-        attr = MOIT.BadConstraintAttribute()
+        attr = MOIT.UnknownConstraintAttribute()
         test_varconattrs(uf, model, attr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
     end
     @testset "Continuous Linear tests" begin
