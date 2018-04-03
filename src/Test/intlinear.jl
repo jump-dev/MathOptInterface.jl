@@ -22,7 +22,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
@@ -121,7 +121,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         MOI.empty!(model)
         @test MOI.isempty(model)
 
-        MOI.canaddvariable(model)
+        @test MOI.canaddvariable(model)
         v = MOI.addvariables!(model, 3)
         @test MOI.get(model, MOI.NumberOfVariables()) == 3
         @test MOI.canaddconstraint(model, typeof(MOI.SingleVariable(v[1])), MOI.LessThan{Float64})
@@ -212,7 +212,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         MOI.empty!(model)
         @test MOI.isempty(model)
 
-        MOI.canaddvariable(model)
+        @test MOI.canaddvariable(model)
         v = MOI.addvariables!(model, 10)
         @test MOI.get(model, MOI.NumberOfVariables()) == 10
 
@@ -331,14 +331,14 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.Interval{Float64})
     @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     z = MOI.addvariable!(model)
     @test MOI.canaddconstraint(model, typeof(MOI.SingleVariable(z)), MOI.Integer)
     MOI.addconstraint!(model, MOI.SingleVariable(z), MOI.Integer())
     @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.Integer)
     MOI.addconstraint!(model, MOI.SingleVariable(z), MOI.Interval(0.0, 100.0))
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     b = MOI.addvariables!(model, 10)
 
     for bi in b
@@ -398,7 +398,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
     @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
-    MOI.canaddvariable(model)
+    @test MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 5)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
 
