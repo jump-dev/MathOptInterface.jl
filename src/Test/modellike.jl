@@ -4,6 +4,20 @@ struct UnknownSet <: MOI.AbstractSet end
 
 function nametest(model::MOI.ModelLike)
     @testset "Name test" begin
+        @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
+        @test MOI.canget(model, MOI.Name())
+        @test MOI.get(model, MOI.Name()) == ""
+        @test MOI.canset(model, MOI.Name())
+        MOI.set!(model, MOI.Name(), "Name1")
+        @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
+        @test MOI.canget(model, MOI.Name())
+        @test MOI.get(model, MOI.Name()) == "Name1"
+        @test MOI.canset(model, MOI.Name())
+        MOI.set!(model, MOI.Name(), "Name2")
+        @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
+        @test MOI.canget(model, MOI.Name())
+        @test MOI.get(model, MOI.Name()) == "Name2"
+
         @test MOI.get(model, MOI.NumberOfVariables()) == 0
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
 
@@ -187,11 +201,17 @@ end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.canaddvariable(src)
+    MOI.set!(src, MOI.Name(), "ModelName")
     v = MOI.addvariables!(src, 3)
+    MOI.set!(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
     csv = MOI.addconstraint!(src, MOI.SingleVariable(v[2]), MOI.EqualTo(2.))
+    MOI.set!(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.addconstraint!(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
+    MOI.set!(src, MOI.ConstraintName(), cvv, "cvv")
     csa = MOI.addconstraint!(src, MOI.ScalarAffineFunction([v[3], v[1]], [1., 3.], 2.), MOI.LessThan(2.))
+    MOI.set!(src, MOI.ConstraintName(), csa, "csa")
     cva = MOI.addconstraint!(src, MOI.VectorAffineFunction([1, 2], [v[3], v[2]], ones(2), [-3.0,-2.0]), MOI.Zeros(2))
+    MOI.set!(src, MOI.ConstraintName(), cva, "cva")
     MOI.set!(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(v, [-3.0, -2.0, -4.0], 0.0))
     MOI.set!(src, MOI.ObjectiveSense(), MOI.MinSense)
 
@@ -201,11 +221,13 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.supportsconstraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     @test MOI.supportsconstraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
-    copyresult = MOI.copy!(dest, src)
+    copyresult = MOI.copy!(dest, src; copynames=false)
     @test copyresult.status == MOI.CopySuccess
     dict = copyresult.indexmap
 
+    @test !MOI.canget(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
     @test MOI.get(dest, MOI.NumberOfVariables()) == 3
+    @test !MOI.canget(dest, MOI.VariableName(), MOI.VariableIndex) || MOI.get(dest, MOI.VariableName(), v) == ["", "", ""]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
     @test MOI.get(dest, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == [dict[csv]]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
@@ -221,18 +243,22 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}) in loc
     @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
 
+    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(csv)) || MOI.get(dest, MOI.ConstraintName(), csv) == ""
     @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[csv]))
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) == MOI.SingleVariable(dict[v[2]])
     @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[csv]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.)
+    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), cvv) == ""
     @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[cvv]))
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) == MOI.VectorOfVariables(getindex.(dict, v))
     @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[cvv]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.Nonnegatives(3)
+    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), csa) == ""
     @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[csa]))
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈ MOI.ScalarAffineFunction([dict[v[3]], dict[v[1]]], [1., 3.], 2.)
     @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[csa]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csa]) == MOI.LessThan(2.)
+    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), cva) == ""
     @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[cva]))
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈ MOI.VectorAffineFunction([1, 2], [dict[v[3]], dict[v[2]]], ones(2), [-3.0,-2.0])
     @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[cva]))

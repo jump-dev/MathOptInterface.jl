@@ -30,7 +30,7 @@ function MOI.empty!(uf::UniversalFallback)
     empty!(uf.conattr)
 end
 MOI.supports(b::UniversalFallback, attr::Union{MOI.AbstractModelAttribute, MOI.AbstractOptimizerAttribute}) = true
-MOI.copy!(uf::UniversalFallback, src::MOI.ModelLike) = MOIU.defaultcopy!(uf, src)
+MOI.copy!(uf::UniversalFallback, src::MOI.ModelLike; copynames=true) = MOIU.defaultcopy!(uf, src, copynames)
 
 # References
 MOI.candelete(uf::UniversalFallback, idx::MOI.Index) = MOI.candelete(uf.model, idx)
