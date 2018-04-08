@@ -1,6 +1,7 @@
 
 
 struct HS071 <: MOI.AbstractNLPEvaluator
+    enable_hessian::Bool
 end
 
 # hs071
@@ -13,7 +14,7 @@ end
 
 function MOI.initialize!(d::HS071, requested_features::Vector{Symbol})
     for feat in requested_features
-        if !(feat in [:Grad, :Jac, :Hess])
+        if !(feat in MOI.features_available(d))
             error("Unsupported feature $feat")
             # TODO: implement Jac-vec and Hess-vec products
             # for solvers that need them
@@ -21,7 +22,13 @@ function MOI.initialize!(d::HS071, requested_features::Vector{Symbol})
     end
 end
 
-MOI.features_available(d::HS071) = [:Grad, :Jac, :Hess]
+function MOI.features_available(d::HS071)
+    if d.enable_hessian
+        return [:Grad, :Jac, :Hess]
+    else
+        return [:Grad, :Jac]
+    end
+end
 
 MOI.eval_objective(d::HS071, x) = x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
 
@@ -43,6 +50,7 @@ function MOI.jacobian_structure(d::HS071)
 end
 # lower triangle only
 function MOI.hessian_lagrangian_structure(d::HS071)
+    @assert d.enable_hessian
     return Tuple{Int64,Int64}[(1,1), (2,1), (2,2), (3,1), (3,2), (3,3),
                               (4,1), (4,2), (4,3), (4,4)]
 end
@@ -61,6 +69,7 @@ function MOI.eval_constraint_jacobian(d::HS071, J, x)
 end
 
 function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
+    @assert d.enable_hessian
     # Again, only lower left triangle
     # Objective
     H[1] = σ * (2*x[4])               # 1,1
@@ -90,7 +99,7 @@ function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
 
 end
 
-function hs071test(model::MOI.ModelLike, config::TestConfig)
+function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator::HS071)
     atol = config.atol
     rtol = config.rtol
 
@@ -105,7 +114,7 @@ function hs071test(model::MOI.ModelLike, config::TestConfig)
     lb = [25.0, 40.0]
     ub = [Inf, 40.0]
 
-    hs071_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), HS071(), true)
+    hs071_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
 
     v = MOI.addvariables!(model, 4)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
@@ -151,8 +160,11 @@ function hs071test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+hs071_test(model, config) = hs071test_template(model, config, HS071(true))
+hs071_no_hessian_test(model, config) = hs071test_template(model, config, HS071(false))
+
 # TODO: HS071 version without hessians.
 
-const nlptests = Dict("hs071" => hs071test)
+const nlptests = Dict("hs071" => hs071_test, "hs071_no_hessian" => hs071_no_hessian_test)
 
 @moitestset nlp
