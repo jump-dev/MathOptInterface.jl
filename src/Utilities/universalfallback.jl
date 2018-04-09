@@ -76,18 +76,37 @@ function MOI.get(uf::UniversalFallback, attr::Union{MOI.AbstractVariableAttribut
     end
 end
 
-_dict(uf, attr::MOI.ListOfOptimizerAttributesSet)  = uf.optattr
-_args(uf, attr::MOI.ListOfOptimizerAttributesSet)  = tuple()
-_dict(uf, attr::MOI.ListOfModelAttributesSet)      = uf.modattr
-_args(uf, attr::MOI.ListOfModelAttributesSet)      = tuple()
-_dict(uf, attr::MOI.ListOfVariableAttributesSet)   = uf.varattr
-_args(uf, attr::MOI.ListOfVariableAttributesSet)   = (MOI.VariableIndex,)
-_dict(uf, attr::MOI.ListOfConstraintAttributesSet) = uf.conattr
-_args(uf, attr::MOI.ListOfConstraintAttributesSet{F, S}) where {F, S} = (MOI.ConstraintIndex{F, S},)
-function MOI.get(uf::UniversalFallback, listattr::Union{MOI.ListOfOptimizerAttributesSet, MOI.ListOfModelAttributesSet, MOI.ListOfVariableAttributesSet, MOI.ListOfConstraintAttributesSet})
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfOptimizerAttributesSet)
     list = MOI.get(uf.model, listattr)
-    for attr in keys(_dict(uf, listattr))
-        if MOI.canget(uf, attr, _args(uf, listattr)...)
+    for attr in keys(uf.optattr)
+        if MOI.canget(uf, attr)
+            push!(list, attr)
+        end
+    end
+    list
+end
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
+    list = MOI.get(uf.model, listattr)
+    for attr in keys(uf.modattr)
+        if MOI.canget(uf, attr)
+            push!(list, attr)
+        end
+    end
+    list
+end
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfVariableAttributesSet)
+    list = MOI.get(uf.model, listattr)
+    for attr in keys(uf.varattr)
+        if MOI.canget(uf, attr, MOI.VariableIndex)
+            push!(list, attr)
+        end
+    end
+    list
+end
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintAttributesSet{F, S}) where {F, S}
+    list = MOI.get(uf.model, listattr)
+    for attr in keys(uf.conattr)
+        if MOI.canget(uf, attr, MOI.ConstraintIndex{F, S})
             push!(list, attr)
         end
     end
