@@ -169,12 +169,14 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfConstraintAttributesSet)::Vec
 end
 
 # Objective
+MOI.canget(model::AbstractModel, ::MOI.ObjectiveSense) = model.senseset
 MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
 MOI.canset(model::AbstractModel, ::MOI.ObjectiveSense) = true
 function MOI.set!(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+    model.senseset = true
     model.sense = sense
 end
-MOI.canget(model::AbstractModel, ::MOI.ObjectiveFunction{T}) where T = typeof(model.objective) == T
+MOI.canget(model::AbstractModel, ::MOI.ObjectiveFunction{T}) where T = model.objectiveset && typeof(model.objective) == T
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     if typeof(model.objective) != T
         throw(InexactError())
@@ -183,6 +185,7 @@ function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
 end
 MOI.canset(model::AbstractModel, ::MOI.ObjectiveFunction) = true
 function MOI.set!(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
+    model.objectiveset = true
     # f needs to be copied, see #2
     model.objective = deepcopy(f)
 end
@@ -192,9 +195,18 @@ function MOI.modifyobjective!(model::AbstractModel, change::MOI.AbstractFunction
     model.objective = modifyfunction(model.objective, change)
 end
 
+MOI.canget(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet) = true
+MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet) = MOI.AbstractOptimizerAttribute[]
 MOI.canget(::AbstractModel, ::MOI.ListOfModelAttributesSet) = true
 function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{MOI.AbstractModelAttribute}
-    [MOI.ObjectiveSense(), MOI.ObjectiveFunction{typeof(model.objective)}()]
+    listattr = MOI.AbstractModelAttribute[]
+    if model.senseset
+        push!(listattr, MOI.ObjectiveSense())
+    end
+    if model.objectiveset
+        push!(listattr, MOI.ObjectiveFunction{typeof(model.objective)}())
+    end
+    listattr
 end
 
 # Constraints
@@ -251,7 +263,7 @@ function MOI.get(model::AbstractModel, ::MOI.ConstraintSet, ci::CI)
 end
 
 function MOI.isempty(model::AbstractModel)
-    model.sense == MOI.FeasibilitySense &&
+    !model.senseset && !model.objectiveset &&
     isempty(model.objective.variables) && isempty(model.objective.coefficients) && iszero(model.objective.constant) &&
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
@@ -443,7 +455,9 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
     modeldef = quote
         mutable struct $modelname{T} <: $MOIU.AbstractModel{T}
+            senseset::Bool
             sense::$MOI.OptimizationSense
+            objectiveset::Bool
             objective::Union{$MOI.SingleVariable, $MOI.ScalarAffineFunction{T}, $MOI.ScalarQuadraticFunction{T}}
             nextvariableid::Int64
             varindices::Set{$VI}
@@ -469,7 +483,9 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             vcat($(_broadcastfield.(:($MOIU.broadcastvcat), funs)...))
         end
         function $MOI.empty!(model::$modelname{T}) where T
+            model.senseset = false
             model.sense = $MOI.FeasibilitySense
+            model.objectiveset = false
             model.objective = $SAF{T}($VI[], T[], zero(T))
             model.nextvariableid = 0
             model.varindices = Set{$VI}()
@@ -533,7 +549,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
         $modeldef
         function $modelname{T}() where T
-            $modelname{T}($MOI.FeasibilitySense, $SAF{T}($VI[], T[], zero(T)),
+            $modelname{T}(false, $MOI.FeasibilitySense, false, $SAF{T}($VI[], T[], zero(T)),
                    0, Set{$VI}(), Dict{$VI, String}(), Dict{String, $VI}(),
                    0, Dict{$CI, String}(), Dict{String, $CI}(), Int[],
                    $(_getCV.(funs)...))
