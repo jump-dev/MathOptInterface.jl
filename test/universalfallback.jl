@@ -1,51 +1,61 @@
-function test_optmodattrs(uf, model, attr)
+function test_optmodattrs(uf, model, attr, listattr)
     @test !MOI.canset(model, attr)
     @test MOI.canset(uf, attr)
     @test !MOI.canget(model, attr)
     @test !MOI.canget(uf, attr)
+    @test isempty(MOI.get(uf, listattr))
     MOI.set!(uf, attr, 0)
     @test !MOI.canget(model, attr)
     @test MOI.canget(uf, attr)
     @test MOI.get(uf, attr) == 0
+    @test MOI.get(uf, listattr) == [attr]
     @test !MOI.isempty(uf)
     MOI.empty!(uf)
     @test MOI.isempty(uf)
 end
-function test_varconattrs(uf, model, attr, I::Type{<:MOI.Index}, addfun, x, y, z)
+function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfun, x, y, z)
     @test !MOI.canset(model, attr, I)
     @test MOI.canset(uf, attr, I)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
+    @test isempty(MOI.get(uf, listattr))
     MOI.set!(uf, attr, [x, y], [2, 0])
     @test !MOI.isempty(uf)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
+    @test isempty(MOI.get(uf, listattr))
     MOI.set!(uf, attr, z, 5)
     @test !MOI.canget(model, attr, I)
     @test MOI.canget(uf, attr, I)
     @test MOI.get(uf, attr, y) == 0
     @test MOI.get(uf, attr, [z, x]) == [5, 2]
+    @test MOI.get(uf, listattr) == [attr]
 
     u = addfun(uf)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
+    @test isempty(MOI.get(uf, listattr))
     MOI.set!(uf, attr, u, 8)
     @test !MOI.canget(model, attr, I)
     @test MOI.canget(uf, attr, I)
+    @test MOI.get(uf, listattr) == [attr]
 
     w = addfun(uf)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
+    @test isempty(MOI.get(uf, listattr))
     @test MOI.candelete(uf, u)
     @test MOI.isvalid(uf, u)
     MOI.delete!(uf, u)
     @test !MOI.isvalid(uf, u)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
+    @test isempty(MOI.get(uf, listattr))
 
     MOI.set!(uf, attr, [w, z], [9, 4])
     @test !MOI.canget(model, attr, I)
     @test MOI.canget(uf, attr, I)
+    @test MOI.get(uf, listattr) == [attr]
     @test MOI.get(uf, attr, w) == 9
     @test MOI.get(uf, attr, x) == 2
     @test MOI.get(uf, attr, z) == 4
@@ -82,18 +92,21 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
     end
     @testset "Optimizer Attribute" begin
         attr = UnknownOptimizerAttribute()
-        test_optmodattrs(uf, model, attr)
+        listattr = MOI.ListOfOptimizerAttributesSet()
+        test_optmodattrs(uf, model, attr, listattr)
     end
     @testset "Model Attribute" begin
         attr = MOIT.UnknownModelAttribute()
-        test_optmodattrs(uf, model, attr)
+        listattr = MOI.ListOfModelAttributesSet()
+        test_optmodattrs(uf, model, attr, listattr)
     end
     x = MOI.addvariable!(uf)
     y, z = MOI.addvariables!(uf, 2)
     @testset "Variable Attribute" begin
         VI = MOI.VariableIndex
         attr = MOIT.UnknownVariableAttribute()
-        test_varconattrs(uf, model, attr, VI, MOI.addvariable!, x, y, z)
+        listattr = MOI.ListOfVariableAttributesSet()
+        test_varconattrs(uf, model, attr, listattr, VI, MOI.addvariable!, x, y, z)
     end
     cx = MOI.addconstraint!(uf, x, MOI.EqualTo(0.))
     cy = MOI.addconstraint!(uf, y, MOI.EqualTo(1.))
@@ -101,7 +114,8 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
     @testset "Constraint Attribute" begin
         CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
         attr = MOIT.UnknownConstraintAttribute()
-        test_varconattrs(uf, model, attr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
+        listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
+        test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
     end
     @testset "Continuous Linear tests" begin
         config = MOIT.TestConfig(solve=false)

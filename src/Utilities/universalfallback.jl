@@ -76,6 +76,43 @@ function MOI.get(uf::UniversalFallback, attr::Union{MOI.AbstractVariableAttribut
     end
 end
 
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfOptimizerAttributesSet)
+    list = MOI.get(uf.model, listattr)
+    for attr in keys(uf.optattr)
+        if MOI.canget(uf, attr)
+            push!(list, attr)
+        end
+    end
+    list
+end
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
+    list = MOI.get(uf.model, listattr)
+    for attr in keys(uf.modattr)
+        if MOI.canget(uf, attr)
+            push!(list, attr)
+        end
+    end
+    list
+end
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfVariableAttributesSet)
+    list = MOI.get(uf.model, listattr)
+    for attr in keys(uf.varattr)
+        if MOI.canget(uf, attr, MOI.VariableIndex)
+            push!(list, attr)
+        end
+    end
+    list
+end
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintAttributesSet{F, S}) where {F, S}
+    list = MOI.get(uf.model, listattr)
+    for attr in keys(uf.conattr)
+        if MOI.canget(uf, attr, MOI.ConstraintIndex{F, S})
+            push!(list, attr)
+        end
+    end
+    list
+end
+
 # Name
 MOI.canget(uf::UniversalFallback, IdxT::Type{<:MOI.Index}, name::String) = MOI.canget(uf.model, IdxT, name)
 MOI.get(uf::UniversalFallback, IdxT::Type{<:MOI.Index}, name::String) = MOI.get(uf.model, IdxT, name)
