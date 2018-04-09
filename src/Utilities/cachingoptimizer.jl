@@ -149,7 +149,10 @@ MOI.isempty(m::CachingOptimizer) = MOI.isempty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == Automatic && m.state == EmptyOptimizer
-        attachoptimizer!(m)
+        copy_result = attachoptimizer!(m)
+        if copy_result.status != MOI.CopySuccess
+            error("Failed to copy model into optimizer: $(copy_result.message)")
+        end
     end
     # TODO: better error message if no optimizer is set
     @assert m.state == AttachedOptimizer
