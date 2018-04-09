@@ -1575,14 +1575,14 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
-            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbx))
-            @test MOI.get(model, MOI.ConstraintPrimal(), clbx) ≈ 0 atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clby))
-            @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1/2 atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbz))
-            @test MOI.get(model, MOI.ConstraintPrimal(), clbz) ≈ 1 atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(cubz))
-            @test MOI.get(model, MOI.ConstraintPrimal(), cubz) ≈ 1 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(clbx))
+            @test MOI.get(model, MOI.ConstraintDual(), clbx) ≈ 2 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(clby))
+            @test MOI.get(model, MOI.ConstraintDual(), clby) ≈ 0 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(clbz))
+            @test MOI.get(model, MOI.ConstraintDual(), clbz) ≈ 0 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(cubz))
+            @test MOI.get(model, MOI.ConstraintDual(), cubz) ≈ -2 atol=atol rtol=rtol
         end
     end
 
@@ -1616,8 +1616,8 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
-            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(clbx))
-            @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintDual(), typeof(clbx))
+            @test MOI.get(model, MOI.ConstraintDual(), clby) ≈ 0 atol=atol rtol=rtol
         end
     end
 end
