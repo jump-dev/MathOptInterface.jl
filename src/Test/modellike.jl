@@ -221,7 +221,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.supportsconstraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     @test MOI.supportsconstraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
-    copyresult = MOI.copy!(dest, src; copynames=false)
+    copyresult = MOI.copy!(dest, src, copynames=false)
     @test copyresult.status == MOI.CopySuccess
     dict = copyresult.indexmap
 
