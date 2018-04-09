@@ -273,11 +273,7 @@ function MOI.get(model::AbstractModel, ::MOI.ConstraintSet, ci::CI)
 end
 
 function MOI.isempty(model::AbstractModel)
-<<<<<<< HEAD
-    !model.senseset && !model.objectiveset &&
-=======
-    isempty(model.name) && model.sense == MOI.FeasibilitySense &&
->>>>>>> Add copynames argument to copy
+    isempty(model.name) && !model.senseset && !model.objectiveset &&
     isempty(model.objective.variables) && isempty(model.objective.coefficients) && iszero(model.objective.constant) &&
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
@@ -470,11 +466,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
     modeldef = quote
         mutable struct $modelname{T} <: $MOIU.AbstractModel{T}
-<<<<<<< HEAD
-            senseset::Bool
-=======
             name::String
->>>>>>> Add copynames argument to copy
+            senseset::Bool
             sense::$MOI.OptimizationSense
             objectiveset::Bool
             objective::Union{$MOI.SingleVariable, $MOI.ScalarAffineFunction{T}, $MOI.ScalarQuadraticFunction{T}}
@@ -502,11 +495,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             vcat($(_broadcastfield.(:($MOIU.broadcastvcat), funs)...))
         end
         function $MOI.empty!(model::$modelname{T}) where T
-<<<<<<< HEAD
-            model.senseset = false
-=======
             model.name = ""
->>>>>>> Add copynames argument to copy
+            model.senseset = false
             model.sense = $MOI.FeasibilitySense
             model.objectiveset = false
             model.objective = $SAF{T}($VI[], T[], zero(T))
@@ -572,11 +562,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
         $modeldef
         function $modelname{T}() where T
-<<<<<<< HEAD
-            $modelname{T}(false, $MOI.FeasibilitySense, false, $SAF{T}($VI[], T[], zero(T)),
-=======
-            $modelname{T}("", $MOI.FeasibilitySense, $SAF{T}($VI[], T[], zero(T)),
->>>>>>> Add copynames argument to copy
+            $modelname{T}("", false, $MOI.FeasibilitySense, false, $SAF{T}($VI[], T[], zero(T)),
                    0, Set{$VI}(), Dict{$VI, String}(), Dict{String, $VI}(),
                    0, Dict{$CI, String}(), Dict{String, $CI}(), Int[],
                    $(_getCV.(funs)...))
