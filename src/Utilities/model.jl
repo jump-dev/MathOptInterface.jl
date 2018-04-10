@@ -130,7 +130,14 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
 end
 
 # Names
-MOI.canset(model::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
+MOI.canset(::AbstractModel, ::MOI.Name) = true
+function MOI.set!(model::AbstractModel, ::MOI.Name, name::String)
+    model.name = name
+end
+MOI.canget(model::AbstractModel, ::MOI.Name) = true
+MOI.get(model::AbstractModel, ::MOI.Name) = model.name
+
+MOI.canset(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
     if !isempty(name) && haskey(model.namesvar, name) && model.namesvar[name] != vi
         error("Variable name $name is already used by $(model.namesvar[name])")
@@ -138,7 +145,7 @@ function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String
     model.varnames[vi] = name
     model.namesvar[name] = vi
 end
-MOI.canget(model::AbstractModel, ::MOI.VariableName, ::Type{VI}) = true
+MOI.canget(::AbstractModel, ::MOI.VariableName, ::Type{VI}) = true
 MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.varnames, vi, EMPTYSTRING)
 
 MOI.canget(model::AbstractModel, ::Type{VI}, name::String) = haskey(model.namesvar, name)
@@ -206,6 +213,9 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{M
     if model.objectiveset
         push!(listattr, MOI.ObjectiveFunction{typeof(model.objective)}())
     end
+    if !isempty(model.name)
+        push!(listattr, MOI.Name())
+    end
     listattr
 end
 
@@ -263,14 +273,14 @@ function MOI.get(model::AbstractModel, ::MOI.ConstraintSet, ci::CI)
 end
 
 function MOI.isempty(model::AbstractModel)
-    !model.senseset && !model.objectiveset &&
+    isempty(model.name) && !model.senseset && !model.objectiveset &&
     isempty(model.objective.variables) && isempty(model.objective.coefficients) && iszero(model.objective.constant) &&
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
 
 MOI.supports(::AbstractModel, ::MOI.ObjectiveFunction) = true
 MOI.supportsconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
-MOI.copy!(dest::AbstractModel, src::MOI.ModelLike) = defaultcopy!(dest, src)
+MOI.copy!(dest::AbstractModel, src::MOI.ModelLike; copynames=true) = defaultcopy!(dest, src, copynames)
 
 # Allocate-Load Interface
 # Even if the model does not need it and use defaultcopy!, it could be used by a layer that needs it
@@ -415,6 +425,7 @@ struct LPModelVectorConstraints{T, F <: MOI.AbstractVectorFunction} <: MOIU.Cons
     nonpositives::Vector{MOIU.C{F, MOI.Nonpositives}}
 end
 mutable struct LPModel{T} <: MOIU.AbstractModel{T}
+    name::String
     sense::MOI.OptimizationSense
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
     nextvariableid::Int64
@@ -455,6 +466,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
     modeldef = quote
         mutable struct $modelname{T} <: $MOIU.AbstractModel{T}
+            name::String
             senseset::Bool
             sense::$MOI.OptimizationSense
             objectiveset::Bool
@@ -483,6 +495,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             vcat($(_broadcastfield.(:($MOIU.broadcastvcat), funs)...))
         end
         function $MOI.empty!(model::$modelname{T}) where T
+            model.name = ""
             model.senseset = false
             model.sense = $MOI.FeasibilitySense
             model.objectiveset = false
@@ -549,7 +562,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
         $modeldef
         function $modelname{T}() where T
-            $modelname{T}(false, $MOI.FeasibilitySense, false, $SAF{T}($VI[], T[], zero(T)),
+            $modelname{T}("", false, $MOI.FeasibilitySense, false, $SAF{T}($VI[], T[], zero(T)),
                    0, Set{$VI}(), Dict{$VI, String}(), Dict{String, $VI}(),
                    0, Dict{$CI, String}(), Dict{String, $CI}(), Int[],
                    $(_getCV.(funs)...))

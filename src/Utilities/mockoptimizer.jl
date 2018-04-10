@@ -228,11 +228,11 @@ end
 
 MOI.supports(mock::MockOptimizer, attr::MOI.ObjectiveFunction) = MOI.supports(mock.inner_model, attr)
 MOI.supportsconstraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.supportsconstraint(mock.inner_model, F, S)
-function MOI.copy!(mock::MockOptimizer, src::MOI.ModelLike)
+function MOI.copy!(mock::MockOptimizer, src::MOI.ModelLike; copynames=true)
     if needsallocateload(mock)
-        allocateload!(mock, src)
+        allocateload!(mock, src, copynames)
     else
-        defaultcopy!(mock, src)
+        defaultcopy!(mock, src, copynames)
     end
 end
 

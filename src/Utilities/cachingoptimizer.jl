@@ -116,7 +116,8 @@ from the model cache to the optimizer failed.
 """
 function attachoptimizer!(m::CachingOptimizer)
     @assert m.state == EmptyOptimizer
-    copy_result = MOI.copy!(m.optimizer, m.model_cache)
+    # We do not need to copy names because name-related operations are handled by `m.model_cache`
+    copy_result = MOI.copy!(m.optimizer, m.model_cache, copynames=false)
     if copy_result.status != MOI.CopySuccess
         return copy_result
     end

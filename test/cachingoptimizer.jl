@@ -111,8 +111,8 @@ end
     @test MOI.get(m, MOI.VariableName(), v) == "v"
     @test MOI.canget(m, MOIU.AttributeFromModelCache(MOI.VariableName()), typeof(v))
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.VariableName()), v) == "v"
-    @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.VariableName()), typeof(v))
-    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariableName()), v) == "v"
+    # The caching optimizer does not copy names
+    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariableName()), v) == ""
 
     @test MOI.canset(m, MOI.ObjectiveSense())
     MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)

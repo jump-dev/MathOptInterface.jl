@@ -110,7 +110,7 @@ struct CopyResult{T}
 end
 
 """
-    copy!(dest::ModelLike, src::ModelLike, warnattributes=true)::CopyResult
+    copy!(dest::ModelLike, src::ModelLike; copynames=true, warnattributes=true)::CopyResult
 
 Copy the model from `src` into `dest`. The target `dest` is emptied, and all
 previous indices to variables or constraints in `dest` are invalidated. Returns
@@ -118,6 +118,7 @@ a `CopyResult` object. If the copy is successful, the `CopyResult` contains a
 dictionary-like object that translates variable and constraint indices from the
 `src` model to the corresponding indices in the `dest` model.
 
+If `copynames` is `false`, the `Name`, `VariableName` and `ConstraintName` attributes are not copied even if they are set to `src`.
 If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If an optimizer attribute cannot be copied then:
 
 * If `warnattributes` is `true`, a warning is displayed, otherwise,
