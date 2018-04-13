@@ -93,7 +93,7 @@ end
 attribute_value_map(idxmap, f::MOI.AbstractFunction) = mapvariables(idxmap, f)
 attribute_value_map(idxmap, attribute_value) = attribute_value
 function defaultcopy!(dest::MOI.ModelLike, src::MOI.ModelLike)
-    warn("defaultcopy!(dest, src) is deprecated, use defaultcopy!(dest, src, true) instead or defaultcopy!(dest, src, false) if you do not want to copy names.")
+    Base.depwarn("defaultcopy!(dest, src) is deprecated, use defaultcopy!(dest, src, true) instead or defaultcopy!(dest, src, false) if you do not want to copy names.", :defaultcopy!)
     defaultcopy!(dest, src, true)
 end
 function defaultcopy!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
