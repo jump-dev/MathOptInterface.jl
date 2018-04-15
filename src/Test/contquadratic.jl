@@ -350,7 +350,7 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
         x = MOI.addvariable!(model)
         @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
-        cf = MOI.ScalarQuadraticFunction(MOI.VariableIndex[x],Float64[0.0],[x],[x],[1.0], 0.0)
+        cf = MOI.ScalarQuadraticFunction(MOI.VariableIndex[x],Float64[0.0],[x],[x],[2.0], 0.0)
         @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
         c = MOI.addconstraint!(model, cf, MOI.LessThan(2.0))
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
@@ -410,7 +410,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
         x = MOI.addvariable!(model)
         @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
-        cf = MOI.ScalarQuadraticFunction(MOI.VariableIndex[],Float64[],[x],[x],[1.0], 0.0)
+        cf = MOI.ScalarQuadraticFunction(MOI.VariableIndex[],Float64[],[x],[x],[2.0], 0.0)
         @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
         c = MOI.addconstraint!(model, cf, MOI.LessThan(2.0))
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
