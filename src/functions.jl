@@ -79,7 +79,7 @@ end
 The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
 * ``a`` is a sparse vector specified in tuple form by `affine_variables, affine_coefficients`
 * ``b`` is a scalar specified by `constant`
-* ``Q`` is a symmetric matrix is specified in triplet form by `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients`
+* ``Q`` is a symmetric matrix specified in triplet form by `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients`
 
 Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together.
 "Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be specified.
@@ -100,7 +100,7 @@ end
 The vector-valued quadratic function with i`th` component ("output index") defined as ``\\frac{1}{2}x^TQ_ix + a_i^T x + b_i``, where:
 * ``a_i`` is a sparse vector specified in tuple form by the subset of `affine_variables, affine_coefficients` for the indices `k` where `affine_outputindex[k] == i`.
 * ``b_i`` is a scalar specified by `constant[i]`
-* ``Q_i`` is a symmetric matrix is specified in triplet form by the subset of `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients` for the indices `k` where `quadratic_outputindex[k] == i`
+* ``Q_i`` is a symmetric matrix specified in triplet form by the subset of `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients` for the indices `k` where `quadratic_outputindex[k] == i`
 
 Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding coefficients are summed together.
 "Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be specified.
