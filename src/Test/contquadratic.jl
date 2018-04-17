@@ -261,10 +261,12 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     rtol = config.rtol
     @testset "qcp1" begin
         # quadratic constraint
-        # Max x + y
-        # st  - x + y >= 0 (c1[1])
-        #       x + y >= 0 (c1[2])
-        #     0.5x^2 + y <= 2 (c2)
+        # Max x  + y
+        # st -x  + y >= 0 (c1[1])
+        #     x  + y >= 0 (c1[2])
+        #     x² + y <= 2 (c2)
+        # Optimal solution
+        # x = 1/2, y = 7/4
 
         @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
         @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
@@ -283,7 +285,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
         c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1,1,2,2], [x,y,x,y], [-1.0,1.0,1.0,1.0], [0.0,0.0]), MOI.Nonnegatives(2))
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()) == 1
 
-        c2f = MOI.ScalarQuadraticFunction([y],[1.0],[x],[x],[1.0], 0.0)
+        c2f = MOI.ScalarQuadraticFunction([y],[1.0],[x],[x],[2.0], 0.0)
         @test MOI.canaddconstraint(model, typeof(c2f), MOI.LessThan{Float64})
         c2 = MOI.addconstraint!(model, c2f, MOI.LessThan(2.0))
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
@@ -313,6 +315,11 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
 
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), [x,y]) ≈ [0.5,1.75] atol=atol rtol=rtol
+
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
+            @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ [5/4, 9/4] atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
+            @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 2 atol=atol rtol=rtol
         end
 
         # try delete quadratic constraint and go back to linear
@@ -386,6 +393,9 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=atol rtol=rtol
 
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+            @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
+
             # TODO - duals
             # @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
             # @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 0.5/sqrt(2) atol=atol rtol=rtol
@@ -445,6 +455,9 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
 
             @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=atol rtol=rtol
+
+            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
+            @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
 
             # TODO - duals
             # @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
