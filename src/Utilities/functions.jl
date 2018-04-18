@@ -358,8 +358,8 @@ end
 function _modifycoefficient(variables::Vector{MOI.VariableIndex}, coefficients::Vector, variable::MOI.VariableIndex, new_coefficient)
     variables = copy(variables)
     coefficients = copy(coefficients)
-    i = findfirst(variables, variable)
-    if (VERSION >= v"0.7.0-DEV.3395" && i === nothing) || (VERSION < v"0.7.0-DEV.3395" && iszero(i))
+    i = coalesce(findfirst(isequal(variable), variables), 0)
+    if iszero(i)
         # The variable was not already in the function
         if !iszero(new_coefficient)
             push!(variables, variable)
