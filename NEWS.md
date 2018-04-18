@@ -12,6 +12,7 @@ v0.2.0 (prerelease)
 - Addition of NLP tests.
 - Introduction of `UniversalFallback`.
 - `copynames` keyword argument to `MOI.copy!`.
+- Add Bridges submodule.
 
 
 v0.1.0 (February 28, 2018)
