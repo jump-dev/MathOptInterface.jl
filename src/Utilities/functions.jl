@@ -140,7 +140,7 @@ If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-function canonical{T}(f::SAF{T})
+function canonical(f::SAF{T}) where T
     σ = sortperm(f.variables)
     outputindex = Int[]
     variables = VI[]
@@ -165,7 +165,7 @@ function canonical{T}(f::SAF{T})
     end
     SAF{T}(variables, coefficients, f.constant)
 end
-function canonical{T}(f::VAF{T})
+function canonical(f::VAF{T}) where T
     σ = sortperm(1:length(f.variables), by = i -> (f.outputindex[i], f.variables[i]))
     outputindex = Int[]
     variables = VI[]
