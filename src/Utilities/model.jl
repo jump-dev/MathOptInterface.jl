@@ -30,18 +30,18 @@ function _getset(constrs::Vector, ci::CI, i::Int)
     _gets(constrs[i]...)
 end
 
-_modifyconstr{F, S}(ci::CI{F, S}, f::F, s::S, change::F) = (ci, change, s)
-_modifyconstr{F, S}(ci::CI{F, S}, f::F, s::S, change::S) = (ci, f, change)
-_modifyconstr{F, S}(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) = (ci, modifyfunction(f, change), s)
-function _modifyconstraint!{F, S}(constrs::Vector{C{F, S}}, ci::CI{F}, i::Int, change)
+_modifyconstr(ci::CI{F, S}, f::F, s::S, change::F) where {F, S} = (ci, change, s)
+_modifyconstr(ci::CI{F, S}, f::F, s::S, change::S) where {F, S} = (ci, f, change)
+_modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modifyfunction(f, change), s)
+function _modifyconstraint!(constrs::Vector{C{F, S}}, ci::CI{F}, i::Int, change) where {F, S}
     constrs[i] = _modifyconstr(constrs[i]..., change)
 end
 
-_getnoc{F, S}(constrs::Vector{C{F, S}}, noc::MOI.NumberOfConstraints{F, S}) = length(constrs)
+_getnoc(constrs::Vector{C{F, S}}, noc::MOI.NumberOfConstraints{F, S}) where {F, S} = length(constrs)
 # Might be called when calling NumberOfConstraint with different coefficient type than the one supported
 _getnoc(constrs::Vector, noc::MOI.NumberOfConstraints) = 0
 
-function _getloc{F, S}(constrs::Vector{C{F, S}})::Vector{Tuple{DataType, DataType}}
+function _getloc(constrs::Vector{C{F, S}})::Vector{Tuple{DataType, DataType}} where {F, S}
     isempty(constrs) ? [] : [(F, S)]
 end
 
@@ -534,7 +534,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                 field = _field(s)
                 code = quote
                     $code
-                    $funct{F}(model::$c, ci::$T{F, <:$set}, args...) = $funct(model.$field, ci, args...)
+                    $funct(model::$c, ci::$T{F, <:$set}, args...) where F = $funct(model.$field, ci, args...)
                 end
             end
         end

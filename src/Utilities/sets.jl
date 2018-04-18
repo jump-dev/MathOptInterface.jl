@@ -16,6 +16,6 @@ const DimensionUpdatableSets = Union{MOI.Reals,
 
 Returns a set with the dimension modified to `newdim`.
 """
-function updatedimension{S<:DimensionUpdatableSets}(::S, newdim)
+function updatedimension(::S, newdim) where S<:DimensionUpdatableSets
     S(newdim)
 end
