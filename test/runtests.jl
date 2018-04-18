@@ -2,6 +2,7 @@ using MathOptInterface, Base.Test
 const MOI = MathOptInterface
 const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
+const MOIB = MathOptInterface.Bridges
 
 # Tests for solvers are located in MOI.Test.
 
@@ -42,3 +43,6 @@ include("contquadratic.jl")
 
 include("intlinear.jl")
 include("intconic.jl")
+
+# Bridges submodule tests
+include("bridge.jl")
