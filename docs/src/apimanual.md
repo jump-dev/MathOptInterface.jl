@@ -565,4 +565,39 @@ If `canaddconstraint` returns `false`, then calling `addconstraint!` must throw 
 
 ### Package Naming
 
-MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example). In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.
+MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example).
+The guideline for naming the file containing the MOI wrapper is `src/MOIWrapper.jl` and `test/MOIWrapper.jl` for the tests.
+In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.
+
+### Testing guideline
+
+The skeleton below can be used for the wrapper test file of a solver name `FooBar`:
+```julia
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIU = MOI.Utilities
+const MOIB = MOI.Bridges
+
+# Include here the functions/sets supported by the solver wrapper (not those that are supported through bridges)
+MOIU.@model FooBarModelData () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+
+MOIB.@bridge SplitInterval MOIB.SplitIntervalBridge () (Interval,) () () () (ScalarAffineFunction,) () ()
+MOIB.@bridge GeoMean MOIB.GeoMeanBridge () () (GeometricMeanCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+
+const optimizer = FooBarOptimizer()
+const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
+
+@testset "MOI Continuous Linear" begin
+    MOIT.contlineartest(SplitInterval{Float64}(MOIU.CachingOptimizer(FooBarModelData{Float64}(), optimizer)), config)
+end
+
+@testset "MOI Continuous Conic" begin
+    MOIT.contlineartest(RootDet{Float64}(GeoMean{Float64}(MOIU.CachingOptimizer(FooBarModelData{Float64}(), optimizer))), config)
+end
+
+@testset "MOI Integer Conic" begin
+    MOIT.intconictest(MOIU.CachingOptimizer(FooBarModelData{Float64}(), optimizer), config)
+end
+```
