@@ -526,14 +526,14 @@ MOI defines a very general interface, with multiple possible ways to describe th
  - `@constraint(m, 2x + y == 10)` becomes `ScalarAffineFunction`-in-`EqualTo`;
  - `@constraint(m, 0 <= 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`Interval`;
  - `@constraint(m, 2x + y in ArbitrarySet())` becomes `ScalarAffineFunction`-in-`ArbitrarySet`.
- 
+
 Variable bounds are handled in a similar fashion:
  - `@variable(m, x <= 1)` becomes `SingleVariable`-in-`LessThan`;
  - `@variable(m, x >= 1)` becomes `SingleVariable`-in-`GreaterThan`.
 
 One notable difference is that a variable with an upper and lower bound is translated into two constraints, rather than an interval. i.e.:
  - `@variable(m, 0 <= x <= 1)` becomes `SingleVariable`-in-`LessThan` *and* `SingleVariable`-in-`GreaterThan`.
- 
+
 Therefore, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessThan` constraints, users will not be able to write: `@constraint(m, 2x + y <= 10)` in JuMP. With this in mind, developers should support all the constraint types that they want to be usable from JuMP. That said, from the perspective of JuMP, solvers can safely choose to not support the following constraints:
 
 - `ScalarAffineFunction` in `GreaterThan`, `LessThan`, or `EqualTo` with a nonzero constant in the function. Constants in the affine function should instead be moved into the parameters of the corresponding sets.
@@ -559,8 +559,8 @@ Solver wrappers should document how the low-level solver statuses map to the MOI
 
 ### canXXX
 
-For most operations, MOI provides a function `canXXX` that can be used to check if the operation `XXX` is allowed. 
-For example, `addconstraint!(model::ModelLike, func::F, set::S)` has the corresponding function `canaddconstraint(model, ::Type{F}, ::Type{S})::Bool`. 
+For most operations, MOI provides a function `canXXX` that can be used to check if the operation `XXX` is allowed.
+For example, `addconstraint!(model::ModelLike, func::F, set::S)` has the corresponding function `canaddconstraint(model, ::Type{F}, ::Type{S})::Bool`.
 If `canaddconstraint` returns `false`, then calling `addconstraint!` must throw an error (likewise with all `XXX` and `canXXX` pairs). Note that even if `canaddconstraint` returns `true`, `addconstraint!` may still throw an error if, for example, the constraint function does not meet some sparsity conditions, one of the coefficients is `NaN`, or an invalid variable index is provided. This is because (in most cases) the `canXXX` method receives type information instead of the actual arguments.
 
 ### Package Naming
