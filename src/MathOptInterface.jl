@@ -118,7 +118,7 @@ a `CopyResult` object. If the copy is successful, the `CopyResult` contains a
 dictionary-like object that translates variable and constraint indices from the
 `src` model to the corresponding indices in the `dest` model.
 
-If `copynames` is `false`, the `Name`, `VariableName` and `ConstraintName` attributes are not copied even if they are set to `src`.
+If `copynames` is `false`, the `Name`, `VariableName` and `ConstraintName` attributes are not copied even if they are set in `src`.
 If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If an optimizer attribute cannot be copied then:
 
 * If `warnattributes` is `true`, a warning is displayed, otherwise,
