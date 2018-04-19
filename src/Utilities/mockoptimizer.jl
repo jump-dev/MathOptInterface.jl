@@ -12,8 +12,8 @@ struct MockConstraintAttribute <: MOI.AbstractConstraintAttribute
 end
 
 # A mock optimizer used for testing.
-mutable struct MockOptimizer <: MOI.AbstractOptimizer
-    inner_model::MOI.ModelLike
+mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
+    inner_model::MT
     attribute::Int # MockModelAttribute
     varattribute::Dict{MOI.VariableIndex,Int} # MockVariableAttribute
     conattribute::Dict{MOI.ConstraintIndex,Int} # MockConstraintAttribute
