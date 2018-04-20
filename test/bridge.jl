@@ -76,6 +76,26 @@ MOIB.@bridge RSOCtoPSD MOIB.RSOCtoPSDCBridge () () (RotatedSecondOrderCone,) () 
 MOIB.@bridge LogDet MOIB.LogDetBridge () () (LogDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 
+# Test deletion of bridge
+function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int, nocs::Tuple) where {F, S}
+    @test MOI.get(m, MOI.NumberOfVariables()) == nvars
+    test_noc(m, F, S, 1)
+    for noc in nocs
+        test_noc(m, noc...)
+    end
+    @test MOI.isvalid(m, ci)
+    @test MOI.candelete(m, ci)
+    MOI.delete!(m, ci)
+    @test !MOI.isvalid(m, ci)
+    @test isempty(m.bridges)
+    test_noc(m, F, S, 0)
+    # As the bridge has been removed, if the constraints it has created where not removed, it wouldn't be there to decrease this counter anymore
+    @test MOI.get(m, MOI.NumberOfVariables()) == nvars
+    for noc in nocs
+        test_noc(m, noc...)
+    end
+end
+
 @testset "Bridge tests" begin
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
     config = MOIT.TestConfig()
@@ -99,19 +119,8 @@ MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (V
         MOI.modifyconstraint!(bridgedmock, ci, newf)
         @test MOI.canget(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
-        # Test deletion
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 2
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64},    1)
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)
-        @test MOI.isvalid(bridgedmock, ci)
-        @test MOI.candelete(bridgedmock, ci)
-        MOI.delete!(bridgedmock, ci)
-        @test isempty(bridgedmock.bridges)
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 2
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64},    0)
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
+                                                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
     end
 
     @testset "GeoMean" begin
@@ -122,21 +131,8 @@ MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (V
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.GeometricMeanCone})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
-        # Test deletion
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 4
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone,      1)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0)
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},      1)
-        @test MOI.isvalid(bridgedmock, ci)
-        @test MOI.candelete(bridgedmock, ci)
-        MOI.delete!(bridgedmock, ci)
-        @test !MOI.isvalid(bridgedmock, ci)
-        @test isempty(bridgedmock.bridges)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone,      0)
-        # As the bridge has been removed, if the constraints it has created where not removed, it wouldn't be there to decrease this counter anymore
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 4
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0)
-        test_noc(bridgedmock, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},      1)
+        test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+                                                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},      1)))
     end
 
     @testset "SOCtoPSD" begin
@@ -148,17 +144,7 @@ MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (V
         MOIT.soc1ftest(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 3
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 1)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
-        @test MOI.isvalid(bridgedmock, ci)
-        @test MOI.candelete(bridgedmock, ci)
-        MOI.delete!(bridgedmock, ci)
-        @test !MOI.isvalid(bridgedmock, ci)
-        @test isempty(bridgedmock.bridges)
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 3
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
+        test_delete_bridge(bridgedmock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
     end
 
     @testset "RSOCtoPSD" begin
@@ -172,17 +158,7 @@ MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (V
         MOIT.rotatedsoc1ftest(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 2
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 1)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
-        @test MOI.isvalid(bridgedmock, ci)
-        @test MOI.candelete(bridgedmock, ci)
-        MOI.delete!(bridgedmock, ci)
-        @test !MOI.isvalid(bridgedmock, ci)
-        @test isempty(bridgedmock.bridges)
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 2
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
     end
 
     @testset "LogDet" begin
@@ -193,19 +169,7 @@ MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (V
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 4
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle, 1)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
-        @test MOI.isvalid(bridgedmock, ci)
-        @test MOI.candelete(bridgedmock, ci)
-        MOI.delete!(bridgedmock, ci)
-        @test !MOI.isvalid(bridgedmock, ci)
-        @test isempty(bridgedmock.bridges)
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 4
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
+        test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone, 0), (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
     end
 
     @testset "RootDet" begin
@@ -216,18 +180,7 @@ MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (V
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 4
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle, 1)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
-        @test MOI.isvalid(bridgedmock, ci)
-        @test MOI.candelete(bridgedmock, ci)
-        MOI.delete!(bridgedmock, ci)
-        @test !MOI.isvalid(bridgedmock, ci)
-        @test isempty(bridgedmock.bridges)
-        @test MOI.get(bridgedmock, MOI.NumberOfVariables()) == 4
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0)
-        test_noc(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)
+        test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+                                                (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
     end
 end
