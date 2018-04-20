@@ -1,10 +1,9 @@
 # Model not supporting Interval
 MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
-MOIB.@bridge SplitInterval MOIB.SplitIntervalBridge () (Interval,) () () () (ScalarAffineFunction,) () ()
 
 @testset "Copy test" begin
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-    bridgedmock = SplitInterval{Float64}(mock)
+    bridgedmock = MOIB.SplitInterval{Float64}(mock)
     MOIT.failcopytestc(bridgedmock)
     MOIT.failcopytestia(bridgedmock)
     MOIT.failcopytestva(bridgedmock)
@@ -20,10 +19,10 @@ function test_noc(bridgedmock, F, S, n)
 end
 
 @testset "BridgeOptimizer" begin
-    const model = SplitInterval{Int}(SimpleModel{Int}())
+    const model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
 
     @testset "Name test" begin
-        MOIT.nametest(SplitInterval{Float64}(SimpleModel{Float64}()))
+        MOIT.nametest(MOIB.SplitInterval{Float64}(SimpleModel{Float64}()))
     end
 
     @testset "Custom test" begin
@@ -66,15 +65,9 @@ end
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 
     @testset "Continuous Linear" begin
-        MOIT.contlineartest(SplitInterval{Float64}(mock), MOIT.TestConfig(solve=false))
+        MOIT.contlineartest(MOIB.SplitInterval{Float64}(mock), MOIT.TestConfig(solve=false))
     end
 end
-
-MOIB.@bridge GeoMean MOIB.GeoMeanBridge () () (GeometricMeanCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
-MOIB.@bridge SOCtoPSD MOIB.SOCtoPSDCBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
-MOIB.@bridge RSOCtoPSD MOIB.RSOCtoPSDCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
-MOIB.@bridge LogDet MOIB.LogDetBridge () () (LogDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
-MOIB.@bridge RootDet MOIB.RootDetBridge () () (RootDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 
 # Test deletion of bridge
 function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int, nocs::Tuple) where {F, S}
@@ -111,7 +104,7 @@ end
                   (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [0]),
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0]),
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [6.0, 6.0]))
-        bridgedmock = SplitInterval{Float64}(mock)
+        bridgedmock = MOIB.SplitInterval{Float64}(mock)
         MOIT.linear10test(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
         @test MOI.canmodifyconstraint(bridgedmock, ci, MOI.ScalarAffineFunction{Float64})
@@ -125,7 +118,7 @@ end
 
     @testset "GeoMean" begin
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [ones(4); 2; √2; √2])
-        bridgedmock = GeoMean{Float64}(mock)
+        bridgedmock = MOIB.GeoMean{Float64}(mock)
         MOIT.geomean1vtest(bridgedmock, config)
         MOIT.geomean1ftest(bridgedmock, config)
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.GeometricMeanCone})
@@ -136,7 +129,7 @@ end
     end
 
     @testset "SOCtoPSD" begin
-        bridgedmock = SOCtoPSD{Float64}(mock)
+        bridgedmock = MOIB.SOCtoPSD{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1/√2, 1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2/2, -1/2, √2/4, -1/2, √2/4, √2/4]],
                               (MOI.VectorAffineFunction{Float64}, MOI.Zeros)                            => [[-√2]])
@@ -148,7 +141,7 @@ end
     end
 
     @testset "RSOCtoPSD" begin
-        bridgedmock = RSOCtoPSD{Float64}(mock)
+        bridgedmock = MOIB.RSOCtoPSD{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
                               (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√2, -1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2, -1/2, √2/8, -1/2, √2/8, √2/8]])
@@ -162,7 +155,7 @@ end
     end
 
     @testset "LogDet" begin
-        bridgedmock = LogDet{Float64}(mock)
+        bridgedmock = MOIB.LogDet{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1, 0, 1, 0, 0])
         MOIT.logdett1vtest(bridgedmock, config)
         MOIT.logdett1ftest(bridgedmock, config)
@@ -173,7 +166,7 @@ end
     end
 
     @testset "RootDet" begin
-        bridgedmock = RootDet{Float64}(mock)
+        bridgedmock = MOIB.RootDet{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1])
         MOIT.rootdett1vtest(bridgedmock, config)
         MOIT.rootdett1ftest(bridgedmock, config)
