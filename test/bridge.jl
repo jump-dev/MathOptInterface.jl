@@ -120,10 +120,10 @@ end
         bridgedmock = MOIB.RSOC{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
                               (MOI.SingleVariable,                MOI.EqualTo{Float64}) => [-√2, -1/√2],
-                              (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[√2, 0.0, -1.0, -1.0]])
+                              (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
         MOIT.rotatedsoc1vtest(bridgedmock, config)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2],
-                              (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[√2, 0.0, -1.0, -1.0]])
+                              (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
         MOIT.rotatedsoc1ftest(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})

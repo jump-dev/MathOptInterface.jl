@@ -2,17 +2,17 @@
     RSOCBridge{T}
 
 The `RotatedSecondOrderCone` is `SecondOrderCone` representable; see [1, p. 104].
-Indeed, we have ``2tu = (t/√2 + u/√2)^2 - (t/√2 - u/√2)^2 = (t + u/2)^2 - (t - u/2)^2`` hence
+Indeed, we have ``2tu = (t/√2 + u/√2)^2 - (t/√2 - u/√2)^2`` hence
 ```math
 2tu \\ge || x ||_2^2
 ```
 is equivalent to
 ```math
-(t + u/2)^2 \\ge || x ||_2^2 + (t - u/2)^2.
+(t/√2 + u/√2)^2 \\ge || x ||_2^2 + (t/√2 - u/√2)^2.
 ```
-We can therefore use the transformation ``(t, u, x) \\mapsto (t+u/2, t-u/2, x)``.
-The transformation ``(t, u, x) \\mapsto (t/\\sqrt{2}+u/\\sqrt{2}, t/\\sqrt{2}-u/\\sqrt{2}, x)``
-would also work and is its own inverse but it would not preserve the rationality of the input.
+We can therefore use the transformation ``(t, u, x) \\mapsto (t/√2+u/√2, t/√2-u/√2, x)``.
+Note that the linear transformation is a symmetric involution (i.e. it is its own transpose and its own inverse).
+That means in particular that the norm is of constraint primal and duals are preserved by the tranformation.
 
 [1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
 """
@@ -27,8 +27,9 @@ function RSOCBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSeco
     t = MOIU.eachscalar(f)[1]
     u = MOIU.eachscalar(f)[2]
     x = MOIU.eachscalar(f)[3:d]
-    y = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients; -u.coefficients/2], t.constant - u.constant/2)
-    z = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients;  u.coefficients/2], t.constant + u.constant/2)
+    s2 = √2
+    y = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients/s2; -u.coefficients/s2], t.constant/s2 - u.constant/s2)
+    z = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients/s2;  u.coefficients/s2], t.constant/s2 + u.constant/s2)
     g = MOIU.moivcat(z, y, x)
     soc = MOI.addconstraint!(model, g, MOI.SecondOrderCone(d))
     RSOCBridge{T}(soc)
@@ -43,20 +44,22 @@ function MOI.delete!(model::MOI.ModelLike, c::RSOCBridge)
 end
 
 # Attributes, Bridge acting as a constraint
+# As the linear transformation is a symmetric involution,
+# the constraint primal and dual both need to be processed by reapplying the same transformation
+function _get(model, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, c::RSOCBridge)
+    x = MOI.get(model, attr, c.soc)
+    s2 = √2
+    [x[1]/s2+x[2]/s2; x[1]/s2-x[2]/s2; x[3:end]]
+end
+# Need to define both `get` methods and redirect to `_get` to avoid ambiguity in dispatch
 function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{RSOCBridge{T}}) where T
     MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
 end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::RSOCBridge)
-    cp = MOI.get(model, a, c.soc)
-    [cp[1]/2+cp[2]/2; cp[1]-cp[2]; cp[3:end]]
-end
+MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::RSOCBridge) = _get(model, attr, c)
 function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{RSOCBridge{T}}) where T
     MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
 end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::RSOCBridge)
-    cd = MOI.get(model, a, c.soc)
-    [cd[1]+cd[2]; cd[1]/2-cd[2]/2; cd[3:end]]
-end
+MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
 
 # Constraints
 MOI.canmodifyconstraint(model::MOI.ModelLike, c::RSOCBridge, change) = false
