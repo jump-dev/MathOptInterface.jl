@@ -1,9 +1,4 @@
-# Current output:
-#  38.889 ns (4 allocations: 112 bytes)
-# 252.048 ns (11 allocations: 288 bytes)
-#  24.412 ns (3 allocations: 96 bytes)
-#  24.982 ns (3 allocations: 96 bytes)
-# See https://github.com/JuliaOpt/MathOptInterface.jl/issues/321
+# See https://github.com/JuliaOpt/MathOptInterface.jl/issues/321 and https://github.com/JuliaOpt/MathOptInterface.jl/pull/323
 
 using BenchmarkTools
 using MathOptInterface
