@@ -571,7 +571,7 @@ In some cases it may be more appropriate to host the MOI wrapper in its own pack
 
 ### Testing guideline
 
-The skeleton below can be used for the wrapper test file of a solver name `FooBar`:
+The skeleton below can be used for the wrapper test file of a solver name `FooBar`. A few bridges are used to give examples, you can find more in the bridge documentation.
 ```julia
 using MathOptInterface
 const MOI = MathOptInterface
@@ -582,10 +582,15 @@ const optimizer = FooBarOptimizer()
 const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
 
 @testset "MOI Continuous Linear" begin
+    # If `optimizer` does not support the `Interval` set,
+    # the `SplitInterval` bridge can be used to split each `f`-in-`Interval(lb, ub)` constraint into
+    # a constraint `f`-in-`GreaterThan(lb)` and a constraint `f`-in-`LessThan(ub)`
     MOIT.contlineartest(MOIB.SplitInterval{Float64}(optimizer), config)
 end
 
 @testset "MOI Continuous Conic" begin
+    # If the solver supports rotated second order cone, the `GeoMean` bridge can be used to make it support geometric mean cone constraints.
+    # If it additionally support positive semidefinite cone constraints, the `RootDet` bridge can be used to make it support root-det cone constraints.
     MOIT.contlineartest(MOIB.RootDet{Float64}(MOIB.GeoMean{Float64}(optimizer)), config)
 end
 
