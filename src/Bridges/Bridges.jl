@@ -21,6 +21,8 @@ const CI = MOI.ConstraintIndex
 include("bridge.jl")
 include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (Interval,) () () () (ScalarAffineFunction,) () ()
+include("rsocbridge.jl")
+@bridge RSOC RSOCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("geomeanbridge.jl")
 @bridge GeoMean GeoMeanBridge () () (GeometricMeanCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("detbridge.jl")

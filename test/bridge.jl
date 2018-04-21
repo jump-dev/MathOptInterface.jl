@@ -1,5 +1,5 @@
 # Model not supporting Interval
-MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 
 @testset "Copy test" begin
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
@@ -114,6 +114,20 @@ end
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
+   end
+
+    @testset "RSOC" begin
+        bridgedmock = MOIB.RSOC{Float64}(mock)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
+                              (MOI.SingleVariable,                MOI.EqualTo{Float64}) => [-√2, -1/√2],
+                              (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
+        MOIT.rotatedsoc1vtest(bridgedmock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2],
+                              (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
+        MOIT.rotatedsoc1ftest(bridgedmock, config)
+        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
+        @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0),))
     end
 
     @testset "GeoMean" begin
