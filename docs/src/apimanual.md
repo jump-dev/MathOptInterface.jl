@@ -565,4 +565,44 @@ If `canaddconstraint` returns `false`, then calling `addconstraint!` must throw 
 
 ### Package Naming
 
-MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example). In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.
+MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example).
+The guideline for naming the file containing the MOI wrapper is `src/MOIWrapper.jl` and `test/MOIWrapper.jl` for the tests.
+In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.
+
+### Testing guideline
+
+The skeleton below can be used for the wrapper test file of a solver name `FooBar`. A few bridges are used to give examples, you can find more in the bridge documentation.
+```julia
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIB = MOI.Bridges
+
+const optimizer = FooBarOptimizer()
+const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
+
+@testset "MOI Continuous Linear" begin
+    # If `optimizer` does not support the `Interval` set,
+    # the `SplitInterval` bridge can be used to split each `f`-in-`Interval(lb, ub)` constraint into
+    # a constraint `f`-in-`GreaterThan(lb)` and a constraint `f`-in-`LessThan(ub)`
+    MOIT.contlineartest(MOIB.SplitInterval{Float64}(optimizer), config)
+end
+
+@testset "MOI Continuous Conic" begin
+    # If the solver supports rotated second order cone, the `GeoMean` bridge can be used to make it support geometric mean cone constraints.
+    # If it additionally support positive semidefinite cone constraints, the `RootDet` bridge can be used to make it support root-det cone constraints.
+    MOIT.contlineartest(MOIB.RootDet{Float64}(MOIB.GeoMean{Float64}(optimizer)), config)
+end
+
+@testset "MOI Integer Conic" begin
+    MOIT.intconictest(optimizer, config)
+end
+```
+
+If the wrapper does not support building the model incrementally (i.e. with `addvariable!` and `addconstraint!`), the line `const optimizer = FooBarOptimizer()` can be replaced with
+```julia
+const MOIU = MOI.Utilities
+# Include here the functions/sets supported by the solver wrapper (not those that are supported through bridges)
+MOIU.@model FooBarModelData () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+const optimizer = MOIU.CachingOptimizer(FooBarModelData{Float64}(), FooBarOptimizer())
+```
