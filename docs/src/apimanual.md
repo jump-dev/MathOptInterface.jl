@@ -571,7 +571,7 @@ In some cases it may be more appropriate to host the MOI wrapper in its own pack
 
 ### Testing guideline
 
-The skeleton below can be used for the wrapper test file of a solver name `FooBar`. A few bridges are used to give examples, you can find more in the bridge documentation.
+The skeleton below can be used for the wrapper test file of a solver name `FooBar`. A few bridges are used to give examples, you can find more bridges in the [Bridges](@ref) section.
 ```julia
 using MathOptInterface
 const MOI = MathOptInterface
