@@ -30,9 +30,9 @@ Note that we need to create ``x_{21}`` and not use ``t^4`` directly as ``t`` is 
 Now, this is equivalent to
 ```math
 \\begin{align*}
-  t & \\le x_{21}/sqrt{4},\\\\
+  t & \\le x_{21}/\\sqrt{4},\\\\
   x_{21}^2 & \\le 2x_{11} x_{12},\\\\
-  x_{11}^2 & \\le 2x_1 x_2, & x_{21}^2 & \\le 2x_3(x_{21}/sqrt{4}).
+  x_{11}^2 & \\le 2x_1 x_2, & x_{21}^2 & \\le 2x_3(x_{21}/\\sqrt{4}).
 \\end{align*}
 ```
 

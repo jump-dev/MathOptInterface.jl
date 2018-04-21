@@ -285,3 +285,20 @@ eval_hessian_lagrangian_product
 objective_expr
 constraint_expr
 ```
+
+## Bridges
+
+Bridges can be used for automatic reformulation of a certain constraint type into equivalent constraints.
+```@docs
+Bridges.AbstractBridge
+```
+
+Below is the list of bridges implemented in this package. Bridge optimizer are also available with the same name but "Bridge" suffix, e.g. `SplitInterval` is an `AbstractBridgeOptimizer` for the `SplitIntervalBridge`.
+```@docs
+Bridges.SplitIntervalBridge
+Bridges.GeoMeanBridge
+Bridges.RootDetBridge
+Bridges.LogDetBridge
+Bridges.SOCtoPSDCBridge
+Bridges.RSOCtoPSDCBridge
+```

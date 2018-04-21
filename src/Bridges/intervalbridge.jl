@@ -1,7 +1,8 @@
-# l ≤ ⟨a, x⟩ + α ≤ u
-# is transformed into
-# ⟨a, x⟩ + α ≥ l
-# ⟨a, x⟩ + α ≤ u
+"""
+    SplitIntervalBridge{T}
+
+The `SplitIntervalBridge` splits a constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints ``⟨a, x⟩ + α ≥ l`` and ``⟨a, x⟩ + α ≤ u``.
+"""
 struct SplitIntervalBridge{T} <: AbstractBridge
     lower::CI{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}}
     upper::CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}
