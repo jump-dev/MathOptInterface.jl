@@ -20,8 +20,14 @@ const CI = MOI.ConstraintIndex
 
 include("bridge.jl")
 include("intervalbridge.jl")
+@bridge SplitInterval SplitIntervalBridge () (Interval,) () () () (ScalarAffineFunction,) () ()
 include("geomeanbridge.jl")
+@bridge GeoMean GeoMeanBridge () () (GeometricMeanCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("detbridge.jl")
+@bridge LogDet LogDetBridge () () (LogDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge RootDet RootDetBridge () () (RootDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("soctopsdbridge.jl")
+@bridge SOCtoPSD SOCtoPSDCBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge RSOCtoPSD RSOCtoPSDCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 
 end # module
