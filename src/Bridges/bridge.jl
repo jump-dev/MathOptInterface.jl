@@ -40,6 +40,12 @@ MOI.candelete(model::MOI.ModelLike, c::AbstractBridge) = true
 const InstanceConstraintAttribute = Union{MOI.ConstraintName, MOI.ConstraintFunction, MOI.ConstraintSet}
 const SolverConstraintAttribute = Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart, MOI.ConstraintPrimal, MOI.ConstraintDual, MOI.ConstraintBasisStatus}
 
+"""
+    AbstractBridgeOptimizer
+
+A bridge optimizer applies a given constraint bridge to a given optimizer.
+The attributes of the bridge optimizer are automatically computed to make the bridges transparent, e.g. the variables and constraints created by the bridges are hidden.
+"""
 abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 bridge(b::AbstractBridgeOptimizer, ci::CI) = b.bridges[ci.value]
 MOI.optimize!(b::AbstractBridgeOptimizer) = MOI.optimize!(b.model)

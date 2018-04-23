@@ -510,6 +510,23 @@ See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefin
 
 [Explain `modifyconstraint!` and `modifyobjective!`.]
 
+### Constraint bridges
+
+A same constraint often possess different equivalent formulations but a solver may only support one of them.
+It would be duplicate work to implement rewritting rules in every solver wrapper for every different formulation of the constraint to express it in the form supported by the solver.
+Constraint bridges provide a way to define a rewritting rule to top of the MOI interface which can be used by any optimizer.
+Some rule also implement constraint modifications and constraint primal and duals translations.
+
+Given a bridge, the `@bridge` macro can be used to define a bridge optimizer that automatically apply the rewritting rule for a given optimizer.
+
+For example, the `SplitIntervalBridge` defines the reformulation of a `ScalarAffineFunction`-in-`Interval` constraint into a `ScalarAffineFunction`-in-`GreaterThan` and a `ScalarAffineFunction`-in-`LessThan` constraint.
+The `SplitInterval` is the bridge optimizer that applies the `SplitIntervalBridge` rewritting rule.
+Given an optimizer `optimizer` implementing `ScalarAffineFunction`-in-`GreaterThan` and `ScalarAffineFunction`-in-`LessThan`, the optimizer
+```
+bridgedoptimizer = SplitInterval(optimizer)
+```
+will additionally support `ScalarAffineFunction`-in-`Interval`.
+
 ## Implementing a solver interface
 
 [The interface is designed for multiple dispatch, e.g., attributes, combinations of sets and functions.]
