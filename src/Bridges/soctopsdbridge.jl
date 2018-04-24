@@ -33,15 +33,29 @@ function _SOCtoPSDCaff{T}(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFun
     MOI.VectorAffineFunction(outputindex, variables, coefficients, constant)
 end
 
-# (t, x) is transformed into the matrix
-# [t  x']
-# [x t*I]
-# Indeed by the Schur Complement, it is positive definite iff
-# tI ≻ 0
-# t - x' * (t*I)^(-1) * x ≻ 0
-# which is equivalent to
-# t > 0
-# t^2 > x' * x
+"""
+The `SOCtoPSDCBridge` transforms the second order cone constraint ``\\lVert x \\rVert \\le t`` into the semidefinite cone constraints
+```math
+\\begin{pmatrix}
+  t & x^\\top\\\\
+  x & tI
+\\end{pmatrix} \\succeq 0
+```
+Indeed by the Schur Complement, it is positive definite iff
+```math
+\\begin{align*}
+  tI & \\succ 0\\\\
+  t - x^\\top (tI)^{-1} x & \\succ 0
+\\end{align*}
+```
+which is equivalent to
+```math
+\\begin{align*}
+  t & > 0\\\\
+  t^2 & > x^\\top x
+\\end{align*}
+```
+"""
 struct SOCtoPSDCBridge{T} <: AbstractBridge
     dim::Int
     cr::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
@@ -76,15 +90,29 @@ end
 
 MOI.canmodifyconstraint(::MOI.AbstractOptimizer, ::SOCtoPSDCBridge, change) = false
 
-# (t, u, x) is transformed into the matrix
-# [t   x']
-# [x 2u*I]
-# Indeed by the Schur Complement, it is positive definite iff
-# uI ≻ 0
-# t - x' * (2u*I)^(-1) * x ≻ 0
-# which is equivalent to
-# u > 0
-# 2t*u > x' * x
+"""
+The `RSOCtoPSDCBridge` transforms the second order cone constraint ``\\lVert x \\rVert \\le 2tu`` with ``u \\ge 0`` into the semidefinite cone constraints
+```math
+\\begin{pmatrix}
+  t & x^\\top\\\\
+  x & 2uI
+\\end{pmatrix} \\succeq 0
+```
+Indeed by the Schur Complement, it is positive definite iff
+```math
+\\begin{align*}
+  uI & \\succ 0\\\\
+  t - x^\\top (2uI)^{-1} x & \\succ 0
+\\end{align*}
+```
+which is equivalent to
+```math
+\\begin{align*}
+  u & > 0\\\\
+  2tu & > x^\\top x
+\\end{align*}
+```
+"""
 struct RSOCtoPSDCBridge{T} <: AbstractBridge
     dim::Int
     cr::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
