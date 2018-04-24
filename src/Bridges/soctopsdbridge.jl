@@ -10,7 +10,7 @@ Builds a VectorAffineFunction representing the upper (or lower) triangular part 
 [ f[1]     f[2:end]' ]
 [ f[2:end] g * I     ]
 """
-function _SOCtoPSDCaff{T}(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFunction{T})
+function _SOCtoPSDCaff(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFunction{T}) where T
     dim = length(f.constant)
     n = div(dim * (dim+1), 2)
     # Needs to add t*I
