@@ -512,7 +512,7 @@ See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefin
 
 ### Constraint bridges
 
-A same constraint often possess different equivalent formulations, but a solver may only support one of them.
+A constraint often possess different equivalent formulations, but a solver may only support one of them.
 It would be duplicate work to implement rewritting rules in every solver wrapper for every different formulation of the constraint to express it in the form supported by the solver.
 Constraint bridges provide a way to define a rewritting rule on top of the MOI interface which can be used by any optimizer.
 Some rules also implement constraint modifications and constraint primal and duals translations.
