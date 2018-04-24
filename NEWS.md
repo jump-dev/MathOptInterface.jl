@@ -1,8 +1,8 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.2.0 (prerelease)
--------------------
+v0.2.0 (April 24, 2018)
+-----------------------
 
 - Improvements to and better coverage of `Tests`.
 - Documentation fixes.
