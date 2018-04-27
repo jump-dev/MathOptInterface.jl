@@ -113,7 +113,7 @@ function Base.getindex(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}, 
     outputindex = Int[]
     variables = VI[]
     coefficients = T[]
-    constant = Vector{T}(length(I))
+    constant = Vector{T}(undef, length(I))
     for (i, j) in enumerate(I)
         g = it[j]
         append!(outputindex, repmat(i:i, length(g.variables)))
