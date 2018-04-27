@@ -195,7 +195,7 @@ variabletoindex(model, s) = s
 for typename in [:ParsedScalarAffineFunction,:ParsedVectorAffineFunction,
                  :ParsedScalarQuadraticFunction,:ParsedVectorQuadraticFunction,
                  :ParsedSingleVariable,:ParsedVectorOfVariables]
-    moiname = parse(replace(string(typename), "Parsed", "MOI."))
+    moiname = parse(replace(string(typename), "Parsed" => "MOI."))
     fields = fieldnames(eval(typename))
     constructor = Expr(:call, moiname, [Expr(:call,:variabletoindex,:model,Expr(:.,:f,Base.Meta.quot(field))) for field in fields]...)
     @eval parsedtoMOI(model, f::$typename) = $constructor
