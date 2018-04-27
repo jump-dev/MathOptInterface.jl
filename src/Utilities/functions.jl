@@ -97,13 +97,13 @@ Compat.lastindex(it::ScalarFunctionIterator) = length(it)
 Base.getindex(it::ScalarFunctionIterator{MOI.VectorOfVariables}, i::Integer) = MOI.SingleVariable(it.f.variables[i])
 function Base.getindex(it::ScalarFunctionIterator{<:MOI.VectorAffineFunction}, i::Integer)
     f = it.f
-    I = find(oi -> oi == i, f.outputindex)
+    I = findall(oi -> oi == i, f.outputindex)
     MOI.ScalarAffineFunction(f.variables[I], f.coefficients[I], f.constant[i])
 end
 function Base.getindex(it::ScalarFunctionIterator{<:MOI.VectorQuadraticFunction}, i::Integer)
     f = it.f
-    aI = find(oi -> oi == i, f.affine_outputindex)
-    qI = find(oi -> oi == i, f.quadratic_outputindex)
+    aI = findall(oi -> oi == i, f.affine_outputindex)
+    qI = findall(oi -> oi == i, f.quadratic_outputindex)
     MOI.ScalarQuadraticFunction(f.affine_variables[aI], f.affine_coefficients[aI],
                                 f.quadratic_rowvariables[qI], f.quadratic_colvariables[qI], f.quadratic_coefficients[qI],
                                 f.constant[i])
@@ -294,11 +294,11 @@ end
 
 
 function _rmvar(vis::Vector{MOI.VariableIndex}, vi::MOI.VariableIndex)
-    find(v -> v != vi, vis)
+    findall(v -> v != vi, vis)
 end
 function _rmvar(vis1::Vector{MOI.VariableIndex}, vis2::Vector{MOI.VariableIndex}, vi::MOI.VariableIndex)
     @assert eachindex(vis1) == eachindex(vis2)
-    find(i -> vis1[i] != vi && vis2[i] != vi, eachindex(vis1))
+    findall(i -> vis1[i] != vi && vis2[i] != vi, eachindex(vis1))
 end
 
 """
