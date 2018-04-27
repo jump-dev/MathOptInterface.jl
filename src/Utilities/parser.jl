@@ -17,7 +17,6 @@ all constraints must be named
 "x - y" does NOT currently parse, needs to be written as "x + -1.0*y"
 "x^2" does NOT currently parse, needs to be written as "x*x"
 """
-
 struct ParsedScalarAffineFunction
     variables::Vector{Symbol}
     coefficients::Vector{Float64}
