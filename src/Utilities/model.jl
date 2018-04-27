@@ -457,8 +457,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
     scalarconstraints = :(struct $scname{T, F<:$MOI.AbstractScalarFunction} <: $MOIU.Constraints{F}; end)
     vectorconstraints = :(struct $vcname{T, F<:$MOI.AbstractVectorFunction} <: $MOIU.Constraints{F}; end)
-    for (c, ss) in ((scalarconstraints, scalarsets), (vectorconstraints, vectorsets))
-        for s in ss
+    for (c, sets) in ((scalarconstraints, scalarsets), (vectorconstraints, vectorsets))
+        for s in sets
             field = _field(s)
             push!(c.args[3].args, :($field::Vector{$(_getC(s))}))
         end
@@ -528,8 +528,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
     for (func, T) in ((:_addconstraint!, CI), (:_modifyconstraint!, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
         funct = _mod(MOIU, func)
-        for (c, ss) in ((scname, scalarsets), (vcname, vectorsets))
-            for s in ss
+        for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
+            for s in sets
                 set = _set(s)
                 field = _field(s)
                 code = quote
