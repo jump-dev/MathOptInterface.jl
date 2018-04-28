@@ -212,6 +212,20 @@ function getconstraint(model::MOI.ModelLike, config::TestConfig)
     @test MOI.isvalid(model, c2)
 end
 
+function variablenames(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    v = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.VariableName(), v) == ""
+    @test MOI.canset(model, MOI.VariableName(), typeof(v))
+    MOI.set!(model, MOI.VariableName(), v, "x")
+    @test MOI.get(model, MOI.VariableName(), v) == "x"
+    MOI.set!(model, MOI.VariableName(), v, "y")
+    @test MOI.get(model, MOI.VariableName(), v) == "y"
+    x = MOI.addvariable!(model)
+    MOI.set!(model, MOI.VariableName(), x, "x")
+    @test MOI.get(model, MOI.VariableName(), x) == "x"
+end
+
 const atomictests = Dict(
     "add_variable"     => add_variable,
     "add_variables"    => add_variables,
@@ -224,6 +238,7 @@ const atomictests = Dict(
     "getvariable"      => getvariable,
     "getconstraint"    => getconstraint,
     "constantobj"      => constantobj,
-    "blankobj"         => blankobj
+    "blankobj"         => blankobj,
+    "variablenames"    => variablenames
 )
 @moitestset atomic
