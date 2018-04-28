@@ -41,15 +41,22 @@ isvalid(model::ModelLike, ref::Index) = false
     delete!(model::ModelLike, index::Index)
 
 Delete the referenced object from the model.
+"""
+Base.delete!(model::ModelLike, index::Index) = throw(MethodError(Base.delete!, (model, index)))
 
+"""
+    candelete(model::ModelLike, indices::Vector{<:Index})::Bool
+
+Return a `Bool` indicating whether all the objects referred to by `indices` can be removed from the model `model`.
+"""
+candelete(model::ModelLike, indices::Vector{<:Index}) = all(candelete.(model, indices))
+
+"""
     delete!{R}(model::ModelLike, indices::Vector{R<:Index})
 
 Delete the referenced objects in the vector `indices` from the model.
 It may be assumed that `R` is a concrete type.
 """
-Base.delete!(model::ModelLike, index::Index) = throw(MethodError(Base.delete!, (model, index)))
-
-candelete(model::ModelLike, indices::Vector{<:Index}) = all(candelete.(model, indices))
 function Base.delete!(model::ModelLike, indices::Vector{<:Index})
     for index in indices
         Base.delete!(model, index)

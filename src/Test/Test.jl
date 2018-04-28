@@ -18,4 +18,6 @@ include("intconic.jl")
 
 include("nlp.jl")
 
+include("atomic_tests.jl")
+
 end # module
