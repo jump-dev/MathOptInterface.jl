@@ -88,6 +88,38 @@ function min_sense(model::MOI.ModelLike, config::TestConfig)
 end
 
 """
+    Test constant in objective.
+"""
+function constantobj(model::MOI.ModelLike, config::TestConfig)
+    atol, rtol = config.atol, config.rtol
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        minobjective: 2.0x + 1.0
+        c: x >= 1.0
+    """)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
+end
+
+"""
+    Test blank objective.
+"""
+function blankobj(model::MOI.ModelLike, config::TestConfig)
+    atol, rtol = config.atol, config.rtol
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        minobjective: 0.0x + 0.0
+        c: x >= 1.0
+    """)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+end
+
+"""
     Test the setting of an upper bound
 """
 function upperbound(model::MOI.ModelLike, config::TestConfig)
@@ -139,6 +171,9 @@ function lowerbound(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+"""
+    Test getting variables by name.
+"""
 function getvariable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     MOIU.loadfromstring!(model,"""
@@ -148,10 +183,14 @@ function getvariable(model::MOI.ModelLike, config::TestConfig)
         c2: x <= 2.0
     """)
     @test MOI.canget(model, MOI.VariableIndex, "x")
+    @test !MOI.canget(model, MOI.VariableIndex, "y")
     x = MOI.get(model, MOI.VariableIndex, "x")
     @test MOI.isvalid(model, x)
 end
 
+"""
+    Test getting constraints by name.
+"""
 function getconstraint(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     MOIU.loadfromstring!(model,"""
@@ -160,13 +199,13 @@ function getconstraint(model::MOI.ModelLike, config::TestConfig)
         c1: x >= 1.0
         c2: x <= 2.0
     """)
+    @test !MOI.canget(model, MOI.ConstraintIndex, "c3")
     @test MOI.canget(model, MOI.ConstraintIndex, "c1")
     @test MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c1")
     @test !MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c1")
     @test MOI.canget(model, MOI.ConstraintIndex, "c2")
     @test !MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c2")
     @test MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
-
     c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c1")
     @test MOI.isvalid(model, c1)
     c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
@@ -183,6 +222,8 @@ const atomictests = Dict(
     "upperbound"       => upperbound,
     "lowerbound"       => lowerbound,
     "getvariable"      => getvariable,
-    "getconstraint"    => getconstraint
+    "getconstraint"    => getconstraint,
+    "constantobj"      => constantobj,
+    "blankobj"         => blankobj
 )
 @moitestset atomic
