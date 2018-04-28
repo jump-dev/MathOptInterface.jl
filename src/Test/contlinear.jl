@@ -105,46 +105,47 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
         end
     end
 
-    # change objective to Max +x
+    # change objective to Max +x, first using SingleVariable, then using ScalarAffineFunction
+    for objf in (MOI.SingleVariable(v[1]), MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0))
+        @test MOI.canset(model, MOI.ObjectiveFunction{typeof(objf)}())
+        MOI.set!(model, MOI.ObjectiveFunction{typeof(objf)}(), objf)
+        @test MOI.canset(model, MOI.ObjectiveSense())
+        MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
 
-    objf = MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0)
-    @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
-    @test MOI.canset(model, MOI.ObjectiveSense())
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        if config.query
+            @test MOI.canget(model, MOI.ObjectiveFunction{typeof(objf)}())
+            @test objf ≈ MOI.get(model, MOI.ObjectiveFunction{typeof(objf)}())
 
-    if config.query
-        @test MOI.canget(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-        @test objf ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    end
+            @test MOI.canget(model, MOI.ObjectiveSense())
+            @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+        end
 
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+        if config.solve
+            MOI.optimize!(model)
 
-    if config.solve
-        MOI.optimize!(model)
+            @test MOI.canget(model, MOI.TerminationStatus())
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.TerminationStatus())
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.canget(model, MOI.PrimalStatus())
+            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.PrimalStatus())
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.canget(model, MOI.ObjectiveValue())
+            @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
+            @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0] atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0] atol=atol rtol=rtol
+            if config.duals
+                @test MOI.canget(model, MOI.DualStatus())
+                @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+                @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
+                @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
-        if config.duals
-            @test MOI.canget(model, MOI.DualStatus())
-            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
-
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(vc1))
-            @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
-            @test MOI.canget(model, MOI.ConstraintDual(), typeof(vc2))
-            @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ 1 atol=atol rtol=rtol
+                @test MOI.canget(model, MOI.ConstraintDual(), typeof(vc1))
+                @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
+                @test MOI.canget(model, MOI.ConstraintDual(), typeof(vc2))
+                @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ 1 atol=atol rtol=rtol
+            end
         end
     end
 
