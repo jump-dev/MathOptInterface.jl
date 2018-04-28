@@ -157,8 +157,8 @@ include("variables.jl")
 include("nlp.jl")
 
 # submodules
-include("Test/Test.jl")           # MOI.Test
 include("Utilities/Utilities.jl") # MOI.Utilities
+include("Test/Test.jl")           # MOI.Test
 include("Bridges/Bridges.jl")     # MOI.Bridges
 
 end

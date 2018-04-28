@@ -91,33 +91,86 @@ end
     Test the setting of an upper bound
 """
 function upperbound(model::MOI.ModelLike, config::TestConfig)
+    atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.isempty(model)
-    @test MOI.supportsconstraint(model,
-        MOI.SingleVariable,
-        MOI.LessThan{Float64}
-    )
-    v = MOI.addvariable!(model)
-    @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
-    c = MOI.addconstraint!(model,
-        MOI.SingleVariable(v),
-        MOI.LessThan(1.0)
-    )
-    @test MOI.get(model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()
-    ) == 1
-
-    @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([v], [1.0], 0.0)
-    )
-    @test MOI.canset(model, MOI.ObjectiveSense())
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
-
-    if config.solve
-
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        maxobjective: 2.0x
+        c1: x <= 1.0
+        c2: x >= 0.0
+    """)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+    v = MOI.get(model, MOI.VariableIndex, "x")
+    @test MOI.get(model, MOI.VariablePrimal(), v) ≈ 1 atol=atol rtol=rtol
+    if config.duals
+        @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+        c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c1")
+        @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ -2.0 atol=atol rtol=rtol
+        c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c2")
+        @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
     end
+end
+
+"""
+    Test the setting of an lower bound
+"""
+function lowerbound(model::MOI.ModelLike, config::TestConfig)
+    atol, rtol = config.atol, config.rtol
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        minobjective: 2.0x
+        c1: x >= 1.0
+        c2: x <= 2.0
+    """)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+    v = MOI.get(model, MOI.VariableIndex, "x")
+    @test MOI.get(model, MOI.VariablePrimal(), v) ≈ 1 atol=atol rtol=rtol
+    if config.duals
+        @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+        c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c1")
+        @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ 2.0 atol=atol rtol=rtol
+        c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c2")
+        @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
+    end
+end
+
+function getvariable(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        minobjective: 2.0x
+        c1: x >= 1.0
+        c2: x <= 2.0
+    """)
+    @test MOI.canget(model, MOI.VariableIndex, "x")
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    @test MOI.isvalid(model, x)
+end
+
+function getconstraint(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        minobjective: 2.0x
+        c1: x >= 1.0
+        c2: x <= 2.0
+    """)
+    @test MOI.canget(model, MOI.ConstraintIndex, "c1")
+    @test MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c1")
+    @test !MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c1")
+    @test MOI.canget(model, MOI.ConstraintIndex, "c2")
+    @test !MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c2")
+    @test MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
+
+    c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c1")
+    @test MOI.isvalid(model, c1)
+    c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
+    @test MOI.isvalid(model, c2)
 end
 
 const atomictests = Dict(
@@ -127,6 +180,9 @@ const atomictests = Dict(
     "delete_variables" => delete_variables,
     "min_sense"        => min_sense,
     "max_sense"        => max_sense,
-    "upperbound"       => upperbound
+    "upperbound"       => upperbound,
+    "lowerbound"       => lowerbound,
+    "getvariable"      => getvariable,
+    "getconstraint"    => getconstraint
 )
 @moitestset atomic

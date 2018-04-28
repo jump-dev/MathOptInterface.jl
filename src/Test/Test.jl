@@ -2,6 +2,7 @@ module Test
 
 using MathOptInterface
 const MOI = MathOptInterface
+const MOIU = MOI.Utilities
 
 using Base.Test
 
