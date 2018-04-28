@@ -1,3 +1,23 @@
+#=
+    Functions in this file test functionality relating to variables in MOI.
+
+### Functionality currently tested
+    - canaddvariable
+    - addvariables!
+    - addvariable!
+    - deleting variables
+    - get/set! VariableName
+    - isvalid for VariableIndex
+    - get VariableIndex by name
+    - NumberOfVariables
+
+### Functionality not yet tested
+    - VariablePrimalStart
+    - VariablePrimal
+    - VariableBasisStatus
+    - ListOfVariableIndices
+=#
+
 """
     This function tests adding a single variable.
 """
@@ -9,6 +29,7 @@ function add_variable(model::MOI.ModelLike, config::TestConfig)
     v = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 end
+atomictests["add_variable"]     = add_variable
 
 """
     This function tests adding multiple variables.
@@ -21,6 +42,7 @@ function add_variables(model::MOI.ModelLike, config::TestConfig)
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 end
+atomictests["add_variables"]    = add_variables
 
 """
     This function tests adding, and then deleting,
@@ -37,6 +59,7 @@ function delete_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.delete!(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
 end
+atomictests["delete_variable"]  = delete_variable
 
 """
     This function tests adding, and then deleting,
@@ -62,62 +85,43 @@ function delete_variables(model::MOI.ModelLike, config::TestConfig)
     @test !MOI.isvalid(model, v[1])
     @test MOI.isvalid(model, v[2])
 end
+atomictests["delete_variables"] = delete_variable
 
 """
-    Set objective to MaxSense
+    Test getting variables by name.
 """
-function max_sense(model::MOI.ModelLike, config::TestConfig)
+function getvariable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
-    @test MOI.canset(model, MOI.ObjectiveSense())
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.canget(model, MOI.ObjectiveSense())
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
-end
-
-"""
-    Set objective to MinSense
-"""
-function min_sense(model::MOI.ModelLike, config::TestConfig)
-    MOI.empty!(model)
-    @test MOI.isempty(model)
-    @test MOI.canset(model, MOI.ObjectiveSense())
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
-    @test MOI.canget(model, MOI.ObjectiveSense())
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
-end
-
-"""
-    Test constant in objective.
-"""
-function constantobj(model::MOI.ModelLike, config::TestConfig)
-    atol, rtol = config.atol, config.rtol
-    MOI.empty!(model)
-    @test MOI.isempty(model)
     MOIU.loadfromstring!(model,"""
         variables: x
-        minobjective: 2.0x + 1.0
-        c: x >= 1.0
+        minobjective: 2.0x
+        c1: x >= 1.0
+        c2: x <= 2.0
     """)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
+    @test MOI.canget(model, MOI.VariableIndex, "x")
+    @test !MOI.canget(model, MOI.VariableIndex, "y")
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    @test MOI.isvalid(model, x)
 end
+atomictests["getvariable"]      = getvariable
 
 """
-    Test blank objective.
+    Test getting and setting varaible names.
 """
-function blankobj(model::MOI.ModelLike, config::TestConfig)
-    atol, rtol = config.atol, config.rtol
+function variablenames(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
-    MOIU.loadfromstring!(model,"""
-        variables: x
-        minobjective: 0.0x + 0.0
-        c: x >= 1.0
-    """)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+    v = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.VariableName(), v) == ""
+    @test MOI.canset(model, MOI.VariableName(), typeof(v))
+    MOI.set!(model, MOI.VariableName(), v, "x")
+    @test MOI.get(model, MOI.VariableName(), v) == "x"
+    MOI.set!(model, MOI.VariableName(), v, "y")
+    @test MOI.get(model, MOI.VariableName(), v) == "y"
+    x = MOI.addvariable!(model)
+    MOI.set!(model, MOI.VariableName(), x, "x")
+    @test MOI.get(model, MOI.VariableName(), x) == "x"
 end
+atomictests["variablenames"]    = variablenames
 
 """
     Test the setting of an upper bound
@@ -144,6 +148,7 @@ function upperbound(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
     end
 end
+atomictests["upperbound"]    = upperbound
 
 """
     Test the setting of an lower bound
@@ -170,75 +175,4 @@ function lowerbound(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
     end
 end
-
-"""
-    Test getting variables by name.
-"""
-function getvariable(model::MOI.ModelLike, config::TestConfig)
-    MOI.empty!(model)
-    MOIU.loadfromstring!(model,"""
-        variables: x
-        minobjective: 2.0x
-        c1: x >= 1.0
-        c2: x <= 2.0
-    """)
-    @test MOI.canget(model, MOI.VariableIndex, "x")
-    @test !MOI.canget(model, MOI.VariableIndex, "y")
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    @test MOI.isvalid(model, x)
-end
-
-"""
-    Test getting constraints by name.
-"""
-function getconstraint(model::MOI.ModelLike, config::TestConfig)
-    MOI.empty!(model)
-    MOIU.loadfromstring!(model,"""
-        variables: x
-        minobjective: 2.0x
-        c1: x >= 1.0
-        c2: x <= 2.0
-    """)
-    @test !MOI.canget(model, MOI.ConstraintIndex, "c3")
-    @test MOI.canget(model, MOI.ConstraintIndex, "c1")
-    @test MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c1")
-    @test !MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c1")
-    @test MOI.canget(model, MOI.ConstraintIndex, "c2")
-    @test !MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c2")
-    @test MOI.canget(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
-    c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c1")
-    @test MOI.isvalid(model, c1)
-    c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
-    @test MOI.isvalid(model, c2)
-end
-
-function variablenames(model::MOI.ModelLike, config::TestConfig)
-    MOI.empty!(model)
-    v = MOI.addvariable!(model)
-    @test MOI.get(model, MOI.VariableName(), v) == ""
-    @test MOI.canset(model, MOI.VariableName(), typeof(v))
-    MOI.set!(model, MOI.VariableName(), v, "x")
-    @test MOI.get(model, MOI.VariableName(), v) == "x"
-    MOI.set!(model, MOI.VariableName(), v, "y")
-    @test MOI.get(model, MOI.VariableName(), v) == "y"
-    x = MOI.addvariable!(model)
-    MOI.set!(model, MOI.VariableName(), x, "x")
-    @test MOI.get(model, MOI.VariableName(), x) == "x"
-end
-
-const atomictests = Dict(
-    "add_variable"     => add_variable,
-    "add_variables"    => add_variables,
-    "delete_variable"  => delete_variable,
-    "delete_variables" => delete_variables,
-    "min_sense"        => min_sense,
-    "max_sense"        => max_sense,
-    "upperbound"       => upperbound,
-    "lowerbound"       => lowerbound,
-    "getvariable"      => getvariable,
-    "getconstraint"    => getconstraint,
-    "constantobj"      => constantobj,
-    "blankobj"         => blankobj,
-    "variablenames"    => variablenames
-)
-@moitestset atomic
+atomictests["lowerbound"]    = lowerbound
