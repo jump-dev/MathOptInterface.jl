@@ -116,7 +116,7 @@ function Base.getindex(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}, 
     constant = Vector{T}(undef, length(I))
     for (i, j) in enumerate(I)
         g = it[j]
-        append!(outputindex, repmat(i:i, length(g.variables)))
+        append!(outputindex, repeat(i:i, outer=length(g.variables)))
         append!(variables, g.variables)
         append!(coefficients, g.coefficients)
         constant[i] = g.constant
