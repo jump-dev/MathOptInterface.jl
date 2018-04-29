@@ -1,8 +1,11 @@
-using MathOptInterface, Base.Test
+using MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
+
+using Compat
+using Compat.Test
 
 # Tests for solvers are located in MOI.Test.
 
