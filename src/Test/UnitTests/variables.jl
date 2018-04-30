@@ -29,7 +29,7 @@ function add_variable(model::MOI.ModelLike, config::TestConfig)
     v = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 end
-atomictests["add_variable"]     = add_variable
+unittests["add_variable"]     = add_variable
 
 """
     This function tests adding multiple variables.
@@ -42,7 +42,7 @@ function add_variables(model::MOI.ModelLike, config::TestConfig)
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 end
-atomictests["add_variables"]    = add_variables
+unittests["add_variables"]    = add_variables
 
 """
     This function tests adding, and then deleting,
@@ -59,7 +59,7 @@ function delete_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.delete!(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
 end
-atomictests["delete_variable"]  = delete_variable
+unittests["delete_variable"]  = delete_variable
 
 """
     This function tests adding, and then deleting,
@@ -85,7 +85,7 @@ function delete_variables(model::MOI.ModelLike, config::TestConfig)
     @test !MOI.isvalid(model, v[1])
     @test MOI.isvalid(model, v[2])
 end
-atomictests["delete_variables"] = delete_variable
+unittests["delete_variables"] = delete_variable
 
 """
     Test getting variables by name.
@@ -103,7 +103,7 @@ function getvariable(model::MOI.ModelLike, config::TestConfig)
     x = MOI.get(model, MOI.VariableIndex, "x")
     @test MOI.isvalid(model, x)
 end
-atomictests["getvariable"]      = getvariable
+unittests["getvariable"]      = getvariable
 
 """
     Test getting and setting varaible names.
@@ -121,12 +121,12 @@ function variablenames(model::MOI.ModelLike, config::TestConfig)
     MOI.set!(model, MOI.VariableName(), x, "x")
     @test MOI.get(model, MOI.VariableName(), x) == "x"
 end
-atomictests["variablenames"]    = variablenames
+unittests["variablenames"]    = variablenames
 
 """
     Test the setting of an upper bound
 """
-function upperbound(model::MOI.ModelLike, config::TestConfig)
+function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -148,12 +148,12 @@ function upperbound(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
     end
 end
-atomictests["upperbound"]    = upperbound
+unittests["solve_with_upperbound"]    = solve_with_upperbound
 
 """
     Test the setting of an lower bound
 """
-function lowerbound(model::MOI.ModelLike, config::TestConfig)
+function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -175,4 +175,4 @@ function lowerbound(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
     end
 end
-atomictests["lowerbound"]    = lowerbound
+unittests["solve_with_lowerbound"]    = solve_with_lowerbound

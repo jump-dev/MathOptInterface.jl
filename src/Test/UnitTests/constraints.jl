@@ -21,4 +21,4 @@ function getconstraint(model::MOI.ModelLike, config::TestConfig)
     c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
     @test MOI.isvalid(model, c2)
 end
-atomictests["getconstraint"]    = getconstraint
+unittests["getconstraint"]    = getconstraint

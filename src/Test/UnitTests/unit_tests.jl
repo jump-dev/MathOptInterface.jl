@@ -3,10 +3,10 @@
     to the full end-to-end tests in contlinear.jl etc
 =#
 
-const atomictests = Dict{String, Function}()
+const unittests = Dict{String, Function}()
 
 include("variables.jl")
 include("objectives.jl")
 include("constraints.jl")
 
-@moitestset atomic
+@moitestset unit

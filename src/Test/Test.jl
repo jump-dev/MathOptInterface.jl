@@ -19,6 +19,6 @@ include("intconic.jl")
 
 include("nlp.jl")
 
-include("AtomicTests/atomic_tests.jl")
+include("UnitTests/unit_tests.jl")
 
 end # module

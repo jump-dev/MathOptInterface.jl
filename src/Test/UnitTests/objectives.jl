@@ -25,7 +25,7 @@ function max_sense(model::MOI.ModelLike, config::TestConfig)
     @test MOI.canget(model, MOI.ObjectiveSense())
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 end
-atomictests["max_sense"] = max_sense
+unittests["max_sense"] = max_sense
 
 """
     Set objective to MinSense
@@ -38,7 +38,7 @@ function min_sense(model::MOI.ModelLike, config::TestConfig)
     @test MOI.canget(model, MOI.ObjectiveSense())
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
 end
-atomictests["min_sense"] = min_sense
+unittests["min_sense"] = min_sense
 
 """
     Set objective to FeasibilitySense
@@ -51,12 +51,12 @@ function feasibility_sense(model::MOI.ModelLike, config::TestConfig)
     @test MOI.canget(model, MOI.ObjectiveSense())
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
 end
-atomictests["feasibility_sense"] = feasibility_sense
+unittests["feasibility_sense"] = feasibility_sense
 
 """
     Test constant in objective.
 """
-function constant_obj(model::MOI.ModelLike, config::TestConfig)
+function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -68,12 +68,12 @@ function constant_obj(model::MOI.ModelLike, config::TestConfig)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
 end
-atomictests["constant_obj"] = constant_obj
+unittests["solve_constant_obj"] = solve_constant_obj
 
 """
     Test blank objective.
 """
-function blank_obj(model::MOI.ModelLike, config::TestConfig)
+function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -85,12 +85,12 @@ function blank_obj(model::MOI.ModelLike, config::TestConfig)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
 end
-atomictests["blank_obj"] = blank_obj
+unittests["solve_blank_obj"] = solve_blank_obj
 
 """
     Test SingleVariable objective.
 """
-function singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
+function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -102,4 +102,4 @@ function singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol=atol rtol=rtol
 end
-atomictests["singlevariable_obj"] = singlevariable_obj
+unittests["solve_singlevariable_obj"] = solve_singlevariable_obj
