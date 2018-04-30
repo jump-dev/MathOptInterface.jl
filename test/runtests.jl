@@ -39,7 +39,7 @@ end
 # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
 @testset "MOI.Test" begin
     include("Test/config.jl")
-    include("Test/atomic.jl")
+    include("Test/unit.jl")
     include("Test/contlinear.jl")
     include("Test/contconic.jl")
     include("Test/contquadratic.jl")
