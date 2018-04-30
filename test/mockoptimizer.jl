@@ -1,3 +1,7 @@
+@testset "Mock optimizer name test" begin
+    MOIT.nametest(MOIU.MockOptimizer(ModelForMock{Float64}()))
+end
+
 @testset "Mock optimizer optimizer attributes" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.canset(optimizer, MOIU.MockModelAttribute())

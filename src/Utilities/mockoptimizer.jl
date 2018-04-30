@@ -72,19 +72,20 @@ function MOI.optimize!(mock::MockOptimizer)
     mock.optimize!(mock)
 end
 
-MOI.canset(mock::MockOptimizer, ::Union{MOI.ResultCount,MOI.TerminationStatus,MOI.ObjectiveValue,MOI.PrimalStatus,MOI.DualStatus,MOI.ObjectiveSense,MOI.ObjectiveFunction,MockModelAttribute}) = true
 MOI.canset(mock::MockOptimizer, ::Union{MOI.VariablePrimal,MockVariableAttribute}, ::Type{MOI.VariableIndex}) = true
 MOI.canset(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, IdxT::Type{MOI.VariableIndex}) = MOI.canset(mock.inner_model, attr, IdxT)
 MOI.canset(mock::MockOptimizer, ::Union{MOI.ConstraintDual,MockConstraintAttribute}, ::Type{<:MOI.ConstraintIndex}) = true
 MOI.canset(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute, IdxT::Type{<:MOI.ConstraintIndex}) = MOI.canset(mock.inner_model, attr, IdxT)
 
+MOI.canset(mock::MockOptimizer, ::Union{MOI.ResultCount,MOI.TerminationStatus,MOI.ObjectiveValue,MOI.PrimalStatus,MOI.DualStatus,MockModelAttribute}) = true
 MOI.set!(mock::MockOptimizer, ::MOI.ResultCount, value::Integer) = (mock.resultcount = value)
 MOI.set!(mock::MockOptimizer, ::MOI.TerminationStatus, value::MOI.TerminationStatusCode) = (mock.terminationstatus = value)
 MOI.set!(mock::MockOptimizer, ::MOI.ObjectiveValue, value::Real) = (mock.objectivevalue = value)
 MOI.set!(mock::MockOptimizer, ::MOI.PrimalStatus, value::MOI.ResultStatusCode) = (mock.primalstatus = value)
 MOI.set!(mock::MockOptimizer, ::MOI.DualStatus, value::MOI.ResultStatusCode) = (mock.dualstatus = value)
 MOI.set!(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
-MOI.set!(mock::MockOptimizer, attr::MOI.ObjectiveSense, value) = MOI.set!(mock.inner_model, attr, value)
+MOI.canset(mock::MockOptimizer, attr::MOI.AbstractModelAttribute) = MOI.canset(mock.inner_model, attr)
+MOI.set!(mock::MockOptimizer, attr::MOI.AbstractModelAttribute, value) = MOI.set!(mock.inner_model, attr, value)
 MOI.set!(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = MOI.set!(mock.inner_model, attr, xor_variables(value))
 
 MOI.set!(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, idx::MOI.VariableIndex, value) = MOI.set!(mock.inner_model, attr, xor_index(idx), value)
@@ -101,14 +102,7 @@ MOI.canget(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.hasprimal && (mock.re
 MOI.canget(mock::MockOptimizer, ::MOI.DualStatus) = mock.hasdual && (mock.resultcount > 0)
 MOI.canget(mock::MockOptimizer, ::MockModelAttribute) = true
 
-MOI.canget(mock::MockOptimizer, attr::Union{MOI.NumberOfVariables,
-                                            MOI.ListOfVariableIndices,
-                                            MOI.NumberOfConstraints,
-                                            MOI.ListOfConstraints,
-                                            MOI.ListOfConstraintIndices,
-                                            MOI.ObjectiveFunction,
-                                            MOI.ObjectiveSense}) = MOI.canget(mock.inner_model, attr)
-
+MOI.canget(mock::MockOptimizer, attr::MOI.AbstractModelAttribute) = MOI.canget(mock.inner_model, attr)
 MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute) = MOI.get(mock.inner_model, attr)
 MOI.get(mock::MockOptimizer, attr::Union{MOI.ListOfVariableIndices,
                                          MOI.ListOfConstraintIndices}) = xor_index.(MOI.get(mock.inner_model, attr))
@@ -130,6 +124,10 @@ MOI.canget(mock::MockOptimizer, ::MOI.ConstraintDual, ::Type{<:MOI.ConstraintInd
 
 MOI.canget(mock::MockOptimizer, ::MockVariableAttribute, ::Type{MOI.VariableIndex}) = length(mock.varattribute) > 0
 MOI.canget(mock::MockOptimizer, ::MockConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = length(mock.conattribute) > 0
+
+# Name
+MOI.canget(b::MockOptimizer, IdxT::Type{<:MOI.Index}, name::String) = MOI.canget(b.inner_model, IdxT, name)
+MOI.get(b::MockOptimizer, IdxT::Type{<:MOI.Index}, name::String) = xor_index(MOI.get(b.inner_model, IdxT, name))
 
 MOI.get(mock::MockOptimizer, ::MOI.ResultCount) = mock.resultcount
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.terminationstatus
