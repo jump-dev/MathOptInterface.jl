@@ -2,6 +2,7 @@ module Test
 
 using MathOptInterface
 const MOI = MathOptInterface
+const MOIU = MOI.Utilities
 
 using Compat
 using Compat.Test
@@ -18,5 +19,7 @@ include("intlinear.jl")
 include("intconic.jl")
 
 include("nlp.jl")
+
+include("UnitTests/unit_tests.jl")
 
 end # module

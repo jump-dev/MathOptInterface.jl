@@ -27,25 +27,30 @@ MOIU.@model(Model,
 @MOIU.model ModelForMock (ZeroOne, Integer) (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 
 # Utilities submodule tests
-include("functions.jl")
-include("sets.jl")
-include("model.jl")
-include("universalfallback.jl")
-include("parser.jl")
-include("mockoptimizer.jl")
-include("cachingoptimizer.jl")
-include("copy.jl")
+@testset "MOI.Utilities" begin
+    include("functions.jl")
+    include("sets.jl")
+    include("model.jl")
+    include("universalfallback.jl")
+    include("parser.jl")
+    include("mockoptimizer.jl")
+    include("cachingoptimizer.jl")
+    include("copy.jl")
+end
 
 # Test submodule tests
 # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
-include("config.jl")
+@testset "MOI.Test" begin
+    include("Test/config.jl")
+    include("Test/unit.jl")
+    include("Test/contlinear.jl")
+    include("Test/contconic.jl")
+    include("Test/contquadratic.jl")
+    include("Test/intlinear.jl")
+    include("Test/intconic.jl")
+end
 
-include("contlinear.jl")
-include("contconic.jl")
-include("contquadratic.jl")
-
-include("intlinear.jl")
-include("intconic.jl")
-
-# Bridges submodule tests
-include("bridge.jl")
+@testset "MOI.Bridges" begin
+    # Bridges submodule tests
+    include("bridge.jl")
+end
