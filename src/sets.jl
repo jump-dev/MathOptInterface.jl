@@ -8,11 +8,21 @@ Abstract supertype for set objects used to encode constraints.
 abstract type AbstractSet end
 
 """
+    dimension(s::AbstractSet)
+
+Return the underlying dimension (number of vector components) in the set `s`, i.e.,
+``n`` if the set is a subset of ``\\mathbb{R}^n``.
+"""
+function dimension end
+
+"""
     AbstractScalarSet
 
 Abstract supertype for subsets of ``\\mathbb{R}``.
 """
 abstract type AbstractScalarSet <: AbstractSet end
+
+dimension(s::AbstractScalarSet) = 1
 
 """
     AbstractVectorSet
@@ -21,12 +31,6 @@ Abstract supertype for subsets of ``\\mathbb{R}^n`` for some ``n``.
 """
 abstract type AbstractVectorSet <: AbstractSet end
 
-"""
-    dimension(s::AbstractVectorSet)
-
-Return the underlying dimension (number of vector components) in the set `s`, i.e.,
-``n`` if the set is a subset of ``\\mathbb{R}^n``.
-"""
 dimension(s::AbstractVectorSet) = s.dimension # .dimension field is conventional, overwrite this method if not applicable
 
 """
