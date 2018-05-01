@@ -3,7 +3,8 @@ module Test
 using MathOptInterface
 const MOI = MathOptInterface
 
-using Base.Test
+using Compat
+using Compat.Test
 
 include("config.jl")
 
