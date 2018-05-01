@@ -124,7 +124,8 @@ end
 unittests["variablenames"]    = variablenames
 
 """
-    Test the setting of an upper bound
+    Test setting the upper bound of a variable, confirm that it solves correctly,
+    and if `config.duals=true`, check that the dual is computed correctly.
 """
 function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
@@ -151,7 +152,8 @@ end
 unittests["solve_with_upperbound"]    = solve_with_upperbound
 
 """
-    Test the setting of an lower bound
+    Test setting the lower bound of a variable, confirm that it solves correctly,
+    and if `config.duals=true`, check that the dual is computed correctly.
 """
 function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
