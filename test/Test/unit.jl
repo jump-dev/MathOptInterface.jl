@@ -6,9 +6,6 @@
         "solve_constant_obj",
         "solve_singlevariable_obj",
         "solve_with_lowerbound",
-        "solve_with_upperbound",
-        "getconstraint",
-        "getvariable",
-        "variablenames"
+        "solve_with_upperbound"
         ])
 end
