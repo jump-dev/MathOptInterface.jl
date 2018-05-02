@@ -142,6 +142,9 @@ function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String
     if !isempty(name) && haskey(model.namesvar, name) && model.namesvar[name] != vi
         error("Variable name $name is already used by $(model.namesvar[name])")
     end
+    if haskey(model.varnames, vi)
+        delete!(model.namesvar, model.varnames[vi])
+    end
     model.varnames[vi] = name
     model.namesvar[name] = vi
 end
@@ -161,13 +164,16 @@ function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::Stri
     if !isempty(name) && haskey(model.namescon, name) && model.namescon[name] != ci
         error("Constraint name $name is already used by $(model.namescon[name])")
     end
+    if haskey(model.connames, ci)
+        delete!(model.namescon, model.connames[ci])
+    end
     model.connames[ci] = name
     model.namescon[name] = ci
 end
 MOI.canget(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.connames, ci, EMPTYSTRING)
 
-MOI.canget(model::AbstractModel, ::Type{<:CI}, name::String) = haskey(model.namescon, name)
+MOI.canget(model::AbstractModel, CT::Type{<:CI}, name::String) = haskey(model.namescon, name) && model.namescon[name] isa CT
 MOI.get(model::AbstractModel, ::Type{<:CI}, name::String) = model.namescon[name]
 
 MOI.canget(::AbstractModel, ::MOI.ListOfConstraintAttributesSet) = true
