@@ -106,7 +106,7 @@ end
 unittests["getvariable"]      = getvariable
 
 """
-    Test getting and setting varaible names.
+    Test getting and setting variable names.
 """
 function variablenames(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
