@@ -71,4 +71,48 @@
         )
         MOIT.solve_with_upperbound(mock, config)
     end
+    @testset "solve_affine_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [0.5]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
+            )
+        )
+        MOIT.solve_affine_lessthan(mock, config)
+    end
+    @testset "solve_affine_greaterthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [0.5]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0.5]
+            )
+        )
+        MOIT.solve_affine_greaterthan(mock, config)
+    end
+    @testset "solve_affine_equalto" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [0.5]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [0.5]
+            )
+        )
+        MOIT.solve_affine_equalto(mock, config)
+    end
+    @testset "solve_affine_interval" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [2.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.5]
+            )
+        )
+        MOIT.solve_affine_interval(mock, config)
+    end
 end
