@@ -15,7 +15,9 @@
 =#
 
 """
-    Set objective to MaxSense
+    max_sense(model::MOI.ModelLike, config::TestConfig)
+
+Test setting objective sense to MaxSense.
 """
 function max_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -28,7 +30,9 @@ end
 unittests["max_sense"] = max_sense
 
 """
-    Set objective to MinSense
+    min_sense(model::MOI.ModelLike, config::TestConfig)
+
+Test setting objective sense to MinSense.
 """
 function min_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -41,7 +45,9 @@ end
 unittests["min_sense"] = min_sense
 
 """
-    Set objective to FeasibilitySense
+    feasibility_sense(model::MOI.ModelLike, config::TestConfig)
+
+Test setting objective sense to FeasibilitySense.
 """
 function feasibility_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -54,7 +60,11 @@ end
 unittests["feasibility_sense"] = feasibility_sense
 
 """
-    Test constant in objective.
+    solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
+
+Test constant in linear objective,  if `config.solve=true` confirm that it
+solves correctly, and if `config.duals=true`, check that the duals are computed
+correctly.
 """
 function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
@@ -65,13 +75,25 @@ function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
         minobjective: 2.0x + 1.0
         c: x >= 1.0
     """)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 3.0,
+            variable_primal   = [(x, 1.0)],
+            constraint_primal = [(c, 1.0)],
+            constraint_dual   = [(c, 2.0)]
+        )
+    end
 end
 unittests["solve_constant_obj"] = solve_constant_obj
 
 """
-    Test blank objective.
+    solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
+
+Test blank linear objective,  if `config.solve=true` confirm that it
+solves correctly, and if `config.duals=true`, check that the duals are computed
+correctly.
 """
 function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
@@ -82,13 +104,25 @@ function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
         minobjective: 0.0x + 0.0
         c: x >= 1.0
     """)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 0.0,
+            variable_primal   = [(x, 1.0)],
+            constraint_primal = [(c, 1.0)],
+            constraint_dual   = [(c, 0.0)]
+        )
+    end
 end
 unittests["solve_blank_obj"] = solve_blank_obj
 
 """
-    Test SingleVariable objective.
+    solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
+
+Test SingleVariable objective,  if `config.solve=true` confirm that it
+solves correctly, and if `config.duals=true`, check that the duals are computed
+correctly.
 """
 function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
@@ -99,7 +133,15 @@ function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
         minobjective: x
         c: x >= 1.0
     """)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol=atol rtol=rtol
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 1.0,
+            variable_primal   = [(x, 1.0)],
+            constraint_primal = [(c, 1.0)],
+            constraint_dual   = [(c, 1.0)]
+        )
+    end
 end
 unittests["solve_singlevariable_obj"] = solve_singlevariable_obj
