@@ -47,15 +47,15 @@ struct GeoMeanBridge{T} <: AbstractBridge
     tubc::CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}
     socrc::Vector{CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}}
 end
-function GeoMeanBridge{T}(model, f::MOI.VectorOfVariables, s::MOI.GeometricMeanCone) where T
-    GeoMeanBridge{T}(model, MOI.VectorAffineFunction{T}(f), s)
+function GeoMeanBridge{T}(optimizer, f::MOI.VectorOfVariables, s::MOI.GeometricMeanCone) where T
+    GeoMeanBridge{T}(optimizer, MOI.VectorAffineFunction{T}(f), s)
 end
-function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.GeometricMeanCone) where T
+function GeoMeanBridge{T}(optimizer, f::MOI.VectorAffineFunction{T}, s::MOI.GeometricMeanCone) where T
     d = s.dimension
     n = d-1
     l = ilog2(n)
     N = 1 << l
-    xij = MOI.addvariables!(model, N-1)
+    xij = MOI.addvariables!(optimizer, N-1)
 
     xl1 = xij[1]
     sN = one(T) / sqrt(N)
@@ -69,7 +69,7 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
 
     t = MOIU.eachscalar(f)[1]
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
-    tubc = MOI.addconstraint!(model, MOI.ScalarAffineFunction([t.variables; xl1], [t.coefficients; -sN], t.constant), MOI.LessThan(zero(T)))
+    tubc = MOI.addconstraint!(optimizer, MOI.ScalarAffineFunction([t.variables; xl1], [t.coefficients; -sN], t.constant), MOI.LessThan(zero(T)))
 
     socrc = Vector{CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}}(N-1)
     offset = offsetnext = 0
@@ -84,13 +84,13 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
                 b = MOI.ScalarAffineFunction{T}(MOI.SingleVariable(xij[offsetnext+2j]))
             end
             c = MOI.ScalarAffineFunction{T}(MOI.SingleVariable(xij[offset+j]))
-            socrc[offset + j] = MOI.addconstraint!(model, MOIU.moivcat(a, b, c), MOI.RotatedSecondOrderCone(3))
+            socrc[offset + j] = MOI.addconstraint!(optimizer, MOIU.moivcat(a, b, c), MOI.RotatedSecondOrderCone(3))
         end
         offset = offsetnext
     end
     GeoMeanBridge(d, xij, tubc, socrc)
 end
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as an optimizer
 MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables) = length(b.xij)
 MOI.get(b::GeoMeanBridge{T}, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) where T = 1 # t ≤ x_{l1}/sqrt(N)
 MOI.get(b::GeoMeanBridge{T}, ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}) where T = length(b.socrc)
@@ -98,40 +98,40 @@ MOI.get(b::GeoMeanBridge{T}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunct
 MOI.get(b::GeoMeanBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}) where T = b.socrc
 
 # References
-function MOI.delete!(model::MOI.ModelLike, c::GeoMeanBridge)
-    MOI.delete!(model, c.xij)
-    MOI.delete!(model, c.tubc)
-    MOI.delete!(model, c.socrc)
+function MOI.delete!(optimizer::MOI.AbstractOptimizer, c::GeoMeanBridge)
+    MOI.delete!(optimizer, c.xij)
+    MOI.delete!(optimizer, c.tubc)
+    MOI.delete!(optimizer, c.socrc)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{GeoMeanBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) &&
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone})
+function MOI.canget(optimizer::MOI.AbstractOptimizer, a::MOI.ConstraintPrimal, ::Type{GeoMeanBridge{T}}) where T
+    MOI.canget(optimizer, a, CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) &&
+    MOI.canget(optimizer, a, CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone})
 end
-function _getconstrattr(model, a, c::GeoMeanBridge{T}) where T
+function _getconstrattr(optimizer, a, c::GeoMeanBridge{T}) where T
     output = Vector{T}(c.d)
-    output[1] = MOI.get(model, a, c.tubc)
+    output[1] = MOI.get(optimizer, a, c.tubc)
     N = length(c.xij)+1
     offset = div(N, 2) - 1 # 1 + 2 + ... + n/4
     for i in 1:(c.d-1)
         j = ((i-1) >> 1) + 1
         k = i - 2(j - 1)
-        output[1+i] = MOI.get(model, a, c.socrc[offset+j])[k]
+        output[1+i] = MOI.get(optimizer, a, c.socrc[offset+j])[k]
     end
     output
 end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::GeoMeanBridge)
-    output = _getconstrattr(model, a, c)
+function MOI.get(optimizer::MOI.AbstractOptimizer, a::MOI.ConstraintPrimal, c::GeoMeanBridge)
+    output = _getconstrattr(optimizer, a, c)
     N = length(c.xij)+1
     # the constraint is t - x_l1/sqrt(2^l) ≤ 0, we need to add the value of x_l1
-    output[1] += MOI.get(model, MOI.VariablePrimal(), c.xij[1]) / sqrt(N)
+    output[1] += MOI.get(optimizer, MOI.VariablePrimal(), c.xij[1]) / sqrt(N)
     output
 end
-MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{<:GeoMeanBridge}) = false
-#function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::GeoMeanBridge)
-#    output = _getconstrattr(model, a, c)
+MOI.canget(optimizer::MOI.AbstractOptimizer, a::MOI.ConstraintDual, ::Type{<:GeoMeanBridge}) = false
+#function MOI.get(optimizer::MOI.AbstractOptimizer, a::MOI.ConstraintDual, c::GeoMeanBridge)
+#    output = _getconstrattr(optimizer, a, c)
 #end
 
 # Constraints
-MOI.canmodifyconstraint(model::MOI.ModelLike, c::GeoMeanBridge, change) = false
+MOI.canmodifyconstraint(optimizer::MOI.AbstractOptimizer, c::GeoMeanBridge, change) = false
