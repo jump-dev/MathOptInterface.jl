@@ -1,6 +1,5 @@
 @testset "Unit Tests" begin
     mock = MOIU.MockOptimizer(Model{Float64}())
-    mock.evalobjective = true
     config = MOIT.TestConfig()
     MOIT.unittest(mock, config, [
         "solve_blank_obj",
