@@ -1,7 +1,6 @@
 @testset "Continuous Quadratic" begin
     mock = MOIU.MockOptimizer(Model{Float64}())
     config = MOIT.TestConfig()
-    mock.evalobjective = true
 
     @testset "QP" begin
         MOIU.set_mock_optimize!(mock,

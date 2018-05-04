@@ -92,7 +92,6 @@ end
 @testset "Bridge tests" begin
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
     config = MOIT.TestConfig()
-    mock.evalobjective = true
 
     @testset "Interval" begin
         MOIU.set_mock_optimize!(mock,
