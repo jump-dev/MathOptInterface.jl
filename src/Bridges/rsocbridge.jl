@@ -19,10 +19,10 @@ That means in particular that the norm is of constraint primal and duals are pre
 struct RSOCBridge{T} <: AbstractBridge
     soc::CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone}
 end
-function RSOCBridge{T}(model, f::MOI.VectorOfVariables, s::MOI.RotatedSecondOrderCone) where T
-    RSOCBridge{T}(model, MOI.VectorAffineFunction{T}(f), s)
+function RSOCBridge{T}(optimizer, f::MOI.VectorOfVariables, s::MOI.RotatedSecondOrderCone) where T
+    RSOCBridge{T}(optimizer, MOI.VectorAffineFunction{T}(f), s)
 end
-function RSOCBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSecondOrderCone) where T
+function RSOCBridge{T}(optimizer, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSecondOrderCone) where T
     d = s.dimension
     t = MOIU.eachscalar(f)[1]
     u = MOIU.eachscalar(f)[2]
@@ -31,35 +31,35 @@ function RSOCBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSeco
     y = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients/s2; -u.coefficients/s2], t.constant/s2 - u.constant/s2)
     z = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients/s2;  u.coefficients/s2], t.constant/s2 + u.constant/s2)
     g = MOIU.moivcat(z, y, x)
-    soc = MOI.addconstraint!(model, g, MOI.SecondOrderCone(d))
+    soc = MOI.addconstraint!(optimizer, g, MOI.SecondOrderCone(d))
     RSOCBridge{T}(soc)
 end
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as an optimizer
 MOI.get(b::RSOCBridge{T}, ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone}) where T = 1
 MOI.get(b::RSOCBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone}) where T = [b.soc]
 
 # References
-function MOI.delete!(model::MOI.ModelLike, c::RSOCBridge)
-    MOI.delete!(model, c.soc)
+function MOI.delete!(optimizer::MOI.AbstractOptimizer, c::RSOCBridge)
+    MOI.delete!(optimizer, c.soc)
 end
 
 # Attributes, Bridge acting as a constraint
 # As the linear transformation is a symmetric involution,
 # the constraint primal and dual both need to be processed by reapplying the same transformation
-function _get(model, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, c::RSOCBridge)
-    x = MOI.get(model, attr, c.soc)
+function _get(optimizer, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, c::RSOCBridge)
+    x = MOI.get(optimizer, attr, c.soc)
     s2 = √2
     [x[1]/s2+x[2]/s2; x[1]/s2-x[2]/s2; x[3:end]]
 end
 # Need to define both `get` methods and redirect to `_get` to avoid ambiguity in dispatch
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{RSOCBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
+function MOI.canget(optimizer::MOI.AbstractOptimizer, a::MOI.ConstraintPrimal, ::Type{RSOCBridge{T}}) where T
+    MOI.canget(optimizer, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
 end
-MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::RSOCBridge) = _get(model, attr, c)
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{RSOCBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
+MOI.get(optimizer::MOI.AbstractOptimizer, attr::MOI.ConstraintPrimal, c::RSOCBridge) = _get(optimizer, attr, c)
+function MOI.canget(optimizer::MOI.AbstractOptimizer, a::MOI.ConstraintDual, ::Type{RSOCBridge{T}}) where T
+    MOI.canget(optimizer, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
 end
-MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
+MOI.get(optimizer::MOI.AbstractOptimizer, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(optimizer, attr, c)
 
 # Constraints
-MOI.canmodifyconstraint(model::MOI.ModelLike, c::RSOCBridge, change) = false
+MOI.canmodifyconstraint(optimizer::MOI.AbstractOptimizer, c::RSOCBridge, change) = false

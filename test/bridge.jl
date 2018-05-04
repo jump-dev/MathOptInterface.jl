@@ -1,16 +1,6 @@
 # Model not supporting Interval
 MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 
-@testset "Copy test" begin
-    mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-    bridgedmock = MOIB.SplitInterval{Float64}(mock)
-    MOIT.failcopytestc(bridgedmock)
-    MOIT.failcopytestia(bridgedmock)
-    MOIT.failcopytestva(bridgedmock)
-    MOIT.failcopytestca(bridgedmock)
-    MOIT.copytest(bridgedmock, SimpleModel{Float64}())
-end
-
 function test_noc(bridgedmock, F, S, n)
     @test MOI.canget(bridgedmock, MOI.NumberOfConstraints{F, S}())
     @test MOI.get(bridgedmock, MOI.NumberOfConstraints{F, S}()) == n
@@ -19,53 +9,65 @@ function test_noc(bridgedmock, F, S, n)
 end
 
 @testset "BridgeOptimizer" begin
-    const model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
+    mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+    bridgedmock = MOIB.SplitInterval{Float64}(mock)
 
-    @testset "Name test" begin
-        MOIT.nametest(MOIB.SplitInterval{Float64}(SimpleModel{Float64}()))
+    @testset "ModelLike" begin
+        @testset "Name test" begin
+            MOIT.nametest(bridgedmock)
+        end
+
+        @testset "Copy test" begin
+            MOIT.failcopytestc(bridgedmock)
+            MOIT.failcopytestia(bridgedmock)
+            MOIT.failcopytestva(bridgedmock)
+            MOIT.failcopytestca(bridgedmock)
+            MOIT.copytest(bridgedmock, SimpleModel{Float64}())
+        end
     end
 
     @testset "Custom test" begin
-        x, y = MOI.addvariables!(model, 2)
-        @test MOI.get(model, MOI.NumberOfVariables()) == 2
+        intmock = MOIU.MockOptimizer(SimpleModel{Int}())
+        bridgedintmock = MOIB.SplitInterval{Int}(intmock)
+
+        x, y = MOI.addvariables!(bridgedintmock, 2)
+        @test MOI.get(bridgedintmock, MOI.NumberOfVariables()) == 2
 
         f1 = MOI.ScalarAffineFunction([x], [3], 7)
-        c1 = MOI.addconstraint!(model, f1, MOI.Interval(-1, 1))
+        c1 = MOI.addconstraint!(bridgedintmock, f1, MOI.Interval(-1, 1))
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
-        @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
-        test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
-        test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
-        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+        @test MOI.canget(bridgedintmock, MOI.ListOfConstraints())
+        @test MOI.get(bridgedintmock, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+        test_noc(bridgedintmock, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
+        test_noc(bridgedintmock, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+        @test MOI.canget(bridgedintmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
+        @test (@inferred MOI.get(bridgedintmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
 
         f2 = MOI.ScalarAffineFunction([x, y], [2, -1], 2)
-        c2 = MOI.addconstraint!(model, f1, MOI.GreaterThan(-2))
+        c2 = MOI.addconstraint!(bridgedintmock, f1, MOI.GreaterThan(-2))
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
-        @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
-        test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
-        test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
-        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
-        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
+        @test MOI.canget(bridgedintmock, MOI.ListOfConstraints())
+        @test MOI.get(bridgedintmock, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+        test_noc(bridgedintmock, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
+        test_noc(bridgedintmock, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+        @test MOI.canget(bridgedintmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
+        @test (@inferred MOI.get(bridgedintmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+        @test (@inferred MOI.get(bridgedintmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
 
-        @test MOI.isvalid(model, c2)
-        @test MOI.candelete(model, c2)
-        MOI.delete!(model, c2)
+        @test MOI.isvalid(bridgedintmock, c2)
+        @test MOI.candelete(bridgedintmock, c2)
+        MOI.delete!(bridgedintmock, c2)
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
-        @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
-        test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
-        test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
-        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+        @test MOI.canget(bridgedintmock, MOI.ListOfConstraints())
+        @test MOI.get(bridgedintmock, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+        test_noc(bridgedintmock, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
+        test_noc(bridgedintmock, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+        @test MOI.canget(bridgedintmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
+        @test (@inferred MOI.get(bridgedintmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
     end
 
-    mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-
     @testset "Continuous Linear" begin
-        MOIT.contlineartest(MOIB.SplitInterval{Float64}(mock), MOIT.TestConfig(solve=false))
+        MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
     end
 end
 
