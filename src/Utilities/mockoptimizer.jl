@@ -40,12 +40,12 @@ xor_index(vi::VI) = VI(xor(vi.value, internal_xor_mask))
 xor_index(ci::CI{F,S}) where {F,S} = CI{F,S}(xor(ci.value, internal_xor_mask))
 xor_variables(f) = mapvariables(xor_index, f)
 
-MockOptimizer(inner_model::MOI.ModelLike) =
+MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false, evalobjective=true) =
     MockOptimizer(inner_model,
                        0,
                        Dict{MOI.VariableIndex,Int}(),
                        Dict{MOI.ConstraintIndex,Int}(),
-                       false,
+                       needsallocateload,
                        true,
                        (::MockOptimizer) -> begin end,
                        false,
@@ -53,7 +53,7 @@ MockOptimizer(inner_model::MOI.ModelLike) =
                        false,
                        MOI.Success,
                        0,
-                       false,
+                       evalobjective,
                        NaN,
                        MOI.UnknownResultStatus,
                        MOI.UnknownResultStatus,

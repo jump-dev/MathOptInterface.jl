@@ -49,7 +49,7 @@ end
 end
 
 @testset "Mock optimizer optimizer solve with result" begin
-    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
+    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}(), evalobjective=false)
 
     v = MOI.addvariables!(optimizer, 2)
     c1 = MOI.addconstraint!(optimizer, MOI.SingleVariable(v[1]), MOI.GreaterThan(1.0))

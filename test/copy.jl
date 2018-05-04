@@ -8,8 +8,7 @@
         MOIT.copytest(model, Model{Float64}())
     end
     @testset "Allocate-Load copy" begin
-        mock = MOIU.MockOptimizer(Model{Float64}())
-        mock.needsallocateload = true
+        mock = MOIU.MockOptimizer(Model{Float64}(), needsallocateload=true)
         MOIT.failcopytestc(mock)
         MOIT.failcopytestia(mock)
         MOIT.failcopytestva(mock)

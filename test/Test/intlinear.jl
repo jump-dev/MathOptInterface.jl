@@ -1,7 +1,6 @@
 @testset "Integer Linear" begin
     mock = MOIU.MockOptimizer(Model{Float64}())
     config = MOIT.TestConfig()
-    mock.evalobjective = true
 
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4, 5, 1]))

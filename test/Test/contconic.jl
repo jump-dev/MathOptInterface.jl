@@ -1,7 +1,6 @@
 @testset "Continuous Conic" begin
     mock = MOIU.MockOptimizer(Model{Float64}())
     config = MOIT.TestConfig()
-    mock.evalobjective = true
 
     @testset "Linear" begin
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
