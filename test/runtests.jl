@@ -9,8 +9,11 @@ using Compat.Test
 
 # Tests for solvers are located in MOI.Test.
 
-include("isapprox.jl")
-include("interval.jl")
+# MOI tests not relying on any submodule
+@testset "MOI" begin
+    include("isapprox.jl")
+    include("interval.jl")
+end
 
 # Needed by test spread over several files, defining it here make it easier to comment out tests
 # Model supporting every MOI functions and sets
