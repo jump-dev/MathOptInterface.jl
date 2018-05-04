@@ -1,16 +1,6 @@
 # Model not supporting Interval
 MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 
-@testset "Copy test" begin
-    mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-    bridgedmock = MOIB.SplitInterval{Float64}(mock)
-    MOIT.failcopytestc(bridgedmock)
-    MOIT.failcopytestia(bridgedmock)
-    MOIT.failcopytestva(bridgedmock)
-    MOIT.failcopytestca(bridgedmock)
-    MOIT.copytest(bridgedmock, SimpleModel{Float64}())
-end
-
 function test_noc(bridgedmock, F, S, n)
     @test MOI.canget(bridgedmock, MOI.NumberOfConstraints{F, S}())
     @test MOI.get(bridgedmock, MOI.NumberOfConstraints{F, S}()) == n
@@ -19,13 +9,24 @@ function test_noc(bridgedmock, F, S, n)
 end
 
 @testset "BridgeOptimizer" begin
-    const model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
+    const mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+    const bridgedmock = MOIB.SplitInterval{Float64}(mock)
 
     @testset "Name test" begin
-        MOIT.nametest(MOIB.SplitInterval{Float64}(SimpleModel{Float64}()))
+        MOIT.nametest(bridgedmock)
+    end
+
+    @testset "Copy test" begin
+        MOIT.failcopytestc(bridgedmock)
+        MOIT.failcopytestia(bridgedmock)
+        MOIT.failcopytestva(bridgedmock)
+        MOIT.failcopytestca(bridgedmock)
+        MOIT.copytest(bridgedmock, SimpleModel{Float64}())
     end
 
     @testset "Custom test" begin
+        const model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
+
         x, y = MOI.addvariables!(model, 2)
         @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
@@ -62,10 +63,8 @@ end
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
     end
 
-    mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-
     @testset "Continuous Linear" begin
-        MOIT.contlineartest(MOIB.SplitInterval{Float64}(mock), MOIT.TestConfig(solve=false))
+        MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
     end
 end
 
