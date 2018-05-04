@@ -19,7 +19,9 @@
 =#
 
 """
-    This function tests adding a single variable.
+    add_variable(model::MOI.ModelLike, config::TestConfig)
+
+Test adding a single variable.
 """
 function add_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -32,7 +34,9 @@ end
 unittests["add_variable"]     = add_variable
 
 """
-    This function tests adding multiple variables.
+    add_variables(model::MOI.ModelLike, config::TestConfig)
+
+Test adding multiple variables.
 """
 function add_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -42,11 +46,12 @@ function add_variables(model::MOI.ModelLike, config::TestConfig)
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 end
-unittests["add_variables"]    = add_variables
+unittests["add_variables"] = add_variables
 
 """
-    This function tests adding, and then deleting,
-    a single variable.
+    delete_variable(model::MOI.ModelLike, config::TestConfig)
+
+Tess adding, and then deleting, a single variable.
 """
 function delete_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -59,11 +64,12 @@ function delete_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.delete!(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
 end
-unittests["delete_variable"]  = delete_variable
+unittests["delete_variable"] = delete_variable
 
 """
-    This function tests adding, and then deleting,
-    multiple variables.
+    delete_variables(model::MOI.ModelLike, config::TestConfig)
+
+Test adding, and then deleting, multiple variables.
 """
 function delete_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -88,7 +94,9 @@ end
 unittests["delete_variables"] = delete_variable
 
 """
-    Test getting variables by name.
+    getvariable(model::MOI.ModelLike, config::TestConfig)
+
+Test getting variables by name.
 """
 function getvariable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -103,10 +111,12 @@ function getvariable(model::MOI.ModelLike, config::TestConfig)
     x = MOI.get(model, MOI.VariableIndex, "x")
     @test MOI.isvalid(model, x)
 end
-unittests["getvariable"]      = getvariable
+unittests["getvariable"] = getvariable
 
 """
-    Test getting and setting variable names.
+    variablenames(model::MOI.ModelLike, config::TestConfig)
+
+Test getting and setting variable names.
 """
 function variablenames(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -121,11 +131,13 @@ function variablenames(model::MOI.ModelLike, config::TestConfig)
     MOI.set!(model, MOI.VariableName(), x, "x")
     @test MOI.get(model, MOI.VariableName(), x) == "x"
 end
-unittests["variablenames"]    = variablenames
+unittests["variablenames"] = variablenames
 
 """
-    Test setting the upper bound of a variable, confirm that it solves correctly,
-    and if `config.duals=true`, check that the dual is computed correctly.
+    solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
+
+Test setting the upper bound of a variable, confirm that it solves correctly,
+and if `config.duals=true`, check that the dual is computed correctly.
 """
 function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
@@ -137,23 +149,25 @@ function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
         c1: x <= 1.0
         c2: x >= 0.0
     """)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
-    v = MOI.get(model, MOI.VariableIndex, "x")
-    @test MOI.get(model, MOI.VariablePrimal(), v) ≈ 1 atol=atol rtol=rtol
-    if config.duals
-        @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
-        c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c1")
-        @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ -2.0 atol=atol rtol=rtol
-        c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c2")
-        @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
+    x  = MOI.get(model, MOI.VariableIndex, "x")
+    c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c1")
+    c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c2")
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 2.0,
+            variable_primal   = [(x, 1.0)],
+            constraint_primal = [(c1, 1.0), (c2, 1.0)],
+            constraint_dual   = [(c1, -2.0), (c2, 0.0)]
+        )
     end
 end
-unittests["solve_with_upperbound"]    = solve_with_upperbound
+unittests["solve_with_upperbound"] = solve_with_upperbound
 
 """
-    Test setting the lower bound of a variable, confirm that it solves correctly,
-    and if `config.duals=true`, check that the dual is computed correctly.
+    solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
+
+Test setting the lower bound of a variable, confirm that it solves correctly,
+and if `config.duals=true`, check that the dual is computed correctly.
 """
 function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
@@ -165,16 +179,16 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
         c1: x >= 1.0
         c2: x <= 2.0
     """)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
-    v = MOI.get(model, MOI.VariableIndex, "x")
-    @test MOI.get(model, MOI.VariablePrimal(), v) ≈ 1 atol=atol rtol=rtol
-    if config.duals
-        @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
-        c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c1")
-        @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ 2.0 atol=atol rtol=rtol
-        c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c2")
-        @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.0 atol=atol rtol=rtol
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c1")
+    c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c2")
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 2.0,
+            variable_primal   = [(x, 1.0)],
+            constraint_primal = [(c1, 1.0), (c2, 1.0)],
+            constraint_dual   = [(c1, 2.0), (c2, 0.0)]
+        )
     end
 end
-unittests["solve_with_lowerbound"]    = solve_with_lowerbound
+unittests["solve_with_lowerbound"] = solve_with_lowerbound
