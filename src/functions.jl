@@ -43,77 +43,126 @@ struct VectorOfVariables <: AbstractVectorFunction
 end
 
 """
-    ScalarAffineFunction{T}(variables, coefficients, constant)
+    const ScalarAffineTerm{T} = Tuple{VariableIndex,T}
+
+A tuple `(variable_index, coefficient)` representing ``c x_i`` where ``c`` is
+`coefficient` and ``x_i`` is the variable identified by `variable_index`.
+"""
+const ScalarAffineTerm{T} = Tuple{VariableIndex,T}
+
+"""
+    ScalarAffineFunction{T}(terms, constant)
 
 The scalar-valued affine function ``a^T x + b``, where:
-* ``a`` is a sparse vector specified in tuple form by `variables::Vector{VariableIndex}` and `coefficients::Vector{T}`
+* ``a`` is a sparse vector specified by a list of [`ScalarAffineTerm`](@ref ScalarAffineTerm) tuples.
 * ``b`` is a scalar specified by `constant::T`
 
-Duplicate variable indices in `variables` are accepted, and the corresponding coefficients are summed together.
+Duplicate variable indices in `terms` are accepted, and the corresponding
+coefficients are summed together.
 """
 struct ScalarAffineFunction{T} <: AbstractScalarFunction
-    variables::Vector{VariableIndex}
-    coefficients::Vector{T}
+    terms::Vector{ScalarAffineTerm{T}}
     constant::T
 end
 
 """
-    VectorAffineFunction{T}(outputindex, variables, coefficients, constant)
+    struct VectorAffineTerm{T}
+        output_index::Int64
+        scalar_term::ScalarAffineTerm{T}
+    end
+
+A `ScalarAffineTerm` plus its index of the output component of a
+`VectorAffineFunction` or `VectorQuadraticFunction`.
+`output_index` can also be interpreted as a row index into a sparse matrix,
+where the `scalar_term` contains the column index and coefficient.
+"""
+struct VectorAffineTerm{T}
+    output_index::Int64
+    scalar_term::ScalarAffineTerm{T}
+end
+
+"""
+    VectorAffineFunction{T}(terms, constants)
 
 The vector-valued affine function ``A x + b``, where:
-* ``A`` is a sparse matrix specified in triplet form by `outputindex, variables, coefficients`
-* ``b`` is a vector specified by `constant`
+* ``A`` is a sparse matrix specified by a list of `VectorAffineTerm` objects.
+* ``b`` is a vector specified by `constants`
 
-Duplicate indices in the ``A`` are accepted, and the corresponding coefficients are summed together.
+Duplicate indices in the ``A`` are accepted, and the corresponding coefficients
+are summed together.
 """
 struct VectorAffineFunction{T} <: AbstractVectorFunction
-    outputindex::Vector{Int}
-    variables::Vector{VariableIndex}
-    coefficients::Vector{T}
-    constant::Vector{T}
+    terms::Vector{VectorAffineTerm{T}}
+    constants::Vector{T}
 end
 
 """
-    ScalarQuadraticFunction{T}(affine_variables, affine_coefficients, quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients, constant)
+    const ScalarQuadraticTerm{T} = Tuple{VariableIndex, VariableIndex, T}
+
+A tuple `(variable_index_1, variable_index_2, coefficient)` representing
+``c x_i x_j`` where ``c`` is `coefficient`, ``x_i`` is the variable identified
+by `variable_index_1` and ``x_j`` is the variable identified by
+`variable_index_2`.
+"""
+const ScalarQuadraticTerm{T} = Tuple{VariableIndex, VariableIndex, T}
+
+
+"""
+    ScalarQuadraticFunction{T}(affine_terms, quadratic_terms, constant)
 
 The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
-* ``a`` is a sparse vector specified in tuple form by `affine_variables, affine_coefficients`
-* ``b`` is a scalar specified by `constant`
-* ``Q`` is a symmetric matrix specified in triplet form by `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients`
+* ``a`` is a sparse vector specified by a list of `ScalarAffineTerm` tuples.
+* ``b`` is a scalar specified by `constant`.
+* ``Q`` is a symmetric matrix specified by a list of `ScalarQuadraticTerm`
+  tuples.
 
-Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding coefficients are summed together.
-"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be specified.
+Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding
+coefficients are summed together. "Mirrored" indices `(q,r)` and `(r,q)` (where
+`r` and `q` are `VariableIndex`es) are considered duplicates; only one need be
+specified.
 """
 struct ScalarQuadraticFunction{T} <: AbstractScalarFunction
-    affine_variables::Vector{VariableIndex}
-    affine_coefficients::Vector{T}
-    quadratic_rowvariables::Vector{VariableIndex}
-    quadratic_colvariables::Vector{VariableIndex}
-    quadratic_coefficients::Vector{T}
+    affine_terms::Vector{ScalarAffineTerm{T}}
+    quadratic_terms::Vector{ScalarQuadraticTerm{T}}
     constant::T
 end
 
+"""
+    struct VectorQuadraticTerm{T}
+        output_index::Int64
+        scalar_term::ScalarQuadraticTerm{T}
+    end
+
+A `ScalarQuadraticTerm` plus its index of the output component of a
+`VectorQuadraticFunction`. Each output component corresponds to a
+distinct sparse matrix ``Q_i``.
+"""
+struct VectorQuadraticTerm{T}
+    output_index::Int64
+    scalar_term::ScalarQuadraticTerm{T}
+end
+
 
 """
-    VectorQuadraticFunction{T}(affine_outputindex, affine_variables, affine_coefficients, quadratic_outputindex, quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients, constant)
+    VectorQuadraticFunction{T}(affine_terms, quadratic_terms, constant)
 
-The vector-valued quadratic function with i`th` component ("output index") defined as ``\\frac{1}{2}x^TQ_ix + a_i^T x + b_i``, where:
-* ``a_i`` is a sparse vector specified in tuple form by the subset of `affine_variables, affine_coefficients` for the indices `k` where `affine_outputindex[k] == i`.
-* ``b_i`` is a scalar specified by `constant[i]`
-* ``Q_i`` is a symmetric matrix specified in triplet form by the subset of `quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients` for the indices `k` where `quadratic_outputindex[k] == i`
+The vector-valued quadratic function with i`th` component ("output index")
+defined as ``\\frac{1}{2}x^TQ_ix + a_i^T x + b_i``, where:
+* ``a_i`` is a sparse vector specified by the `VectorAffineTerm`s with
+  `output_index == i`.
+* ``b_i`` is a scalar specified by `constants[i]`
+* ``Q_i`` is a symmetric matrix specified by the `VectorQuadraticTerm` with
+  `output_index == i`.
 
-Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding coefficients are summed together.
-"Mirrored" indices `(q,r)` and `(r,q)` (where `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be specified.
+Duplicate indices in ``a_i`` or ``Q_i`` are accepted, and the corresponding
+coefficients are summed together. "Mirrored" indices `(q,r)` and `(r,q)` (where
+`r` and `q` are `VariableIndex`es) are considered duplicates; only one need be
+specified.
 """
 struct VectorQuadraticFunction{T} <: AbstractVectorFunction
-    affine_outputindex::Vector{Int}
-    affine_variables::Vector{VariableIndex}
-    affine_coefficients::Vector{T}
-    quadratic_outputindex::Vector{Int}
-    quadratic_rowvariables::Vector{VariableIndex}
-    quadratic_colvariables::Vector{VariableIndex}
-    quadratic_coefficients::Vector{T}
-    constant::Vector{T}
+    affine_terms::Vector{VectorAffineTerm{T}}
+    quadratic_terms::Vector{VectorQuadraticTerm{T}}
+    constants::Vector{T}
 end
 
 # Function modifications
@@ -159,16 +208,16 @@ struct ScalarCoefficientChange{T} <: AbstractFunctionModification
 end
 
 """
-    MultirowChange{T}(variable, rows, new_coefficients)
+    MultirowChange{T}(variable, new_coefficients)
 
-A struct used to request a change in the linear coefficients of a single variable
-in a vector-valued function.
-Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
+A struct used to request a change in the linear coefficients of a single
+variable in a vector-valued function. New coefficients are specified by
+`(output_index, coefficient)` tuples. Applicable to `VectorAffineFunction` and
+`VectorQuadraticFunction`.
 """
 struct MultirowChange{T} <: AbstractFunctionModification
     variable::VariableIndex
-    rows::Vector{Int}
-    new_coefficients::Vector{T}
+    new_coefficients::Vector{Tuple{Int64, T}}
 end
 
 # Implementation of comparison for MOI functions
