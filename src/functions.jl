@@ -43,18 +43,25 @@ struct VectorOfVariables <: AbstractVectorFunction
 end
 
 """
-    const ScalarAffineTerm{T} = Tuple{VariableIndex,T}
+    struct ScalarAffineTerm{T}
+        coefficient::T
+        variable_index::VariableIndex
+    end
 
-A tuple `(variable_index, coefficient)` representing ``c x_i`` where ``c`` is
-`coefficient` and ``x_i`` is the variable identified by `variable_index`.
+Represents ``c x_i`` where ``c`` is `coefficient` and ``x_i`` is the variable
+identified by `variable_index`.
 """
-const ScalarAffineTerm{T} = Tuple{VariableIndex,T}
+struct ScalarAffineTerm{T}
+    coefficient::T
+    variable_index::VariableIndex
+end
 
 """
     ScalarAffineFunction{T}(terms, constant)
 
 The scalar-valued affine function ``a^T x + b``, where:
-* ``a`` is a sparse vector specified by a list of [`ScalarAffineTerm`](@ref ScalarAffineTerm) tuples.
+* ``a`` is a sparse vector specified by a list of
+  [`ScalarAffineTerm`](@ref ScalarAffineTerm) structs.
 * ``b`` is a scalar specified by `constant::T`
 
 Duplicate variable indices in `terms` are accepted, and the corresponding
@@ -97,14 +104,21 @@ struct VectorAffineFunction{T} <: AbstractVectorFunction
 end
 
 """
-    const ScalarQuadraticTerm{T} = Tuple{VariableIndex, VariableIndex, T}
+    struct ScalarQuadraticTerm{T}
+        coefficient::T
+        variable_index_1::VariableIndex
+        variable_index_2::VariableIndex
+    end
 
-A tuple `(variable_index_1, variable_index_2, coefficient)` representing
-``c x_i x_j`` where ``c`` is `coefficient`, ``x_i`` is the variable identified
-by `variable_index_1` and ``x_j`` is the variable identified by
+Represents ``c x_i x_j`` where ``c`` is `coefficient`, ``x_i`` is the variable
+identified by `variable_index_1` and ``x_j`` is the variable identified by
 `variable_index_2`.
 """
-const ScalarQuadraticTerm{T} = Tuple{VariableIndex, VariableIndex, T}
+struct ScalarQuadraticTerm{T}
+    coefficient::T
+    variable_index_1::VariableIndex
+    variable_index_2::VariableIndex
+end
 
 
 """
