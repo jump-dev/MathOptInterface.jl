@@ -125,10 +125,10 @@ end
     ScalarQuadraticFunction{T}(affine_terms, quadratic_terms, constant)
 
 The scalar-valued quadratic function ``\\frac{1}{2}x^TQx + a^T x + b``, where:
-* ``a`` is a sparse vector specified by a list of `ScalarAffineTerm` tuples.
+* ``a`` is a sparse vector specified by a list of `ScalarAffineTerm` structs.
 * ``b`` is a scalar specified by `constant`.
 * ``Q`` is a symmetric matrix specified by a list of `ScalarQuadraticTerm`
-  tuples.
+  structs.
 
 Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding
 coefficients are summed together. "Mirrored" indices `(q,r)` and `(r,q)` (where
