@@ -147,7 +147,7 @@ end
         scalar_term::ScalarQuadraticTerm{T}
     end
 
-A `ScalarQuadraticTerm` plus its index of the output component of a
+A [`ScalarQuadraticTerm`](@ref) plus its index of the output component of a
 `VectorQuadraticFunction`. Each output component corresponds to a
 distinct sparse matrix ``Q_i``.
 """
