@@ -68,6 +68,39 @@ end
     end
 end
 
+@testset "AutomaticBridgeOptimizer" begin
+    const mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+    const bridgedmock = MOIB.AutomaticBridgeOptimizer(mock, Model{Float64}())
+    MOIB.addbridge!(bridgedmock, MOIB.SplitIntervalBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
+
+    @testset "Name test" begin
+        MOIT.nametest(bridgedmock)
+    end
+
+    @testset "Copy test" begin
+        MOIT.failcopytestc(bridgedmock)
+        MOIT.failcopytestia(bridgedmock)
+        MOIT.failcopytestva(bridgedmock)
+        MOIT.failcopytestca(bridgedmock)
+        MOIT.copytest(bridgedmock, SimpleModel{Float64}())
+    end
+
+    # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path
+    @testset "Bridge selection" begin
+        MOI.empty!(bridgedmock)
+        x = MOI.addvariables!(bridgedmock, 3)
+        c = MOI.addconstraint!(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
+        @test MOIB.bridge(bridgedmock, c) isa RSOCtoPSDBridge
+    end
+
+    @testset "Continuous Linear" begin
+        MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
+    end
+end
+
 # Test deletion of bridge
 function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int, nocs::Tuple) where {F, S}
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
