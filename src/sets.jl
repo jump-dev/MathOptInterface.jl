@@ -10,8 +10,21 @@ abstract type AbstractSet end
 """
     dimension(s::AbstractSet)
 
-Return the underlying dimension (number of vector components) in the set `s`, i.e.,
-``n`` if the set is a subset of ``\\mathbb{R}^n``.
+Return the output dimension that an [`AbstractFunction`](@ref) should have to be used with the set `s`.
+
+### Examples
+
+```julia-repl
+julia> dimension(Reals(4))
+4
+
+julia> dimension(LessThan(3.0))
+1
+
+julia> dimension(PositiveSemidefiniteConeTriangle(2))
+3
+```
+
 """
 function dimension end
 
