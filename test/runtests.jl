@@ -19,7 +19,7 @@ end
 # Model supporting every MOI functions and sets
 MOIU.@model(Model,
                (ZeroOne, Integer),
-               (EqualTo, GreaterThan, LessThan, Interval),
+               (EqualTo, GreaterThan, LessThan, Interval, Semicontinuous, Semiinteger),
                (Reals, Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare, RootDetConeTriangle, RootDetConeSquare, LogDetConeTriangle, LogDetConeSquare),
                (PowerCone, DualPowerCone, SOS1, SOS2),
                (SingleVariable,),
