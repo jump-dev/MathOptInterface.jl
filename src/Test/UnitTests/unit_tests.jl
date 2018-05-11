@@ -95,5 +95,7 @@ end
 include("variables.jl")
 include("objectives.jl")
 include("constraints.jl")
+include("basic_constraint_tests.jl")
+
 
 @moitestset unit
