@@ -22,13 +22,10 @@ function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, 
     F, S = typeof(constraint_function), typeof(set)
 
     @test MOI.supportsconstraint(model, F, S)
+    @test MOI.canaddconstraint(model, F, S)
 
     @testset "NumberOfConstraints" begin
         @test MOI.canget(model, MOI.NumberOfConstraints{F,S}())
-    end
-
-    @testset "canaddconstraint" begin
-        @test MOI.canaddconstraint(model, F, S)
     end
 
     @testset "addconstraint!" begin
@@ -79,13 +76,11 @@ function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, 
     end
 
     if delete
-        @testset "candelete" begin
+        @testset "delete!" begin
             c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             @test length(c_indices) == 3  # check that we've added a constraint
             @test MOI.candelete(model, c_indices[1])
-        end
-        @testset "delete!" begin
-            c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+
             @test length(c_indices) == 3  # check that we've added a constraint
             MOI.delete!(model, c_indices[1])
             @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1 == 2
