@@ -21,6 +21,8 @@ function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, 
     constraint_function = f(x)
     F, S = typeof(constraint_function), typeof(set)
 
+    @test MOI.supportsconstraint(model, F, S)
+
     @testset "NumberOfConstraints" begin
         @test MOI.canget(model, MOI.NumberOfConstraints{F,S}())
     end
