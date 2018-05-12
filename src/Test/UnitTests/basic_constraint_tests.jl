@@ -1,5 +1,5 @@
 """
-    basic_constraint_tests(f::Function, model::MOI.ModelLike, config::TestConfig, set::MOI.AbstractSet, N::Int; delete::Bool=true)
+    test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, config::TestConfig, set::MOI.AbstractSet, N::Int; delete::Bool=true)
 
 Test some basic constraint tests.
 
@@ -11,11 +11,11 @@ If `config.query=true`, test getting `ConstraintFunction` and `ConstraintSet`.
 
 ### Example
 
-    basic_constraint_tests(model, config, MOI.LessThan(1.0), 1; delete=false) do x
+    test_basic_constraint_functionality(model, config, MOI.LessThan(1.0), 1; delete=false) do x
         MOI.ScalarAffineFunction(model, [x], [1.0], 0.0)
     end
 """
-function basic_constraint_tests(f::Function, model::MOI.ModelLike, config::TestConfig, set::MOI.AbstractSet, N::Int=1; delete::Bool=true)
+function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, config::TestConfig, set::MOI.AbstractSet, N::Int=1; delete::Bool=true)
     MOI.empty!(model)
     x = MOI.addvariables!(model, N)
     constraint_function = f(x)
@@ -100,7 +100,7 @@ Basic tests for constraints of the form `ScalarAffineFunction{Float64}`-in-`Less
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalaraffine_in_lessthan(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.LessThan(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.LessThan(1.0); delete=delete) do x
         MOI.ScalarAffineFunction(x, [1.0], 0.0)
     end
 end
@@ -115,7 +115,7 @@ Basic tests for constraints of the form `ScalarAffineFunction{Float64}`-in-`Grea
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalaraffine_in_greaterthan(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.GreaterThan(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.GreaterThan(1.0); delete=delete) do x
         MOI.ScalarAffineFunction(x, [1.0], 0.0)
     end
 end
@@ -129,7 +129,7 @@ Basic tests for constraints of the form `ScalarAffineFunction{Float64}`-in-`Equa
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalaraffine_in_equalto(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.EqualTo(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.EqualTo(1.0); delete=delete) do x
         MOI.ScalarAffineFunction(x, [1.0], 0.0)
     end
 end
@@ -143,7 +143,7 @@ Basic tests for constraints of the form `ScalarAffineFunction{Float64}`-in-`Inte
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalaraffine_in_interval(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.Interval(0.0, 1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.Interval(0.0, 1.0); delete=delete) do x
         MOI.ScalarAffineFunction(x, [1.0], 0.0)
     end
 end
@@ -157,7 +157,7 @@ Basic tests for constraints of the form `ScalarQuadraticFunction{Float64}`-in-`L
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalarquadratic_in_lessthan(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.LessThan(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.LessThan(1.0); delete=delete) do x
         MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
     end
 end
@@ -172,7 +172,7 @@ Basic tests for constraints of the form `ScalarQuadraticFunction{Float64}`-in-`G
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalarquadratic_in_greaterthan(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.GreaterThan(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.GreaterThan(1.0); delete=delete) do x
         MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
     end
 end
@@ -186,7 +186,7 @@ Basic tests for constraints of the form `ScalarQuadraticFunction{Float64}`-in-`E
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalarquadratic_in_equalto(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.EqualTo(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.EqualTo(1.0); delete=delete) do x
         MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
     end
 end
@@ -200,7 +200,7 @@ Basic tests for constraints of the form `ScalarQuadraticFunction{Float64}`-in-`I
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_scalarquadratic_in_interval(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.Interval(0.0, 1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.Interval(0.0, 1.0); delete=delete) do x
         MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
     end
 end
@@ -214,7 +214,7 @@ Basic tests for constraints of the form `SingleVariable`-in-`LessThan{Float64}`.
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_lessthan(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.LessThan(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.LessThan(1.0); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
@@ -229,7 +229,7 @@ Basic tests for constraints of the form `SingleVariable`-in-`GreaterThan{Float64
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_greaterthan(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.GreaterThan(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.GreaterThan(1.0); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
@@ -243,7 +243,7 @@ Basic tests for constraints of the form `SingleVariable`-in-`EqualTo{Float64}`.
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_equalto(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.EqualTo(1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.EqualTo(1.0); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
@@ -257,7 +257,7 @@ Basic tests for constraints of the form `SingleVariable`-in-`Interval{Float64}`.
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_interval(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.Interval(0.0, 1.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.Interval(0.0, 1.0); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
@@ -271,7 +271,7 @@ Basic tests for constraints of the form `SingleVariable`-in-`ZeroOne`.
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_zeroone(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.ZeroOne(); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.ZeroOne(); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
@@ -285,7 +285,7 @@ Basic tests for constraints of the form `SingleVariable`-in-`Integer`.
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_integer(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.Integer(); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.Integer(); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
@@ -299,7 +299,7 @@ Basic tests for constraints of the form `SingleVariable`-in-`Semicontinuous`.
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_semicontinuous(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.Semicontinuous(1.0, 2.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.Semicontinuous(1.0, 2.0); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
@@ -313,8 +313,36 @@ Basic tests for constraints of the form `SingleVariable`-in-`Semiinteger`.
 If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
 """
 function test_singlevariable_in_semiinteger(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
-    basic_constraint_tests(model, config, MOI.Semiinteger(1.0, 2.0); delete=delete) do x
+    test_basic_constraint_functionality(model, config, MOI.Semiinteger(1.0, 2.0); delete=delete) do x
         MOI.SingleVariable(x[1])
     end
 end
 unittests["test_singlevariable_in_semiinteger"] = test_singlevariable_in_semiinteger
+
+"""
+    test_vectorofvariables_in_sos1(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorOfVariables`-in-`SOS1`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectorofvariables_in_sos1(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.SOS1([1.0, 2.0, 3.0]), 3; delete=delete) do x
+        MOI.VectorOfVariables(x)
+    end
+end
+unittests["test_vectorofvariables_in_sos1"] = test_vectorofvariables_in_sos1
+
+"""
+    test_vectorofvariables_in_sos2(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorOfVariables`-in-`SOS2`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectorofvariables_in_sos2(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.SOS2([1.0, 2.0, 3.0]), 3; delete=delete) do x
+        MOI.VectorOfVariables(x)
+    end
+end
+unittests["test_vectorofvariables_in_sos2"] = test_vectorofvariables_in_sos2

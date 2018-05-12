@@ -379,6 +379,9 @@ struct SOS1{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
+Base.:(==)(a::SOS1{T}, b::SOS1{T}) where T = a.weights == b.weights
+Base.isapprox(a::SOS1{T}, b::SOS1{T}; kwargs...) where T = isapprox(a.weights, b.weights; kwargs...)
+
 """
     SOS2{T <: Real}(weights::Vector{T})
 
@@ -391,5 +394,8 @@ See [here](http://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS 
 struct SOS2{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
+
+Base.:(==)(a::SOS2{T}, b::SOS2{T}) where T = a.weights == b.weights
+Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b.weights; kwargs...)
 
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
