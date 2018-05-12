@@ -404,3 +404,46 @@ function test_vectorofvariables_in_zeros(model::MOI.ModelLike, config::TestConfi
     end
 end
 unittests["test_vectorofvariables_in_zeros"] = test_vectorofvariables_in_zeros
+
+
+"""
+    test_vectoraffinefunction_in_zeros(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorAffine`-in-`Zeros`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectoraffinefunction_in_zeros(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.Zeros(2), 2; delete=delete) do x
+        MOI.VectorAffineFunction([1, 2], x, [1.0, 1.0], [-1.0, 1.0])
+    end
+end
+unittests["test_vectoraffinefunction_in_zeros"] = test_vectoraffinefunction_in_zeros
+
+"""
+    test_vectoraffinefunction_in_nonnegatives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorAffine`-in-`Nonnegatives`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectoraffinefunction_in_nonnegatives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.Nonnegatives(2), 2; delete=delete) do x
+        MOI.VectorAffineFunction([1, 2], x, [1.0, 1.0], [-1.0, 1.0])
+    end
+end
+unittests["test_vectoraffinefunction_in_nonnegatives"] = test_vectoraffinefunction_in_nonnegatives
+
+"""
+    test_vectoraffinefunction_in_nonpositives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorAffine`-in-`Nonpositives`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectoraffinefunction_in_nonpositives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.Nonpositives(2), 2; delete=delete) do x
+        MOI.VectorAffineFunction([1, 2], x, [1.0, 1.0], [-1.0, 1.0])
+    end
+end
+unittests["test_vectoraffinefunction_in_nonpositives"] = test_vectoraffinefunction_in_nonpositives
