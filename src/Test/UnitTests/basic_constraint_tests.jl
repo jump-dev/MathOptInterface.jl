@@ -348,3 +348,59 @@ function test_vectorofvariables_in_sos2(model::MOI.ModelLike, config::TestConfig
     end
 end
 unittests["test_vectorofvariables_in_sos2"] = test_vectorofvariables_in_sos2
+
+"""
+    test_vectorofvariables_in_reals(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorOfVariables`-in-`Reals`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectorofvariables_in_reals(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.Reals(3), 3; delete=delete) do x
+        MOI.VectorOfVariables(x)
+    end
+end
+unittests["test_vectorofvariables_in_reals"] = test_vectorofvariables_in_reals
+
+"""
+    test_vectorofvariables_in_nonnegatives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorOfVariables`-in-`Nonnegatives`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectorofvariables_in_nonnegatives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.Nonnegatives(3), 3; delete=delete) do x
+        MOI.VectorOfVariables(x)
+    end
+end
+unittests["test_vectorofvariables_in_nonnegatives"] = test_vectorofvariables_in_nonnegatives
+
+"""
+    test_vectorofvariables_in_nonpositives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorOfVariables`-in-`Nonpositives`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectorofvariables_in_nonpositives(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.Nonpositives(3), 3; delete=delete) do x
+        MOI.VectorOfVariables(x)
+    end
+end
+unittests["test_vectorofvariables_in_nonpositives"] = test_vectorofvariables_in_nonpositives
+
+"""
+    test_vectorofvariables_in_zeros(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+
+Basic tests for constraints of the form `VectorOfVariables`-in-`Zeros`.
+
+If `delete=true`, test `MOI.candelete` and `MOI.delete!`.
+"""
+function test_vectorofvariables_in_zeros(model::MOI.ModelLike, config::TestConfig; delete::Bool=true)
+    test_basic_constraint_functionality(model, config, MOI.Zeros(3), 3; delete=delete) do x
+        MOI.VectorOfVariables(x)
+    end
+end
+unittests["test_vectorofvariables_in_zeros"] = test_vectorofvariables_in_zeros
