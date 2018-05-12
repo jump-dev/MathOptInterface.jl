@@ -61,7 +61,7 @@ end
 
 The scalar-valued affine function ``a^T x + b``, where:
 * ``a`` is a sparse vector specified by a list of
-  [`ScalarAffineTerm`](@ref ScalarAffineTerm) structs.
+  [`ScalarAffineTerm`](@ref) structs.
 * ``b`` is a scalar specified by `constant::T`
 
 Duplicate variable indices in `terms` are accepted, and the corresponding
