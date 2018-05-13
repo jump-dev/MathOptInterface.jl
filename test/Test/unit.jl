@@ -1,3 +1,9 @@
+@testset "Basic Constraint Tests" begin
+    mock   = MOIU.MockOptimizer(Model{Float64}())
+    config = MOIT.TestConfig()
+    MOIT.basic_constraint_tests(mock, config)
+end
+
 @testset "Unit Tests" begin
     mock = MOIU.MockOptimizer(Model{Float64}())
     config = MOIT.TestConfig()
