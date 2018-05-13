@@ -488,6 +488,11 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
 
 The assignment to the constraint primal values in result `N`.
 If `N` is omitted, it is 1 by default.
+
+Given a constraint `function-in-set`, the `ConstraintPrimal` is the value of the
+function evaluated at the primal solution of the variables. For example, given
+the constraint `2x + y <= 1`, and a primal solution of `(x,y) = (1,2)`, the
+`ConstraintPrimal` solution of the constraint is `2 * 1 + 2=4`.
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
     N::Int
