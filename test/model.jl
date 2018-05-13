@@ -52,8 +52,8 @@ end
     @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle}())
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle}())) == [c2]
 
-    @test MOI.canget(model, MOI.ListOfConstraints())
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    @test MOI.canget(model, MOI.ListOfConstraintTypes())
+    loc = MOI.get(model, MOI.ListOfConstraintTypes())
     @test length(loc) == 2
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
@@ -81,7 +81,7 @@ end
     c7 = MOI.addconstraint!(model, f7, MOI.Nonpositives(2))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}()) == 1
 
-    loc1 = MOI.get(model, MOI.ListOfConstraints())
+    loc1 = MOI.get(model, MOI.ListOfConstraintTypes())
     loc2 = Vector{Tuple{DataType, DataType}}()
     function _pushloc(constrs::Vector{MOIU.C{F, S}}) where {F, S}
         if !isempty(constrs)

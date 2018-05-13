@@ -38,7 +38,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     c = MOI.addconstraint!(model, MOI.VectorAffineFunction([1,1,1,2,2], [v;v[2];v[3]], ones(5), [-3.0,-2.0]), MOI.Zeros(2))
     @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypes())
     @test length(loc) == 2
     @test (vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},MOI.Nonnegatives) in loc
     @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
@@ -357,7 +357,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypes())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
     @test (vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone) in loc

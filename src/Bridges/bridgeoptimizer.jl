@@ -42,9 +42,9 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::Union{MOI.NumberOfConstraints
     end
     s
 end
-MOI.canget(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints) = MOI.canget(b.model, attr) && MOI.canget(b.bridged, attr)
+MOI.canget(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraintTypes) = MOI.canget(b.model, attr) && MOI.canget(b.bridged, attr)
 _noc(b, fs) = MOI.get(b, MOI.NumberOfConstraints{fs...}())
-function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
+function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraintTypes)
     loc = MOI.get(b.model, attr)
     rm = find(_noc.(b, loc) .== 0)
     deleteat!(loc, rm)

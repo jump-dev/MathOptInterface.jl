@@ -129,7 +129,7 @@ function emptytest(model::MOI.ModelLike)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 0
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 0
-    @test isempty(MOI.get(model, MOI.ListOfConstraints()))
+    @test isempty(MOI.get(model, MOI.ListOfConstraintTypes()))
 
     @test !MOI.isvalid(model, v[1])
     @test !MOI.isvalid(model, vc)
@@ -143,7 +143,7 @@ MOI.get(::BadModel, ::MOI.NumberOfVariables) = 1
 MOI.get(::BadModel, ::MOI.ListOfVariableIndices) = [MOI.VariableIndex(1)]
 MOI.canget(::BadModel, ::MOI.ListOfVariableAttributesSet) = true
 MOI.get(::BadModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[]
-MOI.get(::BadModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64})]
+MOI.get(::BadModel, ::MOI.ListOfConstraintTypes) = [(MOI.SingleVariable, MOI.EqualTo{Float64})]
 MOI.get(::BadModel, ::MOI.ListOfConstraintIndices{F,S}) where {F,S} = [MOI.ConstraintIndex{F,S}(1)]
 MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.SingleVariable(MOI.VariableIndex(1))
 MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.EqualTo(0.0)
@@ -151,7 +151,7 @@ MOI.canget(::BadModel, ::MOI.ListOfConstraintAttributesSet) = true
 MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[]
 
 struct BadConstraintModel <: BadModel end
-MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownSet)]
+MOI.get(::BadConstraintModel, ::MOI.ListOfConstraintTypes) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownSet)]
 MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
 MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = UnknownSet()
 
@@ -235,7 +235,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.get(dest, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == [dict[csa]]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
     @test MOI.get(dest, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == [dict[cva]]
-    loc = MOI.get(dest, MOI.ListOfConstraints())
+    loc = MOI.get(dest, MOI.ListOfConstraintTypes())
     @test length(loc) == 4
     @test (MOI.SingleVariable,MOI.EqualTo{Float64}) in loc
     @test (MOI.VectorOfVariables,MOI.Nonnegatives) in loc

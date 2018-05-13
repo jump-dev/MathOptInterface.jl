@@ -33,8 +33,8 @@ end
         f1 = MOI.ScalarAffineFunction([x], [3], 7)
         c1 = MOI.addconstraint!(model, f1, MOI.Interval(-1, 1))
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
-        @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+        @test MOI.canget(model, MOI.ListOfConstraintTypes())
+        @test MOI.get(model, MOI.ListOfConstraintTypes()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
         @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
@@ -43,8 +43,8 @@ end
         f2 = MOI.ScalarAffineFunction([x, y], [2, -1], 2)
         c2 = MOI.addconstraint!(model, f1, MOI.GreaterThan(-2))
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
-        @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+        @test MOI.canget(model, MOI.ListOfConstraintTypes())
+        @test MOI.get(model, MOI.ListOfConstraintTypes()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
         @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
@@ -55,8 +55,8 @@ end
         @test MOI.candelete(model, c2)
         MOI.delete!(model, c2)
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
-        @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+        @test MOI.canget(model, MOI.ListOfConstraintTypes())
+        @test MOI.get(model, MOI.ListOfConstraintTypes()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
         @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())

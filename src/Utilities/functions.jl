@@ -215,7 +215,7 @@ function test_variablenames_equal(model, variablenames)
 end
 function test_constraintnames_equal(model, constraintnames)
     seen_name = Dict(name => false for name in constraintnames)
-    for (F,S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F,S) in MOI.get(model, MOI.ListOfConstraintTypes())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             cname = MOI.get(model, MOI.ConstraintName(), index)
             if !haskey(seen_name, cname)

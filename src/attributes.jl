@@ -308,13 +308,13 @@ The number of constraints of the type `F`-in-`S` present in the model.
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
 """
-    ListOfConstraints()
+    ListOfConstraintTypes()
 
 A list of tuples of the form `(F,S)`, where `F` is a function type
 and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
-struct ListOfConstraints <: AbstractModelAttribute end
+struct ListOfConstraintTypes <: AbstractModelAttribute end
 
 """
     ObjectiveFunction{F<:AbstractScalarFunction}()

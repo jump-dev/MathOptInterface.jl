@@ -255,7 +255,7 @@ end
 
 MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints) = _getnoc(model, noc)
 
-function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraints)
+function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintTypes)
     broadcastvcat(_getloc, model)
 end
 
@@ -266,7 +266,7 @@ end
 MOI.canget(model::AbstractModel, ::Union{MOI.NumberOfVariables,
                                          MOI.ListOfVariableIndices,
                                          MOI.NumberOfConstraints,
-                                         MOI.ListOfConstraints,
+                                         MOI.ListOfConstraintTypes,
                                          MOI.ListOfConstraintIndices,
                                          MOI.ObjectiveSense}) = true
 
@@ -329,7 +329,7 @@ function broadcastcall end
 """
 broadcastvcat(f::Function, model::AbstractModel)
 
-Calls `f(contrs)` for every vector `constrs::Vector{ConstraintIndex{F, S}, F, S}` of the model and concatenate the results with `vcat` (this is used internally for `ListOfConstraints`).
+Calls `f(contrs)` for every vector `constrs::Vector{ConstraintIndex{F, S}, F, S}` of the model and concatenate the results with `vcat` (this is used internally for `ListOfConstraintTypes`).
 
 # Examples
 

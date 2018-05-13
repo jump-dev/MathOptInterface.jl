@@ -53,7 +53,7 @@ Name
 ObjectiveSense
 NumberOfVariables
 ListOfVariableIndices
-ListOfConstraints
+ListOfConstraintTypes
 NumberOfConstraints
 ListOfConstraintIndices
 ListOfModelAttributesSet

@@ -119,7 +119,7 @@ function defaultcopy!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
     res.status == MOI.CopySuccess || return res
 
     # Copy constraints
-    for (F, S) in MOI.get(src, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(src, MOI.ListOfConstraintTypes())
         # do the rest in copyconstraints! which is type stable
         res = copyconstraints!(dest, src, copynames, idxmap, F, S)
         res.status == MOI.CopySuccess || return res
@@ -296,7 +296,7 @@ function allocateload!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
     res.status == MOI.CopySuccess || return res
 
     # Allocate constraints
-    for (F, S) in MOI.get(src, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(src, MOI.ListOfConstraintTypes())
         # do the rest in copyconstraints! which is type stable
         res = allocateconstraints!(dest, src, copynames, idxmap, F, S)
         res.status == MOI.CopySuccess || return res
@@ -314,7 +314,7 @@ function allocateload!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
     res.status == MOI.CopySuccess || return res
 
     # Copy constraints
-    for (F, S) in MOI.get(src, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(src, MOI.ListOfConstraintTypes())
         # do the rest in copyconstraints! which is type stable
         res = loadconstraints!(dest, src, copynames, idxmap, F, S)
         res.status == MOI.CopySuccess || return res
