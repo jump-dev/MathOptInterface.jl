@@ -101,11 +101,24 @@ function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, 
     end
 end
 
+# x
 const dummy_single_variable   = (x) -> MOI.SingleVariable(x[1])
+# x₁, x₂
 const dummy_vectorofvariables = (x) -> MOI.VectorOfVariables(x)
+# 1.0 * x
 const dummy_scalar_affine     = (x) -> MOI.ScalarAffineFunction(x, [1.0], 0.0)
+# 1.0 * x + 1.0 * x^2
 const dummy_scalar_quadratic  = (x) -> MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
+# x₁ +    - 1
+#    + x₂ + 1
 const dummy_vector_affine     = (x) -> MOI.VectorAffineFunction([1, 2], x, [1.0, 1.0], [-1.0, 1.0])
+# x₁ +    + x₁^2
+#    + x₂ +      + x₂^2
+const dummy_vector_quadratic  = (x) -> MOI.VectorQuadraticFunction(
+    [1,2], x, [1.0, 1.0],       # affine component
+    [1,2], x, x, [1.0, 1.0],    # quadratic component
+    [0.0, 0.0]                  # constant term
+)
 
 const BasicConstraintTests = Dict(
     (MOI.SingleVariable, MOI.LessThan{Float64})    => ( dummy_single_variable, 1, MOI.LessThan(1.0) ),
@@ -138,7 +151,12 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.Reals)        => ( dummy_vector_affine, 2, MOI.Reals(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => ( dummy_vector_affine, 2, MOI.Zeros(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_affine, 2, MOI.Nonpositives(2) ),
-    (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_affine, 2, MOI.Nonnegatives(2) )
+    (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_affine, 2, MOI.Nonnegatives(2) ),
+
+    (MOI.VectorQuadraticFunction{Float64}, MOI.Reals)        => ( dummy_vector_quadratic, 2, MOI.Reals(2) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros)        => ( dummy_vector_quadratic, 2, MOI.Zeros(2) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_quadratic, 2, MOI.Nonpositives(2) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) )
 )
 """
     basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
