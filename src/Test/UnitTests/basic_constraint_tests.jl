@@ -102,19 +102,19 @@ function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, 
 end
 
 # x
-const dummy_single_variable   = (x) -> MOI.SingleVariable(x[1])
+const dummy_single_variable   = (x::Vector{MOI.VariableIndex}) -> MOI.SingleVariable(x[1])
 # x₁, x₂
-const dummy_vectorofvariables = (x) -> MOI.VectorOfVariables(x)
+const dummy_vectorofvariables = (x::Vector{MOI.VariableIndex}) -> MOI.VectorOfVariables(x)
 # 1.0 * x
-const dummy_scalar_affine     = (x) -> MOI.ScalarAffineFunction(x, [1.0], 0.0)
+const dummy_scalar_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarAffineFunction(x, [1.0], 0.0)
 # 1.0 * x + 1.0 * x^2
-const dummy_scalar_quadratic  = (x) -> MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
+const dummy_scalar_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
 # x₁ +    - 1
 #    + x₂ + 1
-const dummy_vector_affine     = (x) -> MOI.VectorAffineFunction([1, 2], x, [1.0, 1.0], [-1.0, 1.0])
+const dummy_vector_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.VectorAffineFunction([1, 2], x, [1.0, 1.0], [-1.0, 1.0])
 # x₁ +    + x₁^2
 #    + x₂ +      + x₂^2
-const dummy_vector_quadratic  = (x) -> MOI.VectorQuadraticFunction(
+const dummy_vector_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.VectorQuadraticFunction(
     [1,2], x, [1.0, 1.0],       # affine component
     [1,2], x, x, [1.0, 1.0],    # quadratic component
     [0.0, 0.0]                  # constant term
@@ -137,6 +137,12 @@ const BasicConstraintTests = Dict(
     (MOI.VectorOfVariables, MOI.Zeros)         => ( dummy_vectorofvariables, 2, MOI.Zeros(2) ),
     (MOI.VectorOfVariables, MOI.Nonpositives)  => ( dummy_vectorofvariables, 2, MOI.Nonpositives(2) ),
     (MOI.VectorOfVariables, MOI.Nonnegatives)  => ( dummy_vectorofvariables, 2, MOI.Nonnegatives(2) ),
+
+    (MOI.VectorOfVariables, MOI.SecondOrderCone)        => ( dummy_vectorofvariables, 3, MOI.SecondOrderCone(3) ),
+    (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) => ( dummy_vectorofvariables, 3, MOI.RotatedSecondOrderCone(3) ),
+    (MOI.VectorOfVariables, MOI.GeometricMeanCone)      => ( dummy_vectorofvariables, 3, MOI.GeometricMeanCone(3) ),
+    (MOI.VectorOfVariables, MOI.ExponentialCone)        => ( dummy_vectorofvariables, 3, MOI.ExponentialCone() ),
+    (MOI.VectorOfVariables, MOI.DualExponentialCone)    => ( dummy_vectorofvariables, 3, MOI.DualExponentialCone() ),
 
     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => ( dummy_scalar_affine, 1, MOI.LessThan(1.0) ),
     (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => ( dummy_scalar_affine, 1, MOI.GreaterThan(1.0) ),
