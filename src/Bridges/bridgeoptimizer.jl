@@ -110,11 +110,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfConstraints{F, S}
     if isbridged(b, F, S)
         MOI.get(b.bridged, attr)
     else
-        s = MOI.get(b.model, attr)
-        for v in values(b.bridges)
-            s -= MOI.get(v, attr)
-        end
-        s
+        _numberof(b, attr)
     end
 end
 MOI.canget(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints) = MOI.canget(b.model, attr) && MOI.canget(b.bridged, attr)
