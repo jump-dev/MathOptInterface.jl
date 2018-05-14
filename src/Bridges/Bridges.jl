@@ -25,7 +25,7 @@ mapcoefficient(coefmap, f::MOI.ScalarAffineFunction) = MOI.ScalarAffineFunction(
 include("bridge.jl")
 include("bridgeoptimizer.jl")
 include("singlebridgeoptimizer.jl")
-include("autobridge.jl")
+include("lazybridgeoptimizer.jl")
 
 include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (Interval,) () () () (ScalarAffineFunction,) () ()
