@@ -143,6 +143,15 @@ const BasicConstraintTests = Dict(
     (MOI.VectorOfVariables, MOI.GeometricMeanCone)      => ( dummy_vectorofvariables, 3, MOI.GeometricMeanCone(3) ),
     (MOI.VectorOfVariables, MOI.ExponentialCone)        => ( dummy_vectorofvariables, 3, MOI.ExponentialCone() ),
     (MOI.VectorOfVariables, MOI.DualExponentialCone)    => ( dummy_vectorofvariables, 3, MOI.DualExponentialCone() ),
+    (MOI.VectorOfVariables, MOI.PowerCone)              => ( dummy_vectorofvariables, 3, MOI.PowerCone(2.0) ),
+    (MOI.VectorOfVariables, MOI.DualPowerCone)          => ( dummy_vectorofvariables, 3, MOI.DualPowerCone(2.0) ),
+
+    (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) => ( dummy_vectorofvariables, 6, MOI.PositiveSemidefiniteConeTriangle(3) ),
+    (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeSquare)   => ( dummy_vectorofvariables, 9, MOI.PositiveSemidefiniteConeSquare(3) ),
+    (MOI.VectorOfVariables, MOI.LogDetConeTriangle)               => ( dummy_vectorofvariables, 6, MOI.LogDetConeTriangle(3) ),
+    (MOI.VectorOfVariables, MOI.LogDetConeSquare)                 => ( dummy_vectorofvariables, 9, MOI.LogDetConeSquare(3) ),
+    (MOI.VectorOfVariables, MOI.RootDetConeTriangle)              => ( dummy_vectorofvariables, 6, MOI.RootDetConeTriangle(3) ),
+    (MOI.VectorOfVariables, MOI.RootDetConeSquare)                => ( dummy_vectorofvariables, 9, MOI.RootDetConeSquare(3) ),
 
     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => ( dummy_scalar_affine, 1, MOI.LessThan(1.0) ),
     (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => ( dummy_scalar_affine, 1, MOI.GreaterThan(1.0) ),
