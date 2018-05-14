@@ -11,7 +11,8 @@ isbridged(b::SingleBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI
 
 bridgetype(b::SingleBridgeOptimizer{BT}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) where BT = BT
 
-_mois(t) = MOIU._moi.(t.args)
+# :((Zeros, SecondOrderCone)) -> (:(MOI.Zeros), :(MOI.SecondOrderCone))
+_tuple_prefix_moi(t) = MOIU._moi.(t.args)
 
 """
 macro bridge(modelname, bridge, scalarsets, typedscalarsets, vectorsets, typedvectorsets, scalarfunctions, typedscalarfunctions, vectorfunctions, typedvectorfunctions)
@@ -33,8 +34,8 @@ will additionally support `ScalarAffineFunction`-in-`Interval`.
 """
 macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
     bridgedmodelname = Symbol(string(modelname) * "Instance")
-    bridgedfuns = :(Union{$(_mois(sf)...), $(_mois(sft)...), $(_mois(vf)...), $(_mois(vft)...)})
-    bridgedsets = :(Union{$(_mois(ss)...), $(_mois(sst)...), $(_mois(vs)...), $(_mois(vst)...)})
+    bridgedfuns = :(Union{$(_tuple_prefix_moi(sf)...), $(_tuple_prefix_moi(sft)...), $(_tuple_prefix_moi(vf)...), $(_tuple_prefix_moi(vft)...)})
+    bridgedsets = :(Union{$(_tuple_prefix_moi(ss)...), $(_tuple_prefix_moi(sst)...), $(_tuple_prefix_moi(vs)...), $(_tuple_prefix_moi(vst)...)})
 
     esc(quote
         $MOIU.@model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
