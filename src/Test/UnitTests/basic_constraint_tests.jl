@@ -1,107 +1,3 @@
-"""
-    test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, config::TestConfig, set::MOI.AbstractSet, N::Int;
-        delete::Bool                  = true,
-        get_constraint_function::Bool = true,
-        get_constraint_set::Bool      = true
-    )
-
-Test some basic constraint tests.
-
-See also `basic_constraint_tests`.
-
-`f` is a function that takes a vector of `N` variables and returns a constraint
-function.
-
-If `delete = true`, it will test the deletion of constraints.
-If `get_constraint_function = true`, it will test the getting of `ConstraintFunction`.
-If `get_constraint_set = true`, it will test the getting of `ConstraintSet`.
-
-### Example
-
-    test_basic_constraint_functionality(model, config, MOI.LessThan(1.0), 1; delete=false) do x
-        MOI.ScalarAffineFunction(model, [x], [1.0], 0.0)
-    end
-"""
-function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, config::TestConfig, set::MOI.AbstractSet, N::Int=1;
-    delete::Bool                  = true,
-    get_constraint_function::Bool = true,
-    get_constraint_set::Bool      = true
-    )
-    MOI.empty!(model)
-    x = MOI.addvariables!(model, N)
-    constraint_function = f(x)
-    F, S = typeof(constraint_function), typeof(set)
-
-    @test MOI.supportsconstraint(model, F, S)
-    @test MOI.canaddconstraint(model, F, S)
-
-    @testset "NumberOfConstraints" begin
-        @test MOI.canget(model, MOI.NumberOfConstraints{F,S}())
-    end
-
-    @testset "addconstraint!" begin
-        n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
-        c = MOI.addconstraint!(model, constraint_function, set)
-        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == n + 1
-
-        @testset "ConstraintName" begin
-            @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
-            @test MOI.get(model, MOI.ConstraintName(), c) == ""
-            @test MOI.canset(model, MOI.ConstraintName(), typeof(c))
-            MOI.set!(model, MOI.ConstraintName(), c, "c")
-            @test MOI.get(model, MOI.ConstraintName(), c) == "c"
-        end
-
-        if get_constraint_function
-            @testset "ConstraintFunction" begin
-                @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
-                @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ constraint_function
-            end
-        end
-        if get_constraint_set
-            @testset "ConstraintSet" begin
-                @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
-                @test MOI.get(model, MOI.ConstraintSet(), c) == set
-            end
-        end
-    end
-
-    @testset "addconstraints!" begin
-        n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
-        cc = MOI.addconstraints!(model,
-            [constraint_function, constraint_function],
-            [set, set]
-        )
-        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == n + 2
-    end
-
-    @testset "ListOfConstraintIndices" begin
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{F,S}())
-        c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        # for sanity, check that we've added 3 constraints as expected.
-        @test length(c_indices) == MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 3
-    end
-
-    @testset "isvalid" begin
-        c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        # for sanity, check that we've added 3 constraints as expected.
-        @test length(c_indices) == 3
-        @test all(MOI.isvalid.(model, c_indices))
-    end
-
-    if delete
-        @testset "delete!" begin
-            c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            # for sanity, check that we've added 3 constraints as expected.
-            @test length(c_indices) == 3
-            @test MOI.candelete(model, c_indices[1])
-            MOI.delete!(model, c_indices[1])
-            @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1 == 2
-            @test !MOI.isvalid(model, c_indices[1])
-        end
-    end
-end
-
 # x
 const dummy_single_variable   = (x::Vector{MOI.VariableIndex}) -> MOI.SingleVariable(x[1])
 # x₁, x₂
@@ -186,7 +82,7 @@ const BasicConstraintTests = Dict(
 Test basic constraint functionality for all function-in-set combinations that
 are supported by `model`.
 
-See also `test_basic_constraint_functionality`.
+See also `basic_constraint_test_helper`.
 
 If `delete = true`, it will test the deletion of constraints.
 If `get_constraint_function = true`, it will test the getting of `ConstraintFunction`.
@@ -223,12 +119,119 @@ function basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
         if MOI.supportsconstraint(model, F, S)
             @testset "$(F)-$(S)" begin
                 (cf, N, set) = BasicConstraintTests[(F,S)]
-                test_basic_constraint_functionality(cf, model, config, set, N;
+                basic_constraint_test_helper(model, config, cf, set, N;
                     delete                  = delete,
                     get_constraint_function = get_constraint_function,
                     get_constraint_set      = get_constraint_set
                 )
             end
+        end
+    end
+end
+
+"""
+    basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int;
+        delete::Bool                  = true,
+        get_constraint_function::Bool = true,
+        get_constraint_set::Bool      = true
+    )
+
+A helper function for `basic_constraint_tests`.
+
+This function tests the basic functionality of the constraint type `F`-in-`S`
+where `S = typeof(set)`, and `func` is a function that takes a vector of `N`
+variables and returns a `MOI.AbstractFunction` of type `F`.
+
+If `delete = true`, it will test the deletion of constraints.
+If `get_constraint_function = true`, it will test the getting of `ConstraintFunction`.
+If `get_constraint_set = true`, it will test the getting of `ConstraintSet`.
+
+### Example
+
+    basic_constraint_test_helper(model, config,
+        (x) -> MOI.ScalarAffineFunction(model, [x], [1.0], 0.0),
+        MOI.LessThan(1.0),
+        1;
+        delete=false
+    )
+
+"""
+function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int=1;
+    delete::Bool                  = true,
+    get_constraint_function::Bool = true,
+    get_constraint_set::Bool      = true
+    )
+    MOI.empty!(model)
+    x = MOI.addvariables!(model, N)
+    constraint_function = func(x)
+    F, S = typeof(constraint_function), typeof(set)
+
+    @test MOI.supportsconstraint(model, F, S)
+    @test MOI.canaddconstraint(model, F, S)
+
+    @testset "NumberOfConstraints" begin
+        @test MOI.canget(model, MOI.NumberOfConstraints{F,S}())
+    end
+
+    @testset "addconstraint!" begin
+        n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
+        c = MOI.addconstraint!(model, constraint_function, set)
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == n + 1
+
+        @testset "ConstraintName" begin
+            @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
+            @test MOI.get(model, MOI.ConstraintName(), c) == ""
+            @test MOI.canset(model, MOI.ConstraintName(), typeof(c))
+            MOI.set!(model, MOI.ConstraintName(), c, "c")
+            @test MOI.get(model, MOI.ConstraintName(), c) == "c"
+        end
+
+        if get_constraint_function
+            @testset "ConstraintFunction" begin
+                @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
+                @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ constraint_function
+            end
+        end
+        if get_constraint_set
+            @testset "ConstraintSet" begin
+                @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
+                @test MOI.get(model, MOI.ConstraintSet(), c) == set
+            end
+        end
+    end
+
+    @testset "addconstraints!" begin
+        n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
+        cc = MOI.addconstraints!(model,
+            [constraint_function, constraint_function],
+            [set, set]
+        )
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == n + 2
+    end
+
+    @testset "ListOfConstraintIndices" begin
+        @test MOI.canget(model, MOI.ListOfConstraintIndices{F,S}())
+        c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        # for sanity, check that we've added 3 constraints as expected.
+        @test length(c_indices) == MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 3
+    end
+
+    @testset "isvalid" begin
+        c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        # for sanity, check that we've added 3 constraints as expected.
+        @test length(c_indices) == 3
+        @test all(MOI.isvalid.(model, c_indices))
+    end
+
+    if delete
+        @testset "delete!" begin
+            c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            # for sanity, check that we've added 3 constraints as expected.
+            @test length(c_indices) == 3
+            @test MOI.candelete(model, c_indices[1])
+            MOI.delete!(model, c_indices[1])
+            @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1 == 2
+            @test !MOI.isvalid(model, c_indices[1])
         end
     end
 end
