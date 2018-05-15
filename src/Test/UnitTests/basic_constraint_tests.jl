@@ -106,19 +106,19 @@ end
 const dummy_single_variable   = (x::Vector{MOI.VariableIndex}) -> MOI.SingleVariable(x[1])
 # x₁, x₂
 const dummy_vectorofvariables = (x::Vector{MOI.VariableIndex}) -> MOI.VectorOfVariables(x)
-# 1.0 * x
-const dummy_scalar_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarAffineFunction(x, [1.0], 0.0)
-# 1.0 * x + 1.0 * x^2
-const dummy_scalar_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarQuadraticFunction(x, [1.0], x, x, [1.0], 0.0)
-# x₁ +    - 1
-#    + x₂ + 1
-const dummy_vector_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.VectorAffineFunction([1, 2], x, [1.0, 1.0], [-1.0, 1.0])
-# x₁ +    + x₁^2
-#    + x₂ +      + x₂^2
+# 1.0 * x + 0.0
+const dummy_scalar_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarAffineFunction(x, ones(Float64, length(x)), 0.0)
+# 1.0 * x + 1.0 * x^2 + 0.0
+const dummy_scalar_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarQuadraticFunction(x, ones(Float64, length(x)), x, x, ones(Float64, length(x)), 0.0)
+# x₁ +    + 0.0
+#    + x₂ + 0.0
+const dummy_vector_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.VectorAffineFunction(collect(1:length(x)), x, ones(Float64, length(x)), zeros(Float64, length(x)))
+# x₁ +    + x₁^2        + 0.0
+#    + x₂ +      + x₂^2 + 0.0
 const dummy_vector_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.VectorQuadraticFunction(
-    [1,2], x, [1.0, 1.0],       # affine component
-    [1,2], x, x, [1.0, 1.0],    # quadratic component
-    [0.0, 0.0]                  # constant term
+    collect(1:length(x)), x, ones(Float64, length(x)),     # affine component
+    collect(1:length(x)), x, x, ones(Float64, length(x)),  # quadratic component
+    zeros(Float64, length(x))                              # constant term
 )
 
 const BasicConstraintTests = Dict(
