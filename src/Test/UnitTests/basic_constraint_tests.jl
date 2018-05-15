@@ -78,22 +78,23 @@ function test_basic_constraint_functionality(f::Function, model::MOI.ModelLike, 
     @testset "ListOfConstraintIndices" begin
         @test MOI.canget(model, MOI.ListOfConstraintIndices{F,S}())
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        # for sanity, check that we've added 3 constraints as expected.
         @test length(c_indices) == MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 3
     end
 
     @testset "isvalid" begin
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        @test length(c_indices) == 3  # check that we've added a constraint
+        # for sanity, check that we've added 3 constraints as expected.
+        @test length(c_indices) == 3
         @test all(MOI.isvalid.(model, c_indices))
     end
 
     if delete
         @testset "delete!" begin
             c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            @test length(c_indices) == 3  # check that we've added a constraint
+            # for sanity, check that we've added 3 constraints as expected.
+            @test length(c_indices) == 3
             @test MOI.candelete(model, c_indices[1])
-
-            @test length(c_indices) == 3  # check that we've added a constraint
             MOI.delete!(model, c_indices[1])
             @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1 == 2
             @test !MOI.isvalid(model, c_indices[1])
