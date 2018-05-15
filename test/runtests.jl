@@ -11,6 +11,7 @@ using Compat.Test
 
 # MOI tests not relying on any submodule
 @testset "MOI" begin
+    include("isbits.jl")
     include("isapprox.jl")
     include("interval.jl")
 end
