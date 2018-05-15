@@ -1,7 +1,7 @@
-# Test isbit-ness of VariableIndex and terms
+# Test isbit-ness of VariableIndex and terms.
 # It is important that these struct remain isbits as otherwise,
 # the performance of function will be deteriored.
-# These tests explicit this design choice and makes sure that it remains the case
+# These tests explicit this design choice and makes sure that it remains the case.
 @testset "isbits" begin
     x = @inferred MOI.VariableIndex(1)
     @test isbits(x)
