@@ -68,13 +68,16 @@ end
     end
 end
 
+# Model not supporting RotatedSecondOrderCone
+MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, PositiveSemidefiniteConeTriangle) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+
 @testset "LazyBridgeOptimizer" begin
-    const mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+    const mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
     const bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
     MOIB.addbridge!(bridgedmock, MOIB.SplitIntervalBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDCBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDCBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.RSOCBridge{Float64})
 
     @testset "Name test" begin
         MOIT.nametest(bridgedmock)
@@ -85,7 +88,7 @@ end
         MOIT.failcopytestia(bridgedmock)
         MOIT.failcopytestva(bridgedmock)
         MOIT.failcopytestca(bridgedmock)
-        MOIT.copytest(bridgedmock, SimpleModel{Float64}())
+        MOIT.copytest(bridgedmock, NoRSOCModel{Float64}())
     end
 
     # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path
@@ -93,7 +96,7 @@ end
         MOI.empty!(bridgedmock)
         x = MOI.addvariables!(bridgedmock, 3)
         c = MOI.addconstraint!(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
-        @test MOIB.bridge(bridgedmock, c) isa RSOCtoPSDBridge
+        @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
     end
 
     @testset "Continuous Linear" begin
