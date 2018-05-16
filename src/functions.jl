@@ -254,18 +254,24 @@ function sum_dict(kvs::Vector{Pair{K, V}}) where {K, V}
     d
 end
 
-_dicts(f::ScalarAffineFunction) = sum_dict(Pair.(f.variables, f.coefficients))
-_dicts(f::VectorAffineFunction) = sum_dict(Pair.(tuple.(f.outputindex, f.variables), f.coefficients))
-
+function _pair(t::Union{VectorAffineTerm, VectorQuadraticTerm})
+    p = _pair(t.scalar_term)
+    (t.output_index, p.first) => p.second
+end
+_pair(t::ScalarAffineTerm) = t.variable_index => t.coefficient
 # For quadratic terms, x*y == y*x
 _canonicalize(v1::VariableIndex, v2::VariableIndex) = VariableIndex.(extrema((v1.value, v2.value)))
+_pair(t::ScalarQuadraticTerm) = _canonicalize(t.variable_index_1, t.variable_index_2) => t.coefficient
 
-_dicts(f::ScalarQuadraticFunction) = (sum_dict(Pair.(f.affine_variables, f.affine_coefficients)),
-                                      sum_dict(Pair.(_canonicalize.(f.quadratic_rowvariables, f.quadratic_colvariables), f.quadratic_coefficients)))
-_dicts(f::VectorQuadraticFunction) = (sum_dict(Pair.(tuple.(f.affine_outputindex, f.affine_variables), f.affine_coefficients)),
-                                      sum_dict(Pair.(tuple.(f.quadratic_outputindex, _canonicalize.(f.quadratic_rowvariables, f.quadratic_colvariables)), f.quadratic_coefficients)))
+_dicts(f::Union{ScalarAffineFunction, VectorAffineFunction}) = sum_dict(_pair.(f.terms))
+
+_dicts(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction}) = (sum_dict(_pair.(f.affine_terms)),
+                                                                      sum_dict(_pair.(f.quadratic_terms)))
+
+_constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
+_constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
 
 function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction},
                                                      G<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction}}
-    isapprox(f.constant, g.constant; kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
+    isapprox(_constant(f), _constant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
 end
