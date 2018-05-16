@@ -16,8 +16,8 @@
     end
     @testset "Affine" begin
         @testset "Scalar" begin
-            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x), MOI.ScalarAffineTerm(1, z)], 1) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1., x), MOI.ScalarAffineTerm(1e-7, y), MOI.ScalarAffineTerm(1., z)], 1.) atol=1e-6
-            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1., x), MOI.ScalarAffineTerm(1e-7, y)], 1.) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
+            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x), MOI.ScalarAffineTerm(1, z)], 1) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1e-7, y), MOI.ScalarAffineTerm(1.0, z)], 1.0) atol=1e-6
+            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1e-7, y)], 1.0) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
             f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2, x), MOI.ScalarAffineTerm(4, y)], 6)
             g = deepcopy(f)
             @test g ≈ f
