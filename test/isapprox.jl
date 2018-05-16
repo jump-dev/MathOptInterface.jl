@@ -16,61 +16,56 @@
     end
     @testset "Affine" begin
         @testset "Scalar" begin
-            @test MOI.ScalarAffineFunction([x, z], [1, 1], 1) ≈ MOI.ScalarAffineFunction([x, y, z], [1, 1e-7, 1], 1.) atol=1e-6
-            @test MOI.ScalarAffineFunction([x, y], [1, 1e-7], 1.) ≈ MOI.ScalarAffineFunction([x], [1], 1) atol=1e-6
-            f = MOI.ScalarAffineFunction([x, y], [2, 4], 6)
+            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x), MOI.ScalarAffineTerm(1, z)], 1) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1., x), MOI.ScalarAffineTerm(1e-7, y), MOI.ScalarAffineTerm(1., z)], 1.) atol=1e-6
+            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1., x), MOI.ScalarAffineTerm(1e-7, y)], 1.) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
+            f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2, x), MOI.ScalarAffineTerm(4, y)], 6)
             g = deepcopy(f)
             @test g ≈ f
-            f.coefficients[2] = 3
+            f.terms[2] = MOI.ScalarAffineTerm(3, y)
             @test !(g ≈ f)
         end
         @testset "Vector" begin
-            f = MOI.VectorAffineFunction([1, 1, 2],
-                                         [x, y, y],
-                                         [2, 4, 3], [6, 8])
+            f = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 2],
+                                                               MOI.ScalarAffineTerm.([2, 4, 3],
+                                                                                     [x, y, y])), [6, 8])
             g = deepcopy(f)
             @test f ≈ g
-            f.coefficients[3] = 9
+            f.terms[3] = MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(9, y))
             @test !(f ≈ g)
-            push!(f.outputindex, 2)
-            push!(f.variables, y)
-            push!(f.coefficients, -6)
+            push!(f.terms, MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(-6, y)))
             @test f ≈ g
         end
     end
     @testset "Quadratic" begin
         @testset "Affine" begin
-            f = MOI.ScalarQuadraticFunction([x], [3], [x, y, x], [x, y, y], [1, 2, 3], 8)
+            f = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
+                                            MOI.ScalarQuadraticTerm.([1, 2, 3],
+                                                                     [x, y, x],
+                                                                     [x, y, y]), 8)
             g = deepcopy(f)
             @test f ≈ g
-            push!(f.affine_variables, y)
-            push!(f.affine_coefficients, 2)
+            push!(f.affine_terms, MOI.ScalarAffineTerm(2, y))
             @test !(f ≈ g)
             g = deepcopy(f)
-            push!(f.quadratic_rowvariables, y)
-            push!(f.quadratic_colvariables, x)
-            push!(f.quadratic_coefficients, 2)
+            push!(f.quadratic_terms, MOI.ScalarQuadraticTerm(2, y, x))
             @test !(f ≈ g)
-            push!(f.quadratic_rowvariables, y)
-            push!(f.quadratic_colvariables, x)
-            push!(f.quadratic_coefficients, -2)
+            push!(f.quadratic_terms, MOI.ScalarQuadraticTerm(-2, y, x))
             @test f ≈ g
         end
         @testset "Vector" begin
-            f = MOI.VectorQuadraticFunction([1, 2, 1], [x, x, y], [3, 1, 1], [1, 1, 2], [x, y, x], [x, y, y], [1, 2, 3], [10, 11, 12])
+            f = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([1, 2, 1], MOI.ScalarAffineTerm.([3, 1, 1],
+                                                                                                   [x, x, y])),
+                                            MOI.VectorQuadraticTerm.([1, 1, 2], MOI.ScalarQuadraticTerm.([1, 2, 3],
+                                                                                                         [x, y, x],
+                                                                                                         [x, y, y])), [10, 11, 12])
             g = deepcopy(f)
             @test f ≈ g
-            f.affine_outputindex[1] = 3
-            f.affine_coefficients[1] = 4
+            f.affine_terms[1] = MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(4, x))
             @test !(f ≈ g)
-            push!(g.affine_outputindex, 1)
-            push!(g.affine_variables, x)
-            push!(g.affine_coefficients, -3)
-            push!(g.affine_outputindex, 3)
-            push!(g.affine_variables, x)
-            push!(g.affine_coefficients, 4)
+            push!(g.affine_terms, MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(-3, x)))
+            push!(g.affine_terms, MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(4, x)))
             @test f ≈ g
-            f.quadratic_outputindex[1] = 3
+            f.quadratic_terms[1] =  MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1, x, x))
             @test !(f ≈ g)
         end
     end

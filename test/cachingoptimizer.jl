@@ -12,7 +12,7 @@
 
     v = MOI.addvariable!(m)
     x = MOI.addvariables!(m, 2)
-    saf = MOI.ScalarAffineFunction([v;x], [1.0,2.0,3.0], 0.0)
+    saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v); MOI.ScalarAffineTerm.([2.0, 3.0], x)], 0.0)
     @test MOI.canset(m, MOI.ObjectiveFunction{typeof(saf)}())
     MOI.set!(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
@@ -98,7 +98,7 @@ end
     MOIU.resetoptimizer!(m, s)
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
-    saf = MOI.ScalarAffineFunction([v], [1.0], 0.0)
+    saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v)], 0.0)
     @test MOI.canset(m, MOI.ObjectiveFunction{typeof(saf)}())
     MOI.set!(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
