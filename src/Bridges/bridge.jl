@@ -40,6 +40,20 @@ Return a `Bool` indicating whether the bridges of type `BT` support bridging `F`
 MOI.supportsconstraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
 
 """
+    supportedconstrainttypes(BT::Type{<:AbstractBridge})::Bool
+
+Return a list of the types of constraints that can be bridged with a bridge of type `BT`.
+"""
+function supportedconstrainttypes end
+
+"""
+    addedconstrainttypes(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
+
+Return a list of the types of constraints that bridges of type `BT` add for bridging an `F`-in-`S` constraints.
+"""
+function addedconstrainttypes end
+
+"""
     MOI.candelete(model::MOI.ModelLike, b::AbstractBridge)
 
 Return a `Bool` indicating whether the bridge `b` can be removed from the model `model`.
