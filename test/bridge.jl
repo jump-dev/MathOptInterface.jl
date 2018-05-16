@@ -68,9 +68,9 @@ end
     end
 end
 
-@testset "AutomaticBridgeOptimizer" begin
+@testset "LazyBridgeOptimizer" begin
     const mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-    const bridgedmock = MOIB.AutomaticBridgeOptimizer(mock, Model{Float64}())
+    const bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
     MOIB.addbridge!(bridgedmock, MOIB.SplitIntervalBridge{Float64})
     MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
     MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDBridge{Float64})
