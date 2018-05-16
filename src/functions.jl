@@ -254,6 +254,7 @@ function sum_dict(kvs::Vector{Pair{K, V}}) where {K, V}
     d
 end
 
+# _pair transforms a *Term into a pair key => coefficient where the key groups the variables of the term and its output_index if it is not one.
 function _pair(t::Union{VectorAffineTerm, VectorQuadraticTerm})
     p = _pair(t.scalar_term)
     (t.output_index, p.first) => p.second
