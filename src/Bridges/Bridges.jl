@@ -20,6 +20,8 @@ const CI = MOI.ConstraintIndex
 
 include("bridge.jl")
 include("bridgeoptimizer.jl")
+include("singlebridgeoptimizer.jl")
+
 include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (Interval,) () () () (ScalarAffineFunction,) () ()
 include("rsocbridge.jl")
