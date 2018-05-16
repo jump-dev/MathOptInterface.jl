@@ -12,10 +12,10 @@
         fvv = MOI.VectorOfVariables([x, z, y])
         @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
         @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
-        fsa = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1., x), MOI.ScalarAffineTerm(3., z), MOI.ScalarAffineTerm(2., y)], 2.)
+        fsa = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(3.0, z), MOI.ScalarAffineTerm(2.0, y)], 2.0)
         @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
         @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
-        fva = MOI.VectorAffineFunction([2, 1, 2], [x, z, y], [1., 3., 2.], [-3., 2.])
+        fva = MOI.VectorAffineFunction([2, 1, 2], [x, z, y], [1.0, 3.0, 2.0], [-3.0, 2.0])
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
         fsq = MOI.ScalarQuadraticFunction([x, y], ones(2), [x, w, w], [z, z, y], ones(3), -3.0)
@@ -132,8 +132,8 @@
     end
     @testset "Scalar" begin
         @testset "Affine" begin
-            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x), MOI.ScalarAffineTerm(1, z)], 1) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x), MOI.ScalarAffineTerm(1e-7, y), MOI.ScalarAffineTerm(1, z)], 1.) atol=1e-6
-            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1., x), MOI.ScalarAffineTerm(1e-7, y)], 1.) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
+            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x), MOI.ScalarAffineTerm(1, z)], 1) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x), MOI.ScalarAffineTerm(1e-7, y), MOI.ScalarAffineTerm(1, z)], 1.0) atol=1e-6
+            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1e-7, y)], 1.0) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
             f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 1, 3, -2, -3], [y, x, z, x, z]), 5))
             @test f.variables == [x, y]
             @test f.coefficients == [-1, 2]
