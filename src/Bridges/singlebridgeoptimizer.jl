@@ -8,7 +8,6 @@ function SingleBridgeOptimizer{BT, MT, T}(model::OT) where {BT, MT, T, OT <: MOI
 end
 
 isbridged(b::SingleBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
-
 bridgetype(b::SingleBridgeOptimizer{BT}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) where BT = BT
 
 # :((Zeros, SecondOrderCone)) -> (:(MOI.Zeros), :(MOI.SecondOrderCone))
@@ -40,6 +39,7 @@ macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
     esc(quote
         $MOIU.@model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
         const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, T, OT}
-        isbridged(b::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
+        isbridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
+        supportsbridgingconstraint(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
     end)
 end
