@@ -30,15 +30,6 @@ type `F`-in`S` created by the bride `b` in the model (i.e., of length equal to t
 """
 MOI.get(b::AbstractBridge, ::MOI.ListOfConstraintIndices{F, S}) where {F, S} = CI{F, S}[]
 
-# TODO supportsconstraint and supports constraint should maybe be on the type of the model in MOI too
-#      that would clarify the fact that it does not depend on the current state of the model
-"""
-    MOI.supportsconstraint(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
-
-Return a `Bool` indicating whether the bridges of type `BT` support bridging `F`-in-`S` constraints.
-"""
-MOI.supportsconstraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
-
 """
     supportedconstrainttypes(BT::Type{<:AbstractBridge})::Bool
 
