@@ -1,10 +1,10 @@
-struct SingleBridgeOptimizer{BT<:AbstractBridge, MT<:MOI.ModelLike, T, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+struct SingleBridgeOptimizer{BT<:AbstractBridge, MT<:MOI.ModelLike, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     model::OT
     bridged::MT
     bridges::Dict{CI, BT}
 end
-function SingleBridgeOptimizer{BT, MT, T}(model::OT) where {BT, MT, T, OT <: MOI.ModelLike}
-    SingleBridgeOptimizer{BT, MT, T, OT}(model, MT(), Dict{CI, BT}())
+function SingleBridgeOptimizer{BT, MT}(model::OT) where {BT, MT, OT <: MOI.ModelLike}
+    SingleBridgeOptimizer{BT, MT, OT}(model, MT(), Dict{CI, BT}())
 end
 
 isbridged(b::SingleBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
@@ -38,7 +38,7 @@ macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
 
     esc(quote
         $MOIU.@model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
-        const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, T, OT}
+        const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, OT}
         isbridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
         supportsbridgingconstraint(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
     end)
