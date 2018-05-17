@@ -15,21 +15,25 @@
         fsa = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(3.0, z), MOI.ScalarAffineTerm(2.0, y)], 2.0)
         @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
         @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
-        fva = MOI.VectorAffineFunction([2, 1, 2], [x, z, y], [1.0, 3.0, 2.0], [-3.0, 2.0])
+        fva = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([[2, 1, 2]], MOI.ScalarAffineTerm.([[1.0, 3.0, 2.0]], [[x, z, y]])), [-3.0, 2.0])
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
-        fsq = MOI.ScalarQuadraticFunction([x, y], ones(2), [x, w, w], [z, z, y], ones(3), -3.0)
+        fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(ones(2), [x, y]),
+                                          MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y]), -3.0)
         @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
         @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
-        fvq = MOI.VectorQuadraticFunction([2, 1], [x, y], ones(2), [1, 2, 2], [x, w, w], [z, z, y], ones(3), [-3.0, -2.0])
+        fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(ones(2), [x, y])),
+                                          MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y])), [-3.0, -2.0])
         @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
         @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
     end
     @testset "mapvariables" begin
-        fsq = MOI.ScalarQuadraticFunction([x, y], ones(2), [x, w, w], [z, z, y], ones(3), -3.0)
+        fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(ones(2), [x, y]),
+                                          MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y]), -3.0)
         gsq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fsq)
         @test gsq.constant == -3.
-        fvq = MOI.VectorQuadraticFunction([2, 1], [x, y], ones(2), [1, 2, 2], [x, w, w], [z, z, y], ones(3), [-3.0, -2.0])
+        fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(ones(2), [x, y])),
+                                          MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y])), [-3.0, -2.0])
         gvq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fvq)
         @test gvq.affine_outputindex == [2, 1]
         @test gvq.quadratic_outputindex == [1, 2, 2]
@@ -157,7 +161,7 @@
             @test f.coefficients == [3]
         end
         @testset "Quadratic" begin
-            f = MOI.ScalarQuadraticFunction([x], [3], [x, y, x], [x, y, y], [1, 2, 3], 7)
+            f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([[3]], [[x]]), MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7)
             f = MOIU.modifyfunction(f, MOI.ScalarConstantChange(9))
             @test f.constant == 9
             f = MOIU.modifyfunction(f, MOI.ScalarCoefficientChange(y, 0))
@@ -174,9 +178,9 @@
     end
     @testset "Vector" begin
         @testset "Affine" begin
-            f = MOIU.canonical(MOI.VectorAffineFunction([2, 1, 2,  1,  1,  2, 2,  2, 2, 1, 1,  2, 1,  2],
-                                                        [x, x, z,  y,  y,  x, y,  z, x, y, y,  x, x,  z],
-                                                        [3, 2, 3, -3, -1, -2, 3, -2, 1, 3, 5, -2, 0, -1], [5, 7]))
+            f = MOIU.canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1, 2,  1,  1,  2, 2,  2, 2, 1, 1,  2, 1,  2],
+                                                                              MOI.ScalarAffineTerm.([3, 2, 3, -3, -1, -2, 3, -2, 1, 3, 5, -2, 0, -1],
+                                                                                                    [x, x, z,  y,  y,  x, y,  z, x, y, y,  x, x,  z])), [5, 7]))
             @test f.outputindex == [1, 1, 2]
             @test f.variables == [x, y, y]
             @test f.coefficients == [2, 4, 3]
@@ -197,7 +201,7 @@
             @test f.coefficients == [2, 9]
         end
         @testset "Quadratic" begin
-            f = MOI.VectorQuadraticFunction([1, 2, 2], [x, x, y], [3, 1, 2], [1, 1, 2], [x, y, x], [x, y, y], [1, 2, 3], [7, 3, 4])
+            f = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([1, 2, 2], MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])), MOI.VectorQuadraticTerm.([1, 1, 2], MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])), [7, 3, 4])
             f = MOIU.modifyfunction(f, MOI.VectorConstantChange([10, 11, 12]))
             @test f.constant == [10, 11, 12]
             f = MOIU.modifyfunction(f, MOI.MultirowChange(y, [2, 1], [0, 1]))
