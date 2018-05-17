@@ -1,3 +1,14 @@
+"""
+    LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+
+The `LazyBridgeOptimizer` combines several bridges, which are added using the [`addbridge!`](@ref) function.
+Whenever a constraint is added, it only attempts to bridge it if it is not supported by the internal model (hence its name `Lazy`).
+When bridging a constraint, it selects the minimal number of bridges needed.
+For instance, a constraint `F`-in-`S` can be bridged into a constraint `F1`-in-`S1` (supported by the internal model) using bridge 1 or
+bridged into a constraint `F2`-in-`S2` (unsupported by the internal model) using bridge 2 which can then be
+bridged into a constraint `F3`-in-`S3` (supported by the internal model) using bridge 3,
+it will choose bridge 1 as it allows to bridge `F`-in-`S` using only one bridge instead of two if it uses bridge 2 and 3.
+"""
 struct LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     model::OT   # Internal model
     bridged::MT # Model containing bridged constraints

@@ -1,3 +1,9 @@
+"""
+    SingleBridgeOptimizer{BT<:AbstractBridge, MT<:MOI.ModelLike, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+
+The `SingleBridgeOptimizer` bridges any constraint supported by the bridge `BT`.
+This is in contrast with the [`LazyBridgeOptimizer`](@ref) which only bridges the constraints that are unsupported by the internal model, even if they are supported by one of its bridges.
+"""
 struct SingleBridgeOptimizer{BT<:AbstractBridge, MT<:MOI.ModelLike, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     model::OT
     bridged::MT

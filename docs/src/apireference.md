@@ -296,9 +296,12 @@ Bridges can be used for automatic reformulation of a certain constraint type int
 ```@docs
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
+Bridges.SingleBridgeOptimizer
+Bridges.LazyBridgeOptimizer
+Bridges.addbridge!
 ```
 
-Below is the list of bridges implemented in this package. Bridge optimizers are also available with the same name but "Bridge" suffix, e.g. `SplitInterval` is an `AbstractBridgeOptimizer` for the `SplitIntervalBridge`.
+Below is the list of bridges implemented in this package.
 ```@docs
 Bridges.SplitIntervalBridge
 Bridges.RSOCBridge
@@ -308,3 +311,4 @@ Bridges.LogDetBridge
 Bridges.SOCtoPSDCBridge
 Bridges.RSOCtoPSDCBridge
 ```
+For each bridge defined in this package, a corresponding bridge optimizer is available with the same name but "Bridge" suffix, e.g. `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
