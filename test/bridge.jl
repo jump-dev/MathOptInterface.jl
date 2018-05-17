@@ -40,7 +40,7 @@ end
         @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
 
-        f2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2, x), MOI.ScalarAffineTerm(-1, y)], 2)
+        f2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, -1], [x, y]), 2)
         c2 = MOI.addconstraint!(model, f1, MOI.GreaterThan(-2))
 
         @test MOI.canget(model, MOI.ListOfConstraints())
