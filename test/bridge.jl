@@ -26,6 +26,7 @@ end
 
     @testset "Custom test" begin
         const model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
+        @test !MOIB.supportsbridgingconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
 
         x, y = MOI.addvariables!(model, 2)
         @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -94,6 +95,7 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
     # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path
     @testset "Bridge selection" begin
         MOI.empty!(bridgedmock)
+        @test !(MOI.supportsconstraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
         x = MOI.addvariables!(bridgedmock, 3)
         c = MOI.addconstraint!(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
         @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
