@@ -15,6 +15,7 @@ using Compat.Test
     include("isapprox.jl")
     include("interval.jl")
 end
+exit(1)
 
 # Needed by test spread over several files, defining it here make it easier to comment out tests
 # Model supporting every MOI functions and sets
