@@ -11,35 +11,35 @@ evalvariables(varval::Function, f::MOI.SingleVariable) = varval(f.variable)
 evalvariables(varval::Function, f::MOI.VectorOfVariables) = varval.(f.variables)
 evalvariables(varval::Function, f::MOI.ScalarAffineFunction) = sum(evalterm.(varval, f.terms)) + f.constant
 function evalvariables(varval::Function, f::MOI.VectorAffineFunction)
-    out = copy(f.constant)
-    for t in eachindex(f.terms)
+    out = copy(f.constants)
+    for t in f.terms
         out[t.output_index] += evalterm(varval, t.scalar_term)
     end
     out
 end
 evalvariables(varval::Function, f::MOI.ScalarQuadraticFunction) = sum(evalterm.(varval, f.affine_terms)) + sum(evalterm.(varval, f.quadratic_terms)) + f.constant
 function evalvariables(varval::Function, f::MOI.VectorQuadraticFunction)
-    out = copy(f.constant)
-    for t in eachindex(f.affine_terms)
+    out = copy(f.constants)
+    for t in f.affine_terms
         out[t.output_index] += evalterm(varval, t.scalar_term)
     end
-    for t in eachindex(f.quadratic_terms)
+    for t in f.quadratic_terms
         out[t.output_index] += evalterm(varval, t.scalar_term)
     end
     out
 end
 # Affine term
-evalterm(varval::Function, t::MOI.ScalarAffineTerm) = coefficient * varval(t.variable_index)
+evalterm(varval::Function, t::MOI.ScalarAffineTerm) = t.coefficient * varval(t.variable_index)
 # Quadratic term
 function evalterm(varval::Function, t::MOI.ScalarQuadraticTerm)
-    tval = coefficient * varval(t.variable_index_1) * varval(t.variable_index_2)
-    virow == vicol ? tval/2 : tval
+    tval = t.coefficient * varval(t.variable_index_1) * varval(t.variable_index_2)
+    t.variable_index_1 == t.variable_index_2 ? tval/2 : tval
 end
 
 mapvariable(varmap::Function, t::MOI.ScalarAffineTerm) = MOI.ScalarAffineTerm(t.coefficient, varmap(t.variable_index))
-mapvariable(varmap::Function, t::MOI.VectorAffineTerm) = MOI.VectorAffineTerm(t.output_index, mapvariable(t.scalar_term))
+mapvariable(varmap::Function, t::MOI.VectorAffineTerm) = MOI.VectorAffineTerm(t.output_index, mapvariable(varmap, t.scalar_term))
 mapvariable(varmap::Function, t::MOI.ScalarQuadraticTerm) = MOI.ScalarQuadraticTerm(t.coefficient, varmap(t.variable_index_1), varmap(t.variable_index_2))
-mapvariable(varmap::Function, t::MOI.VectorQuadraticTerm) = MOI.VectorQuadraticTerm(t.output_index, mapvariable(t.scalar_term))
+mapvariable(varmap::Function, t::MOI.VectorQuadraticTerm) = MOI.VectorQuadraticTerm(t.output_index, mapvariable(varmap, t.scalar_term))
 
 mapvariables(varmap::Function, f::MOI.SingleVariable) = MOI.SingleVariable(varmap(f.variable))
 mapvariables(varmap::Function, f::MOI.VectorOfVariables) = MOI.VectorOfVariables(varmap.(f.variables))
@@ -59,8 +59,8 @@ mapvariables(varmap, f::MOI.AbstractFunctionModification) = mapvariables(vi -> v
 # Cat for MOI sets
 moilength(f::MOI.ScalarAffineFunction) = 1
 moilength(f::MOI.VectorAffineFunction) = length(f.constants)
-constant(f::MOI.ScalarAffineFunction) = [f.constant]
-constant(f::MOI.VectorAffineFunction) = f.constants
+constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = [f.constant]
+constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}) = f.constants
 offsetterm(t::MOI.ScalarAffineTerm, offset::Int) = MOI.VectorAffineTerm(offset+1, t)
 offsetterm(t::MOI.VectorAffineTerm, offset::Int) = MOI.VectorAffineTerm(offset+t.output_index, t.scalar_term)
 offsetterms(f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}, offset::Int) = offsetterm.(f.terms, offset)
@@ -102,14 +102,14 @@ Compat.lastindex(it::ScalarFunctionIterator) = length(it)
 Base.getindex(it::ScalarFunctionIterator{MOI.VectorOfVariables}, i::Integer) = MOI.SingleVariable(it.f.variables[i])
 # Returns the scalar terms of output_index i
 function scalar_terms_at_index(terms::Vector{<:Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}}, i::Int)
-    I = findall(t -> t.output_index == i, f.terms)
-    map(i -> f.terms[i].scalar_term, I)
+    I = findall(t -> t.output_index == i, terms)
+    map(i -> terms[i].scalar_term, I)
 end
 function Base.getindex(it::ScalarFunctionIterator{<:MOI.VectorAffineFunction}, i::Integer)
-    MOI.ScalarAffineFunction(scalar_terms_at_index(it.f.terms, i), it.f.constant[i])
+    MOI.ScalarAffineFunction(scalar_terms_at_index(it.f.terms, i), it.f.constants[i])
 end
 function Base.getindex(it::ScalarFunctionIterator{<:MOI.VectorQuadraticFunction}, i::Integer)
-    MOI.ScalarQuadraticFunction(scalar_terms_at_index(it.f.affine_terms, i), scalar_terms_at_index(it.f.quadratic_terms, i), it.f.constant[i])
+    MOI.ScalarQuadraticFunction(scalar_terms_at_index(it.f.affine_terms, i), scalar_terms_at_index(it.f.quadratic_terms, i), it.f.constants[i])
 end
 
 function Base.getindex(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}, I::AbstractVector) where T
@@ -138,12 +138,12 @@ The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3,
 
 """
 function canonical(f::SAF{T}) where T
-    sorted_terms = sort(f.terms, by=t->t.variable_index.value)
+    sorted_terms = sort(f.terms, by = t -> t.variable_index.value)
     terms = MOI.ScalarAffineTerm{T}[]
     for t in sorted_terms
         if !isempty(terms) && t.variable_index == last(terms).variable_index
-            terms[end] += MOI.ScalarAffineTerm(terms[end].coefficient + t.coefficient, t.variable_index)
-        elseif !iszero(t.coefficients)
+            terms[end] = MOI.ScalarAffineTerm(terms[end].coefficient + t.coefficient, t.variable_index)
+        elseif !iszero(t.coefficient)
             if !isempty(terms) && iszero(last(terms).coefficient)
                 terms[end] = t
             else
@@ -157,31 +157,23 @@ function canonical(f::SAF{T}) where T
     SAF{T}(terms, f.constant)
 end
 function canonical(f::VAF{T}) where T
-    σ = sortperm(f.terms, by = t -> (t.output_index, f.variable_index.value))
-    outputindex = Int[]
-    variables = VI[]
-    coefficients = T[]
-    for i in σ
-        if !isempty(variables) && f.outputindex[i] == last(outputindex) && f.variables[i] == last(variables)
-            coefficients[end] += f.coefficients[i]
-        elseif !iszero(f.coefficients[i])
-            if !isempty(variables) && iszero(last(coefficients))
-                outputindex[end] = f.outputindex[i]
-                variables[end] = f.variables[i]
-                coefficients[end] = f.coefficients[i]
+    sorted_terms = sort(f.terms, by = t -> (t.output_index, t.scalar_term.variable_index.value))
+    terms = MOI.VectorAffineTerm{T}[]
+    for t in sorted_terms
+        if !isempty(terms) && t.output_index == last(terms).output_index && t.scalar_term.variable_index == last(terms).scalar_term.variable_index
+            terms[end] = MOI.VectorAffineTerm(t.output_index, MOI.ScalarAffineTerm(terms[end].scalar_term.coefficient + t.scalar_term.coefficient, t.scalar_term.variable_index))
+        elseif !iszero(t.scalar_term.coefficient)
+            if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
+                terms[end] = t
             else
-                push!(outputindex, f.outputindex[i])
-                push!(variables, f.variables[i])
-                push!(coefficients, f.coefficients[i])
+                push!(terms, t)
             end
         end
     end
-    if !isempty(variables) && iszero(last(coefficients))
-        pop!(outputindex)
-        pop!(variables)
-        pop!(coefficients)
+    if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
+        pop!(terms)
     end
-    VAF{T}(outputindex, variables, coefficients, f.constant)
+    VAF{T}(terms, f.constants)
 end
 
 function test_variablenames_equal(model, variablenames)
@@ -283,13 +275,12 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
 end
 
 
-function _rmvar(vis::Vector{MOI.VariableIndex}, vi::MOI.VariableIndex)
-    findall(v -> v != vi, vis)
-end
-function _rmvar(vis1::Vector{MOI.VariableIndex}, vis2::Vector{MOI.VariableIndex}, vi::MOI.VariableIndex)
-    @assert eachindex(vis1) == eachindex(vis2)
-    findall(i -> vis1[i] != vi && vis2[i] != vi, eachindex(vis1))
-end
+_hasvar(v::MOI.VariableIndex, vi::MOI.VariableIndex) = v == vi
+_hasvar(t::MOI.ScalarAffineTerm, vi::MOI.VariableIndex) = t.variable_index == vi
+_hasvar(t::MOI.ScalarQuadraticTerm, vi::MOI.VariableIndex) = t.variable_index_1 == vi || t.variable_index_1 == vi
+_hasvar(t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}, vi::MOI.VariableIndex) = _hasvar(t.scalar_term, vi)
+# Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
+_rmvar(vis_or_terms::Vector, vi::MOI.VariableIndex) = vis_or_terms[findall(t -> !_hasvar(t, vi)), vis_or_terms]
 
 """
     removevariable(f::AbstractFunction, vi::VariableIndex)
@@ -297,29 +288,13 @@ end
 Return a new function `f` with the variable vi removed.
 """
 function removevariable(f::MOI.VectorOfVariables, vi)
-    MOI.VectorOfVariables(f.variables[_rmvar(f.variables, vi)])
+    MOI.VectorOfVariables(_rmvar(f.variables, vi))
 end
-function removevariable(f::MOI.ScalarAffineFunction, vi)
-    I = _rmvar(f.variables, vi)
-    MOI.ScalarAffineFunction(f.variables[I], f.coefficients[I], f.constant)
+function removevariable(f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}, vi)
+    typeof(f)(_rmvar(f.terms, vi), constant(f))
 end
-function removevariable(f::MOI.ScalarQuadraticFunction, vi)
-    I = _rmvar(f.affine_variables, vi)
-    J = _rmvar(f.quadratic_rowvariables, f.quadratic_colvariables, vi)
-    MOI.ScalarQuadraticFunction(f.affine_variables[I], f.affine_coefficients[I],
-                                f.quadratic_rowvariables[J], f.quadratic_colvariables[J], f.quadratic_coefficients[J],
-                                f.constant)
-end
-function removevariable(f::MOI.VectorAffineFunction, vi)
-    I = _rmvar(f.variables, vi)
-    MOI.VectorAffineFunction(f.outputindex[I], f.variables[I], f.coefficients[I], f.constant)
-end
-function removevariable(f::MOI.VectorQuadraticFunction, vi)
-    I = _rmvar(f.affine_variables, vi)
-    J = _rmvar(f.quadratic_rowvariables, f.quadratic_colvariables, vi)
-    MOI.VectorQuadraticFunction(f.affine_outputindex[I], f.affine_variables[I], f.affine_coefficients[I],
-                                f.quadratic_outputindex[J], f.quadratic_rowvariables[J], f.quadratic_colvariables[J], f.quadratic_coefficients[J],
-                                f.constant)
+function removevariable(f::Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction}, vi)
+    typeof(f)(_rmvar(f.affine_terms, vi), _rmvar(f.quadratic_terms, vi), constant(f))
 end
 
 """
@@ -327,93 +302,69 @@ end
 
 Return a new function `f` modified according to `change`.
 """
-function modifyfunction(f::MOI.ScalarAffineFunction, change::MOI.ScalarConstantChange)
-    MOI.ScalarAffineFunction(f.variables, f.coefficients, change.new_constant)
-end
-function modifyfunction(f::MOI.ScalarQuadraticFunction, change::MOI.ScalarConstantChange)
-    MOI.ScalarQuadraticFunction(f.affine_variables, f.affine_coefficients,
-                         f.quadratic_rowvariables, f.quadratic_colvariables, f.quadratic_coefficients,
-                         change.new_constant)
-end
+modifyfunction(f::MOI.ScalarAffineFunction, change::MOI.ScalarConstantChange) = MOI.ScalarAffineFunction(f.terms, change.new_constant)
+modifyfunction(f::MOI.VectorAffineFunction, change::MOI.VectorConstantChange) = MOI.VectorAffineFunction(f.terms, change.new_constant)
+modifyfunction(f::MOI.ScalarQuadraticFunction, change::MOI.ScalarConstantChange) = MOI.ScalarQuadraticFunction(f.affine_terms, f.quadratic_terms, change.new_constant)
+modifyfunction(f::MOI.VectorQuadraticFunction, change::MOI.VectorConstantChange) = MOI.VectorQuadraticFunction(f.affine_terms, f.quadratic_terms, change.new_constant)
 
-function modifyfunction(f::MOI.VectorAffineFunction, change::MOI.VectorConstantChange)
-    MOI.VectorAffineFunction(f.outputindex, f.variables, f.coefficients, change.new_constant)
-end
-function modifyfunction(f::MOI.VectorQuadraticFunction, change::MOI.VectorConstantChange)
-    MOI.VectorQuadraticFunction(f.affine_outputindex, f.affine_variables, f.affine_coefficients,
-                                f.quadratic_outputindex, f.quadratic_rowvariables, f.quadratic_colvariables, f.quadratic_coefficients,
-                                change.new_constant)
-end
-
-function _modifycoefficient(variables::Vector{MOI.VariableIndex}, coefficients::Vector, variable::MOI.VariableIndex, new_coefficient)
-    variables = copy(variables)
-    coefficients = copy(coefficients)
-    i = coalesce(findfirst(isequal(variable), variables), 0)
+function _modifycoefficient(terms::Vector{<:MOI.ScalarAffineTerm}, variable::MOI.VariableIndex, new_coefficient)
+    terms = copy(terms)
+    i = coalesce(findfirst(t -> _hasvar(t, variable), terms), 0)
     if iszero(i)
         # The variable was not already in the function
         if !iszero(new_coefficient)
-            push!(variables, variable)
-            push!(coefficients, new_coefficient)
+            push!(terms, MOI.ScalarAffineTerm(new_coefficient, variable))
         end
     else
         # The variable was already in the function
         if iszero(new_coefficient)
-            deleteat!(variables, i)
-            deleteat!(coefficients, i)
+            deleteat!(terms, i)
         else
-            coefficients[i] = new_coefficient
+            terms[i] = MOI.ScalarAffineTerm(new_coefficient, variable)
         end
     end
-    variables, coefficients
+    terms
 end
 function modifyfunction(f::MOI.ScalarAffineFunction, change::MOI.ScalarCoefficientChange)
-    MOI.ScalarAffineFunction(_modifycoefficient(f.variables, f.coefficients, change.variable, change.new_coefficient)..., f.constant)
+    MOI.ScalarAffineFunction(_modifycoefficient(f.terms, change.variable, change.new_coefficient), f.constant)
 end
 function modifyfunction(f::MOI.ScalarQuadraticFunction, change::MOI.ScalarCoefficientChange)
-    MOI.ScalarQuadraticFunction(_modifycoefficient(f.affine_variables, f.affine_coefficients, change.variable, change.new_coefficient)...,
-                            f.quadratic_rowvariables, f.quadratic_colvariables, f.quadratic_coefficients,
-                            f.constant)
+    MOI.ScalarQuadraticFunction(_modifycoefficient(f.affine_terms, change.variable, change.new_coefficient),
+                                f.quadratic_terms, f.constant)
 
 end
-function _modifycoefficients(n, outputindex, variables::Vector{MOI.VariableIndex}, coefficients::Vector, variable::MOI.VariableIndex, rows, new_coefficients)
-    outputindex = copy(outputindex)
-    variables = copy(variables)
-    coefficients = copy(coefficients)
+function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable::MOI.VariableIndex, new_coefficients)
+    terms = copy(terms)
+    # Maps between rows in the `VectorAffineTerm`s and indices in new_coefficients
     rowmap = zeros(Int, n)
-    rowmap[rows] = 1:length(rows)
+    rowmap[map(c -> c[1], new_coefficients)] = 1:length(new_coefficients)
     del = Int[]
-    for i in 1:length(variables)
-        if variables[i] == variable
-            row = outputindex[i]
+    for i in 1:length(terms)
+        if _hasvar(terms[i], variable)
+            row = terms[i].output_index
             j = rowmap[row]
-            if !iszero(j)
-                if iszero(new_coefficients[j])
+            if !iszero(j) # If it is zero, it means that the row should not be changed
+                if iszero(new_coefficients[j][2])
                     push!(del, i)
                 else
-                    coefficients[i] =  new_coefficients[j]
+                    terms[i] = MOI.VectorAffineTerm(row, MOI.ScalarAffineTerm(new_coefficients[j][2], variable))
                 end
-                rowmap[row] = 0
+                rowmap[row] = 0 # We only change the first term of a row
             end
         end
     end
-    deleteat!(outputindex, del)
-    deleteat!(variables, del)
-    deleteat!(coefficients, del)
+    deleteat!(terms, del)
     for (row, j) in enumerate(rowmap)
         if !iszero(j)
-            push!(outputindex, row)
-            push!(variables, variable)
-            push!(coefficients, new_coefficients[j])
+            push!(terms, MOI.VectorAffineTerm(row, MOI.ScalarAffineTerm(new_coefficients[j][2], variable)))
         end
     end
-    outputindex, variables, coefficients
+    terms
 end
 function modifyfunction(f::MOI.VectorAffineFunction, change::MOI.MultirowChange)
-    MOI.VectorAffineFunction(_modifycoefficients(length(f.constant), f.outputindex, f.variables, f.coefficients, change.variable, change.rows, change.new_coefficients)...,
-                         f.constant)
+    MOI.VectorAffineFunction(_modifycoefficients(length(f.constants), f.terms, change.variable, change.new_coefficients), f.constants)
 end
 function modifyfunction(f::MOI.VectorQuadraticFunction, change::MOI.MultirowChange)
-    MOI.VectorQuadraticFunction(_modifycoefficients(length(f.constant), f.affine_outputindex, f.affine_variables, f.affine_coefficients, change.variable, change.rows, change.new_coefficients)...,
-                            f.quadratic_outputindex, f.quadratic_rowvariables, f.quadratic_colvariables, f.quadratic_coefficients,
-                            f.constant)
+    MOI.VectorQuadraticFunction(_modifycoefficients(length(f.constants), f.affine_terms, change.variable, change.new_coefficients),
+                                f.quadratic_terms, f.constants)
 end
