@@ -311,4 +311,4 @@ Bridges.LogDetBridge
 Bridges.SOCtoPSDCBridge
 Bridges.RSOCtoPSDCBridge
 ```
-For each bridge defined in this package, a corresponding bridge optimizer is available with the same name but "Bridge" suffix, e.g. `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
+For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
