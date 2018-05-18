@@ -86,7 +86,6 @@ function LogDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.LogDetCon
 end
 
 MOI.supportsconstraint(::Type{LogDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.LogDetConeTriangle}) where T = true
-supportedconstrainttypes(::Type{LogDetBridge{T}}) where T = [(MOI.VectorOfVariables, MOI.LogDetConeTriangle), (MOI.VectorAffineFunction{T}, MOI.LogDetConeTriangle)]
 addedconstrainttypes(::Type{LogDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.LogDetConeTriangle}) where T = [(MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorAffineFunction{T}, MOI.ExponentialCone), (MOI.ScalarAffineFunction{T}, MOI.LessThan{T})]
 
 """
@@ -179,7 +178,6 @@ function RootDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RootDetC
 end
 
 MOI.supportsconstraint(::Type{RootDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RootDetConeTriangle}) where T = true
-supportedconstrainttypes(::Type{RootDetBridge{T}}) where T = [(MOI.VectorOfVariables, MOI.RootDetConeTriangle), (MOI.VectorAffineFunction{T}, MOI.RootDetConeTriangle)]
 addedconstrainttypes(::Type{RootDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RootDetConeTriangle}) where T = [(MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle), (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone)]
 
 # Attributes, Bridge acting as an model
