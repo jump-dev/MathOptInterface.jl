@@ -46,13 +46,11 @@ function addbridge!(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     changed = true # Has b.dist changed in the last iteration ?
     while changed
         changed = false
-        i = 0
         for BT in b.bridgetypes
-            i += 1
             for (F, S) in supportedconstrainttypes(BT)
-                if all(C -> MOI.supportsconstraint(b, C...), addedconstrainttypes(BT, F, S))
+                if all(C -> MOI.supportsconstraint(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
                     # Number of bridges needed using BT
-                    dist = sum(C -> _dist(b, C...), addedconstrainttypes(BT, F, S))
+                    dist = sum(C -> _dist(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
                         b.dist[(F, S)] = dist
