@@ -43,10 +43,8 @@ mapvariable(varmap::Function, t::MOI.VectorQuadraticTerm) = MOI.VectorQuadraticT
 
 mapvariables(varmap::Function, f::MOI.SingleVariable) = MOI.SingleVariable(varmap(f.variable))
 mapvariables(varmap::Function, f::MOI.VectorOfVariables) = MOI.VectorOfVariables(varmap.(f.variables))
-mapvariables(varmap::Function, f::MOI.ScalarAffineFunction) = MOI.ScalarAffineFunction(mapvariable.(varmap, f.terms), f.constant)
-mapvariables(varmap::Function, f::MOI.VectorAffineFunction) = MOI.VectorAffineFunction(mapvariable.(varmap, f.terms), f.constants)
-mapvariables(varmap::Function, f::MOI.ScalarQuadraticFunction) = MOI.ScalarQuadraticFunction(mapvariable.(varmap, f.affine_terms), mapvariable.(varmap, f.quadratic_terms), f.constant)
-mapvariables(varmap::Function, f::MOI.VectorQuadraticFunction) = MOI.VectorQuadraticFunction(mapvariable.(varmap, f.affine_terms), mapvariable.(varmap, f.quadratic_terms), f.constants)
+mapvariables(varmap::Function, f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}) = typeof(f)(mapvariable.(varmap, f.terms), _constant(f))
+mapvariables(varmap::Function, f::Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction}) = MOI.ScalarQuadraticFunction(mapvariable.(varmap, f.affine_terms), mapvariable.(varmap, f.quadratic_terms), _constant(f))
 
 mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f)
 
@@ -59,6 +57,8 @@ mapvariables(varmap, f::MOI.AbstractFunctionModification) = mapvariables(vi -> v
 # Cat for MOI sets
 moilength(f::MOI.ScalarAffineFunction) = 1
 moilength(f::MOI.VectorAffineFunction) = length(f.constants)
+_constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = f.constant
+_constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}) = f.constants
 constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = [f.constant]
 constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}) = f.constants
 offsetterm(t::MOI.ScalarAffineTerm, offset::Int) = MOI.VectorAffineTerm(offset+1, t)
@@ -91,7 +91,7 @@ Base.start(it::ScalarFunctionIterator) = 1
 Base.done(it::ScalarFunctionIterator, state) = state > length(it)
 Base.next(it::ScalarFunctionIterator, state) = (it[state], state+1)
 Base.length(it::ScalarFunctionIterator{MOI.VectorOfVariables}) = length(it.f.variables)
-Base.length(it::ScalarFunctionIterator{<:Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}}) = length(it.f.constants)
+Base.length(it::ScalarFunctionIterator{<:Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}}) = moilength(it.f)
 Base.eltype(it::ScalarFunctionIterator{MOI.VectorOfVariables}) = MOI.SingleVariable
 Base.eltype(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}) where T = MOI.ScalarAffineFunction{T}
 Base.eltype(it::ScalarFunctionIterator{MOI.VectorQuadraticFunction{T}}) where T = MOI.ScalarQuadraticFunction{T}
@@ -277,10 +277,10 @@ end
 
 _hasvar(v::MOI.VariableIndex, vi::MOI.VariableIndex) = v == vi
 _hasvar(t::MOI.ScalarAffineTerm, vi::MOI.VariableIndex) = t.variable_index == vi
-_hasvar(t::MOI.ScalarQuadraticTerm, vi::MOI.VariableIndex) = t.variable_index_1 == vi || t.variable_index_1 == vi
+_hasvar(t::MOI.ScalarQuadraticTerm, vi::MOI.VariableIndex) = t.variable_index_1 == vi || t.variable_index_2 == vi
 _hasvar(t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}, vi::MOI.VariableIndex) = _hasvar(t.scalar_term, vi)
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
-_rmvar(vis_or_terms::Vector, vi::MOI.VariableIndex) = vis_or_terms[findall(t -> !_hasvar(t, vi)), vis_or_terms]
+_rmvar(vis_or_terms::Vector, vi::MOI.VariableIndex) = vis_or_terms[findall(t -> !_hasvar(t, vi), vis_or_terms)]
 
 """
     removevariable(f::AbstractFunction, vi::VariableIndex)
@@ -291,10 +291,10 @@ function removevariable(f::MOI.VectorOfVariables, vi)
     MOI.VectorOfVariables(_rmvar(f.variables, vi))
 end
 function removevariable(f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}, vi)
-    typeof(f)(_rmvar(f.terms, vi), constant(f))
+    typeof(f)(_rmvar(f.terms, vi), _constant(f))
 end
 function removevariable(f::Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction}, vi)
-    typeof(f)(_rmvar(f.affine_terms, vi), _rmvar(f.quadratic_terms, vi), constant(f))
+    typeof(f)(_rmvar(f.affine_terms, vi), _rmvar(f.quadratic_terms, vi), _constant(f))
 end
 
 """
@@ -362,9 +362,9 @@ function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable:
     terms
 end
 function modifyfunction(f::MOI.VectorAffineFunction, change::MOI.MultirowChange)
-    MOI.VectorAffineFunction(_modifycoefficients(length(f.constants), f.terms, change.variable, change.new_coefficients), f.constants)
+    MOI.VectorAffineFunction(_modifycoefficients(moilength(f), f.terms, change.variable, change.new_coefficients), f.constants)
 end
 function modifyfunction(f::MOI.VectorQuadraticFunction, change::MOI.MultirowChange)
-    MOI.VectorQuadraticFunction(_modifycoefficients(length(f.constants), f.affine_terms, change.variable, change.new_coefficients),
+    MOI.VectorQuadraticFunction(_modifycoefficients(moilength(f), f.affine_terms, change.variable, change.new_coefficients),
                                 f.quadratic_terms, f.constants)
 end

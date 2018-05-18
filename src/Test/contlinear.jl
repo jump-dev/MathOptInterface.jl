@@ -27,7 +27,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
-    cf = MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0)
+    cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0)
     @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.addconstraint!(model, cf, MOI.LessThan(1.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
@@ -107,7 +107,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
     # change objective to Max +x
 
-    objf = MOI.ScalarAffineFunction(v, [1.0,0.0], 0.0)
+    objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,0.0], v), 0.0)
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
     @test MOI.canset(model, MOI.ObjectiveSense())
@@ -159,12 +159,12 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     @test v[3] == z
 
     if config.query
-        # Test that the modifcation of v has not affected the model
+        # Test that the modification of v has not affected the model
         @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
-        vars = MOI.get(model, MOI.ConstraintFunction(), c).variables
+        vars = map(t -> t.variable_index, MOI.get(model, MOI.ConstraintFunction(), c).terms)
         @test vars == [v[1], v[2]] || vars == [v[2], v[1]]
         @test MOI.canget(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-        @test MOI.ScalarAffineFunction([v[1]], [1.0], 0.0) ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+        @test MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], [v[1]]), 0.0) ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     end
 
     @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
@@ -313,7 +313,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x + y + z == 2 (c)
     # x,y >= 0, z = 0
 
-    objf = MOI.ScalarAffineFunction(v, [1.0,2.0,0.0], 0.0)
+    objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,2.0,0.0], v), 0.0)
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
     @test MOI.canset(model, MOI.ObjectiveSense())
@@ -349,7 +349,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # x - y >= 0 (c2)
     # x,y >= 0 (vc1,vc2), z = 0 (vc3)
 
-    cf2 = MOI.ScalarAffineFunction(v, [1.0, -1.0, 0.0], 0.0)
+    cf2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0, 0.0], v), 0.0)
     @test MOI.canaddconstraint(model, typeof(cf2), MOI.GreaterThan{Float64})
     c2 = MOI.addconstraint!(model, cf2, MOI.GreaterThan(0.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}()) == 1
@@ -425,13 +425,13 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 1
 
     if config.query
-        @test MOI.get(model, MOI.ConstraintFunction(), c2) ≈ MOI.ScalarAffineFunction([v[2], z], [-1.0, 0.0], 0.0)
+        @test MOI.get(model, MOI.ConstraintFunction(), c2) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0, 0.0], [v[2], z]), 0.0)
 
         @test MOI.canget(model, MOI.ListOfVariableIndices())
         vrs = MOI.get(model, MOI.ListOfVariableIndices())
         @test vrs == [v[2], z] || vrs == [z, v[2]]
         @test MOI.canget(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-        @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction([v[2], z], [2.0, 0.0], 0.0)
+        @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 0.0], [v[2], z]), 0.0)
     end
 end
 
@@ -870,9 +870,9 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
-    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([x],[1.0],0.0), MOI.GreaterThan(0.0))
+    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], [x]), 0.0), MOI.GreaterThan(0.0))
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
-    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction([y],[1.0],0.0), MOI.LessThan(0.0))
+    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], [y]), 0.0), MOI.LessThan(0.0))
 
     if config.solve
         MOI.optimize!(model)
@@ -943,9 +943,9 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
-    c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[x],[1.0],[0.0]), MOI.Nonnegatives(1))
+    c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([1.0], [x])), [0.0]), MOI.Nonnegatives(1))
     @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
-    c2 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[y],[1.0],[0.0]), MOI.Nonpositives(1))
+    c2 = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([1.0], [y])), [0.0]), MOI.Nonpositives(1))
 
     if config.solve
         MOI.optimize!(model)
@@ -1349,12 +1349,12 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     v = MOI.addvariables!(model, 2)
 
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
-    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.GreaterThan(1.0))
+    c1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0), MOI.GreaterThan(1.0))
     @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
-    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0), MOI.GreaterThan(2.0))
+    c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0), MOI.GreaterThan(2.0))
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(v, [1.0,1.0], 0.0))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
