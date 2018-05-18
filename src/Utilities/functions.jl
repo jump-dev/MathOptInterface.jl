@@ -44,7 +44,7 @@ mapvariable(varmap::Function, t::MOI.VectorQuadraticTerm) = MOI.VectorQuadraticT
 mapvariables(varmap::Function, f::MOI.SingleVariable) = MOI.SingleVariable(varmap(f.variable))
 mapvariables(varmap::Function, f::MOI.VectorOfVariables) = MOI.VectorOfVariables(varmap.(f.variables))
 mapvariables(varmap::Function, f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}) = typeof(f)(mapvariable.(varmap, f.terms), _constant(f))
-mapvariables(varmap::Function, f::Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction}) = MOI.ScalarQuadraticFunction(mapvariable.(varmap, f.affine_terms), mapvariable.(varmap, f.quadratic_terms), _constant(f))
+mapvariables(varmap::Function, f::Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction}) = typeof(f)(mapvariable.(varmap, f.affine_terms), mapvariable.(varmap, f.quadratic_terms), _constant(f))
 
 mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f)
 
@@ -55,8 +55,8 @@ mapvariables(varmap::Function, change::MOI.MultirowChange) = MOI.MultirowChange(
 mapvariables(varmap, f::MOI.AbstractFunctionModification) = mapvariables(vi -> varmap[vi], f)
 
 # Cat for MOI sets
-moilength(f::MOI.ScalarAffineFunction) = 1
-moilength(f::MOI.VectorAffineFunction) = length(f.constants)
+moilength(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = 1
+moilength(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}) = length(f.constants)
 _constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = f.constant
 _constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}) = f.constants
 constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = [f.constant]
