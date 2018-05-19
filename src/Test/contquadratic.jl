@@ -93,7 +93,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [v[1],v[2]]), 0.0), MOI.GreaterThan(1.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 2
 
-    obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(zeros(3), v), MOI.ScalarQuadraticTerm.([2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
+    obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
     @test MOI.canset(model, MOI.ObjectiveSense())
@@ -128,7 +128,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     end
 
     # change objective to Max -2(x^2 + xy + y^2 + yz + z^2)
-    obj2 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(zeros(3), v), MOI.ScalarQuadraticTerm.([-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
+    obj2 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj2)
     @test MOI.canset(model, MOI.ObjectiveSense())
