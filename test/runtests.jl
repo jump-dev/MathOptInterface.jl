@@ -54,7 +54,7 @@ end
     include("Test/intconic.jl")
 end
 
-#@testset "MOI.Bridges" begin
-#    # Bridges submodule tests
-#    include("bridge.jl")
-#end
+@testset "MOI.Bridges" begin
+    # Bridges submodule tests
+    include("bridge.jl")
+end

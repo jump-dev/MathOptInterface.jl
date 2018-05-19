@@ -28,8 +28,8 @@ function RSOCBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSeco
     u = MOIU.eachscalar(f)[2]
     x = MOIU.eachscalar(f)[3:d]
     s2 = √2
-    y = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients/s2; -u.coefficients/s2], t.constant/s2 - u.constant/s2)
-    z = MOI.ScalarAffineFunction([t.variables; u.variables], [t.coefficients/s2;  u.coefficients/s2], t.constant/s2 + u.constant/s2)
+    y = MOI.ScalarAffineFunction([mapcoefficient.(c -> c/s2, t.terms); mapcoefficient.(c -> -c/s2, u.terms)], t.constant/s2 - u.constant/s2)
+    z = MOI.ScalarAffineFunction([mapcoefficient.(c -> c/s2, t.terms); mapcoefficient.(c ->  c/s2, u.terms)], t.constant/s2 + u.constant/s2)
     g = MOIU.moivcat(z, y, x)
     soc = MOI.addconstraint!(model, g, MOI.SecondOrderCone(d))
     RSOCBridge{T}(soc)
