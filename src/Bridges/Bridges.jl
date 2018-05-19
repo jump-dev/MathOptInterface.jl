@@ -18,6 +18,10 @@ const VQF{T} = MOI.VectorQuadraticFunction{T}
 const VI = MOI.VariableIndex
 const CI = MOI.ConstraintIndex
 
+# TODO move to MOIU ?
+mapcoefficient(coefmap, t::MOI.ScalarAffineTerm) = MOI.ScalarAffineTerm(coefmap(t.coefficient), t.variable_index)
+mapcoefficient(coefmap, f::MOI.ScalarAffineFunction) = MOI.ScalarAffineFunction(mapcoefficient.(coefmap, f.terms), coefmap(f.constant))
+
 include("bridge.jl")
 include("bridgeoptimizer.jl")
 include("singlebridgeoptimizer.jl")
