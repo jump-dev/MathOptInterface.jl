@@ -18,26 +18,26 @@
         fva = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1, 2], MOI.ScalarAffineTerm.([1.0, 3.0, 2.0], [x, z, y])), [-3.0, 2.0])
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
-        fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(ones(2), [x, y]),
-                                          MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y]), -3.0)
+        fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
+                                          MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]), -3.0)
         @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
         @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
-        fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(ones(2), [x, y])),
-                                          MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y])), [-3.0, -2.0])
+        fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
+                                          MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y])), [-3.0, -2.0])
         @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
         @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
     end
     @testset "mapvariables" begin
-        fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(ones(2), [x, y]),
-                                          MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y]), -3.0)
+        fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
+                                          MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]), -3.0)
         gsq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fsq)
-        sats = MOI.ScalarAffineTerm.(ones(2), [y, z])
-        sqts = MOI.ScalarQuadraticTerm.(ones(3), [y, w, w], [x, x, z])
+        sats = MOI.ScalarAffineTerm.(1.0, [y, z])
+        sqts = MOI.ScalarQuadraticTerm.(1.0, [y, w, w], [x, x, z])
         @test gsq.affine_terms == sats
         @test gsq.quadratic_terms == sqts
         @test gsq.constant == -3.
-        fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(ones(2), [x, y])),
-                                          MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(ones(3), [x, w, w], [z, z, y])), [-3.0, -2.0])
+        fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
+                                          MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y])), [-3.0, -2.0])
         gvq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fvq)
         @test gvq.affine_terms == MOI.VectorAffineTerm.([2, 1], sats)
         @test gvq.quadratic_terms == MOI.VectorQuadraticTerm.([1, 2, 2], sqts)
@@ -50,7 +50,7 @@
         @test all(iszero.(MOIU.constant(f)))
         f = MOI.VectorAffineFunction{Float64}(MOI.VectorOfVariables([x, w]))
         @test f isa MOI.VectorAffineFunction{Float64}
-        @test f.terms == MOI.VectorAffineTerm.(1:2, MOI.ScalarAffineTerm.(ones(2), [x, w]))
+        @test f.terms == MOI.VectorAffineTerm.(1:2, MOI.ScalarAffineTerm.(1.0, [x, w]))
         @test all(iszero.(MOIU.constant(f)))
     end
     @testset "Iteration and indexing on VectorOfVariables" begin
