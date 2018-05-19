@@ -277,7 +277,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,2,2], MOI.ScalarAffineTerm.([-1.0,1.0,1.0,1.0], [x,y,x,y])), [0.0,0.0]), MOI.Nonnegatives(2))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()) == 1
 
-    c2f = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([1.0], [y]), MOI.ScalarQuadraticTerm.([2.0], [x], [x]), 0.0)
+    c2f = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(1.0, y)], [MOI.ScalarQuadraticTerm(2.0, x, x)], 0.0)
     @test MOI.canaddconstraint(model, typeof(c2f), MOI.LessThan{Float64})
     c2 = MOI.addconstraint!(model, c2f, MOI.LessThan(2.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
@@ -347,13 +347,13 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
-    cf = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([0.0], [x]), MOI.ScalarQuadraticTerm.([2.0], [x], [x]), 0.0)
+    cf = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(0.0, x)], [MOI.ScalarQuadraticTerm(2.0, x, x)], 0.0)
     @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.addconstraint!(model, cf, MOI.LessThan(2.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], [x]), 0.0))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
@@ -408,13 +408,13 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
-    cf = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[], MOI.ScalarQuadraticTerm.([2.0], [x], [x]), 0.0)
+    cf = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[], [MOI.ScalarQuadraticTerm(2.0, x, x)], 0.0)
     @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.addconstraint!(model, cf, MOI.LessThan(2.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0], [x]), 0.0))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-1.0, x)], 0.0))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
@@ -502,7 +502,7 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == 1
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], [t]), 0.0))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, t)], 0.0))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
