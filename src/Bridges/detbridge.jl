@@ -21,29 +21,24 @@ function extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int) wher
     Δ = MOI.addvariables!(model, n)
 
     X = MOIU.eachscalar(f)[2:(n+1)]
-    m = length(X.outputindex)
+    m = length(X.terms)
     M = m + n + d
 
-    outputindex = Vector{Int}(M); outputindex[1:m] = X.outputindex
-    variables = Vector{VI}(M); variables[1:m] = X.variables
-    coefficients = Vector{T}(M); coefficients[1:m] = X.coefficients
-    constant = zeros(T, N); constant[1:n] = X.constant
+    terms = Vector{MOI.VectorAffineTerm{T}}(undef, M)
+    terms[1:m] = X.terms
+    constant = zeros(T, N); constant[1:n] = X.constants
 
     cur = m
     for j in 1:d
         for i in j:d
             cur += 1
-            outputindex[cur] = trimap(i, d+j)
-            variables[cur] = Δ[trimap(i, j)]
-            coefficients[cur] = one(T)
+            terms[cur] = MOI.VectorAffineTerm(trimap(i, d+j), MOI.ScalarAffineTerm(one(T), Δ[trimap(i, j)]))
         end
         cur += 1
-        outputindex[cur] = trimap(d+j, d+j)
-        variables[cur] = Δ[trimap(j, j)]
-        coefficients[cur] = one(T)
+            terms[cur] = MOI.VectorAffineTerm(trimap(d+j, d+j), MOI.ScalarAffineTerm(one(T), Δ[trimap(j, j)]))
     end
     @assert cur == M
-    Y = MOI.VectorAffineFunction(outputindex, variables, coefficients, constant)
+    Y = MOI.VectorAffineFunction(terms, constant)
     sdindex = MOI.addconstraint!(model, Y, MOI.PositiveSemidefiniteConeTriangle(2d))
 
     t = MOIU.eachscalar(f)[1]
@@ -96,7 +91,7 @@ end
 Constrains ``x \\le \\log(z)`` and return the constraint index.
 """
 function sublog(model, x::MOI.VariableIndex, z::MOI.VariableIndex, ::Type{T}) where T
-    MOI.addconstraint!(model, MOI.VectorAffineFunction([1, 3], [x, z], ones(T, 2), [zero(T), one(T), zero(T)]), MOI.ExponentialCone())
+    MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), x)), MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(one(T), z))], [zero(T), one(T), zero(T)]), MOI.ExponentialCone())
 end
 
 """
@@ -106,7 +101,7 @@ Constrains ``t \\le l_1 + \\cdots + l_n`` where `n` is the length of `l` and ret
 """
 function subsum(model, t::MOI.ScalarAffineFunction, l::Vector{MOI.VariableIndex}, ::Type{T}) where T
     n = length(l)
-    MOI.addconstraint!(model, MOI.ScalarAffineFunction([t.variables; l], [t.coefficients; fill(-one(T), n)], zero(T)), MOI.LessThan(-t.constant))
+    MOI.addconstraint!(model, MOI.ScalarAffineFunction([t.terms; MOI.ScalarAffineTerm.(-one(T), l)], zero(T)), MOI.LessThan(-t.constant))
 end
 
 # Attributes, Bridge acting as an model
