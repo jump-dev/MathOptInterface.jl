@@ -191,9 +191,13 @@ List of recognized functions.
 AbstractFunction
 SingleVariable
 VectorOfVariables
+ScalarAffineTerm
 ScalarAffineFunction
+VectorAffineTerm
 VectorAffineFunction
+ScalarQuadraticTerm
 ScalarQuadraticFunction
+VectorQuadraticTerm
 VectorQuadraticFunction
 ```
 

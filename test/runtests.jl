@@ -11,6 +11,7 @@ using Compat.Test
 
 # MOI tests not relying on any submodule
 @testset "MOI" begin
+    include("isbits.jl")
     include("isapprox.jl")
     include("interval.jl")
 end
@@ -35,7 +36,7 @@ MOIU.@model(Model,
     include("sets.jl")
     include("model.jl")
     include("universalfallback.jl")
-    include("parser.jl")
+#    include("parser.jl")
     include("mockoptimizer.jl")
     include("cachingoptimizer.jl")
     include("copy.jl")
@@ -45,7 +46,7 @@ end
 # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
 @testset "MOI.Test" begin
     include("Test/config.jl")
-    include("Test/unit.jl")
+#    include("Test/unit.jl")
     include("Test/contlinear.jl")
     include("Test/contconic.jl")
     include("Test/contquadratic.jl")
@@ -53,7 +54,7 @@ end
     include("Test/intconic.jl")
 end
 
-@testset "MOI.Bridges" begin
-    # Bridges submodule tests
-    include("bridge.jl")
-end
+#@testset "MOI.Bridges" begin
+#    # Bridges submodule tests
+#    include("bridge.jl")
+#end
