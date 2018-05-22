@@ -4,13 +4,18 @@ structeq(a::T, b::T) where {T} = all(f->getfield(a, f) == getfield(b, f), fieldn
 @testset "parsefunction" begin
     @test structeq(MOIU.parsefunction(:x), MOIU.ParsedSingleVariable(:x))
     @test structeq(MOIU.parsefunction(:([x,y,z])), MOIU.ParsedVectorOfVariables([:x,:y,:z]))
-    @test structeq(MOIU.parsefunction(:(x + y + 2.0)), MOIU.ParsedScalarAffineFunction([:x,:y],[1.0,1.0],2.0))
-    @test structeq(MOIU.parsefunction(:(x + -3y + 2.0)), MOIU.ParsedScalarAffineFunction([:x,:y],[1.0,-3.0],2.0))
-    @test structeq(MOIU.parsefunction(:(2*x*y + y + 1.0)), MOIU.ParsedScalarQuadraticFunction([:y],[1.0],[:x],[:y],[2.0],1.0))
+    @test structeq(MOIU.parsefunction(:(x + y + 2.0)), MOIU.ParsedScalarAffineFunction(MOIU.ParsedScalarAffineTerm.([1.0,1.0],[:x,:y]), 2.0))
+    @test structeq(MOIU.parsefunction(:(x + -3y + 2.0)), MOIU.ParsedScalarAffineFunction(MOIU.ParsedScalarAffineTerm.([1.0,-3.0],[:x,:y]), 2.0))
+    @test structeq(MOIU.parsefunction(:(2*x*y + y + 1.0)), MOIU.ParsedScalarQuadraticFunction(MOIU.ParsedScalarAffineTerm.([1.0],[:y]),
+                                                                                              MOIU.ParsedScalarQuadraticTerm.([2.0],[:x],[:y]),
+                                                                                              1.0))
     @test_throws AssertionError MOIU.parsefunction(:(x - y))
 
-    @test structeq(MOIU.parsefunction(:([x, 2x+y+5.0])), MOIU.ParsedVectorAffineFunction([1,2,2],[:x,:x,:y],[1.0,2.0,1.0],[0.0,5.0]))
-    @test structeq(MOIU.parsefunction(:([x, 2x+y+5.0, 1*x*x])), MOIU.ParsedVectorQuadraticFunction([1,2,2],[:x,:x,:y],[1.0,2.0,1.0],[3],[:x],[:x],[2.0],[0.0,5.0,0.0]))
+    @test structeq(MOIU.parsefunction(:([x, 2x+y+5.0])), MOIU.ParsedVectorAffineFunction(MOIU.ParsedVectorAffineTerm.([1,2,2],MOIU.ParsedScalarAffineTerm.([1.0,2.0,1.0],[:x,:x,:y])),
+                                                                                         [0.0,5.0]))
+    @test structeq(MOIU.parsefunction(:([x, 2x+y+5.0, 1*x*x])), MOIU.ParsedVectorQuadraticFunction(MOIU.ParsedVectorAffineTerm.([1,2,2],MOIU.ParsedScalarAffineTerm.([1.0,2.0,1.0],[:x,:x,:y])),
+                                                                                                   MOIU.ParsedVectorQuadraticTerm.([3],MOIU.ParsedScalarQuadraticTerm.([2.0],[:x],[:x])),
+                                                                                                   [0.0,5.0,0.0]))
 
 end
 
@@ -75,7 +80,7 @@ end
         y = MOI.addvariable!(model)
         MOI.set!(model, MOI.VariableName(), x, "x")
         MOI.set!(model, MOI.VariableName(), y, "y")
-        MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], [x, y]), 1.0))
+        MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -2.0], [x, y]), 1.0))
         MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
         model2 = GeneralModel{Float64}()
