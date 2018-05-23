@@ -22,12 +22,12 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     x,y,z = MOI.addvariables!(model, 3)
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([y,z],[-2.0,-1.0],0.0))
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0,-1.0], [y,z]), 0.0))
     @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
-    ceq = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[x],[1.0],[-1.0]), MOI.Zeros(1))
+    ceq = MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Zeros(1))
     @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
     csoc = MOI.addconstraint!(model, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))
 

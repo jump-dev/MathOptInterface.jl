@@ -17,36 +17,47 @@ all constraints must be named
 "x - y" does NOT currently parse, needs to be written as "x + -1.0*y"
 "x^2" does NOT currently parse, needs to be written as "x*x"
 """
+
+struct ParsedScalarAffineTerm
+    coefficient::Float64
+    variable_index::Symbol
+end
+
 struct ParsedScalarAffineFunction
-    variables::Vector{Symbol}
-    coefficients::Vector{Float64}
+    terms::Vector{ParsedScalarAffineTerm}
     constant::Float64
+end
+
+struct ParsedVectorAffineTerm
+    output_index::Int64
+    scalar_term::ParsedScalarAffineTerm
 end
 
 struct ParsedVectorAffineFunction
-    outputindex::Vector{Int}
-    variables::Vector{Symbol}
-    coefficients::Vector{Float64}
+    terms::Vector{ParsedVectorAffineTerm}
     constant::Vector{Float64}
 end
 
+struct ParsedScalarQuadraticTerm
+    coefficient::Float64
+    variable_index_1::Symbol
+    variable_index_2::Symbol
+end
+
 struct ParsedScalarQuadraticFunction
-    affine_variables::Vector{Symbol}
-    affine_coefficients::Vector{Float64}
-    quadratic_rowvariables::Vector{Symbol}
-    quadratic_colvariables::Vector{Symbol}
-    quadratic_coefficients::Vector{Float64}
+    affine_terms::Vector{ParsedScalarAffineTerm}
+    quadratic_terms::Vector{ParsedScalarQuadraticTerm}
     constant::Float64
 end
 
+struct ParsedVectorQuadraticTerm
+    output_index::Int64
+    scalar_term::ParsedScalarQuadraticTerm
+end
+
 struct ParsedVectorQuadraticFunction
-    affine_outputindex::Vector{Int}
-    affine_variables::Vector{Symbol}
-    affine_coefficients::Vector{Float64}
-    quadratic_outputindex::Vector{Int}
-    quadratic_rowvariables::Vector{Symbol}
-    quadratic_colvariables::Vector{Symbol}
-    quadratic_coefficients::Vector{Float64}
+    affine_terms::Vector{ParsedVectorAffineTerm}
+    quadratic_terms::Vector{ParsedVectorQuadraticTerm}
     constant::Vector{Float64}
 end
 
@@ -67,41 +78,27 @@ function parsefunction(ex)
             return ParsedVectorOfVariables(copy(ex.args))
         else
             singlefunctions = parsefunction.(ex.args)
-            affine_outputindex = Int[]
-            affine_variables = Symbol[]
-            affine_coefficients = Float64[]
-            quadratic_outputindex = Int[]
-            quadratic_rowvariables = Symbol[]
-            quadratic_colvariables = Symbol[]
-            quadratic_coefficients = Float64[]
+            affine_terms = ParsedVectorAffineTerm[]
+            quadratic_terms = ParsedVectorQuadraticTerm[]
             constant = Float64[]
             for (outindex,f) in enumerate(singlefunctions)
                 if isa(f, ParsedSingleVariable)
-                    push!(affine_outputindex, outindex)
-                    push!(affine_variables, f.variable)
-                    push!(affine_coefficients, 1.0)
+                    push!(affine_terms, ParsedVectorAffineTerm(outindex, ParsedScalarAffineTerm(1.0, f.variable)))
                     push!(constant, 0.0)
                 elseif isa(f, ParsedScalarAffineFunction)
-                    append!(affine_outputindex, fill(outindex,length(f.variables)))
-                    append!(affine_variables, f.variables)
-                    append!(affine_coefficients, f.coefficients)
+                    append!(affine_terms, ParsedVectorAffineTerm.(outindex, f.terms))
                     push!(constant, f.constant)
                 else
                     @assert isa(f, ParsedScalarQuadraticFunction)
-                    append!(affine_outputindex, fill(outindex,length(f.affine_variables)))
-                    append!(affine_variables, f.affine_variables)
-                    append!(affine_coefficients, f.affine_coefficients)
-                    append!(quadratic_outputindex, fill(outindex,length(f.quadratic_rowvariables)))
-                    append!(quadratic_rowvariables, f.quadratic_rowvariables)
-                    append!(quadratic_colvariables, f.quadratic_colvariables)
-                    append!(quadratic_coefficients, f.quadratic_coefficients)
+                    append!(affine_terms, ParsedVectorAffineTerm.(outindex, f.affine_terms))
+                    append!(quadratic_terms, ParsedVectorQuadraticTerm.(outindex, f.quadratic_terms))
                     push!(constant, f.constant)
                 end
             end
-            if length(quadratic_outputindex) == 0
-                return ParsedVectorAffineFunction(affine_outputindex, affine_variables, affine_coefficients, constant)
+            if length(quadratic_terms) == 0
+                return ParsedVectorAffineFunction(affine_terms, constant)
             else
-                return ParsedVectorQuadraticFunction(affine_outputindex, affine_variables, affine_coefficients, quadratic_outputindex, quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients, constant)
+                return ParsedVectorQuadraticFunction(affine_terms, quadratic_terms, constant)
             end
         end
     else
@@ -115,11 +112,8 @@ function parsefunction(ex)
             ex = Expr(:call,:+,ex)
         end
         @assert isexpr(ex, :call) && ex.args[1] == :+
-        affine_variables = Symbol[]
-        affine_coefficients = Float64[]
-        quadratic_rowvariables = Symbol[]
-        quadratic_colvariables = Symbol[]
-        quadratic_coefficients = Float64[]
+        affine_terms = ParsedScalarAffineTerm[]
+        quadratic_terms = ParsedScalarQuadraticTerm[]
         constant = 0.0
         for subex in ex.args[2:end]
             if isexpr(subex, :call) && subex.args[1] == :*
@@ -127,8 +121,7 @@ function parsefunction(ex)
                     # constant * variable
                     @assert isa(subex.args[2], Number)
                     @assert isa(subex.args[3], Symbol)
-                    push!(affine_coefficients, subex.args[2])
-                    push!(affine_variables, subex.args[3])
+                    push!(affine_terms, ParsedScalarAffineTerm(subex.args[2], subex.args[3]))
                 else
                     # constant * variable * variable for quadratic
                     @assert length(subex.args) == 4 "Multiplication with more than three terms not supported"
@@ -136,25 +129,23 @@ function parsefunction(ex)
                     @assert isa(subex.args[3], Symbol)
                     @assert isa(subex.args[4], Symbol)
                     if subex.args[3] == subex.args[4]
-                        push!(quadratic_coefficients, 2*subex.args[2])
+                        coefficient = 2*subex.args[2]
                     else
-                        push!(quadratic_coefficients, subex.args[2])
+                        coefficient = subex.args[2]
                     end
-                    push!(quadratic_rowvariables, subex.args[3])
-                    push!(quadratic_colvariables, subex.args[4])
+                    push!(quadratic_terms, ParsedScalarQuadraticTerm(coefficient, subex.args[3], subex.args[4]))
                 end
             elseif isa(subex, Symbol)
-                push!(affine_coefficients, 1.0)
-                push!(affine_variables, subex)
+                push!(affine_terms, ParsedScalarAffineTerm(1.0, subex))
             else
                 @assert isa(subex, Number)
                 constant += subex
             end
         end
-        if length(quadratic_rowvariables) == 0
-            return ParsedScalarAffineFunction(affine_variables, affine_coefficients, constant)
+        if length(quadratic_terms) == 0
+            return ParsedScalarAffineFunction(affine_terms, constant)
         else
-            return ParsedScalarQuadraticFunction(affine_variables, affine_coefficients, quadratic_rowvariables, quadratic_colvariables, quadratic_coefficients, constant)
+            return ParsedScalarQuadraticFunction(affine_terms, quadratic_terms, constant)
         end
     end
 end
@@ -180,23 +171,23 @@ function separatelabel(ex)
     end
 end
 
-function variabletoindex(model, s::Symbol)
+function parsedtoMOI(model, s::Symbol)
     return MOI.get(model, MOI.VariableIndex, String(s))
 end
 
-function variabletoindex(model, s::Vector{Symbol})
-    return MOI.get.(model, MOI.VariableIndex, String.(s))
-end
+# Used for Vector{Symbol}, Vector{ParsedScalarAffineTerm}, Vector{ParsedVectorAffineTerm},
+# Vector{ParsedScalarQuadraticTerm} and Vector{ParsedVectorQuadraticTerm}
+parsedtoMOI(model, s::Vector) = parsedtoMOI.(model, s)
 
-variabletoindex(model, s) = s
+parsedtoMOI(model, s::Union{Float64, Int64}) = s
 
 
-for typename in [:ParsedScalarAffineFunction,:ParsedVectorAffineFunction,
-                 :ParsedScalarQuadraticFunction,:ParsedVectorQuadraticFunction,
+for typename in [:ParsedScalarAffineTerm,:ParsedScalarAffineFunction,:ParsedVectorAffineTerm,:ParsedVectorAffineFunction,
+                 :ParsedScalarQuadraticTerm,:ParsedScalarQuadraticFunction,:ParsedVectorQuadraticTerm,:ParsedVectorQuadraticFunction,
                  :ParsedSingleVariable,:ParsedVectorOfVariables]
     moiname = parse(replace(string(typename), "Parsed" => "MOI."))
     fields = fieldnames(eval(typename))
-    constructor = Expr(:call, moiname, [Expr(:call,:variabletoindex,:model,Expr(:.,:f,Base.Meta.quot(field))) for field in fields]...)
+    constructor = Expr(:call, moiname, [Expr(:call,:parsedtoMOI,:model,Expr(:.,:f,Base.Meta.quot(field))) for field in fields]...)
     @eval parsedtoMOI(model, f::$typename) = $constructor
 end
 

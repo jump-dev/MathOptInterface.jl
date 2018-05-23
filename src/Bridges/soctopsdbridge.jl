@@ -1,8 +1,3 @@
-function tofun(f::MOI.VectorOfVariables)
-    nv = length(f.variables)
-    MOI.VectorAffineFunction(collect(1:nv), f.variables, ones(nv), zeros(nv))
-end
-
 """
     _SOCtoPSDCaff{T}(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFunction{T})
 
@@ -11,26 +6,26 @@ Builds a VectorAffineFunction representing the upper (or lower) triangular part 
 [ f[2:end] g * I     ]
 """
 function _SOCtoPSDCaff(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFunction{T}) where T
-    dim = length(f.constant)
+    dim = MOIU.moilength(f)
     n = div(dim * (dim+1), 2)
     # Needs to add t*I
-    N0 = length(f.variables)
-    Ni = length(g.variables)
+    N0 = length(f.terms)
+    Ni = length(g.terms)
     N = N0 + (dim-1) * Ni
-    outputindex  = Vector{Int}(N); outputindex[1:N0]  = trimap.(f.outputindex, 1)
-    variables    = Vector{VI}(N);  variables[1:N0]    = f.variables
-    coefficients = Vector{T}(N);   coefficients[1:N0] = f.coefficients
-    constant = [f.constant; zeros(T, n - length(f.constant))]
+    terms = Vector{MOI.VectorAffineTerm{T}}(N)
+    terms[1:N0] = MOI.VectorAffineTerm.(map(t -> trimap.(t.output_index, 1), f.terms),
+                                        MOI.ScalarAffineTerm.(map(t -> t.scalar_term.coefficient, f.terms),
+                                                              map(t -> t.scalar_term.variable_index, f.terms)))
+    constant = [f.constants; zeros(T, n - dim)]
     cur = N0
     for i in 2:dim
         k = trimap(i, i)
-        outputindex[cur+(1:Ni)]  = k
-        variables[cur+(1:Ni)]    = g.variables
-        coefficients[cur+(1:Ni)] = g.coefficients
+        terms[cur+(1:Ni)]  = MOI.VectorAffineTerm.(k, MOI.ScalarAffineTerm.(map(t -> t.coefficient, g.terms),
+                                                                            map(t -> t.variable_index, g.terms)))
         constant[k] = g.constant
         cur += Ni
     end
-    MOI.VectorAffineFunction(outputindex, variables, coefficients, constant)
+    MOI.VectorAffineFunction(terms, constant)
 end
 
 """
@@ -62,12 +57,12 @@ struct SOCtoPSDCBridge{T} <: AbstractBridge
 end
 function SOCtoPSDCBridge{T}(instance, f, s::MOI.SecondOrderCone) where T
     d = MOI.dimension(s)
-    cr = MOI.addconstraint!(instance, _SOCtoPSDCaff(f), MOI.PositiveSemidefiniteConeTriangle(d))
+    cr = MOI.addconstraint!(instance, _SOCtoPSDCaff(f, T), MOI.PositiveSemidefiniteConeTriangle(d))
     SOCtoPSDCBridge(d, cr)
 end
 
-_SOCtoPSDCaff(f::MOI.VectorOfVariables) = _SOCtoPSDCaff(tofun(f))
-_SOCtoPSDCaff(f::MOI.VectorAffineFunction) = _SOCtoPSDCaff(f, MOIU.eachscalar(f)[1])
+_SOCtoPSDCaff(f::MOI.VectorOfVariables, ::Type{T}) where T = _SOCtoPSDCaff(MOI.VectorAffineFunction{T}(f), T)
+_SOCtoPSDCaff(f::MOI.VectorAffineFunction, ::Type) = _SOCtoPSDCaff(f, MOIU.eachscalar(f)[1])
 
 function MOI.canget(instance::MOI.AbstractOptimizer, a::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, ::Type{SOCtoPSDCBridge{T}}) where T
     MOI.canget(instance, a, CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle})
@@ -119,15 +114,14 @@ struct RSOCtoPSDCBridge{T} <: AbstractBridge
 end
 function RSOCtoPSDCBridge{T}(instance, f, s::MOI.RotatedSecondOrderCone) where T
     d = MOI.dimension(s)-1
-    cr = MOI.addconstraint!(instance, _RSOCtoPSDCaff(f), MOI.PositiveSemidefiniteConeTriangle(d))
+    cr = MOI.addconstraint!(instance, _RSOCtoPSDCaff(f, T), MOI.PositiveSemidefiniteConeTriangle(d))
     RSOCtoPSDCBridge(d, cr)
 end
 
-_RSOCtoPSDCaff(f::MOI.VectorOfVariables) = _RSOCtoPSDCaff(tofun(f))
-function _RSOCtoPSDCaff(f::MOI.VectorAffineFunction)
-    n = length(f.constant)
-    g = MOIU.eachscalar(f)[2]
-    g = MOI.ScalarAffineFunction(g.variables, g.coefficients*2, g.constant*2)
+_RSOCtoPSDCaff(f::MOI.VectorOfVariables, ::Type{T}) where T = _RSOCtoPSDCaff(MOI.VectorAffineFunction{T}(f), T)
+function _RSOCtoPSDCaff(f::MOI.VectorAffineFunction, ::Type)
+    n = MOIU.moilength(f)
+    g = mapcoefficient(c -> 2c, MOIU.eachscalar(f)[2])
     _SOCtoPSDCaff(MOIU.eachscalar(f)[[1; 3:n]], g)
 end
 

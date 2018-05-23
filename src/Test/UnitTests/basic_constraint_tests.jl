@@ -3,18 +3,18 @@ const dummy_single_variable   = (x::Vector{MOI.VariableIndex}) -> MOI.SingleVari
 # x₁, x₂
 const dummy_vectorofvariables = (x::Vector{MOI.VariableIndex}) -> MOI.VectorOfVariables(x)
 # 1.0 * x + 0.0
-const dummy_scalar_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarAffineFunction(x, ones(Float64, length(x)), 0.0)
+const dummy_scalar_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0)
 # 1.0 * x + 1.0 * x^2 + 0.0
-const dummy_scalar_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarQuadraticFunction(x, ones(Float64, length(x)), x, x, ones(Float64, length(x)), 0.0)
+const dummy_scalar_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, x), MOI.ScalarQuadraticTerm.(1.0, x, x), 0.0)
 # x₁ +    + 0.0
 #    + x₂ + 0.0
-const dummy_vector_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.VectorAffineFunction(collect(1:length(x)), x, ones(Float64, length(x)), zeros(Float64, length(x)))
+const dummy_vector_affine     = (x::Vector{MOI.VariableIndex}) -> MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(1.0, x)), zeros(Float64, length(x)))
 # x₁ +    + x₁^2        + 0.0
 #    + x₂ +      + x₂^2 + 0.0
 const dummy_vector_quadratic  = (x::Vector{MOI.VariableIndex}) -> MOI.VectorQuadraticFunction(
-    collect(1:length(x)), x, ones(Float64, length(x)),     # affine component
-    collect(1:length(x)), x, x, ones(Float64, length(x)),  # quadratic component
-    zeros(Float64, length(x))                              # constant term
+    MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(1.0, x)),           # affine component
+    MOI.VectorQuadraticTerm.(1:length(x), MOI.ScalarQuadraticTerm.(1.0, x, x)),  # affine component
+    zeros(Float64, length(x))                                                    # constant term
 )
 
 const BasicConstraintTests = Dict(
@@ -149,7 +149,7 @@ If `get_constraint_set = true`, it will test the getting of `ConstraintSet`.
 ### Example
 
     basic_constraint_test_helper(model, config,
-        (x) -> MOI.ScalarAffineFunction(model, [x], [1.0], 0.0),
+        (x) -> MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
         MOI.LessThan(1.0),
         1;
         delete=false
