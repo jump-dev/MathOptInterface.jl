@@ -135,21 +135,38 @@ If `v` is a `VariableIndex` object, then `SingleVariable(v)` is simply the scala
 
 A more interesting function is [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction), defined as
 ```julia
-struct ScalarAffineFunction{T} <: AbstractFunction
-    variables::Vector{VariableIndex}
-    coefficients::Vector{T}
+struct ScalarAffineFunction{T} <: AbstractScalarFunction
+    terms::Vector{ScalarAffineTerm{T}}
     constant::T
 end
 ```
 
-If `x` is a vector of `VariableIndex` objects, then `ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0)` represents the function ``5x_1 - 2.3x_2 + 1``.
+The [`ScalarAffineTerm`](@ref MathOptInterface.ScalarAffineTerm) struct defines
+a variable-coefficient pair:
+```julia
+struct ScalarAffineTerm{T}
+    coefficient::T
+    variable_index::VariableIndex
+end
+```
+
+If `x` is a vector of `VariableIndex` objects, then
+`ScalarAffineFunction(ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]]),1.0)` represents
+the function ``5x_1 - 2.3x_2 + 1``.
+
+!!! note
+
+    `ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]])` is a shortcut for
+    `[ScalarAffineTerm(5.0, x[1]), ScalarAffineTerm(-2.3, x[2])]`. This is
+    Julia's broadcast syntax and is used quite often.
 
 Objective functions are assigned to a model by setting the [`ObjectiveFunction`](@ref MathOptInterface.ObjectiveFunction) attribute.
 The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used for setting the optimization sense.
 For example,
 ```julia
 x = addvariables!(model, 2)
-set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction([x[1],x[2]],[5.0,-2.3],1.0))
+set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+            ScalarAffineFunction(ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]]),1.0))
 set!(model, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
@@ -183,9 +200,11 @@ The code example below encodes the linear optimization problem:
 
 ```julia
 x = addvariables!(model, 2)
-set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction(x, [3.0,2.0], 0.0))
+set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+            ScalarAffineFunction(ScalarAffineTerm.([3.0, 2.0], x), 0.0))
 set!(model, ObjectiveSense(), MaxSense)
-addconstraint!(model, ScalarAffineFunction(x, [1.0,1.0], 0.0), LessThan(5.0))
+addconstraint!(model, ScalarAffineFunction(ScalarAffineTerm.(1.0, x), 0.0),
+                      LessThan(5.0))
 addconstraint!(model, SingleVariable(x[1]), GreaterThan(0.0))
 addconstraint!(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
@@ -205,9 +224,11 @@ The code example below encodes the convex optimization problem:
 
 ```julia
 x,y,z = addvariables!(model, 3)
-set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarAffineFunction([y,z], [1.0,1.0], 0.0))
+set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+            ScalarAffineFunction(ScalarAffineTerm.(1.0, [y,z]), 0.0))
 set!(model, ObjectiveSense(), MaxSense)
-addconstraint!(model, VectorAffineFunction([1],[x],[3.0],[-2.0]), Zeros(1))
+vector_terms = [VectorAffineTerm(1, ScalarAffineTerm(3.0, x))]
+addconstraint!(model, VectorAffineFunction(vector_terms,[-2.0]), Zeros(1))
 addconstraint!(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
 ```
 
@@ -357,11 +378,13 @@ optimizer = MathOptInterfaceGLPK.GLPKOptimizerMIP()
 x = MOI.addvariables!(optimizer, numvariables)
 
 # set the objective function
-MOI.set!(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(x, c, 0.0))
+objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
+MOI.set!(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objective_function)
 MOI.set!(optimizer, MOI.ObjectiveSense(), MOI.MaxSense)
 
 # add the knapsack constraint
-MOI.addconstraint!(optimizer, MOI.ScalarAffineFunction(x, w, 0.0), MOI.LessThan(C))
+knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
+MOI.addconstraint!(optimizer, knapsack_function, MOI.LessThan(C))
 
 # add integrality constraints
 for i in 1:numvariables
@@ -566,7 +589,13 @@ new coefficients are known.
 
 ### Problem data
 
-All data passed to the solver should be copied immediately to internal data structures. Solvers may not modify any input vectors and should not assume that input vectors will not be modified by users in the future. This applies, for example, to the coefficient vector in `ScalarAffineFunction`. Vectors returned to the user, e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes should not be modified by the solver afterwards. The in-place version of `get!` can be used by users to avoid extra copies in this case.
+All data passed to the solver should be copied immediately to internal data
+structures. Solvers may not modify any input vectors and should assume that
+input vectors may be modified by users in the future. This applies, for example,
+to the `terms` vector in `ScalarAffineFunction`. Vectors returned to the user,
+e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes, should not be
+modified by the solver afterwards. The in-place version of `get!` can be used by
+users to avoid extra copies in this case.
 
 ### Statuses
 
