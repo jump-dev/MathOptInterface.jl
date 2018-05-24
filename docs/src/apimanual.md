@@ -141,8 +141,8 @@ struct ScalarAffineFunction{T} <: AbstractScalarFunction
 end
 ```
 
-The [`ScalarAffineTerm`](@ref MathOptInterface.ScalarAffineTerm) struct simply
-defines a pair of a variable and coefficient:
+The [`ScalarAffineTerm`](@ref MathOptInterface.ScalarAffineTerm) struct defines
+a variable-coefficient pair:
 ```julia
 struct ScalarAffineTerm{T}
     coefficient::T
@@ -589,7 +589,13 @@ new coefficients are known.
 
 ### Problem data
 
-All data passed to the solver should be copied immediately to internal data structures. Solvers may not modify any input vectors and should not assume that input vectors will not be modified by users in the future. This applies, for example, to the terms vector in `ScalarAffineFunction`. Vectors returned to the user, e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes should not be modified by the solver afterwards. The in-place version of `get!` can be used by users to avoid extra copies in this case.
+All data passed to the solver should be copied immediately to internal data
+structures. Solvers may not modify any input vectors and should assume that
+input vectors may be modified by users in the future. This applies, for example,
+to the `terms` vector in `ScalarAffineFunction`. Vectors returned to the user,
+e.g., via `ObjectiveFunction` or `ConstraintFunction` attributes, should not be
+modified by the solver afterwards. The in-place version of `get!` can be used by
+users to avoid extra copies in this case.
 
 ### Statuses
 
