@@ -91,42 +91,42 @@ function MOI.canget(b::AbstractBridgeOptimizer, attr::Union{MOI.NumberOfConstrai
 end
 function MOI.get(b::AbstractBridgeOptimizer, loc::MOI.ListOfConstraintIndices{F, S}) where {F, S}
     if isbridged(b, F, S)
-        MOI.get(b.bridged, loc)
+        locr = MOI.get(b.bridged, loc)
     else
         locr = MOI.get(b.model, loc)
-        for bridge in values(b.bridges)
-            for c in MOI.get(bridge, loc)
-                i = findfirst(locr, c)
-                if (VERSION >= v"0.7.0-DEV.3395" && i !== nothing) || (VERSION < v"0.7.0-DEV.3395" && !iszero(i))
-                    MOI.deleteat!(locr, i)
-                end
+    end
+    for bridge in values(b.bridges)
+        for c in MOI.get(bridge, loc)
+            i = findfirst(locr, c)
+            if (VERSION >= v"0.7.0-DEV.3395" && i !== nothing) || (VERSION < v"0.7.0-DEV.3395" && !iszero(i))
+                MOI.deleteat!(locr, i)
             end
         end
-        locr
     end
+    locr
 end
-function _numberof(b::AbstractBridgeOptimizer, attr::Union{MOI.NumberOfConstraints, MOI.NumberOfVariables})
-    s = MOI.get(b.model, attr)
+function _numberof(b::AbstractBridgeOptimizer, model::MOI.ModelLike, attr::Union{MOI.NumberOfConstraints, MOI.NumberOfVariables})
+    s = MOI.get(model, attr)
     for v in values(b.bridges)
         s -= MOI.get(v, attr)
     end
     s
 end
-MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables) = _numberof(b, attr)
+MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables) = _numberof(b, b.model, attr)
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfConstraints{F, S}) where {F, S}
     if isbridged(b, F, S)
-        MOI.get(b.bridged, attr)
+        # The constraints contained in `b.bridged` may have been added by bridges
+        _numberof(b, b.bridged, attr)
     else
-        _numberof(b, attr)
+        _numberof(b, b.model, attr)
     end
 end
 MOI.canget(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints) = MOI.canget(b.model, attr) && MOI.canget(b.bridged, attr)
 _noc(b, fs) = MOI.get(b, MOI.NumberOfConstraints{fs...}())
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
-    loc = MOI.get(b.model, attr)
-    rm = find(_noc.(b, loc) .== 0)
+    loc = [MOI.get(b.model, attr); MOI.get(b.bridged, attr)]
+    rm = find(iszero.(_noc.(b, loc)))
     deleteat!(loc, rm)
-    append!(loc, MOI.get(b.bridged, attr))
 end
 for f in (:canget, :canset, :get, :get!)
     @eval begin

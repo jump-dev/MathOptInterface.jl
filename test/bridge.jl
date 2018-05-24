@@ -6,6 +6,28 @@ function test_noc(bridgedmock, F, S, n)
     @test MOI.get(bridgedmock, MOI.NumberOfConstraints{F, S}()) == n
     @test MOI.canget(bridgedmock, MOI.ListOfConstraintIndices{F, S}())
     @test length(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{F, S}())) == n
+    @test MOI.canget(bridgedmock, MOI.ListOfConstraints())
+    @test ((F, S) in MOI.get(bridgedmock, MOI.ListOfConstraints())) == !iszero(n)
+end
+
+# Test deletion of bridge
+function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int, nocs::Tuple) where {F, S}
+    @test MOI.get(m, MOI.NumberOfVariables()) == nvars
+    test_noc(m, F, S, 1)
+    for noc in nocs
+        test_noc(m, noc...)
+    end
+    @test MOI.isvalid(m, ci)
+    @test MOI.candelete(m, ci)
+    MOI.delete!(m, ci)
+    @test !MOI.isvalid(m, ci)
+    @test isempty(m.bridges)
+    test_noc(m, F, S, 0)
+    # As the bridge has been removed, if the constraints it has created where not removed, it wouldn't be there to decrease this counter anymore
+    @test MOI.get(m, MOI.NumberOfVariables()) == nvars
+    for noc in nocs
+        test_noc(m, noc...)
+    end
 end
 
 @testset "BridgeOptimizer" begin
@@ -101,32 +123,27 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
         @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
     end
 
+    @testset "Combining two briges" begin
+        fullbridgedmock = MOIB.fullbridgeoptimizer(mock, Float64)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1, √2])
+        config = MOIT.TestConfig()
+        MOIT.rootdett1vtest(fullbridgedmock, config)
+        MOIT.rootdett1ftest(fullbridgedmock, config)
+        @test !MOI.canget(fullbridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
+        ci = first(MOI.get(fullbridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
+        @test !MOI.canmodifyconstraint(fullbridgedmock, ci, MOI.VectorAffineFunction{Float64})
+        test_delete_bridge(fullbridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+                                                    (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone, 0),
+                                                    (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
+
+    end
+
     @testset "Continuous Linear" begin
         MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
     end
 
     @testset "Continuous Conic" begin
         MOIT.contconictest(MOIB.fullbridgeoptimizer(mock, Float64), MOIT.TestConfig(solve=false), ["logdets", "rootdets", "psds"])
-    end
-end
-
-# Test deletion of bridge
-function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int, nocs::Tuple) where {F, S}
-    @test MOI.get(m, MOI.NumberOfVariables()) == nvars
-    test_noc(m, F, S, 1)
-    for noc in nocs
-        test_noc(m, noc...)
-    end
-    @test MOI.isvalid(m, ci)
-    @test MOI.candelete(m, ci)
-    MOI.delete!(m, ci)
-    @test !MOI.isvalid(m, ci)
-    @test isempty(m.bridges)
-    test_noc(m, F, S, 0)
-    # As the bridge has been removed, if the constraints it has created where not removed, it wouldn't be there to decrease this counter anymore
-    @test MOI.get(m, MOI.NumberOfVariables()) == nvars
-    for noc in nocs
-        test_noc(m, noc...)
     end
 end
 
@@ -228,6 +245,7 @@ end
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
         test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+                                                (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone, 0),
                                                 (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
     end
 end
