@@ -1,3 +1,4 @@
+# /!\ LazyBridgeOptimizer is still experimental and is meant to be used by JuMP. Use the SingleBridgeOptimizer in the solver tests as explained in the MOI documentation.
 """
     LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 
