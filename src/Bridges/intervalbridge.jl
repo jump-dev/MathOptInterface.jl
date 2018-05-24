@@ -12,6 +12,10 @@ function SplitIntervalBridge{T}(model, f::MOI.ScalarAffineFunction{T}, s::MOI.In
     upper = MOI.addconstraint!(model, f, MOI.LessThan(s.upper))
     SplitIntervalBridge(lower, upper)
 end
+
+supportedconstrainttypes(::Type{SplitIntervalBridge{T}}) where T = [(MOI.ScalarAffineFunction{T}, MOI.Interval{T})]
+addedconstrainttypes(::Type{SplitIntervalBridge{T}}, ::Type{MOI.ScalarAffineFunction{T}}, ::Type{MOI.Interval{T}}) where T = [(MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}), (MOI.ScalarAffineFunction{T}, MOI.LessThan{T})]
+
 # Attributes, Bridge acting as an model
 MOI.get(b::SplitIntervalBridge{T}, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) where T = 1
 MOI.get(b::SplitIntervalBridge{T}, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}}) where T = 1

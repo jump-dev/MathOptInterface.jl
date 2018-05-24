@@ -31,6 +31,20 @@ type `F`-in`S` created by the bride `b` in the model (i.e., of length equal to t
 MOI.get(b::AbstractBridge, ::MOI.ListOfConstraintIndices{F, S}) where {F, S} = CI{F, S}[]
 
 """
+    supportedconstrainttypes(BT::Type{<:AbstractBridge})::Bool
+
+Return a list of the types of constraints that can be bridged with a bridge of type `BT`.
+"""
+function supportedconstrainttypes end
+
+"""
+    addedconstrainttypes(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
+
+Return a list of the types of constraints that bridges of type `BT` add for bridging an `F`-in-`S` constraints.
+"""
+function addedconstrainttypes end
+
+"""
     MOI.candelete(model::MOI.ModelLike, b::AbstractBridge)
 
 Return a `Bool` indicating whether the bridge `b` can be removed from the model `model`.

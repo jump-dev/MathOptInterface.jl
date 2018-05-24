@@ -11,11 +11,18 @@ abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 """
     isbridged(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
 
-Return a `Bool` indicating whether `b` bridges `F`-in-`S` constraints.
+Return a `Bool` indicating whether `b` tries to bridge `F`-in-`S` constraints instead of passing it as is to its internal model.
 """
 function isbridged end
 # Syntactic sugar
 isbridged(b::AbstractBridgeOptimizer, ::Type{CI{F, S}}) where {F, S} = isbridged(b, F, S)
+
+"""
+    supportsbridgingconstraint(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
+
+Return a `Bool` indicating whether `b` supports bridging `F`-in-`S` constraints.
+"""
+supportsbridgingconstraint(::AbstractBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
 
 """
     bridgetype(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
@@ -176,14 +183,14 @@ MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index}, name::String) = MOI
 # Constraints
 function MOI.supportsconstraint(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     if isbridged(b, F, S)
-        MOI.supportsconstraint(b.bridged, F, S)
+        supportsbridgingconstraint(b, F, S) && MOI.supportsconstraint(b.bridged, F, S)
     else
         MOI.supportsconstraint(b.model, F, S)
     end
 end
 function MOI.canaddconstraint(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     if isbridged(b, F, S)
-        MOI.canaddconstraint(b.bridged, F, S)
+        supportsbridgingconstraint(b, F, S) && MOI.canaddconstraint(b.bridged, F, S) && all(C -> MOI.canaddconstraint(b, C...), addedconstrainttypes(bridgetype(b, F, S), F, S))
     else
         MOI.canaddconstraint(b.model, F, S)
     end

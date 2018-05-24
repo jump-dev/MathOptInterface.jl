@@ -26,6 +26,7 @@ end
 
     @testset "Custom test" begin
         const model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
+        @test !MOIB.supportsbridgingconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
 
         x, y = MOI.addvariables!(model, 2)
         @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -61,6 +62,43 @@ end
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
         @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+    end
+
+    @testset "Continuous Linear" begin
+        MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
+    end
+end
+
+# Model not supporting RotatedSecondOrderCone
+MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, PositiveSemidefiniteConeTriangle) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+
+@testset "LazyBridgeOptimizer" begin
+    const mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
+    const bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
+    MOIB.addbridge!(bridgedmock, MOIB.SplitIntervalBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDCBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDCBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.RSOCBridge{Float64})
+
+    @testset "Name test" begin
+        MOIT.nametest(bridgedmock)
+    end
+
+    @testset "Copy test" begin
+        MOIT.failcopytestc(bridgedmock)
+        MOIT.failcopytestia(bridgedmock)
+        MOIT.failcopytestva(bridgedmock)
+        MOIT.failcopytestca(bridgedmock)
+        MOIT.copytest(bridgedmock, NoRSOCModel{Float64}())
+    end
+
+    # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path
+    @testset "Bridge selection" begin
+        MOI.empty!(bridgedmock)
+        @test !(MOI.supportsconstraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
+        x = MOI.addvariables!(bridgedmock, 3)
+        c = MOI.addconstraint!(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
+        @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
     end
 
     @testset "Continuous Linear" begin

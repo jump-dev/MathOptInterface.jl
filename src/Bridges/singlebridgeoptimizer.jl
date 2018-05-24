@@ -1,14 +1,19 @@
-struct SingleBridgeOptimizer{BT<:AbstractBridge, MT<:MOI.ModelLike, T, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+"""
+    SingleBridgeOptimizer{BT<:AbstractBridge, MT<:MOI.ModelLike, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+
+The `SingleBridgeOptimizer` bridges any constraint supported by the bridge `BT`.
+This is in contrast with the [`LazyBridgeOptimizer`](@ref) which only bridges the constraints that are unsupported by the internal model, even if they are supported by one of its bridges.
+"""
+struct SingleBridgeOptimizer{BT<:AbstractBridge, MT<:MOI.ModelLike, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     model::OT
     bridged::MT
     bridges::Dict{CI, BT}
 end
-function SingleBridgeOptimizer{BT, MT, T}(model::OT) where {BT, MT, T, OT <: MOI.ModelLike}
-    SingleBridgeOptimizer{BT, MT, T, OT}(model, MT(), Dict{CI, BT}())
+function SingleBridgeOptimizer{BT, MT}(model::OT) where {BT, MT, OT <: MOI.ModelLike}
+    SingleBridgeOptimizer{BT, MT, OT}(model, MT(), Dict{CI, BT}())
 end
 
 isbridged(b::SingleBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
-
 bridgetype(b::SingleBridgeOptimizer{BT}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) where BT = BT
 
 # :((Zeros, SecondOrderCone)) -> (:(MOI.Zeros), :(MOI.SecondOrderCone))
@@ -39,7 +44,8 @@ macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
 
     esc(quote
         $MOIU.@model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
-        const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, T, OT}
-        isbridged(b::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
+        const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, OT}
+        isbridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
+        supportsbridgingconstraint(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
     end)
 end
