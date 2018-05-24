@@ -70,7 +70,7 @@ end
 end
 
 # Model not supporting RotatedSecondOrderCone
-MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, PositiveSemidefiniteConeTriangle) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, ExponentialCone, PositiveSemidefiniteConeTriangle) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 
 @testset "LazyBridgeOptimizer" begin
     const mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
@@ -103,6 +103,10 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
 
     @testset "Continuous Linear" begin
         MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
+    end
+
+    @testset "Continuous Conic" begin
+        MOIT.contconictest(MOIB.fullbridgeoptimizer(mock, Float64), MOIT.TestConfig(solve=false), ["logdets", "rootdets", "psds"])
     end
 end
 
