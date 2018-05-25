@@ -1,6 +1,17 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.3.0 (May 25, 2018)
+---------------------
+
+- Functions have been redefined to use arrays-of-structs instead of
+  structs-of-arrays.
+- Improvements to `MockOptimizer`.
+- Significant changes to `Bridges`.
+- New and improved unit tests.
+- Fixes for Julia 0.7.
+
+
 v0.2.0 (April 24, 2018)
 -----------------------
 
