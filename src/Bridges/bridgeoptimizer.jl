@@ -122,11 +122,11 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfConstraints{F, S}
     end
 end
 MOI.canget(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints) = MOI.canget(b.model, attr) && MOI.canget(b.bridged, attr)
-_noc(b, fs) = MOI.get(b, MOI.NumberOfConstraints{fs...}())
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
-    loc = [MOI.get(b.model, attr); MOI.get(b.bridged, attr)]
-    rm = find(iszero.(_noc.(b, loc)))
-    deleteat!(loc, rm)
+    list_of_types = [MOI.get(b.model, attr); MOI.get(b.bridged, attr)]
+    types_to_remove = find(iszero.(map(FS -> MOI.get(b, MOI.NumberOfConstraints{FS...}()), list_of_types)))
+    deleteat!(list_of_types, types_to_remove)
+    list_of_types
 end
 for f in (:canget, :canset, :get, :get!)
     @eval begin
