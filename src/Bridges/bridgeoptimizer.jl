@@ -124,6 +124,10 @@ end
 MOI.canget(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints) = MOI.canget(b.model, attr) && MOI.canget(b.bridged, attr)
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
     list_of_types = [MOI.get(b.model, attr); MOI.get(b.bridged, attr)]
+    # Some constraint types show up in `list_of_types` while all the constraints
+    # of that type have been created by bridges and not by the user.
+    # The code in `NumberOfConstraints` takes care of removing these constraints
+    # from the counter so we can rely on it to remove these constraint types.
     types_to_remove = find(iszero.(map(FS -> MOI.get(b, MOI.NumberOfConstraints{FS...}()), list_of_types)))
     deleteat!(list_of_types, types_to_remove)
     list_of_types
