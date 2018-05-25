@@ -129,6 +129,7 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
         config = MOIT.TestConfig()
         MOIT.rootdett1vtest(fullbridgedmock, config)
         MOIT.rootdett1ftest(fullbridgedmock, config)
+        # Dual is not yet implemented for RootDet and GeoMean bridges
         @test !MOI.canget(fullbridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
         ci = first(MOI.get(fullbridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
         @test !MOI.canmodifyconstraint(fullbridgedmock, ci, MOI.VectorAffineFunction{Float64})
@@ -192,6 +193,7 @@ end
         bridgedmock = MOIB.GeoMean{Float64}(mock)
         MOIT.geomean1vtest(bridgedmock, config)
         MOIT.geomean1ftest(bridgedmock, config)
+        # Dual is not yet implemented for GeoMean bridge
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.GeometricMeanCone})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
@@ -230,6 +232,7 @@ end
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1, 0, 1, 0, 0])
         MOIT.logdett1vtest(bridgedmock, config)
         MOIT.logdett1ftest(bridgedmock, config)
+        # Dual is not yet implemented for LogDet bridge
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
@@ -241,6 +244,7 @@ end
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1])
         MOIT.rootdett1vtest(bridgedmock, config)
         MOIT.rootdett1ftest(bridgedmock, config)
+        # Dual is not yet implemented for RootDet bridge
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
         @test !MOI.canmodifyconstraint(bridgedmock, ci, MOI.VectorAffineFunction{Float64})
