@@ -171,8 +171,16 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     vc3 = MOI.addconstraint!(model, MOI.SingleVariable(v[3]), MOI.GreaterThan(0.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
 
-    @test MOI.canmodifyconstraint(model, c, MOI.ScalarCoefficientChange{Float64})
-    MOI.modifyconstraint!(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
+    if config.modify_lhs
+        @test MOI.canmodifyconstraint(model, c, MOI.ScalarCoefficientChange{Float64})
+        MOI.modifyconstraint!(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
+    else
+        @test MOI.candelete(model, c)
+        MOI.delete!(model, c)
+        cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
+        @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
+        c = MOI.addconstraint!(model, cf, MOI.LessThan(1.0))
+    end
 
     @test MOI.canmodifyobjective(model, MOI.ScalarCoefficientChange{Float64})
     MOI.modifyobjective!(model, MOI.ScalarCoefficientChange{Float64}(z, 2.0))
@@ -770,10 +778,19 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     #        1 x + 2 y <= 4
     #        x >= 0, y >= 0
     #
-    #   solution: x = 2, y = 0, objv = 2
-
-    @test MOI.canmodifyconstraint(model, c1, MOI.ScalarCoefficientChange{Float64})
-    MOI.modifyconstraint!(model, c1, MOI.ScalarCoefficientChange(y, 3.0))
+    #   solution: x = 2, y = 0, objv = 2  
+    
+    if config.modify_lhs
+        @test MOI.canmodifyconstraint(model, c1, MOI.ScalarCoefficientChange{Float64})
+        MOI.modifyconstraint!(model, c1, MOI.ScalarCoefficientChange(y, 3.0))
+    else
+        @test MOI.candelete(model, c1)
+        MOI.delete!(model, c1)
+        cf1 = MOI.ScalarAffineFunction([x, y], [2.0,3.0], 0.0)
+        @test MOI.canaddconstraint(model, typeof(cf1), MOI.LessThan{Float64})
+        c1 = MOI.addconstraint!(model, cf1, MOI.LessThan(4.0))
+    end
+    
     if config.solve
         MOI.optimize!(model)
 
@@ -961,8 +978,17 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     # Min  x - y
     # s.t. 100.0 <= x
     #               y <= 0.0
-    @test MOI.canmodifyconstraint(model, c1, MOI.VectorConstantChange{Float64})
-    MOI.modifyconstraint!(model, c1, MOI.VectorConstantChange([-100.0]))
+
+    if config.modify_lhs
+        @test MOI.canmodifyconstraint(model, c1, MOI.VectorConstantChange{Float64})
+        MOI.modifyconstraint!(model, c1, MOI.VectorConstantChange([-100.0]))
+    else
+        @test MOI.candelete(model, c1)
+        MOI.delete!(model, c1)
+        @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
+        c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[x],[1.0],[-100.0]), MOI.Nonnegatives(1))
+    end
+    
     if config.solve
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
@@ -976,8 +1002,17 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     # Min  x - y
     # s.t. 100.0 <= x
     #               y <= -100.0
-    @test MOI.canmodifyconstraint(model, c2, MOI.VectorConstantChange{Float64})
-    MOI.modifyconstraint!(model, c2, MOI.VectorConstantChange([100.0]))
+
+    if config.modify_lhs
+        @test MOI.canmodifyconstraint(model, c2, MOI.VectorConstantChange{Float64})
+        MOI.modifyconstraint!(model, c2, MOI.VectorConstantChange([100.0]))
+    else
+        @test MOI.candelete(model, c2)
+        MOI.delete!(model, c2)
+        @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
+        c2 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[y],[1.0],[100.0]), MOI.Nonpositives(1))
+    end
+    
     if config.solve
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
