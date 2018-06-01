@@ -31,26 +31,6 @@
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0],
              (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-1],
-             (MOI.SingleVariable,                MOI.GreaterThan{Float64}) => [0, 1]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0],
-             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-1],
-             (MOI.SingleVariable,                MOI.GreaterThan{Float64}) => [0, 1]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0, 1],
-             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-2],
-             (MOI.SingleVariable,                MOI.GreaterThan{Float64}) => [1, 2, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-1, 0, 2]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2, 0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 2, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0],
-             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})     => [-1.5],
-             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0.5],
-             (MOI.SingleVariable,                MOI.GreaterThan{Float64}) => [0, 0],
-             (MOI.SingleVariable,                MOI.EqualTo{Float64})     => [1.5]))
-    MOIT.linear1test(mock, config_no_lhs_modif)
-    MOIU.set_mock_optimize!(mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0],
-             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-1],
              (MOI.SingleVariable,                MOI.GreaterThan{Float64}) => [0, 1]))
     MOIT.linear2test(mock, config)
     MOIU.set_mock_optimize!(mock,
