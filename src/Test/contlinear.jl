@@ -174,7 +174,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.modify_lhs
         @test MOI.canmodifyconstraint(model, c, MOI.ScalarCoefficientChange{Float64})
         MOI.modifyconstraint!(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
-    else        
+    else
         @test MOI.candelete(model, c)
         MOI.delete!(model, c)
         cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0,1.0], v), 0.0)
