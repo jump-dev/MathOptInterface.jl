@@ -174,10 +174,10 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.modify_lhs
         @test MOI.canmodifyconstraint(model, c, MOI.ScalarCoefficientChange{Float64})
         MOI.modifyconstraint!(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
-    else
+    else        
         @test MOI.candelete(model, c)
         MOI.delete!(model, c)
-        cf = MOI.ScalarAffineFunction(v, [1.0,1.0,1.0], 0.0)
+        cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0,1.0], v), 0.0)
         @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
         c = MOI.addconstraint!(model, cf, MOI.LessThan(1.0))
     end
@@ -786,7 +786,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     else
         @test MOI.candelete(model, c1)
         MOI.delete!(model, c1)
-        cf1 = MOI.ScalarAffineFunction([x, y], [2.0,3.0], 0.0)
+        cf1 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0,3.0], [x,y]), 0.0)
         @test MOI.canaddconstraint(model, typeof(cf1), MOI.LessThan{Float64})
         c1 = MOI.addconstraint!(model, cf1, MOI.LessThan(4.0))
     end
@@ -984,9 +984,9 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
         MOI.modifyconstraint!(model, c1, MOI.VectorConstantChange([-100.0]))
     else
         @test MOI.candelete(model, c1)
-        MOI.delete!(model, c1)
+        MOI.delete!(model, c1)        
         @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
-        c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[x],[1.0],[-100.0]), MOI.Nonnegatives(1))
+        c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-100.0]), MOI.Nonnegatives(1))        
     end
     
     if config.solve
@@ -1010,7 +1010,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.candelete(model, c2)
         MOI.delete!(model, c2)
         @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
-        c2 = MOI.addconstraint!(model, MOI.VectorAffineFunction([1],[y],[1.0],[100.0]), MOI.Nonpositives(1))
+        c2 = MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [100.0]), MOI.Nonpositives(1))
     end
     
     if config.solve
