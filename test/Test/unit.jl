@@ -16,7 +16,9 @@ end
         "solve_affine_lessthan",
         "solve_affine_greaterthan",
         "solve_affine_equalto",
-        "solve_affine_interval"
+        "solve_affine_interval",
+        "solve_qp_edge_cases",
+        "solve_qcp_edge_cases"
         ])
 
     @testset "solve_blank_obj" begin
@@ -120,4 +122,37 @@ end
         )
         MOIT.solve_affine_interval(mock, config)
     end
+
+    @testset "solve_qcp_edge_cases" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [0.5, 0.5])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [0.5, (√13 - 1)/4])
+            )
+        )
+        MOIT.solve_qcp_edge_cases(mock, config)
+    end
+
+    @testset "solve_qp_edge_cases" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [1.0, 2.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [1.0, 2.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [1.0, 2.0])
+            )
+        )
+        MOIT.solve_qp_edge_cases(mock, config)
+    end
+
 end

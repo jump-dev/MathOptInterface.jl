@@ -132,3 +132,72 @@ function solve_affine_interval(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_affine_interval"] = solve_affine_interval
+
+"""
+    solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+
+Test various edge cases relating to quadratically constrainted programs (i.e.,
+with a ScalarQuadraticFunction-in-Set constraint.
+
+If `config.solve=true` confirm that it solves correctly.
+"""
+function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    @testset "Duplicate on-diagonal" begin
+        # max x + 2y | y + x^2 + x^2 <= 1, x >= 0.5, y >= 0.5
+        MOI.empty!(model)
+        x = MOI.addvariables!(model, 2)
+        MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction{Float64}(
+                MOI.ScalarAffineTerm{Float64}.([1.0, 2.0], x),
+                0.0
+            )
+        )
+        MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan{Float64}(0.5))
+        MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan{Float64}(0.5))
+        MOI.addconstraint!(model,
+            MOI.ScalarQuadraticFunction{Float64}(
+                MOI.ScalarAffineTerm{Float64}.([1.0], [x[2]]),  # affine terms
+                MOI.ScalarQuadraticTerm{Float64}.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
+                0.0  # constant
+            ),
+            MOI.LessThan{Float64}(1.0)
+        )
+        test_model_solution(model, config;
+            objective_value   = 1.5,
+            variable_primal   = [(x[1], 0.5), (x[2], 0.5)]
+        )
+    end
+    @testset "Duplicate off-diagonal" begin
+        # max x + 2y | x^2 + 0.25y*x + 0.25x*y + 0.5x*y + y^2 <= 1, x >= 0.5, y >= 0.5
+        MOI.empty!(model)
+        x = MOI.addvariables!(model, 2)
+        MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction{Float64}(
+                MOI.ScalarAffineTerm{Float64}.([1.0, 2.0], x),
+                0.0
+            )
+        )
+        MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan{Float64}(0.5))
+        MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan{Float64}(0.5))
+        MOI.addconstraint!(model,
+            MOI.ScalarQuadraticFunction{Float64}(
+                MOI.ScalarAffineTerm{Float64}[],  # affine terms
+                MOI.ScalarQuadraticTerm{Float64}.(
+                    [ 2.0, 0.25, 0.25,  0.5,  2.0],
+                    [x[1], x[1], x[2], x[1], x[2]],
+                    [x[1], x[2], x[1], x[2], x[2]]),  # quad
+                0.0  # constant
+            ),
+            MOI.LessThan{Float64}(1.0)
+        )
+        test_model_solution(model, config;
+            objective_value   = 0.5 + (√13-1)/2,
+            variable_primal   = [(x[1], 0.5), (x[2], (√13-1)/4)]
+        )
+    end
+end
+unittests["solve_qcp_edge_cases"] = solve_qcp_edge_cases
