@@ -192,18 +192,3 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_with_lowerbound"] = solve_with_lowerbound
-
-"""
-    multiple_variable_types(model::MOI.ModelLike, config::TestConfig)
-
-
-"""
-function multiple_variable_types(model::MOI.ModelLike, config::TestConfig)
-    MOI.empty!(model)
-    x = MOI.addvariable!(m)
-    MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.ZeroOne())
-    @test_throws Exception MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Integer())
-    @test_throws Exception MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Semiinteger(3.0,4.0))
-    @test_throws Exception MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.Semicontinuous(3.0,4.0))
-end
-unittests["multiple_variable_types"] = multiple_variable_types
