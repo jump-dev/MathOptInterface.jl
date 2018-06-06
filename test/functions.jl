@@ -3,6 +3,14 @@
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
+    @testset "VectorAffineTerm/VectorQuadraticTerm construction" begin
+        scalaraffine = MOI.ScalarAffineTerm(2.0, z)
+        @test MOI.VectorAffineTerm(Int32(3), scalaraffine) === MOI.VectorAffineTerm(Int64(3), scalaraffine)
+        @test MOI.VectorAffineTerm{Float64}(Int32(3), scalaraffine) === MOI.VectorAffineTerm(Int64(3), scalaraffine)
+        scalarquad = MOI.ScalarQuadraticTerm(2.0, y, z)
+        @test MOI.VectorQuadraticTerm(Int32(3), scalarquad) === MOI.VectorQuadraticTerm(Int64(3), scalarquad)
+        @test MOI.VectorQuadraticTerm{Float64}(Int32(3), scalarquad) === MOI.VectorQuadraticTerm(Int64(3), scalarquad)
+    end
     @testset "evalvariables" begin
         # We do tests twice to make sure the function is not modified
         vals = Dict(w=>0, x=>3, y=>1, z=>5)

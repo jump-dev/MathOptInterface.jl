@@ -88,6 +88,10 @@ struct VectorAffineTerm{T}
     scalar_term::ScalarAffineTerm{T}
 end
 
+function VectorAffineTerm(output_index::Base.Integer, scalar_term::ScalarAffineTerm)
+    VectorAffineTerm(convert(Int64, output_index), scalar_term)
+end
+
 """
     VectorAffineFunction{T}(terms, constants)
 
@@ -154,6 +158,10 @@ distinct sparse matrix ``Q_i``.
 struct VectorQuadraticTerm{T}
     output_index::Int64
     scalar_term::ScalarQuadraticTerm{T}
+end
+
+function VectorQuadraticTerm(output_index::Base.Integer, scalar_term::ScalarQuadraticTerm)
+    VectorQuadraticTerm(convert(Int64, output_index), scalar_term)
 end
 
 
