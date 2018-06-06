@@ -132,3 +132,115 @@ function solve_affine_interval(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_affine_interval"] = solve_affine_interval
+
+"""
+    solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+
+Test various edge cases relating to quadratically constrainted programs (i.e.,
+with a ScalarQuadraticFunction-in-Set constraint.
+
+If `config.solve=true` confirm that it solves correctly.
+"""
+function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    @testset "Duplicate on-diagonal" begin
+        # max x + 2y | y + x^2 + x^2 <= 1, x >= 0.5, y >= 0.5
+        MOI.empty!(model)
+        x = MOI.addvariables!(model, 2)
+        MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
+        )
+        MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(0.5))
+        MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(0.5))
+        MOI.addconstraint!(model,
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm.([1.0], [x[2]]),  # affine terms
+                MOI.ScalarQuadraticTerm.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
+                0.0  # constant
+            ),
+            MOI.LessThan(1.0)
+        )
+        test_model_solution(model, config;
+            objective_value   = 1.5,
+            variable_primal   = [(x[1], 0.5), (x[2], 0.5)]
+        )
+    end
+    @testset "Duplicate off-diagonal" begin
+        # max x + 2y | x^2 + 0.25y*x + 0.25x*y + 0.5x*y + y^2 <= 1, x >= 0.5, y >= 0.5
+        MOI.empty!(model)
+        x = MOI.addvariables!(model, 2)
+        MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
+        )
+        MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan{Float64}(0.5))
+        MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan{Float64}(0.5))
+        MOI.addconstraint!(model,
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm{Float64}[],  # affine terms
+                MOI.ScalarQuadraticTerm.(
+                    [ 2.0, 0.25, 0.25,  0.5,  2.0],
+                    [x[1], x[1], x[2], x[1], x[2]],
+                    [x[1], x[2], x[1], x[2], x[2]]),  # quad
+                0.0  # constant
+            ),
+            MOI.LessThan(1.0)
+        )
+        test_model_solution(model, config;
+            objective_value   = 0.5 + (√13-1)/2,
+            variable_primal   = [(x[1], 0.5), (x[2], (√13-1)/4)]
+        )
+    end
+end
+unittests["solve_qcp_edge_cases"] = solve_qcp_edge_cases
+
+"""
+    solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConfig)
+
+Test various edge cases relating to deleting affine constraints. This requires
+    + ScalarAffineFunction-in-LessThan; and
+    + VectorAffineFunction-in-Nonpositives.
+
+If `config.solve=true` confirm that it solves correctly.
+"""
+function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.addvariable!(model)
+    # helpers. The function 1.0x + 0.0
+    saf  = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], x), 0.0)
+    vaf  = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [0.0])
+    vaf2 = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-2.0])
+    # max x
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), saf)
+    # test adding a VectorAffineFunction -in- LessThan
+    c1 = MOI.addconstraint!(model, vaf, MOI.Nonpositives(1))
+    test_model_solution(model, config; objective_value = 0.0,
+        constraint_primal = [(c1, [0.0])]
+    )
+    # test adding a ScalarAffineFunction -in- LessThan
+    c2 = MOI.addconstraint!(model, saf, MOI.LessThan(1.0))
+    test_model_solution(model, config; objective_value = 0.0,
+        constraint_primal = [(c1, [0.0]), (c2, 0.0)]
+    )
+    # now delete the VectorAffineFunction
+    @test MOI.candelete(model, c1)
+    MOI.delete!(model, c1)
+    test_model_solution(model, config; objective_value = 1.0,
+        constraint_primal = [(c2, 1.0)]
+    )
+    # add a different VectorAffineFunction constraint
+    c3 = MOI.addconstraint!(model, vaf2, MOI.Nonpositives(1))
+    test_model_solution(model, config; objective_value = 1.0,
+        constraint_primal = [(c2, 1.0), (c3, [-1.0])]
+    )
+    # delete the ScalarAffineFunction
+    @test MOI.candelete(model, c2)
+    MOI.delete!(model, c2)
+    test_model_solution(model, config; objective_value = 2.0,
+        constraint_primal = [(c3, [0.0])]
+    )
+end
+unittests["solve_affine_deletion_edge_cases"] = solve_affine_deletion_edge_cases
