@@ -149,20 +149,17 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
         MOI.set!(model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-            MOI.ScalarAffineFunction{Float64}(
-                MOI.ScalarAffineTerm{Float64}.([1.0, 2.0], x),
-                0.0
-            )
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
         )
-        MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan{Float64}(0.5))
-        MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan{Float64}(0.5))
+        MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(0.5))
+        MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(0.5))
         MOI.addconstraint!(model,
-            MOI.ScalarQuadraticFunction{Float64}(
-                MOI.ScalarAffineTerm{Float64}.([1.0], [x[2]]),  # affine terms
-                MOI.ScalarQuadraticTerm{Float64}.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm.([1.0], [x[2]]),  # affine terms
+                MOI.ScalarQuadraticTerm.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
                 0.0  # constant
             ),
-            MOI.LessThan{Float64}(1.0)
+            MOI.LessThan(1.0)
         )
         test_model_solution(model, config;
             objective_value   = 1.5,
@@ -176,23 +173,20 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
         MOI.set!(model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-            MOI.ScalarAffineFunction{Float64}(
-                MOI.ScalarAffineTerm{Float64}.([1.0, 2.0], x),
-                0.0
-            )
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
         )
         MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan{Float64}(0.5))
         MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan{Float64}(0.5))
         MOI.addconstraint!(model,
-            MOI.ScalarQuadraticFunction{Float64}(
+            MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm{Float64}[],  # affine terms
-                MOI.ScalarQuadraticTerm{Float64}.(
+                MOI.ScalarQuadraticTerm.(
                     [ 2.0, 0.25, 0.25,  0.5,  2.0],
                     [x[1], x[1], x[2], x[1], x[2]],
                     [x[1], x[2], x[1], x[2], x[2]]),  # quad
                 0.0  # constant
             ),
-            MOI.LessThan{Float64}(1.0)
+            MOI.LessThan(1.0)
         )
         test_model_solution(model, config;
             objective_value   = 0.5 + (√13-1)/2,
@@ -205,7 +199,9 @@ unittests["solve_qcp_edge_cases"] = solve_qcp_edge_cases
 """
     solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
-Test various edge cases relating to deleting affine constraints.
+Test various edge cases relating to deleting affine constraints. This requires
+    + ScalarAffineFunction-in-LessThan; and
+    + VectorAffineFunction-in-Nonpositives.
 
 If `config.solve=true` confirm that it solves correctly.
 """
