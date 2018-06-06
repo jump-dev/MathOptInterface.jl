@@ -201,3 +201,50 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_qcp_edge_cases"] = solve_qcp_edge_cases
+
+"""
+    solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConfig)
+
+Test various edge cases relating to deleting affine constraints.
+
+If `config.solve=true` confirm that it solves correctly.
+"""
+function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.addvariable!(model)
+    # helpers. The function 1.0x + 0.0
+    saf  = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], x), 0.0)
+    vaf  = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [0.0])
+    vaf2 = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-2.0])
+    # max x
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), saf)
+    # test adding a VectorAffineFunction -in- LessThan
+    c1 = MOI.addconstraint!(model, vaf, MOI.Nonpositives(1))
+    test_model_solution(model, config; objective_value = 0.0,
+        constraint_primal = [(c1, [0.0])]
+    )
+    # test adding a ScalarAffineFunction -in- LessThan
+    c2 = MOI.addconstraint!(model, saf, MOI.LessThan(1.0))
+    test_model_solution(model, config; objective_value = 0.0,
+        constraint_primal = [(c1, [0.0]), (c2, 0.0)]
+    )
+    # now delete the VectorAffineFunction
+    @test MOI.candelete(model, c1)
+    MOI.delete!(model, c1)
+    test_model_solution(model, config; objective_value = 1.0,
+        constraint_primal = [(c2, 1.0)]
+    )
+    # add a different VectorAffineFunction constraint
+    c3 = MOI.addconstraint!(model, vaf2, MOI.Nonpositives(1))
+    test_model_solution(model, config; objective_value = 1.0,
+        constraint_primal = [(c2, 1.0), (c3, [-1.0])]
+    )
+    # delete the ScalarAffineFunction
+    @test MOI.candelete(model, c2)
+    MOI.delete!(model, c2)
+    test_model_solution(model, config; objective_value = 2.0,
+        constraint_primal = [(c3, [0.0])]
+    )
+end
+unittests["solve_affine_deletion_edge_cases"] = solve_affine_deletion_edge_cases
