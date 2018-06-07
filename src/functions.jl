@@ -56,6 +56,10 @@ struct ScalarAffineTerm{T}
     variable_index::VariableIndex
 end
 
+# Note: ScalarAffineFunction is mutable because its `constant` field is likely of an immutable
+# type, while its `terms` field is of a mutable type, meaning that creating a `ScalarAffineFunction`
+# allocates, and it is desirable to provide a zero-allocation option for working with
+# ScalarAffineFunctions. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
 """
     ScalarAffineFunction{T}(terms, constant)
 
@@ -67,7 +71,7 @@ The scalar-valued affine function ``a^T x + b``, where:
 Duplicate variable indices in `terms` are accepted, and the corresponding
 coefficients are summed together.
 """
-struct ScalarAffineFunction{T} <: AbstractScalarFunction
+mutable struct ScalarAffineFunction{T} <: AbstractScalarFunction
     terms::Vector{ScalarAffineTerm{T}}
     constant::T
 end
@@ -124,7 +128,10 @@ struct ScalarQuadraticTerm{T}
     variable_index_2::VariableIndex
 end
 
-
+# Note: ScalarQuadraticFunction is mutable because its `constant` field is likely of an immutable
+# type, while its other fields are of mutable types, meaning that creating a `ScalarQuadraticFunction`
+# allocates, and it is desirable to provide a zero-allocation option for working with
+# ScalarQuadraticFunctions. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
 """
     ScalarQuadraticFunction{T}(affine_terms, quadratic_terms, constant)
 
@@ -139,7 +146,7 @@ coefficients are summed together. "Mirrored" indices `(q,r)` and `(r,q)` (where
 `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be
 specified.
 """
-struct ScalarQuadraticFunction{T} <: AbstractScalarFunction
+mutable struct ScalarQuadraticFunction{T} <: AbstractScalarFunction
     affine_terms::Vector{ScalarAffineTerm{T}}
     quadratic_terms::Vector{ScalarQuadraticTerm{T}}
     constant::T
@@ -229,6 +236,10 @@ struct ScalarCoefficientChange{T} <: AbstractFunctionModification
     new_coefficient::T
 end
 
+# Note: MultiRowChange is mutable because its `variable` field of an immutable
+# type, while `new_coefficients` is of a mutable type, meaning that creating a `MultiRowChange`
+# allocates, and it is desirable to provide a zero-allocation option for working with
+# MultiRowChanges. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
 """
     MultirowChange{T}(variable, new_coefficients)
 
@@ -237,7 +248,7 @@ variable in a vector-valued function. New coefficients are specified by
 `(output_index, coefficient)` tuples. Applicable to `VectorAffineFunction` and
 `VectorQuadraticFunction`.
 """
-struct MultirowChange{T} <: AbstractFunctionModification
+mutable struct MultirowChange{T} <: AbstractFunctionModification
     variable::VariableIndex
     new_coefficients::Vector{Tuple{Int64, T}}
 end
