@@ -309,7 +309,7 @@ modifyfunction(f::MOI.VectorQuadraticFunction, change::MOI.VectorConstantChange)
 
 function _modifycoefficient(terms::Vector{<:MOI.ScalarAffineTerm}, variable::MOI.VariableIndex, new_coefficient)
     terms = copy(terms)
-    i = coalesce(findfirst(t -> _hasvar(t, variable), terms), 0)
+    i = something(findfirst(t -> _hasvar(t, variable), terms), 0)
     if iszero(i)
         # The variable was not already in the function
         if !iszero(new_coefficient)
