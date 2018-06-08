@@ -24,7 +24,7 @@ A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 """
 mutable struct CachingOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     model_cache::MT
-    optimizer::Union{Void,MOI.AbstractOptimizer}
+    optimizer::Union{Nothing,MOI.AbstractOptimizer}
     state::CachingOptimizerState
     mode::CachingOptimizerMode
     model_to_optimizer_map::IndexMap
