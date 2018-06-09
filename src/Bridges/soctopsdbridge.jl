@@ -64,6 +64,7 @@ end
 _SOCtoPSDCaff(f::MOI.VectorOfVariables, ::Type{T}) where T = _SOCtoPSDCaff(MOI.VectorAffineFunction{T}(f), T)
 _SOCtoPSDCaff(f::MOI.VectorAffineFunction, ::Type) = _SOCtoPSDCaff(f, MOIU.eachscalar(f)[1])
 
+MOI.supportsconstraint(::Type{SOCtoPSDCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.SecondOrderCone}) where T = true
 supportedconstrainttypes(::Type{SOCtoPSDCBridge{T}}) where T = [(MOI.VectorOfVariables, MOI.SecondOrderCone), (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone)]
 addedconstrainttypes(::Type{SOCtoPSDCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.SecondOrderCone}) where T = [(MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle)]
 
@@ -115,6 +116,7 @@ struct RSOCtoPSDCBridge{T} <: AbstractBridge
     dim::Int
     cr::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
 end
+MOI.supportsconstraint(::Type{RSOCtoPSDCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = true
 supportedconstrainttypes(::Type{RSOCtoPSDCBridge{T}}) where T = [(MOI.VectorOfVariables, MOI.RotatedSecondOrderCone), (MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
 addedconstrainttypes(::Type{RSOCtoPSDCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = [(MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle)]
 function RSOCtoPSDCBridge{T}(instance, f, s::MOI.RotatedSecondOrderCone) where T

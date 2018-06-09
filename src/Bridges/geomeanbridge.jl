@@ -91,6 +91,7 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
     GeoMeanBridge(d, xij, tubc, socrc)
 end
 
+MOI.supportsconstraint(::Type{GeoMeanBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.GeometricMeanCone}) where T = true
 supportedconstrainttypes(::Type{GeoMeanBridge{T}}) where T = [(MOI.VectorOfVariables, MOI.GeometricMeanCone), (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone)]
 addedconstrainttypes(::Type{GeoMeanBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.GeometricMeanCone}) where T = [(MOI.ScalarAffineFunction{T}, MOI.LessThan{T}), (MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
 
