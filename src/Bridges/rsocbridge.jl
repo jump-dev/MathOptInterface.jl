@@ -35,7 +35,7 @@ function RSOCBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSeco
     RSOCBridge{T}(soc)
 end
 
-supportedconstrainttypes(::Type{RSOCBridge{T}}) where T = [(MOI.VectorOfVariables, MOI.RotatedSecondOrderCone), (MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
+MOI.supportsconstraint(::Type{RSOCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = true
 addedconstrainttypes(::Type{RSOCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = [(MOI.VectorAffineFunction{T}, MOI.SecondOrderCone)]
 
 # Attributes, Bridge acting as an model
