@@ -139,7 +139,7 @@ end
         instance = MOF.MOFInstance()
         v = MOI.addvariable!(instance)
         f = MOI.ScalarAffineFunction([v, v], [1.0, 2.0], 3.0)
-        MOI.set!(instance, MOI.ObjectiveFunction(),f)
+        MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),f)
         MOI.set!(instance, MOI.ObjectiveSense(), MOI.MinSense)
         @test MOI.canaddconstraint(instance,
             MOI.ScalarAffineFunction([v], [1.0], 0.0),
@@ -223,7 +223,7 @@ end
         @test MOI.get(instance, MOI.ListOfVariableIndices()) == [x,y]
 
         c = MOI.ScalarAffineFunction([x, y], [2.0, -1.0], 0.0)
-        MOI.set!(instance, MOI.ObjectiveFunction(), c)
+        MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), c)
         MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
         @test MOI.canaddconstraint(instance,
             MOI.ScalarAffineFunction([x], [2.0], 1.0),
@@ -280,7 +280,7 @@ end
         instance = MOF.MOFInstance()
 
         (x1, x2, x3) = MOI.addvariables!(instance, 3)
-        MOI.set!(instance, MOI.ObjectiveFunction(),
+        MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
             MOI.ScalarQuadraticFunction(
                 [x1, x2],
                 [2.0, -1.0],
@@ -330,13 +330,13 @@ end
         @test MOI.canset(instance, MOI.VariableName(), y)
         MOI.set!(instance, MOI.VariableName(), y, "y")
 
-        @test MOI.canset(instance, MOI.ObjectiveFunction(),
+        @test MOI.canset(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
             MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
         )
         obj = MOI.ScalarAffineFunction([x, y], [1.0, -1.0], 0.0)
-        MOI.set!(instance, MOI.ObjectiveFunction(), obj)
-        @test MOI.canget(instance, MOI.ObjectiveFunction())
-        obj2 = MOI.get(instance, MOI.ObjectiveFunction())
+        MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), obj)
+        @test MOI.canget(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+        obj2 = MOI.get(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
         @test obj.variables == obj2.variables
         @test obj.coefficients == obj2.coefficients
         @test obj.constant == obj2.constant
@@ -384,7 +384,7 @@ end
             MOI.ScalarAffineFunction([v[1],v[2]], [1.0,1.0], 0.0),
             MOI.GreaterThan(1.0)
         )
-        MOI.set!(instance, MOI.ObjectiveFunction(),
+        MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
             MOI.ScalarQuadraticFunction(
                 MOI.VariableIndex[],
                 Float64[],
@@ -418,7 +418,7 @@ end
         @test MOI.canaddconstraint(instance, f, MOI.LessThan(2.0))
         MOI.addconstraint!(instance, f, MOI.LessThan(2.0))
 
-        MOI.set!(instance, MOI.ObjectiveFunction(), MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
+        MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([x,y], [1.0,1.0], 0.0))
         MOI.set!(instance, MOI.ObjectiveSense(), MOI.MaxSense)
         WRITEFILES && MOI.write(instance, problempath("qcp.mof.json"), 1)
         @test stringify(instance) == getproblem("qcp.mof.json")
@@ -556,7 +556,7 @@ end
             MOI.RootDetConeSquare(3)
         )
 
-        MOI.set!(instance, MOI.ObjectiveFunction(),
+        MOI.set!(instance, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
             MOI.ScalarAffineFunction(
                 MOI.VariableIndex[],
                 Float64[],

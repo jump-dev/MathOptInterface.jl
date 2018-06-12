@@ -90,7 +90,7 @@ function MOI.get(m::MOFInstance, ::Type{MOI.ListOfConstraintIndices})
 end
 MOI.canget(m::MOFInstance, ::Type{MOI.ListOfConstraintIndices}) = true
 
-function MOI.copy!(dest::MOI.AbstractInstance, src::MOFInstance)
+function MOI.copy!(dest::MOI.AbstractOptimizer, src::MOFInstance)
     numvar = MOI.get(src, MOI.NumberOfVariables())
     destv = MOI.addvariables!(dest, numvar)
     srcv  = MOI.get(src, MOI.ListOfVariableIndices())
@@ -109,9 +109,9 @@ function MOI.copy!(dest::MOI.AbstractInstance, src::MOFInstance)
     sense = MOI.get(src, MOI.ObjectiveSense())
     MOI.set!(dest, MOI.ObjectiveSense(), sense)
 
-    objfunc = MOI.get(src, MOI.ObjectiveFunction())
+    objfunc = MOI.get(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     objfunc = rereference!(objfunc, variablemap)
-    MOI.set!(dest, MOI.ObjectiveFunction(), objfunc)
+    MOI.set!(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objfunc)
 
     # ============
     #   Find a way to loop through constraint references

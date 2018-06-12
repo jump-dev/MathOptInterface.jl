@@ -12,7 +12,7 @@ mutable struct CurrentReference
     variable::UInt64
     constraint::UInt64
 end
-struct MOFInstance <: MOI.AbstractStandaloneInstance
+struct MOFInstance <: MOI.AbstractOptimizer
     d::Object
     # an extension dictionary to help MOI reading/writing
     # should be improved later
