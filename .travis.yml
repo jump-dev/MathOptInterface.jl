@@ -5,17 +5,11 @@ os:
 #  - osx
 julia:
   - 0.6
-#  - nightly
+  - 0.7
 notifications:
   email: false
 git:
   depth: 99999999
-
-## uncomment the following lines to allow failures on nightly julia
-## (tests will run but not make your overall status red)
-matrix:
-  allow_failures:
-  - julia: nightly
 
 # Integration with JuMP-dev gitter channel
 notifications:
