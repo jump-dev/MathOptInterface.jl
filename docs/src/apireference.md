@@ -44,6 +44,7 @@ Copying
 copy!
 CopyResult
 CopyStatusCode
+emptycopy
 ```
 
 List of model attributes

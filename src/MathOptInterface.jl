@@ -147,6 +147,27 @@ end
 """
 function copy! end
 
+"""
+    emptycopy(model::ModelLike)
+
+Return an independent empty copy of `model`. This can be used to duplicate a
+`model` and modify it without affecting the original model.
+
+### Example
+
+Consider the following example:
+```julia
+# Given a model `model`
+dup = emptycopy(model)
+copy_result = copy!(dup, model)
+```
+After `copy!`, `dup` and `model` are equivalent but may have different indices
+for corresponding variables and constraints. The map `copy_result.indexmap` can
+be used to get the correspondance between indices.
+```
+"""
+function emptycopy end
+
 include("indextypes.jl")
 include("functions.jl")
 include("sets.jl")
