@@ -205,7 +205,7 @@ An abstract supertype for structs which specify partial modifications to functio
 abstract type AbstractFunctionModification end
 
 """
-    ScalarConstantChange{T}(new_constant)
+    ScalarConstantChange{T}(new_constant::T)
 
 A struct used to request a change in the constant term of a scalar-valued function.
 Applicable to `ScalarAffineFunction` and `ScalarQuadraticFunction`.
@@ -215,7 +215,7 @@ struct ScalarConstantChange{T} <: AbstractFunctionModification
 end
 
 """
-    VectorConstantChange{T}(new_constant)
+    VectorConstantChange{T}(new_constant::Vector{T})
 
 A struct used to request a change in the constant vector of a vector-valued function.
 Applicable to `VectorAffineFunction` and `VectorQuadraticFunction`.
@@ -225,7 +225,7 @@ struct VectorConstantChange{T} <: AbstractFunctionModification
 end
 
 """
-    ScalarCoefficientChange{T}(variable, new_coefficient)
+    ScalarCoefficientChange{T}(variable::VariableIndex, new_coefficient::T)
 
 A struct used to request a change in the linear coefficient of a single variable
 in a scalar-valued function.
@@ -241,7 +241,7 @@ end
 # allocates, and it is desirable to provide a zero-allocation option for working with
 # MultiRowChanges. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
 """
-    MultirowChange{T}(variable, new_coefficients)
+    MultirowChange{T}(variable::VariableIndex, new_coefficients::Vector{Tuple{Int64, T}})
 
 A struct used to request a change in the linear coefficients of a single
 variable in a vector-valued function. New coefficients are specified by
