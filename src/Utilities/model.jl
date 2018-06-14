@@ -495,10 +495,10 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
     code = quote
         function $MOIU.broadcastcall(f::Function, model::$modelname)
-            $(Expr(:block, _broadcastfield.(:($MOIU.broadcastcall), funs)...))
+            $(Expr(:block, _broadcastfield.(Ref(:($MOIU.broadcastcall)), funs)...))
         end
         function $MOIU.broadcastvcat(f::Function, model::$modelname)
-            vcat($(_broadcastfield.(:($MOIU.broadcastvcat), funs)...))
+            vcat($(_broadcastfield.(Ref(:($MOIU.broadcastvcat)), funs)...))
         end
         function $MOI.empty!(model::$modelname{T}) where T
             model.name = ""
@@ -514,7 +514,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             model.connames = Dict{Int64, String}()
             model.namescon = Dict{String, $CI}()
             model.constrmap = Int[]
-            $(Expr(:block, _callfield.(:($MOI.empty!), funs)...))
+            $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
     end
     for (cname, sets) in ((scname, scalarsets), (vcname, vectorsets))
@@ -527,7 +527,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                 vcat($(_callfield.(:f, sets)...))
             end
             function $MOI.empty!(model::$cname)
-                $(Expr(:block, _callfield.(:(Base.empty!), sets)...))
+                $(Expr(:block, _callfield.(Ref(:(Base.empty!)), sets)...))
             end
         end
     end
