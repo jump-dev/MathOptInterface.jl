@@ -201,6 +201,12 @@ VectorQuadraticTerm
 VectorQuadraticFunction
 ```
 
+Functions for getting and setting properties of sets.
+
+```@docs
+output_dimension
+```
+
 List of function modifications.
 ```@docs
 ScalarConstantChange
