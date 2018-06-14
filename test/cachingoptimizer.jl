@@ -171,8 +171,6 @@ end
         @test MOI.isempty(m)
         @test MOIU.state(m) == MOIU.AttachedOptimizer
         @test MOIU.mode(m) == MOIU.Automatic
-        @test_throws MethodError MOIU.dropoptimizer!(m)
-        @test_throws MethodError MOIU.resetoptimizer!(m, s)
     end
     @testset "Non-empty optimizer" begin
         s = MOIU.MockOptimizer(ModelForMock{Float64}())
