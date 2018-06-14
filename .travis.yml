@@ -30,7 +30,7 @@ notifications:
 
 ## uncomment the following lines to override the default test script
 script:
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("MathOptInterface")' # warnings here about needed to do using Pkg but it also installs Compat
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("MathOptInterface"); Pkg.add("Compat")' # warnings here about needed to do using Pkg but it also installs Compat
   - julia --depwarn=error -e 'using Compat; using Compat.Pkg; Pkg.test("MathOptInterface"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
