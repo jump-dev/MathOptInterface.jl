@@ -97,8 +97,8 @@ function MOI.get(b::AbstractBridgeOptimizer, loc::MOI.ListOfConstraintIndices{F,
     end
     for bridge in values(b.bridges)
         for c in MOI.get(bridge, loc)
-            i = findfirst(locr, c)
-            if (VERSION >= v"0.7.0-DEV.3395" && i !== nothing) || (VERSION < v"0.7.0-DEV.3395" && !iszero(i))
+            i = something(findfirst(isequal(c), locr), 0)
+            if !iszero(i)
                 MOI.deleteat!(locr, i)
             end
         end
@@ -128,7 +128,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
     # of that type have been created by bridges and not by the user.
     # The code in `NumberOfConstraints` takes care of removing these constraints
     # from the counter so we can rely on it to remove these constraint types.
-    types_to_remove = find(iszero.(map(FS -> MOI.get(b, MOI.NumberOfConstraints{FS...}()), list_of_types)))
+    types_to_remove = findall(iszero.(map(FS -> MOI.get(b, MOI.NumberOfConstraints{FS...}()), list_of_types)))
     deleteat!(list_of_types, types_to_remove)
     list_of_types
 end

@@ -283,7 +283,7 @@ _pair(t::ScalarAffineTerm) = t.variable_index => t.coefficient
 _canonicalize(v1::VariableIndex, v2::VariableIndex) = VariableIndex.(extrema((v1.value, v2.value)))
 _pair(t::ScalarQuadraticTerm) = _canonicalize(t.variable_index_1, t.variable_index_2) => t.coefficient
 
-_dicts(f::Union{ScalarAffineFunction, VectorAffineFunction}) = sum_dict(_pair.(f.terms))
+_dicts(f::Union{ScalarAffineFunction, VectorAffineFunction}) = (sum_dict(_pair.(f.terms)),)
 
 _dicts(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction}) = (sum_dict(_pair.(f.affine_terms)),
                                                                       sum_dict(_pair.(f.quadratic_terms)))

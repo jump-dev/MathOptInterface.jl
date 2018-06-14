@@ -71,7 +71,7 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
     tubc = MOI.addconstraint!(model, MOI.ScalarAffineFunction([t.terms; MOI.ScalarAffineTerm(-sN, xl1)], t.constant), MOI.LessThan(zero(T)))
 
-    socrc = Vector{CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}}(N-1)
+    socrc = Vector{CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}}(undef, N-1)
     offset = offsetnext = 0
     for i in 1:l
         offsetnext = offset + i
@@ -114,7 +114,7 @@ function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{GeoMea
     MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone})
 end
 function _getconstrattr(model, a, c::GeoMeanBridge{T}) where T
-    output = Vector{T}(c.d)
+    output = Vector{T}(undef, c.d)
     output[1] = MOI.get(model, a, c.tubc)
     N = length(c.xij)+1
     offset = div(N, 2) - 1 # 1 + 2 + ... + n/4

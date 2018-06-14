@@ -31,8 +31,8 @@ function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintI
 end
 
 @testset "BridgeOptimizer" begin
-    const mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-    const bridgedmock = MOIB.SplitInterval{Float64}(mock)
+    mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+    bridgedmock = MOIB.SplitInterval{Float64}(mock)
 
     @testset "Name test" begin
         MOIT.nametest(bridgedmock)
@@ -47,7 +47,7 @@ end
     end
 
     @testset "Custom test" begin
-        const model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
+        model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
         @test !MOIB.supportsbridgingconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
 
         x, y = MOI.addvariables!(model, 2)
@@ -95,8 +95,8 @@ end
 MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, ExponentialCone, PositiveSemidefiniteConeTriangle) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 
 @testset "LazyBridgeOptimizer" begin
-    const mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
-    const bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
+    mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
+    bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
     MOIB.addbridge!(bridgedmock, MOIB.SplitIntervalBridge{Float64})
     MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDCBridge{Float64})
     MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDCBridge{Float64})
