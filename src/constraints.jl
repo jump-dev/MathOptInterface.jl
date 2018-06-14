@@ -45,12 +45,13 @@ addconstraints!(model::ModelLike, funcs, sets) = addconstraint!.(model, funcs, s
 
 
 """
-    canset(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, ::Type{S})::Bool
+    canset(model::ModelLike, ::ConstraintSet, ::Type{ConstraintIndex{F,S}})::Bool
 
-Return a `Bool` indicating whether the set in constraint `c` can be replaced by
-another set of the same type `S` as the original set.
+Return a `Bool` indicating whether the set in a constraint of type `F`-in-`S`
+can be replaced by another set of the same type `S` as the original set.
 """
-canset(model::ModelLike, ::ConstraintSet, c::ConstraintIndex, ::Type{S}) where S = false
+canset(model::ModelLike, ::ConstraintSet, type_of_constraint_set) = false
+# Note: the above method is deliberately under-typed to avoid method ambiguities
 
 """
     set!(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, set::S)
@@ -67,13 +68,20 @@ set!(model, ConstraintSet(), c, Interval(0, 5))
 set!(model, ConstraintSet(), c, NonPositives)    # Error
 ```
 """
-function set!(model::ModelLike, cs::ConstraintSet, c::ConstraintIndex{F,S1}, s::S2) where F where  S1 where S2
-    if S1 != S2  # throw helpful error
-        error("Cannot modify sets of different types. Use `transformconstraint!` instead.")
-    else  # throw original error suggesting that it is not implemented
-        throw(MethodError(set!, (model, cs, c, s)))
+function set!(model::ModelLike, ::ConstraintSet, constraint_index, set)
+    # note: we deliberately avoid typing the last two arguments to avoid
+    # ambiguity errors. If solvers don't catch the case where the set is
+    # different, it should still fall back to this method.
+    if typeof(constraint_index) <: ConstraintIndex && typeof(set) <: AbstractSet
+        if set_type(constraint_index) != typeof(set)
+            # throw helpful error
+            error("Cannot modify sets of different types. Use `transformconstraint!` instead.")
+        end
     end
+    # throw original error suggesting that it is not implemented
+    throw(MethodError(set!, (model, ConstraintSet(), constraint_index, set)))
 end
+set_type(c::ConstraintIndex{F,S}) where {F, S} = S
 
 """
 ## Modify Function

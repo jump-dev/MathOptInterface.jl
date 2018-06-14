@@ -210,7 +210,7 @@ function MOI.modifyconstraint!(mock::MockOptimizer, c::CI, change)
     MOI.modifyconstraint!(mock.inner_model, xor_index(c), xor_variables(change))
 end
 
-MOI.canset(mock::MockOptimizer, ::MOI.ConstraintSet, c::CI{F,S}, set::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = true
+MOI.canset(mock::MockOptimizer, ::MOI.ConstraintSet, ::Type{C}) where C <: CI = true
 function MOI.set!(mock::MockOptimizer, ::MOI.ConstraintSet, c::CI{F,S}, set::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     MOI.set!(mock.inner_model, MOI.ConstraintSet(), xor_index(c), set)
 end

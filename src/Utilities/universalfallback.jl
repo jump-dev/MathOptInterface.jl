@@ -155,11 +155,11 @@ MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.Abstra
 MOI.canmodifyconstraint(uf::UniversalFallback, ci::CI, change) = MOI.canmodifyconstraint(uf.model, ci, change)
 MOI.modifyconstraint!(uf::UniversalFallback, ci::CI, change) = MOI.modifyconstraint!(uf.model, ci, change)
 
-function MOI.canset(uf::UniversalFallback, cs::MOI.ConstraintSet, ci::CI, ::Type{S}) where S <: MOI.AbstractSet
-    MOI.canset(uf.model, ci, S)
+function MOI.canset(uf::UniversalFallback, ::MOI.ConstraintSet, ::Type{C}) where C <: CI
+    MOI.canset(uf.model, MOI.ConstraintSet(), C)
 end
-function MOI.set!(uf::UniversalFallback, cs::MOI.ConstraintSet, ci::CI, set::AbstractSet)
-    MOI.set!(uf.model, ci, set)
+function MOI.set!(uf::UniversalFallback, ::MOI.ConstraintSet, ci::CI{F,S}, set::S) where F where S
+    MOI.set!(uf.model, MOI.ConstraintSet(), ci, set)
 end
 
 

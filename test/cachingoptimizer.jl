@@ -62,7 +62,7 @@
     @test MOI.canaddconstraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.canaddconstraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
     lb = MOI.addconstraint!(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
-    @test MOI.canset(m, MOI.ConstraintSet(), lb, MOI.LessThan{Float64})
+    @test MOI.canset(m, MOI.ConstraintSet(), typeof(lb))
     MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
     @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
@@ -70,7 +70,7 @@
     MOIU.dropoptimizer!(m)
     @test MOIU.state(m) == MOIU.NoOptimizer
 
-    @test MOI.canset(m, MOI.ConstraintSet(), lb, MOI.LessThan{Float64})
+    @test MOI.canset(m, MOI.ConstraintSet(), typeof(lb))
     MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(12.0)
 
