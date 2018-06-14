@@ -10,8 +10,8 @@ abstract type AbstractFunction end
 """
     output_dimension(f::AbstractFunction)
 
-Return 1 `f` has a scalar output and the number of components if `f` has a
-vector output.
+Return 1 if `f` has a scalar output and the number of output components if `f`
+has a vector output.
 """
 function output_dimension end
 
