@@ -229,7 +229,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x + y + z <= 1
     # x >= -1
     # y,z >= 0
-    @test MOI.canset(model, MOI.ConstraintSet(), vc1, MOI.GreaterThan{Float64})
+    @test MOI.canset(model, MOI.ConstraintSet(), typeof(vc1))
     MOI.set!(model, MOI.ConstraintSet(), vc1, MOI.GreaterThan(-1.0))
 
     if config.solve
@@ -255,7 +255,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # max x + 2z
     # s.t. x + y + z <= 1
     # x, y >= 0, z = 0 (vc3)
-    @test MOI.canset(model, MOI.ConstraintSet(), vc1, MOI.GreaterThan{Float64})
+    @test MOI.canset(model, MOI.ConstraintSet(), typeof(vc1))
     MOI.set!(model, MOI.ConstraintSet(), vc1, MOI.GreaterThan(0.0))
 
     @test MOI.candelete(model, vc3)
@@ -666,7 +666,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     # Min  x - y
     # s.t. 100.0 <= x
     #               y <= 0.0
-    @test MOI.canset(model, MOI.ConstraintSet(), c1, MOI.GreaterThan{Float64})
+    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c1))
     MOI.set!(model, MOI.ConstraintSet(), c1, MOI.GreaterThan(100.0))
     if config.solve
         MOI.optimize!(model)
@@ -681,7 +681,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     # Min  x - y
     # s.t. 100.0 <= x
     #               y <= -100.0
-    @test MOI.canset(model, MOI.ConstraintSet(), c2, MOI.LessThan{Float64})
+    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c2))
     MOI.set!(model, MOI.ConstraintSet(), c2, MOI.LessThan(-100.0))
     if config.solve
         MOI.optimize!(model)
@@ -905,7 +905,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     # Min  x - y
     # s.t. 100.0 <= x
     #               y <= 0.0
-    @test MOI.canset(model, MOI.ConstraintSet(), c1, MOI.GreaterThan{Float64})
+    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c1))
     MOI.set!(model, MOI.ConstraintSet(), c1, MOI.GreaterThan(100.0))
     if config.solve
         MOI.optimize!(model)
@@ -920,7 +920,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     # Min  x - y
     # s.t. 100.0 <= x
     #               y <= -100.0
-    @test MOI.canset(model, MOI.ConstraintSet(), c2, MOI.LessThan{Float64})
+    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c2))
     MOI.set!(model, MOI.ConstraintSet(), c2, MOI.LessThan(-100.0))
     if config.solve
         MOI.optimize!(model)
@@ -1330,7 +1330,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         end
     end
 
-    @test MOI.canset(model, MOI.ConstraintSet(), c, MOI.Interval{Float64})
+    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c))
     MOI.set!(model, MOI.ConstraintSet(), c, MOI.Interval(2.0, 12.0))
 
     if config.query
