@@ -326,6 +326,7 @@ MOIU.broadcastcall(constrs -> _addcon(solver, constrs), model)
 ```
 """
 function broadcastcall end
+
 """
 broadcastvcat(f::Function, model::AbstractModel)
 
@@ -339,6 +340,7 @@ _getfun(ci, f, s) = f
 _getfun(cindices::Tuple) = _getfun(cindices...)
 _getfuns(constrs::Vector) = _getfun.(constrs)
 MOIU.broadcastvcat(_getfuns, model)
+```
 """
 function broadcastvcat end
 

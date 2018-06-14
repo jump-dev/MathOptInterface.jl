@@ -43,18 +43,44 @@ function addconstraints! end
 # default fallback
 addconstraints!(model::ModelLike, funcs, sets) = addconstraint!.(model, funcs, sets)
 
+
+"""
+    canset(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, ::Type{S})::Bool
+
+Return a `Bool` indicating whether the set in constraint `c` can be replaced by
+another set of the same type `S` as the original set.
+"""
+canset(model::ModelLike, ::ConstraintSet, c::ConstraintIndex, ::Type{S}) where S = false
+
+"""
+    set!(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, set::S)
+
+Change the set of constraint `c` to the new set `set` which should be of the
+same type as the original set.
+
+### Examples
+
+If `c` is a `ConstraintIndex{F,Interval}`
+
+```julia
+set!(model, ConstraintSet(), c, Interval(0, 5))
+set!(model, ConstraintSet(), c, NonPositives)    # Error
+```
+"""
+function set!(model::ModelLike, cs::ConstraintSet, c::ConstraintIndex{F,S1}, s::S2) where F where  S1 where S2
+    if S1 != S2  # throw helpful error
+        error("Cannot modify sets of different types. Use `transformconstraint!` instead.")
+    else  # throw original error suggesting that it is not implemented
+        throw(MethodError(set!, (model, cs, c, s)))
+    end
+end
+
 """
 ## Modify Function
 
     canmodifyconstraint(model::ModelLike, c::ConstraintIndex{F,S}, ::Type{F})::Bool
 
 Return a `Bool` indicating whether the function in constraint `c` can be replaced by another function of the same type `F` as the original function.
-
-## Modify Set
-
-    canmodifyconstraint(model::ModelLike, c::ConstraintIndex{F,S}, ::Type{S})::Bool
-
-Return a `Bool` indicating whether the set in constraint `c` can be replaced by another set of the same type `S` as the original set.
 
 ## Partial Modifications
 
@@ -85,21 +111,6 @@ If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are `Var
 ```julia
 modifyconstraint!(model, c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
 modifyconstraint!(model, c, SingleVariable(v1)) # Error
-```
-
-## Modify Set
-
-    modifyconstraint!(model::ModelLike, c::ConstraintIndex{F,S}, set::S)
-
-Change the set of constraint `c` to the new set `set` which should be of the same type as the original set.
-
-### Examples
-
-If `c` is a `ConstraintIndex{F,Interval}`
-
-```julia
-modifyconstraint!(model, c, Interval(0, 5))
-modifyconstraint!(model, c, NonPositives) # Error
 ```
 
 ## Partial Modifications

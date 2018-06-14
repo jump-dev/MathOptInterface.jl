@@ -247,14 +247,21 @@ function MOI.modifyconstraint!(m::CachingOptimizer, cindex::CI, change)
     return
 end
 
-function MOI.modifyconstraint!(m::CachingOptimizer, cindex::CI{F,S}, set::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canmodifyconstraint(m.optimizer, cindex, S)
+function MOI.canset(m::CachingOptimizer, ::MOI.ConstraintSet, cindex::CI, ::Type{S}) where S <: MOI.AbstractSet
+    MOI.canset(m.model_cache, MOI.ConstraintSet(), cindex, S) || return false
+    if m.state == AttachedOptimizer && m.mode == Manual
+        MOI.canset(m.optimizer, MOI.ConstraintSet(), m.model_to_optimizer_map[cindex], S) || return false
+    end
+    return true
+end
+function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintSet, cindex::CI{F,S}, set::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canset(m.optimizer, MOI.ConstraintSet(), cindex, S)
         resetoptimizer!(m)
     end
-    @assert MOI.canmodifyconstraint(m, cindex, S)
-    MOI.modifyconstraint!(m.model_cache, cindex, set)
+    @assert MOI.canset(m, MOI.ConstraintSet(), cindex, S)
+    MOI.set!(m.model_cache, MOI.ConstraintSet(), cindex, set)
     if m.state == AttachedOptimizer
-        MOI.modifyconstraint!(m.optimizer, m.model_to_optimizer_map[cindex], set)
+        MOI.set!(m.optimizer, MOI.ConstraintSet(), m.model_to_optimizer_map[cindex], set)
     end
     return
 end
