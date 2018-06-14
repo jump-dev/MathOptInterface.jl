@@ -22,9 +22,9 @@ A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 - `Manual`: The only methods that change the state of the `CachingOptimizer` are [`resetoptimizer!`](@ref), [`dropoptimizer!`](@ref), and [`attachoptimizer!`](@ref). Attempting to perform an operation in the incorrect state results in an error.
 - `Automatic`: The `CachingOptimizer` changes its state when necessary. For example, `optimize!` will automatically call `attachoptimizer!` (an optimizer must have been previously set). Attempting to add a constraint or perform a modification not supported by the optimizer results in a drop to `EmptyOptimizer` mode.
 """
-mutable struct CachingOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
+mutable struct CachingOptimizer{OT, MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
+    optimizer::OT
     model_cache::MT
-    optimizer::Union{Nothing,MOI.AbstractOptimizer}
     state::CachingOptimizerState
     mode::CachingOptimizerMode
     model_to_optimizer_map::IndexMap
@@ -34,19 +34,24 @@ mutable struct CachingOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     # optimizer indices.
 end
 
-CachingOptimizer(model_cache::MOI.ModelLike, mode::CachingOptimizerMode) = CachingOptimizer(model_cache, nothing, NoOptimizer, mode, IndexMap(), IndexMap())
+function CachingOptimizer(model_cache::MOI.ModelLike, mode::CachingOptimizerMode)
+    CachingOptimizer{Union{Nothing,MOI.AbstractOptimizer}, typeof(model_cache)}(nothing, model_cache, NoOptimizer, mode, IndexMap(), IndexMap())
+end
 
 """
     CachingOptimizer(model_cache::MOI.ModelLike, optimizer::AbstractOptimizer)
 
 Creates an `CachingOptimizer` in `Automatic` mode, with the optimizer `optimizer`.
 The model_cache manager returned behaves like an `AbstractOptimizer` as long as no
-`CachingOptimizer`-specific functions (e.g. `dropoptimizer!`) are called on it.
+`CachingOptimizer`-specific functions (e.g. `resetoptimizer!`) are called on it.
+The type of the optimizer returned is `CachingOptimizer{typeof(optimizer),
+typeof(model_cache)}` so it does not support the function `dropoptimizer!`
+nor the method `resetoptimizer!(::CachingOptimizer, optimizer)`.
 """
 function CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer)
     @assert MOI.isempty(model_cache)
     @assert MOI.isempty(optimizer)
-    CachingOptimizer(model_cache, optimizer, AttachedOptimizer, Automatic, IndexMap(), IndexMap())
+    CachingOptimizer{typeof(optimizer), typeof(model_cache)}(optimizer, model_cache, AttachedOptimizer, Automatic, IndexMap(), IndexMap())
 end
 
 ## Methods for managing the state of CachingOptimizer.
@@ -71,7 +76,7 @@ mode(m::CachingOptimizer) = m.mode
 Sets or resets `m` to have the given empty optimizer. Can be called
 from any state. The `CachingOptimizer` will be in state `EmptyOptimizer` after the call.
 """
-function resetoptimizer!(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
+function resetoptimizer!(m::CachingOptimizer{Union{Nothing,MOI.AbstractOptimizer}}, optimizer::MOI.AbstractOptimizer)
     @assert MOI.isempty(optimizer)
     m.optimizer = optimizer
     m.state = EmptyOptimizer
@@ -99,7 +104,7 @@ end
 Drops the optimizer, if one is present. Can be called from any state.
 The `CachingOptimizer` will be in state `NoOptimizer` after the call.
 """
-function dropoptimizer!(m::CachingOptimizer)
+function dropoptimizer!(m::CachingOptimizer{Union{Nothing,MOI.AbstractOptimizer}})
     m.optimizer = nothing
     m.state = NoOptimizer
     return
