@@ -8,11 +8,20 @@ Abstract supertype for function objects.
 abstract type AbstractFunction end
 
 """
+    output_dimension(f::AbstractFunction)
+
+Return 1 `f` has a scalar output and the number of components if `f` has a
+vector output.
+"""
+function output_dimension end
+
+"""
     AbstractScalarFunction
 
 Abstract supertype for scalar-valued function objects.
 """
 abstract type AbstractScalarFunction <: AbstractFunction end
+output_dimension(::AbstractScalarFunction) = 1
 
 """
     AbstractVectorFunction
@@ -41,6 +50,7 @@ This function is naturally be used for constraints that apply to groups of varia
 struct VectorOfVariables <: AbstractVectorFunction
     variables::Vector{VariableIndex}
 end
+output_dimension(f::VectorOfVariables) = length(f.variables)
 
 """
     struct ScalarAffineTerm{T}
@@ -110,6 +120,7 @@ struct VectorAffineFunction{T} <: AbstractVectorFunction
     terms::Vector{VectorAffineTerm{T}}
     constants::Vector{T}
 end
+output_dimension(f::VectorAffineFunction) = length(f.constants)
 
 """
     struct ScalarQuadraticTerm{T}
@@ -193,6 +204,7 @@ struct VectorQuadraticFunction{T} <: AbstractVectorFunction
     quadratic_terms::Vector{VectorQuadraticTerm{T}}
     constants::Vector{T}
 end
+output_dimension(f::VectorQuadraticFunction) = length(f.constants)
 
 # Function modifications
 

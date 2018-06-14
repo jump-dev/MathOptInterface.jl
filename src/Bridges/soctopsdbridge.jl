@@ -6,7 +6,7 @@ Builds a VectorAffineFunction representing the upper (or lower) triangular part 
 [ f[2:end] g * I     ]
 """
 function _SOCtoPSDCaff(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFunction{T}) where T
-    dim = MOIU.moilength(f)
+    dim = MOI.output_dimension(f)
     n = div(dim * (dim+1), 2)
     # Needs to add t*I
     N0 = length(f.terms)
@@ -125,7 +125,7 @@ end
 
 _RSOCtoPSDCaff(f::MOI.VectorOfVariables, ::Type{T}) where T = _RSOCtoPSDCaff(MOI.VectorAffineFunction{T}(f), T)
 function _RSOCtoPSDCaff(f::MOI.VectorAffineFunction, ::Type)
-    n = MOIU.moilength(f)
+    n = MOI.output_dimension(f)
     g = mapcoefficient(c -> 2c, MOIU.eachscalar(f)[2])
     _SOCtoPSDCaff(MOIU.eachscalar(f)[[1; 3:n]], g)
 end
