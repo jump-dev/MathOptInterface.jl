@@ -22,9 +22,9 @@ A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 - `Manual`: The only methods that change the state of the `CachingOptimizer` are [`resetoptimizer!`](@ref), [`dropoptimizer!`](@ref), and [`attachoptimizer!`](@ref). Attempting to perform an operation in the incorrect state results in an error.
 - `Automatic`: The `CachingOptimizer` changes its state when necessary. For example, `optimize!` will automatically call `attachoptimizer!` (an optimizer must have been previously set). Attempting to add a constraint or perform a modification not supported by the optimizer results in a drop to `EmptyOptimizer` mode.
 """
-mutable struct CachingOptimizer{OT, MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
-    optimizer::OT
-    model_cache::MT
+mutable struct CachingOptimizer{OptimizerType, ModelType<:MOI.ModelLike} <: MOI.AbstractOptimizer
+    optimizer::OptimizerType
+    model_cache::ModelType
     state::CachingOptimizerState
     mode::CachingOptimizerMode
     model_to_optimizer_map::IndexMap
