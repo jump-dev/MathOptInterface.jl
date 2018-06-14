@@ -252,10 +252,15 @@ MOI.canmodifyconstraint(::AbstractModel, ::CI, ::Type{<:MOI.AbstractFunctionModi
 function MOI.modifyconstraint!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
     _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
 end
-MOI.canset(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
-function MOI.set!(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
+
+MOI.canmodifyconstraint(::AbstractModel, ::CI, ::Type{<:MOI.AbstractFunction}) = true
+function MOI.modifyconstraint!(model::AbstractModel, ci::CI, change::MOI.AbstractFunction)
     _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
 end
+# MOI.canset(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
+# function MOI.set!(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
+#     _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
+# end
 MOI.canset(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
     _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
