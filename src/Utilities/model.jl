@@ -203,7 +203,7 @@ function MOI.set!(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.Abstract
     model.objective = deepcopy(f)
 end
 
-MOI.canmodifyobjective(model::AbstractModel, ::Type{<:MOI.AbstractFunctionModification}) = true
+MOI.canmodifyobjective(::AbstractModel, ::Type{<:MOI.AbstractFunctionModification}) = true
 function MOI.modifyobjective!(model::AbstractModel, change::MOI.AbstractFunctionModification)
     model.objective = modifyfunction(model.objective, change)
 end
@@ -248,8 +248,16 @@ function MOI.delete!(model::AbstractModel, ci::CI)
     end
 end
 
-MOI.canmodifyconstraint(model::AbstractModel, ci::CI, change) = true
-function MOI.modifyconstraint!(model::AbstractModel, ci::CI, change)
+MOI.canmodifyconstraint(::AbstractModel, ::CI, ::Type{<:MOI.AbstractFunctionModification}) = true
+function MOI.modifyconstraint!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
+    _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
+end
+MOI.canset(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
+function MOI.set!(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
+    _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
+end
+MOI.canset(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
+function MOI.set!(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
     _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
 end
 

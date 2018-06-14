@@ -57,7 +57,7 @@ function MOI.modifyconstraint!(model::MOI.ModelLike, c::SplitIntervalBridge, cha
     MOI.modifyconstraint!(model, c.upper, change)
 end
 
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, c::SplitIntervalBridge, ::Type{MOI.Interval}) = true
+MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SplitIntervalBridge}) = true
 function MOI.set!(model::MOI.ModelLike, ::MOI.ConstraintSet, c::SplitIntervalBridge, change::MOI.Interval)
     MOI.set!(model, MOI.ConstraintSet(), c.lower, MOI.GreaterThan(change.lower))
     MOI.set!(model, MOI.ConstraintSet(), c.upper, MOI.LessThan(change.upper))
