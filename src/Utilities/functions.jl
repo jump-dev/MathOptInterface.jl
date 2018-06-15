@@ -55,8 +55,6 @@ mapvariables(varmap::Function, change::MOI.MultirowChange) = MOI.MultirowChange(
 mapvariables(varmap, f::MOI.AbstractFunctionModification) = mapvariables(vi -> varmap[vi], f)
 
 # Cat for MOI sets
-moilength(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = 1
-moilength(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}) = length(f.constants)
 _constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = f.constant
 _constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}) = f.constants
 constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}) = [f.constant]
@@ -66,7 +64,7 @@ offsetterm(t::MOI.VectorAffineTerm, offset::Int) = MOI.VectorAffineTerm(offset+t
 offsetterms(f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}, offset::Int) = offsetterm.(f.terms, offset)
 function moivcat(f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}...)
     n = length(f)
-    offsets = cumsum(collect(moilength.(f)))
+    offsets = cumsum(collect(MOI.output_dimension.(f)))
     offsets = [0; offsets[1:(n-1)]]
     terms = vcat((offsetterms.(f, offsets))...)
     cst = vcat(constant.(f)...)
@@ -91,7 +89,7 @@ Base.start(it::ScalarFunctionIterator) = 1
 Base.done(it::ScalarFunctionIterator, state) = state > length(it)
 Base.next(it::ScalarFunctionIterator, state) = (it[state], state+1)
 Base.length(it::ScalarFunctionIterator{MOI.VectorOfVariables}) = length(it.f.variables)
-Base.length(it::ScalarFunctionIterator{<:Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}}) = moilength(it.f)
+Base.length(it::ScalarFunctionIterator{<:Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}}) = MOI.output_dimension(it.f)
 Base.eltype(it::ScalarFunctionIterator{MOI.VectorOfVariables}) = MOI.SingleVariable
 Base.eltype(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}) where T = MOI.ScalarAffineFunction{T}
 Base.eltype(it::ScalarFunctionIterator{MOI.VectorQuadraticFunction{T}}) where T = MOI.ScalarQuadraticFunction{T}
@@ -362,9 +360,9 @@ function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable:
     terms
 end
 function modifyfunction(f::MOI.VectorAffineFunction, change::MOI.MultirowChange)
-    MOI.VectorAffineFunction(_modifycoefficients(moilength(f), f.terms, change.variable, change.new_coefficients), f.constants)
+    MOI.VectorAffineFunction(_modifycoefficients(MOI.output_dimension(f), f.terms, change.variable, change.new_coefficients), f.constants)
 end
 function modifyfunction(f::MOI.VectorQuadraticFunction, change::MOI.MultirowChange)
-    MOI.VectorQuadraticFunction(_modifycoefficients(moilength(f), f.affine_terms, change.variable, change.new_coefficients),
+    MOI.VectorQuadraticFunction(_modifycoefficients(MOI.output_dimension(f), f.affine_terms, change.variable, change.new_coefficients),
                                 f.quadratic_terms, f.constants)
 end

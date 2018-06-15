@@ -15,23 +15,29 @@
         # We do tests twice to make sure the function is not modified
         vals = Dict(w=>0, x=>3, y=>1, z=>5)
         fsv = MOI.SingleVariable(z)
+        @test MOI.output_dimension(fsv) == 1
         @test MOIU.evalvariables(vi -> vals[vi], fsv) ≈ 5
         @test MOIU.evalvariables(vi -> vals[vi], fsv) ≈ 5
         fvv = MOI.VectorOfVariables([x, z, y])
+        @test MOI.output_dimension(fvv) == 3
         @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
         @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
         fsa = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(3.0, z), MOI.ScalarAffineTerm(2.0, y)], 2.0)
+        @test MOI.output_dimension(fsa) == 1
         @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
         @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
         fva = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1, 2], MOI.ScalarAffineTerm.([1.0, 3.0, 2.0], [x, z, y])), [-3.0, 2.0])
+        @test MOI.output_dimension(fva) == 2
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
         @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
         fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
                                           MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]), -3.0)
+        @test MOI.output_dimension(fsq) == 1
         @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
         @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
         fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
                                           MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y])), [-3.0, -2.0])
+        @test MOI.output_dimension(fvq) == 2
         @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
         @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
     end
@@ -127,6 +133,7 @@
             @test MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1], [x, z]), 1) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]), 1.0) atol=1e-6
             @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1e-7, y)], 1.0) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
             f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 1, 3, -2, -3], [y, x, z, x, z]), 5))
+            @test MOI.output_dimension(f) == 1
             @test f.terms == MOI.ScalarAffineTerm.([-1, 2], [x, y])
             @test f.constant == 5
             f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 3, 1, 2, -3, 2, -1, -2, -2, 3, 2],
@@ -146,6 +153,7 @@
         end
         @testset "Quadratic" begin
             f = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]), MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7)
+            @test MOI.output_dimension(f) == 1
             f = MOIU.modifyfunction(f, MOI.ScalarConstantChange(9))
             @test f.constant == 9
             f = MOIU.modifyfunction(f, MOI.ScalarCoefficientChange(y, 0))
@@ -163,6 +171,7 @@
             f = MOIU.canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1, 2,  1,  1,  2, 2,  2, 2, 1, 1,  2, 1,  2],
                                                                               MOI.ScalarAffineTerm.([3, 2, 3, -3, -1, -2, 3, -2, 1, 3, 5, -2, 0, -1],
                                                                                                     [x, x, z,  y,  y,  x, y,  z, x, y, y,  x, x,  z])), [5, 7]))
+            @test MOI.output_dimension(f) == 2
             @test f.terms == MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y]))
             @test MOIU.constant(f) == [5, 7]
             f = MOIU.modifyfunction(f, MOI.VectorConstantChange([6, 8]))
@@ -178,6 +187,7 @@
         end
         @testset "Quadratic" begin
             f = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([1, 2, 2], MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])), MOI.VectorQuadraticTerm.([1, 1, 2], MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])), [7, 3, 4])
+            @test MOI.output_dimension(f) == 3
             f = MOIU.modifyfunction(f, MOI.VectorConstantChange([10, 11, 12]))
             @test MOIU.constant(f) == [10, 11, 12]
             f = MOIU.modifyfunction(f, MOI.MultirowChange(y, [(2, 0), (1, 1)]))

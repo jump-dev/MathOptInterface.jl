@@ -10,7 +10,7 @@ abstract type AbstractSet end
 """
     dimension(s::AbstractSet)
 
-Return the output dimension that an [`AbstractFunction`](@ref) should have to be used with the set `s`.
+Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should have to be used with the set `s`.
 
 ### Examples
 
