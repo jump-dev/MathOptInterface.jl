@@ -226,6 +226,28 @@ end
         )
         MOIT.solve_coef_scalaraffine_lessthan(mock, config)
     end
+    @testset "solve_const_vectoraffine_nonpos" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.0, 0.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0, 0.75])
+            )
+        )
+        MOIT.solve_const_vectoraffine_nonpos(mock, config)
+    end
+    @testset "solve_const_scalar_objective" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            )
+        )
+        MOIT.solve_const_scalar_objective(mock, config)
+    end
     @testset "solve_coef_scalar_objective" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
