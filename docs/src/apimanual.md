@@ -412,10 +412,122 @@ primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 @show primal_variable_result
 ```
 
+## Problem Modification
+
+In addition to adding and deleting constraints and variables, MathOptInterface
+supports modifying, in-place, coefficients in the constraints and the objective
+function of a model. In the following, we detail the various ways this can be
+achieved. Readers should note that some solvers will not support problem
+modification.
+
+### Modify the set of a constraint
+
+In this section we discuss how, given a constraint of type `F`-in-`S` (see
+[Constraints by function-set pairs](@ref) above for an explanation), we can
+modify parameters (but not the type) of the set `S`. For example, given the
+variable bound ``x \\le 1``:
+```julia
+c = addconstraint(m, SingleVariable(x), LessThan(1.0))
+```
+we can modify the set so that the bound now ``x \\le 2`` as follows:
+```julia
+set!(m, ConstraintSet(), c, LessThan(2.0))
+```
+where `m` is our [`ModelLike`](@ref) model. However, the following will fail as
+the new set (`GreaterThan`) is of a different type to the original set
+(`LessThan`):
+```julia
+set!(m, ConstraintSet(), c, GreaterThan(2.0))  # errors
+```
+If our constraint is an affine inequality, then this corresponds to modifying
+the right hand-side of a constraint in linear programming.
+
+### Modify the function of a constraint
+
+... still to do ...
+
+### Change the constant term in a function
+
+Another modification that MathOptInterface supports is the ability to modify the
+constant term within a function. This includes the objective function, as well
+as the function in a function-pair constraint.
+
+```julia
+modify!(m::ModelLike, ref, change::AbstractFunctionModification)
+```
+`ref` is either the constraint index of the constraint we wish to modify or an
+instance of the [`ObjectiveFunction`](@ref) attribute. There are two types of
+[`AbstractFunctionModification`](@ref) that we can use to modify constant terms:
+[`ScalarConstantChange`](@ref) if the function is scalar, and
+[`VectorConstantChange`](@ref) if the function is a vector function.
+
+For example, consider a problem `m` with the objective ``\\max 1.0x + 0.0``:
+```julia
+set!(m,
+    ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+    ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0)
+)
+```
+We can modify the constant term in the objective function as follows:
+```julia
+modify!(m,
+    ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+    ScalarConstantChange(1.0)
+)
+```
+The objective function will now be ``\\max 1.0x + 1.0``.
+
+As another example, consider a model with the following
+`VectorAffineFunction`-in-`Nonpositives` constraint:
+```julia
+c = addconstraint!(m,
+    VectorAffineFunction([
+            VectorAffineTerm(1, ScalarAffineTerm(1.0, x)),
+            VectorAffineTerm(1, ScalarAffineTerm(2.0, y))
+        ],
+        [0.0, 0.0]
+    ),
+    Nonpositives(2)
+)
+```
+We can modify the constant vector in the `VectorAffineFunction` from `[0.0, 0.0]`
+to `[1.0, 2.0]` as follows:
+```julia
+modify!(m, c, VectorConstantChange([1.0, 2.0])
+)
+```
+The constraints are now ``1.0x + 1.0 \\le 0.0`` and ``2.0y + 2.0 \\le 0.0``.
+
+### Change affine coefficients in a function
+
+In addition to modifying the constant terms in a function, we can also modify
+the affine variable coefficients using [`ScalarCoefficientChange`](@ref). For
+example, give the constraint ``1.0x <= 1.0``:
+```julia
+c = addconstraint!(m,
+    ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0),
+    LessThan(1.0)
+)
+```
+we can modify the coefficient of the `x` variable so that the constraint becomes
+``2.0x <= 1.0`` as follows:
+```julia
+modify!(m, c, ScalarCoefficientChange(x, 2.0))
+```
+
+`ScalarCoefficientChange` can also be used to modify the objective function by
+passing an instance of [`ObjectiveFunction`](@ref) instead of the constraint
+index `c` as we saw above.
+
+### MultirowChange
+
+Column generation
+
+... still to do ...
+
 ## Advanced
 
 ### Duals
-
 
 Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cones, the model may be called a conic optimization problem.
 For conic-form minimization problems, the primal is:
@@ -529,9 +641,6 @@ If the set ``C_i`` of the section [Duals](@ref) is one of these three cones,
 then the rows of the matrix ``A_i`` corresponding to off-diagonal entries are twice the value of the `coefficients` field in the `VectorAffineFunction` for the corresponding rows.
 See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle) for details.
 
-### Modifying a model
-
-[Explain `modify!`.]
 
 ### Constraint bridges
 
