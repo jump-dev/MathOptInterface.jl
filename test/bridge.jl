@@ -167,7 +167,7 @@ end
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
         @test MOI.canmodifyconstraint(bridgedmock, ci, MOI.ScalarAffineFunction{Float64})
         newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridgedmock, MOI.ListOfVariableIndices())), 0.0)
-        MOI.modifyconstraint!(bridgedmock, ci, newf)
+        MOI.set!(bridgedmock, MOI.ConstraintFunction(), ci, newf)
         @test MOI.canget(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),

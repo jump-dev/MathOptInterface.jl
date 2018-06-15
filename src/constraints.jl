@@ -43,7 +43,6 @@ function addconstraints! end
 # default fallback
 addconstraints!(model::ModelLike, funcs, sets) = addconstraint!.(model, funcs, sets)
 
-
 """
     canset(model::ModelLike, ::ConstraintSet, ::Type{ConstraintIndex{F,S}})::Bool
 
@@ -84,12 +83,39 @@ end
 set_type(c::ConstraintIndex{F,S}) where {F, S} = S
 
 """
-## Modify Function
+    canset(model::ModelLike, ::ConstraintFunction, ::Type{ConstraintIndex{F,S}})::Bool
 
-    canmodifyconstraint(model::ModelLike, c::ConstraintIndex{F,S}, ::Type{F})::Bool
+Return a `Bool` indicating whether the function in a constraint of type
+`F`-in-`S` can be replaced by another set of the same type `F` as the original
+function.
+"""
+canset(model::ModelLike, ::ConstraintFunction, type_of_function) = false
+# Note: the above method is deliberately under-typed to avoid method ambiguities
 
-Return a `Bool` indicating whether the function in constraint `c` can be replaced by another function of the same type `F` as the original function.
+"""
+    set!(model::ModelLike, ::ConstraintFunction, c::ConstraintIndex{F,S}, func::F)
 
+Replace the function in constraint `c` with `func`. `F` must match the original
+function type used to define the constraint.
+
+### Examples
+
+If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
+`VariableIndex` objects,
+
+```julia
+set!(model, ConstraintFunction(), c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
+set!(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
+```
+"""
+function set!(model::ModelLike, ::ConstraintFunction, constraint_index, func)
+    # note: we deliberately avoid typing the last two arguments to avoid
+    # ambiguity errors. If solvers don't catch the case where the set is
+    # different, it should still fall back to this method.
+    throw(MethodError(set!, (model, ConstraintFunction(), constraint_index, func)))
+end
+
+"""
 ## Partial Modifications
 
     canmodifyconstraint(model::ModelLike, c::ConstraintIndex, ::Type{M})::Bool where M<:AbstractFunctionModification
@@ -106,21 +132,6 @@ function canmodifyconstraint end
 canmodifyconstraint(model::ModelLike, c::ConstraintIndex, change) = false
 
 """
-## Modify Function
-
-    modifyconstraint!(model::ModelLike, c::ConstraintIndex{F,S}, func::F)
-
-Replace the function in constraint `c` with `func`. `F` must match the original function type used to define the constraint.
-
-### Examples
-
-If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are `VariableIndex` objects,
-
-```julia
-modifyconstraint!(model, c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
-modifyconstraint!(model, c, SingleVariable(v1)) # Error
-```
-
 ## Partial Modifications
 
     modifyconstraint!(model::ModelLike, c::ConstraintIndex, change::AbstractFunctionModification)

@@ -244,6 +244,25 @@ function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_in
     end
 end
 
+function MOI.canset(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, ::Type{C}) where C <: CI
+    if isbridged(b, C)
+       MOI.canset(b.bridged, MOI.ConstraintFunction(), C)
+        # TODO(@blegat) is this necessary? How do I do it without types
+        # && MOI.canset(b, MOIB.bridge(b, ci), change)
+    else
+        MOI.canset(b.model, MOI.ConstraintFunction(), C)
+    end
+end
+function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constraint_index::CI, func)
+    # Note: we also under-type this function to avoid ambiguity
+    if isbridged(b, typeof(constraint_index))
+        MOI.set!(b, MOI.ConstraintFunction(), bridge(b, constraint_index), func)
+        MOI.set!(b.bridged, MOI.ConstraintFunction(), constraint_index, func)
+    else
+        MOI.set!(b.model, MOI.ConstraintFunction(), constraint_index, func)
+    end
+end
+
 # Objective
 MOI.canmodifyobjective(b::AbstractBridgeOptimizer, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodifyobjective(b.model, M)
 MOI.modifyobjective!(b::AbstractBridgeOptimizer, change::MOI.AbstractFunctionModification) = MOI.modifyobjective!(b.model, change)

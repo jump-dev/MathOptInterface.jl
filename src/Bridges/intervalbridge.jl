@@ -52,9 +52,15 @@ end
 
 # Constraints
 MOI.canmodifyconstraint(model::MOI.ModelLike, c::SplitIntervalBridge, change) = true
-function MOI.modifyconstraint!(model::MOI.ModelLike, c::SplitIntervalBridge, change::Union{MOI.ScalarAffineFunction, MOI.AbstractFunctionModification})
+function MOI.modifyconstraint!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
     MOI.modifyconstraint!(model, c.lower, change)
     MOI.modifyconstraint!(model, c.upper, change)
+end
+
+MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SplitIntervalBridge}) = true
+function MOI.set!(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::SplitIntervalBridge, func::MOI.ScalarAffineFunction)
+    MOI.set!(model, MOI.ConstraintFunction(), c.lower, func)
+    MOI.set!(model, MOI.ConstraintFunction(), c.upper, func)
 end
 
 MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SplitIntervalBridge}) = true

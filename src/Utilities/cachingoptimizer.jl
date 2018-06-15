@@ -271,6 +271,30 @@ function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintSet, cindex::CI{F,S}, set
     return
 end
 
+function MOI.canset(m::CachingOptimizer, ::MOI.ConstraintFunction, ::Type{C}) where C <: CI
+    if !MOI.canset(m.model_cache, MOI.ConstraintFunction(), C)
+        return false
+    end
+    if m.state == AttachedOptimizer && m.mode == Manual
+        if !MOI.canset(m.optimizer, MOI.ConstraintFunction(), C)
+            return false
+        end
+    end
+    return true
+end
+function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintFunction, cindex::CI{F,S}, func::F) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    if (m.mode == Automatic && m.state == AttachedOptimizer &&
+            !MOI.canset(m.optimizer, MOI.ConstraintFunction(), typeof(cindex)) )
+        resetoptimizer!(m)
+    end
+    @assert MOI.canset(m, MOI.ConstraintFunction(), typeof(cindex))
+    MOI.set!(m.model_cache, MOI.ConstraintFunction(), cindex, func)
+    if m.state == AttachedOptimizer
+        MOI.set!(m.optimizer, MOI.ConstraintFunction(), m.model_to_optimizer_map[cindex], func)
+    end
+    return
+end
+
 function MOI.canmodifyobjective(m::CachingOptimizer, change)
     MOI.canmodifyobjective(m.model_cache, change) || return false
     if m.state == AttachedOptimizer && m.mode == Manual
