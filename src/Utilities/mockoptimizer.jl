@@ -219,12 +219,12 @@ function MOI.set!(mock::MockOptimizer, ::MOI.ConstraintFunction, c::CI{F,S}, fun
     MOI.set!(mock.inner_model, MOI.ConstraintFunction(), xor_index(c), func)
 end
 
-function MOI.canmodifyobjective(mock::MockOptimizer, change)
-    MOI.canmodifyobjective(mock.inner_model, change)
+function MOI.canmodify(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change)
+    MOI.canmodify(mock.inner_model, obj, change)
 end
 
-function MOI.modifyobjective!(mock::MockOptimizer, change::MOI.AbstractFunctionModification)
-    MOI.modifyobjective!(mock.inner_model, xor_variables(change))
+function MOI.modify!(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
+    MOI.modify!(mock.inner_model, obj, xor_variables(change))
 end
 
 # TODO: transformconstraint and cantransformconstraint

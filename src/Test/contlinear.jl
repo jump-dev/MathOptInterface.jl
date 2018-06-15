@@ -182,8 +182,14 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
         c = MOI.addconstraint!(model, cf, MOI.LessThan(1.0))
     end
 
-    @test MOI.canmodifyobjective(model, MOI.ScalarCoefficientChange{Float64})
-    MOI.modifyobjective!(model, MOI.ScalarCoefficientChange{Float64}(z, 2.0))
+    @test MOI.canmodify(model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarCoefficientChange{Float64}
+    )
+    MOI.modify!(model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarCoefficientChange{Float64}(z, 2.0)
+    )
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3

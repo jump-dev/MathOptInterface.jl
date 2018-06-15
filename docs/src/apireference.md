@@ -255,8 +255,8 @@ dimension
 Functions for modifying objective functions. Use `ObjectiveFunction` and `ObjectiveSense` to set and query the objective function.
 
 ```@docs
-modifyobjective!
-canmodifyobjective
+modify!
+canmodify
 ```
 
 ## Nonlinear programming (NLP)

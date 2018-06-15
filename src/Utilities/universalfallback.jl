@@ -170,8 +170,8 @@ function MOI.set!(uf::UniversalFallback, ::MOI.ConstraintFunction, ci::CI{F,S}, 
 end
 
 # Objective
-MOI.canmodifyobjective(uf::UniversalFallback, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodifyobjective(uf.model, M)
-MOI.modifyobjective!(uf::UniversalFallback, change::MOI.AbstractFunctionModification) = MOI.modifyobjective!(uf.model, change)
+MOI.canmodify(uf::UniversalFallback, obj::MOI.ObjectiveFunction, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodify(uf.model, obj, M)
+MOI.modify!(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(uf.model, obj, change)
 
 # Variables
 MOI.canaddvariable(uf::UniversalFallback) = MOI.canaddvariable(uf.model)

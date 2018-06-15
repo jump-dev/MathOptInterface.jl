@@ -203,8 +203,8 @@ function MOI.set!(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.Abstract
     model.objective = deepcopy(f)
 end
 
-MOI.canmodifyobjective(::AbstractModel, ::Type{<:MOI.AbstractFunctionModification}) = true
-function MOI.modifyobjective!(model::AbstractModel, change::MOI.AbstractFunctionModification)
+MOI.canmodify(::AbstractModel, ::MOI.ObjectiveFunction, ::Type{<:MOI.AbstractFunctionModification}) = true
+function MOI.modify!(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
     model.objective = modifyfunction(model.objective, change)
 end
 

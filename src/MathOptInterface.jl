@@ -152,7 +152,7 @@ include("functions.jl")
 include("sets.jl")
 include("attributes.jl")
 include("constraints.jl")
-include("objectives.jl")
+include("modifications.jl")
 include("variables.jl")
 include("nlp.jl")
 

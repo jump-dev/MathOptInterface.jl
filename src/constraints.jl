@@ -116,35 +116,6 @@ function set!(model::ModelLike, ::ConstraintFunction, constraint_index, func)
 end
 
 """
-    canmodify(model::ModelLike, ::Type{CI}, ::Type{M})::Bool where CI<:ConstraintIndex where M<:AbstractFunctionModification
-
-Return a `Bool` indicating whether it is possible to apply a modification of
-type `M` to the function of constraint of type `CI`.
-
-### Examples
-
-```julia
-canmodify(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}, ScalarConstantChange{Float64})
-```
-"""
-function canmodify end
-canmodify(model::ModelLike, constraint_index, change) = false
-
-"""
-    modify!(model::ModelLike, c::ConstraintIndex, change::AbstractFunctionModification)
-
-Apply the modification specified by `change` to the function of constraint `c`.
-
-### Examples
-
-```julia
-modify!(model, c, ScalarConstantChange(10.0))
-```
-"""
-function modify! end
-
-
-"""
 ## Transform Constraint Set
 
     transformconstraint!(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}

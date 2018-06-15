@@ -266,8 +266,8 @@ function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constrai
 end
 
 # Objective
-MOI.canmodifyobjective(b::AbstractBridgeOptimizer, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodifyobjective(b.model, M)
-MOI.modifyobjective!(b::AbstractBridgeOptimizer, change::MOI.AbstractFunctionModification) = MOI.modifyobjective!(b.model, change)
+MOI.canmodify(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodify(b.model, obj, M)
+MOI.modify!(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(b.model, obj, change)
 
 # Variables
 MOI.canaddvariable(b::AbstractBridgeOptimizer) = MOI.canaddvariable(b.model)
