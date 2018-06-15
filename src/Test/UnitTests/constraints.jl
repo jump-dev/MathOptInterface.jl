@@ -209,7 +209,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConf
     MOI.empty!(model)
     x = MOI.addvariable!(model)
     # helpers. The function 1.0x + 0.0
-    saf  = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0], x), 0.0)
+    saf  = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     vaf  = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [0.0])
     vaf2 = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-2.0])
     # max x

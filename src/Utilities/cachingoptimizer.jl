@@ -388,7 +388,7 @@ function MOI.get(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,
     if MOI.canget(m.model_cache, attr, eltype(indices))
         return MOI.get(m.model_cache, attr, indices)
     elseif m.state == AttachedOptimizer && MOI.canget(m.optimizer, attr, eltype(indices))
-        return attribute_value_map.(m.optimizer_to_model_map,MOI.get(m.optimizer, attr, getindex.(m.model_to_optimizer_map,indices)))
+        return attribute_value_map.(Ref(m.optimizer_to_model_map),MOI.get(m.optimizer, attr, getindex.(Ref(m.model_to_optimizer_map),indices)))
     end
     error("Attribute $attr not accessible")
 end
@@ -478,10 +478,12 @@ function MOI.set!(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, v) where
     return MOI.set!(m.optimizer, attr.attr, attribute_value_map(m.model_to_optimizer_map,v))
 end
 
+# Map vector of indices into vector of indices or one index into one index
+map_indices_to_optimizer(m::CachingOptimizer, idx::MOI.Index) = m.model_to_optimizer_map[idx]
+map_indices_to_optimizer(m::CachingOptimizer, indices::Vector{<:MOI.Index}) = getindex.(Ref(m.model_to_optimizer_map), indices)
 function MOI.set!(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx, v) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == AttachedOptimizer
-    # TODO: getindex. causes this to return a vector of results for scalar idx
-    return MOI.set!(m.optimizer, attr.attr, getindex.(m.model_to_optimizer_map,idx), attribute_value_map(m.model_to_optimizer_map,v))
+    return MOI.set!(m.optimizer, attr.attr, map_indices_to_optimizer(m, idx), attribute_value_map(m.model_to_optimizer_map,v))
 end
 
 function MOI.canset(m::CachingOptimizer, attr::AttributeFromModelCache{T}) where {T <: MOI.AbstractModelAttribute}

@@ -41,7 +41,7 @@ This call is equivalent to `addconstraint!.(model, funcs, sets)` but may be more
 function addconstraints! end
 
 # default fallback
-addconstraints!(model::ModelLike, funcs, sets) = addconstraint!.(model, funcs, sets)
+addconstraints!(model::ModelLike, funcs, sets) = addconstraint!.(Ref(model), funcs, sets)
 
 """
 ## Modify Function

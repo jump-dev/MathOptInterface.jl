@@ -1,6 +1,6 @@
 module Bridges
 
-using Compat # For lastindex
+using Compat
 
 using MathOptInterface
 const MOI = MathOptInterface

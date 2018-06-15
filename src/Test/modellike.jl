@@ -249,7 +249,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.)
     @test !MOI.canget(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), cvv) == ""
     @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[cvv]))
-    @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) == MOI.VectorOfVariables(getindex.(dict, v))
+    @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) == MOI.VectorOfVariables(getindex.(Ref(dict), v))
     @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[cvv]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.Nonnegatives(3)
     @test !MOI.canget(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), csa) == ""

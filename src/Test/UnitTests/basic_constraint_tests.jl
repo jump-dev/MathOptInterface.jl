@@ -220,7 +220,7 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         # for sanity, check that we've added 3 constraints as expected.
         @test length(c_indices) == 3
-        @test all(MOI.isvalid.(model, c_indices))
+        @test all(MOI.isvalid.(Ref(model), c_indices))
     end
 
     if delete

@@ -12,7 +12,7 @@ function _SOCtoPSDCaff(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFuncti
     N0 = length(f.terms)
     Ni = length(g.terms)
     N = N0 + (dim-1) * Ni
-    terms = Vector{MOI.VectorAffineTerm{T}}(N)
+    terms = Vector{MOI.VectorAffineTerm{T}}(undef, N)
     terms[1:N0] = MOI.VectorAffineTerm.(map(t -> trimap.(t.output_index, 1), f.terms),
                                         MOI.ScalarAffineTerm.(map(t -> t.scalar_term.coefficient, f.terms),
                                                               map(t -> t.scalar_term.variable_index, f.terms)))
@@ -20,8 +20,8 @@ function _SOCtoPSDCaff(f::MOI.VectorAffineFunction{T}, g::MOI.ScalarAffineFuncti
     cur = N0
     for i in 2:dim
         k = trimap(i, i)
-        terms[cur+(1:Ni)]  = MOI.VectorAffineTerm.(k, MOI.ScalarAffineTerm.(map(t -> t.coefficient, g.terms),
-                                                                            map(t -> t.variable_index, g.terms)))
+        terms[cur.+(1:Ni)]  = MOI.VectorAffineTerm.(k, MOI.ScalarAffineTerm.(map(t -> t.coefficient, g.terms),
+                                                                             map(t -> t.variable_index, g.terms)))
         constant[k] = g.constant
         cur += Ni
     end
