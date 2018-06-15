@@ -181,7 +181,7 @@ end
 @testset "modifications" begin
     mock   = MOIU.MockOptimizer(Model{Float64}())
     config = MOIT.TestConfig()
-    @testset "solve_modify_variable_bound" begin
+    @testset "solve_set_singlevariable_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success, (MOI.FeasiblePoint, [1.0]),
@@ -194,9 +194,9 @@ end
                     (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
             )
         )
-        MOIT.solve_modify_variable_bound(mock, config)
+        MOIT.solve_set_singlevariable_lessthan(mock, config)
     end
-    @testset "solve_modify_rhs" begin
+    @testset "solve_set_scalaraffine_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success, (MOI.FeasiblePoint, [1.0]),
@@ -209,6 +209,32 @@ end
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
             )
         )
-        MOIT.solve_modify_rhs(mock, config)
+        MOIT.solve_set_scalaraffine_lessthan(mock, config)
+    end
+    @testset "solve_coef_scalaraffine_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.5]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
+            )
+        )
+        MOIT.solve_coef_scalaraffine_lessthan(mock, config)
+    end
+    @testset "solve_coef_scalar_objective" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            )
+        )
+        MOIT.solve_coef_scalar_objective(mock, config)
     end
 end
