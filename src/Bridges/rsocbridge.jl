@@ -66,4 +66,4 @@ end
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
 
 # Constraints
-MOI.canmodifyconstraint(model::MOI.ModelLike, c::RSOCBridge, change) = false
+MOI.canmodify(model::MOI.ModelLike, c::RSOCBridge, change) = false

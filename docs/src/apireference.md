@@ -163,8 +163,8 @@ isvalid(::ModelLike,::ConstraintIndex)
 canaddconstraint
 addconstraint!
 addconstraints!
-modifyconstraint!
-canmodifyconstraint
+modify!
+canmodify
 transformconstraint!
 cantransformconstraint
 supportsconstraint

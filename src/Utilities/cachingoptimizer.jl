@@ -227,22 +227,22 @@ function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set
     return cindex
 end
 
-function MOI.canmodifyconstraint(m::CachingOptimizer, cindex::CI, change)
-    MOI.canmodifyconstraint(m.model_cache, cindex, change) || return false
+function MOI.canmodify(m::CachingOptimizer, cindex::CI, change)
+    MOI.canmodify(m.model_cache, cindex, change) || return false
     if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canmodifyconstraint(m.optimizer, m.model_to_optimizer_map[cindex], change) || return false
+        MOI.canmodify(m.optimizer, m.model_to_optimizer_map[cindex], change) || return false
     end
     return true
 end
 
-function MOI.modifyconstraint!(m::CachingOptimizer, cindex::CI, change)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canmodifyconstraint(m.optimizer, cindex, typeof(change))
+function MOI.modify!(m::CachingOptimizer, cindex::CI, change)
+    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canmodify(m.optimizer, cindex, typeof(change))
         resetoptimizer!(m)
     end
-    @assert MOI.canmodifyconstraint(m, cindex, typeof(change))
-    MOI.modifyconstraint!(m.model_cache, cindex, change)
+    @assert MOI.canmodify(m, cindex, typeof(change))
+    MOI.modify!(m.model_cache, cindex, change)
     if m.state == AttachedOptimizer
-        MOI.modifyconstraint!(m.optimizer, m.model_to_optimizer_map[cindex], mapvariables(m.model_to_optimizer_map,change))
+        MOI.modify!(m.optimizer, m.model_to_optimizer_map[cindex], mapvariables(m.model_to_optimizer_map,change))
     end
     return
 end

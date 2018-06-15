@@ -531,7 +531,7 @@ See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefin
 
 ### Modifying a model
 
-[Explain `modifyconstraint!` and `modifyobjective!`.]
+[Explain `modify!` and `modifyobjective!`.]
 
 ### Constraint bridges
 

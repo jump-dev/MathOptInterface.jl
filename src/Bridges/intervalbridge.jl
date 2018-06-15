@@ -51,10 +51,10 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBr
 end
 
 # Constraints
-MOI.canmodifyconstraint(model::MOI.ModelLike, c::SplitIntervalBridge, change) = true
-function MOI.modifyconstraint!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
-    MOI.modifyconstraint!(model, c.lower, change)
-    MOI.modifyconstraint!(model, c.upper, change)
+MOI.canmodify(model::MOI.ModelLike, c::SplitIntervalBridge, change) = true
+function MOI.modify!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
+    MOI.modify!(model, c.lower, change)
+    MOI.modify!(model, c.upper, change)
 end
 
 MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SplitIntervalBridge}) = true

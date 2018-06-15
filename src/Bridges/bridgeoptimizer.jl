@@ -209,19 +209,19 @@ function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         MOI.addconstraint!(b.model, f, s)
     end
 end
-function MOI.canmodifyconstraint(b::AbstractBridgeOptimizer, ci::CI, change)
+function MOI.canmodify(b::AbstractBridgeOptimizer, ci::CI, change)
     if isbridged(b, typeof(ci))
-       MOI.canmodifyconstraint(b.bridged, ci, change) && MOI.canmodifyconstraint(b, MOIB.bridge(b, ci), change)
+       MOI.canmodify(b.bridged, ci, change) && MOI.canmodify(b, MOIB.bridge(b, ci), change)
     else
-        MOI.canmodifyconstraint(b.model, ci, change)
+        MOI.canmodify(b.model, ci, change)
     end
 end
-function MOI.modifyconstraint!(b::AbstractBridgeOptimizer, ci::CI, change)
+function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)
     if isbridged(b, typeof(ci))
-        MOI.modifyconstraint!(b, bridge(b, ci), change)
-        MOI.modifyconstraint!(b.bridged, ci, change)
+        MOI.modify!(b, bridge(b, ci), change)
+        MOI.modify!(b.bridged, ci, change)
     else
-        MOI.modifyconstraint!(b.model, ci, change)
+        MOI.modify!(b.model, ci, change)
     end
 end
 

@@ -141,7 +141,7 @@ end
     MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.RotatedSecondOrderCone(1))
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
-    # TODO: test modifyconstraint! with a change that forces the optimizer to be dropped
+    # TODO: test modify! with a change that forces the optimizer to be dropped
 
     MOI.empty!(m)
     @test MOIU.state(m) == MOIU.AttachedOptimizer

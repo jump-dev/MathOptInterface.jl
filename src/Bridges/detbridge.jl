@@ -141,7 +141,7 @@ end
 MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{<:LogDetBridge}) = false
 
 # Constraints
-MOI.canmodifyconstraint(model::MOI.ModelLike, c::LogDetBridge, change) = false
+MOI.canmodify(model::MOI.ModelLike, c::LogDetBridge, change) = false
 
 """
     RootDetBridge{T}
@@ -207,4 +207,4 @@ end
 MOI.canget(model::MOI.ModelLike, ::MOI.ConstraintDual, ::Type{<:RootDetBridge}) = false
 
 # Constraints
-MOI.canmodifyconstraint(model::MOI.ModelLike, c::RootDetBridge, change) = false
+MOI.canmodify(model::MOI.ModelLike, c::RootDetBridge, change) = false

@@ -118,33 +118,33 @@ end
 """
 ## Partial Modifications
 
-    canmodifyconstraint(model::ModelLike, c::ConstraintIndex, ::Type{M})::Bool where M<:AbstractFunctionModification
+    canmodify(model::ModelLike, c::ConstraintIndex, ::Type{M})::Bool where M<:AbstractFunctionModification
 
 Return a `Bool` indicating whether it is possible to apply a modification of type `M` to the function of constraint `c`.
 
 ### Examples
 
 ```julia
-canmodifyconstraint(model, c, ScalarConstantChange{Float64})
+canmodify(model, c, ScalarConstantChange{Float64})
 ```
 """
-function canmodifyconstraint end
-canmodifyconstraint(model::ModelLike, c::ConstraintIndex, change) = false
+function canmodify end
+canmodify(model::ModelLike, c::ConstraintIndex, change) = false
 
 """
 ## Partial Modifications
 
-    modifyconstraint!(model::ModelLike, c::ConstraintIndex, change::AbstractFunctionModification)
+    modify!(model::ModelLike, c::ConstraintIndex, change::AbstractFunctionModification)
 
 Apply the modification specified by `change` to the function of constraint `c`.
 
 ### Examples
 
 ```julia
-modifyconstraint!(model, c, ScalarConstantChange(10.0))
+modify!(model, c, ScalarConstantChange(10.0))
 ```
 """
-function modifyconstraint! end
+function modify! end
 
 
 """
@@ -159,7 +159,7 @@ the correct type.
 Solvers may only support a subset of constraint transforms that they perform
 efficiently (for example, changing from a `LessThan` to `GreaterThan` set). In
 addition, set modification (where `S1 = S2`) should be performed via the
-`modifyconstraint!` function.
+`modify!` function.
 
 
 Typically, the user should delete the constraint and add a new one.
