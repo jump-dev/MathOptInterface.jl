@@ -116,24 +116,21 @@ function set!(model::ModelLike, ::ConstraintFunction, constraint_index, func)
 end
 
 """
-## Partial Modifications
+    canmodify(model::ModelLike, ::Type{CI}, ::Type{M})::Bool where CI<:ConstraintIndex where M<:AbstractFunctionModification
 
-    canmodify(model::ModelLike, c::ConstraintIndex, ::Type{M})::Bool where M<:AbstractFunctionModification
-
-Return a `Bool` indicating whether it is possible to apply a modification of type `M` to the function of constraint `c`.
+Return a `Bool` indicating whether it is possible to apply a modification of
+type `M` to the function of constraint of type `CI`.
 
 ### Examples
 
 ```julia
-canmodify(model, c, ScalarConstantChange{Float64})
+canmodify(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}, ScalarConstantChange{Float64})
 ```
 """
 function canmodify end
-canmodify(model::ModelLike, c::ConstraintIndex, change) = false
+canmodify(model::ModelLike, constraint_index, change) = false
 
 """
-## Partial Modifications
-
     modify!(model::ModelLike, c::ConstraintIndex, change::AbstractFunctionModification)
 
 Apply the modification specified by `change` to the function of constraint `c`.

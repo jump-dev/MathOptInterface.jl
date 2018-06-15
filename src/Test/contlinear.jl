@@ -172,7 +172,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
 
     if config.modify_lhs
-        @test MOI.canmodify(model, c, MOI.ScalarCoefficientChange{Float64})
+        @test MOI.canmodify(model, typeof(c), MOI.ScalarCoefficientChange{Float64})
         MOI.modify!(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
     else
         @test MOI.candelete(model, c)
@@ -781,7 +781,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     #   solution: x = 2, y = 0, objv = 2
 
     if config.modify_lhs
-        @test MOI.canmodify(model, c1, MOI.ScalarCoefficientChange{Float64})
+        @test MOI.canmodify(model, typeof(c1), MOI.ScalarCoefficientChange{Float64})
         MOI.modify!(model, c1, MOI.ScalarCoefficientChange(y, 3.0))
     else
         @test MOI.candelete(model, c1)
@@ -980,7 +980,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     #               y <= 0.0
 
     if config.modify_lhs
-        @test MOI.canmodify(model, c1, MOI.VectorConstantChange{Float64})
+        @test MOI.canmodify(model, typeof(c1), MOI.VectorConstantChange{Float64})
         MOI.modify!(model, c1, MOI.VectorConstantChange([-100.0]))
     else
         @test MOI.candelete(model, c1)
@@ -1004,7 +1004,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     #               y <= -100.0
 
     if config.modify_lhs
-        @test MOI.canmodify(model, c2, MOI.VectorConstantChange{Float64})
+        @test MOI.canmodify(model, typeof(c2), MOI.VectorConstantChange{Float64})
         MOI.modify!(model, c2, MOI.VectorConstantChange([100.0]))
     else
         @test MOI.candelete(model, c2)

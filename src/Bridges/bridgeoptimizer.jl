@@ -209,11 +209,13 @@ function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         MOI.addconstraint!(b.model, f, s)
     end
 end
-function MOI.canmodify(b::AbstractBridgeOptimizer, ci::CI, change)
-    if isbridged(b, typeof(ci))
-       MOI.canmodify(b.bridged, ci, change) && MOI.canmodify(b, MOIB.bridge(b, ci), change)
+function MOI.canmodify(b::AbstractBridgeOptimizer, ::Type{C}, ::Type{Chg}) where {C<:CI,Chg<:MOI.AbstractFunctionModification}
+    if isbridged(b, C)
+       MOI.canmodify(b.bridged, C, Chg)
+       # TODO(@blegat): how should the following be implemented?
+       # && MOI.canmodify(b, MOIB.bridge(b, ci), Chg)
     else
-        MOI.canmodify(b.model, ci, change)
+        MOI.canmodify(b.model, C, Chg)
     end
 end
 function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)

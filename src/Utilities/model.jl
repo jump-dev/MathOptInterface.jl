@@ -248,15 +248,11 @@ function MOI.delete!(model::AbstractModel, ci::CI)
     end
 end
 
-MOI.canmodify(::AbstractModel, ::CI, ::Type{<:MOI.AbstractFunctionModification}) = true
+MOI.canmodify(::AbstractModel, ::Type{<:CI}, ::Type{<:MOI.AbstractFunctionModification}) = true
 function MOI.modify!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
     _modify!(model, ci, getconstrloc(model, ci), change)
 end
 
-MOI.canmodify(::AbstractModel, ::CI, ::Type{<:MOI.AbstractFunction}) = true
-function MOI.modify!(model::AbstractModel, ci::CI, change::MOI.AbstractFunction)
-    _modify!(model, ci, getconstrloc(model, ci), change)
-end
 MOI.canset(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
     _modify!(model, ci, getconstrloc(model, ci), change)
