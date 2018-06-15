@@ -177,3 +177,38 @@ end
         MOIT.solve_affine_deletion_edge_cases(mock, config)
     end
 end
+
+@testset "modifications" begin
+    mock   = MOIU.MockOptimizer(Model{Float64}())
+    config = MOIT.TestConfig()
+    @testset "solve_modify_variable_bound" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.FeasiblePoint,
+                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+            )
+        )
+        MOIT.solve_modify_variable_bound(mock, config)
+    end
+    @testset "solve_modify_rhs" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
+            )
+        )
+        MOIT.solve_modify_rhs(mock, config)
+    end
+end
