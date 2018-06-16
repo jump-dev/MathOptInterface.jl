@@ -123,3 +123,28 @@ end
     @test MOI.dimension(s) == 1
 
 end
+
+struct Func388 <: MOI.AbstractScalarFunction
+    x::MOI.VariableIndex
+end
+struct Set388 <: MOI.AbstractSet end
+@testset "Default fallbacks" begin
+    @testset "set!" begin
+        m = Model{Float64}()
+        x = MOI.addvariable!(m)
+        c = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
+        @test !MOI.supportsconstraint(m, Func388, Set388)
+
+        @test MOI.canset(m, MOI.ConstraintSet(), typeof(c))
+        # set of different type
+        @test_throws Exception MOI.set!(m, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
+        # set not implemented
+        @test_throws Exception MOI.set!(m, MOI.ConstraintSet(), c, Set388())
+
+        @test MOI.canset(m, MOI.ConstraintFunction(), typeof(c))
+        # function of different type
+        @test_throws Exception MOI.set!(m, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
+        # function not implemented
+        @test_throws Exception MOI.set!(m, MOI.ConstraintFunction(), c, Func388(x))
+    end
+end
