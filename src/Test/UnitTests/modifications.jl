@@ -150,7 +150,7 @@ function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
     )
     @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
     foo = MOI.get(model, MOI.ConstraintFunction(), c)
-    @test_broken foo == MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    @test foo ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
     if config.solve
         test_model_solution(model, config;
             objective_value   = 0.5,
