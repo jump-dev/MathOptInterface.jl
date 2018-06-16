@@ -209,13 +209,11 @@ function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         MOI.addconstraint!(b.model, f, s)
     end
 end
-function MOI.canmodify(b::AbstractBridgeOptimizer, ::Type{C}, ::Type{Chg}) where {C<:CI,Chg<:MOI.AbstractFunctionModification}
-    if isbridged(b, C)
-       MOI.canmodify(b.bridged, C, Chg)
-       # TODO(@blegat): how should the following be implemented?
-       # && MOI.canmodify(b, MOIB.bridge(b, ci), Chg)
+function MOI.canmodify(b::AbstractBridgeOptimizer, ::Type{CI{F, S}}, ::Type{Chg}) where {F, S, Chg<:MOI.AbstractFunctionModification}
+    if isbridged(b, CI{F, S})
+        MOI.canmodify(b.bridged, CI{F, S}, Chg) && MOI.canmodify(b, MOIB.bridgetype(b, F, S), Chg)
     else
-        MOI.canmodify(b.model, C, Chg)
+        MOI.canmodify(b.model, CI{F, S}, Chg)
     end
 end
 function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)
@@ -227,13 +225,11 @@ function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)
     end
 end
 
-function MOI.canset(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, ::Type{C}) where C <: CI
-    if isbridged(b, C)
-       MOI.canset(b.bridged, MOI.ConstraintSet(), C)
-        # TODO(@blegat) is this necessary? How do I do it without types
-        # && MOI.canset(b, MOIB.bridge(b, ci), change)
+function MOI.canset(b::AbstractBridgeOptimizer, attr::MOI.ConstraintSet, ::Type{CI{F, S}}) where {F, S}
+    if isbridged(b, CI{F, S})
+        MOI.canset(b.bridged, MOI.ConstraintSet(), CI{F, S}) && MOI.canset(b, MOI.ConstraintSet(), MOIB.bridgetype(b, F, S))
     else
-        MOI.canset(b.model, MOI.ConstraintSet(), C)
+        MOI.canset(b.model, MOI.ConstraintSet(), CI{F, S})
     end
 end
 function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_index::CI, set)
@@ -246,13 +242,11 @@ function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_in
     end
 end
 
-function MOI.canset(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, ::Type{C}) where C <: CI
-    if isbridged(b, C)
-       MOI.canset(b.bridged, MOI.ConstraintFunction(), C)
-        # TODO(@blegat) is this necessary? How do I do it without types
-        # && MOI.canset(b, MOIB.bridge(b, ci), change)
+function MOI.canset(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, ::Type{CI{F, S}}) where {F, S}
+    if isbridged(b, CI{F, S})
+        MOI.canset(b.bridged, MOI.ConstraintFunction(), CI{F, S}) && MOI.canset(b, MOI.ConstraintFunction(), MOIB.bridgetype(b, F, S))
     else
-        MOI.canset(b.model, MOI.ConstraintFunction(), C)
+        MOI.canset(b.model, MOI.ConstraintFunction(), CI{F, S})
     end
 end
 function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constraint_index::CI, func)
