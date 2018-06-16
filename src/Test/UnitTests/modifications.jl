@@ -119,6 +119,50 @@ end
 modificationtests["solve_coef_scalaraffine_lessthan"] = solve_coef_scalaraffine_lessthan
 
 """
+    solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfig)
+
+Test setting the function in a ScalarAffineFunction-in-LessThan
+constraint. If `config.solve=true` confirm that it solves correctly, and if
+`config.duals=true`, check that the duals are computed correctly.
+"""
+function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        maxobjective: 1.0x
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.addconstraint!(model,
+            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+            MOI.LessThan(1.0)
+        )
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 1.0,
+            variable_primal   = [(x, 1.0)],
+            constraint_primal = [(c, 1.0)],
+            constraint_dual   = [(c, -1.0)]
+        )
+    end
+    @test MOI.canset(model, MOI.ConstraintFunction(), typeof(c))
+    MOI.set!(model, MOI.ConstraintFunction(), c,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    )
+    @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
+    foo = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test_broken foo == MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 0.5,
+            variable_primal   = [(x, 0.5)],
+            # constraint_primal = [(c, 1.0)],
+            constraint_dual   = [(c, -0.5)]
+        )
+    end
+end
+modificationtests["solve_func_scalaraffine_lessthan"] = solve_func_scalaraffine_lessthan
+
+"""
     solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfig)
 
 Test modifying the constant term in a VectorAffineFunction-in-Nonpositives
