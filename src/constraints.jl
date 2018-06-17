@@ -51,6 +51,9 @@ can be replaced by another set of the same type `S` as the original set.
 """
 canset(model::ModelLike, ::ConstraintSet, type_of_constraint_set) = false
 # Note: the above method is deliberately under-typed to avoid method ambiguities
+# For example, a bridge might implement
+#  canset(model::AbstractBridgeOptimizer, ::ConstraintSet, type_of_constraint_set)
+# which is ambiguous if we use `type_of_constraint_set::Abstractset`
 
 """
     set!(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, set::S)
@@ -71,6 +74,7 @@ function set!(model::ModelLike, ::ConstraintSet, constraint_index, set)
     # note: we deliberately avoid typing the last two arguments to avoid
     # ambiguity errors. If solvers don't catch the case where the set is
     # different, it should still fall back to this method.
+    # See also: the note under canset(m, ::ConstraintSet, type_of_constraint_set)
     if typeof(constraint_index) <: ConstraintIndex && typeof(set) <: AbstractSet
         if set_type(constraint_index) != typeof(set)
             # throw helpful error
@@ -91,6 +95,9 @@ function.
 """
 canset(model::ModelLike, ::ConstraintFunction, type_of_function) = false
 # Note: the above method is deliberately under-typed to avoid method ambiguities
+# For example, a bridge might implement
+#  canset(model::AbstractBridgeOptimizer, ::ConstraintFunction, type_of_function)
+# which is ambiguous if we use `type_of_function::AbstractFunction`
 
 """
     set!(model::ModelLike, ::ConstraintFunction, c::ConstraintIndex{F,S}, func::F)
@@ -112,6 +119,7 @@ function set!(model::ModelLike, ::ConstraintFunction, constraint_index, func)
     # note: we deliberately avoid typing the last two arguments to avoid
     # ambiguity errors. If solvers don't catch the case where the set is
     # different, it should still fall back to this method.
+    # See also: the note under canset(m, ::ConstraintFunction, type_of_function)
     if typeof(constraint_index) <: ConstraintIndex && typeof(func) <: AbstractFunction
         if func_type(constraint_index) != typeof(func)
             # throw helpful error

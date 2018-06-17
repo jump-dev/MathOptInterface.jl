@@ -232,8 +232,7 @@ function MOI.canset(b::AbstractBridgeOptimizer, attr::MOI.ConstraintSet, ::Type{
         MOI.canset(b.model, MOI.ConstraintSet(), CI{F, S})
     end
 end
-function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_index::CI, set)
-    # Note: we also under-type this function to avoid ambiguity
+function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_index::CI{F,S}, set::S) where {F,S}
     if isbridged(b, typeof(constraint_index))
         MOI.set!(b, MOI.ConstraintSet(), bridge(b, constraint_index), set)
         MOI.set!(b.bridged, MOI.ConstraintSet(), constraint_index, set)
@@ -249,8 +248,7 @@ function MOI.canset(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, ::Type
         MOI.canset(b.model, MOI.ConstraintFunction(), CI{F, S})
     end
 end
-function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constraint_index::CI, func)
-    # Note: we also under-type this function to avoid ambiguity
+function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constraint_index::CI{F,S}, func::F) where {F,S}
     if isbridged(b, typeof(constraint_index))
         MOI.set!(b, MOI.ConstraintFunction(), bridge(b, constraint_index), func)
         MOI.set!(b.bridged, MOI.ConstraintFunction(), constraint_index, func)
