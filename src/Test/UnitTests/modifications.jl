@@ -39,6 +39,46 @@ end
 modificationtests["solve_set_singlevariable_lessthan"] = solve_set_singlevariable_lessthan
 
 """
+    solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::TestConfig)
+
+Test set transformation of a SingleVariable-in-LessThan constraint. If
+`config.solve=true` confirm that it solves correctly, and if
+`config.duals=true`, check that the duals are computed correctly.
+"""
+function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        maxobjective: 1.0x
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 1.0,
+            variable_primal   = [(x, 1.0)],
+            constraint_primal = [(c, 1.0)],
+            constraint_dual   = [(c, -1.0)]
+        )
+    end
+    @test !MOI.cantransform(model, typeof(c), MOI.LessThan{Float64})
+    @test MOI.cantransform(model, typeof(c), MOI.GreaterThan{Float64})
+    c2 = MOI.transform!(model, c, MOI.GreaterThan(2.0))
+    @test !MOI.isvalid(model, c)
+    @test MOI.isvalid(model, c2)
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 2.0,
+            variable_primal   = [(x, 2.0)],
+            constraint_primal = [(c2, 2.0)],
+            constraint_dual   = [(c2, 1.0)]
+        )
+    end
+end
+modificationtests["solve_transform_singlevariable_lessthan"] = solve_transform_singlevariable_lessthan
+
+"""
     solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfig)
 
 Test modifying set of ScalarAffineFunction-in-LessThan constraint. If

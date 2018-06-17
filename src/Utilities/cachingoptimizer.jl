@@ -339,7 +339,7 @@ function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
 end
 
 
-# TODO: addconstraints!, transformconstraint!, cantransformconstraint
+# TODO: addconstraints!, transform!, cantransform
 
 ## CachingOptimizer get and set attributes
 

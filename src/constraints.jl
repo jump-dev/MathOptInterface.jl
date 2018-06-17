@@ -74,7 +74,7 @@ function set!(model::ModelLike, ::ConstraintSet, constraint_index, set)
     if typeof(constraint_index) <: ConstraintIndex && typeof(set) <: AbstractSet
         if set_type(constraint_index) != typeof(set)
             # throw helpful error
-            error("Cannot modify sets of different types. Use `transformconstraint!` instead.")
+            error("Cannot modify sets of different types. Use `transform!` instead.")
         end
     end
     # throw original error suggesting that it is not implemented
@@ -118,7 +118,7 @@ end
 """
 ## Transform Constraint Set
 
-    transformconstraint!(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}
+    transform!(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}
 
 Replace the set in constraint `c` with `newset`. The constraint index `c`
 will no longer be valid, and the function returns a new constraint index with
@@ -137,14 +137,14 @@ Typically, the user should delete the constraint and add a new one.
 If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
 
 ```julia
-c2 = transformconstraint!(model, c, GreaterThan(0.0))
-transformconstraint!(model, c, LessThan(0.0)) # errors
+c2 = transform!(model, c, GreaterThan(0.0))
+transform!(model, c, LessThan(0.0)) # errors
 ```
 """
-function transformconstraint! end
+function transform! end
 
 # default fallback
-function transformconstraint!(model::ModelLike, c::ConstraintIndex, newset)
+function transform!(model::ModelLike, c::ConstraintIndex, newset)
     f = get(model, ConstraintFunction(), c)
     delete!(model, c)
     addconstraint!(model, f, newset)
@@ -153,7 +153,7 @@ end
 """
 ## Transform Constraint Set
 
-    cantransformconstraint(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2})::Bool where S2<:AbstractSet
+    cantransform(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2})::Bool where S2<:AbstractSet
 
 Return a `Bool` indicating whether the set of type `S1` in constraint `c` can be replaced by a set of type `S2`.
 
@@ -162,13 +162,13 @@ Return a `Bool` indicating whether the set of type `S1` in constraint `c` can be
 If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
 
 ```julia
-cantransformconstraint(model, c, GreaterThan(0.0)) # true
-cantransformconstraint(model, c, ZeroOne())        # false
+cantransform(model, c, GreaterThan(0.0)) # true
+cantransform(model, c, ZeroOne())        # false
 ```
 """
-function cantransformconstraint end
+function cantransform end
 
 # default fallback
-function cantransformconstraint(model::ModelLike, c::ConstraintIndex{F}, ::Type{S}) where {F<:AbstractFunction, S<:AbstractSet}
+function cantransform(model::ModelLike, c::ConstraintIndex{F}, ::Type{S}) where {F<:AbstractFunction, S<:AbstractSet}
     canget(model, ConstraintFunction(), typeof(c)) && candelete(model, c) && canaddconstraint(model, F, S)
 end

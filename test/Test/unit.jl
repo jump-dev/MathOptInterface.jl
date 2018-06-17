@@ -196,6 +196,22 @@ end
         )
         MOIT.solve_set_singlevariable_lessthan(mock, config)
     end
+    # TODO: implement transform!
+    # @testset "solve_transform_singlevariable_lessthan" begin
+    #     MOIU.set_mock_optimize!(mock,
+    #         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+    #             MOI.Success, (MOI.FeasiblePoint, [1.0]),
+    #             MOI.FeasiblePoint,
+    #                 (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+    #         ),
+    #         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+    #             MOI.Success, (MOI.FeasiblePoint, [2.0]),
+    #             MOI.FeasiblePoint,
+    #                 (MOI.SingleVariable, MOI.LessThan{Float64}) => [1.0]
+    #         )
+    #     )
+    #     MOIT.solve_transform_singlevariable_lessthan(mock, config)
+    # end
     @testset "solve_set_scalaraffine_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,

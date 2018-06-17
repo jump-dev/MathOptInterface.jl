@@ -165,8 +165,8 @@ addconstraint!
 addconstraints!
 modify!
 canmodify
-transformconstraint!
-cantransformconstraint
+transform!
+cantransform
 supportsconstraint
 ```
 

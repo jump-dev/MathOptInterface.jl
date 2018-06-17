@@ -442,6 +442,22 @@ set!(m, ConstraintSet(), c, GreaterThan(2.0))  # errors
 If our constraint is an affine inequality, then this corresponds to modifying
 the right hand-side of a constraint in linear programming.
 
+In some special cases, solvers may support efficiently changing the set of a
+constraint (for example, from `LessThan` to `GreaterThan`). For these cases,
+MathOptInterface provides the [`transform!`](@ref) method. For example, instead
+of the error we observed above, the following will work:
+```julia
+c2 = transform!(m, c, GreaterThan(1.0))
+```
+The `transform!` function returns a new constraint index, and the old constraint
+index (i.e., `c`) is no longer valid:
+```julia
+isvalid(m, c)   # false
+isvalid(m, c2)  # true
+```
+Also note that `transform!` cannot be called with a set of the same type;
+[`set!`](@ref) should be used instead.
+
 ### Modify the function of a constraint
 
 Given a constraint of type `F`-in-`S` (see [Constraints by function-set pairs](@ref)
