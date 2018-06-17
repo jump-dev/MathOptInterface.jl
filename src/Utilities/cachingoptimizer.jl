@@ -45,8 +45,9 @@ Creates an `CachingOptimizer` in `Automatic` mode, with the optimizer `optimizer
 The model_cache manager returned behaves like an `AbstractOptimizer` as long as no
 `CachingOptimizer`-specific functions (e.g. `resetoptimizer!`) are called on it.
 The type of the optimizer returned is `CachingOptimizer{typeof(optimizer),
-typeof(model_cache)}` so it does not support the function `dropoptimizer!`
-nor the method `resetoptimizer!(::CachingOptimizer, optimizer)`.
+typeof(model_cache)}` so it does not support the function
+`resetoptimizer!(::CachingOptimizer, new_optimizer)` if the type of
+`new_optimizer` is different from the type of `optimizer`.
 """
 function CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer)
     @assert MOI.isempty(model_cache)
