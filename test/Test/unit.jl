@@ -252,6 +252,17 @@ end
         )
         MOIT.solve_const_vectoraffine_nonpos(mock, config)
     end
+    @testset "solve_multirow_vectoraffine_nonpos" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.5])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.25])
+            )
+        )
+        MOIT.solve_multirow_vectoraffine_nonpos(mock, config)
+    end
     @testset "solve_const_scalar_objective" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,

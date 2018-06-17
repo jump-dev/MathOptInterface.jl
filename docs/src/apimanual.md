@@ -444,7 +444,23 @@ the right hand-side of a constraint in linear programming.
 
 ### Modify the function of a constraint
 
-... still to do ...
+Given a constraint of type `F`-in-`S` (see [Constraints by function-set pairs](@ref)
+above for an explanation), it is also  possible to modify the function of type
+`F`. For example, given the variable bound ``x \\le 1``:
+```julia
+c = addconstraint(m, SingleVariable(x), LessThan(1.0))
+```
+we can modify the function so that the bound now ``y \\le 1`` as follows:
+```julia
+set!(m, ConstraintFunction(), c, SingleVariable(y))
+```
+where `m` is our [`ModelLike`](@ref) model. However, the following will fail as
+the new function is of a different type to the original function:
+```julia
+set!(m, ConstraintFunction(), c,
+    ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0)
+)
+```
 
 ### Change the constant term in a function
 
@@ -502,7 +518,7 @@ The constraints are now ``1.0x + 1.0 \\le 0.0`` and ``2.0y + 2.0 \\le 0.0``.
 
 In addition to modifying the constant terms in a function, we can also modify
 the affine variable coefficients using [`ScalarCoefficientChange`](@ref). For
-example, give the constraint ``1.0x <= 1.0``:
+example, given the constraint ``1.0x <= 1.0``:
 ```julia
 c = addconstraint!(m,
     ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0),
@@ -521,9 +537,28 @@ index `c` as we saw above.
 
 ### MultirowChange
 
-Column generation
+Finally, the last modification supports by MathOptInterface is the ability to
+modify the affine coefficient of a single variable in a VectorAffine or
+VectorQuadratic  function.
 
-... still to do ...
+For
+example, given the constraint ``Ax \\in [0, \\infty)``, where ``A = [1.0, 2.0]^\\top``:
+```julia
+c = addconstraint!(m,
+    VectorAffineFunction([
+            VectorAffineTerm(1, ScalarAffineTerm(1.0, x)),
+            VectorAffineTerm(1, ScalarAffineTerm(2.0, x))
+        ],
+        [0.0, 0.0]
+    ),
+    Nonnegatives(2)
+)
+```
+we can modify the coefficients of the `x` variable so that the `A` matrix
+becomes ``A = [3.0, 4.0]^\\top`` as follows:
+```julia
+modify!(m, c, MultirowChange(x, [3.0, 4.0]))
+```
 
 ## Advanced
 

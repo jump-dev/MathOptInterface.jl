@@ -50,7 +50,7 @@ mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f
 
 mapvariables(varmap::Function, change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange}) = change
 mapvariables(varmap::Function, change::MOI.ScalarCoefficientChange) = MOI.ScalarCoefficientChange(varmap(change.variable), change.new_coefficient)
-mapvariables(varmap::Function, change::MOI.MultirowChange) = MOI.MultirowChange(varmap(change.variable), change.rows, change.new_coefficients)
+mapvariables(varmap::Function, change::MOI.MultirowChange) = MOI.MultirowChange(varmap(change.variable), change.new_coefficients)
 
 mapvariables(varmap, f::MOI.AbstractFunctionModification) = mapvariables(vi -> varmap[vi], f)
 

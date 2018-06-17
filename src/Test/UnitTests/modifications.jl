@@ -206,6 +206,48 @@ end
 modificationtests["solve_const_vectoraffine_nonpos"] = solve_const_vectoraffine_nonpos
 
 """
+    solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfig)
+
+Test modifying the variable coefficients in a
+VectorAffineFunction-in-Nonpositives constraint. If `config.solve=true` confirm
+that it solves correctly.
+"""
+function solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        maxobjective: 1.0x
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.addconstraint!(model,
+            MOI.VectorAffineFunction([
+                    MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
+                    MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x))
+                ],
+                [-1.0, -1.0]
+            ),
+            MOI.Nonpositives(2)
+        )
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 0.5,
+            variable_primal   = [(x, 0.5)],
+            constraint_primal = [(c, [-0.5, 0.0])]
+        )
+    end
+    @test MOI.canmodify(model, typeof(c), MOI.MultirowChange{Float64})
+    MOI.modify!(model, c, MOI.MultirowChange(x, [(1,4.0), (2,3.0)]))
+    if config.solve
+        test_model_solution(model, config;
+            objective_value   = 0.25,
+            variable_primal   = [(x, 0.25)],
+            constraint_primal = [(c, [0.0, -0.25])]
+        )
+    end
+end
+modificationtests["solve_multirow_vectoraffine_nonpos"] = solve_multirow_vectoraffine_nonpos
+
+"""
     solve_const_scalar_objective(model::MOI.ModelLike, config::TestConfig)
 
 Test the constant of a scalaraffine objective. If `config.solve=true` confirm
