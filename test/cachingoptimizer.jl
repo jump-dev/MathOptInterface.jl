@@ -167,6 +167,7 @@ end
         s = MOIU.MockOptimizer(ModelForMock{Float64}())
         model = ModelForCachingOptimizer{Float64}()
         m = MOIU.CachingOptimizer(model, s)
+        @test m isa MOIU.CachingOptimizer{typeof(s), typeof(model)}
         @test MOI.isempty(m)
         @test MOIU.state(m) == MOIU.AttachedOptimizer
         @test MOIU.mode(m) == MOIU.Automatic
