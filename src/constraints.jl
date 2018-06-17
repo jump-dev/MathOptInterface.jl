@@ -64,7 +64,7 @@ If `c` is a `ConstraintIndex{F,Interval}`
 
 ```julia
 set!(model, ConstraintSet(), c, Interval(0, 5))
-set!(model, ConstraintSet(), c, NonPositives)    # Error
+set!(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
 ```
 """
 function set!(model::ModelLike, ::ConstraintSet, constraint_index, set)
@@ -112,8 +112,16 @@ function set!(model::ModelLike, ::ConstraintFunction, constraint_index, func)
     # note: we deliberately avoid typing the last two arguments to avoid
     # ambiguity errors. If solvers don't catch the case where the set is
     # different, it should still fall back to this method.
+    if typeof(constraint_index) <: ConstraintIndex && typeof(func) <: AbstractFunction
+        if func_type(constraint_index) != typeof(func)
+            # throw helpful error
+            error("Cannot use `set!` on functions of different types.")
+        end
+    end
+    # throw original error suggesting that it is not implemented
     throw(MethodError(set!, (model, ConstraintFunction(), constraint_index, func)))
 end
+func_type(c::ConstraintIndex{F,S}) where {F, S} = F
 
 """
 ## Transform Constraint Set
@@ -155,7 +163,8 @@ end
 
     cantransform(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2})::Bool where S2<:AbstractSet
 
-Return a `Bool` indicating whether the set of type `S1` in constraint `c` can be replaced by a set of type `S2`.
+Return a `Bool` indicating whether the set of type `S1` in constraint `c` can be
+replaced by a set of type `S2`.
 
 ### Examples
 
@@ -163,7 +172,10 @@ If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
 
 ```julia
 cantransform(model, c, GreaterThan(0.0)) # true
-cantransform(model, c, ZeroOne())        # false
+cantransform(model, c, ZeroOne())        # it is expected that most solvers will
+                                         # return false, but this does not
+                                         # preclude solvers from supporting
+                                         # constraints such as this.
 ```
 """
 function cantransform end

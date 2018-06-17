@@ -1,5 +1,6 @@
 """
 ## Constraint Function
+
     canmodify(model::ModelLike, ::Type{CI}, ::Type{M})::Bool where CI<:ConstraintIndex where M<:AbstractFunctionModification
 
 Return a `Bool` indicating whether it is possible to apply a modification of
@@ -13,7 +14,7 @@ canmodify(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.Less
 
 ## Objective Function
 
-canmodify(model::ModelLike, ::ObjectiveFunction, ::Type{M})::Bool where M<:AbstractFunctionModification
+    canmodify(model::ModelLike, ::ObjectiveFunction, ::Type{M})::Bool where M<:AbstractFunctionModification
 
 Return a `Bool` indicating whether it is possible to apply a modification of
 type `M` to the objective function of model `model`.
@@ -42,7 +43,7 @@ modify!(model, c, ScalarConstantChange(10.0))
 
 ## Objective Function
 
-modify!(model::ModelLike, ::ObjectiveFunction, change::AbstractFunctionModification)
+    modify!(model::ModelLike, ::ObjectiveFunction, change::AbstractFunctionModification)
 
 Apply the modification specified by `change` to the objective function of
 `model`. To change the function completely, call `set!` instead.

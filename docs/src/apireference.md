@@ -203,6 +203,7 @@ VectorQuadraticFunction
 
 List of function modifications.
 ```@docs
+AbstractFunctionModification
 ScalarConstantChange
 VectorConstantChange
 ScalarCoefficientChange

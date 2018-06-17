@@ -12,9 +12,10 @@ function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestCon
     MOIU.loadfromstring!(model,"""
         variables: x
         maxobjective: 1.0x
+        c: x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
     if config.solve
         test_model_solution(model, config;
             objective_value   = 1.0,
@@ -50,9 +51,10 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
     MOIU.loadfromstring!(model,"""
         variables: x
         maxobjective: 1.0x
+        c: x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
     if config.solve
         test_model_solution(model, config;
             objective_value   = 1.0,
@@ -90,12 +92,10 @@ function solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfi
     MOIU.loadfromstring!(model,"""
         variables: x
         maxobjective: 1.0x
+        c: 1.0x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.addconstraint!(model,
-            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-            MOI.LessThan(1.0)
-        )
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
     if config.solve
         test_model_solution(model, config;
             objective_value   = 1.0,
@@ -131,12 +131,10 @@ function solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
     MOIU.loadfromstring!(model,"""
         variables: x
         maxobjective: 1.0x
+        c: 1.0x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.addconstraint!(model,
-            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-            MOI.LessThan(1.0)
-        )
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
     if config.solve
         test_model_solution(model, config;
             objective_value   = 1.0,
@@ -170,12 +168,10 @@ function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
     MOIU.loadfromstring!(model,"""
         variables: x
         maxobjective: 1.0x
+        c: 1.0x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.addconstraint!(model,
-            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-            MOI.LessThan(1.0)
-        )
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
     if config.solve
         test_model_solution(model, config;
             objective_value   = 1.0,
