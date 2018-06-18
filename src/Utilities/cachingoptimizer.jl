@@ -247,52 +247,37 @@ function MOI.modify!(m::CachingOptimizer, cindex::CI, change)
     return
 end
 
-function MOI.canset(m::CachingOptimizer, ::MOI.ConstraintSet, ::Type{C}) where C <: CI
-    if !MOI.canset(m.model_cache, MOI.ConstraintSet(), C)
+function MOI.canset(m::CachingOptimizer, attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet}, ::Type{C}) where C <: CI
+    if !MOI.canset(m.model_cache, attr, C)
         return false
     end
     if m.state == AttachedOptimizer && m.mode == Manual
-        if !MOI.canset(m.optimizer, MOI.ConstraintSet(), C)
+        if !MOI.canset(m.optimizer, attr, C)
             return false
         end
     end
     return true
-end
-function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintSet, cindex::CI{F,S}, set::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    if (m.mode == Automatic && m.state == AttachedOptimizer &&
-            !MOI.canset(m.optimizer, MOI.ConstraintSet(), typeof(cindex)) )
-        resetoptimizer!(m)
-    end
-    @assert MOI.canset(m, MOI.ConstraintSet(), typeof(cindex))
-    MOI.set!(m.model_cache, MOI.ConstraintSet(), cindex, set)
-    if m.state == AttachedOptimizer
-        MOI.set!(m.optimizer, MOI.ConstraintSet(), m.model_to_optimizer_map[cindex], set)
-    end
-    return
 end
 
-function MOI.canset(m::CachingOptimizer, ::MOI.ConstraintFunction, ::Type{C}) where C <: CI
-    if !MOI.canset(m.model_cache, MOI.ConstraintFunction(), C)
-        return false
-    end
-    if m.state == AttachedOptimizer && m.mode == Manual
-        if !MOI.canset(m.optimizer, MOI.ConstraintFunction(), C)
-            return false
-        end
-    end
-    return true
-end
-function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintFunction, cindex::CI{F,S}, func::F) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+# This function avoids duplicating code, but allows us to strongly type the
+# arguments of the set! functions below.
+function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, replacement)
     if (m.mode == Automatic && m.state == AttachedOptimizer &&
-            !MOI.canset(m.optimizer, MOI.ConstraintFunction(), typeof(cindex)) )
+            !MOI.canset(m.optimizer, attr, typeof(cindex)) )
         resetoptimizer!(m)
     end
-    @assert MOI.canset(m, MOI.ConstraintFunction(), typeof(cindex))
-    MOI.set!(m.model_cache, MOI.ConstraintFunction(), cindex, func)
+    MOI.set!(m.model_cache, attr, cindex, replacement)
     if m.state == AttachedOptimizer
-        MOI.set!(m.optimizer, MOI.ConstraintFunction(), m.model_to_optimizer_map[cindex], func)
+        MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
     end
-    return
+end
+
+function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintSet, cindex::CI{F,S}, set::S) where {F,S}
+    replace_constraint_function_or_set!(m, MOI.ConstraintSet(), cindex, set)
+end
+
+function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintFunction, cindex::CI{F,S}, func::F) where {F,S}
+    replace_constraint_function_or_set!(m, MOI.ConstraintFunction(), cindex, func)
 end
 
 function MOI.canmodify(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change)

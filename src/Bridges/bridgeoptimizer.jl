@@ -225,13 +225,14 @@ function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)
     end
 end
 
-function MOI.canset(b::AbstractBridgeOptimizer, attr::MOI.ConstraintSet, ::Type{CI{F, S}}) where {F, S}
+function MOI.canset(b::AbstractBridgeOptimizer, attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet}, ::Type{CI{F, S}}) where {F, S}
     if isbridged(b, CI{F, S})
-        MOI.canset(b.bridged, MOI.ConstraintSet(), CI{F, S}) && MOI.canset(b, MOI.ConstraintSet(), MOIB.bridgetype(b, F, S))
+        MOI.canset(b.bridged, attr, CI{F, S}) && MOI.canset(b, attr, MOIB.bridgetype(b, F, S))
     else
-        MOI.canset(b.model, MOI.ConstraintSet(), CI{F, S})
+        MOI.canset(b.model, attr, CI{F, S})
     end
 end
+
 function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_index::CI{F,S}, set::S) where {F,S}
     if isbridged(b, typeof(constraint_index))
         MOI.set!(b, MOI.ConstraintSet(), bridge(b, constraint_index), set)
@@ -241,13 +242,6 @@ function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_in
     end
 end
 
-function MOI.canset(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, ::Type{CI{F, S}}) where {F, S}
-    if isbridged(b, CI{F, S})
-        MOI.canset(b.bridged, MOI.ConstraintFunction(), CI{F, S}) && MOI.canset(b, MOI.ConstraintFunction(), MOIB.bridgetype(b, F, S))
-    else
-        MOI.canset(b.model, MOI.ConstraintFunction(), CI{F, S})
-    end
-end
 function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constraint_index::CI{F,S}, func::F) where {F,S}
     if isbridged(b, typeof(constraint_index))
         MOI.set!(b, MOI.ConstraintFunction(), bridge(b, constraint_index), func)
