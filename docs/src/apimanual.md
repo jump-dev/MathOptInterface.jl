@@ -412,7 +412,7 @@ primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 @show primal_variable_result
 ```
 
-## Problem Modification
+## Problem modification
 
 In addition to adding and deleting constraints and variables, MathOptInterface
 supports modifying, in-place, coefficients in the constraints and the objective
@@ -489,7 +489,7 @@ set!(m, ConstraintFunction(), c,
 )
 ```
 
-### In-place Modifications
+### In-place modification
 
 The second type of problem modifications allow the user to modify, in-place, the
 coefficients of a function. Currently, four modifications are supported by
