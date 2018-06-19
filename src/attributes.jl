@@ -578,16 +578,15 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
-function hidden_set!(model::ModelLike, ::ConstraintFunction, constraint_index::ConstraintIndex, func::AbstractFunction)
-    if func_type(constraint_index) != typeof(func)
-        # throw helpful error
-        throw(ArgumentError("""Cannot modify functions of different types.
-        Constraint type is $(func_type(constraint_index)) while the replacement
-        function is of type $(typeof(func))."""))
-    end
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintFunction`"))
+function hidden_set!(model::ModelLike, ::ConstraintFunction, constraint_index::ConstraintIndex{F,S}, func::F) where {F,S}
+    throw(ArgumentError("""Cannot modify functions of different types.
+    Constraint type is $(func_type(constraint_index)) while the replacement
+    function is of type $(typeof(func))."""))
 end
 func_type(c::ConstraintIndex{F,S}) where {F, S} = F
+function hidden_set!(model::ModelLike, ::ConstraintFunction, ::ConstraintIndex, ::AbstractFunction)
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintFunction`"))
+end
 
 """
     ConstraintSet()
@@ -596,16 +595,15 @@ Return the `AbstractSet` object used to define the constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function hidden_set!(model::ModelLike, ::ConstraintSet, constraint_index::ConstraintIndex, set::AbstractSet)
-    if set_type(constraint_index) != typeof(set)
-        # throw helpful error
-        throw(ArgumentError("""Cannot modify sets of different types. Constraint
-        type is $(set_type(constraint_index)) while the replacement set is of
-        type $(typeof(set)). Use `transform!` instead."""))
-    end
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintSet`"))
+function hidden_set!(model::ModelLike, ::ConstraintSet, constraint_index::ConstraintIndex{F,S}, set::S) where {F,S}
+    throw(ArgumentError("""Cannot modify sets of different types. Constraint
+    type is $(set_type(constraint_index)) while the replacement set is of
+    type $(typeof(set)). Use `transform!` instead."""))
 end
 set_type(c::ConstraintIndex{F,S}) where {F, S} = S
+function hidden_set!(model::ModelLike, ::ConstraintSet, ::ConstraintIndex, ::AbstractSet)
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintSet`"))
+end
 
 ## Termination status
 """

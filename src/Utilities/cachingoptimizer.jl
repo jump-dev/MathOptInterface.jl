@@ -259,8 +259,10 @@ function MOI.canset(m::CachingOptimizer, attr::Union{MOI.ConstraintFunction, MOI
     return true
 end
 
-# This function avoids duplicating code, but allows us to strongly type the
-# arguments of the set! functions below.
+# This function avoids duplicating code in the MOI.set! methods for
+# ConstraintSet and ConstraintFunction methods, but allows us to strongly type
+# the third and fourth arguments of the set! methods so that we only support
+# setting the same type of set or function.
 function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, replacement)
     if (m.mode == Automatic && m.state == AttachedOptimizer &&
             !MOI.canset(m.optimizer, attr, typeof(cindex)) )
