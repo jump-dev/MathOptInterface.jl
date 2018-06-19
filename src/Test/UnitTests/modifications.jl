@@ -63,8 +63,8 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
             constraint_dual   = [(c, -1.0)]
         )
     end
-    @test !MOI.cantransform(model, typeof(c), MOI.LessThan{Float64})
-    @test MOI.cantransform(model, typeof(c), MOI.GreaterThan{Float64})
+    @test !MOI.cantransform(model, c, MOI.LessThan{Float64})
+    @test MOI.cantransform(model, c, MOI.GreaterThan{Float64})
     c2 = MOI.transform!(model, c, MOI.GreaterThan(2.0))
     @test !MOI.isvalid(model, c)
     @test MOI.isvalid(model, c2)

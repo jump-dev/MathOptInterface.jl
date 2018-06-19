@@ -101,6 +101,9 @@ cantransform(model, c, ZeroOne())        # it is expected that most solvers will
 function cantransform end
 
 # default fallback
-function cantransform(model::ModelLike, c::ConstraintIndex{F}, ::Type{S}) where {F<:AbstractFunction, S<:AbstractSet}
-    canget(model, ConstraintFunction(), typeof(c)) && candelete(model, c) && canaddconstraint(model, F, S)
+function cantransform(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2}) where {F<:AbstractFunction, S1<:AbstractSet, S2<:AbstractSet}
+    if S1 == S2
+        return false
+    end
+    canget(model, ConstraintFunction(), typeof(c)) && candelete(model, c) && canaddconstraint(model, F, S2)
 end
