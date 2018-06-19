@@ -585,7 +585,7 @@ function hidden_set!(model::ModelLike, ::ConstraintFunction, constraint_index::C
         Constraint type is $(func_type(constraint_index)) while the replacement
         function is of type $(typeof(func))."""))
     end
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute $attr"))
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintFunction`"))
 end
 func_type(c::ConstraintIndex{F,S}) where {F, S} = F
 
@@ -603,7 +603,7 @@ function hidden_set!(model::ModelLike, ::ConstraintSet, constraint_index::Constr
         type is $(set_type(constraint_index)) while the replacement set is of
         type $(typeof(set)). Use `transform!` instead."""))
     end
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute $attr"))
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintSet`"))
 end
 set_type(c::ConstraintIndex{F,S}) where {F, S} = S
 
