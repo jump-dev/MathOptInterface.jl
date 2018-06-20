@@ -209,25 +209,51 @@ function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         MOI.addconstraint!(b.model, f, s)
     end
 end
-function MOI.canmodifyconstraint(b::AbstractBridgeOptimizer, ci::CI, change)
-    if isbridged(b, typeof(ci))
-       MOI.canmodifyconstraint(b.bridged, ci, change) && MOI.canmodifyconstraint(b, MOIB.bridge(b, ci), change)
+function MOI.canmodify(b::AbstractBridgeOptimizer, ::Type{CI{F, S}}, ::Type{Chg}) where {F, S, Chg<:MOI.AbstractFunctionModification}
+    if isbridged(b, CI{F, S})
+        MOI.canmodify(b.bridged, CI{F, S}, Chg) && MOI.canmodify(b, MOIB.bridgetype(b, F, S), Chg)
     else
-        MOI.canmodifyconstraint(b.model, ci, change)
+        MOI.canmodify(b.model, CI{F, S}, Chg)
     end
 end
-function MOI.modifyconstraint!(b::AbstractBridgeOptimizer, ci::CI, change)
+function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)
     if isbridged(b, typeof(ci))
-        MOI.modifyconstraint!(b, bridge(b, ci), change)
-        MOI.modifyconstraint!(b.bridged, ci, change)
+        MOI.modify!(b, bridge(b, ci), change)
+        MOI.modify!(b.bridged, ci, change)
     else
-        MOI.modifyconstraint!(b.model, ci, change)
+        MOI.modify!(b.model, ci, change)
+    end
+end
+
+function MOI.canset(b::AbstractBridgeOptimizer, attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet}, ::Type{CI{F, S}}) where {F, S}
+    if isbridged(b, CI{F, S})
+        MOI.canset(b.bridged, attr, CI{F, S}) && MOI.canset(b, attr, MOIB.bridgetype(b, F, S))
+    else
+        MOI.canset(b.model, attr, CI{F, S})
+    end
+end
+
+function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet, constraint_index::CI{F,S}, set::S) where {F,S}
+    if isbridged(b, typeof(constraint_index))
+        MOI.set!(b, MOI.ConstraintSet(), bridge(b, constraint_index), set)
+        MOI.set!(b.bridged, MOI.ConstraintSet(), constraint_index, set)
+    else
+        MOI.set!(b.model, MOI.ConstraintSet(), constraint_index, set)
+    end
+end
+
+function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constraint_index::CI{F,S}, func::F) where {F,S}
+    if isbridged(b, typeof(constraint_index))
+        MOI.set!(b, MOI.ConstraintFunction(), bridge(b, constraint_index), func)
+        MOI.set!(b.bridged, MOI.ConstraintFunction(), constraint_index, func)
+    else
+        MOI.set!(b.model, MOI.ConstraintFunction(), constraint_index, func)
     end
 end
 
 # Objective
-MOI.canmodifyobjective(b::AbstractBridgeOptimizer, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodifyobjective(b.model, M)
-MOI.modifyobjective!(b::AbstractBridgeOptimizer, change::MOI.AbstractFunctionModification) = MOI.modifyobjective!(b.model, change)
+MOI.canmodify(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodify(b.model, obj, M)
+MOI.modify!(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(b.model, obj, change)
 
 # Variables
 MOI.canaddvariable(b::AbstractBridgeOptimizer) = MOI.canaddvariable(b.model)

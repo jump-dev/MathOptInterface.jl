@@ -62,16 +62,16 @@
     @test MOI.canaddconstraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.canaddconstraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
     lb = MOI.addconstraint!(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
-    @test MOI.canmodifyconstraint(m, lb, MOI.LessThan{Float64})
-    MOI.modifyconstraint!(m, lb, MOI.LessThan(11.0))
+    @test MOI.canset(m, MOI.ConstraintSet(), typeof(lb))
+    MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
     @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
 
     MOIU.dropoptimizer!(m)
     @test MOIU.state(m) == MOIU.NoOptimizer
 
-    @test MOI.canmodifyconstraint(m, lb, MOI.LessThan{Float64})
-    MOI.modifyconstraint!(m, lb, MOI.LessThan(12.0))
+    @test MOI.canset(m, MOI.ConstraintSet(), typeof(lb))
+    MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(12.0)
 
     @test MOI.candelete(m, x[2])
@@ -141,7 +141,7 @@ end
     MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.RotatedSecondOrderCone(1))
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
-    # TODO: test modifyconstraint! with a change that forces the optimizer to be dropped
+    # TODO: test modify! with a change that forces the optimizer to be dropped
 
     MOI.empty!(m)
     @test MOIU.state(m) == MOIU.AttachedOptimizer

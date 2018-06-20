@@ -33,7 +33,7 @@ end
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::F) where {F, S} = (ci, change, s)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::S) where {F, S} = (ci, f, change)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modifyfunction(f, change), s)
-function _modifyconstraint!(constrs::Vector{C{F, S}}, ci::CI{F}, i::Int, change) where {F, S}
+function _modify!(constrs::Vector{C{F, S}}, ci::CI{F}, i::Int, change) where {F, S}
     constrs[i] = _modifyconstr(constrs[i]..., change)
 end
 
@@ -203,8 +203,8 @@ function MOI.set!(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.Abstract
     model.objective = deepcopy(f)
 end
 
-MOI.canmodifyobjective(model::AbstractModel, ::Type{<:MOI.AbstractFunctionModification}) = true
-function MOI.modifyobjective!(model::AbstractModel, change::MOI.AbstractFunctionModification)
+MOI.canmodify(::AbstractModel, ::MOI.ObjectiveFunction, ::Type{<:MOI.AbstractFunctionModification}) = true
+function MOI.modify!(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
     model.objective = modifyfunction(model.objective, change)
 end
 
@@ -248,9 +248,18 @@ function MOI.delete!(model::AbstractModel, ci::CI)
     end
 end
 
-MOI.canmodifyconstraint(model::AbstractModel, ci::CI, change) = true
-function MOI.modifyconstraint!(model::AbstractModel, ci::CI, change)
-    _modifyconstraint!(model, ci, getconstrloc(model, ci), change)
+MOI.canmodify(::AbstractModel, ::Type{<:CI}, ::Type{<:MOI.AbstractFunctionModification}) = true
+function MOI.modify!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
+    _modify!(model, ci, getconstrloc(model, ci), change)
+end
+
+MOI.canset(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
+function MOI.set!(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
+    _modify!(model, ci, getconstrloc(model, ci), change)
+end
+MOI.canset(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
+function MOI.set!(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
+    _modify!(model, ci, getconstrloc(model, ci), change)
 end
 
 MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints) = _getnoc(model, noc)
@@ -326,6 +335,7 @@ MOIU.broadcastcall(constrs -> _addcon(solver, constrs), model)
 ```
 """
 function broadcastcall end
+
 """
 broadcastvcat(f::Function, model::AbstractModel)
 
@@ -339,6 +349,7 @@ _getfun(ci, f, s) = f
 _getfun(cindices::Tuple) = _getfun(cindices...)
 _getfuns(constrs::Vector) = _getfun.(constrs)
 MOIU.broadcastvcat(_getfuns, model)
+```
 """
 function broadcastvcat end
 
@@ -532,7 +543,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    for (func, T) in ((:_addconstraint!, CI), (:_modifyconstraint!, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
+    for (func, T) in ((:_addconstraint!, CI), (:_modify!, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
         funct = _mod(MOIU, func)
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets

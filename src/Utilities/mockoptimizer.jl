@@ -201,27 +201,32 @@ function MOI.delete!(mock::MockOptimizer, idx::MOI.ConstraintIndex)
     MOI.delete!(mock.condual, idx)
 end
 
-function MOI.canmodifyconstraint(mock::MockOptimizer, c::CI, change)
-    MOI.canmodifyconstraint(mock.inner_model, xor_index(c), change)
+function MOI.canmodify(mock::MockOptimizer, ::Type{C}, change) where C <: CI
+    MOI.canmodify(mock.inner_model, C, change)
+end
+function MOI.modify!(mock::MockOptimizer, c::CI, change)
+    MOI.modify!(mock.inner_model, xor_index(c), xor_variables(change))
 end
 
-function MOI.modifyconstraint!(mock::MockOptimizer, c::CI, change)
-    MOI.modifyconstraint!(mock.inner_model, xor_index(c), xor_variables(change))
+MOI.canset(mock::MockOptimizer, ::MOI.ConstraintSet, ::Type{C}) where C <: CI = true
+function MOI.set!(mock::MockOptimizer, ::MOI.ConstraintSet, c::CI{F,S}, set::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    MOI.set!(mock.inner_model, MOI.ConstraintSet(), xor_index(c), set)
 end
 
-function MOI.modifyconstraint!(mock::MockOptimizer, c::CI{F,S}, set::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    MOI.modifyconstraint!(mock.inner_model, xor_index(c), set)
+MOI.canset(mock::MockOptimizer, ::MOI.ConstraintFunction, ::Type{C}) where C <: CI = true
+function MOI.set!(mock::MockOptimizer, ::MOI.ConstraintFunction, c::CI{F,S}, func::F) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    MOI.set!(mock.inner_model, MOI.ConstraintFunction(), xor_index(c), xor_variables(func))
 end
 
-function MOI.canmodifyobjective(mock::MockOptimizer, change)
-    MOI.canmodifyobjective(mock.inner_model, change)
+function MOI.canmodify(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change)
+    MOI.canmodify(mock.inner_model, obj, change)
 end
 
-function MOI.modifyobjective!(mock::MockOptimizer, change::MOI.AbstractFunctionModification)
-    MOI.modifyobjective!(mock.inner_model, xor_variables(change))
+function MOI.modify!(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
+    MOI.modify!(mock.inner_model, obj, xor_variables(change))
 end
 
-# TODO: transformconstraint and cantransformconstraint
+# TODO: transform and cantransform
 
 MOI.supports(mock::MockOptimizer, attr::MOI.ObjectiveFunction) = MOI.supports(mock.inner_model, attr)
 MOI.supportsconstraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.supportsconstraint(mock.inner_model, F, S)

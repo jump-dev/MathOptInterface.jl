@@ -150,9 +150,9 @@ function copy! end
 include("indextypes.jl")
 include("functions.jl")
 include("sets.jl")
-include("constraints.jl")
 include("attributes.jl")
-include("objectives.jl")
+include("constraints.jl")
+include("modifications.jl")
 include("variables.jl")
 include("nlp.jl")
 

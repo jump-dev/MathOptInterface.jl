@@ -177,3 +177,127 @@ end
         MOIT.solve_affine_deletion_edge_cases(mock, config)
     end
 end
+
+@testset "modifications" begin
+    mock   = MOIU.MockOptimizer(Model{Float64}())
+    config = MOIT.TestConfig()
+    @testset "solve_set_singlevariable_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.FeasiblePoint,
+                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+            )
+        )
+        MOIT.solve_set_singlevariable_lessthan(mock, config)
+    end
+    @testset "solve_transform_singlevariable_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.FeasiblePoint,
+                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0]
+            )
+        )
+        MOIT.solve_transform_singlevariable_lessthan(mock, config)
+    end
+    @testset "solve_set_scalaraffine_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
+            )
+        )
+        MOIT.solve_set_scalaraffine_lessthan(mock, config)
+    end
+    @testset "solve_coef_scalaraffine_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.5]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
+            )
+        )
+        MOIT.solve_coef_scalaraffine_lessthan(mock, config)
+    end
+    @testset "solve_func_scalaraffine_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.5]),
+                MOI.FeasiblePoint,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
+            )
+        )
+        MOIT.solve_func_scalaraffine_lessthan(mock, config)
+    end
+    @testset "solve_const_vectoraffine_nonpos" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.0, 0.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0, 0.75])
+            )
+        )
+        MOIT.solve_const_vectoraffine_nonpos(mock, config)
+    end
+    @testset "solve_multirow_vectoraffine_nonpos" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.5])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.25])
+            )
+        )
+        MOIT.solve_multirow_vectoraffine_nonpos(mock, config)
+    end
+    @testset "solve_const_scalar_objective" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            )
+        )
+        MOIT.solve_const_scalar_objective(mock, config)
+    end
+    @testset "solve_coef_scalar_objective" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            )
+        )
+        MOIT.solve_coef_scalar_objective(mock, config)
+    end
+end

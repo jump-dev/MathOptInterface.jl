@@ -189,6 +189,17 @@ Return a `Bool` indicating whether it is possible to set the attribute `attr` to
 
 Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the index type `R` in the model `model`.
 
+    canset(model::ModelLike, ::ConstraintSet, ::Type{ConstraintIndex{F,S}})::Bool
+
+Return a `Bool` indicating whether the set in a constraint of type `F`-in-`S`
+can be replaced by another set of the same type `S` as the original set.
+
+    canset(model::ModelLike, ::ConstraintFunction, ::Type{ConstraintIndex{F,S}})::Bool
+
+Return a `Bool` indicating whether the function in a constraint of type
+`F`-in-`S` can be replaced by another set of the same type `F` as the original
+function.
+
 ### Examples
 
 ```julia
@@ -225,12 +236,52 @@ Assign a value to the attribute `attr` of constraint `c` in model `model`.
     set!(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `model`.
+
+### Replace set in a constraint
+
+    set!(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, set::S)
+
+Change the set of constraint `c` to the new set `set` which should be of the
+same type as the original set.
+
+#### Examples
+
+If `c` is a `ConstraintIndex{F,Interval}`
+
+```julia
+set!(model, ConstraintSet(), c, Interval(0, 5))
+set!(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
+```
+
+### Replace function in a constraint
+
+    set!(model::ModelLike, ::ConstraintFunction, c::ConstraintIndex{F,S}, func::F)
+
+Replace the function in constraint `c` with `func`. `F` must match the original
+function type used to define the constraint.
+
+#### Examples
+
+If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
+`VariableIndex` objects,
+
+```julia
+set!(model, ConstraintFunction(), c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
+set!(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
+```
+
+
 """
 function set! end
 # See note with get
 set!(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, idxs::Vector, vector_of_values::Vector) = set!.(Ref(model), Ref(attr), idxs, vector_of_values)
 
-function set!(model::ModelLike, attr::AnyAttribute, args...)
+set!(model::ModelLike, attr::AnyAttribute, args...) = hidden_set!(model, attr, args...)
+# hidden_set! is included so that we can return type-specific error messages
+# without needing to overload set! and cause ambiguity errors. For examples, see
+# ConstraintSet and ConstraintFunction. hidden_set! should not be overloaded by
+# users of MOI.
+function hidden_set!(model::ModelLike, attr::AnyAttribute, args...)
     throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute $attr"))
 end
 
@@ -491,8 +542,8 @@ If `N` is omitted, it is 1 by default.
 
 Given a constraint `function-in-set`, the `ConstraintPrimal` is the value of the
 function evaluated at the primal solution of the variables. For example, given
-the constraint `ScalarAffineFunction([x,y], [1, 2], 3)`-in-`Interval(0, 20)` and 
-a primal solution of `(x,y) = (4,5)`, the `ConstraintPrimal` solution of the 
+the constraint `ScalarAffineFunction([x,y], [1, 2], 3)`-in-`Interval(0, 20)` and
+a primal solution of `(x,y) = (4,5)`, the `ConstraintPrimal` solution of the
 constraint is `1 * 4 + 2 * 5 + 3 = 17`.
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
@@ -527,12 +578,32 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
+function hidden_set!(model::ModelLike, ::ConstraintFunction, constraint_index::ConstraintIndex{F,S}, func::F) where {F,S}
+    throw(ArgumentError("""Cannot modify functions of different types.
+    Constraint type is $(func_type(constraint_index)) while the replacement
+    function is of type $(typeof(func))."""))
+end
+func_type(c::ConstraintIndex{F,S}) where {F, S} = F
+function hidden_set!(model::ModelLike, ::ConstraintFunction, ::ConstraintIndex, ::AbstractFunction)
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintFunction`"))
+end
+
 """
     ConstraintSet()
 
 Return the `AbstractSet` object used to define the constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
+
+function hidden_set!(model::ModelLike, ::ConstraintSet, constraint_index::ConstraintIndex{F,S}, set::S) where {F,S}
+    throw(ArgumentError("""Cannot modify sets of different types. Constraint
+    type is $(set_type(constraint_index)) while the replacement set is of
+    type $(typeof(set)). Use `transform!` instead."""))
+end
+set_type(c::ConstraintIndex{F,S}) where {F, S} = S
+function hidden_set!(model::ModelLike, ::ConstraintSet, ::ConstraintIndex, ::AbstractSet)
+    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintSet`"))
+end
 
 ## Termination status
 """

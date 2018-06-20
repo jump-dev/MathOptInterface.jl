@@ -51,12 +51,20 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBr
 end
 
 # Constraints
-MOI.canmodifyconstraint(model::MOI.ModelLike, c::SplitIntervalBridge, change) = true
-function MOI.modifyconstraint!(model::MOI.ModelLike, c::SplitIntervalBridge, change::Union{MOI.ScalarAffineFunction, MOI.AbstractFunctionModification})
-    MOI.modifyconstraint!(model, c.lower, change)
-    MOI.modifyconstraint!(model, c.upper, change)
+MOI.canmodify(model::MOI.ModelLike, ::Type{<:SplitIntervalBridge}, ::Type{<:MOI.AbstractFunctionModification}) = true
+function MOI.modify!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
+    MOI.modify!(model, c.lower, change)
+    MOI.modify!(model, c.upper, change)
 end
-function MOI.modifyconstraint!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.Interval)
-    MOI.modifyconstraint!(model, c.lower, MOI.GreaterThan(change.lower))
-    MOI.modifyconstraint!(model, c.upper, MOI.LessThan(change.upper))
+
+MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SplitIntervalBridge}) = true
+function MOI.set!(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::SplitIntervalBridge, func::MOI.ScalarAffineFunction)
+    MOI.set!(model, MOI.ConstraintFunction(), c.lower, func)
+    MOI.set!(model, MOI.ConstraintFunction(), c.upper, func)
+end
+
+MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SplitIntervalBridge}) = true
+function MOI.set!(model::MOI.ModelLike, ::MOI.ConstraintSet, c::SplitIntervalBridge, change::MOI.Interval)
+    MOI.set!(model, MOI.ConstraintSet(), c.lower, MOI.GreaterThan(change.lower))
+    MOI.set!(model, MOI.ConstraintSet(), c.upper, MOI.LessThan(change.upper))
 end

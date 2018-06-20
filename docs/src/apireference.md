@@ -163,10 +163,10 @@ isvalid(::ModelLike,::ConstraintIndex)
 canaddconstraint
 addconstraint!
 addconstraints!
-modifyconstraint!
-canmodifyconstraint
-transformconstraint!
-cantransformconstraint
+modify!
+canmodify
+transform!
+cantransform
 supportsconstraint
 ```
 
@@ -209,6 +209,7 @@ output_dimension
 
 List of function modifications.
 ```@docs
+AbstractFunctionModification
 ScalarConstantChange
 VectorConstantChange
 ScalarCoefficientChange
@@ -261,8 +262,8 @@ dimension
 Functions for modifying objective functions. Use `ObjectiveFunction` and `ObjectiveSense` to set and query the objective function.
 
 ```@docs
-modifyobjective!
-canmodifyobjective
+modify!
+canmodify
 ```
 
 ## Nonlinear programming (NLP)

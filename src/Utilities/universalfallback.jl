@@ -152,12 +152,24 @@ end
 MOI.supportsconstraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = true
 MOI.canaddconstraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = MOI.canaddconstraint(uf.model, F, S)
 MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.addconstraint!(uf.model, f, s)
-MOI.canmodifyconstraint(uf::UniversalFallback, ci::CI, change) = MOI.canmodifyconstraint(uf.model, ci, change)
-MOI.modifyconstraint!(uf::UniversalFallback, ci::CI, change) = MOI.modifyconstraint!(uf.model, ci, change)
+MOI.canmodify(uf::UniversalFallback, ci::Type{<:CI}, change) = MOI.canmodify(uf.model, ci, change)
+MOI.modify!(uf::UniversalFallback, ci::CI, change) = MOI.modify!(uf.model, ci, change)
+
+function MOI.canset(uf::UniversalFallback, attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet}, ::Type{C}) where C <: CI
+    MOI.canset(uf.model, attr, C)
+end
+
+function MOI.set!(uf::UniversalFallback, ::MOI.ConstraintSet, ci::CI{F,S}, set::S) where {F, S}
+    MOI.set!(uf.model, MOI.ConstraintSet(), ci, set)
+end
+
+function MOI.set!(uf::UniversalFallback, ::MOI.ConstraintFunction, ci::CI{F,S}, func::F) where {F, S}
+    MOI.set!(uf.model, MOI.ConstraintFunction(), ci, func)
+end
 
 # Objective
-MOI.canmodifyobjective(uf::UniversalFallback, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodifyobjective(uf.model, M)
-MOI.modifyobjective!(uf::UniversalFallback, change::MOI.AbstractFunctionModification) = MOI.modifyobjective!(uf.model, change)
+MOI.canmodify(uf::UniversalFallback, obj::MOI.ObjectiveFunction, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodify(uf.model, obj, M)
+MOI.modify!(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(uf.model, obj, change)
 
 # Variables
 MOI.canaddvariable(uf::UniversalFallback) = MOI.canaddvariable(uf.model)
