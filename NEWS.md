@@ -1,6 +1,17 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.4.0 (June 23, 2018)
+----------------------
+
+- Helper constructors for `VectorAffineTerm` and `VectorQuadraticTerm`.
+- Added `modify_lhs` to `TestConfig`.
+- Additional unit tests for optimizers.
+- Added a type parameter to `CachingOptimizer` for the `optimizer` field.
+- New API for problem modification (#388)
+- Tests pass without deprecation warnings on Julia 0.7.
+- Small fixes and documentation updates.
+
 v0.3.0 (May 25, 2018)
 ---------------------
 
