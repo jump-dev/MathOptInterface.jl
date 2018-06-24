@@ -114,7 +114,7 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     lb = [25.0, 40.0]
     ub = [Inf, 40.0]
 
-    hs071_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
 
     v = MOI.addvariables!(model, 4)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
@@ -131,11 +131,10 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
         MOI.set!(model, MOI.VariablePrimalStart(), v[i], start[i])
     end
 
-    MOI.set!(model, MOI.NLPBlock(), hs071_data)
+    MOI.set!(model, MOI.NLPBlock(), block_data)
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     # TODO: config.query tests
-
     if config.solve
         MOI.optimize!(model)
 
@@ -163,8 +162,138 @@ end
 hs071_test(model, config) = hs071test_template(model, config, HS071(true))
 hs071_no_hessian_test(model, config) = hs071test_template(model, config, HS071(false))
 
-# TODO: HS071 version without hessians.
+# Test for FeasibilitySense.
+# Find x satisfying x^2 == 1.
+struct FeasibilitySenseEvaluator <: MOI.AbstractNLPEvaluator
+    enable_hessian::Bool
+end
 
-const nlptests = Dict("hs071" => hs071_test, "hs071_no_hessian" => hs071_no_hessian_test)
+function MOI.initialize!(d::FeasibilitySenseEvaluator,
+                         requested_features::Vector{Symbol})
+    for feat in requested_features
+        if !(feat in MOI.features_available(d))
+            error("Unsupported feature $feat")
+            # TODO: implement Jac-vec and Hess-vec products
+            # for solvers that need them
+        end
+    end
+end
+
+function MOI.features_available(d::FeasibilitySenseEvaluator)
+    if d.enable_hessian
+        return [:Grad, :Jac, :Hess]
+    else
+        return [:Grad, :Jac]
+    end
+end
+
+
+MOI.eval_objective(d::FeasibilitySenseEvaluator, x) = 0.0
+
+function MOI.eval_constraint(d::FeasibilitySenseEvaluator, g, x)
+    g[1] = x[1]^2
+end
+
+function MOI.eval_objective_gradient(d::FeasibilitySenseEvaluator, grad_f, x)
+    grad_f[1] = 0.0
+end
+
+function MOI.jacobian_structure(d::FeasibilitySenseEvaluator)
+    return Tuple{Int64,Int64}[(1,1)]
+end
+
+function MOI.hessian_lagrangian_structure(d::FeasibilitySenseEvaluator)
+    @assert d.enable_hessian
+    return Tuple{Int64,Int64}[(1,1)]
+end
+
+function MOI.eval_constraint_jacobian(d::FeasibilitySenseEvaluator, J, x)
+    J[1] = 2x[1]
+end
+
+function MOI.eval_hessian_lagrangian(d::FeasibilitySenseEvaluator, H, x, σ, μ)
+    @assert d.enable_hessian
+    H[1] = 2μ[1] # 1,1
+end
+
+function feasibility_sense_test_template(model::MOI.ModelLike,
+                                         config::TestConfig,
+                                         set_has_objective::Bool,
+                                         evaluator::FeasibilitySenseEvaluator)
+    atol = config.atol
+    rtol = config.rtol
+
+    @test MOI.supports(model, MOI.NLPBlock())
+    @test MOI.canset(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+
+    lb = [1.0]
+    ub = [1.0]
+
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator,
+                                  set_has_objective)
+
+    x = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    # Avoid starting at zero because it's a critial point.
+    MOI.set!(model, MOI.VariablePrimalStart(), x, 1.5)
+
+    MOI.set!(model, MOI.NLPBlock(), block_data)
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
+
+    # TODO: config.query tests
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.canget(model, MOI.TerminationStatus())
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.canget(model, MOI.ResultCount())
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+
+        @test MOI.canget(model, MOI.PrimalStatus())
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.canget(model, MOI.ObjectiveValue())
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol=atol rtol=rtol
+    end
+end
+
+function feasibility_sense_with_objective_and_hessian_test(model, config)
+    feasibility_sense_test_template(model, config, true,
+                                    FeasibilitySenseEvaluator(true))
+end
+
+function feasibility_sense_with_objective_and_no_hessian_test(model, config)
+    feasibility_sense_test_template(model, config, true,
+                                    FeasibilitySenseEvaluator(false))
+end
+
+function feasibility_sense_with_no_objective_and_with_hessian_test(model, config)
+    feasibility_sense_test_template(model, config, false,
+                                    FeasibilitySenseEvaluator(true))
+end
+
+function feasibility_sense_with_no_objective_and_no_hessian_test(model, config)
+    feasibility_sense_test_template(model, config, false,
+                                    FeasibilitySenseEvaluator(false))
+end
+
+const nlptests = Dict("hs071" => hs071_test,
+                      "hs071_no_hessian" => hs071_no_hessian_test,
+                      "feasibility_sense_with_objective_and_hessian" =>
+                      feasibility_sense_with_objective_and_hessian_test,
+                      "feasibility_sense_with_objective_and_no_hessian" =>
+                      feasibility_sense_with_objective_and_no_hessian_test,
+                      "feasibility_sense_with_no_objective_and_with_hessian" =>
+                      feasibility_sense_with_no_objective_and_with_hessian_test,
+                      "feasibility_sense_with_no_objective_and_no_hessian" =>
+                      feasibility_sense_with_no_objective_and_no_hessian_test)
 
 @moitestset nlp
