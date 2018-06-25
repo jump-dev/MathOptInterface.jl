@@ -163,8 +163,6 @@ isvalid(::ModelLike,::ConstraintIndex)
 canaddconstraint
 addconstraint!
 addconstraints!
-modify!
-canmodify
 transform!
 cantransform
 supportsconstraint
@@ -205,15 +203,6 @@ Functions for getting and setting properties of sets.
 
 ```@docs
 output_dimension
-```
-
-List of function modifications.
-```@docs
-AbstractFunctionModification
-ScalarConstantChange
-VectorConstantChange
-ScalarCoefficientChange
-MultirowChange
 ```
 
 ## Sets
@@ -257,13 +246,18 @@ Functions for getting and setting properties of sets.
 dimension
 ```
 
-## Objective modifications
+## Modifications
 
-Functions for modifying objective functions. Use `ObjectiveFunction` and `ObjectiveSense` to set and query the objective function.
+Functions for modifying objective and constraint functions.
 
 ```@docs
 modify!
 canmodify
+AbstractFunctionModification
+ScalarConstantChange
+VectorConstantChange
+ScalarCoefficientChange
+MultirowChange
 ```
 
 ## Nonlinear programming (NLP)
