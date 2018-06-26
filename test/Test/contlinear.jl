@@ -2,7 +2,7 @@
     mock = MOIU.MockOptimizer(ModelForMock{Float64}())
     config = MOIT.TestConfig()
     config_no_lhs_modif = MOIT.TestConfig(modify_lhs = false)
-    
+
     function set_mock_optimize_linear1Test!(mock)
          MOIU.set_mock_optimize!(mock,
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0],
@@ -25,9 +25,9 @@
                   (MOI.SingleVariable,                MOI.EqualTo{Float64})     => [1.5]))
     end
     set_mock_optimize_linear1Test!(mock)
-    MOIT.linear1test(mock, config)    
+    MOIT.linear1test(mock, config)
     set_mock_optimize_linear1Test!(mock)
-    MOIT.linear1test(mock, config_no_lhs_modif)    
+    MOIT.linear1test(mock, config_no_lhs_modif)
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0],
              (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-1],
@@ -62,7 +62,7 @@
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]))        
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]))
     end
     set_mock_optimize_linear7Test!(mock)
     MOIT.linear7test(mock, config)
