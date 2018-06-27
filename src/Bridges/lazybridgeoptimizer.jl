@@ -48,7 +48,7 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
                     dist = 1 + sum(C -> _dist(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
-                        b.dist[(F, S)] = dist # FIXME missing +1!
+                        b.dist[(F, S)] = dist
                         b.best[(F, S)] = BT
                         changed = true
                     end
