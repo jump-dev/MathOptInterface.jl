@@ -121,6 +121,7 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
         x = MOI.addvariables!(bridgedmock, 3)
         c = MOI.addconstraint!(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
         @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
+        @test bridgedmock.dist[(MathOptInterface.VectorOfVariables, MathOptInterface.RotatedSecondOrderCone)] == 1
     end
 
     @testset "Combining two briges" begin
