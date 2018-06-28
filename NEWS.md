@@ -1,6 +1,14 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.4.1 (June 28, 2018)
+----------------------
+
+- Fixes vector function modification on 32 bits.
+- Fixes Bellman-Ford algorithm for bridges.
+- Added an NLP test with `FeasibilitySense`.
+- Update modification documentation.
+
 v0.4.0 (June 23, 2018)
 ----------------------
 
