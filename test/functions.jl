@@ -4,7 +4,10 @@
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
     @testset "MultirowChange construction" begin
-        @test MOI.MultirowChange(w, [(Int32(2), 2.0), (Int32(1), 3.0)]) == MOI.MultirowChange(w, [(Int64(2), 2.0), (Int64(1), 3.0)])
+        chg1 = MOI.MultirowChange(w, [(Int32(2), 2.0), (Int32(1), 3.0)])
+        chg2 = MOI.MultirowChange(w, [(Int64(2), 2.0), (Int64(1), 3.0)])
+        @test chg1.variable == chg2.variable
+        @test chg1.new_coefficients == chg2.new_coefficients
     end
     @testset "VectorAffineTerm/VectorQuadraticTerm construction" begin
         scalaraffine = MOI.ScalarAffineTerm(2.0, z)
