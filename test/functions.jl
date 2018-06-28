@@ -3,6 +3,9 @@
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
+    @testset "MultirowChange construction" begin
+        @test MOI.MultirowChange(w, [(Int32(2), 2.0), (Int32(1), 3.0)]) == MOI.MultirowChange(w, [(Int64(2), 2.0), (Int64(1), 3.0)])
+    end
     @testset "VectorAffineTerm/VectorQuadraticTerm construction" begin
         scalaraffine = MOI.ScalarAffineTerm(2.0, z)
         @test MOI.VectorAffineTerm(Int32(3), scalaraffine) === MOI.VectorAffineTerm(Int64(3), scalaraffine)

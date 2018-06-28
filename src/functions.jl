@@ -265,6 +265,10 @@ mutable struct MultirowChange{T} <: AbstractFunctionModification
     new_coefficients::Vector{Tuple{Int64, T}}
 end
 
+function MultirowChange(variable::VariableIndex, new_coefficients::Vector{Tuple{Integer, T}}) where T
+    MultirowChange(variable, [(convert(Int64, i), j) for (i,j) in new_coefficients])
+end
+
 # Implementation of comparison for MOI functions
 Base.:(==)(f::VectorOfVariables, g::VectorOfVariables) = f.variables == g.variables
 
