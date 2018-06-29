@@ -41,14 +41,12 @@ function solve_affine_lessthan(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.5,
-            variable_primal   = [(x, 0.5)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -0.5)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -0.5)]
+    )
 end
 unittests["solve_affine_lessthan"] = solve_affine_lessthan
 
@@ -68,14 +66,12 @@ function solve_affine_greaterthan(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.5,
-            variable_primal   = [(x, 0.5)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, 0.5)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, 0.5)]
+    )
 end
 unittests["solve_affine_greaterthan"] = solve_affine_greaterthan
 
@@ -95,14 +91,12 @@ function solve_affine_equalto(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.5,
-            variable_primal   = [(x, 0.5)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, 0.5)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, 0.5)]
+    )
 end
 unittests["solve_affine_equalto"] = solve_affine_equalto
 
@@ -122,14 +116,12 @@ function solve_affine_interval(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 6.0,
-            variable_primal   = [(x, 2.0)],
-            constraint_primal = [(c, 4.0)],
-            constraint_dual   = [(c, -1.5)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 6.0,
+        variable_primal   = [(x, 2.0)],
+        constraint_primal = [(c, 4.0)],
+        constraint_dual   = [(c, -1.5)]
+    )
 end
 unittests["solve_affine_interval"] = solve_affine_interval
 
@@ -218,7 +210,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConf
     # test adding a VectorAffineFunction -in- LessThan
     c1 = MOI.addconstraint!(model, vaf, MOI.Nonpositives(1))
     test_model_solution(model, config; objective_value = 0.0,
-        constraint_primal = [(c1, [0.0])]
+                        constraint_primal = [(c1, [0.0])]
     )
     # test adding a ScalarAffineFunction -in- LessThan
     c2 = MOI.addconstraint!(model, saf, MOI.LessThan(1.0))

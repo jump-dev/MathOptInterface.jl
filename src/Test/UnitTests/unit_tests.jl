@@ -56,6 +56,7 @@ function test_model_solution(model, config;
         constraint_primal = nothing,
         constraint_dual   = nothing
     )
+    config.solve || return
     atol, rtol = config.atol, config.rtol
     MOI.optimize!(model)
     @test MOI.canget(model, MOI.TerminationStatus())
