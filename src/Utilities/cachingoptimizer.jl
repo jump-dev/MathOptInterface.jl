@@ -438,6 +438,10 @@ function MOI.canget(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribu
     return false
 end
 
+# Name
+MOI.canget(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String) = MOI.canget(m.model_cache, IdxT, name)
+MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String) = MOI.get(m.model_cache, IdxT, name)
+
 # Force users to specify whether the attribute should be queried from the
 # model_cache or the optimizer. Maybe we could consider a small whitelist of
 # attributes to handle automatically.
