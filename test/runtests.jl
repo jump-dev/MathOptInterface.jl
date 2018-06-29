@@ -28,7 +28,7 @@ MOIU.@model(Model,
                (VectorOfVariables,),
                (VectorAffineFunction, VectorQuadraticFunction))
 # Model supporting only SecondOrderCone as non-LP cone.
-@MOIU.model ModelForMock (ZeroOne, Integer) (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+@MOIU.model ModelForMock (ZeroOne, Integer) (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone) () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) (VectorOfVariables,) (VectorAffineFunction,)
 
 # Utilities submodule tests
 @testset "MOI.Utilities" begin
