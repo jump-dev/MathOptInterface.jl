@@ -7,7 +7,7 @@ Note that `model` is unaware of attributes stored by `UniversalFallback` so this
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
-    constraints::Dict{Tuple{DataType, DataType}, Dict}
+    constraints::Dict{Tuple{DataType, DataType}, Dict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152
     nextconstraintid::Int64
     optattr::Dict{MOI.AbstractOptimizerAttribute, Any}
     modattr::Dict{MOI.AbstractModelAttribute, Any}
