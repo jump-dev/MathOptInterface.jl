@@ -58,5 +58,7 @@ include("detbridge.jl")
 include("soctopsdbridge.jl")
 @bridge SOCtoPSD SOCtoPSDCBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 @bridge RSOCtoPSD RSOCtoPSDCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+include("vaftosafbrige.jl")
+@bridge VAFtoSAF VectorAffineBridge () () () (Zeros, Nonnegatives, Nonpositives) () () () (VectorAffineFunction,)
 
 end # module
