@@ -290,14 +290,14 @@ end
 """
     ListOfOptimizerAttributesSet()
 
-A `Vector{AbstractOptimizerAttribute}` of all optimizer attributes that were set.
+An optimizer attribute for the `Vector{AbstractOptimizerAttribute}` of all optimizer attributes that were set.
 """
 struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 
 """
     SolverName()
 
-A string identifying the solver.
+An optimizer attribute for the string identifying the solver/optimizer.
 """
 struct SolverName <: AbstractOptimizerAttribute end
 
@@ -306,21 +306,21 @@ struct SolverName <: AbstractOptimizerAttribute end
 """
     ListOfModelAttributesSet()
 
-A `Vector{AbstractModelAttribute}` of all model attributes that were set to the model.
+A model attribute for the `Vector{AbstractModelAttribute}` of all model attributes that were set to the model.
 """
 struct ListOfModelAttributesSet <: AbstractModelAttribute end
 
 """
     Name()
 
-A string identifying the model.
+A model attribute for the string identifying the model.
 """
 struct Name <: AbstractModelAttribute end
 
 """
     ObjectiveSense()
 
-The sense of the objective function, an `OptimizationSense` with value `MinSense`, `MaxSense`, or `FeasiblitySense`.
+A model attribute for the `OptimizationSense` of the objective function, which can be `MinSense`, `MaxSense`, or `FeasiblitySense`.
 """
 struct ObjectiveSense <: AbstractModelAttribute end
 
@@ -329,14 +329,14 @@ struct ObjectiveSense <: AbstractModelAttribute end
 """
     NumberOfVariables()
 
-The number of variables in the model.
+A model attribute for the number of variables in the model.
 """
 struct NumberOfVariables <: AbstractModelAttribute end
 
 """
     ListOfVariableIndices()
 
-A `Vector{VariableIndex}` containing all variable indices present in the model
+A model attribute for the `Vector{VariableIndex}` of all variable indices present in the model
 (i.e., of length equal to the value of `NumberOfVariables()`) in the order in
 which they were added.
 """
@@ -345,7 +345,7 @@ struct ListOfVariableIndices <: AbstractModelAttribute end
 """
     ListOfConstraintIndices{F,S}()
 
-A `Vector{ConstraintIndex{F,S}}` containing all constraint indices of type
+A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraint indices of type
 `F`-in-`S` in the model (i.e., of length equal to the value of
 `NumberOfConstraints{F,S}()`) in the order in which they were added.
 """
@@ -354,14 +354,14 @@ struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 """
     NumberOfConstraints{F,S}()
 
-The number of constraints of the type `F`-in-`S` present in the model.
+A model attribute for the number of constraints of the type `F`-in-`S` present in the model.
 """
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
 """
     ListOfConstraints()
 
-A list of tuples of the form `(F,S)`, where `F` is a function type
+A model attribute for the list of tuples of the form `(F,S)`, where `F` is a function type
 and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
@@ -370,8 +370,8 @@ struct ListOfConstraints <: AbstractModelAttribute end
 """
     ObjectiveFunction{F<:AbstractScalarFunction}()
 
-An `F` model which represents the objective function.
-It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
+A model attribute for the objective function which has a type `F<:AbstractScalarFunction`.
+`F` should be guaranteed to be equivalent but not necessarily identical to the function type provided by the user.
 Throws an `InexactError` if the objective function cannot be converted to `F`,
 e.g. the objective function is quadratic and `F` is `ScalarAffineFunction{Float64}` or
 it has non-integer coefficient and `F` is `ScalarAffineFunction{Int}`.
@@ -383,7 +383,7 @@ struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute en
 """
     ObjectiveValue(resultidx::Int=1)
 
-The objective value of the `resultindex`th primal result.
+A model attribute for the objective value of the `resultindex`th primal result.
 """
 struct ObjectiveValue <: AbstractModelAttribute
     resultindex::Int
@@ -393,28 +393,28 @@ end
 """
     ObjectiveBound()
 
-The best known bound on the optimal objective value.
+A model attribute for the best known bound on the optimal objective value.
 """
 struct ObjectiveBound <: AbstractModelAttribute end
 
 """
     RelativeGap()
 
-The final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
+A model attribute for the final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
 """
 struct RelativeGap <: AbstractModelAttribute  end
 
 """
     SolveTime()
 
-The total elapsed solution time (in seconds) as reported by the optimizer.
+A model attribute for the total elapsed solution time (in seconds) as reported by the optimizer.
 """
 struct SolveTime <: AbstractModelAttribute end
 
 """
     SimplexIterations()
 
-The cumulative number of simplex iterations during the optimization process.
+A model attribute for the cumulative number of simplex iterations during the optimization process.
 In particular, for a mixed-integer program (MIP), the total simplex iterations for all nodes.
 """
 struct SimplexIterations <: AbstractModelAttribute end
@@ -422,28 +422,28 @@ struct SimplexIterations <: AbstractModelAttribute end
 """
     BarrierIterations()
 
-The cumulative number of barrier iterations while solving a problem.
+A model attribute for the cumulative number of barrier iterations while solving a problem.
 """
 struct BarrierIterations <: AbstractModelAttribute end
 
 """
     NodeCount()
 
-The total number of branch-and-bound nodes explored while solving a mixed-integer program (MIP).
+A model attribute for the total number of branch-and-bound nodes explored while solving a mixed-integer program (MIP).
 """
 struct NodeCount <: AbstractModelAttribute end
 
 """
     RawSolver()
 
-An object that may be used to access a solver-specific API for this optimizer.
+A model attribute for the object that may be used to access a solver-specific API for this optimizer.
 """
 struct RawSolver <: AbstractModelAttribute end
 
 """
     ResultCount()
 
-The number of results available.
+A model attribute for the number of results available.
 """
 struct ResultCount <: AbstractModelAttribute end
 
@@ -452,21 +452,21 @@ struct ResultCount <: AbstractModelAttribute end
 """
     ListOfVariableAttributesSet()
 
-A `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the model.
+A model attribute for the `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the model.
 """
 struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 
 """
     VariableName()
 
-A string identifying the variable. It is invalid for two variables to have the same name.
+A variable attribute for the string identifying the variable. It is invalid for two variables to have the same name.
 """
 struct VariableName <: AbstractVariableAttribute end
 
 """
     VariablePrimalStart()
 
-An initial assignment of the variables that the optimizer may use to warm-start the solve.
+A variable attribute for the initial assignment to some primal variable's value that the optimizer may use to warm-start the solve.
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
@@ -474,7 +474,7 @@ struct VariablePrimalStart <: AbstractVariableAttribute end
     VariablePrimal(N)
     VariablePrimal()
 
-The assignment to the primal variables in result `N`.
+A variable attribute for the assignment to some primal variable's value in result `N`.
 If `N` is omitted, it is 1 by default.
 """
 struct VariablePrimal <: AbstractVariableAttribute
@@ -485,14 +485,14 @@ VariablePrimal() = VariablePrimal(1)
 """
     VariableBasisStatus()
 
-Returns the `BasisStatusCode` of a given variable, with respect to an available optimal solution basis.
+A variable attribute for the `BasisStatusCode` of some variable, with respect to an available optimal solution basis.
 """
 struct VariableBasisStatus <: AbstractVariableAttribute end
 
 """
     BasisStatusCode
 
-An Enum of possible values for the `VariableBasisStatus` and `ConstraintBasisStatus` attribute.
+An Enum of possible values for the `VariableBasisStatus` and `ConstraintBasisStatus` attributes.
 This explains the status of a given element with respect to an optimal solution basis.
 Possible values are:
 * `Basic`: element is in the basis
@@ -508,28 +508,28 @@ Possible values are:
 """
     ListOfConstraintAttributesSet{F, S}()
 
-A `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to `F`-in-`S` constraints.
+A model attribute for the `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to `F`-in-`S` constraints.
 """
 struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 
 """
     ConstraintName()
 
-A string identifying the constraint. It is invalid for two constraints of any kind to have the same name.
+A constraint attribute for the string identifying the constraint. It is invalid for two constraints of any kind to have the same name.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
 """
     ConstraintPrimalStart()
 
-An initial assignment of the constraint primal values that the optimizer may use to warm-start the solve.
+A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve.
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 
 """
     ConstraintDualStart()
 
-An initial assignment of the constraint duals that the optimizer may use to warm-start the solve.
+A constraint attribute for the initial assignment to some constraint's dual value(s) that the optimizer may use to warm-start the solve.
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
@@ -537,7 +537,7 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
     ConstraintPrimal(N)
     ConstraintPrimal()
 
-The assignment to the constraint primal values in result `N`.
+A constraint attribute for the assignment to some constraint's primal value(s) in result `N`.
 If `N` is omitted, it is 1 by default.
 
 Given a constraint `function-in-set`, the `ConstraintPrimal` is the value of the
@@ -555,7 +555,7 @@ ConstraintPrimal() = ConstraintPrimal(1)
     ConstraintDual(N)
     ConstraintDual()
 
-The assignment to the constraint dual values in result `N`.
+A constraint attribute for the assignment to some constraint's dual value(s) in result `N`.
 If `N` is omitted, it is 1 by default.
 """
 struct ConstraintDual <: AbstractConstraintAttribute
@@ -566,14 +566,14 @@ ConstraintDual() = ConstraintDual(1)
 """
     ConstraintBasisStatus()
 
-Returns the `BasisStatusCode` of a given constraint, with respect to an available optimal solution basis.
+A constraint attribute for the `BasisStatusCode` of some constraint, with respect to an available optimal solution basis.
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute end
 
 """
     ConstraintFunction()
 
-Return the `AbstractFunction` object used to define the constraint.
+A constraint attribute for the `AbstractFunction` object used to define the constraint.
 It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
@@ -591,7 +591,7 @@ end
 """
     ConstraintSet()
 
-Return the `AbstractSet` object used to define the constraint.
+A constraint attribute for the `AbstractSet` object used to define the constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
@@ -609,7 +609,7 @@ end
 """
     TerminationStatus()
 
-A `TerminationStatusCode` explaining why the optimizer stopped.
+A model attribute for the `TerminationStatusCode` explaining why the optimizer stopped.
 """
 struct TerminationStatus <: AbstractModelAttribute end
 
@@ -669,7 +669,7 @@ The values indicate how to interpret the result vector.
     PrimalStatus(N)
     PrimalStatus()
 
-The `ResultStatusCode` of the primal result `N`.
+A model attribute for the `ResultStatusCode` of the primal result `N`.
 If `N` is omitted, it defaults to 1.
 """
 struct PrimalStatus <: AbstractModelAttribute
@@ -681,7 +681,7 @@ PrimalStatus() = PrimalStatus(1)
     DualStatus(N)
     DualStatus()
 
-The `ResultStatusCode` of the dual result `N`.
+A model attribute for the `ResultStatusCode` of the dual result `N`.
 If `N` is omitted, it defaults to 1.
 """
 struct DualStatus <: AbstractModelAttribute
