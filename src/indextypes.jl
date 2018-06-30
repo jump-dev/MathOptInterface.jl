@@ -52,7 +52,7 @@ Base.delete!(model::ModelLike, index::Index) = throw(MethodError(Base.delete!, (
 
 Return a `Bool` indicating whether all the objects referred to by `indices` can be removed from the model `model`.
 """
-candelete(model::ModelLike, indices::Vector{<:Index}) = all(candelete.(Ref(model), indices))
+candelete(model::ModelLike, indices::Vector{<:Index}) = all(index -> candelete(model, index), indices)
 
 """
     delete!{R}(model::ModelLike, indices::Vector{R<:Index})
