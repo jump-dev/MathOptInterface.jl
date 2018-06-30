@@ -339,7 +339,7 @@ end
     RootDetConeSquare(dimension)
 
 The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
-Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
+Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensure that `X` is symmetric.
 The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeSquare <: AbstractVectorSet
