@@ -47,7 +47,7 @@ function write end
 """
     read!(model::ModelLike, filename::String)
 
-Read the file `filename` into the model `model`. If `m` is non-empty, this may
+Read the file `filename` into the model `model`. If `model` is non-empty, this may
 throw an error.
 
 Supported file types depend on the model type.
