@@ -64,8 +64,10 @@ end
 
 struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 
+@MOIU.model ModelForUniversalFallback () () () () () () () ()
+
 @testset "UniversalFallback" begin
-    model = Model{Float64}()
+    model = ModelForUniversalFallback{Float64}()
     uf = MOIU.UniversalFallback(model)
     @test MOI.isempty(uf)
     @testset "Copy Test" begin
@@ -117,7 +119,7 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
         test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
     end
-    @testset "Continuous Linear tests" begin
+    @testset "Continuous Linear" begin
         config = MOIT.TestConfig(solve=false)
         MOI.empty!(uf)
         @test MOI.isempty(uf)

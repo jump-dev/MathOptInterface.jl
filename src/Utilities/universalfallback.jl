@@ -1,9 +1,14 @@
 """
     UniversalFallback
 
-The `UniversalFallback` can be applied on a `ModelLike` `model` to create the model `UniversalFallback(model)` supporting *any* attributes.
-This allows to have a specialized implementation in `model` for performance critical attributes while still supporting other attributes with a small performance penalty.
-Note that `model` is unaware of attributes stored by `UniversalFallback` so this is not appropriate if `model` is an optimizer (for this reason, `optimize!` have not been implemented). In that case, optimizer bridges should be used instead.
+The `UniversalFallback` can be applied on a `ModelLike` `model` to create the
+model `UniversalFallback(model)` supporting *any* constaints and attributes.
+This allows to have a specialized implementation in `model` for performance
+critical constraints and attributes while still supporting other attributes
+with a small performance penalty. Note that `model` is unaware of constraints
+and attributes stored by `UniversalFallback` so this is not appropriate if
+`model` is an optimizer (for this reason, `optimize!` have not been
+implemented). In that case, optimizer bridges should be used instead.
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
@@ -63,7 +68,7 @@ _canget(uf, attr::MOI.AbstractOptimizerAttribute)              = haskey(uf.optat
 _canget(uf, attr::MOI.AbstractModelAttribute)                  = haskey(uf.modattr, attr)
 _canget(uf, attr::MOI.AbstractVariableAttribute, ::Type{VI})   = haskey(uf.varattr, attr) && length(uf.varattr[attr]) == MOI.get(uf.model, MOI.NumberOfVariables())
 function _canget(uf, attr::MOI.AbstractConstraintAttribute, ::Type{CI{F, S}}) where {F, S}
-    haskey(uf.conattr, attr) && length(uf.conattr[attr]) == MOI.get(uf.model, MOI.NumberOfConstraints{F, S}())
+    haskey(uf.conattr, attr) && length(uf.conattr[attr]) == MOI.get(uf, MOI.NumberOfConstraints{F, S}())
 end
 MOI.canget(uf::UniversalFallback, attr::Union{MOI.AbstractModelAttribute, MOI.AbstractOptimizerAttribute}) = MOI.canget(uf.model, attr) || _canget(uf, attr)
 MOI.canget(uf::UniversalFallback, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, IdxT::Type{<:MOI.Index}) = MOI.canget(uf.model, attr, IdxT) || _canget(uf, attr, IdxT)
@@ -86,12 +91,20 @@ function MOI.get(uf::UniversalFallback, attr::Union{MOI.AbstractVariableAttribut
     end
 end
 
-function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
-    if supportsconstraint(uf.model, F, S)
+function MOI.get(uf::UniversalFallback, listattr::MOI.NumberOfConstraints{F, S}) where {F, S}
+    if MOI.supportsconstraint(uf.model, F, S)
         MOI.get(uf, listattr)
     else
-        keys(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}))
+        length(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}()))
     end
+end
+function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
+    if MOI.supportsconstraint(uf.model, F, S)
+        MOI.get(uf, listattr)
+    else
+        keys(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}()))
+    end
+end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraints)
     list = MOI.get(uf.model, listattr)
     for (FS, constraints) in uf.constraints
@@ -188,10 +201,10 @@ function MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::M
         MOI.addconstraint!(uf.model, f, s)
     else
         constraints = get!(uf.constraints, (F, S)) do
-            Dict{CI{F, S, Tuple(F, S)}}()
-        end::Dict{CI{F, S, Tuple(F, S)}}
-        nextconstraintid += 1
-        ci = CI{F, S}(nextconstraintid)
+            Dict{CI{F, S}, Tuple{F, S}}()
+        end::Dict{CI{F, S}, Tuple{F, S}}
+        uf.nextconstraintid += 1
+        ci = CI{F, S}(uf.nextconstraintid)
         constraints[ci] = (f, s)
         ci
     end
