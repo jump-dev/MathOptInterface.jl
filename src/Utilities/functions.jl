@@ -9,7 +9,7 @@ Returns the value of function `f` if each variable index `vi` is evaluated as `v
 function evalvariables end
 evalvariables(varval::Function, f::MOI.SingleVariable) = varval(f.variable)
 evalvariables(varval::Function, f::MOI.VectorOfVariables) = varval.(f.variables)
-evalvariables(varval::Function, f::MOI.ScalarAffineFunction) = sum(evalterm.(varval, f.terms)) + f.constant
+evalvariables(varval::Function, f::MOI.ScalarAffineFunction) = mapreduce(t->evalterm(varval, t), +, zero(f.constant), f.terms) + f.constant
 function evalvariables(varval::Function, f::MOI.VectorAffineFunction)
     out = copy(f.constants)
     for t in f.terms
@@ -17,7 +17,7 @@ function evalvariables(varval::Function, f::MOI.VectorAffineFunction)
     end
     out
 end
-evalvariables(varval::Function, f::MOI.ScalarQuadraticFunction) = sum(evalterm.(varval, f.affine_terms)) + sum(evalterm.(varval, f.quadratic_terms)) + f.constant
+evalvariables(varval::Function, f::MOI.ScalarQuadraticFunction) = mapreduce(t->evalterm(varval, t), +, zero(f.constant), f.affine_terms) + mapreduce(t->evalterm(varval, t), +, zero(f.constant), f.quadratic_terms) + f.constant
 function evalvariables(varval::Function, f::MOI.VectorQuadraticFunction)
     out = copy(f.constants)
     for t in f.affine_terms
@@ -120,6 +120,15 @@ function Base.getindex(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}, 
     MOI.VectorAffineFunction(terms, constant)
 end
 
+termindices(t::MOI.ScalarAffineTerm) = (t.variable_index.value,)
+termindices(t::MOI.VectorAffineTerm) = (t.output_index, termindices(t.scalar_term)...)
+
+unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm) = MOI.ScalarAffineTerm(t1.coefficient + t2.coefficient, t1.variable_index)
+unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm) = MOI.VectorAffineTerm(t1.output_index, MOI.ScalarAffineTerm(t1.scalar_term.coefficient + t2.scalar_term.coefficient, t1.scalar_term.variable_index))
+
+coefficient(t::MOI.ScalarAffineTerm) = t.coefficient
+coefficient(t::MOI.VectorAffineTerm) = t.scalar_term.coefficient
+
 """
     canonical(f::AbstractFunction)
 
@@ -134,43 +143,25 @@ If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-function canonical(f::SAF{T}) where T
-    sorted_terms = sort(f.terms, by = t -> t.variable_index.value)
-    terms = MOI.ScalarAffineTerm{T}[]
+function canonical(f::Union{SAF, VAF})
+    sorted_terms = sort(f.terms, by = termindices)
+    terms = eltype(f.terms)[]
     for t in sorted_terms
-        if !isempty(terms) && t.variable_index == last(terms).variable_index
-            terms[end] = MOI.ScalarAffineTerm(terms[end].coefficient + t.coefficient, t.variable_index)
-        elseif !iszero(t.coefficient)
-            if !isempty(terms) && iszero(last(terms).coefficient)
+        tnot0 = !iszero(coefficient(t))
+        if !isempty(terms) && termindices(t) == termindices(last(terms)) && tnot0
+            terms[end] = unsafe_add(t, last(terms))
+        elseif tnot0
+            if !isempty(terms) && iszero(coefficient(last(terms)))
                 terms[end] = t
             else
                 push!(terms, t)
             end
         end
     end
-    if !isempty(terms) && iszero(last(terms).coefficient)
+    if !isempty(terms) && iszero(coefficient(last(terms)))
         pop!(terms)
     end
-    SAF{T}(terms, f.constant)
-end
-function canonical(f::VAF{T}) where T
-    sorted_terms = sort(f.terms, by = t -> (t.output_index, t.scalar_term.variable_index.value))
-    terms = MOI.VectorAffineTerm{T}[]
-    for t in sorted_terms
-        if !isempty(terms) && t.output_index == last(terms).output_index && t.scalar_term.variable_index == last(terms).scalar_term.variable_index
-            terms[end] = MOI.VectorAffineTerm(t.output_index, MOI.ScalarAffineTerm(terms[end].scalar_term.coefficient + t.scalar_term.coefficient, t.scalar_term.variable_index))
-        elseif !iszero(t.scalar_term.coefficient)
-            if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
-                terms[end] = t
-            else
-                push!(terms, t)
-            end
-        end
-    end
-    if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
-        pop!(terms)
-    end
-    VAF{T}(terms, f.constants)
+    typeof(f)(terms, _constant(f))
 end
 
 function test_variablenames_equal(model, variablenames)
