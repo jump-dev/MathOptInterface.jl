@@ -233,19 +233,18 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
         @test s1 == s2
     end
 
-    for src in (model1, model2)
-        for attr in MOI.get(src, MOI.ListOfModelAttributesSet())
-            @test MOI.canget(model1, attr)
-            value1 = MOI.get(model1, attr)
-            @test MOI.canget(model2, attr)
-            value2 = MOI.get(model2, attr)
-            if value1 isa MOI.AbstractFunction
-                @test value2 isa MOI.AbstractFunction
-                @test isapprox(value1, attribute_value_map(variablemap_2to1, value2))
-            else
-                @test !(value2 isa MOI.AbstractFunction)
-                @test value1 == value2
-            end
+    attr_list = MOI.get(model1, MOI.ListOfModelAttributesSet()) ∪ MOI.get(model2, MOI.ListOfModelAttributesSet())
+    for attr in attr_list 
+        @test MOI.canget(model1, attr)
+        value1 = MOI.get(model1, attr)
+        @test MOI.canget(model2, attr)
+        value2 = MOI.get(model2, attr)
+        if value1 isa MOI.AbstractFunction
+            @test value2 isa MOI.AbstractFunction
+            @test isapprox(value1, attribute_value_map(variablemap_2to1, value2))
+        else
+            @test !(value2 isa MOI.AbstractFunction)
+            @test value1 == value2
         end
     end
 end
