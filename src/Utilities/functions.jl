@@ -4,7 +4,7 @@ using Compat.Test
 """
     evalvariables(varval::Function, f::AbstractFunction)
 
-Returns the value of function `f` if each variable index `vi` is evaluate as `varval(vi)`.
+Returns the value of function `f` if each variable index `vi` is evaluated as `varval(vi)`.
 """
 function evalvariables end
 evalvariables(varval::Function, f::MOI.SingleVariable) = varval(f.variable)
