@@ -203,18 +203,6 @@ function test_constraintnames_equal(model, constraintnames)
     end
 end
 
-map_variables(f::Vector{MOI.VariableIndex}, variablemap::Dict{MOI.VariableIndex,MOI.VariableIndex}) = map(v -> variablemap[v], f)
-map_variables(f, variablemap) = f
-
-
-for moiname in [MOI.ScalarAffineFunction,MOI.VectorAffineFunction,
-                 MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction,
-                 MOI.SingleVariable,MOI.VectorOfVariables]
-    fields = fieldnames(moiname)
-    constructor = Expr(:call, moiname, [Expr(:call,:map_variables,Expr(:.,:f,Base.Meta.quot(field)),:variablemap) for field in fields]...)
-    @eval map_variables(f::$moiname, variablemap::Dict{MOI.VariableIndex,MOI.VariableIndex}) = $constructor
-end
-
 """
     test_models_equal(model1::ModelLike, model2::ModelLike, variablenames::Vector{String}, constraintnames::Vector{String})
 
@@ -241,7 +229,7 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
         f2 = MOI.get(model2, MOI.ConstraintFunction(), index2)
         s1 = MOI.get(model1, MOI.ConstraintSet(), index1)
         s2 = MOI.get(model2, MOI.ConstraintSet(), index2)
-        @test isapprox(f1, map_variables(f2, variablemap_2to1))
+        @test isapprox(f1, mapvariables(variablemap_2to1, f2))
         @test s1 == s2
     end
 
