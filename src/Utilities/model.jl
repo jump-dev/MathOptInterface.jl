@@ -65,21 +65,26 @@ function MOI.addvariables!(model::AbstractModel, n::Integer)
     [MOI.addvariable!(model) for i in 1:n]
 end
 
-function _removevar(ci::CI, f, s, vi::VI)
-    (ci, removevariable(f, vi), s)
-end
-function _removevar(ci::CI, f::MOI.VectorOfVariables, s, vi::VI)
+"""
+    removevariable(f::MOI.AbstractFunction, s::MOI.AbstractSet, vi::MOI.VariableIndex)
+
+Return a tuple `(g, t)` representing the constraint `f`-in-`s` with the
+variable of index `vi` removed.
+"""
+removevariable(f, s, vi::VI) = removevariable(f, vi), s
+function removevariable(f::MOI.VectorOfVariables, s, vi::VI)
     g = removevariable(f, vi)
     if length(g.variables) != length(f.variables)
         t = updatedimension(s, length(g.variables))
     else
         t = s
     end
-    (ci, g, t)
+    return g, t
 end
 function _removevar!(constrs::Vector, vi::VI)
     for i in eachindex(constrs)
-        constrs[i] = _removevar(constrs[i]..., vi)
+        ci, f, s = constrs[i]
+        constrs[i] = (ci, removevariable(f, s, vi)...)
     end
     []
 end
@@ -137,16 +142,30 @@ end
 MOI.canget(model::AbstractModel, ::MOI.Name) = true
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
+"""
+    setname(idxnames::Dict{<:MOI.Index, String}, namesidx::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
+
+Sets the name of the index `idx` to the name `name` in the maps `idxnames` and `namesidx`.
+If the name is already taken by an index different from `idx` then an error is thrown usin g `idxtype` to create a custom error message.
+If `name` is empty, and `idx` already has a name, it is removed.
+"""
+function setname(idxnames::Dict{<:MOI.Index, String}, namesidx::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
+    if !isempty(name) && haskey(namesidx, name) && namesidx[name] != idx
+        error("$idxtype name $name is already used by $namesidx[name])")
+    end
+    if haskey(idxnames, idx)
+        delete!(namesidx, idxnames[idx])
+    end
+    idxnames[idx] = name
+    if !isempty(name)
+        namesidx[name] = idx
+    end
+    return
+end
+
 MOI.canset(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
-    if !isempty(name) && haskey(model.namesvar, name) && model.namesvar[name] != vi
-        error("Variable name $name is already used by $(model.namesvar[name])")
-    end
-    if haskey(model.varnames, vi)
-        delete!(model.namesvar, model.varnames[vi])
-    end
-    model.varnames[vi] = name
-    model.namesvar[name] = vi
+    setname(model.varnames, model.namesvar, vi, name, :Variable)
 end
 MOI.canget(::AbstractModel, ::MOI.VariableName, ::Type{VI}) = true
 MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.varnames, vi, EMPTYSTRING)
@@ -161,14 +180,7 @@ end
 
 MOI.canset(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
-    if !isempty(name) && haskey(model.namescon, name) && model.namescon[name] != ci
-        error("Constraint name $name is already used by $(model.namescon[name])")
-    end
-    if haskey(model.connames, ci)
-        delete!(model.namescon, model.connames[ci])
-    end
-    model.connames[ci] = name
-    model.namescon[name] = ci
+    setname(model.connames, model.namescon, ci, name, :Constraint)
 end
 MOI.canget(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.connames, ci, EMPTYSTRING)

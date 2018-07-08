@@ -24,8 +24,8 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
         new{typeof(model)}(model,
                            Dict{Tuple{DataType, DataType}, Dict}(),
                            0,
-                           connames::Dict{CI, String}(),
-                           namescon::Dict{String, CI}(),
+                           Dict{CI, String}(),
+                           Dict{String, CI}(),
                            Dict{MOI.AbstractOptimizerAttribute, Any}(),
                            Dict{MOI.AbstractModelAttribute, Any}(),
                            Dict{MOI.AbstractVariableAttribute, Dict{VI, Any}}(),
@@ -69,6 +69,10 @@ function MOI.delete!(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
         MOI.delete!(uf.model, ci)
     else
         MOI.delete!(uf.constraints[(F, S)], ci)
+        if haskey(uf.connames, ci)
+            delete!(uf.namescon, uf.connames[ci])
+            delete!(uf.connames, ci)
+        end
     end
     for d in values(uf.conattr)
         delete!(d, ci)
@@ -78,6 +82,18 @@ function MOI.delete!(uf::UniversalFallback, vi::VI)
     MOI.delete!(uf.model, vi)
     for d in values(uf.varattr)
         delete!(d, vi)
+    end
+    for (FS, constraints) in uf.constraints
+        for (ci, constraint) in constraints
+            f, s = constraint
+            if f isa MOI.SingleVariable
+                if f.variable == vi
+                    delete!(constraints, ci)
+                end
+            else
+                constraints[ci] = removevariable(f, s, vi)
+            end
+        end
     end
 end
 
@@ -109,9 +125,9 @@ function MOI.get(uf::UniversalFallback, attr::Union{MOI.AbstractVariableAttribut
     end
 end
 
-function MOI.get(uf::UniversalFallback, listattr::MOI.NumberOfConstraints{F, S}) where {F, S}
+function MOI.get(uf::UniversalFallback, attr::MOI.NumberOfConstraints{F, S}) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.get(uf, listattr)
+        MOI.get(uf, attr)
     else
         length(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}()))
     end
@@ -166,21 +182,62 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintAttributes
             push!(list, attr)
         end
     end
-    list
+    return list
 end
 
 # Name
-MOI.canget(uf::UniversalFallback, IdxT::Type{VI}, name::String) = MOI.canget(uf.model, IdxT, name)
-function MOI.canget(uf::UniversalFallback, IdxT::Type{CI}, name::String) where {F, S}
+# The names of constraints not supported by `uf.model` need to be handled
+function MOI.canset(uf::UniversalFallback, attr::MOI.ConstraintName, ::Type{CI{F, S}}) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.canget(uf.model, IdxT, name)
+        return MOI.canset(uf.model, attr, CI{F, S})
     else
-        haskey(uf.namescon, name)
+        return true
     end
 end
-function MOI.get(uf::UniversalFallback, IdxT::Type{<:MOI.Index}, name::String)
+function MOI.set!(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.get(uf.model, IdxT, name)
+        MOI.set!(uf.model, attr, ci, name)
+    else
+        setname(uf.connames, uf.namescon, ci, name, :Constraint)
+    end
+end
+function MOI.canget(uf::UniversalFallback, attr::MOI.ConstraintName, ::Type{CI{F, S}}) where {F, S}
+    if MOI.supportsconstraint(uf.model, F, S)
+        return MOI.canget(uf.model, attr, CI{F, S})
+    else
+        return true
+    end
+end
+function MOI.get(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}) where {F, S}
+    if MOI.supportsconstraint(uf.model, F, S)
+        return MOI.get(uf.model, attr, ci)
+    else
+        return get(uf.connames, ci, EMPTYSTRING)
+    end
+end
+
+MOI.canget(uf::UniversalFallback, ::Type{VI}, name::String) = MOI.canget(uf.model, VI, name)
+function MOI.canget(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F, S}
+    if MOI.supportsconstraint(uf.model, F, S)
+        return MOI.canget(uf.model, CI{F, S}, name)
+    else
+        return haskey(uf.namescon, name) && uf.namescon[name] isa CI{F, S}
+    end
+end
+function MOI.canget(uf::UniversalFallback, ::Type{CI}, name::String)
+    return MOI.canget(uf.model, CI, name) || haskey(uf.namescon, name)
+end
+MOI.get(uf::UniversalFallback, ::Type{VI}, name::String) = MOI.get(uf.model, VI, name)
+function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F, S}
+    if MOI.supportsconstraint(uf.model, F, S)
+        return MOI.get(uf.model, CI{F, S}, name)
+    else
+        return uf.namescon[name]::CI{F, S}
+    end
+end
+function MOI.get(uf::UniversalFallback, ::Type{CI}, name::String)
+    if MOI.canget(uf.model, CI, name)
+        MOI.get(uf.model, CI, name)
     else
         uf.namescon[name]
     end
@@ -203,31 +260,24 @@ end
 MOI.canset(::UniversalFallback, ::Union{MOI.AbstractModelAttribute, MOI.AbstractOptimizerAttribute}) = true
 function MOI.set!(uf::UniversalFallback, attr::Union{MOI.AbstractOptimizerAttribute, MOI.AbstractModelAttribute}, value)
     if MOI.canset(uf.model, attr)
-        MOI.set!(uf.model, attr, value)
+        return MOI.set!(uf.model, attr, value)
     else
-        _set!(uf, attr, value)
+        return _set!(uf, attr, value)
     end
 end
-MOI.canset(::UniversalFallback, ::MOI.AbstractVariableAttribute, ::Type{VI}) = true
-function MOI.canset(uf::UniversalFallback, attr::MOI.AbstractConstraintAttribute, ::Type{CI{F, S}}) where {F, S}
-    if MOI.supportsconstraint(uf.model, F, S)
-        MOI.canset(uf.model, attr, F, S)
-    else
-        true
-    end
-end
+MOI.canset(::UniversalFallback, ::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, ::Type{<:MOI.Index}) = true
 function MOI.set!(uf::UniversalFallback, attr::MOI.AbstractVariableAttribute, idx::VI, value)
     if MOI.canset(uf.model, attr, typeof(idx))
-        MOI.set!(uf.model, attr, idx, value)
+        return MOI.set!(uf.model, attr, idx, value)
     else
-        _set!(uf, attr, idx, value)
+        return _set!(uf, attr, idx, value)
     end
 end
 function MOI.set!(uf::UniversalFallback, attr::MOI.AbstractConstraintAttribute, idx::CI{F, S}, value) where {F, S}
-    if MOI.supportsconstraint(uf.model, F, S) && MOI.supports(uf.model, attr, CI{F, S})MOI.canset(uf.model, attr, typeof(idx))
-        MOI.set!(uf.model, attr, idx, value)
+    if MOI.supportsconstraint(uf.model, F, S) && MOI.canset(uf.model, attr, CI{F, S})
+        return MOI.set!(uf.model, attr, idx, value)
     else
-        _set!(uf, attr, idx, value)
+        return _set!(uf, attr, idx, value)
     end
 end
 
