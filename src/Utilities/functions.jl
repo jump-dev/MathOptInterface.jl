@@ -276,7 +276,7 @@ _hasvar(t::MOI.ScalarAffineTerm, vi::MOI.VariableIndex) = t.variable_index == vi
 _hasvar(t::MOI.ScalarQuadraticTerm, vi::MOI.VariableIndex) = t.variable_index_1 == vi || t.variable_index_2 == vi
 _hasvar(t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}, vi::MOI.VariableIndex) = _hasvar(t.scalar_term, vi)
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
-_rmvar(vis_or_terms::Vector, vi::MOI.VariableIndex) = vis_or_terms[.!_hasvar.(vis_or_terms, vi)]
+_rmvar(vis_or_terms::Vector, vi::MOI.VariableIndex) = vis_or_terms[.!_hasvar.(vis_or_terms, Ref(vi))]
 
 """
     removevariable(f::AbstractFunction, vi::VariableIndex)
