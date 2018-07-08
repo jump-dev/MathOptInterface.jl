@@ -120,12 +120,33 @@ function Base.getindex(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}, 
     MOI.VectorAffineFunction(terms, constant)
 end
 
+"""
+    termindices(t::Union{ScalarAffineTerm, VectorAffineTerm})
+
+Returns the indices of the input term `t` as a tuple of `Int`s. For `t::ScalarAffineTerm`, this is a 1-tuple of the variable index. For `t::VectorAffineTerm`, this is a 2-tuple of the row/output and variable indices of the term.
+"""
 termindices(t::MOI.ScalarAffineTerm) = (t.variable_index.value,)
 termindices(t::MOI.VectorAffineTerm) = (t.output_index, termindices(t.scalar_term)...)
 
+"""
+    unsafe_add(t1::ScalarAffineTerm, t2::ScalarAffineTerm)
+
+Sums the coefficients of `t1` and `t2` and returns an output `ScalarAffineTerm`. It is unsafe because it uses the `variable_index` of `t1` as the `variable_index` of the output without checking that it is equal to that of `t2`.
+"""
 unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm) = MOI.ScalarAffineTerm(t1.coefficient + t2.coefficient, t1.variable_index)
+
+"""
+    unsafe_add(t1::VectorAffineTerm, t2::VectorAffineTerm)
+
+Sums the coefficients of `t1` and `t2` and returns an output `VectorAffineTerm`. It is unsafe because it uses the `output_index` and `variable_index` of `t1` as the `output_index` and `variable_index` of the output term without checking that they are equal to those of `t2`.
+"""
 unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm) = MOI.VectorAffineTerm(t1.output_index, MOI.ScalarAffineTerm(t1.scalar_term.coefficient + t2.scalar_term.coefficient, t1.scalar_term.variable_index))
 
+"""
+    coefficient(t::Union{ScalarAffineTerm, VectorAffineTerm})
+
+Finds the coefficient associated with the term `t`.
+"""
 coefficient(t::MOI.ScalarAffineTerm) = t.coefficient
 coefficient(t::MOI.VectorAffineTerm) = t.scalar_term.coefficient
 
