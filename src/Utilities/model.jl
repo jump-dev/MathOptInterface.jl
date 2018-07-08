@@ -143,16 +143,32 @@ MOI.canget(model::AbstractModel, ::MOI.Name) = true
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
 """
+    newname(model::MOI.ModelLike, IdxT::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+
+Return a `Bool` indicating whether `name` is not already used by an index of
+type `IdxT`. If it is already used and the index using this name is not `idx`
+then it throws an error.
+"""
+function newname(model::MOI.ModelLike, IdxT::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+    if !isempty(name) && MOI.canget(model, IdxT, name)
+        other_idx = MOI.get(model, IdxT, name)
+        if other_idx != idx
+            error("$(IdxT == VI ? :Variable : :Constraint) name $name is already used by $other_idx)")
+        end
+        return false
+    else
+        return true
+    end
+end
+
+"""
     setname(idxnames::Dict{<:MOI.Index, String}, namesidx::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
 
 Sets the name of the index `idx` to the name `name` in the maps `idxnames` and `namesidx`.
 If the name is already taken by an index different from `idx` then an error is thrown usin g `idxtype` to create a custom error message.
 If `name` is empty, and `idx` already has a name, it is removed.
 """
-function setname(idxnames::Dict{<:MOI.Index, String}, namesidx::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
-    if !isempty(name) && haskey(namesidx, name) && namesidx[name] != idx
-        error("$idxtype name $name is already used by $namesidx[name])")
-    end
+function setname(idxnames::Dict{<:MOI.Index, String}, namesidx::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
     if haskey(idxnames, idx)
         delete!(namesidx, idxnames[idx])
     end
@@ -165,7 +181,9 @@ end
 
 MOI.canset(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
-    setname(model.varnames, model.namesvar, vi, name, :Variable)
+    if newname(model, VI, vi, name)
+        setname(model.varnames, model.namesvar, vi, name)
+    end
 end
 MOI.canget(::AbstractModel, ::MOI.VariableName, ::Type{VI}) = true
 MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.varnames, vi, EMPTYSTRING)
@@ -180,7 +198,9 @@ end
 
 MOI.canset(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
-    setname(model.connames, model.namescon, ci, name, :Constraint)
+    if newname(model, CI, ci, name)
+        setname(model.connames, model.namescon, ci, name)
+    end
 end
 MOI.canget(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.connames, ci, EMPTYSTRING)

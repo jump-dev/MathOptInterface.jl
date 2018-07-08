@@ -127,14 +127,14 @@ end
 
 function MOI.get(uf::UniversalFallback, attr::MOI.NumberOfConstraints{F, S}) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.get(uf, attr)
+        MOI.get(uf.model, attr)
     else
         length(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}()))
     end
 end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.get(uf, listattr)
+        MOI.get(uf.model, listattr)
     else
         collect(keys(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}())))
     end
@@ -195,10 +195,12 @@ function MOI.canset(uf::UniversalFallback, attr::MOI.ConstraintName, ::Type{CI{F
     end
 end
 function MOI.set!(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}
-    if MOI.supportsconstraint(uf.model, F, S)
-        MOI.set!(uf.model, attr, ci, name)
-    else
-        setname(uf.connames, uf.namescon, ci, name, :Constraint)
+    if newname(uf, CI, ci, name)
+        if MOI.supportsconstraint(uf.model, F, S)
+            MOI.set!(uf.model, attr, ci, name)
+        else
+            setname(uf.connames, uf.namescon, ci, name)
+        end
     end
 end
 function MOI.canget(uf::UniversalFallback, attr::MOI.ConstraintName, ::Type{CI{F, S}}) where {F, S}
