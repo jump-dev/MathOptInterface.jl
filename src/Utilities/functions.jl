@@ -311,8 +311,7 @@ end
 function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable::MOI.VariableIndex, new_coefficients)
     terms = copy(terms)
     # Maps between rows in the `VectorAffineTerm`s and indices in new_coefficients
-    rowmap = zeros(Int, n)
-    rowmap[map(c -> c[1], new_coefficients)] = 1:length(new_coefficients)
+    rowmap = Dict(c[1]=>i for (i,c) in enumerate(new_coefficients))
     del = Int[]
     for i in 1:length(terms)
         if _hasvar(terms[i], variable)
