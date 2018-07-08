@@ -337,7 +337,7 @@ function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable:
     for i in 1:length(terms)
         if _hasvar(terms[i], variable)
             row = terms[i].output_index
-            j = rowmap[row]
+            j = Base.get(rowmap, row, 0)
             if !iszero(j) # If it is zero, it means that the row should not be changed
                 if iszero(new_coefficients[j][2])
                     push!(del, i)
@@ -349,7 +349,7 @@ function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable:
         end
     end
     deleteat!(terms, del)
-    for (row, j) in enumerate(rowmap)
+    for (row, j) in rowmap
         if !iszero(j)
             push!(terms, MOI.VectorAffineTerm(row, MOI.ScalarAffineTerm(new_coefficients[j][2], variable)))
         end
