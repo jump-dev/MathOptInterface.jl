@@ -16,26 +16,22 @@ function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestCon
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 1.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -1.0)]
+    )
     @test MOI.canset(model, MOI.ConstraintSet(), typeof(c))
     MOI.set!(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 2.0,
-            variable_primal   = [(x, 2.0)],
-            constraint_primal = [(c, 2.0)],
-            constraint_dual   = [(c, -1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 2.0,
+        variable_primal   = [(x, 2.0)],
+        constraint_primal = [(c, 2.0)],
+        constraint_dual   = [(c, -1.0)]
+    )
 end
 modificationtests["solve_set_singlevariable_lessthan"] = solve_set_singlevariable_lessthan
 
@@ -55,28 +51,24 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 1.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -1.0)]
+    )
     @test !MOI.cantransform(model, c, MOI.LessThan{Float64})
     @test MOI.cantransform(model, c, MOI.GreaterThan{Float64})
     c2 = MOI.transform!(model, c, MOI.GreaterThan(2.0))
     @test !MOI.isvalid(model, c)
     @test MOI.isvalid(model, c2)
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 2.0,
-            variable_primal   = [(x, 2.0)],
-            constraint_primal = [(c2, 2.0)],
-            constraint_dual   = [(c2, 1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 2.0,
+        variable_primal   = [(x, 2.0)],
+        constraint_primal = [(c2, 2.0)],
+        constraint_dual   = [(c2, 1.0)]
+    )
 end
 modificationtests["solve_transform_singlevariable_lessthan"] = solve_transform_singlevariable_lessthan
 
@@ -96,26 +88,22 @@ function solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfi
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 1.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -1.0)]
+    )
     @test MOI.canset(model, MOI.ConstraintSet(), typeof(c))
     MOI.set!(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 2.0,
-            variable_primal   = [(x, 2.0)],
-            constraint_primal = [(c, 2.0)],
-            constraint_dual   = [(c, -1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 2.0,
+        variable_primal   = [(x, 2.0)],
+        constraint_primal = [(c, 2.0)],
+        constraint_dual   = [(c, -1.0)]
+    )
 end
 modificationtests["solve_set_scalaraffine_lessthan"] = solve_set_scalaraffine_lessthan
 
@@ -135,24 +123,20 @@ function solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 1.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -1.0)]
+    )
     @test MOI.canmodify(model, typeof(c), MOI.ScalarCoefficientChange{Float64})
     MOI.modify!(model, c, MOI.ScalarCoefficientChange(x, 2.0))
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.5,
-            variable_primal   = [(x, 0.5)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -0.5)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -0.5)]
+    )
 end
 modificationtests["solve_coef_scalaraffine_lessthan"] = solve_coef_scalaraffine_lessthan
 
@@ -172,14 +156,12 @@ function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 1.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -1.0)]
+    )
     @test MOI.canset(model, MOI.ConstraintFunction(), typeof(c))
     MOI.set!(model, MOI.ConstraintFunction(), c,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
@@ -187,14 +169,12 @@ function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
     @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
     foo = MOI.get(model, MOI.ConstraintFunction(), c)
     @test foo ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.5,
-            variable_primal   = [(x, 0.5)],
-            # constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, -0.5)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        # constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -0.5)]
+    )
 end
 modificationtests["solve_func_scalaraffine_lessthan"] = solve_func_scalaraffine_lessthan
 
@@ -222,22 +202,18 @@ function solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfi
             ),
             MOI.Nonpositives(2)
         )
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.0,
-            variable_primal   = [(x, 0.0), (y, 0.0)],
-            constraint_primal = [(c, [0.0, 0.0])]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.0,
+        variable_primal   = [(x, 0.0), (y, 0.0)],
+        constraint_primal = [(c, [0.0, 0.0])]
+    )
     @test MOI.canmodify(model, typeof(c), MOI.VectorConstantChange{Float64})
     MOI.modify!(model, c, MOI.VectorConstantChange([-1.0, -1.5]))
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 2.5,
-            variable_primal   = [(x, 1.0), (y, 0.75)],
-            constraint_primal = [(c, [0.0, 0.0])]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 2.5,
+        variable_primal   = [(x, 1.0), (y, 0.75)],
+        constraint_primal = [(c, [0.0, 0.0])]
+    )
 end
 modificationtests["solve_const_vectoraffine_nonpos"] = solve_const_vectoraffine_nonpos
 
@@ -264,22 +240,18 @@ function solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::TestCo
             ),
             MOI.Nonpositives(2)
         )
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.5,
-            variable_primal   = [(x, 0.5)],
-            constraint_primal = [(c, [-0.5, 0.0])]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        constraint_primal = [(c, [-0.5, 0.0])]
+    )
     @test MOI.canmodify(model, typeof(c), MOI.MultirowChange{Float64})
     MOI.modify!(model, c, MOI.MultirowChange(x, [(1,4.0), (2,3.0)]))
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.25,
-            variable_primal   = [(x, 0.25)],
-            constraint_primal = [(c, [0.0, -0.25])]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.25,
+        variable_primal   = [(x, 0.25)],
+        constraint_primal = [(c, [0.0, -0.25])]
+    )
 end
 modificationtests["solve_multirow_vectoraffine_nonpos"] = solve_multirow_vectoraffine_nonpos
 
@@ -297,12 +269,10 @@ function solve_const_scalar_objective(model::MOI.ModelLike, config::TestConfig)
         c1: 1.0x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 3.0,
-            variable_primal   = [(x, 1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 3.0,
+        variable_primal   = [(x, 1.0)]
+    )
     @test MOI.canmodify(model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarConstantChange{Float64}
@@ -311,12 +281,10 @@ function solve_const_scalar_objective(model::MOI.ModelLike, config::TestConfig)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarConstantChange(3.0)
     )
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 4.0,
-            variable_primal   = [(x, 1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 4.0,
+        variable_primal   = [(x, 1.0)]
+    )
 end
 modificationtests["solve_const_scalar_objective"] = solve_const_scalar_objective
 
@@ -334,12 +302,10 @@ function solve_coef_scalar_objective(model::MOI.ModelLike, config::TestConfig)
         c1: 1.0x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 1.0,
-            variable_primal   = [(x, 1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)]
+    )
     @test MOI.canmodify(model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarCoefficientChange{Float64}
@@ -348,12 +314,10 @@ function solve_coef_scalar_objective(model::MOI.ModelLike, config::TestConfig)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarCoefficientChange(x, 3.0)
     )
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 3.0,
-            variable_primal   = [(x, 1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 3.0,
+        variable_primal   = [(x, 1.0)]
+    )
 end
 modificationtests["solve_coef_scalar_objective"] = solve_coef_scalar_objective
 

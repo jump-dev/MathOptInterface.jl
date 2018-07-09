@@ -77,14 +77,12 @@ function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 3.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, 2.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 3.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, 2.0)]
+    )
 end
 unittests["solve_constant_obj"] = solve_constant_obj
 
@@ -106,14 +104,12 @@ function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 0.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, 0.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 0.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, 0.0)]
+    )
 end
 unittests["solve_blank_obj"] = solve_blank_obj
 
@@ -135,14 +131,12 @@ function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 1.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c, 1.0)],
-            constraint_dual   = [(c, 1.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, 1.0)]
+    )
 end
 unittests["solve_singlevariable_obj"] = solve_singlevariable_obj
 

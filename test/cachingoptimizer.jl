@@ -203,6 +203,11 @@ for state in (MOIU.NoOptimizer, MOIU.EmptyOptimizer, MOIU.AttachedOptimizer)
         @test MOIU.state(m) == state
         @test MOIU.mode(m) == mode
         config = MOIT.TestConfig(solve=false)
-        MOIT.contlineartest(m, config)
+        @testset "Unit" begin
+            MOIT.unittest(m, config)
+        end
+        @testset "Continuous Linear" begin
+            MOIT.contlineartest(m, config)
+        end
     end
 end

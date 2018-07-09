@@ -152,14 +152,12 @@ function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
     x  = MOI.get(model, MOI.VariableIndex, "x")
     c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c1")
     c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c2")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 2.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c1, 1.0), (c2, 1.0)],
-            constraint_dual   = [(c1, -2.0), (c2, 0.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 2.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c1, 1.0), (c2, 1.0)],
+        constraint_dual   = [(c1, -2.0), (c2, 0.0)]
+    )
 end
 unittests["solve_with_upperbound"] = solve_with_upperbound
 
@@ -182,13 +180,11 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c1")
     c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c2")
-    if config.solve
-        test_model_solution(model, config;
-            objective_value   = 2.0,
-            variable_primal   = [(x, 1.0)],
-            constraint_primal = [(c1, 1.0), (c2, 1.0)],
-            constraint_dual   = [(c1, 2.0), (c2, 0.0)]
-        )
-    end
+    test_model_solution(model, config;
+        objective_value   = 2.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c1, 1.0), (c2, 1.0)],
+        constraint_dual   = [(c1, 2.0), (c2, 0.0)]
+    )
 end
 unittests["solve_with_lowerbound"] = solve_with_lowerbound
