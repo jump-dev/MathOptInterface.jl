@@ -121,10 +121,18 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
         test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
     end
-    @testset "Continuous Linear" begin
-        config = MOIT.TestConfig(solve=false)
+    config = MOIT.TestConfig(solve=false)
+    @testset "empty" begin
         MOI.empty!(uf)
         @test MOI.isempty(uf)
+    end
+    @testset "Unit" begin
+        MOIT.unittest(uf, config)
+    end
+    @testset "Modification" begin
+        MOIT.modificationtest(uf, config)
+    end
+    @testset "Continuous Linear" begin
         MOIT.contlineartest(uf, config)
     end
 end
