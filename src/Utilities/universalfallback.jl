@@ -39,6 +39,8 @@ function MOI.empty!(uf::UniversalFallback)
     MOI.empty!(uf.model)
     empty!(uf.constraints)
     uf.nextconstraintid = 0
+    empty!(uf.connames)
+    empty!(uf.namescon)
     empty!(uf.optattr)
     empty!(uf.modattr)
     empty!(uf.varattr)
