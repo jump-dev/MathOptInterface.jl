@@ -112,14 +112,32 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         listattr = MOI.ListOfVariableAttributesSet()
         test_varconattrs(uf, model, attr, listattr, VI, MOI.addvariable!, x, y, z)
     end
-    cx = MOI.addconstraint!(uf, x, MOI.EqualTo(0.))
-    cy = MOI.addconstraint!(uf, y, MOI.EqualTo(1.))
-    cz = MOI.addconstraint!(uf, z, MOI.EqualTo(2.))
     @testset "Constraint Attribute" begin
-        CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
         attr = MOIT.UnknownConstraintAttribute()
-        listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
-        test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
+        @testset "Supported constraint" begin
+            cx = MOI.addconstraint!(uf, x, MOI.LessThan(0.))
+            cy = MOI.addconstraint!(uf, y, MOI.LessThan(1.))
+            cz = MOI.addconstraint!(uf, z, MOI.LessThan(2.))
+            CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}
+            listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.LessThan{Float64}}()
+            test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.LessThan(0.)), cx, cy, cz)
+            @test MOI.canset(uf, MOI.ConstraintFunction(), typeof(cx))
+            MOI.set!(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
+            @test MOI.canget(uf, MOI.ConstraintFunction(), typeof(cx))
+            @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
+        end
+        @testset "Unsupported constraint" begin
+            cx = MOI.addconstraint!(uf, x, MOI.EqualTo(0.))
+            cy = MOI.addconstraint!(uf, y, MOI.EqualTo(1.))
+            cz = MOI.addconstraint!(uf, z, MOI.EqualTo(2.))
+            CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
+            listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
+            test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
+            @test MOI.canset(uf, MOI.ConstraintFunction(), typeof(cx))
+            MOI.set!(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
+            @test MOI.canget(uf, MOI.ConstraintFunction(), typeof(cx))
+            @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
+        end
     end
     config = MOIT.TestConfig(solve=false)
     @testset "empty" begin

@@ -104,7 +104,7 @@ _canget(uf, attr::MOI.AbstractOptimizerAttribute)              = haskey(uf.optat
 _canget(uf, attr::MOI.AbstractModelAttribute)                  = haskey(uf.modattr, attr)
 _canget(uf, attr::MOI.AbstractVariableAttribute, ::Type{VI})   = haskey(uf.varattr, attr) && length(uf.varattr[attr]) == MOI.get(uf.model, MOI.NumberOfVariables())
 function _canget(uf, attr::MOI.AbstractConstraintAttribute, ::Type{CI{F, S}}) where {F, S}
-    haskey(uf.conattr, attr) && length(uf.conattr[attr]) == MOI.get(uf, MOI.NumberOfConstraints{F, S}())
+    haskey(uf.conattr, attr) && count(ci -> ci isa CI{F, S}, keys(uf.conattr[attr])) == MOI.get(uf, MOI.NumberOfConstraints{F, S}())
 end
 MOI.canget(uf::UniversalFallback, attr::Union{MOI.AbstractModelAttribute, MOI.AbstractOptimizerAttribute}) = MOI.canget(uf.model, attr) || _canget(uf, attr)
 MOI.canget(uf::UniversalFallback, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, IdxT::Type{<:MOI.Index}) = MOI.canget(uf.model, attr, IdxT) || _canget(uf, attr, IdxT)
