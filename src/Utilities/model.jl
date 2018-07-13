@@ -550,13 +550,13 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             model.objectiveset = false
             model.objective = $SAF{T}(MOI.ScalarAffineTerm{T}[], zero(T))
             model.nextvariableid = 0
-            model.varindices = Set{$VI}()
-            model.varnames = Dict{Int64, String}()
-            model.namesvar = Dict{String, $VI}()
+            empty!(model.varindices)
+            empty!(model.varnames)
+            empty!(model.namesvar)
             model.nextconstraintid = 0
-            model.connames = Dict{Int64, String}()
-            model.namescon = Dict{String, $CI}()
-            model.constrmap = Int[]
+            empty!(model.connames)
+            empty!(model.namescon)
+            empty!(model.constrmap)
             $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
     end
