@@ -44,6 +44,7 @@ function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfu
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
     @test isempty(MOI.get(uf, listattr))
+
     @test MOI.candelete(uf, u)
     @test MOI.isvalid(uf, u)
     MOI.delete!(uf, u)
@@ -121,10 +122,20 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}
             listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.LessThan{Float64}}()
             test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.LessThan(0.)), cx, cy, cz)
+
             @test MOI.canset(uf, MOI.ConstraintFunction(), typeof(cx))
             MOI.set!(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
             @test MOI.canget(uf, MOI.ConstraintFunction(), typeof(cx))
             @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
+
+            @test MOI.canset(uf, MOI.ConstraintName(), typeof(cx))
+            MOI.set!(uf, MOI.ConstraintName(), cx, "LessThan")
+            @test MOI.canget(uf, MOI.ConstraintName(), typeof(cx))
+            @test MOI.get(uf, MOI.ConstraintName(), cx) == "LessThan"
+            @test MOI.canget(uf, typeof(cx), "LessThan")
+            @test MOI.get(uf, typeof(cx), "LessThan") == cx
+            MOI.delete!(uf, cx)
+            @test !MOI.canget(uf, typeof(cx), "LessThan")
         end
         @testset "Unsupported constraint" begin
             cx = MOI.addconstraint!(uf, x, MOI.EqualTo(0.))
@@ -133,10 +144,20 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
             listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
             test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.addconstraint!(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
+
             @test MOI.canset(uf, MOI.ConstraintFunction(), typeof(cx))
             MOI.set!(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
             @test MOI.canget(uf, MOI.ConstraintFunction(), typeof(cx))
             @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
+
+            @test MOI.canset(uf, MOI.ConstraintName(), typeof(cx))
+            MOI.set!(uf, MOI.ConstraintName(), cx, "EqualTo")
+            @test MOI.canget(uf, MOI.ConstraintName(), typeof(cx))
+            @test MOI.get(uf, MOI.ConstraintName(), cx) == "EqualTo"
+            @test MOI.canget(uf, typeof(cx), "EqualTo")
+            @test MOI.get(uf, typeof(cx), "EqualTo") == cx
+            MOI.delete!(uf, cx)
+            @test !MOI.canget(uf, typeof(cx), "EqualTo")
         end
     end
     config = MOIT.TestConfig(solve=false)
