@@ -53,6 +53,7 @@ function nametest(model::MOI.ModelLike)
 
         @test MOI.canset(model, MOI.ConstraintName(), typeof(c))
         MOI.set!(model, MOI.ConstraintName(), c, "")
+        @test MOI.canset(model, MOI.ConstraintName(), typeof(c2))
         MOI.set!(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
 
         MOI.set!(model, MOI.ConstraintName(), c, "Con0")
@@ -64,6 +65,8 @@ function nametest(model::MOI.ModelLike)
 
         @test MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
         @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con2")
+        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con1")
+        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}, "Con1")
         @test MOI.canget(model, MOI.ConstraintIndex, "Con1")
         @test !MOI.canget(model, MOI.ConstraintIndex, "Con2")
 
@@ -71,6 +74,17 @@ function nametest(model::MOI.ModelLike)
         @test_throws KeyError MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con2")
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") == c
         @test_throws KeyError MOI.get(model, MOI.ConstraintIndex, "Con2")
+
+        MOI.set!(model, MOI.ConstraintName(), c2, "Con0")
+        @test MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
+        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con0")
+        @test MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con0")
+        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con1")
+        @test MOI.canget(model, MOI.ConstraintIndex, "Con0")
+        @test MOI.canget(model, MOI.ConstraintIndex, "Con1")
+
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1") == c
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con0") == c2
 
         if MOI.candelete(model, v[2])
             MOI.delete!(model, v[2])
