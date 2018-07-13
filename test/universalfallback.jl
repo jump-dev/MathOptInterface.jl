@@ -66,7 +66,7 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 
 # A few constraint types are supported to test both the fallback and the
 # delegation to the internal model
-@MOIU.model ModelForUniversalFallback () (EqualTo,) () () (SingleVariable,) (ScalarAffineFunction,) () ()
+@MOIU.model ModelForUniversalFallback () (LessThan,) () () (SingleVariable,) (ScalarAffineFunction,) () ()
 
 @testset "UniversalFallback" begin
     model = ModelForUniversalFallback{Float64}()
