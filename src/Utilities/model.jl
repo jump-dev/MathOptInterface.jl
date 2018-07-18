@@ -69,7 +69,10 @@ end
     removevariable(f::MOI.AbstractFunction, s::MOI.AbstractSet, vi::MOI.VariableIndex)
 
 Return a tuple `(g, t)` representing the constraint `f`-in-`s` with the
-variable of index `vi` removed.
+variable `vi` removed. That is, the terms containing the variable `vi` in the
+function `f` are removed and the dimension of the set `s` is updated if
+needed (e.g. when `f` is a `VectorOfVariables` with `vi` being one of the
+variables).
 """
 removevariable(f, s, vi::VI) = removevariable(f, vi), s
 function removevariable(f::MOI.VectorOfVariables, s, vi::VI)
@@ -143,17 +146,17 @@ MOI.canget(model::AbstractModel, ::MOI.Name) = true
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
 """
-    newname(model::MOI.ModelLike, IdxT::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+    newname(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
 
 Return a `Bool` indicating whether `name` is not already used by an index of
-type `IdxT`. If it is already used and the index using this name is not `idx`
+type `IndexType`. If it is already used and the index using this name is not `idx`
 then it throws an error.
 """
-function newname(model::MOI.ModelLike, IdxT::Type{<:MOI.Index}, idx::MOI.Index, name::String)
-    if !isempty(name) && MOI.canget(model, IdxT, name)
-        other_idx = MOI.get(model, IdxT, name)
+function newname(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+    if !isempty(name) && MOI.canget(model, IndexType, name)
+        other_idx = MOI.get(model, IndexType, name)
         if other_idx != idx
-            error("$(IdxT == VI ? :Variable : :Constraint) name $name is already used by $other_idx)")
+            error("$(IndexType == VI ? :Variable : :Constraint) name $name is already used by $other_idx)")
         end
         return false
     else
@@ -162,19 +165,19 @@ function newname(model::MOI.ModelLike, IdxT::Type{<:MOI.Index}, idx::MOI.Index, 
 end
 
 """
-    setname(idxnames::Dict{<:MOI.Index, String}, namesidx::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
+    setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
 
-Sets the name of the index `idx` to the name `name` in the maps `idxnames` and `namesidx`.
-If the name is already taken by an index different from `idx` then an error is thrown usin g `idxtype` to create a custom error message.
+Sets the name of the index `idx` to the name `name` in the maps `index_to_names` and `names_to_index`.
+If the name is already taken by an index different from `idx` then an error is thrown using `idxtype` to create a custom error message.
 If `name` is empty, and `idx` already has a name, it is removed.
 """
-function setname(idxnames::Dict{<:MOI.Index, String}, namesidx::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
-    if haskey(idxnames, idx)
-        delete!(namesidx, idxnames[idx])
+function setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
+    if haskey(index_to_names, idx)
+        delete!(names_to_index, index_to_names[idx])
     end
-    idxnames[idx] = name
+    index_to_names[idx] = name
     if !isempty(name)
-        namesidx[name] = idx
+        names_to_index[name] = idx
     end
     return
 end
@@ -336,14 +339,14 @@ needsallocateload(model::AbstractModel) = false
 allocatevariables!(model::AbstractModel, nvars) = MOI.addvariables!(model, nvars)
 allocate!(model::AbstractModel, attr...) = MOI.set!(model, attr...)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.canset(model, attr)
-canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IdxT::Type{<:MOI.Index}) = MOI.canset(model, attr, IdxT)
+canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.canset(model, attr, IndexType)
 allocateconstraint!(model::AbstractModel, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.addconstraint!(model, f, s)
 canallocateconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 
 function loadvariables!(::AbstractModel, nvars) end
 function load!(::AbstractModel, attr...) end
 canload(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.canset(model, attr)
-canload(model::AbstractModel, attr::MOI.AnyAttribute, IdxT::Type{<:MOI.Index}) = MOI.canset(model, attr, IdxT)
+canload(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.canset(model, attr, IndexType)
 function loadconstraint!(::AbstractModel, ::CI, ::MOI.AbstractFunction, ::MOI.AbstractSet) end
 canloadconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 
