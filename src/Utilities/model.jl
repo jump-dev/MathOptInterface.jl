@@ -268,7 +268,7 @@ function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraints)
     broadcastvcat(_getloc, model)
 end
 
-function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices)
+function (MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices{F, S})::Vector{CI{F, S}}) where {F, S}
     broadcastvcat(constrs -> _getlocr(constrs, loc), model)
 end
 
