@@ -10,7 +10,7 @@ function evalvariables end
 evalvariables(varval::Function, f::SVF) = varval(f.variable)
 evalvariables(varval::Function, f::VVF) = varval.(f.variables)
 function evalvariables(varval::Function, f::SAF)
-    if VERSION >= v"0.7"
+    if VERSION >= v"0.7-"
         return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
     else
         return mapreduce(t->evalterm(varval, t), +, f.constant, f.terms)
@@ -25,7 +25,7 @@ function evalvariables(varval::Function, f::VAF)
 end
 function evalvariables(varval::Function, f::SQF)
     init = zero(f.constant)
-    if VERSION >= v"0.7"
+    if VERSION >= v"0.7-"
         lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
         quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
     else
