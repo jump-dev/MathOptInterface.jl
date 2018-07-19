@@ -285,7 +285,7 @@
                 # test allocations inside a function scope to avoid
                 # issues with global variables
                 allocations_wrapper(f) = @allocated(MOI.Utilities.canonical!(f))
-                @test allocations_wrapper(f) <= 200
+                @test allocations_wrapper(f) == 0
             end
         end
         @testset "VectorAffineFunction" begin
@@ -299,7 +299,7 @@
                 # test allocations inside a function scope to avoid
                 # issues with global variables
                 allocations_wrapper(f) = @allocated(MOI.Utilities.canonical!(f))
-                @test allocations_wrapper(f) <= 200
+                @test allocations_wrapper(f) == 0
             end
         end
     end

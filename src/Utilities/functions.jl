@@ -207,18 +207,18 @@ function canonical!(f::MOI.VectorAffineFunction)
     f
 end
 
-function merge_duplicates!(x::AbstractVector, key, keep, reduction, alg = QuickSort)
+function merge_duplicates!(x::AbstractVector, by, keep, combine)
     if length(x) == 1
         if !keep(first(x))
             empty!(x)
         end
     elseif length(x) > 1
-        sort!(x, by = key, alg = alg)
+        sort!(x, QuickSort, Base.Order.ord(isless, by, false, Base.Sort.Forward))
         i1 = 1
         i2 = 2
         @inbounds while i2 <= length(x)
-            if key(x[i1]) == key(x[i2])
-                x[i1] = reduction(x[i1], x[i2])
+            if by(x[i1]) == by(x[i2])
+                x[i1] = combine(x[i1], x[i2])
                 i2 += 1
             else
                 if !keep(x[i1])
