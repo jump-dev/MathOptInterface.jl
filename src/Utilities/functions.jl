@@ -122,6 +122,36 @@ function Base.getindex(it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}}, 
 end
 
 """
+    iscanonical(f::AbstractFunction)
+
+Returns a Bool indicating whether the function is in canonical form.
+See [`canonical`](@ref).
+"""
+iscanonical(f::MOI.VectorAffineFunction) = iscanonical(f.terms,
+                                                       t -> (t.output_index, t.scalar_term.variable_index.value),
+                                                       t -> !iszero(t.scalar_term.coefficient))
+iscanonical(f::MOI.ScalarAffineFunction) = iscanonical(f.terms,
+                                                       t -> t.variable_index.value,
+                                                       t -> !iszero(t.coefficient))
+function iscanonical(x::AbstractVector, key, keep)
+    if isempty(x)
+        return true
+    end
+    @inbounds for i in 1:(length(x) - 1)
+        if key(x[i + 1]) <= key(x[i])
+            return false
+        end
+        if !keep(x[i])
+            return false
+        end
+    end
+    if !keep(x[end])
+        return false
+    end
+    return true
+end
+
+"""
     canonical(f::AbstractFunction)
 
 Returns the function in a canonical form, i.e.
@@ -135,44 +165,79 @@ If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-function canonical(f::SAF{T}) where T
-    sorted_terms = sort(f.terms, by = t -> t.variable_index.value)
-    terms = MOI.ScalarAffineTerm{T}[]
-    for t in sorted_terms
-        if !isempty(terms) && t.variable_index == last(terms).variable_index
-            terms[end] = MOI.ScalarAffineTerm(terms[end].coefficient + t.coefficient, t.variable_index)
-        elseif !iszero(t.coefficient)
-            if !isempty(terms) && iszero(last(terms).coefficient)
-                terms[end] = t
+function canonical(f::MOI.ScalarAffineFunction)
+    if iscanonical(f)
+        f
+    else
+        canonical!(MOI.ScalarAffineFunction(copy(f.terms), f.constant))
+    end
+end
+
+function canonical(f::MOI.VectorAffineFunction)
+    if iscanonical(f)
+        f
+    else
+        canonical!(MOI.VectorAffineFunction(copy(f.terms), f.constants))
+    end
+end
+
+
+"""
+    canonical!(f::AbstractFunction)
+
+Convert a function to canonical form in-place, without allocating a copy to hold the result.
+See [`canonical`](@ref).
+"""
+function canonical!(f::MOI.ScalarAffineFunction)
+    merge_duplicates!(f.terms,
+                      t -> t.variable_index.value,
+                      t -> !iszero(t.coefficient),
+                      (t1, t2) -> MOI.ScalarAffineTerm(t1.coefficient + t2.coefficient, t1.variable_index))
+    f
+end
+
+
+function canonical!(f::MOI.VectorAffineFunction)
+    merge_duplicates!(f.terms,
+                      t -> (t.output_index, t.scalar_term.variable_index.value),
+                      t -> !iszero(t.scalar_term.coefficient),
+                      (t1, t2) -> MOI.VectorAffineTerm(t1.output_index,
+                                                       MOI.ScalarAffineTerm(t1.scalar_term.coefficient + t2.scalar_term.coefficient,
+                                                                            t1.scalar_term.variable_index)))
+    f
+end
+
+function merge_duplicates!(x::AbstractVector, key, keep, reduction, alg = QuickSort)
+    if length(x) == 1
+        if !keep(first(x))
+            empty!(x)
+        end
+    elseif length(x) > 1
+        sort!(x, by = key, alg = alg)
+        i1 = 1
+        i2 = 2
+        @inbounds while i2 <= length(x)
+            if key(x[i1]) == key(x[i2])
+                x[i1] = reduction(x[i1], x[i2])
+                i2 += 1
             else
-                push!(terms, t)
+                if !keep(x[i1])
+                    x[i1] = x[i2]
+                else
+                    x[i1 + 1] = x[i2]
+                    i1 += 1
+                end
+                i2 += 1
             end
         end
-    end
-    if !isempty(terms) && iszero(last(terms).coefficient)
-        pop!(terms)
-    end
-    SAF{T}(terms, f.constant)
-end
-function canonical(f::VAF{T}) where T
-    sorted_terms = sort(f.terms, by = t -> (t.output_index, t.scalar_term.variable_index.value))
-    terms = MOI.VectorAffineTerm{T}[]
-    for t in sorted_terms
-        if !isempty(terms) && t.output_index == last(terms).output_index && t.scalar_term.variable_index == last(terms).scalar_term.variable_index
-            terms[end] = MOI.VectorAffineTerm(t.output_index, MOI.ScalarAffineTerm(terms[end].scalar_term.coefficient + t.scalar_term.coefficient, t.scalar_term.variable_index))
-        elseif !iszero(t.scalar_term.coefficient)
-            if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
-                terms[end] = t
-            else
-                push!(terms, t)
-            end
+        if !keep(x[i1])
+            i1 -= 1
         end
+        resize!(x, i1)
     end
-    if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
-        pop!(terms)
-    end
-    VAF{T}(terms, f.constants)
+    x
 end
+
 
 function test_variablenames_equal(model, variablenames)
     seen_name = Dict(name => false for name in variablenames)

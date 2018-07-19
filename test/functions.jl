@@ -204,4 +204,95 @@
             @test g.affine_terms == MOI.VectorAffineTerm.([1, 2, 1], MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]))
         end
     end
+    @testset "Conversion to canonical form" begin
+
+        # Previous implementations of `MOI.Utilities.canonical`, now kept as reference
+        # implementations to compare against
+        function _canonical_reference(f::MOI.ScalarAffineFunction{T}) where T
+            sorted_terms = sort(f.terms, by = t -> t.variable_index.value)
+            terms = MOI.ScalarAffineTerm{T}[]
+            for t in sorted_terms
+                if !isempty(terms) && t.variable_index == last(terms).variable_index
+                    terms[end] = MOI.ScalarAffineTerm(terms[end].coefficient + t.coefficient, t.variable_index)
+                elseif !iszero(t.coefficient)
+                    if !isempty(terms) && iszero(last(terms).coefficient)
+                        terms[end] = t
+                    else
+                        push!(terms, t)
+                    end
+                end
+            end
+            if !isempty(terms) && iszero(last(terms).coefficient)
+                pop!(terms)
+            end
+            MOI.ScalarAffineFunction{T}(terms, f.constant)
+        end
+        function _canonical_reference(f::MOI.VectorAffineFunction{T}) where T
+            sorted_terms = sort(f.terms, by = t -> (t.output_index, t.scalar_term.variable_index.value))
+            terms = MOI.VectorAffineTerm{T}[]
+            for t in sorted_terms
+                if !isempty(terms) && t.output_index == last(terms).output_index && t.scalar_term.variable_index == last(terms).scalar_term.variable_index
+                    terms[end] = MOI.VectorAffineTerm(t.output_index, MOI.ScalarAffineTerm(terms[end].scalar_term.coefficient + t.scalar_term.coefficient, t.scalar_term.variable_index))
+                elseif !iszero(t.scalar_term.coefficient)
+                    if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
+                        terms[end] = t
+                    else
+                        push!(terms, t)
+                    end
+                end
+            end
+            if !isempty(terms) && iszero(last(terms).scalar_term.coefficient)
+                pop!(terms)
+            end
+            MOI.VectorAffineFunction{T}(terms, f.constants)
+        end
+
+        function random_scalar_affine_function(n)
+            indices = MOI.VariableIndex.([rand(1:n) for i in 1:n])
+            coefficients = randn(n)
+            coefficients[rand(Float64, size(coefficients)) .<= 0.2] .= 0
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(coefficients, indices), randn())
+        end
+
+        function random_vector_affine_function(n)
+            indices = MOI.VariableIndex.([rand(1:n) for i in 1:n])
+            coefficients = randn(n)
+            coefficients[rand(Float64, size(coefficients)) .<= 0.2] .= 0
+            constants = randn(n)
+            constants[rand(Float64, size(constants)) .<= 0.2] .= 0
+            output_indices = [rand(1:n) for i in 1:n]
+            MOI.VectorAffineFunction(MOI.VectorAffineTerm.(output_indices, MOI.ScalarAffineTerm.(coefficients, indices)),
+                                     constants)
+        end
+
+        _var_idx(f::MOI.ScalarAffineTerm) = f.variable_index
+        _coeff(f::MOI.ScalarAffineTerm) = f.coefficient
+        _isapprox(f1::MOI.ScalarAffineFunction, f2::MOI.ScalarAffineFunction) = _var_idx.(f1.terms) == _var_idx.(f2.terms) && _coeff.(f1.terms) ≈ _coeff.(f2.terms) && f1.constant ≈ f2.constant
+        _var_idx(f::MOI.VectorAffineTerm) = f.scalar_term.variable_index
+        _coeff(f::MOI.VectorAffineTerm) = f.scalar_term.coefficient
+        _output_idx(f::MOI.VectorAffineTerm) = f.output_index
+        _isapprox(f1::MOI.VectorAffineFunction, f2::MOI.VectorAffineFunction) = _var_idx.(f1.terms) == _var_idx.(f2.terms) && _output_idx.(f1.terms) == _output_idx.(f2.terms) && _coeff.(f1.terms) ≈ _coeff.(f2.terms) && f1.constants ≈ f2.constants
+
+        srand(1)
+        @testset "ScalarAffineFunction" begin
+            for i in 1:1000
+                f = random_scalar_affine_function(rand(1:1000))
+                g = @inferred(MOI.Utilities.canonical(f))
+                @test _isapprox(g, _canonical_reference(f))
+                @test MOI.Utilities.iscanonical(g)
+                @test MOI.Utilities.canonical(g) === g
+                @test @allocated(MOI.Utilities.canonical!(f)) <= 200
+            end
+        end
+        @testset "VectorAffineFunction" begin
+            for i in 1:1000
+                f = random_vector_affine_function(rand(1:1000))
+                g = @inferred(MOI.Utilities.canonical(f))
+                @test _isapprox(g, _canonical_reference(f))
+                @test MOI.Utilities.iscanonical(g)
+                @test MOI.Utilities.canonical(g) === g
+                @test @allocated(MOI.Utilities.canonical!(f)) <= 200
+            end
+        end
+    end
 end
