@@ -6,6 +6,7 @@ const MOIB = MathOptInterface.Bridges
 
 using Compat
 using Compat.Test
+using Compat.Random
 
 # Tests for solvers are located in MOI.Test.
 

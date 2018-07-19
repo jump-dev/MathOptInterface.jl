@@ -281,7 +281,11 @@
                 @test _isapprox(g, _canonical_reference(f))
                 @test MOI.Utilities.iscanonical(g)
                 @test MOI.Utilities.canonical(g) === g
-                @test @allocated(MOI.Utilities.canonical!(f)) <= 200
+
+                # test allocations inside a function scope to avoid
+                # issues with global variables
+                allocations_wrapper(f) = @allocated(MOI.Utilities.canonical!(f))
+                @test allocations_wrapper(f) <= 200
             end
         end
         @testset "VectorAffineFunction" begin
@@ -291,7 +295,11 @@
                 @test _isapprox(g, _canonical_reference(f))
                 @test MOI.Utilities.iscanonical(g)
                 @test MOI.Utilities.canonical(g) === g
-                @test @allocated(MOI.Utilities.canonical!(f)) <= 200
+
+                # test allocations inside a function scope to avoid
+                # issues with global variables
+                allocations_wrapper(f) = @allocated(MOI.Utilities.canonical!(f))
+                @test allocations_wrapper(f) <= 200
             end
         end
     end
