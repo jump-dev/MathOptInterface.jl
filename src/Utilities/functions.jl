@@ -10,7 +10,7 @@ function evalvariables end
 evalvariables(varval::Function, f::SVF) = varval(f.variable)
 evalvariables(varval::Function, f::VVF) = varval.(f.variables)
 function evalvariables(varval::Function, f::SAF)
-    if VERSION >= v"0.7-"
+    @static if VERSION >= v"0.7-"
         return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
     else
         return mapreduce(t->evalterm(varval, t), +, f.constant, f.terms)
@@ -25,7 +25,7 @@ function evalvariables(varval::Function, f::VAF)
 end
 function evalvariables(varval::Function, f::SQF)
     init = zero(f.constant)
-    if VERSION >= v"0.7-"
+    @static if VERSION >= v"0.7-"
         lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
         quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
     else
@@ -45,27 +45,27 @@ function evalvariables(varval::Function, f::VQF)
     out
 end
 # Affine term
-function evalterm(varval::Function, t::SAT)
+function evalterm(varval::Function, t::MOI.ScalarAffineTerm)
     return t.coefficient * varval(t.variable_index)
 end
 # Quadratic term
-function evalterm(varval::Function, t::SQT)
+function evalterm(varval::Function, t::MOI.ScalarQuadraticTerm)
     tval = t.coefficient * varval(t.variable_index_1) * varval(t.variable_index_2)
     t.variable_index_1 == t.variable_index_2 ? tval/2 : tval
 end
 
-function mapvariable(varmap::Function, t::SAT)
-    return SAT(t.coefficient, varmap(t.variable_index))
+function mapvariable(varmap::Function, t::MOI.ScalarAffineTerm)
+    return MOI.ScalarAffineTerm(t.coefficient, varmap(t.variable_index))
 end
-function mapvariable(varmap::Function, t::VAT)
-    return VAT(t.output_index, mapvariable(varmap, t.scalar_term))
+function mapvariable(varmap::Function, t::MOI.VectorAffineTerm)
+    return MOI.VectorAffineTerm(t.output_index, mapvariable(varmap, t.scalar_term))
 end
-function mapvariable(varmap::Function, t::SQT)
+function mapvariable(varmap::Function, t::MOI.ScalarQuadraticTerm)
     inds = varmap.((t.variable_index_1, t.variable_index_2))
-    return SQT(t.coefficient, inds...)
+    return MOI.ScalarQuadraticTerm(t.coefficient, inds...)
 end
-function mapvariable(varmap::Function, t::VQT)
-    VQT(t.output_index, mapvariable(varmap, t.scalar_term))
+function mapvariable(varmap::Function, t::MOI.VectorQuadraticTerm)
+    MOI.VectorQuadraticTerm(t.output_index, mapvariable(varmap, t.scalar_term))
 end
 function mapvariables(varmap::Function, f::SVF)
     return SVF(varmap(f.variable))
@@ -82,12 +82,12 @@ function mapvariables(varmap::Function, f::Union{SQF, VQF})
     return typeof(f)(lin, quad, _constant(f))
 end
 mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f)
-mapvariables(varmap::Function, change::Union{SConstC, VConstC}) = change
-function mapvariables(varmap::Function, change::SCoeffC)
-    return SCoeffC(varmap(change.variable), change.new_coefficient)
+mapvariables(varmap::Function, change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange}) = change
+function mapvariables(varmap::Function, change::MOI.ScalarCoefficientChange)
+    return MOI.ScalarCoefficientChange(varmap(change.variable), change.new_coefficient)
 end
-function mapvariables(varmap::Function, change::MulC)
-    return MulC(varmap(change.variable), change.new_coefficients)
+function mapvariables(varmap::Function, change::MOI.MultirowChange)
+    return MOI.MultirowChange(varmap(change.variable), change.new_coefficients)
 end
 function mapvariables(varmap, f::MOI.AbstractFunctionModification)
     return mapvariables(vi -> varmap[vi], f)
@@ -98,8 +98,8 @@ _constant(f::Union{SAF, SQF}) = f.constant
 _constant(f::Union{VAF, VQF}) = f.constants
 constant(f::Union{SAF, SQF}) = [f.constant]
 constant(f::Union{VAF, VQF}) = f.constants
-offsetterm(t::SAT, offset::Int) = VAT(offset+1, t)
-offsetterm(t::VAT, offset::Int) = VAT(offset+t.output_index, t.scalar_term)
+offsetterm(t::MOI.ScalarAffineTerm, offset::Int) = MOI.VectorAffineTerm(offset+1, t)
+offsetterm(t::MOI.VectorAffineTerm, offset::Int) = MOI.VectorAffineTerm(offset+t.output_index, t.scalar_term)
 offsetterms(f::Union{SAF, VAF}, offset::Int) = offsetterm.(f.terms, offset)
 function moivcat(f::Union{SAF, VAF}...)
     n = length(f)
@@ -112,11 +112,11 @@ end
 
 # Define conversion SingleVariable -> ScalarAffineFunction and VectorOfVariable -> VectorAffineFunction{T}
 function SAF{T}(f::SVF) where T
-    SAF([SAT(one(T), f.variable)], zero(T))
+    SAF([MOI.ScalarAffineTerm(one(T), f.variable)], zero(T))
 end
 function VAF{T}(f::VVF) where T
     n = length(f.variables)
-    return VAF(map(i -> VAT(i, SAT(one(T), f.variables[i])), 1:n), zeros(T, n))
+    return VAF(map(i -> MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(one(T), f.variables[i])), 1:n), zeros(T, n))
 end
 
 # Implements iterator interface
@@ -141,7 +141,7 @@ function Base.getindex(it::ScalarFunctionIterator{VVF}, i::Integer)
     return SVF(it.f.variables[i])
 end
 # Returns the scalar terms of output_index i
-function scalar_terms_at_index(terms::Vector{<:Union{VAT, VQT}}, i::Int)
+function scalar_terms_at_index(terms::Vector{<:Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}}, i::Int)
     I = findall(t -> t.output_index == i, terms)
     map(i -> terms[i].scalar_term, I)
 end
@@ -155,51 +155,51 @@ function Base.getindex(it::ScalarFunctionIterator{<:VQF}, i::Integer)
 end
 
 function Base.getindex(it::ScalarFunctionIterator{VAF{T}}, I::AbstractVector) where T
-    terms = VAT{T}[]
+    terms = MOI.VectorAffineTerm{T}[]
     constant = Vector{T}(undef, length(I))
     for (i, j) in enumerate(I)
         g = it[j]
-        append!(terms, map(t -> VAT(i, t), g.terms))
+        append!(terms, map(t -> MOI.VectorAffineTerm(i, t), g.terms))
         constant[i] = g.constant
     end
     VAF(terms, constant)
 end
 
 """
-    termindices(t::Union{ScalarAffineTerm, VectorAffineTerm})
+    termindices(t::Union{MOI.ScalarAffineTerm, MOI.VectorAffineTerm})
 
-Returns the indices of the input term `t` as a tuple of `Int`s. For `t::ScalarAffineTerm`, this is a 1-tuple of the variable index. For `t::VectorAffineTerm`, this is a 2-tuple of the row/output and variable indices of the term.
+Returns the indices of the input term `t` as a tuple of `Int`s. For `t::MOI.ScalarAffineTerm`, this is a 1-tuple of the variable index. For `t::MOI.VectorAffineTerm`, this is a 2-tuple of the row/output and variable indices of the term.
 """
-termindices(t::SAT) = (t.variable_index.value,)
-termindices(t::VAT) = (t.output_index, termindices(t.scalar_term)...)
+termindices(t::MOI.ScalarAffineTerm) = (t.variable_index.value,)
+termindices(t::MOI.VectorAffineTerm) = (t.output_index, termindices(t.scalar_term)...)
 
 """
-    unsafe_add(t1::ScalarAffineTerm, t2::ScalarAffineTerm)
+    unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm)
 
-Sums the coefficients of `t1` and `t2` and returns an output `ScalarAffineTerm`. It is unsafe because it uses the `variable_index` of `t1` as the `variable_index` of the output without checking that it is equal to that of `t2`.
+Sums the coefficients of `t1` and `t2` and returns an output `MOI.ScalarAffineTerm`. It is unsafe because it uses the `variable_index` of `t1` as the `variable_index` of the output without checking that it is equal to that of `t2`.
 """
-function unsafe_add(t1::SAT, t2::SAT)
-    return SAT(t1.coefficient + t2.coefficient, t1.variable_index)
+function unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm)
+    return MOI.ScalarAffineTerm(t1.coefficient + t2.coefficient, t1.variable_index)
 end
 
 """
-    unsafe_add(t1::VectorAffineTerm, t2::VectorAffineTerm)
+    unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm)
 
-Sums the coefficients of `t1` and `t2` and returns an output `VectorAffineTerm`. It is unsafe because it uses the `output_index` and `variable_index` of `t1` as the `output_index` and `variable_index` of the output term without checking that they are equal to those of `t2`.
+Sums the coefficients of `t1` and `t2` and returns an output `MOI.VectorAffineTerm`. It is unsafe because it uses the `output_index` and `variable_index` of `t1` as the `output_index` and `variable_index` of the output term without checking that they are equal to those of `t2`.
 """
-function unsafe_add(t1::VAT, t2::VAT)
+function unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm)
     coefficient = t1.scalar_term.coefficient + t2.scalar_term.coefficient
-    scalar_term = SAT(coefficient, t1.scalar_term.variable_index)
-    return VAT(t1.output_index, scalar_term)
+    scalar_term = MOI.ScalarAffineTerm(coefficient, t1.scalar_term.variable_index)
+    return MOI.VectorAffineTerm(t1.output_index, scalar_term)
 end
 
 """
-    coefficient(t::Union{ScalarAffineTerm, VectorAffineTerm})
+    coefficient(t::Union{MOI.ScalarAffineTerm, MOI.VectorAffineTerm})
 
 Finds the coefficient associated with the term `t`.
 """
-coefficient(t::SAT) = t.coefficient
-coefficient(t::VAT) = t.scalar_term.coefficient
+coefficient(t::MOI.ScalarAffineTerm) = t.coefficient
+coefficient(t::MOI.VectorAffineTerm) = t.scalar_term.coefficient
 
 """
     canonical(f::AbstractFunction)
@@ -324,9 +324,9 @@ end
 
 
 _hasvar(v::VI, vi::VI) = v == vi
-_hasvar(t::SAT, vi::VI) = t.variable_index == vi
-_hasvar(t::SQT, vi::VI) = t.variable_index_1 == vi || t.variable_index_2 == vi
-_hasvar(t::Union{VAT, VQT}, vi::VI) = _hasvar(t.scalar_term, vi)
+_hasvar(t::MOI.ScalarAffineTerm, vi::VI) = t.variable_index == vi
+_hasvar(t::MOI.ScalarQuadraticTerm, vi::VI) = t.variable_index_1 == vi || t.variable_index_2 == vi
+_hasvar(t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}, vi::VI) = _hasvar(t.scalar_term, vi)
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
 function _rmvar(vis_or_terms::Vector, vi::VI)
     return vis_or_terms[.!_hasvar.(vis_or_terms, Ref(vi))]
@@ -353,47 +353,47 @@ end
 
 Return a new function `f` modified according to `change`.
 """
-function modifyfunction(f::SAF, change::SConstC)
+function modifyfunction(f::SAF, change::MOI.ScalarConstantChange)
     return SAF(f.terms, change.new_constant)
 end
-function modifyfunction(f::VAF, change::VConstC)
+function modifyfunction(f::VAF, change::MOI.VectorConstantChange)
     return VAF(f.terms, change.new_constant)
 end
-function modifyfunction(f::SQF, change::SConstC)
+function modifyfunction(f::SQF, change::MOI.ScalarConstantChange)
     return SQF(f.affine_terms, f.quadratic_terms, change.new_constant)
 end
-function modifyfunction(f::VQF, change::VConstC)
+function modifyfunction(f::VQF, change::MOI.VectorConstantChange)
     return VQF(f.affine_terms, f.quadratic_terms, change.new_constant)
 end
-function _modifycoefficient(terms::Vector{<:SAT}, variable::VI, new_coefficient)
+function _modifycoefficient(terms::Vector{<:MOI.ScalarAffineTerm}, variable::VI, new_coefficient)
     terms = copy(terms)
     i = something(findfirst(t -> _hasvar(t, variable), terms), 0)
     if iszero(i)
         # The variable was not already in the function
         if !iszero(new_coefficient)
-            push!(terms, SAT(new_coefficient, variable))
+            push!(terms, MOI.ScalarAffineTerm(new_coefficient, variable))
         end
     else
         # The variable was already in the function
         if iszero(new_coefficient)
             deleteat!(terms, i)
         else
-            terms[i] = SAT(new_coefficient, variable)
+            terms[i] = MOI.ScalarAffineTerm(new_coefficient, variable)
         end
     end
     terms
 end
-function modifyfunction(f::SAF, change::SCoeffC)
+function modifyfunction(f::SAF, change::MOI.ScalarCoefficientChange)
     lin = _modifycoefficient(f.terms, change.variable, change.new_coefficient)
     return SAF(lin, f.constant)
 end
-function modifyfunction(f::SQF, change::SCoeffC)
+function modifyfunction(f::SQF, change::MOI.ScalarCoefficientChange)
     lin = _modifycoefficient(f.affine_terms, change.variable, change.new_coefficient)
     return SQF(lin, f.quadratic_terms, f.constant)
 end
-function _modifycoefficients(n, terms::Vector{<:VAT}, variable::VI, new_coefficients)
+function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable::VI, new_coefficients)
     terms = copy(terms)
-    # Maps between rows in the `VectorAffineTerm`s and indices in new_coefficients
+    # Maps between rows in the `MOI.VectorAffineTerm`s and indices in new_coefficients
     rowmap = Dict(c[1]=>i for (i,c) in enumerate(new_coefficients))
     del = Int[]
     for i in 1:length(terms)
@@ -404,7 +404,7 @@ function _modifycoefficients(n, terms::Vector{<:VAT}, variable::VI, new_coeffici
                 if iszero(new_coefficients[j][2])
                     push!(del, i)
                 else
-                    terms[i] = VAT(row, SAT(new_coefficients[j][2], variable))
+                    terms[i] = MOI.VectorAffineTerm(row, MOI.ScalarAffineTerm(new_coefficients[j][2], variable))
                 end
                 rowmap[row] = 0 # We only change the first term of a row
             end
@@ -413,18 +413,18 @@ function _modifycoefficients(n, terms::Vector{<:VAT}, variable::VI, new_coeffici
     deleteat!(terms, del)
     for (row, j) in rowmap
         if !iszero(j)
-            push!(terms, VAT(row, SAT(new_coefficients[j][2], variable)))
+            push!(terms, MOI.VectorAffineTerm(row, MOI.ScalarAffineTerm(new_coefficients[j][2], variable)))
         end
     end
     terms
 end
-function modifyfunction(f::VAF, change::MulC)
+function modifyfunction(f::VAF, change::MOI.MultirowChange)
     dim = MOI.output_dimension(f)
     coefficients = change.new_coefficients
     lin = _modifycoefficients(dim, f.terms, change.variable, coefficients)
     VAF(lin, f.constants)
 end
-function modifyfunction(f::VQF, change::MulC)
+function modifyfunction(f::VQF, change::MOI.MultirowChange)
     dim = MOI.output_dimension(f)
     coefficients = change.new_coefficients
     lin = _modifycoefficients(dim, f.affine_terms, change.variable, coefficients)
