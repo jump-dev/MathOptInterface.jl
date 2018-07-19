@@ -133,12 +133,12 @@ iscanonical(f::MOI.VectorAffineFunction) = iscanonical(f.terms,
 iscanonical(f::MOI.ScalarAffineFunction) = iscanonical(f.terms,
                                                        t -> t.variable_index.value,
                                                        t -> !iszero(t.coefficient))
-function iscanonical(x::AbstractVector, key, keep)
+function iscanonical(x::AbstractVector, by, keep)
     if isempty(x)
         return true
     end
     @inbounds for i in 1:(length(x) - 1)
-        if key(x[i + 1]) <= key(x[i])
+        if by(x[i + 1]) <= by(x[i])
             return false
         end
         if !keep(x[i])
