@@ -1,6 +1,6 @@
 module Utilities
 
-using Compat # For lastindex and Nothing
+using Compat # For firstindex, lastindex and Nothing
 
 using MathOptInterface
 const MOI = MathOptInterface
@@ -15,7 +15,7 @@ const SQF{T} = MOI.ScalarQuadraticFunction{T}
 const VQF{T} = MOI.VectorQuadraticFunction{T}
 
 const VI = MOI.VariableIndex
-const CI = MOI.ConstraintIndex
+const CI{F,S} = MOI.ConstraintIndex{F,S}
 
 include("functions.jl")
 include("sets.jl")

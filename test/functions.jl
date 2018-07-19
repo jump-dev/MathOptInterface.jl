@@ -284,7 +284,7 @@
 
                 # test allocations inside a function scope to avoid
                 # issues with global variables
-                allocations_wrapper(f) = @allocated(MOI.Utilities.canonical!(f))
+                allocations_wrapper(f) = @allocated(MOI.Utilities.canonicalize!(f))
                 @test allocations_wrapper(f) == 0
             end
         end
@@ -298,7 +298,7 @@
 
                 # test allocations inside a function scope to avoid
                 # issues with global variables
-                allocations_wrapper(f) = @allocated(MOI.Utilities.canonical!(f))
+                allocations_wrapper(f) = @allocated(MOI.Utilities.canonicalize!(f))
                 @test allocations_wrapper(f) == 0
             end
         end
