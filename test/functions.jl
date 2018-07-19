@@ -222,6 +222,11 @@
             @test @allocated(MOIU.canonicalize!(f)) == 0
         end
         @testset "ScalarAffine" begin
+            @test MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[])), 1.0))
+            @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1])), 1.0))
+            @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], MOI.VariableIndex.([2, 1])), 2.0))
+            @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.0], MOI.VariableIndex.([1, 2])), 2.0))
+
             test_canonicalization(
                 MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex[]), 1.5),
                 MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex[]), 1.5),
@@ -282,6 +287,13 @@
             end
         end
         @testset "VectorAffine" begin
+            @test MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([0.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, -1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
+
             test_canonicalization(
                 MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]),
                 MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[])
