@@ -10,7 +10,11 @@ function evalvariables end
 evalvariables(varval::Function, f::SVF) = varval(f.variable)
 evalvariables(varval::Function, f::VVF) = varval.(f.variables)
 function evalvariables(varval::Function, f::SAF)
-    return mapreduce(t->evalterm(varval, t), +, f.constant, f.terms)
+    if VERSION >= v"0.7"
+        return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
+    else
+        return mapreduce(t->evalterm(varval, t), +, f.constant, f.terms)
+    end
 end
 function evalvariables(varval::Function, f::VAF)
     out = copy(f.constants)
@@ -20,8 +24,14 @@ function evalvariables(varval::Function, f::VAF)
     out
 end
 function evalvariables(varval::Function, f::SQF)
-    lin = mapreduce(t->evalterm(varval, t), +, zero(f.constant), f.affine_terms)
-    quad = mapreduce(t->evalterm(varval, t), +, zero(f.constant), f.quadratic_terms)
+    init = zero(f.constant)
+    if VERSION >= v"0.7"
+        lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
+        quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
+    else
+        lin = mapreduce(t->evalterm(varval, t), +, init, f.affine_terms)
+        quad = mapreduce(t->evalterm(varval, t), +, init, f.quadratic_terms)
+    end
     return lin + quad + f.constant
 end
 function evalvariables(varval::Function, f::VQF)
@@ -334,7 +344,7 @@ function removevariable(f::Union{SAF, VAF}, vi)
     typeof(f)(_rmvar(f.terms, vi), _constant(f))
 end
 function removevariable(f::Union{SQF, VQF}, vi)
-    terms = _rmvar.((f.affine_terms, f.quadratic_terms), vi)
+    terms = _rmvar.((f.affine_terms, f.quadratic_terms), Ref(vi))
     typeof(f)(terms..., _constant(f))
 end
 
