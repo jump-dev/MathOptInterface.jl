@@ -202,12 +202,20 @@ coefficient(t::MOI.ScalarAffineTerm) = t.coefficient
 coefficient(t::MOI.VectorAffineTerm) = t.scalar_term.coefficient
 
 """
+    copy(f::Union{ScalarAffineFunction, VectorAffineFunction})
+
+Return a new affine function with a shallow copy of the terms vector and constant(s)
+from `f`.
+"""
+Base.copy(f::F) where {F <: Union{SAF, VAF}} = F(copy(f.terms), copy(_constant(f)))
+
+"""
     iscanonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function iscanonical(f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction})
+function iscanonical(f::Union{SAF, VAF})
     iscanonical(f.terms, termindices, t -> !iszero(coefficient(t)))
 end
 function iscanonical(x::AbstractVector, by, keep)
@@ -242,21 +250,7 @@ If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-function canonical(f::MOI.ScalarAffineFunction)
-    if iscanonical(f)
-        f
-    else
-        canonicalize!(MOI.ScalarAffineFunction(copy(f.terms), f.constant))
-    end
-end
-
-function canonical(f::MOI.VectorAffineFunction)
-    if iscanonical(f)
-        f
-    else
-        canonicalize!(MOI.VectorAffineFunction(copy(f.terms), f.constants))
-    end
-end
+canonical(f::Union{SAF, VAF}) = canonicalize!(copy(f))
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
@@ -264,7 +258,7 @@ end
 Convert a function to canonical form in-place, without allocating a copy to hold the result.
 See [`canonical`](@ref).
 """
-function canonicalize!(f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction})
+function canonicalize!(f::Union{SAF, VAF})
     sort_and_compress!(f.terms, termindices, t -> !iszero(coefficient(t)), unsafe_add)
     f
 end
@@ -278,7 +272,7 @@ and remove any entries for which `keep(x[i]) == false`. This may result in `x` b
 a shorter length.
 """
 function sort_and_compress!(x::AbstractVector, by, keep, combine)
-    if length(x) > 1
+    if length(x) > 0
         sort!(x, QuickSort, Base.Order.ord(isless, by, false, Base.Sort.Forward))
         i1 = firstindex(x)
         for i2 in eachindex(x)[2:end]

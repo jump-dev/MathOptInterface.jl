@@ -280,7 +280,7 @@
                 g = @inferred(MOI.Utilities.canonical(f))
                 @test _isapprox(g, _canonical_reference(f))
                 @test MOI.Utilities.iscanonical(g)
-                @test MOI.Utilities.canonical(g) === g
+                @test MOI.Utilities.canonical(g) !== g
 
                 # test allocations inside a function scope to avoid
                 # issues with global variables
@@ -294,7 +294,7 @@
                 g = @inferred(MOI.Utilities.canonical(f))
                 @test _isapprox(g, _canonical_reference(f))
                 @test MOI.Utilities.iscanonical(g)
-                @test MOI.Utilities.canonical(g) === g
+                @test MOI.Utilities.canonical(g) !== g
 
                 # test allocations inside a function scope to avoid
                 # issues with global variables
