@@ -89,7 +89,7 @@ function _removevar!(constrs::Vector, vi::VI)
         ci, f, s = constrs[i]
         constrs[i] = (ci, removevariable(f, s, vi)...)
     end
-    []
+    return []
 end
 function _removevar!(constrs::Vector{<:C{MOI.SingleVariable}}, vi::VI)
     # If a variable is removed, the SingleVariable constraints using this variable
@@ -146,13 +146,14 @@ MOI.canget(model::AbstractModel, ::MOI.Name) = true
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
 """
-    newname(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+    check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
 
-Return a `Bool` indicating whether `name` is not already used by an index of
-type `IndexType`. If it is already used and the index using this name is not `idx`
-then it throws an error.
+Return a `Bool` indicating whether `name` is available to be used by an
+index of type `IndexType` (i.e., it is not already used). type `IndexType`.
+If it is already used and the index using this name is not `idx` then it throws
+an error.
 """
-function newname(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+function check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
     if !isempty(name) && MOI.canget(model, IndexType, name)
         other_idx = MOI.get(model, IndexType, name)
         if other_idx != idx
@@ -168,7 +169,6 @@ end
     setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
 
 Sets the name of the index `idx` to the name `name` in the maps `index_to_names` and `names_to_index`.
-If the name is already taken by an index different from `idx` then an error is thrown using `idxtype` to create a custom error message.
 If `name` is empty, and `idx` already has a name, it is removed.
 """
 function setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
@@ -184,7 +184,7 @@ end
 
 MOI.canset(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
-    if newname(model, VI, vi, name)
+    if check_can_assign_name(model, VI, vi, name)
         setname(model.varnames, model.namesvar, vi, name)
     end
 end
@@ -201,7 +201,7 @@ end
 
 MOI.canset(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
-    if newname(model, CI, ci, name)
+    if check_can_assign_name(model, CI, ci, name)
         setname(model.connames, model.namescon, ci, name)
     end
 end

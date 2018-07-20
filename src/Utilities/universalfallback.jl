@@ -7,7 +7,7 @@ This allows to have a specialized implementation in `model` for performance
 critical constraints and attributes while still supporting other attributes
 with a small performance penalty. Note that `model` is unaware of constraints
 and attributes stored by `UniversalFallback` so this is not appropriate if
-`model` is an optimizer (for this reason, `optimize!` have not been
+`model` is an optimizer (for this reason, `optimize!` has not been
 implemented). In that case, optimizer bridges should be used instead.
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
@@ -129,9 +129,9 @@ end
 
 function MOI.get(uf::UniversalFallback, attr::MOI.NumberOfConstraints{F, S}) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.get(uf.model, attr)
+        return MOI.get(uf.model, attr)
     else
-        length(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}()))
+        return length(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}()))
     end
 end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
@@ -197,7 +197,7 @@ function MOI.canset(uf::UniversalFallback, attr::MOI.ConstraintName, ::Type{CI{F
     end
 end
 function MOI.set!(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}
-    if newname(uf, CI, ci, name)
+    if check_can_assign_name(uf, CI, ci, name)
         if MOI.supportsconstraint(uf.model, F, S)
             MOI.set!(uf.model, attr, ci, name)
         else
@@ -241,9 +241,9 @@ function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F
 end
 function MOI.get(uf::UniversalFallback, ::Type{CI}, name::String)
     if MOI.canget(uf.model, CI, name)
-        MOI.get(uf.model, CI, name)
+        return MOI.get(uf.model, CI, name)
     else
-        uf.namescon[name]
+        return uf.namescon[name]
     end
 end
 
@@ -289,16 +289,16 @@ end
 MOI.supportsconstraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = true
 function MOI.canaddconstraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.canaddconstraint(uf.model, F, S)
+        return MOI.canaddconstraint(uf.model, F, S)
     else
-        true
+        return true
     end
 end
 function MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.AbstractSet)
     F = typeof(f)
     S = typeof(s)
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.addconstraint!(uf.model, f, s)
+        return MOI.addconstraint!(uf.model, f, s)
     else
         constraints = get!(uf.constraints, (F, S)) do
             Dict{CI{F, S}, Tuple{F, S}}()
@@ -306,7 +306,7 @@ function MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::M
         uf.nextconstraintid += 1
         ci = CI{F, S}(uf.nextconstraintid)
         constraints[ci] = (f, s)
-        ci
+        return ci
     end
 end
 function MOI.canmodify(uf::UniversalFallback, ::Type{CI{F, S}}, change) where {F, S}
