@@ -156,7 +156,6 @@
             @test f.terms == MOI.ScalarAffineTerm.([2, 3], [x, y])
             f = MOIU.modifyfunction(f, MOI.ScalarCoefficientChange(x, 0))
             @test f.terms == MOI.ScalarAffineTerm.([3], [y])
-
         end
         @testset "Quadratic" begin
             f = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]), MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7)
@@ -206,19 +205,19 @@
         end
     end
     @testset "Conversion to canonical form" begin
-        function _isapprox(f1::T, f2::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
+        function isapprox_ordered(f1::T, f2::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
             ((MOIU.termindices.(f1.terms) == MOIU.termindices.(f2.terms)) &&
              (MOIU._constant(f1) ≈ MOIU._constant(f2)) &&
              (MOIU.coefficient.(f1.terms) ≈ MOIU.coefficient.(f2.terms)))
         end
         function test_canonicalization(f::T, expected::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
-            @test MOI.Utilities.iscanonical(expected)
+            @test MOIU.iscanonical(expected)
             g = @inferred(MOIU.canonical(f))
-            @test _isapprox(g, expected)
-            @test MOI.Utilities.iscanonical(g)
-            @test MOI.Utilities.iscanonical(expected)
-            @test _isapprox(MOI.Utilities.canonical(g), g)
-            @test MOI.Utilities.canonical(g) !== g
+            @test isapprox_ordered(g, expected)
+            @test MOIU.iscanonical(g)
+            @test MOIU.iscanonical(expected)
+            @test isapprox_ordered(MOIU.canonical(g), g)
+            @test MOIU.canonical(g) !== g
             @test @allocated(MOIU.canonicalize!(f)) == 0
         end
         @testset "ScalarAffine" begin
@@ -275,16 +274,6 @@
                 MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -0.5, 0.5, -0.5], MOI.VariableIndex.([7, 7, 2, 7])), 5.0),
                 MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.5], MOI.VariableIndex.([2])), 5.0),
                 )
-            function random_scalar_affine_function(n)
-                indices = MOI.VariableIndex.([rand(1:n) for i in 1:n])
-                coefficients = randn(n)
-                coefficients[rand(Float64, size(coefficients)) .<= 0.2] .= 0
-                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(coefficients, indices), randn())
-            end
-            srand(1)
-            for i in 1:1000
-                @test MOIU.iscanonical(MOIU.canonical(random_scalar_affine_function(rand(1:100))))
-            end
         end
         @testset "VectorAffine" begin
             @test MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]))
@@ -334,20 +323,6 @@
                 MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 3, 3, 3], MOI.ScalarAffineTerm.([1.0, 3.0, -1.0, -2.0], MOI.VariableIndex.([1, 1, 1, 1]))), [4.0, 5.0, 6.0]),
                 MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2], MOI.ScalarAffineTerm.([1.0], MOI.VariableIndex.([1]))), [4.0, 5.0, 6.0]),
                 )
-            srand(2)
-            function random_vector_affine_function(n)
-                indices = MOI.VariableIndex.([rand(1:n) for i in 1:n])
-                coefficients = randn(n)
-                coefficients[rand(Float64, size(coefficients)) .<= 0.2] .= 0
-                constants = randn(n)
-                constants[rand(Float64, size(constants)) .<= 0.2] .= 0
-                output_indices = [rand(1:n) for i in 1:n]
-                MOI.VectorAffineFunction(MOI.VectorAffineTerm.(output_indices, MOI.ScalarAffineTerm.(coefficients, indices)),
-                                         constants)
-            end
-            for i in 1:1000
-                @test MOIU.iscanonical(MOIU.canonical(random_vector_affine_function(rand(1:100))))
-            end
         end
     end
 end

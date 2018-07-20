@@ -216,20 +216,27 @@ Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
 function iscanonical(f::Union{SAF, VAF})
-    iscanonical(f.terms, termindices, t -> !iszero(coefficient(t)))
+    is_strictly_sorted(f.terms, termindices, t -> !iszero(coefficient(t)))
 end
-function iscanonical(x::AbstractVector, by, keep)
+
+"""
+    is_strictly_sorted(x::AbstractVector, by, filter)
+
+Returns `true` if `by(x[i]) < by(x[i + 1]` and `filter(x[i]) == true` for
+all indices i.
+"""
+function is_strictly_sorted(x::AbstractVector, by, filter)
     if isempty(x)
         return true
     end
-    if !keep(first(x))
+    if !filter(first(x))
         return false
     end
     for i in eachindex(x)[2:end]
         if by(x[i]) <= by(x[i - 1])
             return false
         end
-        if !keep(x[i])
+        if !filter(x[i])
             return false
         end
     end
