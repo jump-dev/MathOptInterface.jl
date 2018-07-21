@@ -201,13 +201,6 @@ Finds the coefficient associated with the term `t`.
 coefficient(t::MOI.ScalarAffineTerm) = t.coefficient
 coefficient(t::MOI.VectorAffineTerm) = t.scalar_term.coefficient
 
-"""
-    copy(f::Union{ScalarAffineFunction, VectorAffineFunction})
-
-Return a new affine function with a shallow copy of the terms and constant(s)
-from `f`.
-"""
-Base.copy(f::F) where {F <: Union{SAF, VAF}} = F(copy(f.terms), copy(_constant(f)))
 
 """
     iscanonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
