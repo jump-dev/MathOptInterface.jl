@@ -260,6 +260,7 @@ See [`canonical`](@ref).
 """
 function canonicalize!(f::Union{SAF, VAF})
     sort_and_compress!(f.terms, termindices, t -> !iszero(coefficient(t)), unsafe_add)
+    return f
 end
 
 """
