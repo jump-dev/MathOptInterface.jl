@@ -222,7 +222,7 @@ end
 """
     is_strictly_sorted(x::AbstractVector, by, filter)
 
-Returns `true` if `by(x[i]) < by(x[i + 1]` and `filter(x[i]) == true` for
+Returns `true` if `by(x[i]) < by(x[i + 1])` and `filter(x[i]) == true` for
 all indices i.
 """
 function is_strictly_sorted(x::AbstractVector, by, filter)
