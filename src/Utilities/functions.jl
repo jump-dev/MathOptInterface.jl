@@ -201,8 +201,43 @@ Finds the coefficient associated with the term `t`.
 coefficient(t::MOI.ScalarAffineTerm) = t.coefficient
 coefficient(t::MOI.VectorAffineTerm) = t.scalar_term.coefficient
 
+
 """
-    canonical(f::AbstractFunction)
+    iscanonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
+
+Returns a Bool indicating whether the function is in canonical form.
+See [`canonical`](@ref).
+"""
+function iscanonical(f::Union{SAF, VAF})
+    is_strictly_sorted(f.terms, termindices, t -> !iszero(coefficient(t)))
+end
+
+"""
+    is_strictly_sorted(x::AbstractVector, by, filter)
+
+Returns `true` if `by(x[i]) < by(x[i + 1])` and `filter(x[i]) == true` for
+all indices i.
+"""
+function is_strictly_sorted(x::AbstractVector, by, filter)
+    if isempty(x)
+        return true
+    end
+    if !filter(first(x))
+        return false
+    end
+    for i in eachindex(x)[2:end]
+        if by(x[i]) <= by(x[i - 1])
+            return false
+        end
+        if !filter(x[i])
+            return false
+        end
+    end
+    return true
+end
+
+"""
+    canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
 Returns the function in a canonical form, i.e.
 * A term appear only once.
@@ -215,26 +250,51 @@ If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-function canonical(f::Union{SAF, VAF})
-    sorted_terms = sort(f.terms, by = termindices)
-    terms = eltype(f.terms)[]
-    for t in sorted_terms
-        tnot0 = !iszero(coefficient(t))
-        if !isempty(terms) && termindices(t) == termindices(last(terms)) && tnot0
-            terms[end] = unsafe_add(t, last(terms))
-        elseif tnot0
-            if !isempty(terms) && iszero(coefficient(last(terms)))
-                terms[end] = t
+canonical(f::Union{SAF, VAF}) = canonicalize!(copy(f))
+
+"""
+    canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
+
+Convert a function to canonical form in-place, without allocating a copy to hold the result.
+See [`canonical`](@ref).
+"""
+function canonicalize!(f::Union{SAF, VAF})
+    sort_and_compress!(f.terms, termindices, t -> !iszero(coefficient(t)), unsafe_add)
+    return f
+end
+
+"""
+    sort_and_compress!(x::AbstractVector, by::Function, keep::Function, combine::Function)
+
+Sort the vector `x` in-place using `by` as the function from elements to comparable keys, then
+combine all entries for which `by(x[i]) == by(x[j])` using the function `x[i] = combine(x[i], x[j])`,
+and remove any entries for which `keep(x[i]) == false`. This may result in `x` being resized to
+a shorter length.
+"""
+function sort_and_compress!(x::AbstractVector, by, keep, combine)
+    if length(x) > 0
+        sort!(x, QuickSort, Base.Order.ord(isless, by, false, Base.Sort.Forward))
+        i1 = firstindex(x)
+        for i2 in eachindex(x)[2:end]
+            if by(x[i1]) == by(x[i2])
+                x[i1] = combine(x[i1], x[i2])
             else
-                push!(terms, t)
+                if !keep(x[i1])
+                    x[i1] = x[i2]
+                else
+                    x[i1 + 1] = x[i2]
+                    i1 += 1
+                end
             end
         end
+        if !keep(x[i1])
+            i1 -= 1
+        end
+        resize!(x, i1)
     end
-    if !isempty(terms) && iszero(coefficient(last(terms)))
-        pop!(terms)
-    end
-    typeof(f)(terms, _constant(f))
+    return x
 end
+
 
 function test_variablenames_equal(model, variablenames)
     seen_name = Dict(name => false for name in variablenames)
@@ -307,7 +367,7 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
     attrs1 = MOI.get(model1, MOI.ListOfModelAttributesSet())
     attrs2 = MOI.get(model2, MOI.ListOfModelAttributesSet())
     attr_list = attrs1 ∪ attrs2
-    for attr in attr_list 
+    for attr in attr_list
         @test MOI.canget(model1, attr)
         value1 = MOI.get(model1, attr)
         @test MOI.canget(model2, attr)

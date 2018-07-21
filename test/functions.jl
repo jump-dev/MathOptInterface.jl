@@ -204,4 +204,125 @@
             @test g.affine_terms == MOI.VectorAffineTerm.([1, 2, 1], MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]))
         end
     end
+    @testset "Conversion to canonical form" begin
+        function isapprox_ordered(f1::T, f2::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
+            ((MOIU.termindices.(f1.terms) == MOIU.termindices.(f2.terms)) &&
+             (MOIU._constant(f1) ≈ MOIU._constant(f2)) &&
+             (MOIU.coefficient.(f1.terms) ≈ MOIU.coefficient.(f2.terms)))
+        end
+        function test_canonicalization(f::T, expected::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
+            @test MOIU.iscanonical(expected)
+            g = @inferred(MOIU.canonical(f))
+            @test isapprox_ordered(g, expected)
+            @test MOIU.iscanonical(g)
+            @test MOIU.iscanonical(expected)
+            @test isapprox_ordered(MOIU.canonical(g), g)
+            @test MOIU.canonical(g) !== g
+            @test @allocated(MOIU.canonicalize!(f)) == 0
+        end
+        @testset "ScalarAffine" begin
+            @test MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[])), 1.0))
+            @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1])), 1.0))
+            @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], MOI.VariableIndex.([2, 1])), 2.0))
+            @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.0], MOI.VariableIndex.([1, 2])), 2.0))
+
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex[]), 1.5),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex[]), 1.5),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], [MOI.VariableIndex(1)]), -2.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex[]), -2.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], [MOI.VariableIndex(2)]), -2.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex[]), -2.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0], [MOI.VariableIndex(2)]),  1.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0], [MOI.VariableIndex(2)]),  1.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0, 4.0], MOI.VariableIndex.([2, 1])), 0.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([4.0, 3.0], MOI.VariableIndex.([1, 2])), 0.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.1], MOI.VariableIndex.([1, 1])), 5.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.1], MOI.VariableIndex.([1])), 5.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.5, 2.0], MOI.VariableIndex.([1, 3, 1])), 5.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0, 0.5], MOI.VariableIndex.([1, 3])), 5.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.5, 2.0], MOI.VariableIndex.([1, 3, 1])), 5.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0, 0.5], MOI.VariableIndex.([1, 3])), 5.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0, 3.0, 4.0, 5.0], MOI.VariableIndex.([1, 3, 1, 3, 2])), 5.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([4.0, 5.0, 6.0], MOI.VariableIndex.([1, 2, 3])), 5.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.VariableIndex.([7, 7])), 5.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[])), 5.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0, 0.5], MOI.VariableIndex.([7, 7, 2])), 5.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.5], MOI.VariableIndex.([2])), 5.0),
+                )
+            test_canonicalization(
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -0.5, 0.5, -0.5], MOI.VariableIndex.([7, 7, 2, 7])), 5.0),
+                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.5], MOI.VariableIndex.([2])), 5.0),
+                )
+        end
+        @testset "VectorAffine" begin
+            @test MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([0.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, -1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
+            @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
+
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[])
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3], MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([5]))), [1.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), [1.0])
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 2], MOI.ScalarAffineTerm.([1.0, 2.0], MOI.VariableIndex.([5, 6]))), [1.0, 2.0, 3.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 3], MOI.ScalarAffineTerm.([2.0, 1.0], MOI.VariableIndex.([6, 5]))), [1.0, 2.0, 3.0])
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 3], MOI.ScalarAffineTerm.([1.0, 2.0], MOI.VariableIndex.([6, 5]))), [1.0, 2.0, 3.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 3], MOI.ScalarAffineTerm.([2.0, 1.0], MOI.VariableIndex.([5, 6]))), [1.0, 2.0, 3.0])
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 3], MOI.ScalarAffineTerm.([1.0, 2.0], MOI.VariableIndex.([1, 1]))), [1.0, 2.0, 3.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3], MOI.ScalarAffineTerm.([3.0], MOI.VariableIndex.([1]))), [1.0, 2.0, 3.0])
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 1], MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], MOI.VariableIndex.([1, 2, 1]))), [4.0, 5.0, 6.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([4.0, 2.0], MOI.VariableIndex.([1, 2]))), [4.0, 5.0, 6.0]),
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 1], MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], MOI.VariableIndex.([2, 1, 1]))), [4.0, 5.0, 6.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([5.0, 1.0], MOI.VariableIndex.([1, 2]))), [4.0, 5.0, 6.0]),
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 3, 3], MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], MOI.VariableIndex.([1, 1, 1]))), [4.0, 5.0, 6.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 3], MOI.ScalarAffineTerm.([1.0, 5.0], MOI.VariableIndex.([1, 1]))), [4.0, 5.0, 6.0]),
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 3, 3], MOI.ScalarAffineTerm.([1.0, -3.0, 3.0], MOI.VariableIndex.([1, 1, 1]))), [4.0, 5.0, 6.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2], MOI.ScalarAffineTerm.([1.0], MOI.VariableIndex.([1]))), [4.0, 5.0, 6.0]),
+                )
+            test_canonicalization(
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 3, 3, 3], MOI.ScalarAffineTerm.([1.0, 3.0, -1.0, -2.0], MOI.VariableIndex.([1, 1, 1, 1]))), [4.0, 5.0, 6.0]),
+                MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2], MOI.ScalarAffineTerm.([1.0], MOI.VariableIndex.([1]))), [4.0, 5.0, 6.0]),
+                )
+        end
+    end
 end

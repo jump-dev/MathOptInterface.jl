@@ -1,6 +1,6 @@
 module Utilities
 
-using Compat # For lastindex and Nothing
+using Compat # For firstindex, lastindex and Nothing
 
 using MathOptInterface
 const MOI = MathOptInterface
