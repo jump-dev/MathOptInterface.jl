@@ -267,7 +267,6 @@ See [`canonical`](@ref).
 """
 function canonicalize!(f::Union{SAF, VAF})
     sort_and_compress!(f.terms, termindices, t -> !iszero(coefficient(t)), unsafe_add)
-    f
 end
 
 """
@@ -299,7 +298,7 @@ function sort_and_compress!(x::AbstractVector, by, keep, combine)
         end
         resize!(x, i1)
     end
-    x
+    return x
 end
 
 
