@@ -318,4 +318,4 @@ end
 Return a new affine function with a shallow copy of the terms and constant(s)
 from `func`.
 """
-Base.copy(func::F) where {F <: Union{SAF, VAF}} = F(copy(func.terms), copy(_constant(func)))
+Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(_constant(func)))
