@@ -76,7 +76,7 @@ function LogDetBridge{T}(model, f::MOI.VectorOfVariables, s::MOI.LogDetConeTrian
     LogDetBridge{T}(model, MOI.VectorAffineFunction{T}(f), s)
 end
 function LogDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.LogDetConeTriangle) where T
-    d = s.dimension
+    d = s.side_dimension
     t, D, Δ, sdindex = extract_eigenvalues(model, f, d)
     l = MOI.addvariables!(model, d)
     lcindex = sublog.(Ref(model), l, D, T)
@@ -171,7 +171,7 @@ function RootDetBridge{T}(model, f::MOI.VectorOfVariables, s::MOI.RootDetConeTri
     RootDetBridge{T}(model, MOI.VectorAffineFunction{T}(f), s)
 end
 function RootDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RootDetConeTriangle) where T
-    d = s.dimension
+    d = s.side_dimension
     t, D, Δ, sdindex = extract_eigenvalues(model, f, d)
     DF = MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(D))
     gmindex = MOI.addconstraint!(model, MOIU.moivcat(t, DF), MOI.GeometricMeanCone(d+1))

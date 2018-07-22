@@ -272,10 +272,10 @@ The reason is that ``2y_2`` is the scalar product between ``y`` and the symmetri
 [1] Boyd, S. and Vandenberghe, L.. *Convex optimization*. Cambridge university press, 2004.
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractVectorSet
-    dimension::Int
+    side_dimension::Int
 end
 
-dimension(s::PositiveSemidefiniteConeTriangle) = div(s.dimension * (s.dimension + 1), 2)
+dimension(s::PositiveSemidefiniteConeTriangle) = div(s.side_dimension * (s.side_dimension + 1), 2)
 
 """
     PositiveSemidefiniteConeSquare(dimension)
@@ -299,10 +299,10 @@ to belong to the `PositiveSemidefiniteConeSquare(2)`.
 It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `PositiveSemidefiniteConeTriangle(2)`.
 """
 struct PositiveSemidefiniteConeSquare <: AbstractVectorSet
-    dimension::Int
+    side_dimension::Int
 end
 
-dimension(s::PositiveSemidefiniteConeSquare) = s.dimension^2
+dimension(s::PositiveSemidefiniteConeSquare) = s.side_dimension^2
 
 """
     LogDetConeTriangle(dimension)
@@ -311,7 +311,7 @@ The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \
 The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct LogDetConeTriangle <: AbstractVectorSet
-    dimension::Int
+    side_dimension::Int
 end
 
 """
@@ -322,7 +322,7 @@ Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures 
 The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct LogDetConeSquare <: AbstractVectorSet
-    dimension::Int
+    side_dimension::Int
 end
 
 """
@@ -332,7 +332,7 @@ The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le 
 The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeTriangle <: AbstractVectorSet
-    dimension::Int
+    side_dimension::Int
 end
 
 """
@@ -343,11 +343,11 @@ Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensure t
 The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeSquare <: AbstractVectorSet
-    dimension::Int
+    side_dimension::Int
 end
 
-dimension(s::Union{LogDetConeTriangle, RootDetConeTriangle}) = 1 + div(s.dimension * (s.dimension + 1), 2)
-dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.dimension^2
+dimension(s::Union{LogDetConeTriangle, RootDetConeTriangle}) = 1 + div(s.side_dimension * (s.side_dimension + 1), 2)
+dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.side_dimension^2
 
 """
     Integer()
