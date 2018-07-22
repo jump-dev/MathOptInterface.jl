@@ -65,23 +65,31 @@ function MOI.addvariables!(model::AbstractModel, n::Integer)
     [MOI.addvariable!(model) for i in 1:n]
 end
 
-function _removevar(ci::CI, f, s, vi::VI)
-    (ci, removevariable(f, vi), s)
-end
-function _removevar(ci::CI, f::MOI.VectorOfVariables, s, vi::VI)
+"""
+    removevariable(f::MOI.AbstractFunction, s::MOI.AbstractSet, vi::MOI.VariableIndex)
+
+Return a tuple `(g, t)` representing the constraint `f`-in-`s` with the
+variable `vi` removed. That is, the terms containing the variable `vi` in the
+function `f` are removed and the dimension of the set `s` is updated if
+needed (e.g. when `f` is a `VectorOfVariables` with `vi` being one of the
+variables).
+"""
+removevariable(f, s, vi::VI) = removevariable(f, vi), s
+function removevariable(f::MOI.VectorOfVariables, s, vi::VI)
     g = removevariable(f, vi)
     if length(g.variables) != length(f.variables)
         t = updatedimension(s, length(g.variables))
     else
         t = s
     end
-    (ci, g, t)
+    return g, t
 end
 function _removevar!(constrs::Vector, vi::VI)
     for i in eachindex(constrs)
-        constrs[i] = _removevar(constrs[i]..., vi)
+        ci, f, s = constrs[i]
+        constrs[i] = (ci, removevariable(f, s, vi)...)
     end
-    []
+    return []
 end
 function _removevar!(constrs::Vector{<:C{MOI.SingleVariable}}, vi::VI)
     # If a variable is removed, the SingleVariable constraints using this variable
@@ -137,16 +145,48 @@ end
 MOI.canget(model::AbstractModel, ::MOI.Name) = true
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
+"""
+    check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+
+Return a `Bool` indicating whether `name` is available to be used by an
+index of type `IndexType` (i.e., it is not already used). type `IndexType`.
+If it is already used and the index using this name is not `idx` then it throws
+an error.
+"""
+function check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
+    if !isempty(name) && MOI.canget(model, IndexType, name)
+        other_idx = MOI.get(model, IndexType, name)
+        if other_idx != idx
+            error("$(IndexType == VI ? :Variable : :Constraint) name $name is already used by $other_idx)")
+        end
+        return false
+    else
+        return true
+    end
+end
+
+"""
+    setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
+
+Sets the name of the index `idx` to the name `name` in the maps `index_to_names` and `names_to_index`.
+If `name` is empty, and `idx` already has a name, it is removed.
+"""
+function setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
+    if haskey(index_to_names, idx)
+        delete!(names_to_index, index_to_names[idx])
+    end
+    index_to_names[idx] = name
+    if !isempty(name)
+        names_to_index[name] = idx
+    end
+    return
+end
+
 MOI.canset(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
-    if !isempty(name) && haskey(model.namesvar, name) && model.namesvar[name] != vi
-        error("Variable name $name is already used by $(model.namesvar[name])")
+    if check_can_assign_name(model, VI, vi, name)
+        setname(model.varnames, model.namesvar, vi, name)
     end
-    if haskey(model.varnames, vi)
-        delete!(model.namesvar, model.varnames[vi])
-    end
-    model.varnames[vi] = name
-    model.namesvar[name] = vi
 end
 MOI.canget(::AbstractModel, ::MOI.VariableName, ::Type{VI}) = true
 MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.varnames, vi, EMPTYSTRING)
@@ -161,14 +201,9 @@ end
 
 MOI.canset(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
-    if !isempty(name) && haskey(model.namescon, name) && model.namescon[name] != ci
-        error("Constraint name $name is already used by $(model.namescon[name])")
+    if check_can_assign_name(model, CI, ci, name)
+        setname(model.connames, model.namescon, ci, name)
     end
-    if haskey(model.connames, ci)
-        delete!(model.namescon, model.connames[ci])
-    end
-    model.connames[ci] = name
-    model.namescon[name] = ci
 end
 MOI.canget(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.connames, ci, EMPTYSTRING)
@@ -304,14 +339,14 @@ needsallocateload(model::AbstractModel) = false
 allocatevariables!(model::AbstractModel, nvars) = MOI.addvariables!(model, nvars)
 allocate!(model::AbstractModel, attr...) = MOI.set!(model, attr...)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.canset(model, attr)
-canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IdxT::Type{<:MOI.Index}) = MOI.canset(model, attr, IdxT)
+canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.canset(model, attr, IndexType)
 allocateconstraint!(model::AbstractModel, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.addconstraint!(model, f, s)
 canallocateconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 
 function loadvariables!(::AbstractModel, nvars) end
 function load!(::AbstractModel, attr...) end
 canload(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.canset(model, attr)
-canload(model::AbstractModel, attr::MOI.AnyAttribute, IdxT::Type{<:MOI.Index}) = MOI.canset(model, attr, IdxT)
+canload(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.canset(model, attr, IndexType)
 function loadconstraint!(::AbstractModel, ::CI, ::MOI.AbstractFunction, ::MOI.AbstractSet) end
 canloadconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 
@@ -518,13 +553,13 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             model.objectiveset = false
             model.objective = $SAF{T}(MOI.ScalarAffineTerm{T}[], zero(T))
             model.nextvariableid = 0
-            model.varindices = Set{$VI}()
-            model.varnames = Dict{Int64, String}()
-            model.namesvar = Dict{String, $VI}()
+            empty!(model.varindices)
+            empty!(model.varnames)
+            empty!(model.namesvar)
             model.nextconstraintid = 0
-            model.connames = Dict{Int64, String}()
-            model.namescon = Dict{String, $CI}()
-            model.constrmap = Int[]
+            empty!(model.connames)
+            empty!(model.namescon)
+            empty!(model.constrmap)
             $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
     end
