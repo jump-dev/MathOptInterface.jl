@@ -197,11 +197,11 @@ end
 dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
 
 """
-    PositiveSemidefiniteConeTriangle(dimension)
+    PositiveSemidefiniteConeTriangle(side_dimension)
 
-The (vectorized) cone of symmetric positive semidefinite matrices, with side length `dimension` and with off-diagonals unscaled.
+The (vectorized) cone of symmetric positive semidefinite matrices, with side length `side_dimension` and with off-diagonals unscaled.
 The entries of the upper triangular part of the matrix are given column by column (or equivalently, the entries of the lower triangular part are given row by row).
-An ``dimension \\times dimension`` matrix has ``dimension(dimension+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``n``, the corresponding symmetric matrix has side dimension ``\\sqrt{1/4 + 2 n} - 1/2`` elements.
+An ``side_dimension \\times side_dimension`` matrix has ``side_dimension(side_dimension+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``n``, the corresponding symmetric matrix has a ``side_dimension`` of ``\\sqrt{1/4 + 2 n} - 1/2`` rows/columns.
 
 ### Examples
 
@@ -221,7 +221,7 @@ Two packed storage formats exist for symmetric matrices, the respective orders o
 - upper triangular column by column (or lower triangular row by row);
 - lower triangular column by column (or upper triangular row by row).
 
-The advantage of the first format is the mapping between the `(i, j)` matrix indices and the `k` index of the vectorized form. It is simpler and does not depend on the dimension of the matrix.
+The advantage of the first format is the mapping between the `(i, j)` matrix indices and the `k` index of the vectorized form. It is simpler and does not depend on the side dimension of the matrix.
 Indeed,
 - the entry of matrix indices `(i, j)` has vectorized index `k = div((j-1)*j, 2) + i` if ``i \\leq j`` and `k = div((i-1)*i, 2) + j` if ``j \\leq i``;
 - and the entry with vectorized index `k` has matrix indices `i = isqrt(2k)` and `j = k - div((i-1)*i, 2)` or `j = isqrt(2k)` and `i = k - div((j-1)*j, 2)`.
@@ -278,9 +278,9 @@ end
 dimension(s::PositiveSemidefiniteConeTriangle) = div(s.side_dimension * (s.side_dimension + 1), 2)
 
 """
-    PositiveSemidefiniteConeSquare(dimension)
+    PositiveSemidefiniteConeSquare(side_dimension)
 
-The cone of symmetric positive semidefinite matrices, with side length `dimension`.
+The cone of symmetric positive semidefinite matrices, with side length `side_dimension`.
 The entries of the matrix are given column by column (or equivalently, row by row).
 The matrix is both constrained to be symmetric and to be positive semidefinite.
 That is, if the functions in entries ``(i, j)`` and ``(j, i)`` are different, then a constraint will be added to make sure that the entries are equal.
@@ -305,42 +305,42 @@ end
 dimension(s::PositiveSemidefiniteConeSquare) = s.side_dimension^2
 
 """
-    LogDetConeTriangle(dimension)
+    LogDetConeTriangle(side_dimension)
 
 The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\log(\\det(X)) \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
-The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct LogDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
 
 """
-    LogDetConeSquare(dimension)
+    LogDetConeSquare(side_dimension)
 
 The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\log(\\det(X)), X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
 Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
-The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct LogDetConeSquare <: AbstractVectorSet
     side_dimension::Int
 end
 
 """
-    RootDetConeTriangle(dimension)
+    RootDetConeTriangle(side_dimension)
 
 The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
-The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
 
 """
-    RootDetConeSquare(dimension)
+    RootDetConeSquare(side_dimension)
 
 The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
 Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensure that `X` is symmetric.
-The argument `dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeSquare <: AbstractVectorSet
     side_dimension::Int
