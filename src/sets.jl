@@ -201,7 +201,7 @@ dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCon
 
 The (vectorized) cone of symmetric positive semidefinite matrices, with side length `side_dimension` and with off-diagonals unscaled.
 The entries of the upper triangular part of the matrix are given column by column (or equivalently, the entries of the lower triangular part are given row by row).
-A ``d \\times d`` matrix has ``d(d+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``n``, the corresponding symmetric matrix has a side dimension ``d`` of ``\\sqrt{1/4 + 2 n} - 1/2`` rows/columns, where ``d`` is the input `side_dimension`.
+A ``d \\times d`` matrix has ``d(d+1)/2`` lower-triangular elements, so for the vectorized cone of dimension ``n``, the corresponding symmetric matrix has a side dimension ``d`` of ``\\sqrt{1/4 + 2 n} - 1/2`` rows/columns, where ``d`` is the `side_dimension`.
 
 ### Examples
 
