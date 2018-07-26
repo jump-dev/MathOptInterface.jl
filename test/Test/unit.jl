@@ -19,7 +19,8 @@ end
         "solve_affine_interval",
         "solve_qp_edge_cases",
         "solve_qcp_edge_cases",
-        "solve_affine_deletion_edge_cases"
+        "solve_affine_deletion_edge_cases",
+        "solve_duplicate_terms_obj"
         ])
 
     @testset "solve_blank_obj" begin
@@ -151,11 +152,25 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success,
                 (MOI.FeasiblePoint, [1.0, 2.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [1.0, 2.0])
             )
         )
         MOIT.solve_qp_edge_cases(mock, config)
     end
-
+    @testset "solve_duplicate_terms_obj" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [1]),
+                MOI.FeasiblePoint,
+                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [3.0]
+            )
+        )
+        MOIT.solve_duplicate_terms_obj(mock, config)
+    end
     @testset "solve_affine_deletion_edge_cases" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,

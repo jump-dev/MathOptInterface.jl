@@ -155,51 +155,95 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
     MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
 
-    # min x^2 + y^2 | x>=1, y>=2
-    MOI.set!(model,
-        MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
-        MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],  # affine terms
-            MOI.ScalarQuadraticTerm.([2.0, 2.0], x, x),  # quad
-            0.0  # constant
+    @testset "Basic model" begin
+        # min x^2 + y^2 | x>=1, y>=2
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm{Float64}[],  # affine terms
+                MOI.ScalarQuadraticTerm.([2.0, 2.0], x, x),  # quad
+                0.0  # constant
+            )
         )
-    )
-    test_model_solution(model, config;
-        objective_value   = 5.0,
-        variable_primal   = [(x[1], 1.0), (x[2], 2.0)]
-    )
-
-    # duplicate terms on diagonal
-    # min x^2 + x^2 | x>=1, y>=2
-    MOI.set!(model,
-        MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
-        MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],  # affine terms
-            MOI.ScalarQuadraticTerm.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
-            0.0  # constant
+        test_model_solution(model, config;
+            objective_value   = 5.0,
+            variable_primal   = [(x[1], 1.0), (x[2], 2.0)]
         )
-    )
-    test_model_solution(model, config;
-        objective_value   = 2.0,
-        variable_primal   = [(x[1], 1.0)]
-    )
-
-    # duplicate terms on off-diagonal
-    # min x^2 + 0.25x*y + 0.25y*x + 0.5x*y + y^2 | x>=1, y>=2
-    MOI.set!(model,
-        MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
-        MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],  # affine terms
-            MOI.ScalarQuadraticTerm.(
-                [ 2.0, 0.25, 0.25,  0.5,  2.0],
-                [x[1], x[1], x[2], x[1], x[2]],
-                [x[1], x[2], x[1], x[2], x[2]]),  # quad
-            0.0  # constant
+    end
+    @testset "Duplicate linear terms" begin
+        # min x + x + x^2 + y^2 | x>=1, y>=2
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], x[1]]),  # affine terms
+                MOI.ScalarQuadraticTerm.([2.0, 2.0], x, x),  # quad
+                0.0  # constant
+            )
         )
-    )
-    test_model_solution(model, config;
-        objective_value   = 7.0,
-        variable_primal   = [(x[1], 1.0), (x[2], 2.0)]
-    )
+        test_model_solution(model, config;
+            objective_value   = 7.0,
+            variable_primal   = [(x[1], 1.0), (x[2], 2.0)]
+        )
+    end
+    @testset "Duplicate diagonal terms" begin
+        # min x^2 + x^2 | x>=1, y>=2
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm{Float64}[],  # affine terms
+                MOI.ScalarQuadraticTerm.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
+                0.0  # constant
+            )
+        )
+        test_model_solution(model, config;
+            objective_value   = 2.0,
+            variable_primal   = [(x[1], 1.0)]
+        )
+    end
+    @testset "Duplicate off-diagonal terms" begin
+        # min x^2 + 0.25x*y + 0.25y*x + 0.5x*y + y^2 | x>=1, y>=2
+        MOI.set!(model,
+            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm{Float64}[],  # affine terms
+                MOI.ScalarQuadraticTerm.(
+                    [ 2.0, 0.25, 0.25,  0.5,  2.0],
+                    [x[1], x[1], x[2], x[1], x[2]],
+                    [x[1], x[2], x[1], x[2], x[2]]),  # quad
+                0.0  # constant
+            )
+        )
+        test_model_solution(model, config;
+            objective_value   = 7.0,
+            variable_primal   = [(x[1], 1.0), (x[2], 2.0)]
+        )
+    end
 end
 unittests["solve_qp_edge_cases"] = solve_qp_edge_cases
+
+"""
+    solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
+
+Test duplicate terms in linear objective, if `config.solve=true` confirm that it
+solves correctly.
+"""
+function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+    x = MOI.addvariable!(model)
+    c = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(
+            [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(1.0, x)],
+            0.0
+        )
+    )
+    test_model_solution(model, config;
+        objective_value   = 3.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, 3.0)]
+    )
+end
+unittests["solve_duplicate_terms_obj"] = solve_duplicate_terms_obj
