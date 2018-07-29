@@ -10,6 +10,8 @@
     MOIU.resetoptimizer!(m, s)
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
+    @test MOI.get(m, MOI.SolverName()) == "Mock"
+
     v = MOI.addvariable!(m)
     x = MOI.addvariables!(m, 2)
     saf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], [v; x]), 0.0)

@@ -395,11 +395,20 @@ function MOI.canset(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribu
     return true
 end
 
+function MOI.get(m::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
+    if MOI.canget(m.model_cache, attr)
+        return MOI.get(m.model_cache, attr)
+    elseif MOI.canget(m.optimizer, attr)
+        return attribute_value_map(m.optimizer_to_model_map, MOI.get(m.optimizer, attr))
+    end
+    error("Attribute $attr not accessible")
+end
+
 function MOI.get(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
     if MOI.canget(m.model_cache, attr)
         return MOI.get(m.model_cache, attr)
     elseif m.state == AttachedOptimizer && MOI.canget(m.optimizer, attr)
-        return attribute_value_map(m.optimizer_to_model_map,MOI.get(m.optimizer, attr))
+        return attribute_value_map(m.optimizer_to_model_map, MOI.get(m.optimizer, attr))
     end
     error("Attribute $attr not accessible")
 end
