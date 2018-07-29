@@ -62,9 +62,20 @@ MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false, evalobjective
                   Dict{MOI.VariableIndex,Float64}(),
                   Dict{MOI.ConstraintIndex,Any}())
 
-MOI.canaddvariable(mock::MockOptimizer) = MOI.canaddvariable(mock.inner_model) && mock.canaddvar
-MOI.addvariable!(mock::MockOptimizer) = xor_index(MOI.addvariable!(mock.inner_model))
-MOI.addvariables!(mock::MockOptimizer, n::Int) = xor_index.(MOI.addvariables!(mock.inner_model, n))
+function MOI.addvariable!(mock::MockOptimizer)
+    if mock.canaddvar
+        return xor_index(MOI.addvariable!(mock.inner_model))
+    else
+        throw(MOI.CannotAddVariable())
+    end
+end
+function MOI.addvariables!(mock::MockOptimizer, n::Int)
+    if mock.canaddvar
+        return xor_index.(MOI.addvariables!(mock.inner_model, n))
+    else
+        throw(MOI.CannotAddVariable())
+    end
+end
 function MOI.addconstraint!(mock::MockOptimizer,
                             func::MOI.AbstractFunction,
                             set::MOI.AbstractSet)

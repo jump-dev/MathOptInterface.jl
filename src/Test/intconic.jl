@@ -18,7 +18,6 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x,y,z = MOI.addvariables!(model, 3)
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())

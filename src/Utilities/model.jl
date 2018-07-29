@@ -55,7 +55,6 @@ getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
 # Variables
 MOI.get(model::AbstractModel, ::MOI.NumberOfVariables) = length(model.varindices)
-MOI.canaddvariable(model::AbstractModel) = true
 function MOI.addvariable!(model::AbstractModel)
     v = VI(model.nextvariableid += 1)
     push!(model.varindices, v)

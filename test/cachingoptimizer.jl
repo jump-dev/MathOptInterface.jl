@@ -147,11 +147,10 @@ end
     MOI.empty!(m)
     @test MOIU.state(m) == MOIU.AttachedOptimizer
 
-    m.optimizer.canaddvar = false # Simulate optimizer for which MOI.canaddvariable returns false
+    m.optimizer.canaddvar = false # Simulate optimizer that cannot add variables incrementally
     MOI.addvariable!(m)
     @test MOIU.state(m) == MOIU.EmptyOptimizer
-    res = MOIU.attachoptimizer!(m)
-    @test res.status == MOI.CopyOtherError
+    @test_throws MOI.CannotAddVariable MOIU.attachoptimizer!(m)
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
     m.optimizer.canaddvar = true

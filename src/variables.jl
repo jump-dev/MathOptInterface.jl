@@ -1,22 +1,24 @@
 # Variables
 
 """
-    canaddvariable(model::ModelLike)::Bool
+    CannotAddVariable <: CannotError
 
-Return a `Bool` indicating whether it is possible to add a variable to the model `model`.
+Variables cannot be added in the current state of the model.
 """
-function canaddvariable end
+struct CannotAddVariable <: CannotError end
+
+operation_name(::CannotAddVariable) = "Adding variables"
 
 """
     addvariables!(model::ModelLike, n::Int)::Vector{VariableIndex}
 
 Add `n` scalar variables to the model, returning a vector of variable indices.
 """
-function addvariables! end
+addvariables!(model::ModelLike, n) = throw(CannotAddVariable())
 
 """
     addvariable!(model::ModelLike)::VariableIndex
 
 Add a scalar variable to the model, returning a variable index.
 """
-function addvariable! end
+addvariable!(model::ModelLike) = throw(CannotAddVariable())

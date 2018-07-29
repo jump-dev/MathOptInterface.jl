@@ -15,7 +15,6 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
@@ -78,7 +77,6 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
@@ -168,9 +166,7 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
 
     MOI.addconstraint!(model,
@@ -261,9 +257,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
@@ -335,7 +329,6 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
@@ -395,7 +388,6 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
@@ -469,11 +461,8 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     t = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 

@@ -249,6 +249,5 @@ MOI.canmodify(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, ::Type{M})
 MOI.modify!(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(b.model, obj, change)
 
 # Variables
-MOI.canaddvariable(b::AbstractBridgeOptimizer) = MOI.canaddvariable(b.model)
 MOI.addvariable!(b::AbstractBridgeOptimizer) = MOI.addvariable!(b.model)
 MOI.addvariables!(b::AbstractBridgeOptimizer, n) = MOI.addvariables!(b.model, n)

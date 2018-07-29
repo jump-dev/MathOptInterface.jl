@@ -22,7 +22,6 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
@@ -117,7 +116,6 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x,y,z,s = MOI.addvariables!(model, 4)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
 
@@ -217,7 +215,6 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
 
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],[-1.0]), MOI.Nonnegatives(1))
@@ -265,7 +262,6 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
 
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Nonnegatives(1))
@@ -323,7 +319,6 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x,y,z = MOI.addvariables!(model, 3)
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -411,7 +406,6 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x,y,t = MOI.addvariables!(model, 3)
 
     @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -494,7 +488,6 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x,y = MOI.addvariables!(model, 2)
 
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [-2.0]), MOI.Nonnegatives(1))
@@ -546,7 +539,6 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 5)
 
     c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2,3,2,3], MOI.ScalarAffineTerm.([1.0,1.0,1.0,-1.0,-1.0], x)),[-1.0, 0.0, 0.0]), MOI.Zeros(3))
@@ -628,12 +620,9 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 2)
     if abvars
-        MOI.canaddvariable(model)
         a = MOI.addvariable!(model)
-        MOI.canaddvariable(model)
         b = MOI.addvariable!(model)
         vc1 = MOI.addconstraint!(model, MOI.SingleVariable(a), MOI.EqualTo(0.5))
         vc2 = MOI.addconstraint!(model, MOI.SingleVariable(b), MOI.EqualTo(1.0))
@@ -735,7 +724,6 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 3)
 
     vc1 = MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
@@ -809,13 +797,9 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariables!(model, n)
-    MOI.canaddvariable(model)
     u = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     v = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     t = MOI.addvariables!(model, 2)
 
     ct1 = MOI.addconstraint!(model, MOI.SingleVariable(t[1]), MOI.EqualTo(1.0))
@@ -933,9 +917,7 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     t = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     x = MOI.addvariables!(model, n)
 
     vov = MOI.VectorOfVariables([t; x])
@@ -1015,7 +997,6 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
@@ -1093,7 +1074,6 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 9)
     @test MOI.get(model, MOI.NumberOfVariables()) == 9
 
@@ -1179,9 +1159,7 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
-    MOI.canaddvariable(model)
     y = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
@@ -1264,7 +1242,6 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     X = MOI.addvariables!(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)
 
@@ -1408,10 +1385,8 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     X = MOI.addvariables!(model, square ? 9 : 6)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 9 : 6)
-    MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 12 : 9)
 
@@ -1500,7 +1475,6 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x = MOI.addvariables!(model, 7)
     @test MOI.get(model, MOI.NumberOfVariables()) == 7
 
@@ -1615,10 +1589,8 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     t = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    MOI.canaddvariable(model)
     Q = MOI.addvariables!(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
 

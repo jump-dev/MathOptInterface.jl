@@ -369,6 +369,5 @@ MOI.canmodify(uf::UniversalFallback, obj::MOI.ObjectiveFunction, ::Type{M}) wher
 MOI.modify!(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(uf.model, obj, change)
 
 # Variables
-MOI.canaddvariable(uf::UniversalFallback) = MOI.canaddvariable(uf.model)
 MOI.addvariable!(uf::UniversalFallback) = MOI.addvariable!(uf.model)
 MOI.addvariables!(uf::UniversalFallback, n) = MOI.addvariables!(uf.model, n)

@@ -2,7 +2,6 @@
     Functions in this file test functionality relating to variables in MOI.
 
 ### Functionality currently tested
-    - canaddvariable
     - addvariables!
     - addvariable!
     - deleting variables
@@ -26,7 +25,6 @@ Test adding a single variable.
 function add_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
-    @test MOI.canaddvariable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -41,7 +39,6 @@ Test adding multiple variables.
 function add_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
-    @test MOI.canaddvariable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -56,7 +53,6 @@ Tess adding, and then deleting, a single variable.
 function delete_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
-    @test MOI.canaddvariable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -74,7 +70,6 @@ Test adding, and then deleting, multiple variables.
 function delete_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
-    @test MOI.canaddvariable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2

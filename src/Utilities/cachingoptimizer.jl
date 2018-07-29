@@ -166,22 +166,24 @@ function MOI.optimize!(m::CachingOptimizer)
     MOI.optimize!(m.optimizer)
 end
 
-function MOI.canaddvariable(m::CachingOptimizer)
-    MOI.canaddvariable(m.model_cache) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canaddvariable(m.optimizer) || return false
-    end
-    return true
-end
-
 function MOI.addvariable!(m::CachingOptimizer)
-    # Same note as for addconstraint!
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canaddvariable(m.optimizer)
-        resetoptimizer!(m)
+    if m.state == AttachedOptimizer
+        if m.mode == Automatic
+            try
+                vindex_optimizer = MOI.addvariable!(m.optimizer)
+            catch err
+                if err isa MOI.CannotAddVariable
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindex_optimizer = MOI.addvariable!(m.optimizer)
+        end
     end
     vindex = MOI.addvariable!(m.model_cache)
     if m.state == AttachedOptimizer
-        vindex_optimizer = MOI.addvariable!(m.optimizer)
         m.model_to_optimizer_map[vindex] = vindex_optimizer
         m.optimizer_to_model_map[vindex_optimizer] = vindex
     end
@@ -189,13 +191,23 @@ function MOI.addvariable!(m::CachingOptimizer)
 end
 
 function MOI.addvariables!(m::CachingOptimizer, n)
-    # Same note as for addconstraint!
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canaddvariable(m.optimizer)
-        resetoptimizer!(m)
+    if m.state == AttachedOptimizer
+        if m.mode == Automatic
+            try
+                vindices_optimizer = MOI.addvariables!(m.optimizer, n)
+            catch err
+                if err isa MOI.CannotAddVariable
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindices_optimizer = MOI.addvariables!(m.optimizer, n)
+        end
     end
     vindices = MOI.addvariables!(m.model_cache, n)
     if m.state == AttachedOptimizer
-        vindices_optimizer = MOI.addvariables!(m.optimizer, n)
         for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
             m.model_to_optimizer_map[vindex] = vindex_optimizer
             m.optimizer_to_model_map[vindex_optimizer] = vindex
@@ -216,7 +228,8 @@ function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set
             catch err
                 if err isa MOI.CannotAddConstraint
                     # It could be MOI.CannotAddConstraint{F', S'} with F' != F
-                    # or S' != S if bridges are used
+                    # or S' != S if, e.g., the `F`-in-`S` constraint is bridged
+                    # to other constraints in `m.optimizer`
                     resetoptimizer!(m)
                 else
                     rethrow(err)

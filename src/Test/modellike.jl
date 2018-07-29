@@ -21,7 +21,6 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.NumberOfVariables()) == 0
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
 
-        MOI.canaddvariable(model)
         v = MOI.addvariables!(model, 2)
         @test MOI.canget(model, MOI.VariableName(), typeof(v[1]))
         @test MOI.get(model, MOI.VariableName(), v[1]) == ""
@@ -104,11 +103,9 @@ end
 
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
-    MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 2)
     @test MOI.isvalid(model, v[1])
     @test MOI.isvalid(model, v[2])
-    MOI.canaddvariable(model)
     x = MOI.addvariable!(model)
     @test MOI.isvalid(model, x)
     MOI.delete!(model, x)
@@ -125,7 +122,6 @@ end
 
 function emptytest(model::MOI.ModelLike)
     # Taken from LIN1
-    MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 3)
     @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
     vc = MOI.addconstraint!(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
@@ -213,7 +209,6 @@ function failcopytestca(dest::MOI.ModelLike)
 end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
-    MOI.canaddvariable(src)
     MOI.set!(src, MOI.Name(), "ModelName")
     v = MOI.addvariables!(src, 3)
     MOI.set!(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
@@ -284,7 +279,6 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
 end
 
 function supportsconstrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT}) where {GoodT, BadT}
-    MOI.canaddvariable(model)
     v = MOI.addvariable!(model)
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.EqualTo{GoodT})
     @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{GoodT}, MOI.EqualTo{GoodT})
