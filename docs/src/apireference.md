@@ -164,7 +164,6 @@ canaddconstraint
 addconstraint!
 addconstraints!
 transform!
-cantransform
 supportsconstraint
 ```
 

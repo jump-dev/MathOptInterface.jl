@@ -77,33 +77,3 @@ function transform!(model::ModelLike, c::ConstraintIndex, newset)
     delete!(model, c)
     addconstraint!(model, f, newset)
 end
-
-"""
-## Transform Constraint Set
-
-    cantransform(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2})::Bool where S2<:AbstractSet
-
-Return a `Bool` indicating whether the set of type `S1` in constraint `c` can be
-replaced by a set of type `S2`.
-
-### Examples
-
-If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
-
-```julia
-cantransform(model, c, GreaterThan(0.0)) # true
-cantransform(model, c, ZeroOne())        # it is expected that most solvers will
-                                         # return false, but this does not
-                                         # preclude solvers from supporting
-                                         # constraints such as this.
-```
-"""
-function cantransform end
-
-# default fallback
-function cantransform(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2}) where {F<:AbstractFunction, S1<:AbstractSet, S2<:AbstractSet}
-    if S1 == S2
-        return false
-    end
-    canget(model, ConstraintFunction(), typeof(c)) && candelete(model, c) && canaddconstraint(model, F, S2)
-end

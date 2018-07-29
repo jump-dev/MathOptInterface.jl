@@ -1407,7 +1407,6 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
     end
 
-    @test MOI.cantransform(model, c2, MOI.LessThan{Float64})
     c3 = MOI.transform!(model, c2, MOI.LessThan(2.0))
 
     @test isa(c3, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}})
