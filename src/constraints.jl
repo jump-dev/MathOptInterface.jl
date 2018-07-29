@@ -10,11 +10,21 @@ If `F`-in-`S` constraints are only not supported in specific circumstances, e.g.
 supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
 """
-    canaddconstraint(model::ModelLike, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
+    UnsupportedConstraint{F,S} <: CannotError
 
-Return a `Bool` indicating whether it is possible to add a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
+Constraints of type `F`-in-`S` are not supported by the model.
 """
-canaddconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
+struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError end
+
+"""
+    CannotAddConstraint{F,S} <: CannotError
+
+Constraints of type `F`-in-`S` are supported but cannot be added in the current
+state of the model.
+"""
+struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError end
+
+operation_name(::Union{UnsupportedConstraint{F, S}, CannotAddConstraint{F, S}}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 
 """
     addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
@@ -26,7 +36,9 @@ Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, 
 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
 """
-function addconstraint! end
+function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractSet)
+    throw(UnsupportedConstraint{typeof(func), typeof(set)}())
+end
 
 # convenient shorthands TODO: document
 addconstraint!(model::ModelLike, v::VariableIndex, set::AbstractScalarSet) = addconstraint!(model, SingleVariable(v), set)

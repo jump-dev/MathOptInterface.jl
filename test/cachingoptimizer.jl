@@ -1,4 +1,3 @@
-
 @MOIU.model ModelForCachingOptimizer (ZeroOne, Integer) (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, RootDetConeTriangle, LogDetConeTriangle) () (SingleVariable,) (ScalarAffineFunction,ScalarQuadraticFunction) (VectorOfVariables,) (VectorAffineFunction,)
 
 @testset "CachingOptimizer Manual mode" begin
@@ -55,12 +54,12 @@
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
     # ModelForMock doesn't support RotatedSecondOrderCone
-    @test !MOI.canaddconstraint(m, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+    @test !MOI.supportsconstraint(m, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
 
-    @test MOI.canaddconstraint(m.model_cache, MOI.SingleVariable, MOI.LessThan{Float64})
-    @test MOI.canaddconstraint(m.optimizer.inner_model, MOI.SingleVariable, MOI.LessThan{Float64})
-    @test MOI.canaddconstraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
-    @test MOI.canaddconstraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(m.model_cache, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(m.optimizer.inner_model, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
     lb = MOI.addconstraint!(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
     @test MOI.canset(m, MOI.ConstraintSet(), typeof(lb))
     MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
@@ -137,8 +136,10 @@ end
     @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), typeof(v))
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
-    # ModelForMock doesn't support RotatedSecondOrderCone
-    MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.RotatedSecondOrderCone(1))
+    # Simulate that constraints cannot be added
+    s.canaddcon = false
+    MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.SecondOrderCone(1))
+    s.canaddcon = true
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
     # TODO: test modify! with a change that forces the optimizer to be dropped

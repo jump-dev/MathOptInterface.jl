@@ -44,9 +44,9 @@ function nametest(model::MOI.ModelLike)
         MOI.set!(model, MOI.VariableName(), v, ["VarX","Var2"])
         @test MOI.get(model, MOI.VariableName(), v) == ["VarX", "Var2"]
 
-        @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+        @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
         c = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0), MOI.LessThan(1.0))
-        @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+        @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
         c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0,1.0], v), 0.0), MOI.EqualTo(0.0))
         @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
@@ -114,7 +114,7 @@ function validtest(model::MOI.ModelLike)
     MOI.delete!(model, x)
     @test !MOI.isvalid(model, x)
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0)
-    @test MOI.canaddconstraint(model, typeof(cf), MOI.LessThan{Float64})
+    @test MOI.supportsconstraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.addconstraint!(model, cf, MOI.LessThan(1.0))
     @test MOI.isvalid(model, c)
     @test !MOI.isvalid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float32}}(1))
@@ -127,9 +127,9 @@ function emptytest(model::MOI.ModelLike)
     # Taken from LIN1
     MOI.canaddvariable(model)
     v = MOI.addvariables!(model, 3)
-    @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
+    @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
     vc = MOI.addconstraint!(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
-    @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
     c = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0,-2.0]), MOI.Zeros(2))
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
@@ -197,7 +197,7 @@ end
 
 function failcopytestc(dest::MOI.ModelLike)
     @test !MOI.supportsconstraint(dest, MOI.SingleVariable, UnknownSet)
-    failcopytest(dest, BadConstraintModel(), MOI.CopyUnsupportedConstraint)
+    @test_throws MOI.UnsupportedConstraint MOI.copy!(dest, BadConstraintModel())
 end
 function failcopytestia(dest::MOI.ModelLike)
     @test !MOI.supports(dest, UnknownModelAttribute())
@@ -283,20 +283,20 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MinSense
 end
 
-function canaddconstrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT}) where {GoodT, BadT}
+function supportsconstrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT}) where {GoodT, BadT}
     MOI.canaddvariable(model)
     v = MOI.addvariable!(model)
-    @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.EqualTo{GoodT})
-    @test MOI.canaddconstraint(model, MOI.ScalarAffineFunction{GoodT}, MOI.EqualTo{GoodT})
+    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.EqualTo{GoodT})
+    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{GoodT}, MOI.EqualTo{GoodT})
     # Bad type
-    @test !MOI.canaddconstraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{GoodT})
-    @test !MOI.canaddconstraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{BadT})
-    @test !MOI.canaddconstraint(model, MOI.SingleVariable, MOI.EqualTo{BadT})
+    @test !MOI.supportsconstraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{GoodT})
+    @test !MOI.supportsconstraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{BadT})
+    @test !MOI.supportsconstraint(model, MOI.SingleVariable, MOI.EqualTo{BadT})
 
-    @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.Zeros)
-    @test !MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.EqualTo{GoodT}) # vector in scalar
-    @test !MOI.canaddconstraint(model, MOI.SingleVariable, MOI.Zeros) # scalar in vector
-    @test !MOI.canaddconstraint(model, MOI.VectorOfVariables, UnknownSet) # set not supported
+    @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.Zeros)
+    @test !MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.EqualTo{GoodT}) # vector in scalar
+    @test !MOI.supportsconstraint(model, MOI.SingleVariable, MOI.Zeros) # scalar in vector
+    @test !MOI.supportsconstraint(model, MOI.VectorOfVariables, UnknownSet) # set not supported
 end
 
 """

@@ -147,6 +147,7 @@ end
 """
 function copy! end
 
+include("error.jl")
 include("indextypes.jl")
 include("functions.jl")
 include("sets.jl")

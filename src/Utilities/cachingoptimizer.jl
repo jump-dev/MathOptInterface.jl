@@ -208,25 +208,26 @@ function MOI.supportsconstraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunct
     MOI.supportsconstraint(m.model_cache, F, S) && (m.state == NoOptimizer || MOI.supportsconstraint(m.optimizer, F, S))
 end
 
-function MOI.canaddconstraint(m::CachingOptimizer, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    MOI.canaddconstraint(m.model_cache, F, S) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canaddconstraint(m.optimizer, F, S) || return false
-    end
-    return true
-end
-
 function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set::MOI.AbstractSet)
-    # The canaddconstraint checks should catch most issues, but if an
-    # addconstraint! call fails then the model_cache and the optimizer may no longer
-    # be in sync.
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canaddconstraint(m.optimizer, typeof(func), typeof(set))
-        resetoptimizer!(m)
+    if m.state == AttachedOptimizer
+        if m.mode == Automatic
+            try
+                cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+            catch err
+                if err isa MOI.CannotAddConstraint
+                    # It could be MOI.CannotAddConstraint{F', S'} with F' != F
+                    # or S' != S if bridges are used
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+        end
     end
-    @assert MOI.canaddconstraint(m, typeof(func), typeof(set))
     cindex = MOI.addconstraint!(m.model_cache, func, set)
     if m.state == AttachedOptimizer
-        cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map,func), set)
         m.model_to_optimizer_map[cindex] = cindex_optimizer
         m.optimizer_to_model_map[cindex_optimizer] = cindex
     end

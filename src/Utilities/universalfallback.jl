@@ -287,13 +287,6 @@ end
 
 # Constraints
 MOI.supportsconstraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = true
-function MOI.canaddconstraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    if MOI.supportsconstraint(uf.model, F, S)
-        return MOI.canaddconstraint(uf.model, F, S)
-    else
-        return true
-    end
-end
 function MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.AbstractSet)
     F = typeof(f)
     S = typeof(s)

@@ -192,13 +192,6 @@ function MOI.supportsconstraint(b::AbstractBridgeOptimizer, F::Type{<:MOI.Abstra
         MOI.supportsconstraint(b.model, F, S)
     end
 end
-function MOI.canaddconstraint(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    if isbridged(b, F, S)
-        supportsbridgingconstraint(b, F, S) && MOI.canaddconstraint(b.bridged, F, S) && all(C -> MOI.canaddconstraint(b, C...), addedconstrainttypes(bridgetype(b, F, S), F, S))
-    else
-        MOI.canaddconstraint(b.model, F, S)
-    end
-end
 function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction, s::MOI.AbstractSet)
     if isbridged(b, typeof(f), typeof(s))
         ci = MOI.addconstraint!(b.bridged, f, s)

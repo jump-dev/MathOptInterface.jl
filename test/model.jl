@@ -12,9 +12,9 @@ end
     MOIT.emptytest(Model{Float64}())
 end
 
-@testset "canaddconstraint test" begin
-    MOIT.canaddconstrainttest(Model{Float64}(), Float64, Int)
-    MOIT.canaddconstrainttest(Model{Int}(), Int, Float64)
+@testset "supportsconstraint test" begin
+    MOIT.supportsconstrainttest(Model{Float64}(), Float64, Int)
+    MOIT.supportsconstrainttest(Model{Int}(), Int, Float64)
 end
 
 @testset "OrderedIndices" begin

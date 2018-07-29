@@ -79,12 +79,8 @@ function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bo
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         f_dest = mapvariables(idxmap, f_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
-        if MOI.canaddconstraint(dest, typeof(f_dest), typeof(s))
-            ci_dest = MOI.addconstraint!(dest, f_dest, s)
-            idxmap.conmap[ci_src] = ci_dest
-        else
-            return MOI.CopyResult(MOI.CopyUnsupportedConstraint, "Unsupported $F-in-$S constraint", idxmap)
-        end
+        ci_dest = MOI.addconstraint!(dest, f_dest, s)
+        idxmap.conmap[ci_src] = ci_dest
     end
 
     return passattributes!(dest, src, copynames, idxmap, cis_src)
@@ -188,13 +184,6 @@ Returns the index for the constraint to be used in `loadconstraint!` that will b
 function allocateconstraint! end
 
 """
-    canallocateconstraint(model::ModelLike, F::Type{<:AbstractFunction}, S::Type{<:AbstractSet})::Bool
-
-Return a `Bool` indicating whether it is possible to allocate a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
-"""
-canallocateconstraint(model::MOI.ModelLike, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
-
-"""
     loadvariables!(model::MOI.ModelLike, nvars::Integer)
 
 Prepares the `model` for `loadobjective!` and `loadconstraint!`.
@@ -228,19 +217,10 @@ Sets the constraint function and set for the constraint of index `ci`.
 """
 function loadconstraint! end
 
-"""
-    canloadconstraint(model::ModelLike, F::Type{<:AbstractFunction}, S::Type{<:AbstractSet})::Bool
-
-Return a `Bool` indicating whether it is possible to load a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
-"""
-canloadconstraint(model::MOI.ModelLike, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
-
 function allocateconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     # Allocate constraints
-    if !canallocateconstraint(dest, F, S)
-        return MOI.CopyResult(MOI.CopyUnsupportedConstraint, "Unsupported $F-in-$S constraint", idxmap)
-    end
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
+
     for ci_src in cis_src
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
@@ -254,9 +234,6 @@ end
 
 function loadconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     # Load constraints
-    if !canloadconstraint(dest, F, S)
-        return MOI.CopyResult(MOI.CopyUnsupportedConstraint, "Unsupported $F-in-$S constraint", idxmap)
-    end
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
     for ci_src in cis_src
         ci_dest = idxmap[ci_src]

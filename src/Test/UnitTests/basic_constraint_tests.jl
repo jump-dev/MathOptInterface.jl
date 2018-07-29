@@ -167,7 +167,6 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     F, S = typeof(constraint_function), typeof(set)
 
     @test MOI.supportsconstraint(model, F, S)
-    @test MOI.canaddconstraint(model, F, S)
 
     @testset "NumberOfConstraints" begin
         @test MOI.canget(model, MOI.NumberOfConstraints{F,S}())
