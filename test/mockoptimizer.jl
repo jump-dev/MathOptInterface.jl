@@ -4,6 +4,8 @@ end
 
 @testset "Mock optimizer optimizer attributes" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
+    @test MOI.get(optimizer, MOI.SolverName()) == "Mock"
+
     @test MOI.canset(optimizer, MOIU.MockModelAttribute())
     MOI.set!(optimizer, MOIU.MockModelAttribute(), 10)
     @test MOI.canget(optimizer, MOIU.MockModelAttribute())

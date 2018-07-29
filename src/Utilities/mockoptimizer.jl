@@ -102,6 +102,9 @@ MOI.canget(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.hasprimal && (mock.re
 MOI.canget(mock::MockOptimizer, ::MOI.DualStatus) = mock.hasdual && (mock.resultcount > 0)
 MOI.canget(mock::MockOptimizer, ::MockModelAttribute) = true
 
+MOI.canget(mock::MockOptimizer, ::MOI.SolverName) = true
+MOI.get(mock::MockOptimizer, ::MOI.SolverName) = "Mock"
+
 MOI.canget(mock::MockOptimizer, attr::MOI.AbstractModelAttribute) = MOI.canget(mock.inner_model, attr)
 MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute) = MOI.get(mock.inner_model, attr)
 MOI.get(mock::MockOptimizer, attr::Union{MOI.ListOfVariableIndices,
