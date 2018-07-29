@@ -42,23 +42,23 @@ xor_variables(f) = mapvariables(xor_index, f)
 
 MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false, evalobjective=true) =
     MockOptimizer(inner_model,
-                       0,
-                       Dict{MOI.VariableIndex,Int}(),
-                       Dict{MOI.ConstraintIndex,Int}(),
-                       needsallocateload,
-                       true,
-                       (::MockOptimizer) -> begin end,
-                       false,
-                       false,
-                       false,
-                       MOI.Success,
-                       0,
-                       evalobjective,
-                       NaN,
-                       MOI.UnknownResultStatus,
-                       MOI.UnknownResultStatus,
-                       Dict{MOI.VariableIndex,Float64}(),
-                       Dict{MOI.ConstraintIndex,Any}())
+                  0,
+                  Dict{MOI.VariableIndex,Int}(),
+                  Dict{MOI.ConstraintIndex,Int}(),
+                  needsallocateload,
+                  true,
+                  (::MockOptimizer) -> begin end,
+                  false,
+                  false,
+                  false,
+                  MOI.Success,
+                  0,
+                  evalobjective,
+                  NaN,
+                  MOI.UnknownResultStatus,
+                  MOI.UnknownResultStatus,
+                  Dict{MOI.VariableIndex,Float64}(),
+                  Dict{MOI.ConstraintIndex,Any}())
 
 MOI.canaddvariable(mock::MockOptimizer) = MOI.canaddvariable(mock.inner_model) && mock.canaddvar
 MOI.addvariable!(mock::MockOptimizer) = xor_index(MOI.addvariable!(mock.inner_model))
