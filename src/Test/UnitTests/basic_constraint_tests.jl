@@ -174,9 +174,9 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     end
 
     @testset "addconstraint!" begin
-        n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
         c = MOI.addconstraint!(model, constraint_function, set)
-        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == n + 1
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
 
         @testset "ConstraintName" begin
             @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
@@ -200,37 +200,37 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
         end
     end
 
-    @testset "addconstraints!" begin
-        n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
-        cc = MOI.addconstraints!(model,
-            [constraint_function, constraint_function],
-            [set, set]
-        )
-        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == n + 2
-    end
-
     @testset "ListOfConstraintIndices" begin
         @test MOI.canget(model, MOI.ListOfConstraintIndices{F,S}())
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        # for sanity, check that we've added 3 constraints as expected.
-        @test length(c_indices) == MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 3
+        @test length(c_indices) == MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    end
+
+    if F != MOI.SingleVariable
+        # We can't add multiple single variable constraints as these are
+        # interpreted as bounds etc.
+        @testset "addconstraints!" begin
+            n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
+            cc = MOI.addconstraints!(model,
+                [constraint_function, constraint_function],
+                [set, set]
+            )
+            @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 3
+            @test length(MOI.get(model, MOI.ListOfConstraintIndices{F,S}())) == 3
+        end
     end
 
     @testset "isvalid" begin
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        # for sanity, check that we've added 3 constraints as expected.
-        @test length(c_indices) == 3
         @test all(MOI.isvalid.(Ref(model), c_indices))
     end
 
     if delete
         @testset "delete!" begin
             c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            # for sanity, check that we've added 3 constraints as expected.
-            @test length(c_indices) == 3
             @test MOI.candelete(model, c_indices[1])
             MOI.delete!(model, c_indices[1])
-            @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1 == 2
+            @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1
             @test !MOI.isvalid(model, c_indices[1])
         end
     end

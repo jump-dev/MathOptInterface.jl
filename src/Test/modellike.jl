@@ -315,17 +315,17 @@ function orderedindicestest(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2]
     v3 = MOI.addvariable!(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3]
+    v4 = MOI.addvariable!(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3, v4]
 
-    # Note: there are too many combinations to
-    # test, so we're just going to check
-    # SingleVariable-in-LessThan and hope it
-    # works for the rest
+    # Note: there are too many combinations to test, so we're just going to
+    # check SingleVariable-in-LessThan and hope it works for the rest
     c1 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1]
-    c2 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(2.0))
+    c2 = MOI.addconstraint!(model, MOI.SingleVariable(v3), MOI.LessThan(2.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1, c2]
     MOI.delete!(model, c1)
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2]
-    c3 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(3.0))
+    c3 = MOI.addconstraint!(model, MOI.SingleVariable(v4), MOI.LessThan(3.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]
 end
