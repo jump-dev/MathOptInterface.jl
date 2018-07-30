@@ -4,15 +4,14 @@ struct UnknownSet <: MOI.AbstractSet end
 
 function nametest(model::MOI.ModelLike)
     @testset "Name test" begin
+        @test MOI.supports(model, MOI.Name())
         @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
         @test MOI.canget(model, MOI.Name())
         @test MOI.get(model, MOI.Name()) == ""
-        @test MOI.canset(model, MOI.Name())
         MOI.set!(model, MOI.Name(), "Name1")
         @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
         @test MOI.canget(model, MOI.Name())
         @test MOI.get(model, MOI.Name()) == "Name1"
-        @test MOI.canset(model, MOI.Name())
         MOI.set!(model, MOI.Name(), "Name2")
         @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
         @test MOI.canget(model, MOI.Name())
@@ -21,11 +20,11 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.NumberOfVariables()) == 0
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
 
+        @test MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
         v = MOI.addvariables!(model, 2)
         @test MOI.canget(model, MOI.VariableName(), typeof(v[1]))
         @test MOI.get(model, MOI.VariableName(), v[1]) == ""
 
-        @test MOI.canset(model, MOI.VariableName(), typeof(v[1]))
         MOI.set!(model, MOI.VariableName(), v[1], "")
         MOI.set!(model, MOI.VariableName(), v[2], "") # Shouldn't error with duplicate empty name
 
@@ -50,9 +49,9 @@ function nametest(model::MOI.ModelLike)
         @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
 
-        @test MOI.canset(model, MOI.ConstraintName(), typeof(c))
+        @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
         MOI.set!(model, MOI.ConstraintName(), c, "")
-        @test MOI.canset(model, MOI.ConstraintName(), typeof(c2))
+        @test MOI.supports(model, MOI.ConstraintName(), typeof(c2))
         MOI.set!(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
 
         MOI.set!(model, MOI.ConstraintName(), c, "Con0")
@@ -168,28 +167,20 @@ MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariabl
 struct UnknownModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
 MOI.canget(::BadModelAttributeModel, ::UnknownModelAttribute) = true
-# During copy(dest, src::BadModelAttributeModel), canget(src, ...) will return true but canset(dest, ...) will return false.
-# In this case, a correct implementation of copy shouldn't call get(src, ...) since the result will not be used as it won't do set!(dest, ...).
-# If get(src::BadModelAttributeModel, ::UnknownModelAttribute) is defined here, a bad implementation of copy would pass the test.
-# As it is not defined, the bad implementation will get UndefinedMethod
+MOI.get(src::BadModelAttributeModel, ::UnknownModelAttribute) = 0
 MOI.get(::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[UnknownModelAttribute()]
 
 struct UnknownVariableAttribute <: MOI.AbstractVariableAttribute end
 struct BadVariableAttributeModel <: BadModel end
 MOI.canget(::BadVariableAttributeModel, ::UnknownVariableAttribute, ::Type{MOI.VariableIndex}) = true
-# MOI.get is not defined for BadVariableAttribute for the same reason get is not defined UnknownModelAttribute
+MOI.get(::BadVariableAttributeModel, ::UnknownVariableAttribute, ::MOI.VariableIndex) = 0
 MOI.get(::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[UnknownVariableAttribute()]
 
 struct UnknownConstraintAttribute <: MOI.AbstractConstraintAttribute end
 struct BadConstraintAttributeModel <: BadModel end
 MOI.canget(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
-# MOI.get is not defined for UnknownConstraintAttribute for the same reason get is not defined UnknownModelAttribute
+MOI.get(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::MOI.ConstraintIndex) = 0
 MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[UnknownConstraintAttribute()]
-
-function failcopytest(dest::MOI.ModelLike, src::MOI.ModelLike, expected_status)
-    copyresult = MOI.copy!(dest, src)
-    @test copyresult.status == expected_status
-end
 
 function failcopytestc(dest::MOI.ModelLike)
     @test !MOI.supportsconstraint(dest, MOI.SingleVariable, UnknownSet)
@@ -197,15 +188,15 @@ function failcopytestc(dest::MOI.ModelLike)
 end
 function failcopytestia(dest::MOI.ModelLike)
     @test !MOI.supports(dest, UnknownModelAttribute())
-    failcopytest(dest, BadModelAttributeModel(), MOI.CopyUnsupportedAttribute)
+    @test_throws MOI.UnsupportedAttribute MOI.copy!(dest, BadModelAttributeModel())
 end
 function failcopytestva(dest::MOI.ModelLike)
     @test !MOI.supports(dest, UnknownVariableAttribute(), MOI.VariableIndex)
-    failcopytest(dest, BadVariableAttributeModel(), MOI.CopyUnsupportedAttribute)
+    @test_throws MOI.UnsupportedAttribute MOI.copy!(dest, BadVariableAttributeModel())
 end
 function failcopytestca(dest::MOI.ModelLike)
     @test !MOI.supports(dest, UnknownConstraintAttribute(), MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
-    failcopytest(dest, BadConstraintAttributeModel(), MOI.CopyUnsupportedAttribute)
+    @test_throws MOI.UnsupportedAttribute MOI.copy!(dest, BadConstraintAttributeModel())
 end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
@@ -229,9 +220,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.supportsconstraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     @test MOI.supportsconstraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
-    copyresult = MOI.copy!(dest, src, copynames=false)
-    @test copyresult.status == MOI.CopySuccess
-    dict = copyresult.indexmap
+    dict = MOI.copy!(dest, src, copynames=false)
 
     @test !MOI.canget(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
     @test MOI.get(dest, MOI.NumberOfVariables()) == 3

@@ -180,7 +180,7 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
         @testset "ConstraintName" begin
             @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
             @test MOI.get(model, MOI.ConstraintName(), c) == ""
-            @test MOI.canset(model, MOI.ConstraintName(), typeof(c))
+            @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
             MOI.set!(model, MOI.ConstraintName(), c, "c")
             @test MOI.get(model, MOI.ConstraintName(), c) == "c"
         end

@@ -10,11 +10,11 @@ If `F`-in-`S` constraints are only not supported in specific circumstances, e.g.
 supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
 """
-    UnsupportedConstraint{F, S} <: CannotError
+    UnsupportedConstraint{F, S} <: UnsupportedError
 
 Constraints of type `F`-in-`S` are not supported by the model.
 """
-struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError end
+struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError end
 
 """
     CannotAddConstraint{F, S} <: CannotError

@@ -36,6 +36,33 @@ abstract type AbstractConstraintAttribute end
 const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 """
+    struct UnsupportedAttribute{AttrType} <: UnsupportedError
+        attr::AttrType
+    end
+
+Setting attribute `attr` is not supported by the model.
+"""
+struct UnsupportedAttribute{AttrType<:AnyAttribute} <: UnsupportedError
+    attr::AttrType
+end
+# old message:
+# "ModelLike of type $(typeof(model)) does not support setting the attribute $attr"
+
+"""
+    struct CannotSetAttribute{AttrType} <: CannotError
+        attr::AttrType
+    end
+
+Setting attribute `attr` is supported but cannot be added in the current state
+of the model.
+"""
+struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotError
+    attr::AttrType
+end
+
+operation_name(err::Union{UnsupportedAttribute, CannotSetAttribute}) = "Setting attribute $(err.attr)"
+
+"""
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the optimizer attribute `attr`.
@@ -176,43 +203,6 @@ canget(::ModelLike, ::Union{AbstractModelAttribute, AbstractOptimizerAttribute})
 canget(::ModelLike, ::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
 
 """
-    canset(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)::Bool
-
-Return a `Bool` indicating whether it is possible to set the attribute `attr` to the optimizer `optimizer`.
-
-    canset(model::ModelLike, attr::AbstractModelAttribute)::Bool
-
-Return a `Bool` indicating whether it is possible to set the attribute `attr` to the model `model`.
-
-    canset(model::ModelLike, attr::AbstractVariableAttribute, R::Type{VariableIndex})::Bool
-    canset(model::ModelLike, attr::AbstractConstraintAttribute, R::Type{ConstraintIndex{F,S})::Bool
-
-Return a `Bool` indicating whether it is possible to set attribute `attr` applied to the index type `R` in the model `model`.
-
-    canset(model::ModelLike, ::ConstraintSet, ::Type{ConstraintIndex{F,S}})::Bool
-
-Return a `Bool` indicating whether the set in a constraint of type `F`-in-`S`
-can be replaced by another set of the same type `S` as the original set.
-
-    canset(model::ModelLike, ::ConstraintFunction, ::Type{ConstraintIndex{F,S}})::Bool
-
-Return a `Bool` indicating whether the function in a constraint of type
-`F`-in-`S` can be replaced by another set of the same type `F` as the original
-function.
-
-### Examples
-
-```julia
-canset(model, ObjectiveValue())
-canset(model, VariablePrimalStart(), VariableIndex)
-canset(model, ConstraintPrimal(), ConstraintIndex{VectorAffineFunction{Float64},Nonnegatives})
-```
-"""
-function canset end
-canset(::ModelLike, ::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
-canset(::ModelLike, ::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
-
-"""
     set!(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute, value)
 
 Assign `value` to the attribute `attr` of the optimizer `optimizer`.
@@ -282,7 +272,7 @@ set!(model::ModelLike, attr::AnyAttribute, args...) = hidden_set!(model, attr, a
 # ConstraintSet and ConstraintFunction. hidden_set! should not be overloaded by
 # users of MOI.
 function hidden_set!(model::ModelLike, attr::AnyAttribute, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute $attr"))
+    throw(UnsupportedAttribute(attr))
 end
 
 ## Optimizer attributes
@@ -578,14 +568,14 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
-function hidden_set!(model::ModelLike, ::ConstraintFunction, constraint_index::ConstraintIndex{F,S}, func::F) where {F,S}
-    throw(ArgumentError("""Cannot modify functions of different types.
-    Constraint type is $(func_type(constraint_index)) while the replacement
-    function is of type $(typeof(func))."""))
+function hidden_set!(model::ModelLike, attr::ConstraintFunction, constraint_index::ConstraintIndex{F,S}, func::F) where {F,S}
+    throw(UnsupportedAttribute(attr))
 end
 func_type(c::ConstraintIndex{F,S}) where {F, S} = F
 function hidden_set!(model::ModelLike, ::ConstraintFunction, ::ConstraintIndex, ::AbstractFunction)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintFunction`"))
+    throw(ArgumentError("""Cannot modify functions of different types.
+    Constraint type is $(func_type(constraint_index)) while the replacement
+    function is of type $(typeof(func))."""))
 end
 
 """
@@ -595,14 +585,14 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function hidden_set!(model::ModelLike, ::ConstraintSet, constraint_index::ConstraintIndex{F,S}, set::S) where {F,S}
-    throw(ArgumentError("""Cannot modify sets of different types. Constraint
-    type is $(set_type(constraint_index)) while the replacement set is of
-    type $(typeof(set)). Use `transform!` instead."""))
+function hidden_set!(model::ModelLike, attr::ConstraintSet, constraint_index::ConstraintIndex{F,S}, set::S) where {F,S}
+    throw(UnsupportedAttribute(attr))
 end
 set_type(c::ConstraintIndex{F,S}) where {F, S} = S
 function hidden_set!(model::ModelLike, ::ConstraintSet, ::ConstraintIndex, ::AbstractSet)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support setting the attribute `ConstraintSet`"))
+    throw(ArgumentError("""Cannot modify sets of different types. Constraint
+    type is $(set_type(constraint_index)) while the replacement set is of
+    type $(typeof(set)). Use `transform!` instead."""))
 end
 
 ## Termination status

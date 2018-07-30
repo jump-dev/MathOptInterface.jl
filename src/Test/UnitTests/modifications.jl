@@ -22,7 +22,7 @@ function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestCon
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintSet(), typeof(c))
     MOI.set!(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
@@ -92,7 +92,7 @@ function solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfi
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintSet(), typeof(c))
     MOI.set!(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
@@ -160,7 +160,7 @@ function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test MOI.canset(model, MOI.ConstraintFunction(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintFunction(), typeof(c))
     MOI.set!(model, MOI.ConstraintFunction(), c,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
     )

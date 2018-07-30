@@ -87,8 +87,8 @@ function MOI.delete!(instance::MOI.AbstractOptimizer, c::SOCtoPSDCBridge)
 end
 
 MOI.canmodify(::MOI.AbstractOptimizer, ::Type{<:SOCtoPSDCBridge}, ::Type{<:MOI.AbstractFunctionModification}) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SOCtoPSDCBridge}) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SOCtoPSDCBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SOCtoPSDCBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SOCtoPSDCBridge}) = false
 
 """
 The `RSOCtoPSDCBridge` transforms the second order cone constraint ``\\lVert x \\rVert \\le 2tu`` with ``u \\ge 0`` into the semidefinite cone constraints
@@ -154,5 +154,5 @@ function MOI.delete!(instance::MOI.AbstractOptimizer, c::RSOCtoPSDCBridge)
 end
 
 MOI.canmodify(::MOI.AbstractOptimizer, ::Type{<:RSOCtoPSDCBridge}, change) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCtoPSDCBridge}) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RSOCtoPSDCBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCtoPSDCBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RSOCtoPSDCBridge}) = false

@@ -78,48 +78,17 @@ Empty the model, that is, remove all variables, constraints and model attributes
 function empty! end
 
 """
-    CopyStatusCode
-
-An Enum of possible statuses returned by a `copy!` operation through the `CopyResult` struct.
-
-* `CopySuccess`: The copy was successful.
-* `CopyUnsupportedAttribute`: The copy failed because the destination does not support an attribute present in the source.
-* `CopyUnsupportedConstraint`: The copy failed because the destination does not support a constraint present in the source.
-* `CopyOtherError`: The copy failed for a different reason.
-
-In the failure cases:
-
-- See the corresponding `message` field of the `CopyResult` for an explanation of the failure.
-- The state of the destination model is undefined.
-"""
-@enum CopyStatusCode CopySuccess CopyUnsupportedAttribute CopyUnsupportedConstraint CopyOtherError
-
-"""
-    struct CopyResult{T}
-        status::CopyStatusCode
-        message::String # Human-friendly explanation why the copy failed
-        indexmap::T     # Only valid if status is CopySuccess
-    end
-
-A struct returned by `copy!` to indicate success or failure. If success, also exposes a map between the variable and constraint indices of the two models.
-"""
-struct CopyResult{T}
-    status::CopyStatusCode
-    message::String # Human-friendly explanation why the copy failed
-    indexmap::T     # Only valid if status is CopySuccess
-end
-
-"""
-    copy!(dest::ModelLike, src::ModelLike; copynames=true, warnattributes=true)::CopyResult
+    copy!(dest::ModelLike, src::ModelLike; copynames=true, warnattributes=true)
 
 Copy the model from `src` into `dest`. The target `dest` is emptied, and all
 previous indices to variables or constraints in `dest` are invalidated. Returns
-a `CopyResult` object. If the copy is successful, the `CopyResult` contains a
-dictionary-like object that translates variable and constraint indices from the
-`src` model to the corresponding indices in the `dest` model.
+a dictionary-like object that translates variable and constraint indices from
+the `src` model to the corresponding indices in the `dest` model.
 
-If `copynames` is `false`, the `Name`, `VariableName` and `ConstraintName` attributes are not copied even if they are set in `src`.
-If an attribute `attr` cannot be copied from `src` to `dest` then an error is thrown. If an optimizer attribute cannot be copied then:
+If `copynames` is `false`, the `Name`, `VariableName` and `ConstraintName`
+attributes are not copied even if they are set in `src`. If an attribute `attr`
+cannot be copied from `src` to `dest` then an error is thrown. If an optimizer
+attribute cannot be copied then:
 
 * If `warnattributes` is `true`, a warning is displayed, otherwise,
 * The attribute is silently ignored.
@@ -134,15 +103,9 @@ x = addvariable!(src)
 isvalid(src, x)   # true
 isvalid(dest, x)  # false (`dest` has no variables)
 
-copy_result = copy!(dest, src)
-if copy_result.status == CopySuccess
-    index_map = copy_result.indexmap
-    isvalid(dest, x) # false (unless index_map[x] == x)
-    isvalid(dest, index_map[x]) # true
-else
-    println("Copy failed with status ", copy_result.status)
-    println("Failure message: ", copy_result.message)
-end
+index_map = copy!(dest, src)
+isvalid(dest, x) # false (unless index_map[x] == x)
+isvalid(dest, index_map[x]) # true
 ```
 """
 function copy! end

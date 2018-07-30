@@ -4,13 +4,13 @@ end
 
 @testset "Mock optimizer optimizer attributes" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
-    @test MOI.canset(optimizer, MOIU.MockModelAttribute())
+    @test MOI.supports(optimizer, MOIU.MockModelAttribute())
     MOI.set!(optimizer, MOIU.MockModelAttribute(), 10)
     @test MOI.canget(optimizer, MOIU.MockModelAttribute())
     @test MOI.get(optimizer, MOIU.MockModelAttribute()) == 10
 
     v1 = MOI.addvariable!(optimizer)
-    @test MOI.canset(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
+    @test MOI.supports(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
     MOI.set!(optimizer, MOIU.MockVariableAttribute(), v1, 11)
     @test MOI.canget(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), v1) == 11
@@ -19,7 +19,7 @@ end
 
     @test MOI.supportsconstraint(optimizer, MOI.SingleVariable, MOI.GreaterThan{Float64})
     c1 = MOI.addconstraint!(optimizer, MOI.SingleVariable(v1), MOI.GreaterThan(1.0))
-    @test MOI.canset(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
+    @test MOI.supports(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
     MOI.set!(optimizer, MOIU.MockConstraintAttribute(), c1, 12)
     @test MOI.canget(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), c1) == 12

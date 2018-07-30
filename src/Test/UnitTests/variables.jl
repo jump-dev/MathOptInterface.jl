@@ -117,7 +117,7 @@ function variablenames(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     v = MOI.addvariable!(model)
     @test MOI.get(model, MOI.VariableName(), v) == ""
-    @test MOI.canset(model, MOI.VariableName(), typeof(v))
+    @test MOI.supports(model, MOI.VariableName(), typeof(v))
     MOI.set!(model, MOI.VariableName(), v, "x")
     @test MOI.get(model, MOI.VariableName(), v) == "x"
     MOI.set!(model, MOI.VariableName(), v, "y")

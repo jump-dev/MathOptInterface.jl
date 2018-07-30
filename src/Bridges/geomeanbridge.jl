@@ -139,5 +139,5 @@ MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{<:GeoMeanBridge})
 
 # Constraints
 MOI.canmodify(model::MOI.ModelLike, ::Type{<:GeoMeanBridge}, ::Type{<:MOI.AbstractFunctionModification}) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:GeoMeanBridge}) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:GeoMeanBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:GeoMeanBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:GeoMeanBridge}) = false
