@@ -237,7 +237,6 @@ function MOI.set!(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.Abstract
     model.objective = deepcopy(f)
 end
 
-MOI.canmodify(::AbstractModel, ::MOI.ObjectiveFunction, ::Type{<:MOI.AbstractFunctionModification}) = true
 function MOI.modify!(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
     model.objective = modifyfunction(model.objective, change)
 end
@@ -286,7 +285,6 @@ function MOI.delete!(model::AbstractModel, ci::CI)
     end
 end
 
-MOI.canmodify(::AbstractModel, ::Type{<:CI}, ::Type{<:MOI.AbstractFunctionModification}) = true
 function MOI.modify!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
     _modify!(model, ci, getconstrloc(model, ci), change)
 end

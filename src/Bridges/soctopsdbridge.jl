@@ -86,7 +86,6 @@ function MOI.delete!(instance::MOI.AbstractOptimizer, c::SOCtoPSDCBridge)
     MOI.delete!(instance, c.cr)
 end
 
-MOI.canmodify(::MOI.AbstractOptimizer, ::Type{<:SOCtoPSDCBridge}, ::Type{<:MOI.AbstractFunctionModification}) = false
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SOCtoPSDCBridge}) = false
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SOCtoPSDCBridge}) = false
 
@@ -153,6 +152,5 @@ function MOI.delete!(instance::MOI.AbstractOptimizer, c::RSOCtoPSDCBridge)
     MOI.delete!(instance, c.cr)
 end
 
-MOI.canmodify(::MOI.AbstractOptimizer, ::Type{<:RSOCtoPSDCBridge}, change) = false
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCtoPSDCBridge}) = false
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RSOCtoPSDCBridge}) = false

@@ -294,14 +294,7 @@ function MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::M
         return ci
     end
 end
-function MOI.canmodify(uf::UniversalFallback, ::Type{CI{F, S}}, change) where {F, S}
-    if MOI.supportsconstraint(uf.model, F, S)
-        MOI.canmodify(uf.model, CI{F, S}, change)
-    else
-        true
-    end
-end
-function MOI.modify!(uf::UniversalFallback, ci::CI{F, S}, change) where {F, S}
+function MOI.modify!(uf::UniversalFallback, ci::CI{F, S}, change::MOI.AbstractFunctionModification) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
         MOI.modify!(uf.model, ci, change)
     else
@@ -350,7 +343,6 @@ function MOI.set!(uf::UniversalFallback, ::MOI.ConstraintSet, ci::CI{F,S}, set::
 end
 
 # Objective
-MOI.canmodify(uf::UniversalFallback, obj::MOI.ObjectiveFunction, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodify(uf.model, obj, M)
 MOI.modify!(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(uf.model, obj, change)
 
 # Variables

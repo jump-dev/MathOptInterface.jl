@@ -222,10 +222,7 @@ function MOI.delete!(mock::MockOptimizer, idx::MOI.ConstraintIndex)
     MOI.delete!(mock.condual, idx)
 end
 
-function MOI.canmodify(mock::MockOptimizer, ::Type{C}, change) where C <: CI
-    MOI.canmodify(mock.inner_model, C, change)
-end
-function MOI.modify!(mock::MockOptimizer, c::CI, change)
+function MOI.modify!(mock::MockOptimizer, c::CI, change::MOI.AbstractFunctionModification)
     MOI.modify!(mock.inner_model, xor_index(c), xor_variables(change))
 end
 
@@ -235,10 +232,6 @@ end
 
 function MOI.set!(mock::MockOptimizer, ::MOI.ConstraintFunction, c::CI{F,S}, func::F) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     MOI.set!(mock.inner_model, MOI.ConstraintFunction(), xor_index(c), xor_variables(func))
-end
-
-function MOI.canmodify(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change)
-    MOI.canmodify(mock.inner_model, obj, change)
 end
 
 function MOI.modify!(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)

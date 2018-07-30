@@ -240,24 +240,25 @@ function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set
     return cindex
 end
 
-function MOI.canmodify(m::CachingOptimizer, ::Type{C}, change) where C <: CI
-    MOI.canmodify(m.model_cache, C, change) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canmodify(m.optimizer, C, change) || return false
-    end
-    return true
-end
-
-function MOI.modify!(m::CachingOptimizer, cindex::CI, change)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canmodify(m.optimizer, typeof(cindex), typeof(change))
-        resetoptimizer!(m)
-    end
-    @assert MOI.canmodify(m, typeof(cindex), typeof(change))
-    MOI.modify!(m.model_cache, cindex, change)
+function MOI.modify!(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFunctionModification)
     if m.state == AttachedOptimizer
-        MOI.modify!(m.optimizer, m.model_to_optimizer_map[cindex], mapvariables(m.model_to_optimizer_map,change))
+        cindex_optimizer = m.model_to_optimizer_map[cindex]
+        change_optimizer = mapvariables(m.model_to_optimizer_map, change)
+        if m.mode == Automatic
+            try
+                MOI.modify!(m.optimizer, cindex_optimizer, change_optimizer)
+            catch err
+                if err isa MOI.UnsupportedConstraintModification
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.modify!(m.optimizer, cindex_optimizer, change_optimizer)
+        end
     end
-    return
+    MOI.modify!(m.model_cache, cindex, change)
 end
 
 # This function avoids duplicating code in the MOI.set! methods for
@@ -291,24 +292,24 @@ function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintFunction, cindex::CI{F,S}
     replace_constraint_function_or_set!(m, MOI.ConstraintFunction(), cindex, func)
 end
 
-function MOI.canmodify(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change)
-    MOI.canmodify(m.model_cache, obj, change) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canmodify(m.optimizer, obj, change) || return false
-    end
-    return true
-end
-
 function MOI.modify!(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canmodify(m.optimizer, obj, typeof(change))
-        resetoptimizer!(m)
-    end
-    @assert MOI.canmodify(m, obj, typeof(change))
-    MOI.modify!(m.model_cache, obj, change)
     if m.state == AttachedOptimizer
-        MOI.modify!(m.optimizer, obj, mapvariables(m.model_to_optimizer_map,change))
+        change_optimizer = mapvariables(m.model_to_optimizer_map, change)
+        if m.mode == Automatic
+            try
+                MOI.modify!(m.optimizer, obj, change_optimizer)
+            catch err
+                if err isa MOI.UnsupportedObjectiveModification
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.modify!(m.optimizer, obj, change_optimizer)
+        end
     end
-    return
+    MOI.modify!(m.model_cache, obj, change)
 end
 
 MOI.isvalid(m::CachingOptimizer, index::MOI.Index) = MOI.isvalid(m.model_cache, index)

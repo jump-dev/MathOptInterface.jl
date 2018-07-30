@@ -1,44 +1,45 @@
 """
-## Constraint Function
+    struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
+                                             C<:AbstractFunctionModification} <: UnsupportedError
+        change::C
+    end
 
-    canmodify(model::ModelLike, ::Type{CI}, ::Type{M})::Bool where CI<:ConstraintIndex where M<:AbstractFunctionModification
-
-Return a `Bool` indicating whether it is possible to apply a modification of
-type `M` to the function of constraint of type `CI`.
-
-### Examples
-
-```julia
-canmodify(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}, ScalarConstantChange{Float64})
-```
-
-## Objective Function
-
-    canmodify(model::ModelLike, ::ObjectiveFunction, ::Type{M})::Bool where M<:AbstractFunctionModification
-
-Return a `Bool` indicating whether it is possible to apply a modification of
-type `M` to the objective function of model `model`.
-
-### Examples
-
-```julia
-canmodify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstantChange{Float64})
-```
+Constraints of type `F`-in-`S` do not support the constraint modification `change`.
 """
-function canmodify end
-canmodify(model::ModelLike, ref, change) = false
+struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
+                                         C<:AbstractFunctionModification} <: UnsupportedError
+    change::C
+end
+function UnsupportedConstraintModification{F, S}(change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
+    UnsupportedConstraintModification{F, S, typeof(change)}(change)
+end
+
+operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Modifying `$F`-in-`$S` constraints with $(err.change)"
 
 """
+    struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
+        change::C
+    end
+
+The objective function dos not support the constraint modification `change`.
+"""
+struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
+    change::C
+end
+
+operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective function with $(err.change)"
+
+"""
 ## Constraint Function
 
-    modify!(model::ModelLike, c::ConstraintIndex, change::AbstractFunctionModification)
+    modify!(model::ModelLike, ci::ConstraintIndex, change::AbstractFunctionModification)
 
-Apply the modification specified by `change` to the function of constraint `c`.
+Apply the modification specified by `change` to the function of constraint `ci`.
 
 ### Examples
 
 ```julia
-modify!(model, c, ScalarConstantChange(10.0))
+modify!(model, ci, ScalarConstantChange(10.0))
 ```
 
 ## Objective Function
@@ -55,3 +56,13 @@ modify!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstan
 ```
 """
 function modify! end
+
+function modify!(model::ModelLike, ci::ConstraintIndex{F, S},
+                 change::AbstractFunctionModification) where {F, S}
+    throw(UnsupportedConstraintModification{F, S}(change))
+end
+
+function modify!(model::ModelLike, ::ObjectiveFunction,
+                 change::AbstractFunctionModification)
+    throw(UnsupportedObjectiveModification(change))
+end

@@ -51,7 +51,6 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBr
 end
 
 # Constraints
-MOI.canmodify(model::MOI.ModelLike, ::Type{<:SplitIntervalBridge}, ::Type{<:MOI.AbstractFunctionModification}) = true
 function MOI.modify!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
     MOI.modify!(model, c.lower, change)
     MOI.modify!(model, c.upper, change)

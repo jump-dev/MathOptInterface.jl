@@ -133,7 +133,6 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
         # Dual is not yet implemented for RootDet and GeoMean bridges
         @test !MOI.canget(fullbridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
         ci = first(MOI.get(fullbridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
-        @test !MOI.canmodify(fullbridgedmock, typeof(ci), MOI.VectorConstantChange{Float64})
         @test !MOI.supports(fullbridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(fullbridgedmock, MOI.ConstraintFunction(), typeof(ci))
         test_delete_bridge(fullbridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
@@ -168,7 +167,6 @@ end
         bridgedmock = MOIB.SplitInterval{Float64}(mock)
         MOIT.linear10test(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
-        @test MOI.canmodify(bridgedmock, typeof(ci), MOI.ScalarConstantChange{Float64})
         newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridgedmock, MOI.ListOfVariableIndices())), 0.0)
         MOI.set!(bridgedmock, MOI.ConstraintFunction(), ci, newf)
         @test MOI.canget(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
@@ -187,7 +185,6 @@ end
                               (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
         MOIT.rotatedsoc1ftest(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
-        @test !MOI.canmodify(bridgedmock, typeof(ci), MOI.VectorConstantChange{Float64})
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0),))
@@ -201,7 +198,6 @@ end
         # Dual is not yet implemented for GeoMean bridge
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.GeometricMeanCone})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
-        @test !MOI.canmodify(bridgedmock, typeof(ci), MOI.VectorConstantChange{Float64})
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
@@ -216,7 +212,6 @@ end
         MOIT.soc1vtest(bridgedmock, config)
         MOIT.soc1ftest(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone}()))
-        @test !MOI.canmodify(bridgedmock, typeof(ci), MOI.VectorConstantChange{Float64})
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         test_delete_bridge(bridgedmock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
@@ -232,7 +227,6 @@ end
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2, -1/2, √2/8, -1/2, √2/8, √2/8]])
         MOIT.rotatedsoc1ftest(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
-        @test !MOI.canmodify(bridgedmock, typeof(ci), MOI.VectorConstantChange{Float64})
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
@@ -246,7 +240,6 @@ end
         # Dual is not yet implemented for LogDet bridge
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle}()))
-        @test !MOI.canmodify(bridgedmock, typeof(ci), MOI.VectorConstantChange{Float64})
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone, 0), (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
@@ -260,7 +253,6 @@ end
         # Dual is not yet implemented for RootDet bridge
         @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
-        @test !MOI.canmodify(bridgedmock, typeof(ci), MOI.VectorConstantChange{Float64})
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
