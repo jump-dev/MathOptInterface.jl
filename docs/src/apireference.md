@@ -23,7 +23,6 @@ Functions for getting and setting attributes.
 canget
 get
 get!
-canset
 set!
 supports
 ```
@@ -42,8 +41,6 @@ Copying
 
 ```@docs
 copy!
-CopyResult
-CopyStatusCode
 ```
 
 List of model attributes
@@ -129,7 +126,6 @@ BasisStatusCode
 ```@docs
 VariableIndex
 ConstraintIndex
-candelete
 isvalid
 delete!(::ModelLike,::Index)
 ```
@@ -139,7 +135,6 @@ delete!(::ModelLike,::Index)
 Functions for adding variables. For deleting, see index types section.
 
 ```@docs
-canaddvariable
 addvariables!
 addvariable!
 ```
@@ -250,7 +245,6 @@ Functions for modifying objective and constraint functions.
 
 ```@docs
 modify!
-canmodify
 AbstractFunctionModification
 ScalarConstantChange
 VectorConstantChange
@@ -287,6 +281,39 @@ eval_hessian_lagrangian
 eval_hessian_lagrangian_product
 objective_expr
 constraint_expr
+```
+
+## Errors
+
+When an MOI call fails on a model, precise errors should be thrown when possible
+instead of simply calling `error` with a message. This allows for instance to
+the CachingOptimizer to automatically detach the optimizer when an
+incremental update of the model is not supported.
+
+When an invalid index is used in an MOI call, an [`InvalidIndex`](@ref) should
+be thrown:
+```@docs
+InvalidIndex
+```
+
+The rest of the errors defined in MOI fall in two categories represented by the
+following two abstract types:
+```@docs
+UnsupportedError
+CannotError
+```
+
+The different [`UnsupportedError`](@ref) and [`CannotError`](@ref) are the
+following errors:
+```@docs
+UnsupportedAttribute
+CannotSetAttribute
+CannotAddVariable
+UnsupportedConstraint
+CannotAddConstraint
+UnsupportedConstraintModification
+UnsupportedObjectiveModification
+UnsupportedDeletion
 ```
 
 ## Bridges

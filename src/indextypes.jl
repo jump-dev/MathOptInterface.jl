@@ -26,6 +26,13 @@ end
 
 const Index = Union{ConstraintIndex,VariableIndex}
 
+"""
+    struct InvalidIndex{IndexType<:Index} <: Exception
+        index::IndexType
+    end
+
+The index `index` is invalid.
+"""
 struct InvalidIndex{IndexType<:Index} <: Exception
     index::IndexType
 end
