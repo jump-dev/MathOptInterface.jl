@@ -314,21 +314,30 @@ end
 
 MOI.isvalid(m::CachingOptimizer, index::MOI.Index) = MOI.isvalid(m.model_cache, index)
 
-function MOI.candelete(m::CachingOptimizer, index::MOI.Index)
-    MOI.candelete(m.model_cache, index) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.candelete(m.optimizer, m.model_to_optimizer_map[index]) || return false
-    end
-    return true
-end
-
 function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.candelete(m.optimizer, index)
-        resetoptimizer!(m)
-    end
-    @assert MOI.candelete(m, index)
     if m.state == AttachedOptimizer
-        MOI.delete!(m.optimizer, m.model_to_optimizer_map[index])
+        if !MOI.isvalid(m, index)
+            # The index thrown by m.model_cache would be xored
+            throw(MOI.InvalidIndex(index))
+        end
+        index_optimizer = m.model_to_optimizer_map[index]
+        if m.mode == Automatic
+            try
+                MOI.delete!(m.optimizer, index_optimizer)
+            catch err
+                if err isa MOI.UnsupportedDeletion
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.delete!(m.optimizer, index_optimizer)
+        end
+    end
+    # The state may have changed in Automatic mode since resetoptimizer! is
+    # called in case the deletion is not supported
+    if m.state == AttachedOptimizer
         delete!(m.optimizer_to_model_map, m.model_to_optimizer_map[index])
         delete!(m.model_to_optimizer_map, index)
     end

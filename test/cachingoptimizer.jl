@@ -73,8 +73,8 @@
     MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(12.0)
 
-    @test MOI.candelete(m, x[2])
     MOI.delete!(m, x[2])
+    @test_throws MOI.InvalidIndex{typeof(x[2])} MOI.delete!(m, x[2])
     @test !MOI.isvalid(m, x[2])
 
     # TODO: test more constraint modifications

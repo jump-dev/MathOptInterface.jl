@@ -212,14 +212,21 @@ end
 
 MOI.isvalid(mock::MockOptimizer, idx::MOI.Index) = MOI.isvalid(mock.inner_model, xor_index(idx))
 
-MOI.candelete(mock::MockOptimizer, idx::MOI.Index) = MOI.candelete(mock.inner_model, xor_index(idx))
-function MOI.delete!(mock::MockOptimizer, idx::MOI.VariableIndex)
-    MOI.delete!(mock.inner_model, xor_index(idx))
-    MOI.delete!(mock.varprimal, idx)
+function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
+    if !MOI.isvalid(mock, index)
+        # The index thrown by `mock.inner_model` would be xored
+        throw(MOI.InvalidIndex(index))
+    end
+    MOI.delete!(mock.inner_model, xor_index(index))
+    MOI.delete!(mock.varprimal, index)
 end
-function MOI.delete!(mock::MockOptimizer, idx::MOI.ConstraintIndex)
-    MOI.delete!(mock.inner_model, xor_index(idx))
-    MOI.delete!(mock.condual, idx)
+function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
+    if !MOI.isvalid(mock, index)
+        # The index thrown by `mock.inner_model` would be xored
+        throw(MOI.InvalidIndex(index))
+    end
+    MOI.delete!(mock.inner_model, xor_index(index))
+    MOI.delete!(mock.condual, index)
 end
 
 function MOI.modify!(mock::MockOptimizer, c::CI, change::MOI.AbstractFunctionModification)

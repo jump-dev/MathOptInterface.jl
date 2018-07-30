@@ -218,8 +218,13 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConf
         constraint_primal = [(c1, [0.0]), (c2, 0.0)]
     )
     # now delete the VectorAffineFunction
-    @test MOI.candelete(model, c1)
     MOI.delete!(model, c1)
+    @test_throws MOI.InvalidIndex{typeof(c1)} MOI.delete!(model, c1)
+    try
+        MOI.delete!(model, c1)
+    catch err
+        @test err.index == c1
+    end
     test_model_solution(model, config; objective_value = 1.0,
         constraint_primal = [(c2, 1.0)]
     )
@@ -229,7 +234,6 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConf
         constraint_primal = [(c2, 1.0), (c3, [-1.0])]
     )
     # delete the ScalarAffineFunction
-    @test MOI.candelete(model, c2)
     MOI.delete!(model, c2)
     test_model_solution(model, config; objective_value = 2.0,
         constraint_primal = [(c3, [0.0])]

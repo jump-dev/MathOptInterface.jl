@@ -54,14 +54,6 @@ MOI.supports(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractModelAttribute,
 MOI.copy!(b::AbstractBridgeOptimizer, src::MOI.ModelLike; copynames=false) = MOIU.defaultcopy!(b, src, copynames)
 
 # References
-MOI.candelete(b::AbstractBridgeOptimizer, vi::VI) = MOI.candelete(b.model, vi)
-function MOI.candelete(b::AbstractBridgeOptimizer, ci::CI)
-    if isbridged(b, typeof(ci))
-        MOI.candelete(b.bridged, ci) && MOI.candelete(b, bridge(b, ci))
-    else
-        MOI.candelete(b.model, ci)
-    end
-end
 MOI.isvalid(b::AbstractBridgeOptimizer, vi::VI) = MOI.isvalid(b.model, vi)
 function MOI.isvalid(b::AbstractBridgeOptimizer, ci::CI)
     if isbridged(b, typeof(ci))
@@ -73,6 +65,9 @@ end
 MOI.delete!(b::AbstractBridgeOptimizer, vi::VI) = MOI.delete!(b.model, vi)
 function MOI.delete!(b::AbstractBridgeOptimizer, ci::CI)
     if isbridged(b, typeof(ci))
+        if !MOI.isvalid(b, ci)
+            throw(MOI.InvalidIndex(ci))
+        end
         MOI.delete!(b, bridge(b, ci))
         delete!(b.bridges, ci)
         MOI.delete!(b.bridged, ci)

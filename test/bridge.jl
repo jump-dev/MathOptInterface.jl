@@ -18,8 +18,13 @@ function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintI
         test_noc(m, noc...)
     end
     @test MOI.isvalid(m, ci)
-    @test MOI.candelete(m, ci)
     MOI.delete!(m, ci)
+    @test_throws MOI.InvalidIndex{typeof(ci)} MOI.delete!(m, ci)
+    try
+        MOI.delete!(m, ci)
+    catch err
+        @test err.index == ci
+    end
     @test !MOI.isvalid(m, ci)
     @test isempty(m.bridges)
     test_noc(m, F, S, 0)
@@ -75,7 +80,6 @@ end
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
 
         @test MOI.isvalid(model, c2)
-        @test MOI.candelete(model, c2)
         MOI.delete!(model, c2)
 
         @test MOI.canget(model, MOI.ListOfConstraints())

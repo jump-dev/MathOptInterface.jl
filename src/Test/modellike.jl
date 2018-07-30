@@ -84,19 +84,15 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1") == c
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con0") == c2
 
-        if MOI.candelete(model, v[2])
-            MOI.delete!(model, v[2])
-            @test !MOI.canget(model, MOI.VariableIndex, "Var2")
-            @test_throws KeyError MOI.get(model, MOI.VariableIndex, "Var2")
-        end
+        MOI.delete!(model, v[2])
+        @test !MOI.canget(model, MOI.VariableIndex, "Var2")
+        @test_throws KeyError MOI.get(model, MOI.VariableIndex, "Var2")
 
-        if MOI.candelete(model, c)
-            MOI.delete!(model, c)
-            @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
-            @test !MOI.canget(model, MOI.ConstraintIndex, "Con1")
-            @test_throws KeyError MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
-            @test_throws KeyError MOI.get(model, MOI.ConstraintIndex, "Con1")
-        end
+        MOI.delete!(model, c)
+        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
+        @test !MOI.canget(model, MOI.ConstraintIndex, "Con1")
+        @test_throws KeyError MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
+        @test_throws KeyError MOI.get(model, MOI.ConstraintIndex, "Con1")
     end
 end
 

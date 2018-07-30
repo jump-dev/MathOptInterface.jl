@@ -56,7 +56,6 @@ function delete_variable(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.addvariable!(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    @test MOI.candelete(model, v)
     MOI.delete!(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
 end
@@ -73,16 +72,18 @@ function delete_variables(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-    @test MOI.candelete(model, v)
     MOI.delete!(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.addvariables!(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-    @test MOI.candelete(model, v[1])
     MOI.delete!(model, v[1])
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    @test !MOI.candelete(model, v[1])
-    @test MOI.candelete(model, v[2])
+    @test_throws MOI.InvalidIndex{MOI.VariableIndex} MOI.delete!(model, v[1])
+    try
+        MOI.delete!(model, v[1])
+    catch err
+        @test err.index == v[1]
+    end
     @test !MOI.isvalid(model, v[1])
     @test MOI.isvalid(model, v[2])
 end

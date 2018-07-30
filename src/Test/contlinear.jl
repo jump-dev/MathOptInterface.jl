@@ -165,7 +165,6 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.modify_lhs
         MOI.modify!(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
     else
-        @test MOI.candelete(model, c)
         MOI.delete!(model, c)
         cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0,1.0], v), 0.0)
         c = MOI.addconstraint!(model, cf, MOI.LessThan(1.0))
@@ -249,7 +248,6 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     MOI.supports(model, MOI.ConstraintSet(), typeof(vc1))
     MOI.set!(model, MOI.ConstraintSet(), vc1, MOI.GreaterThan(0.0))
 
-    @test MOI.candelete(model, vc3)
     MOI.delete!(model, vc3)
 
     vc3 = MOI.addconstraint!(model, MOI.SingleVariable(v[3]), MOI.EqualTo(0.0))
@@ -278,7 +276,6 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # max x + 2z
     # s.t. x + y + z == 2 (c)
     # x,y >= 0, z = 0
-    @test MOI.candelete(model, c)
     MOI.delete!(model, c)
     # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0], [v; v; v]), 0.0)
@@ -742,7 +739,6 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     if config.modify_lhs
         MOI.modify!(model, c1, MOI.ScalarCoefficientChange(y, 3.0))
     else
-        @test MOI.candelete(model, c1)
         MOI.delete!(model, c1)
         cf1 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0,3.0], [x,y]), 0.0)
         c1 = MOI.addconstraint!(model, cf1, MOI.LessThan(4.0))
@@ -771,7 +767,6 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     #        x >= 0, y >= 0
     #
     #   solution: x = 4, y = 0, objv = 4
-    @test MOI.candelete(model, c1)
     MOI.delete!(model, c1)
 
     if config.solve
@@ -797,7 +792,6 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     #           y >= 0
     #
     #   solution: y = 2, objv = 2
-    @test MOI.candelete(model, x)
     MOI.delete!(model, x)
 
     if config.solve
@@ -929,7 +923,6 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     if config.modify_lhs
         MOI.modify!(model, c1, MOI.VectorConstantChange([-100.0]))
     else
-        @test MOI.candelete(model, c1)
         MOI.delete!(model, c1)
         c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-100.0]), MOI.Nonnegatives(1))
     end
@@ -951,7 +944,6 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     if config.modify_lhs
         MOI.modify!(model, c2, MOI.VectorConstantChange([100.0]))
     else
-        @test MOI.candelete(model, c2)
         MOI.delete!(model, c2)
         c2 = MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [100.0]), MOI.Nonpositives(1))
     end
@@ -1513,7 +1505,6 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
         end
     end
 
-    @test MOI.candelete(model, [x, z])
     MOI.delete!(model, [x, z])
 
     if config.solve

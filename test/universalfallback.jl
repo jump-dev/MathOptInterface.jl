@@ -45,10 +45,10 @@ function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfu
     @test !MOI.canget(uf, attr, I)
     @test isempty(MOI.get(uf, listattr))
 
-    @test MOI.candelete(uf, u)
     @test MOI.isvalid(uf, u)
     MOI.delete!(uf, u)
     @test !MOI.isvalid(uf, u)
+    @test_throws MOI.InvalidIndex{typeof(u)} MOI.delete!(uf, u)
     @test !MOI.canget(model, attr, I)
     @test !MOI.canget(uf, attr, I)
     @test isempty(MOI.get(uf, listattr))

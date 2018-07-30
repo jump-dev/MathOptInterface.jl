@@ -43,10 +43,3 @@ MOI.supportsconstraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction},
 Return a list of the types of constraints that bridges of type `BT` add for bridging an `F`-in-`S` constraints.
 """
 function addedconstrainttypes end
-
-"""
-    MOI.candelete(model::MOI.ModelLike, b::AbstractBridge)
-
-Return a `Bool` indicating whether the bridge `b` can be removed from the model `model`.
-"""
-MOI.candelete(model::MOI.ModelLike, c::AbstractBridge) = true

@@ -163,9 +163,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.canget(model, MOI.DualStatus()) == false
         end
 
-        @test MOI.candelete(model, c1)
         MOI.delete!(model, c1)
-        @test MOI.candelete(model, c2)
         MOI.delete!(model, c2)
 
         if config.solve
@@ -265,7 +263,6 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         end
 
         for cref in bin_constraints
-            @test MOI.candelete(model, cref)
             MOI.delete!(model, cref)
         end
 

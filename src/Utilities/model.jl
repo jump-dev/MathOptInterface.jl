@@ -102,6 +102,9 @@ function _removevar!(constrs::Vector{<:C{MOI.SingleVariable}}, vi::VI)
     rm
 end
 function MOI.delete!(model::AbstractModel, vi::VI)
+    if !MOI.isvalid(model, vi)
+        throw(MOI.InvalidIndex(vi))
+    end
     model.objective = removevariable(model.objective, vi)
     rm = broadcastvcat(constrs -> _removevar!(constrs, vi), model)
     for ci in rm
@@ -273,8 +276,10 @@ function MOI.addconstraint!(model::AbstractModel, f::F, s::S) where {F<:MOI.Abst
     end
 end
 
-MOI.candelete(model::AbstractModel, i::MOI.Index) = MOI.isvalid(model, i)
 function MOI.delete!(model::AbstractModel, ci::CI)
+    if !MOI.isvalid(model, ci)
+        throw(MOI.InvalidIndex(ci))
+    end
     for (ci_next, _, _) in _delete!(model, ci, getconstrloc(model, ci))
         model.constrmap[ci_next.value] -= 1
     end

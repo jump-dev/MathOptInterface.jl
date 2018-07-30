@@ -26,12 +26,13 @@ end
 
 const Index = Union{ConstraintIndex,VariableIndex}
 
-"""
-    candelete(model::ModelLike, index::Index)::Bool
+struct InvalidIndex{IndexType<:Index} <: Exception
+    index::IndexType
+end
 
-Return a `Bool` indicating whether the object referred to by `index` can be removed from the model `model`.
-"""
-candelete(model::ModelLike, ref::Index) = false
+function Base.showerror(io::IO, err::InvalidIndex)
+    print("The index $(err.index) is invalid. Note that an index becomes invalid after it has been deleted.")
+end
 
 """
     isvalid(model::ModelLike, index::Index)::Bool
@@ -41,18 +42,22 @@ Return a `Bool` indicating whether this index refers to a valid object in the mo
 isvalid(model::ModelLike, ref::Index) = false
 
 """
+    UnsupportedDeletion{IndexType} <: UnsupportedError
+
+Deleting indices of type `IndexType` is not supported by the model.
+"""
+struct UnsupportedDeletion{IndexType<:Index} <: UnsupportedError end
+
+function operation_name(::UnsupportedDeletion{IndexType}) where {IndexType<:Index}
+    return "Deleting indices of type `$IndexType`"
+end
+
+"""
     delete!(model::ModelLike, index::Index)
 
 Delete the referenced object from the model.
 """
-Base.delete!(model::ModelLike, index::Index) = throw(MethodError(Base.delete!, (model, index)))
-
-"""
-    candelete(model::ModelLike, indices::Vector{<:Index})::Bool
-
-Return a `Bool` indicating whether all the objects referred to by `indices` can be removed from the model `model`.
-"""
-candelete(model::ModelLike, indices::Vector{<:Index}) = all(index -> candelete(model, index), indices)
+Base.delete!(model::ModelLike, index::Index) = throw(UnsupportedDeletion{typeof(index)}())
 
 """
     delete!{R}(model::ModelLike, indices::Vector{R<:Index})
