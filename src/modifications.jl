@@ -4,7 +4,8 @@
         change::C
     end
 
-Constraints of type `F`-in-`S` do not support the constraint modification `change`.
+An error indicating that constraints of type `F`-in-`S` do not support the
+constraint modification `change`.
 """
 struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
                                          C<:AbstractFunctionModification} <: UnsupportedError
@@ -21,7 +22,8 @@ operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Mod
         change::C
     end
 
-The objective function dos not support the constraint modification `change`.
+An error indicating that the objective function dos not support the constraint
+modification `change`.
 """
 struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
     change::C

@@ -40,7 +40,7 @@ const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, A
         attr::AttrType
     end
 
-Setting attribute `attr` is not supported by the model.
+An error indicating that setting attribute `attr` is not supported by the model.
 """
 struct UnsupportedAttribute{AttrType<:AnyAttribute} <: UnsupportedError
     attr::AttrType
@@ -51,8 +51,8 @@ end
         attr::AttrType
     end
 
-Setting attribute `attr` is supported but cannot be added in the current state
-of the model.
+An error indicating that setting attribute `attr` is supported but cannot be
+added in the current state of the model.
 """
 struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotError
     attr::AttrType

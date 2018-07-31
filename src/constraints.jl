@@ -12,15 +12,16 @@ supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:Abstra
 """
     UnsupportedConstraint{F, S} <: UnsupportedError
 
-Constraints of type `F`-in-`S` are not supported by the model.
+An error indicating that constraints of type `F`-in-`S` are not supported by
+the model.
 """
 struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError end
 
 """
     CannotAddConstraint{F, S} <: CannotError
 
-Constraints of type `F`-in-`S` are supported but cannot be added in the current
-state of the model.
+An error indicating that constraints of type `F`-in-`S` are supported but
+cannot be added in the current state of the model.
 """
 struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError end
 

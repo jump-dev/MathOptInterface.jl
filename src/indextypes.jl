@@ -31,7 +31,7 @@ const Index = Union{ConstraintIndex,VariableIndex}
         index::IndexType
     end
 
-The index `index` is invalid.
+An error indicating that the index `index` is invalid.
 """
 struct InvalidIndex{IndexType<:Index} <: Exception
     index::IndexType
@@ -51,7 +51,8 @@ isvalid(model::ModelLike, ref::Index) = false
 """
     UnsupportedDeletion{IndexType} <: UnsupportedError
 
-Deleting indices of type `IndexType` is not supported by the model.
+An error indicating that deleting indices of type `IndexType` is not supported
+by the model.
 """
 struct UnsupportedDeletion{IndexType<:Index} <: UnsupportedError end
 

@@ -3,7 +3,8 @@
 """
     CannotAddVariable <: CannotError
 
-Variables cannot be added in the current state of the model.
+An error indicating that variables cannot be added in the current state of the
+model.
 """
 struct CannotAddVariable <: CannotError end
 
