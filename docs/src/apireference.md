@@ -286,9 +286,11 @@ constraint_expr
 ## Errors
 
 When an MOI call fails on a model, precise errors should be thrown when possible
-instead of simply calling `error` with a message. This allows for instance to
-the CachingOptimizer to automatically detach the optimizer when an
-incremental update of the model is not supported.
+instead of simply calling `error` with a message. The docstrings for the
+respective methods describe the errors that the implementation should thrown in
+certain situations. This error-reporting system allows code to distinguish
+between internal errors (that should be shown to the user) and unsupported
+operations which may have automatic workarounds.
 
 When an invalid index is used in an MOI call, an [`InvalidIndex`](@ref) should
 be thrown:
