@@ -86,12 +86,15 @@ a dictionary-like object that translates variable and constraint indices from
 the `src` model to the corresponding indices in the `dest` model.
 
 If `copynames` is `false`, the `Name`, `VariableName` and `ConstraintName`
-attributes are not copied even if they are set in `src`. If an attribute `attr`
-cannot be copied from `src` to `dest` then an error is thrown. If an optimizer
-attribute cannot be copied then:
+attributes are not copied even if they are set in `src`. If a constraint that
+is copied from `src` is not supported by `dest` then an
+[`UnsupportedConstraint`](@ref) error is thrown. Similarly, if a model, variable
+or constraint attribute that is copied from `src` is not supported by `dest`
+then an [`UnsupportedAttribute`](@ref) error is thrown. Unsupported *optimizer*
+attributes are treated differently:
 
 * If `warnattributes` is `true`, a warning is displayed, otherwise,
-* The attribute is silently ignored.
+* the attribute is silently ignored.
 
 ### Example
 
