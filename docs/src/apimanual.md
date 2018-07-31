@@ -362,7 +362,7 @@ For solvers which perform a search based only on local criteria (for example, gr
 ```julia
 using MathOptInterface
 const MOI = MathOptInterface
-using MathOptInterfaceGLPK
+using GLPK
 
 # Solve the binary-constrained knapsack problem: max c'x: w'x <= C, x binary using GLPK.
 
@@ -372,7 +372,7 @@ C = 3.2
 
 numvariables = length(c)
 
-optimizer = MathOptInterfaceGLPK.GLPKOptimizerMIP()
+optimizer = GLPK.GLPKOptimizerMIP()
 
 # create the variables in the problem
 x = MOI.addvariables!(optimizer, numvariables)
