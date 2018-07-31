@@ -11,6 +11,7 @@ model.
 struct CannotAddVariable <: CannotError
     message::String # Human-friendly explanation why the attribute cannot be set
 end
+CannotAddVariable() = CannotAddVariable("")
 
 operation_name(::CannotAddVariable) = "Adding variables"
 message(err::CannotAddVariable) = err.message

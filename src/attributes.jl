@@ -59,6 +59,7 @@ struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotError
     attr::AttrType
 	message::String # Human-friendly explanation why the attribute cannot be set
 end
+CannotSetAttribute(attr::AnyAttribute) = CannotSetAttribute(attr, "")
 
 operation_name(err::Union{UnsupportedAttribute, CannotSetAttribute}) = "Setting attribute $(err.attr)"
 message(err::CannotSetAttribute) = err.message

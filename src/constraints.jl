@@ -28,6 +28,7 @@ cannot be added in the current state of the model.
 struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
     message::String # Human-friendly explanation why the attribute cannot be set
 end
+CannotAddConstraint{F, S}() where {F, S} = CannotAddConstraint{F, S}("")
 
 operation_name(::Union{UnsupportedConstraint{F, S}, CannotAddConstraint{F, S}}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 message(err::CannotAddConstraint) = err.message
