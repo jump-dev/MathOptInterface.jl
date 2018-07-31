@@ -30,7 +30,7 @@ struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
 end
 
 operation_name(::Union{UnsupportedConstraint{F, S}, CannotAddConstraint{F, S}}) where {F, S} = "Adding `$F`-in-`$S` constraints"
-message(err::CannotAttConstraint) = err.message
+message(err::CannotAddConstraint) = err.message
 
 """
     addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
@@ -41,6 +41,11 @@ Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, 
     addconstraint!(model::ModelLike, vec::Vector{VariableIndex}, set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
+
+An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
+`F`-in-`S` constraints and a [`CannotAddConstraint`](@ref) error is thrown if
+it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
+current state.
 """
 function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractSet)
     throw(UnsupportedConstraint{typeof(func), typeof(set)}())

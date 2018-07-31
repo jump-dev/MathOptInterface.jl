@@ -61,7 +61,7 @@ struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotError
 end
 
 operation_name(err::Union{UnsupportedAttribute, CannotSetAttribute}) = "Setting attribute $(err.attr)"
-message(err::CannotAttConstraint) = err.message
+message(err::CannotSetAttribute) = err.message
 
 """
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
@@ -227,6 +227,11 @@ Assign a value to the attribute `attr` of constraint `c` in model `model`.
     set!(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `model`.
+
+An [`UnsupportedAttribute`](@ref) error is thrown if `model` does not support
+setting attributes `attr` and a [`CannotSetAttribute`](@ref) error is thrown if
+it supports setting attributes `attr` but it cannot set this attribute the
+current state of the model.
 
 ### Replace set in a constraint
 

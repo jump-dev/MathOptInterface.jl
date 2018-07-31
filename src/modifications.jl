@@ -38,6 +38,9 @@ operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective
 
 Apply the modification specified by `change` to the function of constraint `ci`.
 
+An [`UnsupportedConstraintModification`](@ref) error is thrown if modifying
+constraints is not supported by the model `model`.
+
 ### Examples
 
 ```julia
@@ -50,6 +53,9 @@ modify!(model, ci, ScalarConstantChange(10.0))
 
 Apply the modification specified by `change` to the objective function of
 `model`. To change the function completely, call `set!` instead.
+
+An [`UnsupportedObjectiveModification`](@ref) error is thrown if modifying
+objectives is not supported by the model `model`.
 
 ### Examples
 
