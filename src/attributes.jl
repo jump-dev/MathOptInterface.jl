@@ -49,6 +49,7 @@ end
 """
     struct CannotSetAttribute{AttrType} <: CannotError
         attr::AttrType
+        message::String # Human-friendly explanation why the attribute cannot be set
     end
 
 An error indicating that setting attribute `attr` is supported but cannot be
@@ -56,9 +57,11 @@ added in the current state of the model.
 """
 struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotError
     attr::AttrType
+	message::String # Human-friendly explanation why the attribute cannot be set
 end
 
 operation_name(err::Union{UnsupportedAttribute, CannotSetAttribute}) = "Setting attribute $(err.attr)"
+message(err::CannotAttConstraint) = err.message
 
 """
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool

@@ -18,14 +18,19 @@ the model.
 struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError end
 
 """
-    CannotAddConstraint{F, S} <: CannotError
+    struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
+        message::String # Human-friendly explanation why the attribute cannot be set
+    end
 
 An error indicating that constraints of type `F`-in-`S` are supported but
 cannot be added in the current state of the model.
 """
-struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError end
+struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
+    message::String # Human-friendly explanation why the attribute cannot be set
+end
 
 operation_name(::Union{UnsupportedConstraint{F, S}, CannotAddConstraint{F, S}}) where {F, S} = "Adding `$F`-in-`$S` constraints"
+message(err::CannotAttConstraint) = err.message
 
 """
     addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}

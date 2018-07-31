@@ -1,14 +1,19 @@
 # Variables
 
 """
-    CannotAddVariable <: CannotError
+    struct CannotAddVariable <: CannotError
+        message::String # Human-friendly explanation why the attribute cannot be set
+    end
 
 An error indicating that variables cannot be added in the current state of the
 model.
 """
-struct CannotAddVariable <: CannotError end
+struct CannotAddVariable <: CannotError
+    message::String # Human-friendly explanation why the attribute cannot be set
+end
 
 operation_name(::CannotAddVariable) = "Adding variables"
+message(err::CannotAttConstraint) = err.message
 
 """
     addvariables!(model::ModelLike, n::Int)::Vector{VariableIndex}
