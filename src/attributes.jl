@@ -45,8 +45,6 @@ Setting attribute `attr` is not supported by the model.
 struct UnsupportedAttribute{AttrType<:AnyAttribute} <: UnsupportedError
     attr::AttrType
 end
-# old message:
-# "ModelLike of type $(typeof(model)) does not support setting the attribute $attr"
 
 """
     struct CannotSetAttribute{AttrType} <: CannotError
