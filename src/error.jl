@@ -25,5 +25,5 @@ applied in the current state of the model.
 abstract type CannotError <: Exception end
 
 function Base.showerror(io::IO, err::CannotError)
-    print(io, typeof(err), ": ", operation_name(err), " cannot be done in the current state of the model even if the operation is supported. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode.")
+    print(io, typeof(err), ": ", operation_name(err), " cannot be performed in the current state of the model even if the operation is supported. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode.")
 end
