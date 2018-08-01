@@ -54,14 +54,6 @@ MOI.supports(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractModelAttribute,
 MOI.copy!(b::AbstractBridgeOptimizer, src::MOI.ModelLike; copynames=false) = MOIU.defaultcopy!(b, src, copynames)
 
 # References
-MOI.candelete(b::AbstractBridgeOptimizer, vi::VI) = MOI.candelete(b.model, vi)
-function MOI.candelete(b::AbstractBridgeOptimizer, ci::CI)
-    if isbridged(b, typeof(ci))
-        MOI.candelete(b.bridged, ci) && MOI.candelete(b, bridge(b, ci))
-    else
-        MOI.candelete(b.model, ci)
-    end
-end
 MOI.isvalid(b::AbstractBridgeOptimizer, vi::VI) = MOI.isvalid(b.model, vi)
 function MOI.isvalid(b::AbstractBridgeOptimizer, ci::CI)
     if isbridged(b, typeof(ci))
@@ -73,6 +65,9 @@ end
 MOI.delete!(b::AbstractBridgeOptimizer, vi::VI) = MOI.delete!(b.model, vi)
 function MOI.delete!(b::AbstractBridgeOptimizer, ci::CI)
     if isbridged(b, typeof(ci))
+        if !MOI.isvalid(b, ci)
+            throw(MOI.InvalidIndex(ci))
+        end
         MOI.delete!(b, bridge(b, ci))
         delete!(b.bridges, ci)
         MOI.delete!(b.bridged, ci)
@@ -132,20 +127,22 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
     deleteat!(list_of_types, types_to_remove)
     list_of_types
 end
-for f in (:canget, :canset, :get, :get!)
+for f in (:canget, :get, :get!)
     @eval begin
         MOI.$f(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractModelAttribute, MOI.AbstractOptimizerAttribute}) = MOI.$f(b.model, attr)
     end
 end
 # Objective function and model name
 MOI.set!(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractModelAttribute, MOI.AbstractOptimizerAttribute}, value) = MOI.set!(b.model, attr, value)
-for f in (:canget, :canset)
-    @eval begin
-        MOI.$f(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, index::Type{<:MOI.Index}) = MOI.$f(b.model, attr, index)
-    end
-end
+MOI.canget(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, index::Type{<:MOI.Index}) = MOI.canget(b.model, attr, index)
 MOI.get(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, index::MOI.Index) = MOI.get(b.model, attr, index)
 MOI.get(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector{<:MOI.Index}) = MOI.get(b.model, attr, indices)
+function MOI.supports(b::AbstractBridgeOptimizer,
+                      attr::Union{MOI.AbstractVariableAttribute,
+                                  MOI.AbstractConstraintAttribute},
+                      IndexType::Type{<:MOI.Index})
+    return MOI.supports(b.model, attr, IndexType)
+end
 MOI.set!(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, index::MOI.Index, value) = MOI.set!(b.model, attr, index, value)
 MOI.set!(b::AbstractBridgeOptimizer, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector{<:MOI.Index}, values::Vector) = MOI.set!(b.model, attr, indices, values)
 
@@ -192,13 +189,6 @@ function MOI.supportsconstraint(b::AbstractBridgeOptimizer, F::Type{<:MOI.Abstra
         MOI.supportsconstraint(b.model, F, S)
     end
 end
-function MOI.canaddconstraint(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    if isbridged(b, F, S)
-        supportsbridgingconstraint(b, F, S) && MOI.canaddconstraint(b.bridged, F, S) && all(C -> MOI.canaddconstraint(b, C...), addedconstrainttypes(bridgetype(b, F, S), F, S))
-    else
-        MOI.canaddconstraint(b.model, F, S)
-    end
-end
 function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction, s::MOI.AbstractSet)
     if isbridged(b, typeof(f), typeof(s))
         ci = MOI.addconstraint!(b.bridged, f, s)
@@ -209,14 +199,7 @@ function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         MOI.addconstraint!(b.model, f, s)
     end
 end
-function MOI.canmodify(b::AbstractBridgeOptimizer, ::Type{CI{F, S}}, ::Type{Chg}) where {F, S, Chg<:MOI.AbstractFunctionModification}
-    if isbridged(b, CI{F, S})
-        MOI.canmodify(b.bridged, CI{F, S}, Chg) && MOI.canmodify(b, MOIB.bridgetype(b, F, S), Chg)
-    else
-        MOI.canmodify(b.model, CI{F, S}, Chg)
-    end
-end
-function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)
+function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change::MOI.AbstractFunctionModification)
     if isbridged(b, typeof(ci))
         MOI.modify!(b, bridge(b, ci), change)
         MOI.modify!(b.bridged, ci, change)
@@ -225,11 +208,11 @@ function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI, change)
     end
 end
 
-function MOI.canset(b::AbstractBridgeOptimizer, attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet}, ::Type{CI{F, S}}) where {F, S}
+function MOI.supports(b::AbstractBridgeOptimizer, attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet}, ::Type{CI{F, S}}) where {F, S}
     if isbridged(b, CI{F, S})
-        MOI.canset(b.bridged, attr, CI{F, S}) && MOI.canset(b, attr, MOIB.bridgetype(b, F, S))
+        MOI.supports(b.bridged, attr, CI{F, S}) && MOI.supports(b, attr, MOIB.bridgetype(b, F, S))
     else
-        MOI.canset(b.model, attr, CI{F, S})
+        MOI.supports(b.model, attr, CI{F, S})
     end
 end
 
@@ -252,10 +235,8 @@ function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction, constrai
 end
 
 # Objective
-MOI.canmodify(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, ::Type{M}) where M<:MOI.AbstractFunctionModification = MOI.canmodify(b.model, obj, M)
 MOI.modify!(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(b.model, obj, change)
 
 # Variables
-MOI.canaddvariable(b::AbstractBridgeOptimizer) = MOI.canaddvariable(b.model)
 MOI.addvariable!(b::AbstractBridgeOptimizer) = MOI.addvariable!(b.model)
 MOI.addvariables!(b::AbstractBridgeOptimizer, n) = MOI.addvariables!(b.model, n)

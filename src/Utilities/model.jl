@@ -55,7 +55,6 @@ getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
 # Variables
 MOI.get(model::AbstractModel, ::MOI.NumberOfVariables) = length(model.varindices)
-MOI.canaddvariable(model::AbstractModel) = true
 function MOI.addvariable!(model::AbstractModel)
     v = VI(model.nextvariableid += 1)
     push!(model.varindices, v)
@@ -103,6 +102,9 @@ function _removevar!(constrs::Vector{<:C{MOI.SingleVariable}}, vi::VI)
     rm
 end
 function MOI.delete!(model::AbstractModel, vi::VI)
+    if !MOI.isvalid(model, vi)
+        throw(MOI.InvalidIndex(vi))
+    end
     model.objective = removevariable(model.objective, vi)
     rm = broadcastvcat(constrs -> _removevar!(constrs, vi), model)
     for ci in rm
@@ -138,7 +140,7 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
 end
 
 # Names
-MOI.canset(::AbstractModel, ::MOI.Name) = true
+MOI.supports(::AbstractModel, ::MOI.Name) = true
 function MOI.set!(model::AbstractModel, ::MOI.Name, name::String)
     model.name = name
 end
@@ -182,7 +184,7 @@ function setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict
     return
 end
 
-MOI.canset(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
+MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
     if check_can_assign_name(model, VI, vi, name)
         setname(model.varnames, model.namesvar, vi, name)
@@ -199,7 +201,7 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vecto
     isempty(model.varnames) ? [] : [MOI.VariableName()]
 end
 
-MOI.canset(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
+MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
     if check_can_assign_name(model, CI, ci, name)
         setname(model.connames, model.namescon, ci, name)
@@ -219,7 +221,7 @@ end
 # Objective
 MOI.canget(model::AbstractModel, ::MOI.ObjectiveSense) = model.senseset
 MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
-MOI.canset(model::AbstractModel, ::MOI.ObjectiveSense) = true
+MOI.supports(model::AbstractModel, ::MOI.ObjectiveSense) = true
 function MOI.set!(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
     model.senseset = true
     model.sense = sense
@@ -231,14 +233,13 @@ function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     end
     model.objective
 end
-MOI.canset(model::AbstractModel, ::MOI.ObjectiveFunction) = true
+MOI.supports(model::AbstractModel, ::MOI.ObjectiveFunction) = true
 function MOI.set!(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
     model.objectiveset = true
     # f needs to be copied, see #2
     model.objective = deepcopy(f)
 end
 
-MOI.canmodify(::AbstractModel, ::MOI.ObjectiveFunction, ::Type{<:MOI.AbstractFunctionModification}) = true
 function MOI.modify!(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
     model.objective = modifyfunction(model.objective, change)
 end
@@ -262,17 +263,23 @@ end
 
 # Constraints
 function MOI.addconstraint!(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    # We give the index value `nextconstraintid + 1` to the new constraint.
-    # As the same counter is used for all pairs of F-in-S constraints,
-    # the index value is unique across all constraint types as mentionned in `@model`'s doc.
-    ci = CI{F, S}(model.nextconstraintid += 1)
-    # f needs to be copied, see #2
-    push!(model.constrmap, _addconstraint!(model, ci, deepcopy(f), deepcopy(s)))
-    ci
+    if MOI.supportsconstraint(model, F, S)
+        # We give the index value `nextconstraintid + 1` to the new constraint.
+        # As the same counter is used for all pairs of F-in-S constraints,
+        # the index value is unique across all constraint types as mentionned in `@model`'s doc.
+        ci = CI{F, S}(model.nextconstraintid += 1)
+        # f needs to be copied, see #2
+        push!(model.constrmap, _addconstraint!(model, ci, deepcopy(f), deepcopy(s)))
+        return ci
+    else
+        throw(MOI.UnsupportedConstraint{F, S}())
+    end
 end
 
-MOI.candelete(model::AbstractModel, i::MOI.Index) = MOI.isvalid(model, i)
 function MOI.delete!(model::AbstractModel, ci::CI)
+    if !MOI.isvalid(model, ci)
+        throw(MOI.InvalidIndex(ci))
+    end
     for (ci_next, _, _) in _delete!(model, ci, getconstrloc(model, ci))
         model.constrmap[ci_next.value] -= 1
     end
@@ -283,16 +290,15 @@ function MOI.delete!(model::AbstractModel, ci::CI)
     end
 end
 
-MOI.canmodify(::AbstractModel, ::Type{<:CI}, ::Type{<:MOI.AbstractFunctionModification}) = true
 function MOI.modify!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
     _modify!(model, ci, getconstrloc(model, ci), change)
 end
 
-MOI.canset(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
+MOI.supports(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
     _modify!(model, ci, getconstrloc(model, ci), change)
 end
-MOI.canset(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
+MOI.supports(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
 function MOI.set!(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
     _modify!(model, ci, getconstrloc(model, ci), change)
 end
@@ -328,8 +334,6 @@ function MOI.isempty(model::AbstractModel)
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
 
-MOI.supports(::AbstractModel, ::MOI.ObjectiveFunction) = true
-MOI.supportsconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 MOI.copy!(dest::AbstractModel, src::MOI.ModelLike; copynames=true) = defaultcopy!(dest, src, copynames)
 
 # Allocate-Load Interface
@@ -338,17 +342,15 @@ needsallocateload(model::AbstractModel) = false
 
 allocatevariables!(model::AbstractModel, nvars) = MOI.addvariables!(model, nvars)
 allocate!(model::AbstractModel, attr...) = MOI.set!(model, attr...)
-canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.canset(model, attr)
-canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.canset(model, attr, IndexType)
+canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.supports(model, attr)
+canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.supports(model, attr, IndexType)
 allocateconstraint!(model::AbstractModel, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.addconstraint!(model, f, s)
-canallocateconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 
 function loadvariables!(::AbstractModel, nvars) end
 function load!(::AbstractModel, attr...) end
-canload(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.canset(model, attr)
-canload(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.canset(model, attr, IndexType)
+canload(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.supports(model, attr)
+canload(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.supports(model, attr, IndexType)
 function loadconstraint!(::AbstractModel, ::CI, ::MOI.AbstractFunction, ::MOI.AbstractSet) end
-canloadconstraint(model::AbstractModel, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.canaddconstraint(model, F, S)
 
 # Can be used to access constraints of a model
 """
@@ -627,8 +629,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                                                   MOI.ConstraintSet}, ::Type{$CI{F, S}}) where {T, F<:Union{$(_typedfun.(vectorfuns)...)},
                                                                                                    S<:Union{$(_typedset.(vectorsets)...)}} = true
 
-        $MOI.canaddconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
-        $MOI.canaddconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
+        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
+        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
 
         $code
 

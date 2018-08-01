@@ -123,20 +123,16 @@ from the model cache to the optimizer failed.
 function attachoptimizer!(m::CachingOptimizer)
     @assert m.state == EmptyOptimizer
     # We do not need to copy names because name-related operations are handled by `m.model_cache`
-    copy_result = MOI.copy!(m.optimizer, m.model_cache, copynames=false)
-    if copy_result.status != MOI.CopySuccess
-        return copy_result
-    end
+    indexmap = MOI.copy!(m.optimizer, m.model_cache, copynames=false)
     m.state = AttachedOptimizer
     # MOI does not define the type of index_map, so we have to copy it into a
     # concrete container. Also load the reverse map.
     m.model_to_optimizer_map = IndexMap()
     m.optimizer_to_model_map = IndexMap()
-    for k in keys(copy_result.indexmap)
-        m.model_to_optimizer_map[k] = copy_result.indexmap[k]
-        m.optimizer_to_model_map[copy_result.indexmap[k]] = k
+    for k in keys(indexmap)
+        m.model_to_optimizer_map[k] = indexmap[k]
+        m.optimizer_to_model_map[indexmap[k]] = k
     end
-    return copy_result
 end
 
 function MOI.empty!(m::CachingOptimizer)
@@ -156,32 +152,31 @@ MOI.isempty(m::CachingOptimizer) = MOI.isempty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == Automatic && m.state == EmptyOptimizer
-        copy_result = attachoptimizer!(m)
-        if copy_result.status != MOI.CopySuccess
-            error("Failed to copy model into optimizer: $(copy_result.message)")
-        end
+        attachoptimizer!(m)
     end
     # TODO: better error message if no optimizer is set
     @assert m.state == AttachedOptimizer
     MOI.optimize!(m.optimizer)
 end
 
-function MOI.canaddvariable(m::CachingOptimizer)
-    MOI.canaddvariable(m.model_cache) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canaddvariable(m.optimizer) || return false
-    end
-    return true
-end
-
 function MOI.addvariable!(m::CachingOptimizer)
-    # Same note as for addconstraint!
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canaddvariable(m.optimizer)
-        resetoptimizer!(m)
+    if m.state == AttachedOptimizer
+        if m.mode == Automatic
+            try
+                vindex_optimizer = MOI.addvariable!(m.optimizer)
+            catch err
+                if err isa MOI.CannotAddVariable
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindex_optimizer = MOI.addvariable!(m.optimizer)
+        end
     end
     vindex = MOI.addvariable!(m.model_cache)
     if m.state == AttachedOptimizer
-        vindex_optimizer = MOI.addvariable!(m.optimizer)
         m.model_to_optimizer_map[vindex] = vindex_optimizer
         m.optimizer_to_model_map[vindex_optimizer] = vindex
     end
@@ -189,13 +184,23 @@ function MOI.addvariable!(m::CachingOptimizer)
 end
 
 function MOI.addvariables!(m::CachingOptimizer, n)
-    # Same note as for addconstraint!
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canaddvariable(m.optimizer)
-        resetoptimizer!(m)
+    if m.state == AttachedOptimizer
+        if m.mode == Automatic
+            try
+                vindices_optimizer = MOI.addvariables!(m.optimizer, n)
+            catch err
+                if err isa MOI.CannotAddVariable
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindices_optimizer = MOI.addvariables!(m.optimizer, n)
+        end
     end
     vindices = MOI.addvariables!(m.model_cache, n)
     if m.state == AttachedOptimizer
-        vindices_optimizer = MOI.addvariables!(m.optimizer, n)
         for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
             m.model_to_optimizer_map[vindex] = vindex_optimizer
             m.optimizer_to_model_map[vindex_optimizer] = vindex
@@ -208,61 +213,52 @@ function MOI.supportsconstraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunct
     MOI.supportsconstraint(m.model_cache, F, S) && (m.state == NoOptimizer || MOI.supportsconstraint(m.optimizer, F, S))
 end
 
-function MOI.canaddconstraint(m::CachingOptimizer, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    MOI.canaddconstraint(m.model_cache, F, S) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canaddconstraint(m.optimizer, F, S) || return false
-    end
-    return true
-end
-
 function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set::MOI.AbstractSet)
-    # The canaddconstraint checks should catch most issues, but if an
-    # addconstraint! call fails then the model_cache and the optimizer may no longer
-    # be in sync.
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canaddconstraint(m.optimizer, typeof(func), typeof(set))
-        resetoptimizer!(m)
+    if m.state == AttachedOptimizer
+        if m.mode == Automatic
+            try
+                cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+            catch err
+                if err isa MOI.CannotAddConstraint
+                    # It could be MOI.CannotAddConstraint{F', S'} with F' != F
+                    # or S' != S if, e.g., the `F`-in-`S` constraint is bridged
+                    # to other constraints in `m.optimizer`
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+        end
     end
-    @assert MOI.canaddconstraint(m, typeof(func), typeof(set))
     cindex = MOI.addconstraint!(m.model_cache, func, set)
     if m.state == AttachedOptimizer
-        cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map,func), set)
         m.model_to_optimizer_map[cindex] = cindex_optimizer
         m.optimizer_to_model_map[cindex_optimizer] = cindex
     end
     return cindex
 end
 
-function MOI.canmodify(m::CachingOptimizer, ::Type{C}, change) where C <: CI
-    MOI.canmodify(m.model_cache, C, change) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canmodify(m.optimizer, C, change) || return false
-    end
-    return true
-end
-
-function MOI.modify!(m::CachingOptimizer, cindex::CI, change)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canmodify(m.optimizer, typeof(cindex), typeof(change))
-        resetoptimizer!(m)
-    end
-    @assert MOI.canmodify(m, typeof(cindex), typeof(change))
-    MOI.modify!(m.model_cache, cindex, change)
+function MOI.modify!(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFunctionModification)
     if m.state == AttachedOptimizer
-        MOI.modify!(m.optimizer, m.model_to_optimizer_map[cindex], mapvariables(m.model_to_optimizer_map,change))
-    end
-    return
-end
-
-function MOI.canset(m::CachingOptimizer, attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet}, ::Type{C}) where C <: CI
-    if !MOI.canset(m.model_cache, attr, C)
-        return false
-    end
-    if m.state == AttachedOptimizer && m.mode == Manual
-        if !MOI.canset(m.optimizer, attr, C)
-            return false
+        cindex_optimizer = m.model_to_optimizer_map[cindex]
+        change_optimizer = mapvariables(m.model_to_optimizer_map, change)
+        if m.mode == Automatic
+            try
+                MOI.modify!(m.optimizer, cindex_optimizer, change_optimizer)
+            catch err
+                if err isa MOI.UnsupportedConstraintModification
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.modify!(m.optimizer, cindex_optimizer, change_optimizer)
         end
     end
-    return true
+    MOI.modify!(m.model_cache, cindex, change)
 end
 
 # This function avoids duplicating code in the MOI.set! methods for
@@ -270,14 +266,22 @@ end
 # the third and fourth arguments of the set! methods so that we only support
 # setting the same type of set or function.
 function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, replacement)
-    if (m.mode == Automatic && m.state == AttachedOptimizer &&
-            !MOI.canset(m.optimizer, attr, typeof(cindex)) )
-        resetoptimizer!(m)
+    if m.state == AttachedOptimizer
+        if m.mode == Automatic
+            try
+                MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
+            catch err
+                if err isa MOI.CannotSet
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
+        end
     end
     MOI.set!(m.model_cache, attr, cindex, replacement)
-    if m.state == AttachedOptimizer
-        MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
-    end
 end
 
 function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintSet, cindex::CI{F,S}, set::S) where {F,S}
@@ -288,43 +292,52 @@ function MOI.set!(m::CachingOptimizer, ::MOI.ConstraintFunction, cindex::CI{F,S}
     replace_constraint_function_or_set!(m, MOI.ConstraintFunction(), cindex, func)
 end
 
-function MOI.canmodify(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change)
-    MOI.canmodify(m.model_cache, obj, change) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canmodify(m.optimizer, obj, change) || return false
-    end
-    return true
-end
-
 function MOI.modify!(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canmodify(m.optimizer, obj, typeof(change))
-        resetoptimizer!(m)
-    end
-    @assert MOI.canmodify(m, obj, typeof(change))
-    MOI.modify!(m.model_cache, obj, change)
     if m.state == AttachedOptimizer
-        MOI.modify!(m.optimizer, obj, mapvariables(m.model_to_optimizer_map,change))
+        change_optimizer = mapvariables(m.model_to_optimizer_map, change)
+        if m.mode == Automatic
+            try
+                MOI.modify!(m.optimizer, obj, change_optimizer)
+            catch err
+                if err isa MOI.UnsupportedObjectiveModification
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.modify!(m.optimizer, obj, change_optimizer)
+        end
     end
-    return
+    MOI.modify!(m.model_cache, obj, change)
 end
 
 MOI.isvalid(m::CachingOptimizer, index::MOI.Index) = MOI.isvalid(m.model_cache, index)
 
-function MOI.candelete(m::CachingOptimizer, index::MOI.Index)
-    MOI.candelete(m.model_cache, index) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.candelete(m.optimizer, m.model_to_optimizer_map[index]) || return false
-    end
-    return true
-end
-
 function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.candelete(m.optimizer, index)
-        resetoptimizer!(m)
-    end
-    @assert MOI.candelete(m, index)
     if m.state == AttachedOptimizer
-        MOI.delete!(m.optimizer, m.model_to_optimizer_map[index])
+        if !MOI.isvalid(m, index)
+            # The index thrown by m.model_cache would be xored
+            throw(MOI.InvalidIndex(index))
+        end
+        index_optimizer = m.model_to_optimizer_map[index]
+        if m.mode == Automatic
+            try
+                MOI.delete!(m.optimizer, index_optimizer)
+            catch err
+                if err isa MOI.UnsupportedDeletion
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.delete!(m.optimizer, index_optimizer)
+        end
+    end
+    # The state may have changed in Automatic mode since resetoptimizer! is
+    # called in case the deletion is not supported
+    if m.state == AttachedOptimizer
         delete!(m.optimizer_to_model_map, m.model_to_optimizer_map[index])
         delete!(m.model_to_optimizer_map, index)
     end
@@ -332,7 +345,7 @@ function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
 end
 
 
-# TODO: addconstraints!, transform!, cantransform
+# TODO: addconstraints!, transform!
 
 ## CachingOptimizer get and set attributes
 
@@ -344,55 +357,58 @@ end
 # store indices need to be handled with care.
 
 function MOI.set!(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
-    # The canset checks should catch most issues, but if a set! call fails then
-    # the model_cache and the optimizer may no longer be in sync.
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canset(m.optimizer, attr)
-        resetoptimizer!(m)
-    end
-    @assert MOI.canset(m.model_cache, attr)
     if m.state == AttachedOptimizer
-        @assert MOI.canset(m.optimizer, attr)
-        MOI.set!(m.optimizer, attr, attribute_value_map(m.model_to_optimizer_map,value))
+        optimizer_value = attribute_value_map(m.model_to_optimizer_map, value)
+        if m.mode == Automatic
+            try
+                MOI.set!(m.optimizer, attr, optimizer_value)
+            catch err
+                if err isa MOI.CannotSet
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.set!(m.optimizer, attr, optimizer_value)
+        end
     end
     MOI.set!(m.model_cache, attr, value)
 end
 
 function MOI.set!(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}, index::MOI.Index, value)
-    if m.mode == Automatic && m.state == AttachedOptimizer && !MOI.canset(m.optimizer, attr, typeof(index))
-        resetoptimizer!(m)
-    end
-    @assert MOI.canset(m.model_cache, attr, typeof(index))
     if m.state == AttachedOptimizer
-        @assert MOI.canset(m.optimizer, attr, typeof(index))
-        MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[index], attribute_value_map(m.model_to_optimizer_map,value))
+        optimizer_index = m.model_to_optimizer_map[index]
+        optimizer_value = attribute_value_map(m.model_to_optimizer_map, value)
+        if m.mode == Automatic
+            try
+                MOI.set!(m.optimizer, attr, optimizer_index, optimizer_value)
+            catch err
+                if err isa MOI.CannotSet
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.set!(m.optimizer, attr, optimizer_index, optimizer_value)
+        end
     end
     MOI.set!(m.model_cache, attr, index, value)
 end
 
+function MOI.supports(m::CachingOptimizer,
+                      attr::Union{MOI.AbstractVariableAttribute,
+                                  MOI.AbstractConstraintAttribute},
+                      IndexType::Type{<:MOI.Index})
+    return MOI.supports(m.model_cache, attr, IndexType) &&
+        (m.state == NoOptimizer || MOI.supports(m.optimizer, attr, IndexType))
+end
+
+
 function MOI.supports(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
-    MOI.supports(m.model_cache, attr) && (m.state == NoOptimizer || MOI.supports(m.optimizer, attr))
-end
-
-# TODO: Automatic mode is broken in the case that the user tries to set
-# an objective function of a type that's not supported by the optimizer.
-# Two possible solutions are:
-# 1. Let canset take a value argument.
-# 2. Be more precise about what types are allowed in each attribute
-# (https://github.com/JuliaOpt/MathOptInterface.jl/issues/31).
-function MOI.canset(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
-    MOI.canset(m.model_cache, attr) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canset(m.optimizer, attr) || return false
-    end
-    return true
-end
-
-function MOI.canset(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}, idxtype::Type{<:MOI.Index})
-    MOI.canset(m.model_cache, attr, idxtype) || return false
-    if m.state == AttachedOptimizer && m.mode == Manual
-        MOI.canset(m.optimizer, attr, idxtype) || return false
-    end
-    return true
+    return MOI.supports(m.model_cache, attr) &&
+        (m.state == NoOptimizer || MOI.supports(m.optimizer, attr))
 end
 
 function MOI.get(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
@@ -519,22 +535,22 @@ function MOI.set!(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx, v) 
     return MOI.set!(m.optimizer, attr.attr, map_indices_to_optimizer(m, idx), attribute_value_map(m.model_to_optimizer_map,v))
 end
 
-function MOI.canset(m::CachingOptimizer, attr::AttributeFromModelCache{T}) where {T <: MOI.AbstractModelAttribute}
-    return MOI.canset(m.model_cache, attr.attr)
+function MOI.supports(m::CachingOptimizer, attr::AttributeFromModelCache{T}) where {T <: MOI.AbstractModelAttribute}
+    return MOI.supports(m.model_cache, attr.attr)
 end
 
-function MOI.canset(m::CachingOptimizer, attr::AttributeFromModelCache{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
-    return MOI.canset(m.model_cache, attr.attr, idxtype)
+function MOI.supports(m::CachingOptimizer, attr::AttributeFromModelCache{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+    return MOI.supports(m.model_cache, attr.attr, idxtype)
 end
 
-function MOI.canset(m::CachingOptimizer, attr::AttributeFromOptimizer{T}) where {T <: MOI.AbstractModelAttribute}
+function MOI.supports(m::CachingOptimizer, attr::AttributeFromOptimizer{T}) where {T <: MOI.AbstractModelAttribute}
     @assert m.state == AttachedOptimizer
-    return MOI.canset(m.optimizer, attr.attr)
+    return MOI.supports(m.optimizer, attr.attr)
 end
 
-function MOI.canset(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function MOI.supports(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == AttachedOptimizer
-    return MOI.canset(m.optimizer, attr.attr, idxtype)
+    return MOI.supports(m.optimizer, attr.attr, idxtype)
 end
 
 # TODO: get and set methods to look up/set name strings

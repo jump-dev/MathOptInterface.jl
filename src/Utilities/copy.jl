@@ -20,51 +20,47 @@ Base.delete!(idxmap::IndexMap, ci::MOI.ConstraintIndex) = delete!(idxmap.conmap,
 Base.keys(idxmap::IndexMap) = Iterators.flatten((keys(idxmap.varmap), keys(idxmap.conmap)))
 
 """
-    passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, canpassattr::Function=MOI.canset, passattr!::Function=MOI.set!)
+    passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, passattr!::Function=MOI.set!)
 
 Pass the model attributes from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `passattr!` to pass the attribute. Does not copy `Name` if `copynames` is `false`.
 
-    passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, vis_src::Vector{MOI.VariableIndex}, canpassattr::Function=MOI.canset, passattr!::Function=MOI.set!)
+    passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, vis_src::Vector{MOI.VariableIndex}, passattr!::Function=MOI.set!)
 
 Pass the variable attributes from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `passattr!` to pass the attribute. Does not copy `VariableName` if `copynames` is `false`.
 
-    passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, cis_src::Vector{MOI.ConstraintIndex{F, S}}, canpassattr::Function=MOI.canset, passattr!::Function=MOI.set!) where {F, S}
+    passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, cis_src::Vector{MOI.ConstraintIndex{F, S}}, passattr!::Function=MOI.set!) where {F, S}
 
 Pass the constraint attributes of `F`-in-`S` constraints from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `passattr!` to pass the attribute. Does not copy `ConstraintName` if `copynames` is `false`.
 """
 function passattributes! end
 
-function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, canpassattr::Function=MOI.canset, passattr!::Function=MOI.set!)
+function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, passattr!::Function=MOI.set!)
     # Copy model attributes
     @assert MOI.canget(src, MOI.ListOfModelAttributesSet())
     attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
-    _passattributes!(dest, src, copynames, idxmap, attrs, tuple(), tuple(), tuple(), canpassattr, passattr!)
+    _passattributes!(dest, src, copynames, idxmap, attrs, tuple(), tuple(), tuple(), passattr!)
 end
-function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, vis_src::Vector{VI}, canpassattr::Function=MOI.canset, passattr!::Function=MOI.set!)
+function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, vis_src::Vector{VI}, passattr!::Function=MOI.set!)
     # Copy variable attributes
     @assert MOI.canget(src, MOI.ListOfVariableAttributesSet())
     attrs = MOI.get(src, MOI.ListOfVariableAttributesSet())
     vis_dest = map(vi -> idxmap[vi], vis_src)
-    _passattributes!(dest, src, copynames, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), canpassattr, passattr!)
+    _passattributes!(dest, src, copynames, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), passattr!)
 end
-function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, cis_src::Vector{CI{F, S}}, canpassattr::Function=MOI.canset, passattr!::Function=MOI.set!) where {F, S}
+function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, cis_src::Vector{CI{F, S}}, passattr!::Function=MOI.set!) where {F, S}
     # Copy constraint attributes
     @assert MOI.canget(src, MOI.ListOfConstraintAttributesSet{F, S}())
     attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F, S}())
     cis_dest = map(ci -> idxmap[ci], cis_src)
-    _passattributes!(dest, src, copynames, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), canpassattr, passattr!)
+    _passattributes!(dest, src, copynames, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), passattr!)
 end
 
-function _passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, attrs, canargs, getargs, setargs, canpassattr::Function=MOI.canset, passattr!::Function=MOI.set!)
+function _passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, attrs, canargs, getargs, setargs, passattr!::Function=MOI.set!)
     for attr in attrs
         if (copynames || !(attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName)) && MOI.canget(src, attr, canargs...)
-            if !canpassattr(dest, attr, canargs...)
-                return MOI.CopyResult(MOI.CopyUnsupportedAttribute, "Unsupported attribute $attr", idxmap)
-            end
             passattr!(dest, attr, setargs..., attribute_value_map(idxmap, MOI.get(src, attr, getargs...)))
         end
     end
-    return MOI.CopyResult(MOI.CopySuccess, "", idxmap)
 end
 
 """
@@ -79,15 +75,11 @@ function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bo
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         f_dest = mapvariables(idxmap, f_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
-        if MOI.canaddconstraint(dest, typeof(f_dest), typeof(s))
-            ci_dest = MOI.addconstraint!(dest, f_dest, s)
-            idxmap.conmap[ci_src] = ci_dest
-        else
-            return MOI.CopyResult(MOI.CopyUnsupportedConstraint, "Unsupported $F-in-$S constraint", idxmap)
-        end
+        ci_dest = MOI.addconstraint!(dest, f_dest, s)
+        idxmap.conmap[ci_src] = ci_dest
     end
 
-    return passattributes!(dest, src, copynames, idxmap, cis_src)
+    passattributes!(dest, src, copynames, idxmap, cis_src)
 end
 
 attribute_value_map(idxmap, f::MOI.AbstractFunction) = mapvariables(idxmap, f)
@@ -103,29 +95,23 @@ function defaultcopy!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
 
     # Copy variables
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    if !MOI.canaddvariable(dest)
-        return MOI.CopyResult(MOI.CopyOtherError, "Adding variables is not supported", idxmap)
-    end
     for vi in vis_src
         idxmap.varmap[vi] = MOI.addvariable!(dest)
     end
 
     # Copy variable attributes
-    res = passattributes!(dest, src, copynames, idxmap, vis_src)
-    res.status == MOI.CopySuccess || return res
+    passattributes!(dest, src, copynames, idxmap, vis_src)
 
     # Copy model attributes
-    res = passattributes!(dest, src, copynames, idxmap)
-    res.status == MOI.CopySuccess || return res
+    passattributes!(dest, src, copynames, idxmap)
 
     # Copy constraints
     for (F, S) in MOI.get(src, MOI.ListOfConstraints())
         # do the rest in copyconstraints! which is type stable
-        res = copyconstraints!(dest, src, copynames, idxmap, F, S)
-        res.status == MOI.CopySuccess || return res
+        copyconstraints!(dest, src, copynames, idxmap, F, S)
     end
 
-    return MOI.CopyResult(MOI.CopySuccess, "", idxmap)
+    return idxmap
 end
 
 # Allocate-Load Interface: 2-pass copy of a MathOptInterface model
@@ -169,16 +155,11 @@ Informs `model` that `load!` will be called with the same arguments after `loadv
 """
 function allocate! end
 
-"""
-    canallocate(model::ModelLike, attr::ModelLikeAttribute)::Bool
-    canallocate(model::ModelLike, attr::AbstractVariableAttribute, R::Type{VariableIndex})::Bool
-    canallocate(model::ModelLike, attr::AbstractConstraintAttribute, R::Type{ConstraintIndex{F,S})::Bool
-
-Return a `Bool` indicating whether it is possible to allocate attribute `attr` applied to the index type `R` in the model `model`.
-"""
-function canallocate end
-canallocate(::MOI.ModelLike, ::MOI.AnyAttribute) = false
-canallocate(::MOI.ModelLike, ::MOI.AnyAttribute, ::Type{<:MOI.Index}) = false
+function allocate!(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector, values::Vector)
+    for (index, value) in zip(indices, values)
+        allocate!(model, attr, index, value)
+    end
+end
 
 """
     allocateconstraint!(model::MOI.ModelLike, f::MOI.AbstractFunction, s::MOI.AbstractSet)
@@ -186,13 +167,6 @@ canallocate(::MOI.ModelLike, ::MOI.AnyAttribute, ::Type{<:MOI.Index}) = false
 Returns the index for the constraint to be used in `loadconstraint!` that will be called after `loadvariables!` is called.
 """
 function allocateconstraint! end
-
-"""
-    canallocateconstraint(model::ModelLike, F::Type{<:AbstractFunction}, S::Type{<:AbstractSet})::Bool
-
-Return a `Bool` indicating whether it is possible to allocate a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
-"""
-canallocateconstraint(model::MOI.ModelLike, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
 
 """
     loadvariables!(model::MOI.ModelLike, nvars::Integer)
@@ -210,16 +184,11 @@ This has the same effect that `set!` with the same arguments except that `alloca
 """
 function load! end
 
-"""
-    canload(model::ModelLike, attr::ModelLikeAttribute)::Bool
-    canload(model::ModelLike, attr::AbstractVariableAttribute, R::Type{VariableIndex})::Bool
-    canload(model::ModelLike, attr::AbstractConstraintAttribute, R::Type{ConstraintIndex{F,S})::Bool
-
-Return a `Bool` indicating whether it is possible to load attribute `attr` applied to the index type `R` in the model `model`.
-"""
-function canload end
-canload(::MOI.ModelLike, ::MOI.AnyAttribute) = false
-canload(::MOI.ModelLike, ::MOI.AnyAttribute, ::Type{<:MOI.Index}) = false
+function load!(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector, values::Vector)
+    for (index, value) in zip(indices, values)
+        load!(model, attr, index, value)
+    end
+end
 
 """
     loadconstraint!(model::MOI.ModelLike, ci::MOI.ConstraintIndex, f::MOI.AbstractFunction, s::MOI.AbstractSet)
@@ -228,19 +197,10 @@ Sets the constraint function and set for the constraint of index `ci`.
 """
 function loadconstraint! end
 
-"""
-    canloadconstraint(model::ModelLike, F::Type{<:AbstractFunction}, S::Type{<:AbstractSet})::Bool
-
-Return a `Bool` indicating whether it is possible to load a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
-"""
-canloadconstraint(model::MOI.ModelLike, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
-
 function allocateconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     # Allocate constraints
-    if !canallocateconstraint(dest, F, S)
-        return MOI.CopyResult(MOI.CopyUnsupportedConstraint, "Unsupported $F-in-$S constraint", idxmap)
-    end
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
+
     for ci_src in cis_src
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
@@ -249,14 +209,11 @@ function allocateconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames
         idxmap.conmap[ci_src] = ci_dest
     end
 
-    return passattributes!(dest, src, copynames, idxmap, cis_src, canallocate, allocate!)
+    return passattributes!(dest, src, copynames, idxmap, cis_src, allocate!)
 end
 
 function loadconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     # Load constraints
-    if !canloadconstraint(dest, F, S)
-        return MOI.CopyResult(MOI.CopyUnsupportedConstraint, "Unsupported $F-in-$S constraint", idxmap)
-    end
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
     for ci_src in cis_src
         ci_dest = idxmap[ci_src]
@@ -266,7 +223,7 @@ function loadconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bo
         loadconstraint!(dest, ci_dest, f_dest, s)
     end
 
-    return passattributes!(dest, src, copynames, idxmap, cis_src, canload, load!)
+    return passattributes!(dest, src, copynames, idxmap, cis_src, load!)
 end
 
 """
@@ -288,37 +245,31 @@ function allocateload!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
     end
 
     # Allocate variable attributes
-    res = passattributes!(dest, src, copynames, idxmap, vis_src, canallocate, allocate!)
-    res.status == MOI.CopySuccess || return res
+    passattributes!(dest, src, copynames, idxmap, vis_src, allocate!)
 
     # Allocate model attributes
-    res = passattributes!(dest, src, copynames, idxmap, canallocate, allocate!)
-    res.status == MOI.CopySuccess || return res
+    passattributes!(dest, src, copynames, idxmap, allocate!)
 
     # Allocate constraints
     for (F, S) in MOI.get(src, MOI.ListOfConstraints())
         # do the rest in copyconstraints! which is type stable
-        res = allocateconstraints!(dest, src, copynames, idxmap, F, S)
-        res.status == MOI.CopySuccess || return res
+        allocateconstraints!(dest, src, copynames, idxmap, F, S)
     end
 
     # Load variables
     loadvariables!(dest, nvars)
 
     # Load variable attributes
-    res = passattributes!(dest, src, copynames, idxmap, vis_src, canload, load!)
-    res.status == MOI.CopySuccess || return res
+    passattributes!(dest, src, copynames, idxmap, vis_src, load!)
 
     # Load model attributes
-    res = passattributes!(dest, src, copynames, idxmap, canload, load!)
-    res.status == MOI.CopySuccess || return res
+    passattributes!(dest, src, copynames, idxmap, load!)
 
     # Copy constraints
     for (F, S) in MOI.get(src, MOI.ListOfConstraints())
         # do the rest in copyconstraints! which is type stable
-        res = loadconstraints!(dest, src, copynames, idxmap, F, S)
-        res.status == MOI.CopySuccess || return res
+        loadconstraints!(dest, src, copynames, idxmap, F, S)
     end
 
-    return MOI.CopyResult(MOI.CopySuccess, "", idxmap)
+    return idxmap
 end

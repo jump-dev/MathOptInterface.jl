@@ -10,11 +10,28 @@ If `F`-in-`S` constraints are only not supported in specific circumstances, e.g.
 supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
 """
-    canaddconstraint(model::ModelLike, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
+    UnsupportedConstraint{F, S} <: UnsupportedError
 
-Return a `Bool` indicating whether it is possible to add a constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is of type `F`, and ``\\mathcal{S}`` is of type `S`.
+An error indicating that constraints of type `F`-in-`S` are not supported by
+the model.
 """
-canaddconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
+struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError end
+
+"""
+    struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
+        message::String # Human-friendly explanation why the attribute cannot be set
+    end
+
+An error indicating that constraints of type `F`-in-`S` are supported but
+cannot be added in the current state of the model.
+"""
+struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
+    message::String # Human-friendly explanation why the attribute cannot be set
+end
+CannotAddConstraint{F, S}() where {F, S} = CannotAddConstraint{F, S}("")
+
+operation_name(::Union{UnsupportedConstraint{F, S}, CannotAddConstraint{F, S}}) where {F, S} = "Adding `$F`-in-`$S` constraints"
+message(err::CannotAddConstraint) = err.message
 
 """
     addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
@@ -25,8 +42,15 @@ Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, 
     addconstraint!(model::ModelLike, vec::Vector{VariableIndex}, set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
+
+An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
+`F`-in-`S` constraints and a [`CannotAddConstraint`](@ref) error is thrown if
+it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
+current state.
 """
-function addconstraint! end
+function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractSet)
+    throw(UnsupportedConstraint{typeof(func), typeof(set)}())
+end
 
 # convenient shorthands TODO: document
 addconstraint!(model::ModelLike, v::VariableIndex, set::AbstractScalarSet) = addconstraint!(model, SingleVariable(v), set)
@@ -76,34 +100,4 @@ function transform!(model::ModelLike, c::ConstraintIndex, newset)
     f = get(model, ConstraintFunction(), c)
     delete!(model, c)
     addconstraint!(model, f, newset)
-end
-
-"""
-## Transform Constraint Set
-
-    cantransform(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2})::Bool where S2<:AbstractSet
-
-Return a `Bool` indicating whether the set of type `S1` in constraint `c` can be
-replaced by a set of type `S2`.
-
-### Examples
-
-If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
-
-```julia
-cantransform(model, c, GreaterThan(0.0)) # true
-cantransform(model, c, ZeroOne())        # it is expected that most solvers will
-                                         # return false, but this does not
-                                         # preclude solvers from supporting
-                                         # constraints such as this.
-```
-"""
-function cantransform end
-
-# default fallback
-function cantransform(model::ModelLike, c::ConstraintIndex{F,S1}, ::Type{S2}) where {F<:AbstractFunction, S1<:AbstractSet, S2<:AbstractSet}
-    if S1 == S2
-        return false
-    end
-    canget(model, ConstraintFunction(), typeof(c)) && candelete(model, c) && canaddconstraint(model, F, S2)
 end

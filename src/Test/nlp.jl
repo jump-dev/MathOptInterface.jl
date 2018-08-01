@@ -106,7 +106,7 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     @test MOI.supports(model, MOI.NLPBlock())
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
-    @test MOI.canset(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -224,7 +224,7 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
     rtol = config.rtol
 
     @test MOI.supports(model, MOI.NLPBlock())
-    @test MOI.canset(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
 
     MOI.empty!(model)
     @test MOI.isempty(model)

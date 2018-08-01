@@ -12,9 +12,9 @@ end
     MOIT.emptytest(Model{Float64}())
 end
 
-@testset "canaddconstraint test" begin
-    MOIT.canaddconstrainttest(Model{Float64}(), Float64, Int)
-    MOIT.canaddconstrainttest(Model{Int}(), Int, Float64)
+@testset "supportsconstraint test" begin
+    MOIT.supportsconstrainttest(Model{Float64}(), Float64, Int)
+    MOIT.supportsconstrainttest(Model{Int}(), Int, Float64)
 end
 
 @testset "OrderedIndices" begin
@@ -137,13 +137,13 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
         c = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
         @test !MOI.supportsconstraint(m, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
 
-        @test MOI.canset(m, MOI.ConstraintSet(), typeof(c))
+        @test MOI.supports(m, MOI.ConstraintSet(), typeof(c))
         # set of different type
         @test_throws Exception MOI.set!(m, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
         # set not implemented
         @test_throws Exception MOI.set!(m, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
 
-        @test MOI.canset(m, MOI.ConstraintFunction(), typeof(c))
+        @test MOI.supports(m, MOI.ConstraintFunction(), typeof(c))
         # function of different type
         @test_throws Exception MOI.set!(m, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
         # function not implemented

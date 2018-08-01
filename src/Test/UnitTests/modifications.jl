@@ -22,7 +22,7 @@ function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestCon
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintSet(), typeof(c))
     MOI.set!(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
@@ -57,8 +57,6 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test !MOI.cantransform(model, c, MOI.LessThan{Float64})
-    @test MOI.cantransform(model, c, MOI.GreaterThan{Float64})
     c2 = MOI.transform!(model, c, MOI.GreaterThan(2.0))
     @test !MOI.isvalid(model, c)
     @test MOI.isvalid(model, c2)
@@ -94,7 +92,7 @@ function solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfi
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test MOI.canset(model, MOI.ConstraintSet(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintSet(), typeof(c))
     MOI.set!(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
@@ -129,7 +127,6 @@ function solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test MOI.canmodify(model, typeof(c), MOI.ScalarCoefficientChange{Float64})
     MOI.modify!(model, c, MOI.ScalarCoefficientChange(x, 2.0))
     test_model_solution(model, config;
         objective_value   = 0.5,
@@ -162,7 +159,7 @@ function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConf
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    @test MOI.canset(model, MOI.ConstraintFunction(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintFunction(), typeof(c))
     MOI.set!(model, MOI.ConstraintFunction(), c,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
     )
@@ -207,7 +204,6 @@ function solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfi
         variable_primal   = [(x, 0.0), (y, 0.0)],
         constraint_primal = [(c, [0.0, 0.0])]
     )
-    @test MOI.canmodify(model, typeof(c), MOI.VectorConstantChange{Float64})
     MOI.modify!(model, c, MOI.VectorConstantChange([-1.0, -1.5]))
     test_model_solution(model, config;
         objective_value   = 2.5,
@@ -245,7 +241,6 @@ function solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::TestCo
         variable_primal   = [(x, 0.5)],
         constraint_primal = [(c, [-0.5, 0.0])]
     )
-    @test MOI.canmodify(model, typeof(c), MOI.MultirowChange{Float64})
     MOI.modify!(model, c, MOI.MultirowChange(x, [(1,4.0), (2,3.0)]))
     test_model_solution(model, config;
         objective_value   = 0.25,
@@ -272,10 +267,6 @@ function solve_const_scalar_objective(model::MOI.ModelLike, config::TestConfig)
     test_model_solution(model, config;
         objective_value   = 3.0,
         variable_primal   = [(x, 1.0)]
-    )
-    @test MOI.canmodify(model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarConstantChange{Float64}
     )
     MOI.modify!(model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -305,10 +296,6 @@ function solve_coef_scalar_objective(model::MOI.ModelLike, config::TestConfig)
     test_model_solution(model, config;
         objective_value   = 1.0,
         variable_primal   = [(x, 1.0)]
-    )
-    @test MOI.canmodify(model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarCoefficientChange{Float64}
     )
     MOI.modify!(model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

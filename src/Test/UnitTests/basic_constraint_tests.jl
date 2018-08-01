@@ -167,7 +167,6 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     F, S = typeof(constraint_function), typeof(set)
 
     @test MOI.supportsconstraint(model, F, S)
-    @test MOI.canaddconstraint(model, F, S)
 
     @testset "NumberOfConstraints" begin
         @test MOI.canget(model, MOI.NumberOfConstraints{F,S}())
@@ -181,7 +180,7 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
         @testset "ConstraintName" begin
             @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
             @test MOI.get(model, MOI.ConstraintName(), c) == ""
-            @test MOI.canset(model, MOI.ConstraintName(), typeof(c))
+            @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
             MOI.set!(model, MOI.ConstraintName(), c, "c")
             @test MOI.get(model, MOI.ConstraintName(), c) == "c"
         end
@@ -228,7 +227,6 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     if delete
         @testset "delete!" begin
             c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            @test MOI.candelete(model, c_indices[1])
             MOI.delete!(model, c_indices[1])
             @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1
             @test !MOI.isvalid(model, c_indices[1])

@@ -18,17 +18,12 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    MOI.canaddvariable(model)
     x,y,z = MOI.addvariables!(model, 3)
 
-    @test MOI.canset(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0,-1.0], [y,z]), 0.0))
-    @test MOI.canset(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
-    @test MOI.canaddconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
     ceq = MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Zeros(1))
-    @test MOI.canaddconstraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
     csoc = MOI.addconstraint!(model, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
@@ -38,9 +33,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
     @test (MOI.VectorOfVariables,MOI.SecondOrderCone) in loc
 
-    @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
     bin1 = MOI.addconstraint!(model, MOI.SingleVariable(y), MOI.ZeroOne())
-    @test MOI.canaddconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
     bin2 = MOI.addconstraint!(model, MOI.SingleVariable(z), MOI.ZeroOne())
 
     if config.solve

@@ -65,6 +65,5 @@ function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{RSOCBrid
 end
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
 
-MOI.canmodify(model::MOI.ModelLike, ::Type{<:RSOCBridge}, ::Type{<:MOI.AbstractFunctionModification}) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCBridge}) = false
-MOI.canset(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RSOCBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCBridge}) = false
+MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RSOCBridge}) = false
