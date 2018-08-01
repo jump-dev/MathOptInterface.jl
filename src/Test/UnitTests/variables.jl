@@ -184,3 +184,75 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     )
 end
 unittests["solve_with_lowerbound"] = solve_with_lowerbound
+
+"""
+    solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
+
+Test setting the lower bound of an integer variable to fractional value and
+confirm that it solves correctly.
+"""
+function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    @testset "integer with lower bound" begin
+        MOI.empty!(model)
+        @test MOI.isempty(model)
+        MOIU.loadfromstring!(model,"""
+            variables: x
+            minobjective: 2.0x
+            c1: x >= 1.5
+            c2: x in Integer()
+        """)
+        x = MOI.get(model, MOI.VariableIndex, "x")
+        test_model_solution(model, config;
+            objective_value   = 4.0,
+            variable_primal   = [(x, 2.0)]
+        )
+    end
+    @testset "integer with upper bound" begin
+        MOI.empty!(model)
+        @test MOI.isempty(model)
+        MOIU.loadfromstring!(model,"""
+            variables: x
+            minobjective: -2.0x
+            c1: x <= 1.5
+            c2: x in Integer()
+        """)
+        x = MOI.get(model, MOI.VariableIndex, "x")
+        test_model_solution(model, config;
+            objective_value   = -2.0,
+            variable_primal   = [(x, 1.0)]
+        )
+    end
+
+    @testset "binary with upper" begin
+        MOI.empty!(model)
+        @test MOI.isempty(model)
+        MOIU.loadfromstring!(model,"""
+            variables: x
+            minobjective: -2.0x
+            c1: x <= 2.0
+            c2: x in ZeroOne()
+        """)
+        x = MOI.get(model, MOI.VariableIndex, "x")
+        test_model_solution(model, config;
+            objective_value   = -2.0,
+            variable_primal   = [(x, 1.0)]
+        )
+    end
+
+    @testset "binary with 0 upper" begin
+        MOI.empty!(model)
+        @test MOI.isempty(model)
+        MOIU.loadfromstring!(model,"""
+            variables: x
+            minobjective: 1.0x
+            c1: x <= 0.0
+            c2: x in ZeroOne()
+        """)
+        x = MOI.get(model, MOI.VariableIndex, "x")
+        test_model_solution(model, config;
+            objective_value   = 0.0,
+            variable_primal   = [(x, 0.0)]
+        )
+    end
+end
+unittests["solve_integer_edge_cases"] = solve_integer_edge_cases
