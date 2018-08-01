@@ -14,7 +14,7 @@ function SingleBridgeOptimizer{BT, MT}(model::OT) where {BT, MT, OT <: MOI.Model
 end
 
 isbridged(b::SingleBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
-bridgetype(b::SingleBridgeOptimizer{BT}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) where BT = BT
+bridge_type(b::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) where BT = BT
 
 # :((Zeros, SecondOrderCone)) -> (:(MOI.Zeros), :(MOI.SecondOrderCone))
 _tuple_prefix_moi(t) = MOIU._moi.(t.args)

@@ -14,7 +14,7 @@ struct LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBrid
     model::OT   # Internal model
     bridged::MT # Model containing bridged constraints
     bridges::Dict{CI, AbstractBridge} # Constraint Index of bridged constraint in bridged -> Bridge
-    bridgetypes::Vector{DataType} # List of types of available bridges
+    bridgetypes::Vector{Any} # List of types of available bridges
     dist::Dict{Tuple{DataType, DataType}, Int}      # (F, S) -> Number of bridges that need to be used for an `F`-in-`S` constraint
     best::Dict{Tuple{DataType, DataType}, DataType} # (F, S) -> Bridge to be used for an `F`-in-`S` constraint
 end
@@ -22,7 +22,7 @@ function LazyBridgeOptimizer(model::MOI.ModelLike, bridged::MOI.ModelLike)
     LazyBridgeOptimizer{typeof(model),
                              typeof(bridged)}(model, bridged,
                                               Dict{CI, AbstractBridge}(),
-                                              DataType[],
+                                              Any[],
                                               Dict{Tuple{DataType, DataType}, Int}(),
                                               Dict{Tuple{DataType, DataType}, DataType}())
 end
@@ -49,7 +49,7 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
                         b.dist[(F, S)] = dist
-                        b.best[(F, S)] = BT
+                        b.best[(F, S)] = concrete_bridge_type(BT, F, S)
                         changed = true
                     end
                 end
@@ -103,7 +103,7 @@ function supportsbridgingconstraint(b::LazyBridgeOptimizer, F::Type{<:MOI.Abstra
     update_constraint!(b, F, S)
     (F, S) in keys(b.best)
 end
-function bridgetype(b::LazyBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) where BT
+function bridge_type(b::LazyBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) where BT
     update_constraint!(b, F, S)
     b.best[(F, S)]
 end

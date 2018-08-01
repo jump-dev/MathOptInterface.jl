@@ -43,3 +43,18 @@ MOI.supportsconstraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction},
 Return a list of the types of constraints that bridges of type `BT` add for bridging an `F`-in-`S` constraints.
 """
 function addedconstrainttypes end
+
+"""
+    concrete_bridge_type(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+
+Return the concrete type of the bridge supporting `F`-in-`S` constraints. This
+function can only be called if `MOI.supportsconstraint(BT, F, S)` is `true`.
+
+## Examples
+
+The following returns `SplitIntervalBridge{Float64, MOI.SingleVariable}`:
+```julia
+bridgetype(SplitIntervalBridge{Float64}, MOI.SingleVariable, MOI.Interval{Float64})
+```
+"""
+function concrete_bridge_type end

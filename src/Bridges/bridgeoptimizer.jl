@@ -25,12 +25,16 @@ Return a `Bool` indicating whether `b` supports bridging `F`-in-`S` constraints.
 supportsbridgingconstraint(::AbstractBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
 
 """
-    bridgetype(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+    bridge_type(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
 
 Return the `AbstractBridge` type to be used to bridge `F`-in-`S` constraints.
 This function should only be called if `isbridged(b, F, S)`.
 """
-function bridgetype end
+function bridge_type end
+
+function concrete_bridge_type(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+    return concrete_bridge_type(bridge_type(b, F, S), F, S)
+end
 
 """
     bridge(b::AbstractBridgeOptimizer, ci::CI)
@@ -157,7 +161,7 @@ function MOI.canget(b::AbstractBridgeOptimizer, attr::InstanceConstraintAttribut
 end
 function MOI.canget(b::AbstractBridgeOptimizer, attr::SolverConstraintAttribute, ci::Type{CI{F, S}}) where {F, S}
     if isbridged(b, F, S)
-        MOI.canget(b, attr, bridgetype(b, F, S))
+        MOI.canget(b, attr, concrete_bridge_type(b, F, S))
     else
         MOI.canget(b.model, attr, ci)
     end
@@ -193,7 +197,7 @@ function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
     if isbridged(b, typeof(f), typeof(s))
         ci = MOI.addconstraint!(b.bridged, f, s)
         @assert !haskey(b.bridges, ci)
-        b.bridges[ci] = bridgetype(b, typeof(f), typeof(s))(b, f, s)
+        b.bridges[ci] = concrete_bridge_type(b, typeof(f), typeof(s))(b, f, s)
         ci
     else
         MOI.addconstraint!(b.model, f, s)
@@ -210,7 +214,7 @@ end
 
 function MOI.supports(b::AbstractBridgeOptimizer, attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet}, ::Type{CI{F, S}}) where {F, S}
     if isbridged(b, CI{F, S})
-        MOI.supports(b.bridged, attr, CI{F, S}) && MOI.supports(b, attr, MOIB.bridgetype(b, F, S))
+        MOI.supports(b.bridged, attr, CI{F, S}) && MOI.supports(b, attr, concrete_bridge_type(b, F, S))
     else
         MOI.supports(b.model, attr, CI{F, S})
     end
