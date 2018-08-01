@@ -188,8 +188,7 @@ unittests["solve_with_lowerbound"] = solve_with_lowerbound
 """
     solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
-Test setting the lower bound of an integer variable to fractional value and
-confirm that it solves correctly.
+Test a variety of edge cases related to binary and integer variables.
 """
 function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "integer with lower bound" begin
