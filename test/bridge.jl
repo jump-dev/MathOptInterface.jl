@@ -1,5 +1,5 @@
 # Model not supporting Interval
-MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) (VectorOfVariables,) (VectorAffineFunction,)
 
 function test_noc(bridgedmock, F, S, n)
     @test MOI.canget(bridgedmock, MOI.NumberOfConstraints{F, S}())
@@ -159,6 +159,14 @@ end
     config = MOIT.TestConfig()
 
     @testset "Interval" begin
+        bridgedmock = MOIB.SplitInterval{Float64}(mock)
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=[(MOI.SingleVariable,
+                                              MOI.Interval{Float64}),
+                                             (MOI.ScalarAffineFunction{Float64},
+                                              MOI.Interval{Float64}),
+                                             (MOI.ScalarQuadraticFunction{Float64},
+                                              MOI.Interval{Float64})])
         MOIU.set_mock_optimize!(mock,
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [5.0, 5.0],
                   (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0],
@@ -168,7 +176,6 @@ end
                   (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [0]),
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0]),
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [6.0, 6.0]))
-        bridgedmock = MOIB.SplitInterval{Float64}(mock)
         MOIT.linear10test(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
         newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridgedmock, MOI.ListOfVariableIndices())), 0.0)
