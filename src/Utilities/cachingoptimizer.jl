@@ -135,6 +135,10 @@ function attachoptimizer!(m::CachingOptimizer)
     end
 end
 
+function MOI.copy!(m::CachingOptimizer, src::MOI.ModelLike; copynames=true)
+    return defaultcopy!(m, src, copynames)
+end
+
 function MOI.empty!(m::CachingOptimizer)
     MOI.empty!(m.model_cache)
     if m.state == AttachedOptimizer

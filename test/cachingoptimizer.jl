@@ -201,6 +201,19 @@ for state in (MOIU.NoOptimizer, MOIU.EmptyOptimizer, MOIU.AttachedOptimizer)
         end
         @test MOIU.state(m) == state
         @test MOIU.mode(m) == mode
+
+        @testset "Name test" begin
+            MOIT.nametest(m)
+        end
+
+        @testset "Copy test" begin
+            MOIT.failcopytestc(m)
+            MOIT.failcopytestia(m)
+            MOIT.failcopytestva(m)
+            MOIT.failcopytestca(m)
+            MOIT.copytest(m, Model{Float64}())
+        end
+
         config = MOIT.TestConfig(solve=false)
         @testset "Unit" begin
             MOIT.unittest(m, config)
