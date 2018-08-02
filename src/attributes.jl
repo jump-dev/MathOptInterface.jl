@@ -592,11 +592,14 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function hidden_set!(model::ModelLike, attr::ConstraintSet, constraint_index::ConstraintIndex{F,S}, set::S) where {F,S}
+function hidden_set!(model::ModelLike, attr::ConstraintSet,
+                     constraint_index::ConstraintIndex{F, S},
+                     set::S) where {F, S<:AbstractSet}
     throw(UnsupportedAttribute(attr))
 end
-set_type(c::ConstraintIndex{F,S}) where {F, S} = S
-function hidden_set!(model::ModelLike, ::ConstraintSet, ::ConstraintIndex, ::AbstractSet)
+set_type(::ConstraintIndex{F, S}) where {F, S} = S
+function hidden_set!(model::ModelLike, ::ConstraintSet,
+                     constraint_index::ConstraintIndex, set::AbstractSet)
     throw(ArgumentError("""Cannot modify sets of different types. Constraint
     type is $(set_type(constraint_index)) while the replacement set is of
     type $(typeof(set)). Use `transform!` instead."""))
