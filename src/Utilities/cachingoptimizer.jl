@@ -1,4 +1,3 @@
-
 @enum CachingOptimizerState NoOptimizer EmptyOptimizer AttachedOptimizer
 @enum CachingOptimizerMode Manual Automatic
 
@@ -133,6 +132,10 @@ function attachoptimizer!(m::CachingOptimizer)
         m.model_to_optimizer_map[k] = indexmap[k]
         m.optimizer_to_model_map[indexmap[k]] = k
     end
+end
+
+function MOI.copy!(m::CachingOptimizer, src::MOI.ModelLike; copynames=true)
+    return defaultcopy!(m, src, copynames)
 end
 
 function MOI.empty!(m::CachingOptimizer)
@@ -397,6 +400,21 @@ function MOI.set!(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute
     MOI.set!(m.model_cache, attr, index, value)
 end
 
+# Names are not copied, i.e. we use the option `copynames=false` in
+# `attachoptimizer`, so the caching optimizer can support names even if the
+# optimizer does not.
+function MOI.supports(m::CachingOptimizer,
+                      attr::Union{MOI.VariableName,
+                                  MOI.ConstraintName},
+                      IndexType::Type{<:MOI.Index})
+    return MOI.supports(m.model_cache, attr, IndexType)
+end
+
+function MOI.supports(m::CachingOptimizer,
+                      attr::MOI.Name)
+    return MOI.supports(m.model_cache, attr)
+end
+
 function MOI.supports(m::CachingOptimizer,
                       attr::Union{MOI.AbstractVariableAttribute,
                                   MOI.AbstractConstraintAttribute},
@@ -404,7 +422,6 @@ function MOI.supports(m::CachingOptimizer,
     return MOI.supports(m.model_cache, attr, IndexType) &&
         (m.state == NoOptimizer || MOI.supports(m.optimizer, attr, IndexType))
 end
-
 
 function MOI.supports(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
     return MOI.supports(m.model_cache, attr) &&
