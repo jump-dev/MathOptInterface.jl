@@ -397,6 +397,20 @@ function MOI.set!(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute
     MOI.set!(m.model_cache, attr, index, value)
 end
 
+# Names are not copied, i.e. we use the option `copynames=false` in
+# `attachoptimizer`, so the optimizer do not need to support names.
+function MOI.supports(m::CachingOptimizer,
+                      attr::Union{MOI.VariableName,
+                                  MOI.ConstraintName},
+                      IndexType::Type{<:MOI.Index})
+    return MOI.supports(m.model_cache, attr, IndexType)
+end
+
+function MOI.supports(m::CachingOptimizer,
+                      attr::MOI.Name)
+    return MOI.supports(m.model_cache, attr)
+end
+
 function MOI.supports(m::CachingOptimizer,
                       attr::Union{MOI.AbstractVariableAttribute,
                                   MOI.AbstractConstraintAttribute},
@@ -404,7 +418,6 @@ function MOI.supports(m::CachingOptimizer,
     return MOI.supports(m.model_cache, attr, IndexType) &&
         (m.state == NoOptimizer || MOI.supports(m.optimizer, attr, IndexType))
 end
-
 
 function MOI.supports(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
     return MOI.supports(m.model_cache, attr) &&
