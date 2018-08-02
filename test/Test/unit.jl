@@ -20,7 +20,8 @@ end
         "solve_qp_edge_cases",
         "solve_qcp_edge_cases",
         "solve_affine_deletion_edge_cases",
-        "solve_duplicate_terms_obj"
+        "solve_duplicate_terms_obj",
+        "solve_integer_edge_cases"
         ])
 
     @testset "solve_blank_obj" begin
@@ -190,6 +191,23 @@ end
             )
         )
         MOIT.solve_affine_deletion_edge_cases(mock, config)
+    end
+    @testset "solve_integer_edge_cases" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [2.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [1.0])
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success, (MOI.FeasiblePoint, [0.0])
+            )
+        )
+        MOIT.solve_integer_edge_cases(mock, config)
     end
 end
 
