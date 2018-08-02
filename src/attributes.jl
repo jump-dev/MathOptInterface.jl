@@ -273,12 +273,14 @@ function set! end
 # See note with get
 set!(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, idxs::Vector, vector_of_values::Vector) = set!.(Ref(model), Ref(attr), idxs, vector_of_values)
 
-set!(model::ModelLike, attr::AnyAttribute, args...) = hidden_set!(model, attr, args...)
-# hidden_set! is included so that we can return type-specific error messages
-# without needing to overload set! and cause ambiguity errors. For examples, see
-# ConstraintSet and ConstraintFunction. hidden_set! should not be overloaded by
-# users of MOI.
-function hidden_set!(model::ModelLike, attr::AnyAttribute, args...)
+function set!(model::ModelLike, attr::AnyAttribute, args...)
+    set!_fallback_error(model, attr, args...)
+end
+# set!_fallback_error is included so that we can return type-specific error
+# messages without needing to overload set! and cause ambiguity errors. For
+# examples, see ConstraintSet and ConstraintFunction. set!_fallback_error should
+# not be overloaded by users of MOI.
+function set!_fallback_error(model::ModelLike, attr::AnyAttribute, args...)
     throw(UnsupportedAttribute(attr))
 end
 
@@ -575,13 +577,13 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
-function hidden_set!(::ModelLike, attr::ConstraintFunction,
+function set!_fallback_error(::ModelLike, attr::ConstraintFunction,
                      ::ConstraintIndex{F, S}, ::F) where {F <: AbstractFunction,
                                                           S}
     throw(UnsupportedAttribute(attr))
 end
 func_type(c::ConstraintIndex{F, S}) where {F, S} = F
-function hidden_set!(::ModelLike, ::ConstraintFunction,
+function set!_fallback_error(::ModelLike, ::ConstraintFunction,
                      constraint_index::ConstraintIndex, func::AbstractFunction)
     throw(ArgumentError("""Cannot modify functions of different types.
     Constraint type is $(func_type(constraint_index)) while the replacement
@@ -595,12 +597,12 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function hidden_set!(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
+function set!_fallback_error(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
                      ::S) where {F, S <: AbstractSet}
     throw(UnsupportedAttribute(attr))
 end
 set_type(::ConstraintIndex{F, S}) where {F, S} = S
-function hidden_set!(::ModelLike, ::ConstraintSet,
+function set!_fallback_error(::ModelLike, ::ConstraintSet,
                      constraint_index::ConstraintIndex, set::AbstractSet)
     throw(ArgumentError("""Cannot modify sets of different types. Constraint
     type is $(set_type(constraint_index)) while the replacement set is of
