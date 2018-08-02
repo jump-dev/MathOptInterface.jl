@@ -575,11 +575,14 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
-function hidden_set!(model::ModelLike, attr::ConstraintFunction, constraint_index::ConstraintIndex{F,S}, func::F) where {F,S}
+function hidden_set!(::ModelLike, attr::ConstraintFunction,
+                     ::ConstraintIndex{F, S}, ::F) where {F <: AbstractFunction,
+                                                          S}
     throw(UnsupportedAttribute(attr))
 end
-func_type(c::ConstraintIndex{F,S}) where {F, S} = F
-function hidden_set!(model::ModelLike, ::ConstraintFunction, ::ConstraintIndex, ::AbstractFunction)
+func_type(c::ConstraintIndex{F, S}) where {F, S} = F
+function hidden_set!(::ModelLike, ::ConstraintFunction,
+                     constraint_index::ConstraintIndex, func::AbstractFunction)
     throw(ArgumentError("""Cannot modify functions of different types.
     Constraint type is $(func_type(constraint_index)) while the replacement
     function is of type $(typeof(func))."""))
@@ -592,13 +595,12 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function hidden_set!(model::ModelLike, attr::ConstraintSet,
-                     constraint_index::ConstraintIndex{F, S},
-                     set::S) where {F, S<:AbstractSet}
+function hidden_set!(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
+                     ::S) where {F, S <: AbstractSet}
     throw(UnsupportedAttribute(attr))
 end
 set_type(::ConstraintIndex{F, S}) where {F, S} = S
-function hidden_set!(model::ModelLike, ::ConstraintSet,
+function hidden_set!(::ModelLike, ::ConstraintSet,
                      constraint_index::ConstraintIndex, set::AbstractSet)
     throw(ArgumentError("""Cannot modify sets of different types. Constraint
     type is $(set_type(constraint_index)) while the replacement set is of
