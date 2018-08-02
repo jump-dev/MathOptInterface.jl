@@ -1,4 +1,3 @@
-
 @enum CachingOptimizerState NoOptimizer EmptyOptimizer AttachedOptimizer
 @enum CachingOptimizerMode Manual Automatic
 
