@@ -271,7 +271,7 @@ function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, 
             try
                 MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
             catch err
-                if err isa MOI.CannotSet
+                if err isa MOI.CannotSetAttribute
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -363,7 +363,7 @@ function MOI.set!(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
             try
                 MOI.set!(m.optimizer, attr, optimizer_value)
             catch err
-                if err isa MOI.CannotSet
+                if err isa MOI.CannotSetAttribute
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -384,7 +384,7 @@ function MOI.set!(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute
             try
                 MOI.set!(m.optimizer, attr, optimizer_index, optimizer_value)
             catch err
-                if err isa MOI.CannotSet
+                if err isa MOI.CannotSetAttribute
                     resetoptimizer!(m)
                 else
                     rethrow(err)
