@@ -401,7 +401,8 @@ function MOI.set!(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute
 end
 
 # Names are not copied, i.e. we use the option `copynames=false` in
-# `attachoptimizer`, so the optimizer do not need to support names.
+# `attachoptimizer`, so the caching optimizer can support names even if the
+# optimizer does not.
 function MOI.supports(m::CachingOptimizer,
                       attr::Union{MOI.VariableName,
                                   MOI.ConstraintName},
