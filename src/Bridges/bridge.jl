@@ -56,8 +56,12 @@ function can only be called if `MOI.supportsconstraint(BT, F, S)` is `true`.
 
 The following returns `SplitIntervalBridge{Float64, MOI.SingleVariable}`:
 ```julia
-bridgetype(SplitIntervalBridge{Float64}, MOI.SingleVariable,
-                                         MOI.Interval{Float64})
+concrete_bridge_type(SplitIntervalBridge{Float64}, MOI.SingleVariable,
+                                                   MOI.Interval{Float64})
 ```
 """
-function concrete_bridge_type end
+function concrete_bridge_type(bridge_type::DataType,
+                              ::Type{<:MOI.AbstractFunction},
+                              ::Type{<:MOI.AbstractSet})
+    return bridge_type
+end

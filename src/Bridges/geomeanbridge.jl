@@ -93,7 +93,6 @@ end
 
 MOI.supportsconstraint(::Type{GeoMeanBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.GeometricMeanCone}) where T = true
 addedconstrainttypes(::Type{GeoMeanBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.GeometricMeanCone}) where T = [(MOI.ScalarAffineFunction{T}, MOI.LessThan{T}), (MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
-concrete_bridge_type(::Type{GeoMeanBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.GeometricMeanCone}) where T = GeoMeanBridge{T}
 
 # Attributes, Bridge acting as an model
 MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables) = length(b.xij)
