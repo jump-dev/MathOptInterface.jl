@@ -64,6 +64,7 @@ bridge(b::AbstractBridgeOptimizer, ci::CI) = b.bridges[ci]
 # Implementation of the MOI interface for AbstractBridgeOptimizer
 
 MOI.optimize!(b::AbstractBridgeOptimizer) = MOI.optimize!(b.model)
+# By convention, the model should be stored in a `model` field
 
 function MOI.isempty(b::AbstractBridgeOptimizer)
     return isempty(b.bridges) && MOI.isempty(b.model)
