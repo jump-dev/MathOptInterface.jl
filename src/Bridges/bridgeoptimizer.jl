@@ -5,6 +5,11 @@ A bridge optimizer applies given constraint bridges to a given optimizer thus
 extending the types of supported constraints. The attributes of the inner
 optimizer are automatically transformed to make the bridges transparent, e.g.
 the variables and constraints created by the bridges are hidden.
+
+By convention, the inner optimizer should be stored in a `model` field and
+the dictionary mapping constraint indices to bridges should be stored in a
+`bridges` field. If a bridge optimizer deviates from these conventions, it
+should implement the functions `MOI.optimize!` and `bridge` respectively.
 """
 abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 
