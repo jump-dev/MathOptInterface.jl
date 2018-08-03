@@ -42,9 +42,11 @@ function MOI.canget(model::MOI.ModelLike, attr::MOI.ConstraintDual, ::Type{Split
            MOI.canget(model, attr, CI{F, MOI.LessThan{T}})
 end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBridge)
-    lowd = MOI.get(model, MOI.ConstraintDual(), c.lower) # Should be nonnegative
-    uppd = MOI.get(model, MOI.ConstraintDual(), c.upper) # Should be nonpositive
-    return lowd > -uppd ? lowd : uppd
+    # Should be nonnegative
+    lower_dual = MOI.get(model, MOI.ConstraintDual(), c.lower)
+    # Should be nonpositive
+    upper_dual = MOI.get(model, MOI.ConstraintDual(), c.upper)
+    return lower_dual > -upper_dual ? lower_dual : upper_dual
 end
 
 # Constraints
