@@ -47,7 +47,7 @@ function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 end
 
 include("intervalbridge.jl")
-@bridge SplitInterval SplitIntervalBridge () (Interval,) () () () (ScalarAffineFunction,) () ()
+@bridge SplitInterval SplitIntervalBridge () (Interval,) () () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) () ()
 include("rsocbridge.jl")
 @bridge RSOC RSOCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("geomeanbridge.jl")

@@ -116,8 +116,10 @@ struct RSOCtoPSDCBridge{T} <: AbstractBridge
     dim::Int
     cr::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
 end
+
 MOI.supportsconstraint(::Type{RSOCtoPSDCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = true
 addedconstrainttypes(::Type{RSOCtoPSDCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = [(MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle)]
+
 function RSOCtoPSDCBridge{T}(instance, f, s::MOI.RotatedSecondOrderCone) where T
     d = MOI.dimension(s)-1
     cr = MOI.addconstraint!(instance, _RSOCtoPSDCaff(f, T), MOI.PositiveSemidefiniteConeTriangle(d))

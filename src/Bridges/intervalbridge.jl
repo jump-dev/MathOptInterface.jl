@@ -3,24 +3,25 @@
 
 The `SplitIntervalBridge` splits a constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints ``⟨a, x⟩ + α ≥ l`` and ``⟨a, x⟩ + α ≤ u``.
 """
-struct SplitIntervalBridge{T} <: AbstractBridge
-    lower::CI{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}}
-    upper::CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}
+struct SplitIntervalBridge{T, F<:MOI.AbstractScalarFunction} <: AbstractBridge
+    lower::CI{F, MOI.GreaterThan{T}}
+    upper::CI{F, MOI.LessThan{T}}
 end
-function SplitIntervalBridge{T}(model, f::MOI.ScalarAffineFunction{T}, s::MOI.Interval{T}) where T
+function SplitIntervalBridge{T, F}(model, f::F, s::MOI.Interval{T}) where {T, F}
     lower = MOI.addconstraint!(model, f, MOI.GreaterThan(s.lower))
     upper = MOI.addconstraint!(model, f, MOI.LessThan(s.upper))
-    SplitIntervalBridge(lower, upper)
+    return SplitIntervalBridge(lower, upper)
 end
 
-MOI.supportsconstraint(::Type{SplitIntervalBridge{T}}, ::Type{MOI.ScalarAffineFunction{T}}, ::Type{MOI.Interval{T}}) where T = true
-addedconstrainttypes(::Type{SplitIntervalBridge{T}}, ::Type{MOI.ScalarAffineFunction{T}}, ::Type{MOI.Interval{T}}) where T = [(MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}), (MOI.ScalarAffineFunction{T}, MOI.LessThan{T})]
+MOI.supportsconstraint(::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = true
+addedconstrainttypes(::Type{SplitIntervalBridge{T}}, F::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
+concrete_bridge_type(::Type{<:SplitIntervalBridge}, F::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = SplitIntervalBridge{T, F}
 
 # Attributes, Bridge acting as an model
-MOI.get(b::SplitIntervalBridge{T}, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) where T = 1
-MOI.get(b::SplitIntervalBridge{T}, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}}) where T = 1
-MOI.get(b::SplitIntervalBridge{T}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}}) where {T} = [b.lower]
-MOI.get(b::SplitIntervalBridge{T}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) where {T} = [b.upper]
+MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.LessThan{T}}) where {T, F} = 1
+MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F} = 1
+MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F} = [b.lower]
+MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.LessThan{T}}) where {T, F} = [b.upper]
 
 # Indices
 function MOI.delete!(model::MOI.ModelLike, c::SplitIntervalBridge)
@@ -29,25 +30,23 @@ function MOI.delete!(model::MOI.ModelLike, c::SplitIntervalBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{SplitIntervalBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}})
+function MOI.canget(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, ::Type{SplitIntervalBridge{T, F}}) where {T, F}
+    return MOI.canget(model, attr, CI{F, MOI.GreaterThan{T}})
 end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::SplitIntervalBridge)
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::SplitIntervalBridge)
     # lower and upper should give the same value
-    MOI.get(model, MOI.ConstraintPrimal(), c.lower)
+    return MOI.get(model, attr, c.lower)
 end
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{SplitIntervalBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}}) &&
-    MOI.canget(model, a, CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}})
+function MOI.canget(model::MOI.ModelLike, attr::MOI.ConstraintDual, ::Type{SplitIntervalBridge{T, F}}) where {T, F}
+    return MOI.canget(model, attr, CI{F, MOI.GreaterThan{T}}) &&
+           MOI.canget(model, attr, CI{F, MOI.LessThan{T}})
 end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBridge)
-    lowd = MOI.get(model, MOI.ConstraintDual(), c.lower) # Should be nonnegative
-    uppd = MOI.get(model, MOI.ConstraintDual(), c.upper) # Should be nonpositive
-    if lowd > -uppd
-        lowd
-    else
-        uppd
-    end
+    # Should be nonnegative
+    lower_dual = MOI.get(model, MOI.ConstraintDual(), c.lower)
+    # Should be nonpositive
+    upper_dual = MOI.get(model, MOI.ConstraintDual(), c.upper)
+    return lower_dual > -upper_dual ? lower_dual : upper_dual
 end
 
 # Constraints
@@ -57,7 +56,8 @@ function MOI.modify!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.A
 end
 
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SplitIntervalBridge}) = true
-function MOI.set!(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::SplitIntervalBridge, func::MOI.ScalarAffineFunction)
+function MOI.set!(model::MOI.ModelLike, ::MOI.ConstraintFunction,
+                  c::SplitIntervalBridge{T, F}, func::F) where {T, F}
     MOI.set!(model, MOI.ConstraintFunction(), c.lower, func)
     MOI.set!(model, MOI.ConstraintFunction(), c.upper, func)
 end
