@@ -117,21 +117,21 @@ function MOI.canget(b::AbstractBridgeOptimizer,
     end
 end
 function MOI.get(b::AbstractBridgeOptimizer,
-                 loc::MOI.ListOfConstraintIndices{F, S}) where {F, S}
+                 attr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
     if isbridged(b, F, S)
-        locr = MOI.get(b.bridged, loc)
+        list = MOI.get(b.bridged, attr)
     else
-        locr = MOI.get(b.model, loc)
+        list = MOI.get(b.model, attr)
     end
     for bridge in values(b.bridges)
-        for c in MOI.get(bridge, loc)
-            i = something(findfirst(isequal(c), locr), 0)
+        for c in MOI.get(bridge, attr)
+            i = something(findfirst(isequal(c), list), 0)
             if !iszero(i)
-                MOI.deleteat!(locr, i)
+                MOI.deleteat!(list, i)
             end
         end
     end
-    return locr
+    return list
 end
 function _numberof(b::AbstractBridgeOptimizer, model::MOI.ModelLike,
                    attr::Union{MOI.NumberOfConstraints, MOI.NumberOfVariables})
