@@ -28,6 +28,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     resultcount::Int
     evalobjective::Bool # Computes ObjectiveValue by evaluation ObjectiveFunction with VariablePrimal
     objectivevalue::Float64
+    objectivebound::Float64  # set this using MOI.set!(model, MOI.ObjectiveBound(), value)
     primalstatus::MOI.ResultStatusCode
     dualstatus::MOI.ResultStatusCode
     varprimal::Dict{MOI.VariableIndex,Float64}
@@ -56,6 +57,7 @@ MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false, evalobjective
                   MOI.Success,
                   0,
                   evalobjective,
+                  NaN,
                   NaN,
                   MOI.UnknownResultStatus,
                   MOI.UnknownResultStatus,
@@ -180,6 +182,13 @@ MOI.get(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute, idx::MOI.Con
 MOI.get(mock::MockOptimizer, ::MOI.ConstraintDual, idx::MOI.ConstraintIndex) = mock.condual[xor_index(idx)]
 MOI.get(mock::MockOptimizer, ::MockConstraintAttribute, idx::MOI.ConstraintIndex) = mock.conattribute[xor_index(idx)]
 
+MOI.supports(mock::MockOptimizer, ::MOI.ObjectiveBound) = true
+MOI.canget(mock::MockOptimizer, ::MOI.ObjectiveBound) = !isnan(mock.objectivebound)
+MOI.get(mock::MockOptimizer, ::MOI.ObjectiveBound) = mock.objectivebound
+function MOI.set!(mock::MockOptimizer, ::MOI.ObjectiveBound, value::Float64)
+    mock.objectivebound = value
+end
+
 function MOI.empty!(mock::MockOptimizer)
     MOI.empty!(mock.inner_model)
     mock.attribute = 0
@@ -191,6 +200,7 @@ function MOI.empty!(mock::MockOptimizer)
     mock.terminationstatus = MOI.Success
     mock.resultcount = 0
     mock.objectivevalue = NaN
+    mock.objectivebound = NaN
     mock.primalstatus = MOI.UnknownResultStatus
     mock.dualstatus = MOI.UnknownResultStatus
     mock.varprimal = Dict{MOI.VariableIndex,Float64}()
@@ -206,6 +216,7 @@ function MOI.isempty(mock::MockOptimizer)
         !mock.solved && !mock.hasprimal && !mock.hasdual &&
         mock.terminationstatus == MOI.Success &&
         mock.resultcount == 0 && isnan(mock.objectivevalue) &&
+        isnan(mock.objectivebound) &&
         mock.primalstatus == MOI.UnknownResultStatus &&
         mock.dualstatus == MOI.UnknownResultStatus
 end
