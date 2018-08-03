@@ -1,10 +1,10 @@
 """
     AbstractBridgeOptimizer
 
-A bridge optimizer applies a given constraint bridge to a given optimizer. The
-attributes of the bridge optimizer are automatically computed to make the
-bridges transparent, e.g. the variables and constraints created by the bridges
-are hidden.
+A bridge optimizer applies given constraint bridges to a given optimizer thus
+extending the types of supported constraints. The attributes of the inner
+optimizer are automatically transformed to make the bridges transparent, e.g.
+the variables and constraints created by the bridges are hidden.
 """
 abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 
