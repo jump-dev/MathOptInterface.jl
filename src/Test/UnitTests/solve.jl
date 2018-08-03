@@ -7,7 +7,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "Min IP with constant" begin
         MOI.empty!(model)
         @test MOI.isempty(model)
-        MOIU.loadfromstring!(model,"""
+        MOIU.loadfromstring!(model, """
             variables: x
             minobjective: 2.0x + -1.0
             c1: x >= 1.5
@@ -15,8 +15,8 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
         """)
         x = MOI.get(model, MOI.VariableIndex, "x")
         test_model_solution(model, config;
-            objective_value   = 3.0,
-            variable_primal   = [(x, 2.0)]
+            objective_value = 3.0,
+            variable_primal = [(x, 2.0)]
         )
         if config.solve
             @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
@@ -26,7 +26,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "Max IP with constant" begin
         MOI.empty!(model)
         @test MOI.isempty(model)
-        MOIU.loadfromstring!(model,"""
+        MOIU.loadfromstring!(model, """
             variables: x
             maxobjective: 2.0x + 1.0
             c1: x <= 1.5
@@ -34,8 +34,8 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
         """)
         x = MOI.get(model, MOI.VariableIndex, "x")
         test_model_solution(model, config;
-            objective_value   = 3.0,
-            variable_primal   = [(x, 1.0)]
+            objective_value = 3.0,
+            variable_primal = [(x, 1.0)]
         )
         if config.solve
             @test MOI.get(model, MOI.ObjectiveBound()) >= 3.0
@@ -45,15 +45,15 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "Min LP with constant" begin
         MOI.empty!(model)
         @test MOI.isempty(model)
-        MOIU.loadfromstring!(model,"""
+        MOIU.loadfromstring!(model, """
             variables: x
             minobjective: 2.0x + -1.0
             c1: x >= 1.5
         """)
         x = MOI.get(model, MOI.VariableIndex, "x")
         test_model_solution(model, config;
-            objective_value   = 2.0,
-            variable_primal   = [(x, 1.5)]
+            objective_value = 2.0,
+            variable_primal = [(x, 1.5)]
         )
         if config.solve
             @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
@@ -63,15 +63,15 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "Max LP with constant" begin
         MOI.empty!(model)
         @test MOI.isempty(model)
-        MOIU.loadfromstring!(model,"""
+        MOIU.loadfromstring!(model, """
             variables: x
             maxobjective: 2.0x + 1.0
             c1: x <= 1.5
         """)
         x = MOI.get(model, MOI.VariableIndex, "x")
         test_model_solution(model, config;
-            objective_value   = 4.0,
-            variable_primal   = [(x, 1.5)]
+            objective_value = 4.0,
+            variable_primal = [(x, 1.5)]
         )
         if config.solve
             @test MOI.get(model, MOI.ObjectiveBound()) >= 4.0
