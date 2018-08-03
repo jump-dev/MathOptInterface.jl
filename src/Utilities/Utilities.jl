@@ -20,6 +20,7 @@ const CI{F,S} = MOI.ConstraintIndex{F,S}
 include("functions.jl")
 include("sets.jl")
 include("copy.jl")
+include("results.jl")
 
 include("model.jl")
 include("parser.jl")

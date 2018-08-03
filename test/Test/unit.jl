@@ -30,8 +30,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success,
                 (MOI.FeasiblePoint, [1]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0]
+                MOI.FeasiblePoint
             )
         )
         MOIT.solve_blank_obj(mock, config)
@@ -41,8 +40,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success,
                 (MOI.FeasiblePoint, [1]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0]
+                MOI.FeasiblePoint
             )
         )
         MOIT.solve_constant_obj(mock, config)
@@ -52,8 +50,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success,
                 (MOI.FeasiblePoint, [1]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0]
+                MOI.FeasiblePoint
             )
         )
         MOIT.solve_singlevariable_obj(mock, config)
@@ -68,7 +65,10 @@ end
                     (MOI.SingleVariable, MOI.LessThan{Float64})    => [0.0]
             )
         )
+        # x has two variable constraints
+        mock.eval_variable_constraint_dual = false
         MOIT.solve_with_lowerbound(mock, config)
+        mock.eval_variable_constraint_dual = true
     end
     @testset "solve_with_upperbound" begin
         MOIU.set_mock_optimize!(mock,
@@ -80,7 +80,10 @@ end
                     (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0]
             )
         )
+        # x has two variable constraints
+        mock.eval_variable_constraint_dual = false
         MOIT.solve_with_upperbound(mock, config)
+        mock.eval_variable_constraint_dual = true
     end
     @testset "solve_affine_lessthan" begin
         MOIU.set_mock_optimize!(mock,
@@ -167,8 +170,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success,
                 (MOI.FeasiblePoint, [1]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [3.0]
+                MOI.FeasiblePoint
             )
         )
         MOIT.solve_duplicate_terms_obj(mock, config)
@@ -241,13 +243,11 @@ end
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success, (MOI.FeasiblePoint, [1.0]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+                MOI.FeasiblePoint
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success, (MOI.FeasiblePoint, [2.0]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+                MOI.FeasiblePoint
             )
         )
         MOIT.solve_set_singlevariable_lessthan(mock, config)
@@ -256,13 +256,11 @@ end
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success, (MOI.FeasiblePoint, [1.0]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
+                MOI.FeasiblePoint
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
                 MOI.Success, (MOI.FeasiblePoint, [2.0]),
-                MOI.FeasiblePoint,
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0]
+                MOI.FeasiblePoint
             )
         )
         MOIT.solve_transform_singlevariable_lessthan(mock, config)

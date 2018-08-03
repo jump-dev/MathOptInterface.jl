@@ -1277,7 +1277,7 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 2 atol=atol rtol=rtol
 
-            cXv = square ? [1, -1, -1, 1] : [1, -1, 1]
+            cXv = square ? [1, -2, 0, 1] : [1, -1, 1]
             @test MOI.canget(model, MOI.ConstraintDual(), typeof(cX))
             @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ cXv atol=atol rtol=rtol
         end

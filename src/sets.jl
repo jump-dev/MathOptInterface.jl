@@ -47,6 +47,27 @@ abstract type AbstractVectorSet <: AbstractSet end
 dimension(s::AbstractVectorSet) = s.dimension # .dimension field is conventional, overwrite this method if not applicable
 
 """
+    set_dot(x::Vector, y::Vector, set::AbstractVectorSet)
+
+Return the scalar product between a vector `x` of the set `set` and a vector
+`y` of the dual of the set `s`.
+"""
+function set_dot(x::Vector, y::Vector, set::AbstractVectorSet)
+    return dot(x, y)
+end
+
+"""
+    dot_coefficients(a::Vector, set::AbstractVectorSet)
+
+Return the vector `b` such that for all vector `x` of the set `set`,
+`set_dot(b, x, set)` is equal to `dot(a, x)`.
+"""
+function dot_coefficients(a::Vector, set::AbstractVectorSet)
+    return a
+end
+
+
+"""
     Reals(dimension)
 
 The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension `dimension`.
@@ -279,6 +300,44 @@ end
 
 dimension(s::PositiveSemidefiniteConeTriangle) = div(s.side_dimension * (s.side_dimension + 1), 2)
 
+function triangle_dot(x::Vector{T}, y::Vector{T}, dim::Int, offset::Int) where T
+    result = zero(T)
+    k = offset
+    for i in 1:dim
+        for j in 1:i
+            k += 1
+            if i == j
+                result += x[k] * y[k]
+            else
+                result += 2 * x[k] * y[k]
+            end
+        end
+    end
+    return result
+end
+
+function triangle_coefficients!(b::Vector{T}, dim::Int, offset::Int) where T
+    k = offset
+    for i in 1:dim
+        for j in 1:i
+            k += 1
+            if i != j
+                b[k] /= 2
+            end
+        end
+    end
+end
+
+function set_dot(x::Vector, y::Vector, set::PositiveSemidefiniteConeTriangle)
+    return triangle_dot(x, y, set.side_dimension, 0)
+end
+
+function dot_coefficients(a::Vector, set::PositiveSemidefiniteConeTriangle)
+    b = copy(a)
+    triangle_coefficients!(b, set.side_dimension, 0)
+    return b
+end
+
 """
     PositiveSemidefiniteConeSquare(side_dimension)
 
@@ -305,6 +364,29 @@ struct PositiveSemidefiniteConeSquare <: AbstractVectorSet
 end
 
 dimension(s::PositiveSemidefiniteConeSquare) = s.side_dimension^2
+
+function square_dot(x::Vector{T}, y::Vector{T}, dim::Int, offset::Int) where T
+    @show x
+    @show y
+    result = zero(T)
+    for i in 1:dim
+        for j in 1:i
+            k = (j - 1) * dim + i
+            if i == j
+                result += x[k] * y[k]
+            else
+                l = (i - 1) * dim + j
+                result += (x[k] + x[l]) * (y[k] + y[k]) / 2
+            end
+        end
+    end
+    @show result
+    return result
+end
+
+#function set_dot(x::Vector, y::Vector, set::PositiveSemidefiniteConeSquare)
+#    return square_dot(x, y, set.side_dimension, 0)
+#end
 
 """
     LogDetConeTriangle(side_dimension)
@@ -349,7 +431,22 @@ struct RootDetConeSquare <: AbstractVectorSet
 end
 
 dimension(s::Union{LogDetConeTriangle, RootDetConeTriangle}) = 1 + div(s.side_dimension * (s.side_dimension + 1), 2)
+function set_dot(x::Vector, y::Vector, set::Union{LogDetConeTriangle,
+                                                  RootDetConeTriangle})
+    return x[1] * y[1] + triangle_dot(x, y, set.side_dimension, 1)
+end
+function dot_coefficients(a::Vector, set::Union{LogDetConeTriangle,
+                                                RootDetConeTriangle})
+    b = copy(a)
+    triangle_coefficients!(b, set.side_dimension, 1)
+    return b
+end
+
 dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.side_dimension^2
+#function set_dot(x::Vector, y::Vector, set::Union{LogDetConeSquare,
+#                                                  RootDetConeSquare})
+#    return x[1] * y[1] + square_dot(x, y, set.side_dimension, 1)
+#end
 
 """
     Integer()

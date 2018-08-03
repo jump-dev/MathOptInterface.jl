@@ -380,6 +380,24 @@ it has non-integer coefficient and `F` is `ScalarAffineFunction{Int}`.
 """
 struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute end
 
+"""
+    ObjectiveFunctionType()
+
+A model attribute for the type `F` of the objective function set using the
+`ObjectiveFunction{F}` attribute.
+
+## Examples
+
+In the following code, `attr` should be equal to `MOI.SingleVariable`:
+```julia
+x = MOI.addvariable!(model)
+MOI.set!(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
+         MOI.SingleVariable(x))
+attr = MOI.get(model, MOI.ObjectiveFunctionType())
+```
+"""
+struct ObjectiveFunctionType <: AbstractModelAttribute end
+
 ## Optimizer attributes
 
 """
