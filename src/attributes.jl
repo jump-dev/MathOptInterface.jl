@@ -38,13 +38,16 @@ const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, A
 """
     struct UnsupportedAttribute{AttrType} <: UnsupportedError
         attr::AttrType
+        message::String
     end
 
 An error indicating that setting attribute `attr` is not supported by the model.
 """
 struct UnsupportedAttribute{AttrType<:AnyAttribute} <: UnsupportedError
     attr::AttrType
+    message::String
 end
+UnsupportedAttribute(attr::AnyAttribute) = UnsupportedAttribute(attr, "")
 
 """
     struct CannotSetAttribute{AttrType} <: CannotError

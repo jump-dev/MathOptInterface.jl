@@ -10,12 +10,17 @@ If `F`-in-`S` constraints are only not supported in specific circumstances, e.g.
 supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
 """
-    UnsupportedConstraint{F, S} <: UnsupportedError
+    struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
+        message::String # Human-friendly explanation why the attribute cannot be set
+    end
 
 An error indicating that constraints of type `F`-in-`S` are not supported by
 the model.
 """
-struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError end
+struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
+    message::String # Human-friendly explanation why the attribute cannot be set
+end
+UnsupportedConstraint{F, S}() where {F, S} = UnsupportedConstraint{F, S}("")
 
 """
     struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
@@ -31,7 +36,6 @@ end
 CannotAddConstraint{F, S}() where {F, S} = CannotAddConstraint{F, S}("")
 
 operation_name(::Union{UnsupportedConstraint{F, S}, CannotAddConstraint{F, S}}) where {F, S} = "Adding `$F`-in-`$S` constraints"
-message(err::CannotAddConstraint) = err.message
 
 """
     addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}

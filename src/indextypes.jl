@@ -49,12 +49,16 @@ Return a `Bool` indicating whether this index refers to a valid object in the mo
 isvalid(model::ModelLike, ref::Index) = false
 
 """
-    UnsupportedDeletion{IndexType} <: UnsupportedError
+    struct UnsupportedDeletion{IndexType} <: UnsupportedError
+        message::String
+    end
 
 An error indicating that deleting indices of type `IndexType` is not supported
 by the model.
 """
-struct UnsupportedDeletion{IndexType<:Index} <: UnsupportedError end
+struct UnsupportedDeletion{IndexType<:Index} <: UnsupportedError
+    message::String
+end
 
 function operation_name(::UnsupportedDeletion{IndexType}) where {IndexType<:Index}
     return "Deleting indices of type `$IndexType`"

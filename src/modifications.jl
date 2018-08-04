@@ -2,6 +2,7 @@
     struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
                                              C<:AbstractFunctionModification} <: UnsupportedError
         change::C
+        message::String
     end
 
 An error indicating that constraints of type `F`-in-`S` do not support the
@@ -10,9 +11,10 @@ constraint modification `change`.
 struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
                                          C<:AbstractFunctionModification} <: UnsupportedError
     change::C
+    message::String
 end
 function UnsupportedConstraintModification{F, S}(change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
-    UnsupportedConstraintModification{F, S, typeof(change)}(change)
+    UnsupportedConstraintModification{F, S, typeof(change)}(change, "")
 end
 
 operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Modifying `$F`-in-`$S` constraints with $(err.change)"
@@ -20,13 +22,15 @@ operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Mod
 """
     struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
         change::C
+        message::String
     end
 
-An error indicating that the objective function dos not support the constraint
+An error indicating that the objective function does not support the constraint
 modification `change`.
 """
 struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
     change::C
+    message::String
 end
 
 operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective function with $(err.change)"
