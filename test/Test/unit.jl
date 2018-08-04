@@ -21,7 +21,8 @@ end
         "solve_qcp_edge_cases",
         "solve_affine_deletion_edge_cases",
         "solve_duplicate_terms_obj",
-        "solve_integer_edge_cases"
+        "solve_integer_edge_cases",
+        "solve_objbound_edge_cases"
         ])
 
     @testset "solve_blank_obj" begin
@@ -209,6 +210,28 @@ end
         )
         MOIT.solve_integer_edge_cases(mock, config)
     end
+    @testset "solve_objbound_edge_cases" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOI.set!(mock, MOI.ObjectiveBound(), 3.0)
+                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [2.0]))
+            end,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOI.set!(mock, MOI.ObjectiveBound(), 3.0)
+                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.0]))
+            end,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOI.set!(mock, MOI.ObjectiveBound(), 2.0)
+                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.5]))
+            end,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOI.set!(mock, MOI.ObjectiveBound(), 4.0)
+                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.5]))
+            end
+        )
+        MOIT.solve_objbound_edge_cases(mock, config)
+    end
+
 end
 
 @testset "modifications" begin

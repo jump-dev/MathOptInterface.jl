@@ -98,5 +98,6 @@ include("objectives.jl")
 include("constraints.jl")
 include("basic_constraint_tests.jl")
 include("modifications.jl")
+include("solve.jl")
 
 @moitestset unit
