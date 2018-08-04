@@ -365,29 +365,6 @@ end
 
 dimension(s::PositiveSemidefiniteConeSquare) = s.side_dimension^2
 
-function square_dot(x::Vector{T}, y::Vector{T}, dim::Int, offset::Int) where T
-    @show x
-    @show y
-    result = zero(T)
-    for i in 1:dim
-        for j in 1:i
-            k = (j - 1) * dim + i
-            if i == j
-                result += x[k] * y[k]
-            else
-                l = (i - 1) * dim + j
-                result += (x[k] + x[l]) * (y[k] + y[k]) / 2
-            end
-        end
-    end
-    @show result
-    return result
-end
-
-#function set_dot(x::Vector, y::Vector, set::PositiveSemidefiniteConeSquare)
-#    return square_dot(x, y, set.side_dimension, 0)
-#end
-
 """
     LogDetConeTriangle(side_dimension)
 
@@ -443,10 +420,6 @@ function dot_coefficients(a::Vector, set::Union{LogDetConeTriangle,
 end
 
 dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.side_dimension^2
-#function set_dot(x::Vector, y::Vector, set::Union{LogDetConeSquare,
-#                                                  RootDetConeSquare})
-#    return x[1] * y[1] + square_dot(x, y, set.side_dimension, 1)
-#end
 
 """
     Integer()
