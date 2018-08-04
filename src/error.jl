@@ -15,11 +15,11 @@ abstract type UnsupportedError <: Exception end
 function Base.showerror(io::IO, err::UnsupportedError)
     print(io, typeof(err), ": ", operation_name(err),
           " is not supported by the the model")
-    message = message(err)
-    if isempty(message)
+    m = message(err)
+    if Base.isempty(m)
         print(io, ".")
     else
-        print(io, ": ", message)
+        print(io, ": ", m)
     end
 end
 
@@ -35,11 +35,11 @@ function Base.showerror(io::IO, err::CannotError)
     print(io, typeof(err), ": ", operation_name(err),
           " cannot be performed in the current state of the model even if the",
           " operation is supported")
-    message = message(err)
-    if isempty(message)
+    m = message(err)
+    if Base.isempty(m)
         print(io, ".")
     else
-        print(io, ": ", message)
+        print(io, ": ", m)
     end
     print(io, " You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode.")
 end

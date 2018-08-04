@@ -24,3 +24,10 @@ end
         end
     end
 end
+
+@testset "Error messages" begin
+    @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name())) == "MathOptInterface.UnsupportedAttribute{MathOptInterface.Name}: Setting attribute MathOptInterface.Name() is not supported by the the model."
+    @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name(), "Message")) == "MathOptInterface.UnsupportedAttribute{MathOptInterface.Name}: Setting attribute MathOptInterface.Name() is not supported by the the model: Message"
+    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name())) == "MathOptInterface.CannotSetAttribute{MathOptInterface.Name}: Setting attribute MathOptInterface.Name() cannot be performed in the current state of the model even if the operation is supported. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name(), "Message")) == "MathOptInterface.CannotSetAttribute{MathOptInterface.Name}: Setting attribute MathOptInterface.Name() cannot be performed in the current state of the model even if the operation is supported: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+end
