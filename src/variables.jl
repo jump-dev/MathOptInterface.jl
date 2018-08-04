@@ -14,7 +14,6 @@ end
 CannotAddVariable() = CannotAddVariable("")
 
 operation_name(::CannotAddVariable) = "Adding variables"
-message(err::CannotAddVariable) = err.message
 
 """
     addvariables!(model::ModelLike, n::Int)::Vector{VariableIndex}
