@@ -1,6 +1,22 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.5.0 (August 5, 2018)
+-----------------------
+
+- Fix names with CachingOptimizer.
+- Cleanup thanks to @mohamed82008.
+- Added a universal fallback for constraints.
+- Fast utilities for function canonicalization thanks to @rdeits.
+- Renamed `dimension` field to `side_dimension` in the context of matrix-like
+  sets.
+- New and improved tests for cases like duplicate terms and `ObjectiveBound`.
+- Removed `cantransform`, `canaddconstraint`, `canaddvariable`, `canset`,
+  `canmodify`, and `candelete` functions from the API. They are replaced by a
+  new set of errors that are thrown to indicate unsupported or
+  "can't do that right now" operations. The API for `copy!` is updated as well.
+ - Updates for the new JuMP style guide.
+
 v0.4.1 (June 28, 2018)
 ----------------------
 
