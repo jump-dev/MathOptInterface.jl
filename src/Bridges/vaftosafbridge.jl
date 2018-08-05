@@ -1,69 +1,78 @@
-"""
-    VectorAffineBridge{T}
+const VectorToScalarBridgeSets = Union{MOI.Zeros,
+                                       MOI.Nonpositives,
+                                       MOI.Nonnegatives}
+get_scalar_set(T, ::Type{MOI.Zeros}) = MOI.EqualTo{T}
+get_scalar_set(T, ::Type{MOI.Nonpositives}) = MOI.LessThan{T}
+get_scalar_set(T, ::Type{MOI.Nonnegatives}) = MOI.GreaterThan{T}
 
-The `VectorAffineBridge` splits a `VectorAffineFunction` into a series of
+"""
+    VectorToScalarBridge{S, T}
+
+The `VectorToScalarBridge` splits an `VectorAffineFunction` into a series of
 `ScalarAffineFunction`s.
 """
-struct VectorAffineBridge{S,T} <: AbstractBridge
+struct VectorToScalarBridge{T, S<:VectorToScalarBridgeSets} <: AbstractBridge
     constraints::Vector{CI{MOI.ScalarAffineFunction{T}, S}}
 end
-const VectorAffineBridgeSets = Union{MOI.Zeros, MOI.Nonpositives, MOI.Nonnegatives}
-function VectorAffineBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::VectorAffineBridgeSets) where T
-    set_type = getscalarset(T, typeof(s))
-    sets      = [ set_type(-constant) for constant in f.constants ]
-    functions = [ MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}[], zero(T)) for term in f.terms ]
-    @assert dimension(s) == length(sets) == length(functions)
-    for term in f.terms
-        saf = functions[term.output_index]
-        push!(saf.terms, term.scalar_term)
+function VectorToScalarBridge(model, func::MOI.VectorAffineFunction{T}, set::S) where {T, S}
+    set_type = get_scalar_set(T, S)
+    sets = [set_type(-constant) for constant in func.constants]
+    functions = [MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}[], zero(T))
+        for term in func.terms]
+    @assert dimension(set) == length(sets) == length(functions)
+    for term in func.terms
+        scalar_function = functions[term.output_index]
+        push!(scalar_function.terms, term.scalar_term)
     end
-    ci = CI{MOI.ScalarAffineFunction{T}, S}[]
-    for (func, set) in zip(functions, sets)
-        push!(ci, MOI.addconstraint!(model, func, set))
-    end
-    VectorAffineBridge(ci)
+    constraint_indices = MOI.addconstraints!(model, functions, sets)
+    VectorToScalarBridge(constraint_indices)
 end
-getscalarset(T, ::Type{MOI.Zeros})        = MOI.EqualTo{T}
-getscalarset(T, ::Type{MOI.Nonpositives}) = MOI.LessThan{T}
-getscalarset(T, ::Type{MOI.Nonnegatives}) = MOI.GreaterThan{T}
 
+function MOI.supportsconstraint(::Type{VectorToScalarBridge{T, S}},
+                                ::Type{MOI.VectorAffineFunction{T}},
+                                ::Type{S}) where {T, S<:VectorToScalarBridgeSets}
+    return true
+end
 
-MOI.supportsconstraint(::Type{VectorAffineBridge{T,S}}, ::Type{MOI.VectorAffineFunction{T}}, ::Type{S}) where {T,S<:VectorAffineBridgeSets} = true
-function addedconstrainttypes(::Type{VectorAffineBridge{T,S}}, ::Type{MOI.VectorAffineFunction{T}}, ::Type{S}) where {T,S<:VectorAffineBridgeSets}
-    [(MOI.ScalarAffineFunction{T}, getscalarset(T,S))]
- end
+function addedconstrainttypes(::Type{VectorToScalarBridge{T, S}},
+                              ::Type{<:MOI.VectorAffineFunction{T}},
+                              ::Type{S}) where {T, S<:VectorToScalarBridgeSets}
+    return [(MOI.ScalarAffineFunction{T}, get_scalar_set(T, S))]
+end
+
+function concrete_bridge_type(::Type{<:VectorToScalarBridge},
+                              ::Type{<:MOI.VectorAffineFunction{T}},
+                              ::Type{S}) where {T, S<:VectorToScalarBridgeSets}
+    return VectorToScalarBridge{T, S}
+end
 
 # Attributes, Bridge acting as an model
-function MOI.get(b::VectorAffineBridge{T,S}, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, S2}) where {T,S,S2}
-    if getscalarset(T, S) == S2
-        return length(b.constraints)
-    else
-        return 0
-    end
+function MOI.get(bridge::VectorToScalarBridge{T, S},
+       ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, S}) where {T, S}
+    return length(bridge.constraints)
 end
-function MOI.get(b::VectorAffineBridge{T,S}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, S2}) where {T,S,S2}
-    b.constraints
+function MOI.get(bridge::VectorToScalarBridge{T, S},
+       ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, S}) where {T, S}
+    return bridge.constraints
 end
 
 # Indices
-function MOI.delete!(model::MOI.ModelLike, c::VectorAffineBridge)
-    for ci in c.constraints
-        MOI.delete!(model, ci)
-    end
+function MOI.delete!(model::MOI.ModelLike, bridge::VectorToScalarBridge)
+    MOI.delete!.(Ref(model), bridge.constraints)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{VectorAffineBridge{T,S}}) where {T,S}
-    MOI.canget(model, a, CI{MOI.ScalarAffineFunction{T}, getscalarset(T, S)})
+
+function MOI.canget(model::MOI.ModelLike, attribute::Union{MOI.ConstraintPrimal,
+                                                           MOI.ConstraintDual},
+                    ::Type{VectorToScalarBridge{T, S}}) where {T, S}
+    return MOI.canget(model, attribute,
+                      CI{MOI.ScalarAffineFunction{T}, get_scalar_set(T, S)})
 end
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::VectorAffineBridge)
-    [ MOI.get(model, MOI.ConstraintPrimal(), ci) for ci in c.constraints ]
-end
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{VectorAffineBridge{T,S}}) where {T,S}
-    MOI.canget(model, a, CI{MOI.ScalarAffineFunction{T}, getscalarset(T, S))
-end
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintDual, c::VectorAffineBridge)
-    [ MOI.get(model, MOI.ConstraintDual(), ci) for ci in c.constraints ]
+function MOI.get(model::MOI.ModelLike, attribute::Union{MOI.ConstraintPrimal,
+                                                        MOI.ConstraintDual},
+                 bridge::VectorToScalarBridge)
+    return [MOI.get(model, attribute, ci) for ci in bridge.constraints]
 end
 
 # Constraints
