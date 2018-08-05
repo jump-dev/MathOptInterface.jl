@@ -124,9 +124,19 @@ struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
 end
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
-Base.start(it::ScalarFunctionIterator) = 1
-Base.done(it::ScalarFunctionIterator, state) = state > length(it)
-Base.next(it::ScalarFunctionIterator, state) = (it[state], state+1)
+@static if VERSION >= v"0.7-"
+    function Base.iterate(it::ScalarFunctionIterator, state = 1)
+        if state > length(it)
+            return nothing
+        else
+            return (it[state], state + 1)
+        end
+    end
+else
+    Base.start(it::ScalarFunctionIterator) = 1
+    Base.done(it::ScalarFunctionIterator, state) = state > length(it)
+    Base.next(it::ScalarFunctionIterator, state) = (it[state], state+1)
+end
 function Base.length(it::ScalarFunctionIterator{<:MOI.AbstractVectorFunction})
     return MOI.output_dimension(it.f)
 end
