@@ -345,9 +345,9 @@ function MOI.canget(b::AbstractBridgeOptimizer, IdxT::Type{CI},
 end
 function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{CI},
                  name::String)
-    try
+    if MOI.canget(b.model, IdxT, name)
         return MOI.get(b.model, IdxT, name)
-    catch
+    else
         return MOI.get(b.bridged, IdxT, name)
     end
 end
