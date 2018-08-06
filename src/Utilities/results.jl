@@ -61,8 +61,8 @@ end
 # then invert A_j*. To get the kth element of A_i* y_i we need to compute
 # ⟨e_k, A_i* y_i⟩_Rn = ⟨A_i e_k, y_i⟩_{C_i}. A_i e_k is computed using
 # `variable_coefficient` and then it is combined with the dual y_i with
-# `MOI.set_dot`.
-# Once A_j* y_j is obtained, we invert A_j* with `MOI.dot_coefficients`.
+# `set_dot`.
+# Once A_j* y_j is obtained, we invert A_j* with `dot_coefficients`.
 
 function variable_coefficient(func::MOI.ScalarAffineFunction{T},
                               vi::MOI.VariableIndex) where T
@@ -123,7 +123,7 @@ function variable_dual(model::MOI.ModelLike,
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     coef = variable_coefficient(func, vi)
     dual = MOI.get(model, attr, ci)
-    return MOI.set_dot(coef, dual, set)
+    return set_dot(coef, dual, set)
 end
 function variable_dual(model::MOI.ModelLike,
                        attr::MOI.ConstraintDual,
@@ -186,7 +186,7 @@ function variable_dual(model::MOI.ModelLike, attr::MOI.ConstraintDual,
                        ci::MOI.ConstraintIndex, func::MOI.VectorOfVariables)
     dual = map(vi -> variable_dual(model, attr, ci, vi), func.variables)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
-    return MOI.dot_coefficients(dual, set)
+    return dot_coefficients(dual, set)
 end
 
 """
@@ -205,4 +205,79 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ConstraintDual,
                                                     MOI.VectorOfVariables}})
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     return variable_dual(model, attr, ci, func)
+end
+
+# Scalar product. Any vector set defined that does not use the standard scalar
+# product between vectors of ``R^n`` should redefine `set_dot` and
+# `dot_coefficients`.
+
+"""
+    set_dot(x::Vector, y::Vector, set::AbstractVectorSet)
+
+Return the scalar product between a vector `x` of the set `set` and a vector
+`y` of the dual of the set `s`.
+"""
+function set_dot(x::Vector, y::Vector, set::MOI.AbstractVectorSet)
+    return dot(x, y)
+end
+
+function triangle_dot(x::Vector{T}, y::Vector{T}, dim::Int, offset::Int) where T
+    result = zero(T)
+    k = offset
+    for i in 1:dim
+        for j in 1:i
+            k += 1
+            if i == j
+                result += x[k] * y[k]
+            else
+                result += 2 * x[k] * y[k]
+            end
+        end
+    end
+    return result
+end
+
+function set_dot(x::Vector, y::Vector,
+                 set::MOI.PositiveSemidefiniteConeTriangle)
+    return triangle_dot(x, y, set.side_dimension, 0)
+end
+
+function set_dot(x::Vector, y::Vector, set::Union{MOI.LogDetConeTriangle,
+                                                  MOI.RootDetConeTriangle})
+    return x[1] * y[1] + triangle_dot(x, y, set.side_dimension, 1)
+end
+
+"""
+    dot_coefficients(a::Vector, set::AbstractVectorSet)
+
+Return the vector `b` such that for all vector `x` of the set `set`,
+`set_dot(b, x, set)` is equal to `dot(a, x)`.
+"""
+function dot_coefficients(a::Vector, set::MOI.AbstractVectorSet)
+    return a
+end
+
+function triangle_coefficients!(b::Vector{T}, dim::Int, offset::Int) where T
+    k = offset
+    for i in 1:dim
+        for j in 1:i
+            k += 1
+            if i != j
+                b[k] /= 2
+            end
+        end
+    end
+end
+
+function dot_coefficients(a::Vector, set::MOI.PositiveSemidefiniteConeTriangle)
+    b = copy(a)
+    triangle_coefficients!(b, set.side_dimension, 0)
+    return b
+end
+
+function dot_coefficients(a::Vector, set::Union{MOI.LogDetConeTriangle,
+                                                MOI.RootDetConeTriangle})
+    b = copy(a)
+    triangle_coefficients!(b, set.side_dimension, 1)
+    return b
 end
