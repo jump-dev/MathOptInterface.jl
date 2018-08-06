@@ -201,8 +201,8 @@ or `MOI.VectorOfVariables`-in-`S` constraint with one of the variables in the
 function of the constraint `ci`.
 """
 function get_fallback(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                      ci::MOI.ConstraintIndex{Union{MOI.SingleVariable,
-                                                    MOI.VectorOfVariables}})
+                      ci::MOI.ConstraintIndex{<:Union{MOI.SingleVariable,
+                                                      MOI.VectorOfVariables}})
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     return variable_dual(model, attr, ci, func)
 end
