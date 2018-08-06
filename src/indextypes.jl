@@ -59,6 +59,9 @@ by the model.
 struct UnsupportedDeletion{IndexType<:Index} <: UnsupportedError
     message::String
 end
+function UnsupportedDeletion{IndexType}() where IndexType <: Index
+    UnsupportedDeletion{IndexType}("")
+end
 
 function operation_name(::UnsupportedDeletion{IndexType}) where {IndexType<:Index}
     return "Deleting indices of type `$IndexType`"
