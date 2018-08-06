@@ -4,6 +4,9 @@ end
 @testset "Fallbacks for `set!` methods" begin
     model = DummyModel()
     ci = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}(1)
+
+    @test_throws MOI.UnsupportedDeletion{typeof(ci)} MOI.delete!(model, ci)
+
     @testset "ConstraintFunction" begin
         vi = MOI.VariableIndex(1)
         @test_throws MOI.UnsupportedAttribute begin
