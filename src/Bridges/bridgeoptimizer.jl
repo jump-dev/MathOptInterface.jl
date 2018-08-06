@@ -318,12 +318,21 @@ end
 # Name
 function MOI.canget(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index},
                     name::String)
-    return MOI.canget(b.model, IdxT, name)
+    if isbridged(b, IdxT)
+        return MOI.canget(b.bridged, IdxT, name)
+    else
+        return MOI.canget(b.model, IdxT, name)
+    end
 end
 function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index},
                  name::String)
-    return MOI.get(b.model, IdxT, name)
+    if isbridged(b, IdxT)
+        return MOI.get(b.bridged, IdxT, name)
+    else
+        return MOI.get(b.model, IdxT, name)
+    end
 end
+
 
 # Constraints
 function MOI.supportsconstraint(b::AbstractBridgeOptimizer,
