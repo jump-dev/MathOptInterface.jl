@@ -28,7 +28,7 @@ include("singlebridgeoptimizer.jl")
 include("lazybridgeoptimizer.jl")
 
 # This is used by JuMP and removes the need to update JuMP everytime a bridge is added
-MOIU.@model AllBridgedConstraints () (Interval,) (SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, LogDetConeTriangle, RootDetConeTriangle) () () (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model AllBridgedConstraints () (Interval,) (SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, LogDetConeTriangle, RootDetConeTriangle, Zeros, Nonnegatives, Nonpositives) () () (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
 """
     fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 
@@ -43,6 +43,7 @@ function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
     addbridge!(bridgedmodel, MOIB.RSOCBridge{T})
     addbridge!(bridgedmodel, MOIB.RSOCtoPSDCBridge{T})
     addbridge!(bridgedmodel, MOIB.SOCtoPSDCBridge{T})
+    addbridge!(bridgedmodel, MOIB.VectorToScalarBridge{T})
     bridgedmodel
 end
 
@@ -59,6 +60,6 @@ include("soctopsdbridge.jl")
 @bridge SOCtoPSD SOCtoPSDCBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 @bridge RSOCtoPSD RSOCtoPSDCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("vaftosafbridge.jl")
-# @bridge VAFtoSAF VectorAffineBridge () () () (Zeros, Nonnegatives, Nonpositives) () () () (VectorAffineFunction,)
+@bridge VectorToScalar VectorToScalarBridge () () (Zeros, Nonnegatives, Nonpositives) () () () () (VectorAffineFunction,)
 
 end # module
