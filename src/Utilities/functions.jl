@@ -608,6 +608,22 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
     operate!(op, T, copy(f), g)
 end
 
+####################################### * ######################################
+function operate(::typeof(*), ::Type{T}, α::T, vi::MOI.VariableIndex) where T
+    MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, vi)], zero(T))
+end
+
+####################################### / ######################################
+function operate(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction, α::T) where T
+    MOI.ScalarAffineFunction{T}(mapcoefficient.(c -> c / α, f.terms),
+                                f.constant / α)
+end
+
+## sum
+function operate(::typeof(sum), ::Type{T}, vis::Vector{MOI.VariableIndex}) where T
+    return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), vis), zero(T))
+end
+
 #################### Concatenation of MOI functions: `vcat` ####################
 function fill_vector(vector::Vector, ::Type, vector_offset::Int,
                      output_offset::Int, fill_func::Function,

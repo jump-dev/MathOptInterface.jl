@@ -56,20 +56,24 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
     l = ilog2(n)
     N = 1 << l
     xij = MOI.addvariables!(model, N-1)
+    f_scalars = MOIU.eachscalar(f)
 
     xl1 = xij[1]
     sN = one(T) / sqrt(N)
     function _getx(i)
         if i > n
-            MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(sN, xl1)], zero(T))
+            MOIU.operate(*, T, sN, xl1)
         else
-            MOIU.eachscalar(f)[1+i]
+            f_scalars[1+i]
         end
     end
 
-    t = MOIU.eachscalar(f)[1]
+    t = f_scalars[1]
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
-    tubc = MOI.addconstraint!(model, MOI.ScalarAffineFunction([t.terms; MOI.ScalarAffineTerm(-sN, xl1)], t.constant), MOI.LessThan(zero(T)))
+    tubc = MOIU.add_scalar_constraint(model,
+                                      MOIU.operate(-, T, t,
+                                                   MOIU.operate(*, T, -Sn, xl1)),
+                                      MOI.LessThan(zero(T)))
 
     socrc = Vector{CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}}(undef, N-1)
     offset = offsetnext = 0
@@ -80,10 +84,10 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
                 a = _getx(2j-1)
                 b = _getx(2j)
             else
-                a = MOI.ScalarAffineFunction{T}(MOI.SingleVariable(xij[offsetnext+2j-1]))
-                b = MOI.ScalarAffineFunction{T}(MOI.SingleVariable(xij[offsetnext+2j]))
+                a = MOIU.operate(*, T, one(T), xij[offsetnext+2j-1])
+                b = MOIU.operate(*, T, one(T), xij[offsetnext+2j])
             end
-            c = MOI.ScalarAffineFunction{T}(MOI.SingleVariable(xij[offset+j]))
+            c = xij[offset+j]
             socrc[offset + j] = MOI.addconstraint!(model,
                                                    MOIU.operate(vcat, T, a, b, c),
                                                    MOI.RotatedSecondOrderCone(3))

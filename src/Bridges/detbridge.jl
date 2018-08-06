@@ -95,7 +95,8 @@ addedconstrainttypes(::Type{LogDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariabl
 Constrains ``x \\le \\log(z)`` and return the constraint index.
 """
 function sublog(model, x::MOI.VariableIndex, z::MOI.VariableIndex, ::Type{T}) where T
-    MOI.addconstraint!(model, operate(vcat, T, x, one(T), z),
+    MOI.addconstraint!(model, MOIU.operate(vcat, T, MOI.SingleVariable(x),
+                                           one(T), MOI.SingleVariable(z)),
                        MOI.ExponentialCone())
 end
 
@@ -106,7 +107,8 @@ Constrains ``t \\le l_1 + \\cdots + l_n`` where `n` is the length of `l` and ret
 """
 function subsum(model, t::MOI.ScalarAffineFunction, l::Vector{MOI.VariableIndex}, ::Type{T}) where T
     n = length(l)
-    MOI.addconstraint!(model, MOI.ScalarAffineFunction([t.terms; MOI.ScalarAffineTerm.(-one(T), l)], zero(T)), MOI.LessThan(-t.constant))
+    f = MOIU.operate(-, T, t, MOIU.operate(sum, T, l))
+    return MOIU.add_scalar_constraint(model, f, MOI.LessThan(zero(T)))
 end
 
 # Attributes, Bridge acting as an model
