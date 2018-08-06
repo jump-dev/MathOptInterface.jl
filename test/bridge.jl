@@ -39,6 +39,28 @@ end
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
     bridgedmock = MOIB.SplitInterval{Float64}(mock)
 
+    @testset "Issue #453" begin
+        MOI.empty!(bridgedmock)
+        MOIU.loadfromstring!(bridgedmock, """
+            variables: x
+            maxobjective: 3.0x
+            c: 2.0x in Interval(1.0, 4.0)
+            d: x in LessThan(1.5)
+        """)
+        x = MOI.get(bridgedmock, MOI.VariableIndex, "x")
+        @test isa(x, MOI.VariableIndex)
+        c1 = MOI.get(bridgedmock, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}, "c")
+        @test isa(c1, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}})
+        c2 = MOI.get(bridgedmock, MOI.ConstraintIndex, "c")
+        @test c1 == c2
+        d1 = MOI.get(bridgedmock, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "d")
+        @test isa(d1, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}})
+        d2 = MOI.get(bridgedmock, MOI.ConstraintIndex, "d")
+        @test d1 == d2
+    end
+
+    MOI.empty!(bridgedmock)
+
     @testset "Name test" begin
         MOIT.nametest(bridgedmock)
     end

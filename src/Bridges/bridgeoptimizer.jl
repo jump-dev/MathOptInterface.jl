@@ -27,6 +27,8 @@ function isbridged end
 function isbridged(b::AbstractBridgeOptimizer, ::Type{CI{F, S}}) where {F, S}
     return isbridged(b, F, S)
 end
+# We don't bridge variables.
+isbridged(b::AbstractBridgeOptimizer, ::Type{VI}) = false
 
 """
     supportsbridgingconstraint(b::AbstractBridgeOptimizer,
@@ -318,11 +320,36 @@ end
 # Name
 function MOI.canget(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index},
                     name::String)
-    return MOI.canget(b.model, IdxT, name)
+    if isbridged(b, IdxT)
+        return MOI.canget(b.bridged, IdxT, name)
+    else
+        return MOI.canget(b.model, IdxT, name)
+    end
 end
 function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index},
                  name::String)
-    return MOI.get(b.model, IdxT, name)
+    if isbridged(b, IdxT)
+        return MOI.get(b.bridged, IdxT, name)
+    else
+        return MOI.get(b.model, IdxT, name)
+    end
+end
+
+# For the type-unstable case, we have no information as to whether the
+# constraint is in the bridge or the model. Therefore, we try the model first,
+# and then the bridge if that fails. As such, we need canget for either the
+# bridge or the model.
+function MOI.canget(b::AbstractBridgeOptimizer, IdxT::Type{CI},
+                    name::String)
+    return MOI.canget(b.bridged, IdxT, name) || MOI.canget(b.model, IdxT, name)
+end
+function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{CI},
+                 name::String)
+    if MOI.canget(b.model, IdxT, name)
+        return MOI.get(b.model, IdxT, name)
+    else
+        return MOI.get(b.bridged, IdxT, name)
+    end
 end
 
 # Constraints
