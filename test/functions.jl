@@ -3,7 +3,7 @@
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
-    @testset "moivcat" begin
+    @testset "operate vcat" begin
         v = MOI.VectorOfVariables([y, w])
         f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4],
                                                            [x, z]), 5)
