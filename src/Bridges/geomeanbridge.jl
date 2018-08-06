@@ -84,7 +84,9 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
                 b = MOI.ScalarAffineFunction{T}(MOI.SingleVariable(xij[offsetnext+2j]))
             end
             c = MOI.ScalarAffineFunction{T}(MOI.SingleVariable(xij[offset+j]))
-            socrc[offset + j] = MOI.addconstraint!(model, MOIU.moivcat(a, b, c), MOI.RotatedSecondOrderCone(3))
+            socrc[offset + j] = MOI.addconstraint!(model,
+                                                   MOIU.operate(vcat, T, a, b, c),
+                                                   MOI.RotatedSecondOrderCone(3))
         end
         offset = offsetnext
     end

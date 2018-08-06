@@ -3,6 +3,22 @@
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
+    @testset "moivcat" begin
+        v = MOI.VectorOfVariables([y, w])
+        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4],
+                                                           [x, z]), 5)
+        g = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 1],
+                                                           MOI.ScalarAffineTerm.([5, 2],
+                                                                                 [y, x])),
+                                                           [3, 1, 4])
+        wf = MOI.SingleVariable(w)
+        xf = MOI.SingleVariable(x)
+        F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+        @test F.terms == MOI.VectorAffineTerm.([1, 2, 2, 3, 4, 8, 6, 9],
+                                               MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
+                                                                     [w, x, z, y, w, y, x, x]))
+        @test F.constants == [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
+    end
     @testset "MultirowChange construction" begin
         chg1 = MOI.MultirowChange(w, [(Int32(2), 2.0), (Int32(1), 3.0)])
         chg2 = MOI.MultirowChange(w, [(Int64(2), 2.0), (Int64(1), 3.0)])
@@ -106,7 +122,7 @@
         @test h isa MOI.VectorAffineFunction
         @test h.terms == MOI.VectorAffineTerm.([1, 1, 2, 2, 2], MOI.ScalarAffineTerm.([2, 6, 7, 1, 4], [z, x, y, z, x]))
         @test MOIU.constant(h) == [5, 2]
-        F = MOIU.moivcat(it[[1, 2]], it[3])
+        F = MOIU.operate(vcat, Int, it[[1, 2]], it[3])
         @test F isa MOI.VectorAffineFunction{Int}
         @test F.terms == MOI.VectorAffineTerm.([1, 1, 1, 2, 2, 2, 2, 3, 3], MOI.ScalarAffineTerm.([7, 1, 4, 1, 9, 3, 1, 2, 6], [y, z, x, x, z, y, y, z, x]))
         @test MOIU.constant(F) == MOIU.constant(f)
