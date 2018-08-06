@@ -337,11 +337,11 @@ end
 
 # For the type-unstable case, we have no information as to whether the
 # constraint is in the bridge or the model. Therefore, we try the model first,
-# and then the bridge if that fails. As such, we need canget for both the bridge
-# and the model.
+# and then the bridge if that fails. As such, we need canget for either the
+# bridge or the model.
 function MOI.canget(b::AbstractBridgeOptimizer, IdxT::Type{CI},
                     name::String)
-    return MOI.canget(b.bridged, IdxT, name) && MOI.canget(b.model, IdxT, name)
+    return MOI.canget(b.bridged, IdxT, name) || MOI.canget(b.model, IdxT, name)
 end
 function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{CI},
                  name::String)
