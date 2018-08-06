@@ -1,3 +1,15 @@
+# This file contains the implementation of different methods for the
+# `get_fallback` function. These methods can be used by solver wrappers as
+# fallbacks for implemented the `get` method when the solver API does not
+# provide the required result. For instance, if the solver does not provide the
+# value of the constraints, the solver wrapper can write
+# ```julia
+# function MOI.get(model::Optimizer, attr::MOI.ConstraintPrimal,
+#                  ci::MOI.ConstraintIndex)
+#     return MOIU.get_fallback(model, attr, ci)
+# end
+# ```
+
 """
     get_fallback(model::MOI.ModelLike, ::MOI.ObjectiveValue)
 
