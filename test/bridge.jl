@@ -54,6 +54,8 @@ end
         @test c1 == c2
     end
 
+    MOI.empty!(bridgedmock)
+
     @testset "Name test" begin
         MOIT.nametest(bridgedmock)
     end
