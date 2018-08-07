@@ -20,6 +20,29 @@ end
 operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Modifying `$F`-in-`$S` constraints with $(err.change)"
 
 """
+    struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
+                                  C<:AbstractFunctionModification} <: CannotError
+        change::C
+        message::String
+    end
+
+An error indicating that constraints of type `F`-in-`S` do support the constraint
+modification `change` but cannot accomplish it in the current state.
+"""
+struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
+                              C<:AbstractFunctionModification} <: CannotError
+    change::C
+    message::String
+end
+function CannotModifyConstraint{F, S}(
+        change::AbstractFunctionModification, message="") where {F<:AbstractFunction, S<:AbstractSet}
+    CannotModifyConstraint{F, S, typeof(change)}(change, message)
+end
+
+operation_name(err::CannotModifyConstraint{F, S}) where {F, S} =
+    "Modifying `$F`-in-`$S` constraints with $(err.change)"
+
+"""
     struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
         change::C
         message::String
@@ -34,6 +57,25 @@ struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: Unsu
 end
 
 operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective function with $(err.change)"
+
+"""
+    struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotError
+        change::C
+        message::String
+    end
+
+An error indicating that the objective function supports the modification
+`change` but it cannot be accomplished in the current state.
+"""
+struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotError
+    change::C
+    message::String
+end
+function CannotModifyObjective(change::AbstractFunctionModification, message="")
+    CannotModifyObjective{typeof(change)}(change, message)
+end
+
+operation_name(err::CannotModifyObjective) = "Modifying the objective function with $(err.change)"
 
 """
 ## Constraint Function
