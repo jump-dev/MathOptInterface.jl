@@ -1542,6 +1542,8 @@ end
 
 # Empty vector affine function rows (LQOI Issue #48)
 function linear15test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
     # minimize 0
     # s.t. 0 == 0
     #      x == 1
