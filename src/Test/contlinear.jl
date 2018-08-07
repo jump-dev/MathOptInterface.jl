@@ -1566,7 +1566,9 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
         MOI.Zeros(2)
     )
 
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], x), 0.0))
+    MOI.set!(model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], x), 0.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     if config.solve
