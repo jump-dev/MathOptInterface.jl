@@ -127,10 +127,11 @@ function RSOCtoPSDCBridge{T}(instance, f, s::MOI.RotatedSecondOrderCone) where T
 end
 
 _RSOCtoPSDCaff(f::MOI.VectorOfVariables, ::Type{T}) where T = _RSOCtoPSDCaff(MOI.VectorAffineFunction{T}(f), T)
-function _RSOCtoPSDCaff(f::MOI.VectorAffineFunction, ::Type)
+function _RSOCtoPSDCaff(f::MOI.VectorAffineFunction, ::Type{T}) where T
     n = MOI.output_dimension(f)
-    g = mapcoefficient(c -> 2c, MOIU.eachscalar(f)[2])
-    _SOCtoPSDCaff(MOIU.eachscalar(f)[[1; 3:n]], g)
+    f_scalars = MOIU.eachscalar(f)
+    g = MOIU.operate(*, T, convert(T, 2), f_scalars[2])
+    _SOCtoPSDCaff(f_scalars[[1; 3:n]], g)
 end
 
 function MOI.canget(instance::MOI.AbstractOptimizer, a::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, ::Type{RSOCtoPSDCBridge{T}}) where T

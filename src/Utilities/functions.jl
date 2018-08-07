@@ -540,24 +540,28 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarAffineFunction{T},
                   g::MOI.SingleVariable) where T
     push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g))
+    return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarAffineFunction{T},
                   g::MOI.ScalarAffineFunction{T}) where T
     append!(f.terms, operate_terms(op, g.terms))
     f.constant = op(f.constant, g.constant)
+    return f
 end
 # Scalar Quadratic +/-! ...
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarQuadraticFunction{T},
                   g::MOI.SingleVariable) where T
     push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g))
+    return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarQuadraticFunction{T},
                   g::MOI.ScalarAffineFunction{T}) where T
     append!(f.affine_terms, operate_terms(op, g.terms))
     f.constant = op(f.constant, g.constant)
+    return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarQuadraticFunction{T},
@@ -565,6 +569,7 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
     append!(f.affine_terms, operate_terms(op, g.affine_terms))
     append!(f.quadratic_terms, operate_terms(op, g.quadratic_terms))
     f.constant = op(f.constant, g.constant)
+    return f
 end
 
 ## operate
@@ -609,13 +614,26 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
 end
 
 ####################################### * ######################################
+function operate_term(::typeof(*), ::Type{T}, α::T, t::MOI.ScalarAffineTerm) where T
+    MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
+end
+
 function operate(::typeof(*), ::Type{T}, α::T, vi::MOI.VariableIndex) where T
     MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, vi)], zero(T))
 end
 
+function operate(::typeof(*), ::Type{T}, α::T, f::MOI.ScalarAffineFunction) where T
+    MOI.ScalarAffineFunction{T}(operate_term.(*, T, α, f.terms),
+                                α * f.constant)
+end
+
 ####################################### / ######################################
-function operate(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction, α::T) where T
-    MOI.ScalarAffineFunction{T}(mapcoefficient.(c -> c / α, f.terms),
+function operate_term(::typeof(/), ::Type{T}, t::MOI.ScalarAffineTerm, α::T) where T
+    MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
+end
+
+function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction, α::T) where T
+    MOI.ScalarAffineFunction{T}(operate_term.(/, T, f.terms, α),
                                 f.constant / α)
 end
 
