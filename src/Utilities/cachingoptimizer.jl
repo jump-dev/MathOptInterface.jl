@@ -113,11 +113,10 @@ end
 """
     attachoptimizer!(m::CachingOptimizer)
 
-Attaches the optimizer to `m`, copying all model data into it. Can be called only
-from the `EmptyOptimizer` state. The `CachingOptimizer` will be in state `AttachedOptimizer`
-after the call. Returns an `MOI.CopyResult`. `MOI.CopySuccess` means that the
-optimizer is correctly attached, otherwise the status indicates why the `copy!`
-from the model cache to the optimizer failed.
+Attaches the optimizer to `m`, copying all model data into it. Can be called
+only from the `EmptyOptimizer` state. If the copy succeeds, the
+`CachingOptimizer` will be in state `AttachedOptimizer` after the call,
+otherwise an error is thrown.
 """
 function attachoptimizer!(m::CachingOptimizer)
     @assert m.state == EmptyOptimizer
