@@ -545,7 +545,7 @@ end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarAffineFunction{T},
                   g::MOI.SingleVariable) where T
-    push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g))
+    push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g.variable))
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -558,8 +558,14 @@ end
 # Scalar Quadratic +/-! ...
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarQuadraticFunction{T},
+                  g::T) where T
+    f.constant = op(f.constant, g)
+    return f
+end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+                  f::MOI.ScalarQuadraticFunction{T},
                   g::MOI.SingleVariable) where T
-    push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g))
+    push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g.variable))
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -600,16 +606,21 @@ function operate(op::typeof(-), ::Type{T},
     return operate!(+, T, operate(-, T, g), f)
 end
 # Scalar Affine +/- ...
+function operate(op::Union{typeof(-)}, ::Type{T},
+                 f::MOI.ScalarAffineFunction{T}) where T
+    return MOI.ScalarAffineFunction(operate_terms(op, f.terms),
+                                    op(f.constant))
+end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.ScalarAffineFunction{T},
                  g::ScalarAffineLike{T}) where T
-    operate!(op, T, copy(f), g)
+    return operate!(op, T, copy(f), g)
 end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.ScalarAffineFunction{T},
                  g::MOI.ScalarQuadraticFunction{T}) where T
     MOI.ScalarQuadraticFunction([f.terms; operate_terms(op, g.affine_terms)],
-                                operate_terms(g.quadratic_terms),
+                                operate_terms(op, g.quadratic_terms),
                                 op(f.constant, g.constant))
 end
 # Scalar Quadratic +/- ...
