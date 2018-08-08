@@ -274,6 +274,8 @@ function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, 
             try
                 MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
             catch err
+                # UnsupportedAttribute is rethrown as if the attribute is not
+                # supported, the copy will fail as well
                 if err isa MOI.CannotSetAttribute
                     resetoptimizer!(m)
                 else
