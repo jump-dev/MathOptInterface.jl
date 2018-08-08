@@ -14,4 +14,6 @@
     @test_throws MethodError MOI.Interval(MOI.GreaterThan(1))
     @test_throws MethodError MOI.Interval(MOI.LessThan(2))
     @test MOI.Interval(MOI.EqualTo(3)) === MOI.Interval(3, 3)
+
+    @test MOI.Interval(MOI.Interval(1, 2)) == MOI.Interval(1, 2)
 end
