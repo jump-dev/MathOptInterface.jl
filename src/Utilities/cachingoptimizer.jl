@@ -268,21 +268,17 @@ end
 # ConstraintSet and ConstraintFunction methods, but allows us to strongly type
 # the third and fourth arguments of the set! methods so that we only support
 # setting the same type of set or function.
-function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, replacement)
+function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, replacement)                                             
     if m.state == AttachedOptimizer
         if m.mode == Automatic            
-            if MOI.supports(m.optimizer, attr, typeof(cindex))
-                try
-                    MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
-                catch err
-                    if err isa MOI.CannotSetAttribute
-                        resetoptimizer!(m)
-                    else
-                        rethrow(err)
-                    end
+            try
+                MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
+            catch err
+                if err isa MOI.CannotSetAttribute || err isa MOI.UnsupportedAttribute
+                    resetoptimizer!(m)
+                else
+                    rethrow(err)
                 end
-            else
-                resetoptimizer!(m)
             end
         else
             MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
