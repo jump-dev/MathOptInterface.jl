@@ -124,4 +124,8 @@
              (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-1],
              (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [0]))
     MOIT.linear14test(mock, config)
+    MOIU.set_mock_optimize!(mock,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0],
+             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [0.0, 0.0]))
+    MOIT.linear15test(mock, config)
 end

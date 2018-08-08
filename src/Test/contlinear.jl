@@ -1540,6 +1540,54 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+# Empty vector affine function rows (LQOI Issue #48)
+function linear15test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # minimize 0
+    # s.t. 0 == 0
+    #      x == 1
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+
+    x = MOI.addvariables!(model, 1)
+    # Create a VectorAffineFunction with two rows, but only
+    # one term, belonging to the second row. The first row,
+    # which is empty, is essentially a constraint that 0 == 0.
+    c = MOI.addconstraint!(model,
+        MOI.VectorAffineFunction(
+            MOI.VectorAffineTerm.(2, MOI.ScalarAffineTerm.([1.0], x)),
+            zeros(2)
+        ),
+        MOI.Zeros(2)
+    )
+
+    MOI.set!(model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], x), 0.0))
+    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.canget(model, MOI.TerminationStatus())
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+
+        @test MOI.canget(model, MOI.PrimalStatus())
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
+        @test MOI.canget(model, MOI.ObjectiveValue())
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0 atol=atol rtol=rtol
+
+        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
+        @test MOI.get(model, MOI.VariablePrimal(), x[1]) ≈ 0 atol=atol rtol=rtol
+    end
+end
+
 const contlineartests = Dict("linear1" => linear1test,
                              "linear2" => linear2test,
                              "linear3" => linear3test,
@@ -1555,6 +1603,7 @@ const contlineartests = Dict("linear1" => linear1test,
                              "linear11" => linear11test,
                              "linear12" => linear12test,
                              "linear13" => linear13test,
-                             "linear14" => linear14test)
+                             "linear14" => linear14test,
+                             "linear15" => linear15test)
 
 @moitestset contlinear
