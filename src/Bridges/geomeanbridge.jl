@@ -71,7 +71,7 @@ function GeoMeanBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.Geometri
     t = f_scalars[1]
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
     tubc = MOIU.add_scalar_constraint(model,
-                                      MOIU.operate(-, T, t,
+                                      MOIU.operate(+, T, t,
                                                    MOIU.operate(*, T, -sN, xl1)),
                                       MOI.LessThan(zero(T)))
 

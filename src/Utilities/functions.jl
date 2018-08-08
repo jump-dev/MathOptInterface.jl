@@ -517,25 +517,31 @@ end
 
 
 # Functions convertible to a ScalarAffineFunction
-const ScalarAffineLike = Union{MOI.SingleVariable, MOI.ScalarAffineFunction}
+const ScalarAffineLike{T} = Union{T, MOI.SingleVariable, MOI.ScalarAffineFunction{T}}
 # Functions convertible to a ScalarQuadraticFunction
-const ScalarQuadraticLike = Union{ScalarAffineLike, MOI.ScalarQuadraticTerm}
+const ScalarQuadraticLike{T} = Union{ScalarAffineLike{T}, MOI.ScalarQuadraticFunction{T}}
 
 ###################################### +/- #####################################
 ## promote_operation
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
-                           ::ScalarAffineLike,
-                           ::ScalarAffineLike) where T
+                           ::Type{<:ScalarAffineLike{T}},
+                           ::Type{<:ScalarAffineLike{T}}) where T
     return MOI.ScalarAffineFunction{T}
 end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
-                           ::ScalarQuadraticLike,
-                           ::ScalarQuadraticLike) where T
+                           ::Type{<:ScalarQuadraticLike{T}},
+                           ::Type{<:ScalarQuadraticLike{T}}) where T
     return MOI.ScalarQuadraticFunction{T}
 end
 
 ## operate!
 # Scalar Affine +/-! ...
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+                  f::MOI.ScalarAffineFunction{T},
+                  g::T) where T
+    f.constant = op(f.constant, g)
+    return f
+end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarAffineFunction{T},
                   g::MOI.SingleVariable) where T
@@ -577,8 +583,8 @@ end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.SingleVariable,
                  g::MOI.SingleVariable) where T
-    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f),
-                                        MOI.ScalarAffineTerm(op(one(T)), g)],
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f.variable),
+                                        MOI.ScalarAffineTerm(op(one(T)), g.variable)],
                                        zero(T))
 end
 function operate(op::typeof(+), ::Type{T},
@@ -596,7 +602,7 @@ end
 # Scalar Affine +/- ...
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.ScalarAffineFunction{T},
-                 g::ScalarAffineLike) where T
+                 g::ScalarAffineLike{T}) where T
     operate!(op, T, copy(f), g)
 end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -609,7 +615,7 @@ end
 # Scalar Quadratic +/- ...
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.ScalarQuadraticFunction{T},
-                 g::ScalarQuadraticLike) where T
+                 g::ScalarQuadraticLike{T}) where T
     operate!(op, T, copy(f), g)
 end
 
@@ -710,13 +716,17 @@ function fill_constant(constant::Vector{T}, offset::Int,
     constant[offset .+ (1:n)] .= func.constants
 end
 
+function promote_operation(::typeof(vcat), ::Type{T},
+                           ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
+    return VAF{T}
+end
 function operate(::typeof(vcat), ::Type{T},
-                 funcs::Union{T, SVF, VVF, SAF{T}, VAF{T}}...) where T
+                 funcs::Union{ScalarAffineLike{T}, VVF, VAF{T}}...) where T
     nterms = sum(func -> number_of_affine_terms(T, func), funcs)
     out_dim = sum(func -> output_dim(T, func), funcs)
     terms = Vector{MOI.VectorAffineTerm{T}}(undef, nterms)
     constant = zeros(T, out_dim)
     fill_vector(terms, T, 0, 0, fill_terms, number_of_affine_terms, funcs...)
     fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
-    VAF(terms, constant)
+    return VAF(terms, constant)
 end

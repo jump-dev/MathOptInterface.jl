@@ -319,3 +319,11 @@ Return a new affine function with a shallow copy of the terms and constant(s)
 from `func`.
 """
 Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(_constant(func)))
+
+"""
+    copy(func::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
+
+Return a new quadratic function with a shallow copy of the terms and constant(s)
+from `func`.
+"""
+Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(_constant(func)))
