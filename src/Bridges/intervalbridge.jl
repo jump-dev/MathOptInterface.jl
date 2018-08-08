@@ -10,12 +10,18 @@ end
 function SplitIntervalBridge{T, F}(model, f::F, s::MOI.Interval{T}) where {T, F}
     lower = MOI.addconstraint!(model, f, MOI.GreaterThan(s.lower))
     upper = MOI.addconstraint!(model, f, MOI.LessThan(s.upper))
-    return SplitIntervalBridge(lower, upper)
+    return SplitIntervalBridge{T, F}(lower, upper)
 end
 
 MOI.supportsconstraint(::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = true
-addedconstrainttypes(::Type{SplitIntervalBridge{T}}, F::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
-concrete_bridge_type(::Type{<:SplitIntervalBridge}, F::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = SplitIntervalBridge{T, F}
+function addedconstrainttypes(::Type{SplitIntervalBridge{T, F}}) where {T, F}
+    return [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
+end
+function concrete_bridge_type(::Type{<:SplitIntervalBridge},
+                              F::Type{<:MOI.AbstractScalarFunction},
+                              ::Type{MOI.Interval{T}}) where T
+    return SplitIntervalBridge{T, F}
+end
 
 # Attributes, Bridge acting as an model
 MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.LessThan{T}}) where {T, F} = 1

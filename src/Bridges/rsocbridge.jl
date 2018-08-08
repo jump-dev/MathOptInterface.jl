@@ -16,13 +16,10 @@ That means in particular that the norm is of constraint primal and duals are pre
 
 [1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
 """
-struct RSOCBridge{T} <: AbstractBridge
-    soc::CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone}
+struct RSOCBridge{T, F} <: AbstractBridge
+    soc::CI{F, MOI.SecondOrderCone}
 end
-function RSOCBridge{T}(model, f::MOI.VectorOfVariables, s::MOI.RotatedSecondOrderCone) where T
-    RSOCBridge{T}(model, MOI.VectorAffineFunction{T}(f), s)
-end
-function RSOCBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSecondOrderCone) where T
+function RSOCBridge{T, F}(model, f::MOI.AbstractVectorFunction, s::MOI.RotatedSecondOrderCone) where {T, F}
     d = s.dimension
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]
@@ -35,15 +32,36 @@ function RSOCBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RotatedSeco
     z  = MOIU.operate(+, T, ts, us)
     g = MOIU.operate(vcat, T, z, y, x)
     soc = MOI.addconstraint!(model, g, MOI.SecondOrderCone(d))
-    RSOCBridge{T}(soc)
+    RSOCBridge{T, F}(soc)
 end
 
-MOI.supportsconstraint(::Type{RSOCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = true
-addedconstrainttypes(::Type{RSOCBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RotatedSecondOrderCone}) where T = [(MOI.VectorAffineFunction{T}, MOI.SecondOrderCone)]
+function MOI.supportsconstraint(::Type{RSOCBridge{T}},
+                                ::Type{<:MOI.AbstractVectorFunction},
+                                ::Type{MOI.RotatedSecondOrderCone}) where T
+    return true
+end
+function addedconstrainttypes(::Type{RSOCBridge{T, F}}) where {T, F}
+    return [(F, MOI.SecondOrderCone)]
+end
+function concrete_bridge_type(::Type{<:RSOCBridge{T}},
+                              G::Type{<:MOI.AbstractVectorFunction},
+                              ::Type{MOI.RotatedSecondOrderCone}) where T
+    S = MOIU.promote_operation(/, T, MOIU.scalar_type(G), T)
+    Y = MOIU.promote_operation(-, T, S, S)
+    Z = MOIU.promote_operation(+, T, S, S)
+    F = MOIU.promote_operation(vcat, T, Z, Y, G)
+    RSOCBridge{T, F}
+end
 
 # Attributes, Bridge acting as an model
-MOI.get(b::RSOCBridge{T}, ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone}) where T = 1
-MOI.get(b::RSOCBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone}) where T = [b.soc]
+function MOI.get(b::RSOCBridge{T, F},
+                 ::MOI.NumberOfConstraints{F, MOI.SecondOrderCone}) where {T, F}
+    return 1
+end
+function MOI.get(b::RSOCBridge{T, F},
+                 ::MOI.ListOfConstraintIndices{F, MOI.SecondOrderCone}) where {T, F}
+    return [b.soc]
+end
 
 # References
 function MOI.delete!(model::MOI.ModelLike, c::RSOCBridge)
@@ -59,12 +77,14 @@ function _get(model, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, c::R
     [x[1]/s2+x[2]/s2; x[1]/s2-x[2]/s2; x[3:end]]
 end
 # Need to define both `get` methods and redirect to `_get` to avoid ambiguity in dispatch
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{RSOCBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
+function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal,
+                    ::Type{RSOCBridge{T, F}}) where {T, F}
+    MOI.canget(model, a, CI{F, MOI.SecondOrderCone})
 end
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::RSOCBridge) = _get(model, attr, c)
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{RSOCBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.SecondOrderCone})
+function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual,
+                    ::Type{RSOCBridge{T, F}}) where {T, F}
+    MOI.canget(model, a, CI{F, MOI.SecondOrderCone})
 end
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
 
