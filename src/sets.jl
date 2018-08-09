@@ -134,6 +134,7 @@ end
 Interval(s::GreaterThan{<:AbstractFloat}) = Interval(s.lower, typemax(s.lower))
 Interval(s::LessThan{<:AbstractFloat}) = Interval(typemin(s.upper), s.upper)
 Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
+Interval(s::Interval) = s
 
 """
     SecondOrderCone(dimension)
