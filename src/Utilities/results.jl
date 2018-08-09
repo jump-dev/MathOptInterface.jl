@@ -1,6 +1,6 @@
 # This file contains the implementation of different methods for the
 # `get_fallback` function. These methods can be used by solver wrappers as
-# fallbacks for implemented the `get` method when the solver API does not
+# fallbacks for implementing the `get` method when the solver API does not
 # provide the required result. For instance, if the solver does not provide the
 # value of the constraints, the solver wrapper can write
 # ```julia
@@ -86,35 +86,16 @@ function variable_coefficient(func::MOI.VectorAffineFunction{T},
     return coef
 end
 
-function variable_dual(model::MOI.ModelLike,
-                       ::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex,
-                       vi::MOI.VariableIndex,
-                       F::Type{<:Union{MOI.SingleVariable,
-                                       MOI.VectorOfVariables}},
-                       S::Type{<:MOI.AbstractSet})
-    for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
-        if constraint_index != ci
-            func = MOI.get(model, MOI.ConstraintFunction(), constraint_index)
-            if (F == MOI.SingleVariable && func.variable == vi) ||
-               (F == MOI.VectorOfVariables && vi in func.variables)
-               error("Fallback getter for variable constraint dual does not support other variable-wise constraints on the variable.")
-            end
-        end
-    end
-    return 0.0
-end
+"""
+    variable_dual(model::MOI.ModelLike,
+                  attr::MOI.ConstraintDual,
+                  vi::MOI.VariableIndex,
+                  ci::MOI.ConstraintIndex{<:Union{MOI.ScalarAffineFunction,
+                                                  MOI.VectorAffineFunction})
 
-function variable_dual(::MOI.ModelLike,
-                       ::MOI.ConstraintDual,
-                       ::MOI.ConstraintIndex,
-                       ::MOI.VariableIndex,
-                       ::Type{<:Union{MOI.ScalarQuadraticFunction,
-                                      MOI.VectorQuadraticFunction}},
-                       ::Type{<:MOI.AbstractSet})
-    error("Fallback getter for variable constraint dual only supports affine constraint functions.")
-end
-
+Return dual of the constraint of index `ci` multiplied by the coefficient of
+`vi` in the `MOI.ConstraintFunction`.
+"""
 function variable_dual(model::MOI.ModelLike,
                        attr::MOI.ConstraintDual,
                        vi::MOI.VariableIndex,
@@ -134,6 +115,19 @@ function variable_dual(model::MOI.ModelLike,
     dual = MOI.get(model, attr, ci)
     return coef * dual
 end
+
+"""
+    variable_dual(model::MOI.ModelLike,
+                  attr::MOI.ConstraintDual,
+                  ci::MOI.ConstraintIndex,
+                  vi::MOI.VariableIndex,
+                  F::Type{<:MOI.AbstractFunction},
+                  S::Type{<:MOI.AbstractSet})
+
+Return sum of the the dual of the `F`-in-`S` constraints except `ci` multiplied
+by the coefficient of `vi` in the `MOI.ConstraintFunction`. It errors if another
+variable-wise constraint different than `ci` uses `vi`.
+"""
 function variable_dual(model::MOI.ModelLike,
                        attr::MOI.ConstraintDual,
                        ci::MOI.ConstraintIndex,
@@ -146,6 +140,46 @@ function variable_dual(model::MOI.ModelLike,
     end
     return dual
 end
+function variable_dual(model::MOI.ModelLike,
+                       ::MOI.ConstraintDual,
+                       ci::MOI.ConstraintIndex,
+                       vi::MOI.VariableIndex,
+                       F::Type{<:Union{MOI.SingleVariable,
+                                       MOI.VectorOfVariables}},
+                       S::Type{<:MOI.AbstractSet})
+    for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
+        if constraint_index != ci
+            func = MOI.get(model, MOI.ConstraintFunction(), constraint_index)
+            if (F == MOI.SingleVariable && func.variable == vi) ||
+               (F == MOI.VectorOfVariables && vi in func.variables)
+               error("Fallback getter for variable constraint dual does not",
+                     "support other variable-wise constraints on the variable.")
+            end
+        end
+    end
+    return 0.0
+end
+function variable_dual(::MOI.ModelLike,
+                       ::MOI.ConstraintDual,
+                       ::MOI.ConstraintIndex,
+                       ::MOI.VariableIndex,
+                       ::Type{<:Union{MOI.ScalarQuadraticFunction,
+                                      MOI.VectorQuadraticFunction}},
+                       ::Type{<:MOI.AbstractSet})
+    error("Fallback getter for variable constraint dual only supports affine",
+          "constraint functions.")
+end
+
+"""
+    variable_dual(model::MOI.ModelLike,
+                  attr::MOI.ConstraintDual,
+                  ci::MOI.ConstraintIndex,
+                  vi::MOI.VariableIndex)
+
+Return the dual of the variable `vi` by using the duals of constraints
+of index different than `ci`. It errors if another variable-wise constraint
+different than `ci` uses `vi`.
+"""
 function variable_dual(model::MOI.ModelLike,
                        attr::MOI.ConstraintDual,
                        ci::MOI.ConstraintIndex,
@@ -169,7 +203,8 @@ function variable_dual(model::MOI.ModelLike,
             f = MOI.get(model, obj_attr)
             dual += sign * variable_coefficient(f, vi)
         else
-            error("Fallback getter for variable constraint dual only supports affine objective function.")
+            error("Fallback getter for variable constraint dual only supports",
+                  "affine objective function.")
         end
     end
     for FS in MOI.get(model, MOI.ListOfConstraints())
@@ -178,12 +213,23 @@ function variable_dual(model::MOI.ModelLike,
     return dual
 end
 
+"""
+    variable_dual(model::MOI.ModelLike, attr::MOI.ConstraintDual,
+                  ci::MOI.ConstraintIndex{F},
+                  func::F) where F <: Union{MOI.SingleVariable,
+                                            MOI.VectorOfVariables}
+
+Return the dual of the constraint of index `ci` for which the value of the
+`MOI.ConstraintFunction` attribute is `func`.
+"""
 function variable_dual(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex, func::MOI.SingleVariable)
+                       ci::MOI.ConstraintIndex{MOI.SingleVariable},
+                       func::MOI.SingleVariable)
     return variable_dual(model, attr, ci, func.variable)
 end
 function variable_dual(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex, func::MOI.VectorOfVariables)
+                       ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
+                       func::MOI.VectorOfVariables)
     dual = map(vi -> variable_dual(model, attr, ci, vi), func.variables)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     return dot_coefficients(dual, set)

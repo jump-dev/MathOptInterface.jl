@@ -1,6 +1,7 @@
 module Utilities
 
 using Compat # For firstindex, lastindex and Nothing
+using Compat.LinearAlgebra # For dot
 
 using MathOptInterface
 const MOI = MathOptInterface
