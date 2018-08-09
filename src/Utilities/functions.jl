@@ -67,11 +67,11 @@ end
 function mapvariable(varmap::Function, t::MOI.VectorQuadraticTerm)
     MOI.VectorQuadraticTerm(t.output_index, mapvariable(varmap, t.scalar_term))
 end
-function mapvariables(varmap::Function, f::SVF)
-    return SVF(varmap(f.variable))
+function mapvariables(varmap::Function, f::MOI.SingleVariable)
+    return MOI.SingleVariable(varmap(f.variable))
 end
-function mapvariables(varmap::Function, f::VVF)
-    return VVF(varmap.(f.variables))
+function mapvariables(varmap::Function, f::MOI.VectorOfVariables)
+    return MOI.VectorOfVariables(varmap.(f.variables))
 end
 function mapvariables(varmap::Function, f::Union{SAF, VAF})
     typeof(f)(mapvariable.(varmap, f.terms), _constant(f))
@@ -148,8 +148,9 @@ Compat.lastindex(it::ScalarFunctionIterator) = length(it)
 
 # Define getindex for Vector functions
 
-function Base.getindex(it::ScalarFunctionIterator{VVF}, i::Integer)
-    return SVF(it.f.variables[i])
+function Base.getindex(it::ScalarFunctionIterator{MOI.VectorOfVariables},
+                       i::Integer)
+    return MOI.SingleVariable(it.f.variables[i])
 end
 # Returns the scalar terms of output_index i
 function scalar_terms_at_index(terms::Vector{<:Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}}, i::Int)
@@ -165,8 +166,9 @@ function Base.getindex(it::ScalarFunctionIterator{<:VQF}, i::Integer)
     return SQF(lin, quad, it.f.constants[i])
 end
 
-function Base.getindex(it::ScalarFunctionIterator{VVF}, I::AbstractVector)
-    return VVF(it.f.variables[I])
+function Base.getindex(it::ScalarFunctionIterator{MOI.VectorOfVariables},
+                       I::AbstractVector)
+    return MOI.VectorOfVariables(it.f.variables[I])
 end
 function Base.getindex(it::ScalarFunctionIterator{VAF{T}}, I::AbstractVector) where T
     terms = MOI.VectorAffineTerm{T}[]
@@ -507,6 +509,35 @@ end
 
 # Arithmetic
 
+"""
+    operate(op::Function, ::Type{T},
+            args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
+
+Returns an `MOI.AbstractFunction` representing the function resulting from the
+operation `op(args...)`. No argument can be modified.
+"""
+function operate end
+
+"""
+    operate!(op::Function, ::Type{T},
+             args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
+
+Returns an `MOI.AbstractFunction` representing the function resulting from the
+operation `op(args...)`. The first argument can be modified. The return type
+is the same than the method `operate(op, T, args...)` without `!`.
+"""
+function operate! end
+
+"""
+    promote_operation(op::Function, ::Type{T},
+                      ArgsTypes::Type{<:Union{T, MOI.AbstractFunction}}...) where T
+
+Returns the type of the `MOI.AbstractFunction` returned to the call
+`operate(op, T, args...)` where the types of the arguments `args` are
+`ArgsTypes`.
+"""
+function promote_operation end
+
 # Helpers
 
 function operate_term(::typeof(-), term::MOI.ScalarAffineTerm)
@@ -518,6 +549,15 @@ function operate_term(::typeof(-), term::MOI.ScalarQuadraticTerm)
                                    term.variable_index_2)
 end
 
+function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
+    MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
+end
+
+function operate_term(::typeof(/), t::MOI.ScalarAffineTerm{T}, α::T) where T
+    MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
+end
+
+# Avoid a copy in the case of +
 function operate_terms(::typeof(+),
                        terms::Vector{<:Union{MOI.ScalarAffineTerm,
                                              MOI.ScalarQuadraticTerm}})
@@ -645,10 +685,6 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
 end
 
 ####################################### * ######################################
-function operate_term(::typeof(*), ::Type{T}, α::T, t::MOI.ScalarAffineTerm) where T
-    MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
-end
-
 function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
                            ::Type{<:Union{MOI.SingleVariable,
                                           MOI.ScalarAffineFunction{T}}}) where T
@@ -660,15 +696,11 @@ function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
 end
 
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.ScalarAffineFunction) where T
-    MOI.ScalarAffineFunction{T}(operate_term.(*, T, α, f.terms),
+    MOI.ScalarAffineFunction{T}(operate_term.(*, α, f.terms),
                                 α * f.constant)
 end
 
 ####################################### / ######################################
-function operate_term(::typeof(/), ::Type{T}, t::MOI.ScalarAffineTerm, α::T) where T
-    MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
-end
-
 function promote_operation(::typeof(/), ::Type{T},
                            ::Type{<:Union{MOI.SingleVariable,
                                           MOI.ScalarAffineFunction{T}}},
@@ -683,7 +715,7 @@ function operate(::typeof(/), ::Type{T}, f::MOI.SingleVariable,
 end
 function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
                  α::T) where T
-    MOI.ScalarAffineFunction{T}(operate_term.(/, T, f.terms, α),
+    MOI.ScalarAffineFunction{T}(operate_term.(/, f.terms, α),
                                 f.constant / α)
 end
 
