@@ -111,26 +111,26 @@ function dropoptimizer!(m::CachingOptimizer)
 end
 
 """
-    attachoptimizer!(m::CachingOptimizer)
+    attachoptimizer!(model::CachingOptimizer)
 
-Attaches the optimizer to `m`, copying all model data into it. Can be called only
-from the `EmptyOptimizer` state. The `CachingOptimizer` will be in state `AttachedOptimizer`
-after the call. Returns an `MOI.CopyResult`. `MOI.CopySuccess` means that the
-optimizer is correctly attached, otherwise the status indicates why the `copy!`
-from the model cache to the optimizer failed.
+Attaches the optimizer to `model`, copying all model data into it. Can be called
+only from the `EmptyOptimizer` state. If the copy succeeds, the
+`CachingOptimizer` will be in state `AttachedOptimizer` after the call,
+otherwise an error is thrown; see [`copy!`](@ref) for more details on which
+errors can be thrown.
 """
-function attachoptimizer!(m::CachingOptimizer)
-    @assert m.state == EmptyOptimizer
+function attachoptimizer!(model::CachingOptimizer)
+    @assert model.state == EmptyOptimizer
     # We do not need to copy names because name-related operations are handled by `m.model_cache`
-    indexmap = MOI.copy!(m.optimizer, m.model_cache, copynames=false)
-    m.state = AttachedOptimizer
+    indexmap = MOI.copy!(model.optimizer, model.model_cache, copynames=false)
+    model.state = AttachedOptimizer
     # MOI does not define the type of index_map, so we have to copy it into a
     # concrete container. Also load the reverse map.
-    m.model_to_optimizer_map = IndexMap()
-    m.optimizer_to_model_map = IndexMap()
+    model.model_to_optimizer_map = IndexMap()
+    model.optimizer_to_model_map = IndexMap()
     for k in keys(indexmap)
-        m.model_to_optimizer_map[k] = indexmap[k]
-        m.optimizer_to_model_map[indexmap[k]] = k
+        model.model_to_optimizer_map[k] = indexmap[k]
+        model.optimizer_to_model_map[indexmap[k]] = k
     end
 end
 
