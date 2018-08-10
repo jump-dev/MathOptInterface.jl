@@ -350,6 +350,7 @@ struct RootDetConeSquare <: AbstractVectorSet
 end
 
 dimension(s::Union{LogDetConeTriangle, RootDetConeTriangle}) = 1 + div(s.side_dimension * (s.side_dimension + 1), 2)
+
 dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.side_dimension^2
 
 """

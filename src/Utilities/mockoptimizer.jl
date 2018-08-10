@@ -26,12 +26,18 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     hasdual::Bool
     terminationstatus::MOI.TerminationStatusCode
     resultcount::Int
-    evalobjective::Bool # Computes ObjectiveValue by evaluation ObjectiveFunction with VariablePrimal
+    # Computes `ObjectiveValue` by evaluating the `ObjectiveFunction` with
+    # `VariablePrimal`. See `get_fallback`.
+    eval_objective_value::Bool
     objectivevalue::Float64
     objectivebound::Float64  # set this using MOI.set!(model, MOI.ObjectiveBound(), value)
     primalstatus::MOI.ResultStatusCode
     dualstatus::MOI.ResultStatusCode
     varprimal::Dict{MOI.VariableIndex,Float64}
+    # Computes `ConstraintDual` of constraints with `SingleVariable` or
+    # `VectorOfVariables` functions by evaluating the `ConstraintDual` of
+    # constraints having the variable in the function. See `get_fallback`.
+    eval_variable_constraint_dual::Bool
     condual::Dict{MOI.ConstraintIndex,Any}
 end
 
@@ -42,27 +48,31 @@ xor_index(vi::VI) = VI(xor(vi.value, internal_xor_mask))
 xor_index(ci::CI{F,S}) where {F,S} = CI{F,S}(xor(ci.value, internal_xor_mask))
 xor_variables(f) = mapvariables(xor_index, f)
 
-MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false, evalobjective=true) =
-    MockOptimizer(inner_model,
-                  0,
-                  Dict{MOI.VariableIndex,Int}(),
-                  Dict{MOI.ConstraintIndex,Int}(),
-                  needsallocateload,
-                  true,
-                  true,
-                  (::MockOptimizer) -> begin end,
-                  false,
-                  false,
-                  false,
-                  MOI.Success,
-                  0,
-                  evalobjective,
-                  NaN,
-                  NaN,
-                  MOI.UnknownResultStatus,
-                  MOI.UnknownResultStatus,
-                  Dict{MOI.VariableIndex,Float64}(),
-                  Dict{MOI.ConstraintIndex,Any}())
+function MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false,
+                       eval_objective_value=true,
+                       eval_variable_constraint_dual=true)
+    return MockOptimizer(inner_model,
+                         0,
+                         Dict{MOI.VariableIndex,Int}(),
+                         Dict{MOI.ConstraintIndex,Int}(),
+                         needsallocateload,
+                         true,
+                         true,
+                         (::MockOptimizer) -> begin end,
+                         false,
+                         false,
+                         false,
+                         MOI.Success,
+                         0,
+                         eval_objective_value,
+                         NaN,
+                         NaN,
+                         MOI.UnknownResultStatus,
+                         MOI.UnknownResultStatus,
+                         Dict{MOI.VariableIndex,Float64}(),
+                         eval_variable_constraint_dual,
+                         Dict{MOI.ConstraintIndex,Any}())
+end
 
 function MOI.addvariable!(mock::MockOptimizer)
     if mock.canaddvar
@@ -154,17 +164,11 @@ MOI.get(b::MockOptimizer, IdxT::Type{<:MOI.Index}, name::String) = xor_index(MOI
 
 MOI.get(mock::MockOptimizer, ::MOI.ResultCount) = mock.resultcount
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.terminationstatus
-# Gets the ObjectiveFunction attribute set to mock, i.e. the type of the scalar function is unknown
-_getobjfunattr() = error("Objective Function not set")
-_getobjfunattr(objfun::MOI.ObjectiveFunction, args...) = objfun
-_getobjfunattr(::MOI.AbstractModelAttribute, args...) = _getobjfunattr(args...)
-_getobjfunattr(mock::MockOptimizer) = _getobjfunattr(MOI.get(mock, MOI.ListOfModelAttributesSet())...)
-function MOI.get(mock::MockOptimizer, ::MOI.ObjectiveValue)
-    if mock.evalobjective
-        f = MOI.get(mock, _getobjfunattr(mock))
-        evalvariables(vi -> MOI.get(mock, MOI.VariablePrimal(), vi), f)
+function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
+    if mock.eval_objective_value
+        return get_fallback(mock, attr)
     else
-        mock.objectivevalue
+        return mock.objectivevalue
     end
 end
 MOI.get(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.primalstatus
@@ -174,12 +178,20 @@ MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
 MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, idx::MOI.VariableIndex) = MOI.get(mock.inner_model, attr, xor_index(idx))
 MOI.get(mock::MockOptimizer, ::MockVariableAttribute, idx::MOI.VariableIndex) = mock.varattribute[xor_index(idx)]
 MOI.get(mock::MockOptimizer, ::MOI.VariablePrimal, idx::MOI.VariableIndex) = mock.varprimal[xor_index(idx)]
-function MOI.get(mock::MockOptimizer, ::MOI.ConstraintPrimal, idx::MOI.ConstraintIndex)
-    f = MOI.get(mock, MOI.ConstraintFunction(), idx)
-    evalvariables(vi -> MOI.get(mock, MOI.VariablePrimal(), vi), f)
+function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintPrimal,
+                 idx::MOI.ConstraintIndex)
+    return get_fallback(mock, attr, idx)
 end
 MOI.get(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute, idx::MOI.ConstraintIndex) = MOI.get(mock.inner_model, attr, xor_index(idx))
-MOI.get(mock::MockOptimizer, ::MOI.ConstraintDual, idx::MOI.ConstraintIndex) = mock.condual[xor_index(idx)]
+function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintDual,
+                 idx::MOI.ConstraintIndex{F}) where F
+    if mock.eval_variable_constraint_dual &&
+        (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
+        return get_fallback(mock, attr, idx)
+    else
+        return mock.condual[xor_index(idx)]
+    end
+end
 MOI.get(mock::MockOptimizer, ::MockConstraintAttribute, idx::MOI.ConstraintIndex) = mock.conattribute[xor_index(idx)]
 
 MOI.supports(mock::MockOptimizer, ::MOI.ObjectiveBound) = true

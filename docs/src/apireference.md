@@ -80,6 +80,7 @@ List of attributes useful for optimizers
 RawSolver
 ResultCount
 ObjectiveFunction
+ObjectiveFunctionType
 ObjectiveValue
 ObjectiveBound
 RelativeGap

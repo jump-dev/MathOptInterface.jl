@@ -226,6 +226,10 @@ function MOI.set!(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.Optimiz
     model.senseset = true
     model.sense = sense
 end
+MOI.canget(model::AbstractModel, ::MOI.ObjectiveFunctionType) = true
+function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunctionType)
+    return MOI.typeof(model.objective)
+end
 MOI.canget(model::AbstractModel, ::MOI.ObjectiveFunction{T}) where T = model.objectiveset && typeof(model.objective) == T
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     if typeof(model.objective) != T

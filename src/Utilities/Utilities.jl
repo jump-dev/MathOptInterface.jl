@@ -1,6 +1,7 @@
 module Utilities
 
 using Compat # For firstindex, lastindex and Nothing
+using Compat.LinearAlgebra # For dot
 
 using MathOptInterface
 const MOI = MathOptInterface
@@ -20,6 +21,7 @@ const CI{F,S} = MOI.ConstraintIndex{F,S}
 include("functions.jl")
 include("sets.jl")
 include("copy.jl")
+include("results.jl")
 
 include("model.jl")
 include("parser.jl")
