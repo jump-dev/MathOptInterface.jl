@@ -153,7 +153,8 @@ function variable_dual(model::MOI.ModelLike,
             if (F == MOI.SingleVariable && func.variable == vi) ||
                (F == MOI.VectorOfVariables && vi in func.variables)
                error("Fallback getter for variable constraint dual does not",
-                     "support other variable-wise constraints on the variable.")
+                     "support other variable-wise constraints on the variable.",
+                     "Please report this issue to the solver wrapper package.")
             end
         end
     end
@@ -167,7 +168,8 @@ function variable_dual(::MOI.ModelLike,
                                       MOI.VectorQuadraticFunction}},
                        ::Type{<:MOI.AbstractSet})
     error("Fallback getter for variable constraint dual only supports affine",
-          "constraint functions.")
+          "constraint functions.",
+          "Please report this issue to the solver wrapper package.")
 end
 
 """
@@ -204,7 +206,8 @@ function variable_dual(model::MOI.ModelLike,
             dual += sign * variable_coefficient(f, vi)
         else
             error("Fallback getter for variable constraint dual only supports",
-                  "affine objective function.")
+                  "affine objective function.",
+                  "Please report this issue to the solver wrapper package.")
         end
     end
     for FS in MOI.get(model, MOI.ListOfConstraints())
