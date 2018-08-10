@@ -274,7 +274,7 @@ function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, 
             try
                 MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
             catch err
-                if err isa MOI.CannotSetAttribute
+                if err isa MOI.CannotSetAttribute || err isa MOI.UnsupportedAttribute
                     resetoptimizer!(m)
                 else
                     rethrow(err)
