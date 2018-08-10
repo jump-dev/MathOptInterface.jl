@@ -22,6 +22,8 @@ struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: Unsupported
 end
 UnsupportedConstraint{F, S}() where {F, S} = UnsupportedConstraint{F, S}("")
 
+operation_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constraints"
+
 """
     struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
         message::String # Human-friendly explanation why the attribute cannot be set
@@ -35,7 +37,7 @@ struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
 end
 CannotAddConstraint{F, S}() where {F, S} = CannotAddConstraint{F, S}("")
 
-operation_name(::Union{UnsupportedConstraint{F, S}, CannotAddConstraint{F, S}}) where {F, S} = "Adding `$F`-in-`$S` constraints"
+operation_name(::CannotAddConstraint{F, S}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 
 """
     addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
@@ -53,7 +55,11 @@ it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
 current state.
 """
 function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractSet)
-    throw(UnsupportedConstraint{typeof(func), typeof(set)}())
+    if supports(model, typeof(func), typeof(set))
+        throw(UnsupportedConstraint{typeof(func), typeof(set)}())
+    else
+        throw(CannotAddConstraint{typeof(func), typeof(set)}())
+    end
 end
 
 # convenient shorthands TODO: document

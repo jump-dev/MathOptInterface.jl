@@ -33,8 +33,7 @@ abstract type CannotError <: Exception end
 
 function Base.showerror(io::IO, err::CannotError)
     print(io, typeof(err), ": ", operation_name(err),
-          " cannot be performed in the current state of the model even if the",
-          " operation is supported")
+          " cannot be performed")
     m = message(err)
     if Base.isempty(m)
         print(io, ".")

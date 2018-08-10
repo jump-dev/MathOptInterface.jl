@@ -1,6 +1,6 @@
 """
-    struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
-                                             C<:AbstractFunctionModification} <: UnsupportedError
+    struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
+                                             C<:AbstractFunctionModification} <: CannotError
         change::C
         message::String
     end
@@ -8,19 +8,19 @@
 An error indicating that constraints of type `F`-in-`S` do not support the
 constraint modification `change`.
 """
-struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
-                                         C<:AbstractFunctionModification} <: UnsupportedError
+struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
+                                         C<:AbstractFunctionModification} <: CannotError
     change::C
     message::String
 end
-function UnsupportedConstraintModification{F, S}(change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
-    UnsupportedConstraintModification{F, S, typeof(change)}(change, "")
+function CannotModifyConstraint{F, S}(change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
+    CannotModifyConstraint{F, S, typeof(change)}(change, "")
 end
 
-operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Modifying `$F`-in-`$S` constraints with $(err.change)"
+operation_name(err::CannotModifyConstraint{F, S}) where {F, S} = "Modifying `$F`-in-`$S` constraints with $(err.change)"
 
 """
-    struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
+    struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotError
         change::C
         message::String
     end
@@ -28,12 +28,12 @@ operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Mod
 An error indicating that the objective function does not support the constraint
 modification `change`.
 """
-struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
+struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotError
     change::C
     message::String
 end
 
-operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective function with $(err.change)"
+operation_name(err::CannotModifyObjective) = "Modifying the objective function with $(err.change)"
 
 """
 ## Constraint Function
@@ -42,7 +42,7 @@ operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective
 
 Apply the modification specified by `change` to the function of constraint `ci`.
 
-An [`UnsupportedConstraintModification`](@ref) error is thrown if modifying
+An [`CannotModifyConstraint`](@ref) error is thrown if modifying
 constraints is not supported by the model `model`.
 
 ### Examples
@@ -58,7 +58,7 @@ modify!(model, ci, ScalarConstantChange(10.0))
 Apply the modification specified by `change` to the objective function of
 `model`. To change the function completely, call `set!` instead.
 
-An [`UnsupportedObjectiveModification`](@ref) error is thrown if modifying
+An [`CannotModifyObjective`](@ref) error is thrown if modifying
 objectives is not supported by the model `model`.
 
 ### Examples
@@ -71,10 +71,10 @@ function modify! end
 
 function modify!(model::ModelLike, ci::ConstraintIndex{F, S},
                  change::AbstractFunctionModification) where {F, S}
-    throw(UnsupportedConstraintModification{F, S}(change))
+    throw(CannotModifyConstraint{F, S}(change))
 end
 
 function modify!(model::ModelLike, ::ObjectiveFunction,
                  change::AbstractFunctionModification)
-    throw(UnsupportedObjectiveModification(change))
+    throw(CannotModifyObjective(change))
 end

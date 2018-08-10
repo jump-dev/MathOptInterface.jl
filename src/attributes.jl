@@ -48,6 +48,7 @@ struct UnsupportedAttribute{AttrType<:AnyAttribute} <: UnsupportedError
     message::String
 end
 UnsupportedAttribute(attr::AnyAttribute) = UnsupportedAttribute(attr, "")
+operation_name(err::UnsupportedAttribute) = "Attribute $(err.attr)"
 
 """
     struct CannotSetAttribute{AttrType} <: CannotError
@@ -64,7 +65,7 @@ struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotError
 end
 CannotSetAttribute(attr::AnyAttribute) = CannotSetAttribute(attr, "")
 
-operation_name(err::Union{UnsupportedAttribute, CannotSetAttribute}) = "Setting attribute $(err.attr)"
+operation_name(err::CannotSetAttribute) = "Setting attribute $(err.attr)"
 message(err::CannotSetAttribute) = err.message
 
 """
@@ -284,7 +285,11 @@ end
 # examples, see ConstraintSet and ConstraintFunction. set!_fallback_error should
 # not be overloaded by users of MOI.
 function set!_fallback_error(model::ModelLike, attr::AnyAttribute, args...)
-    throw(UnsupportedAttribute(attr))
+    if support(model, attr, args...) # FIXME
+        throw(UnsupportedAttribute(attr))
+    else
+        throw(CannotSetAttribute(attr))
+    end
 end
 
 ## Optimizer attributes
@@ -601,7 +606,7 @@ struct ConstraintFunction <: AbstractConstraintAttribute end
 function set!_fallback_error(::ModelLike, attr::ConstraintFunction,
                      ::ConstraintIndex{F, S}, ::F) where {F <: AbstractFunction,
                                                           S}
-    throw(UnsupportedAttribute(attr))
+    throw(CannotSetAttribute(attr))
 end
 func_type(c::ConstraintIndex{F, S}) where {F, S} = F
 function set!_fallback_error(::ModelLike, ::ConstraintFunction,
@@ -620,7 +625,7 @@ struct ConstraintSet <: AbstractConstraintAttribute end
 
 function set!_fallback_error(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
                      ::S) where {F, S <: AbstractSet}
-    throw(UnsupportedAttribute(attr))
+    throw(CannotSetAttribute(attr))
 end
 set_type(::ConstraintIndex{F, S}) where {F, S} = S
 function set!_fallback_error(::ModelLike, ::ConstraintSet,

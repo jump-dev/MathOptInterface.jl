@@ -168,7 +168,7 @@ function MOI.addvariable!(m::CachingOptimizer)
             try
                 vindex_optimizer = MOI.addvariable!(m.optimizer)
             catch err
-                if err isa MOI.CannotAddVariable
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -192,7 +192,7 @@ function MOI.addvariables!(m::CachingOptimizer, n)
             try
                 vindices_optimizer = MOI.addvariables!(m.optimizer, n)
             catch err
-                if err isa MOI.CannotAddVariable
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -222,7 +222,7 @@ function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set
             try
                 cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
             catch err
-                if err isa MOI.CannotAddConstraint
+                if err isa MOI.CannotError
                     # It could be MOI.CannotAddConstraint{F', S'} with F' != F
                     # or S' != S if, e.g., the `F`-in-`S` constraint is bridged
                     # to other constraints in `m.optimizer`
@@ -251,7 +251,7 @@ function MOI.modify!(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFuncti
             try
                 MOI.modify!(m.optimizer, cindex_optimizer, change_optimizer)
             catch err
-                if err isa MOI.UnsupportedConstraintModification
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -274,7 +274,7 @@ function replace_constraint_function_or_set!(m::CachingOptimizer, attr, cindex, 
             try
                 MOI.set!(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
             catch err
-                if err isa MOI.CannotSetAttribute
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -302,7 +302,7 @@ function MOI.modify!(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MO
             try
                 MOI.modify!(m.optimizer, obj, change_optimizer)
             catch err
-                if err isa MOI.UnsupportedObjectiveModification
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -328,7 +328,7 @@ function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
             try
                 MOI.delete!(m.optimizer, index_optimizer)
             catch err
-                if err isa MOI.UnsupportedDeletion
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -366,7 +366,7 @@ function MOI.set!(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
             try
                 MOI.set!(m.optimizer, attr, optimizer_value)
             catch err
-                if err isa MOI.CannotSetAttribute
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
@@ -387,7 +387,7 @@ function MOI.set!(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute
             try
                 MOI.set!(m.optimizer, attr, optimizer_index, optimizer_value)
             catch err
-                if err isa MOI.CannotSetAttribute
+                if err isa MOI.CannotError
                     resetoptimizer!(m)
                 else
                     rethrow(err)
