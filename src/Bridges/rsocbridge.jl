@@ -26,9 +26,11 @@ function RSOCBridge{T, F}(model, f::MOI.AbstractVectorFunction, s::MOI.RotatedSe
     u = f_scalars[2]
     x = f_scalars[3:d]
     s2 = √2
-    ts = MOIU.operate!(/, T, t / s2
-    us = MOIU.operate!(/, T, u / s2
-    y  = MOIU.operate!(-, T, ts, us)
+    ts = MOIU.operate!(/, T, t, s2)
+    us = MOIU.operate!(/, T, u, s2)
+    # Cannot use `operate!` here since `ts` and `us` are needed for the next
+    # line
+    y  = ts - us
     z  = MOIU.operate!(+, T, ts, us)
     g = MOIU.operate(vcat, T, z, y, x)
     soc = MOI.addconstraint!(model, g, MOI.SecondOrderCone(d))

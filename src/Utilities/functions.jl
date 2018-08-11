@@ -575,6 +575,11 @@ const ScalarAffineLike{T} = Union{T, MOI.SingleVariable, MOI.ScalarAffineFunctio
 # Functions convertible to a ScalarQuadraticFunction
 const ScalarQuadraticLike{T} = Union{ScalarAffineLike{T}, MOI.ScalarQuadraticFunction{T}}
 
+# Used for overloading Base operator functions so `T` is not in the union to
+# avoid overloading e.g. `+(::Float64, ::Float64)`
+const ScalarLike{T} = Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T},
+                            MOI.ScalarQuadraticFunction{T}}
+
 ###################################### +/- #####################################
 ## promote_operation
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -589,6 +594,12 @@ function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
 end
 
 ## operate!
+# Scalar Variable +/- ...
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+                  f::MOI.SingleVariable,
+                  g::ScalarQuadraticLike) where T
+    return operate(op, T, f, g)
+end
 # Scalar Affine +/-! ...
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarAffineFunction{T},
@@ -684,11 +695,17 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
     operate!(op, T, copy(f), g)
 end
 
-function Base.:+(args::ScalarQuadraticLike{T}...) where T
+function Base.:+(args::ScalarLike{T}...) where T
     return operate(+, T, args...)
 end
-function Base.:-(args::ScalarQuadraticLike{T}...) where T
+function Base.:+(f::ScalarLike{T}, g::T) where T
+    return operate(+, T, f, g)
+end
+function Base.:-(args::ScalarLike{T}...) where T
     return operate(-, T, args...)
+end
+function Base.:-(f::ScalarLike{T}, g::T) where T
+    return operate(-, T, f, g)
 end
 
 ####################################### * ######################################
@@ -701,7 +718,7 @@ end
 function operate!(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
     return operate(*, T, α, f)
 end
-function operate!(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
+function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
     MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
 end
 
@@ -714,9 +731,13 @@ function operate(::typeof(*), ::Type{T}, α::T, f::MOI.ScalarAffineFunction) whe
     return operate!(*, T, copy(f), α)
 end
 
-function Base.:*(args::ScalarQuadraticLike{T}...) where T
+function Base.:*(args::ScalarLike{T}...) where T
     return operate(*, T, args...)
 end
+function Base.:*(f::T, g::ScalarLike{T}) where T
+    return operate(*, T, f, g)
+end
+
 
 ####################################### / ######################################
 function promote_operation(::typeof(/), ::Type{T},
@@ -726,19 +747,33 @@ function promote_operation(::typeof(/), ::Type{T},
     MOI.ScalarAffineFunction{T}
 end
 
+function operate!(::typeof(/), ::Type{T}, f::MOI.SingleVariable,
+                  α::T) where T
+    return operate(/, T, f, α)
+end
 function operate(::typeof(/), ::Type{T}, f::MOI.SingleVariable,
                  α::T) where T
-    MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(inv(α), f.variable)],
-                                zero(T))
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(inv(α),
+                                                             f.variable)],
+                                       zero(T))
+end
+
+function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
+                  α::T) where T
+    f.terms .= operate_term.(/, f.terms, α)
+    f.constant /= α
+    return f
 end
 function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
                  α::T) where T
-    MOI.ScalarAffineFunction{T}(operate_term.(/, f.terms, α),
-                                f.constant / α)
+    return operate(/, T, copy(f), α)
 end
 
-function Base.:/(args::ScalarQuadraticLike{T}...) where T
+function Base.:/(args::ScalarLike{T}...) where T
     return operate(/, T, args...)
+end
+function Base.:/(f::ScalarLike{T}, g::T) where T
+    return operate(/, T, f, g)
 end
 
 ## sum
