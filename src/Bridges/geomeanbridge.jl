@@ -57,20 +57,19 @@ function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
     f_scalars = MOIU.eachscalar(f)
 
     xl1 = MOI.SingleVariable(xij[1])
-    sN = one(T) / sqrt(N)
+    sN = one(T) / √N
     function _getx(i)
         if i > n
-            MOIU.operate(*, T, sN, xl1)
+            return sN * xl1
         else
-            f_scalars[1+i]
+            return f_scalars[1+i]
         end
     end
 
     t = f_scalars[1]
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
     tubc = MOIU.add_scalar_constraint(model,
-                                      MOIU.operate(+, T, t,
-                                                   MOIU.operate(*, T, -sN, xl1)),
+                                      MOIU.operate!(+, T, t, -sN * xl1),
                                       MOI.LessThan(zero(T)))
 
     socrc = Vector{CI{G, MOI.RotatedSecondOrderCone}}(undef, N-1)
@@ -82,8 +81,8 @@ function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
                 a = _getx(2j-1)
                 b = _getx(2j)
             else
-                a = MOIU.operate(*, T, one(T), MOI.SingleVariable(xij[offsetnext+2j-1]))
-                b = MOIU.operate(*, T, one(T), MOI.SingleVariable(xij[offsetnext+2j]))
+                a = one(T) * MOI.SingleVariable(xij[offsetnext+2j-1])
+                b = one(T) * MOI.SingleVariable(xij[offsetnext+2j])
             end
             c = MOI.SingleVariable(xij[offset+j])
             socrc[offset + j] = MOI.addconstraint!(model,
@@ -107,7 +106,7 @@ function concrete_bridge_type(::Type{<:GeoMeanBridge{T}},
                               H::Type{<:MOI.AbstractVectorFunction},
                               ::Type{MOI.GeometricMeanCone}) where T
     S = MOIU.scalar_type(H)
-    A = MOIU.promote_operation(*, T, Float64, MOI.SingleVariable)
+    A = MOIU.promote_operation(*, T, T, MOI.SingleVariable)
     F = MOIU.promote_operation(+, T, S, A)
     G = MOIU.promote_operation(vcat, T, A, A, MOI.SingleVariable)
     return GeoMeanBridge{T, F, G}

@@ -684,6 +684,13 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
     operate!(op, T, copy(f), g)
 end
 
+function Base.:+(args::ScalarQuadraticLike{T}...) where T
+    return operate(+, T, args...)
+end
+function Base.:-(args::ScalarQuadraticLike{T}...) where T
+    return operate(-, T, args...)
+end
+
 ####################################### * ######################################
 function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
                            ::Type{<:Union{MOI.SingleVariable,
@@ -691,13 +698,24 @@ function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
     return MOI.ScalarAffineFunction{T}
 end
 
-function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
+function operate!(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
+    return operate(*, T, α, f)
+end
+function operate!(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
     MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
 end
 
+function operate!(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction{T}, α::T) where T
+    f.terms .= operate_term.(*, α, f.terms)
+    f.constant *= α
+    return f
+end
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.ScalarAffineFunction) where T
-    MOI.ScalarAffineFunction{T}(operate_term.(*, α, f.terms),
-                                α * f.constant)
+    return operate!(*, T, copy(f), α)
+end
+
+function Base.:*(args::ScalarQuadraticLike{T}...) where T
+    return operate(*, T, args...)
 end
 
 ####################################### / ######################################
@@ -717,6 +735,10 @@ function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
                  α::T) where T
     MOI.ScalarAffineFunction{T}(operate_term.(/, f.terms, α),
                                 f.constant / α)
+end
+
+function Base.:/(args::ScalarQuadraticLike{T}...) where T
+    return operate(/, T, args...)
 end
 
 ## sum

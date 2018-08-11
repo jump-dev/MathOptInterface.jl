@@ -130,7 +130,7 @@ _RSOCtoPSDCaff(f::MOI.VectorOfVariables, ::Type{T}) where T = _RSOCtoPSDCaff(MOI
 function _RSOCtoPSDCaff(f::MOI.VectorAffineFunction, ::Type{T}) where T
     n = MOI.output_dimension(f)
     f_scalars = MOIU.eachscalar(f)
-    g = MOIU.operate(*, T, convert(T, 2), f_scalars[2])
+    g = MOIU.operate!(*, T, f_scalars[2], convert(T, 2))
     _SOCtoPSDCaff(f_scalars[[1; 3:n]], g)
 end
 

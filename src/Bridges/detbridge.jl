@@ -107,7 +107,7 @@ Constrains ``t \\le l_1 + \\cdots + l_n`` where `n` is the length of `l` and ret
 """
 function subsum(model, t::MOI.ScalarAffineFunction, l::Vector{MOI.VariableIndex}, ::Type{T}) where T
     n = length(l)
-    f = MOIU.operate(-, T, t, MOIU.operate(sum, T, l))
+    f = MOIU.operate!(-, T, t, MOIU.operate(sum, T, l))
     return MOIU.add_scalar_constraint(model, f, MOI.LessThan(zero(T)))
 end
 
