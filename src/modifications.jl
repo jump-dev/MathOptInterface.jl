@@ -1,34 +1,37 @@
 """
     struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
-                                             C<:AbstractFunctionModification} <: CannotError
+                                             C<:AbstractFunctionModification} <: CannotTryResetError
+        constraint_index::ConstraintIndex{F, S}
         change::C
         message::String
     end
 
-An error indicating that constraints of type `F`-in-`S` do not support the
-constraint modification `change`.
+An error indicating that the constraint modification `change` cannot be applied
+to the constraint of index `ci`.
 """
 struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
-                                         C<:AbstractFunctionModification} <: CannotError
+                                         C<:AbstractFunctionModification} <: CannotTryResetError
+    constraint_index::ConstraintIndex{F, S}
     change::C
     message::String
 end
-function CannotModifyConstraint{F, S}(change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
-    CannotModifyConstraint{F, S, typeof(change)}(change, "")
+function CannotModifyConstraint(ci::ConstraintIndex{F, S},
+                                change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
+    CannotModifyConstraint{F, S, typeof(change)}(ci, change, "")
 end
 
-operation_name(err::CannotModifyConstraint{F, S}) where {F, S} = "Modifying `$F`-in-`$S` constraints with $(err.change)"
+operation_name(err::CannotModifyConstraint{F, S}) where {F, S} = "Modifying the constraints $(err.constraint_index) with $(err.change)"
 
 """
-    struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotError
+    struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotTryResetError
         change::C
         message::String
     end
 
-An error indicating that the objective function does not support the constraint
-modification `change`.
+An error indicating that the objective modification `change` cannot be applied
+to the objective.
 """
-struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotError
+struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotTryResetError
     change::C
     message::String
 end
@@ -71,7 +74,7 @@ function modify! end
 
 function modify!(model::ModelLike, ci::ConstraintIndex{F, S},
                  change::AbstractFunctionModification) where {F, S}
-    throw(CannotModifyConstraint{F, S}(change))
+    throw(CannotModifyConstraint(ci, change))
 end
 
 function modify!(model::ModelLike, ::ObjectiveFunction,

@@ -49,22 +49,21 @@ Return a `Bool` indicating whether this index refers to a valid object in the mo
 isvalid(model::ModelLike, ref::Index) = false
 
 """
-    struct CannotDelete{IndexType} <: CannotError
+    struct CannotDelete{IndexType <: Index} <: CannotTryResetError
+        index::IndexType
         message::String
     end
 
-An error indicating that deleting indices of type `IndexType` is not supported
-by the model.
+An error indicating that the index `index` cannot be deleted.
 """
-struct CannotDelete{IndexType<:Index} <: CannotError
+struct CannotDelete{IndexType <: Index} <: CannotTryResetError
+    index::IndexType
     message::String
 end
-function CannotDelete{IndexType}() where IndexType <: Index
-    CannotDelete{IndexType}("")
-end
+CannotDelete(index::Index) = CannotDelete(index, "")
 
-function operation_name(::CannotDelete{IndexType}) where {IndexType<:Index}
-    return "Deleting indices of type `$IndexType`"
+function operation_name(err::CannotDelete)
+    return "Deleting the index $(err.index)"
 end
 
 """
@@ -72,7 +71,7 @@ end
 
 Delete the referenced object from the model.
 """
-Base.delete!(model::ModelLike, index::Index) = throw(CannotDelete{typeof(index)}())
+Base.delete!(model::ModelLike, index::Index) = throw(CannotDelete(index))
 
 """
     delete!{R}(model::ModelLike, indices::Vector{R<:Index})

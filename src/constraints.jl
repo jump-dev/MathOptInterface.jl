@@ -15,7 +15,7 @@ supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:Abstra
     end
 
 An error indicating that constraints of type `F`-in-`S` are not supported by
-the model.
+the model, i.e. that [`supportsconstraint`](@ref) returns `false`.
 """
 struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
     message::String # Human-friendly explanation why the attribute cannot be set
@@ -25,14 +25,14 @@ UnsupportedConstraint{F, S}() where {F, S} = UnsupportedConstraint{F, S}("")
 operation_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constraints"
 
 """
-    struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
+    struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotTryResetError
         message::String # Human-friendly explanation why the attribute cannot be set
     end
 
-An error indicating that constraints of type `F`-in-`S` are supported but
-cannot be added in the current state of the model.
+An error indicating that constraints of type `F`-in-`S` are supported (see
+[`supportsconstraint`](@ref)) but cannot be added.
 """
-struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotError
+struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotTryResetError
     message::String # Human-friendly explanation why the attribute cannot be set
 end
 CannotAddConstraint{F, S}() where {F, S} = CannotAddConstraint{F, S}("")

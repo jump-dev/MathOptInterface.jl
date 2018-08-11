@@ -1,14 +1,13 @@
 # Variables
 
 """
-    struct CannotAddVariable <: CannotError
+    struct CannotAddVariable <: CannotTryResetError
         message::String # Human-friendly explanation why the attribute cannot be set
     end
 
-An error indicating that variables cannot be added in the current state of the
-model.
+An error indicating that variables cannot be added to the model.
 """
-struct CannotAddVariable <: CannotError
+struct CannotAddVariable <: CannotTryResetError
     message::String # Human-friendly explanation why the attribute cannot be set
 end
 CannotAddVariable() = CannotAddVariable("")
