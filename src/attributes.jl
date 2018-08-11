@@ -244,9 +244,8 @@ Assign a value to the attribute `attr` of constraint `c` in model `model`.
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `model`.
 
 An [`UnsupportedAttribute`](@ref) error is thrown if `model` does not support
-setting attributes `attr` and a [`CannotSetAttribute`](@ref) error is thrown if
-it supports setting attributes `attr` but it cannot set this attribute the
-current state of the model.
+the attribute `attr` (see [`supports`](@ref)) and a [`CannotSetAttribute`](@ref)
+error is thrown if it supports the attribute `attr` but it cannot be set.
 
 ### Replace set in a constraint
 
@@ -280,8 +279,6 @@ If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
 set!(model, ConstraintFunction(), c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
 set!(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
 ```
-
-
 """
 function set! end
 # See note with get
