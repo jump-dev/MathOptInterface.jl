@@ -14,7 +14,7 @@ using Compat.Test
     include("isbits.jl")
     include("isapprox.jl")
     include("interval.jl")
-    include("attributes.jl")
+    include("errors.jl")
 end
 
 # Needed by test spread over several files, defining it here make it easier to comment out tests
