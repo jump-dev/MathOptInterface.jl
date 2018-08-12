@@ -22,7 +22,7 @@ struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: Unsupported
 end
 UnsupportedConstraint{F, S}() where {F, S} = UnsupportedConstraint{F, S}("")
 
-operation_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constraints"
+element_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constraints"
 
 """
     struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotTryResetError
@@ -55,10 +55,10 @@ it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
 current state.
 """
 function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractSet)
-    if supports(model, typeof(func), typeof(set))
-        throw(UnsupportedConstraint{typeof(func), typeof(set)}())
-    else
+    if supportsconstraint(model, typeof(func), typeof(set))
         throw(CannotAddConstraint{typeof(func), typeof(set)}())
+    else
+        throw(UnsupportedConstraint{typeof(func), typeof(set)}())
     end
 end
 
