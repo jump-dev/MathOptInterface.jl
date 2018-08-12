@@ -26,7 +26,7 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
         try
             MOI.addconstraint!(model, func, MOI.EqualTo(0.0))
         catch err
-            @test sprint(showerror, err) == "MathOptInterface.CannotAddConstraint{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}: Adding `MathOptInterface.SingleVariable`-in-`MathOptInterface.EqualTo{Float64}` constraints cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+            @test sprint(showerror, err) == "$MOI.CannotAddConstraint{$MOI.SingleVariable,$MOI.EqualTo{Float64}}: Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}` constraints cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
         end
         @test_throws MOI.CannotAddConstraint begin
             MOI.addconstraint!(model, vi, MOI.EqualTo(0.0))
@@ -44,7 +44,7 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
         try
             MOI.addconstraint!(model, func, MOI.EqualTo(0))
         catch err
-            @test sprint(showerror, err) == "MathOptInterface.UnsupportedConstraint{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Int64}}: `MathOptInterface.SingleVariable`-in-`MathOptInterface.EqualTo{Int64}` constraints is not supported by the the model."
+            @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}: `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraints is not supported by the the model."
         end
         @test_throws MOI.UnsupportedConstraint begin
             MOI.addconstraint!(model, vi, MOI.EqualTo(0))
@@ -108,8 +108,8 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
 end
 
 @testset "Error messages" begin
-    @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name())) == "MathOptInterface.UnsupportedAttribute{MathOptInterface.Name}: Attribute MathOptInterface.Name() is not supported by the the model."
-    @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name(), "Message")) == "MathOptInterface.UnsupportedAttribute{MathOptInterface.Name}: Attribute MathOptInterface.Name() is not supported by the the model: Message"
-    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name())) == "MathOptInterface.CannotSetAttribute{MathOptInterface.Name}: Setting attribute MathOptInterface.Name() cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
-    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name(), "Message")) == "MathOptInterface.CannotSetAttribute{MathOptInterface.Name}: Setting attribute MathOptInterface.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode." == "MathOptInterface.CannotSetAttribute{MathOptInterface.Name}: Setting attribute MathOptInterface.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+    @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name())) == "$MOI.UnsupportedAttribute{$MOI.Name}: Attribute $MOI.Name() is not supported by the the model."
+    @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name(), "Message")) == "$MOI.UnsupportedAttribute{$MOI.Name}: Attribute $MOI.Name() is not supported by the the model: Message"
+    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name())) == "$MOI.CannotSetAttribute{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name(), "Message")) == "$MOI.CannotSetAttribute{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode." == "$MOI.CannotSetAttribute{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
 end
