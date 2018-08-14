@@ -20,6 +20,8 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     needsallocateload::Bool # Allows to tests the Allocate-Load interface, see copy!
     canaddvar::Bool
     canaddcon::Bool # If false, the optimizer throws CannotAddConstraint
+    canmodify::Bool # If false, the optimizer throws CannotModify...
+    candelete::Bool # If false, the optimizer throws CannotDelete
     optimize!::Function
     solved::Bool
     hasprimal::Bool
@@ -56,6 +58,8 @@ function MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false,
                          Dict{MOI.VariableIndex,Int}(),
                          Dict{MOI.ConstraintIndex,Int}(),
                          needsallocateload,
+                         true,
+                         true,
                          true,
                          true,
                          (::MockOptimizer) -> begin end,
@@ -236,6 +240,9 @@ end
 MOI.isvalid(mock::MockOptimizer, idx::MOI.Index) = MOI.isvalid(mock.inner_model, xor_index(idx))
 
 function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
+    if !mock.candelete
+        throw(MOI.CannotDelete(index))
+    end
     if !MOI.isvalid(mock, index)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
@@ -244,6 +251,9 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
     MOI.delete!(mock.varprimal, index)
 end
 function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
+    if !mock.candelete
+        throw(MOI.CannotDelete(index))
+    end
     if !MOI.isvalid(mock, index)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
@@ -253,6 +263,9 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
 end
 
 function MOI.modify!(mock::MockOptimizer, c::CI, change::MOI.AbstractFunctionModification)
+    if !mock.canmodify
+        throw(MOI.CannotModifyConstraint(c, change))
+    end
     MOI.modify!(mock.inner_model, xor_index(c), xor_variables(change))
 end
 
@@ -265,6 +278,9 @@ function MOI.set!(mock::MockOptimizer, ::MOI.ConstraintFunction, c::CI{F,S}, fun
 end
 
 function MOI.modify!(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
+    if !mock.canmodify
+        throw(MOI.CannotModifyObjective(change))
+    end
     MOI.modify!(mock.inner_model, obj, xor_variables(change))
 end
 

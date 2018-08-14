@@ -35,6 +35,9 @@ struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotTryResetE
     change::C
     message::String
 end
+function CannotModifyObjective(change::AbstractFunctionModification)
+    CannotModifyObjective(change, "")
+end
 
 operation_name(err::CannotModifyObjective) = "Modifying the objective function with $(err.change)"
 
