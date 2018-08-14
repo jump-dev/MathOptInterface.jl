@@ -58,7 +58,7 @@ element_name(err::UnsupportedAttribute) = "Attribute $(err.attr)"
     end
 
 An error indicating that the attribute `attr` is supported (see
-[`supports`](@ref)) but cannot be set.
+[`supports`](@ref)) but cannot be set for some reason (see the error string).
 """
 struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotTryResetError
     attr::AttrType
@@ -73,25 +73,27 @@ message(err::CannotSetAttribute) = err.message
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the optimizer attribute
-`attr`. That is, it return false if `copy!(model, src)` shows a warning in
-case `attr` is in the [`ListOfOptimizerAttributesSet`](@ref) of `src`.
+`attr`. That is, it returns `false` if `copy!(model, src)` shows a warning in
+case `attr` is in the [`ListOfOptimizerAttributesSet`](@ref) of `src`; see
+[`copy!`](@ref) for more details on how unsupported optimizer attributes are
+handled in copy.
 
     supports(model::ModelLike, attr::AbstractModelAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the model attribute `attr`.
-That is, it return false if `copy!(model, src)` cannot be performed in case
+That is, it returns `false` if `copy!(model, src)` cannot be performed in case
 `attr` is in the [`ListOfModelAttributesSet`](@ref) of `src`.
 
     supports(model::ModelLike, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
 
 Return a `Bool` indicating whether `model` supports the variable attribute
-`attr`. That is, it return false if `copy!(model, src)` cannot be performed in
-case `attr` is in the [`ListOfVariableAttributesSet`](@ref) of `src`.
+`attr`. That is, it returns `false` if `copy!(model, src)` cannot be performed
+in case `attr` is in the [`ListOfVariableAttributesSet`](@ref) of `src`.
 
     supports(model::ModelLike, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
 
 Return a `Bool` indicating whether `model` supports the constraint attribute
-`attr` applied to an `F`-in-`S` constraint. That is, it return false if
+`attr` applied to an `F`-in-`S` constraint. That is, it returns `false` if
 `copy!(model, src)` cannot be performed in case `attr` is in the
 [`ListOfConstraintAttributesSet`](@ref) of `src`.
 
@@ -375,12 +377,6 @@ struct ListOfVariableIndices <: AbstractModelAttribute end
 A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraint indices of type
 `F`-in-`S` in the model (i.e., of length equal to the value of
 `NumberOfConstraints{F,S}()`) in the order in which they were added.
-
-## Note
-#
-The attributes [`ConstraintFunction`](@ref) and [`MOI.ConstraintSet`](@ref)
-should not be included in the list even if then have been set with
-[`set!`](@ref).
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
@@ -560,6 +556,12 @@ Possible values are:
     ListOfConstraintAttributesSet{F, S}()
 
 A model attribute for the `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to `F`-in-`S` constraints.
+
+## Note
+
+The attributes [`ConstraintFunction`](@ref) and [`MOI.ConstraintSet`](@ref)
+should not be included in the list even if then have been set with
+[`set!`](@ref).
 """
 struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 
