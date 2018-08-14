@@ -13,6 +13,11 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
 
     @testset "CannotAddVariable" begin
         @test_throws MOI.CannotAddVariable MOI.addvariable!(model)
+        try
+            MOI.addvariable!(model)
+        catch err
+            @test sprint(showerror, err) == "MathOptInterface.CannotAddVariable: Adding variables cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+        end
         @test_throws MOI.CannotAddVariable MOI.addvariables!(model, 2)
     end
 
@@ -62,7 +67,17 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
 
     @testset "CannotDelete" begin
         @test_throws MOI.CannotDelete{typeof(vi)} MOI.delete!(model, vi)
+        try
+            MOI.delete!(model, vi)
+        catch err
+            @test sprint(showerror, err) == "MathOptInterface.CannotDelete{MathOptInterface.VariableIndex}: Deleting the index MathOptInterface.VariableIndex(1) cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+        end
         @test_throws MOI.CannotDelete{typeof(ci)} MOI.delete!(model, ci)
+        try
+            MOI.delete!(model, ci)
+        catch err
+            @test sprint(showerror, err) == "MathOptInterface.CannotDelete{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}: Deleting the index MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1) cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+        end
     end
 
     @testset "UnsupportedAttribute" begin
