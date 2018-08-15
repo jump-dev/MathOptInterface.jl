@@ -18,10 +18,10 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     varattribute::Dict{MOI.VariableIndex,Int} # MockVariableAttribute
     conattribute::Dict{MOI.ConstraintIndex,Int} # MockConstraintAttribute
     needsallocateload::Bool # Allows to tests the Allocate-Load interface, see copy!
-    canaddvar::Bool
-    canaddcon::Bool # If false, the optimizer throws AddConstraintNotAllowed
-    canmodify::Bool # If false, the optimizer throws Modify...NotAllowed
-    candelete::Bool # If false, the optimizer throws DeleteNotAllowed
+    add_var_allowed::Bool
+    add_con_allowed::Bool # If false, the optimizer throws AddConstraintNotAllowed
+    modify_allowed::Bool # If false, the optimizer throws Modify...NotAllowed
+    delete_allowed::Bool # If false, the optimizer throws DeleteNotAllowed
     optimize!::Function
     solved::Bool
     hasprimal::Bool
@@ -79,14 +79,14 @@ function MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false,
 end
 
 function MOI.addvariable!(mock::MockOptimizer)
-    if mock.canaddvar
+    if mock.add_var_allowed
         return xor_index(MOI.addvariable!(mock.inner_model))
     else
         throw(MOI.AddVariableNotAllowed())
     end
 end
 function MOI.addvariables!(mock::MockOptimizer, n::Int)
-    if mock.canaddvar
+    if mock.add_var_allowed
         return xor_index.(MOI.addvariables!(mock.inner_model, n))
     else
         throw(MOI.AddVariableNotAllowed())
@@ -95,7 +95,7 @@ end
 function MOI.addconstraint!(mock::MockOptimizer,
                             func::MOI.AbstractFunction,
                             set::MOI.AbstractSet)
-    if mock.canaddcon
+    if mock.add_con_allowed
         ci = MOI.addconstraint!(mock.inner_model, xor_variables(func), set)
         return xor_index(ci)
     else
@@ -240,7 +240,7 @@ end
 MOI.isvalid(mock::MockOptimizer, idx::MOI.Index) = MOI.isvalid(mock.inner_model, xor_index(idx))
 
 function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
-    if !mock.candelete
+    if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
     end
     if !MOI.isvalid(mock, index)
@@ -251,7 +251,7 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
     MOI.delete!(mock.varprimal, index)
 end
 function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
-    if !mock.candelete
+    if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
     end
     if !MOI.isvalid(mock, index)
@@ -263,7 +263,7 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
 end
 
 function MOI.modify!(mock::MockOptimizer, c::CI, change::MOI.AbstractFunctionModification)
-    if !mock.canmodify
+    if !mock.modify_allowed
         throw(MOI.ModifyConstraintNotAllowed(c, change))
     end
     MOI.modify!(mock.inner_model, xor_index(c), xor_variables(change))
@@ -278,7 +278,7 @@ function MOI.set!(mock::MockOptimizer, ::MOI.ConstraintFunction, c::CI{F,S}, fun
 end
 
 function MOI.modify!(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
-    if !mock.canmodify
+    if !mock.modify_allowed
         throw(MOI.ModifyObjectiveNotAllowed(change))
     end
     MOI.modify!(mock.inner_model, obj, xor_variables(change))
