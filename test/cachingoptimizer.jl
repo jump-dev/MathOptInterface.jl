@@ -136,7 +136,7 @@ end
     @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), typeof(v))
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
-    @testset "Cannot modify" begin
+    @testset "Modify not allowed" begin
         s.canmodify = false
         MOI.modify!(m, MOI.ObjectiveFunction{typeof(saf)}(),
                     MOI.ScalarConstantChange(1.0))
@@ -154,7 +154,7 @@ end
     end
 
     # Simulate that constraints cannot be added
-    @testset "Cannot add constraint" begin
+    @testset "Add constraint not allowed" begin
         s.canaddcon = false
         MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.SecondOrderCone(1))
         s.canaddcon = true
@@ -163,11 +163,11 @@ end
         @test MOIU.state(m) == MOIU.AttachedOptimizer
     end
 
-    @testset "Cannot add variable" begin
+    @testset "Add variable not allowed" begin
         s.canaddvar = false # Simulate optimizer that cannot add variables incrementally
         MOI.addvariable!(m)
         @test MOIU.state(m) == MOIU.EmptyOptimizer
-        @test_throws MOI.CannotAddVariable MOIU.attachoptimizer!(m)
+        @test_throws MOI.AddVariableNotAllowed MOIU.attachoptimizer!(m)
         @test MOIU.state(m) == MOIU.EmptyOptimizer
 
         s.canaddvar = true
@@ -179,7 +179,7 @@ end
         @test MOIU.state(m) == MOIU.EmptyOptimizer
     end
 
-    @testset "Cannot delete" begin
+    @testset "Delete not allowed" begin
         vi = MOI.addvariable!(m)
         s.candelete = false # Simulate optimizer that cannot delete variable
         MOI.delete!(m, vi)

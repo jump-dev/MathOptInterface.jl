@@ -52,7 +52,7 @@ UnsupportedAttribute(attr::AnyAttribute) = UnsupportedAttribute(attr, "")
 element_name(err::UnsupportedAttribute) = "Attribute $(err.attr)"
 
 """
-    struct CannotSetAttribute{AttrType} <: CannotTryResetError
+    struct SetAttributeNotAllowed{AttrType} <: NotAllowedError
         attr::AttrType
         message::String # Human-friendly explanation why the attribute cannot be set
     end
@@ -60,14 +60,14 @@ element_name(err::UnsupportedAttribute) = "Attribute $(err.attr)"
 An error indicating that the attribute `attr` is supported (see
 [`supports`](@ref)) but cannot be set for some reason (see the error string).
 """
-struct CannotSetAttribute{AttrType<:AnyAttribute} <: CannotTryResetError
+struct SetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
     attr::AttrType
 	message::String # Human-friendly explanation why the attribute cannot be set
 end
-CannotSetAttribute(attr::AnyAttribute) = CannotSetAttribute(attr, "")
+SetAttributeNotAllowed(attr::AnyAttribute) = SetAttributeNotAllowed(attr, "")
 
-operation_name(err::CannotSetAttribute) = "Setting attribute $(err.attr)"
-message(err::CannotSetAttribute) = err.message
+operation_name(err::SetAttributeNotAllowed) = "Setting attribute $(err.attr)"
+message(err::SetAttributeNotAllowed) = err.message
 
 """
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
@@ -246,7 +246,7 @@ Assign a value to the attribute `attr` of constraint `c` in model `model`.
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `model`.
 
 An [`UnsupportedAttribute`](@ref) error is thrown if `model` does not support
-the attribute `attr` (see [`supports`](@ref)) and a [`CannotSetAttribute`](@ref)
+the attribute `attr` (see [`supports`](@ref)) and a [`SetAttributeNotAllowed`](@ref)
 error is thrown if it supports the attribute `attr` but it cannot be set.
 
 ### Replace set in a constraint
@@ -298,7 +298,7 @@ function set!_fallback_error(model::ModelLike,
                                          AbstractOptimizerAttribute},
                              value)
     if supports(model, attr)
-        throw(CannotSetAttribute(attr))
+        throw(SetAttributeNotAllowed(attr))
     else
         throw(UnsupportedAttribute(attr))
     end
@@ -308,7 +308,7 @@ function set!_fallback_error(model::ModelLike,
                                          AbstractConstraintAttribute},
                              index::Index, value)
     if supports(model, attr, typeof(index))
-        throw(CannotSetAttribute(attr))
+        throw(SetAttributeNotAllowed(attr))
     else
         throw(UnsupportedAttribute(attr))
     end
@@ -559,9 +559,8 @@ A model attribute for the `Vector{AbstractConstraintAttribute}` of all constrain
 
 ## Note
 
-The attributes [`ConstraintFunction`](@ref) and [`MOI.ConstraintSet`](@ref)
-should not be included in the list even if then have been set with
-[`set!`](@ref).
+The attributes [`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref) should
+not be included in the list even if then have been set with [`set!`](@ref).
 """
 struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 
@@ -634,7 +633,7 @@ struct ConstraintFunction <: AbstractConstraintAttribute end
 function set!_fallback_error(::ModelLike, attr::ConstraintFunction,
                      ::ConstraintIndex{F, S}, ::F) where {F <: AbstractFunction,
                                                           S}
-    throw(CannotSetAttribute(attr))
+    throw(SetAttributeNotAllowed(attr))
 end
 func_type(c::ConstraintIndex{F, S}) where {F, S} = F
 function set!_fallback_error(::ModelLike, ::ConstraintFunction,
@@ -653,7 +652,7 @@ struct ConstraintSet <: AbstractConstraintAttribute end
 
 function set!_fallback_error(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
                      ::S) where {F, S <: AbstractSet}
-    throw(CannotSetAttribute(attr))
+    throw(SetAttributeNotAllowed(attr))
 end
 set_type(::ConstraintIndex{F, S}) where {F, S} = S
 function set!_fallback_error(::ModelLike, ::ConstraintSet,

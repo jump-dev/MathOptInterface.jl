@@ -19,9 +19,9 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     conattribute::Dict{MOI.ConstraintIndex,Int} # MockConstraintAttribute
     needsallocateload::Bool # Allows to tests the Allocate-Load interface, see copy!
     canaddvar::Bool
-    canaddcon::Bool # If false, the optimizer throws CannotAddConstraint
-    canmodify::Bool # If false, the optimizer throws CannotModify...
-    candelete::Bool # If false, the optimizer throws CannotDelete
+    canaddcon::Bool # If false, the optimizer throws AddConstraintNotAllowed
+    canmodify::Bool # If false, the optimizer throws Modify...NotAllowed
+    candelete::Bool # If false, the optimizer throws DeleteNotAllowed
     optimize!::Function
     solved::Bool
     hasprimal::Bool
@@ -82,14 +82,14 @@ function MOI.addvariable!(mock::MockOptimizer)
     if mock.canaddvar
         return xor_index(MOI.addvariable!(mock.inner_model))
     else
-        throw(MOI.CannotAddVariable())
+        throw(MOI.AddVariableNotAllowed())
     end
 end
 function MOI.addvariables!(mock::MockOptimizer, n::Int)
     if mock.canaddvar
         return xor_index.(MOI.addvariables!(mock.inner_model, n))
     else
-        throw(MOI.CannotAddVariable())
+        throw(MOI.AddVariableNotAllowed())
     end
 end
 function MOI.addconstraint!(mock::MockOptimizer,
@@ -99,7 +99,7 @@ function MOI.addconstraint!(mock::MockOptimizer,
         ci = MOI.addconstraint!(mock.inner_model, xor_variables(func), set)
         return xor_index(ci)
     else
-        throw(MOI.CannotAddConstraint{typeof(func), typeof(set)}())
+        throw(MOI.AddConstraintNotAllowed{typeof(func), typeof(set)}())
     end
 end
 function MOI.optimize!(mock::MockOptimizer)
@@ -241,7 +241,7 @@ MOI.isvalid(mock::MockOptimizer, idx::MOI.Index) = MOI.isvalid(mock.inner_model,
 
 function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
     if !mock.candelete
-        throw(MOI.CannotDelete(index))
+        throw(MOI.DeleteNotAllowed(index))
     end
     if !MOI.isvalid(mock, index)
         # The index thrown by `mock.inner_model` would be xored
@@ -252,7 +252,7 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
 end
 function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
     if !mock.candelete
-        throw(MOI.CannotDelete(index))
+        throw(MOI.DeleteNotAllowed(index))
     end
     if !MOI.isvalid(mock, index)
         # The index thrown by `mock.inner_model` would be xored
@@ -264,7 +264,7 @@ end
 
 function MOI.modify!(mock::MockOptimizer, c::CI, change::MOI.AbstractFunctionModification)
     if !mock.canmodify
-        throw(MOI.CannotModifyConstraint(c, change))
+        throw(MOI.ModifyConstraintNotAllowed(c, change))
     end
     MOI.modify!(mock.inner_model, xor_index(c), xor_variables(change))
 end
@@ -279,7 +279,7 @@ end
 
 function MOI.modify!(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
     if !mock.canmodify
-        throw(MOI.CannotModifyObjective(change))
+        throw(MOI.ModifyObjectiveNotAllowed(change))
     end
     MOI.modify!(mock.inner_model, obj, xor_variables(change))
 end

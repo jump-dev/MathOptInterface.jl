@@ -25,19 +25,19 @@ UnsupportedConstraint{F, S}() where {F, S} = UnsupportedConstraint{F, S}("")
 element_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constraints"
 
 """
-    struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotTryResetError
+    struct AddConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet} <: NotAllowedError
         message::String # Human-friendly explanation why the attribute cannot be set
     end
 
 An error indicating that constraints of type `F`-in-`S` are supported (see
 [`supportsconstraint`](@ref)) but cannot be added.
 """
-struct CannotAddConstraint{F<:AbstractFunction, S<:AbstractSet} <: CannotTryResetError
+struct AddConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet} <: NotAllowedError
     message::String # Human-friendly explanation why the attribute cannot be set
 end
-CannotAddConstraint{F, S}() where {F, S} = CannotAddConstraint{F, S}("")
+AddConstraintNotAllowed{F, S}() where {F, S} = AddConstraintNotAllowed{F, S}("")
 
-operation_name(::CannotAddConstraint{F, S}) where {F, S} = "Adding `$F`-in-`$S` constraints"
+operation_name(::AddConstraintNotAllowed{F, S}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 
 """
     addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
@@ -50,13 +50,13 @@ Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
 
 An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
-`F`-in-`S` constraints and a [`CannotAddConstraint`](@ref) error is thrown if
+`F`-in-`S` constraints and a [`AddConstraintNotAllowed`](@ref) error is thrown if
 it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
 current state.
 """
 function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractSet)
     if supportsconstraint(model, typeof(func), typeof(set))
-        throw(CannotAddConstraint{typeof(func), typeof(set)}())
+        throw(AddConstraintNotAllowed{typeof(func), typeof(set)}())
     else
         throw(UnsupportedConstraint{typeof(func), typeof(set)}())
     end

@@ -11,35 +11,35 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
 @testset "Fallbacks for `set!` methods" begin
     model = DummyModel()
 
-    @testset "CannotAddVariable" begin
-        @test_throws MOI.CannotAddVariable MOI.addvariable!(model)
+    @testset "AddVariableNotAllowed" begin
+        @test_throws MOI.AddVariableNotAllowed MOI.addvariable!(model)
         try
             MOI.addvariable!(model)
         catch err
-            @test sprint(showerror, err) == "MathOptInterface.CannotAddVariable: Adding variables cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+            @test sprint(showerror, err) == "MathOptInterface.AddVariableNotAllowed: Adding variables cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
         end
-        @test_throws MOI.CannotAddVariable MOI.addvariables!(model, 2)
+        @test_throws MOI.AddVariableNotAllowed MOI.addvariables!(model, 2)
     end
 
     vi = MOI.VariableIndex(1)
     func = MOI.SingleVariable(vi)
 
     @testset "addconstraint! errors" begin
-        @test_throws MOI.CannotAddConstraint begin
+        @test_throws MOI.AddConstraintNotAllowed begin
             MOI.addconstraint!(model, func, MOI.EqualTo(0.0))
         end
         try
             MOI.addconstraint!(model, func, MOI.EqualTo(0.0))
         catch err
-            @test sprint(showerror, err) == "$MOI.CannotAddConstraint{$MOI.SingleVariable,$MOI.EqualTo{Float64}}: Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}` constraints cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+            @test sprint(showerror, err) == "$MOI.AddConstraintNotAllowed{$MOI.SingleVariable,$MOI.EqualTo{Float64}}: Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}` constraints cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
         end
-        @test_throws MOI.CannotAddConstraint begin
+        @test_throws MOI.AddConstraintNotAllowed begin
             MOI.addconstraint!(model, vi, MOI.EqualTo(0.0))
         end
-        @test_throws MOI.CannotAddConstraint begin
+        @test_throws MOI.AddConstraintNotAllowed begin
             MOI.addconstraint!(model, [vi, vi], MOI.Zeros(2))
         end
-        @test_throws MOI.CannotAddConstraint begin
+        @test_throws MOI.AddConstraintNotAllowed begin
             MOI.addconstraints!(model, [vi, vi], [MOI.EqualTo(0.0),
                                                   MOI.EqualTo(0.0)])
         end
@@ -65,18 +65,18 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
 
     ci = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}(1)
 
-    @testset "CannotDelete" begin
-        @test_throws MOI.CannotDelete{typeof(vi)} MOI.delete!(model, vi)
+    @testset "DeleteNotAllowed" begin
+        @test_throws MOI.DeleteNotAllowed{typeof(vi)} MOI.delete!(model, vi)
         try
             MOI.delete!(model, vi)
         catch err
-            @test sprint(showerror, err) == "MathOptInterface.CannotDelete{MathOptInterface.VariableIndex}: Deleting the index MathOptInterface.VariableIndex(1) cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+            @test sprint(showerror, err) == "MathOptInterface.DeleteNotAllowed{MathOptInterface.VariableIndex}: Deleting the index MathOptInterface.VariableIndex(1) cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
         end
-        @test_throws MOI.CannotDelete{typeof(ci)} MOI.delete!(model, ci)
+        @test_throws MOI.DeleteNotAllowed{typeof(ci)} MOI.delete!(model, ci)
         try
             MOI.delete!(model, ci)
         catch err
-            @test sprint(showerror, err) == "MathOptInterface.CannotDelete{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}: Deleting the index MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1) cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+            @test sprint(showerror, err) == "MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}: Deleting the index MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1) cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
         end
     end
 
@@ -90,17 +90,17 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
         end
     end
 
-    @testset "CannotSetAttribute" begin
-        @test_throws MOI.CannotSetAttribute begin
+    @testset "SetAttributeNotAllowed" begin
+        @test_throws MOI.SetAttributeNotAllowed begin
             MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
         end
-        @test_throws MOI.CannotSetAttribute begin
+        @test_throws MOI.SetAttributeNotAllowed begin
             MOI.set!(model, MOI.ConstraintPrimalStart(), ci, 0.0)
         end
     end
 
     @testset "ConstraintFunction" begin
-        @test_throws MOI.CannotSetAttribute begin
+        @test_throws MOI.SetAttributeNotAllowed begin
             MOI.set!(model, MOI.ConstraintFunction(), ci, func)
         end
         @test_throws ArgumentError begin
@@ -110,7 +110,7 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
         end
     end
     @testset "ConstraintSet" begin
-        @test_throws MOI.CannotSetAttribute begin
+        @test_throws MOI.SetAttributeNotAllowed begin
             MOI.set!(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1.0))
         end
         @test_throws ArgumentError begin
@@ -125,6 +125,6 @@ end
 @testset "Error messages" begin
     @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name())) == "$MOI.UnsupportedAttribute{$MOI.Name}: Attribute $MOI.Name() is not supported by the the model."
     @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name(), "Message")) == "$MOI.UnsupportedAttribute{$MOI.Name}: Attribute $MOI.Name() is not supported by the the model: Message"
-    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name())) == "$MOI.CannotSetAttribute{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
-    @test sprint(showerror, MOI.CannotSetAttribute(MOI.Name(), "Message")) == "$MOI.CannotSetAttribute{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode." == "$MOI.CannotSetAttribute{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+    @test sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name())) == "$MOI.SetAttributeNotAllowed{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed. You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
+    @test sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name(), "Message")) == "$MOI.SetAttributeNotAllowed{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode." == "$MOI.SetAttributeNotAllowed{$MOI.Name}: Setting attribute $MOI.Name() cannot be performed: Message You may want to use a `CachingOptimizer` in `Automatic` mode or you may need to call `resetoptimizer!` before doing this operation if the `CachingOptimizer` is in `Manual` mode."
 end

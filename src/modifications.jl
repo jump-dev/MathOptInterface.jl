@@ -1,6 +1,6 @@
 """
-    struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
-                                             C<:AbstractFunctionModification} <: CannotTryResetError
+    struct ModifyConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet,
+                                             C<:AbstractFunctionModification} <: NotAllowedError
         constraint_index::ConstraintIndex{F, S}
         change::C
         message::String
@@ -9,21 +9,21 @@
 An error indicating that the constraint modification `change` cannot be applied
 to the constraint of index `ci`.
 """
-struct CannotModifyConstraint{F<:AbstractFunction, S<:AbstractSet,
-                                         C<:AbstractFunctionModification} <: CannotTryResetError
+struct ModifyConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet,
+                                         C<:AbstractFunctionModification} <: NotAllowedError
     constraint_index::ConstraintIndex{F, S}
     change::C
     message::String
 end
-function CannotModifyConstraint(ci::ConstraintIndex{F, S},
+function ModifyConstraintNotAllowed(ci::ConstraintIndex{F, S},
                                 change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
-    CannotModifyConstraint{F, S, typeof(change)}(ci, change, "")
+    ModifyConstraintNotAllowed{F, S, typeof(change)}(ci, change, "")
 end
 
-operation_name(err::CannotModifyConstraint{F, S}) where {F, S} = "Modifying the constraints $(err.constraint_index) with $(err.change)"
+operation_name(err::ModifyConstraintNotAllowed{F, S}) where {F, S} = "Modifying the constraints $(err.constraint_index) with $(err.change)"
 
 """
-    struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotTryResetError
+    struct ModifyObjectiveNotAllowed{C<:AbstractFunctionModification} <: NotAllowedError
         change::C
         message::String
     end
@@ -31,15 +31,15 @@ operation_name(err::CannotModifyConstraint{F, S}) where {F, S} = "Modifying the 
 An error indicating that the objective modification `change` cannot be applied
 to the objective.
 """
-struct CannotModifyObjective{C<:AbstractFunctionModification} <: CannotTryResetError
+struct ModifyObjectiveNotAllowed{C<:AbstractFunctionModification} <: NotAllowedError
     change::C
     message::String
 end
-function CannotModifyObjective(change::AbstractFunctionModification)
-    CannotModifyObjective(change, "")
+function ModifyObjectiveNotAllowed(change::AbstractFunctionModification)
+    ModifyObjectiveNotAllowed(change, "")
 end
 
-operation_name(err::CannotModifyObjective) = "Modifying the objective function with $(err.change)"
+operation_name(err::ModifyObjectiveNotAllowed) = "Modifying the objective function with $(err.change)"
 
 """
 ## Constraint Function
@@ -48,7 +48,7 @@ operation_name(err::CannotModifyObjective) = "Modifying the objective function w
 
 Apply the modification specified by `change` to the function of constraint `ci`.
 
-An [`CannotModifyConstraint`](@ref) error is thrown if modifying
+An [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
 constraints is not supported by the model `model`.
 
 ### Examples
@@ -64,7 +64,7 @@ modify!(model, ci, ScalarConstantChange(10.0))
 Apply the modification specified by `change` to the objective function of
 `model`. To change the function completely, call `set!` instead.
 
-An [`CannotModifyObjective`](@ref) error is thrown if modifying
+An [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
 objectives is not supported by the model `model`.
 
 ### Examples
@@ -77,10 +77,10 @@ function modify! end
 
 function modify!(model::ModelLike, ci::ConstraintIndex{F, S},
                  change::AbstractFunctionModification) where {F, S}
-    throw(CannotModifyConstraint(ci, change))
+    throw(ModifyConstraintNotAllowed(ci, change))
 end
 
 function modify!(model::ModelLike, ::ObjectiveFunction,
                  change::AbstractFunctionModification)
-    throw(CannotModifyObjective(change))
+    throw(ModifyObjectiveNotAllowed(change))
 end

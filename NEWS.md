@@ -1,6 +1,16 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.6.0 (August ??, 2018)
+-----------------------
+
+- Rework errors: `CannotError` has been renamed `NotAllowedError` and
+  the distinction between `UnsupportedError` and `NotAllowedError` is now
+  about whether the element is not supported (i.e. it cannot be copied a
+  model containing this element) or the operation is not allowed (either
+  because it is not implemented, because it cannot be performemd in the current
+  state of the model, because it cannot be performed for a specific index, ...)
+
 v0.5.0 (August 5, 2018)
 -----------------------
 
