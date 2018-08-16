@@ -23,9 +23,7 @@ notifications:
 ## uncomment the following lines to override the default test script
 script:
   - julia -e 'Pkg.clone(pwd()); Pkg.build("MathOptInterface"); Pkg.add("Compat")' # warnings here about needed to do using Pkg but it also installs Compat
-  # TODO: re-enable depwarn=error after https://github.com/JuliaLang/Compat.jl/pull/602 is tagged.
-  #- julia --depwarn=error -e 'using Compat; using Compat.Pkg; Pkg.test("MathOptInterface"; coverage=true)'
-  - julia -e 'using Compat; using Compat.Pkg; Pkg.test("MathOptInterface"; coverage=true)'
+  - julia --depwarn=error -e 'using Compat; using Compat.Pkg; Pkg.test("MathOptInterface"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
   #- julia -e 'cd(Pkg.dir("MathOptInterface")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
