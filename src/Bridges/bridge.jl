@@ -40,9 +40,20 @@ MOI.supportsconstraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction},
 """
     addedconstrainttypes(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
 
-Return a list of the types of constraints that bridges of type `BT` add for bridging an `F`-in-`S` constraints.
+Return a list of the types of constraints that bridges of type `BT` add for
+bridging an `F`-in-`S` constraints.
+
+    addedconstrainttypes(BT::Type{<:AbstractBridge})::Bool
+
+Return a list of the types of constraints that bridges of concrete type `BT` add
+for `F`-in-`S` constraints.
 """
-function addedconstrainttypes end
+function addedconstrainttypes(BT::Type{<:AbstractBridge},
+                              F::Type{<:MOI.AbstractFunction},
+                              S::Type{<:MOI.AbstractSet})
+    addedconstrainttypes(concrete_bridge_type(BT, F, S))
+end
+
 
 """
     concrete_bridge_type(BT::Type{<:AbstractBridge},

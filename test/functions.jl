@@ -3,6 +3,25 @@
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
+    @testset "operate vcat" begin
+        v = MOI.VectorOfVariables([y, w])
+        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4],
+                                                           [x, z]), 5)
+        g = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 1],
+                                                           MOI.ScalarAffineTerm.([5, 2],
+                                                                                 [y, x])),
+                                                           [3, 1, 4])
+        wf = MOI.SingleVariable(w)
+        xf = MOI.SingleVariable(x)
+        @test MOIU.promote_operation(vcat, Int, typeof(wf), typeof(f),
+                                     typeof(v), Int, typeof(g), typeof(xf),
+                                     Int) == MOI.VectorAffineFunction{Int}
+        F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+        @test F.terms == MOI.VectorAffineTerm.([1, 2, 2, 3, 4, 8, 6, 9],
+                                               MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
+                                                                     [w, x, z, y, w, y, x, x]))
+        @test F.constants == [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
+    end
     @testset "MultirowChange construction" begin
         chg1 = MOI.MultirowChange(w, [(Int32(2), 2.0), (Int32(1), 3.0)])
         chg2 = MOI.MultirowChange(w, [(Int64(2), 2.0), (Int64(1), 3.0)])
@@ -106,7 +125,7 @@
         @test h isa MOI.VectorAffineFunction
         @test h.terms == MOI.VectorAffineTerm.([1, 1, 2, 2, 2], MOI.ScalarAffineTerm.([2, 6, 7, 1, 4], [z, x, y, z, x]))
         @test MOIU.constant(h) == [5, 2]
-        F = MOIU.moivcat(it[[1, 2]], it[3])
+        F = MOIU.operate(vcat, Int, it[[1, 2]], it[3])
         @test F isa MOI.VectorAffineFunction{Int}
         @test F.terms == MOI.VectorAffineTerm.([1, 1, 1, 2, 2, 2, 2, 3, 3], MOI.ScalarAffineTerm.([7, 1, 4, 1, 9, 3, 1, 2, 6], [y, z, x, x, z, y, y, z, x]))
         @test MOIU.constant(F) == MOIU.constant(f)
@@ -136,14 +155,31 @@
     end
     @testset "Scalar" begin
         @testset "Affine" begin
-            @test MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1], [x, z]), 1) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]), 1.0) atol=1e-6
+            @test MOIU.promote_operation(+, Float64, MOI.SingleVariable,
+                                         MOI.SingleVariable) == MOI.ScalarAffineFunction{Float64}
+            @test MOIU.promote_operation(+, Float64,
+                                         MOI.ScalarAffineFunction{Float64},
+                                         Float64) == MOI.ScalarAffineFunction{Float64}
+            @test MOIU.operate(+, Float64, MOI.SingleVariable(x),
+                               MOI.SingleVariable(z)) + 1.0 ≈
+                  MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]), 1.0) atol=1e-6
             @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1e-7, y)], 1.0) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
             f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 1, 3, -2, -3], [y, x, z, x, z]), 5))
             @test MOI.output_dimension(f) == 1
             @test f.terms == MOI.ScalarAffineTerm.([-1, 2], [x, y])
             @test f.constant == 5
-            f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 3, 1, 2, -3, 2, -1, -2, -2, 3, 2],
-                                                                              [w, y, w, x,  x, z,  y,  z,  w, x, y]), 5))
+            @test MOIU.promote_operation(+, Int,
+                                         MOI.ScalarAffineFunction{Int},
+                                         MOI.ScalarAffineFunction{Int}) == MOI.ScalarAffineFunction{Int}
+            f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 3, 1, 2, -3, 2],
+                                                                              [w, y, w, x,  x, z]), 2) +
+                               MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -2, -2, 3, 2],
+                                                                              [ y,  z,  w, x, y]), 3))
+            @test f ≈ MOI.SingleVariable(x) + MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4],
+                                                                                             [x, y]), 5)
+            @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4], [x, y]), 5) + MOI.SingleVariable(x)
+            @test f ≈ MOI.SingleVariable(x) - MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -4], [x, y]), -5)
+            @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3, 4], [x, y]), 5) - MOI.SingleVariable(x)
             @test f.terms == MOI.ScalarAffineTerm.([2, 4], [x, y])
             @test f.constant == 5
             f = MOIU.modifyfunction(f, MOI.ScalarConstantChange(6))
@@ -158,7 +194,46 @@
             @test f.terms == MOI.ScalarAffineTerm.([3], [y])
         end
         @testset "Quadratic" begin
-            f = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]), MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7)
+            @test MOIU.promote_operation(+, Int,
+                                         MOI.ScalarQuadraticFunction{Int},
+                                         MOI.ScalarQuadraticFunction{Int}) == MOI.ScalarQuadraticFunction{Int}
+            f = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
+                                            MOI.ScalarQuadraticTerm.([1], [x], [x]), 4) +
+                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
+                                            MOI.ScalarQuadraticTerm.([2, 3], [y, x], [y, y]), 3)
+            @test f ≈ begin
+                MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
+                                            MOI.ScalarQuadraticTerm.([1], [x], [x]), 10) -
+                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
+                                            MOI.ScalarQuadraticTerm.([-2, -3], [y, x], [y, y]), 3)
+            end
+            @test f ≈ begin
+                MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) +
+                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
+                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2)
+            end
+            @test f ≈ begin
+                MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) -
+                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
+                                            MOI.ScalarQuadraticTerm.([-1, -2, -3], [x, y, x], [x, y, y]), -2)
+            end
+            @test f ≈ begin
+                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
+                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2) +
+                MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5)
+            end
+            @test f ≈ begin
+                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
+                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 12) -
+                MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-3, x)], 5)
+            end
+            @test f ≈ begin
+                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([2], [x]),
+                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7) +
+                MOI.SingleVariable(x)
+            end
+            @test f ≈ MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]),
+                                                  MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 10) - 3
             @test MOI.output_dimension(f) == 1
             f = MOIU.modifyfunction(f, MOI.ScalarConstantChange(9))
             @test f.constant == 9
