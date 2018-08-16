@@ -124,14 +124,14 @@ end
                           (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
     MOIT.psdt0vtest(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(3),
-                          (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
+                          (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1.0, -1.0, 1.0]],
                           (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
     MOIT.psdt0ftest(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
                           (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
     MOIT.psds0vtest(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
-                          (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare)   => [[1, -2, 0, 1]],
+                          (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare)   => [[1.0, -2.0, 0.0, 1.0]],
                           (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2])
     MOIT.psds0ftest(mock, config)
     # PSD1

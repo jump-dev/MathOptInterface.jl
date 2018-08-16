@@ -79,6 +79,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -1 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
@@ -112,6 +113,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
@@ -171,6 +173,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -2 atol=atol rtol=rtol
 
             @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 1 atol=atol rtol=rtol
@@ -198,6 +201,11 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [-1, 0, 2] atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 atol=atol rtol=rtol
+        end
     end
 
     # put lb of x back to 0 and fix z to zero to get :
@@ -317,6 +325,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.DualStatus(1)) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1.5 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ 0.5 atol=atol rtol=rtol
@@ -405,6 +414,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -1 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
@@ -1157,6 +1167,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         if config.duals
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 10.0 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
         end
 
@@ -1180,6 +1191,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 5 atol=atol rtol=rtol
 
         if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 5.0 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 1 atol=atol rtol=rtol
@@ -1212,6 +1224,13 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
             @test (MOI.get(model, MOI.ConstraintBasisStatus(), vc[1]) == MOI.BASIC ||
                    MOI.get(model, MOI.ConstraintBasisStatus(), vc[2])== MOI.BASIC)
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_LOWER
+        end
+
+        if config.duals
+            @test MOI.get(model, MOI.ResultCount()) >= 1
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 1 atol=atol rtol=rtol
         end
     end
 
@@ -1529,6 +1548,7 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 8 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
@@ -1565,6 +1585,7 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 6 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
 
             # reduced costs
@@ -1617,6 +1638,11 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0 atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.VariablePrimal(), x[1]) ≈ 0 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 0 atol=atol rtol=rtol
+        end
     end
 end
 
