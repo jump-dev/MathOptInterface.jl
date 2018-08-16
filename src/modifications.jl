@@ -1,39 +1,45 @@
 """
-    struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
-                                             C<:AbstractFunctionModification} <: UnsupportedError
+    struct ModifyConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet,
+                                             C<:AbstractFunctionModification} <: NotAllowedError
+        constraint_index::ConstraintIndex{F, S}
         change::C
         message::String
     end
 
-An error indicating that constraints of type `F`-in-`S` do not support the
-constraint modification `change`.
+An error indicating that the constraint modification `change` cannot be applied
+to the constraint of index `ci`.
 """
-struct UnsupportedConstraintModification{F<:AbstractFunction, S<:AbstractSet,
-                                         C<:AbstractFunctionModification} <: UnsupportedError
+struct ModifyConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet,
+                                         C<:AbstractFunctionModification} <: NotAllowedError
+    constraint_index::ConstraintIndex{F, S}
     change::C
     message::String
 end
-function UnsupportedConstraintModification{F, S}(change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
-    UnsupportedConstraintModification{F, S, typeof(change)}(change, "")
+function ModifyConstraintNotAllowed(ci::ConstraintIndex{F, S},
+                                change::AbstractFunctionModification) where {F<:AbstractFunction, S<:AbstractSet}
+    ModifyConstraintNotAllowed{F, S, typeof(change)}(ci, change, "")
 end
 
-operation_name(err::UnsupportedConstraintModification{F, S}) where {F, S} = "Modifying `$F`-in-`$S` constraints with $(err.change)"
+operation_name(err::ModifyConstraintNotAllowed{F, S}) where {F, S} = "Modifying the constraints $(err.constraint_index) with $(err.change)"
 
 """
-    struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
+    struct ModifyObjectiveNotAllowed{C<:AbstractFunctionModification} <: NotAllowedError
         change::C
         message::String
     end
 
-An error indicating that the objective function does not support the constraint
-modification `change`.
+An error indicating that the objective modification `change` cannot be applied
+to the objective.
 """
-struct UnsupportedObjectiveModification{C<:AbstractFunctionModification} <: UnsupportedError
+struct ModifyObjectiveNotAllowed{C<:AbstractFunctionModification} <: NotAllowedError
     change::C
     message::String
 end
+function ModifyObjectiveNotAllowed(change::AbstractFunctionModification)
+    ModifyObjectiveNotAllowed(change, "")
+end
 
-operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective function with $(err.change)"
+operation_name(err::ModifyObjectiveNotAllowed) = "Modifying the objective function with $(err.change)"
 
 """
 ## Constraint Function
@@ -42,7 +48,7 @@ operation_name(err::UnsupportedObjectiveModification) = "Modifying the objective
 
 Apply the modification specified by `change` to the function of constraint `ci`.
 
-An [`UnsupportedConstraintModification`](@ref) error is thrown if modifying
+An [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
 constraints is not supported by the model `model`.
 
 ### Examples
@@ -58,7 +64,7 @@ modify!(model, ci, ScalarConstantChange(10.0))
 Apply the modification specified by `change` to the objective function of
 `model`. To change the function completely, call `set!` instead.
 
-An [`UnsupportedObjectiveModification`](@ref) error is thrown if modifying
+An [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
 objectives is not supported by the model `model`.
 
 ### Examples
@@ -71,10 +77,10 @@ function modify! end
 
 function modify!(model::ModelLike, ci::ConstraintIndex{F, S},
                  change::AbstractFunctionModification) where {F, S}
-    throw(UnsupportedConstraintModification{F, S}(change))
+    throw(ModifyConstraintNotAllowed(ci, change))
 end
 
 function modify!(model::ModelLike, ::ObjectiveFunction,
                  change::AbstractFunctionModification)
-    throw(UnsupportedObjectiveModification(change))
+    throw(ModifyObjectiveNotAllowed(change))
 end

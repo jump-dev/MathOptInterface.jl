@@ -136,29 +136,68 @@ end
     @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), typeof(v))
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
+    @testset "Modify not allowed" begin
+        s.modify_allowed = false
+        MOI.modify!(m, MOI.ObjectiveFunction{typeof(saf)}(),
+                    MOI.ScalarConstantChange(1.0))
+        s.modify_allowed = true
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        MOIU.attachoptimizer!(m)
+        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        ci = MOI.addconstraint!(m, saf, MOI.EqualTo(0.0))
+        s.modify_allowed = false
+        MOI.modify!(m, ci, MOI.ScalarCoefficientChange(v, 1.0))
+        s.modify_allowed = true
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        MOIU.attachoptimizer!(m)
+        @test MOIU.state(m) == MOIU.AttachedOptimizer
+    end
+
     # Simulate that constraints cannot be added
-    s.canaddcon = false
-    MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.SecondOrderCone(1))
-    s.canaddcon = true
-    @test MOIU.state(m) == MOIU.EmptyOptimizer
+    @testset "Add constraint not allowed" begin
+        s.add_con_allowed = false
+        MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.SecondOrderCone(1))
+        s.add_con_allowed = true
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        MOI.empty!(m)
+        @test MOIU.state(m) == MOIU.AttachedOptimizer
+    end
 
-    # TODO: test modify! with a change that forces the optimizer to be dropped
+    @testset "Add variable not allowed" begin
+        s.add_var_allowed = false # Simulate optimizer that cannot add variables incrementally
+        MOI.addvariable!(m)
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test_throws MOI.AddVariableNotAllowed MOIU.attachoptimizer!(m)
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
 
-    MOI.empty!(m)
-    @test MOIU.state(m) == MOIU.AttachedOptimizer
+        s.add_var_allowed = true
+        MOIU.attachoptimizer!(m)
+        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        s.add_var_allowed = false
+        MOI.addvariables!(m, 2)
+        s.add_var_allowed = true
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
+    end
 
-    m.optimizer.canaddvar = false # Simulate optimizer that cannot add variables incrementally
-    MOI.addvariable!(m)
-    @test MOIU.state(m) == MOIU.EmptyOptimizer
-    @test_throws MOI.CannotAddVariable MOIU.attachoptimizer!(m)
-    @test MOIU.state(m) == MOIU.EmptyOptimizer
+    @testset "Delete not allowed" begin
+        vi = MOI.addvariable!(m)
+        s.delete_allowed = false # Simulate optimizer that cannot delete variable
+        MOI.delete!(m, vi)
+        s.delete_allowed = true
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        MOIU.attachoptimizer!(m)
+        @test MOIU.state(m) == MOIU.AttachedOptimizer
 
-    m.optimizer.canaddvar = true
-    MOIU.attachoptimizer!(m)
-    @test MOIU.state(m) == MOIU.AttachedOptimizer
-    m.optimizer.canaddvar = false
-    MOI.addvariables!(m, 2)
-    @test MOIU.state(m) == MOIU.EmptyOptimizer
+        vi = MOI.addvariable!(m)
+        ci = MOI.addconstraint!(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
+        s.delete_allowed = false # Simulate optimizer that cannot delete constraint
+        MOI.delete!(m, ci)
+        s.delete_allowed = true
+        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        MOIU.attachoptimizer!(m)
+        @test MOIU.state(m) == MOIU.AttachedOptimizer
+    end
+
 end
 
 @testset "CachingOptimizer constructor with optimizer" begin

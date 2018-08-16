@@ -53,6 +53,7 @@ ListOfVariableIndices
 ListOfConstraints
 NumberOfConstraints
 ListOfConstraintIndices
+ListOfOptimizerAttributesSet
 ListOfModelAttributesSet
 ListOfVariableAttributesSet
 ListOfConstraintAttributesSet
@@ -303,20 +304,20 @@ The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs
 UnsupportedError
-CannotError
+NotAllowedError
 ```
 
-The different [`UnsupportedError`](@ref) and [`CannotError`](@ref) are the
+The different [`UnsupportedError`](@ref) and [`NotAllowedError`](@ref) are the
 following errors:
 ```@docs
 UnsupportedAttribute
-CannotSetAttribute
-CannotAddVariable
+SetAttributeNotAllowed
+AddVariableNotAllowed
 UnsupportedConstraint
-CannotAddConstraint
-UnsupportedConstraintModification
-UnsupportedObjectiveModification
-UnsupportedDeletion
+AddConstraintNotAllowed
+ModifyConstraintNotAllowed
+ModifyObjectiveNotAllowed
+DeleteNotAllowed
 ```
 
 ## Bridges
