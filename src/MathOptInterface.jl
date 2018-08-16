@@ -9,6 +9,8 @@ an optimization problem.
 """
 abstract type ModelLike end
 @static if VERSION >= v"0.7-"
+    # This allows to use `ModelLike`s in broadcast calls without the need to
+    # embed it in a `Ref`
     Base.broadcastable(model::ModelLike) = Ref(model)
 end
 
