@@ -196,7 +196,7 @@ end
 
 # Used for Vector{Symbol}, Vector{ParsedScalarAffineTerm}, Vector{ParsedVectorAffineTerm},
 # Vector{ParsedScalarQuadraticTerm} and Vector{ParsedVectorQuadraticTerm}
-parsedtoMOI(model, s::Vector) = parsedtoMOI.(Ref(model), s)
+parsedtoMOI(model, s::Vector) = parsedtoMOI.(model, s)
 
 parsedtoMOI(model, s::Union{Float64, Int64}) = s
 

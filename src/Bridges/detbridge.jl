@@ -80,7 +80,7 @@ function LogDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.LogDetCon
     d = s.side_dimension
     t, D, Δ, sdindex = extract_eigenvalues(model, f, d)
     l = MOI.addvariables!(model, d)
-    lcindex = sublog.(Ref(model), l, D, T)
+    lcindex = sublog.(model, l, D, T)
     tlindex = subsum(model, t, l, T)
 
     LogDetBridge(Δ, l, sdindex, lcindex, tlindex)

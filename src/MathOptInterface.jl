@@ -8,6 +8,9 @@ Abstract supertype for objects that implement the "Model" interface for defining
 an optimization problem.
 """
 abstract type ModelLike end
+@static if VERSION >= v"0.7-"
+    Base.broadcastable(model::ModelLike) = Ref(model)
+end
 
 """
     AbstractOptimizer
