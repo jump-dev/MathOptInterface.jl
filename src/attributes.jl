@@ -157,7 +157,7 @@ function get end
 # We want to avoid being too specific in the type arguments to avoid method ambiguity.
 # For model, get(::ModelLike, ::AbstractVariableAttribute, ::Vector{VariableIndex}) would not allow
 # to define get(::SomeModel, ::AnyAttribute, ::Vector)
-get(model::ModelLike, attr::AnyAttribute, idxs::Vector) = get.(Ref(model), Ref(attr), idxs)
+get(model::ModelLike, attr::AnyAttribute, idxs::Vector) = get.(model, Ref(attr), idxs)
 
 function get(model::ModelLike, attr::AnyAttribute, args...)
     throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
@@ -284,7 +284,7 @@ set!(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
 """
 function set! end
 # See note with get
-set!(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, idxs::Vector, vector_of_values::Vector) = set!.(Ref(model), Ref(attr), idxs, vector_of_values)
+set!(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, idxs::Vector, vector_of_values::Vector) = set!.(model, Ref(attr), idxs, vector_of_values)
 
 function set!(model::ModelLike, attr::AnyAttribute, args...)
     set!_fallback_error(model, attr, args...)
