@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.6.0 (August 17, 2018)
+v0.6.0 (August ??, 2018)
 -----------------------
 
 - Add result fallback for `ConstraintDual` of variable-wise constraint,
