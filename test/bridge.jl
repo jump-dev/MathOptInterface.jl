@@ -223,6 +223,25 @@ end
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0),))
     end
 
+    @testset "SquarePSD" begin
+        bridgedmock = MOIB.SquarePSD{Float64}(mock)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2, 2])
+        MOIT.psds0vtest(bridgedmock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+                              (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
+                              (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2, 2])
+        MOIT.psds0ftest(bridgedmock, config)
+        ci = first(MOI.get(bridgedmock,
+                           MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},
+                                                       MOI.PositiveSemidefiniteConeSquare}()))
+        test_delete_bridge(bridgedmock, ci, 4,
+                           ((MOI.VectorAffineFunction{Float64},
+                             MOI.PositiveSemidefiniteConeTriangle, 0),
+                            (MOI.ScalarAffineFunction{Float64},
+                             MOI.EqualTo{Float64}, 1)))
+    end
+
     @testset "GeoMean" begin
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [ones(4); 2; √2; √2])
         bridgedmock = MOIB.GeoMean{Float64}(mock)

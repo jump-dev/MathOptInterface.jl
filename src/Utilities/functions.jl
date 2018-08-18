@@ -351,6 +351,33 @@ function test_constraintnames_equal(model, constraintnames)
     end
 end
 
+isapprox_zero(α::AbstractFloat, tol) = -tol < α < tol
+isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
+function isapprox_zero(t::Union{MOI.ScalarAffineTerm,
+                                MOI.ScalarQuadraticTerm}, tol)
+    isapprox_zero(t.coefficient, tol)
+end
+
+"""
+    isapprox_zero(f::MOI.AbstractFunction, tol)
+
+Return a `Bool` indicating whether the function `f` is approximately zero using
+`tol` as a tolerance.
+"""
+function isapprox_zero end
+
+function isapprox_zero(f::MOI.ScalarAffineFunction, tol)
+    isapprox_zero(f.constant, tol) && all(t -> isapprox_zero(t, tol),
+                                           f.terms)
+end
+function isapprox_zero(f::MOI.ScalarQuadraticFunction, tol)
+    isapprox_zero(f.constant, tol) &&
+        all(t -> isapprox_zero(t, tol),
+            f.affine_terms) &&
+        all(t -> isapprox_zero(t, tol),
+            f.quadratic_terms)
+end
+
 """
     test_models_equal(model1::ModelLike, model2::ModelLike, variablenames::Vector{String}, constraintnames::Vector{String})
 
