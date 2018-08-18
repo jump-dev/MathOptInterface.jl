@@ -163,7 +163,13 @@
             @test MOIU.operate(+, Float64, MOI.SingleVariable(x),
                                MOI.SingleVariable(z)) + 1.0 ≈
                   MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]), 1.0) atol=1e-6
-            @test MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1e-7, y)], 1.0) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol=1e-6
+            f1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1e-7, y)], 1.0)
+            f2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 1.0)
+            @test f1 ≈ f2 atol=1e-6
+            fdiff = f1 - f2
+            MOIU.canonicalize!(fdiff)
+            @test !MOIU.isapprox_zero(fdiff, 1e-8)
+            @test MOIU.isapprox_zero(fdiff, 1e-6)
             f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 1, 3, -2, -3], [y, x, z, x, z]), 5))
             @test MOI.output_dimension(f) == 1
             @test f.terms == MOI.ScalarAffineTerm.([-1, 2], [x, y])
@@ -201,6 +207,8 @@
                                             MOI.ScalarQuadraticTerm.([1], [x], [x]), 4) +
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
                                             MOI.ScalarQuadraticTerm.([2, 3], [y, x], [y, y]), 3)
+            @test !MOIU.isapprox_zero(f, 1e-8)
+            @test MOIU.isapprox_zero(0 * f, 1e-8)
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
                                             MOI.ScalarQuadraticTerm.([1], [x], [x]), 10) -

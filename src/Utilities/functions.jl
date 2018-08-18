@@ -363,6 +363,17 @@ end
 
 Return a `Bool` indicating whether the function `f` is approximately zero using
 `tol` as a tolerance.
+
+## Important note
+
+This function assumes that `f` does not contain any duplicate terms, you might
+want to first call [`canonicalize`](@ref) if that is not guaranteed.
+For instance, given
+```julia
+f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [x, x]), 0)`.
+```
+then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonicalize(f))` is
+`true`.
 """
 function isapprox_zero end
 
@@ -579,6 +590,10 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
 end
+function operate_term(::typeof(*), α::T, t::MOI.ScalarQuadraticTerm{T}) where T
+    MOI.ScalarQuadraticTerm(α * t.coefficient, t.variable_index_1,
+                            t.variable_index_2)
+end
 
 function operate_term(::typeof(/), t::MOI.ScalarAffineTerm{T}, α::T) where T
     MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
@@ -596,6 +611,13 @@ function operate_terms(::typeof(-),
     return map(term -> operate_term(-, term), terms)
 end
 
+function map_terms!(op, func::MOI.ScalarAffineFunction)
+    map!(op, func.terms, func.terms)
+end
+function map_terms!(op, func::MOI.ScalarQuadraticFunction)
+    map!(op, func.affine_terms, func.affine_terms)
+    map!(op, func.quadratic_terms, func.quadratic_terms)
+end
 
 # Functions convertible to a ScalarAffineFunction
 const ScalarAffineLike{T} = Union{T, MOI.SingleVariable, MOI.ScalarAffineFunction{T}}
@@ -749,12 +771,19 @@ function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
     MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
 end
 
-function operate!(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction{T}, α::T) where T
-    f.terms .= operate_term.(*, α, f.terms)
+function operate!(::typeof(*), ::Type{T},
+                  f::Union{MOI.ScalarAffineFunction{T},
+                           MOI.ScalarQuadraticFunction{T}}, α::T) where T
+    map_terms!(term -> operate_term(*, α, term), f)
     f.constant *= α
     return f
 end
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.ScalarAffineFunction) where T
+    return operate!(*, T, copy(f), α)
+end
+
+function operate(::typeof(*), ::Type{T}, α::T,
+                 f::MOI.ScalarQuadraticFunction) where T
     return operate!(*, T, copy(f), α)
 end
 
