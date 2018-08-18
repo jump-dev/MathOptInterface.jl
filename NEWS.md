@@ -4,6 +4,10 @@ MathOptInterface (MOI) release notes
 v0.6.0 (August ??, 2018)
 -----------------------
 
+- Add result fallback for `ConstraintDual` of variable-wise constraint,
+  `ConstraintPrimal` and `ObjectiveValue`.
+- Add tests for `ObjectiveBound`.
+- Add test for empty row in vector linear constraint.
 - Rework errors: `CannotError` has been renamed `NotAllowedError` and
   the distinction between `UnsupportedError` and `NotAllowedError` is now
   about whether the element is not supported (i.e. it cannot be copied a
