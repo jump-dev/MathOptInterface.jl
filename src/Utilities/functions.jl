@@ -367,12 +367,12 @@ Return a `Bool` indicating whether the function `f` is approximately zero using
 ## Important note
 
 This function assumes that `f` does not contain any duplicate terms, you might
-want to first call [`canonicalize`](@ref) if that is not guaranteed.
+want to first call [`canonical`](@ref) if that is not guaranteed.
 For instance, given
 ```julia
 f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [x, x]), 0)`.
 ```
-then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonicalize(f))` is
+then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonical(f))` is
 `true`.
 """
 function isapprox_zero end
