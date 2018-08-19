@@ -65,7 +65,6 @@ ListOfConstraintAttributesSet
 ```@docs
 AbstractOptimizer
 optimize!
-free!
 ```
 
 List of attributes optimizers attributes

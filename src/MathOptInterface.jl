@@ -32,16 +32,6 @@ Start the solution procedure.
 function optimize! end
 
 """
-    free!(optimizer::AbstractOptimizer)
-
-Release any resources and memory used by the optimizer.
-Note that the Julia garbage collector takes care of this automatically, but automatic collection cannot always be forced.
-This method is useful for more precise control of resources, especially in the case of commercial solvers with licensing restrictions on the number of concurrent runs.
-Users must discard the optimizer object after this method is invoked.
-"""
-function free! end
-
-"""
     write(model::ModelLike, filename::String)
 
 Writes the current model data to the given file.
