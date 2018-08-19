@@ -351,6 +351,44 @@ function test_constraintnames_equal(model, constraintnames)
     end
 end
 
+isapprox_zero(α::AbstractFloat, tol) = -tol < α < tol
+isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
+function isapprox_zero(t::Union{MOI.ScalarAffineTerm,
+                                MOI.ScalarQuadraticTerm}, tol)
+    isapprox_zero(t.coefficient, tol)
+end
+
+"""
+    isapprox_zero(f::MOI.AbstractFunction, tol)
+
+Return a `Bool` indicating whether the function `f` is approximately zero using
+`tol` as a tolerance.
+
+## Important note
+
+This function assumes that `f` does not contain any duplicate terms, you might
+want to first call [`canonical`](@ref) if that is not guaranteed.
+For instance, given
+```julia
+f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [x, x]), 0)`.
+```
+then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonical(f))` is
+`true`.
+"""
+function isapprox_zero end
+
+function isapprox_zero(f::MOI.ScalarAffineFunction, tol)
+    isapprox_zero(f.constant, tol) && all(t -> isapprox_zero(t, tol),
+                                           f.terms)
+end
+function isapprox_zero(f::MOI.ScalarQuadraticFunction, tol)
+    isapprox_zero(f.constant, tol) &&
+        all(t -> isapprox_zero(t, tol),
+            f.affine_terms) &&
+        all(t -> isapprox_zero(t, tol),
+            f.quadratic_terms)
+end
+
 """
     test_models_equal(model1::ModelLike, model2::ModelLike, variablenames::Vector{String}, constraintnames::Vector{String})
 
@@ -552,6 +590,10 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
 end
+function operate_term(::typeof(*), α::T, t::MOI.ScalarQuadraticTerm{T}) where T
+    MOI.ScalarQuadraticTerm(α * t.coefficient, t.variable_index_1,
+                            t.variable_index_2)
+end
 
 function operate_term(::typeof(/), t::MOI.ScalarAffineTerm{T}, α::T) where T
     MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
@@ -569,6 +611,13 @@ function operate_terms(::typeof(-),
     return map(term -> operate_term(-, term), terms)
 end
 
+function map_terms!(op, func::MOI.ScalarAffineFunction)
+    map!(op, func.terms, func.terms)
+end
+function map_terms!(op, func::MOI.ScalarQuadraticFunction)
+    map!(op, func.affine_terms, func.affine_terms)
+    map!(op, func.quadratic_terms, func.quadratic_terms)
+end
 
 # Functions convertible to a ScalarAffineFunction
 const ScalarAffineLike{T} = Union{T, MOI.SingleVariable, MOI.ScalarAffineFunction{T}}
@@ -722,12 +771,19 @@ function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
     MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
 end
 
-function operate!(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction{T}, α::T) where T
-    f.terms .= operate_term.(*, α, f.terms)
+function operate!(::typeof(*), ::Type{T},
+                  f::Union{MOI.ScalarAffineFunction{T},
+                           MOI.ScalarQuadraticFunction{T}}, α::T) where T
+    map_terms!(term -> operate_term(*, α, term), f)
     f.constant *= α
     return f
 end
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.ScalarAffineFunction) where T
+    return operate!(*, T, copy(f), α)
+end
+
+function operate(::typeof(*), ::Type{T}, α::T,
+                 f::MOI.ScalarQuadraticFunction) where T
     return operate!(*, T, copy(f), α)
 end
 
