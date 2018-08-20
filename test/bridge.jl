@@ -2,11 +2,8 @@
 MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) (VectorOfVariables,) (VectorAffineFunction,)
 
 function test_noc(bridgedmock, F, S, n)
-    @test MOI.canget(bridgedmock, MOI.NumberOfConstraints{F, S}())
     @test MOI.get(bridgedmock, MOI.NumberOfConstraints{F, S}()) == n
-    @test MOI.canget(bridgedmock, MOI.ListOfConstraintIndices{F, S}())
     @test length(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{F, S}())) == n
-    @test MOI.canget(bridgedmock, MOI.ListOfConstraints())
     @test ((F, S) in MOI.get(bridgedmock, MOI.ListOfConstraints())) == !iszero(n)
 end
 
@@ -83,32 +80,26 @@ end
         f1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 7)
         c1 = MOI.addconstraint!(model, f1, MOI.Interval(-1, 1))
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
         @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
 
         f2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, -1], [x, y]), 2)
         c2 = MOI.addconstraint!(model, f1, MOI.GreaterThan(-2))
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
         @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
 
         @test MOI.isvalid(model, c2)
         MOI.delete!(model, c2)
 
-        @test MOI.canget(model, MOI.ListOfConstraints())
         @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
     end
 
@@ -157,7 +148,6 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
         MOIT.rootdett1vtest(fullbridgedmock, config)
         MOIT.rootdett1ftest(fullbridgedmock, config)
         # Dual is not yet implemented for RootDet and GeoMean bridges
-        @test !MOI.canget(fullbridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
         ci = first(MOI.get(fullbridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
         @test !MOI.supports(fullbridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(fullbridgedmock, MOI.ConstraintFunction(), typeof(ci))
@@ -202,7 +192,6 @@ end
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
         newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridgedmock, MOI.ListOfVariableIndices())), 0.0)
         MOI.set!(bridgedmock, MOI.ConstraintFunction(), ci, newf)
-        @test MOI.canget(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
@@ -248,7 +237,6 @@ end
         MOIT.geomean1vtest(bridgedmock, config)
         MOIT.geomean1ftest(bridgedmock, config)
         # Dual is not yet implemented for GeoMean bridge
-        @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.GeometricMeanCone})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
@@ -290,7 +278,6 @@ end
         MOIT.logdett1vtest(bridgedmock, config)
         MOIT.logdett1ftest(bridgedmock, config)
         # Dual is not yet implemented for LogDet bridge
-        @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle}()))
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))
@@ -303,7 +290,6 @@ end
         MOIT.rootdett1vtest(bridgedmock, config)
         MOIT.rootdett1ftest(bridgedmock, config)
         # Dual is not yet implemented for RootDet bridge
-        @test !MOI.canget(bridgedmock, MOI.ConstraintDual(), MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle})
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
         @test !MOI.supports(bridgedmock, MOI.ConstraintSet(), typeof(ci))
         @test !MOI.supports(bridgedmock, MOI.ConstraintFunction(), typeof(ci))

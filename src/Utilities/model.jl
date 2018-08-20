@@ -144,21 +144,21 @@ MOI.supports(::AbstractModel, ::MOI.Name) = true
 function MOI.set!(model::AbstractModel, ::MOI.Name, name::String)
     model.name = name
 end
-MOI.canget(model::AbstractModel, ::MOI.Name) = true
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
 """
     check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
 
 Return a `Bool` indicating whether `name` is available to be used by an
-index of type `IndexType` (i.e., it is not already used). type `IndexType`.
-If it is already used and the index using this name is not `idx` then it throws
-an error.
+index of type `IndexType` (i.e., it is not already used). If it is already used
+and the index using this name is not `idx` then it throws an error.
 """
 function check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
-    if !isempty(name) && MOI.canget(model, IndexType, name)
+    if !isempty(name)
         other_idx = MOI.get(model, IndexType, name)
-        if other_idx != idx
+        if other_idx === nothing
+            return true
+        elseif other_idx != idx
             error("$(IndexType == VI ? :Variable : :Constraint) name $name is already used by $other_idx)")
         end
         return false
@@ -190,13 +190,12 @@ function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String
         setname(model.varnames, model.namesvar, vi, name)
     end
 end
-MOI.canget(::AbstractModel, ::MOI.VariableName, ::Type{VI}) = true
 MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.varnames, vi, EMPTYSTRING)
 
-MOI.canget(model::AbstractModel, ::Type{VI}, name::String) = haskey(model.namesvar, name)
-MOI.get(model::AbstractModel, ::Type{VI}, name::String) = model.namesvar[name]
+function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
+    return get(model.namesvar, name, nothing)
+end
 
-MOI.canget(::AbstractModel, ::MOI.ListOfVariableAttributesSet) = true
 function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vector{MOI.AbstractVariableAttribute}
     isempty(model.varnames) ? [] : [MOI.VariableName()]
 end
@@ -207,30 +206,31 @@ function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::Stri
         setname(model.connames, model.namescon, ci, name)
     end
 end
-MOI.canget(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.connames, ci, EMPTYSTRING)
 
-MOI.canget(model::AbstractModel, CT::Type{<:CI}, name::String) = haskey(model.namescon, name) && model.namescon[name] isa CT
-MOI.get(model::AbstractModel, ::Type{<:CI}, name::String) = model.namescon[name]
+function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
+    ci = get(model.namescon, name, nothing)
+    if ci isa ConType
+        return ci
+    else
+        return nothing
+    end
+end
 
-MOI.canget(::AbstractModel, ::MOI.ListOfConstraintAttributesSet) = true
 function MOI.get(model::AbstractModel, ::MOI.ListOfConstraintAttributesSet)::Vector{MOI.AbstractConstraintAttribute}
     isempty(model.connames) ? [] : [MOI.ConstraintName()]
 end
 
 # Objective
-MOI.canget(model::AbstractModel, ::MOI.ObjectiveSense) = model.senseset
 MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
 MOI.supports(model::AbstractModel, ::MOI.ObjectiveSense) = true
 function MOI.set!(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
     model.senseset = true
     model.sense = sense
 end
-MOI.canget(model::AbstractModel, ::MOI.ObjectiveFunctionType) = true
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunctionType)
     return MOI.typeof(model.objective)
 end
-MOI.canget(model::AbstractModel, ::MOI.ObjectiveFunction{T}) where T = model.objectiveset && typeof(model.objective) == T
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     if typeof(model.objective) != T
         throw(InexactError())
@@ -248,9 +248,7 @@ function MOI.modify!(model::AbstractModel, obj::MOI.ObjectiveFunction, change::M
     model.objective = modifyfunction(model.objective, change)
 end
 
-MOI.canget(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet) = true
 MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet) = MOI.AbstractOptimizerAttribute[]
-MOI.canget(::AbstractModel, ::MOI.ListOfModelAttributesSet) = true
 function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{MOI.AbstractModelAttribute}
     listattr = MOI.AbstractModelAttribute[]
     if model.senseset
@@ -316,13 +314,6 @@ end
 function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices)
     broadcastvcat(constrs -> _getlocr(constrs, loc), model)
 end
-
-MOI.canget(model::AbstractModel, ::Union{MOI.NumberOfVariables,
-                                         MOI.ListOfVariableIndices,
-                                         MOI.NumberOfConstraints,
-                                         MOI.ListOfConstraints,
-                                         MOI.ListOfConstraintIndices,
-                                         MOI.ObjectiveSense}) = true
 
 function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)
     _getfunction(model, ci, getconstrloc(model, ci))
@@ -625,13 +616,6 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                    0, Dict{$CI, String}(), Dict{String, $CI}(), Int[],
                    $(_getCV.(funs)...))
         end
-
-        $MOI.canget(model::$modelname{T}, ::Union{MOI.ConstraintFunction,
-                                                  MOI.ConstraintSet}, ::Type{$CI{F, S}}) where {T, F<:Union{$(_typedfun.(scalarfuns)...)},
-                                                                                                   S<:Union{$(_typedset.(scalarsets)...)}} = true
-        $MOI.canget(model::$modelname{T}, ::Union{MOI.ConstraintFunction,
-                                                  MOI.ConstraintSet}, ::Type{$CI{F, S}}) where {T, F<:Union{$(_typedfun.(vectorfuns)...)},
-                                                                                                   S<:Union{$(_typedset.(vectorsets)...)}} = true
 
         $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
         $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true

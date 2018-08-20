@@ -36,16 +36,9 @@ function MOI.delete!(model::MOI.ModelLike, c::SplitIntervalBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, ::Type{SplitIntervalBridge{T, F}}) where {T, F}
-    return MOI.canget(model, attr, CI{F, MOI.GreaterThan{T}})
-end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::SplitIntervalBridge)
     # lower and upper should give the same value
     return MOI.get(model, attr, c.lower)
-end
-function MOI.canget(model::MOI.ModelLike, attr::MOI.ConstraintDual, ::Type{SplitIntervalBridge{T, F}}) where {T, F}
-    return MOI.canget(model, attr, CI{F, MOI.GreaterThan{T}}) &&
-           MOI.canget(model, attr, CI{F, MOI.LessThan{T}})
 end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBridge)
     # Should be nonnegative

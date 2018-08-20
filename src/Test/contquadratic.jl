@@ -31,29 +31,22 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
 
     if config.query
-        @test MOI.canget(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
         @test obj ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
 
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c1))
         @test cf1 ≈ MOI.get(model, MOI.ConstraintFunction(), c1)
 
-        @test MOI.canget(model, MOI.ConstraintSet(), typeof(c1))
         @test MOI.GreaterThan(4.0) == MOI.get(model, MOI.ConstraintSet(), c1)
     end
 
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 13/7 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [4/7,3/7,6/7] atol=atol rtol=rtol
     end
 end
@@ -91,29 +84,22 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
 
     if config.query
-        @test MOI.canget(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
         @test obj ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
 
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c1))
         @test c1f ≈ MOI.get(model, MOI.ConstraintFunction(), c1)
 
-        @test MOI.canget(model, MOI.ConstraintSet(), typeof(c1))
         @test MOI.GreaterThan(4.0) == MOI.get(model, MOI.ConstraintSet(), c1)
     end
 
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 13/7 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [4/7,3/7,6/7] atol=atol rtol=rtol
     end
 
@@ -124,23 +110,18 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 
     if config.query
-        @test MOI.canget(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
         @test obj2 ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
     end
 
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -2*13/7 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [4/7,3/7,6/7] atol=atol rtol=rtol
     end
 end
@@ -182,15 +163,11 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.875 atol=atol rtol=rtol
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), [x,y]) ≈ [0.25, 0.75] atol=atol rtol=rtol
     end
 
@@ -206,15 +183,11 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), [x,y]) ≈ [1.0, 0.0] atol=atol rtol=rtol
     end
 end
@@ -263,28 +236,21 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 
     if config.query
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c2))
         @test c2f ≈ MOI.get(model, MOI.ConstraintFunction(), c2)
     end
 
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.25 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), [x,y]) ≈ [0.5,1.75] atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c1))
         @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ [5/4, 9/4] atol=atol rtol=rtol
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 2 atol=atol rtol=rtol
     end
 
@@ -294,13 +260,10 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     #
     # MOI.optimize!(model)
     #
-    # @test MOI.canget(model, MOI.TerminationStatus())
     # @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
     #
-    # @test MOI.canget(model, MOI.PrimalStatus())
     # @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
     #
-    # @test MOI.canget(model, MOI.ObjectiveValue())
     # @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
 end
 
@@ -329,35 +292,27 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 
     if config.query
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
         @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
     end
 
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         if config.duals
-            @test MOI.canget(model, MOI.DualStatus())
             @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
         end
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
 
         # TODO - duals
-        # @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
         # @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 0.5/sqrt(2) atol=atol rtol=rtol
     end
 end
@@ -386,35 +341,27 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
 
     if config.query
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
         @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
     end
 
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         if config.duals
-            @test MOI.canget(model, MOI.DualStatus())
             @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
         end
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -sqrt(2) atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ sqrt(2) atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
 
         # TODO - duals
-        # @test MOI.canget(model, MOI.ConstraintDual(), typeof(c))
         # @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -0.5/sqrt(2) atol=atol rtol=rtol
     end
 end
@@ -466,29 +413,22 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
 
     if config.query
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c1))
         @test c1f ≈ MOI.get(model, MOI.ConstraintFunction(), c1)
 
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c2))
         @test c2f ≈ MOI.get(model, MOI.ConstraintFunction(), c2)
     end
 
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ sqrt(1/2) atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), [x,y,t]) ≈ [0.5,0.5,sqrt(1/2)] atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), [t,x,y,t]) ≈ [sqrt(1/2),0.5,0.5,sqrt(1/2)] atol=atol rtol=rtol
     end
 end

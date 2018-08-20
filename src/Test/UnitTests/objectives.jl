@@ -24,7 +24,6 @@ function max_sense(model::MOI.ModelLike, config::TestConfig)
     @test MOI.isempty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.canget(model, MOI.ObjectiveSense())
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 end
 unittests["max_sense"] = max_sense
@@ -39,7 +38,6 @@ function min_sense(model::MOI.ModelLike, config::TestConfig)
     @test MOI.isempty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
-    @test MOI.canget(model, MOI.ObjectiveSense())
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
 end
 unittests["min_sense"] = min_sense
@@ -54,7 +52,6 @@ function feasibility_sense(model::MOI.ModelLike, config::TestConfig)
     @test MOI.isempty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set!(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
-    @test MOI.canget(model, MOI.ObjectiveSense())
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
 end
 unittests["feasibility_sense"] = feasibility_sense

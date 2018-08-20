@@ -6,13 +6,11 @@ end
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.supports(optimizer, MOIU.MockModelAttribute())
     MOI.set!(optimizer, MOIU.MockModelAttribute(), 10)
-    @test MOI.canget(optimizer, MOIU.MockModelAttribute())
     @test MOI.get(optimizer, MOIU.MockModelAttribute()) == 10
 
     v1 = MOI.addvariable!(optimizer)
     @test MOI.supports(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
     MOI.set!(optimizer, MOIU.MockVariableAttribute(), v1, 11)
-    @test MOI.canget(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), v1) == 11
     MOI.set!(optimizer, MOIU.MockVariableAttribute(), [v1], [-11])
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), [v1]) == [-11]
@@ -21,7 +19,6 @@ end
     c1 = MOI.addconstraint!(optimizer, MOI.SingleVariable(v1), MOI.GreaterThan(1.0))
     @test MOI.supports(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
     MOI.set!(optimizer, MOIU.MockConstraintAttribute(), c1, 12)
-    @test MOI.canget(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), c1) == 12
     MOI.set!(optimizer, MOIU.MockConstraintAttribute(), [c1], [-12])
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), [c1]) == [-12]
@@ -35,15 +32,7 @@ end
     # Load fake solution
     MOI.set!(optimizer, MOI.TerminationStatus(), MOI.InfeasibleNoResult)
 
-    # Attributes are hidden until after optimize!()
-    @test !MOI.canget(optimizer, MOI.TerminationStatus())
-    @test !MOI.canget(optimizer, MOI.ResultCount())
-    @test !MOI.canget(optimizer, MOI.VariablePrimal(), MOI.VariableIndex)
-
     MOI.optimize!(optimizer)
-    @test MOI.canget(optimizer, MOI.TerminationStatus())
-    @test MOI.canget(optimizer, MOI.ResultCount())
-    @test !MOI.canget(optimizer, MOI.VariablePrimal(), typeof(v1))
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.InfeasibleNoResult
     @test MOI.get(optimizer, MOI.ResultCount()) == 0
 end
@@ -70,22 +59,7 @@ end
     MOI.set!(optimizer, MOI.ConstraintDual(), c1, 5.9)
     MOI.set!(optimizer, MOI.ConstraintDual(), soc, [1.0,2.0])
 
-    # Attributes are hidden until after optimize!()
-    @test !MOI.canget(optimizer, MOI.TerminationStatus())
-    @test !MOI.canget(optimizer, MOI.ResultCount())
-    @test !MOI.canget(optimizer, MOI.VariablePrimal(), typeof(v[1]))
-    @test !MOI.canget(optimizer, MOI.ConstraintDual(), typeof(c1))
-    @test !MOI.canget(optimizer, MOI.ConstraintDual(), typeof(soc))
-
     MOI.optimize!(optimizer)
-    @test MOI.canget(optimizer, MOI.TerminationStatus())
-    @test MOI.canget(optimizer, MOI.ResultCount())
-    @test MOI.canget(optimizer, MOI.ObjectiveValue())
-    @test MOI.canget(optimizer, MOI.PrimalStatus())
-    @test MOI.canget(optimizer, MOI.DualStatus())
-    @test MOI.canget(optimizer, MOI.VariablePrimal(), typeof(v[1]))
-    @test MOI.canget(optimizer, MOI.ConstraintDual(), typeof(c1))
-    @test MOI.canget(optimizer, MOI.ConstraintDual(), typeof(soc))
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.Success
     @test MOI.get(optimizer, MOI.ResultCount()) == 1
     @test MOI.get(optimizer, MOI.ObjectiveValue()) == 1.0

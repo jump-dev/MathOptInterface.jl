@@ -136,21 +136,16 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.ResultCount())
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 17.014017145179164 atol=atol rtol=rtol
 
         optimal_v = [1.0, 4.7429996418092970, 3.8211499817883077, 1.3794082897556983]
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ optimal_v atol=atol rtol=rtol
 
         # TODO: Duals? Maybe better to test on a convex instance.
@@ -246,19 +241,14 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.ResultCount())
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol=atol rtol=rtol
     end
 end

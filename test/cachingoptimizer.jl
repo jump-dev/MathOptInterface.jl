@@ -16,7 +16,6 @@
     MOI.set!(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
     @test MOI.get(m, MOI.ObjectiveFunction{typeof(saf)}()) ≈ saf
-    @test !MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense()))
 
     @test_throws AssertionError MOI.optimize!(m)
 
@@ -26,16 +25,11 @@
 
     @test MOI.supports(m, MOI.ObjectiveSense())
     MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.canget(m, MOI.ObjectiveSense())
-    @test MOI.canget(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense()))
-    @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense()))
     @test MOI.get(m, MOI.ObjectiveSense()) == MOI.MaxSense
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MaxSense
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MaxSense
 
     @test !MOI.supports(m, MOI.NumberOfVariables())
-    @test !MOI.canget(m, MOIU.AttributeFromModelCache(MOIU.MockModelAttribute()))
-    @test MOI.canget(m, MOIU.AttributeFromOptimizer((MOIU.MockModelAttribute())))
 
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()))
     MOI.set!(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
@@ -47,10 +41,8 @@
 
     MOI.optimize!(m)
 
-    @test MOI.canget(m, MOI.VariablePrimal(), typeof(v))
     @test MOI.get(m, MOI.VariablePrimal(), v) == 3.0
     @test MOI.get(m, MOI.VariablePrimal(), [v]) == [3.0]
-    @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), typeof(v))
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
     # ModelForMock doesn't support RotatedSecondOrderCone
@@ -89,7 +81,6 @@ end
     v = MOI.addvariable!(m)
     @test MOI.supports(m, MOI.VariableName(), typeof(v))
     MOI.set!(m, MOI.VariableName(), v, "v")
-    @test MOI.canget(m, MOI.VariableName(), typeof(v))
     @test MOI.get(m, MOI.VariableName(), v) == "v"
 
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
@@ -106,22 +97,15 @@ end
     @test MOIU.state(m) == MOIU.AttachedOptimizer
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ResultCount())) == 0
 
-    @test MOI.canget(m, MOI.VariableName(), typeof(v))
     @test MOI.get(m, MOI.VariableName(), v) == "v"
-    @test MOI.canget(m, MOIU.AttributeFromModelCache(MOI.VariableName()), typeof(v))
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.VariableName()), v) == "v"
     # The caching optimizer does not copy names
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariableName()), v) == ""
 
     @test MOI.supports(m, MOI.ObjectiveSense())
     MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.canget(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense()))
-    @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense()))
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MaxSense
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MaxSense
-
-    @test !MOI.canget(m, MOIU.AttributeFromModelCache(MOIU.MockModelAttribute()))
-    @test MOI.canget(m, MOIU.AttributeFromOptimizer((MOIU.MockModelAttribute())))
 
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()))
     MOI.set!(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
@@ -133,7 +117,6 @@ end
 
     MOI.optimize!(m)
 
-    @test MOI.canget(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), typeof(v))
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
     @testset "Modify not allowed" begin

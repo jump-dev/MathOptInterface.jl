@@ -20,7 +20,6 @@ AbstractConstraintAttribute
 Functions for getting and setting attributes.
 
 ```@docs
-canget
 get
 get!
 set!

@@ -6,15 +6,12 @@ function nametest(model::MOI.ModelLike)
     @testset "Name test" begin
         @test MOI.supports(model, MOI.Name())
         @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
-        @test MOI.canget(model, MOI.Name())
         @test MOI.get(model, MOI.Name()) == ""
         MOI.set!(model, MOI.Name(), "Name1")
         @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
-        @test MOI.canget(model, MOI.Name())
         @test MOI.get(model, MOI.Name()) == "Name1"
         MOI.set!(model, MOI.Name(), "Name2")
         @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
-        @test MOI.canget(model, MOI.Name())
         @test MOI.get(model, MOI.Name()) == "Name2"
 
         @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -22,7 +19,6 @@ function nametest(model::MOI.ModelLike)
 
         @test MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
         v = MOI.addvariables!(model, 2)
-        @test MOI.canget(model, MOI.VariableName(), typeof(v[1]))
         @test MOI.get(model, MOI.VariableName(), v[1]) == ""
 
         MOI.set!(model, MOI.VariableName(), v[1], "")
@@ -32,12 +28,9 @@ function nametest(model::MOI.ModelLike)
         @test_throws Exception MOI.set!(model, MOI.VariableName(), v[2], "Var1")
         MOI.set!(model, MOI.VariableName(), v[2], "Var2")
 
-        @test MOI.canget(model, MOI.VariableIndex, "Var1")
-        @test !MOI.canget(model, MOI.VariableIndex, "Var3")
-
         @test MOI.get(model, MOI.VariableIndex, "Var1") == v[1]
         @test MOI.get(model, MOI.VariableIndex, "Var2") == v[2]
-        @test_throws KeyError MOI.get(model, MOI.VariableIndex, "Var3")
+        @test MOI.get(model, MOI.VariableIndex, "Var3") === nothing
 
         MOI.set!(model, MOI.VariableName(), v, ["VarX","Var2"])
         @test MOI.get(model, MOI.VariableName(), v) == ["VarX", "Var2"]
@@ -46,7 +39,6 @@ function nametest(model::MOI.ModelLike)
         c = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0), MOI.LessThan(1.0))
         @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
         c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0,1.0], v), 0.0), MOI.EqualTo(0.0))
-        @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
 
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
@@ -61,38 +53,28 @@ function nametest(model::MOI.ModelLike)
         MOI.set!(model, MOI.ConstraintName(), [c], ["Con1"])
         @test MOI.get(model, MOI.ConstraintName(), [c]) == ["Con1"]
 
-        @test MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
-        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con2")
-        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con1")
-        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}, "Con1")
-        @test MOI.canget(model, MOI.ConstraintIndex, "Con1")
-        @test !MOI.canget(model, MOI.ConstraintIndex, "Con2")
-
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1") == c
-        @test_throws KeyError MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con2")
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con1") === nothing
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}, "Con1") === nothing
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con2") === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") == c
-        @test_throws KeyError MOI.get(model, MOI.ConstraintIndex, "Con2")
+        @test MOI.get(model, MOI.ConstraintIndex, "Con2") === nothing
 
         MOI.set!(model, MOI.ConstraintName(), c2, "Con0")
-        @test MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
-        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con0")
-        @test MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con0")
-        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con1")
-        @test MOI.canget(model, MOI.ConstraintIndex, "Con0")
-        @test MOI.canget(model, MOI.ConstraintIndex, "Con1")
 
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con0") === nothing
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con1") === nothing
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1") == c
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con0") == c2
+        @test MOI.get(model, MOI.ConstraintIndex, "Con0") == c2
+        @test MOI.get(model, MOI.ConstraintIndex, "Con1") == c
 
         MOI.delete!(model, v[2])
-        @test !MOI.canget(model, MOI.VariableIndex, "Var2")
-        @test_throws KeyError MOI.get(model, MOI.VariableIndex, "Var2")
+        @test MOI.get(model, MOI.VariableIndex, "Var2") === nothing
 
         MOI.delete!(model, c)
-        @test !MOI.canget(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
-        @test !MOI.canget(model, MOI.ConstraintIndex, "Con1")
-        @test_throws KeyError MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1")
-        @test_throws KeyError MOI.get(model, MOI.ConstraintIndex, "Con1")
+        @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1") === nothing
+        @test MOI.get(model, MOI.ConstraintIndex, "Con1") === nothing
     end
 end
 
@@ -142,17 +124,14 @@ function emptytest(model::MOI.ModelLike)
 end
 
 abstract type BadModel <: MOI.ModelLike end
-MOI.canget(::BadModel, ::MOI.ListOfModelAttributesSet) = true
 MOI.get(::BadModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[]
 MOI.get(::BadModel, ::MOI.NumberOfVariables) = 1
 MOI.get(::BadModel, ::MOI.ListOfVariableIndices) = [MOI.VariableIndex(1)]
-MOI.canget(::BadModel, ::MOI.ListOfVariableAttributesSet) = true
 MOI.get(::BadModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[]
 MOI.get(::BadModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64})]
 MOI.get(::BadModel, ::MOI.ListOfConstraintIndices{F,S}) where {F,S} = [MOI.ConstraintIndex{F,S}(1)]
 MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.SingleVariable(MOI.VariableIndex(1))
 MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}) = MOI.EqualTo(0.0)
-MOI.canget(::BadModel, ::MOI.ListOfConstraintAttributesSet) = true
 MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[]
 
 struct BadConstraintModel <: BadModel end
@@ -162,19 +141,16 @@ MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariabl
 
 struct UnknownModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
-MOI.canget(::BadModelAttributeModel, ::UnknownModelAttribute) = true
 MOI.get(src::BadModelAttributeModel, ::UnknownModelAttribute) = 0
 MOI.get(::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet) = MOI.AbstractModelAttribute[UnknownModelAttribute()]
 
 struct UnknownVariableAttribute <: MOI.AbstractVariableAttribute end
 struct BadVariableAttributeModel <: BadModel end
-MOI.canget(::BadVariableAttributeModel, ::UnknownVariableAttribute, ::Type{MOI.VariableIndex}) = true
 MOI.get(::BadVariableAttributeModel, ::UnknownVariableAttribute, ::MOI.VariableIndex) = 0
 MOI.get(::BadVariableAttributeModel, ::MOI.ListOfVariableAttributesSet) = MOI.AbstractVariableAttribute[UnknownVariableAttribute()]
 
 struct UnknownConstraintAttribute <: MOI.AbstractConstraintAttribute end
 struct BadConstraintAttributeModel <: BadModel end
-MOI.canget(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::Type{<:MOI.ConstraintIndex}) = true
 MOI.get(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::MOI.ConstraintIndex) = 0
 MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[UnknownConstraintAttribute()]
 
@@ -218,9 +194,9 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
 
     dict = MOI.copy!(dest, src, copynames=false)
 
-    @test !MOI.canget(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
+    @test !MOI.supports(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
     @test MOI.get(dest, MOI.NumberOfVariables()) == 3
-    @test !MOI.canget(dest, MOI.VariableName(), MOI.VariableIndex) || MOI.get(dest, MOI.VariableName(), v) == ["", "", ""]
+    @test !MOI.supports(dest, MOI.VariableName(), MOI.VariableIndex) || MOI.get(dest, MOI.VariableName(), v) == ["", "", ""]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
     @test MOI.get(dest, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == [dict[csv]]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
@@ -236,30 +212,20 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}) in loc
     @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
 
-    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(csv)) || MOI.get(dest, MOI.ConstraintName(), csv) == ""
-    @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[csv]))
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csv)) || MOI.get(dest, MOI.ConstraintName(), csv) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) == MOI.SingleVariable(dict[v[2]])
-    @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[csv]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.)
-    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), cvv) == ""
-    @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[cvv]))
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), cvv) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) == MOI.VectorOfVariables(getindex.(Ref(dict), v))
-    @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[cvv]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.Nonnegatives(3)
-    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), csa) == ""
-    @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[csa]))
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), csa) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1., 3.], [dict[v[3]], dict[v[1]]]), 2.)
-    @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[csa]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csa]) == MOI.LessThan(2.)
-    @test !MOI.canget(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), cva) == ""
-    @test MOI.canget(dest, MOI.ConstraintFunction(), typeof(dict[cva]))
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), cva) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈ MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [dict[v[3]], dict[v[2]]])), [-3.0,-2.0])
-    @test MOI.canget(dest, MOI.ConstraintSet(), typeof(dict[cva]))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cva]) == MOI.Zeros(2)
 
-    @test MOI.canget(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.get(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], [dict[v[1]], dict[v[2]], dict[v[3]]]), 0.0)
-    @test MOI.canget(dest, MOI.ObjectiveSense())
     @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MinSense
 end
 

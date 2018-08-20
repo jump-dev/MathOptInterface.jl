@@ -175,52 +175,6 @@ function get!(output, model::ModelLike, attr::AnyAttribute, args...)
 end
 
 """
-    canget(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)::Bool
-
-Return a `Bool` indicating whether `optimizer` currently has a value for the attribute specified by attr type `attr`.
-
-    canget(model::ModelLike, attr::AbstractModelAttribute)::Bool
-
-Return a `Bool` indicating whether `model` currently has a value for the attribute specified by attribute type `attr`.
-
-    canget(model::ModelLike, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
-
-Return a `Bool` indicating whether `model` currently has a value for the attribute specified by attribute type `attr` applied to *every* variable of the model.
-
-    canget(model::ModelLike, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F<:AbstractFunction,S<:AbstractSet}
-
-Return a `Bool` indicating whether `model` currently has a value for the attribute specified by attribute type `attr` applied to *every* `F`-in-`S` constraint.
-
-    canget(model::ModelLike, ::Type{VariableIndex}, name::String)::Bool
-
-Return a `Bool` indicating if a variable with the name `name` exists in `model`.
-
-    canget(model::ModelLike, ::Type{ConstraintIndex{F,S}}, name::String)::Bool where {F<:AbstractFunction,S<:AbstractSet}
-
-Return a `Bool` indicating if an `F`-in-`S` constraint with the name `name` exists in `model`.
-
-    canget(model::ModelLike, ::Type{ConstraintIndex}, name::String)::Bool
-
-Return a `Bool` indicating if a constraint of any kind with the name `name` exists in `model`.
-
-
-### Examples
-
-```julia
-canget(model, ObjectiveValue())
-canget(model, VariablePrimalStart(), VariableIndex)
-canget(model, VariablePrimal(), VariableIndex)
-canget(model, ConstraintPrimal(), ConstraintIndex{SingleVariable,EqualTo{Float64}})
-canget(model, VariableIndex, "var1")
-canget(model, ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
-canget(model, ConstraintIndex, "con1")
-```
-"""
-function canget end
-canget(::ModelLike, ::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
-canget(::ModelLike, ::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
-
-"""
     set!(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute, value)
 
 Assign `value` to the attribute `attr` of the optimizer `optimizer`.
@@ -710,6 +664,7 @@ To be documented: `NumericalError`, `InvalidModel`, `InvalidOption`, `Interrupte
 An Enum of possible values for the `PrimalStatus` and `DualStatus` attributes.
 The values indicate how to interpret the result vector.
 
+* `NoSolution`
 * `FeasiblePoint`
 * `NearlyFeasiblePoint`
 * `InfeasiblePoint`
@@ -720,7 +675,7 @@ The values indicate how to interpret the result vector.
 * `UnknownResultStatus`
 * `OtherResultStatus`
 """
-@enum ResultStatusCode FeasiblePoint NearlyFeasiblePoint InfeasiblePoint InfeasibilityCertificate NearlyInfeasibilityCertificate ReductionCertificate NearlyReductionCertificate UnknownResultStatus OtherResultStatus
+@enum ResultStatusCode NoSolution FeasiblePoint NearlyFeasiblePoint InfeasiblePoint InfeasibilityCertificate NearlyInfeasibilityCertificate ReductionCertificate NearlyReductionCertificate UnknownResultStatus OtherResultStatus
 
 """
     PrimalStatus(N)

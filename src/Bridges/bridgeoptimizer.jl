@@ -115,15 +115,6 @@ function MOI.delete!(b::AbstractBridgeOptimizer, ci::CI)
 end
 
 # Attributes
-function MOI.canget(b::AbstractBridgeOptimizer,
-                    attr::Union{MOI.NumberOfConstraints{F, S},
-                                MOI.ListOfConstraintIndices{F, S}}) where {F, S}
-    if isbridged(b, F, S)
-        return MOI.canget(b.bridged, attr)
-    else
-        return MOI.canget(b.model, attr)
-    end
-end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
     if isbridged(b, F, S)
@@ -162,9 +153,6 @@ function MOI.get(b::AbstractBridgeOptimizer,
         return _numberof(b, b.model, attr)
     end
 end
-function MOI.canget(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
-    return MOI.canget(b.model, attr) && MOI.canget(b.bridged, attr)
-end
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
     list_of_types = [MOI.get(b.model, attr); MOI.get(b.bridged, attr)]
     # Some constraint types show up in `list_of_types` even when all the
@@ -178,11 +166,6 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
 end
 
 # Model an optimizer attributes
-function MOI.canget(b::AbstractBridgeOptimizer,
-                    attr::Union{MOI.AbstractModelAttribute,
-                                MOI.AbstractOptimizerAttribute})
-    return MOI.canget(b.model, attr)
-end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::Union{MOI.AbstractModelAttribute,
                              MOI.AbstractOptimizerAttribute})
@@ -196,11 +179,6 @@ function MOI.set!(b::AbstractBridgeOptimizer,
 end
 
 # Variable attributes
-function MOI.canget(b::AbstractBridgeOptimizer,
-                    attr::MOI.AbstractVariableAttribute,
-                    ::Type{VI})
-    return MOI.canget(b.model, attr, VI)
-end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractVariableAttribute,
                  index::VI)
@@ -234,14 +212,6 @@ const ResultConstraintAttribute = Union{MOI.ConstraintPrimalStart,
                                         MOI.ConstraintPrimal,
                                         MOI.ConstraintDual,
                                         MOI.ConstraintBasisStatus}
-function MOI.canget(b::AbstractBridgeOptimizer, attr::ResultConstraintAttribute,
-                    ci::Type{CI{F, S}}) where {F, S}
-    if isbridged(b, F, S)
-        return MOI.canget(b, attr, concrete_bridge_type(b, F, S))
-    else
-        return MOI.canget(b.model, attr, ci)
-    end
-end
 function MOI.get(b::AbstractBridgeOptimizer, attr::ResultConstraintAttribute,
                  ci::CI)
     if isbridged(b, typeof(ci))
@@ -254,14 +224,6 @@ end
 const ModelConstraintAttribute = Union{MOI.ConstraintName,
                                        MOI.ConstraintFunction,
                                        MOI.ConstraintSet}
-function MOI.canget(b::AbstractBridgeOptimizer, attr::ModelConstraintAttribute,
-                    ci::Type{CI{F, S}}) where {F, S}
-    if isbridged(b, F, S)
-        return MOI.canget(b.bridged, attr, ci)
-    else
-        return MOI.canget(b.model, attr, ci)
-    end
-end
 function MOI.get(b::AbstractBridgeOptimizer, attr::ModelConstraintAttribute,
                  ci::CI)
     if isbridged(b, typeof(ci))
@@ -318,14 +280,6 @@ function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction,
 end
 
 # Name
-function MOI.canget(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index},
-                    name::String)
-    if isbridged(b, IdxT)
-        return MOI.canget(b.bridged, IdxT, name)
-    else
-        return MOI.canget(b.model, IdxT, name)
-    end
-end
 function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index},
                  name::String)
     if isbridged(b, IdxT)
@@ -335,20 +289,15 @@ function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.Index},
     end
 end
 
-# For the type-unstable case, we have no information as to whether the
-# constraint is in the bridge or the model. Therefore, we try the model first,
-# and then the bridge if that fails. As such, we need canget for either the
-# bridge or the model.
-function MOI.canget(b::AbstractBridgeOptimizer, IdxT::Type{CI},
-                    name::String)
-    return MOI.canget(b.bridged, IdxT, name) || MOI.canget(b.model, IdxT, name)
-end
+# We have no information as to whether the constraint is in the bridge or the
+# model. Therefore, we try the model first, and then the bridge if that fails.
 function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{CI},
                  name::String)
-    if MOI.canget(b.model, IdxT, name)
-        return MOI.get(b.model, IdxT, name)
-    else
+    ci = MOI.get(b.model, IdxT, name)
+    if ci === nothing
         return MOI.get(b.bridged, IdxT, name)
+    else
+        return ci
     end
 end
 

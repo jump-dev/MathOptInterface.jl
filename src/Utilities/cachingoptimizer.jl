@@ -428,52 +428,78 @@ function MOI.supports(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
         (m.state == NoOptimizer || MOI.supports(m.optimizer, attr))
 end
 
-function MOI.get(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
-    if MOI.canget(m.model_cache, attr)
-        return MOI.get(m.model_cache, attr)
-    elseif m.state == AttachedOptimizer && MOI.canget(m.optimizer, attr)
-        return attribute_value_map(m.optimizer_to_model_map,MOI.get(m.optimizer, attr))
-    end
-    error("Attribute $attr not accessible")
-end
+"""
+    is_result_attribute(::Union{MOI.AbstractModelAttribute,
+                                MOI.AbstractVariableAttribute,
+                                MOI.AbstractConstraintAttribute})
 
-function MOI.get(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}, index::MOI.Index)
-    if MOI.canget(m.model_cache, attr, typeof(index))
-        return MOI.get(m.model_cache, attr, index)
-    elseif m.state == AttachedOptimizer && MOI.canget(m.optimizer, attr, typeof(index))
-        return attribute_value_map(m.optimizer_to_model_map,MOI.get(m.optimizer, attr, m.model_to_optimizer_map[index]))
-    end
-    error("Attribute $attr not accessible")
-end
+Return a `Bool` indicating whether the value of the attribute is determined
+during [`MOI.optimize!`](@ref) hence is part of the result of the optimization.
+"""
+function is_result_attribute end
 
-function MOI.get(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}, indices::Vector{<:MOI.Index})
-    if MOI.canget(m.model_cache, attr, eltype(indices))
-        return MOI.get(m.model_cache, attr, indices)
-    elseif m.state == AttachedOptimizer && MOI.canget(m.optimizer, attr, eltype(indices))
-        return attribute_value_map.(Ref(m.optimizer_to_model_map),MOI.get(m.optimizer, attr, getindex.(Ref(m.model_to_optimizer_map),indices)))
-    end
-    error("Attribute $attr not accessible")
-end
-
-function MOI.canget(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
-    MOI.canget(m.model_cache, attr) && return true
-    if m.state == AttachedOptimizer
-        MOI.canget(m.optimizer, attr) && return true
-    end
+function is_result_attribute(::Union{MOI.AbstractModelAttribute,
+                                     MOI.AbstractVariableAttribute,
+                                     MOI.AbstractConstraintAttribute})
     return false
 end
-
-function MOI.canget(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}, idxtype::Type{<:MOI.Index})
-    MOI.canget(m.model_cache, attr, idxtype) && return true
-    if m.state == AttachedOptimizer
-        MOI.canget(m.optimizer, attr, idxtype) && return true
+function is_result_attribute(::Union{MOI.ObjectiveValue,
+                                     MOI.ObjectiveBound,
+                                     MOI.RelativeGap,
+                                     MOI.SolveTime,
+                                     MOI.SimplexIterations,
+                                     MOI.BarrierIterations,
+                                     MOI.NodeCount,
+                                     MOI.RawSolver,
+                                     MOI.ResultCount,
+                                     MOI.TerminationStatus,
+                                     MOI.PrimalStatus,
+                                     MOI.DualStatus,
+                                     MOI.VariablePrimal,
+                                     MOI.ConstraintBasisStatus,
+                                     MOI.ConstraintPrimal,
+                                     MOI.ConstraintDual,
+                                     MOI.ConstraintBasisStatus})
+    return true
+end
+function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
+    if is_result_attribute(attr)
+        return attribute_value_map(model.optimizer_to_model_map,
+                                   MOI.get(model.optimizer, attr))
+    else
+        return MOI.get(model.model_cache, attr)
     end
-    return false
+end
+function MOI.get(model::CachingOptimizer,
+                 attr::Union{MOI.AbstractVariableAttribute,
+                             MOI.AbstractConstraintAttribute},
+                 index::MOI.Index)
+    if is_result_attribute(attr)
+        return attribute_value_map(model.optimizer_to_model_map,
+                                   MOI.get(model.optimizer, attr,
+                                           model.model_to_optimizer_map[index]))
+    else
+        return MOI.get(model.model_cache, attr, index)
+    end
+end
+function MOI.get(model::CachingOptimizer,
+                 attr::Union{MOI.AbstractVariableAttribute,
+                             MOI.AbstractConstraintAttribute},
+                 indices::Vector{<:MOI.Index})
+    if is_result_attribute(attr)
+        return attribute_value_map(model.optimizer_to_model_map,
+                                   MOI.get(model.optimizer, attr,
+                                           map(index -> model.model_to_optimizer_map[index],
+                                               indices)))
+  else
+      return MOI.get(model.model_cache, attr, indices)
+  end
 end
 
 # Name
-MOI.canget(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String) = MOI.canget(m.model_cache, IdxT, name)
-MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String) = MOI.get(m.model_cache, IdxT, name)
+function MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String)
+    return MOI.get(m.model_cache, IdxT, name)
+end
 
 # Force users to specify whether the attribute should be queried from the
 # model_cache or the optimizer. Maybe we could consider a small whitelist of
@@ -511,24 +537,6 @@ end
 function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx::Vector{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == AttachedOptimizer
     return attribute_value_map(m.optimizer_to_model_map,MOI.get(m.optimizer, attr.attr, getindex.(m.model_to_optimizer_map,idx)))
-end
-
-function MOI.canget(m::CachingOptimizer, attr::AttributeFromModelCache{T}) where {T <: MOI.AbstractModelAttribute}
-    return MOI.canget(m.model_cache, attr.attr)
-end
-
-function MOI.canget(m::CachingOptimizer, attr::AttributeFromModelCache{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
-    return MOI.canget(m.model_cache, attr.attr, idxtype)
-end
-
-function MOI.canget(m::CachingOptimizer, attr::AttributeFromOptimizer{T}) where {T <: MOI.AbstractModelAttribute}
-    m.state == AttachedOptimizer || return false
-    return MOI.canget(m.optimizer, attr.attr)
-end
-
-function MOI.canget(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
-    m.state == AttachedOptimizer || return false
-    return MOI.canget(m.optimizer, attr.attr, idxtype)
 end
 
 function MOI.set!(m::CachingOptimizer, attr::AttributeFromModelCache{T}, v) where {T <: MOI.AbstractModelAttribute}

@@ -36,20 +36,17 @@ function passattributes! end
 
 function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, passattr!::Function=MOI.set!)
     # Copy model attributes
-    @assert MOI.canget(src, MOI.ListOfModelAttributesSet())
     attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
     _passattributes!(dest, src, copynames, idxmap, attrs, tuple(), tuple(), tuple(), passattr!)
 end
 function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, vis_src::Vector{VI}, passattr!::Function=MOI.set!)
     # Copy variable attributes
-    @assert MOI.canget(src, MOI.ListOfVariableAttributesSet())
     attrs = MOI.get(src, MOI.ListOfVariableAttributesSet())
     vis_dest = map(vi -> idxmap[vi], vis_src)
     _passattributes!(dest, src, copynames, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), passattr!)
 end
 function passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, cis_src::Vector{CI{F, S}}, passattr!::Function=MOI.set!) where {F, S}
     # Copy constraint attributes
-    @assert MOI.canget(src, MOI.ListOfConstraintAttributesSet{F, S}())
     attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F, S}())
     cis_dest = map(ci -> idxmap[ci], cis_src)
     _passattributes!(dest, src, copynames, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), passattr!)
@@ -57,7 +54,7 @@ end
 
 function _passattributes!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool, idxmap::IndexMap, attrs, canargs, getargs, setargs, passattr!::Function=MOI.set!)
     for attr in attrs
-        if (copynames || !(attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName)) && MOI.canget(src, attr, canargs...)
+        if (copynames || !(attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName))
             passattr!(dest, attr, setargs..., attribute_value_map(idxmap, MOI.get(src, attr, getargs...)))
         end
     end

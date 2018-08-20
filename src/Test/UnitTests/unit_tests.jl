@@ -59,34 +59,26 @@ function test_model_solution(model, config;
     config.solve || return
     atol, rtol = config.atol, config.rtol
     MOI.optimize!(model)
-    @test MOI.canget(model, MOI.TerminationStatus())
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
     if objective_value != nothing
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ objective_value atol=atol rtol=rtol
     end
     if variable_primal != nothing
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         for (index, solution_value) in variable_primal
-            @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), index) ≈ solution_value atol=atol rtol=rtol
         end
     end
     if constraint_primal != nothing
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         for (index, solution_value) in constraint_primal
-            @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(index))
             @test MOI.get(model, MOI.ConstraintPrimal(), index) ≈ solution_value atol=atol rtol=rtol
         end
     end
     if config.duals
         if constraint_dual != nothing
-            @test MOI.canget(model, MOI.DualStatus())
             @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
             for (index, solution_value) in constraint_dual
-                @test MOI.canget(model, MOI.ConstraintDual(), typeof(index))
                 @test MOI.get(model, MOI.ConstraintDual(), index) ≈ solution_value atol=atol rtol=rtol
             end
         end

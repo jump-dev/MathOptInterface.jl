@@ -397,7 +397,7 @@ end
 MOI.optimize!(optimizer)
 
 termination_status = MOI.get(optimizer, MOI.TerminationStatus())
-objvalue = MOI.canget(optimizer, MOI.ObjectiveValue()) ? MOI.get(optimizer, MOI.ObjectiveValue()) : NaN
+objvalue = MOI.get(optimizer, MOI.ObjectiveValue())
 if termination_status != MOI.Success
     error("Solver terminated with status $termination_status")
 end
