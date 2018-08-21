@@ -256,6 +256,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
 
     # try delete quadratic constraint and go back to linear
 
+    # FIXME why is this commented ?
     # MOI.delete!(model, c2)
     #
     # MOI.optimize!(model)
