@@ -1,3 +1,7 @@
+function add_scalar_constraint(model::MOI.ModelLike, func::MOI.SingleVariable,
+                               set::MOI.AbstractScalarSet)
+    return MOI.addconstraint!(model, func, set)
+end
 function add_scalar_constraint(model::MOI.ModelLike,
                                func::Union{MOI.ScalarAffineFunction{T},
                                            MOI.ScalarQuadraticFunction{T}},

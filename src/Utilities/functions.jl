@@ -74,12 +74,12 @@ function mapvariables(varmap::Function, f::MOI.VectorOfVariables)
     return MOI.VectorOfVariables(varmap.(f.variables))
 end
 function mapvariables(varmap::Function, f::Union{SAF, VAF})
-    typeof(f)(mapvariable.(varmap, f.terms), _constant(f))
+    typeof(f)(mapvariable.(varmap, f.terms), MOI._constant(f))
 end
 function mapvariables(varmap::Function, f::Union{SQF, VQF})
     lin = mapvariable.(varmap, f.affine_terms)
     quad = mapvariable.(varmap, f.quadratic_terms)
-    return typeof(f)(lin, quad, _constant(f))
+    return typeof(f)(lin, quad, MOI._constant(f))
 end
 mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f)
 mapvariables(varmap::Function, change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange}) = change
@@ -93,9 +93,6 @@ function mapvariables(varmap, f::MOI.AbstractFunctionModification)
     return mapvariables(vi -> varmap[vi], f)
 end
 
-# Constant field
-_constant(f::Union{SAF, SQF}) = f.constant
-_constant(f::Union{VAF, VQF}) = f.constants
 # Vector of constants
 constant(f::Union{SAF, SQF}) = [f.constant]
 constant(f::Union{VAF, VQF}) = f.constants
@@ -182,14 +179,6 @@ function Base.getindex(it::ScalarFunctionIterator{VAF{T}}, I::AbstractVector) wh
 end
 
 """
-    termindices(t::Union{MOI.ScalarAffineTerm, MOI.VectorAffineTerm})
-
-Returns the indices of the input term `t` as a tuple of `Int`s. For `t::MOI.ScalarAffineTerm`, this is a 1-tuple of the variable index. For `t::MOI.VectorAffineTerm`, this is a 2-tuple of the row/output and variable indices of the term.
-"""
-termindices(t::MOI.ScalarAffineTerm) = (t.variable_index.value,)
-termindices(t::MOI.VectorAffineTerm) = (t.output_index, termindices(t.scalar_term)...)
-
-"""
     unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm)
 
 Sums the coefficients of `t1` and `t2` and returns an output `MOI.ScalarAffineTerm`. It is unsafe because it uses the `variable_index` of `t1` as the `variable_index` of the output without checking that it is equal to that of `t2`.
@@ -199,33 +188,39 @@ function unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm)
 end
 
 """
+    unsafe_add(t1::MOI.ScalarQuadraticTerm, t2::MOI.ScalarQuadraticTerm)
+
+Sums the coefficients of `t1` and `t2` and returns an output
+`MOI.ScalarQuadraticTerm`. It is unsafe because it uses the `variable_index`'s
+of `t1` as the `variable_index`'s of the output without checking that they are
+the same (up to permutation) to those of `t2`.
+"""
+function unsafe_add(t1::MOI.ScalarQuadraticTerm, t2::MOI.ScalarQuadraticTerm)
+    return MOI.ScalarAffineTerm(t1.coefficient + t2.coefficient,
+                                t1.variable_index)
+end
+
+"""
     unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm)
 
 Sums the coefficients of `t1` and `t2` and returns an output `MOI.VectorAffineTerm`. It is unsafe because it uses the `output_index` and `variable_index` of `t1` as the `output_index` and `variable_index` of the output term without checking that they are equal to those of `t2`.
 """
-function unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm)
-    coefficient = t1.scalar_term.coefficient + t2.scalar_term.coefficient
-    scalar_term = MOI.ScalarAffineTerm(coefficient, t1.scalar_term.variable_index)
+function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
+                                                      MOI.VectorQuadraticTerm}
+    scalar_term = unsafe_add(t1.scalar_term, t2.scalar_term)
     return MOI.VectorAffineTerm(t1.output_index, scalar_term)
 end
 
 """
-    coefficient(t::Union{MOI.ScalarAffineTerm, MOI.VectorAffineTerm})
-
-Finds the coefficient associated with the term `t`.
-"""
-coefficient(t::MOI.ScalarAffineTerm) = t.coefficient
-coefficient(t::MOI.VectorAffineTerm) = t.scalar_term.coefficient
-
-
-"""
-    iscanonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
+    iscanonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
+                         VectorAffineFunction, VectorQuadraticTerm})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function iscanonical(f::Union{SAF, VAF})
-    is_strictly_sorted(f.terms, termindices, t -> !iszero(coefficient(t)))
+function iscanonical(f::Union{SAF, VAF, SQF, VQF})
+    is_strictly_sorted(f.terms, MOI.term_indices,
+                       t -> !iszero(MOI.coefficient(t)))
 end
 
 """
@@ -266,16 +261,31 @@ If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-canonical(f::Union{SAF, VAF}) = canonicalize!(copy(f))
+canonical(f::Union{SAF, VAF, SQF, VQF}) = canonicalize!(copy(f))
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
-Convert a function to canonical form in-place, without allocating a copy to hold the result.
-See [`canonical`](@ref).
+Convert a function to canonical form in-place, without allocating a copy to hold
+the result. See [`canonical`](@ref).
 """
 function canonicalize!(f::Union{SAF, VAF})
-    sort_and_compress!(f.terms, termindices, t -> !iszero(coefficient(t)), unsafe_add)
+    sort_and_compress!(f.terms, MOI.term_indices,
+                       t -> !iszero(MOI.coefficient(t)), unsafe_add)
+    return f
+end
+
+"""
+    canonicalize!(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
+
+Convert a function to canonical form in-place, without allocating a copy to hold
+the result. See [`canonical`](@ref).
+"""
+function canonicalize!(f::Union{SQF, VQF})
+    sort_and_compress!(f.affine_terms, MOI.term_indices,
+                       t -> !iszero(MOI.coefficient(t)), unsafe_add)
+    sort_and_compress!(f.quadratic_terms, MOI.term_indices,
+                       t -> !iszero(MOI.coefficient(t)), unsafe_add)
     return f
 end
 
@@ -355,7 +365,7 @@ isapprox_zero(α::AbstractFloat, tol) = -tol < α < tol
 isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
 function isapprox_zero(t::Union{MOI.ScalarAffineTerm,
                                 MOI.ScalarQuadraticTerm}, tol)
-    isapprox_zero(t.coefficient, tol)
+    isapprox_zero(MOI.coefficient(t), tol)
 end
 
 """
@@ -453,11 +463,11 @@ function removevariable(f::VVF, vi)
     VVF(_rmvar(f.variables, vi))
 end
 function removevariable(f::Union{SAF, VAF}, vi)
-    typeof(f)(_rmvar(f.terms, vi), _constant(f))
+    typeof(f)(_rmvar(f.terms, vi), MOI._constant(f))
 end
 function removevariable(f::Union{SQF, VQF}, vi)
     terms = _rmvar.((f.affine_terms, f.quadratic_terms), Ref(vi))
-    typeof(f)(terms..., _constant(f))
+    typeof(f)(terms..., MOI._constant(f))
 end
 
 """
@@ -592,6 +602,11 @@ function operate_term(::typeof(*), α::T, t::MOI.ScalarQuadraticTerm{T}) where T
     MOI.ScalarQuadraticTerm(α * t.coefficient, t.variable_index_1,
                             t.variable_index_2)
 end
+function operate_term(::typeof(*), t1::MOI.ScalarAffineTerm,
+                      t2::MOI.ScalarAffineTerm)
+    MOI.ScalarQuadraticTerm(t1.coefficient * t2.coefficient, t1.variable_index,
+                            t2.variable_index)
+end
 
 function operate_term(::typeof(/), t::MOI.ScalarAffineTerm{T}, α::T) where T
     MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
@@ -641,6 +656,12 @@ function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
 end
 
 ## operate!
+# + with at least 3 arguments
+function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where T
+    operate!(op, T, f, g)
+    return operate!(+, T, f, h, args...)
+end
+
 # Scalar Variable +/- ...
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.SingleVariable,
@@ -697,7 +718,27 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
 end
 
 ## operate
+# + with at least 3 arguments, can use in-place as the user cannot use
+# intermediate results
+function operate(op::typeof(+), ::Type{T}, f, g, h, args...) where T
+    return operate!(+, T, operate(+, T, f, g), h, args...)
+end
+
+# Scalar number +/- ...
+function operate(op::typeof(+), ::Type{T}, α::T, f::ScalarLike{T}) where T
+    return operate(op, T, f, α)
+end
+function operate(op::typeof(-), ::Type{T}, α::T, f::ScalarLike{T}) where T
+    return operate!(+, T, operate(-, T, f), α)
+end
+
 # Scalar Variable +/- ...
+function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
+                 f::MOI.SingleVariable, α::T) where T
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T),
+                                                             f.variable)],
+                                       op(α))
+end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.SingleVariable,
                  g::MOI.SingleVariable) where T
@@ -745,14 +786,20 @@ end
 function Base.:+(args::ScalarLike{T}...) where T
     return operate(+, T, args...)
 end
-function Base.:+(f::ScalarLike{T}, g::T) where T
-    return operate(+, T, f, g)
+function Base.:+(α::T, f::ScalarLike{T}) where T
+    return operate(+, T, α, f)
+end
+function Base.:+(f::ScalarLike{T}, α::T) where T
+    return operate(+, T, f, α)
 end
 function Base.:-(args::ScalarLike{T}...) where T
     return operate(-, T, args...)
 end
-function Base.:-(f::ScalarLike{T}, g::T) where T
-    return operate(-, T, f, g)
+function Base.:-(f::ScalarLike{T}, α::T) where T
+    return operate(-, T, f, α)
+end
+function Base.:-(α::T, f::ScalarLike{T}) where T
+    return operate(-, T, α, f)
 end
 
 ####################################### * ######################################
@@ -761,6 +808,14 @@ function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
                                           MOI.ScalarAffineFunction{T}}}) where T
     return MOI.ScalarAffineFunction{T}
 end
+function promote_operation(::typeof(*), ::Type{T},
+                           ::Type{<:Union{MOI.SingleVariable,
+                                          MOI.ScalarAffineFunction{T}}},
+                           ::Type{<:Union{MOI.SingleVariable,
+                                          MOI.ScalarAffineFunction{T}}}) where T
+    return MOI.ScalarQuadraticFunction{T}
+end
+
 
 function operate!(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
     return operate(*, T, α, f)
@@ -783,6 +838,60 @@ end
 function operate(::typeof(*), ::Type{T}, α::T,
                  f::MOI.ScalarQuadraticFunction) where T
     return operate!(*, T, copy(f), α)
+end
+
+function operate(::typeof(*), ::Type{T}, f::MOI.SingleVariable,
+                 g::MOI.SingleVariable) where T
+    return MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{T}[],
+                                       [MOI.ScalarQuadraticTerm(one(T),
+                                                                f.variable,
+                                                                g.variable)],
+                                       zero(T))
+end
+
+function operate(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction{T},
+                 g::MOI.SingleVariable) where T
+    aff_terms = [MOI.ScalarAffineTerm(f.constant, g.variable)]
+    quad_terms = map(t -> MOI.ScalarQuadraticTerm(t.coefficient,
+                                                  t.variable_index,
+                                                  g.variable),
+                     f.terms)
+    return MOI.ScalarQuadraticFunction(aff_terms, quad_terms, zero(T))
+end
+
+function operate(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction{T},
+                 g::MOI.ScalarAffineFunction{T}) where T
+    nfterms = length(f.terms)
+    ngterms = length(g.terms)
+    quad_terms = Vector{MOI.ScalarQuadraticTerm{T}}(undef, nfterms * ngterms)
+    k = 0
+    for t1 in f.terms
+        for t2 in g.terms
+            k += 1
+            quad_terms[k] = operate_term(*, t1, t2)
+        end
+    end
+    @assert k == length(quad_terms)
+    if iszero(f.constant)
+        if iszero(g.constant)
+            aff_terms = MOI.ScalarAffineTerm{T}[]
+        else
+            aff_terms = operate_term.(*, g.constant, f.terms)
+        end
+    else
+        if iszero(g.constant)
+            aff_terms = operate_term.(*, f.constant, g.terms)
+        else
+            aff_terms = Vector{MOI.ScalarAffineTerm{T}}(undef,
+                                                        nfterms + ngterms)
+            map!(t -> operate_term(*, g.constant, t), aff_terms, f.terms)
+            for i in 1:ngterms
+                aff_terms[nfterms + i] = operate_term(*, f.constant, g.terms[i])
+            end
+        end
+    end
+    constant = f.constant * g.constant
+    return MOI.ScalarQuadraticFunction(aff_terms, quad_terms, constant)
 end
 
 function Base.:*(args::ScalarLike{T}...) where T

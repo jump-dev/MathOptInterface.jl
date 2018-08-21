@@ -227,10 +227,10 @@
                                              MOI.ScalarAffineFunction{Int},
                                              MOI.ScalarQuadraticFunction{Int}) == MOI.ScalarQuadraticFunction{Int}
             end
-            f = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
-                                            MOI.ScalarQuadraticTerm.([1], [x], [x]), 4) +
-                MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                            MOI.ScalarQuadraticTerm.([2, 3], [y, x], [y, y]), 3)
+            fx = MOI.SingleVariable(x)
+            fy = MOI.SingleVariable(y)
+            f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
+            MOIU.canonicalize!(f)
             @test MOI.output_dimension(f) == 1
             @testset "isapprox_zero" begin
                 @test !MOIU.isapprox_zero(f, 1e-8)
@@ -238,6 +238,14 @@
                 @test MOIU.isapprox_zero(0 * f, 1e-8)
             end
             @testset "operate" begin
+                @test f ≈ 7 + MOIU.operate(*, Int, fx, fx) + 3fx * (fy + 1) + 2fy * fy
+                @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
+                @test f ≈ begin
+                    MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
+                                                MOI.ScalarQuadraticTerm.([1], [x], [x]), 4) +
+                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
+                                            MOI.ScalarQuadraticTerm.([2, 3], [y, x], [y, y]), 3)
+                end
                 @test f ≈ begin
                     MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
                                                 MOI.ScalarQuadraticTerm.([1], [x], [x]), 10) -
@@ -320,9 +328,9 @@
     end
     @testset "Conversion to canonical form" begin
         function isapprox_ordered(f1::T, f2::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
-            ((MOIU.termindices.(f1.terms) == MOIU.termindices.(f2.terms)) &&
-             (MOIU._constant(f1) ≈ MOIU._constant(f2)) &&
-             (MOIU.coefficient.(f1.terms) ≈ MOIU.coefficient.(f2.terms)))
+            ((MOI.term_indices.(f1.terms) == MOI.term_indices.(f2.terms)) &&
+             (MOI._constant(f1) ≈ MOI._constant(f2)) &&
+             (MOI.coefficient.(f1.terms) ≈ MOI.coefficient.(f2.terms)))
         end
         function test_canonicalization(f::T, expected::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
             @test MOIU.iscanonical(expected)
