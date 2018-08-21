@@ -131,15 +131,19 @@ Return a vector of attributes corresponding to each constraint in the collection
 
     get(model::ModelLike, ::Type{VariableIndex}, name::String)
 
-If a variable with name `name` exists in the model `model`, return the corresponding index, otherwise throw a `KeyError`.
+If a variable with name `name` exists in the model `model`, return the
+corresponding index, otherwise return `nothing`.
 
     get(model::ModelLike, ::Type{ConstraintIndex{F,S}}, name::String) where {F<:AbstractFunction,S<:AbstractSet}
 
-If an `F`-in-`S` constraint with name `name` exists in the model `model`, return the corresponding index, otherwise throw a `KeyError`.
+If an `F`-in-`S` constraint with name `name` exists in the model `model`, return
+the corresponding index, otherwise return `nothing`.
 
     get(model::ModelLike, ::Type{ConstraintIndex}, name::String)
 
-If *any* constraint with name `name` exists in the model `model`, return the corresponding index, otherwise throw a `KeyError`. This version is available for convenience but may incur a performance penalty because it is not type stable.
+If *any* constraint with name `name` exists in the model `model`, return the
+corresponding index, otherwise return `nothing`. This version is available for
+convenience but may incur a performance penalty because it is not type stable.
 
 ### Examples
 
