@@ -456,7 +456,7 @@ function is_result_attribute(::Union{MOI.ObjectiveValue,
                                      MOI.PrimalStatus,
                                      MOI.DualStatus,
                                      MOI.VariablePrimal,
-                                     MOI.ConstraintBasisStatus,
+                                     MOI.VariableBasisStatus,
                                      MOI.ConstraintPrimal,
                                      MOI.ConstraintDual,
                                      MOI.ConstraintBasisStatus})
