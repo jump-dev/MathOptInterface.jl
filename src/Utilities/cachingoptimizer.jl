@@ -435,6 +435,11 @@ end
 
 Return a `Bool` indicating whether the value of the attribute is determined
 during [`MOI.optimize!`](@ref) hence is part of the result of the optimization.
+
+## Important note when defining new attributes
+
+This function returns `false` by default so it should be implemented for all
+result attributes.
 """
 function is_result_attribute end
 
