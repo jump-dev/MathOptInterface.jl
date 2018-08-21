@@ -849,14 +849,6 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n+1) atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ n atol=atol rtol=rtol
-
-    #    if config.duals
-    #        @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
-    #
-    #        @show MOI.get(model, MOI.ConstraintDual(), gmc)
-    #
-    #        @show MOI.get(model, MOI.ConstraintDual(), c)
-    #    end
     end
 end
 
