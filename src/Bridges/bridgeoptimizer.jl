@@ -208,10 +208,14 @@ end
 # Constraint attributes
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractConstraintAttribute,
-                 ci::CI)
+                 ci::CI{F, S}) where {F, S}
     if isbridged(b, typeof(ci))
         if MOIU.is_result_attribute(attr)
-            MOI.get(b, attr, bridge(b, ci))
+            if attr isa MOI.ConstraintPrimal && need_constraint_primal_fallback(concrete_bridge_type(b, F, S))
+                MOIU.get_fallback(b, attr, ci)
+            else
+                MOI.get(b, attr, bridge(b, ci))
+            end
         else
             MOI.get(b.bridged, attr, ci)
         end

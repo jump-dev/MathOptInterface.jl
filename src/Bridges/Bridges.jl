@@ -25,6 +25,7 @@ include("lazybridgeoptimizer.jl")
 
 # This is used by JuMP and removes the need to update JuMP everytime a bridge is added
 MOIU.@model AllBridgedConstraints () (Interval,) (SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, LogDetConeTriangle, RootDetConeTriangle) () () (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+
 """
     fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 
@@ -33,13 +34,14 @@ Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in thi
 function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
     bridgedmodel = MOIB.LazyBridgeOptimizer(model, AllBridgedConstraints{T}())
     addbridge!(bridgedmodel, MOIB.SplitIntervalBridge{T})
+    addbridge!(bridgedmodel, MOIB.RSOCBridge{T})
+    addbridge!(bridgedmodel, MOIB.SOCtoQuadBridge{T})
     addbridge!(bridgedmodel, MOIB.GeoMeanBridge{T})
     addbridge!(bridgedmodel, MOIB.SquarePSDBridge{T})
     addbridge!(bridgedmodel, MOIB.LogDetBridge{T})
     addbridge!(bridgedmodel, MOIB.RootDetBridge{T})
-    addbridge!(bridgedmodel, MOIB.RSOCBridge{T})
-    addbridge!(bridgedmodel, MOIB.RSOCtoPSDCBridge{T})
     addbridge!(bridgedmodel, MOIB.SOCtoPSDCBridge{T})
+    addbridge!(bridgedmodel, MOIB.RSOCtoPSDCBridge{T})
     bridgedmodel
 end
 
@@ -47,6 +49,8 @@ include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (Interval,) () () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) () ()
 include("rsocbridge.jl")
 @bridge RSOC RSOCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+include("soctoquadbridge.jl")
+@bridge SOCtoQuad SOCtoQuadBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("geomeanbridge.jl")
 @bridge GeoMean GeoMeanBridge () () (GeometricMeanCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("squarepsdbridge.jl")

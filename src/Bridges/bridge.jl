@@ -76,3 +76,11 @@ function concrete_bridge_type(bridge_type::DataType,
                               ::Type{<:MOI.AbstractSet})
     return bridge_type
 end
+
+"""
+    need_constraint_primal_fallback(BT::Type{<:AbstractBridge})
+
+Return a `Bool` indicating whether bridges of concrete type `BT` need the bridge
+optimizer to use `get_fallback`.
+"""
+need_constraint_primal_fallback(::Type{<:AbstractBridge}) = false
