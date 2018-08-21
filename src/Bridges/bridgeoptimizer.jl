@@ -206,28 +206,15 @@ function MOI.set!(b::AbstractBridgeOptimizer,
 end
 
 # Constraint attributes
-## Result constraint attributes
-const ResultConstraintAttribute = Union{MOI.ConstraintPrimalStart,
-                                        MOI.ConstraintDualStart,
-                                        MOI.ConstraintPrimal,
-                                        MOI.ConstraintDual,
-                                        MOI.ConstraintBasisStatus}
-function MOI.get(b::AbstractBridgeOptimizer, attr::ResultConstraintAttribute,
+function MOI.get(b::AbstractBridgeOptimizer,
+                 attr::MOI.AbstractConstraintAttribute,
                  ci::CI)
     if isbridged(b, typeof(ci))
-        MOI.get(b, attr, bridge(b, ci))
-    else
-        MOI.get(b.model, attr, ci)
-    end
-end
-## Model constraint attributes
-const ModelConstraintAttribute = Union{MOI.ConstraintName,
-                                       MOI.ConstraintFunction,
-                                       MOI.ConstraintSet}
-function MOI.get(b::AbstractBridgeOptimizer, attr::ModelConstraintAttribute,
-                 ci::CI)
-    if isbridged(b, typeof(ci))
-        MOI.get(b.bridged, attr, ci)
+        if MOIU.is_result_attribute(attr)
+            MOI.get(b, attr, bridge(b, ci))
+        else
+            MOI.get(b.bridged, attr, ci)
+        end
     else
         MOI.get(b.model, attr, ci)
     end
