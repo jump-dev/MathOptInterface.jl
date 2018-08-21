@@ -205,15 +205,16 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
 
         if config.infeas_certificates
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.get(model, MOI.ResultCount()) > 0
         else
             @test MOI.get(model, MOI.TerminationStatus()) in [MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
         end
-        if config.infeas_certificates || MOI.get(model, MOI.ResultCount()) > 0
+        if MOI.get(model, MOI.ResultCount()) > 0
             @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NoSolution,
                                                          MOI.InfeasiblePoint)
-        end
-        if config.duals && config.infeas_certificates
-            @test MOI.get(model, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            if config.duals && config.infeas_certificates
+                @test MOI.get(model, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            end
         end
         # TODO test dual feasibility and objective sign
     end
@@ -252,15 +253,16 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
 
         if config.infeas_certificates
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.get(model, MOI.ResultCount()) > 0
         else
             @test MOI.get(model, MOI.TerminationStatus()) in [MOI.InfeasibleNoResult, MOI.InfeasibleOrUnbounded]
         end
-        if config.infeas_certificates || MOI.get(model, MOI.ResultCount()) > 0
+        if MOI.get(model, MOI.ResultCount()) > 0
             @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NoSolution,
                                                          MOI.InfeasiblePoint)
-        end
-        if config.duals && config.infeas_certificates
-            @test MOI.get(model, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            if config.duals && config.infeas_certificates
+                @test MOI.get(model, MOI.DualStatus()) == MOI.InfeasibilityCertificate
+            end
         end
         # TODO test dual feasibility and objective sign
     end
