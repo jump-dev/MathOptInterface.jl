@@ -102,8 +102,7 @@ function getvariable(model::MOI.ModelLike, config::TestConfig)
         c1: x >= 1.0
         c2: x <= 2.0
     """)
-    @test MOI.canget(model, MOI.VariableIndex, "x")
-    @test !MOI.canget(model, MOI.VariableIndex, "y")
+    @test MOI.get(model, MOI.VariableIndex, "y") === nothing
     x = MOI.get(model, MOI.VariableIndex, "x")
     @test MOI.isvalid(model, x)
 end

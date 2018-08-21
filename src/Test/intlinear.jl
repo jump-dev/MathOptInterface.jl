@@ -55,47 +55,27 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.ResultCount())
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FeasiblePoint, MOI.NearlyFeasiblePoint ]
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 19.4 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [4,5,1] atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c))
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 10 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.ConstraintPrimal(), typeof(c2))
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 15 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.DualStatus()) == false
-
-        if MOI.canget(model, MOI.ObjectiveBound())
-            @test MOI.get(model, MOI.ObjectiveBound()) >= 19.4
-        end
-        if MOI.canget(model, MOI.RelativeGap())
-            @test MOI.get(model, MOI.RelativeGap()) >= 0.0
-        end
-        if MOI.canget(model, MOI.SolveTime())
-            @test MOI.get(model, MOI.SolveTime()) >= 0.0
-        end
-        if MOI.canget(model, MOI.SimplexIterations())
-            @test MOI.get(model, MOI.SimplexIterations()) >= 0
-        end
-        if MOI.canget(model, MOI.BarrierIterations())
-            @test MOI.get(model, MOI.BarrierIterations()) >= 0
-        end
-        if MOI.canget(model, MOI.NodeCount())
-            @test MOI.get(model, MOI.NodeCount()) >= 0
-        end
+        @test MOI.get(model, MOI.ObjectiveBound()) >= 19.4
+        # FIXME the following are currently not implemented in MockOptimizer
+#        @test MOI.get(model, MOI.RelativeGap()) >= 0.0
+#        @test MOI.get(model, MOI.SolveTime()) >= 0.0
+#        @test MOI.get(model, MOI.SimplexIterations()) >= 0
+#        @test MOI.get(model, MOI.BarrierIterations()) >= 0
+#        @test MOI.get(model, MOI.NodeCount()) >= 0
     end
 end
 
@@ -125,8 +105,6 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1{Float64}}()) == 2
 
 
-        @test MOI.canget(model, MOI.ConstraintSet(), typeof(c2))
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c2))
         #=
             To allow for permutations in the sets and variable vectors
             we're going to sort according to the weights
@@ -145,22 +123,15 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.canget(model, MOI.TerminationStatus())
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(model, MOI.ResultCount())
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.canget(model, MOI.PrimalStatus())
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(model, MOI.ObjectiveValue())
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
-            @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0,1,2] atol=atol rtol=rtol
-
-            @test MOI.canget(model, MOI.DualStatus()) == false
         end
 
         MOI.delete!(model, c1)
@@ -169,19 +140,14 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.canget(model, MOI.TerminationStatus())
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(model, MOI.ResultCount())
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.canget(model, MOI.PrimalStatus())
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(model, MOI.ObjectiveValue())
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 5 atol=atol rtol=rtol
 
-            @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1,1,2] atol=atol rtol=rtol
         end
     end
@@ -224,8 +190,6 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         sos2 = MOI.SOS2([5.0, 4.0, 7.0, 2.0, 1.0])
         c = MOI.addconstraint!(model, vv, sos2)
 
-        @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
-        @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
         #=
             To allow for permutations in the sets and variable vectors
             we're going to sort according to the weights
@@ -244,22 +208,15 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.canget(model, MOI.TerminationStatus())
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(model, MOI.ResultCount())
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.canget(model, MOI.PrimalStatus())
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(model, MOI.ObjectiveValue())
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 15.0 atol=atol rtol=rtol
 
-            @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol=atol rtol=rtol
-
-            @test MOI.canget(model, MOI.DualStatus()) == false
         end
 
         for cref in bin_constraints
@@ -269,22 +226,15 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.canget(model, MOI.TerminationStatus())
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-            @test MOI.canget(model, MOI.ResultCount())
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.canget(model, MOI.PrimalStatus())
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-            @test MOI.canget(model, MOI.ObjectiveValue())
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 30.0 atol=atol rtol=rtol
 
-            @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
             @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol=atol rtol=rtol
-
-            @test MOI.canget(model, MOI.DualStatus()) == false
         end
     end
 end
@@ -327,25 +277,19 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
 
         # test for CPLEX.jl #76
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
     end
 end
@@ -389,16 +333,12 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FeasiblePoint, MOI.NearlyFeasiblePoint ]
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 16 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0, 0, 1, 1] atol=atol rtol=rtol
     end
 end

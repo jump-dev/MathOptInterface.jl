@@ -149,10 +149,6 @@ function MOI.delete!(model::MOI.ModelLike, bridge::SquarePSDBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-                    ::Type{<:SquarePSDBridge{T, F}}) where {T, F}
-    return MOI.canget(model, attr, CI{F, MOI.PositiveSemidefiniteConeTriangle})
-end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::SquarePSDBridge{T}) where T
     tri = MOI.get(model, attr, bridge.psd)
@@ -166,11 +162,6 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
         end
     end
     return sqr
-end
-function MOI.canget(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                    ::Type{SquarePSDBridge{T, F, G}}) where {T, F, G}
-    return MOI.canget(model, attr, CI{F, MOI.PositiveSemidefiniteConeTriangle}) &&
-           MOI.canget(model, attr, CI{G, MOI.EqualTo{T}})
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
                  bridge::SquarePSDBridge)

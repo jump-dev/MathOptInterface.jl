@@ -79,15 +79,7 @@ function _get(model, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, c::R
     [x[1]/s2+x[2]/s2; x[1]/s2-x[2]/s2; x[3:end]]
 end
 # Need to define both `get` methods and redirect to `_get` to avoid ambiguity in dispatch
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal,
-                    ::Type{RSOCBridge{T, F}}) where {T, F}
-    MOI.canget(model, a, CI{F, MOI.SecondOrderCone})
-end
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::RSOCBridge) = _get(model, attr, c)
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual,
-                    ::Type{RSOCBridge{T, F}}) where {T, F}
-    MOI.canget(model, a, CI{F, MOI.SecondOrderCone})
-end
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
 
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCBridge}) = false

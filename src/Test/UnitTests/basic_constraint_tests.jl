@@ -168,17 +168,12 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
 
     @test MOI.supportsconstraint(model, F, S)
 
-    @testset "NumberOfConstraints" begin
-        @test MOI.canget(model, MOI.NumberOfConstraints{F,S}())
-    end
-
     @testset "addconstraint!" begin
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
         c = MOI.addconstraint!(model, constraint_function, set)
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
 
         @testset "ConstraintName" begin
-            @test MOI.canget(model, MOI.ConstraintName(), typeof(c))
             @test MOI.get(model, MOI.ConstraintName(), c) == ""
             @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
             MOI.set!(model, MOI.ConstraintName(), c, "c")
@@ -187,20 +182,17 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
 
         if get_constraint_function
             @testset "ConstraintFunction" begin
-                @test MOI.canget(model, MOI.ConstraintFunction(), typeof(c))
                 @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ constraint_function
             end
         end
         if get_constraint_set
             @testset "ConstraintSet" begin
-                @test MOI.canget(model, MOI.ConstraintSet(), typeof(c))
                 @test MOI.get(model, MOI.ConstraintSet(), c) == set
             end
         end
     end
 
     @testset "ListOfConstraintIndices" begin
-        @test MOI.canget(model, MOI.ListOfConstraintIndices{F,S}())
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         @test length(c_indices) == MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
     end

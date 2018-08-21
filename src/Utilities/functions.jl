@@ -422,9 +422,7 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
     attrs2 = MOI.get(model2, MOI.ListOfModelAttributesSet())
     attr_list = attrs1 ∪ attrs2
     for attr in attr_list
-        @test MOI.canget(model1, attr)
         value1 = MOI.get(model1, attr)
-        @test MOI.canget(model2, attr)
         value2 = MOI.get(model2, attr)
         if value1 isa MOI.AbstractFunction
             @test value2 isa MOI.AbstractFunction

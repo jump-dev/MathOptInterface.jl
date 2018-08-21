@@ -139,11 +139,6 @@ function MOI.delete!(model::MOI.ModelLike, c::GeoMeanBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal,
-                    ::Type{GeoMeanBridge{T, F, G}}) where {T, F, G}
-    MOI.canget(model, a, CI{F, MOI.LessThan{T}}) &&
-    MOI.canget(model, a, CI{G, MOI.RotatedSecondOrderCone})
-end
 function _getconstrattr(model, a, c::GeoMeanBridge{T}) where T
     output = Vector{T}(undef, c.d)
     output[1] = MOI.get(model, a, c.tubc)
@@ -163,7 +158,6 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::GeoMeanBridge
     output[1] += MOI.get(model, MOI.VariablePrimal(), c.xij[1]) / sqrt(N)
     output
 end
-MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{<:GeoMeanBridge}) = false
 #function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::GeoMeanBridge)
 #    output = _getconstrattr(model, a, c)
 #end

@@ -130,11 +130,6 @@ function MOI.delete!(model::MOI.ModelLike, c::LogDetBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{LogDetBridge{T}}) where T
-    MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex) &&
-    MOI.canget(model, a, CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) &&
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle})
-end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::LogDetBridge)
     d = length(c.lcindex)
     Δ = MOI.get(model, MOI.VariablePrimal(), c.Δ)
@@ -142,7 +137,6 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::LogDetBridge)
     x = MOI.get(model, MOI.ConstraintPrimal(), c.sdindex)[1:length(c.Δ)]
     [t; x]
 end
-MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintDual, ::Type{<:LogDetBridge}) = false
 
 # Constraints
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:LogDetBridge}) = false
@@ -201,16 +195,11 @@ function MOI.delete!(model::MOI.ModelLike, c::RootDetBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.canget(model::MOI.ModelLike, a::MOI.ConstraintPrimal, ::Type{RootDetBridge{T}}) where T
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}) &&
-    MOI.canget(model, a, CI{MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone})
-end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::RootDetBridge)
     t = MOI.get(model, MOI.ConstraintPrimal(), c.gmindex)[1]
     x = MOI.get(model, MOI.ConstraintPrimal(), c.sdindex)[1:length(c.Δ)]
     [t; x]
 end
-MOI.canget(model::MOI.ModelLike, ::MOI.ConstraintDual, ::Type{<:RootDetBridge}) = false
 
 # Constraints
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RootDetBridge}) = false

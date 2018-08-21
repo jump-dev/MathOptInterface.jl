@@ -39,16 +39,12 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.canget(model, MOI.TerminationStatus())
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
 
-        @test MOI.canget(model, MOI.PrimalStatus())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
-        @test MOI.canget(model, MOI.ObjectiveValue())
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -2 atol=atol rtol=rtol
 
-        @test MOI.canget(model, MOI.VariablePrimal(), MOI.VariableIndex)
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 0 atol=atol rtol=rtol
