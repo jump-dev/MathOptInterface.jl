@@ -95,7 +95,8 @@ function SquarePSDBridge{T, F, G}(model::MOI.ModelLike, f::F,
             # functions at entries (i, j) and (j, i) are almost identical
             if !MOIU.isapprox_zero(diff, 1e-10)
                 push!(sym, (i, j) => MOIU.add_scalar_constraint(model, diff,
-                                                                MOI.EqualTo(zero(T))))
+                                                                MOI.EqualTo(zero(T)),
+                                                                own_function=true))
             end
         end
         k += dim - j
