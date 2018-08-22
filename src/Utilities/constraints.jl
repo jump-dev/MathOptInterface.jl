@@ -18,9 +18,9 @@ function add_scalar_constraint(model::MOI.ModelLike,
                                func::Union{MOI.ScalarAffineFunction{T},
                                            MOI.ScalarQuadraticFunction{T}},
                                set::MOI.AbstractScalarSet;
-                               own::Bool=false) where T
+                               own_function::Bool=false) where T
     set = shift_constant(set, -func.constant)
-    if !own
+    if !own_function
         func = copy(func)
     end
     func.constant = zero(T)
