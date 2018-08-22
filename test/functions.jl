@@ -226,6 +226,18 @@
                 @test MOIU.promote_operation(+, Int,
                                              MOI.ScalarAffineFunction{Int},
                                              MOI.ScalarQuadraticFunction{Int}) == MOI.ScalarQuadraticFunction{Int}
+                @test MOIU.promote_operation(*, Int,
+                                             MOI.SingleVariable,
+                                             MOI.SingleVariable) == MOI.ScalarQuadraticFunction{Int}
+                @test MOIU.promote_operation(*, Float64,
+                                             MOI.SingleVariable,
+                                             MOI.ScalarAffineFunction{Float64}) == MOI.ScalarQuadraticFunction{Float64}
+                @test MOIU.promote_operation(*, Int,
+                                             MOI.ScalarAffineFunction{Int},
+                                             MOI.SingleVariable) == MOI.ScalarQuadraticFunction{Int}
+                @test MOIU.promote_operation(*, Float64,
+                                             MOI.ScalarAffineFunction{Float64},
+                                             MOI.ScalarAffineFunction{Float64}) == MOI.ScalarQuadraticFunction{Float64}
             end
             fx = MOI.SingleVariable(x)
             fy = MOI.SingleVariable(y)
@@ -236,8 +248,13 @@
                 @test !MOIU.isapprox_zero(f, 1e-8)
                 # Test isapprox_zero with zero terms
                 @test MOIU.isapprox_zero(0 * f, 1e-8)
+                g = 1.0fx * fy - (1 + 1e-6) * fy * fx
+                MOIU.canonicalize!(g)
+                @test MOIU.isapprox_zero(g, 1e-5)
+                @test !MOIU.isapprox_zero(g, 1e-7)
             end
             @testset "operate" begin
+                @test f ≈ 7 + (fx + 2fy) * (1fx + fy) + 3fx
                 @test f ≈ 7 + MOIU.operate(*, Int, fx, fx) + 3fx * (fy + 1) + 2fy * fy
                 @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
                 @test f ≈ begin

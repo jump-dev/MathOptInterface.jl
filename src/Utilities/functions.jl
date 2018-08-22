@@ -196,8 +196,9 @@ of `t1` as the `variable_index`'s of the output without checking that they are
 the same (up to permutation) to those of `t2`.
 """
 function unsafe_add(t1::MOI.ScalarQuadraticTerm, t2::MOI.ScalarQuadraticTerm)
-    return MOI.ScalarAffineTerm(t1.coefficient + t2.coefficient,
-                                t1.variable_index)
+    return MOI.ScalarQuadraticTerm(t1.coefficient + t2.coefficient,
+                                   t1.variable_index_1,
+                                   t1.variable_index_2)
 end
 
 """
@@ -688,6 +689,11 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
     f.constant = op(f.constant, g.constant)
     return f
 end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+                  f::MOI.ScalarAffineFunction{T},
+                  g::MOI.ScalarQuadraticFunction{T}) where T
+    return operate(op, T, f, g)
+end
 # Scalar Quadratic +/-! ...
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.ScalarQuadraticFunction{T},
@@ -786,8 +792,8 @@ end
 function Base.:+(args::ScalarLike{T}...) where T
     return operate(+, T, args...)
 end
-function Base.:+(α::T, f::ScalarLike{T}) where T
-    return operate(+, T, α, f)
+function Base.:+(α::T, f::ScalarLike{T}...) where T
+    return operate(+, T, α, f...)
 end
 function Base.:+(f::ScalarLike{T}, α::T) where T
     return operate(+, T, f, α)
