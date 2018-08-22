@@ -810,12 +810,6 @@ users to avoid extra copies in this case.
 
 Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NearlyFeasiblePoint`, `InfeasiblePoint`, `NearlyInfeasiblePoint`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
 
-### canXXX
-
-For most operations, MOI provides a function `canXXX` that can be used to check if the operation `XXX` is allowed.
-For example, `addconstraint!(model::ModelLike, func::F, set::S)` has the corresponding function `canaddconstraint(model, ::Type{F}, ::Type{S})::Bool`.
-If `canaddconstraint` returns `false`, then calling `addconstraint!` must throw an error (likewise with all `XXX` and `canXXX` pairs). Note that even if `canaddconstraint` returns `true`, `addconstraint!` may still throw an error if, for example, the constraint function does not meet some sparsity conditions, one of the coefficients is `NaN`, or an invalid variable index is provided. This is because (in most cases) the `canXXX` method receives type information instead of the actual arguments.
-
 ### Package Naming
 
 MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example).
