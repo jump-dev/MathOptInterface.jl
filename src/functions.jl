@@ -293,7 +293,7 @@ end
     coefficient(t::Union{ScalarAffineTerm, ScalarQuadraticTerm
                          VectorAffineTerm, VectorQuadraticTerm})
 
-Finds the coefficient associated with the term `t`.
+Finds the coefficient stored in the term `t`.
 """
 function coefficient end
 
