@@ -18,7 +18,7 @@ function extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int) wher
     n = trimap(d, d)
     N = trimap(2d, 2d)
 
-    Δ = MOI.addvariables!(model, n)
+    Δ = MOI.add_variables(model, n)
 
     f_scalars = MOIU.eachscalar(f)
     X = f_scalars[2:(n+1)]
@@ -79,7 +79,7 @@ end
 function LogDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.LogDetConeTriangle) where T
     d = s.side_dimension
     t, D, Δ, sdindex = extract_eigenvalues(model, f, d)
-    l = MOI.addvariables!(model, d)
+    l = MOI.add_variables(model, d)
     lcindex = sublog.(model, l, D, T)
     tlindex = subsum(model, t, l, T)
 

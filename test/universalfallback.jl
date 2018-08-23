@@ -85,13 +85,13 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         listattr = MOI.ListOfModelAttributesSet()
         test_optmodattrs(uf, model, attr, listattr)
     end
-    x = MOI.addvariable!(uf)
-    y, z = MOI.addvariables!(uf, 2)
+    x = MOI.add_variable(uf)
+    y, z = MOI.add_variables(uf, 2)
     @testset "Variable Attribute" begin
         VI = MOI.VariableIndex
         attr = MOIT.UnknownVariableAttribute()
         listattr = MOI.ListOfVariableAttributesSet()
-        test_varconattrs(uf, model, attr, listattr, VI, MOI.addvariable!, x, y, z)
+        test_varconattrs(uf, model, attr, listattr, VI, MOI.add_variable, x, y, z)
     end
     @testset "Constraint Attribute" begin
         attr = MOIT.UnknownConstraintAttribute()
@@ -116,8 +116,8 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         end
         # To remove the constraint attributes added in the previous testset
         MOI.empty!(uf)
-        x = MOI.addvariable!(uf)
-        y, z = MOI.addvariables!(uf, 2)
+        x = MOI.add_variable(uf)
+        y, z = MOI.add_variables(uf, 2)
         @testset "Unsupported constraint" begin
             cx = MOI.addconstraint!(uf, x, MOI.EqualTo(0.))
             cy = MOI.addconstraint!(uf, y, MOI.EqualTo(1.))

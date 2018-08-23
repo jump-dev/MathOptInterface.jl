@@ -375,7 +375,7 @@ A model attribute for the type `F` of the objective function set using the
 
 In the following code, `attr` should be equal to `MOI.SingleVariable`:
 ```julia
-x = MOI.addvariable!(model)
+x = MOI.add_variable(model)
 MOI.set!(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
          MOI.SingleVariable(x))
 attr = MOI.get(model, MOI.ObjectiveFunctionType())

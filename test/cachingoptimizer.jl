@@ -9,8 +9,8 @@
     MOIU.resetoptimizer!(m, s)
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
-    v = MOI.addvariable!(m)
-    x = MOI.addvariables!(m, 2)
+    v = MOI.add_variable(m)
+    x = MOI.add_variables(m, 2)
     saf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], [v; x]), 0.0)
     @test MOI.supports(m, MOI.ObjectiveFunction{typeof(saf)}())
     MOI.set!(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
@@ -78,7 +78,7 @@ end
     m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.Automatic)
     @test MOIU.state(m) == MOIU.NoOptimizer
 
-    v = MOI.addvariable!(m)
+    v = MOI.add_variable(m)
     @test MOI.supports(m, MOI.VariableName(), typeof(v))
     MOI.set!(m, MOI.VariableName(), v, "v")
     @test MOI.get(m, MOI.VariableName(), v) == "v"
@@ -148,7 +148,7 @@ end
 
     @testset "Add variable not allowed" begin
         s.add_var_allowed = false # Simulate optimizer that cannot add variables incrementally
-        MOI.addvariable!(m)
+        MOI.add_variable(m)
         @test MOIU.state(m) == MOIU.EmptyOptimizer
         @test_throws MOI.AddVariableNotAllowed MOIU.attachoptimizer!(m)
         @test MOIU.state(m) == MOIU.EmptyOptimizer
@@ -157,13 +157,13 @@ end
         MOIU.attachoptimizer!(m)
         @test MOIU.state(m) == MOIU.AttachedOptimizer
         s.add_var_allowed = false
-        MOI.addvariables!(m, 2)
+        MOI.add_variables(m, 2)
         s.add_var_allowed = true
         @test MOIU.state(m) == MOIU.EmptyOptimizer
     end
 
     @testset "Delete not allowed" begin
-        vi = MOI.addvariable!(m)
+        vi = MOI.add_variable(m)
         s.delete_allowed = false # Simulate optimizer that cannot delete variable
         MOI.delete!(m, vi)
         s.delete_allowed = true
@@ -171,7 +171,7 @@ end
         MOIU.attachoptimizer!(m)
         @test MOIU.state(m) == MOIU.AttachedOptimizer
 
-        vi = MOI.addvariable!(m)
+        vi = MOI.add_variable(m)
         ci = MOI.addconstraint!(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
         s.delete_allowed = false # Simulate optimizer that cannot delete constraint
         MOI.delete!(m, ci)
@@ -195,7 +195,7 @@ end
     end
     @testset "Non-empty optimizer" begin
         s = MOIU.MockOptimizer(ModelForMock{Float64}())
-        MOI.addvariable!(s)
+        MOI.add_variable(s)
         model = ModelForCachingOptimizer{Float64}()
         @test MOI.isempty(model)
         @test !MOI.isempty(s)
@@ -204,7 +204,7 @@ end
     @testset "Non-empty model" begin
         s = MOIU.MockOptimizer(ModelForMock{Float64}())
         model = ModelForCachingOptimizer{Float64}()
-        MOI.addvariable!(model)
+        MOI.add_variable(model)
         @test !MOI.isempty(model)
         @test MOI.isempty(s)
         @test_throws AssertionError MOIU.CachingOptimizer(model, s)

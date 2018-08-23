@@ -135,7 +135,7 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "Duplicate on-diagonal" begin
         # max x + 2y | y + x^2 + x^2 <= 1, x >= 0.5, y >= 0.5
         MOI.empty!(model)
-        x = MOI.addvariables!(model, 2)
+        x = MOI.add_variables(model, 2)
         MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
         MOI.set!(model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -159,7 +159,7 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "Duplicate off-diagonal" begin
         # max x + 2y | x^2 + 0.25y*x + 0.25x*y + 0.5x*y + y^2 <= 1, x >= 0.5, y >= 0.5
         MOI.empty!(model)
-        x = MOI.addvariables!(model, 2)
+        x = MOI.add_variables(model, 2)
         MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
         MOI.set!(model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -197,7 +197,7 @@ If `config.solve=true` confirm that it solves correctly.
 """
 function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     # helpers. The function 1.0x + 0.0
     saf  = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     vaf  = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [0.0])

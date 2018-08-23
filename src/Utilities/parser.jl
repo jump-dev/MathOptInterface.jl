@@ -218,12 +218,12 @@ function loadfromstring!(model, s)
         if label == :variables
             if isexpr(ex, :tuple)
                 for v in ex.args
-                    vindex = MOI.addvariable!(model)
+                    vindex = MOI.add_variable(model)
                     MOI.set!(model, MOI.VariableName(), vindex, String(v))
                 end
             else
                 @assert isa(ex, Symbol)
-                vindex = MOI.addvariable!(model)
+                vindex = MOI.add_variable(model)
                 MOI.set!(model, MOI.VariableName(), vindex, String(ex))
             end
         elseif label == :maxobjective

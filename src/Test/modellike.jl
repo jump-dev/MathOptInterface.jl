@@ -18,7 +18,7 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 0
 
         @test MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
-        v = MOI.addvariables!(model, 2)
+        v = MOI.add_variables(model, 2)
         @test MOI.get(model, MOI.VariableName(), v[1]) == ""
 
         MOI.set!(model, MOI.VariableName(), v[1], "")
@@ -80,10 +80,10 @@ end
 
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
-    v = MOI.addvariables!(model, 2)
+    v = MOI.add_variables(model, 2)
     @test MOI.isvalid(model, v[1])
     @test MOI.isvalid(model, v[2])
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     @test MOI.isvalid(model, x)
     MOI.delete!(model, x)
     @test !MOI.isvalid(model, x)
@@ -99,7 +99,7 @@ end
 
 function emptytest(model::MOI.ModelLike)
     # Taken from LIN1
-    v = MOI.addvariables!(model, 3)
+    v = MOI.add_variables(model, 3)
     @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
     vc = MOI.addconstraint!(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
@@ -173,7 +173,7 @@ end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.set!(src, MOI.Name(), "ModelName")
-    v = MOI.addvariables!(src, 3)
+    v = MOI.add_variables(src, 3)
     MOI.set!(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
     csv = MOI.addconstraint!(src, MOI.SingleVariable(v[2]), MOI.EqualTo(2.))
     MOI.set!(src, MOI.ConstraintName(), csv, "csv")
@@ -230,7 +230,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
 end
 
 function supportsconstrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT}) where {GoodT, BadT}
-    v = MOI.addvariable!(model)
+    v = MOI.add_variable(model)
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.EqualTo{GoodT})
     @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{GoodT}, MOI.EqualTo{GoodT})
     # Bad type
@@ -252,15 +252,15 @@ sorted by creation time.
 """
 function orderedindicestest(model::MOI.ModelLike)
     MOI.empty!(model)
-    v1 = MOI.addvariable!(model)
+    v1 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]
-    v2 = MOI.addvariable!(model)
+    v2 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1, v2]
     MOI.delete!(model, v1)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2]
-    v3 = MOI.addvariable!(model)
+    v3 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3]
-    v4 = MOI.addvariable!(model)
+    v4 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3, v4]
 
     # Note: there are too many combinations to test, so we're just going to

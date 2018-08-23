@@ -2,8 +2,8 @@
     Functions in this file test functionality relating to variables in MOI.
 
 ### Functionality currently tested
-    - addvariables!
-    - addvariable!
+    - add_variables
+    - add_variable
     - deleting variables
     - get/set! VariableName
     - isvalid for VariableIndex
@@ -26,7 +26,7 @@ function add_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v = MOI.addvariable!(model)
+    v = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 end
 unittests["add_variable"]     = add_variable
@@ -40,7 +40,7 @@ function add_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v = MOI.addvariables!(model, 2)
+    v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 end
 unittests["add_variables"] = add_variables
@@ -54,7 +54,7 @@ function delete_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v = MOI.addvariable!(model)
+    v = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     MOI.delete!(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -70,11 +70,11 @@ function delete_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v = MOI.addvariables!(model, 2)
+    v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     MOI.delete!(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v = MOI.addvariables!(model, 2)
+    v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     MOI.delete!(model, v[1])
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -115,14 +115,14 @@ Test getting and setting variable names.
 """
 function variablenames(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    v = MOI.addvariable!(model)
+    v = MOI.add_variable(model)
     @test MOI.get(model, MOI.VariableName(), v) == ""
     @test MOI.supports(model, MOI.VariableName(), typeof(v))
     MOI.set!(model, MOI.VariableName(), v, "x")
     @test MOI.get(model, MOI.VariableName(), v) == "x"
     MOI.set!(model, MOI.VariableName(), v, "y")
     @test MOI.get(model, MOI.VariableName(), v) == "y"
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     MOI.set!(model, MOI.VariableName(), x, "x")
     @test MOI.get(model, MOI.VariableName(), x) == "x"
 end

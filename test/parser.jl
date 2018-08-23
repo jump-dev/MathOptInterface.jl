@@ -40,7 +40,7 @@ end
         bound: x >= 1.0
         """
         model = GeneralModel{Float64}()
-        x = MOI.addvariable!(model)
+        x = MOI.add_variable(model)
         MOI.set!(model, MOI.VariableName(), x, "x")
         bound = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
         MOI.set!(model, MOI.ConstraintName(), bound, "bound")
@@ -58,8 +58,8 @@ end
         linear3: x + y == 1.0
         """
         model = GeneralModel{Float64}()
-        x = MOI.addvariable!(model)
-        y = MOI.addvariable!(model)
+        x = MOI.add_variable(model)
+        y = MOI.add_variable(model)
         MOI.set!(model, MOI.VariableName(), x, "x")
         MOI.set!(model, MOI.VariableName(), y, "y")
         linear1 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]), 0.0), MOI.GreaterThan(1.0))
@@ -80,8 +80,8 @@ end
         minobjective: x + -2y + 1.0
         """
         model = GeneralModel{Float64}()
-        x = MOI.addvariable!(model)
-        y = MOI.addvariable!(model)
+        x = MOI.add_variable(model)
+        y = MOI.add_variable(model)
         MOI.set!(model, MOI.VariableName(), x, "x")
         MOI.set!(model, MOI.VariableName(), y, "y")
         MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -2.0], [x, y]), 1.0))
@@ -98,8 +98,8 @@ end
         maxobjective: x + -2y + 1.0
         """
         model = GeneralModel{Float64}()
-        x = MOI.addvariable!(model)
-        y = MOI.addvariable!(model)
+        x = MOI.add_variable(model)
+        y = MOI.add_variable(model)
         MOI.set!(model, MOI.VariableName(), x, "x")
         MOI.set!(model, MOI.VariableName(), y, "y")
         MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -2.0], [x, y]), 1.0))
@@ -118,9 +118,9 @@ end
         affsoc2: [1.0,2.0,3.0] in SecondOrderCone(3)
         """
         model = GeneralModel{Float64}()
-        x = MOI.addvariable!(model)
-        y = MOI.addvariable!(model)
-        z = MOI.addvariable!(model)
+        x = MOI.add_variable(model)
+        y = MOI.add_variable(model)
+        z = MOI.add_variable(model)
         MOI.set!(model, MOI.VariableName(), x, "x")
         MOI.set!(model, MOI.VariableName(), y, "y")
         MOI.set!(model, MOI.VariableName(), z, "z")

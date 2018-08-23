@@ -74,7 +74,7 @@ end
         model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
         @test !MOIB.supportsbridgingconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
 
-        x, y = MOI.addvariables!(model, 2)
+        x, y = MOI.add_variables(model, 2)
         @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
         f1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 7)
@@ -135,7 +135,7 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
     @testset "Bridge selection" begin
         MOI.empty!(bridgedmock)
         @test !(MOI.supportsconstraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
-        x = MOI.addvariables!(bridgedmock, 3)
+        x = MOI.add_variables(bridgedmock, 3)
         c = MOI.addconstraint!(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
         @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
         @test bridgedmock.dist[(MathOptInterface.VectorOfVariables, MathOptInterface.RotatedSecondOrderCone)] == 1

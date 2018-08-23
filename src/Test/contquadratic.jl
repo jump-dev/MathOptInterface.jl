@@ -15,7 +15,7 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    v = MOI.addvariables!(model, 3)
+    v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
     cf1 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,2.0,3.0], v), 0.0)
@@ -68,7 +68,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    v = MOI.addvariables!(model, 3)
+    v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
     c1f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,2.0,3.0], v), 0.0)
@@ -141,8 +141,8 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
-    y = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
 
     MOI.addconstraint!(model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [x,y]), 0.0),
@@ -220,8 +220,8 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
-    y = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
     c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,2,2], MOI.ScalarAffineTerm.([-1.0,1.0,1.0,1.0], [x,y,x,y])), [0.0,0.0]), MOI.Nonnegatives(2))
@@ -281,7 +281,7 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
     cf = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(0.0, x)], [MOI.ScalarQuadraticTerm(2.0, x, x)], 0.0)
@@ -330,7 +330,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
     cf = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[], [MOI.ScalarQuadraticTerm(2.0, x, x)], 0.0)
@@ -393,9 +393,9 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
-    y = MOI.addvariable!(model)
-    t = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
     c1f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x,y]), 0.0)

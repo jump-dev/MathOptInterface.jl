@@ -162,7 +162,7 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     get_constraint_set::Bool      = true
     )
     MOI.empty!(model)
-    x = MOI.addvariables!(model, N)
+    x = MOI.add_variables(model, N)
     constraint_function = func(x)
     F, S = typeof(constraint_function), typeof(set)
 

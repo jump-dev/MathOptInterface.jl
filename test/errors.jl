@@ -12,9 +12,9 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
     model = DummyModel()
 
     @testset "AddVariableNotAllowed" begin
-        @test_throws MOI.AddVariableNotAllowed MOI.addvariable!(model)
+        @test_throws MOI.AddVariableNotAllowed MOI.add_variable(model)
         try
-            MOI.addvariable!(model)
+            MOI.add_variable(model)
         catch err
             @test sprint(showerror, err) == "MathOptInterface.AddVariableNotAllowed:" *
             " Adding variables cannot be performed. You may want to use a" *
@@ -22,7 +22,7 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
             " `resetoptimizer!` before doing this operation if the" *
             " `CachingOptimizer` is in `Manual` mode."
         end
-        @test_throws MOI.AddVariableNotAllowed MOI.addvariables!(model, 2)
+        @test_throws MOI.AddVariableNotAllowed MOI.add_variables(model, 2)
     end
 
     vi = MOI.VariableIndex(1)

@@ -8,7 +8,7 @@ end
     MOI.set!(optimizer, MOIU.MockModelAttribute(), 10)
     @test MOI.get(optimizer, MOIU.MockModelAttribute()) == 10
 
-    v1 = MOI.addvariable!(optimizer)
+    v1 = MOI.add_variable(optimizer)
     @test MOI.supports(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
     MOI.set!(optimizer, MOIU.MockVariableAttribute(), v1, 11)
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), v1) == 11
@@ -27,7 +27,7 @@ end
 @testset "Mock optimizer optimizer solve no result" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
 
-    v1 = MOI.addvariable!(optimizer)
+    v1 = MOI.add_variable(optimizer)
 
     # Load fake solution
     MOI.set!(optimizer, MOI.TerminationStatus(), MOI.InfeasibleNoResult)
@@ -42,7 +42,7 @@ end
                                    eval_objective_value=false,
                                    eval_variable_constraint_dual=false)
 
-    v = MOI.addvariables!(optimizer, 2)
+    v = MOI.add_variables(optimizer, 2)
     c1 = MOI.addconstraint!(optimizer, MOI.SingleVariable(v[1]), MOI.GreaterThan(1.0))
     soc = MOI.addconstraint!(optimizer, MOI.VectorOfVariables(v), MOI.SecondOrderCone(2))
 

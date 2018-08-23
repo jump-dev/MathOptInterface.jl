@@ -18,7 +18,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x,y,z = MOI.addvariables!(model, 3)
+    x,y,z = MOI.add_variables(model, 3)
 
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0,-1.0], [y,z]), 0.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
