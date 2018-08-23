@@ -109,7 +109,7 @@ function subsum(model, t::MOI.ScalarAffineFunction, l::Vector{MOI.VariableIndex}
     n = length(l)
     f = MOIU.operate!(-, T, t, MOIU.operate(sum, T, l))
     return MOIU.add_scalar_constraint(model, f, MOI.LessThan(zero(T)),
-                                      own_function=true)
+                                      allow_modify_function=true)
 end
 
 # Attributes, Bridge acting as an model

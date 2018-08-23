@@ -71,7 +71,7 @@ function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
     tubc = MOIU.add_scalar_constraint(model,
                                       MOIU.operate!(+, T, t, -sN * xl1),
                                       MOI.LessThan(zero(T)),
-                                      own_function=true)
+                                      allow_modify_function=true)
 
     socrc = Vector{CI{G, MOI.RotatedSecondOrderCone}}(undef, N-1)
     offset = offsetnext = 0
