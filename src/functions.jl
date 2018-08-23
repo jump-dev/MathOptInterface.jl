@@ -289,20 +289,62 @@ function sum_dict(kvs::Vector{Pair{K, V}}) where {K, V}
     d
 end
 
-# _pair transforms a *Term into a pair key => coefficient where the key groups the variables of the term and its output_index if it is not one.
-function _pair(t::Union{VectorAffineTerm, VectorQuadraticTerm})
-    p = _pair(t.scalar_term)
-    (t.output_index, p.first) => p.second
+"""
+    coefficient(t::Union{ScalarAffineTerm, ScalarQuadraticTerm
+                         VectorAffineTerm, VectorQuadraticTerm})
+
+Finds the coefficient stored in the term `t`.
+"""
+function coefficient end
+
+function coefficient(t::Union{ScalarAffineTerm, ScalarQuadraticTerm})
+    return t.coefficient
 end
-_pair(t::ScalarAffineTerm) = t.variable_index => t.coefficient
-# For quadratic terms, x*y == y*x
-_canonicalize(v1::VariableIndex, v2::VariableIndex) = VariableIndex.(extrema((v1.value, v2.value)))
-_pair(t::ScalarQuadraticTerm) = _canonicalize(t.variable_index_1, t.variable_index_2) => t.coefficient
+function coefficient(t::Union{VectorAffineTerm, VectorQuadraticTerm})
+    return t.scalar_term.coefficient
+end
 
-_dicts(f::Union{ScalarAffineFunction, VectorAffineFunction}) = (sum_dict(_pair.(f.terms)),)
+"""
+    term_indices(t::Union{ScalarAffineTerm, ScalarQuadraticTerm,
+                         VectorAffineTerm, VectorQuadraticTerm})
 
-_dicts(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction}) = (sum_dict(_pair.(f.affine_terms)),
-                                                                      sum_dict(_pair.(f.quadratic_terms)))
+Returns the indices of the input term `t` as a tuple of `Int`s.
+
+* For `t::ScalarAffineTerm`, this is a 1-tuple of the variable index.
+* For `t::ScalarQuadraticTerm`, this is a 2-tuple of the variable indices
+  in non-decreasing order.
+* For `t::VectorAffineTerm`, this is a 2-tuple of the row/output and
+  variable indices.
+* For `t::VectorQuadraticTerm`, this is a 3-tuple of the row/output and
+  variable indices in non-decreasing order.
+"""
+term_indices(t::ScalarAffineTerm) = (t.variable_index.value,)
+function term_indices(t::ScalarQuadraticTerm)
+    return minmax(t.variable_index_1.value, t.variable_index_2.value)
+end
+function term_indices(t::Union{VectorAffineTerm, VectorQuadraticTerm})
+    return (t.output_index, term_indices(t.scalar_term)...)
+end
+
+"""
+    term_pair(t::Union{ScalarAffineTerm, ScalarQuadraticTerm,
+                       VectorAffineTerm, VectorQuadraticTerm})
+
+Returns the pair [`term_indices`](@ref) `=>` [`coefficient`](@ref) of the term.
+"""
+function term_pair(t::Union{ScalarAffineTerm, ScalarQuadraticTerm,
+                            VectorAffineTerm, VectorQuadraticTerm})
+    term_indices(t) => coefficient(t)
+end
+
+function _dicts(f::Union{ScalarAffineFunction, VectorAffineFunction})
+    return (sum_dict(term_pair.(f.terms)),)
+end
+
+function _dicts(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
+    return (sum_dict(term_pair.(f.affine_terms)),
+            sum_dict(term_pair.(f.quadratic_terms)))
+end
 
 _constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
 _constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants

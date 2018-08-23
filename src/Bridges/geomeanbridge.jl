@@ -70,7 +70,8 @@ function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
     tubc = MOIU.add_scalar_constraint(model,
                                       MOIU.operate!(+, T, t, -sN * xl1),
-                                      MOI.LessThan(zero(T)))
+                                      MOI.LessThan(zero(T)),
+                                      allow_modify_function=true)
 
     socrc = Vector{CI{G, MOI.RotatedSecondOrderCone}}(undef, N-1)
     offset = offsetnext = 0

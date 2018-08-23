@@ -35,6 +35,7 @@ MOIU.@model(Model,
 @testset "MOI.Utilities" begin
     include("functions.jl")
     include("sets.jl")
+    include("constraints.jl")
     include("model.jl")
     include("universalfallback.jl")
     include("parser.jl")
