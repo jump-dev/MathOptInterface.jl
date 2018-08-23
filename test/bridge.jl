@@ -255,6 +255,23 @@ end
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0),))
     end
 
+    @testset "QuadtoSOC" begin
+        bridgedmock = MOIB.QuadtoSOC{Float64}(mock)
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FeasiblePoint))
+        MOIT.qcp1test(bridgedmock, config)
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+        MOIT.qcp2test(bridgedmock, config)
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+        MOIT.qcp3test(bridgedmock, config)
+        ci = first(MOI.get(bridgedmock,
+                           MOI.ListOfConstraintIndices{MOI.ScalarQuadraticFunction{Float64},
+                                                       MOI.LessThan{Float64}}()))
+        test_delete_bridge(bridgedmock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),))
+    end
+
     @testset "SquarePSD" begin
         bridgedmock = MOIB.SquarePSD{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
