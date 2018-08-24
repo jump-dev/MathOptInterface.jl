@@ -315,11 +315,11 @@ function MOI.modify!(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MO
     MOI.modify!(m.model_cache, obj, change)
 end
 
-MOI.isvalid(m::CachingOptimizer, index::MOI.Index) = MOI.isvalid(m.model_cache, index)
+MOI.is_valid(m::CachingOptimizer, index::MOI.Index) = MOI.is_valid(m.model_cache, index)
 
 function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
     if m.state == AttachedOptimizer
-        if !MOI.isvalid(m, index)
+        if !MOI.is_valid(m, index)
             # The index thrown by m.model_cache would be xored
             throw(MOI.InvalidIndex(index))
         end

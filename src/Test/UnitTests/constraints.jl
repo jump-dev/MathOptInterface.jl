@@ -16,10 +16,10 @@ function getconstraint(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c2") === nothing
     c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c1")
     @test MOI.get(model, MOI.ConstraintIndex, "c1") == c1
-    @test MOI.isvalid(model, c1)
+    @test MOI.is_valid(model, c1)
     c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "c2")
     @test MOI.get(model, MOI.ConstraintIndex, "c2") == c2
-    @test MOI.isvalid(model, c2)
+    @test MOI.is_valid(model, c2)
 end
 unittests["getconstraint"]    = getconstraint
 

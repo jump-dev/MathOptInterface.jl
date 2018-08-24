@@ -98,12 +98,12 @@ attributes are treated differently:
 
 x = add_variable(src)
 
-isvalid(src, x)   # true
-isvalid(dest, x)  # false (`dest` has no variables)
+is_valid(src, x)   # true
+is_valid(dest, x)  # false (`dest` has no variables)
 
 index_map = copy!(dest, src)
-isvalid(dest, x) # false (unless index_map[x] == x)
-isvalid(dest, index_map[x]) # true
+is_valid(dest, x) # false (unless index_map[x] == x)
+is_valid(dest, index_map[x]) # true
 ```
 """
 function copy! end

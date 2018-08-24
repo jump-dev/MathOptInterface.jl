@@ -29,9 +29,9 @@ function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfu
     w = addfun(uf)
     @test MOI.get(uf, listattr) == [attr]
 
-    @test MOI.isvalid(uf, u)
+    @test MOI.is_valid(uf, u)
     MOI.delete!(uf, u)
-    @test !MOI.isvalid(uf, u)
+    @test !MOI.is_valid(uf, u)
     @test_throws MOI.InvalidIndex{typeof(u)} MOI.delete!(uf, u)
     @test MOI.get(uf, listattr) == [attr]
 
