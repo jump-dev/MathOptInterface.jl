@@ -410,12 +410,29 @@ _mod(m::Module, s::Symbol) = Expr(:., m, :($(QuoteNode(s))))
 # (:Zeros) -> :(MOI.Zeros)
 _moi(s::Symbol) = _mod(MOI, s)
 _set(s::SymbolSet) = _moi(s.s)
+_external_set(s::SymbolSet) = s.s
 _fun(s::SymbolFun) = _moi(s.s)
+_external_fun(s::SymbolFun) = s.s
+
+function _external_typedset(s::SymbolSet)
+    if s.typed
+        :($(s.s){T})
+    else
+        s.s
+    end
+end
 function _typedset(s::SymbolSet)
     if s.typed
         :($(_set(s)){T})
     else
         _set(s)
+    end
+end
+function _external_typedfun(s::SymbolFun)
+    if s.typed
+        :($(s.s){T})
+    else
+        s.s
     end
 end
 function _typedfun(s::SymbolFun)
@@ -432,10 +449,14 @@ if VERSION >= v"0.7.0-DEV.2813"
 end
 _field(s::SymbolFS) = Symbol(lowercase(string(s.s)))
 
+_external_getC(s::SymbolSet) = :($MOIU.C{F, $(_external_typedset(s))})
 _getC(s::SymbolSet) = :($MOIU.C{F, $(_typedset(s))})
+_external_getC(s::SymbolFun) = _external_typedfun(s)
 _getC(s::SymbolFun) = _typedfun(s)
 
+_external_getCV(s::SymbolSet) = :($(_external_getC(s))[])
 _getCV(s::SymbolSet) = :($(_getC(s))[])
+_external_getCV(s::SymbolFun) = :($(s.cname){T, $(_external_getC(s))}())
 _getCV(s::SymbolFun) = :($(s.cname){T, $(_getC(s))}())
 
 _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
@@ -494,6 +515,23 @@ end
 The type `LPModel` implements the MathOptInterface API except methods specific to solver models like `optimize!` or `getattribute` with `VariablePrimal`.
 """
 macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
+    code = model_impl(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
+    esc(code)
+end
+
+macro external_model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
+    code = model_impl(modelname, ss, sst, vs, vst, sf, sft, vf, vft, 
+            _set_func = _external_set, _typedset_func = _external_typedset, 
+            _getC_func = _external_getC, _getCV_func = _external_getCV,
+            _fun_func = _external_fun, _typedfun_func = _external_typedfun)
+    esc(code)
+end
+
+function model_impl(modelname, ss, sst, vs, vst, sf, sft, vf, vft; 
+        _set_func = _set, _typedset_func = _typedset, 
+        _getC_func = _getC, _getCV_func = _getCV,
+        _fun_func = _fun, _typedfun_func = _typedfun)
+        
     scalarsets = [SymbolSet.(ss.args, false); SymbolSet.(sst.args, true)]
     vectorsets = [SymbolSet.(vs.args, false); SymbolSet.(vst.args, true)]
 
@@ -509,7 +547,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     for (c, sets) in ((scalarconstraints, scalarsets), (vectorconstraints, vectorsets))
         for s in sets
             field = _field(s)
-            push!(c.args[3].args, :($field::Vector{$(_getC(s))}))
+            push!(c.args[3].args, :($field::Vector{$(_getC_func(s))}))
         end
     end
 
@@ -533,7 +571,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     for f in funs
         cname = f.cname
         field = _field(f)
-        push!(modeldef.args[2].args[3].args, :($field::$cname{T, $(_getC(f))}))
+        push!(modeldef.args[2].args[3].args, :($field::$cname{T, $(_getC_func(f))}))
     end
 
     code = quote
@@ -579,7 +617,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         funct = _mod(MOIU, func)
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets
-                set = _set(s)
+                set = _set_func(s) #s.s for external
                 field = _field(s)
                 code = quote
                     $code
@@ -589,7 +627,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
 
         for f in funs
-            fun = _fun(f)
+            fun = _fun_func(f)
             field = _field(f)
             code = quote
                 $code
@@ -598,15 +636,15 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    return esc(quote
+    code = quote
         $scalarconstraints
         function $scname{T, F}() where {T, F}
-            $scname{T, F}($(_getCV.(scalarsets)...))
+            $scname{T, F}($(_getCV_func.(scalarsets)...))
         end
 
         $vectorconstraints
         function $vcname{T, F}() where {T, F}
-            $vcname{T, F}($(_getCV.(vectorsets)...))
+            $vcname{T, F}($(_getCV_func.(vectorsets)...))
         end
 
         $modeldef
@@ -617,10 +655,11 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                    $(_getCV.(funs)...))
         end
 
-        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
-        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
+        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun_func.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset_func.(scalarsets)...)}}) where T = true
+        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun_func.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset_func.(vectorsets)...)}}) where T = true
 
         $code
-
-    end)
+    end
+    
+    return code
 end

@@ -38,14 +38,38 @@ bridgedmodel = SplitInterval(model)
 will additionally support `ScalarAffineFunction`-in-`Interval`.
 """
 macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
-    bridgedmodelname = Symbol(string(modelname) * "Instance")
-    bridgedfuns = :(Union{$(_tuple_prefix_moi(sf)...), $(_tuple_prefix_moi(sft)...), $(_tuple_prefix_moi(vf)...), $(_tuple_prefix_moi(vft)...)})
-    bridgedsets = :(Union{$(_tuple_prefix_moi(ss)...), $(_tuple_prefix_moi(sst)...), $(_tuple_prefix_moi(vs)...), $(_tuple_prefix_moi(vst)...)})
+    code = bridge_impl(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
+    esc(code)
+end
 
-    esc(quote
-        $MOIU.@model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
+macro external_bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
+    code = bridge_impl(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft,
+                      _prefix_func = (x->x.args), use_external_model = true)
+    esc(code)
+end
+
+function bridge_impl(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft;
+        _prefix_func = _tuple_prefix_moi, use_external_model = false)            
+    bridgedmodelname = Symbol(string(modelname) * "Instance")
+    bridgedfuns = :(Union{$(_prefix_func(sf)...), $(_prefix_func(sft)...), $(_prefix_func(vf)...), $(_prefix_func(vft)...)})
+    bridgedsets = :(Union{$(_prefix_func(ss)...), $(_prefix_func(sst)...), $(_prefix_func(vs)...), $(_prefix_func(vst)...)})
+
+    if use_external_model
+        code = quote
+            $MOIU.@external_model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
+        end
+    else
+        code = quote
+            $MOIU.@model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
+        end
+    end    
+    code = quote
+        $code
         const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, OT}
-        isbridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
+        function MathOptInterface.Bridges.isbridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) 
+            return true
+        end      
         supportsbridgingconstraint(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
-    end)
+    end
+    return code    
 end
