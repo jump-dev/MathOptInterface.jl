@@ -37,7 +37,7 @@ function RSOCBridge{T, F}(model, f::MOI.AbstractVectorFunction, s::MOI.RotatedSe
     RSOCBridge{T, F}(soc)
 end
 
-function MOI.supportsconstraint(::Type{RSOCBridge{T}},
+function MOI.supports_constraint(::Type{RSOCBridge{T}},
                                 ::Type{<:MOI.AbstractVectorFunction},
                                 ::Type{MOI.RotatedSecondOrderCone}) where T
     return true

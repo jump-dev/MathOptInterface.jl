@@ -265,7 +265,7 @@ end
 
 # Constraints
 function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    if MOI.supportsconstraint(model, F, S)
+    if MOI.supports_constraint(model, F, S)
         # We give the index value `nextconstraintid + 1` to the new constraint.
         # As the same counter is used for all pairs of F-in-S constraints,
         # the index value is unique across all constraint types as mentionned in `@model`'s doc.
@@ -617,8 +617,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                    $(_getCV.(funs)...))
         end
 
-        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
-        $MOI.supportsconstraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
+        $MOI.supports_constraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
+        $MOI.supports_constraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
 
         $code
 

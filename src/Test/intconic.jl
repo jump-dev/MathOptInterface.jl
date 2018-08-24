@@ -11,9 +11,9 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     #      (y,z) binary
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
-    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
-    @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
 
     MOI.empty!(model)
     @test MOI.isempty(model)

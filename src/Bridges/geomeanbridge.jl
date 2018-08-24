@@ -95,7 +95,7 @@ function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
     GeoMeanBridge(d, xij, tubc, socrc)
 end
 
-function MOI.supportsconstraint(::Type{GeoMeanBridge{T}},
+function MOI.supports_constraint(::Type{GeoMeanBridge{T}},
                                 ::Type{<:MOI.AbstractVectorFunction},
                                 ::Type{MOI.GeometricMeanCone}) where T
     return true

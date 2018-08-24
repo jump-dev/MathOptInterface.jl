@@ -158,7 +158,7 @@ is_valid(::ModelLike,::ConstraintIndex)
 add_constraint
 add_constraints
 transform!
-supportsconstraint
+supports_constraint
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]

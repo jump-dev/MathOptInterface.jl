@@ -134,7 +134,7 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
     # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path
     @testset "Bridge selection" begin
         MOI.empty!(bridgedmock)
-        @test !(MOI.supportsconstraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
+        @test !(MOI.supports_constraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
         x = MOI.add_variables(bridgedmock, 3)
         c = MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
         @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
