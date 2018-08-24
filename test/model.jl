@@ -35,7 +35,7 @@ end
 
     model = Model{Int}()
 
-    x, y = MOI.addvariables!(model, 2)
+    x, y = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
     f1 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]), MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7)
@@ -130,7 +130,7 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
 @testset "Default fallbacks" begin
     @testset "set!" begin
         m = Model{Float64}()
-        x = MOI.addvariable!(m)
+        x = MOI.add_variable(m)
         c = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
         @test !MOI.supportsconstraint(m, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
 

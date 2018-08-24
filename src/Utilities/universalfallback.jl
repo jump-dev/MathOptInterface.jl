@@ -316,5 +316,5 @@ end
 MOI.modify!(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify!(uf.model, obj, change)
 
 # Variables
-MOI.addvariable!(uf::UniversalFallback) = MOI.addvariable!(uf.model)
-MOI.addvariables!(uf::UniversalFallback, n) = MOI.addvariables!(uf.model, n)
+MOI.add_variable(uf::UniversalFallback) = MOI.add_variable(uf.model)
+MOI.add_variables(uf::UniversalFallback, n) = MOI.add_variables(uf.model, n)

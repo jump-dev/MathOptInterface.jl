@@ -53,7 +53,7 @@ function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
     n = d-1
     l = ilog2(n)
     N = 1 << l
-    xij = MOI.addvariables!(model, N-1)
+    xij = MOI.add_variables(model, N-1)
     f_scalars = MOIU.eachscalar(f)
 
     xl1 = MOI.SingleVariable(xij[1])

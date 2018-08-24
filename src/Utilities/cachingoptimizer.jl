@@ -162,11 +162,11 @@ function MOI.optimize!(m::CachingOptimizer)
     MOI.optimize!(m.optimizer)
 end
 
-function MOI.addvariable!(m::CachingOptimizer)
+function MOI.add_variable(m::CachingOptimizer)
     if m.state == AttachedOptimizer
         if m.mode == Automatic
             try
-                vindex_optimizer = MOI.addvariable!(m.optimizer)
+                vindex_optimizer = MOI.add_variable(m.optimizer)
             catch err
                 if err isa MOI.NotAllowedError
                     resetoptimizer!(m)
@@ -175,10 +175,10 @@ function MOI.addvariable!(m::CachingOptimizer)
                 end
             end
         else
-            vindex_optimizer = MOI.addvariable!(m.optimizer)
+            vindex_optimizer = MOI.add_variable(m.optimizer)
         end
     end
-    vindex = MOI.addvariable!(m.model_cache)
+    vindex = MOI.add_variable(m.model_cache)
     if m.state == AttachedOptimizer
         m.model_to_optimizer_map[vindex] = vindex_optimizer
         m.optimizer_to_model_map[vindex_optimizer] = vindex
@@ -186,11 +186,11 @@ function MOI.addvariable!(m::CachingOptimizer)
     return vindex
 end
 
-function MOI.addvariables!(m::CachingOptimizer, n)
+function MOI.add_variables(m::CachingOptimizer, n)
     if m.state == AttachedOptimizer
         if m.mode == Automatic
             try
-                vindices_optimizer = MOI.addvariables!(m.optimizer, n)
+                vindices_optimizer = MOI.add_variables(m.optimizer, n)
             catch err
                 if err isa MOI.NotAllowedError
                     resetoptimizer!(m)
@@ -199,10 +199,10 @@ function MOI.addvariables!(m::CachingOptimizer, n)
                 end
             end
         else
-            vindices_optimizer = MOI.addvariables!(m.optimizer, n)
+            vindices_optimizer = MOI.add_variables(m.optimizer, n)
         end
     end
-    vindices = MOI.addvariables!(m.model_cache, n)
+    vindices = MOI.add_variables(m.model_cache, n)
     if m.state == AttachedOptimizer
         for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
             m.model_to_optimizer_map[vindex] = vindex_optimizer

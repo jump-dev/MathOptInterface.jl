@@ -147,7 +147,7 @@ If `config.solve=true` confirm that it solves correctly.
 """
 function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    x = MOI.addvariables!(model, 2)
+    x = MOI.add_variables(model, 2)
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
     MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
@@ -227,7 +227,7 @@ solves correctly.
 function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     c = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

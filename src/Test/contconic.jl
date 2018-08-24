@@ -23,7 +23,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    v = MOI.addvariables!(model, 3)
+    v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
     vov = MOI.VectorOfVariables(v)
@@ -107,7 +107,7 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x,y,z,s = MOI.addvariables!(model, 4)
+    x,y,z,s = MOI.add_variables(model, 4)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
 
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0, 2.0, -4.0], [x,y,z]), 0.0))
@@ -192,7 +192,7 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
 
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],[-1.0]), MOI.Nonnegatives(1))
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [1.0]), MOI.Nonpositives(1))
@@ -240,7 +240,7 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
 
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Nonnegatives(1))
     MOI.addconstraint!(model, MOI.VectorOfVariables([x]), MOI.Nonpositives(1))
@@ -297,7 +297,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x,y,z = MOI.addvariables!(model, 3)
+    x,y,z = MOI.add_variables(model, 3)
 
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [y,z]), 0.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
@@ -372,7 +372,7 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x,y,t = MOI.addvariables!(model, 3)
+    x,y,t = MOI.add_variables(model, 3)
 
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
@@ -443,7 +443,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x,y = MOI.addvariables!(model, 2)
+    x,y = MOI.add_variables(model, 2)
 
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [-2.0]), MOI.Nonnegatives(1))
     MOI.addconstraint!(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Nonpositives(1))
@@ -492,7 +492,7 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariables!(model, 5)
+    x = MOI.add_variables(model, 5)
 
     c1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2,3,2,3], MOI.ScalarAffineTerm.([1.0,1.0,1.0,-1.0,-1.0], x)),[-1.0, 0.0, 0.0]), MOI.Zeros(3))
     c2 = MOI.addconstraint!(model, MOI.VectorOfVariables([x[1],x[4],x[5]]), MOI.SecondOrderCone(3))
@@ -563,10 +563,10 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariables!(model, 2)
+    x = MOI.add_variables(model, 2)
     if abvars
-        a = MOI.addvariable!(model)
-        b = MOI.addvariable!(model)
+        a = MOI.add_variable(model)
+        b = MOI.add_variable(model)
         vc1 = MOI.addconstraint!(model, MOI.SingleVariable(a), MOI.EqualTo(0.5))
         vc2 = MOI.addconstraint!(model, MOI.SingleVariable(b), MOI.EqualTo(1.0))
         rsoc = MOI.addconstraint!(model, MOI.VectorOfVariables([a; b; x]), MOI.RotatedSecondOrderCone(4))
@@ -652,7 +652,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariables!(model, 3)
+    x = MOI.add_variables(model, 3)
 
     vc1 = MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
     vc2 = MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.EqualTo(0.5))
@@ -719,10 +719,10 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariables!(model, n)
-    u = MOI.addvariable!(model)
-    v = MOI.addvariable!(model)
-    t = MOI.addvariables!(model, 2)
+    x = MOI.add_variables(model, n)
+    u = MOI.add_variable(model)
+    v = MOI.add_variable(model)
+    t = MOI.add_variables(model, 2)
 
     ct1 = MOI.addconstraint!(model, MOI.SingleVariable(t[1]), MOI.EqualTo(1.0))
     ct2 = MOI.addconstraint!(model, MOI.SingleVariable(t[2]), MOI.EqualTo(1.0))
@@ -819,8 +819,8 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    t = MOI.addvariable!(model)
-    x = MOI.addvariables!(model, n)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, n)
 
     vov = MOI.VectorOfVariables([t; x])
     if vecofvars
@@ -881,7 +881,7 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    v = MOI.addvariables!(model, 3)
+    v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
     vov = MOI.VectorOfVariables(v)
@@ -946,7 +946,7 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    v = MOI.addvariables!(model, 9)
+    v = MOI.add_variables(model, 9)
     @test MOI.get(model, MOI.NumberOfVariables()) == 9
 
     ec1 = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 3], MOI.ScalarAffineTerm.(1.0, [v[2], v[3], v[4]])), [0., 1., 0.]), MOI.ExponentialCone())
@@ -1011,8 +1011,8 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariable!(model)
-    y = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
     xc = MOI.addconstraint!(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0), MOI.LessThan(4.0))
@@ -1081,7 +1081,7 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    X = MOI.addvariables!(model, square ? 4 : 3)
+    X = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)
 
     vov = MOI.VectorOfVariables(X)
@@ -1215,9 +1215,9 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    X = MOI.addvariables!(model, square ? 9 : 6)
+    X = MOI.add_variables(model, square ? 9 : 6)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 9 : 6)
-    x = MOI.addvariables!(model, 3)
+    x = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 12 : 9)
 
     vov = MOI.VectorOfVariables(X)
@@ -1295,7 +1295,7 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    x = MOI.addvariables!(model, 7)
+    x = MOI.add_variables(model, 7)
     @test MOI.get(model, MOI.NumberOfVariables()) == 7
 
     η = 10.0
@@ -1397,9 +1397,9 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    t = MOI.addvariable!(model)
+    t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    Q = MOI.addvariables!(model, square ? 4 : 3)
+    Q = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
 
     vov = MOI.VectorOfVariables([t; Q])

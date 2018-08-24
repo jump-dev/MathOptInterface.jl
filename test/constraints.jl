@@ -1,6 +1,6 @@
 @testset "Scalar constraints" begin
     model = Model{Float64}()
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     @testset "SingleVariable" begin
         f = MOI.SingleVariable(x)
         ci = MOIU.add_scalar_constraint(model, f, MOI.EqualTo(1.0))

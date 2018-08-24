@@ -55,13 +55,13 @@ getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
 # Variables
 MOI.get(model::AbstractModel, ::MOI.NumberOfVariables) = length(model.varindices)
-function MOI.addvariable!(model::AbstractModel)
+function MOI.add_variable(model::AbstractModel)
     v = VI(model.nextvariableid += 1)
     push!(model.varindices, v)
     v
 end
-function MOI.addvariables!(model::AbstractModel, n::Integer)
-    [MOI.addvariable!(model) for i in 1:n]
+function MOI.add_variables(model::AbstractModel, n::Integer)
+    [MOI.add_variable(model) for i in 1:n]
 end
 
 """
@@ -335,7 +335,7 @@ MOI.copy!(dest::AbstractModel, src::MOI.ModelLike; copynames=true) = defaultcopy
 # Even if the model does not need it and use defaultcopy!, it could be used by a layer that needs it
 needsallocateload(model::AbstractModel) = false
 
-allocatevariables!(model::AbstractModel, nvars) = MOI.addvariables!(model, nvars)
+allocatevariables!(model::AbstractModel, nvars) = MOI.add_variables(model, nvars)
 allocate!(model::AbstractModel, attr...) = MOI.set!(model, attr...)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.supports(model, attr)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.supports(model, attr, IndexType)

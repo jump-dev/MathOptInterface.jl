@@ -327,5 +327,5 @@ function MOI.modify!(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction,
 end
 
 # Variables
-MOI.addvariable!(b::AbstractBridgeOptimizer) = MOI.addvariable!(b.model)
-MOI.addvariables!(b::AbstractBridgeOptimizer, n) = MOI.addvariables!(b.model, n)
+MOI.add_variable(b::AbstractBridgeOptimizer) = MOI.add_variable(b.model)
+MOI.add_variables(b::AbstractBridgeOptimizer, n) = MOI.add_variables(b.model, n)

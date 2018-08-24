@@ -116,7 +116,7 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
 
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
 
-    v = MOI.addvariables!(model, 4)
+    v = MOI.add_variables(model, 4)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
 
     l = [1.0,1.0,1.0,1.0]
@@ -228,7 +228,7 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator,
                                   set_has_objective)
 
-    x = MOI.addvariable!(model)
+    x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
     # Avoid starting at zero because it's a critial point.

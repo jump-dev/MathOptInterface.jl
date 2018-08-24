@@ -77,16 +77,16 @@ function MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false,
                          Dict{MOI.ConstraintIndex,Any}())
 end
 
-function MOI.addvariable!(mock::MockOptimizer)
+function MOI.add_variable(mock::MockOptimizer)
     if mock.add_var_allowed
-        return xor_index(MOI.addvariable!(mock.inner_model))
+        return xor_index(MOI.add_variable(mock.inner_model))
     else
         throw(MOI.AddVariableNotAllowed())
     end
 end
-function MOI.addvariables!(mock::MockOptimizer, n::Int)
+function MOI.add_variables(mock::MockOptimizer, n::Int)
     if mock.add_var_allowed
-        return xor_index.(MOI.addvariables!(mock.inner_model, n))
+        return xor_index.(MOI.add_variables(mock.inner_model, n))
     else
         throw(MOI.AddVariableNotAllowed())
     end

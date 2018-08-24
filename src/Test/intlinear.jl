@@ -23,7 +23,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
 
-    v = MOI.addvariables!(model, 3)
+    v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
 
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0,1.0], v), 0.0)
@@ -94,7 +94,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         MOI.empty!(model)
         @test MOI.isempty(model)
 
-        v = MOI.addvariables!(model, 3)
+        v = MOI.add_variables(model, 3)
         @test MOI.get(model, MOI.NumberOfVariables()) == 3
         MOI.addconstraint!(model, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
         MOI.addconstraint!(model, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
@@ -162,7 +162,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         MOI.empty!(model)
         @test MOI.isempty(model)
 
-        v = MOI.addvariables!(model, 10)
+        v = MOI.add_variables(model, 10)
         @test MOI.get(model, MOI.NumberOfVariables()) == 10
 
         bin_constraints = []
@@ -259,11 +259,11 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.Interval{Float64})
     @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
 
-    z = MOI.addvariable!(model)
+    z = MOI.add_variable(model)
     MOI.addconstraint!(model, MOI.SingleVariable(z), MOI.Integer())
     MOI.addconstraint!(model, MOI.SingleVariable(z), MOI.Interval(0.0, 100.0))
 
-    b = MOI.addvariables!(model, 10)
+    b = MOI.add_variables(model, 10)
 
     for bi in b
         MOI.addconstraint!(model, MOI.SingleVariable(bi), MOI.ZeroOne())
@@ -313,7 +313,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.ZeroOne)
     @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
-    v = MOI.addvariables!(model, 5)
+    v = MOI.add_variables(model, 5)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
 
     for vi in v

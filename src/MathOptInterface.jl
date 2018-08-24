@@ -96,7 +96,7 @@ attributes are treated differently:
 ```julia
 # Given empty `ModelLike` objects `src` and `dest`.
 
-x = addvariable!(src)
+x = add_variable(src)
 
 isvalid(src, x)   # true
 isvalid(dest, x)  # false (`dest` has no variables)
