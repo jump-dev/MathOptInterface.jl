@@ -59,7 +59,7 @@ end
     f3 = MOIU.modifyfunction(f3, MOI.ScalarCoefficientChange(y, 2))
 
     @test !(MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3)
-    MOI.set!(model, MOI.ConstraintFunction(), c1, f3)
+    MOI.set(model, MOI.ConstraintFunction(), c1, f3)
     @test MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3
 
     f4 = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y])), [5, 7])
@@ -128,7 +128,7 @@ struct FunctionNotSupportedBySolvers <: MOI.AbstractScalarFunction
 end
 struct SetNotSupportedBySolvers <: MOI.AbstractSet end
 @testset "Default fallbacks" begin
-    @testset "set!" begin
+    @testset "set" begin
         m = Model{Float64}()
         x = MOI.add_variable(m)
         c = MOI.add_constraint(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
@@ -136,14 +136,14 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
 
         @test MOI.supports(m, MOI.ConstraintSet(), typeof(c))
         # set of different type
-        @test_throws Exception MOI.set!(m, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
+        @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
         # set not implemented
-        @test_throws Exception MOI.set!(m, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
+        @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
 
         @test MOI.supports(m, MOI.ConstraintFunction(), typeof(c))
         # function of different type
-        @test_throws Exception MOI.set!(m, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
+        @test_throws Exception MOI.set(m, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
         # function not implemented
-        @test_throws Exception MOI.set!(m, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
+        @test_throws Exception MOI.set(m, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
     end
 end

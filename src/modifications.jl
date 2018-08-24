@@ -62,7 +62,7 @@ modify!(model, ci, ScalarConstantChange(10.0))
     modify!(model::ModelLike, ::ObjectiveFunction, change::AbstractFunctionModification)
 
 Apply the modification specified by `change` to the objective function of
-`model`. To change the function completely, call `set!` instead.
+`model`. To change the function completely, call `set` instead.
 
 An [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
 objectives is not supported by the model `model`.

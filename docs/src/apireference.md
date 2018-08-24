@@ -22,7 +22,7 @@ Functions for getting and setting attributes.
 ```@docs
 get
 get!
-set!
+set
 supports
 ```
 
@@ -140,7 +140,7 @@ add_variable
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
-Calls to `get` and `set!` should include as an argument a single `VariableIndex` or a vector of `VariableIndex` objects.
+Calls to `get` and `set` should include as an argument a single `VariableIndex` or a vector of `VariableIndex` objects.
 
 ```@docs
 VariableName
@@ -162,7 +162,7 @@ supportsconstraint
 ```
 
 List of attributes associated with constraints. [category AbstractConstraintAttribute]
-Calls to `get` and `set!` should include as an argument a single `ConstraintIndex` or a vector of `ConstraintIndex{F,S}` objects.
+Calls to `get` and `set` should include as an argument a single `ConstraintIndex` or a vector of `ConstraintIndex{F,S}` objects.
 
 ```@docs
 ConstraintName

@@ -4,7 +4,7 @@
 
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> begin
-            MOI.set!(mock, MOI.ObjectiveBound(), 20.0)
+            MOI.set(mock, MOI.ObjectiveBound(), 20.0)
             MOIU.mock_optimize!(mock, [4, 5, 1])
         end)
     MOIT.int1test(mock, config)

@@ -171,11 +171,11 @@ function MOI.get(b::AbstractBridgeOptimizer,
                              MOI.AbstractOptimizerAttribute})
     return MOI.get(b.model, attr)
 end
-function MOI.set!(b::AbstractBridgeOptimizer,
+function MOI.set(b::AbstractBridgeOptimizer,
                   attr::Union{MOI.AbstractModelAttribute,
                               MOI.AbstractOptimizerAttribute},
                   value)
-    return MOI.set!(b.model, attr, value)
+    return MOI.set(b.model, attr, value)
 end
 
 # Variable attributes
@@ -194,15 +194,15 @@ function MOI.supports(b::AbstractBridgeOptimizer,
                       IndexType::Type{<:MOI.Index})
     return MOI.supports(b.model, attr, IndexType)
 end
-function MOI.set!(b::AbstractBridgeOptimizer,
+function MOI.set(b::AbstractBridgeOptimizer,
                   attr::MOI.AbstractVariableAttribute,
                   index::MOI.Index, value)
-    return MOI.set!(b.model, attr, index, value)
+    return MOI.set(b.model, attr, index, value)
 end
-function MOI.set!(b::AbstractBridgeOptimizer,
+function MOI.set(b::AbstractBridgeOptimizer,
                   attr::MOI.AbstractVariableAttribute,
                   indices::Vector{<:MOI.Index}, values::Vector)
-    return MOI.set!(b.model, attr, indices, values)
+    return MOI.set(b.model, attr, indices, values)
 end
 
 # Constraint attributes
@@ -228,12 +228,12 @@ function MOI.supports(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
         return MOI.supports(b.model, attr, Index)
     end
 end
-function MOI.set!(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
+function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
                   constraint_index::CI, name::String)
     if isbridged(b, typeof(constraint_index))
-        MOI.set!(b.bridged, attr, constraint_index, name)
+        MOI.set(b.bridged, attr, constraint_index, name)
     else
-        MOI.set!(b.model, attr, constraint_index, name)
+        MOI.set(b.model, attr, constraint_index, name)
     end
 end
 ## Setting functions and sets
@@ -247,22 +247,22 @@ function MOI.supports(b::AbstractBridgeOptimizer,
         return MOI.supports(b.model, attr, CI{F, S})
     end
 end
-function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet,
+function MOI.set(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet,
                   constraint_index::CI{F, S}, set::S) where {F, S}
     if isbridged(b, typeof(constraint_index))
-        MOI.set!(b, MOI.ConstraintSet(), bridge(b, constraint_index), set)
-        MOI.set!(b.bridged, MOI.ConstraintSet(), constraint_index, set)
+        MOI.set(b, MOI.ConstraintSet(), bridge(b, constraint_index), set)
+        MOI.set(b.bridged, MOI.ConstraintSet(), constraint_index, set)
     else
-        MOI.set!(b.model, MOI.ConstraintSet(), constraint_index, set)
+        MOI.set(b.model, MOI.ConstraintSet(), constraint_index, set)
     end
 end
-function MOI.set!(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction,
+function MOI.set(b::AbstractBridgeOptimizer, ::MOI.ConstraintFunction,
                   constraint_index::CI{F, S}, func::F) where {F, S}
     if isbridged(b, typeof(constraint_index))
-        MOI.set!(b, MOI.ConstraintFunction(), bridge(b, constraint_index), func)
-        MOI.set!(b.bridged, MOI.ConstraintFunction(), constraint_index, func)
+        MOI.set(b, MOI.ConstraintFunction(), bridge(b, constraint_index), func)
+        MOI.set(b.bridged, MOI.ConstraintFunction(), constraint_index, func)
     else
-        MOI.set!(b.model, MOI.ConstraintFunction(), constraint_index, func)
+        MOI.set(b.model, MOI.ConstraintFunction(), constraint_index, func)
     end
 end
 

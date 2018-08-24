@@ -179,27 +179,27 @@ function get!(output, model::ModelLike, attr::AnyAttribute, args...)
 end
 
 """
-    set!(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute, value)
+    set(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute, value)
 
 Assign `value` to the attribute `attr` of the optimizer `optimizer`.
 
-    set!(model::ModelLike, attr::AbstractModelAttribute, value)
+    set(model::ModelLike, attr::AbstractModelAttribute, value)
 
 Assign `value` to the attribute `attr` of the model `model`.
 
-    set!(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex, value)
+    set(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex, value)
 
 Assign `value` to the attribute `attr` of variable `v` in model `model`.
 
-    set!(model::ModelLike, attr::AbstractVariableAttribute, v::Vector{VariableIndex}, vector_of_values)
+    set(model::ModelLike, attr::AbstractVariableAttribute, v::Vector{VariableIndex}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each variable in the collection `v` in model `model`.
 
-    set!(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex, value)
+    set(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex, value)
 
 Assign a value to the attribute `attr` of constraint `c` in model `model`.
 
-    set!(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
+    set(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
 
 Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `model`.
 
@@ -209,7 +209,7 @@ error is thrown if it supports the attribute `attr` but it cannot be set.
 
 ### Replace set in a constraint
 
-    set!(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, set::S)
+    set(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, set::S)
 
 Change the set of constraint `c` to the new set `set` which should be of the
 same type as the original set.
@@ -219,13 +219,13 @@ same type as the original set.
 If `c` is a `ConstraintIndex{F,Interval}`
 
 ```julia
-set!(model, ConstraintSet(), c, Interval(0, 5))
-set!(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
+set(model, ConstraintSet(), c, Interval(0, 5))
+set(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
 ```
 
 ### Replace function in a constraint
 
-    set!(model::ModelLike, ::ConstraintFunction, c::ConstraintIndex{F,S}, func::F)
+    set(model::ModelLike, ::ConstraintFunction, c::ConstraintIndex{F,S}, func::F)
 
 Replace the function in constraint `c` with `func`. `F` must match the original
 function type used to define the constraint.
@@ -236,22 +236,22 @@ If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
 `VariableIndex` objects,
 
 ```julia
-set!(model, ConstraintFunction(), c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
-set!(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
+set(model, ConstraintFunction(), c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
+set(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
 ```
 """
-function set! end
+function set end
 # See note with get
-set!(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, idxs::Vector, vector_of_values::Vector) = set!.(model, Ref(attr), idxs, vector_of_values)
+set(model::ModelLike, attr::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, idxs::Vector, vector_of_values::Vector) = set.(model, Ref(attr), idxs, vector_of_values)
 
-function set!(model::ModelLike, attr::AnyAttribute, args...)
-    set!_fallback_error(model, attr, args...)
+function set(model::ModelLike, attr::AnyAttribute, args...)
+    set_fallback_error(model, attr, args...)
 end
-# set!_fallback_error is included so that we can return type-specific error
-# messages without needing to overload set! and cause ambiguity errors. For
-# examples, see ConstraintSet and ConstraintFunction. set!_fallback_error should
+# set_fallback_error is included so that we can return type-specific error
+# messages without needing to overload set and cause ambiguity errors. For
+# examples, see ConstraintSet and ConstraintFunction. set_fallback_error should
 # not be overloaded by users of MOI.
-function set!_fallback_error(model::ModelLike,
+function set_fallback_error(model::ModelLike,
                              attr::Union{AbstractModelAttribute,
                                          AbstractOptimizerAttribute},
                              value)
@@ -261,7 +261,7 @@ function set!_fallback_error(model::ModelLike,
         throw(UnsupportedAttribute(attr))
     end
 end
-function set!_fallback_error(model::ModelLike,
+function set_fallback_error(model::ModelLike,
                              attr::Union{AbstractVariableAttribute,
                                          AbstractConstraintAttribute},
                              index::Index, value)
@@ -376,7 +376,7 @@ A model attribute for the type `F` of the objective function set using the
 In the following code, `attr` should be equal to `MOI.SingleVariable`:
 ```julia
 x = MOI.add_variable(model)
-MOI.set!(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
+MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
          MOI.SingleVariable(x))
 attr = MOI.get(model, MOI.ObjectiveFunctionType())
 ```
@@ -518,7 +518,7 @@ A model attribute for the `Vector{AbstractConstraintAttribute}` of all constrain
 ## Note
 
 The attributes [`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref) should
-not be included in the list even if then have been set with [`set!`](@ref).
+not be included in the list even if then have been set with [`set`](@ref).
 """
 struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 
@@ -588,13 +588,13 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
-function set!_fallback_error(::ModelLike, attr::ConstraintFunction,
+function set_fallback_error(::ModelLike, attr::ConstraintFunction,
                      ::ConstraintIndex{F, S}, ::F) where {F <: AbstractFunction,
                                                           S}
     throw(SetAttributeNotAllowed(attr))
 end
 func_type(c::ConstraintIndex{F, S}) where {F, S} = F
-function set!_fallback_error(::ModelLike, ::ConstraintFunction,
+function set_fallback_error(::ModelLike, ::ConstraintFunction,
                      constraint_index::ConstraintIndex, func::AbstractFunction)
     throw(ArgumentError("""Cannot modify functions of different types.
     Constraint type is $(func_type(constraint_index)) while the replacement
@@ -608,12 +608,12 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function set!_fallback_error(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
+function set_fallback_error(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
                      ::S) where {F, S <: AbstractSet}
     throw(SetAttributeNotAllowed(attr))
 end
 set_type(::ConstraintIndex{F, S}) where {F, S} = S
-function set!_fallback_error(::ModelLike, ::ConstraintSet,
+function set_fallback_error(::ModelLike, ::ConstraintSet,
                      constraint_index::ConstraintIndex, set::AbstractSet)
     throw(ArgumentError("""Cannot modify sets of different types. Constraint
     type is $(set_type(constraint_index)) while the replacement set is of

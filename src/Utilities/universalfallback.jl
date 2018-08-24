@@ -178,10 +178,10 @@ end
 
 # Name
 # The names of constraints not supported by `uf.model` need to be handled
-function MOI.set!(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}
+function MOI.set(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}
     if check_can_assign_name(uf, CI, ci, name)
         if MOI.supportsconstraint(uf.model, F, S)
-            MOI.set!(uf.model, attr, ci, name)
+            MOI.set(uf.model, attr, ci, name)
         else
             setname(uf.connames, uf.namescon, ci, name)
         end
@@ -217,41 +217,41 @@ function MOI.get(uf::UniversalFallback, ::Type{CI}, name::String)
     end
 end
 
-_set!(uf, attr::MOI.AbstractOptimizerAttribute, value) = uf.optattr[attr] = value
-_set!(uf, attr::MOI.AbstractModelAttribute, value)     = uf.modattr[attr] = value
-function _set!(uf, attr::MOI.AbstractVariableAttribute, vi::VI, value)
+_set(uf, attr::MOI.AbstractOptimizerAttribute, value) = uf.optattr[attr] = value
+_set(uf, attr::MOI.AbstractModelAttribute, value)     = uf.modattr[attr] = value
+function _set(uf, attr::MOI.AbstractVariableAttribute, vi::VI, value)
     if !haskey(uf.varattr, attr)
         uf.varattr[attr] = Dict{VI, Any}()
     end
     uf.varattr[attr][vi] = value
 end
-function _set!(uf, attr::MOI.AbstractConstraintAttribute, ci::CI, value)
+function _set(uf, attr::MOI.AbstractConstraintAttribute, ci::CI, value)
     if !haskey(uf.conattr, attr)
         uf.conattr[attr] = Dict{CI, Any}()
     end
     uf.conattr[attr][ci] = value
 end
 MOI.supports(::UniversalFallback, ::Union{MOI.AbstractModelAttribute, MOI.AbstractOptimizerAttribute}) = true
-function MOI.set!(uf::UniversalFallback, attr::Union{MOI.AbstractOptimizerAttribute, MOI.AbstractModelAttribute}, value)
+function MOI.set(uf::UniversalFallback, attr::Union{MOI.AbstractOptimizerAttribute, MOI.AbstractModelAttribute}, value)
     if MOI.supports(uf.model, attr)
-        return MOI.set!(uf.model, attr, value)
+        return MOI.set(uf.model, attr, value)
     else
-        return _set!(uf, attr, value)
+        return _set(uf, attr, value)
     end
 end
 MOI.supports(::UniversalFallback, ::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, ::Type{<:MOI.Index}) = true
-function MOI.set!(uf::UniversalFallback, attr::MOI.AbstractVariableAttribute, idx::VI, value)
+function MOI.set(uf::UniversalFallback, attr::MOI.AbstractVariableAttribute, idx::VI, value)
     if MOI.supports(uf.model, attr, typeof(idx))
-        return MOI.set!(uf.model, attr, idx, value)
+        return MOI.set(uf.model, attr, idx, value)
     else
-        return _set!(uf, attr, idx, value)
+        return _set(uf, attr, idx, value)
     end
 end
-function MOI.set!(uf::UniversalFallback, attr::MOI.AbstractConstraintAttribute, idx::CI{F, S}, value) where {F, S}
+function MOI.set(uf::UniversalFallback, attr::MOI.AbstractConstraintAttribute, idx::CI{F, S}, value) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S) && MOI.supports(uf.model, attr, CI{F, S})
-        return MOI.set!(uf.model, attr, idx, value)
+        return MOI.set(uf.model, attr, idx, value)
     else
-        return _set!(uf, attr, idx, value)
+        return _set(uf, attr, idx, value)
     end
 end
 
@@ -295,17 +295,17 @@ function MOI.get(uf::UniversalFallback, attr::MOI.ConstraintSet, ci::CI{F, S}) w
         uf.constraints[(F, S)][ci][2]
     end
 end
-function MOI.set!(uf::UniversalFallback, ::MOI.ConstraintFunction, ci::CI{F,S}, func::F) where {F, S}
+function MOI.set(uf::UniversalFallback, ::MOI.ConstraintFunction, ci::CI{F,S}, func::F) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.set!(uf.model, MOI.ConstraintFunction(), ci, func)
+        MOI.set(uf.model, MOI.ConstraintFunction(), ci, func)
     else
         (_, s) = uf.constraints[(F, S)][ci]
         uf.constraints[(F, S)][ci] = (func, s)
     end
 end
-function MOI.set!(uf::UniversalFallback, ::MOI.ConstraintSet, ci::CI{F,S}, set::S) where {F, S}
+function MOI.set(uf::UniversalFallback, ::MOI.ConstraintSet, ci::CI{F,S}, set::S) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.set!(uf.model, MOI.ConstraintSet(), ci, set)
+        MOI.set(uf.model, MOI.ConstraintSet(), ci, set)
     else
         (f, _) = uf.constraints[(F, S)][ci]
         uf.constraints[(F, S)][ci] = (f, set)

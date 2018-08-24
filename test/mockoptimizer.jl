@@ -5,22 +5,22 @@ end
 @testset "Mock optimizer optimizer attributes" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.supports(optimizer, MOIU.MockModelAttribute())
-    MOI.set!(optimizer, MOIU.MockModelAttribute(), 10)
+    MOI.set(optimizer, MOIU.MockModelAttribute(), 10)
     @test MOI.get(optimizer, MOIU.MockModelAttribute()) == 10
 
     v1 = MOI.add_variable(optimizer)
     @test MOI.supports(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
-    MOI.set!(optimizer, MOIU.MockVariableAttribute(), v1, 11)
+    MOI.set(optimizer, MOIU.MockVariableAttribute(), v1, 11)
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), v1) == 11
-    MOI.set!(optimizer, MOIU.MockVariableAttribute(), [v1], [-11])
+    MOI.set(optimizer, MOIU.MockVariableAttribute(), [v1], [-11])
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), [v1]) == [-11]
 
     @test MOI.supportsconstraint(optimizer, MOI.SingleVariable, MOI.GreaterThan{Float64})
     c1 = MOI.add_constraint(optimizer, MOI.SingleVariable(v1), MOI.GreaterThan(1.0))
     @test MOI.supports(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
-    MOI.set!(optimizer, MOIU.MockConstraintAttribute(), c1, 12)
+    MOI.set(optimizer, MOIU.MockConstraintAttribute(), c1, 12)
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), c1) == 12
-    MOI.set!(optimizer, MOIU.MockConstraintAttribute(), [c1], [-12])
+    MOI.set(optimizer, MOIU.MockConstraintAttribute(), [c1], [-12])
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), [c1]) == [-12]
 end
 
@@ -30,7 +30,7 @@ end
     v1 = MOI.add_variable(optimizer)
 
     # Load fake solution
-    MOI.set!(optimizer, MOI.TerminationStatus(), MOI.InfeasibleNoResult)
+    MOI.set(optimizer, MOI.TerminationStatus(), MOI.InfeasibleNoResult)
 
     MOI.optimize!(optimizer)
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.InfeasibleNoResult
@@ -49,15 +49,15 @@ end
 
     # Load fake solution
     # TODO: Provide a more compact API for this.
-    MOI.set!(optimizer, MOI.TerminationStatus(), MOI.Success)
-    MOI.set!(optimizer, MOI.ObjectiveValue(), 1.0)
-    MOI.set!(optimizer, MOI.ResultCount(), 1)
-    MOI.set!(optimizer, MOI.PrimalStatus(), MOI.FeasiblePoint)
-    MOI.set!(optimizer, MOI.DualStatus(), MOI.FeasiblePoint)
-    MOI.set!(optimizer, MOI.VariablePrimal(), v, [1.0, 2.0])
-    MOI.set!(optimizer, MOI.VariablePrimal(), v[1], 3.0)
-    MOI.set!(optimizer, MOI.ConstraintDual(), c1, 5.9)
-    MOI.set!(optimizer, MOI.ConstraintDual(), soc, [1.0,2.0])
+    MOI.set(optimizer, MOI.TerminationStatus(), MOI.Success)
+    MOI.set(optimizer, MOI.ObjectiveValue(), 1.0)
+    MOI.set(optimizer, MOI.ResultCount(), 1)
+    MOI.set(optimizer, MOI.PrimalStatus(), MOI.FeasiblePoint)
+    MOI.set(optimizer, MOI.DualStatus(), MOI.FeasiblePoint)
+    MOI.set(optimizer, MOI.VariablePrimal(), v, [1.0, 2.0])
+    MOI.set(optimizer, MOI.VariablePrimal(), v[1], 3.0)
+    MOI.set(optimizer, MOI.ConstraintDual(), c1, 5.9)
+    MOI.set(optimizer, MOI.ConstraintDual(), soc, [1.0,2.0])
 
     MOI.optimize!(optimizer)
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.Success

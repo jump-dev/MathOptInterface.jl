@@ -136,8 +136,8 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         # max x + 2y | y + x^2 + x^2 <= 1, x >= 0.5, y >= 0.5
         MOI.empty!(model)
         x = MOI.add_variables(model, 2)
-        MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
-        MOI.set!(model,
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set(model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
         )
@@ -160,8 +160,8 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         # max x + 2y | x^2 + 0.25y*x + 0.25x*y + 0.5x*y + y^2 <= 1, x >= 0.5, y >= 0.5
         MOI.empty!(model)
         x = MOI.add_variables(model, 2)
-        MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
-        MOI.set!(model,
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set(model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
         )
@@ -203,8 +203,8 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConf
     vaf  = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [0.0])
     vaf2 = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-2.0])
     # max x
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), saf)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), saf)
     # test adding a VectorAffineFunction -in- LessThan
     c1 = MOI.add_constraint(model, vaf, MOI.Nonpositives(1))
     test_model_solution(model, config; objective_value = 0.0,

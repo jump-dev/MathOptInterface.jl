@@ -191,7 +191,7 @@ end
         MOIT.linear10test(bridgedmock, config)
         ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
         newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridgedmock, MOI.ListOfVariableIndices())), 0.0)
-        MOI.set!(bridgedmock, MOI.ConstraintFunction(), ci, newf)
+        MOI.set(bridgedmock, MOI.ConstraintFunction(), ci, newf)
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))

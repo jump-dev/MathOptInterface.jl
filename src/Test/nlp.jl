@@ -126,11 +126,11 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     for i in 1:4
         MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.LessThan(u[i]))
         MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.GreaterThan(l[i]))
-        MOI.set!(model, MOI.VariablePrimalStart(), v[i], start[i])
+        MOI.set(model, MOI.VariablePrimalStart(), v[i], start[i])
     end
 
-    MOI.set!(model, MOI.NLPBlock(), block_data)
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     # TODO: config.query tests
     if config.solve
@@ -232,10 +232,10 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
     # Avoid starting at zero because it's a critial point.
-    MOI.set!(model, MOI.VariablePrimalStart(), x, 1.5)
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
 
-    MOI.set!(model, MOI.NLPBlock(), block_data)
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
 
     # TODO: config.query tests
     if config.solve

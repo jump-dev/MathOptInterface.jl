@@ -7,10 +7,10 @@ function nametest(model::MOI.ModelLike)
         @test MOI.supports(model, MOI.Name())
         @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
         @test MOI.get(model, MOI.Name()) == ""
-        MOI.set!(model, MOI.Name(), "Name1")
+        MOI.set(model, MOI.Name(), "Name1")
         @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
         @test MOI.get(model, MOI.Name()) == "Name1"
-        MOI.set!(model, MOI.Name(), "Name2")
+        MOI.set(model, MOI.Name(), "Name2")
         @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
         @test MOI.get(model, MOI.Name()) == "Name2"
 
@@ -21,18 +21,18 @@ function nametest(model::MOI.ModelLike)
         v = MOI.add_variables(model, 2)
         @test MOI.get(model, MOI.VariableName(), v[1]) == ""
 
-        MOI.set!(model, MOI.VariableName(), v[1], "")
-        MOI.set!(model, MOI.VariableName(), v[2], "") # Shouldn't error with duplicate empty name
+        MOI.set(model, MOI.VariableName(), v[1], "")
+        MOI.set(model, MOI.VariableName(), v[2], "") # Shouldn't error with duplicate empty name
 
-        MOI.set!(model, MOI.VariableName(), v[1], "Var1")
-        @test_throws Exception MOI.set!(model, MOI.VariableName(), v[2], "Var1")
-        MOI.set!(model, MOI.VariableName(), v[2], "Var2")
+        MOI.set(model, MOI.VariableName(), v[1], "Var1")
+        @test_throws Exception MOI.set(model, MOI.VariableName(), v[2], "Var1")
+        MOI.set(model, MOI.VariableName(), v[2], "Var2")
 
         @test MOI.get(model, MOI.VariableIndex, "Var1") == v[1]
         @test MOI.get(model, MOI.VariableIndex, "Var2") == v[2]
         @test MOI.get(model, MOI.VariableIndex, "Var3") === nothing
 
-        MOI.set!(model, MOI.VariableName(), v, ["VarX","Var2"])
+        MOI.set(model, MOI.VariableName(), v, ["VarX","Var2"])
         @test MOI.get(model, MOI.VariableName(), v) == ["VarX", "Var2"]
 
         @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -42,15 +42,15 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
 
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
-        MOI.set!(model, MOI.ConstraintName(), c, "")
+        MOI.set(model, MOI.ConstraintName(), c, "")
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c2))
-        MOI.set!(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
+        MOI.set(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
 
-        MOI.set!(model, MOI.ConstraintName(), c, "Con0")
+        MOI.set(model, MOI.ConstraintName(), c, "Con0")
         @test MOI.get(model, MOI.ConstraintName(), c) == "Con0"
-        @test_throws Exception MOI.set!(model, MOI.ConstraintName(), c2, "Con0")
+        @test_throws Exception MOI.set(model, MOI.ConstraintName(), c2, "Con0")
 
-        MOI.set!(model, MOI.ConstraintName(), [c], ["Con1"])
+        MOI.set(model, MOI.ConstraintName(), [c], ["Con1"])
         @test MOI.get(model, MOI.ConstraintName(), [c]) == ["Con1"]
 
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1") == c
@@ -60,7 +60,7 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") == c
         @test MOI.get(model, MOI.ConstraintIndex, "Con2") === nothing
 
-        MOI.set!(model, MOI.ConstraintName(), c2, "Con0")
+        MOI.set(model, MOI.ConstraintName(), c2, "Con0")
 
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con0") === nothing
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}, "Con1") === nothing
@@ -104,8 +104,8 @@ function emptytest(model::MOI.ModelLike)
     vc = MOI.add_constraint(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
     c = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0,-2.0]), MOI.Zeros(2))
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     @test !MOI.isempty(model)
 
@@ -172,19 +172,19 @@ function failcopytestca(dest::MOI.ModelLike)
 end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
-    MOI.set!(src, MOI.Name(), "ModelName")
+    MOI.set(src, MOI.Name(), "ModelName")
     v = MOI.add_variables(src, 3)
-    MOI.set!(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
+    MOI.set(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
     csv = MOI.add_constraint(src, MOI.SingleVariable(v[2]), MOI.EqualTo(2.))
-    MOI.set!(src, MOI.ConstraintName(), csv, "csv")
+    MOI.set(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
-    MOI.set!(src, MOI.ConstraintName(), cvv, "cvv")
+    MOI.set(src, MOI.ConstraintName(), cvv, "cvv")
     csa = MOI.add_constraint(src, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1., 3.], [v[3], v[1]]), 2.), MOI.LessThan(2.))
-    MOI.set!(src, MOI.ConstraintName(), csa, "csa")
+    MOI.set(src, MOI.ConstraintName(), csa, "csa")
     cva = MOI.add_constraint(src, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [v[3], v[2]])), [-3.0,-2.0]), MOI.Zeros(2))
-    MOI.set!(src, MOI.ConstraintName(), cva, "cva")
-    MOI.set!(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
-    MOI.set!(src, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(src, MOI.ConstraintName(), cva, "cva")
+    MOI.set(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MinSense)
 
     @test MOI.supports(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supportsconstraint(dest, MOI.SingleVariable, MOI.EqualTo{Float64})

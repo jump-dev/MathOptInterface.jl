@@ -215,19 +215,19 @@ end
     @testset "solve_objbound_edge_cases" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> begin
-                MOI.set!(mock, MOI.ObjectiveBound(), 3.0)
+                MOI.set(mock, MOI.ObjectiveBound(), 3.0)
                 MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [2.0]))
             end,
             (mock::MOIU.MockOptimizer) -> begin
-                MOI.set!(mock, MOI.ObjectiveBound(), 3.0)
+                MOI.set(mock, MOI.ObjectiveBound(), 3.0)
                 MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.0]))
             end,
             (mock::MOIU.MockOptimizer) -> begin
-                MOI.set!(mock, MOI.ObjectiveBound(), 2.0)
+                MOI.set(mock, MOI.ObjectiveBound(), 2.0)
                 MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.5]))
             end,
             (mock::MOIU.MockOptimizer) -> begin
-                MOI.set!(mock, MOI.ObjectiveBound(), 4.0)
+                MOI.set(mock, MOI.ObjectiveBound(), 4.0)
                 MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.5]))
             end
         )
