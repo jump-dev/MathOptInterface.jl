@@ -109,13 +109,13 @@ Through the rest of the manual, `model` is used as a generic `ModelLike`, and
 ## Variables
 
 All variables in MOI are scalar variables.
-New scalar variables are created with [`addvariable!`](@ref MathOptInterface.addvariable!) or [`addvariables!`](@ref MathOptInterface.addvariables!), which return a [`VariableIndex`](@ref MathOptInterface.VariableIndex) or `Vector{VariableIndex}` respectively. `VariableIndex` objects are type-safe wrappers around integers that refer to a variable in a particular model.
+New scalar variables are created with [`add_variable`](@ref MathOptInterface.add_variable) or [`add_variables`](@ref MathOptInterface.add_variables), which return a [`VariableIndex`](@ref MathOptInterface.VariableIndex) or `Vector{VariableIndex}` respectively. `VariableIndex` objects are type-safe wrappers around integers that refer to a variable in a particular model.
 
 One uses `VariableIndex` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
 ```julia
-v = addvariable!(model)
+v = add_variable(model)
 set!(model, VariablePrimalStart(), v, 10.5)
-v2 = addvariables!(model, 3)
+v2 = add_variables(model, 3)
 set!(model, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
@@ -166,7 +166,7 @@ Objective functions are assigned to a model by setting the [`ObjectiveFunction`]
 The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used for setting the optimization sense.
 For example,
 ```julia
-x = addvariables!(model, 2)
+x = add_variables(model, 2)
 set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]]),1.0))
 set!(model, ObjectiveSense(), MinSense)
@@ -201,7 +201,7 @@ The code example below encodes the linear optimization problem:
 ```
 
 ```julia
-x = addvariables!(model, 2)
+x = add_variables(model, 2)
 set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.([3.0, 2.0], x), 0.0))
 set!(model, ObjectiveSense(), MaxSense)
@@ -225,7 +225,7 @@ The code example below encodes the convex optimization problem:
 ```
 
 ```julia
-x,y,z = addvariables!(model, 3)
+x,y,z = add_variables(model, 3)
 set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.(1.0, [y,z]), 0.0))
 set!(model, ObjectiveSense(), MaxSense)
@@ -377,7 +377,7 @@ numvariables = length(c)
 optimizer = GLPK.GLPKOptimizerMIP()
 
 # create the variables in the problem
-x = MOI.addvariables!(optimizer, numvariables)
+x = MOI.add_variables(optimizer, numvariables)
 
 # set the objective function
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
@@ -763,7 +763,7 @@ will additionally support `ScalarAffineFunction`-in-`Interval`.
 
 Avoid storing extra copies of the problem when possible. This means that solver wrappers should not use
 `CachingOptimizer` as part of the wrapper. Instead, just implement `copy!` if the solver's API
-does not support an `addvariable!`-like API. Let users or JuMP decide to use `CachingOptimizer` instead.
+does not support an `add_variable`-like API. Let users or JuMP decide to use `CachingOptimizer` instead.
 
 ### JuMP mapping
 
@@ -847,7 +847,7 @@ end
 end
 ```
 
-If the wrapper does not support building the model incrementally (i.e. with `addvariable!` and `addconstraint!`), the line `const optimizer = FooBarOptimizer()` can be replaced with
+If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `addconstraint!`), the line `const optimizer = FooBarOptimizer()` can be replaced with
 ```julia
 const MOIU = MOI.Utilities
 # Include here the functions/sets supported by the solver wrapper (not those that are supported through bridges)

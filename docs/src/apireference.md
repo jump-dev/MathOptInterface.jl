@@ -135,8 +135,8 @@ delete!(::ModelLike,::Index)
 Functions for adding variables. For deleting, see index types section.
 
 ```@docs
-addvariables!
-addvariable!
+add_variables
+add_variable
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
