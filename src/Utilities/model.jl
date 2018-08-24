@@ -141,7 +141,7 @@ end
 
 # Names
 MOI.supports(::AbstractModel, ::MOI.Name) = true
-function MOI.set!(model::AbstractModel, ::MOI.Name, name::String)
+function MOI.set(model::AbstractModel, ::MOI.Name, name::String)
     model.name = name
 end
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
@@ -185,7 +185,7 @@ function setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict
 end
 
 MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
-function MOI.set!(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
+function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
     if check_can_assign_name(model, VI, vi, name)
         setname(model.varnames, model.namesvar, vi, name)
     end
@@ -201,7 +201,7 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vecto
 end
 
 MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
-function MOI.set!(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
+function MOI.set(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
     if check_can_assign_name(model, CI, ci, name)
         setname(model.connames, model.namescon, ci, name)
     end
@@ -224,7 +224,7 @@ end
 # Objective
 MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
 MOI.supports(model::AbstractModel, ::MOI.ObjectiveSense) = true
-function MOI.set!(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+function MOI.set(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
     model.senseset = true
     model.sense = sense
 end
@@ -238,7 +238,7 @@ function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     model.objective
 end
 MOI.supports(model::AbstractModel, ::MOI.ObjectiveFunction) = true
-function MOI.set!(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
+function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
     model.objectiveset = true
     # f needs to be copied, see #2
     model.objective = deepcopy(f)
@@ -297,11 +297,11 @@ function MOI.modify!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionM
 end
 
 MOI.supports(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
-function MOI.set!(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
+function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
     _modify!(model, ci, getconstrloc(model, ci), change)
 end
 MOI.supports(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
-function MOI.set!(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
+function MOI.set(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
     _modify!(model, ci, getconstrloc(model, ci), change)
 end
 
@@ -336,7 +336,7 @@ MOI.copy!(dest::AbstractModel, src::MOI.ModelLike; copynames=true) = defaultcopy
 needsallocateload(model::AbstractModel) = false
 
 allocatevariables!(model::AbstractModel, nvars) = MOI.add_variables(model, nvars)
-allocate!(model::AbstractModel, attr...) = MOI.set!(model, attr...)
+allocate!(model::AbstractModel, attr...) = MOI.set(model, attr...)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.supports(model, attr)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.supports(model, attr, IndexType)
 allocateconstraint!(model::AbstractModel, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.add_constraint(model, f, s)

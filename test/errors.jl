@@ -8,7 +8,7 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.SingleVariable},
 MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
                        ::Type{MOI.Zeros}) = true
 
-@testset "Fallbacks for `set!` methods" begin
+@testset "Fallbacks for `set` methods" begin
     model = DummyModel()
 
     @testset "AddVariableNotAllowed" begin
@@ -103,42 +103,42 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
 
     @testset "UnsupportedAttribute" begin
         @test_throws MOI.UnsupportedAttribute begin
-            MOI.set!(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
+            MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
                      MOI.SingleVariable(vi))
         end
         @test_throws MOI.UnsupportedAttribute begin
-            MOI.set!(model, MOI.ConstraintDualStart(), ci, 0.0)
+            MOI.set(model, MOI.ConstraintDualStart(), ci, 0.0)
         end
     end
 
     @testset "SetAttributeNotAllowed" begin
         @test_throws MOI.SetAttributeNotAllowed begin
-            MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+            MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
         end
         @test_throws MOI.SetAttributeNotAllowed begin
-            MOI.set!(model, MOI.ConstraintPrimalStart(), ci, 0.0)
+            MOI.set(model, MOI.ConstraintPrimalStart(), ci, 0.0)
         end
     end
 
     @testset "ConstraintFunction" begin
         @test_throws MOI.SetAttributeNotAllowed begin
-            MOI.set!(model, MOI.ConstraintFunction(), ci, func)
+            MOI.set(model, MOI.ConstraintFunction(), ci, func)
         end
         @test_throws ArgumentError begin
-            MOI.set!(model, MOI.ConstraintFunction(), ci,
+            MOI.set(model, MOI.ConstraintFunction(), ci,
                      MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, vi)],
                                               0.0))
         end
     end
     @testset "ConstraintSet" begin
         @test_throws MOI.SetAttributeNotAllowed begin
-            MOI.set!(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1.0))
+            MOI.set(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1.0))
         end
         @test_throws ArgumentError begin
-            MOI.set!(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1))
+            MOI.set(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1))
         end
         @test_throws ArgumentError begin
-            MOI.set!(model, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
+            MOI.set(model, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
         end
     end
 end

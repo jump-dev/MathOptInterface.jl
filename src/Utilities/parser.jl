@@ -219,21 +219,21 @@ function loadfromstring!(model, s)
             if isexpr(ex, :tuple)
                 for v in ex.args
                     vindex = MOI.add_variable(model)
-                    MOI.set!(model, MOI.VariableName(), vindex, String(v))
+                    MOI.set(model, MOI.VariableName(), vindex, String(v))
                 end
             else
                 @assert isa(ex, Symbol)
                 vindex = MOI.add_variable(model)
-                MOI.set!(model, MOI.VariableName(), vindex, String(ex))
+                MOI.set(model, MOI.VariableName(), vindex, String(ex))
             end
         elseif label == :maxobjective
             f = parsedtoMOI(model, parsefunction(ex))
-            MOI.set!(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-            MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
         elseif label == :minobjective
             f = parsedtoMOI(model, parsefunction(ex))
-            MOI.set!(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-            MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
         else
             # constraint
             @assert isexpr(ex, :call)
@@ -251,7 +251,7 @@ function loadfromstring!(model, s)
                 error("Unrecognized expression $ex")
             end
             cindex = MOI.add_constraint(model, f, set)
-            MOI.set!(model, MOI.ConstraintName(), cindex, String(label))
+            MOI.set(model, MOI.ConstraintName(), cindex, String(label))
         end
     end
 end

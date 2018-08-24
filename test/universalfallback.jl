@@ -2,7 +2,7 @@ function test_optmodattrs(uf, model, attr, listattr)
     @test !MOI.supports(model, attr)
     @test MOI.supports(uf, attr)
     @test isempty(MOI.get(uf, listattr))
-    MOI.set!(uf, attr, 0)
+    MOI.set(uf, attr, 0)
     @test MOI.get(uf, attr) == 0
     @test MOI.get(uf, listattr) == [attr]
     @test !MOI.isempty(uf)
@@ -13,17 +13,17 @@ function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfu
     @test !MOI.supports(model, attr, I)
     @test MOI.supports(uf, attr, I)
     @test isempty(MOI.get(uf, listattr))
-    MOI.set!(uf, attr, [x, y], [2, 0])
+    MOI.set(uf, attr, [x, y], [2, 0])
     @test !MOI.isempty(uf)
     @test MOI.get(uf, listattr) == [attr]
-    MOI.set!(uf, attr, z, 5)
+    MOI.set(uf, attr, z, 5)
     @test MOI.get(uf, attr, y) == 0
     @test MOI.get(uf, attr, [z, x]) == [5, 2]
     @test MOI.get(uf, listattr) == [attr]
 
     u = addfun(uf)
     @test MOI.get(uf, listattr) == [attr]
-    MOI.set!(uf, attr, u, 8)
+    MOI.set(uf, attr, u, 8)
     @test MOI.get(uf, listattr) == [attr]
 
     w = addfun(uf)
@@ -35,7 +35,7 @@ function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfu
     @test_throws MOI.InvalidIndex{typeof(u)} MOI.delete!(uf, u)
     @test MOI.get(uf, listattr) == [attr]
 
-    MOI.set!(uf, attr, [w, z], [9, 4])
+    MOI.set(uf, attr, [w, z], [9, 4])
     @test MOI.get(uf, listattr) == [attr]
     @test MOI.get(uf, attr, w) == 9
     @test MOI.get(uf, attr, x) == 2
@@ -104,11 +104,11 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.LessThan(0.)), cx, cy, cz)
 
             @test MOI.supports(uf, MOI.ConstraintFunction(), typeof(cx))
-            MOI.set!(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
+            MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
             @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
 
             @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
-            MOI.set!(uf, MOI.ConstraintName(), cx, "LessThan")
+            MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
             @test MOI.get(uf, MOI.ConstraintName(), cx) == "LessThan"
             @test MOI.get(uf, typeof(cx), "LessThan") == cx
             MOI.delete!(uf, cx)
@@ -127,11 +127,11 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
 
             @test MOI.supports(uf, MOI.ConstraintFunction(), typeof(cx))
-            MOI.set!(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
+            MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
             @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
 
             @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
-            MOI.set!(uf, MOI.ConstraintName(), cx, "EqualTo")
+            MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")
             @test MOI.get(uf, MOI.ConstraintName(), cx) == "EqualTo"
             @test MOI.get(uf, typeof(cx), "EqualTo") == cx
             MOI.delete!(uf, cx)

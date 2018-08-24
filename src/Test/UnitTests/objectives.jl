@@ -23,7 +23,7 @@ function max_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 end
 unittests["max_sense"] = max_sense
@@ -37,7 +37,7 @@ function min_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
 end
 unittests["min_sense"] = min_sense
@@ -51,7 +51,7 @@ function feasibility_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
 end
 unittests["feasibility_sense"] = feasibility_sense
@@ -148,13 +148,13 @@ If `config.solve=true` confirm that it solves correctly.
 function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
     MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
     MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
 
     @testset "Basic model" begin
         # min x^2 + y^2 | x>=1, y>=2
-        MOI.set!(model,
+        MOI.set(model,
             MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm{Float64}[],  # affine terms
@@ -169,7 +169,7 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     end
     @testset "Duplicate linear terms" begin
         # min x + x + x^2 + y^2 | x>=1, y>=2
-        MOI.set!(model,
+        MOI.set(model,
             MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], x[1]]),  # affine terms
@@ -184,7 +184,7 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     end
     @testset "Duplicate diagonal terms" begin
         # min x^2 + x^2 | x>=1, y>=2
-        MOI.set!(model,
+        MOI.set(model,
             MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm{Float64}[],  # affine terms
@@ -199,7 +199,7 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     end
     @testset "Duplicate off-diagonal terms" begin
         # min x^2 + 0.25x*y + 0.25y*x + 0.5x*y + y^2 | x>=1, y>=2
-        MOI.set!(model,
+        MOI.set(model,
             MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm{Float64}[],  # affine terms
@@ -229,8 +229,8 @@ function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
     @test MOI.isempty(model)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(
             [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(1.0, x)],
             0.0

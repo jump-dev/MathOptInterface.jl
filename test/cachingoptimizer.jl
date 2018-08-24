@@ -13,7 +13,7 @@
     x = MOI.add_variables(m, 2)
     saf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], [v; x]), 0.0)
     @test MOI.supports(m, MOI.ObjectiveFunction{typeof(saf)}())
-    MOI.set!(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
+    MOI.set(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
     @test MOI.get(m, MOI.ObjectiveFunction{typeof(saf)}()) ≈ saf
 
@@ -24,7 +24,7 @@
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
 
     @test MOI.supports(m, MOI.ObjectiveSense())
-    MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(m, MOI.ObjectiveSense(), MOI.MaxSense)
     @test MOI.get(m, MOI.ObjectiveSense()) == MOI.MaxSense
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MaxSense
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MaxSense
@@ -32,12 +32,12 @@
     @test !MOI.supports(m, MOI.NumberOfVariables())
 
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()))
-    MOI.set!(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
+    MOI.set(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute())) == 10
 
-    MOI.set!(m, MOIU.AttributeFromOptimizer(MOI.ResultCount()), 1)
+    MOI.set(m, MOIU.AttributeFromOptimizer(MOI.ResultCount()), 1)
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), typeof(v))
-    MOI.set!(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v, 3.0)
+    MOI.set(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v, 3.0)
 
     MOI.optimize!(m)
 
@@ -54,7 +54,7 @@
     @test MOI.supportsconstraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
     lb = MOI.add_constraint(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
     @test MOI.supports(m, MOI.ConstraintSet(), typeof(lb))
-    MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
+    MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
     @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
 
@@ -62,7 +62,7 @@
     @test MOIU.state(m) == MOIU.NoOptimizer
 
     @test MOI.supports(m, MOI.ConstraintSet(), typeof(lb))
-    MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
+    MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(12.0)
 
     MOI.delete!(m, x[2])
@@ -80,7 +80,7 @@ end
 
     v = MOI.add_variable(m)
     @test MOI.supports(m, MOI.VariableName(), typeof(v))
-    MOI.set!(m, MOI.VariableName(), v, "v")
+    MOI.set(m, MOI.VariableName(), v, "v")
     @test MOI.get(m, MOI.VariableName(), v) == "v"
 
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
@@ -90,7 +90,7 @@ end
 
     saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v)], 0.0)
     @test MOI.supports(m, MOI.ObjectiveFunction{typeof(saf)}())
-    MOI.set!(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
+    MOI.set(m, MOI.ObjectiveFunction{typeof(saf)}(), saf)
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
 
     MOI.optimize!(m)
@@ -103,17 +103,17 @@ end
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariableName()), v) == ""
 
     @test MOI.supports(m, MOI.ObjectiveSense())
-    MOI.set!(m, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(m, MOI.ObjectiveSense(), MOI.MaxSense)
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MaxSense
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MaxSense
 
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()))
-    MOI.set!(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
+    MOI.set(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute())) == 10
 
-    MOI.set!(m, MOIU.AttributeFromOptimizer(MOI.ResultCount()), 1)
+    MOI.set(m, MOIU.AttributeFromOptimizer(MOI.ResultCount()), 1)
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), typeof(v))
-    MOI.set!(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v, 3.0)
+    MOI.set(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v, 3.0)
 
     MOI.optimize!(m)
 

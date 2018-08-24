@@ -114,9 +114,9 @@ New scalar variables are created with [`add_variable`](@ref MathOptInterface.add
 One uses `VariableIndex` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
 ```julia
 v = add_variable(model)
-set!(model, VariablePrimalStart(), v, 10.5)
+set(model, VariablePrimalStart(), v, 10.5)
 v2 = add_variables(model, 3)
-set!(model, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
+set(model, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
 A variable can be deleted from a model with [`delete!(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete!(::MathOptInterface.ModelLike, ::MathOptInterface.Index)).
@@ -167,9 +167,9 @@ The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used f
 For example,
 ```julia
 x = add_variables(model, 2)
-set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+set(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]]),1.0))
-set!(model, ObjectiveSense(), MinSense)
+set(model, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
 
@@ -202,9 +202,9 @@ The code example below encodes the linear optimization problem:
 
 ```julia
 x = add_variables(model, 2)
-set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+set(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.([3.0, 2.0], x), 0.0))
-set!(model, ObjectiveSense(), MaxSense)
+set(model, ObjectiveSense(), MaxSense)
 add_constraint(model, ScalarAffineFunction(ScalarAffineTerm.(1.0, x), 0.0),
                       LessThan(5.0))
 add_constraint(model, SingleVariable(x[1]), GreaterThan(0.0))
@@ -226,9 +226,9 @@ The code example below encodes the convex optimization problem:
 
 ```julia
 x,y,z = add_variables(model, 3)
-set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+set(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.(1.0, [y,z]), 0.0))
-set!(model, ObjectiveSense(), MaxSense)
+set(model, ObjectiveSense(), MaxSense)
 vector_terms = [VectorAffineTerm(1, ScalarAffineTerm(3.0, x))]
 add_constraint(model, VectorAffineFunction(vector_terms,[-2.0]), Zeros(1))
 add_constraint(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
@@ -381,8 +381,8 @@ x = MOI.add_variables(optimizer, numvariables)
 
 # set the objective function
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
-MOI.set!(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objective_function)
-MOI.set!(optimizer, MOI.ObjectiveSense(), MOI.MaxSense)
+MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objective_function)
+MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MaxSense)
 
 # add the knapsack constraint
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
@@ -443,14 +443,14 @@ c = add_constraint(m, SingleVariable(x), LessThan(1.0))
 ```
 we can modify the set so that the bound now ``x \le 2`` as follows:
 ```julia
-set!(m, ConstraintSet(), c, LessThan(2.0))
+set(m, ConstraintSet(), c, LessThan(2.0))
 ```
 where `m` is our [`ModelLike`](@ref MathOptInterface.ModelLike) model. However,
 the following will fail as the new set (`GreaterThan`) is of a different type to
 the original set
 (`LessThan`):
 ```julia
-set!(m, ConstraintSet(), c, GreaterThan(2.0))  # errors
+set(m, ConstraintSet(), c, GreaterThan(2.0))  # errors
 ```
 If our constraint is an affine inequality, then this corresponds to modifying
 the right-hand side of a constraint in linear programming.
@@ -471,7 +471,7 @@ isvalid(m, c)   # false
 isvalid(m, c2)  # true
 ```
 Also note that [`transform!`](@ref MathOptInterface.transform!) cannot be called
-with a set of the same type; [`set!`](@ref MathOptInterface.set!) should be used
+with a set of the same type; [`set`](@ref MathOptInterface.set) should be used
 instead.
 
 #### The function of a constraint
@@ -485,13 +485,13 @@ c = add_constraint(m, SingleVariable(x), LessThan(1.0))
 ```
 we can modify the function so that the bound now ``y \le 1`` as follows:
 ```julia
-set!(m, ConstraintFunction(), c, SingleVariable(y))
+set(m, ConstraintFunction(), c, SingleVariable(y))
 ```
 where `m` is our [`ModelLike`](@ref MathOptInterface.ModelLike) model. However,
 the following will fail as the new function is of a different type to the
 original function:
 ```julia
-set!(m, ConstraintFunction(), c,
+set(m, ConstraintFunction(), c,
     ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0)
 )
 ```
@@ -531,7 +531,7 @@ constraint.
 
 For example, consider a problem `m` with the objective ``\max 1.0x + 0.0``:
 ```julia
-set!(m,
+set(m,
     ObjectiveFunction{ScalarAffineFunction{Float64}}(),
     ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0)
 )

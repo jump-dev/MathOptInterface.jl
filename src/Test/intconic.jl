@@ -20,8 +20,8 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
 
     x,y,z = MOI.add_variables(model, 3)
 
-    MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0,-1.0], [y,z]), 0.0))
-    MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0,-1.0], [y,z]), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
 
     ceq = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Zeros(1))
     csoc = MOI.add_constraint(model, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))

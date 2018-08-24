@@ -5,7 +5,7 @@
     - add_variables
     - add_variable
     - deleting variables
-    - get/set! VariableName
+    - get/set VariableName
     - isvalid for VariableIndex
     - get VariableIndex by name
     - NumberOfVariables
@@ -118,12 +118,12 @@ function variablenames(model::MOI.ModelLike, config::TestConfig)
     v = MOI.add_variable(model)
     @test MOI.get(model, MOI.VariableName(), v) == ""
     @test MOI.supports(model, MOI.VariableName(), typeof(v))
-    MOI.set!(model, MOI.VariableName(), v, "x")
+    MOI.set(model, MOI.VariableName(), v, "x")
     @test MOI.get(model, MOI.VariableName(), v) == "x"
-    MOI.set!(model, MOI.VariableName(), v, "y")
+    MOI.set(model, MOI.VariableName(), v, "y")
     @test MOI.get(model, MOI.VariableName(), v) == "y"
     x = MOI.add_variable(model)
-    MOI.set!(model, MOI.VariableName(), x, "x")
+    MOI.set(model, MOI.VariableName(), x, "x")
     @test MOI.get(model, MOI.VariableName(), x) == "x"
 end
 unittests["variablenames"] = variablenames
