@@ -16,7 +16,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     attribute::Int # MockModelAttribute
     varattribute::Dict{MOI.VariableIndex,Int} # MockVariableAttribute
     conattribute::Dict{MOI.ConstraintIndex,Int} # MockConstraintAttribute
-    needsallocateload::Bool # Allows to tests the Allocate-Load interface, see copy!
+    needsallocateload::Bool # Allows to tests the Allocate-Load interface, see copy_to
     add_var_allowed::Bool
     add_con_allowed::Bool # If false, the optimizer throws AddConstraintNotAllowed
     modify_allowed::Bool # If false, the optimizer throws Modify...NotAllowed
@@ -269,11 +269,11 @@ end
 # TODO: transform
 
 MOI.supports_constraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.supports_constraint(mock.inner_model, F, S)
-function MOI.copy!(mock::MockOptimizer, src::MOI.ModelLike; copynames=true)
+function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; copynames=true)
     if needsallocateload(mock)
         allocateload!(mock, src, copynames)
     else
-        defaultcopy!(mock, src, copynames)
+        default_copy_to(mock, src, copynames)
     end
 end
 

@@ -329,10 +329,10 @@ function MOI.isempty(model::AbstractModel)
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
 
-MOI.copy!(dest::AbstractModel, src::MOI.ModelLike; copynames=true) = defaultcopy!(dest, src, copynames)
+MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copynames=true) = default_copy_to(dest, src, copynames)
 
 # Allocate-Load Interface
-# Even if the model does not need it and use defaultcopy!, it could be used by a layer that needs it
+# Even if the model does not need it and use default_copy_to, it could be used by a layer that needs it
 needsallocateload(model::AbstractModel) = false
 
 allocatevariables!(model::AbstractModel, nvars) = MOI.add_variables(model, nvars)

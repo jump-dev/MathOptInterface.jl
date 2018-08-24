@@ -81,11 +81,11 @@ end
 
 attribute_value_map(idxmap, f::MOI.AbstractFunction) = mapvariables(idxmap, f)
 attribute_value_map(idxmap, attribute_value) = attribute_value
-function defaultcopy!(dest::MOI.ModelLike, src::MOI.ModelLike)
-    Base.depwarn("defaultcopy!(dest, src) is deprecated, use defaultcopy!(dest, src, true) instead or defaultcopy!(dest, src, false) if you do not want to copy names.", :defaultcopy!)
-    defaultcopy!(dest, src, true)
+function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
+    Base.depwarn("default_copy_to(dest, src) is deprecated, use default_copy_to(dest, src, true) instead or default_copy_to(dest, src, false) if you do not want to copy names.", :default_copy_to)
+    default_copy_to(dest, src, true)
 end
-function defaultcopy!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
+function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
     MOI.empty!(dest)
 
     idxmap = IndexMap()
@@ -118,14 +118,14 @@ end
 # During the first pass (called allocate) : the model collects the relevant information about the problem so that
 # on the second pass (called load), the constraints can be loaded directly to the solver (in case of SDOI) or written directly into the matrix of constraints (in case of SCS and ECOS).
 
-# To support `MOI.copy!` using this 2-pass mechanism, implement the allocate-load interface defined below and do:
-# MOI.copy!(dest::ModelType, src::MOI.ModelLike) = MOIU.allocateload!(dest, src)
+# To support `MOI.copy_to` using this 2-pass mechanism, implement the allocate-load interface defined below and do:
+# MOI.copy_to(dest::ModelType, src::MOI.ModelLike) = MOIU.allocateload!(dest, src)
 # In the implementation of the allocate-load interface, it can be assumed that the different functions will the called in the following order:
 # 1) `allocatevariables!`
 # 2) `allocate!` and `allocateconstraint!`
 # 3) `loadvariables!` and `allocateconstraint!`
 # 4) `load!` and `loadconstraint!`
-# The interface is not meant to be used to create new constraints with `allocateconstraint!` followed by `loadconstraint!` after a solve, it is only meant for being used in this order to implement `MOI.copy!`.
+# The interface is not meant to be used to create new constraints with `allocateconstraint!` followed by `loadconstraint!` after a solve, it is only meant for being used in this order to implement `MOI.copy_to`.
 
 """
     needsallocateload(model::MOI.ModelLike)::Bool
@@ -226,7 +226,7 @@ end
 """
     allocateload!(dest::MOI.ModelLike, src::MOI.ModelLike)
 
-Implements `MOI.copy!(dest, src)` using the allocate-load interface.
+Implements `MOI.copy_to(dest, src)` using the allocate-load interface.
 """
 function allocateload!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
     MOI.empty!(dest)

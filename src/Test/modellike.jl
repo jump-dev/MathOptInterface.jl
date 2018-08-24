@@ -156,19 +156,19 @@ MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MO
 
 function failcopytestc(dest::MOI.ModelLike)
     @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownSet)
-    @test_throws MOI.UnsupportedConstraint MOI.copy!(dest, BadConstraintModel())
+    @test_throws MOI.UnsupportedConstraint MOI.copy_to(dest, BadConstraintModel())
 end
 function failcopytestia(dest::MOI.ModelLike)
     @test !MOI.supports(dest, UnknownModelAttribute())
-    @test_throws MOI.UnsupportedAttribute MOI.copy!(dest, BadModelAttributeModel())
+    @test_throws MOI.UnsupportedAttribute MOI.copy_to(dest, BadModelAttributeModel())
 end
 function failcopytestva(dest::MOI.ModelLike)
     @test !MOI.supports(dest, UnknownVariableAttribute(), MOI.VariableIndex)
-    @test_throws MOI.UnsupportedAttribute MOI.copy!(dest, BadVariableAttributeModel())
+    @test_throws MOI.UnsupportedAttribute MOI.copy_to(dest, BadVariableAttributeModel())
 end
 function failcopytestca(dest::MOI.ModelLike)
     @test !MOI.supports(dest, UnknownConstraintAttribute(), MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
-    @test_throws MOI.UnsupportedAttribute MOI.copy!(dest, BadConstraintAttributeModel())
+    @test_throws MOI.UnsupportedAttribute MOI.copy_to(dest, BadConstraintAttributeModel())
 end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
@@ -192,7 +192,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.supports_constraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     @test MOI.supports_constraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
-    dict = MOI.copy!(dest, src, copynames=false)
+    dict = MOI.copy_to(dest, src, copynames=false)
 
     @test !MOI.supports(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
     @test MOI.get(dest, MOI.NumberOfVariables()) == 3

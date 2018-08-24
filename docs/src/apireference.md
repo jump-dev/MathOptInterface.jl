@@ -39,7 +39,7 @@ read_from_file
 Copying
 
 ```@docs
-copy!
+copy_to
 ```
 
 List of model attributes

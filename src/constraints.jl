@@ -4,7 +4,7 @@
     supports_constraint(model::ModelLike, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
 
 Return a `Bool` indicating whether `model` supports `F`-in-`S` constraints, that is,
-`copy!(model, src)` does not return `CopyUnsupportedConstraint` when `src` contains `F`-in-`S` constraints.
+`copy_to(model, src)` does not return `CopyUnsupportedConstraint` when `src` contains `F`-in-`S` constraints.
 If `F`-in-`S` constraints are only not supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be combined with another type of constraint, it should still return `true`.
 """
 supports_constraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
