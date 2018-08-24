@@ -10,7 +10,7 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     #     x,y \in R
 
     MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
-    MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -63,7 +63,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     #     x,y \in R
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
-    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -135,8 +135,8 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     #             x + y = 1
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
-    MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
-    MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+    MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -214,8 +214,8 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     # x = 1/2, y = 7/4
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
-    @test MOI.supportsconstraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -276,7 +276,7 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x^2 <= 2 (c)
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supportsconstraint(model, MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -325,7 +325,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x^2 <= 2
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supportsconstraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)
@@ -386,9 +386,9 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     #      t >= 0 (bound)
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supportsconstraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
-    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
-    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
     @test MOI.isempty(model)

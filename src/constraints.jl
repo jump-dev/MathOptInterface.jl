@@ -1,13 +1,13 @@
 # Constraints
 
 """
-    supportsconstraint(model::ModelLike, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
+    supports_constraint(model::ModelLike, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
 
 Return a `Bool` indicating whether `model` supports `F`-in-`S` constraints, that is,
 `copy!(model, src)` does not return `CopyUnsupportedConstraint` when `src` contains `F`-in-`S` constraints.
 If `F`-in-`S` constraints are only not supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be combined with another type of constraint, it should still return `true`.
 """
-supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
+supports_constraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
 
 """
     struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
@@ -15,7 +15,7 @@ supportsconstraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:Abstra
     end
 
 An error indicating that constraints of type `F`-in-`S` are not supported by
-the model, i.e. that [`supportsconstraint`](@ref) returns `false`.
+the model, i.e. that [`supports_constraint`](@ref) returns `false`.
 """
 struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
     message::String # Human-friendly explanation why the attribute cannot be set
@@ -30,7 +30,7 @@ element_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constra
     end
 
 An error indicating that constraints of type `F`-in-`S` are supported (see
-[`supportsconstraint`](@ref)) but cannot be added.
+[`supports_constraint`](@ref)) but cannot be added.
 """
 struct AddConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet} <: NotAllowedError
     message::String # Human-friendly explanation why the attribute cannot be set
@@ -55,7 +55,7 @@ it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
 current state.
 """
 function add_constraint(model::ModelLike, func::AbstractFunction, set::AbstractSet)
-    if supportsconstraint(model, typeof(func), typeof(set))
+    if supports_constraint(model, typeof(func), typeof(set))
         throw(AddConstraintNotAllowed{typeof(func), typeof(set)}())
     else
         throw(UnsupportedConstraint{typeof(func), typeof(set)}())

@@ -116,7 +116,7 @@ function basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
     end
     test_keys = length(include) > 0 ? include : Iterators.filter(x->!(x in exclude), keys(BasicConstraintTests))
     for (F,S) in test_keys
-        if MOI.supportsconstraint(model, F, S)
+        if MOI.supports_constraint(model, F, S)
             @testset "$(F)-$(S)" begin
                 (cf, N, set) = BasicConstraintTests[(F,S)]
                 basic_constraint_test_helper(model, config, cf, set, N;
@@ -166,7 +166,7 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     constraint_function = func(x)
     F, S = typeof(constraint_function), typeof(set)
 
-    @test MOI.supportsconstraint(model, F, S)
+    @test MOI.supports_constraint(model, F, S)
 
     @testset "add_constraint" begin
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0

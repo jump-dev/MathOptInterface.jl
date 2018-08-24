@@ -28,7 +28,7 @@ function LazyBridgeOptimizer(model::MOI.ModelLike, bridged::MOI.ModelLike)
 end
 
 function _dist(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    if MOI.supportsconstraint(b.model, F, S)
+    if MOI.supports_constraint(b.model, F, S)
         0
     else
         get(b.dist, (F, S), typemax(Int))
@@ -43,7 +43,7 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
         changed = false
         for BT in b.bridgetypes
             for (F, S) in constraints
-                if MOI.supportsconstraint(BT, F, S) && all(C -> MOI.supportsconstraint(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
+                if MOI.supports_constraint(BT, F, S) && all(C -> MOI.supports_constraint(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
                     # Number of bridges needed using BT
                     dist = 1 + sum(C -> _dist(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
                     # Is it better that what can currently be done ?
@@ -59,7 +59,7 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
 end
 
 function fill_required_constraints!(required::Set{Tuple{DataType, DataType}}, b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    if MOI.supportsconstraint(b.model, F, S) || (F, S) in keys(b.best)
+    if MOI.supports_constraint(b.model, F, S) || (F, S) in keys(b.best)
         return # The constraint is supported
     end
     if (F, S) in required
@@ -68,7 +68,7 @@ function fill_required_constraints!(required::Set{Tuple{DataType, DataType}}, b:
     # The constraint is not supported yet, add in `required` the required constraint types to bridge it
     push!(required, (F, S))
     for BT in b.bridgetypes
-        if MOI.supportsconstraint(BT, F, S)
+        if MOI.supports_constraint(BT, F, S)
             for C in addedconstrainttypes(BT, F, S)
                 fill_required_constraints!(required, b, C[1], C[2])
             end
@@ -97,7 +97,7 @@ end
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
 function isbridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    !MOI.supportsconstraint(b.model, F, S)
+    !MOI.supports_constraint(b.model, F, S)
 end
 function supportsbridgingconstraint(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     update_constraint!(b, F, S)

@@ -212,8 +212,8 @@ function MOI.add_variables(m::CachingOptimizer, n)
     return vindices
 end
 
-function MOI.supportsconstraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    MOI.supportsconstraint(m.model_cache, F, S) && (m.state == NoOptimizer || MOI.supportsconstraint(m.optimizer, F, S))
+function MOI.supports_constraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+    MOI.supports_constraint(m.model_cache, F, S) && (m.state == NoOptimizer || MOI.supports_constraint(m.optimizer, F, S))
 end
 
 function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set::MOI.AbstractSet)

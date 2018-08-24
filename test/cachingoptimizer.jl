@@ -46,12 +46,12 @@
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
     # ModelForMock doesn't support RotatedSecondOrderCone
-    @test !MOI.supportsconstraint(m, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+    @test !MOI.supports_constraint(m, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
 
-    @test MOI.supportsconstraint(m.model_cache, MOI.SingleVariable, MOI.LessThan{Float64})
-    @test MOI.supportsconstraint(m.optimizer.inner_model, MOI.SingleVariable, MOI.LessThan{Float64})
-    @test MOI.supportsconstraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
-    @test MOI.supportsconstraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(m.model_cache, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(m.optimizer.inner_model, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
     lb = MOI.add_constraint(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
     @test MOI.supports(m, MOI.ConstraintSet(), typeof(lb))
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))

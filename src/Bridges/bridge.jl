@@ -31,11 +31,11 @@ type `F`-in`S` created by the bride `b` in the model (i.e., of length equal to t
 MOI.get(b::AbstractBridge, ::MOI.ListOfConstraintIndices{F, S}) where {F, S} = CI{F, S}[]
 
 """
-    MOI.supportsconstraint(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
+    MOI.supports_constraint(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
 
 Return a `Bool` indicating whether the bridges of type `BT` support bridging `F`-in-`S` constraints.
 """
-MOI.supportsconstraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
+MOI.supports_constraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
 
 """
     addedconstrainttypes(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
@@ -61,7 +61,7 @@ end
                          S::Type{<:MOI.AbstractSet})::DataType
 
 Return the concrete type of the bridge supporting `F`-in-`S` constraints. This
-function can only be called if `MOI.supportsconstraint(BT, F, S)` is `true`.
+function can only be called if `MOI.supports_constraint(BT, F, S)` is `true`.
 
 ## Examples
 

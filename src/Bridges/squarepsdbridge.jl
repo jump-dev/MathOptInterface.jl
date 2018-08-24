@@ -107,7 +107,7 @@ function SquarePSDBridge{T, F, G}(model::MOI.ModelLike, f::F,
     return SquarePSDBridge(dim, psd, sym)
 end
 
-function MOI.supportsconstraint(::Type{SquarePSDBridge{T}},
+function MOI.supports_constraint(::Type{SquarePSDBridge{T}},
                                 ::Type{<:MOI.AbstractVectorFunction},
                                 ::Type{MOI.PositiveSemidefiniteConeSquare}) where T
     return true

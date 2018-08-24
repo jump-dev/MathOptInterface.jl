@@ -289,14 +289,14 @@ function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{CI},
 end
 
 # Constraints
-function MOI.supportsconstraint(b::AbstractBridgeOptimizer,
+function MOI.supports_constraint(b::AbstractBridgeOptimizer,
                                 F::Type{<:MOI.AbstractFunction},
                                 S::Type{<:MOI.AbstractSet})
     if isbridged(b, F, S)
         return supportsbridgingconstraint(b, F, S) &&
-            MOI.supportsconstraint(b.bridged, F, S)
+            MOI.supports_constraint(b.bridged, F, S)
     else
-        return MOI.supportsconstraint(b.model, F, S)
+        return MOI.supports_constraint(b.model, F, S)
     end
 end
 function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,

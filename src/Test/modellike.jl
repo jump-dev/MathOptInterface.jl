@@ -35,9 +35,9 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.VariableName(), v, ["VarX","Var2"])
         @test MOI.get(model, MOI.VariableName(), v) == ["VarX", "Var2"]
 
-        @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+        @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
         c = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0), MOI.LessThan(1.0))
-        @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+        @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
         c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0,1.0], v), 0.0), MOI.EqualTo(0.0))
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
 
@@ -88,7 +88,7 @@ function validtest(model::MOI.ModelLike)
     MOI.delete!(model, x)
     @test !MOI.is_valid(model, x)
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0)
-    @test MOI.supportsconstraint(model, typeof(cf), MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.add_constraint(model, cf, MOI.LessThan(1.0))
     @test MOI.is_valid(model, c)
     @test !MOI.is_valid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float32}}(1))
@@ -100,9 +100,9 @@ end
 function emptytest(model::MOI.ModelLike)
     # Taken from LIN1
     v = MOI.add_variables(model, 3)
-    @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
     vc = MOI.add_constraint(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
-    @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
     c = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0,-2.0]), MOI.Zeros(2))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
@@ -155,7 +155,7 @@ MOI.get(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::MOI.Const
 MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[UnknownConstraintAttribute()]
 
 function failcopytestc(dest::MOI.ModelLike)
-    @test !MOI.supportsconstraint(dest, MOI.SingleVariable, UnknownSet)
+    @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownSet)
     @test_throws MOI.UnsupportedConstraint MOI.copy!(dest, BadConstraintModel())
 end
 function failcopytestia(dest::MOI.ModelLike)
@@ -187,10 +187,10 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.set(src, MOI.ObjectiveSense(), MOI.MinSense)
 
     @test MOI.supports(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supportsconstraint(dest, MOI.SingleVariable, MOI.EqualTo{Float64})
-    @test MOI.supportsconstraint(dest, MOI.VectorOfVariables, MOI.Nonnegatives)
-    @test MOI.supportsconstraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
-    @test MOI.supportsconstraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+    @test MOI.supports_constraint(dest, MOI.SingleVariable, MOI.EqualTo{Float64})
+    @test MOI.supports_constraint(dest, MOI.VectorOfVariables, MOI.Nonnegatives)
+    @test MOI.supports_constraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
     dict = MOI.copy!(dest, src, copynames=false)
 
@@ -229,19 +229,19 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MinSense
 end
 
-function supportsconstrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT}) where {GoodT, BadT}
+function supports_constrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT}) where {GoodT, BadT}
     v = MOI.add_variable(model)
-    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.EqualTo{GoodT})
-    @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{GoodT}, MOI.EqualTo{GoodT})
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{GoodT})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{GoodT}, MOI.EqualTo{GoodT})
     # Bad type
-    @test !MOI.supportsconstraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{GoodT})
-    @test !MOI.supportsconstraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{BadT})
-    @test !MOI.supportsconstraint(model, MOI.SingleVariable, MOI.EqualTo{BadT})
+    @test !MOI.supports_constraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{GoodT})
+    @test !MOI.supports_constraint(model, MOI.ScalarAffineFunction{BadT}, MOI.EqualTo{BadT})
+    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{BadT})
 
-    @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.Zeros)
-    @test !MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.EqualTo{GoodT}) # vector in scalar
-    @test !MOI.supportsconstraint(model, MOI.SingleVariable, MOI.Zeros) # scalar in vector
-    @test !MOI.supportsconstraint(model, MOI.VectorOfVariables, UnknownSet) # set not supported
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+    @test !MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.EqualTo{GoodT}) # vector in scalar
+    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.Zeros) # scalar in vector
+    @test !MOI.supports_constraint(model, MOI.VectorOfVariables, UnknownSet) # set not supported
 end
 
 """

@@ -3,9 +3,9 @@ end
 MOI.supports(::DummyModel, ::MOI.ObjectiveSense) = true
 MOI.supports(::DummyModel, ::MOI.ConstraintPrimalStart,
              ::Type{<:MOI.ConstraintIndex}) = true
-MOI.supportsconstraint(::DummyModel, ::Type{MOI.SingleVariable},
+MOI.supports_constraint(::DummyModel, ::Type{MOI.SingleVariable},
                        ::Type{MOI.EqualTo{Float64}}) = true
-MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
+MOI.supports_constraint(::DummyModel, ::Type{MOI.VectorOfVariables},
                        ::Type{MOI.Zeros}) = true
 
 @testset "Fallbacks for `set` methods" begin

@@ -104,8 +104,8 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     rtol = config.rtol
 
     @test MOI.supports(model, MOI.NLPBlock())
-    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
-    @test MOI.supportsconstraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
     @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
 
     MOI.empty!(model)
