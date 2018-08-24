@@ -57,7 +57,7 @@ struct SOCtoPSDCBridge{T} <: AbstractBridge
 end
 function SOCtoPSDCBridge{T}(instance, f, s::MOI.SecondOrderCone) where T
     d = MOI.dimension(s)
-    cr = MOI.addconstraint!(instance, _SOCtoPSDCaff(f, T), MOI.PositiveSemidefiniteConeTriangle(d))
+    cr = MOI.add_constraint(instance, _SOCtoPSDCaff(f, T), MOI.PositiveSemidefiniteConeTriangle(d))
     SOCtoPSDCBridge(d, cr)
 end
 
@@ -119,7 +119,7 @@ addedconstrainttypes(::Type{RSOCtoPSDCBridge{T}}, ::Type{<:Union{MOI.VectorOfVar
 
 function RSOCtoPSDCBridge{T}(instance, f, s::MOI.RotatedSecondOrderCone) where T
     d = MOI.dimension(s)-1
-    cr = MOI.addconstraint!(instance, _RSOCtoPSDCaff(f, T), MOI.PositiveSemidefiniteConeTriangle(d))
+    cr = MOI.add_constraint(instance, _RSOCtoPSDCaff(f, T), MOI.PositiveSemidefiniteConeTriangle(d))
     RSOCtoPSDCBridge(d, cr)
 end
 

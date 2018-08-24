@@ -102,7 +102,7 @@ function SquarePSDBridge{T, F, G}(model::MOI.ModelLike, f::F,
         k += dim - j
     end
     @assert length(upper_triangle_indices) == trilen
-    psd = MOI.addconstraint!(model, f_scalars[upper_triangle_indices],
+    psd = MOI.add_constraint(model, f_scalars[upper_triangle_indices],
                              MOI.PositiveSemidefiniteConeTriangle(dim))
     return SquarePSDBridge(dim, psd, sym)
 end

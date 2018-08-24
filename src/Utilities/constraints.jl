@@ -12,7 +12,7 @@ function add_scalar_constraint end
 
 function add_scalar_constraint(model::MOI.ModelLike, func::MOI.SingleVariable,
                                set::MOI.AbstractScalarSet)
-    return MOI.addconstraint!(model, func, set)
+    return MOI.add_constraint(model, func, set)
 end
 function add_scalar_constraint(model::MOI.ModelLike,
                                func::Union{MOI.ScalarAffineFunction{T},
@@ -24,5 +24,5 @@ function add_scalar_constraint(model::MOI.ModelLike,
         func = copy(func)
     end
     func.constant = zero(T)
-    return MOI.addconstraint!(model, func, set)
+    return MOI.add_constraint(model, func, set)
 end

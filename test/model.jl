@@ -39,13 +39,13 @@ end
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
     f1 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]), MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7)
-    c1 = MOI.addconstraint!(model, f1, MOI.Interval(-1, 1))
+    c1 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Int},MOI.Interval{Int}}()) == 1
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarQuadraticFunction{Int},MOI.Interval{Int}}())) == [c1]
 
     f2 = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([1, 2, 2], MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])), MOI.VectorQuadraticTerm.([1, 1, 2], MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])), [7, 3, 4])
-    c2 = MOI.addconstraint!(model, f2, MOI.PositiveSemidefiniteConeTriangle(3))
+    c2 = MOI.add_constraint(model, f2, MOI.PositiveSemidefiniteConeTriangle(3))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle}()) == 1
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle}())) == [c2]
@@ -63,19 +63,19 @@ end
     @test MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3
 
     f4 = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y])), [5, 7])
-    c4 = MOI.addconstraint!(model, f4, MOI.SecondOrderCone(2))
+    c4 = MOI.add_constraint(model, f4, MOI.SecondOrderCone(2))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}()) == 1
 
     f5 = MOI.VectorOfVariables([x])
-    c5 = MOI.addconstraint!(model, f5, MOI.RotatedSecondOrderCone(1))
+    c5 = MOI.add_constraint(model, f5, MOI.RotatedSecondOrderCone(1))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}()) == 1
 
     f6 = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([2, 9], [x, y])), [6, 8])
-    c6 = MOI.addconstraint!(model, f6, MOI.SecondOrderCone(2))
+    c6 = MOI.add_constraint(model, f6, MOI.SecondOrderCone(2))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}()) == 2
 
     f7 = MOI.VectorOfVariables([x, y])
-    c7 = MOI.addconstraint!(model, f7, MOI.Nonpositives(2))
+    c7 = MOI.add_constraint(model, f7, MOI.Nonpositives(2))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}()) == 1
 
     loc1 = MOI.get(model, MOI.ListOfConstraints())
@@ -131,7 +131,7 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
     @testset "set!" begin
         m = Model{Float64}()
         x = MOI.add_variable(m)
-        c = MOI.addconstraint!(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
+        c = MOI.add_constraint(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
         @test !MOI.supportsconstraint(m, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
 
         @test MOI.supports(m, MOI.ConstraintSet(), typeof(c))

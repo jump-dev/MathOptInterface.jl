@@ -250,7 +250,7 @@ function loadfromstring!(model, s)
             else
                 error("Unrecognized expression $ex")
             end
-            cindex = MOI.addconstraint!(model, f, set)
+            cindex = MOI.add_constraint(model, f, set)
             MOI.set!(model, MOI.ConstraintName(), cindex, String(label))
         end
     end

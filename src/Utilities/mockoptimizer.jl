@@ -91,11 +91,11 @@ function MOI.add_variables(mock::MockOptimizer, n::Int)
         throw(MOI.AddVariableNotAllowed())
     end
 end
-function MOI.addconstraint!(mock::MockOptimizer,
+function MOI.add_constraint(mock::MockOptimizer,
                             func::MOI.AbstractFunction,
                             set::MOI.AbstractSet)
     if mock.add_con_allowed
-        ci = MOI.addconstraint!(mock.inner_model, xor_variables(func), set)
+        ci = MOI.add_constraint(mock.inner_model, xor_variables(func), set)
         return xor_index(ci)
     else
         throw(MOI.AddConstraintNotAllowed{typeof(func), typeof(set)}())

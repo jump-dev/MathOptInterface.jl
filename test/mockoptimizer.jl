@@ -16,7 +16,7 @@ end
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), [v1]) == [-11]
 
     @test MOI.supportsconstraint(optimizer, MOI.SingleVariable, MOI.GreaterThan{Float64})
-    c1 = MOI.addconstraint!(optimizer, MOI.SingleVariable(v1), MOI.GreaterThan(1.0))
+    c1 = MOI.add_constraint(optimizer, MOI.SingleVariable(v1), MOI.GreaterThan(1.0))
     @test MOI.supports(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
     MOI.set!(optimizer, MOIU.MockConstraintAttribute(), c1, 12)
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), c1) == 12
@@ -43,8 +43,8 @@ end
                                    eval_variable_constraint_dual=false)
 
     v = MOI.add_variables(optimizer, 2)
-    c1 = MOI.addconstraint!(optimizer, MOI.SingleVariable(v[1]), MOI.GreaterThan(1.0))
-    soc = MOI.addconstraint!(optimizer, MOI.VectorOfVariables(v), MOI.SecondOrderCone(2))
+    c1 = MOI.add_constraint(optimizer, MOI.SingleVariable(v[1]), MOI.GreaterThan(1.0))
+    soc = MOI.add_constraint(optimizer, MOI.VectorOfVariables(v), MOI.SecondOrderCone(2))
 
 
     # Load fake solution

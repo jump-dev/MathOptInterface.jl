@@ -168,9 +168,9 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
 
     @test MOI.supportsconstraint(model, F, S)
 
-    @testset "addconstraint!" begin
+    @testset "add_constraint" begin
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
-        c = MOI.addconstraint!(model, constraint_function, set)
+        c = MOI.add_constraint(model, constraint_function, set)
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
 
         @testset "ConstraintName" begin
@@ -200,9 +200,9 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     if F != MOI.SingleVariable
         # We can't add multiple single variable constraints as these are
         # interpreted as bounds etc.
-        @testset "addconstraints!" begin
+        @testset "add_constraints" begin
             n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
-            cc = MOI.addconstraints!(model,
+            cc = MOI.add_constraints(model,
                 [constraint_function, constraint_function],
                 [set, set]
             )

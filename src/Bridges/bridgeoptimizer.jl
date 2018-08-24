@@ -299,15 +299,15 @@ function MOI.supportsconstraint(b::AbstractBridgeOptimizer,
         return MOI.supportsconstraint(b.model, F, S)
     end
 end
-function MOI.addconstraint!(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
+function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                             s::MOI.AbstractSet)
     if isbridged(b, typeof(f), typeof(s))
-        ci = MOI.addconstraint!(b.bridged, f, s)
+        ci = MOI.add_constraint(b.bridged, f, s)
         @assert !haskey(b.bridges, ci)
         b.bridges[ci] = concrete_bridge_type(b, typeof(f), typeof(s))(b, f, s)
         return ci
     else
-        return MOI.addconstraint!(b.model, f, s)
+        return MOI.add_constraint(b.model, f, s)
     end
 end
 function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI,

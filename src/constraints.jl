@@ -40,12 +40,12 @@ AddConstraintNotAllowed{F, S}() where {F, S} = AddConstraintNotAllowed{F, S}("")
 operation_name(::AddConstraintNotAllowed{F, S}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 
 """
-    addconstraint!(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
+    add_constraint(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
 
 Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
 
-    addconstraint!(model::ModelLike, v::VariableIndex, set::S)::ConstraintIndex{SingleVariable,S} where {S}
-    addconstraint!(model::ModelLike, vec::Vector{VariableIndex}, set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
+    add_constraint(model::ModelLike, v::VariableIndex, set::S)::ConstraintIndex{SingleVariable,S} where {S}
+    add_constraint(model::ModelLike, vec::Vector{VariableIndex}, set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
 
@@ -54,7 +54,7 @@ An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
 it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
 current state.
 """
-function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractSet)
+function add_constraint(model::ModelLike, func::AbstractFunction, set::AbstractSet)
     if supportsconstraint(model, typeof(func), typeof(set))
         throw(AddConstraintNotAllowed{typeof(func), typeof(set)}())
     else
@@ -63,19 +63,19 @@ function addconstraint!(model::ModelLike, func::AbstractFunction, set::AbstractS
 end
 
 # convenient shorthands TODO: document
-addconstraint!(model::ModelLike, v::VariableIndex, set::AbstractScalarSet) = addconstraint!(model, SingleVariable(v), set)
-addconstraint!(model::ModelLike, v::Vector{VariableIndex}, set::AbstractVectorSet) = addconstraint!(model, VectorOfVariables(v), set)
+add_constraint(model::ModelLike, v::VariableIndex, set::AbstractScalarSet) = add_constraint(model, SingleVariable(v), set)
+add_constraint(model::ModelLike, v::Vector{VariableIndex}, set::AbstractVectorSet) = add_constraint(model, VectorOfVariables(v), set)
 
 """
-    addconstraints!(model::ModelLike, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintIndex{F,S}} where {F,S}
+    add_constraints(model::ModelLike, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintIndex{F,S}} where {F,S}
 
 Add the set of constraints specified by each function-set pair in `funcs` and `sets`. `F` and `S` should be concrete types.
-This call is equivalent to `addconstraint!.(model, funcs, sets)` but may be more efficient.
+This call is equivalent to `add_constraint.(model, funcs, sets)` but may be more efficient.
 """
-function addconstraints! end
+function add_constraints end
 
 # default fallback
-addconstraints!(model::ModelLike, funcs, sets) = addconstraint!.(model, funcs, sets)
+add_constraints(model::ModelLike, funcs, sets) = add_constraint.(model, funcs, sets)
 
 """
 ## Transform Constraint Set
@@ -109,5 +109,5 @@ function transform! end
 function transform!(model::ModelLike, c::ConstraintIndex, newset)
     f = get(model, ConstraintFunction(), c)
     delete!(model, c)
-    addconstraint!(model, f, newset)
+    add_constraint(model, f, newset)
 end

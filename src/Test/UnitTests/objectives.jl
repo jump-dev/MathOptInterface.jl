@@ -149,8 +149,8 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
-    MOI.addconstraint!(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
-    MOI.addconstraint!(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
+    MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
+    MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
 
     @testset "Basic model" begin
         # min x^2 + y^2 | x>=1, y>=2
@@ -228,7 +228,7 @@ function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.isempty(model)
     x = MOI.add_variable(model)
-    c = MOI.addconstraint!(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(

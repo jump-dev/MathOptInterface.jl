@@ -78,7 +78,7 @@ end
         @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
         f1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 7)
-        c1 = MOI.addconstraint!(model, f1, MOI.Interval(-1, 1))
+        c1 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
 
         @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
@@ -86,7 +86,7 @@ end
         @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
 
         f2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, -1], [x, y]), 2)
-        c2 = MOI.addconstraint!(model, f1, MOI.GreaterThan(-2))
+        c2 = MOI.add_constraint(model, f1, MOI.GreaterThan(-2))
 
         @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
         test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
@@ -136,7 +136,7 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
         MOI.empty!(bridgedmock)
         @test !(MOI.supportsconstraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
         x = MOI.add_variables(bridgedmock, 3)
-        c = MOI.addconstraint!(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
+        c = MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
         @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
         @test bridgedmock.dist[(MathOptInterface.VectorOfVariables, MathOptInterface.RotatedSecondOrderCone)] == 1
     end

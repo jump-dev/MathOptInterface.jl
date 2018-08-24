@@ -257,11 +257,11 @@ end
 
 # Constraints
 MOI.supportsconstraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = true
-function MOI.addconstraint!(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.AbstractSet)
+function MOI.add_constraint(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.AbstractSet)
     F = typeof(f)
     S = typeof(s)
     if MOI.supportsconstraint(uf.model, F, S)
-        return MOI.addconstraint!(uf.model, f, s)
+        return MOI.add_constraint(uf.model, f, s)
     else
         constraints = get!(uf.constraints, (F, S)) do
             Dict{CI{F, S}, Tuple{F, S}}()

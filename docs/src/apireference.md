@@ -155,8 +155,8 @@ Functions for adding and modifying constraints.
 
 ```@docs
 isvalid(::ModelLike,::ConstraintIndex)
-addconstraint!
-addconstraints!
+add_constraint
+add_constraints
 transform!
 supportsconstraint
 ```

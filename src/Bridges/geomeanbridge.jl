@@ -86,7 +86,7 @@ function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
                 b = one(T) * MOI.SingleVariable(xij[offsetnext+2j])
             end
             c = MOI.SingleVariable(xij[offset+j])
-            socrc[offset + j] = MOI.addconstraint!(model,
+            socrc[offset + j] = MOI.add_constraint(model,
                                                    MOIU.operate(vcat, T, a, b, c),
                                                    MOI.RotatedSecondOrderCone(3))
         end

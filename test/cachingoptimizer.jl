@@ -52,7 +52,7 @@
     @test MOI.supportsconstraint(m.optimizer.inner_model, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supportsconstraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supportsconstraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
-    lb = MOI.addconstraint!(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
+    lb = MOI.add_constraint(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
     @test MOI.supports(m, MOI.ConstraintSet(), typeof(lb))
     MOI.set!(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
@@ -127,7 +127,7 @@ end
         @test MOIU.state(m) == MOIU.EmptyOptimizer
         MOIU.attachoptimizer!(m)
         @test MOIU.state(m) == MOIU.AttachedOptimizer
-        ci = MOI.addconstraint!(m, saf, MOI.EqualTo(0.0))
+        ci = MOI.add_constraint(m, saf, MOI.EqualTo(0.0))
         s.modify_allowed = false
         MOI.modify!(m, ci, MOI.ScalarCoefficientChange(v, 1.0))
         s.modify_allowed = true
@@ -139,7 +139,7 @@ end
     # Simulate that constraints cannot be added
     @testset "Add constraint not allowed" begin
         s.add_con_allowed = false
-        MOI.addconstraint!(m, MOI.VectorOfVariables([v]), MOI.SecondOrderCone(1))
+        MOI.add_constraint(m, MOI.VectorOfVariables([v]), MOI.SecondOrderCone(1))
         s.add_con_allowed = true
         @test MOIU.state(m) == MOIU.EmptyOptimizer
         MOI.empty!(m)
@@ -172,7 +172,7 @@ end
         @test MOIU.state(m) == MOIU.AttachedOptimizer
 
         vi = MOI.add_variable(m)
-        ci = MOI.addconstraint!(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
+        ci = MOI.add_constraint(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
         s.delete_allowed = false # Simulate optimizer that cannot delete constraint
         MOI.delete!(m, ci)
         s.delete_allowed = true
