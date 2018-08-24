@@ -124,8 +124,8 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     start = [1,5,5,1]
 
     for i in 1:4
-        MOI.addconstraint!(model, MOI.SingleVariable(v[i]), MOI.LessThan(u[i]))
-        MOI.addconstraint!(model, MOI.SingleVariable(v[i]), MOI.GreaterThan(l[i]))
+        MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.LessThan(u[i]))
+        MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.GreaterThan(l[i]))
         MOI.set!(model, MOI.VariablePrimalStart(), v[i], start[i])
     end
 

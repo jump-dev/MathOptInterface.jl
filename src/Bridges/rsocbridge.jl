@@ -33,7 +33,7 @@ function RSOCBridge{T, F}(model, f::MOI.AbstractVectorFunction, s::MOI.RotatedSe
     y  = ts - us
     z  = MOIU.operate!(+, T, ts, us)
     g = MOIU.operate(vcat, T, z, y, x)
-    soc = MOI.addconstraint!(model, g, MOI.SecondOrderCone(d))
+    soc = MOI.add_constraint(model, g, MOI.SecondOrderCone(d))
     RSOCBridge{T, F}(soc)
 end
 

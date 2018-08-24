@@ -28,12 +28,12 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
     vi = MOI.VariableIndex(1)
     func = MOI.SingleVariable(vi)
 
-    @testset "addconstraint! errors" begin
+    @testset "add_constraint errors" begin
         @test_throws MOI.AddConstraintNotAllowed begin
-            MOI.addconstraint!(model, func, MOI.EqualTo(0.0))
+            MOI.add_constraint(model, func, MOI.EqualTo(0.0))
         end
         try
-            MOI.addconstraint!(model, func, MOI.EqualTo(0.0))
+            MOI.add_constraint(model, func, MOI.EqualTo(0.0))
         catch err
             @test sprint(showerror, err) == "$MOI.AddConstraintNotAllowed{$MOI.SingleVariable,$MOI.EqualTo{Float64}}:" *
             " Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}`" *
@@ -43,33 +43,33 @@ MOI.supportsconstraint(::DummyModel, ::Type{MOI.VectorOfVariables},
             " `CachingOptimizer` is in `Manual` mode."
         end
         @test_throws MOI.AddConstraintNotAllowed begin
-            MOI.addconstraint!(model, vi, MOI.EqualTo(0.0))
+            MOI.add_constraint(model, vi, MOI.EqualTo(0.0))
         end
         @test_throws MOI.AddConstraintNotAllowed begin
-            MOI.addconstraint!(model, [vi, vi], MOI.Zeros(2))
+            MOI.add_constraint(model, [vi, vi], MOI.Zeros(2))
         end
         @test_throws MOI.AddConstraintNotAllowed begin
-            MOI.addconstraints!(model, [vi, vi], [MOI.EqualTo(0.0),
+            MOI.add_constraints(model, [vi, vi], [MOI.EqualTo(0.0),
                                                   MOI.EqualTo(0.0)])
         end
         @test_throws MOI.UnsupportedConstraint begin
-            MOI.addconstraint!(model, func, MOI.EqualTo(0))
+            MOI.add_constraint(model, func, MOI.EqualTo(0))
         end
         try
-            MOI.addconstraint!(model, func, MOI.EqualTo(0))
+            MOI.add_constraint(model, func, MOI.EqualTo(0))
         catch err
             @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
             " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraints is" *
             " not supported by the the model."
         end
         @test_throws MOI.UnsupportedConstraint begin
-            MOI.addconstraint!(model, vi, MOI.EqualTo(0))
+            MOI.add_constraint(model, vi, MOI.EqualTo(0))
         end
         @test_throws MOI.UnsupportedConstraint begin
-            MOI.addconstraint!(model, [vi, vi], MOI.Nonnegatives(2))
+            MOI.add_constraint(model, [vi, vi], MOI.Nonnegatives(2))
         end
         @test_throws MOI.UnsupportedConstraint begin
-            MOI.addconstraints!(model, [vi, vi], [MOI.EqualTo(0),
+            MOI.add_constraints(model, [vi, vi], [MOI.EqualTo(0),
                                                   MOI.EqualTo(0)])
         end
     end

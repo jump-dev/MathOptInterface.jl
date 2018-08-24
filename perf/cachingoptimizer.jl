@@ -13,7 +13,7 @@ caching_optimizer = MOIU.CachingOptimizer(Model{Float64}(), optimizer)
 MOIU.resetoptimizer!(caching_optimizer) # detach optimizer
 v = MOI.addvariables!(caching_optimizer, 2)
 cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0, 0.0], v), 0.0)
-c = MOI.addconstraint!(caching_optimizer, cf, MOI.Interval(-Inf, 1.0))
+c = MOI.add_constraint(caching_optimizer, cf, MOI.Interval(-Inf, 1.0))
 @btime MOI.set!($caching_optimizer, $(MOI.ConstraintSet()), $c, $(MOI.Interval(0.0, 2.0)))
 MOIU.attachoptimizer!(caching_optimizer)
 @btime MOI.set!($caching_optimizer, $(MOI.ConstraintSet()), $c, $(MOI.Interval(0.0, 2.0)))

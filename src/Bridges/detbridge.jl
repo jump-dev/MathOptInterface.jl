@@ -40,7 +40,7 @@ function extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int) wher
     end
     @assert cur == M
     Y = MOI.VectorAffineFunction(terms, constant)
-    sdindex = MOI.addconstraint!(model, Y, MOI.PositiveSemidefiniteConeTriangle(2d))
+    sdindex = MOI.add_constraint(model, Y, MOI.PositiveSemidefiniteConeTriangle(2d))
 
     t = f_scalars[1]
     D = Δ[trimap.(1:d, 1:d)]
@@ -95,7 +95,7 @@ addedconstrainttypes(::Type{LogDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariabl
 Constrains ``x \\le \\log(z)`` and return the constraint index.
 """
 function sublog(model, x::MOI.VariableIndex, z::MOI.VariableIndex, ::Type{T}) where T
-    MOI.addconstraint!(model, MOIU.operate(vcat, T, MOI.SingleVariable(x),
+    MOI.add_constraint(model, MOIU.operate(vcat, T, MOI.SingleVariable(x),
                                            one(T), MOI.SingleVariable(z)),
                        MOI.ExponentialCone())
 end
@@ -172,7 +172,7 @@ function RootDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RootDetC
     d = s.side_dimension
     t, D, Δ, sdindex = extract_eigenvalues(model, f, d)
     DF = MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(D))
-    gmindex = MOI.addconstraint!(model, MOIU.operate(vcat, T, t, DF),
+    gmindex = MOI.add_constraint(model, MOIU.operate(vcat, T, t, DF),
                                  MOI.GeometricMeanCone(d+1))
 
     RootDetBridge(Δ, sdindex, gmindex)

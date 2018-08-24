@@ -72,7 +72,7 @@ function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bo
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         f_dest = mapvariables(idxmap, f_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
-        ci_dest = MOI.addconstraint!(dest, f_dest, s)
+        ci_dest = MOI.add_constraint(dest, f_dest, s)
         idxmap.conmap[ci_src] = ci_dest
     end
 
@@ -112,7 +112,7 @@ function defaultcopy!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
 end
 
 # Allocate-Load Interface: 2-pass copy of a MathOptInterface model
-# Some solver wrappers (e.g. SCS, ECOS, SDOI) do not supporting copying an optimization model using `MOI.addconstraints!`, `MOI.add_variables` and `MOI.set!`
+# Some solver wrappers (e.g. SCS, ECOS, SDOI) do not supporting copying an optimization model using `MOI.add_constraints`, `MOI.add_variables` and `MOI.set!`
 # as they first need to figure out some information about a model before being able to pass the problem data to the solver.
 #
 # During the first pass (called allocate) : the model collects the relevant information about the problem so that
@@ -130,7 +130,7 @@ end
 """
     needsallocateload(model::MOI.ModelLike)::Bool
 
-Return a `Bool` indicating whether `model` does not support `add_variables`/`addconstraint!`/`set!` but supports `allocatevariables!`/`allocateconstraint!`/`allocate!`/`loadvariables!`/`loadconstraint!`/`load!`.
+Return a `Bool` indicating whether `model` does not support `add_variables`/`add_constraint`/`set!` but supports `allocatevariables!`/`allocateconstraint!`/`allocate!`/`loadvariables!`/`loadconstraint!`/`load!`.
 That is, the allocate-load interface need to be used to copy an model to `model`.
 """
 function needsallocateload end

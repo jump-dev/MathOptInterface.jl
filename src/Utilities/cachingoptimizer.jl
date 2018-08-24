@@ -216,11 +216,11 @@ function MOI.supportsconstraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunct
     MOI.supportsconstraint(m.model_cache, F, S) && (m.state == NoOptimizer || MOI.supportsconstraint(m.optimizer, F, S))
 end
 
-function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set::MOI.AbstractSet)
+function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set::MOI.AbstractSet)
     if m.state == AttachedOptimizer
         if m.mode == Automatic
             try
-                cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+                cindex_optimizer = MOI.add_constraint(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
             catch err
                 if err isa MOI.NotAllowedError
                     # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
@@ -232,10 +232,10 @@ function MOI.addconstraint!(m::CachingOptimizer, func::MOI.AbstractFunction, set
                 end
             end
         else
-            cindex_optimizer = MOI.addconstraint!(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+            cindex_optimizer = MOI.add_constraint(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
         end
     end
-    cindex = MOI.addconstraint!(m.model_cache, func, set)
+    cindex = MOI.add_constraint(m.model_cache, func, set)
     if m.state == AttachedOptimizer
         m.model_to_optimizer_map[cindex] = cindex_optimizer
         m.optimizer_to_model_map[cindex_optimizer] = cindex
@@ -348,7 +348,7 @@ function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
 end
 
 
-# TODO: addconstraints!, transform!
+# TODO: add_constraints, transform!
 
 ## CachingOptimizer get and set attributes
 

@@ -3,7 +3,7 @@ const C{F, S} = Tuple{CI{F, S}, F, S}
 const EMPTYSTRING = ""
 
 # Implementation of MOI for vector of constraint
-function _addconstraint!(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S) where {F, S}
+function _add_constraint(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S) where {F, S}
     push!(constrs, (ci, f, s))
     length(constrs)
 end
@@ -264,14 +264,14 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{M
 end
 
 # Constraints
-function MOI.addconstraint!(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     if MOI.supportsconstraint(model, F, S)
         # We give the index value `nextconstraintid + 1` to the new constraint.
         # As the same counter is used for all pairs of F-in-S constraints,
         # the index value is unique across all constraint types as mentionned in `@model`'s doc.
         ci = CI{F, S}(model.nextconstraintid += 1)
         # f needs to be copied, see #2
-        push!(model.constrmap, _addconstraint!(model, ci, deepcopy(f), deepcopy(s)))
+        push!(model.constrmap, _add_constraint(model, ci, deepcopy(f), deepcopy(s)))
         return ci
     else
         throw(MOI.UnsupportedConstraint{F, S}())
@@ -339,7 +339,7 @@ allocatevariables!(model::AbstractModel, nvars) = MOI.add_variables(model, nvars
 allocate!(model::AbstractModel, attr...) = MOI.set!(model, attr...)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.supports(model, attr)
 canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.supports(model, attr, IndexType)
-allocateconstraint!(model::AbstractModel, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.addconstraint!(model, f, s)
+allocateconstraint!(model::AbstractModel, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.add_constraint(model, f, s)
 
 function loadvariables!(::AbstractModel, nvars) end
 function load!(::AbstractModel, attr...) end
@@ -357,7 +357,7 @@ Calls `f(contrs)` for every vector `constrs::Vector{ConstraintIndex{F, S}, F, S}
 
 To add all constraints of the model to a solver `solver`, one can do
 ```julia
-_addcon(solver, ci, f, s) = MOI.addconstraint!(solver, f, s)
+_addcon(solver, ci, f, s) = MOI.add_constraint(solver, f, s)
 function _addcon(solver, constrs::Vector)
     for constr in constrs
         _addcon(solver, constr...)
@@ -575,7 +575,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    for (func, T) in ((:_addconstraint!, CI), (:_modify!, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
+    for (func, T) in ((:_add_constraint, CI), (:_modify!, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
         funct = _mod(MOIU, func)
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets

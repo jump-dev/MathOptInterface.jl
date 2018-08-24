@@ -187,7 +187,7 @@ function solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfi
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
-    c = MOI.addconstraint!(model,
+    c = MOI.add_constraint(model,
             MOI.VectorAffineFunction([
                     MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
                     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, y))
@@ -224,7 +224,7 @@ function solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::TestCo
         maxobjective: 1.0x
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.addconstraint!(model,
+    c = MOI.add_constraint(model,
             MOI.VectorAffineFunction([
                     MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
                     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x))

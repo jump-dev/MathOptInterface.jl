@@ -36,9 +36,9 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.VariableName(), v) == ["VarX", "Var2"]
 
         @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
-        c = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0), MOI.LessThan(1.0))
+        c = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0), MOI.LessThan(1.0))
         @test MOI.supportsconstraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
-        c2 = MOI.addconstraint!(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0,1.0], v), 0.0), MOI.EqualTo(0.0))
+        c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0,1.0], v), 0.0), MOI.EqualTo(0.0))
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
 
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
@@ -89,7 +89,7 @@ function validtest(model::MOI.ModelLike)
     @test !MOI.isvalid(model, x)
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0)
     @test MOI.supportsconstraint(model, typeof(cf), MOI.LessThan{Float64})
-    c = MOI.addconstraint!(model, cf, MOI.LessThan(1.0))
+    c = MOI.add_constraint(model, cf, MOI.LessThan(1.0))
     @test MOI.isvalid(model, c)
     @test !MOI.isvalid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float32}}(1))
     @test !MOI.isvalid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float64}}(1))
@@ -101,9 +101,9 @@ function emptytest(model::MOI.ModelLike)
     # Taken from LIN1
     v = MOI.add_variables(model, 3)
     @test MOI.supportsconstraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
-    vc = MOI.addconstraint!(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
+    vc = MOI.add_constraint(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     @test MOI.supportsconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
-    c = MOI.addconstraint!(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0,-2.0]), MOI.Zeros(2))
+    c = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0,-2.0]), MOI.Zeros(2))
     MOI.set!(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
     MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
 
@@ -175,13 +175,13 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.set!(src, MOI.Name(), "ModelName")
     v = MOI.add_variables(src, 3)
     MOI.set!(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
-    csv = MOI.addconstraint!(src, MOI.SingleVariable(v[2]), MOI.EqualTo(2.))
+    csv = MOI.add_constraint(src, MOI.SingleVariable(v[2]), MOI.EqualTo(2.))
     MOI.set!(src, MOI.ConstraintName(), csv, "csv")
-    cvv = MOI.addconstraint!(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
+    cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     MOI.set!(src, MOI.ConstraintName(), cvv, "cvv")
-    csa = MOI.addconstraint!(src, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1., 3.], [v[3], v[1]]), 2.), MOI.LessThan(2.))
+    csa = MOI.add_constraint(src, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1., 3.], [v[3], v[1]]), 2.), MOI.LessThan(2.))
     MOI.set!(src, MOI.ConstraintName(), csa, "csa")
-    cva = MOI.addconstraint!(src, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [v[3], v[2]])), [-3.0,-2.0]), MOI.Zeros(2))
+    cva = MOI.add_constraint(src, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [v[3], v[2]])), [-3.0,-2.0]), MOI.Zeros(2))
     MOI.set!(src, MOI.ConstraintName(), cva, "cva")
     MOI.set!(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
     MOI.set!(src, MOI.ObjectiveSense(), MOI.MinSense)
@@ -265,12 +265,12 @@ function orderedindicestest(model::MOI.ModelLike)
 
     # Note: there are too many combinations to test, so we're just going to
     # check SingleVariable-in-LessThan and hope it works for the rest
-    c1 = MOI.addconstraint!(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
+    c1 = MOI.add_constraint(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1]
-    c2 = MOI.addconstraint!(model, MOI.SingleVariable(v3), MOI.LessThan(2.0))
+    c2 = MOI.add_constraint(model, MOI.SingleVariable(v3), MOI.LessThan(2.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1, c2]
     MOI.delete!(model, c1)
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2]
-    c3 = MOI.addconstraint!(model, MOI.SingleVariable(v4), MOI.LessThan(3.0))
+    c3 = MOI.add_constraint(model, MOI.SingleVariable(v4), MOI.LessThan(3.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]
 end

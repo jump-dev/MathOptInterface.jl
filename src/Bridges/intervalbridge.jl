@@ -8,8 +8,8 @@ struct SplitIntervalBridge{T, F<:MOI.AbstractScalarFunction} <: AbstractBridge
     upper::CI{F, MOI.LessThan{T}}
 end
 function SplitIntervalBridge{T, F}(model, f::F, s::MOI.Interval{T}) where {T, F}
-    lower = MOI.addconstraint!(model, f, MOI.GreaterThan(s.lower))
-    upper = MOI.addconstraint!(model, f, MOI.LessThan(s.upper))
+    lower = MOI.add_constraint(model, f, MOI.GreaterThan(s.lower))
+    upper = MOI.add_constraint(model, f, MOI.LessThan(s.upper))
     return SplitIntervalBridge{T, F}(lower, upper)
 end
 

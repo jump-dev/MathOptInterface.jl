@@ -177,7 +177,7 @@ See [Functions and function modifications](@ref) for the complete list of functi
 
 ## Sets and Constraints
 
-All constraints are specified with [`addconstraint!`](@ref MathOptInterface.addconstraint!)
+All constraints are specified with [`add_constraint`](@ref MathOptInterface.add_constraint)
 by restricting the output of some function to a set.
 The interface allows an arbitrary combination of functions and sets, but of course
 solvers may decide to support only a small number of combinations.
@@ -205,10 +205,10 @@ x = add_variables(model, 2)
 set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.([3.0, 2.0], x), 0.0))
 set!(model, ObjectiveSense(), MaxSense)
-addconstraint!(model, ScalarAffineFunction(ScalarAffineTerm.(1.0, x), 0.0),
+add_constraint(model, ScalarAffineFunction(ScalarAffineTerm.(1.0, x), 0.0),
                       LessThan(5.0))
-addconstraint!(model, SingleVariable(x[1]), GreaterThan(0.0))
-addconstraint!(model, SingleVariable(x[2]), GreaterThan(-1.0))
+add_constraint(model, SingleVariable(x[1]), GreaterThan(0.0))
+add_constraint(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
 Besides scalar-valued functions in scalar-valued sets it possible to use vector-valued functions and sets.
@@ -230,8 +230,8 @@ set!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.(1.0, [y,z]), 0.0))
 set!(model, ObjectiveSense(), MaxSense)
 vector_terms = [VectorAffineTerm(1, ScalarAffineTerm(3.0, x))]
-addconstraint!(model, VectorAffineFunction(vector_terms,[-2.0]), Zeros(1))
-addconstraint!(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
+add_constraint(model, VectorAffineFunction(vector_terms,[-2.0]), Zeros(1))
+add_constraint(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
 ```
 
 [Describe `ConstraintIndex` objects.]
@@ -386,11 +386,11 @@ MOI.set!(optimizer, MOI.ObjectiveSense(), MOI.MaxSense)
 
 # add the knapsack constraint
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
-MOI.addconstraint!(optimizer, knapsack_function, MOI.LessThan(C))
+MOI.add_constraint(optimizer, knapsack_function, MOI.LessThan(C))
 
 # add integrality constraints
 for i in 1:numvariables
-    MOI.addconstraint!(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
+    MOI.add_constraint(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
 end
 
 # all set
@@ -439,7 +439,7 @@ Given a constraint of type `F`-in-`S` (see [Constraints by function-set pairs](@
  set `S` by replacing it with a new instance of the same type. For example,
  given the variable bound ``x \le 1``:
 ```julia
-c = addconstraint(m, SingleVariable(x), LessThan(1.0))
+c = add_constraint(m, SingleVariable(x), LessThan(1.0))
 ```
 we can modify the set so that the bound now ``x \le 2`` as follows:
 ```julia
@@ -481,7 +481,7 @@ above for an explanation), it is also  possible to modify the function of type
 `F` by replacing it with a new instance of the same type. For example, given the
 variable bound ``x \le 1``:
 ```julia
-c = addconstraint(m, SingleVariable(x), LessThan(1.0))
+c = add_constraint(m, SingleVariable(x), LessThan(1.0))
 ```
 we can modify the function so that the bound now ``y \le 1`` as follows:
 ```julia
@@ -554,7 +554,7 @@ We can modify the constant terms in a [`VectorAffineFunction`](@ref MathOptInter
 For example, consider a model with the following
 `VectorAffineFunction`-in-`Nonpositives` constraint:
 ```julia
-c = addconstraint!(m,
+c = add_constraint(m,
     VectorAffineFunction([
             VectorAffineTerm(1, ScalarAffineTerm(1.0, x)),
             VectorAffineTerm(1, ScalarAffineTerm(2.0, y))
@@ -581,7 +581,7 @@ subtype of [`AbstractFunctionModification`](@ref MathOptInterface.AbstractFuncti
 
 For example, given the constraint ``1.0x <= 1.0``:
 ```julia
-c = addconstraint!(m,
+c = add_constraint(m,
     ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0),
     LessThan(1.0)
 )
@@ -609,7 +609,7 @@ the [`MultirowChange`](@ref MathOptInterface.MultirowChange) subtype of
 For example, given the constraint ``Ax \in \mathbb{R}^2_+``, where
 ``A = [1.0, 2.0]^\top``:
 ```julia
-c = addconstraint!(m,
+c = add_constraint(m,
     VectorAffineFunction([
             VectorAffineTerm(1, ScalarAffineTerm(1.0, x)),
             VectorAffineTerm(1, ScalarAffineTerm(2.0, x))
@@ -847,7 +847,7 @@ end
 end
 ```
 
-If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `addconstraint!`), the line `const optimizer = FooBarOptimizer()` can be replaced with
+If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), the line `const optimizer = FooBarOptimizer()` can be replaced with
 ```julia
 const MOIU = MOI.Utilities
 # Include here the functions/sets supported by the solver wrapper (not those that are supported through bridges)
