@@ -32,15 +32,15 @@ Start the solution procedure.
 function optimize! end
 
 """
-    write(model::ModelLike, filename::String)
+    write_to_file(model::ModelLike, filename::String)
 
 Writes the current model data to the given file.
 Supported file types depend on the model type.
 """
-function write end
+function write_to_file end
 
 """
-    read!(model::ModelLike, filename::String)
+    read_from_file(model::ModelLike, filename::String)
 
 Read the file `filename` into the model `model`. If `model` is non-empty, this may
 throw an error.
@@ -55,7 +55,7 @@ maintain an explicit ordering of the variables. Therefore, the returned list may
 arbitrary order. To avoid depending on the order of the indices, users should look up each
 variable index by name: `get(model, VariableIndex, "name")`.
 """
-function read! end
+function read_from_file end
 
 """
     isempty(model::ModelLike)
