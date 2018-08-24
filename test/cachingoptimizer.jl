@@ -67,7 +67,7 @@
 
     MOI.delete!(m, x[2])
     @test_throws MOI.InvalidIndex{typeof(x[2])} MOI.delete!(m, x[2])
-    @test !MOI.isvalid(m, x[2])
+    @test !MOI.is_valid(m, x[2])
 
     # TODO: test more constraint modifications
 

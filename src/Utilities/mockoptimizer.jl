@@ -219,13 +219,13 @@ function MOI.isempty(mock::MockOptimizer)
         mock.dualstatus == MOI.UnknownResultStatus
 end
 
-MOI.isvalid(mock::MockOptimizer, idx::MOI.Index) = MOI.isvalid(mock.inner_model, xor_index(idx))
+MOI.is_valid(mock::MockOptimizer, idx::MOI.Index) = MOI.is_valid(mock.inner_model, xor_index(idx))
 
 function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
     if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
     end
-    if !MOI.isvalid(mock, index)
+    if !MOI.is_valid(mock, index)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
     end
@@ -236,7 +236,7 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
     if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
     end
-    if !MOI.isvalid(mock, index)
+    if !MOI.is_valid(mock, index)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
     end

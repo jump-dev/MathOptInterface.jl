@@ -49,10 +49,10 @@ end
 MOI.copy!(uf::UniversalFallback, src::MOI.ModelLike; copynames=true) = MOIU.defaultcopy!(uf, src, copynames)
 
 # References
-MOI.isvalid(uf::UniversalFallback, idx::VI) = MOI.isvalid(uf.model, idx)
-function MOI.isvalid(uf::UniversalFallback, idx::CI{F, S}) where {F, S}
+MOI.is_valid(uf::UniversalFallback, idx::VI) = MOI.is_valid(uf.model, idx)
+function MOI.is_valid(uf::UniversalFallback, idx::CI{F, S}) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
-        MOI.isvalid(uf.model, idx)
+        MOI.is_valid(uf.model, idx)
     else
         haskey(uf.constraints, (F, S)) && haskey(uf.constraints[(F, S)], idx)
     end
@@ -61,7 +61,7 @@ function MOI.delete!(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
     if MOI.supportsconstraint(uf.model, F, S)
         MOI.delete!(uf.model, ci)
     else
-        if !MOI.isvalid(uf, ci)
+        if !MOI.is_valid(uf, ci)
             throw(MOI.InvalidIndex(ci))
         end
         MOI.delete!(uf.constraints[(F, S)], ci)

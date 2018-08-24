@@ -95,9 +95,9 @@ end
         @test (MOI.VectorOfVariables,MOI.Nonpositives) in loc
     end
 
-    @test MOI.isvalid(model, c4)
+    @test MOI.is_valid(model, c4)
     MOI.delete!(model, c4)
-    @test !MOI.isvalid(model, c4)
+    @test !MOI.is_valid(model, c4)
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}()) == 1
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants

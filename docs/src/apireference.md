@@ -126,7 +126,7 @@ BasisStatusCode
 ```@docs
 VariableIndex
 ConstraintIndex
-isvalid
+is_valid
 delete!(::ModelLike,::Index)
 ```
 
@@ -154,7 +154,7 @@ VariableBasisStatus
 Functions for adding and modifying constraints.
 
 ```@docs
-isvalid(::ModelLike,::ConstraintIndex)
+is_valid(::ModelLike,::ConstraintIndex)
 add_constraint
 add_constraints
 transform!

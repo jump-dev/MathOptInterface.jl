@@ -57,8 +57,8 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
         constraint_dual   = [(c, -1.0)]
     )
     c2 = MOI.transform!(model, c, MOI.GreaterThan(2.0))
-    @test !MOI.isvalid(model, c)
-    @test MOI.isvalid(model, c2)
+    @test !MOI.is_valid(model, c)
+    @test MOI.is_valid(model, c2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
     test_model_solution(model, config;
         objective_value   = 2.0,

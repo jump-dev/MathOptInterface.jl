@@ -92,18 +92,18 @@ function MOI.copy!(b::AbstractBridgeOptimizer, src::MOI.ModelLike;
 end
 
 # References
-MOI.isvalid(b::AbstractBridgeOptimizer, vi::VI) = MOI.isvalid(b.model, vi)
-function MOI.isvalid(b::AbstractBridgeOptimizer, ci::CI)
+MOI.is_valid(b::AbstractBridgeOptimizer, vi::VI) = MOI.is_valid(b.model, vi)
+function MOI.is_valid(b::AbstractBridgeOptimizer, ci::CI)
     if isbridged(b, typeof(ci))
-        return MOI.isvalid(b.bridged, ci)
+        return MOI.is_valid(b.bridged, ci)
     else
-        return MOI.isvalid(b.model, ci)
+        return MOI.is_valid(b.model, ci)
     end
 end
 MOI.delete!(b::AbstractBridgeOptimizer, vi::VI) = MOI.delete!(b.model, vi)
 function MOI.delete!(b::AbstractBridgeOptimizer, ci::CI)
     if isbridged(b, typeof(ci))
-        if !MOI.isvalid(b, ci)
+        if !MOI.is_valid(b, ci)
             throw(MOI.InvalidIndex(ci))
         end
         MOI.delete!(b, bridge(b, ci))

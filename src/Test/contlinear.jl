@@ -1176,8 +1176,8 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     c3 = MOI.transform!(model, c2, MOI.LessThan(2.0))
 
     @test isa(c3, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}})
-    @test MOI.isvalid(model, c2) == false
-    @test MOI.isvalid(model, c3) == true
+    @test MOI.is_valid(model, c2) == false
+    @test MOI.is_valid(model, c3) == true
 
     if config.solve
         MOI.optimize!(model)

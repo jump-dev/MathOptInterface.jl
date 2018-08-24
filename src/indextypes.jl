@@ -42,11 +42,11 @@ function Base.showerror(io::IO, err::InvalidIndex)
 end
 
 """
-    isvalid(model::ModelLike, index::Index)::Bool
+    is_valid(model::ModelLike, index::Index)::Bool
 
 Return a `Bool` indicating whether this index refers to a valid object in the model `model`.
 """
-isvalid(model::ModelLike, ref::Index) = false
+is_valid(model::ModelLike, ref::Index) = false
 
 """
     struct DeleteNotAllowed{IndexType <: Index} <: NotAllowedError

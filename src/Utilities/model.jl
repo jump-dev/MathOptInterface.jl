@@ -102,7 +102,7 @@ function _removevar!(constrs::Vector{<:C{MOI.SingleVariable}}, vi::VI)
     rm
 end
 function MOI.delete!(model::AbstractModel, vi::VI)
-    if !MOI.isvalid(model, vi)
+    if !MOI.is_valid(model, vi)
         throw(MOI.InvalidIndex(vi))
     end
     model.objective = removevariable(model.objective, vi)
@@ -117,7 +117,7 @@ function MOI.delete!(model::AbstractModel, vi::VI)
     end
 end
 
-function MOI.isvalid(model::AbstractModel, ci::CI{F, S}) where {F, S}
+function MOI.is_valid(model::AbstractModel, ci::CI{F, S}) where {F, S}
     if ci.value > length(model.constrmap)
         false
     else
@@ -131,7 +131,7 @@ function MOI.isvalid(model::AbstractModel, ci::CI{F, S}) where {F, S}
         end
     end
 end
-MOI.isvalid(model::AbstractModel, vi::VI) = in(vi, model.varindices)
+MOI.is_valid(model::AbstractModel, vi::VI) = in(vi, model.varindices)
 
 function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
     vis = collect(model.varindices)
@@ -279,7 +279,7 @@ function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.Abst
 end
 
 function MOI.delete!(model::AbstractModel, ci::CI)
-    if !MOI.isvalid(model, ci)
+    if !MOI.is_valid(model, ci)
         throw(MOI.InvalidIndex(ci))
     end
     for (ci_next, _, _) in _delete!(model, ci, getconstrloc(model, ci))

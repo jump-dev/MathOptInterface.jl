@@ -6,7 +6,7 @@
     - add_variable
     - deleting variables
     - get/set VariableName
-    - isvalid for VariableIndex
+    - is_valid for VariableIndex
     - get VariableIndex by name
     - NumberOfVariables
 
@@ -84,8 +84,8 @@ function delete_variables(model::MOI.ModelLike, config::TestConfig)
     catch err
         @test err.index == v[1]
     end
-    @test !MOI.isvalid(model, v[1])
-    @test MOI.isvalid(model, v[2])
+    @test !MOI.is_valid(model, v[1])
+    @test MOI.is_valid(model, v[2])
 end
 unittests["delete_variables"] = delete_variable
 
@@ -104,7 +104,7 @@ function getvariable(model::MOI.ModelLike, config::TestConfig)
     """)
     @test MOI.get(model, MOI.VariableIndex, "y") === nothing
     x = MOI.get(model, MOI.VariableIndex, "x")
-    @test MOI.isvalid(model, x)
+    @test MOI.is_valid(model, x)
 end
 unittests["getvariable"] = getvariable
 

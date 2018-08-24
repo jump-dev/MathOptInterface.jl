@@ -467,8 +467,8 @@ c2 = transform!(m, c, GreaterThan(1.0))
 The [`transform!`](@ref MathOptInterface.transform!) function returns a new
 constraint index, and the old constraint index (i.e., `c`) is no longer valid:
 ```julia
-isvalid(m, c)   # false
-isvalid(m, c2)  # true
+is_valid(m, c)   # false
+is_valid(m, c2)  # true
 ```
 Also note that [`transform!`](@ref MathOptInterface.transform!) cannot be called
 with a set of the same type; [`set`](@ref MathOptInterface.set) should be used

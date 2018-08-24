@@ -81,20 +81,20 @@ end
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
     v = MOI.add_variables(model, 2)
-    @test MOI.isvalid(model, v[1])
-    @test MOI.isvalid(model, v[2])
+    @test MOI.is_valid(model, v[1])
+    @test MOI.is_valid(model, v[2])
     x = MOI.add_variable(model)
-    @test MOI.isvalid(model, x)
+    @test MOI.is_valid(model, x)
     MOI.delete!(model, x)
-    @test !MOI.isvalid(model, x)
+    @test !MOI.is_valid(model, x)
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0)
     @test MOI.supportsconstraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.add_constraint(model, cf, MOI.LessThan(1.0))
-    @test MOI.isvalid(model, c)
-    @test !MOI.isvalid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float32}}(1))
-    @test !MOI.isvalid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float64}}(1))
-    @test !MOI.isvalid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float32}}(1))
-    @test !MOI.isvalid(model, MOI.ConstraintIndex{MOI.VectorQuadraticFunction{Float64},MOI.SecondOrderCone}(1))
+    @test MOI.is_valid(model, c)
+    @test !MOI.is_valid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float32}}(1))
+    @test !MOI.is_valid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float32},MOI.LessThan{Float64}}(1))
+    @test !MOI.is_valid(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float32}}(1))
+    @test !MOI.is_valid(model, MOI.ConstraintIndex{MOI.VectorQuadraticFunction{Float64},MOI.SecondOrderCone}(1))
 end
 
 function emptytest(model::MOI.ModelLike)
@@ -118,9 +118,9 @@ function emptytest(model::MOI.ModelLike)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 0
     @test isempty(MOI.get(model, MOI.ListOfConstraints()))
 
-    @test !MOI.isvalid(model, v[1])
-    @test !MOI.isvalid(model, vc)
-    @test !MOI.isvalid(model, c)
+    @test !MOI.is_valid(model, v[1])
+    @test !MOI.is_valid(model, vc)
+    @test !MOI.is_valid(model, c)
 end
 
 abstract type BadModel <: MOI.ModelLike end
