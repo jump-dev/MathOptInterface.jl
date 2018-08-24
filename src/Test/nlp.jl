@@ -12,7 +12,7 @@ end
 # Start at (1,5,5,1)
 # End at (1.000..., 4.743..., 3.821..., 1.379...)
 
-function MOI.initialize!(d::HS071, requested_features::Vector{Symbol})
+function MOI.initialize(d::HS071, requested_features::Vector{Symbol})
     for feat in requested_features
         if !(feat in MOI.features_available(d))
             error("Unsupported feature $feat")
@@ -161,7 +161,7 @@ struct FeasibilitySenseEvaluator <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
 end
 
-function MOI.initialize!(d::FeasibilitySenseEvaluator,
+function MOI.initialize(d::FeasibilitySenseEvaluator,
                          requested_features::Vector{Symbol})
     for feat in requested_features
         if !(feat in MOI.features_available(d))

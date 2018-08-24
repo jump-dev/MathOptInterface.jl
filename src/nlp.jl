@@ -77,7 +77,7 @@ struct NLPBlockData
 end
 
 """
-    initialize!(d::AbstractNLPEvaluator, requested_features::Vector{Symbol})
+    initialize(d::AbstractNLPEvaluator, requested_features::Vector{Symbol})
 
 Must be called before any other methods. The vector `requested_features`
 lists features requested by the solver. These may include `:Grad` for gradients
@@ -86,7 +86,7 @@ Jacobian-vector products, `:HessVec` for Hessian-vector
 and Hessian-of-Lagrangian-vector products, `:Hess` for explicit Hessians and
 Hessian-of-Lagrangians, and `:ExprGraph` for expression graphs.
 """
-function initialize! end
+function initialize end
 
 """
     features_available(d::AbstractNLPEvaluator)

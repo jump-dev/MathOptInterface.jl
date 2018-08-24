@@ -32,8 +32,8 @@ supports
 ModelLike
 isempty
 empty!
-write
-read!
+write_to_file
+read_from_file
 ```
 
 Copying
@@ -267,7 +267,7 @@ NLPBlockDualStart
 
 ```@docs
 AbstractNLPEvaluator
-initialize!
+initialize
 features_available
 eval_objective
 eval_constraint
