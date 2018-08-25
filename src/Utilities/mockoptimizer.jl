@@ -16,7 +16,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     attribute::Int # MockModelAttribute
     varattribute::Dict{MOI.VariableIndex,Int} # MockVariableAttribute
     conattribute::Dict{MOI.ConstraintIndex,Int} # MockConstraintAttribute
-    needsallocateload::Bool # Allows to tests the Allocate-Load interface, see copy_to
+    needs_allocate_load::Bool # Allows to tests the Allocate-Load interface, see copy_to
     add_var_allowed::Bool
     add_con_allowed::Bool # If false, the optimizer throws AddConstraintNotAllowed
     modify_allowed::Bool # If false, the optimizer throws Modify...NotAllowed
@@ -49,14 +49,14 @@ xor_index(vi::VI) = VI(xor(vi.value, internal_xor_mask))
 xor_index(ci::CI{F,S}) where {F,S} = CI{F,S}(xor(ci.value, internal_xor_mask))
 xor_variables(f) = mapvariables(xor_index, f)
 
-function MockOptimizer(inner_model::MOI.ModelLike; needsallocateload=false,
+function MockOptimizer(inner_model::MOI.ModelLike; needs_allocate_load=false,
                        eval_objective_value=true,
                        eval_variable_constraint_dual=true)
     return MockOptimizer(inner_model,
                          0,
                          Dict{MOI.VariableIndex,Int}(),
                          Dict{MOI.ConstraintIndex,Int}(),
-                         needsallocateload,
+                         needs_allocate_load,
                          true,
                          true,
                          true,
@@ -270,15 +270,15 @@ end
 
 MOI.supports_constraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.supports_constraint(mock.inner_model, F, S)
 function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; copynames=true)
-    if needsallocateload(mock)
-        allocateload!(mock, src, copynames)
+    if needs_allocate_load(mock)
+        allocate_load(mock, src, copynames)
     else
         default_copy_to(mock, src, copynames)
     end
 end
 
 # Allocate-Load Interface
-needsallocateload(mock::MockOptimizer) = mock.needsallocateload || needsallocateload(mock.inner_model)
+needs_allocate_load(mock::MockOptimizer) = mock.needs_allocate_load || needs_allocate_load(mock.inner_model)
 
 allocatevariables!(mock::MockOptimizer, nvars) = allocatevariables!(mock.inner_model, nvars)
 allocate!(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = allocate!(mock.inner_model, attr, value)
