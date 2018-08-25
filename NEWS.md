@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.6.0 (August 25, 2018)
+v0.6.0 (August ??, 2018)
 -----------------------
 
 - Rename functions according to the [JuMP's style guide](http://www.juliaopt.org/JuMP.jl/latest/style.html):
