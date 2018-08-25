@@ -116,13 +116,13 @@ end
 Attaches the optimizer to `model`, copying all model data into it. Can be called
 only from the `EmptyOptimizer` state. If the copy succeeds, the
 `CachingOptimizer` will be in state `AttachedOptimizer` after the call,
-otherwise an error is thrown; see [`copy!`](@ref) for more details on which
+otherwise an error is thrown; see [`copy_to`](@ref) for more details on which
 errors can be thrown.
 """
 function attachoptimizer!(model::CachingOptimizer)
     @assert model.state == EmptyOptimizer
     # We do not need to copy names because name-related operations are handled by `m.model_cache`
-    indexmap = MOI.copy!(model.optimizer, model.model_cache, copynames=false)
+    indexmap = MOI.copy_to(model.optimizer, model.model_cache, copynames=false)
     model.state = AttachedOptimizer
     # MOI does not define the type of index_map, so we have to copy it into a
     # concrete container. Also load the reverse map.
@@ -134,8 +134,8 @@ function attachoptimizer!(model::CachingOptimizer)
     end
 end
 
-function MOI.copy!(m::CachingOptimizer, src::MOI.ModelLike; copynames=true)
-    return defaultcopy!(m, src, copynames)
+function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; copynames=true)
+    return default_copy_to(m, src, copynames)
 end
 
 function MOI.empty!(m::CachingOptimizer)

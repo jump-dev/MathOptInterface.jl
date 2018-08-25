@@ -73,7 +73,7 @@ Empty the model, that is, remove all variables, constraints and model attributes
 function empty! end
 
 """
-    copy!(dest::ModelLike, src::ModelLike; copynames=true, warnattributes=true)
+    copy_to(dest::ModelLike, src::ModelLike; copynames=true, warnattributes=true)
 
 Copy the model from `src` into `dest`. The target `dest` is emptied, and all
 previous indices to variables or constraints in `dest` are invalidated. Returns
@@ -101,12 +101,12 @@ x = add_variable(src)
 is_valid(src, x)   # true
 is_valid(dest, x)  # false (`dest` has no variables)
 
-index_map = copy!(dest, src)
+index_map = copy_to(dest, src)
 is_valid(dest, x) # false (unless index_map[x] == x)
 is_valid(dest, index_map[x]) # true
 ```
 """
-function copy! end
+function copy_to end
 
 include("error.jl")
 include("indextypes.jl")

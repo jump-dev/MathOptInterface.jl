@@ -762,7 +762,7 @@ will additionally support `ScalarAffineFunction`-in-`Interval`.
 [The interface is designed for multiple dispatch, e.g., attributes, combinations of sets and functions.]
 
 Avoid storing extra copies of the problem when possible. This means that solver wrappers should not use
-`CachingOptimizer` as part of the wrapper. Instead, just implement `copy!` if the solver's API
+`CachingOptimizer` as part of the wrapper. Instead, just implement `copy_to` if the solver's API
 does not support an `add_variable`-like API. Let users or JuMP decide to use `CachingOptimizer` instead.
 
 ### JuMP mapping

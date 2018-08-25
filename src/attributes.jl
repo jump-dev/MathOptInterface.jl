@@ -7,7 +7,7 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 
 ### Note
 
-The difference between `AbstractOptimizerAttribute` and `AbstractModelAttribute` lies in the behavior of `isempty`, `empty!` and `copy!`.
+The difference between `AbstractOptimizerAttribute` and `AbstractModelAttribute` lies in the behavior of `isempty`, `empty!` and `copy_to`.
 Typically optimizer attributes only affect how the model is solved.
 """
 abstract type AbstractOptimizerAttribute end
@@ -73,28 +73,28 @@ message(err::SetAttributeNotAllowed) = err.message
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the optimizer attribute
-`attr`. That is, it returns `false` if `copy!(model, src)` shows a warning in
+`attr`. That is, it returns `false` if `copy_to(model, src)` shows a warning in
 case `attr` is in the [`ListOfOptimizerAttributesSet`](@ref) of `src`; see
-[`copy!`](@ref) for more details on how unsupported optimizer attributes are
+[`copy_to`](@ref) for more details on how unsupported optimizer attributes are
 handled in copy.
 
     supports(model::ModelLike, attr::AbstractModelAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the model attribute `attr`.
-That is, it returns `false` if `copy!(model, src)` cannot be performed in case
+That is, it returns `false` if `copy_to(model, src)` cannot be performed in case
 `attr` is in the [`ListOfModelAttributesSet`](@ref) of `src`.
 
     supports(model::ModelLike, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
 
 Return a `Bool` indicating whether `model` supports the variable attribute
-`attr`. That is, it returns `false` if `copy!(model, src)` cannot be performed
+`attr`. That is, it returns `false` if `copy_to(model, src)` cannot be performed
 in case `attr` is in the [`ListOfVariableAttributesSet`](@ref) of `src`.
 
     supports(model::ModelLike, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
 
 Return a `Bool` indicating whether `model` supports the constraint attribute
 `attr` applied to an `F`-in-`S` constraint. That is, it returns `false` if
-`copy!(model, src)` cannot be performed in case `attr` is in the
+`copy_to(model, src)` cannot be performed in case `attr` is in the
 [`ListOfConstraintAttributesSet`](@ref) of `src`.
 
 For all four methods, if the attribute is only not supported in specific
