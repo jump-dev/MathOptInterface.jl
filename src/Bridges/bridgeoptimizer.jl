@@ -87,7 +87,7 @@ function MOI.supports(b::AbstractBridgeOptimizer,
     return MOI.supports(b.model, attr)
 end
 function MOI.copy_to(b::AbstractBridgeOptimizer, src::MOI.ModelLike;
-                   copynames=false)
+                   copynames = true)
     return MOIU.default_copy_to(b, src, copynames)
 end
 
