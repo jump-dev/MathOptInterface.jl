@@ -334,6 +334,7 @@ Below is the list of bridges implemented in this package.
 Bridges.SplitIntervalBridge
 Bridges.RSOCBridge
 Bridges.GeoMeanBridge
+Bridges.SquarePSDBridge
 Bridges.RootDetBridge
 Bridges.LogDetBridge
 Bridges.SOCtoPSDCBridge
