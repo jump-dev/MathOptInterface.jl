@@ -89,7 +89,7 @@ the correct type.
 Solvers may only support a subset of constraint transforms that they perform
 efficiently (for example, changing from a `LessThan` to `GreaterThan` set). In
 addition, set modification (where `S1 = S2`) should be performed via the
-`modify!` function.
+`modify` function.
 
 
 Typically, the user should delete the constraint and add a new one.

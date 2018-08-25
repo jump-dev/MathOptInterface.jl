@@ -310,20 +310,20 @@ function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         return MOI.add_constraint(b.model, f, s)
     end
 end
-function MOI.modify!(b::AbstractBridgeOptimizer, ci::CI,
+function MOI.modify(b::AbstractBridgeOptimizer, ci::CI,
                      change::MOI.AbstractFunctionModification)
     if isbridged(b, typeof(ci))
-        MOI.modify!(b, bridge(b, ci), change)
-        MOI.modify!(b.bridged, ci, change)
+        MOI.modify(b, bridge(b, ci), change)
+        MOI.modify(b.bridged, ci, change)
     else
-        MOI.modify!(b.model, ci, change)
+        MOI.modify(b.model, ci, change)
     end
 end
 
 # Objective
-function MOI.modify!(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction,
+function MOI.modify(b::AbstractBridgeOptimizer, obj::MOI.ObjectiveFunction,
                      change::MOI.AbstractFunctionModification)
-    MOI.modify!(b.model, obj, change)
+    MOI.modify(b.model, obj, change)
 end
 
 # Variables

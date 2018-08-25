@@ -121,7 +121,7 @@ end
 
     @testset "Modify not allowed" begin
         s.modify_allowed = false
-        MOI.modify!(m, MOI.ObjectiveFunction{typeof(saf)}(),
+        MOI.modify(m, MOI.ObjectiveFunction{typeof(saf)}(),
                     MOI.ScalarConstantChange(1.0))
         s.modify_allowed = true
         @test MOIU.state(m) == MOIU.EmptyOptimizer
@@ -129,7 +129,7 @@ end
         @test MOIU.state(m) == MOIU.AttachedOptimizer
         ci = MOI.add_constraint(m, saf, MOI.EqualTo(0.0))
         s.modify_allowed = false
-        MOI.modify!(m, ci, MOI.ScalarCoefficientChange(v, 1.0))
+        MOI.modify(m, ci, MOI.ScalarCoefficientChange(v, 1.0))
         s.modify_allowed = true
         @test MOIU.state(m) == MOIU.EmptyOptimizer
         MOIU.attachoptimizer!(m)
