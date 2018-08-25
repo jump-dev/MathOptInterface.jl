@@ -56,7 +56,7 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
         constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, -1.0)]
     )
-    c2 = MOI.transform!(model, c, MOI.GreaterThan(2.0))
+    c2 = MOI.transform(model, c, MOI.GreaterThan(2.0))
     @test !MOI.is_valid(model, c)
     @test MOI.is_valid(model, c2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)

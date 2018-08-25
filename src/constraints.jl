@@ -80,7 +80,7 @@ add_constraints(model::ModelLike, funcs, sets) = add_constraint.(model, funcs, s
 """
 ## Transform Constraint Set
 
-    transform!(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}
+    transform(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}
 
 Replace the set in constraint `c` with `newset`. The constraint index `c`
 will no longer be valid, and the function returns a new constraint index with
@@ -99,14 +99,14 @@ Typically, the user should delete the constraint and add a new one.
 If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
 
 ```julia
-c2 = transform!(model, c, GreaterThan(0.0))
-transform!(model, c, LessThan(0.0)) # errors
+c2 = transform(model, c, GreaterThan(0.0))
+transform(model, c, LessThan(0.0)) # errors
 ```
 """
-function transform! end
+function transform end
 
 # default fallback
-function transform!(model::ModelLike, c::ConstraintIndex, newset)
+function transform(model::ModelLike, c::ConstraintIndex, newset)
     f = get(model, ConstraintFunction(), c)
     delete!(model, c)
     add_constraint(model, f, newset)

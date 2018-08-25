@@ -617,7 +617,7 @@ function set_fallback_error(::ModelLike, ::ConstraintSet,
                      constraint_index::ConstraintIndex, set::AbstractSet)
     throw(ArgumentError("""Cannot modify sets of different types. Constraint
     type is $(set_type(constraint_index)) while the replacement set is of
-    type $(typeof(set)). Use `transform!` instead."""))
+    type $(typeof(set)). Use `transform` instead."""))
 end
 
 ## Termination status

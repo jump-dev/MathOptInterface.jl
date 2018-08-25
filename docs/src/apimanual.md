@@ -458,19 +458,19 @@ the right-hand side of a constraint in linear programming.
 In some special cases, solvers may support efficiently changing the set of a
 constraint (for example, from [`LessThan`](@ref MathOptInterface.LessThan) to
 [`GreaterThan`](@ref MathOptInterface.GreaterThan)). For these cases,
-MathOptInterface provides the [`transform!`](@ref MathOptInterface.transform!)
+MathOptInterface provides the [`transform`](@ref MathOptInterface.transform)
 method. For example, instead of the error we observed above, the following will
 work:
 ```julia
-c2 = transform!(m, c, GreaterThan(1.0))
+c2 = transform(m, c, GreaterThan(1.0))
 ```
-The [`transform!`](@ref MathOptInterface.transform!) function returns a new
+The [`transform`](@ref MathOptInterface.transform) function returns a new
 constraint index, and the old constraint index (i.e., `c`) is no longer valid:
 ```julia
 is_valid(m, c)   # false
 is_valid(m, c2)  # true
 ```
-Also note that [`transform!`](@ref MathOptInterface.transform!) cannot be called
+Also note that [`transform`](@ref MathOptInterface.transform) cannot be called
 with a set of the same type; [`set`](@ref MathOptInterface.set) should be used
 instead.
 
