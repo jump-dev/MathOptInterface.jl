@@ -133,7 +133,6 @@ end
 Return a `Bool` indicating whether `model` does not support `add_variables`/`add_constraint`/`set` but supports `allocatevariables!`/`allocateconstraint!`/`allocate!`/`loadvariables!`/`loadconstraint!`/`load!`.
 That is, the allocate-load interface need to be used to copy an model to `model`.
 """
-function needs_allocate_load end
 needs_allocate_load(::MOI.ModelLike) = false
 
 """
