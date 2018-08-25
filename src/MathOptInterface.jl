@@ -73,14 +73,14 @@ Empty the model, that is, remove all variables, constraints and model attributes
 function empty! end
 
 """
-    copy_to(dest::ModelLike, src::ModelLike; copynames=true, warnattributes=true)
+    copy_to(dest::ModelLike, src::ModelLike; copy_names=true, warn_attributes=true)
 
 Copy the model from `src` into `dest`. The target `dest` is emptied, and all
 previous indices to variables or constraints in `dest` are invalidated. Returns
 a dictionary-like object that translates variable and constraint indices from
 the `src` model to the corresponding indices in the `dest` model.
 
-If `copynames` is `false`, the `Name`, `VariableName` and `ConstraintName`
+If `copy_names` is `false`, the `Name`, `VariableName` and `ConstraintName`
 attributes are not copied even if they are set in `src`. If a constraint that
 is copied from `src` is not supported by `dest` then an
 [`UnsupportedConstraint`](@ref) error is thrown. Similarly, if a model, variable
@@ -88,7 +88,7 @@ or constraint attribute that is copied from `src` is not supported by `dest`
 then an [`UnsupportedAttribute`](@ref) error is thrown. Unsupported *optimizer*
 attributes are treated differently:
 
-* If `warnattributes` is `true`, a warning is displayed, otherwise,
+* If `warn_attributes` is `true`, a warning is displayed, otherwise,
 * the attribute is silently ignored.
 
 ### Example
