@@ -69,10 +69,10 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintIndex, "Con0") == c2
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") == c
 
-        MOI.delete!(model, v[2])
+        MOI.delete(model, v[2])
         @test MOI.get(model, MOI.VariableIndex, "Var2") === nothing
 
-        MOI.delete!(model, c)
+        MOI.delete(model, c)
         @test MOI.get(model, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}, "Con1") === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") === nothing
     end
@@ -85,7 +85,7 @@ function validtest(model::MOI.ModelLike)
     @test MOI.is_valid(model, v[2])
     x = MOI.add_variable(model)
     @test MOI.is_valid(model, x)
-    MOI.delete!(model, x)
+    MOI.delete(model, x)
     @test !MOI.is_valid(model, x)
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], v), 0.0)
     @test MOI.supports_constraint(model, typeof(cf), MOI.LessThan{Float64})
@@ -256,7 +256,7 @@ function orderedindicestest(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]
     v2 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1, v2]
-    MOI.delete!(model, v1)
+    MOI.delete(model, v1)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2]
     v3 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3]
@@ -269,7 +269,7 @@ function orderedindicestest(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1]
     c2 = MOI.add_constraint(model, MOI.SingleVariable(v3), MOI.LessThan(2.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1, c2]
-    MOI.delete!(model, c1)
+    MOI.delete(model, c1)
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2]
     c3 = MOI.add_constraint(model, MOI.SingleVariable(v4), MOI.LessThan(3.0))
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]

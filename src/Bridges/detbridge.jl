@@ -122,12 +122,12 @@ MOI.get(b::LogDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFuncti
 MOI.get(b::LogDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) where T = [b.tlindex]
 
 # References
-function MOI.delete!(model::MOI.ModelLike, c::LogDetBridge)
-    MOI.delete!(model, c.tlindex)
-    MOI.delete!(model, c.lcindex)
-    MOI.delete!(model, c.sdindex)
-    MOI.delete!(model, c.l)
-    MOI.delete!(model, c.Δ)
+function MOI.delete(model::MOI.ModelLike, c::LogDetBridge)
+    MOI.delete(model, c.tlindex)
+    MOI.delete(model, c.lcindex)
+    MOI.delete(model, c.sdindex)
+    MOI.delete(model, c.l)
+    MOI.delete(model, c.Δ)
 end
 
 # Attributes, Bridge acting as a constraint
@@ -189,10 +189,10 @@ MOI.get(b::RootDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunct
 MOI.get(b::RootDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone}) where T = [b.gmindex]
 
 # References
-function MOI.delete!(model::MOI.ModelLike, c::RootDetBridge)
-    MOI.delete!(model, c.gmindex)
-    MOI.delete!(model, c.sdindex)
-    MOI.delete!(model, c.Δ)
+function MOI.delete(model::MOI.ModelLike, c::RootDetBridge)
+    MOI.delete(model, c.gmindex)
+    MOI.delete(model, c.sdindex)
+    MOI.delete(model, c.Δ)
 end
 
 # Attributes, Bridge acting as a constraint

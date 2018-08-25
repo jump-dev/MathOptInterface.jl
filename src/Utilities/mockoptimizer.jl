@@ -221,7 +221,7 @@ end
 
 MOI.is_valid(mock::MockOptimizer, idx::MOI.Index) = MOI.is_valid(mock.inner_model, xor_index(idx))
 
-function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
+function MOI.delete(mock::MockOptimizer, index::MOI.VariableIndex)
     if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
     end
@@ -229,10 +229,10 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.VariableIndex)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
     end
-    MOI.delete!(mock.inner_model, xor_index(index))
-    MOI.delete!(mock.varprimal, index)
+    MOI.delete(mock.inner_model, xor_index(index))
+    delete!(mock.varprimal, index)
 end
-function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
+function MOI.delete(mock::MockOptimizer, index::MOI.ConstraintIndex)
     if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
     end
@@ -240,8 +240,8 @@ function MOI.delete!(mock::MockOptimizer, index::MOI.ConstraintIndex)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
     end
-    MOI.delete!(mock.inner_model, xor_index(index))
-    MOI.delete!(mock.condual, index)
+    MOI.delete(mock.inner_model, xor_index(index))
+    delete!(mock.condual, index)
 end
 
 function MOI.modify(mock::MockOptimizer, c::CI, change::MOI.AbstractFunctionModification)

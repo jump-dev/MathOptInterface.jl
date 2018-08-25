@@ -127,7 +127,7 @@ BasisStatusCode
 VariableIndex
 ConstraintIndex
 is_valid
-delete!(::ModelLike,::Index)
+delete(::ModelLike, ::Index)
 ```
 
 ### Variables

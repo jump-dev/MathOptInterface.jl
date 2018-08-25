@@ -100,17 +100,17 @@ function MOI.is_valid(b::AbstractBridgeOptimizer, ci::CI)
         return MOI.is_valid(b.model, ci)
     end
 end
-MOI.delete!(b::AbstractBridgeOptimizer, vi::VI) = MOI.delete!(b.model, vi)
-function MOI.delete!(b::AbstractBridgeOptimizer, ci::CI)
+MOI.delete(b::AbstractBridgeOptimizer, vi::VI) = MOI.delete(b.model, vi)
+function MOI.delete(b::AbstractBridgeOptimizer, ci::CI)
     if isbridged(b, typeof(ci))
         if !MOI.is_valid(b, ci)
             throw(MOI.InvalidIndex(ci))
         end
-        MOI.delete!(b, bridge(b, ci))
+        MOI.delete(b, bridge(b, ci))
         delete!(b.bridges, ci)
-        MOI.delete!(b.bridged, ci)
+        MOI.delete(b.bridged, ci)
     else
-        MOI.delete!(b.model, ci)
+        MOI.delete(b.model, ci)
     end
 end
 

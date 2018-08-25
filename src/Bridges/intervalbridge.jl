@@ -30,9 +30,9 @@ MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.Great
 MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.LessThan{T}}) where {T, F} = [b.upper]
 
 # Indices
-function MOI.delete!(model::MOI.ModelLike, c::SplitIntervalBridge)
-    MOI.delete!(model, c.lower)
-    MOI.delete!(model, c.upper)
+function MOI.delete(model::MOI.ModelLike, c::SplitIntervalBridge)
+    MOI.delete(model, c.lower)
+    MOI.delete(model, c.upper)
 end
 
 # Attributes, Bridge acting as a constraint

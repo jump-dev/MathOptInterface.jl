@@ -79,8 +79,8 @@ end
 MOI.get(::SOCtoPSDBridge{T}, ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}) where T = 1
 MOI.get(b::SOCtoPSDBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}) where T = [b.cr]
 
-function MOI.delete!(instance::MOI.AbstractOptimizer, c::SOCtoPSDBridge)
-    MOI.delete!(instance, c.cr)
+function MOI.delete(instance::MOI.AbstractOptimizer, c::SOCtoPSDBridge)
+    MOI.delete(instance, c.cr)
 end
 
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SOCtoPSDBridge}) = false
@@ -145,8 +145,8 @@ end
 MOI.get(::RSOCtoPSDBridge{T}, ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}) where T = 1
 MOI.get(b::RSOCtoPSDBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}) where T = [b.cr]
 
-function MOI.delete!(instance::MOI.AbstractOptimizer, c::RSOCtoPSDBridge)
-    MOI.delete!(instance, c.cr)
+function MOI.delete(instance::MOI.AbstractOptimizer, c::RSOCtoPSDBridge)
+    MOI.delete(instance, c.cr)
 end
 
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCtoPSDBridge}) = false

@@ -8,7 +8,7 @@ function _add_constraint(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S) where {F,
     length(constrs)
 end
 
-function _delete!(constrs::Vector, ci::CI, i::Int)
+function _delete(constrs::Vector, ci::CI, i::Int)
     deleteat!(constrs, i)
     @view constrs[i:end] # will need to shift it in constrmap
 end
@@ -101,14 +101,14 @@ function _removevar!(constrs::Vector{<:C{MOI.SingleVariable}}, vi::VI)
     end
     rm
 end
-function MOI.delete!(model::AbstractModel, vi::VI)
+function MOI.delete(model::AbstractModel, vi::VI)
     if !MOI.is_valid(model, vi)
         throw(MOI.InvalidIndex(vi))
     end
     model.objective = removevariable(model.objective, vi)
     rm = broadcastvcat(constrs -> _removevar!(constrs, vi), model)
     for ci in rm
-        MOI.delete!(model, ci)
+        MOI.delete(model, ci)
     end
     delete!(model.varindices, vi)
     if haskey(model.varnames, vi)
@@ -278,11 +278,11 @@ function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.Abst
     end
 end
 
-function MOI.delete!(model::AbstractModel, ci::CI)
+function MOI.delete(model::AbstractModel, ci::CI)
     if !MOI.is_valid(model, ci)
         throw(MOI.InvalidIndex(ci))
     end
-    for (ci_next, _, _) in _delete!(model, ci, getconstrloc(model, ci))
+    for (ci_next, _, _) in _delete(model, ci, getconstrloc(model, ci))
         model.constrmap[ci_next.value] -= 1
     end
     model.constrmap[ci.value] = 0
@@ -575,7 +575,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    for (func, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
+    for (func, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
         funct = _mod(MOIU, func)
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets

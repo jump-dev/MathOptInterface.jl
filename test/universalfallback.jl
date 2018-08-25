@@ -30,9 +30,9 @@ function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfu
     @test MOI.get(uf, listattr) == [attr]
 
     @test MOI.is_valid(uf, u)
-    MOI.delete!(uf, u)
+    MOI.delete(uf, u)
     @test !MOI.is_valid(uf, u)
-    @test_throws MOI.InvalidIndex{typeof(u)} MOI.delete!(uf, u)
+    @test_throws MOI.InvalidIndex{typeof(u)} MOI.delete(uf, u)
     @test MOI.get(uf, listattr) == [attr]
 
     MOI.set(uf, attr, [w, z], [9, 4])
@@ -111,7 +111,7 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
             @test MOI.get(uf, MOI.ConstraintName(), cx) == "LessThan"
             @test MOI.get(uf, typeof(cx), "LessThan") == cx
-            MOI.delete!(uf, cx)
+            MOI.delete(uf, cx)
             @test MOI.get(uf, typeof(cx), "LessThan") === nothing
         end
         # To remove the constraint attributes added in the previous testset
@@ -134,7 +134,7 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")
             @test MOI.get(uf, MOI.ConstraintName(), cx) == "EqualTo"
             @test MOI.get(uf, typeof(cx), "EqualTo") == cx
-            MOI.delete!(uf, cx)
+            MOI.delete(uf, cx)
             @test MOI.get(uf, typeof(cx), "EqualTo") === nothing
         end
     end

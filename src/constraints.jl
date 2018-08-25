@@ -108,6 +108,6 @@ function transform end
 # default fallback
 function transform(model::ModelLike, c::ConstraintIndex, newset)
     f = get(model, ConstraintFunction(), c)
-    delete!(model, c)
+    delete(model, c)
     add_constraint(model, f, newset)
 end

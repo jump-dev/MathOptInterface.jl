@@ -77,9 +77,9 @@ MOI.supports_constraint(::DummyModel, ::Type{MOI.VectorOfVariables},
     ci = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}(1)
 
     @testset "DeleteNotAllowed" begin
-        @test_throws MOI.DeleteNotAllowed{typeof(vi)} MOI.delete!(model, vi)
+        @test_throws MOI.DeleteNotAllowed{typeof(vi)} MOI.delete(model, vi)
         try
-            MOI.delete!(model, vi)
+            MOI.delete(model, vi)
         catch err
             @test sprint(showerror, err) == "MathOptInterface.DeleteNotAllowed{MathOptInterface.VariableIndex}:" *
             " Deleting the index MathOptInterface.VariableIndex(1) cannot be" *
@@ -88,9 +88,9 @@ MOI.supports_constraint(::DummyModel, ::Type{MOI.VectorOfVariables},
             " before doing this operation if the `CachingOptimizer` is in" *
             " `Manual` mode."
         end
-        @test_throws MOI.DeleteNotAllowed{typeof(ci)} MOI.delete!(model, ci)
+        @test_throws MOI.DeleteNotAllowed{typeof(ci)} MOI.delete(model, ci)
         try
-            MOI.delete!(model, ci)
+            MOI.delete(model, ci)
         catch err
             @test sprint(showerror, err) == "MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}:" *
             " Deleting the index MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1)" *

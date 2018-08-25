@@ -67,20 +67,20 @@ function operation_name(err::DeleteNotAllowed)
 end
 
 """
-    delete!(model::ModelLike, index::Index)
+    delete(model::ModelLike, index::Index)
 
 Delete the referenced object from the model.
 """
-Base.delete!(model::ModelLike, index::Index) = throw(DeleteNotAllowed(index))
+delete(model::ModelLike, index::Index) = throw(DeleteNotAllowed(index))
 
 """
-    delete!{R}(model::ModelLike, indices::Vector{R<:Index})
+    delete{R}(model::ModelLike, indices::Vector{R<:Index})
 
 Delete the referenced objects in the vector `indices` from the model.
 It may be assumed that `R` is a concrete type.
 """
-function Base.delete!(model::ModelLike, indices::Vector{<:Index})
+function delete(model::ModelLike, indices::Vector{<:Index})
     for index in indices
-        Base.delete!(model, index)
+        delete(model, index)
     end
 end

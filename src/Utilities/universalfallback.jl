@@ -57,14 +57,14 @@ function MOI.is_valid(uf::UniversalFallback, idx::CI{F, S}) where {F, S}
         haskey(uf.constraints, (F, S)) && haskey(uf.constraints[(F, S)], idx)
     end
 end
-function MOI.delete!(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
+function MOI.delete(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
     if MOI.supports_constraint(uf.model, F, S)
-        MOI.delete!(uf.model, ci)
+        MOI.delete(uf.model, ci)
     else
         if !MOI.is_valid(uf, ci)
             throw(MOI.InvalidIndex(ci))
         end
-        MOI.delete!(uf.constraints[(F, S)], ci)
+        delete!(uf.constraints[(F, S)], ci)
         if haskey(uf.connames, ci)
             delete!(uf.namescon, uf.connames[ci])
             delete!(uf.connames, ci)
@@ -74,8 +74,8 @@ function MOI.delete!(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
         delete!(d, ci)
     end
 end
-function MOI.delete!(uf::UniversalFallback, vi::VI)
-    MOI.delete!(uf.model, vi)
+function MOI.delete(uf::UniversalFallback, vi::VI)
+    MOI.delete(uf.model, vi)
     for d in values(uf.varattr)
         delete!(d, vi)
     end
