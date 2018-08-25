@@ -4,6 +4,23 @@ MathOptInterface (MOI) release notes
 v0.6.0 (August ??, 2018)
 -----------------------
 
+- Rename functions according to the [JuMP's style guide](http://www.juliaopt.org/JuMP.jl/latest/style.html):
+  * `copy!` with keyword arguments `copynames` and `warnattributes` ->
+    `copy_to` with keyword arguments `copy_names` and `warn_attributes`;
+  * `set!` -> `set`;
+  * `addvariable[s]!` -> `add_variable[s]`;
+  * `supportsconstraint` -> `supports_constraint`;
+  * `addconstraint[s]!` -> `add_constraint[s]`;
+  * `isvalid` -> `is_valid`;
+  * `Base.delete!` -> `delete`;
+  * `modify!` -> `modify`;
+  * `transform!` -> `transform`;
+  * `initialize!` -> `initialize`;
+  * `write` -> `write_to_file`; and
+  * `read!` -> `read_from_file`.
+- Remove `free!` use `Base.finalize` instead.
+- Add the `SquarePSD` bridge which transforms `PositiveSemidefiniteConeTriangle`
+  constraints into `PositiveSemidefiniteConeTriangle`.
 - Add result fallback for `ConstraintDual` of variable-wise constraint,
   `ConstraintPrimal` and `ObjectiveValue`.
 - Add tests for `ObjectiveBound`.
