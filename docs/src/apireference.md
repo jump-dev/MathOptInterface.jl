@@ -157,7 +157,7 @@ Functions for adding and modifying constraints.
 is_valid(::ModelLike,::ConstraintIndex)
 add_constraint
 add_constraints
-transform!
+transform
 supports_constraint
 ```
 
