@@ -244,7 +244,7 @@ dimension
 Functions for modifying objective and constraint functions.
 
 ```@docs
-modify!
+modify
 AbstractFunctionModification
 ScalarConstantChange
 VectorConstantChange

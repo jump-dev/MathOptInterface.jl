@@ -49,9 +49,9 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBr
 end
 
 # Constraints
-function MOI.modify!(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
-    MOI.modify!(model, c.lower, change)
-    MOI.modify!(model, c.upper, change)
+function MOI.modify(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
+    MOI.modify(model, c.lower, change)
+    MOI.modify(model, c.upper, change)
 end
 
 MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SplitIntervalBridge}) = true

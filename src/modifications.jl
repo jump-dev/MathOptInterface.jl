@@ -44,7 +44,7 @@ operation_name(err::ModifyObjectiveNotAllowed) = "Modifying the objective functi
 """
 ## Constraint Function
 
-    modify!(model::ModelLike, ci::ConstraintIndex, change::AbstractFunctionModification)
+    modify(model::ModelLike, ci::ConstraintIndex, change::AbstractFunctionModification)
 
 Apply the modification specified by `change` to the function of constraint `ci`.
 
@@ -54,12 +54,12 @@ constraints is not supported by the model `model`.
 ### Examples
 
 ```julia
-modify!(model, ci, ScalarConstantChange(10.0))
+modify(model, ci, ScalarConstantChange(10.0))
 ```
 
 ## Objective Function
 
-    modify!(model::ModelLike, ::ObjectiveFunction, change::AbstractFunctionModification)
+    modify(model::ModelLike, ::ObjectiveFunction, change::AbstractFunctionModification)
 
 Apply the modification specified by `change` to the objective function of
 `model`. To change the function completely, call `set` instead.
@@ -70,17 +70,17 @@ objectives is not supported by the model `model`.
 ### Examples
 
 ```julia
-modify!(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstantChange(10.0))
+modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstantChange(10.0))
 ```
 """
-function modify! end
+function modify end
 
-function modify!(model::ModelLike, ci::ConstraintIndex{F, S},
+function modify(model::ModelLike, ci::ConstraintIndex{F, S},
                  change::AbstractFunctionModification) where {F, S}
     throw(ModifyConstraintNotAllowed(ci, change))
 end
 
-function modify!(model::ModelLike, ::ObjectiveFunction,
+function modify(model::ModelLike, ::ObjectiveFunction,
                  change::AbstractFunctionModification)
     throw(ModifyObjectiveNotAllowed(change))
 end

@@ -136,14 +136,14 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 3
 
     if config.modify_lhs
-        MOI.modify!(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
+        MOI.modify(model, c, MOI.ScalarCoefficientChange{Float64}(z, 1.0))
     else
         MOI.delete!(model, c)
         cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0,1.0], v), 0.0)
         c = MOI.add_constraint(model, cf, MOI.LessThan(1.0))
     end
 
-    MOI.modify!(model,
+    MOI.modify(model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarCoefficientChange{Float64}(z, 2.0)
     )
@@ -636,7 +636,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     #   solution: x = 2, y = 0, objv = 2
 
     if config.modify_lhs
-        MOI.modify!(model, c1, MOI.ScalarCoefficientChange(y, 3.0))
+        MOI.modify(model, c1, MOI.ScalarCoefficientChange(y, 3.0))
     else
         MOI.delete!(model, c1)
         cf1 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0,3.0], [x,y]), 0.0)
@@ -808,7 +808,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     #               y <= 0.0
 
     if config.modify_lhs
-        MOI.modify!(model, c1, MOI.VectorConstantChange([-100.0]))
+        MOI.modify(model, c1, MOI.VectorConstantChange([-100.0]))
     else
         MOI.delete!(model, c1)
         c1 = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-100.0]), MOI.Nonnegatives(1))
@@ -829,7 +829,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     #               y <= -100.0
 
     if config.modify_lhs
-        MOI.modify!(model, c2, MOI.VectorConstantChange([100.0]))
+        MOI.modify(model, c2, MOI.VectorConstantChange([100.0]))
     else
         MOI.delete!(model, c2)
         c2 = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [100.0]), MOI.Nonpositives(1))

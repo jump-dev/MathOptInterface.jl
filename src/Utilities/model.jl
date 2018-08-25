@@ -33,7 +33,7 @@ end
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::F) where {F, S} = (ci, change, s)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::S) where {F, S} = (ci, f, change)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modifyfunction(f, change), s)
-function _modify!(constrs::Vector{C{F, S}}, ci::CI{F}, i::Int, change) where {F, S}
+function _modify(constrs::Vector{C{F, S}}, ci::CI{F}, i::Int, change) where {F, S}
     constrs[i] = _modifyconstr(constrs[i]..., change)
 end
 
@@ -244,7 +244,7 @@ function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractF
     model.objective = deepcopy(f)
 end
 
-function MOI.modify!(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
+function MOI.modify(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
     model.objective = modifyfunction(model.objective, change)
 end
 
@@ -292,17 +292,17 @@ function MOI.delete!(model::AbstractModel, ci::CI)
     end
 end
 
-function MOI.modify!(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
-    _modify!(model, ci, getconstrloc(model, ci), change)
+function MOI.modify(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
+    _modify(model, ci, getconstrloc(model, ci), change)
 end
 
 MOI.supports(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
 function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
-    _modify!(model, ci, getconstrloc(model, ci), change)
+    _modify(model, ci, getconstrloc(model, ci), change)
 end
 MOI.supports(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
 function MOI.set(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
-    _modify!(model, ci, getconstrloc(model, ci), change)
+    _modify(model, ci, getconstrloc(model, ci), change)
 end
 
 MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints) = _getnoc(model, noc)
@@ -575,7 +575,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    for (func, T) in ((:_add_constraint, CI), (:_modify!, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
+    for (func, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete!, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
         funct = _mod(MOIU, func)
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets

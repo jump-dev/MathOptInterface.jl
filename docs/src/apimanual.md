@@ -508,11 +508,11 @@ MathOptInterface. They are:
 
 To distinguish between the replacement of the function with a new instance
 (described above) and the modification of an existing function, the in-place
-modifications use the  [`modify!`](@ref MathOptInterface.modify!) method:
+modifications use the  [`modify`](@ref MathOptInterface.modify) method:
 ```julia
-modify!(model, index, change::AbstractFunctionModification)
+modify(model, index, change::AbstractFunctionModification)
 ```
-[`modify!`](@ref MathOptInterface.modify!) takes three arguments. The first is
+[`modify`](@ref MathOptInterface.modify) takes three arguments. The first is
 the [`ModelLike`](@ref MathOptInterface.ModelLike) model `model`, the second is
 the constraint index, and the third is an instance of an
 [`AbstractFunctionModification`](@ref MathOptInterface.AbstractFunctionModification).
@@ -538,7 +538,7 @@ set(m,
 ```
 We can modify the constant term in the objective function as follows:
 ```julia
-modify!(m,
+modify(m,
     ObjectiveFunction{ScalarAffineFunction{Float64}}(),
     ScalarConstantChange(1.0)
 )
@@ -567,7 +567,7 @@ c = add_constraint(m,
 We can modify the constant vector in the [`VectorAffineFunction`](@ref MathOptInterface.VectorAffineFunction)
 from `[0.0, 0.0]` to `[1.0, 2.0]` as follows:
 ```julia
-modify!(m, c, VectorConstantChange([1.0, 2.0])
+modify(m, c, VectorConstantChange([1.0, 2.0])
 )
 ```
 The constraints are now ``1.0x + 1.0 \le 0.0`` and ``2.0y + 2.0 \le 0.0``.
@@ -589,7 +589,7 @@ c = add_constraint(m,
 we can modify the coefficient of the `x` variable so that the constraint becomes
 ``2.0x <= 1.0`` as follows:
 ```julia
-modify!(m, c, ScalarCoefficientChange(x, 2.0))
+modify(m, c, ScalarCoefficientChange(x, 2.0))
 ```
 
 [`ScalarCoefficientChange`](@ref MathOptInterface.ScalarCoefficientChange) can
@@ -622,7 +622,7 @@ c = add_constraint(m,
 we can modify the coefficients of the `x` variable so that the `A` matrix
 becomes ``A = [3.0, 4.0]^\top`` as follows:
 ```julia
-modify!(m, c, MultirowChange(x, [3.0, 4.0]))
+modify(m, c, MultirowChange(x, [3.0, 4.0]))
 ```
 
 ## Advanced

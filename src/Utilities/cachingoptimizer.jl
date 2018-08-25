@@ -243,13 +243,13 @@ function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set
     return cindex
 end
 
-function MOI.modify!(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFunctionModification)
+function MOI.modify(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFunctionModification)
     if m.state == AttachedOptimizer
         cindex_optimizer = m.model_to_optimizer_map[cindex]
         change_optimizer = mapvariables(m.model_to_optimizer_map, change)
         if m.mode == Automatic
             try
-                MOI.modify!(m.optimizer, cindex_optimizer, change_optimizer)
+                MOI.modify(m.optimizer, cindex_optimizer, change_optimizer)
             catch err
                 if err isa MOI.NotAllowedError
                     resetoptimizer!(m)
@@ -258,10 +258,10 @@ function MOI.modify!(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFuncti
                 end
             end
         else
-            MOI.modify!(m.optimizer, cindex_optimizer, change_optimizer)
+            MOI.modify(m.optimizer, cindex_optimizer, change_optimizer)
         end
     end
-    MOI.modify!(m.model_cache, cindex, change)
+    MOI.modify(m.model_cache, cindex, change)
 end
 
 # This function avoids duplicating code in the MOI.set methods for
@@ -295,12 +295,12 @@ function MOI.set(m::CachingOptimizer, ::MOI.ConstraintFunction, cindex::CI{F,S},
     replace_constraint_function_or_set(m, MOI.ConstraintFunction(), cindex, func)
 end
 
-function MOI.modify!(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
+function MOI.modify(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
     if m.state == AttachedOptimizer
         change_optimizer = mapvariables(m.model_to_optimizer_map, change)
         if m.mode == Automatic
             try
-                MOI.modify!(m.optimizer, obj, change_optimizer)
+                MOI.modify(m.optimizer, obj, change_optimizer)
             catch err
                 if err isa MOI.NotAllowedError
                     resetoptimizer!(m)
@@ -309,10 +309,10 @@ function MOI.modify!(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MO
                 end
             end
         else
-            MOI.modify!(m.optimizer, obj, change_optimizer)
+            MOI.modify(m.optimizer, obj, change_optimizer)
         end
     end
-    MOI.modify!(m.model_cache, obj, change)
+    MOI.modify(m.model_cache, obj, change)
 end
 
 MOI.is_valid(m::CachingOptimizer, index::MOI.Index) = MOI.is_valid(m.model_cache, index)
