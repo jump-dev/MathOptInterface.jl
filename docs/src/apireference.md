@@ -337,7 +337,7 @@ Bridges.GeoMeanBridge
 Bridges.SquarePSDBridge
 Bridges.RootDetBridge
 Bridges.LogDetBridge
-Bridges.SOCtoPSDCBridge
-Bridges.RSOCtoPSDCBridge
+Bridges.SOCtoPSDBridge
+Bridges.RSOCtoPSDBridge
 ```
 For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.

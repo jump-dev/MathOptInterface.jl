@@ -38,8 +38,8 @@ function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
     addbridge!(bridgedmodel, MOIB.LogDetBridge{T})
     addbridge!(bridgedmodel, MOIB.RootDetBridge{T})
     addbridge!(bridgedmodel, MOIB.RSOCBridge{T})
-    addbridge!(bridgedmodel, MOIB.RSOCtoPSDCBridge{T})
-    addbridge!(bridgedmodel, MOIB.SOCtoPSDCBridge{T})
+    addbridge!(bridgedmodel, MOIB.RSOCtoPSDBridge{T})
+    addbridge!(bridgedmodel, MOIB.SOCtoPSDBridge{T})
     bridgedmodel
 end
 
@@ -55,7 +55,7 @@ include("detbridge.jl")
 @bridge LogDet LogDetBridge () () (LogDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 @bridge RootDet RootDetBridge () () (RootDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 include("soctopsdbridge.jl")
-@bridge SOCtoPSD SOCtoPSDCBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
-@bridge RSOCtoPSD RSOCtoPSDCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge SOCtoPSD SOCtoPSDBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge RSOCtoPSD RSOCtoPSDBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
 
 end # module

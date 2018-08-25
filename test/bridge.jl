@@ -115,8 +115,8 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
     mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
     bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
     MOIB.addbridge!(bridgedmock, MOIB.SplitIntervalBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDCBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDCBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
+    MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDBridge{Float64})
     MOIB.addbridge!(bridgedmock, MOIB.RSOCBridge{Float64})
 
     @testset "Name test" begin
@@ -137,7 +137,7 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
         @test !(MOI.supports_constraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
         x = MOI.add_variables(bridgedmock, 3)
         c = MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
-        @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDCBridge
+        @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDBridge
         @test bridgedmock.dist[(MathOptInterface.VectorOfVariables, MathOptInterface.RotatedSecondOrderCone)] == 1
     end
 
