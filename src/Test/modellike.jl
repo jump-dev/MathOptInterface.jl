@@ -192,7 +192,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.supports_constraint(dest, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
     @test MOI.supports_constraint(dest, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
-    dict = MOI.copy_to(dest, src, copynames=false)
+    dict = MOI.copy_to(dest, src, copy_names=false)
 
     @test !MOI.supports(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
     @test MOI.get(dest, MOI.NumberOfVariables()) == 3

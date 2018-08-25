@@ -122,7 +122,7 @@ errors can be thrown.
 function attachoptimizer!(model::CachingOptimizer)
     @assert model.state == EmptyOptimizer
     # We do not need to copy names because name-related operations are handled by `m.model_cache`
-    indexmap = MOI.copy_to(model.optimizer, model.model_cache, copynames=false)
+    indexmap = MOI.copy_to(model.optimizer, model.model_cache, copy_names=false)
     model.state = AttachedOptimizer
     # MOI does not define the type of index_map, so we have to copy it into a
     # concrete container. Also load the reverse map.
@@ -134,8 +134,8 @@ function attachoptimizer!(model::CachingOptimizer)
     end
 end
 
-function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; copynames=true)
-    return default_copy_to(m, src, copynames)
+function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; copy_names=true)
+    return default_copy_to(m, src, copy_names)
 end
 
 function MOI.empty!(m::CachingOptimizer)
@@ -400,7 +400,7 @@ function MOI.set(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,
     MOI.set(m.model_cache, attr, index, value)
 end
 
-# Names are not copied, i.e. we use the option `copynames=false` in
+# Names are not copied, i.e. we use the option `copy_names=false` in
 # `attachoptimizer`, so the caching optimizer can support names even if the
 # optimizer does not.
 function MOI.supports(m::CachingOptimizer,
