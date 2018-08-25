@@ -333,7 +333,7 @@ MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copynames=true) = default_c
 
 # Allocate-Load Interface
 # Even if the model does not need it and use default_copy_to, it could be used by a layer that needs it
-needsallocateload(model::AbstractModel) = false
+needs_allocate_load(model::AbstractModel) = false
 
 allocatevariables!(model::AbstractModel, nvars) = MOI.add_variables(model, nvars)
 allocate!(model::AbstractModel, attr...) = MOI.set(model, attr...)

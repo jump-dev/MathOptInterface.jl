@@ -119,7 +119,7 @@ end
 # on the second pass (called load), the constraints can be loaded directly to the solver (in case of SDOI) or written directly into the matrix of constraints (in case of SCS and ECOS).
 
 # To support `MOI.copy_to` using this 2-pass mechanism, implement the allocate-load interface defined below and do:
-# MOI.copy_to(dest::ModelType, src::MOI.ModelLike) = MOIU.allocateload!(dest, src)
+# MOI.copy_to(dest::ModelType, src::MOI.ModelLike) = MOIU.allocate_load(dest, src)
 # In the implementation of the allocate-load interface, it can be assumed that the different functions will the called in the following order:
 # 1) `allocatevariables!`
 # 2) `allocate!` and `allocateconstraint!`
@@ -128,13 +128,12 @@ end
 # The interface is not meant to be used to create new constraints with `allocateconstraint!` followed by `loadconstraint!` after a solve, it is only meant for being used in this order to implement `MOI.copy_to`.
 
 """
-    needsallocateload(model::MOI.ModelLike)::Bool
+    needs_allocate_load(model::MOI.ModelLike)::Bool
 
 Return a `Bool` indicating whether `model` does not support `add_variables`/`add_constraint`/`set` but supports `allocatevariables!`/`allocateconstraint!`/`allocate!`/`loadvariables!`/`loadconstraint!`/`load!`.
 That is, the allocate-load interface need to be used to copy an model to `model`.
 """
-function needsallocateload end
-needsallocateload(::MOI.ModelLike) = false
+needs_allocate_load(::MOI.ModelLike) = false
 
 """
     allocatevariables!(model::MOI.ModelLike, nvars::Integer)
@@ -224,11 +223,11 @@ function loadconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bo
 end
 
 """
-    allocateload!(dest::MOI.ModelLike, src::MOI.ModelLike)
+    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike)
 
 Implements `MOI.copy_to(dest, src)` using the allocate-load interface.
 """
-function allocateload!(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
+function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copynames::Bool)
     MOI.empty!(dest)
 
     idxmap = IndexMap()
