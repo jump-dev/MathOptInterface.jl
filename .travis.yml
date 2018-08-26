@@ -6,6 +6,7 @@ os:
 julia:
   - 0.6
   - 0.7
+  - 1.0
 notifications:
   email: false
 git:
@@ -20,10 +21,6 @@ notifications:
     on_failure: always  # options: [always|never|change] default: always
     on_start: never     # options: [always|never|change] default: always
 
-## uncomment the following lines to override the default test script
-script:
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("MathOptInterface"); Pkg.add("Compat")' # warnings here about needed to do using Pkg but it also installs Compat
-  - julia --depwarn=error -e 'using Compat; using Compat.Pkg; Pkg.test("MathOptInterface"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
   #- julia -e 'cd(Pkg.dir("MathOptInterface")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
