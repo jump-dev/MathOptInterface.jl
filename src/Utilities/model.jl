@@ -233,7 +233,11 @@ function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunctionType)
 end
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     if typeof(model.objective) != T
-        throw(InexactError())
+        if VERSION >= v"0.7-"
+            throw(InexactError(:get, T, model.objective))
+        else
+            throw(InexactError())
+        end
     end
     model.objective
 end
