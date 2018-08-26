@@ -57,6 +57,31 @@ end
 unittests["feasibility_sense"] = feasibility_sense
 
 """
+    get_objective_function(model::MOI.ModelLike, config::TestConfig)
+
+Test get objective function.
+"""
+function get_objective_function(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    @test MOI.isempty(model)
+    obj_attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    @test MOI.supports(model, obj_attr)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        minobjective: 2.0x + 1.0
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    expected_obj_fun = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)],
+                                                1.0)
+    @test_throws InexactError begin
+        MOI.get(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    end
+    obj_fun = MOI.get(model, obj_attr)
+    @test obj_fun ≈ expected_obj_fun
+end
+unittests["get_objective_function"] = get_objective_function
+
+"""
     solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
 
 Test constant in linear objective,  if `config.solve=true` confirm that it
