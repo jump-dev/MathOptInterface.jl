@@ -381,6 +381,10 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where T
     return VectorAffineFunction(map(i -> VectorAffineTerm(i, ScalarAffineTerm(one(T), f.variables[i])), 1:n), zeros(T, n))
 end
 
+if VERSION < v"0.7-"
+    isone(x::T) = x == one(T)
+end
+
 # Conversion between scalar functions
 # Conversion to SingleVariable
 function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
