@@ -78,6 +78,9 @@ function get_objective_function(model::MOI.ModelLike, config::TestConfig)
     end
     obj_fun = MOI.get(model, obj_attr)
     @test obj_fun ≈ expected_obj_fun
+    quad_obj_attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
+    quad_obj_fun = MOI.get(model, quad_obj_attr)
+    @test convert(MOI.ScalarAffineFunction{Float64}, quad_obj_fun) ≈ expected_obj_fun
 end
 unittests["get_objective_function"] = get_objective_function
 

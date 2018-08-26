@@ -191,6 +191,15 @@
             end
             f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4], [x, y]),
                                          5)
+            @testset "convert" begin
+                @test_throws InexactError convert(MOI.SingleVariable, f)
+                quad_f = MOI.ScalarQuadraticFunction(f.terms,
+                                                     MOI.ScalarQuadraticTerm{Int}[],
+                                                     f.constant)
+                @test convert(MOI.ScalarQuadraticFunction{Int}, f) ≈ quad_f
+                g = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
+                @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+            end
             @testset "operate" begin
                 f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 3, 1, 2, -3, 2],
                                                                                   [w, y, w, x,  x, z]), 2) +
@@ -252,6 +261,13 @@
                 MOIU.canonicalize!(g)
                 @test MOIU.isapprox_zero(g, 1e-5)
                 @test !MOIU.isapprox_zero(g, 1e-7)
+            end
+            @testset "convert" begin
+                @test_throws InexactError convert(MOI.SingleVariable, f)
+                @test_throws InexactError convert(MOI.ScalarAffineFunction{Int},
+                                                  f)
+                g = convert(MOI.ScalarQuadraticFunction{Float64}, fx)
+                @test convert(MOI.SingleVariable, g) == fx
             end
             @testset "operate" begin
                 @test f ≈ 7 + (fx + 2fy) * (1fx + fy) + 3fx
