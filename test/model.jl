@@ -96,13 +96,13 @@ end
     end
 
     @test MOI.is_valid(model, c4)
-    MOI.delete!(model, c4)
+    MOI.delete(model, c4)
     @test !MOI.is_valid(model, c4)
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}()) == 1
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
 
-    MOI.delete!(model, y)
+    MOI.delete(model, y)
 
     f = MOI.get(model, MOI.ConstraintFunction(), c2)
     @test f.affine_terms == MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([3, 1], [x, x]))

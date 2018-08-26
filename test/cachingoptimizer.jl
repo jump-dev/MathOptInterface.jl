@@ -65,8 +65,8 @@
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(12.0)
 
-    MOI.delete!(m, x[2])
-    @test_throws MOI.InvalidIndex{typeof(x[2])} MOI.delete!(m, x[2])
+    MOI.delete(m, x[2])
+    @test_throws MOI.InvalidIndex{typeof(x[2])} MOI.delete(m, x[2])
     @test !MOI.is_valid(m, x[2])
 
     # TODO: test more constraint modifications
@@ -165,7 +165,7 @@ end
     @testset "Delete not allowed" begin
         vi = MOI.add_variable(m)
         s.delete_allowed = false # Simulate optimizer that cannot delete variable
-        MOI.delete!(m, vi)
+        MOI.delete(m, vi)
         s.delete_allowed = true
         @test MOIU.state(m) == MOIU.EmptyOptimizer
         MOIU.attachoptimizer!(m)
@@ -174,7 +174,7 @@ end
         vi = MOI.add_variable(m)
         ci = MOI.add_constraint(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
         s.delete_allowed = false # Simulate optimizer that cannot delete constraint
-        MOI.delete!(m, ci)
+        MOI.delete(m, ci)
         s.delete_allowed = true
         @test MOIU.state(m) == MOIU.EmptyOptimizer
         MOIU.attachoptimizer!(m)

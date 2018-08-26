@@ -142,10 +142,10 @@ function MOI.get(bridge::SquarePSDBridge{T, F, G},
 end
 
 # Indices
-function MOI.delete!(model::MOI.ModelLike, bridge::SquarePSDBridge)
-    MOI.delete!(model, bridge.psd)
+function MOI.delete(model::MOI.ModelLike, bridge::SquarePSDBridge)
+    MOI.delete(model, bridge.psd)
     for pair in bridge.sym
-        MOI.delete!(model, pair.second)
+        MOI.delete(model, pair.second)
     end
 end
 

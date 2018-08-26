@@ -133,10 +133,10 @@ function MOI.get(b::GeoMeanBridge{T, F, G},
 end
 
 # References
-function MOI.delete!(model::MOI.ModelLike, c::GeoMeanBridge)
-    MOI.delete!(model, c.xij)
-    MOI.delete!(model, c.tubc)
-    MOI.delete!(model, c.socrc)
+function MOI.delete(model::MOI.ModelLike, c::GeoMeanBridge)
+    MOI.delete(model, c.xij)
+    MOI.delete(model, c.tubc)
+    MOI.delete(model, c.socrc)
 end
 
 # Attributes, Bridge acting as a constraint

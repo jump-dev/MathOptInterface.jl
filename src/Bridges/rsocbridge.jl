@@ -66,8 +66,8 @@ function MOI.get(b::RSOCBridge{T, F},
 end
 
 # References
-function MOI.delete!(model::MOI.ModelLike, c::RSOCBridge)
-    MOI.delete!(model, c.soc)
+function MOI.delete(model::MOI.ModelLike, c::RSOCBridge)
+    MOI.delete(model, c.soc)
 end
 
 # Attributes, Bridge acting as a constraint

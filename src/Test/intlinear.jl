@@ -134,8 +134,8 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0,1,2] atol=atol rtol=rtol
         end
 
-        MOI.delete!(model, c1)
-        MOI.delete!(model, c2)
+        MOI.delete(model, c1)
+        MOI.delete(model, c2)
 
         if config.solve
             MOI.optimize!(model)
@@ -220,7 +220,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         end
 
         for cref in bin_constraints
-            MOI.delete!(model, cref)
+            MOI.delete(model, cref)
         end
 
         if config.solve

@@ -317,7 +317,7 @@ end
 
 MOI.is_valid(m::CachingOptimizer, index::MOI.Index) = MOI.is_valid(m.model_cache, index)
 
-function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
+function MOI.delete(m::CachingOptimizer, index::MOI.Index)
     if m.state == AttachedOptimizer
         if !MOI.is_valid(m, index)
             # The index thrown by m.model_cache would be xored
@@ -326,7 +326,7 @@ function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
         index_optimizer = m.model_to_optimizer_map[index]
         if m.mode == Automatic
             try
-                MOI.delete!(m.optimizer, index_optimizer)
+                MOI.delete(m.optimizer, index_optimizer)
             catch err
                 if err isa MOI.NotAllowedError
                     resetoptimizer!(m)
@@ -335,7 +335,7 @@ function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
                 end
             end
         else
-            MOI.delete!(m.optimizer, index_optimizer)
+            MOI.delete(m.optimizer, index_optimizer)
         end
     end
     # The state may have changed in Automatic mode since resetoptimizer! is
@@ -344,7 +344,7 @@ function MOI.delete!(m::CachingOptimizer, index::MOI.Index)
         delete!(m.optimizer_to_model_map, m.model_to_optimizer_map[index])
         delete!(m.model_to_optimizer_map, index)
     end
-    MOI.delete!(m.model_cache, index)
+    MOI.delete(m.model_cache, index)
 end
 
 
