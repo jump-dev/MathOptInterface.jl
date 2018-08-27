@@ -308,8 +308,8 @@ struct SolverName <: AbstractOptimizerAttribute end
     ListOfModelAttributesSet()
 
 A model attribute for the `Vector{AbstractModelAttribute}` of all model
-attributes `attr` such that `is_copyable(attr)` returns `true` that were set to
-the model.
+attributes `attr` such that 1) `is_copyable(attr)` returns `true` and 2) the
+attribute was set to the model.
 """
 struct ListOfModelAttributesSet <: AbstractModelAttribute end
 
@@ -474,8 +474,8 @@ struct ResultCount <: AbstractModelAttribute end
     ListOfVariableAttributesSet()
 
 A model attribute for the `Vector{AbstractVariableAttribute}` of all variable
-attributes `attr` such that `is_copyable(attr)` returns `true` that were set to
-variables.
+attributes `attr` such that 1) `is_copyable(attr)` returns `true` and 2) the
+attribute was set to variables.
 """
 struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 
@@ -532,8 +532,8 @@ Possible values are:
     ListOfConstraintAttributesSet{F, S}()
 
 A model attribute for the `Vector{AbstractConstraintAttribute}` of all
-constraint attributes `attr` such that `is_copyable(attr)` returns `true` that
-were set to `F`-in-`S` constraints.
+constraint attributes `attr` such that 1) `is_copyable(attr)` returns `true` and
+2) the attribute was set to `F`-in-`S` constraints.
 
 ## Note
 
