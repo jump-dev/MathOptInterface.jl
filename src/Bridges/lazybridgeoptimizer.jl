@@ -43,9 +43,9 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
         changed = false
         for BT in b.bridgetypes
             for (F, S) in constraints
-                if MOI.supports_constraint(BT, F, S) && all(C -> MOI.supports_constraint(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
+                if MOI.supports_constraint(BT, F, S) && all(C -> MOI.supports_constraint(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Number of bridges needed using BT
-                    dist = 1 + sum(C -> _dist(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
+                    dist = 1 + sum(C -> _dist(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
                         b.dist[(F, S)] = dist
@@ -69,7 +69,7 @@ function fill_required_constraints!(required::Set{Tuple{DataType, DataType}}, b:
     push!(required, (F, S))
     for BT in b.bridgetypes
         if MOI.supports_constraint(BT, F, S)
-            for C in addedconstrainttypes(BT, F, S)
+            for C in added_constraint_types(BT, F, S)
                 fill_required_constraints!(required, b, C[1], C[2])
             end
         end

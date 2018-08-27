@@ -14,7 +14,7 @@ function SplitIntervalBridge{T, F}(model, f::F, s::MOI.Interval{T}) where {T, F}
 end
 
 MOI.supports_constraint(::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = true
-function addedconstrainttypes(::Type{SplitIntervalBridge{T, F}}) where {T, F}
+function added_constraint_types(::Type{SplitIntervalBridge{T, F}}) where {T, F}
     return [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
 end
 function concrete_bridge_type(::Type{<:SplitIntervalBridge},

@@ -38,20 +38,20 @@ Return a `Bool` indicating whether the bridges of type `BT` support bridging `F`
 MOI.supports_constraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
 
 """
-    addedconstrainttypes(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
+    added_constraint_types(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
 
 Return a list of the types of constraints that bridges of type `BT` add for
 bridging an `F`-in-`S` constraints.
 
-    addedconstrainttypes(BT::Type{<:AbstractBridge})::Bool
+    added_constraint_types(BT::Type{<:AbstractBridge})::Bool
 
 Return a list of the types of constraints that bridges of concrete type `BT` add
 for `F`-in-`S` constraints.
 """
-function addedconstrainttypes(BT::Type{<:AbstractBridge},
+function added_constraint_types(BT::Type{<:AbstractBridge},
                               F::Type{<:MOI.AbstractFunction},
                               S::Type{<:MOI.AbstractSet})
-    addedconstrainttypes(concrete_bridge_type(BT, F, S))
+    added_constraint_types(concrete_bridge_type(BT, F, S))
 end
 
 
