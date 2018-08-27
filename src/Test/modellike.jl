@@ -107,11 +107,11 @@ function emptytest(model::MOI.ModelLike)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
 
-    @test !MOI.isempty(model)
+    @test !MOI.is_empty(model)
 
     MOI.empty!(model)
 
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 0

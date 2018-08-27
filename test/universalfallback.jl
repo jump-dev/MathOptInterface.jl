@@ -5,16 +5,16 @@ function test_optmodattrs(uf, model, attr, listattr)
     MOI.set(uf, attr, 0)
     @test MOI.get(uf, attr) == 0
     @test MOI.get(uf, listattr) == [attr]
-    @test !MOI.isempty(uf)
+    @test !MOI.is_empty(uf)
     MOI.empty!(uf)
-    @test MOI.isempty(uf)
+    @test MOI.is_empty(uf)
 end
 function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfun, x, y, z)
     @test !MOI.supports(model, attr, I)
     @test MOI.supports(uf, attr, I)
     @test isempty(MOI.get(uf, listattr))
     MOI.set(uf, attr, [x, y], [2, 0])
-    @test !MOI.isempty(uf)
+    @test !MOI.is_empty(uf)
     @test MOI.get(uf, listattr) == [attr]
     MOI.set(uf, attr, z, 5)
     @test MOI.get(uf, attr, y) == 0
@@ -52,28 +52,28 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 @testset "UniversalFallback" begin
     model = ModelForUniversalFallback{Float64}()
     uf = MOIU.UniversalFallback(model)
-    @test MOI.isempty(uf)
+    @test MOI.is_empty(uf)
     @testset "Copy Test" begin
         MOIT.copytest(uf, Model{Float64}())
-        @test !MOI.isempty(uf)
+        @test !MOI.is_empty(uf)
         MOI.empty!(uf)
-        @test MOI.isempty(uf)
+        @test MOI.is_empty(uf)
     end
     @testset "Valid Test" begin
         MOIT.validtest(uf)
-        @test !MOI.isempty(uf)
+        @test !MOI.is_empty(uf)
         MOI.empty!(uf)
-        @test MOI.isempty(uf)
+        @test MOI.is_empty(uf)
     end
     @testset "Empty Test" begin
         MOIT.emptytest(uf)
-        @test MOI.isempty(uf)
+        @test MOI.is_empty(uf)
     end
     @testset "Name Test" begin
         MOIT.nametest(uf)
-        @test !MOI.isempty(uf)
+        @test !MOI.is_empty(uf)
         MOI.empty!(uf)
-        @test MOI.isempty(uf)
+        @test MOI.is_empty(uf)
     end
     @testset "Optimizer Attribute" begin
         attr = UnknownOptimizerAttribute()
@@ -141,7 +141,7 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
     config = MOIT.TestConfig(solve=false)
     @testset "empty" begin
         MOI.empty!(uf)
-        @test MOI.isempty(uf)
+        @test MOI.is_empty(uf)
     end
     @testset "Unit" begin
         MOIT.unittest(uf, config)

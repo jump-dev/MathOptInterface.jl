@@ -13,7 +13,7 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
@@ -66,7 +66,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
@@ -139,7 +139,7 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -218,7 +218,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -279,7 +279,7 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -328,7 +328,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -391,7 +391,7 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)

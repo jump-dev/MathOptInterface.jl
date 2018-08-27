@@ -34,7 +34,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
 end
 UniversalFallback(model::MOI.ModelLike) = UniversalFallback{typeof(model)}(model)
 
-MOI.isempty(uf::UniversalFallback) = MOI.isempty(uf.model) && isempty(uf.constraints) && isempty(uf.optattr) && isempty(uf.modattr) && isempty(uf.varattr) && isempty(uf.conattr)
+MOI.is_empty(uf::UniversalFallback) = MOI.is_empty(uf.model) && isempty(uf.constraints) && isempty(uf.optattr) && isempty(uf.modattr) && isempty(uf.varattr) && isempty(uf.conattr)
 function MOI.empty!(uf::UniversalFallback)
     MOI.empty!(uf.model)
     empty!(uf.constraints)

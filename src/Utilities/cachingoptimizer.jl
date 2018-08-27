@@ -49,8 +49,8 @@ typeof(model_cache)}` so it does not support the function
 `new_optimizer` is different from the type of `optimizer`.
 """
 function CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer)
-    @assert MOI.isempty(model_cache)
-    @assert MOI.isempty(optimizer)
+    @assert MOI.is_empty(model_cache)
+    @assert MOI.is_empty(optimizer)
     CachingOptimizer{typeof(optimizer), typeof(model_cache)}(optimizer, model_cache, AttachedOptimizer, Automatic, IndexMap(), IndexMap())
 end
 
@@ -77,7 +77,7 @@ Sets or resets `m` to have the given empty optimizer. Can be called
 from any state. The `CachingOptimizer` will be in state `EmptyOptimizer` after the call.
 """
 function resetoptimizer!(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
-    @assert MOI.isempty(optimizer)
+    @assert MOI.is_empty(optimizer)
     m.optimizer = optimizer
     m.state = EmptyOptimizer
     return
@@ -149,7 +149,7 @@ function MOI.empty!(m::CachingOptimizer)
     m.model_to_optimizer_map = IndexMap()
     m.optimizer_to_model_map = IndexMap()
 end
-MOI.isempty(m::CachingOptimizer) = MOI.isempty(m.model_cache)
+MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
 # Optimizing and adding/modifying constraints and variables.
 

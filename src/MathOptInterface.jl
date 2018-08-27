@@ -58,12 +58,12 @@ variable index by name: `get(model, VariableIndex, "name")`.
 function read_from_file end
 
 """
-    isempty(model::ModelLike)
+    is_empty(model::ModelLike)
 
 Returns `false` if the `model` has any model attribute set or has any variables or constraints.
 Note that an empty model can have optimizer attributes set.
 """
-function isempty end
+function is_empty end
 
 """
     empty!(model::ModelLike)

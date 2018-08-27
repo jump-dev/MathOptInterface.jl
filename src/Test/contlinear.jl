@@ -22,7 +22,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     #@test MOI.get(model, MOI.SupportsDeleteConstraint())
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -363,7 +363,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -426,7 +426,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -461,7 +461,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     #      x <= 3
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -503,7 +503,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -587,7 +587,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -709,7 +709,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -777,7 +777,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -860,7 +860,7 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -911,7 +911,7 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -953,7 +953,7 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -1006,7 +1006,7 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -1063,7 +1063,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -1155,7 +1155,7 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 2)
 
@@ -1203,7 +1203,7 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -1253,7 +1253,7 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -1306,7 +1306,7 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x, y, z = MOI.add_variables(model, 3)
     c = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0, 2.0, 1.0], [x, y, z]), 0.0), MOI.LessThan(2.0))
@@ -1387,7 +1387,7 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variables(model, 1)
     # Create a VectorAffineFunction with two rows, but only

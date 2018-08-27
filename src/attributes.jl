@@ -7,8 +7,9 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 
 ### Note
 
-The difference between `AbstractOptimizerAttribute` and `AbstractModelAttribute` lies in the behavior of `isempty`, `empty!` and `copy_to`.
-Typically optimizer attributes only affect how the model is solved.
+The difference between `AbstractOptimizerAttribute` and `AbstractModelAttribute`
+lies in the behavior of `is_empty`, `empty!` and `copy_to`. Typically optimizer
+attributes only affect how the model is solved.
 """
 abstract type AbstractOptimizerAttribute end
 

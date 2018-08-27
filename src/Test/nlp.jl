@@ -109,7 +109,7 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     lb = [25.0, 40.0]
     ub = [Inf, 40.0]
@@ -220,7 +220,7 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
     @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     lb = [1.0]
     ub = [1.0]
