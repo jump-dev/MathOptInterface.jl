@@ -72,7 +72,7 @@ end
 
     @testset "Custom test" begin
         model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
-        @test !MOIB.supportsbridgingconstraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
+        @test !MOIB.supports_bridging_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
 
         x, y = MOI.add_variables(model, 2)
         @test MOI.get(model, MOI.NumberOfVariables()) == 2

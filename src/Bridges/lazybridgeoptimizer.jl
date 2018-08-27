@@ -96,10 +96,10 @@ function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 end
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
-function isbridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     !MOI.supports_constraint(b.model, F, S)
 end
-function supportsbridgingconstraint(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+function supports_bridging_constraint(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     update_constraint!(b, F, S)
     (F, S) in keys(b.best)
 end
