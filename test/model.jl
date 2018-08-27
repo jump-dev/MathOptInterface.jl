@@ -1,4 +1,4 @@
-MOIU.@model LPModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model LPModel () (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction,) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
 @testset "Name test" begin
     MOIT.nametest(Model{Float64}())

@@ -393,12 +393,12 @@ abstract type Constraints{F} end
 
 abstract type SymbolFS end
 struct SymbolFun <: SymbolFS
-    s::Symbol
+    s::Union{Symbol,Expr}
     typed::Bool
     cname::Symbol
 end
 struct SymbolSet <: SymbolFS
-    s::Symbol
+    s::Union{Symbol,Expr}
     typed::Bool
 end
 
@@ -409,9 +409,9 @@ end
 # Expr(:., MOI, :($(QuoteNode(s)))) is Expr(:., MOI, :(:EqualTo)) <- what we want
 
 # (MOI, :Zeros) -> :(MOI.Zeros)
-_mod(m::Module, s::Symbol) = s
+_mod(m::Module, s::Union{Symbol,Expr}) = s
 # (:Zeros) -> :(MOI.Zeros)
-_moi(s::Symbol) = _mod(MOI, s)
+_moi(s::Union{Symbol,Expr}) = _mod(MOI, s)
 _set(s::SymbolSet) = _moi(s.s)
 _fun(s::SymbolFun) = _moi(s.s)
 function _typedset(s::SymbolSet)
@@ -433,7 +433,7 @@ end
 if VERSION >= v"0.7.0-DEV.2813"
     using Unicode
 end
-_field(s::SymbolFS) = Symbol(lowercase(string(s.s)))
+_field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
 _getC(s::SymbolSet) = :($MOIU.C{F, $(_typedset(s))})
 _getC(s::SymbolFun) = _typedfun(s)
@@ -586,7 +586,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                 field = _field(s)
                 code = quote
                     $code
-                    MathOptInterface.Utilities.$funct(model::$c, ci::$T{F, <:$set}, args...) where F = MathOptInterface.Utilities.$funct(model.$field, ci, args...)
+                    $MOIU.$funct(model::$c, ci::$T{F, <:$set}, args...) where F = $MOIU.$funct(model.$field, ci, args...)
                 end
             end
         end
@@ -596,7 +596,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             field = _field(f)
             code = quote
                 $code
-                MathOptInterface.Utilities.$funct(model::$modelname, ci::$T{<:$fun}, args...) = MathOptInterface.Utilities.$funct(model.$field, ci, args...)
+                $MOIU.$funct(model::$modelname, ci::$T{<:$fun}, args...) = $MOIU.$funct(model.$field, ci, args...)
             end
         end
     end

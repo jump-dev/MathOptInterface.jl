@@ -1,5 +1,5 @@
 # Model not supporting Interval
-MOIU.@model SimpleModel () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, PositiveSemidefiniteConeTriangle, ExponentialCone) () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model SimpleModel () (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone, MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
 function test_noc(bridgedmock, F, S, n)
     @test MOI.get(bridgedmock, MOI.NumberOfConstraints{F, S}()) == n
@@ -109,7 +109,7 @@ end
 end
 
 # Model not supporting RotatedSecondOrderCone
-MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, ExponentialCone, PositiveSemidefiniteConeTriangle) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model NoRSOCModel () (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.ExponentialCone, MOI.PositiveSemidefiniteConeTriangle) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction,) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
 @testset "LazyBridgeOptimizer" begin
     mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())

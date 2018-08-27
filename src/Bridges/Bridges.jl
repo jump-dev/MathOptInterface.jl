@@ -24,7 +24,7 @@ include("singlebridgeoptimizer.jl")
 include("lazybridgeoptimizer.jl")
 
 # This is used by JuMP and removes the need to update JuMP everytime a bridge is added
-MOIU.@model AllBridgedConstraints () (Interval,) (SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, LogDetConeTriangle, RootDetConeTriangle) () () (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model AllBridgedConstraints () (MOI.Interval,) (MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone, MOI.LogDetConeTriangle, MOI.RootDetConeTriangle) () () (MOI.ScalarAffineFunction,) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 """
     fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 
@@ -44,18 +44,18 @@ function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 end
 
 include("intervalbridge.jl")
-@bridge SplitInterval SplitIntervalBridge () (Interval,) () () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) () ()
+@bridge SplitInterval SplitIntervalBridge () (MOI.Interval,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
 include("rsocbridge.jl")
-@bridge RSOC RSOCBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge RSOC RSOCBridge () () (MOI.RotatedSecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 include("geomeanbridge.jl")
-@bridge GeoMean GeoMeanBridge () () (GeometricMeanCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge GeoMean GeoMeanBridge () () (MOI.GeometricMeanCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 include("squarepsdbridge.jl")
-@bridge SquarePSD SquarePSDBridge () () (PositiveSemidefiniteConeSquare,) () () () (VectorOfVariables,) (VectorAffineFunction, VectorQuadraticFunction)
+@bridge SquarePSD SquarePSDBridge () () (MOI.PositiveSemidefiniteConeSquare,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 include("detbridge.jl")
-@bridge LogDet LogDetBridge () () (LogDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
-@bridge RootDet RootDetBridge () () (RootDetConeTriangle,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge LogDet LogDetBridge () () (MOI.LogDetConeTriangle,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+@bridge RootDet RootDetBridge () () (MOI.RootDetConeTriangle,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 include("soctopsdbridge.jl")
-@bridge SOCtoPSD SOCtoPSDBridge () () (SecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
-@bridge RSOCtoPSD RSOCtoPSDBridge () () (RotatedSecondOrderCone,) () () () (VectorOfVariables,) (VectorAffineFunction,)
+@bridge SOCtoPSD SOCtoPSDBridge () () (MOI.SecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+@bridge RSOCtoPSD RSOCtoPSDBridge () () (MOI.RotatedSecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
 end # module
