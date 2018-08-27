@@ -409,7 +409,7 @@ end
 # Expr(:., MOI, :($(QuoteNode(s)))) is Expr(:., MOI, :(:EqualTo)) <- what we want
 
 # (MOI, :Zeros) -> :(MOI.Zeros)
-_mod(m::Module, s::Symbol) = Expr(:., m, :($(QuoteNode(s))))
+_mod(m::Module, s::Symbol) = s
 # (:Zeros) -> :(MOI.Zeros)
 _moi(s::Symbol) = _mod(MOI, s)
 _set(s::SymbolSet) = _moi(s.s)
@@ -586,7 +586,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                 field = _field(s)
                 code = quote
                     $code
-                    $funct(model::$c, ci::$T{F, <:$set}, args...) where F = $funct(model.$field, ci, args...)
+                    MathOptInterface.Utilities.$funct(model::$c, ci::$T{F, <:$set}, args...) where F = MathOptInterface.Utilities.$funct(model.$field, ci, args...)
                 end
             end
         end
@@ -596,7 +596,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             field = _field(f)
             code = quote
                 $code
-                $funct(model::$modelname, ci::$T{<:$fun}, args...) = $funct(model.$field, ci, args...)
+                MathOptInterface.Utilities.$funct(model::$modelname, ci::$T{<:$fun}, args...) = MathOptInterface.Utilities.$funct(model.$field, ci, args...)
             end
         end
     end
