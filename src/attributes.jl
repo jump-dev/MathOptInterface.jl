@@ -108,13 +108,21 @@ list of attributes set obtained by `ListOf...AttributesSet`.
 function supports end
 function supports(::ModelLike, attr::Union{AbstractModelAttribute,
                                            AbstractOptimizerAttribute})
-    @assert is_copyable(attr)
+    if !is_copyable(attr)
+        throw(ArgumentError("`supports` is not defined for $attr, it is only" *
+                            " defined for attributes such that `is_copyable`" *
+                            " returns `true`."))
+    end
     return false
 end
 function supports(::ModelLike, attr::Union{AbstractVariableAttribute,
                                            AbstractConstraintAttribute},
                   ::Type{<:Index})
-    @assert is_copyable(attr)
+    if !is_copyable(attr)
+        throw(ArgumentError("`supports` is not defined for $attr, it is only" *
+                            " defined for attributes such that `is_copyable`" *
+                            " returns `true`."))
+    end
     return false
 end
 

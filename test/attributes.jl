@@ -11,8 +11,8 @@
     end
     @testset "supports" begin
         model = DummyModel()
-        @test_throws AssertionError MOI.supports(model, MOI.TerminationStatus())
-        @test_throws AssertionError begin
+        @test_throws ArgumentError MOI.supports(model, MOI.TerminationStatus())
+        @test_throws ArgumentError begin
             MOI.supports(model, MOI.ConstraintSet(),
                          MOI.ConstraintIndex{MOI.SingleVariable,
                                              MOI.EqualTo{Float64}})
