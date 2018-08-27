@@ -333,23 +333,29 @@ function MOI.isempty(model::AbstractModel)
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
 
-MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true) = default_copy_to(dest, src, copy_names)
+function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true)
+    return default_copy_to(dest, src, copy_names)
+end
 
 # Allocate-Load Interface
-# Even if the model does not need it and use default_copy_to, it could be used by a layer that needs it
+# Even if the model does not need it and use default_copy_to, it could be used
+# by a layer that needs it
 needs_allocate_load(model::AbstractModel) = false
 
-allocatevariables!(model::AbstractModel, nvars) = MOI.add_variables(model, nvars)
-allocate!(model::AbstractModel, attr...) = MOI.set(model, attr...)
-canallocate(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.supports(model, attr)
-canallocate(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.supports(model, attr, IndexType)
-allocateconstraint!(model::AbstractModel, f::MOI.AbstractFunction, s::MOI.AbstractSet) = MOI.add_constraint(model, f, s)
+function allocate_variables(model::AbstractModel, nvars)
+    return MOI.add_variables(model, nvars)
+end
+allocate(model::AbstractModel, attr...) = MOI.set(model, attr...)
+function allocate_constraint(model::AbstractModel, f::MOI.AbstractFunction,
+                             s::MOI.AbstractSet)
+    return MOI.add_constraint(model, f, s)
+end
 
-function loadvariables!(::AbstractModel, nvars) end
-function load!(::AbstractModel, attr...) end
-canload(model::AbstractModel, attr::MOI.AnyAttribute) = MOI.supports(model, attr)
-canload(model::AbstractModel, attr::MOI.AnyAttribute, IndexType::Type{<:MOI.Index}) = MOI.supports(model, attr, IndexType)
-function loadconstraint!(::AbstractModel, ::CI, ::MOI.AbstractFunction, ::MOI.AbstractSet) end
+function load_variables(::AbstractModel, nvars) end
+function load(::AbstractModel, attr...) end
+function load_constraint(::AbstractModel, ::CI, ::MOI.AbstractFunction,
+                         ::MOI.AbstractSet)
+end
 
 # Can be used to access constraints of a model
 """

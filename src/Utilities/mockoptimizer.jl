@@ -280,21 +280,17 @@ end
 # Allocate-Load Interface
 needs_allocate_load(mock::MockOptimizer) = mock.needs_allocate_load || needs_allocate_load(mock.inner_model)
 
-allocatevariables!(mock::MockOptimizer, nvars) = allocatevariables!(mock.inner_model, nvars)
-allocate!(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = allocate!(mock.inner_model, attr, value)
-allocate!(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = allocate!(mock.inner_model, attr, xor_variables(value))
-allocate!(mock::MockOptimizer, attr::MOI.AnyAttribute, idx::MOI.Index, value) = allocate!(mock.inner_model, attr, xor_index(idx), value)
-canallocate(mock::MockOptimizer, attr::MOI.AnyAttribute) = canallocate(mock.inner_model, attr)
-canallocate(mock::MockOptimizer, attr::MOI.AnyAttribute, IdxT::Type{<:MOI.Index}) = canallocate(mock.inner_model, attr, IdxT)
-allocateconstraint!(mock::MockOptimizer, f::MOI.AbstractFunction, s::MOI.AbstractSet) = xor_index(allocateconstraint!(mock.inner_model, xor_variables(f), s))
+allocate_variables(mock::MockOptimizer, nvars) = allocate_variables(mock.inner_model, nvars)
+allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = allocate(mock.inner_model, attr, value)
+allocate(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = allocate(mock.inner_model, attr, xor_variables(value))
+allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, idx::MOI.Index, value) = allocate(mock.inner_model, attr, xor_index(idx), value)
+allocate_constraint(mock::MockOptimizer, f::MOI.AbstractFunction, s::MOI.AbstractSet) = xor_index(allocate_constraint(mock.inner_model, xor_variables(f), s))
 
-loadvariables!(mock::MockOptimizer, nvars) = loadvariables!(mock.inner_model, nvars)
-load!(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = load!(mock.inner_model, attr, value)
-load!(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = load!(mock.inner_model, attr, xor_variables(value))
-load!(mock::MockOptimizer, attr::MOI.AnyAttribute, idx::MOI.Index, value) = load!(mock.inner_model, attr, xor_index(idx), value)
-canload(mock::MockOptimizer, attr::MOI.AnyAttribute) = canload(mock.inner_model, attr)
-canload(mock::MockOptimizer, attr::MOI.AnyAttribute, IdxT::Type{<:MOI.Index}) = canload(mock.inner_model, attr, IdxT)
-loadconstraint!(mock::MockOptimizer, ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = loadconstraint!(mock.inner_model, xor_index(ci), xor_variables(f), s)
+load_variables(mock::MockOptimizer, nvars) = load_variables(mock.inner_model, nvars)
+load(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = load(mock.inner_model, attr, value)
+load(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = load(mock.inner_model, attr, xor_variables(value))
+load(mock::MockOptimizer, attr::MOI.AnyAttribute, idx::MOI.Index, value) = load(mock.inner_model, attr, xor_index(idx), value)
+load_constraint(mock::MockOptimizer, ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = load_constraint(mock.inner_model, xor_index(ci), xor_variables(f), s)
 
 """
     set_mock_optimize!(mock::MockOptimizer, opt::Function...)
