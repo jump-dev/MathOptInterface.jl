@@ -66,9 +66,7 @@ function bridge_impl(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft;
     code = quote
         $code
         const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, OT}
-        function MathOptInterface.Bridges.isbridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) 
-            return true
-        end      
+        MathOptInterface.Bridges.isbridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
         supportsbridgingconstraint(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
     end
     return code    
