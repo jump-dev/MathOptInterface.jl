@@ -382,7 +382,7 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where T
 end
 
 if VERSION < v"0.7-"
-    isone(x::T) = x == one(T)
+    isone(x) = x == one(x)
 end
 
 # Conversion between scalar functions
