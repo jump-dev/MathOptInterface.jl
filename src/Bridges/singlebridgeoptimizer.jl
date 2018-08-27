@@ -38,14 +38,14 @@ bridgedmodel = SplitInterval(model)
 will additionally support `ScalarAffineFunction`-in-`Interval`.
 """
 macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
-    bridgedmodelname = Symbol(string(modelname) * "Instance")
-    bridgedfuns = :(Union{$(_tuple_prefix_moi(sf)...), $(_tuple_prefix_moi(sft)...), $(_tuple_prefix_moi(vf)...), $(_tuple_prefix_moi(vft)...)})
-    bridgedsets = :(Union{$(_tuple_prefix_moi(ss)...), $(_tuple_prefix_moi(sst)...), $(_tuple_prefix_moi(vs)...), $(_tuple_prefix_moi(vst)...)})
+    bridged_model_name = Symbol(string(modelname) * "Instance")
+    bridged_funs = :(Union{$(_tuple_prefix_moi(sf)...), $(_tuple_prefix_moi(sft)...), $(_tuple_prefix_moi(vf)...), $(_tuple_prefix_moi(vft)...)})
+    bridged_sets = :(Union{$(_tuple_prefix_moi(ss)...), $(_tuple_prefix_moi(sst)...), $(_tuple_prefix_moi(vs)...), $(_tuple_prefix_moi(vst)...)})
 
     esc(quote
-        $MOIU.@model $bridgedmodelname $ss $sst $vs $vst $sf $sft $vf $vft
-        const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridgedmodelname{T}, OT}
-        is_bridged(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
-        supports_bridging_constraint(::$modelname, ::Type{<:$bridgedfuns}, ::Type{<:$bridgedsets}) = true
+        $MOIU.@model $bridged_model_name $ss $sst $vs $vst $sf $sft $vf $vft
+        const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridged_model_name{T}, OT}
+        is_bridged(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
+        supports_bridging_constraint(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
     end)
 end
