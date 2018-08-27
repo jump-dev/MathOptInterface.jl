@@ -28,7 +28,7 @@ Attributes can be set in different ways:
 * or it is set to contain the result of the optimization during
   [`optimize!`](@ref) like [`VariablePrimal`](@ref).
 
-The following functions allows to distinguish between different some of these
+The following functions allows to distinguish between some of these different
 categories:
 ```@docs
 is_set_by_optimize
