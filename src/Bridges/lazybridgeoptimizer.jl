@@ -2,7 +2,7 @@
 """
     LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 
-The `LazyBridgeOptimizer` combines several bridges, which are added using the [`addbridge!`](@ref) function.
+The `LazyBridgeOptimizer` combines several bridges, which are added using the [`add_bridge`](@ref) function.
 Whenever a constraint is added, it only attempts to bridge it if it is not supported by the internal model (hence its name `Lazy`).
 When bridging a constraint, it selects the minimal number of bridges needed.
 For instance, a constraint `F`-in-`S` can be bridged into a constraint `F1`-in-`S1` (supported by the internal model) using bridge 1 or
@@ -84,11 +84,11 @@ function update_constraint!(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFuncti
 end
 
 """
-    addbridge!(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
 Enable the use of the bridges of type `BT` by `b`.
 """
-function addbridge!(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     push!(b.bridgetypes, BT)
     # Some constraints (F, S) in keys(b.best) may now be bridged
     # with a less briges than `b.dist[(F, S)] using `BT`

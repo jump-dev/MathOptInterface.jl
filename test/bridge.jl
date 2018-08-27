@@ -114,10 +114,10 @@ MOIU.@model NoRSOCModel () (EqualTo, GreaterThan, LessThan, Interval) (Zeros, No
 @testset "LazyBridgeOptimizer" begin
     mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
     bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
-    MOIB.addbridge!(bridgedmock, MOIB.SplitIntervalBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.SOCtoPSDBridge{Float64})
-    MOIB.addbridge!(bridgedmock, MOIB.RSOCBridge{Float64})
+    MOIB.add_bridge(bridgedmock, MOIB.SplitIntervalBridge{Float64})
+    MOIB.add_bridge(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
+    MOIB.add_bridge(bridgedmock, MOIB.SOCtoPSDBridge{Float64})
+    MOIB.add_bridge(bridgedmock, MOIB.RSOCBridge{Float64})
 
     @testset "Name test" begin
         MOIT.nametest(bridgedmock)

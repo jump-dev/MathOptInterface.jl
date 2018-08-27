@@ -32,14 +32,14 @@ Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in thi
 """
 function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
     bridgedmodel = MOIB.LazyBridgeOptimizer(model, AllBridgedConstraints{T}())
-    addbridge!(bridgedmodel, MOIB.SplitIntervalBridge{T})
-    addbridge!(bridgedmodel, MOIB.GeoMeanBridge{T})
-    addbridge!(bridgedmodel, MOIB.SquarePSDBridge{T})
-    addbridge!(bridgedmodel, MOIB.LogDetBridge{T})
-    addbridge!(bridgedmodel, MOIB.RootDetBridge{T})
-    addbridge!(bridgedmodel, MOIB.RSOCBridge{T})
-    addbridge!(bridgedmodel, MOIB.RSOCtoPSDBridge{T})
-    addbridge!(bridgedmodel, MOIB.SOCtoPSDBridge{T})
+    add_bridge(bridgedmodel, MOIB.SplitIntervalBridge{T})
+    add_bridge(bridgedmodel, MOIB.GeoMeanBridge{T})
+    add_bridge(bridgedmodel, MOIB.SquarePSDBridge{T})
+    add_bridge(bridgedmodel, MOIB.LogDetBridge{T})
+    add_bridge(bridgedmodel, MOIB.RootDetBridge{T})
+    add_bridge(bridgedmodel, MOIB.RSOCBridge{T})
+    add_bridge(bridgedmodel, MOIB.RSOCtoPSDBridge{T})
+    add_bridge(bridgedmodel, MOIB.SOCtoPSDBridge{T})
     bridgedmodel
 end
 

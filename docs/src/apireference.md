@@ -326,7 +326,7 @@ Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
 Bridges.SingleBridgeOptimizer
 Bridges.LazyBridgeOptimizer
-Bridges.addbridge!
+Bridges.add_bridge
 ```
 
 Below is the list of bridges implemented in this package.
