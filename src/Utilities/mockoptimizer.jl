@@ -206,11 +206,11 @@ function MOI.empty!(mock::MockOptimizer)
     return
 end
 
-function MOI.isempty(mock::MockOptimizer)
+function MOI.is_empty(mock::MockOptimizer)
     # Assumes that variable and constraint attributes can't be set if
     # mock.inner_model is empty.
     # TODO: Default values are currently copied in three places, not good.
-    return MOI.isempty(mock.inner_model) && mock.attribute == 0 &&
+    return MOI.is_empty(mock.inner_model) && mock.attribute == 0 &&
         !mock.solved && !mock.hasprimal && !mock.hasdual &&
         mock.terminationstatus == MOI.Success &&
         mock.resultcount == 0 && isnan(mock.objectivevalue) &&

@@ -5,7 +5,7 @@
     @test MOIU.state(m) == MOIU.NoOptimizer
 
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
-    @test MOI.isempty(s)
+    @test MOI.is_empty(s)
     MOIU.resetoptimizer!(m, s)
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
@@ -84,7 +84,7 @@ end
     @test MOI.get(m, MOI.VariableName(), v) == "v"
 
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
-    @test MOI.isempty(s)
+    @test MOI.is_empty(s)
     MOIU.resetoptimizer!(m, s)
     @test MOIU.state(m) == MOIU.EmptyOptimizer
 
@@ -189,7 +189,7 @@ end
         model = ModelForCachingOptimizer{Float64}()
         m = MOIU.CachingOptimizer(model, s)
         @test m isa MOIU.CachingOptimizer{typeof(s), typeof(model)}
-        @test MOI.isempty(m)
+        @test MOI.is_empty(m)
         @test MOIU.state(m) == MOIU.AttachedOptimizer
         @test MOIU.mode(m) == MOIU.Automatic
     end
@@ -197,16 +197,16 @@ end
         s = MOIU.MockOptimizer(ModelForMock{Float64}())
         MOI.add_variable(s)
         model = ModelForCachingOptimizer{Float64}()
-        @test MOI.isempty(model)
-        @test !MOI.isempty(s)
+        @test MOI.is_empty(model)
+        @test !MOI.is_empty(s)
         @test_throws AssertionError MOIU.CachingOptimizer(model, s)
     end
     @testset "Non-empty model" begin
         s = MOIU.MockOptimizer(ModelForMock{Float64}())
         model = ModelForCachingOptimizer{Float64}()
         MOI.add_variable(model)
-        @test !MOI.isempty(model)
-        @test MOI.isempty(s)
+        @test !MOI.is_empty(model)
+        @test MOI.is_empty(s)
         @test_throws AssertionError MOIU.CachingOptimizer(model, s)
     end
 end

@@ -73,8 +73,8 @@ bridge(b::AbstractBridgeOptimizer, ci::CI) = b.bridges[ci]
 MOI.optimize!(b::AbstractBridgeOptimizer) = MOI.optimize!(b.model)
 # By convention, the model should be stored in a `model` field
 
-function MOI.isempty(b::AbstractBridgeOptimizer)
-    return isempty(b.bridges) && MOI.isempty(b.model)
+function MOI.is_empty(b::AbstractBridgeOptimizer)
+    return isempty(b.bridges) && MOI.is_empty(b.model)
 end
 function MOI.empty!(b::AbstractBridgeOptimizer)
     MOI.empty!(b.model)

@@ -21,7 +21,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
@@ -92,7 +92,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
 
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
 
         v = MOI.add_variables(model, 3)
         @test MOI.get(model, MOI.NumberOfVariables()) == 3
@@ -160,7 +160,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
 
         v = MOI.add_variables(model, 10)
         @test MOI.get(model, MOI.NumberOfVariables()) == 10
@@ -250,7 +250,7 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     #       z in {0, 1, 2, ..., 100}
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -306,7 +306,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     #                  a,b,c,d,e ∈ binary
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())

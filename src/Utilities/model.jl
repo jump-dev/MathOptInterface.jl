@@ -320,7 +320,7 @@ function MOI.get(model::AbstractModel, ::MOI.ConstraintSet, ci::CI)
     _getset(model, ci, getconstrloc(model, ci))
 end
 
-function MOI.isempty(model::AbstractModel)
+function MOI.is_empty(model::AbstractModel)
     isempty(model.name) && !model.senseset && !model.objectiveset &&
     isempty(model.objective.terms) && iszero(model.objective.constant) &&
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)

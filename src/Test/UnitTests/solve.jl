@@ -6,7 +6,7 @@ Test a variety of edge cases related to the ObjectiveBound attribute.
 function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "Min IP with constant" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model, """
             variables: x
             minobjective: 2.0x + -1.0
@@ -25,7 +25,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
     @testset "Max IP with constant" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model, """
             variables: x
             maxobjective: 2.0x + 1.0
@@ -44,7 +44,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
     @testset "Min LP with constant" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model, """
             variables: x
             minobjective: 2.0x + -1.0
@@ -62,7 +62,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
     @testset "Max LP with constant" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model, """
             variables: x
             maxobjective: 2.0x + 1.0

@@ -24,7 +24,7 @@ Test adding a single variable.
 """
 function add_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -38,7 +38,7 @@ Test adding multiple variables.
 """
 function add_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -52,7 +52,7 @@ Tess adding, and then deleting, a single variable.
 """
 function delete_variable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
@@ -68,7 +68,7 @@ Test adding, and then deleting, multiple variables.
 """
 function delete_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -137,7 +137,7 @@ and if `config.duals=true`, check that the dual is computed correctly.
 function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     MOIU.loadfromstring!(model,"""
         variables: x
         maxobjective: 2.0x
@@ -165,7 +165,7 @@ and if `config.duals=true`, check that the dual is computed correctly.
 function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     MOIU.loadfromstring!(model,"""
         variables: x
         minobjective: 2.0x
@@ -192,7 +192,7 @@ Test a variety of edge cases related to binary and integer variables.
 function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "integer with lower bound" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model,"""
             variables: x
             minobjective: 2.0x
@@ -207,7 +207,7 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
     end
     @testset "integer with upper bound" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model,"""
             variables: x
             minobjective: -2.0x
@@ -223,7 +223,7 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
     @testset "binary with upper" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model,"""
             variables: x
             minobjective: -2.0x
@@ -239,7 +239,7 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
     @testset "binary with 0 upper" begin
         MOI.empty!(model)
-        @test MOI.isempty(model)
+        @test MOI.is_empty(model)
         MOIU.loadfromstring!(model,"""
             variables: x
             minobjective: 1.0x

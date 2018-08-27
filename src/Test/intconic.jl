@@ -16,7 +16,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x,y,z = MOI.add_variables(model, 3)
 

@@ -21,7 +21,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
@@ -105,7 +105,7 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x,y,z,s = MOI.add_variables(model, 4)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
@@ -190,7 +190,7 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
 
@@ -238,7 +238,7 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonpositives)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
 
@@ -295,7 +295,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables,MOI.SecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x,y,z = MOI.add_variables(model, 3)
 
@@ -370,7 +370,7 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x,y,t = MOI.add_variables(model, 3)
 
@@ -441,7 +441,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x,y = MOI.add_variables(model, 2)
 
@@ -490,7 +490,7 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variables(model, 5)
 
@@ -561,7 +561,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     end
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variables(model, 2)
     if abvars
@@ -650,7 +650,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variables(model, 3)
 
@@ -717,7 +717,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variables(model, n)
     u = MOI.add_variable(model)
@@ -817,7 +817,7 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, n)
@@ -879,7 +879,7 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
@@ -944,7 +944,7 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 9)
     @test MOI.get(model, MOI.NumberOfVariables()) == 9
@@ -1009,7 +1009,7 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -1079,7 +1079,7 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     X = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)
@@ -1213,7 +1213,7 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SecondOrderCone)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     X = MOI.add_variables(model, square ? 9 : 6)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 9 : 6)
@@ -1293,7 +1293,7 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     x = MOI.add_variables(model, 7)
     @test MOI.get(model, MOI.NumberOfVariables()) == 7
@@ -1395,7 +1395,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
 
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
 
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1

@@ -21,7 +21,7 @@ Test setting objective sense to MaxSense.
 """
 function max_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
@@ -35,7 +35,7 @@ Test setting objective sense to MinSense.
 """
 function min_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
@@ -49,7 +49,7 @@ Test setting objective sense to FeasibilitySense.
 """
 function feasibility_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
@@ -63,7 +63,7 @@ Test get objective function.
 """
 function get_objective_function(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     obj_attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
     @test MOI.supports(model, obj_attr)
     MOIU.loadfromstring!(model,"""
@@ -94,7 +94,7 @@ correctly.
 function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     MOIU.loadfromstring!(model,"""
         variables: x
         minobjective: 2.0x + 1.0
@@ -121,7 +121,7 @@ correctly.
 function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     MOIU.loadfromstring!(model,"""
         variables: x
         minobjective: 0.0x + 0.0
@@ -148,7 +148,7 @@ correctly.
 function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     MOIU.loadfromstring!(model,"""
         variables: x
         minobjective: x
@@ -254,7 +254,7 @@ solves correctly.
 """
 function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    @test MOI.isempty(model)
+    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
