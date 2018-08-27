@@ -97,15 +97,6 @@ end
 constant(f::Union{SAF, SQF}) = [f.constant]
 constant(f::Union{VAF, VQF}) = f.constants
 
-# Define conversion SingleVariable -> ScalarAffineFunction and VectorOfVariables -> VectorAffineFunction{T}
-function SAF{T}(f::SVF) where T
-    SAF([MOI.ScalarAffineTerm(one(T), f.variable)], zero(T))
-end
-function VAF{T}(f::VVF) where T
-    n = length(f.variables)
-    return VAF(map(i -> MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(one(T), f.variables[i])), 1:n), zeros(T, n))
-end
-
 # Implements iterator interface
 """
     scalar_type(F::Type{<:MOI.AbstractVectorFunction})

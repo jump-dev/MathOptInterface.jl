@@ -269,7 +269,7 @@ function MultirowChange(variable::VariableIndex, new_coefficients::Vector{Tuple{
     MultirowChange(variable, [(convert(Int64, i), j) for (i,j) in new_coefficients])
 end
 
-# Implementation of comparison for MOI functions
+# Implementation of comparison for functions
 Base.:(==)(f::VectorOfVariables, g::VectorOfVariables) = f.variables == g.variables
 
 Base.isapprox(f::Union{SingleVariable, VectorOfVariables}, g::Union{SingleVariable, VectorOfVariables}; kwargs...) = f == g
@@ -369,3 +369,63 @@ Return a new quadratic function with a shallow copy of the terms and constant(s)
 from `func`.
 """
 Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(_constant(func)))
+
+# Define shortcuts for
+# SingleVariable -> ScalarAffineFunction
+function ScalarAffineFunction{T}(f::SingleVariable) where T
+    ScalarAffineFunction([ScalarAffineTerm(one(T), f.variable)], zero(T))
+end
+# VectorOfVariables -> VectorAffineFunction
+function VectorAffineFunction{T}(f::VectorOfVariables) where T
+    n = length(f.variables)
+    return VectorAffineFunction(map(i -> VectorAffineTerm(i, ScalarAffineTerm(one(T), f.variables[i])), 1:n), zeros(T, n))
+end
+
+if VERSION < v"0.7-"
+    isone(x) = x == one(x)
+end
+
+# Conversion between scalar functions
+# Conversion to SingleVariable
+function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
+    if !iszero(f.constant) || !isone(length(f.terms)) || !isone(f.terms[1].coefficient)
+        if VERSION >= v"0.7-"
+            throw(InexactError(:convert, SingleVariable, f))
+        else
+            throw(InexactError())
+        end
+    end
+    return SingleVariable(f.terms[1].variable_index)
+end
+function Base.convert(::Type{SingleVariable},
+                      f::ScalarQuadraticFunction{T}) where T
+    return convert(SingleVariable, convert(ScalarAffineFunction{T}, f))
+end
+
+# Conversion to ScalarAffineFunction
+function Base.convert(::Type{ScalarAffineFunction{T}},
+                      f::SingleVariable) where T
+    return ScalarAffineFunction{T}(f)
+end
+function Base.convert(::Type{ScalarAffineFunction{T}},
+                      f::ScalarQuadraticFunction{T}) where T
+    if !Base.isempty(f.quadratic_terms)
+        if VERSION >= v"0.7-"
+            throw(InexactError(:convert, ScalarAffineFunction{T}, f))
+        else
+            throw(InexactError())
+        end
+    end
+    return ScalarAffineFunction{T}(f.affine_terms, f.constant)
+end
+
+# Conversion to ScalarQuadraticFunction
+function Base.convert(::Type{ScalarQuadraticFunction{T}},
+                      f::SingleVariable) where T
+    convert(ScalarQuadraticFunction{T}, convert(ScalarAffineFunction{T}, f))
+end
+function Base.convert(::Type{ScalarQuadraticFunction{T}},
+                      f::ScalarAffineFunction{T}) where T
+    return ScalarQuadraticFunction{T}(f.terms, ScalarQuadraticTerm{T}[],
+                                      f.constant)
+end
