@@ -17,6 +17,23 @@ AbstractVariableAttribute
 AbstractConstraintAttribute
 ```
 
+Attributes can be set in different ways:
+
+* it is either set when the model is created like [`SolverName`](@ref) and
+  [`RawSolver`](@ref),
+* or explicitely when the model is copied like
+  [`ObjectiveSense`](@ref),
+* or implicitely like [`NumberOfVariables`](@ref)
+* or it is set to contain the result of the optimization during
+  [`optimize!`](@ref) like [`VariablePrimal`](@ref).
+
+The following functions allows to distinguish between different some of these
+categories:
+```@docs
+is_set_by_optimize
+is_copyable
+```
+
 Functions for getting and setting attributes.
 
 ```@docs
