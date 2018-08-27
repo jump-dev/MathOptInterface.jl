@@ -112,7 +112,7 @@ function MOI.supports_constraint(::Type{SquarePSDBridge{T}},
                                 ::Type{MOI.PositiveSemidefiniteConeSquare}) where T
     return true
 end
-function addedconstrainttypes(::Type{SquarePSDBridge{T, F, G}}) where {T, F, G}
+function added_constraint_types(::Type{SquarePSDBridge{T, F, G}}) where {T, F, G}
     return [(F, MOI.PositiveSemidefiniteConeTriangle), (G, MOI.EqualTo{T})]
 end
 function concrete_bridge_type(::Type{<:SquarePSDBridge{T}},

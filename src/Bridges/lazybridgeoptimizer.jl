@@ -2,7 +2,7 @@
 """
     LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 
-The `LazyBridgeOptimizer` combines several bridges, which are added using the [`addbridge!`](@ref) function.
+The `LazyBridgeOptimizer` combines several bridges, which are added using the [`add_bridge`](@ref) function.
 Whenever a constraint is added, it only attempts to bridge it if it is not supported by the internal model (hence its name `Lazy`).
 When bridging a constraint, it selects the minimal number of bridges needed.
 For instance, a constraint `F`-in-`S` can be bridged into a constraint `F1`-in-`S1` (supported by the internal model) using bridge 1 or
@@ -43,9 +43,9 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
         changed = false
         for BT in b.bridgetypes
             for (F, S) in constraints
-                if MOI.supports_constraint(BT, F, S) && all(C -> MOI.supports_constraint(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
+                if MOI.supports_constraint(BT, F, S) && all(C -> MOI.supports_constraint(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Number of bridges needed using BT
-                    dist = 1 + sum(C -> _dist(b, C[1], C[2]), addedconstrainttypes(BT, F, S))
+                    dist = 1 + sum(C -> _dist(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
                         b.dist[(F, S)] = dist
@@ -69,7 +69,7 @@ function fill_required_constraints!(required::Set{Tuple{DataType, DataType}}, b:
     push!(required, (F, S))
     for BT in b.bridgetypes
         if MOI.supports_constraint(BT, F, S)
-            for C in addedconstrainttypes(BT, F, S)
+            for C in added_constraint_types(BT, F, S)
                 fill_required_constraints!(required, b, C[1], C[2])
             end
         end
@@ -84,11 +84,11 @@ function update_constraint!(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFuncti
 end
 
 """
-    addbridge!(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
 Enable the use of the bridges of type `BT` by `b`.
 """
-function addbridge!(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     push!(b.bridgetypes, BT)
     # Some constraints (F, S) in keys(b.best) may now be bridged
     # with a less briges than `b.dist[(F, S)] using `BT`
@@ -96,10 +96,10 @@ function addbridge!(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 end
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
-function isbridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     !MOI.supports_constraint(b.model, F, S)
 end
-function supportsbridgingconstraint(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+function supports_bridging_constraint(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     update_constraint!(b, F, S)
     (F, S) in keys(b.best)
 end
