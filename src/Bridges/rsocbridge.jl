@@ -81,6 +81,3 @@ end
 # Need to define both `get` methods and redirect to `_get` to avoid ambiguity in dispatch
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::RSOCBridge) = _get(model, attr, c)
 MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
-
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCBridge}) = false
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RSOCBridge}) = false
