@@ -576,8 +576,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    for (func, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
-        funct = func
+    for (funct, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets
                 set = _set(s)
