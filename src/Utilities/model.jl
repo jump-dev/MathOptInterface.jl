@@ -393,12 +393,12 @@ abstract type Constraints{F} end
 
 abstract type SymbolFS end
 struct SymbolFun <: SymbolFS
-    s::Union{Symbol,Expr}
+    s::Union{Symbol, Expr}
     typed::Bool
     cname::Symbol
 end
 struct SymbolSet <: SymbolFS
-    s::Union{Symbol,Expr}
+    s::Union{Symbol, Expr}
     typed::Bool
 end
 
@@ -623,5 +623,5 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
         $code
     end
-    esc(code)
+    return esc(code)
 end

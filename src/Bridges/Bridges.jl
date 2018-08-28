@@ -24,7 +24,16 @@ include("singlebridgeoptimizer.jl")
 include("lazybridgeoptimizer.jl")
 
 # This is used by JuMP and removes the need to update JuMP everytime a bridge is added
-MOIU.@model AllBridgedConstraints () (MOI.Interval,) (MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone, MOI.LogDetConeTriangle, MOI.RootDetConeTriangle) () () (MOI.ScalarAffineFunction,) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+MOIU.@model(AllBridgedConstraints,
+            (),
+            (MOI.Interval,),
+            (MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+             MOI.LogDetConeTriangle, MOI.RootDetConeTriangle),
+            (),
+            (),
+            (MOI.ScalarAffineFunction,),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction,))
 """
     fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 
