@@ -409,11 +409,9 @@ end
 # Expr(:., MOI, :($(QuoteNode(s)))) is Expr(:., MOI, :(:EqualTo)) <- what we want
 
 # (MOI, :Zeros) -> :(MOI.Zeros)
-_mod(m::Module, s::Union{Symbol,Expr}) = s
 # (:Zeros) -> :(MOI.Zeros)
-_moi(s::Union{Symbol,Expr}) = _mod(MOI, s)
-_set(s::SymbolSet) = _moi(s.s)
-_fun(s::SymbolFun) = _moi(s.s)
+_set(s::SymbolSet) = s.s
+_fun(s::SymbolFun) = s.s
 function _typedset(s::SymbolSet)
     if s.typed
         :($(_set(s)){T})
@@ -579,7 +577,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     end
 
     for (func, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
-        funct = _mod(MOIU, func)
+        funct = func
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets
                 set = _set(s)
@@ -601,7 +599,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    return esc(quote
+    code = quote
         $scalarconstraints
         function $scname{T, F}() where {T, F}
             $scname{T, F}($(_getCV.(scalarsets)...))
@@ -624,6 +622,6 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         $MOI.supports_constraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
 
         $code
-
-    end)
+    end
+    esc(code)
 end
