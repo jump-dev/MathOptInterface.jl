@@ -162,7 +162,3 @@ end
 #function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::GeoMeanBridge)
 #    output = _getconstrattr(model, a, c)
 #end
-
-# Constraints
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:GeoMeanBridge}) = false
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:GeoMeanBridge}) = false

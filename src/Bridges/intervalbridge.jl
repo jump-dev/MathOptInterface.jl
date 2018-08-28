@@ -54,14 +54,12 @@ function MOI.modify(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.Ab
     MOI.modify(model, c.upper, change)
 end
 
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SplitIntervalBridge}) = true
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
                   c::SplitIntervalBridge{T, F}, func::F) where {T, F}
     MOI.set(model, MOI.ConstraintFunction(), c.lower, func)
     MOI.set(model, MOI.ConstraintFunction(), c.upper, func)
 end
 
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SplitIntervalBridge}) = true
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet, c::SplitIntervalBridge, change::MOI.Interval)
     MOI.set(model, MOI.ConstraintSet(), c.lower, MOI.GreaterThan(change.lower))
     MOI.set(model, MOI.ConstraintSet(), c.upper, MOI.LessThan(change.upper))

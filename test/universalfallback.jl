@@ -111,7 +111,6 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.LessThan{Float64}}()
             test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.LessThan(0.)), cx, cy, cz)
 
-            @test MOI.supports(uf, MOI.ConstraintFunction(), typeof(cx))
             MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
             @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
 
@@ -134,7 +133,6 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
             test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
 
-            @test MOI.supports(uf, MOI.ConstraintFunction(), typeof(cx))
             MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
             @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
 

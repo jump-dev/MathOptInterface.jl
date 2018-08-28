@@ -139,10 +139,6 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::LogDetBridge)
     [t; x]
 end
 
-# Constraints
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:LogDetBridge}) = false
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:LogDetBridge}) = false
-
 """
     RootDetBridge{T}
 
@@ -201,7 +197,3 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::RootDetBridge
     x = MOI.get(model, MOI.ConstraintPrimal(), c.sdindex)[1:length(c.Δ)]
     [t; x]
 end
-
-# Constraints
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RootDetBridge}) = false
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RootDetBridge}) = false

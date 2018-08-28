@@ -51,7 +51,6 @@
     @test MOI.supports_constraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supports_constraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
     lb = MOI.add_constraint(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
-    @test MOI.supports(m, MOI.ConstraintSet(), typeof(lb))
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
     @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
@@ -59,7 +58,6 @@
     MOIU.dropoptimizer!(m)
     @test MOIU.state(m) == MOIU.NoOptimizer
 
-    @test MOI.supports(m, MOI.ConstraintSet(), typeof(lb))
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(12.0)
 

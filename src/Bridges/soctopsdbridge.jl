@@ -83,9 +83,6 @@ function MOI.delete(instance::MOI.AbstractOptimizer, c::SOCtoPSDBridge)
     MOI.delete(instance, c.cr)
 end
 
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:SOCtoPSDBridge}) = false
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:SOCtoPSDBridge}) = false
-
 """
 The `RSOCtoPSDBridge` transforms the second order cone constraint ``\\lVert x \\rVert \\le 2tu`` with ``u \\ge 0`` into the semidefinite cone constraints
 ```math
@@ -148,6 +145,3 @@ MOI.get(b::RSOCtoPSDBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFun
 function MOI.delete(instance::MOI.AbstractOptimizer, c::RSOCtoPSDBridge)
     MOI.delete(instance, c.cr)
 end
-
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintSet, ::Type{<:RSOCtoPSDBridge}) = false
-MOI.supports(model::MOI.ModelLike, ::MOI.ConstraintFunction, ::Type{<:RSOCtoPSDBridge}) = false

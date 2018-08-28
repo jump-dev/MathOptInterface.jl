@@ -142,13 +142,11 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
         c = MOI.add_constraint(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
         @test !MOI.supports_constraint(m, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
 
-        @test MOI.supports(m, MOI.ConstraintSet(), typeof(c))
         # set of different type
         @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
         # set not implemented
         @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
 
-        @test MOI.supports(m, MOI.ConstraintFunction(), typeof(c))
         # function of different type
         @test_throws Exception MOI.set(m, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
         # function not implemented
