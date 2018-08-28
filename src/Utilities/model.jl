@@ -293,11 +293,9 @@ function MOI.modify(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionMo
     _modify(model, ci, getconstrloc(model, ci), change)
 end
 
-MOI.supports(::AbstractModel, ::MOI.ConstraintFunction, ::Type{<:CI}) = true
 function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
     _modify(model, ci, getconstrloc(model, ci), change)
 end
-MOI.supports(::AbstractModel, ::MOI.ConstraintSet, ::Type{<:CI}) = true
 function MOI.set(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
     _modify(model, ci, getconstrloc(model, ci), change)
 end

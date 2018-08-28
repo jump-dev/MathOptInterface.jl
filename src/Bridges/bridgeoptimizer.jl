@@ -237,16 +237,6 @@ function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
     end
 end
 ## Setting functions and sets
-function MOI.supports(b::AbstractBridgeOptimizer,
-                      attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
-                      ::Type{CI{F, S}}) where {F, S}
-    if is_bridged(b, CI{F, S})
-        return MOI.supports(b.bridged, attr, CI{F, S}) &&
-            MOI.supports(b, attr, concrete_bridge_type(b, F, S))
-    else
-        return MOI.supports(b.model, attr, CI{F, S})
-    end
-end
 function MOI.set(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet,
                   constraint_index::CI{F, S}, set::S) where {F, S}
     if is_bridged(b, typeof(constraint_index))
