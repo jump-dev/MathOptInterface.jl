@@ -210,7 +210,7 @@ function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractConstraintAttribute,
                  ci::CI)
     if is_bridged(b, typeof(ci))
-        if MOIU.is_result_attribute(attr)
+        if MOI.is_set_by_optimize(attr)
             MOI.get(b, attr, bridge(b, ci))
         else
             MOI.get(b.bridged, attr, ci)

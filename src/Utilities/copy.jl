@@ -54,6 +54,7 @@ end
 
 function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, attrs, canargs, getargs, setargs, passattr!::Function=MOI.set)
     for attr in attrs
+        @assert MOI.is_copyable(attr)
         if (copy_names || !(attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName))
             passattr!(dest, attr, setargs..., attribute_value_map(idxmap, MOI.get(src, attr, getargs...)))
         end

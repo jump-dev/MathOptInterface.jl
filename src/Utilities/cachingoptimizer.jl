@@ -428,47 +428,8 @@ function MOI.supports(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
         (m.state == NoOptimizer || MOI.supports(m.optimizer, attr))
 end
 
-"""
-    is_result_attribute(::Union{MOI.AbstractModelAttribute,
-                                MOI.AbstractVariableAttribute,
-                                MOI.AbstractConstraintAttribute})
-
-Return a `Bool` indicating whether the value of the attribute is determined
-during [`MOI.optimize!`](@ref) hence is part of the result of the optimization.
-
-## Important note when defining new attributes
-
-This function returns `false` by default so it should be implemented for all
-result attributes.
-"""
-function is_result_attribute end
-
-function is_result_attribute(::Union{MOI.AbstractModelAttribute,
-                                     MOI.AbstractVariableAttribute,
-                                     MOI.AbstractConstraintAttribute})
-    return false
-end
-function is_result_attribute(::Union{MOI.ObjectiveValue,
-                                     MOI.ObjectiveBound,
-                                     MOI.RelativeGap,
-                                     MOI.SolveTime,
-                                     MOI.SimplexIterations,
-                                     MOI.BarrierIterations,
-                                     MOI.NodeCount,
-                                     MOI.RawSolver,
-                                     MOI.ResultCount,
-                                     MOI.TerminationStatus,
-                                     MOI.PrimalStatus,
-                                     MOI.DualStatus,
-                                     MOI.VariablePrimal,
-                                     MOI.VariableBasisStatus,
-                                     MOI.ConstraintPrimal,
-                                     MOI.ConstraintDual,
-                                     MOI.ConstraintBasisStatus})
-    return true
-end
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
-    if is_result_attribute(attr)
+    if MOI.is_set_by_optimize(attr)
         return attribute_value_map(model.optimizer_to_model_map,
                                    MOI.get(model.optimizer, attr))
     else
@@ -479,7 +440,7 @@ function MOI.get(model::CachingOptimizer,
                  attr::Union{MOI.AbstractVariableAttribute,
                              MOI.AbstractConstraintAttribute},
                  index::MOI.Index)
-    if is_result_attribute(attr)
+    if MOI.is_set_by_optimize(attr)
         return attribute_value_map(model.optimizer_to_model_map,
                                    MOI.get(model.optimizer, attr,
                                            model.model_to_optimizer_map[index]))
@@ -491,7 +452,7 @@ function MOI.get(model::CachingOptimizer,
                  attr::Union{MOI.AbstractVariableAttribute,
                              MOI.AbstractConstraintAttribute},
                  indices::Vector{<:MOI.Index})
-    if is_result_attribute(attr)
+    if MOI.is_set_by_optimize(attr)
         return attribute_value_map(model.optimizer_to_model_map,
                                    MOI.get(model.optimizer, attr,
                                            map(index -> model.model_to_optimizer_map[index],

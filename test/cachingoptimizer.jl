@@ -29,8 +29,6 @@
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MaxSense
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MaxSense
 
-    @test !MOI.supports(m, MOI.NumberOfVariables())
-
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()))
     MOI.set(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute())) == 10

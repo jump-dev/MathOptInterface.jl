@@ -100,10 +100,31 @@ Return a `Bool` indicating whether `model` supports the constraint attribute
 
 For all four methods, if the attribute is only not supported in specific
 circumstances, it should still return `true`.
+
+Note that `supports` is only defined for attributes for which
+[`is_copyable`](@ref) returns `true` as other attributes do not appear in the
+list of attributes set obtained by `ListOf...AttributesSet`.
 """
 function supports end
-supports(::ModelLike, ::Union{AbstractModelAttribute, AbstractOptimizerAttribute}) = false
-supports(::ModelLike, ::Union{AbstractVariableAttribute, AbstractConstraintAttribute}, ::Type{<:Index}) = false
+function supports(::ModelLike, attr::Union{AbstractModelAttribute,
+                                           AbstractOptimizerAttribute})
+    if !is_copyable(attr)
+        throw(ArgumentError("`supports` is not defined for $attr, it is only" *
+                            " defined for attributes such that `is_copyable`" *
+                            " returns `true`."))
+    end
+    return false
+end
+function supports(::ModelLike, attr::Union{AbstractVariableAttribute,
+                                           AbstractConstraintAttribute},
+                  ::Type{<:Index})
+    if !is_copyable(attr)
+        throw(ArgumentError("`supports` is not defined for $attr, it is only" *
+                            " defined for attributes such that `is_copyable`" *
+                            " returns `true`."))
+    end
+    return false
+end
 
 """
     get(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)
@@ -294,7 +315,9 @@ struct SolverName <: AbstractOptimizerAttribute end
 """
     ListOfModelAttributesSet()
 
-A model attribute for the `Vector{AbstractModelAttribute}` of all model attributes that were set to the model.
+A model attribute for the `Vector{AbstractModelAttribute}` of all model
+attributes `attr` such that 1) `is_copyable(attr)` returns `true` and 2) the
+attribute was set to the model.
 """
 struct ListOfModelAttributesSet <: AbstractModelAttribute end
 
@@ -458,7 +481,9 @@ struct ResultCount <: AbstractModelAttribute end
 """
     ListOfVariableAttributesSet()
 
-A model attribute for the `Vector{AbstractVariableAttribute}` of all variable attributes that were set to the model.
+A model attribute for the `Vector{AbstractVariableAttribute}` of all variable
+attributes `attr` such that 1) `is_copyable(attr)` returns `true` and 2) the
+attribute was set to variables.
 """
 struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 
@@ -514,7 +539,9 @@ Possible values are:
 """
     ListOfConstraintAttributesSet{F, S}()
 
-A model attribute for the `Vector{AbstractConstraintAttribute}` of all constraint attributes that were set to `F`-in-`S` constraints.
+A model attribute for the `Vector{AbstractConstraintAttribute}` of all
+constraint attributes `attr` such that 1) `is_copyable(attr)` returns `true` and
+2) the attribute was set to `F`-in-`S` constraints.
 
 ## Note
 
@@ -705,3 +732,83 @@ struct DualStatus <: AbstractModelAttribute
     N::Int
 end
 DualStatus() = DualStatus(1)
+
+"""
+    is_set_by_optimize(::AnyAttribute)
+
+Return a `Bool` indicating whether the value of the attribute is modified
+during an [`optimize!`](@ref) call, that is, the attribute is used to query
+the result of the optimization.
+
+## Important note when defining new attributes
+
+This function returns `false` by default so it should be implemented for
+attributes that are modified by [`optimize!`](@ref).
+"""
+is_set_by_optimize(::AnyAttribute) = false
+function is_set_by_optimize(::Union{ObjectiveValue,
+                                    ObjectiveBound,
+                                    RelativeGap,
+                                    SolveTime,
+                                    SimplexIterations,
+                                    BarrierIterations,
+                                    NodeCount,
+                                    RawSolver,
+                                    ResultCount,
+                                    TerminationStatus,
+                                    PrimalStatus,
+                                    DualStatus,
+                                    VariablePrimal,
+                                    VariableBasisStatus,
+                                    ConstraintPrimal,
+                                    ConstraintDual,
+                                    ConstraintBasisStatus})
+    return true
+end
+
+"""
+    is_copyable(::AnyAttribute)
+
+Return a `Bool` indicating whether the value of the attribute may be copied
+during [`copy_to`](@ref) using [`set`](@ref).
+
+## Important note when defining new attributes
+
+By default `is_copyable(attr)` returns `!is_set_by_optimize(attr)`. A specific
+method should be defined for attibutes which are copied indirectly during
+[`copy_to`](@ref). For instance, both `is_copyable` and
+[`is_set_by_optimize`](@ref) return `false` for the following attributes:
+
+* [`ListOfOptimizerAttributesSet`](@ref), [`ListOfModelAttributesSet`](@ref),
+  [`ListOfConstraintAttributesSet`](@ref) and
+  [`ListOfVariableAttributesSet`](@ref).
+* [`SolverName`](@ref) and [`RawSolver`](@ref): these attributes cannot be set.
+* [`NumberOfVariables`](@ref) and [`ListOfVariableIndices`](@ref): these
+  attributes are set indirectly by [`add_variable`](@ref) and
+  [`add_variables`](@ref).
+* [`ObjectiveFunctionType`](@ref): this attribute is set indirectly when setting
+  the [`ObjectiveFunction`](@ref) attribute.
+* [`NumberOfConstraints`](@ref), [`ListOfConstraintIndices`](@ref),
+  [`ListOfConstraints`](@ref), [`ConstraintFunction`](@ref) and
+  [`ConstraintSet`](@ref): these attributes are set indirectly by
+  [`add_constraint`](@ref) and [`add_constraints`](@ref).
+"""
+function is_copyable(attr::AnyAttribute)
+    return !is_set_by_optimize(attr)
+end
+function is_copyable(::Union{ListOfOptimizerAttributesSet,
+                             ListOfModelAttributesSet,
+                             ListOfConstraintAttributesSet,
+                             ListOfVariableAttributesSet,
+                             SolverName,
+                             RawSolver,
+                             NumberOfVariables,
+                             ListOfVariableIndices,
+                             NumberOfConstraints,
+                             ObjectiveFunctionType,
+                             ListOfConstraintIndices,
+                             ListOfConstraints,
+                             ConstraintFunction,
+                             ConstraintSet})
+    return false
+end
