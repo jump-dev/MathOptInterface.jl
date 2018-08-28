@@ -23,16 +23,30 @@ end
 # Needed by test spread over several files, defining it here make it easier to comment out tests
 # Model supporting every MOI functions and sets
 MOIU.@model(Model,
-               (ZeroOne, Integer),
-               (EqualTo, GreaterThan, LessThan, Interval, Semicontinuous, Semiinteger),
-               (Reals, Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare, RootDetConeTriangle, RootDetConeSquare, LogDetConeTriangle, LogDetConeSquare),
-               (PowerCone, DualPowerCone, SOS1, SOS2),
-               (SingleVariable,),
-               (ScalarAffineFunction, ScalarQuadraticFunction),
-               (VectorOfVariables,),
-               (VectorAffineFunction, VectorQuadraticFunction))
+            (MOI.ZeroOne, MOI.Integer),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
+             MOI.Semicontinuous, MOI.Semiinteger),
+            (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
+             MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
+             MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
+             MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
+             MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
+             MOI.LogDetConeSquare),
+            (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2),
+            (MOI.SingleVariable,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+            
 # Model supporting only SecondOrderCone as non-LP cone.
-@MOIU.model ModelForMock (ZeroOne, Integer) (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone) () (SingleVariable,) (ScalarAffineFunction, ScalarQuadraticFunction) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model(ModelForMock, (MOI.ZeroOne, MOI.Integer),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
+            (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone),
+            (),
+            (MOI.SingleVariable,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction,))
 
 # Utilities submodule tests
 @testset "MOI.Utilities" begin

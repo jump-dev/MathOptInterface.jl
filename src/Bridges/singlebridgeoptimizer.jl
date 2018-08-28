@@ -17,7 +17,6 @@ is_bridged(b::SingleBridgeOptimizer, ::Type{<:MOI.AbstractFunction}, ::Type{<:MO
 bridge_type(b::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) where BT = BT
 
 # :((Zeros, SecondOrderCone)) -> (:(MOI.Zeros), :(MOI.SecondOrderCone))
-_tuple_prefix_moi(t) = MOIU._moi.(t.args)
 
 """
 macro bridge(modelname, bridge, scalarsets, typedscalarsets, vectorsets, typedvectorsets, scalarfunctions, typedscalarfunctions, vectorfunctions, typedvectorfunctions)
@@ -39,13 +38,13 @@ will additionally support `ScalarAffineFunction`-in-`Interval`.
 """
 macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
     bridged_model_name = Symbol(string(modelname) * "Instance")
-    bridged_funs = :(Union{$(_tuple_prefix_moi(sf)...), $(_tuple_prefix_moi(sft)...), $(_tuple_prefix_moi(vf)...), $(_tuple_prefix_moi(vft)...)})
-    bridged_sets = :(Union{$(_tuple_prefix_moi(ss)...), $(_tuple_prefix_moi(sst)...), $(_tuple_prefix_moi(vs)...), $(_tuple_prefix_moi(vst)...)})
+    bridged_funs = :(Union{$((sf.args)...), $((sft.args)...), $((vf.args)...), $((vft.args)...)})
+    bridged_sets = :(Union{$((ss.args)...), $((sst.args)...), $((vs.args)...), $((vst.args)...)})
 
     esc(quote
         $MOIU.@model $bridged_model_name $ss $sst $vs $vst $sf $sft $vf $vft
         const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridged_model_name{T}, OT}
-        is_bridged(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
+        $MOIB.is_bridged(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
         supports_bridging_constraint(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
     end)
 end

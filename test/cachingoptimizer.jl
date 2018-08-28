@@ -1,4 +1,4 @@
-@MOIU.model ModelForCachingOptimizer (ZeroOne, Integer) (EqualTo, GreaterThan, LessThan, Interval) (Zeros, Nonnegatives, Nonpositives, SecondOrderCone, RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone, DualExponentialCone, PositiveSemidefiniteConeTriangle, RootDetConeTriangle, LogDetConeTriangle) () (SingleVariable,) (ScalarAffineFunction,ScalarQuadraticFunction) (VectorOfVariables,) (VectorAffineFunction,)
+@MOIU.model ModelForCachingOptimizer (MOI.ZeroOne, MOI.Integer) (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone, MOI.PositiveSemidefiniteConeTriangle, MOI.RootDetConeTriangle, MOI.LogDetConeTriangle) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
 @testset "CachingOptimizer Manual mode" begin
     m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.Manual)

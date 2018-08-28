@@ -393,12 +393,12 @@ abstract type Constraints{F} end
 
 abstract type SymbolFS end
 struct SymbolFun <: SymbolFS
-    s::Symbol
+    s::Union{Symbol, Expr}
     typed::Bool
     cname::Symbol
 end
 struct SymbolSet <: SymbolFS
-    s::Symbol
+    s::Union{Symbol, Expr}
     typed::Bool
 end
 
@@ -409,11 +409,9 @@ end
 # Expr(:., MOI, :($(QuoteNode(s)))) is Expr(:., MOI, :(:EqualTo)) <- what we want
 
 # (MOI, :Zeros) -> :(MOI.Zeros)
-_mod(m::Module, s::Symbol) = Expr(:., m, :($(QuoteNode(s))))
 # (:Zeros) -> :(MOI.Zeros)
-_moi(s::Symbol) = _mod(MOI, s)
-_set(s::SymbolSet) = _moi(s.s)
-_fun(s::SymbolFun) = _moi(s.s)
+_set(s::SymbolSet) = s.s
+_fun(s::SymbolFun) = s.s
 function _typedset(s::SymbolSet)
     if s.typed
         :($(_set(s)){T})
@@ -433,7 +431,7 @@ end
 if VERSION >= v"0.7.0-DEV.2813"
     using Unicode
 end
-_field(s::SymbolFS) = Symbol(lowercase(string(s.s)))
+_field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
 _getC(s::SymbolSet) = :($MOIU.C{F, $(_typedset(s))})
 _getC(s::SymbolFun) = _typedfun(s)
@@ -578,15 +576,14 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         end
     end
 
-    for (func, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
-        funct = _mod(MOIU, func)
+    for (funct, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
         for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
             for s in sets
                 set = _set(s)
                 field = _field(s)
                 code = quote
                     $code
-                    $funct(model::$c, ci::$T{F, <:$set}, args...) where F = $funct(model.$field, ci, args...)
+                    $MOIU.$funct(model::$c, ci::$T{F, <:$set}, args...) where F = $MOIU.$funct(model.$field, ci, args...)
                 end
             end
         end
@@ -596,12 +593,12 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             field = _field(f)
             code = quote
                 $code
-                $funct(model::$modelname, ci::$T{<:$fun}, args...) = $funct(model.$field, ci, args...)
+                $MOIU.$funct(model::$modelname, ci::$T{<:$fun}, args...) = $MOIU.$funct(model.$field, ci, args...)
             end
         end
     end
 
-    return esc(quote
+    code = quote
         $scalarconstraints
         function $scname{T, F}() where {T, F}
             $scname{T, F}($(_getCV.(scalarsets)...))
@@ -624,6 +621,6 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         $MOI.supports_constraint(model::$modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
 
         $code
-
-    end)
+    end
+    return esc(code)
 end
