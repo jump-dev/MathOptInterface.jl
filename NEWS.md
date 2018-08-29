@@ -4,6 +4,9 @@ MathOptInterface (MOI) release notes
 v0.6.0 (August ??, 2018)
 -----------------------
 
+- The `MOIU.@model` and `MOIB.@bridge` macros now support functions and sets
+  defined in external modules. As a consequence, function and set names in the
+  macro arguments now need to be prefixed by the module defining them.
 - Rename functions according to the [JuMP's style guide](http://www.juliaopt.org/JuMP.jl/latest/style.html):
   * `copy!` with keyword arguments `copynames` and `warnattributes` ->
     `copy_to` with keyword arguments `copy_names` and `warn_attributes`;
