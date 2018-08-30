@@ -1,13 +1,13 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.6.0 (August ??, 2018)
+v0.6.0 (August 30, 2018)
 -----------------------
 
 - The `MOIU.@model` and `MOIB.@bridge` macros now support functions and sets
   defined in external modules. As a consequence, function and set names in the
-  macro arguments now need to be prefixed by the module defining them.
-- Rename functions according to the [JuMP's style guide](http://www.juliaopt.org/JuMP.jl/latest/style.html):
+  macro arguments need to be prefixed by module name.
+- Rename functions according to the [JuMP style guide](http://www.juliaopt.org/JuMP.jl/latest/style.html):
   * `copy!` with keyword arguments `copynames` and `warnattributes` ->
     `copy_to` with keyword arguments `copy_names` and `warn_attributes`;
   * `set!` -> `set`;
@@ -21,13 +21,13 @@ v0.6.0 (August ??, 2018)
   * `initialize!` -> `initialize`;
   * `write` -> `write_to_file`; and
   * `read!` -> `read_from_file`.
-- Remove `free!` use `Base.finalize` instead.
+- Remove `free!` (use `Base.finalize` instead).
 - Add the `SquarePSD` bridge which transforms `PositiveSemidefiniteConeTriangle`
   constraints into `PositiveSemidefiniteConeTriangle`.
 - Add result fallback for `ConstraintDual` of variable-wise constraint,
   `ConstraintPrimal` and `ObjectiveValue`.
 - Add tests for `ObjectiveBound`.
-- Add test for empty row in vector linear constraint.
+- Add test for empty rows in vector linear constraint.
 - Rework errors: `CannotError` has been renamed `NotAllowedError` and
   the distinction between `UnsupportedError` and `NotAllowedError` is now
   about whether the element is not supported (i.e. it cannot be copied a
