@@ -1,66 +1,43 @@
 module MathOptFormat
 
-using JSON, DataStructures
+const VERSION = "0.0"
 
-using MathOptInterface
-const MOI = MathOptInterface
+using DataStructures, JSON, MathOptInterface
 
 # we use an ordered dict to make the JSON printing nicer
 const Object = OrderedDict{String, Any}
 
-mutable struct CurrentReference
-    variable::UInt64
-    constraint::UInt64
-end
-struct MOFInstance <: MOI.AbstractOptimizer
-    d::Object
-    # an extension dictionary to help MOI reading/writing
-    # should be improved later
-    namemap::Dict{String, MOI.VariableIndex}
-    # varmap
-    varmap::Dict{MOI.VariableIndex, Int}
-    # constrmap
-    constrmap::Dict{UInt64, Int}
-    current_reference::CurrentReference
-end
+const MOI = MathOptInterface
+const MOIU = MOI.Utilities
 
-MOFInstance() = MOFInstance(
-    OrderedDict(
-        "name"    => "MathOptFormat Model",
-        "version" => "0.0",
-        "sense"   => "min",
-        "variables" => Object[],
-        "objective" => Object("head"=>"ScalarAffineFunction", "variables"=>String[], "coefficients"=>Float64[], "constant"=>0.0),
-        "constraints" => Object[]
-    ),
-    Dict{String, MOI.VariableIndex}(),
-    Dict{MOI.VariableIndex, Int}(),
-    Dict{UInt64, Int}(),
-    CurrentReference(UInt64(0), UInt64(0))
+MOIU.@model(Model,
+    (MOI.ZeroOne, MOI.Integer),
+    (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
+        MOI.Semicontinuous, MOI.Semiinteger),
+    (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
+        MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
+        MOI.GeometricMeanCone,
+        MOI.RootDetConeTriangle, MOI.RootDetConeSquare,
+        MOI.LogDetConeTriangle, MOI.LogDetConeSquare,
+        MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
+        MOI.ExponentialCone, MOI.DualExponentialCone),
+    (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2),
+    (MOI.SingleVariable,),
+    (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 )
 
-# overload getset for m.d
-Base.getindex(m::MOFInstance, key) = getindex(m.d, key)
-Base.setindex!(m::MOFInstance, key, value) = setindex!(m.d, key, value)
+"""
+    Model()
 
-function MOI.write(m::MOFInstance, io::IO, indent::Int=0)
-    if indent > 0
-        write(io, JSON.json(m.d, indent))
-    else
-        write(io, JSON.json(m.d))
-    end
-end
-function MOI.write(m::MOFInstance, f::String, indent::Int=0)
-    open(f, "w") do io
-        MOI.write(m, io, indent)
-    end
+Create an empty instance of MathOptFormat.Model.
+"""
+function Model()
+    return Model{Float64}()
 end
 
-include("variables.jl")
-include("sets.jl")
-include("functions.jl")
-include("constraints.jl")
-include("attributes.jl")
-include("reader.jl")
+include("read.jl")
+include("write.jl")
 
-end # module
+end

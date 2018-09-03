@@ -1,4 +1,5 @@
 julia 0.6
-
+Compat
 DataStructures
 JSON
+MathOptInterface 0.6-0.7

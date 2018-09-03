@@ -8,29 +8,29 @@ over the years, but only a few (such as MPS) have become the industry standard.
 
 Each format is a product of its time in history, and the problem class it tried
 to address. For example, we retain the rigid input format of the MPS file that
-was designed for 1960's punchcards despite the obsolescence of this
-technology [^2]. Although it has since been  extended to problem classes such as
-nonlinear and stochastic linear programming, MPS was not designed with
-extensibility in mind. This has led some authors (such as [^3]) to conclude that
-developing a new format is easier than extending the existing MPS format.
+was designed for 1960's punchcards despite the obsolescence of this technology
+[^2]. Although it has since been  extended to problem classes such as nonlinear
+and stochastic linear programming, MPS was not designed with extensibility in
+mind. This has led some authors (such as [^3]) to conclude that developing a new
+format is easier than extending the existing MPS format.
 
 The LP file-format also dates back to the work of Orchard-Hays who attempted to
 correct the ''mistakes'' of the MPS file-format by creating a human-readable,
-row-oriented format for mathematicians [^2]. However, due to its age, there is no
-longer a single standard for the LP file-format. This has led to subtle
+row-oriented format for mathematicians [^2]. However, due to its age, there is
+no longer a single standard for the LP file-format. This has led to subtle
 differences between implementations in different readers that hampers the
 usefulness of the format as a format for interchange. Much like the MPS file, it
 is also limited in the types of problems it can represent and was not designed
 for extensibility.
 
-In constrast to the LP file, the .NL file explicitly aims for machine-readability
-at the expense of human-readability [^5]. It is also considerably more flexible in
-the problem classes it can represent (in particular, arbitrary nonlinear
+In contrast to the LP file, the .NL file explicitly aims for machine-readability
+at the expense of human-readability [^5]. It is also considerably more flexible
+in the problem classes it can represent (in particular, arbitrary nonlinear
 functions are supported). However, once again, the format is not extensible to
 new problem formats, and lacks support for conic problems.
 
-More recently, considerable work has been put into developing the OSiL format [^4].
-In developing OSiL, Fourer et al. idenfied many of the challenges and
+More recently, considerable work has been put into developing the OSiL format
+[^4]. In developing OSiL, Fourer et al. idenfied many of the challenges and
 limitations of previous formats and attempted to overcome them. In particular,
 they choose to use XML as the basis for their format. This removed the burden of
 writing custom readers and writers for each programming language that wished to
@@ -98,7 +98,8 @@ its use of XML. Although XML has many advantages (a strictly defined schema for
 example), the format is almost too general (and too verbose) for our purposes.
 
 In constrast, JSON is a much simpler format, and is only able to store six
-different data types: `string`, `number`, `object`, `array`, `boolean` and `null`.
+different data types: `string`, `number`, `object`, `array`, `boolean` and
+`null`.
 
 In almost all programming languages, these map directly to native language
 constructs (`object` being a dictionary or a key-value mapping).
@@ -109,8 +110,8 @@ https://www.json.org/xml.html
 
 A MathOptFormat instance is a text representation of the model as a JSON object.
 The object must have the following fields: `version`, `sense`, `variables`,
-`objective` and `constraints`. Users may also choose to add optional fields
-such as `author` to provide contextual information for humans reading the instance.
+`objective` and `constraints`. Users may also choose to add optional fields such
+as `author` to provide contextual information for humans reading the instance.
 Parsers may choose to ignore these fields.
 
 ### Versioning
@@ -119,13 +120,6 @@ The `version` field stores number of the earliest version of MathOptFormat that
 supported all the features in the instance.
 
     "version": 0
-
-### Optimization Sense
-
-The `sense` field must contain a string that is either `"min"` or `"max"`. No
-other values are allowed.
-
-    "sense": "min"
 
 ### Variables
 
@@ -144,23 +138,16 @@ variable object can optionally contain any MathOptInterface variable attributes
 
 A MathOptInterface function can be represented by a JSON object. Every function
 must have the field `head` which contains a string that is identical to the name
-of the MathOptInterface function (
-[`SingleVariable`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.SingleVariable),
-[`VectorOfVariables`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.VectorOfVariables),
-[`ScalarAffineFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.ScalarAffineFunction),
-[`VectorAffineFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.VectorAffineFunction),
-[`ScalarQuadraticFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.ScalarQuadraticFunction),
-and
-[`VectorQuadraticFunction`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.VectorQuadraticFunction)).
+of the MathOptInterface function.
 
 In addition, there must be a one-to-one mapping between the field names of the
 MathOptInterface type, and the fields in the JSON object. However, instead of
-refering to variables in the model using `VariableIndex`s, the MathOptFormat
-version uses the string that corresonds to the name of the variable in the list
+referring to variables in the model using `VariableIndex`s, the MathOptFormat
+version uses the string that corresponds to the name of the variable in the list
 `variables` (defined above).
 
-For example, the [`SingleVariable`](http://www.juliaopt.org/MathOptInterface.jl/latest/apireference.html#MathOptInterface.SingleVariable)
-function has a single field `variable`. For example:
+For example, the `SingleVariable` function has a single field `variable`. For
+example:
 
     {
         "head": "SingleVariable",
@@ -177,23 +164,27 @@ functions.
         "upper": 1.0
     }
 
-### Objective Function
+### Objective Functions
 
-The `objective` field contains a MathOptInterface function ($f_0(x)$).
+The `objectives` field contains a list of MathOptInterface function ($f_0(x)$).
 
-    "objective": {
-        "head": "ScalarAffineFunction",
-        "variables": ["x"],
-        "coefficients": [2.0],
-        "constant": 1.0
-    }
+The `sense` field must contain a string that is either `"min"`, `"max"`, or
+`"feasibility"`. No other values are allowed.
+
+    "objectives": [
+        {
+            "sense": "min",
+            "function": {"head": "SingleVariable", "variable": "x"}
+        }
+    ]
 
 ### Constraints
 
-Each constraint is a JSON object with two required fields: `set`, and `function`.
-The values associated with these fields must be a valid MathOptInterface set and
-function respectively. In addition, the object can contain MathOptInterface
-constraint attributes such as `name`, `ConstraintPrimalStart`, and `ConstraintDualStart`.
+Each constraint is a JSON object with two required fields: `set`, and
+`function`. The values associated with these fields must be a valid
+MathOptInterface set and function respectively. In addition, the object can
+contain MathOptInterface constraint attributes such as `name`,
+`ConstraintPrimalStart`, and `ConstraintDualStart`.
 
     {
         "constraints": [
@@ -204,8 +195,12 @@ constraint attributes such as `name`, `ConstraintPrimalStart`, and `ConstraintDu
                 },
                 "function": {
                     "head": "ScalarAffineFunction",
-                    "variables": ["x"],
-                    "coefficients": [2.0],
+                    "terms": [
+                        {
+                            "head": "ScalarAffineTerm",
+                            "coefficient": 1.0,
+                            "variable_index": "x"}
+                    ],
                     "constant": 1.0
 
                 }
@@ -232,44 +227,66 @@ Consider the following LP:
 
 We can represent this in the MathOptFormat as
 
+
     {
         "author": "Oscar Dowson",
         "description": "A simple example for the MathOptFormat documentation",
-        "version": 0,
-        "sense": "min",
+        "name": "MathOptFormat Model",
+        "version": "0.0",
         "variables": [{"name": "x"}, {"name": "y"}],
-        "objective": {
-            "head": "ScalarAffineFunction",
-            "variables": ["x", "y"],
-            "coefficients": [2, 1],
-            "constant": 0
-        }
-        "constraints": [
+        "objectives": [
             {
-                "name": "x+y≥1",
-                "set": {"head": "GreaterThan", "lower": 1}
+                "sense": "min",
                 "function": {
                     "head": "ScalarAffineFunction",
-                    "variables": ["x", "y"],
-                    "coefficients": [1, 1],
-                    "constant": 0
-                }
-            },
-            {
-                "name": "x ∈ {0,1}",
-                "set": {"head": "ZeroOne"}
-                "function": {
-                    "head": "SingleVariable",
-                    "variable": "x",
+                     "terms": [
+                         {
+                             "head": "ScalarAffineTerm",
+                             "coefficient": 2.0,
+                             "variable_index": "x"
+                         },
+                         {
+                             "head": "ScalarAffineTerm",
+                             "coefficient": 1.0,
+                             "variable_index": "y"
+                         }
+                    ],
+                    "constant": 0.0
                 }
             }
-        ]
-
+         ],
+         "constraints": [
+             {
+                 "name": "x ∈ {0,1}",
+                 "function": {"head": "SingleVariable", "variable": "x"},
+                 "set": {"head": "ZeroOne"}
+             },
+             {
+                 "name": "x+y≥1"
+                 "function": {
+                     "head": "ScalarAffineFunction",
+                     "terms": [
+                        {
+                            "head": "ScalarAffineTerm",
+                            "coefficient": 1.0,
+                            "variable_index": "x",
+                        },
+                        {
+                            "head": "ScalarAffineTerm",
+                            "coefficient": 1.0,
+                            "variable_index": "y"
+                        }
+                    ],
+                    "constant": 0.0
+                 },
+                 "set": {"head": "GreaterThan", "lower": 1.0},
+             }
+         ]
     }
 
-Note that in addition to the required fields, we can store additional information
-(such as the `author` and a `description` of the model) that is not necessary
-to define the model instance, but is useful human-readable metadata.
+Note that in addition to the required fields, we can store additional
+information (such as the `author` and a `description` of the model) that is not
+necessary to define the model instance, but is useful human-readable metadata.
 
 ### LP
 
@@ -332,43 +349,46 @@ more human-readable, better standardized, and more extensible.
 
 ### MathOptFormat.jl
 ```julia
-using MathOptFormat, MathOptInterface
-const MOI = MathOptInterface
+using MathOptFormat
+const MOI = MathOptFormat.MOI
 
-m = MathOptFormat.MOFInstance()
+model = MathOptFormat.Model{Float64}()
 
-# Add in extra metadata
-m["author"] = "Oscar Dowson"
-m["description"] = "A simple example for the MathOptFormat documentation"
+# MOI.set(model, MathOptFormat.Author(), "Oscar Dowson")
+# MOI.set(model, MathOptFormat.Description(), "A simple example for the MathOptFormat documentation")
 
 # Create variables
-[x, y] = MOI.addvariables!(m, 2)
-MOI.set!(m, MOI.VariableName(), x, "x")
-MOI.set!(m, MOI.VariableName(), y, "y")
+(x, y) = MOI.addvariables!(model, 2)
+MOI.set!(model, MOI.VariableName(), x, "x")
+MOI.set!(model, MOI.VariableName(), y, "y")
 
 # Set objective
-MOI.set!(m, MOI.ObjectiveSense(), MOI.MinSense)
-MOI.set!(m,
-    MOI.ObjectiveFunction(),
-    MOI.ScalarAffineFunction([x,y],[2,1],0)
+MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
+MOI.set!(model,
+    MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+    MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.([2.0, 1.0], [x, y]),
+        0.0)
 )
 
 # The constraint: x+y≥1 becomes x+y ∈ [1, ∞)
-c1 = MOI.addconstraint!(m,
-    MOI.ScalarAffineFunction([x,y],[1,1],0),
-    MOI.GreaterThan(1)
+c1 = MOI.addconstraint!(model,
+    MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]),
+        0.0),
+    MOI.GreaterThan(1.0)
 )
-MOI.set!(m, MOI.ConstraintName(), c1, "x+y≥1")
+MOI.set!(model, MOI.ConstraintName(), c1, "x+y≥1")
 
 # The constraint: x, Binary becomes x ∈ {0, 1}
-c2 = MOI.addconstraint!(m,
+c2 = MOI.addconstraint!(model,
     MOI.SingleVariable(x),
     MOI.ZeroOne()
 )
-MOI.set!(m, MOI.ConstraintName(), c2, "x ∈ {0,1}")
+MOI.set!(model, MOI.ConstraintName(), c2, "x ∈ {0,1}")
 
-# Write the instance to file
-MOI.writeinstance(m, "example.mof.json")
+# Write the model to file
+MOI.write(model, "example.mof.json")
 ```
 
 ## References
