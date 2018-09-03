@@ -55,6 +55,8 @@ function moi_to_object end
 function moi_to_object(index::MOI.VariableIndex, model::Model)
     name = MOI.get(model, MOI.VariableName(), index)
     if name == ""
+        # TODO(odow): What happens if this is an existing name? We should
+        # generate a unique name here.
         name = "x$(index.value)"
     end
     return Object("name" => name)
@@ -78,7 +80,6 @@ function moi_to_object(sense::MOI.OptimizationSense)
     elseif sense == MOI.FeasibilitySense
         return "feasibility"
     end
-    error("Unknown objective sense: $(sense)")
 end
 
 # ========== Non-typed scalar functions ==========
@@ -180,17 +181,16 @@ function moi_to_object(foo::MOI.VectorQuadraticFunction, model::Model,
     )
 end
 
-# ========== Default fallback ==========
+# ========== Default ==========
 """
     head_name(::Type{SetType}) where SetType <: MOI.AbstractSet
 
 Return the string that is stored in the `"head"` field of the MOF object for a
 set of type `SetType`.
 """
-function head_name(::Type{SetType}) where SetType <: MOI.AbstractSet
-    error("Version $(VERSION) of MathOptFormat does not support the set " *
-          "$(SetType).")
-end
+function head_name end
+# We don't need a fallback that throws an error because it is impossible for
+# this to be called for a set that is not defined in the MOIU Model constructor.
 
 # Add every field as the field is named in MathOptInterface.
 function moi_to_object(set::SetType, model::Model,

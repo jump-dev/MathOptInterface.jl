@@ -1,6 +1,6 @@
 The MathOptFormat.jl package is licensed under the MIT "Expat" License:
 
-> Copyright (c) 2017: Oscar Dowson, Miles Lubin.
+> Copyright (c) 2017-2018: Oscar Dowson, Miles Lubin.
 >
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy

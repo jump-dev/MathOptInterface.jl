@@ -60,6 +60,11 @@ end
         MOI.read_from_file(model_2, "test.mof.json")
         MOIU.test_models_equal(model, model_2, String[], String[])
     end
+    @testset "Blank variable name" begin
+        model = MathOptFormat.Model()
+        variable_index = MOI.add_variable(model)
+        @test MathOptFormat.moi_to_object(variable_index, model) == MathOptFormat.Object("name" => "x1")
+    end
     @testset "min objective" begin
         test_model_equality("""
             variables: x
