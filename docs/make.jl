@@ -6,6 +6,5 @@ makedocs(
     sitename = "MathOptFormat",
     pages = [
         "MathOptFormat" => "index.md"
-    ],
-    assets = ["assets/custom.css"]
+    ]
 )

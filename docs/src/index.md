@@ -354,17 +354,14 @@ const MOI = MathOptFormat.MOI
 
 model = MathOptFormat.Model{Float64}()
 
-# MOI.set(model, MathOptFormat.Author(), "Oscar Dowson")
-# MOI.set(model, MathOptFormat.Description(), "A simple example for the MathOptFormat documentation")
-
 # Create variables
-(x, y) = MOI.addvariables!(model, 2)
-MOI.set!(model, MOI.VariableName(), x, "x")
-MOI.set!(model, MOI.VariableName(), y, "y")
+(x, y) = MOI.add_variables(model, 2)
+MOI.set(model, MOI.VariableName(), x, "x")
+MOI.set(model, MOI.VariableName(), y, "y")
 
 # Set objective
-MOI.set!(model, MOI.ObjectiveSense(), MOI.MinSense)
-MOI.set!(model,
+MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+MOI.set(model,
     MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([2.0, 1.0], [x, y]),
@@ -372,23 +369,23 @@ MOI.set!(model,
 )
 
 # The constraint: x+y≥1 becomes x+y ∈ [1, ∞)
-c1 = MOI.addconstraint!(model,
+c1 = MOI.add_constraint(model,
     MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]),
         0.0),
     MOI.GreaterThan(1.0)
 )
-MOI.set!(model, MOI.ConstraintName(), c1, "x+y≥1")
+MOI.set(model, MOI.ConstraintName(), c1, "x+y≥1")
 
 # The constraint: x, Binary becomes x ∈ {0, 1}
-c2 = MOI.addconstraint!(model,
+c2 = MOI.add_constraint(model,
     MOI.SingleVariable(x),
     MOI.ZeroOne()
 )
-MOI.set!(model, MOI.ConstraintName(), c2, "x ∈ {0,1}")
+MOI.set(model, MOI.ConstraintName(), c2, "x ∈ {0,1}")
 
 # Write the model to file
-MOI.write(model, "example.mof.json")
+MOI.write_to_file(model, "example.mof.json")
 ```
 
 ## References

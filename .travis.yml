@@ -5,6 +5,7 @@ os:
 julia:
   - 0.6
   - 0.7
+  - 1.0
 notifications:
   email: false
 git:
@@ -14,4 +15,4 @@ branches:
     - master
     - /^release-.*$/
 after_success:
-  - julia -e 'cd(Pkg.dir("MathOptFormat")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e '(VERSION >= v"0.7.0-DEV.5183" && using Pkg); cd(Pkg.dir("MathOptFormat")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
