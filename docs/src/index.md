@@ -6,28 +6,28 @@ In order to use an optimization solver, it is necessary to communicate a model
 instance to the solver [^1]. Many different instance formats have been proposed
 over the years, but only a few (such as MPS) have become the industry standard.
 
-Each format is a product of its time in history, and the problem class it tried
+Each format is a product of its time in history and the problem class it tried
 to address. For example, we retain the rigid input format of the MPS file that
 was designed for 1960's punchcards despite the obsolescence of this technology
-[^2]. Although it has since been  extended to problem classes such as nonlinear
-and stochastic linear programming, MPS was not designed with extensibility in
-mind. This has led some authors (such as [^3]) to conclude that developing a new
-format is easier than extending the existing MPS format.
+[^2]. Although the MPS format has since been extended to problem classes such as
+nonlinear and stochastic linear programming, MPS was not designed with
+extensibility in mind. This has led some authors (such as [^3]) to conclude that
+developing a new format is easier than extending the existing MPS format.
 
-The LP file-format also dates back to the work of Orchard-Hays who attempted to
+The LP file-format dates back to the work of Orchard-Hays who attempted to
 correct the ''mistakes'' of the MPS file-format by creating a human-readable,
 row-oriented format for mathematicians [^2]. However, due to its age, there is
 no longer a single standard for the LP file-format. This has led to subtle
 differences between implementations in different readers that hampers the
-usefulness of the format as a format for interchange. Much like the MPS file, it
-is also limited in the types of problems it can represent and was not designed
-for extensibility.
+usefulness of the format as a format for interchange. Much like the MPS file,
+the LP file is also limited in the types of problems it can represent and was
+not designed for extensibility.
 
-In contrast to the LP file, the .NL file explicitly aims for machine-readability
+In contrast to the LP file, the NL file explicitly aims for machine-readability
 at the expense of human-readability [^5]. It is also considerably more flexible
 in the problem classes it can represent (in particular, arbitrary nonlinear
 functions are supported). However, once again, the format is not extensible to
-new problem formats, and lacks support for conic problems.
+new problem formats and lacks support for conic problems.
 
 More recently, considerable work has been put into developing the OSiL format
 [^4]. In developing OSiL, Fourer et al. idenfied many of the challenges and
@@ -42,7 +42,7 @@ classes including nonlinear, stochastic, and conic.
 
 However, despite the many apparent advantages of the OSiL format, we believe it
 has enough short-comings to justify the development of a new instance format.
-Two of the main reasons are the verbosity of the XML format, and the lack of a
+Two of the main reasons are the verbosity of the XML format and the lack of a
 strong, extensible standard form.
 
 ### Project Goals
@@ -50,15 +50,24 @@ strong, extensible standard form.
 With this understanding of the history and evolution of different file-formats,
 the following goals guided our development of the MathOptFormat:
 
- - **Human-readable**: the format should be able to be read and edited by a
-    human.
- - **Machine-readable**: the format should be able to be read by a variety of
-   different programming languages without needing to write custom parsers in
-   each language.
- - **Standardized**: the format should conform to a well described
-    ''standard-form'' that is unambiguous.
- - **Extensible**: the format should be able to be easily extended to incorporate
-    new problem-classes as they arise.
+1. **Human-readable**
+
+    The format should be able to be read and edited by a human.
+
+2. **Machine-readable**
+
+    The format should be able to be read by a variety of different programming
+    languages without needing to write custom parsers in each language.
+
+3. **Standardized**
+
+    The format should describe a very general mathematical ''standard-form'' in
+    a manner that is unambiguous.
+
+4. **Extensible**
+
+    The format should be able to be easily extended to incorporate new
+    problem-classes as they arise.
 
 ## The MathOptInterface Standard Form
 
@@ -83,7 +92,7 @@ The MathOptInterface standard form problem is:
 where $f_i(x)$ is an arbitrary function and $\mathcal{S}_i$ is an arbitrary set.
 
 For example, instead of thinking of the constraint $3x + y \le 1$ as a ''less
-than or equal to" constraint, we can think of the constraint as enforcing the
+than or equal to'' constraint, we can think of the constraint as enforcing the
 function $3x + y$ to be inside the set $(-\infty, 1]$.
 
 This approach turns out to be very general, as instead of thinking of variable
@@ -92,6 +101,7 @@ Instead of a variable being semicontinuous, we say the function $x$ belongs to
 the set ${0} \cup [l, u]$.
 
 ## Why JSON?
+
 
 One reason for developing a new instance format rather than improving OSiL is
 its use of XML. Although XML has many advantages (a strictly defined schema for
@@ -104,22 +114,24 @@ different data types: `string`, `number`, `object`, `array`, `boolean` and
 In almost all programming languages, these map directly to native language
 constructs (`object` being a dictionary or a key-value mapping).
 
-https://www.json.org/xml.html
+TODO(odow): expand this section.
+
+[https://www.json.org/xml.html](https://www.json.org/xml.html)
 
 ## The Format
 
 A MathOptFormat instance is a text representation of the model as a JSON object.
-The object must have the following fields: `version`, `sense`, `variables`,
-`objective` and `constraints`. Users may also choose to add optional fields such
-as `author` to provide contextual information for humans reading the instance.
-Parsers may choose to ignore these fields.
+The object must have the following fields: `version`, `variables`, `objective`
+and `constraints`. Users may also choose to add optional fields such as `author`
+to provide contextual information for humans reading the instance. Parsers may
+choose to ignore these fields.
 
 ### Versioning
 
 The `version` field stores number of the earliest version of MathOptFormat that
 supported all the features in the instance.
 
-    "version": 0
+    "version": "0.0"
 
 ### Variables
 
@@ -141,7 +153,7 @@ must have the field `head` which contains a string that is identical to the name
 of the MathOptInterface function.
 
 In addition, there must be a one-to-one mapping between the field names of the
-MathOptInterface type, and the fields in the JSON object. However, instead of
+MathOptInterface type and the fields in the JSON object. However, instead of
 referring to variables in the model using `VariableIndex`s, the MathOptFormat
 version uses the string that corresponds to the name of the variable in the list
 `variables` (defined above).
@@ -149,27 +161,25 @@ version uses the string that corresponds to the name of the variable in the list
 For example, the `SingleVariable` function has a single field `variable`. For
 example:
 
-    {
-        "head": "SingleVariable",
-        "variable": "x"
-    }
+    {"head": "SingleVariable", "variable": "x"}
 
 ### MathOptInterface Sets
 
 MathOptInterface Sets are represented in a similar manner to MathOptInterface
 functions.
 
-    {
-        "head": "LessThan",
-        "upper": 1.0
-    }
+    {"head": "LessThan", "upper": 1.0}
 
 ### Objective Functions
 
-The `objectives` field contains a list of MathOptInterface function ($f_0(x)$).
+Although MathOptInterface only defines a single objective function,
+MathOptFormat extends this notion to a list of objectives that are stored in the
+`objectives` field.
 
-The `sense` field must contain a string that is either `"min"`, `"max"`, or
-`"feasibility"`. No other values are allowed.
+Each object in the list must contain two fields: `function` and `sense`. The
+`function` field contains a MathOptInterface function. The `sense` field must
+contain a string that is either `"min"`, `"max"`, or `"feasibility"`. No other
+values are allowed.
 
     "objectives": [
         {
@@ -226,7 +236,6 @@ Consider the following LP:
 ### MathOptFormat
 
 We can represent this in the MathOptFormat as
-
 
     {
         "author": "Oscar Dowson",
@@ -348,6 +357,7 @@ more human-readable, better standardized, and more extensible.
 
 
 ### MathOptFormat.jl
+
 ```julia
 using MathOptFormat
 const MOI = MathOptFormat.MOI

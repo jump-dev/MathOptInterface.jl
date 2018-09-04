@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Background",
     "category": "section",
-    "text": "In order to use an optimization solver, it is necessary to communicate a model instance to the solver [1]. Many different instance formats have been proposed over the years, but only a few (such as MPS) have become the industry standard.Each format is a product of its time in history, and the problem class it tried to address. For example, we retain the rigid input format of the MPS file that was designed for 1960\'s punchcards despite the obsolescence of this technology [2]. Although it has since been  extended to problem classes such as nonlinear and stochastic linear programming, MPS was not designed with extensibility in mind. This has led some authors (such as [3]) to conclude that developing a new format is easier than extending the existing MPS format.The LP file-format also dates back to the work of Orchard-Hays who attempted to correct the \'\'mistakes\'\' of the MPS file-format by creating a human-readable, row-oriented format for mathematicians [2]. However, due to its age, there is no longer a single standard for the LP file-format. This has led to subtle differences between implementations in different readers that hampers the usefulness of the format as a format for interchange. Much like the MPS file, it is also limited in the types of problems it can represent and was not designed for extensibility.In contrast to the LP file, the .NL file explicitly aims for machine-readability at the expense of human-readability [5]. It is also considerably more flexible in the problem classes it can represent (in particular, arbitrary nonlinear functions are supported). However, once again, the format is not extensible to new problem formats, and lacks support for conic problems.More recently, considerable work has been put into developing the OSiL format [4]. In developing OSiL, Fourer et al. idenfied many of the challenges and limitations of previous formats and attempted to overcome them. In particular, they choose to use XML as the basis for their format. This removed the burden of writing custom readers and writers for each programming language that wished to interface with optimization software and allowed more focus on the underlying data-structures. XML is also human-readable and can be rigidly specified with a schema to prevent the profilferation of similar, but incompatible versions. The XML approach also allows for easy extensibility and can support multiple problem classes including nonlinear, stochastic, and conic.However, despite the many apparent advantages of the OSiL format, we believe it has enough short-comings to justify the development of a new instance format. Two of the main reasons are the verbosity of the XML format, and the lack of a strong, extensible standard form."
+    "text": "In order to use an optimization solver, it is necessary to communicate a model instance to the solver [1]. Many different instance formats have been proposed over the years, but only a few (such as MPS) have become the industry standard.Each format is a product of its time in history and the problem class it tried to address. For example, we retain the rigid input format of the MPS file that was designed for 1960\'s punchcards despite the obsolescence of this technology [2]. Although the MPS format has since been extended to problem classes such as nonlinear and stochastic linear programming, MPS was not designed with extensibility in mind. This has led some authors (such as [3]) to conclude that developing a new format is easier than extending the existing MPS format.The LP file-format dates back to the work of Orchard-Hays who attempted to correct the \'\'mistakes\'\' of the MPS file-format by creating a human-readable, row-oriented format for mathematicians [2]. However, due to its age, there is no longer a single standard for the LP file-format. This has led to subtle differences between implementations in different readers that hampers the usefulness of the format as a format for interchange. Much like the MPS file, the LP file is also limited in the types of problems it can represent and was not designed for extensibility.In contrast to the LP file, the NL file explicitly aims for machine-readability at the expense of human-readability [5]. It is also considerably more flexible in the problem classes it can represent (in particular, arbitrary nonlinear functions are supported). However, once again, the format is not extensible to new problem formats and lacks support for conic problems.More recently, considerable work has been put into developing the OSiL format [4]. In developing OSiL, Fourer et al. idenfied many of the challenges and limitations of previous formats and attempted to overcome them. In particular, they choose to use XML as the basis for their format. This removed the burden of writing custom readers and writers for each programming language that wished to interface with optimization software and allowed more focus on the underlying data-structures. XML is also human-readable and can be rigidly specified with a schema to prevent the profilferation of similar, but incompatible versions. The XML approach also allows for easy extensibility and can support multiple problem classes including nonlinear, stochastic, and conic.However, despite the many apparent advantages of the OSiL format, we believe it has enough short-comings to justify the development of a new instance format. Two of the main reasons are the verbosity of the XML format and the lack of a strong, extensible standard form."
 },
 
 {
@@ -21,7 +21,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Project Goals",
     "category": "section",
-    "text": "With this understanding of the history and evolution of different file-formats, the following goals guided our development of the MathOptFormat:Human-readable: the format should be able to be read and edited by a  human.\nMachine-readable: the format should be able to be read by a variety of different programming languages without needing to write custom parsers in each language.\nStandardized: the format should conform to a well described  \'\'standard-form\'\' that is unambiguous.\nExtensible: the format should be able to be easily extended to incorporate  new problem-classes as they arise."
+    "text": "With this understanding of the history and evolution of different file-formats, the following goals guided our development of the MathOptFormat:Human-readableThe format should be able to be read and edited by a human.Machine-readableThe format should be able to be read by a variety of different programming\r\nlanguages without needing to write custom parsers in each language.StandardizedThe format should describe a very general mathematical \'\'standard-form\'\' in\r\na manner that is unambiguous.ExtensibleThe format should be able to be easily extended to incorporate new\r\nproblem-classes as they arise."
 },
 
 {
@@ -29,7 +29,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "The MathOptInterface Standard Form",
     "category": "section",
-    "text": "MathOptInterface is a solver abstraction layer for mathematical optimization solvers [6]. One if the core design goals of MathOptInterface is for it to\"be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions).\"The MathOptInterface standard form problem is:beginalign\r\n     min_x in mathbbR^n  f_0(x)\r\n    \r\n     textst  f_i(x)  in mathcalS_i  i = 1 ldots m\r\nendalignwhere f_i(x) is an arbitrary function and mathcalS_i is an arbitrary set.For example, instead of thinking of the constraint 3x + y le 1 as a \'\'less than or equal to\" constraint, we can think of the constraint as enforcing the function 3x + y to be inside the set (-infty 1.This approach turns out to be very general, as instead of thinking of variable as being \'\'binary\'\', we say the function x belongs to the set 0 1. Instead of a variable being semicontinuous, we say the function x belongs to the set 0 cup l u."
+    "text": "MathOptInterface is a solver abstraction layer for mathematical optimization solvers [6]. One if the core design goals of MathOptInterface is for it to\"be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions).\"The MathOptInterface standard form problem is:beginalign\r\n     min_x in mathbbR^n  f_0(x)\r\n    \r\n     textst  f_i(x)  in mathcalS_i  i = 1 ldots m\r\nendalignwhere f_i(x) is an arbitrary function and mathcalS_i is an arbitrary set.For example, instead of thinking of the constraint 3x + y le 1 as a \'\'less than or equal to\'\' constraint, we can think of the constraint as enforcing the function 3x + y to be inside the set (-infty 1.This approach turns out to be very general, as instead of thinking of variable as being \'\'binary\'\', we say the function x belongs to the set 0 1. Instead of a variable being semicontinuous, we say the function x belongs to the set 0 cup l u."
 },
 
 {
@@ -37,7 +37,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Why JSON?",
     "category": "section",
-    "text": "One reason for developing a new instance format rather than improving OSiL is its use of XML. Although XML has many advantages (a strictly defined schema for example), the format is almost too general (and too verbose) for our purposes.In constrast, JSON is a much simpler format, and is only able to store six different data types: string, number, object, array, boolean and null.In almost all programming languages, these map directly to native language constructs (object being a dictionary or a key-value mapping).https://www.json.org/xml.html"
+    "text": "One reason for developing a new instance format rather than improving OSiL is its use of XML. Although XML has many advantages (a strictly defined schema for example), the format is almost too general (and too verbose) for our purposes.In constrast, JSON is a much simpler format, and is only able to store six different data types: string, number, object, array, boolean and null.In almost all programming languages, these map directly to native language constructs (object being a dictionary or a key-value mapping).TODO(odow): expand this section.https://www.json.org/xml.html"
 },
 
 {
@@ -45,7 +45,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "The Format",
     "category": "section",
-    "text": "A MathOptFormat instance is a text representation of the model as a JSON object. The object must have the following fields: version, sense, variables, objective and constraints. Users may also choose to add optional fields such as author to provide contextual information for humans reading the instance. Parsers may choose to ignore these fields."
+    "text": "A MathOptFormat instance is a text representation of the model as a JSON object. The object must have the following fields: version, variables, objective and constraints. Users may also choose to add optional fields such as author to provide contextual information for humans reading the instance. Parsers may choose to ignore these fields."
 },
 
 {
@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Versioning",
     "category": "section",
-    "text": "The version field stores number of the earliest version of MathOptFormat that supported all the features in the instance.\"version\": 0"
+    "text": "The version field stores number of the earliest version of MathOptFormat that supported all the features in the instance.\"version\": \"0.0\""
 },
 
 {
@@ -69,7 +69,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "MathOptInterface Functions",
     "category": "section",
-    "text": "A MathOptInterface function can be represented by a JSON object. Every function must have the field head which contains a string that is identical to the name of the MathOptInterface function.In addition, there must be a one-to-one mapping between the field names of the MathOptInterface type, and the fields in the JSON object. However, instead of referring to variables in the model using VariableIndexs, the MathOptFormat version uses the string that corresponds to the name of the variable in the list variables (defined above).For example, the SingleVariable function has a single field variable. For example:{\r\n    \"head\": \"SingleVariable\",\r\n    \"variable\": \"x\"\r\n}"
+    "text": "A MathOptInterface function can be represented by a JSON object. Every function must have the field head which contains a string that is identical to the name of the MathOptInterface function.In addition, there must be a one-to-one mapping between the field names of the MathOptInterface type and the fields in the JSON object. However, instead of referring to variables in the model using VariableIndexs, the MathOptFormat version uses the string that corresponds to the name of the variable in the list variables (defined above).For example, the SingleVariable function has a single field variable. For example:{\"head\": \"SingleVariable\", \"variable\": \"x\"}"
 },
 
 {
@@ -77,7 +77,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "MathOptInterface Sets",
     "category": "section",
-    "text": "MathOptInterface Sets are represented in a similar manner to MathOptInterface functions.{\r\n    \"head\": \"LessThan\",\r\n    \"upper\": 1.0\r\n}"
+    "text": "MathOptInterface Sets are represented in a similar manner to MathOptInterface functions.{\"head\": \"LessThan\", \"upper\": 1.0}"
 },
 
 {
@@ -85,7 +85,7 @@ var documenterSearchIndex = {"docs": [
     "page": "MathOptFormat",
     "title": "Objective Functions",
     "category": "section",
-    "text": "The objectives field contains a list of MathOptInterface function (f_0(x)).The sense field must contain a string that is either \"min\", \"max\", or \"feasibility\". No other values are allowed.\"objectives\": [\r\n    {\r\n        \"sense\": \"min\",\r\n        \"function\": {\"head\": \"SingleVariable\", \"variable\": \"x\"}\r\n    }\r\n]"
+    "text": "Although MathOptInterface only defines a single objective function, MathOptFormat extends this notion to a list of objectives that are stored in the objectives field.Each object in the list must contain two fields: function and sense. The function field contains a MathOptInterface function. The sense field must contain a string that is either \"min\", \"max\", or \"feasibility\". No other values are allowed.\"objectives\": [\r\n    {\r\n        \"sense\": \"min\",\r\n        \"function\": {\"head\": \"SingleVariable\", \"variable\": \"x\"}\r\n    }\r\n]"
 },
 
 {
