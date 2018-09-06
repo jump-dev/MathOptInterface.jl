@@ -8,7 +8,7 @@
 **The file format is under active development. No backward compatibility yet!**
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://odow.github.io/MathOptFormat.jl/build/index.html
+[docs-latest-url]: https://odow.github.io/MathOptFormat.jl/latest/index.html
 
 [build-img]: https://travis-ci.org/odow/MathOptFormat.jl.svg?branch=master
 [build-url]: https://travis-ci.org/odow/MathOptFormat.jl
