@@ -5,6 +5,11 @@ function MOI.read_from_file(model::Model, filename::String)
     object = open(filename, "r") do io
         JSON.parse(io; dicttype=Object)
     end
+    if object["version"] > VERSION
+        error("Sorry, the file $(filename) can't be read because this library" *
+              " supports version $(VERSION) of MathOptFormat, but the file " *
+              "you are trying to read is version $(object["version"]).")
+    end
     name_map = read_variables(model, object)
     read_objectives(model, object, name_map)
     read_constraints(model, object, name_map)

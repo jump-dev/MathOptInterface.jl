@@ -22,6 +22,10 @@ end
         @test_throws Exception MOI.read_from_file(model,
             "models/empty_model.mof.json")
     end
+    @testset "incompatible_version" begin
+        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
+            "models/incompatible_version.mof.json")
+    end
     @testset "unsupported_constraint_set" begin
         @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
             "models/unsupported_constraint_set.mof.json")

@@ -1,6 +1,6 @@
 module MathOptFormat
 
-const VERSION = "0.0"
+const VERSION = 0
 
 using DataStructures, JSON, MathOptInterface
 

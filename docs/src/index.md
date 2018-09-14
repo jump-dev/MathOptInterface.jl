@@ -30,13 +30,13 @@ functions are supported). However, once again, the format is not extensible to
 new problem formats and lacks support for conic problems.
 
 More recently, considerable work has been put into developing the OSiL format
-[^4]. In developing OSiL, Fourer et al. idenfied many of the challenges and
+[^4]. In developing OSiL, Fourer et al. identified many of the challenges and
 limitations of previous formats and attempted to overcome them. In particular,
 they choose to use XML as the basis for their format. This removed the burden of
 writing custom readers and writers for each programming language that wished to
 interface with optimization software and allowed more focus on the underlying
 data-structures. XML is also human-readable and can be rigidly specified with a
-schema to prevent the profilferation of similar, but incompatible versions. The
+schema to prevent the proliferation of similar, but incompatible versions. The
 XML approach also allows for easy extensibility and can support multiple problem
 classes including nonlinear, stochastic, and conic.
 
@@ -131,7 +131,7 @@ choose to ignore these fields.
 The `version` field stores number of the earliest version of MathOptFormat that
 supported all the features in the instance.
 
-    "version": "0.0"
+    "version": 0
 
 ### Variables
 
@@ -241,7 +241,7 @@ We can represent this in the MathOptFormat as
         "author": "Oscar Dowson",
         "description": "A simple example for the MathOptFormat documentation",
         "name": "MathOptFormat Model",
-        "version": "0.0",
+        "version": 0,
         "variables": [{"name": "x"}, {"name": "y"}],
         "objectives": [
             {
@@ -299,8 +299,8 @@ necessary to define the model instance, but is useful human-readable metadata.
 
 ### LP
 
-Compared to the LP formulation (below), the MathOptFormat vesion is verbose and
-less human-readable. However, it does not require a specialised parser to read,
+Compared to the LP formulation (below), the MathOptFormat version is verbose and
+less human-readable. However, it does not require a specialized parser to read,
 conforms to a well standardized specification, and is extensible.
 
     / Author: Oscar Dowson
