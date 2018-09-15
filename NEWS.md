@@ -15,7 +15,7 @@ v0.6.0 (August 30, 2018)
   * `supportsconstraint` -> `supports_constraint`;
   * `addconstraint[s]!` -> `add_constraint[s]`;
   * `isvalid` -> `is_valid`;
-  * `isempty` -> `is_empty`
+  * `isempty` -> `is_empty`;
   * `Base.delete!` -> `delete`;
   * `modify!` -> `modify`;
   * `transform!` -> `transform`;
