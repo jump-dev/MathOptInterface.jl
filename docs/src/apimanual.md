@@ -366,38 +366,40 @@ using MathOptInterface
 const MOI = MathOptInterface
 using GLPK
 
-# Solve the binary-constrained knapsack problem: max c'x: w'x <= C, x binary using GLPK.
+# Solves the binary-constrained knapsack problem:
+# max c'x: w'x <= C, x binary using GLPK.
 
 c = [1.0, 2.0, 3.0]
 w = [0.3, 0.5, 1.0]
 C = 3.2
 
-numvariables = length(c)
+num_variables = length(c)
 
-optimizer = GLPK.GLPKOptimizerMIP()
+optimizer = GLPK.Optimizer()
 
-# create the variables in the problem
-x = MOI.add_variables(optimizer, numvariables)
+# Create the variables in the problem.
+x = MOI.add_variables(optimizer, num_variables)
 
-# set the objective function
+# Set the objective function.
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
-MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objective_function)
+MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        objective_function)
 MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MaxSense)
 
-# add the knapsack constraint
+# Add the knapsack constraint.
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
 MOI.add_constraint(optimizer, knapsack_function, MOI.LessThan(C))
 
-# add integrality constraints
-for i in 1:numvariables
+# Add integrality constraints.
+for i in 1:num_variables
     MOI.add_constraint(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
 end
 
-# all set
+# All set!
 MOI.optimize!(optimizer)
 
 termination_status = MOI.get(optimizer, MOI.TerminationStatus())
-objvalue = MOI.get(optimizer, MOI.ObjectiveValue())
+obj_value = MOI.get(optimizer, MOI.ObjectiveValue())
 if termination_status != MOI.Success
     error("Solver terminated with status $termination_status")
 end
@@ -406,11 +408,12 @@ end
 
 result_status = MOI.get(optimizer, MOI.PrimalStatus())
 if result_status != MOI.FeasiblePoint
-    error("Solver ran successfully did not return a feasible point. The problem may be infeasible.")
+    error("Solver ran successfully but did not return a feasible point. " *
+          "The problem may be infeasible.")
 end
 primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 
-@show objvalue
+@show obj_value
 @show primal_variable_result
 ```
 
