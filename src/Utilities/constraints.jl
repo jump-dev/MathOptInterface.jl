@@ -11,7 +11,8 @@ the set in `model`. If `allow_modify_function` is `true` then the function
 function add_scalar_constraint end
 
 function add_scalar_constraint(model::MOI.ModelLike, func::MOI.SingleVariable,
-                               set::MOI.AbstractScalarSet)
+                               set::MOI.AbstractScalarSet;
+                               allow_modify_function::Bool=false)
     return MOI.add_constraint(model, func, set)
 end
 function add_scalar_constraint(model::MOI.ModelLike,
