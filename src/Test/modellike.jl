@@ -174,8 +174,9 @@ end
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.set(src, MOI.Name(), "ModelName")
     v = MOI.add_variables(src, 3)
+    w = MOI.add_variable(src)
     MOI.set(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
-    csv = MOI.add_constraint(src, MOI.SingleVariable(v[2]), MOI.EqualTo(2.))
+    csv = MOI.add_constraint(src, MOI.SingleVariable(w), MOI.EqualTo(2.))
     MOI.set(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     MOI.set(src, MOI.ConstraintName(), cvv, "cvv")
@@ -195,7 +196,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     dict = MOI.copy_to(dest, src, copy_names=false)
 
     @test !MOI.supports(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
-    @test MOI.get(dest, MOI.NumberOfVariables()) == 3
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     @test !MOI.supports(dest, MOI.VariableName(), MOI.VariableIndex) || MOI.get(dest, MOI.VariableName(), v) == ["", "", ""]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
     @test MOI.get(dest, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == [dict[csv]]
