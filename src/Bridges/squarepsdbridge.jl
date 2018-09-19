@@ -94,6 +94,14 @@ function SquarePSDBridge{T, F, G}(model::MOI.ModelLike, f::F,
             # This avoid generating symmetrization constraints when the
             # functions at entries (i, j) and (j, i) are almost identical
             if !MOIU.isapprox_zero(diff, 1e-10)
+                if MOIU.isapprox_zero(diff, 1e-8)
+                    Compat.@warn "The entries ($i, $j) and ($j, $i) of the" *
+                        " positive semidefinite constraint are almost" *
+                        " identical but a constraint is added to ensure their" *
+                        " equality because the largest difference between the" *
+                        " coefficients is smaller than 1e-8 but larger than" *
+                        " 1e-10."
+                end
                 push!(sym, (i, j) => MOIU.add_scalar_constraint(model, diff,
                                                                 MOI.EqualTo(zero(T)),
                                                                 allow_modify_function=true))
