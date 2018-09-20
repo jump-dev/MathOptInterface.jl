@@ -121,14 +121,14 @@ end
 # Model not supporting RotatedSecondOrderCone
 MOIU.@model(NoRSOCModel,
             (),
-            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan),
             (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
              MOI.ExponentialCone, MOI.PositiveSemidefiniteConeTriangle),
             (),
             (MOI.SingleVariable,),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
-            (MOI.VectorAffineFunction,))
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
 @testset "LazyBridgeOptimizer" begin
     mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
@@ -167,17 +167,24 @@ MOIU.@model(NoRSOCModel,
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.Interval{Float64})
         end
-        F = MOI.VectorAffineFunction{Float64}
-        @test MOI.supports_constraint(fullbridgedmock, F,
-                                      MOI.GeometricMeanCone)
-        @test MOI.supports_constraint(fullbridgedmock, F,
-                                      MOI.PositiveSemidefiniteConeSquare)
-        @test MOI.supports_constraint(fullbridgedmock, F,
-                                      MOI.LogDetConeTriangle)
-        @test MOI.supports_constraint(fullbridgedmock, F,
-                                      MOI.RootDetConeTriangle)
-        @test MOI.supports_constraint(fullbridgedmock, F,
-                                      MOI.RotatedSecondOrderCone)
+        for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
+                  MOI.VectorQuadraticFunction{Float64}]
+            @show F
+            @test MOI.supports_constraint(fullbridgedmock, F,
+                                          MOI.PositiveSemidefiniteConeSquare)
+            @test MOI.supports_constraint(fullbridgedmock, F,
+                                          MOI.GeometricMeanCone)
+        end
+        for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
+            # Missing vcat for quadratic for supporting quadratic
+            @test MOI.supports_constraint(fullbridgedmock, F,
+                                          MOI.RotatedSecondOrderCone)
+            # det bridges need to use MOIU.operate to support quadratic
+            @test MOI.supports_constraint(fullbridgedmock, F,
+                                          MOI.LogDetConeTriangle)
+            @test MOI.supports_constraint(fullbridgedmock, F,
+                                          MOI.RootDetConeTriangle)
+        end
     end
 
     @testset "Combining two briges" begin

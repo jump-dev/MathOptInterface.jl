@@ -31,10 +31,10 @@ MOIU.@model(AllBridgedConstraints,
              MOI.PositiveSemidefiniteConeSquare,
              MOI.LogDetConeTriangle, MOI.RootDetConeTriangle),
             (),
-            (),
-            (MOI.ScalarAffineFunction,),
+            (MOI.SingleVariable,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
-            (MOI.VectorAffineFunction,))
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 """
     fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 
