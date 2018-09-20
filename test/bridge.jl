@@ -126,7 +126,7 @@ MOIU.@model(NoRSOCModel,
              MOI.ExponentialCone, MOI.PositiveSemidefiniteConeTriangle),
             (),
             (MOI.SingleVariable,),
-            (MOI.ScalarAffineFunction,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction,))
 
@@ -160,9 +160,28 @@ MOIU.@model(NoRSOCModel,
         @test bridgedmock.dist[(MathOptInterface.VectorOfVariables, MathOptInterface.RotatedSecondOrderCone)] == 1
     end
 
+    @testset "Supports" begin
+        fullbridgedmock = MOIB.fullbridgeoptimizer(mock, Float64)
+        for F in [MOI.SingleVariable, MOI.ScalarAffineFunction{Float64},
+                  MOI.ScalarQuadraticFunction{Float64}]
+            @test MOI.supports_constraint(fullbridgedmock, F,
+                                          MOI.Interval{Float64})
+        end
+        F = MOI.VectorAffineFunction{Float64}
+        @test MOI.supports_constraint(fullbridgedmock, F,
+                                      MOI.GeometricMeanCone)
+        @test MOI.supports_constraint(fullbridgedmock, F,
+                                      MOI.PositiveSemidefiniteConeSquare)
+        @test MOI.supports_constraint(fullbridgedmock, F,
+                                      MOI.LogDetConeTriangle)
+        @test MOI.supports_constraint(fullbridgedmock, F,
+                                      MOI.RootDetConeTriangle)
+        @test MOI.supports_constraint(fullbridgedmock, F,
+                                      MOI.RotatedSecondOrderCone)
+    end
+
     @testset "Combining two briges" begin
         fullbridgedmock = MOIB.fullbridgeoptimizer(mock, Float64)
-        @test MOI.supports_constraint(fullbridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1, √2])
         config = MOIT.TestConfig()
         MOIT.rootdett1vtest(fullbridgedmock, config)
