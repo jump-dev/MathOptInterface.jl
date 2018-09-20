@@ -162,6 +162,7 @@ MOIU.@model(NoRSOCModel,
 
     @testset "Combining two briges" begin
         fullbridgedmock = MOIB.fullbridgeoptimizer(mock, Float64)
+        @test MOI.supports_constraint(fullbridgedmock, MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1, √2])
         config = MOIT.TestConfig()
         MOIT.rootdett1vtest(fullbridgedmock, config)
