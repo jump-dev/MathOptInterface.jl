@@ -169,17 +169,16 @@ MOIU.@model(NoRSOCModel,
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
                   MOI.VectorQuadraticFunction{Float64}]
-            @show F
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.PositiveSemidefiniteConeSquare)
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.GeometricMeanCone)
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
-            # Missing vcat for quadratic for supporting quadratic
+            # TODO Missing vcat for quadratic for supporting quadratic
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.RotatedSecondOrderCone)
-            # det bridges need to use MOIU.operate to support quadratic
+            # TODO det bridges need to use MOIU.operate to support quadratic
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.LogDetConeTriangle)
             @test MOI.supports_constraint(fullbridgedmock, F,
