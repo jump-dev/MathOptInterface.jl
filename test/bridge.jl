@@ -175,6 +175,8 @@ MOIU.@model(NoRSOCModel,
                                           MOI.GeometricMeanCone)
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
+            # The bridges in this for loop do not support yet
+            # VectorQuadraticFunction, see TODO's for the reason
             # TODO Missing vcat for quadratic for supporting quadratic
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.RotatedSecondOrderCone)
