@@ -1,8 +1,20 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.6.1 (September 22, 2018)
+---------------------------
+
+- Enable `PositiveSemidefiniteConeSquare` set and quadratic functions
+  in `MOIB.fullbridgeoptimizer` (#524).
+- Add warning in the bridge between `PositiveSemidefiniteConeSquare` and
+  `PositiveSemidefiniteConeTriangle` when the matrix is almost symmetric (#522).
+- Modify `MOIT.copytest` to not add multiples constraints on the same variable
+  (#521).
+- Add missing keyword argument in one of `MOIU.add_scalar_constraint` methods
+  (#520).
+
 v0.6.0 (August 30, 2018)
------------------------
+------------------------
 
 - The `MOIU.@model` and `MOIB.@bridge` macros now support functions and sets
   defined in external modules. As a consequence, function and set names in the
@@ -37,7 +49,7 @@ v0.6.0 (August 30, 2018)
   state of the model, because it cannot be performed for a specific index, ...)
 - `canget` is removed. `NoSolution` is added as a result status to indicate
   that the solver does not have either a primal or dual solution available
-  (See #479). 
+  (See #479).
 
 v0.5.0 (August 5, 2018)
 -----------------------
