@@ -4,7 +4,8 @@ MathOptInterface (MOI) release notes
 v0.6.1 (September 22, 2018)
 ---------------------------
 
-- Fix cache used in `MOIB.fullbridgeoptimizer` (#524).
+- Enable `PositiveSemidefiniteConeSquare` set and quadratic functions
+  in `MOIB.fullbridgeoptimizer` (#524).
 - Add warning in the bridge between `PositiveSemidefiniteConeSquare` and
   `PositiveSemidefiniteConeTriangle` when the matrix is almost symmetric (#522).
 - Modify `MOIT.copytest` to not add multiples constraints on the same variable
