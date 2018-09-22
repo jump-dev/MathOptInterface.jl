@@ -150,7 +150,7 @@ MOIU.@model(NoRSOCModel,
         MOIT.copytest(bridgedmock, NoRSOCModel{Float64}())
     end
 
-    # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path
+    # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path.
     @testset "Bridge selection" begin
         MOI.empty!(bridgedmock)
         @test !(MOI.supports_constraint(bridgedmock, MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle))
@@ -176,11 +176,11 @@ MOIU.@model(NoRSOCModel,
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
             # The bridges in this for loop do not support yet
-            # VectorQuadraticFunction, see TODO's for the reason
-            # TODO Missing vcat for quadratic for supporting quadratic
+            # VectorQuadraticFunction. See TODO's for the reason.
+            # TODO: Missing vcat for quadratic for supporting quadratic.
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.RotatedSecondOrderCone)
-            # TODO det bridges need to use MOIU.operate to support quadratic
+            # TODO: Det bridges need to use MOIU.operate to support quadratic.
             @test MOI.supports_constraint(fullbridgedmock, F,
                                           MOI.LogDetConeTriangle)
             @test MOI.supports_constraint(fullbridgedmock, F,
