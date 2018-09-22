@@ -37,7 +37,7 @@ v0.6.0 (August 30, 2018)
   state of the model, because it cannot be performed for a specific index, ...)
 - `canget` is removed. `NoSolution` is added as a result status to indicate
   that the solver does not have either a primal or dual solution available
-  (See #479). 
+  (See #479).
 
 v0.5.0 (August 5, 2018)
 -----------------------
