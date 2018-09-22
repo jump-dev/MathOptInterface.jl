@@ -13,7 +13,7 @@ v0.6.1 (September 22, 2018)
   (#520).
 
 v0.6.0 (August 30, 2018)
------------------------
+------------------------
 
 - The `MOIU.@model` and `MOIB.@bridge` macros now support functions and sets
   defined in external modules. As a consequence, function and set names in the
