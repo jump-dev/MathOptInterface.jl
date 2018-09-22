@@ -247,6 +247,9 @@
                 @test MOIU.promote_operation(*, Float64,
                                              MOI.ScalarAffineFunction{Float64},
                                              MOI.ScalarAffineFunction{Float64}) == MOI.ScalarQuadraticFunction{Float64}
+                @test MOIU.promote_operation(/, Float64,
+                                             MOI.ScalarQuadraticFunction{Float64},
+                                             Float64) == MOI.ScalarQuadraticFunction{Float64}
             end
             fx = MOI.SingleVariable(x)
             fy = MOI.SingleVariable(y)

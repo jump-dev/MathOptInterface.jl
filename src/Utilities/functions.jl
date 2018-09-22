@@ -906,6 +906,11 @@ function promote_operation(::typeof(/), ::Type{T},
                            ::Type{T}) where T
     MOI.ScalarAffineFunction{T}
 end
+function promote_operation(::typeof(/), ::Type{T},
+                           ::Type{MOI.ScalarQuadraticFunction{T}},
+                           ::Type{T}) where T
+    MOI.ScalarQuadraticFunction{T}
+end
 
 function operate!(::typeof(/), ::Type{T}, f::MOI.SingleVariable,
                   α::T) where T

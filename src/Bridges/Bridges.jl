@@ -28,12 +28,13 @@ MOIU.@model(AllBridgedConstraints,
             (),
             (MOI.Interval,),
             (MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+             MOI.PositiveSemidefiniteConeSquare,
              MOI.LogDetConeTriangle, MOI.RootDetConeTriangle),
             (),
-            (),
-            (MOI.ScalarAffineFunction,),
+            (MOI.SingleVariable,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
-            (MOI.VectorAffineFunction,))
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 """
     fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
 
