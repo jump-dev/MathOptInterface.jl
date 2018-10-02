@@ -123,13 +123,13 @@ function matrix_to_vector_affine_terms(matrix::AbstractMatrix{T},
     return terms
 end
 
-function MOI.supportsconstraint(::Type{QuadtoSOCBridge{T}},
-                                ::Type{MOI.ScalarQuadraticFunction{T}},
-                                ::Type{<:Union{MOI.LessThan{T},
-                                               MOI.GreaterThan{T}}}) where T
+function MOI.supports_constraint(::Type{QuadtoSOCBridge{T}},
+                                 ::Type{MOI.ScalarQuadraticFunction{T}},
+                                 ::Type{<:Union{MOI.LessThan{T},
+                                                MOI.GreaterThan{T}}}) where T
     return true
 end
-function addedconstrainttypes(::Type{QuadtoSOCBridge{T}}) where T
+function added_constraint_types(::Type{QuadtoSOCBridge{T}}) where T
     return [(MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
 end
 function concrete_bridge_type(::Type{<:QuadtoSOCBridge{T}},
@@ -152,8 +152,8 @@ function MOI.get(bridge::QuadtoSOCBridge{T},
 end
 
 # References
-function MOI.delete!(model::MOI.ModelLike, bridge::QuadtoSOCBridge)
-    MOI.delete!(model, bridge.soc)
+function MOI.delete(model::MOI.ModelLike, bridge::QuadtoSOCBridge)
+    MOI.delete(model, bridge.soc)
 end
 
 # Attributes, Bridge acting as a constraint
