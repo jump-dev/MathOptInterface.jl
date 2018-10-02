@@ -72,7 +72,11 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
         rmul!(Q, -1)
     end
     U = try
-        cholesky(Symmetric(Q)).U
+        @static if VERSION >= v"0.7-"
+            cholesky(Symmetric(Q)).U
+        else
+            chol(Symmetric(Q))
+        end
     catch err
         if err isa PosDefException
             error("The optimizer supports second-order cone constraints and",
