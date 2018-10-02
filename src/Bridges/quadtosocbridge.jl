@@ -71,14 +71,27 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
     if !less_than
         rmul!(Q, -1)
     end
-    U = cholesky(Symmetric(Q)).U
+    U = try
+        cholesky(Symmetric(Q)).U
+    catch err
+        if err isa PosDefException
+            error("The optimizer supports second-order cone constraints and",
+                  " not quadratic constraints but you entered a quadratic",
+                  " constraint of type: `$(typeof(func))`-in-`$(typeof(set))`.",
+                  " A bridge attempted to transform the quadratic constraint",
+                  " to a second order cone constraint but the constraint is not",
+                  " convex.")
+        else
+            rethrow(err)
+        end
+    end
     Ux_terms = matrix_to_vector_affine_terms(U, index_to_variable_map)
     Ux = MOI.VectorAffineFunction(Ux_terms, zeros(T, size(U, 1)))
     t = MOI.ScalarAffineFunction(less_than ? MOIU.operate_terms(-, func.affine_terms) : func.affine_terms,
                                  less_than ? set_constant - func.constant : func.constant - set_constant)
     f = MOIU.operate(vcat, T, one(T), t, Ux)
     dimension = MOI.output_dimension(f)
-    soc = MOI.addconstraint!(model, f,
+    soc = MOI.add_constraint(model, f,
                              MOI.RotatedSecondOrderCone(dimension))
     return QuadtoSOCBridge(soc, dimension, less_than, set_constant)
 end

@@ -257,6 +257,23 @@ end
 
     @testset "QuadtoSOC" begin
         bridgedmock = MOIB.QuadtoSOC{Float64}(mock)
+        @testset "Error for non-convex quadratic constraints" begin
+            x = MOI.add_variable(bridgedmock)
+            @test_throws ErrorException begin
+                MOI.add_constraint(bridgedmock,
+                                   MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
+                                                               [MOI.ScalarQuadraticTerm(1.0, x, x)],
+                                                               0.0),
+                                   MOI.GreaterThan(0.0))
+            end
+            @test_throws ErrorException begin
+                MOI.add_constraint(bridgedmock,
+                                   MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
+                                                               [MOI.ScalarQuadraticTerm(-1.0, x, x)],
+                                                               0.0),
+                                   MOI.LessThan(0.0))
+            end
+        end
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FeasiblePoint))
         MOIT.qcp1test(bridgedmock, config)
