@@ -68,11 +68,9 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
         set_constant = -set_constant
     end
     Q, index_to_variable_map = matrix_from_quadratic_terms(func.quadratic_terms)
-    @show Q
     if !less_than
         rmul!(Q, -1)
     end
-    @show Q
     U = cholesky(Symmetric(Q)).U
     Ux_terms = matrix_to_vector_affine_terms(U, index_to_variable_map)
     Ux = MOI.VectorAffineFunction(Ux_terms, zeros(T, size(U, 1)))
@@ -162,18 +160,12 @@ end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::QuadtoSOCBridge)
     soc = MOI.get(model, attr, bridge.soc)
-    @show soc
     output = sum(soc[i]^2 for i in 3:bridge.dimension)
-    @show output
     output /= 2
-    @show output
     output -= soc[1] * soc[2]
-    @show output
     if !bridge.less_than
         output = -output
     end
-    @show output
     output += bridge.set_constant
-    @show output
     return output
 end
