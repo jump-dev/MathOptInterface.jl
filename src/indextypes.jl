@@ -24,6 +24,14 @@ struct VariableIndex
     value::Int64
 end
 
+# The default hash is slow. It's important for the performance of dictionaries
+# of VariableIndices to define our own.
+# https://github.com/JuliaLang/julia/issues/10208
+Base.hash(v::VariableIndex, h::UInt) = hash(v.value, h)
+
+# No need to define isequal because the default matches our implementation of
+# hash.
+
 const Index = Union{ConstraintIndex,VariableIndex}
 
 """
