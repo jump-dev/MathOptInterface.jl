@@ -54,9 +54,51 @@ An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
 it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
 current state.
 """
-function add_constraint(model::ModelLike, func::AbstractFunction, set::AbstractSet)
+function add_constraint(model::ModelLike, func::AbstractFunction,
+                        set::AbstractSet)
+    add_constraint_fallback_error(model, func, set)
     if supports_constraint(model, typeof(func), typeof(set))
-        throw(AddConstraintNotAllowed{typeof(func), typeof(set)}())
+        throw()
+    else
+        throw(UnsupportedConstraint{typeof(func), typeof(set)}())
+    end
+end
+
+# add_constraint_fallback_error checks whether func and set are both scalar
+# or both vector. If it is the case, it calls
+# `correct_add_constraint_fallback_error`
+function add_constraint_fallback_error(model::ModelLike,
+                                       func::AbstractScalarFunction,
+                                       set::AbstractScalarSet;
+                                       kwargs...)
+    correct_add_constraint_fallback_error(model, func, set; kwargs...)
+end
+function add_constraint_fallback_error(model::ModelLike,
+                                       func::AbstractVectorFunction,
+                                       set::AbstractVectorSet;
+                                       kwargs...)
+    correct_add_constraint_fallback_error(model, func, set; kwargs...)
+end
+function add_constraint_fallback_error(model::ModelLike,
+                                       func::AbstractScalarFunction,
+                                       set::AbstractVectorSet;
+                                       kwargs...)
+    error("Cannot add a constraint of the form `ScalarFunction`-in-`VectorSet`")
+end
+function add_constraint_fallback_error(model::ModelLike,
+                                       func::AbstractVectorFunction,
+                                       set::AbstractScalarSet;
+                                       kwargs...)
+    error("Cannot add a constraint of the form `VectorFunction`-in-`ScalarSet`")
+end
+
+# func and set are both scalar or both vector
+function correct_add_constraint_fallback_error(model::ModelLike,
+                                               func::AbstractFunction,
+                                               set::AbstractSet;
+                                               error_if_supported=AddConstraintNotAllowed{typeof(func), typeof(set)}())
+    if supports_constraint(model, typeof(func), typeof(set))
+        throw(error_if_supported)
     else
         throw(UnsupportedConstraint{typeof(func), typeof(set)}())
     end

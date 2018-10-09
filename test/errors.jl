@@ -18,6 +18,38 @@
     vi = MOI.VariableIndex(1)
     func = MOI.SingleVariable(vi)
 
+    @testset "Inconsistent Vector/Scalar errors" begin
+        @test_throws MOI.ErrorException begin
+            MOI.add_constraint(model, MOI.VectorOfVariables([vi, vi]), MOI.EqualTo(0))
+        end
+        @test_throws MOI.ErrorException begin
+            MOI.add_constraint(model, func, MOI.Nonnegatives(2))
+        end
+    end
+    @testset "UnsupportedConstraint" begin
+        for f in (MOI.add_constraint, MOIU.allocate_constraint, MOIU.load_constraint)
+            @test_throws MOI.UnsupportedConstraint begin
+                MOI.add_constraint(model, func, MOI.EqualTo(0))
+            end
+            try
+                MOI.add_constraint(model, func, MOI.EqualTo(0))
+            catch err
+                @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
+                " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraints is" *
+                " not supported by the the model."
+            end
+            @test_throws MOI.UnsupportedConstraint begin
+                MOI.add_constraint(model, vi, MOI.EqualTo(0))
+            end
+            @test_throws MOI.UnsupportedConstraint begin
+                MOI.add_constraint(model, [vi, vi], MOI.Nonnegatives(2))
+            end
+            @test_throws MOI.UnsupportedConstraint begin
+                MOI.add_constraints(model, [vi, vi], [MOI.EqualTo(0),
+                                                      MOI.EqualTo(0)])
+            end
+        end
+    end
     @testset "add_constraint errors" begin
         @test_throws MOI.AddConstraintNotAllowed begin
             MOI.add_constraint(model, func, MOI.EqualTo(0.0))
@@ -42,25 +74,18 @@
             MOI.add_constraints(model, [vi, vi], [MOI.EqualTo(0.0),
                                                   MOI.EqualTo(0.0)])
         end
-        @test_throws MOI.UnsupportedConstraint begin
-            MOI.add_constraint(model, func, MOI.EqualTo(0))
-        end
-        try
-            MOI.add_constraint(model, func, MOI.EqualTo(0))
-        catch err
-            @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
-            " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraints is" *
-            " not supported by the the model."
-        end
-        @test_throws MOI.UnsupportedConstraint begin
-            MOI.add_constraint(model, vi, MOI.EqualTo(0))
-        end
-        @test_throws MOI.UnsupportedConstraint begin
-            MOI.add_constraint(model, [vi, vi], MOI.Nonnegatives(2))
-        end
-        @test_throws MOI.UnsupportedConstraint begin
-            MOI.add_constraints(model, [vi, vi], [MOI.EqualTo(0),
-                                                  MOI.EqualTo(0)])
+    end
+
+    for f in (MOIU.allocate_constraint, MOIU.load_constraint)
+        @testset "$f errors" begin
+            @test_throws MOI.ErrorException begin
+                f(model, func, MOI.EqualTo(0.0))
+            end
+            try
+                f(model, func, MOI.EqualTo(0.0))
+            catch err
+                @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
+            end
         end
     end
 
@@ -92,12 +117,14 @@
     end
 
     @testset "UnsupportedAttribute" begin
-        @test_throws MOI.UnsupportedAttribute begin
-            MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
-                     MOI.SingleVariable(vi))
-        end
-        @test_throws MOI.UnsupportedAttribute begin
-            MOI.set(model, MOI.ConstraintDualStart(), ci, 0.0)
+        for f in (MOI.set, MOIU.load, MOIU.allocate)
+            @test_throws MOI.UnsupportedAttribute begin
+                f(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
+                         MOI.SingleVariable(vi))
+            end
+            @test_throws MOI.UnsupportedAttribute begin
+                f(model, MOI.ConstraintDualStart(), ci, 0.0)
+            end
         end
     end
 
@@ -107,6 +134,22 @@
         end
         @test_throws MOI.SetAttributeNotAllowed begin
             MOI.set(model, MOI.ConstraintPrimalStart(), ci, 0.0)
+        end
+    end
+
+    for f in (MOIU.load, MOIU.allocate)
+        @testset "$f errors" begin
+            @test_throws MOI.ErrorException begin
+                f(model, MOI.ObjectiveSense(), MOI.MaxSense)
+            end
+            try
+                f(model, MOI.ObjectiveSense(), MOI.MaxSense)
+            catch err
+                @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
+            end
+            @test_throws MOI.ErrorException begin
+                f(model, MOI.ConstraintPrimalStart(), ci, 0.0)
+            end
         end
     end
 
