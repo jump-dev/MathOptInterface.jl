@@ -69,7 +69,7 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
     end
     Q, index_to_variable_map = matrix_from_quadratic_terms(func.quadratic_terms)
     if !less_than
-        rmul!(Q, -1)
+        Compat.rmul!(Q, -1)
     end
     U = try
         @static if VERSION >= v"0.7-"
