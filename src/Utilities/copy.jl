@@ -171,8 +171,8 @@ Returns the index for the constraint to be used in `load_constraint` that will b
 """
 function allocate_constraint(model::MOI.ModelLike, func::MOI.AbstractFunction,
                              set::MOI.AbstractSet)
-    MOI.add_constraint_fallback_error(model, func, set;
-                                      error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+    MOI.throw_add_constraint_error_fallback(model, func, set;
+                                            error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
 end
 
 """
@@ -207,8 +207,8 @@ Sets the constraint function and set for the constraint of index `ci`.
 """
 function load_constraint(model::MOI.ModelLike, func::MOI.AbstractFunction,
                          set::MOI.AbstractSet)
-    MOI.add_constraint_fallback_error(model, func, set;
-                                      error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+    MOI.throw_add_constraint_error_fallback(model, func, set;
+                                            error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
 end
 
 function allocate_constraints(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}

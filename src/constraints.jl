@@ -56,7 +56,7 @@ current state.
 """
 function add_constraint(model::ModelLike, func::AbstractFunction,
                         set::AbstractSet)
-    add_constraint_fallback_error(model, func, set)
+    throw_add_constraint_error_fallback(model, func, set)
     if supports_constraint(model, typeof(func), typeof(set))
         throw()
     else
@@ -64,39 +64,39 @@ function add_constraint(model::ModelLike, func::AbstractFunction,
     end
 end
 
-# add_constraint_fallback_error checks whether func and set are both scalar
-# or both vector. If it is the case, it calls
-# `correct_add_constraint_fallback_error`
-function add_constraint_fallback_error(model::ModelLike,
-                                       func::AbstractScalarFunction,
-                                       set::AbstractScalarSet;
-                                       kwargs...)
-    correct_add_constraint_fallback_error(model, func, set; kwargs...)
+# throw_add_constraint_error_fallback checks whether func and set are both
+# scalar or both vector. If it is the case, it calls
+# `correct_throw_add_constraint_error_fallback`
+function throw_add_constraint_error_fallback(model::ModelLike,
+                                             func::AbstractScalarFunction,
+                                             set::AbstractScalarSet;
+                                             kwargs...)
+    correct_throw_add_constraint_error_fallback(model, func, set; kwargs...)
 end
-function add_constraint_fallback_error(model::ModelLike,
-                                       func::AbstractVectorFunction,
-                                       set::AbstractVectorSet;
-                                       kwargs...)
-    correct_add_constraint_fallback_error(model, func, set; kwargs...)
+function throw_add_constraint_error_fallback(model::ModelLike,
+                                             func::AbstractVectorFunction,
+                                             set::AbstractVectorSet;
+                                             kwargs...)
+    correct_throw_add_constraint_error_fallback(model, func, set; kwargs...)
 end
-function add_constraint_fallback_error(model::ModelLike,
-                                       func::AbstractScalarFunction,
-                                       set::AbstractVectorSet;
-                                       kwargs...)
+function throw_add_constraint_error_fallback(model::ModelLike,
+                                             func::AbstractScalarFunction,
+                                             set::AbstractVectorSet;
+                                             kwargs...)
     error("Cannot add a constraint of the form `ScalarFunction`-in-`VectorSet`")
 end
-function add_constraint_fallback_error(model::ModelLike,
-                                       func::AbstractVectorFunction,
-                                       set::AbstractScalarSet;
-                                       kwargs...)
+function throw_add_constraint_error_fallback(model::ModelLike,
+                                             func::AbstractVectorFunction,
+                                             set::AbstractScalarSet;
+                                             kwargs...)
     error("Cannot add a constraint of the form `VectorFunction`-in-`ScalarSet`")
 end
 
 # func and set are both scalar or both vector
-function correct_add_constraint_fallback_error(model::ModelLike,
-                                               func::AbstractFunction,
-                                               set::AbstractSet;
-                                               error_if_supported=AddConstraintNotAllowed{typeof(func), typeof(set)}())
+function correct_throw_add_constraint_error_fallback(model::ModelLike,
+                                                     func::AbstractFunction,
+                                                     set::AbstractSet;
+                                                     error_if_supported=AddConstraintNotAllowed{typeof(func), typeof(set)}())
     if supports_constraint(model, typeof(func), typeof(set))
         throw(error_if_supported)
     else
