@@ -57,11 +57,6 @@ current state.
 function add_constraint(model::ModelLike, func::AbstractFunction,
                         set::AbstractSet)
     throw_add_constraint_error_fallback(model, func, set)
-    if supports_constraint(model, typeof(func), typeof(set))
-        throw()
-    else
-        throw(UnsupportedConstraint{typeof(func), typeof(set)}())
-    end
 end
 
 # throw_add_constraint_error_fallback checks whether func and set are both
