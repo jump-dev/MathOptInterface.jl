@@ -154,8 +154,8 @@ const ALLOCATE_LOAD_NOT_IMPLEMENTED = ErrorException("The Allocate-Load interfac
 Informs `model` that `load` will be called with the same arguments after `load_variables` is called.
 """
 function allocate(model::MOI.ModelLike, args...)
-    MOI.set_fallback_error(model, args...;
-                           error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+    MOI.throw_set_error_fallback(model, args...;
+                                 error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
 end
 
 function allocate(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector, values::Vector)
@@ -190,8 +190,8 @@ function load_variables end
 This has the same effect that `set` with the same arguments except that `allocate` should be called first before `load_variables`.
 """
 function load(model::MOI.ModelLike, args...)
-    MOI.set_fallback_error(model, args...;
-                           error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+    MOI.throw_set_error_fallback(model, args...;
+                                 error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
 end
 
 function load(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector, values::Vector)
