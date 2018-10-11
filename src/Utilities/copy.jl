@@ -143,6 +143,9 @@ Creates `nvars` variables and returns a vector of `nvars` variable indices.
 """
 function allocate_variables end
 
+const ALLOCATE_LOAD_NOT_IMPLEMENTED = ErrorException("The Allocate-Load interface is" *
+                                                     " not implemented by the model")
+
 """
     allocate(model::ModelLike, attr::ModelLikeAttribute, value)
     allocate(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex, value)
@@ -150,7 +153,10 @@ function allocate_variables end
 
 Informs `model` that `load` will be called with the same arguments after `load_variables` is called.
 """
-function allocate end
+function allocate(model::MOI.ModelLike, args...)
+    MOI.throw_set_error_fallback(model, args...;
+                                 error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+end
 
 function allocate(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector, values::Vector)
     for (index, value) in zip(indices, values)
@@ -163,7 +169,11 @@ end
 
 Returns the index for the constraint to be used in `load_constraint` that will be called after `load_variables` is called.
 """
-function allocate_constraint end
+function allocate_constraint(model::MOI.ModelLike, func::MOI.AbstractFunction,
+                             set::MOI.AbstractSet)
+    MOI.throw_add_constraint_error_fallback(model, func, set;
+                                            error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+end
 
 """
     load_variables(model::MOI.ModelLike, nvars::Integer)
@@ -179,7 +189,10 @@ function load_variables end
 
 This has the same effect that `set` with the same arguments except that `allocate` should be called first before `load_variables`.
 """
-function load end
+function load(model::MOI.ModelLike, args...)
+    MOI.throw_set_error_fallback(model, args...;
+                                 error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+end
 
 function load(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, MOI.AbstractConstraintAttribute}, indices::Vector, values::Vector)
     for (index, value) in zip(indices, values)
@@ -192,7 +205,11 @@ end
 
 Sets the constraint function and set for the constraint of index `ci`.
 """
-function load_constraint end
+function load_constraint(model::MOI.ModelLike, func::MOI.AbstractFunction,
+                         set::MOI.AbstractSet)
+    MOI.throw_add_constraint_error_fallback(model, func, set;
+                                            error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
+end
 
 function allocate_constraints(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     # Allocate constraints

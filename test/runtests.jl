@@ -37,7 +37,7 @@ MOIU.@model(Model,
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
-            
+
 # Model supporting only SecondOrderCone as non-LP cone.
 MOIU.@model(ModelForMock, (MOI.ZeroOne, MOI.Integer),
             (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),

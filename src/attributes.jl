@@ -278,28 +278,30 @@ function set(model::ModelLike,
 end
 
 function set(model::ModelLike, attr::AnyAttribute, args...)
-    set_fallback_error(model, attr, args...)
+    throw_set_error_fallback(model, attr, args...)
 end
-# set_fallback_error is included so that we can return type-specific error
+# throw_set_error_fallback is included so that we can return type-specific error
 # messages without needing to overload set and cause ambiguity errors. For
-# examples, see ConstraintSet and ConstraintFunction. set_fallback_error should
+# examples, see ConstraintSet and ConstraintFunction. throw_set_error_fallback should
 # not be overloaded by users of MOI.
-function set_fallback_error(model::ModelLike,
-                             attr::Union{AbstractModelAttribute,
-                                         AbstractOptimizerAttribute},
-                             value)
+function throw_set_error_fallback(model::ModelLike,
+                                  attr::Union{AbstractModelAttribute,
+                                              AbstractOptimizerAttribute},
+                                  value;
+                                  error_if_supported = SetAttributeNotAllowed(attr))
     if supports(model, attr)
-        throw(SetAttributeNotAllowed(attr))
+        throw(error_if_supported)
     else
         throw(UnsupportedAttribute(attr))
     end
 end
-function set_fallback_error(model::ModelLike,
-                             attr::Union{AbstractVariableAttribute,
-                                         AbstractConstraintAttribute},
-                             index::Index, value)
+function throw_set_error_fallback(model::ModelLike,
+                                  attr::Union{AbstractVariableAttribute,
+                                              AbstractConstraintAttribute},
+                                  index::Index, value;
+                                  error_if_supported = SetAttributeNotAllowed(attr))
     if supports(model, attr, typeof(index))
-        throw(SetAttributeNotAllowed(attr))
+        throw(error_if_supported)
     else
         throw(UnsupportedAttribute(attr))
     end
@@ -627,14 +629,16 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
-function set_fallback_error(::ModelLike, attr::ConstraintFunction,
-                     ::ConstraintIndex{F, S}, ::F) where {F <: AbstractFunction,
-                                                          S}
-    throw(SetAttributeNotAllowed(attr))
+function throw_set_error_fallback(::ModelLike, attr::ConstraintFunction,
+                                  ::ConstraintIndex{F, S}, ::F;
+                                  error_if_supported = SetAttributeNotAllowed(attr)) where {F <: AbstractFunction, S}
+    throw(error_if_supported)
 end
 func_type(c::ConstraintIndex{F, S}) where {F, S} = F
-function set_fallback_error(::ModelLike, ::ConstraintFunction,
-                     constraint_index::ConstraintIndex, func::AbstractFunction)
+function throw_set_error_fallback(::ModelLike, ::ConstraintFunction,
+                                  constraint_index::ConstraintIndex,
+                                  func::AbstractFunction;
+                                  kwargs...)
     throw(ArgumentError("""Cannot modify functions of different types.
     Constraint type is $(func_type(constraint_index)) while the replacement
     function is of type $(typeof(func))."""))
@@ -647,13 +651,16 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function set_fallback_error(::ModelLike, attr::ConstraintSet, ::ConstraintIndex{F, S},
-                     ::S) where {F, S <: AbstractSet}
-    throw(SetAttributeNotAllowed(attr))
+function throw_set_error_fallback(::ModelLike, attr::ConstraintSet,
+                                  ::ConstraintIndex{F, S}, ::S;
+                                  error_if_supported = SetAttributeNotAllowed(attr)) where {F, S <: AbstractSet}
+    throw(error_if_supported)
 end
 set_type(::ConstraintIndex{F, S}) where {F, S} = S
-function set_fallback_error(::ModelLike, ::ConstraintSet,
-                     constraint_index::ConstraintIndex, set::AbstractSet)
+function throw_set_error_fallback(::ModelLike, ::ConstraintSet,
+                                  constraint_index::ConstraintIndex,
+                                  set::AbstractSet;
+                                  kwargs...)
     throw(ArgumentError("""Cannot modify sets of different types. Constraint
     type is $(set_type(constraint_index)) while the replacement set is of
     type $(typeof(set)). Use `transform` instead."""))
