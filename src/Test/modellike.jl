@@ -25,8 +25,10 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.VariableName(), v[2], "") # Shouldn't error with duplicate empty name
 
         MOI.set(model, MOI.VariableName(), v[1], "Var1")
-        @test_throws Exception MOI.set(model, MOI.VariableName(), v[2], "Var1")
         MOI.set(model, MOI.VariableName(), v[2], "Var2")
+
+        # TODO: Models might error in different ways when a duplicate name is
+        # set. Come up with a reasonable way to test this.
 
         @test MOI.get(model, MOI.VariableIndex, "Var1") == v[1]
         @test MOI.get(model, MOI.VariableIndex, "Var2") == v[2]
@@ -48,7 +50,6 @@ function nametest(model::MOI.ModelLike)
 
         MOI.set(model, MOI.ConstraintName(), c, "Con0")
         @test MOI.get(model, MOI.ConstraintName(), c) == "Con0"
-        @test_throws Exception MOI.set(model, MOI.ConstraintName(), c2, "Con0")
 
         MOI.set(model, MOI.ConstraintName(), [c], ["Con1"])
         @test MOI.get(model, MOI.ConstraintName(), [c]) == ["Con1"]
