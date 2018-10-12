@@ -633,8 +633,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         $modeldef
         function $modelname{T}() where T
             $modelname{T}("", false, $MOI.FeasibilitySense, false, $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)),
-                   0, Set{$VI}(), Dict{$VI, String}(), Dict{String, $VI}(),
-                   0, Dict{$CI, String}(), Dict{String, $CI}(), Int[],
+                   0, Set{$VI}(), Dict{$VI, String}(), nothing,
+                   0, Dict{$CI, String}(), nothing, Int[],
                    $(_getCV.(funs)...))
         end
 
