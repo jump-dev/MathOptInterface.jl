@@ -195,13 +195,13 @@ function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
     if model.name_to_var === nothing
         # Rebuild the map.
         model.name_to_var = Dict{String, VI}()
-        for (var, name) in model.var_to_name
-            isempty(name) && continue
-            if haskey(model.name_to_var, name)
-                error("Variable $var and $(model.name_to_var[name]) have the " *
-                      "same name.")
+        for (var, var_name) in model.var_to_name
+            isempty(var_name) && continue
+            if haskey(model.name_to_var, var_name)
+                error("Variable $var and $(model.name_to_var[var_name]) have " *
+                      "the same name.")
             end
-            model.name_to_var[name] = var
+            model.name_to_var[var_name] = var
         end
     end
     return get(model.name_to_var, name, nothing)
@@ -222,13 +222,13 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     if model.name_to_con === nothing
         # Rebuild the map.
         model.name_to_con = Dict{String, CI}()
-        for (con, name) in model.con_to_name
-            isempty(name) && continue
-            if haskey(model.name_to_con, name)
-                error("Constraint $con and $(model.name_to_con[name]) have " *
-                      "the same name.")
+        for (con, con_name) in model.con_to_name
+            isempty(con_name) && continue
+            if haskey(model.name_to_con, con_name)
+                error("Constraint $con and $(model.name_to_con[con_name]) " *
+                      "have the same name.")
             end
-            model.name_to_con[name] = con
+            model.name_to_con[con_name] = con
         end
     end
     ci = get(model.name_to_con, name, nothing)
