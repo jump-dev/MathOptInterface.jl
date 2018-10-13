@@ -34,6 +34,15 @@ end
             )
         )
         MOIT.solve_blank_obj(mock, config)
+        # The objective is blank so any primal value ≥ 1 is correct
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.Success,
+                (MOI.FeasiblePoint, [2]),
+                MOI.FeasiblePoint
+            )
+        )
+        MOIT.solve_blank_obj(mock, config)
     end
     @testset "solve_constant_obj" begin
         MOIU.set_mock_optimize!(mock,

@@ -131,10 +131,12 @@ function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
     test_model_solution(model, config;
         objective_value   = 0.0,
-        variable_primal   = [(x, 1.0)],
-        constraint_primal = [(c, 1.0)],
         constraint_dual   = [(c, 0.0)]
     )
+    # The objective is blank so any primal value ≥ 1 is correct
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+    @test MOI.get(model, MOI.VariablePrimal(), x) + atol + rtol ≥ 1.0
+    @test MOI.get(model, MOI.ConstraintPrimal(), c) + atol + rtol ≥ 1.0
 end
 unittests["solve_blank_obj"] = solve_blank_obj
 
