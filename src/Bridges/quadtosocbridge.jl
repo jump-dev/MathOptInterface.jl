@@ -1,4 +1,4 @@
-using Compat.LinearAlgebra
+using Compat.LinearAlgebra, Compat.SparseArrays
 
 """
     QuadtoSOCBridge{T}
@@ -71,11 +71,14 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
     if !less_than
         Compat.rmul!(Q, -1)
     end
-    U = try
+    # We have L × L' ≈ Q[p, p]
+    L, p = try
         @static if VERSION >= v"0.7-"
-            cholesky(Symmetric(Q)).U
+            F = cholesky(Symmetric(Q))
+            sparse(F.L), F.p
         else
-            chol(Symmetric(Q))
+            F = cholfact(Symmetric(Q))
+            sparse(F[:L]), F[:p]
         end
     catch err
         if err isa PosDefException
@@ -89,8 +92,8 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
             rethrow(err)
         end
     end
-    Ux_terms = matrix_to_vector_affine_terms(U, index_to_variable_map)
-    Ux = MOI.VectorAffineFunction(Ux_terms, zeros(T, size(U, 1)))
+    Ux_terms = matrix_to_vector_affine_terms(L, p, index_to_variable_map)
+    Ux = MOI.VectorAffineFunction(Ux_terms, zeros(T, size(L, 2)))
     t = MOI.ScalarAffineFunction(less_than ? MOIU.operate_terms(-, func.affine_terms) : func.affine_terms,
                                  less_than ? set_constant - func.constant : func.constant - set_constant)
     f = MOIU.operate(vcat, T, one(T), t, Ux)
@@ -113,31 +116,37 @@ function matrix_from_quadratic_terms(terms::Vector{MOI.ScalarQuadraticTerm{T}}) 
             end
         end
     end
-    Q = zeros(T, n, n)
+    I = Int[]
+    J = Int[]
+    V = T[]
     for term in terms
         i = variable_to_index_map[term.variable_index_1]
         j = variable_to_index_map[term.variable_index_2]
-        Q[i, j] += term.coefficient
+        push!(I, i)
+        push!(J, j)
+        push!(V, term.coefficient)
         if i != j
-            Q[j, i] += term.coefficient
+            push!(I, i)
+            push!(J, j)
+            push!(V, term.coefficient)
         end
     end
+    # Duplicate terms are summed together in `sparse`
+    Q = sparse(I, J, V, n, n)
     return Q, index_to_variable_map
 end
 
-function matrix_to_vector_affine_terms(matrix::AbstractMatrix{T},
+function matrix_to_vector_affine_terms(L::SparseMatrixCSC{T},
+                                       p::Vector,
                                        index_to_variable_map::Dict{Int, VI}) where T
-    terms = MOI.VectorAffineTerm{T}[]
-    for row in 1:size(matrix, 1)
-        for col in 1:size(matrix, 2)
-            if !iszero(matrix[row, col])
-                push!(terms, MOI.VectorAffineTerm(row,
-                                                  MOI.ScalarAffineTerm(matrix[row, col],
-                                                                       index_to_variable_map[col])))
-            end
-        end
+    # We know that L × L' ≈ Q[p, p] hence (L × L')[i, :] ≈ Q[p[i], p]
+    # We precompute the map to avoid having to do a dictionary lookup for every
+    # term
+    variable = map(i -> index_to_variable_map[p[i]], 1:size(L, 1))
+    function term(i::Integer, j::Integer, v::T)
+        return MOI.VectorAffineTerm(j, MOI.ScalarAffineTerm(v, variable[i]))
     end
-    return terms
+    return map(ijv -> term(ijv...), zip(findnz(L)...))
 end
 
 function MOI.supports_constraint(::Type{QuadtoSOCBridge{T}},
