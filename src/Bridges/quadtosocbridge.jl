@@ -87,8 +87,9 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
                   " not quadratic constraints but you entered a quadratic",
                   " constraint of type: `$(typeof(func))`-in-`$(typeof(set))`.",
                   " A bridge attempted to transform the quadratic constraint",
-                  " to a second order cone constraint but the constraint is not",
-                  " convex.")
+                  " to a second order cone constraint but the constraint is",
+                  " not strongly convex, i.e., the symmetric matrix of"
+                  " quadratic coefficients is not positive definite.")
         else
             rethrow(err)
         end
