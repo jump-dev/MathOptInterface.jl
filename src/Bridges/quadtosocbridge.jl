@@ -9,7 +9,8 @@ The set of points `x` satisfying the constraint
 ```
 is a convex set if `Q` is positive semidefinite and is the union of two convex
 cones if `a` and `b` are zero (i.e. *homogeneous* case) and `Q` has only one
-negative eigenvalue.
+negative eigenvalue. Currently, only the non-homogeneous transformation
+is implemented, see the [Note](@ref) section for more details.
 
 ## Non-homogeneous case
 
