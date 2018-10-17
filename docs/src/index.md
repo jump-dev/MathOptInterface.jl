@@ -14,9 +14,8 @@ nonlinear and stochastic linear programming, MPS was not designed with
 extensibility in mind. This has led some authors (such as [^3]) to conclude that
 developing a new format is easier than extending the existing MPS format.
 
-The LP file-format dates back to the work of Orchard-Hays who attempted to
-correct the ''mistakes'' of the MPS file-format by creating a human-readable,
-row-oriented format for mathematicians [^2]. However, due to its age, there is
+The LP file-format is an old alternative to the MPS file-format that is
+human-readable and row-oriented [^2]. However, due to its age, there is
 no longer a single standard for the LP file-format. This has led to subtle
 differences between implementations in different readers that hampers the
 usefulness of the format as a format for interchange. Much like the MPS file,
