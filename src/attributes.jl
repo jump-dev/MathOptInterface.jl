@@ -160,18 +160,24 @@ Return a vector of attributes corresponding to each constraint in the collection
     get(model::ModelLike, ::Type{VariableIndex}, name::String)
 
 If a variable with name `name` exists in the model `model`, return the
-corresponding index, otherwise return `nothing`.
+corresponding index, otherwise return `nothing`. Errors if two variables
+have the same name and the model implementation does not check for duplicates
+when the names are set.
 
     get(model::ModelLike, ::Type{ConstraintIndex{F,S}}, name::String) where {F<:AbstractFunction,S<:AbstractSet}
 
 If an `F`-in-`S` constraint with name `name` exists in the model `model`, return
-the corresponding index, otherwise return `nothing`.
+the corresponding index, otherwise return `nothing`. Errors if two constraints
+have the same name and the model implementation does not check for duplicates
+when the names are set.
 
     get(model::ModelLike, ::Type{ConstraintIndex}, name::String)
 
 If *any* constraint with name `name` exists in the model `model`, return the
 corresponding index, otherwise return `nothing`. This version is available for
 convenience but may incur a performance penalty because it is not type stable.
+Errors if two constraints have the same name and the model implementation does
+not check for duplicates when the names are set.
 
 ### Examples
 
@@ -503,7 +509,15 @@ struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 """
     VariableName()
 
-A variable attribute for the string identifying the variable. It is invalid for two variables to have the same name.
+A variable attribute for the string identifying the variable. It is invalid for
+two variables to have the same name.
+
+## Note
+
+An implementation may but is not required to check for duplicate names when the
+`VariableName` attribute is set. If this check is not performed when the name
+is set, then looking up a variable by name must throw an error when more than
+one variable has the same name.
 """
 struct VariableName <: AbstractVariableAttribute end
 
@@ -566,7 +580,15 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 """
     ConstraintName()
 
-A constraint attribute for the string identifying the constraint. It is invalid for two constraints of any kind to have the same name.
+A constraint attribute for the string identifying the constraint. It is invalid
+for two constraints of any kind to have the same name.
+
+## Note
+
+An implementation may but is not required to check for duplicate names when the
+`ConstraintName` attribute is set. If this check is not performed when the name
+is set, then looking up a constraint by name must throw an error when more than
+one constraint (of any type) has the same name.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 

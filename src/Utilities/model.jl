@@ -198,6 +198,7 @@ function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
         for (var, var_name) in model.var_to_name
             isempty(var_name) && continue
             if haskey(model.name_to_var, var_name)
+                model.name_to_var = nothing
                 error("Variable $var and $(model.name_to_var[var_name]) have " *
                       "the same name.")
             end
@@ -225,6 +226,7 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
         for (con, con_name) in model.con_to_name
             isempty(con_name) && continue
             if haskey(model.name_to_con, con_name)
+                model.name_to_con = nothing
                 error("Constraint $con and $(model.name_to_con[con_name]) " *
                       "have the same name.")
             end
