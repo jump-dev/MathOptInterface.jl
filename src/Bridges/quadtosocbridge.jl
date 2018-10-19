@@ -90,8 +90,8 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
                   " to a second order cone constraint but the constraint is",
                   " not strongly convex, i.e., the symmetric matrix of",
                   " quadratic coefficients is not positive definite. Convex",
-                  " constraint that are not stronly convex, i.e. the matrix is",
-                  " positive semidefinite but not positive definite, is not",
+                  " constraints that are not strongly convex, i.e. the matrix is",
+                  " positive semidefinite but not positive definite, are not",
                   " supported yet.")
         else
             rethrow(err)
