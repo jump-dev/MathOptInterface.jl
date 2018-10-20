@@ -255,6 +255,40 @@ end
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0),))
     end
 
+    @testset "QuadtoSOC" begin
+        bridgedmock = MOIB.QuadtoSOC{Float64}(mock)
+        @testset "Error for non-convex quadratic constraints" begin
+            x = MOI.add_variable(bridgedmock)
+            @test_throws ErrorException begin
+                MOI.add_constraint(bridgedmock,
+                                   MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
+                                                               [MOI.ScalarQuadraticTerm(1.0, x, x)],
+                                                               0.0),
+                                   MOI.GreaterThan(0.0))
+            end
+            @test_throws ErrorException begin
+                MOI.add_constraint(bridgedmock,
+                                   MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
+                                                               [MOI.ScalarQuadraticTerm(-1.0, x, x)],
+                                                               0.0),
+                                   MOI.LessThan(0.0))
+            end
+        end
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FeasiblePoint))
+        MOIT.qcp1test(bridgedmock, config)
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+        MOIT.qcp2test(bridgedmock, config)
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+        MOIT.qcp3test(bridgedmock, config)
+        ci = first(MOI.get(bridgedmock,
+                           MOI.ListOfConstraintIndices{MOI.ScalarQuadraticFunction{Float64},
+                                                       MOI.LessThan{Float64}}()))
+        test_delete_bridge(bridgedmock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),))
+    end
+
     @testset "SquarePSD" begin
         bridgedmock = MOIB.SquarePSD{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
