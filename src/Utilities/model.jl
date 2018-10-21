@@ -111,9 +111,9 @@ function MOI.delete(model::AbstractModel, vi::VI)
         MOI.delete(model, ci)
     end
     delete!(model.varindices, vi)
-    if haskey(model.varnames, vi)
-        delete!(model.namesvar, model.varnames[vi])
-        delete!(model.varnames, vi)
+    model.name_to_var = nothing
+    if haskey(model.var_to_name, vi)
+        delete!(model.var_to_name, vi)
     end
 end
 
@@ -168,48 +168,72 @@ function check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index
 end
 
 """
-    setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
+    setname(index_to_name::Dict{<:MOI.Index, String}, name_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
 
-Sets the name of the index `idx` to the name `name` in the maps `index_to_names` and `names_to_index`.
+Sets the name of the index `idx` to the name `name` in the maps `index_to_name` and `name_to_index`.
 If `name` is empty, and `idx` already has a name, it is removed.
 """
-function setname(index_to_names::Dict{<:MOI.Index, String}, names_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
-    if haskey(index_to_names, idx)
-        delete!(names_to_index, index_to_names[idx])
+function setname(index_to_name::Dict{<:MOI.Index, String}, name_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
+    if haskey(index_to_name, idx)
+        delete!(name_to_index, index_to_name[idx])
     end
-    index_to_names[idx] = name
+    index_to_name[idx] = name
     if !isempty(name)
-        names_to_index[name] = idx
+        name_to_index[name] = idx
     end
     return
 end
 
 MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
-    if check_can_assign_name(model, VI, vi, name)
-        setname(model.varnames, model.namesvar, vi, name)
-    end
+    model.var_to_name[vi] = name
+    model.name_to_var = nothing # Invalidate the name map.
 end
-MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.varnames, vi, EMPTYSTRING)
+MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.var_to_name, vi, EMPTYSTRING)
 
 function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
-    return get(model.namesvar, name, nothing)
+    if model.name_to_var === nothing
+        # Rebuild the map.
+        model.name_to_var = Dict{String, VI}()
+        for (var, var_name) in model.var_to_name
+            isempty(var_name) && continue
+            if haskey(model.name_to_var, var_name)
+                model.name_to_var = nothing
+                error("Variable $var and $(model.name_to_var[var_name]) have " *
+                      "the same name.")
+            end
+            model.name_to_var[var_name] = var
+        end
+    end
+    return get(model.name_to_var, name, nothing)
 end
 
 function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vector{MOI.AbstractVariableAttribute}
-    isempty(model.varnames) ? [] : [MOI.VariableName()]
+    isempty(model.var_to_name) ? [] : [MOI.VariableName()]
 end
 
 MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 function MOI.set(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
-    if check_can_assign_name(model, CI, ci, name)
-        setname(model.connames, model.namescon, ci, name)
-    end
+    model.con_to_name[ci] = name
+    model.name_to_con = nothing # Invalidate the name map.
 end
-MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.connames, ci, EMPTYSTRING)
+MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.con_to_name, ci, EMPTYSTRING)
 
 function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
-    ci = get(model.namescon, name, nothing)
+    if model.name_to_con === nothing
+        # Rebuild the map.
+        model.name_to_con = Dict{String, CI}()
+        for (con, con_name) in model.con_to_name
+            isempty(con_name) && continue
+            if haskey(model.name_to_con, con_name)
+                model.name_to_con = nothing
+                error("Constraint $con and $(model.name_to_con[con_name]) " *
+                      "have the same name.")
+            end
+            model.name_to_con[con_name] = con
+        end
+    end
+    ci = get(model.name_to_con, name, nothing)
     if ci isa ConType
         return ci
     else
@@ -218,7 +242,7 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
 end
 
 function MOI.get(model::AbstractModel, ::MOI.ListOfConstraintAttributesSet)::Vector{MOI.AbstractConstraintAttribute}
-    isempty(model.connames) ? [] : [MOI.ConstraintName()]
+    isempty(model.con_to_name) ? [] : [MOI.ConstraintName()]
 end
 
 # Objective
@@ -283,9 +307,9 @@ function MOI.delete(model::AbstractModel, ci::CI)
         model.constrmap[ci_next.value] -= 1
     end
     model.constrmap[ci.value] = 0
-    if haskey(model.connames, ci)
-        delete!(model.namescon, model.connames[ci])
-        delete!(model.connames, ci)
+    model.name_to_con = nothing
+    if haskey(model.con_to_name, ci)
+        delete!(model.con_to_name, ci)
     end
 end
 
@@ -478,11 +502,11 @@ mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
     nextvariableid::Int64
     varindices::Set{MOI.VariableIndex}
-    varnames::Dict{MOI.VariableIndex, String}
-    namesvar::Dict{String, MOI.VariableIndex}
+    var_to_name::Dict{MOI.VariableIndex, String}
+    name_to_var::Union{Dict{String, MOI.VariableIndex}, Nothing}
     nextconstraintid::Int64
-    connames::Dict{MOI.ConstraintIndex, String}
-    namescon::Dict{String, MOI.ConstraintIndex}
+    con_to_name::Dict{MOI.ConstraintIndex, String}
+    name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
     constrmap::Vector{Int}
     singlevariable::LPModelScalarConstraints{T, MOI.SingleVariable}
     scalaraffinefunction::LPModelScalarConstraints{T, MOI.ScalarAffineFunction{T}}
@@ -521,11 +545,12 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             objective::Union{$MOI.SingleVariable, $MOI.ScalarAffineFunction{T}, $MOI.ScalarQuadraticFunction{T}}
             nextvariableid::Int64
             varindices::Set{$VI}
-            varnames::Dict{$VI, String}
-            namesvar::Dict{String, $VI}
+            var_to_name::Dict{$VI, String}
+            # If nothing, the dictionary hasn't been constructed yet.
+            name_to_var::Union{Dict{String, $VI}, Nothing}
             nextconstraintid::Int64
-            connames::Dict{$CI, String}
-            namescon::Dict{String, $CI}
+            con_to_name::Dict{$CI, String}
+            name_to_con::Union{Dict{String, $CI}, Nothing}
             constrmap::Vector{Int} # Constraint Reference value ci -> index in array in Constraints
         end
     end
@@ -550,11 +575,11 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             model.objective = $SAF{T}(MOI.ScalarAffineTerm{T}[], zero(T))
             model.nextvariableid = 0
             empty!(model.varindices)
-            empty!(model.varnames)
-            empty!(model.namesvar)
+            empty!(model.var_to_name)
+            model.name_to_var = nothing
             model.nextconstraintid = 0
-            empty!(model.connames)
-            empty!(model.namescon)
+            empty!(model.con_to_name)
+            model.name_to_con = nothing
             empty!(model.constrmap)
             $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
@@ -610,8 +635,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         $modeldef
         function $modelname{T}() where T
             $modelname{T}("", false, $MOI.FeasibilitySense, false, $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)),
-                   0, Set{$VI}(), Dict{$VI, String}(), Dict{String, $VI}(),
-                   0, Dict{$CI, String}(), Dict{String, $CI}(), Int[],
+                   0, Set{$VI}(), Dict{$VI, String}(), nothing,
+                   0, Dict{$CI, String}(), nothing, Int[],
                    $(_getCV.(funs)...))
         end
 

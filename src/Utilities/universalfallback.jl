@@ -179,6 +179,7 @@ end
 # Name
 # The names of constraints not supported by `uf.model` need to be handled
 function MOI.set(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}
+    # TODO: Switch to lazily building the name-to-con dict like Model does.
     if check_can_assign_name(uf, CI, ci, name)
         if MOI.supports_constraint(uf.model, F, S)
             MOI.set(uf.model, attr, ci, name)
