@@ -101,7 +101,7 @@ _get(uf, attr::MOI.AbstractConstraintAttribute, ci::CI) = uf.conattr[attr][ci]
 function MOI.get(uf::UniversalFallback,
                  attr::Union{MOI.AbstractOptimizerAttribute,
                              MOI.AbstractModelAttribute})
-    if MOI.supports(uf.model, attr)
+    if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
         MOI.get(uf.model, attr)
     else
         _get(uf, attr)
@@ -115,12 +115,6 @@ function MOI.get(uf::UniversalFallback,
     else
         _get(uf, attr, idx)
     end
-end
-
-function MOI.get(uf::UniversalFallback,
-                 attr::Union{MOI.NumberOfVariables,
-                             MOI.ListOfVariableIndices})
-    return MOI.get(uf.model, attr)
 end
 function MOI.get(uf::UniversalFallback,
                  attr::MOI.NumberOfConstraints{F, S}) where {F, S}

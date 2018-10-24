@@ -237,6 +237,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cva]) == MOI.Zeros(2)
 
     @test MOI.get(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], [dict[v[1]], dict[v[2]], dict[v[3]]]), 0.0)
+    @test MOI.get(dest, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{Float64}
     @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MinSense
 end
 
