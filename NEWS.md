@@ -1,11 +1,14 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+See [the gitmoji guide](https://gitmoji.carloscuesta.me/) to interpret the
+emoji at the beginning of NEWS items.
+
 v0.6.2 (October 24, 2018)
 ---------------------------
 
 - 🐛 Fix bug in UniversalFallback attribute getter (#540).
-- 🐛 Allow all correct solution for `solve_blank_obj` unit test (#537).
+- 🐛 Allow all correct solutions for `solve_blank_obj` unit test (#537).
 - ⚡️ Construct the name to object dictionaries lazily in model (#535).
 - 🚸 Add errors for Allocate-Load and bad constraint (#534).
 - ⚡️ Add specialized implementation of `hash` for `VariableIndex` (#533).
