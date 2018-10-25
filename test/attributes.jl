@@ -10,7 +10,7 @@
         @test MOI.is_copyable(MOI.ObjectiveSense())
     end
     @testset "supports" begin
-        model = DummyModel()
+        model = DummyModel{false}()
         @test_throws ArgumentError MOI.supports(model, MOI.TerminationStatus())
         @test_throws ArgumentError begin
             MOI.supports(model, MOI.ConstraintSet(),

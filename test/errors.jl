@@ -1,5 +1,5 @@
 @testset "Fallbacks for `set` methods" begin
-    model = DummyModel()
+    model = DummyModel{false}()
 
     @testset "AddVariableNotAllowed" begin
         @test_throws MOI.AddVariableNotAllowed MOI.add_variable(model)
