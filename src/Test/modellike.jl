@@ -1,6 +1,7 @@
 # TODO: Move generic model tests from MOIU to here
 
-struct UnknownSet <: MOI.AbstractSet end
+struct UnknownScalarSet <: MOI.AbstractScalarSet end
+struct UnknownVectorSet <: MOI.AbstractVectorSet end
 
 function nametest(model::MOI.ModelLike)
     @testset "Name test" begin
@@ -145,9 +146,9 @@ MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariabl
 MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[]
 
 struct BadConstraintModel <: BadModel end
-MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownSet)]
-MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
-MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownSet}) = UnknownSet()
+MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownScalarSet)]
+MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownScalarSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
+MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownScalarSet}) = UnknownScalarSet()
 
 struct UnknownModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
@@ -165,7 +166,7 @@ MOI.get(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::MOI.Const
 MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[UnknownConstraintAttribute()]
 
 function failcopytestc(dest::MOI.ModelLike)
-    @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownSet)
+    @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownScalarSet)
     @test_throws MOI.UnsupportedConstraint MOI.copy_to(dest, BadConstraintModel())
 end
 function failcopytestia(dest::MOI.ModelLike)
@@ -253,7 +254,7 @@ function supports_constrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{Bad
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
     @test !MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.EqualTo{GoodT}) # vector in scalar
     @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.Zeros) # scalar in vector
-    @test !MOI.supports_constraint(model, MOI.VectorOfVariables, UnknownSet) # set not supported
+    @test !MOI.supports_constraint(model, MOI.VectorOfVariables, UnknownVectorSet) # set not supported
 end
 
 """
