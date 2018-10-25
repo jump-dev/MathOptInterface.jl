@@ -1,6 +1,17 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.6.2 (October 24, 2018)
+---------------------------
+
+- Fix bug in UniversalFallback attribute getter (#540).
+- Allow all correct solutions for `solve_blank_obj` unit test (#537).
+- Add errors for Allocate-Load and bad constraints (#534).
+- \[performance\] Add specialized implementation of `hash` for `VariableIndex` (#533).
+- \[performance\] Construct the name to object dictionaries lazily in model (#535).
+- Add the `QuadtoSOC` bridge which transforms `ScalarQuadraticFunction`
+  constraints into `RotatedSecondOrderCone` (#483).
+
 v0.6.1 (September 22, 2018)
 ---------------------------
 
