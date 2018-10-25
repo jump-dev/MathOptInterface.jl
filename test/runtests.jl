@@ -77,3 +77,6 @@ end
     # Bridges submodule tests
     include("bridge.jl")
 end
+
+# Test hygiene of @model macro
+include("hygiene.jl")
