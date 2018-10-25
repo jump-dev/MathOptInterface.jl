@@ -572,10 +572,10 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     end
 
     code = quote
-        function broadcastcall(f::Function, model::$esc_modelname)
+        function $MOIU.broadcastcall(f::Function, model::$esc_modelname)
             $(Expr(:block, _broadcastfield.(Ref(:(broadcastcall)), funs)...))
         end
-        function broadcastvcat(f::Function, model::$esc_modelname)
+        function $MOIU.broadcastvcat(f::Function, model::$esc_modelname)
             vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
         end
         function $MOI.empty!(model::$esc_modelname{T}) where T
@@ -598,10 +598,10 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     for (cname, sets) in ((scname, scalarsets), (vcname, vectorsets))
         code = quote
             $code
-            function broadcastcall(f::Function, model::$cname)
+            function $MOIU.broadcastcall(f::Function, model::$cname)
                 $(Expr(:block, _callfield.(:f, sets)...))
             end
-            function broadcastvcat(f::Function, model::$cname)
+            function $MOIU.broadcastvcat(f::Function, model::$cname)
                 vcat($(_callfield.(:f, sets)...))
             end
             function $MOI.empty!(model::$cname)
@@ -617,7 +617,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
                 field = _field(s)
                 code = quote
                     $code
-                    $funct(model::$c, ci::$T{F, <:$set}, args...) where F = $funct(model.$field, ci, args...)
+                    $MOIU.$funct(model::$c, ci::$T{F, <:$set}, args...) where F = $funct(model.$field, ci, args...)
                 end
             end
         end
@@ -627,7 +627,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             field = _field(f)
             code = quote
                 $code
-                $funct(model::$esc_modelname, ci::$T{<:$fun}, args...) = $funct(model.$field, ci, args...)
+                $MOIU.$funct(model::$esc_modelname, ci::$T{<:$fun}, args...) = $funct(model.$field, ci, args...)
             end
         end
     end
