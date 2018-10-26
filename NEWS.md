@@ -1,9 +1,11 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.6.2 (October 24, 2018)
+v0.6.2 (October 26, 2018)
 ---------------------------
 
+- Improve hygiene of `@model` macro (#544).
+- Fix bug in copy tests (#543).
 - Fix bug in UniversalFallback attribute getter (#540).
 - Allow all correct solutions for `solve_blank_obj` unit test (#537).
 - Add errors for Allocate-Load and bad constraints (#534).
