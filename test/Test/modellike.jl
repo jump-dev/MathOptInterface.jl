@@ -1,5 +1,5 @@
 @testset "ModelLike" begin
-    model = DummyModel{true}()
+    model = DummyModelWithAdd()
     MOIT.failcopytestc(model)
     MOIT.failcopytestia(model)
     MOIT.failcopytestva(model)
