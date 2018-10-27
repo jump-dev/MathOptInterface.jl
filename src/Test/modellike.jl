@@ -4,7 +4,7 @@ struct UnknownScalarSet <: MOI.AbstractScalarSet end
 struct UnknownVectorSet <: MOI.AbstractVectorSet end
 
 function nametest(model::MOI.ModelLike)
-    @testset "Name test" begin
+    @testset "Name test with $(typeof(model))" begin
         @test MOI.supports(model, MOI.Name())
         @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
         @test MOI.get(model, MOI.Name()) == ""
@@ -26,12 +26,10 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.VariableName(), v[2], "") # Shouldn't error with duplicate empty name
 
         MOI.set(model, MOI.VariableName(), v[1], "Var1")
-        @test_throws Exception begin
-            # An implementation may detect duplicate names wither when they're
-            # set or on lookup.
-            MOI.set(model, MOI.VariableName(), v[2], "Var1")
-            MOI.get(model, MOI.VariableIndex, "Var1")
-        end
+        MOI.set(model, MOI.VariableName(), v[2], "Var1")
+        # Lookup must fail when there are multiple variables with the same name.
+        @test_throws Exception MOI.get(model, MOI.VariableIndex, "Var1")
+
         MOI.set(model, MOI.VariableName(), v[2], "Var2")
 
         @test MOI.get(model, MOI.VariableIndex, "Var1") == v[1]
@@ -54,12 +52,14 @@ function nametest(model::MOI.ModelLike)
 
         MOI.set(model, MOI.ConstraintName(), c, "Con0")
         @test MOI.get(model, MOI.ConstraintName(), c) == "Con0"
-        @test_throws Exception begin
-            # An implementation may detect duplicate names wither when they're
-            # set or on lookup.
-            MOI.set(model, MOI.ConstraintName(), c2, "Con0")
-            MOI.get(model, MOI.ConstraintIndex, "Con1")
-        end
+        MOI.set(model, MOI.ConstraintName(), c2, "Con0")
+        # Lookup must fail when multiple constraints have the same name.
+        @test_throws Exception MOI.get(model, MOI.ConstraintIndex, "Con0")
+        @test_throws Exception MOI.get(model,
+                                       MOI.ConstraintIndex{
+                                        MOI.ScalarAffineFunction{Float64},
+                                        MOI.LessThan{Float64}},
+                                       "Con0")
 
         MOI.set(model, MOI.ConstraintName(), [c], ["Con1"])
         @test MOI.get(model, MOI.ConstraintName(), [c]) == ["Con1"]
