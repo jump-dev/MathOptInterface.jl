@@ -14,7 +14,7 @@ deploydocs(
     repo   = "github.com/JuliaOpt/MathOptInterface.jl.git",
     target = "build",
     osname = "linux",
-    julia  = "0.6",
+    julia  = "1.0",
     deps   = nothing,
     make   = nothing,
 )
