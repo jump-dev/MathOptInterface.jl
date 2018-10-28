@@ -108,6 +108,52 @@ is_valid(dest, index_map[x]) # true
 """
 function copy_to end
 
+"""
+    supports_default_copy_to(model::ModelLike; copy_names::Bool=true)
+
+Return a `Bool` indicating whether the model `model` supports
+`default_copy_to(model, src, copy_names=copy_names)` where all the attibutes
+set and constraints added in `src` are supported by `model`.
+
+## Examples
+
+If [`set`](@ref), [`add_variable`](@ref) and [`add_constraint`](@ref) are
+implemented for a model of type `MyModel`, [`copy_to`](@ref) can be implemented
+as
+That is, whether given a model `src`
+Copy the model from `src` into `dest`. The target `dest` is emptied, and all
+previous indices to variables or constraints in `dest` are invalidated. Returns
+a dictionary-like object that translates variable and constraint indices from
+the `src` model to the corresponding indices in the `dest` model.
+
+If `copy_names` is `false`, the `Name`, `VariableName` and `ConstraintName`
+attributes are not copied even if they are set in `src`. If a constraint that
+is copied from `src` is not supported by `dest` then an
+[`UnsupportedConstraint`](@ref) error is thrown. Similarly, if a model, variable
+or constraint attribute that is copied from `src` is not supported by `dest`
+then an [`UnsupportedAttribute`](@ref) error is thrown. Unsupported *optimizer*
+attributes are treated differently:
+
+* If `warn_attributes` is `true`, a warning is displayed, otherwise,
+* the attribute is silently ignored.
+
+### Example
+
+```julia
+# Given empty `ModelLike` objects `src` and `dest`.
+
+x = add_variable(src)
+
+is_valid(src, x)   # true
+is_valid(dest, x)  # false (`dest` has no variables)
+
+index_map = copy_to(dest, src)
+is_valid(dest, x) # false (unless index_map[x] == x)
+is_valid(dest, index_map[x]) # true
+```
+"""
+function supports_default_copy_without_names end
+
 include("error.jl")
 include("indextypes.jl")
 include("functions.jl")
