@@ -1,3 +1,51 @@
+# This file contains default implementations for the `MOI.copy_to` function
+# that can be used by a model.
+
+"""
+    supports_incremental_copy(model::ModelLike, copy_names::Bool)
+
+Return a `Bool` indicating whether the model `model` supports
+[`incremental_copy_to(model, src, copy_names=copy_names)`](@ref) if all
+the attibutes set to `src` and constraints added to `src` are supported by
+`model`.
+
+This function can be used to determine whether a model can loaded into `model`
+incrementally or whether it should be cached and copied at once instead.
+This is used by JuMP to determine whether to add a cache or not.
+If this function returns false whatever the value of `copy_names` is then
+JuMP stores a cache in a [`CachingOptimizer`](@ref) handling the names. Then if
+bridges are used, a cache of the bridged model is stored in another
+[`CachingOptimizer`](@ref).
+If `supports_incremental_copy(optimizer, false)` is `true` then no cache is
+used by default for the bridged model. If
+`supports_incremental_copy(optimizer, true)` is `true` then no caching is used
+by default to store the model and handling names as names are handled by
+`optimizer`.
+
+## Examples
+
+If [`set`](@ref), [`add_variable`](@ref) and [`add_constraint`](@ref) are
+implemented for a model of type `MyModel` and names are supported, then
+[`copy_to`](@ref) can be implemented as
+```julia
+MOI.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = true
+function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true)
+    return default_copy_to(dest, src, copy_names)
+end
+```
+The [`default_copy_to`](@ref) automatically redirects to
+[`incremental_copy_to`](@ref).
+
+If names are not supported, simply change the first line by
+```julia
+MOI.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = !copy_names
+```
+The [`default_copy_to`](@ref) automatically throws an helpful error in case
+`copy_to` is called with `copy_names` equal to `true`.
+"""
+function supports_incremental_copy end
+
+
 struct IndexMap
     varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
     conmap::Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}

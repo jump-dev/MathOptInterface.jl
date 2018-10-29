@@ -359,3 +359,37 @@ Bridges.SOCtoPSDBridge
 Bridges.RSOCtoPSDBridge
 ```
 For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
+
+## Allocate-Load API
+
+The Allocate-Load API allows to implement [`copy_to`](@ref) in a way that still
+allows transformations to be applied in the copy between the cache and the
+model if the transformations are implemented as MOI layers implemented the
+Allocate-Load API.
+
+Allocate-Load Interface: 2-pass copy of a MathOptInterface model
+Some solver wrappers (e.g. SCS, ECOS, SDOI) do not supporting copying an optimization model using `MOI.add_constraints`, `MOI.add_variables` and `MOI.set`
+as they first need to figure out some information about a model before being able to pass the problem data to the solver.
+
+During the first pass (called allocate) : the model collects the relevant information about the problem so that
+on the second pass (called load), the constraints can be loaded directly to the solver (in case of SDOI) or written directly into the matrix of constraints (in case of SCS and ECOS).
+
+To support `MOI.copy_to` using this 2-pass mechanism, implement the allocate-load interface defined below and do:
+MOI.copy_to(dest::ModelType, src::MOI.ModelLike) = MOIU.allocate_load(dest, src)
+In the implementation of the allocate-load interface, it can be assumed that the different functions will the called in the following order:
+1) `allocate_variables`
+2) `allocate` and `allocate_constraint`
+3) `load_variables` and `allocate_constraint`
+4) `load` and `load_constraint`
+The interface is not meant to be used to create new constraints with `allocate_constraint` followed by `load_constraint` after a solve, it is only meant for being used in this order to implement `MOI.copy_to`.
+
+
+```@docs
+allocate_variables
+allocate
+allocate_constraint
+load_variables
+load
+load_constraint
+allocate_load
+```
