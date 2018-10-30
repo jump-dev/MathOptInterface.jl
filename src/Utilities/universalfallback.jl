@@ -189,24 +189,10 @@ function MOI.get(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}) 
     end
 end
 
-function build_name_to_con_map(uf::UniversalFallback)
-    uf.name_to_con = Dict{String, CI}()
-    for (con, con_name) in uf.con_to_name
-        if haskey(uf.name_to_con, con_name)
-            # -1 is a special value that means this string does not map to
-            # a unique constraint name.
-            uf.name_to_con[con_name] = CI{Nothing, Nothing}(-1)
-        else
-            uf.name_to_con[con_name] = con
-        end
-    end
-    return
-end
-
 MOI.get(uf::UniversalFallback, ::Type{VI}, name::String) = MOI.get(uf.model, VI, name)
 function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F, S}
     if uf.name_to_con === nothing
-        build_name_to_con_map(uf)
+        uf.name_to_con = build_name_to_con_map(uf.con_to_name)
     end
 
     if MOI.supports_constraint(uf.model, F, S)
@@ -228,7 +214,7 @@ function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F
 end
 function MOI.get(uf::UniversalFallback, ::Type{CI}, name::String)
     if uf.name_to_con === nothing
-        build_name_to_con_map(uf)
+        uf.name_to_con = build_name_to_con_map(uf.con_to_name)
     end
 
     ci = MOI.get(uf.model, CI, name)

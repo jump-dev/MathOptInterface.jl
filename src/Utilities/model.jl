@@ -186,19 +186,31 @@ function MOI.set(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::Strin
 end
 MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.con_to_name, ci, EMPTYSTRING)
 
+"""
+    build_name_to_con_map(con_to_name::Dict{MOI.ConstraintIndex, String})
+
+Create and return a reverse map from name to constraint index, given a map from
+constraint index to name. The special value
+`MOI.ConstraintIndex{Nothing, Nothing}(-1)` is used to indicate that multiple
+constraints have the same name.
+"""
+function build_name_to_con_map(con_to_name::Dict{CI, String})
+    name_to_con = Dict{String, CI}()
+    for (con, con_name) in con_to_name
+        if haskey(name_to_con, con_name)
+            name_to_con[con_name] = CI{Nothing, Nothing}(-1)
+        else
+            name_to_con[con_name] = con
+        end
+    end
+    return name_to_con
+end
+
+
 function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     if model.name_to_con === nothing
         # Rebuild the map.
-        model.name_to_con = Dict{String, CI}()
-        for (con, con_name) in model.con_to_name
-            if haskey(model.name_to_con, con_name)
-                # CI{Nothing, Nothing}(-1) is a special value that means this
-                # string does not map to a unique constraint name.
-                model.name_to_con[con_name] = CI{Nothing, Nothing}(-1)
-            else
-                model.name_to_con[con_name] = con
-            end
-        end
+        model.name_to_con = build_name_to_con_map(model.con_to_name)
     end
     ci = get(model.name_to_con, name, nothing)
     if ci == CI{Nothing, Nothing}(-1)
