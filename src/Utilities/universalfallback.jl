@@ -14,8 +14,8 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
     constraints::Dict{Tuple{DataType, DataType}, Dict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152
     nextconstraintid::Int64
-    connames::Dict{CI, String}
-    namescon::Dict{String, CI}
+    con_to_name::Dict{CI, String}
+    name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
     optattr::Dict{MOI.AbstractOptimizerAttribute, Any}
     modattr::Dict{MOI.AbstractModelAttribute, Any}
     varattr::Dict{MOI.AbstractVariableAttribute, Dict{VI, Any}}
@@ -25,7 +25,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
                            Dict{Tuple{DataType, DataType}, Dict}(),
                            0,
                            Dict{CI, String}(),
-                           Dict{String, CI}(),
+                           nothing,
                            Dict{MOI.AbstractOptimizerAttribute, Any}(),
                            Dict{MOI.AbstractModelAttribute, Any}(),
                            Dict{MOI.AbstractVariableAttribute, Dict{VI, Any}}(),
@@ -39,8 +39,8 @@ function MOI.empty!(uf::UniversalFallback)
     MOI.empty!(uf.model)
     empty!(uf.constraints)
     uf.nextconstraintid = 0
-    empty!(uf.connames)
-    empty!(uf.namescon)
+    empty!(uf.con_to_name)
+    uf.name_to_con = nothing
     empty!(uf.optattr)
     empty!(uf.modattr)
     empty!(uf.varattr)
@@ -65,10 +65,10 @@ function MOI.delete(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
             throw(MOI.InvalidIndex(ci))
         end
         delete!(uf.constraints[(F, S)], ci)
-        if haskey(uf.connames, ci)
-            delete!(uf.namescon, uf.connames[ci])
-            delete!(uf.connames, ci)
+        if haskey(uf.con_to_name, ci)
+            delete!(uf.con_to_name, ci)
         end
+        uf.name_to_con = nothing
     end
     for d in values(uf.conattr)
         delete!(d, ci)
@@ -173,30 +173,39 @@ end
 # Name
 # The names of constraints not supported by `uf.model` need to be handled
 function MOI.set(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}
-    # TODO: Switch to lazily building the name-to-con dict like Model does.
-    if check_can_assign_name(uf, CI, ci, name)
-        if MOI.supports_constraint(uf.model, F, S)
-            MOI.set(uf.model, attr, ci, name)
-        else
-            setname(uf.connames, uf.namescon, ci, name)
-        end
+    if MOI.supports_constraint(uf.model, F, S)
+        MOI.set(uf.model, attr, ci, name)
+    else
+        uf.con_to_name[ci] = name
+        uf.name_to_con = nothing # Invalidate the name map.
     end
+    return
 end
 function MOI.get(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}) where {F, S}
     if MOI.supports_constraint(uf.model, F, S)
         return MOI.get(uf.model, attr, ci)
     else
-        return get(uf.connames, ci, EMPTYSTRING)
+        return get(uf.con_to_name, ci, EMPTYSTRING)
     end
 end
 
 MOI.get(uf::UniversalFallback, ::Type{VI}, name::String) = MOI.get(uf.model, VI, name)
 function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F, S}
+    if uf.name_to_con === nothing
+        uf.name_to_con = build_name_to_con_map(uf.con_to_name)
+    end
+
     if MOI.supports_constraint(uf.model, F, S)
-        return MOI.get(uf.model, CI{F, S}, name)
+        ci = MOI.get(uf.model, CI{F, S}, name)
+        if ci !== nothing && haskey(uf.name_to_con, name)
+            error("Multiple constraints have the name $name.")
+        end
+        return ci
     else
-        ci = get(uf.namescon, name, nothing)
-        if ci isa CI{F, S}
+        ci = get(uf.name_to_con, name, nothing)
+        if ci == CI{Nothing, Nothing}(-1)
+            error("Multiple constraints have the name $name.")
+        elseif ci isa CI{F, S}
             return ci
         else
             return nothing
@@ -204,10 +213,22 @@ function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F
     end
 end
 function MOI.get(uf::UniversalFallback, ::Type{CI}, name::String)
+    if uf.name_to_con === nothing
+        uf.name_to_con = build_name_to_con_map(uf.con_to_name)
+    end
+
     ci = MOI.get(uf.model, CI, name)
     if ci === nothing
-        return get(uf.namescon, name, nothing)
+        uf_ci = get(uf.name_to_con, name, nothing)
+        if uf_ci == CI{Nothing, Nothing}(-1)
+            error("Multiple constraints have the name $name.")
+        else
+            return uf_ci
+        end
     else
+        if haskey(uf.name_to_con, name)
+            error("Multiple constraints have the name $name.")
+        end
         return ci
     end
 end

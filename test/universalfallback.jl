@@ -58,6 +58,8 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             ())
 
 @testset "UniversalFallback" begin
+    # TODO: Restructure to avoid sharing state across testsets. It doesn't seem
+    # necessary to use the same uf object for all the tests.
     model = ModelForUniversalFallback{Float64}()
     uf = MOIU.UniversalFallback(model)
     @test MOI.is_empty(uf)
@@ -158,4 +160,20 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
     @testset "Continuous Linear" begin
         MOIT.contlineartest(uf, config)
     end
+end
+
+@testset "UniversalFallback duplicate names" begin
+    model = ModelForUniversalFallback{Float64}()
+    uf = MOIU.UniversalFallback(model)
+    x = MOI.add_variable(uf)
+    # These are both intercepted by the fallback.
+    x_eq = MOI.add_constraint(uf, x, MOI.EqualTo(1.0))
+    x_gt = MOI.add_constraint(uf, x, MOI.GreaterThan(1.0))
+    MOI.set(uf, MOI.ConstraintName(), x_eq, "a name")
+    MOI.set(uf, MOI.ConstraintName(), x_gt, "a name")
+    @test_throws Exception MOI.get(uf,
+                                   MOI.ConstraintIndex{MOI.SingleVariable,
+                                                       MOI.EqualTo{Float64}},
+                                   "a name")
+    @test_throws Exception MOI.get(uf, MOI.ConstraintIndex, "a name")
 end

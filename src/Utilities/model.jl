@@ -146,44 +146,6 @@ function MOI.set(model::AbstractModel, ::MOI.Name, name::String)
 end
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
-"""
-    check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
-
-Return a `Bool` indicating whether `name` is available to be used by an
-index of type `IndexType` (i.e., it is not already used). If it is already used
-and the index using this name is not `idx` then it throws an error.
-"""
-function check_can_assign_name(model::MOI.ModelLike, IndexType::Type{<:MOI.Index}, idx::MOI.Index, name::String)
-    if !isempty(name)
-        other_idx = MOI.get(model, IndexType, name)
-        if other_idx === nothing
-            return true
-        elseif other_idx != idx
-            error("$(IndexType == VI ? :Variable : :Constraint) name $name is already used by $other_idx)")
-        end
-        return false
-    else
-        return true
-    end
-end
-
-"""
-    setname(index_to_name::Dict{<:MOI.Index, String}, name_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String, idxtype::Symbol)
-
-Sets the name of the index `idx` to the name `name` in the maps `index_to_name` and `name_to_index`.
-If `name` is empty, and `idx` already has a name, it is removed.
-"""
-function setname(index_to_name::Dict{<:MOI.Index, String}, name_to_index::Dict{String, <:MOI.Index}, idx::MOI.Index, name::String)
-    if haskey(index_to_name, idx)
-        delete!(name_to_index, index_to_name[idx])
-    end
-    index_to_name[idx] = name
-    if !isempty(name)
-        name_to_index[name] = idx
-    end
-    return
-end
-
 MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
     model.var_to_name[vi] = name
@@ -196,16 +158,21 @@ function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
         # Rebuild the map.
         model.name_to_var = Dict{String, VI}()
         for (var, var_name) in model.var_to_name
-            isempty(var_name) && continue
             if haskey(model.name_to_var, var_name)
-                model.name_to_var = nothing
-                error("Variable $var and $(model.name_to_var[var_name]) have " *
-                      "the same name.")
+                # -1 is a special value that means this string does not map to
+                # a unique variable name.
+                model.name_to_var[var_name] = VI(-1)
+            else
+                model.name_to_var[var_name] = var
             end
-            model.name_to_var[var_name] = var
         end
     end
-    return get(model.name_to_var, name, nothing)
+    result = get(model.name_to_var, name, nothing)
+    if result == VI(-1)
+        error("Multiple variables have the name $name.")
+    else
+        return result
+    end
 end
 
 function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vector{MOI.AbstractVariableAttribute}
@@ -219,22 +186,36 @@ function MOI.set(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::Strin
 end
 MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.con_to_name, ci, EMPTYSTRING)
 
+"""
+    build_name_to_con_map(con_to_name::Dict{MOI.ConstraintIndex, String})
+
+Create and return a reverse map from name to constraint index, given a map from
+constraint index to name. The special value
+`MOI.ConstraintIndex{Nothing, Nothing}(-1)` is used to indicate that multiple
+constraints have the same name.
+"""
+function build_name_to_con_map(con_to_name::Dict{CI, String})
+    name_to_con = Dict{String, CI}()
+    for (con, con_name) in con_to_name
+        if haskey(name_to_con, con_name)
+            name_to_con[con_name] = CI{Nothing, Nothing}(-1)
+        else
+            name_to_con[con_name] = con
+        end
+    end
+    return name_to_con
+end
+
+
 function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     if model.name_to_con === nothing
         # Rebuild the map.
-        model.name_to_con = Dict{String, CI}()
-        for (con, con_name) in model.con_to_name
-            isempty(con_name) && continue
-            if haskey(model.name_to_con, con_name)
-                model.name_to_con = nothing
-                error("Constraint $con and $(model.name_to_con[con_name]) " *
-                      "have the same name.")
-            end
-            model.name_to_con[con_name] = con
-        end
+        model.name_to_con = build_name_to_con_map(model.con_to_name)
     end
     ci = get(model.name_to_con, name, nothing)
-    if ci isa ConType
+    if ci == CI{Nothing, Nothing}(-1)
+        error("Multiple constraints have the name $name.")
+    elseif ci isa ConType
         return ci
     else
         return nothing
