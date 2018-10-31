@@ -7,9 +7,9 @@
 An abstraction layer for mathematical optimization solvers. Replaces [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl).
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-stable-url]: http://www.juliaopt.org/MathOptInterface.jl/stable
-[docs-latest-url]: http://www.juliaopt.org/MathOptInterface.jl/latest
+[docs-dev-url]: http://www.juliaopt.org/MathOptInterface.jl/dev
 
 [build-img]: https://travis-ci.org/JuliaOpt/MathOptInterface.jl.svg?branch=master
 [build-url]: https://travis-ci.org/JuliaOpt/MathOptInterface.jl
