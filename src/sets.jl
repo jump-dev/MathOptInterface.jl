@@ -310,17 +310,19 @@ dimension(s::PositiveSemidefiniteConeSquare) = s.side_dimension^2
 """
     LogDetConeTriangle(side_dimension)
 
-The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\log(\\det(X)) \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
+The log-determinant cone ``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d(d+1)/2} : t \\le u \\log(\\det(X/u)), u > 0 \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
 The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct LogDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
 
+dimension(s::LogDetConeTriangle) = 2 + div(s.side_dimension * (s.side_dimension + 1), 2)
+
 """
     LogDetConeSquare(side_dimension)
 
-The Log-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\log(\\det(X)), X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
+The log-determinant cone ``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d^2} : t \\le u \\log(\\det(X/u)), X \\text{ symmetric}, u > 0 \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
 Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
 The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
@@ -328,20 +330,24 @@ struct LogDetConeSquare <: AbstractVectorSet
     side_dimension::Int
 end
 
+dimension(s::LogDetConeSquare) = 2 + s.side_dimension^2
+
 """
     RootDetConeTriangle(side_dimension)
 
-The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
+The root-determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
 The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
 struct RootDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
 
+dimension(s::RootDetConeTriangle) = 1 + div(s.side_dimension * (s.side_dimension + 1), 2)
+
 """
     RootDetConeSquare(side_dimension)
 
-The Root-Determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
+The root-determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
 Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensure that `X` is symmetric.
 The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
 """
@@ -349,9 +355,7 @@ struct RootDetConeSquare <: AbstractVectorSet
     side_dimension::Int
 end
 
-dimension(s::Union{LogDetConeTriangle, RootDetConeTriangle}) = 1 + div(s.side_dimension * (s.side_dimension + 1), 2)
-
-dimension(s::Union{LogDetConeSquare, RootDetConeSquare}) = 1 + s.side_dimension^2
+dimension(s::RootDetConeSquare) = 1 + s.side_dimension^2
 
 """
     Integer()

@@ -1387,6 +1387,9 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
 
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
+    if logdet
+        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
+    end
     if vecofvars
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, detcone)
     else
@@ -1402,7 +1405,13 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     Q = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
 
-    vov = MOI.VectorOfVariables([t; Q])
+    if logdet
+        u = MOI.add_variable(model)
+        MOI.add_constraint(model, MOI.SingleVariable(u), MOI.EqualTo(1.0))
+        vov = MOI.VectorOfVariables([t; u; Q])
+    else
+        vov = MOI.VectorOfVariables([t; Q])
+    end
     if vecofvars
         cX = MOI.add_constraint(model, vov, detcone(2))
     else
@@ -1428,6 +1437,10 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
 
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expectedobjval atol=atol rtol=rtol
 
+        if logdet
+            @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1. atol=atol rtol=rtol
+        end
+
         Qv = MOI.get(model, MOI.VariablePrimal(), Q)
         @test Qv[1] ≈ 1. atol=atol rtol=rtol
         @test Qv[2] ≈ 0. atol=atol rtol=rtol
@@ -1438,7 +1451,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
 
         tQv = MOI.get(model, MOI.ConstraintPrimal(), cX)
         @test tQv[1] ≈ expectedobjval atol=atol rtol=rtol
-        @test tQv[2:end] ≈ Qv atol=atol rtol=rtol
+        @test tQv[(logdet ? 3 : 2):end] ≈ Qv atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ [0., 0.] atol=atol rtol=rtol
     end

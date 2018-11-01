@@ -18,8 +18,8 @@ end
     @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(4)) === 10
     @test MOI.dimension(MOI.PositiveSemidefiniteConeSquare(5)) === 25
     @test MOI.dimension(MOI.RootDetConeTriangle(6)) === 22
-    @test MOI.dimension(MOI.LogDetConeTriangle(6)) === 22
+    @test MOI.dimension(MOI.LogDetConeTriangle(6)) === 23
     @test MOI.dimension(MOI.RootDetConeSquare(4)) === 17
-    @test MOI.dimension(MOI.LogDetConeSquare(4)) === 17
-    @test MOI.dimension(MOI.SOS2(collect(1 : 6))) === 6
+    @test MOI.dimension(MOI.LogDetConeSquare(4)) === 18
+    @test MOI.dimension(MOI.SOS2(collect(1:6))) === 6
 end
