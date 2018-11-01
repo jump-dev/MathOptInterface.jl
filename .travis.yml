@@ -25,7 +25,7 @@ after_success:
   # push coverage results to Coveralls
   #- julia -e 'cd(Pkg.dir("MathOptInterface")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
-  - julia -e 'cd(Pkg.dir("MathOptInterface")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'if VERSION < v"0.7-"; cd(Pkg.dir("MathOptInterface")); else; import Pkg; end; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 
 jobs:
   include:
