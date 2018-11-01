@@ -291,9 +291,12 @@ function set_dot(x::Vector, y::Vector,
     return triangle_dot(x, y, set.side_dimension, 0)
 end
 
-function set_dot(x::Vector, y::Vector, set::Union{MOI.LogDetConeTriangle,
-                                                  MOI.RootDetConeTriangle})
+function set_dot(x::Vector, y::Vector, set::MOI.RootDetConeTriangle)
     return x[1] * y[1] + triangle_dot(x, y, set.side_dimension, 1)
+end
+
+function set_dot(x::Vector, y::Vector, set::MOI.LogDetConeTriangle)
+    return x[1] * y[1] + triangle_dot(x, y, set.side_dimension, 2)
 end
 
 """
@@ -324,9 +327,14 @@ function dot_coefficients(a::Vector, set::MOI.PositiveSemidefiniteConeTriangle)
     return b
 end
 
-function dot_coefficients(a::Vector, set::Union{MOI.LogDetConeTriangle,
-                                                MOI.RootDetConeTriangle})
+function dot_coefficients(a::Vector, set::MOI.RootDetConeTriangle)
     b = copy(a)
     triangle_coefficients!(b, set.side_dimension, 1)
+    return b
+end
+
+function dot_coefficients(a::Vector, set::MOI.LogDetConeTriangle)
+    b = copy(a)
+    triangle_coefficients!(b, set.side_dimension, 2)
     return b
 end

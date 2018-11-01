@@ -45,8 +45,8 @@ const BasicConstraintTests = Dict(
 
     (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) => ( dummy_vectorofvariables,  7, MOI.PositiveSemidefiniteConeTriangle(3) ),
     (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeSquare)   => ( dummy_vectorofvariables, 10, MOI.PositiveSemidefiniteConeSquare(3) ),
-    (MOI.VectorOfVariables, MOI.LogDetConeTriangle)               => ( dummy_vectorofvariables,  7, MOI.LogDetConeTriangle(3) ),
-    (MOI.VectorOfVariables, MOI.LogDetConeSquare)                 => ( dummy_vectorofvariables, 10, MOI.LogDetConeSquare(3) ),
+    (MOI.VectorOfVariables, MOI.LogDetConeTriangle)               => ( dummy_vectorofvariables,  8, MOI.LogDetConeTriangle(3) ),
+    (MOI.VectorOfVariables, MOI.LogDetConeSquare)                 => ( dummy_vectorofvariables, 11, MOI.LogDetConeSquare(3) ),
     (MOI.VectorOfVariables, MOI.RootDetConeTriangle)              => ( dummy_vectorofvariables,  7, MOI.RootDetConeTriangle(3) ),
     (MOI.VectorOfVariables, MOI.RootDetConeSquare)                => ( dummy_vectorofvariables, 10, MOI.RootDetConeSquare(3) ),
 
