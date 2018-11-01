@@ -83,7 +83,7 @@ end
 function LogDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.LogDetConeTriangle) where T
     d = s.side_dimension
     tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 2)
-    t, u = tu[1], tu[2]
+    t, u = tu
     l = MOI.add_variables(model, d)
     lcindex = [sublog(model, l[i], u, D[i], T) for i in eachindex(l)]
     tlindex = subsum(model, copy(t), l, T)
