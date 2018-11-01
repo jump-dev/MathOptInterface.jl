@@ -296,7 +296,7 @@ function set_dot(x::Vector, y::Vector, set::MOI.RootDetConeTriangle)
 end
 
 function set_dot(x::Vector, y::Vector, set::MOI.LogDetConeTriangle)
-    return x[1] * y[1] + triangle_dot(x, y, set.side_dimension, 2)
+    return x[1] * y[1] + x[2] * y[2] + triangle_dot(x, y, set.side_dimension, 2)
 end
 
 """
