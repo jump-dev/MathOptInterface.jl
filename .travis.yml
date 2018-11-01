@@ -22,7 +22,7 @@ notifications:
     on_start: never     # options: [always|never|change] default: always
 
 after_success:
-  - julia -e 'if VERSION < v"0.7-"; cd(Pkg.dir("MathOptInterface")); else; import Pkg; end; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
+  - julia -e 'if VERSION < v"0.7-"; cd(Pkg.dir("MathOptInterface")); else; import Pkg; end; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 
 jobs:
   include:
