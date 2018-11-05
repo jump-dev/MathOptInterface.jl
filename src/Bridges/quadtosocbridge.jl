@@ -131,8 +131,8 @@ function matrix_from_quadratic_terms(terms::Vector{MOI.ScalarQuadraticTerm{T}}) 
         push!(J, j)
         push!(V, term.coefficient)
         if i != j
-            push!(I, i)
-            push!(J, j)
+            push!(I, j)
+            push!(J, i)
             push!(V, term.coefficient)
         end
     end
