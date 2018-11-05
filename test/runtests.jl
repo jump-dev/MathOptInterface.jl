@@ -11,14 +11,14 @@ using Compat.Test
 
 include("dummy.jl")
 
-# MOI tests not relying on any submodule
-@testset "MOI" begin
-    include("isbits.jl")
-    include("isapprox.jl")
-    include("interval.jl")
-    include("errors.jl")
-    include("attributes.jl")
-end
+# # MOI tests not relying on any submodule
+# @testset "MOI" begin
+#     include("isbits.jl")
+#     include("isapprox.jl")
+#     include("interval.jl")
+#     include("errors.jl")
+#     include("attributes.jl")
+# end
 
 # Needed by test spread over several files, defining it here make it easier to comment out tests
 # Model supporting every MOI functions and sets
@@ -48,35 +48,38 @@ MOIU.@model(ModelForMock, (MOI.ZeroOne, MOI.Integer),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction,))
 
-# Utilities submodule tests
-@testset "MOI.Utilities" begin
-    include("functions.jl")
-    include("sets.jl")
-    include("constraints.jl")
-    include("model.jl")
-    include("universalfallback.jl")
-    include("parser.jl")
-    include("mockoptimizer.jl")
-    include("cachingoptimizer.jl")
-    include("copy.jl")
-end
+# # Utilities submodule tests
+# @testset "MOI.Utilities" begin
+#     include("functions.jl")
+#     include("sets.jl")
+#     include("constraints.jl")
+#     include("model.jl")
+#     include("universalfallback.jl")
+#     include("parser.jl")
+#     include("mockoptimizer.jl")
+#     include("cachingoptimizer.jl")
+#     include("copy.jl")
+# end
+#
+# # Test submodule tests
+# # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
+# @testset "MOI.Test" begin
+#     include("Test/config.jl")
+#     include("Test/unit.jl")
+#     include("Test/contlinear.jl")
+#     include("Test/contconic.jl")
+#     include("Test/contquadratic.jl")
+#     include("Test/intlinear.jl")
+#     include("Test/intconic.jl")
+# end
+#
+# @testset "MOI.Bridges" begin
+#     # Bridges submodule tests
+#     include("bridge.jl")
+# end
 
-# Test submodule tests
-# It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
-@testset "MOI.Test" begin
-    include("Test/config.jl")
-    include("Test/unit.jl")
-    include("Test/contlinear.jl")
-    include("Test/contconic.jl")
-    include("Test/contquadratic.jl")
-    include("Test/intlinear.jl")
-    include("Test/intconic.jl")
-end
-
-@testset "MOI.Bridges" begin
-    # Bridges submodule tests
-    include("bridge.jl")
-end
+# Test external set models and bridges
+include("externalset.jl")
 
 # Test hygiene of @model macro
 include("hygiene.jl")
