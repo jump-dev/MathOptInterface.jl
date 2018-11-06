@@ -362,12 +362,13 @@ For each bridge defined in this package, a corresponding bridge optimizer is ava
 
 ## Allocate-Load API
 
-The Allocate-Load API allows to implement [`copy_to`](@ref) in a way that still
-allows transformations to be applied in the copy between the cache and the
+The Allocate-Load API allows solvers that do not support loading the problem
+incrementally to implement [`copy_to`](@ref) in a way that still allows
+transformations to be applied in the copy between the cache and the
 model if the transformations are implemented as MOI layers implemented the
-Allocate-Load API.
+Allocate-Load API, see [Implementing copy](@ref) for more details.
 
-Allocate-Load Interface: 2-pass copy of a MathOptInterface model
+The Allocate-Load Interface: 2-pass copy of a MathOptInterface model
 Some solver wrappers (e.g. SCS, ECOS, SDOI) do not supporting copying an optimization model using `MOI.add_constraints`, `MOI.add_variables` and `MOI.set`
 as they first need to figure out some information about a model before being able to pass the problem data to the solver.
 

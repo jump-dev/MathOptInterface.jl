@@ -838,7 +838,7 @@ will additionally support `ScalarAffineFunction`-in-`Interval`.
 ### Implementing copy
 
 Avoid storing extra copies of the problem when possible. This means that solver wrappers should not use
-`CachingOptimizer` as part of the wrapper. Instead, there do one of the following to load the problem:
+`CachingOptimizer` as part of the wrapper. Instead, do one of the following to load the problem:
 
 * If the solver supports loading the problem incrementally, implement
   [`add_variable`](@ref), [`add_constraint`](@ref) for supported constraints and
@@ -859,10 +859,10 @@ MOI.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = !copy_na
   depending on whether the solver support names; see
   [`supports_incremental_copy`](@ref) for more details.
 * If the solver does not support loading the problem incrementally, do not
-  implement [`add_variable`](@ref) and [`add_constraint`](@ref) they would
-  require caching the problem. Let users or JuMP decide to use
-  a [`CachingOptimizer`](@ref) instead. Write either a custom implementation of
-  [`copy_to`](@ref) or implement the [Allocate-Load API](@ref). If you choose
+  implement [`add_variable`](@ref) and [`add_constraint`](@ref) as implementing
+  them would require caching the problem. Let users or JuMP decide whether to
+  use a [`CachingOptimizer`](@ref) instead. Write either a custom implementation
+  of [`copy_to`](@ref) or implement the [Allocate-Load API](@ref). If you choose
   to implement the [Allocate-Load API](@ref), do
   ```julia
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true)
