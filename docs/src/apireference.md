@@ -368,22 +368,40 @@ transformations to be applied in the copy between the cache and the
 model if the transformations are implemented as MOI layers implemented the
 Allocate-Load API, see [Implementing copy](@ref) for more details.
 
-The Allocate-Load Interface: 2-pass copy of a MathOptInterface model
-Some solver wrappers (e.g. SCS, ECOS, SDOI) do not supporting copying an optimization model using `MOI.add_constraints`, `MOI.add_variables` and `MOI.set`
-as they first need to figure out some information about a model before being able to pass the problem data to the solver.
+Loading a model using the Allocate-Load interface consists of two passes
+through the model data:
+1) the allocate pass where the model typically record the necessary information
+about the constraints and attributes such as their number and size.
+This information may be used by the solver to allocate datastructures of
+appriate size.
+2) the load pass where the model typically load the constraint and attribute
+data to the model.
 
-During the first pass (called allocate) : the model collects the relevant information about the problem so that
-on the second pass (called load), the constraints can be loaded directly to the solver (in case of SDOI) or written directly into the matrix of constraints (in case of SCS and ECOS).
+The description above only gives a suggestion of what to achieve in each pass.
+In fact the exact same constraints and attributes are passes in each pass so
+an implementation of the Allocate-Load API is free to do whatever is more
+convenient in each pass.
 
-To support `MOI.copy_to` using this 2-pass mechanism, implement the allocate-load interface defined below and do:
-MOI.copy_to(dest::ModelType, src::MOI.ModelLike) = MOIU.allocate_load(dest, src)
-In the implementation of the allocate-load interface, it can be assumed that the different functions will the called in the following order:
-1) `allocate_variables`
-2) `allocate` and `allocate_constraint`
-3) `load_variables` and `allocate_constraint`
-4) `load` and `load_constraint`
-The interface is not meant to be used to create new constraints with `allocate_constraint` followed by `load_constraint` after a solve, it is only meant for being used in this order to implement `MOI.copy_to`.
+The main difference between each pass, appart from the fact that one is
+executed before the other during a copy is that the allocate pass needs to
+create and return new variable and constraint indices while the load pass
+needs to be given the appropriate constraint index.
 
+The Allocate-Load API is **not** meant to be used outside a copy operation.
+This means that the order in which the different functions of the API are
+called is fixed by [`MathOptInterface.Utilities.allocate_load`](@ref) and
+models implementing the API can rely on the fact that functions will be
+called in this order. That is, it can be assumed that the different functions
+will the called in the following order:
+1) [`allocate_variables`](@ref)
+2) [`allocate`](@ref) and [`allocate_constraint`](@ref)
+3) [`load_variables`](@ref) and [`allocate_constraint`](@ref)
+4) [`load`](@ref) and [`load_constraint`](@ref)
+
+The interface is not meant to be used to create new constraints with
+[`allocate_constraint`](@ref) followed by [`load_constraint`](@ref) after a
+solve, it is only meant for being used in this order to implement
+[`copy_to`](@ref).
 
 ```@docs
 allocate_variables
