@@ -508,7 +508,7 @@ struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 
 A variable attribute for a string identifying the variable. It is *valid* for
 two variables to have the same name; however, variables with duplicate names
-cannot be looked up using [`MOI.get`](@ref).
+cannot be looked up using [`get`](@ref).
 """
 struct VariableName <: AbstractVariableAttribute end
 
@@ -573,8 +573,8 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 
 A constraint attribute for a string identifying the constraint. It is *valid*
 for constraints variables to have the same name; however, constraints with
-duplicate names cannot be looked up using [`MOI.get`](@ref) regardless of if
-they have the same `F`-in`S` type.
+duplicate names cannot be looked up using [`get`](@ref) regardless of if they
+have the same `F`-in`S` type.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
