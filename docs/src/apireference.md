@@ -384,19 +384,19 @@ through the model data:
 1) the allocate pass where the model typically records the necessary information
    about the constraints and attributes such as their number and size.
    This information may be used by the solver to allocate datastructures of
-   appriate size.
-2) the load pass where the model typically loads the constraints and attributes
+   appropriate size.
+2) the load pass where the model typically loads the constraint and attribute
    data to the model.
 
 The description above only gives a suggestion of what to achieve in each pass.
-In fact the exact same constraints and attributes are passes in each pass so
-an implementation of the Allocate-Load API is free to do whatever is more
+In fact the exact same constraint and attribute data is provided to each pass,
+so an implementation of the Allocate-Load API is free to do whatever is more
 convenient in each pass.
 
-The main difference between each pass, appart from the fact that one is
-executed before the other during a copy is that the allocate pass needs to
-create and return new variable and constraint indices while during the load pass
-the appropriate constraint indices are provided.
+The main difference between each pass, apart from the fact that one is executed
+before the other during a copy, is that the allocate pass needs to create and
+return new variable and constraint indices, while during the load pass the
+appropriate constraint indices are provided.
 
 The Allocate-Load API is **not** meant to be used outside a copy operation,
 that is, the interface is not meant to be used to create new constraints with
