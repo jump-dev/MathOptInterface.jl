@@ -1,3 +1,6 @@
+```@meta
+CurrentModule = MathOptInterface
+```
 
 # Manual
 
@@ -45,46 +48,84 @@ The standard form problem is:
 ```
 
 where:
-* the functions ``f_0, f_1, \ldots, f_m`` are specified by [`AbstractFunction`](@ref MathOptInterface.AbstractFunction) objects
-* the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by [`AbstractSet`](@ref MathOptInterface.AbstractSet) objects
+* the functions ``f_0, f_1, \ldots, f_m`` are specified by
+  [`AbstractFunction`](@ref) objects
+* the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by
+  [`AbstractSet`](@ref) objects
 
 The current function types are:
-* **[`SingleVariable`](@ref MathOptInterface.SingleVariable)**: ``x_j``, i.e., projection onto a single coordinate defined by a variable index ``j``
-* **[`VectorOfVariables`](@ref MathOptInterface.VectorOfVariables)**: projection onto multiple coordinates (i.e., extracting a subvector)
-* **[`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction)**: ``a^T x + b``, where ``a`` is a vector and ``b`` scalar
-* **[`VectorAffineFunction`](@ref MathOptInterface.VectorAffineFunction)**: ``A x + b``, where ``A`` is a matrix and ``b`` is a vector
-* **[`ScalarQuadraticFunction`](@ref MathOptInterface.ScalarQuadraticFunction)**: ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
-* **[`VectorQuadraticFunction`](@ref MathOptInterface.VectorQuadraticFunction)**: a vector of scalar-valued quadratic functions
+* **[`SingleVariable`](@ref)**: ``x_j``, i.e., projection onto a single
+  coordinate defined by a variable index ``j``
+* **[`VectorOfVariables`](@ref)**: projection onto multiple coordinates (i.e.,
+  extracting a subvector)
+* **[`ScalarAffineFunction`](@ref)**: ``a^T x + b``, where ``a`` is a vector and
+  ``b`` scalar
+* **[`VectorAffineFunction`](@ref)**: ``A x + b``, where ``A`` is a matrix and
+  ``b`` is a vector
+* **[`ScalarQuadraticFunction`](@ref)**: ``\frac{1}{2} x^T Q x + a^T x + b``,
+  where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant
+* **[`VectorQuadraticFunction`](@ref)**: a vector of scalar-valued quadratic
+  functions
 
 Extensions for nonlinear programming are present but not yet well documented.
 
-MOI defines some commonly used sets, but the interface is extensible to other sets recognized by the solver.
+MOI defines some commonly used sets, but the interface is extensible to other
+sets recognized by the solver.
 
-* **[`LessThan(upper)`](@ref MathOptInterface.LessThan)**: ``\{ x \in \mathbb{R} : x \le \mbox{upper} \}``
-* **[`GreaterThan(lower)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x \ge \mbox{lower} \}``
-* **[`EqualTo(value)`](@ref MathOptInterface.GreaterThan)**: ``\{ x \in \mathbb{R} : x = \mbox{value} \}``
-* **[`Interval(lower, upper)`](@ref MathOptInterface.Interval)**: ``\{ x \in \mathbb{R} : x \in [\mbox{lower},\mbox{upper}] \}``
-* **[`Reals(dimension)`](@ref MathOptInterface.Reals)**: ``\mathbb{R}^\mbox{dimension}``
+* **[`LessThan(upper)`](@ref MathOptInterface.LessThan)**:
+  ``\{ x \in \mathbb{R} : x \le \mbox{upper} \}``
+* **[`GreaterThan(lower)`](@ref MathOptInterface.GreaterThan)**:
+  ``\{ x \in \mathbb{R} : x \ge \mbox{lower} \}``
+* **[`EqualTo(value)`](@ref MathOptInterface.GreaterThan)**:
+  ``\{ x \in \mathbb{R} : x = \mbox{value} \}``
+* **[`Interval(lower, upper)`](@ref MathOptInterface.Interval)**:
+  ``\{ x \in \mathbb{R} : x \in [\mbox{lower},\mbox{upper}] \}``
+* **[`Reals(dimension)`](@ref MathOptInterface.Reals)**:
+  ``\mathbb{R}^\mbox{dimension}``
 * **[`Zeros(dimension)`](@ref MathOptInterface.Zeros)**: ``0^\mbox{dimension}``
-* **[`Nonnegatives(dimension)`](@ref MathOptInterface.Nonnegatives)**: ``\{ x \in \mathbb{R}^\mbox{dimension} : x \ge 0 \}``
-* **[`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives)**: ``\{ x \in \mathbb{R}^\mbox{dimension} : x \le 0 \}``
-* **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**: ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
-* **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**: ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge ||x||_2^2, t,u \ge 0 \}``
-* **[`GeometricMeanCone(dimension)`](@ref MathOptInterface.GeometricMeanCone)**: ``\{ (t,x) \in \mathbb{R}^{n+1} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}`` where ``n`` is ``dimension - 1``
-* **[`ExponentialCone()`](@ref MathOptInterface.ExponentialCone)**: ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}``
-* **[`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone)**: ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le exp(1) w, u < 0 \}``
-* **[`PowerCone(exponent)`](@ref MathOptInterface.PowerCone)**: ``\{ (x,y,z) \in \mathbb{R}^3 : x^\mbox{exponent} y^{1-\mbox{exponent}} \ge |z|, x,y \ge 0 \}``
-* **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**: ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent} \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
-* **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is the upper triangle of a PSD matrix}\}``
-* **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**: ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix}\}``
-* **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le \log(\det(X)), X \mbox{is the upper triangle of a PSD matrix}\}``
-* **[`LogDetConeSquare(dimension)`](@ref MathOptInterface.LogDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \log(\det(X)), X \mbox{is a PSD matrix}\}``
-* **[`RootDetConeTriangle(dimension)`](@ref MathOptInterface.RootDetConeTriangle)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le det(X)^{1/\mbox{dimension}}, X \mbox{is the upper triangle of a PSD matrix}\}``
-* **[`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare)**: ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \det(X)^{1/\mbox{dimension}}, X \mbox{is a PSD matrix}\}``
+* **[`Nonnegatives(dimension)`](@ref MathOptInterface.Nonnegatives)**:
+  ``\{ x \in \mathbb{R}^\mbox{dimension} : x \ge 0 \}``
+* **[`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives)**:
+  ``\{ x \in \mathbb{R}^\mbox{dimension} : x \le 0 \}``
+* **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
+* **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
+  ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge ||x||_2^2, t,u \ge 0 \}``
+* **[`GeometricMeanCone(dimension)`](@ref MathOptInterface.GeometricMeanCone)**:
+  ``\{ (t,x) \in \mathbb{R}^{n+1} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}``
+  where ``n`` is ``dimension - 1``
+* **[`ExponentialCone()`](@ref MathOptInterface.ExponentialCone)**:
+  ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}``
+* **[`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone)**:
+  ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le exp(1) w, u < 0 \}``
+* **[`PowerCone(exponent)`](@ref MathOptInterface.PowerCone)**:
+  ``\{ (x,y,z) \in \mathbb{R}^3 : x^\mbox{exponent} y^{1-\mbox{exponent}} \ge |z|, x,y \ge 0 \}``
+* **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**:
+  ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent}
+  \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
+* **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
+  ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
+  the upper triangle of a PSD matrix}\}``
+* **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**:
+  ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix}\}``
+* **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**:
+  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} :
+  t \le \log(\det(X)), X \mbox{is the upper triangle of a PSD matrix}\}``
+* **[`LogDetConeSquare(dimension)`](@ref MathOptInterface.LogDetConeSquare)**:
+  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \log(\det(X)),
+  X \mbox{is a PSD matrix}\}``
+* **[`RootDetConeTriangle(dimension)`](@ref MathOptInterface.RootDetConeTriangle)**:
+  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le
+  det(X)^{1/\mbox{dimension}}, X \mbox{is the upper triangle of a PSD matrix}\}``
+* **[`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare)**:
+  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le
+  \det(X)^{1/\mbox{dimension}}, X \mbox{is a PSD matrix}\}``
 * **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
 * **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
-* **[`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous)**: ``\{ 0\} \cup [lower,upper]``
-* **[`Semiinteger(lower,upper)`](@ref MathOptInterface.Semiinteger)**: ``\{ 0\} \cup \{lower,lower+1,\ldots,upper-1,upper\}``
+* **[`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous)**:
+  ``\{ 0\} \cup [lower,upper]``
+* **[`Semiinteger(lower,upper)`](@ref MathOptInterface.Semiinteger)**:
+  ``\{ 0\} \cup \{lower,lower+1,\ldots,upper-1,upper\}``
 
 
 ## The `ModelLike` and `AbstractOptimizer` APIs
@@ -92,13 +133,12 @@ MOI defines some commonly used sets, but the interface is extensible to other se
 The most significant part of MOI is the definition of the **model API** that is
 used to specify an instance of an optimization problem (e.g., by adding
 variables and constraints). Objects that implement the model API should inherit
-from the [`ModelLike`](@ref MathOptInterface.ModelLike) abstract type.
+from the [`ModelLike`](@ref) abstract type.
 
 Notably missing from the model API is the method to solve an optimization problem.
 `ModelLike` objects may store an instance (e.g., in memory or backed by a file format)
 without being linked to a particular solver. In addition to the model API, MOI
-defines [`AbstractOptimizer`](@ref MathOptInterface.AbstractOptimizer). *Optimizers*
-(or solvers) implement the model API (inheriting from `ModelLike`) and additionally
+defines [`AbstractOptimizer`](@ref). *Optimizers* (or solvers) implement the model API (inheriting from `ModelLike`) and additionally
 provide methods to solve the model.
 
 Through the rest of the manual, `model` is used as a generic `ModelLike`, and
@@ -109,9 +149,14 @@ Through the rest of the manual, `model` is used as a generic `ModelLike`, and
 ## Variables
 
 All variables in MOI are scalar variables.
-New scalar variables are created with [`add_variable`](@ref MathOptInterface.add_variable) or [`add_variables`](@ref MathOptInterface.add_variables), which return a [`VariableIndex`](@ref MathOptInterface.VariableIndex) or `Vector{VariableIndex}` respectively. `VariableIndex` objects are type-safe wrappers around integers that refer to a variable in a particular model.
+New scalar variables are created with [`add_variable`](@ref) or
+[`add_variables`](@ref), which return a [`VariableIndex`](@ref) or
+`Vector{VariableIndex}` respectively. `VariableIndex` objects are type-safe
+wrappers around integers that refer to a variable in a particular model.
 
-One uses `VariableIndex` objects to set and get variable attributes. For example, the [`VariablePrimalStart`](@ref MathOptInterface.VariablePrimalStart) attribute is used to provide an initial starting point for a variable or collection of variables:
+One uses `VariableIndex` objects to set and get variable attributes. For
+example, the [`VariablePrimalStart`](@ref) attribute is used to provide an
+initial starting point for a variable or collection of variables:
 ```julia
 v = add_variable(model)
 set(model, VariablePrimalStart(), v, 10.5)
@@ -119,13 +164,16 @@ v2 = add_variables(model, 3)
 set(model, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 ```
 
-A variable can be deleted from a model with [`delete(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete(::MathOptInterface.ModelLike, ::MathOptInterface.Index)).
-Not all models support deleting variables; an [`DeleteNotAllowed`](@ref MathOptInterface.DeleteNotAllowed)
+A variable can be deleted from a model with
+[`delete(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete(::MathOptInterface.ModelLike, ::MathOptInterface.Index)).
+Not all models support deleting variables; an [`DeleteNotAllowed`](@ref)
 error is thrown if this is not supported.
 
 ## Functions
 
-MOI defines six functions as listed in the definition of the [Standard form problem](@ref). The simplest function is [`SingleVariable`](@ref MathOptInterface.SingleVariable) defined as:
+MOI defines six functions as listed in the definition of the
+[Standard form problem](@ref). The simplest function is [`SingleVariable`](@ref)
+defined as:
 ```julia
 struct SingleVariable <: AbstractFunction
     variable::VariableIndex
@@ -135,7 +183,7 @@ end
 If `v` is a `VariableIndex` object, then `SingleVariable(v)` is simply the scalar-valued function from the complete set of variables in a model that returns the value of variable `v`. One may also call this function a coordinate projection, which is more useful for defining constraints than as an objective function.
 
 
-A more interesting function is [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction), defined as
+A more interesting function is [`ScalarAffineFunction`](@ref), defined as
 ```julia
 struct ScalarAffineFunction{T} <: AbstractScalarFunction
     terms::Vector{ScalarAffineTerm{T}}
@@ -143,7 +191,7 @@ struct ScalarAffineFunction{T} <: AbstractScalarFunction
 end
 ```
 
-The [`ScalarAffineTerm`](@ref MathOptInterface.ScalarAffineTerm) struct defines
+The [`ScalarAffineTerm`](@ref) struct defines
 a variable-coefficient pair:
 ```julia
 struct ScalarAffineTerm{T}
@@ -162,8 +210,9 @@ the function ``5x_1 - 2.3x_2 + 1``.
     `[ScalarAffineTerm(5.0, x[1]), ScalarAffineTerm(-2.3, x[2])]`. This is
     Julia's broadcast syntax and is used quite often.
 
-Objective functions are assigned to a model by setting the [`ObjectiveFunction`](@ref MathOptInterface.ObjectiveFunction) attribute.
-The [`ObjectiveSense`](@ref MathOptInterface.ObjectiveSense) attribute is used for setting the optimization sense.
+Objective functions are assigned to a model by setting the
+[`ObjectiveFunction`](@ref) attribute. The [`ObjectiveSense`](@ref) attribute is
+used for setting the optimization sense.
 For example,
 ```julia
 x = add_variables(model, 2)
@@ -173,19 +222,20 @@ set(model, ObjectiveSense(), MinSense)
 ```
 sets the objective to the function just discussed in the minimization sense.
 
-See [Functions and function modifications](@ref) for the complete list of functions.
+See [Functions and function modifications](@ref) for the complete list of
+functions.
 
 ## Sets and Constraints
 
-All constraints are specified with [`add_constraint`](@ref MathOptInterface.add_constraint)
-by restricting the output of some function to a set.
-The interface allows an arbitrary combination of functions and sets, but of course
-solvers may decide to support only a small number of combinations.
+All constraints are specified with [`add_constraint`](@ref) by restricting the
+output of some function to a set. The interface allows an arbitrary combination
+of functions and sets, but of course solvers may decide to support only a small
+number of combinations.
 
-For example, linear programming solvers should support, at least, combinations of affine functions with
-the [`LessThan`](@ref MathOptInterface.LessThan) and [`GreaterThan`](@ref MathOptInterface.GreaterThan)
-sets. These are simply linear constraints.
-`SingleVariable` functions combined with these same sets are used to specify upper and lower bounds on variables.
+For example, linear programming solvers should support, at least, combinations
+of affine functions with the [`LessThan`](@ref) and [`GreaterThan`](@ref) sets.
+These are simply linear constraints. `SingleVariable` functions combined with
+these same sets are used to specify upper and lower bounds on variables.
 
 The code example below encodes the linear optimization problem:
 ```math
@@ -308,12 +358,20 @@ Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `I
 
 ## Solving and retrieving the results
 
-Once an optimizer is loaded with the objective function and all of the constraints, we can ask the solver to solve the model by calling [`optimize!`](@ref MathOptInterface.optimize!).
+Once an optimizer is loaded with the objective function and all of the
+constraints, we can ask the solver to solve the model by calling
+[`optimize!`](@ref).
 ```julia
 optimize!(optimizer)
 ```
 
-The optimization procedure may terminate for a number of reasons. The [`TerminationStatus`](@ref MathOptInterface.TerminationStatus) attribute of the optimizer returns a [`TerminationStatusCode`](@ref MathOptInterface.TerminationStatusCode) object which explains why the solver stopped. Some statuses indicate generally successful termination, some termination because of limit, and some termination because of something unexpected like invalid problem data or failure to converge. A typical usage of the `TerminationStatus` attribute is as follows:
+The optimization procedure may terminate for a number of reasons. The
+[`TerminationStatus`](@ref) attribute of the optimizer returns a
+[`TerminationStatusCode`](@ref) object which explains why the solver stopped.
+Some statuses indicate generally successful termination, some termination
+because of limit, and some termination because of something unexpected like
+invalid problem data or failure to converge. A typical usage of the
+`TerminationStatus` attribute is as follows:
 ```julia
 status = MOI.get(optimizer, TerminationStatus())
 if status == Success
@@ -324,18 +382,33 @@ else
 end
 ```
 
-The `Success` status code specifically implies that the solver has a "result" to return. In the case that the solver converged to an optimal solution, this result will just be the optimal solution vector. The [`PrimalStatus`](@ref MathOptInterface.PrimalStatus) attribute returns a [`ResultStatusCode`](@ref MathOptInterface.ResultStatusCode) that explains how to interpret the result. In the case that the solver is known to return globally optimal solutions (up to numerical tolerances), the combination of `Success` termination status and `FeasiblePoint` primal result status implies that the primal result vector should be interpreted as a globally optimal solution. A result may be available even if the status is not `Success`, for example, if the solver stopped because of a time limit and has a feasible but nonoptimal solution. Use the [`ResultCount`](@ref MathOptInterface.ResultCount) attribute to check if one or more results are available.
+The `Success` status code specifically implies that the solver has a "result" to
+return. In the case that the solver converged to an optimal solution, this
+result will just be the optimal solution vector. The [`PrimalStatus`](@ref)
+attribute returns a [`ResultStatusCode`](@ref) that explains how to interpret
+the result. In the case that the solver is known to return globally optimal
+solutions (up to numerical tolerances), the combination of `Success` termination
+status and `FeasiblePoint` primal result status implies that the primal result
+vector should be interpreted as a globally optimal solution. A result may be
+available even if the status is not `Success`, for example, if the solver
+stopped because of a time limit and has a feasible but nonoptimal solution. Use
+the [`ResultCount`](@ref) attribute to check if one or more results are
+available.
 
-In addition to the primal status, the [`DualStatus`](@ref MathOptInterface.DualStatus) provides important information for primal-dual solvers.
+In addition to the primal status, the [`DualStatus`](@ref) provides important
+information for primal-dual solvers.
 
-If a result is available, it may be retrieved with the [`VariablePrimal`](@ref MathOptInterface.VariablePrimal) attribute:
+If a result is available, it may be retrieved with the [`VariablePrimal`](@ref)
+attribute:
 ```julia
 MOI.get(optimizer, VariablePrimal(), x)
 ```
 If `x` is a `VariableIndex` then the function call returns a scalar, and if `x` is a `Vector{VariableIndex}` then the call returns a vector of scalars. `VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th result.
 
-See also the attributes [`ConstraintPrimal`](@ref MathOptInterface.ConstraintPrimal), and [`ConstraintDual`](@ref MathOptInterface.ConstraintDual).
-See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs and certificates.
+See also the attributes [`ConstraintPrimal`](@ref), and
+[`ConstraintDual`](@ref).
+See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs
+and certificates.
 
 
 
@@ -349,7 +422,11 @@ A typical primal-dual solver is capable of certifying optimality of a solution t
 
 #### Global mixed-integer or nonconvex solver
 
-When a global solver returns `Success` and the primal result is a `FeasiblePoint`, then it is implied that the primal result is indeed a globally optimal solution up to the specified tolerances. Typically, no dual certificate is available to certify optimality. The [`ObjectiveBound`](@ref MathOptInterface.ObjectiveBound) should provide extra information on the optimality gap.
+When a global solver returns `Success` and the primal result is a
+`FeasiblePoint`, then it is implied that the primal result is indeed a globally
+optimal solution up to the specified tolerances. Typically, no dual certificate
+is available to certify optimality. The [`ObjectiveBound`](@ref) should provide
+extra information on the optimality gap.
 
 #### Local solver
 
@@ -448,9 +525,8 @@ we can modify the set so that the bound now ``x \le 2`` as follows:
 ```julia
 set(m, ConstraintSet(), c, LessThan(2.0))
 ```
-where `m` is our [`ModelLike`](@ref MathOptInterface.ModelLike) model. However,
-the following will fail as the new set (`GreaterThan`) is of a different type to
-the original set
+where `m` is our [`ModelLike`](@ref) model. However, the following will fail as
+the new set (`GreaterThan`) is of a different type to the original set
 (`LessThan`):
 ```julia
 set(m, ConstraintSet(), c, GreaterThan(2.0))  # errors
@@ -459,23 +535,21 @@ If our constraint is an affine inequality, then this corresponds to modifying
 the right-hand side of a constraint in linear programming.
 
 In some special cases, solvers may support efficiently changing the set of a
-constraint (for example, from [`LessThan`](@ref MathOptInterface.LessThan) to
-[`GreaterThan`](@ref MathOptInterface.GreaterThan)). For these cases,
-MathOptInterface provides the [`transform`](@ref MathOptInterface.transform)
-method. For example, instead of the error we observed above, the following will
+constraint (for example, from [`LessThan`](@ref) to [`GreaterThan`](@ref)). For
+these cases, MathOptInterface provides the [`transform`](@ref) method. For
+example, instead of the error we observed above, the following will
 work:
 ```julia
 c2 = transform(m, c, GreaterThan(1.0))
 ```
-The [`transform`](@ref MathOptInterface.transform) function returns a new
-constraint index, and the old constraint index (i.e., `c`) is no longer valid:
+The [`transform`](@ref) function returns a new constraint index, and the old
+constraint index (i.e., `c`) is no longer valid:
 ```julia
 is_valid(m, c)   # false
 is_valid(m, c2)  # true
 ```
-Also note that [`transform`](@ref MathOptInterface.transform) cannot be called
-with a set of the same type; [`set`](@ref MathOptInterface.set) should be used
-instead.
+Also note that [`transform`](@ref) cannot be called with a set of the same type;
+[`set`](@ref) should be used instead.
 
 #### The function of a constraint
 
@@ -490,9 +564,8 @@ we can modify the function so that the bound now ``y \le 1`` as follows:
 ```julia
 set(m, ConstraintFunction(), c, SingleVariable(y))
 ```
-where `m` is our [`ModelLike`](@ref MathOptInterface.ModelLike) model. However,
-the following will fail as the new function is of a different type to the
-original function:
+where `m` is our [`ModelLike`](@ref) model. However, the following will fail as
+the new function is of a different type to the original function:
 ```julia
 set(m, ConstraintFunction(), c,
     ScalarAffineFunction([ScalarAffineTerm(1.0, x)], 0.0)
@@ -511,26 +584,23 @@ MathOptInterface. They are:
 
 To distinguish between the replacement of the function with a new instance
 (described above) and the modification of an existing function, the in-place
-modifications use the  [`modify`](@ref MathOptInterface.modify) method:
+modifications use the  [`modify`](@ref) method:
 ```julia
 modify(model, index, change::AbstractFunctionModification)
 ```
-[`modify`](@ref MathOptInterface.modify) takes three arguments. The first is
-the [`ModelLike`](@ref MathOptInterface.ModelLike) model `model`, the second is
-the constraint index, and the third is an instance of an
-[`AbstractFunctionModification`](@ref MathOptInterface.AbstractFunctionModification).
+[`modify`](@ref) takes three arguments. The first is the [`ModelLike`](@ref)
+model `model`, the second is the constraint index, and the third is an instance
+of an [`AbstractFunctionModification`](@ref).
 
 We now detail each of these four in-place modifications.
 
 #### Constant term in a scalar function
 
 MathOptInterface supports is the ability to modify the constant term within a
-[`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction) and a
-[`ScalarQuadraticFunction`](@ref MathOptInterface.ScalarQuadraticFunction) using
-the [`ScalarConstantChange`](@ref MathOptInterface.ScalarConstantChange) subtype
-of [`AbstractFunctionModification`](@ref MathOptInterface.AbstractFunctionModification).
-This includes the objective function, as well as the function in a function-pair
-constraint.
+[`ScalarAffineFunction`](@ref) and a [`ScalarQuadraticFunction`](@ref) using
+the [`ScalarConstantChange`](@ref) subtype of
+[`AbstractFunctionModification`](@ref). This includes the objective function, as
+well as the function in a function-pair constraint.
 
 For example, consider a problem `m` with the objective ``\max 1.0x + 0.0``:
 ```julia
@@ -550,9 +620,9 @@ The objective function will now be ``\max 1.0x + 1.0``.
 
 #### Constant terms in a vector function
 
-We can modify the constant terms in a [`VectorAffineFunction`](@ref MathOptInterface.VectorAffineFunction) or a [`VectorQuadraticFunction`](@ref MathOptInterface.VectorQuadraticFunction) using the
-[`VectorConstantChange`](@ref MathOptInterface.VectorConstantChange) subtype of
-[`AbstractFunctionModification`](@ref MathOptInterface.AbstractFunctionModification).
+We can modify the constant terms in a [`VectorAffineFunction`](@ref) or a
+[`VectorQuadraticFunction`](@ref) using the [`VectorConstantChange`](@ref)
+subtype of [`AbstractFunctionModification`](@ref).
 
 For example, consider a model with the following
 `VectorAffineFunction`-in-`Nonpositives` constraint:
@@ -567,8 +637,8 @@ c = add_constraint(m,
     Nonpositives(2)
 )
 ```
-We can modify the constant vector in the [`VectorAffineFunction`](@ref MathOptInterface.VectorAffineFunction)
-from `[0.0, 0.0]` to `[1.0, 2.0]` as follows:
+We can modify the constant vector in the [`VectorAffineFunction`](@ref) from
+`[0.0, 0.0]` to `[1.0, 2.0]` as follows:
 ```julia
 modify(m, c, VectorConstantChange([1.0, 2.0])
 )
@@ -578,9 +648,9 @@ The constraints are now ``1.0x + 1.0 \le 0.0`` and ``2.0y + 2.0 \le 0.0``.
 #### Affine coefficients in a scalar function
 
 In addition to modifying the constant terms in a function, we can also modify
-the affine variable coefficients in an [`ScalarAffineFunction`](@ref MathOptInterface.ScalarAffineFunction) or a [`ScalarQuadraticFunction`](@ref MathOptInterface.ScalarQuadraticFunction) using
-the [`ScalarCoefficientChange`](@ref MathOptInterface.ScalarCoefficientChange)
-subtype of [`AbstractFunctionModification`](@ref MathOptInterface.AbstractFunctionModification).
+the affine variable coefficients in an [`ScalarAffineFunction`](@ref) or a
+[`ScalarQuadraticFunction`](@ref) using the [`ScalarCoefficientChange`](@ref)
+subtype of [`AbstractFunctionModification`](@ref).
 
 For example, given the constraint ``1.0x <= 1.0``:
 ```julia
@@ -595,19 +665,16 @@ we can modify the coefficient of the `x` variable so that the constraint becomes
 modify(m, c, ScalarCoefficientChange(x, 2.0))
 ```
 
-[`ScalarCoefficientChange`](@ref MathOptInterface.ScalarCoefficientChange) can
-also be used to modify the objective function by passing an instance of
-[`ObjectiveFunction`](@ref MathOptInterface.ObjectiveFunction) instead of the
+[`ScalarCoefficientChange`](@ref) can also be used to modify the objective
+function by passing an instance of [`ObjectiveFunction`](@ref) instead of the
 constraint index `c` as we saw above.
 
 #### Affine coefficients in a vector function
 
 Finally, the last modification supported by MathOptInterface is the ability to
 modify the affine coefficients of a single variable in a
-[`VectorAffineFunction`](@ref MathOptInterface.VectorAffineFunction) or a
-[`VectorQuadraticFunction`](@ref MathOptInterface.VectorQuadraticFunction) using
-the [`MultirowChange`](@ref MathOptInterface.MultirowChange) subtype of
-[`AbstractFunctionModification`](@ref MathOptInterface.AbstractFunctionModification).
+[`VectorAffineFunction`](@ref) or a [`VectorQuadraticFunction`](@ref) using
+the [`MultirowChange`](@ref) subtype of [`AbstractFunctionModification`](@ref).
 
 For example, given the constraint ``Ax \in \mathbb{R}^2_+``, where
 ``A = [1.0, 2.0]^\top``:
@@ -739,10 +806,14 @@ Currently, a convention for duals is not defined for problems with non-conic set
 
 #### Duality and scalar product
 
-The scalar product is different from the canonical one for the sets [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle), [`LogDetConeTriangle`](@ref MathOptInterface.LogDetConeTriangle), [`RootDetConeTriangle`](@ref MathOptInterface.RootDetConeTriangle).
+The scalar product is different from the canonical one for the sets
+[`PositiveSemidefiniteConeTriangle`](@ref), [`LogDetConeTriangle`](@ref),
+[`RootDetConeTriangle`](@ref).
 If the set ``C_i`` of the section [Duals](@ref) is one of these three cones,
-then the rows of the matrix ``A_i`` corresponding to off-diagonal entries are twice the value of the `coefficients` field in the `VectorAffineFunction` for the corresponding rows.
-See [`PositiveSemidefiniteConeTriangle`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle) for details.
+then the rows of the matrix ``A_i`` corresponding to off-diagonal entries are
+twice the value of the `coefficients` field in the `VectorAffineFunction` for
+the corresponding rows. See [`PositiveSemidefiniteConeTriangle`](@ref) for
+details.
 
 
 ### Constraint bridges
