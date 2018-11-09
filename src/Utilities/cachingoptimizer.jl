@@ -134,9 +134,10 @@ function attachoptimizer!(model::CachingOptimizer)
     end
 end
 
-function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; copy_names=true)
-    return default_copy_to(m, src, copy_names)
+function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
+    return automatic_copy_to(m, src; kws...)
 end
+supports_incremental_copy(model::CachingOptimizer, copy_names::Bool) = true
 
 function MOI.empty!(m::CachingOptimizer)
     MOI.empty!(m.model_cache)

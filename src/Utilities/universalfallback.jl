@@ -46,7 +46,12 @@ function MOI.empty!(uf::UniversalFallback)
     empty!(uf.varattr)
     empty!(uf.conattr)
 end
-MOI.copy_to(uf::UniversalFallback, src::MOI.ModelLike; copy_names=true) = MOIU.default_copy_to(uf, src, copy_names)
+function MOI.copy_to(uf::UniversalFallback, src::MOI.ModelLike; kws...)
+    MOIU.automatic_copy_to(uf, src; kws...)
+end
+function supports_incremental_copy(uf::UniversalFallback, copy_names::Bool)
+    return supports_incremental_copy(uf.model, copy_names)
+end
 
 # References
 MOI.is_valid(uf::UniversalFallback, idx::VI) = MOI.is_valid(uf.model, idx)

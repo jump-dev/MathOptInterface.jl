@@ -844,41 +844,42 @@ Avoid storing extra copies of the problem when possible. This means that solver 
   [`add_variable`](@ref), [`add_constraint`](@ref) for supported constraints and
   [`set`](@ref) for supported attributes and add:
   ```julia
-function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true)
-    return MOIU.automatic_copy_to(dest, src, copy_names)
-end
+  function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
+      return MOI.Utilities.automatic_copy_to(dest, src, kws...)
+  end
   ```
   with
   ```julia
-MOI.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = true
+  MOI.Utilities.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = true
   ```
   or
   ```julia
-MOI.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = !copy_names
+  MOI.Utilities.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = !copy_names
   ```
   depending on whether the solver support names; see
-  [`supports_incremental_copy`](@ref) for more details.
+  [`Utilities.supports_incremental_copy`](@ref) for more details.
 * If the solver does not support loading the problem incrementally, do not
   implement [`add_variable`](@ref) and [`add_constraint`](@ref) as implementing
   them would require caching the problem. Let users or JuMP decide whether to
-  use a [`CachingOptimizer`](@ref) instead. Write either a custom implementation
-  of [`copy_to`](@ref) or implement the [Allocate-Load API](@ref). If you choose
-  to implement the [Allocate-Load API](@ref), do
+  use a `CachingOptimizer` instead. Write either a custom implementation of
+  [`copy_to`](@ref) or implement the [Allocate-Load API](@ref). If you choose to
+  implement the Allocate-Load API,
+  do
   ```julia
-function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true)
-    return MOIU.automatic_copy_to(dest, src, copy_names)
-end
+  function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
+      return MOIU.automatic_copy_to(dest, src, kws...)
+  end
   ```
   with
   ```julia
-MOI.supports_allocate_load(model::AbstractModel, copy_names::Bool) = true
+  MOI.Utilities.supports_allocate_load(model::AbstractModel, copy_names::Bool) = true
   ```
   or
   ```julia
-MOI.supports_allocate_load(model::AbstractModel, copy_names::Bool) = !copy_names
+  MOI.Utilities.supports_allocate_load(model::AbstractModel, copy_names::Bool) = !copy_names
   ```
   depending on whether the solver support names; see
-  [`supports_allocate_load`](@ref) for more details. Note that even if both
+  [`Utilities.supports_allocate_load`](@ref) for more details. Note that even if both
   writing  a custom implementation of [`copy_to`](@ref) and implementing the
   [Allocate-Load API](@ref) requires the user to copy the model from a cache,
   the [Allocate-Load API](@ref) allows MOI layers to be added between the cache

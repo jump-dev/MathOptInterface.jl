@@ -329,14 +329,15 @@ function MOI.is_empty(model::AbstractModel)
     iszero(model.nextvariableid) && iszero(model.nextconstraintid)
 end
 
-function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true)
-    return default_copy_to(dest, src, copy_names)
+function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
+    return automatic_copy_to(dest, src; kws...)
 end
+supports_incremental_copy(model::AbstractModel, copy_names::Bool) = true
 
 # Allocate-Load Interface
 # Even if the model does not need it and use default_copy_to, it could be used
 # by a layer that needs it
-needs_allocate_load(model::AbstractModel) = false
+supports_allocate_load(model::AbstractModel, copy_names::Bool) = true
 
 function allocate_variables(model::AbstractModel, nvars)
     return MOI.add_variables(model, nvars)

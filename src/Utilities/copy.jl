@@ -1,21 +1,39 @@
-# This file contains default implementations for the `MOI.copy_to` function
-# that can be used by a model.
+# This file contains default implementations for the `MOI.copy_to` function that can be used by a model.
+
+"""
+    automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
+                      copy_names::Bool=true)
+
+Use [`Utilities.supports_incremental_copy`](@ref) and
+[`Utilities.supports_allocate_load`](@ref) to automatically choose between
+[`Utilities.default_copy_to`](@ref) or [`Utilities.allocate_load`](@ref) to
+apply the copy operation.
+"""
+function automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
+                           copy_names::Bool=true)
+    if supports_incremental_copy(dest, copy_names)
+        default_copy_to(dest, src, copy_names)
+    elseif supports_allocate_load(dest, copy_names)
+        allocate_load(dest, src, copy_names)
+    else
+        error("Model $(typeof(dest)) does not support copy",
+              copy_names ? " with names" : "", ".")
+    end
+end
 
 """
     supports_incremental_copy(model::ModelLike, copy_names::Bool)
 
 Return a `Bool` indicating whether the model `model` supports
-[`incremental_copy_to(model, src, copy_names=copy_names)`](@ref) if all
-the attibutes set to `src` and constraints added to `src` are supported by
-`model`.
+[`default_copy_to(model, src, copy_names=copy_names)`](@ref) if all the
+attributes set to `src` and constraints added to `src` are supported by `model`.
 
-This function can be used to determine whether a model can loaded into `model`
-incrementally or whether it should be cached and copied at once instead.
+This function can be used to determine whether a model can be loaded into
+`model` incrementally or whether it should be cached and copied at once instead.
 This is used by JuMP to determine whether to add a cache or not.
 If this function returns false whatever the value of `copy_names` is then
-JuMP stores a cache in a [`CachingOptimizer`](@ref) handling the names. Then if
-bridges are used, a cache of the bridged model is stored in another
-[`CachingOptimizer`](@ref).
+JuMP stores a cache in a `CachingOptimizer` handling the names. Then if bridges
+are used, a cache of the bridged model is stored in another `CachingOptimizer`.
 If `supports_incremental_copy(optimizer, false)` is `true` then no cache is
 used by default for the bridged model. If
 `supports_incremental_copy(optimizer, true)` is `true` then no caching is used
@@ -24,27 +42,27 @@ by default to store the model and handling names as names are handled by
 
 ## Examples
 
-If [`set`](@ref), [`add_variable`](@ref) and [`add_constraint`](@ref) are
-implemented for a model of type `MyModel` and names are supported, then
-[`copy_to`](@ref) can be implemented as
+If [`MathOptInterface.set`](@ref), [`MathOptInterface.add_variable`](@ref) and
+[`MathOptInterface.add_constraint`](@ref) are implemented for a model of type
+`MyModel` and names are supported, then [`MathOptInterface.copy_to`](@ref) can
+be implemented as
 ```julia
-MOI.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = true
-function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; copy_names=true)
-    return default_copy_to(dest, src, copy_names)
+MOI.Utilities.supports_incremental_copy(model::MyModel, copy_names::Bool) = true
+function MOI.copy_to(dest::MyModel, src::MOI.ModelLike; kws...)
+    return MOI.Utilities.automatic_copy_to(dest, src, kws...)
 end
 ```
-The [`default_copy_to`](@ref) automatically redirects to
-[`incremental_copy_to`](@ref).
+The [`Utilities.automatic_copy_to`](@ref) function automatically redirects to
+[`Utilities.default_copy_to`](@ref).
 
 If names are not supported, simply change the first line by
 ```julia
-MOI.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = !copy_names
+MOI.supports_incremental_copy(model::MyModel, copy_names::Bool) = !copy_names
 ```
-The [`default_copy_to`](@ref) automatically throws an helpful error in case
-`copy_to` is called with `copy_names` equal to `true`.
+The [`Utilities.default_copy_to`](@ref) function automatically throws an helpful
+error in case `copy_to` is called with `copy_names` equal to `true`.
 """
-function supports_incremental_copy end
-
+supports_incremental_copy(model::MOI.ModelLike) = false
 
 struct IndexMap
     varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
@@ -134,6 +152,15 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     Base.depwarn("default_copy_to(dest, src) is deprecated, use default_copy_to(dest, src, true) instead or default_copy_to(dest, src, false) if you do not want to copy names.", :default_copy_to)
     default_copy_to(dest, src, true)
 end
+
+"""
+    default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
+
+Implements `MOI.copy_to(dest, src)` by adding the variables and then the
+constraints and attributes incrementally. The function
+[`supports_incremental_copy`](@ref) can be used to check whether `dest` supports
+the copying a model incrementally.
+"""
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
     MOI.empty!(dest)
 
@@ -172,17 +199,26 @@ end
 # In the implementation of the allocate-load interface, it can be assumed that the different functions will the called in the following order:
 # 1) `allocate_variables`
 # 2) `allocate` and `allocate_constraint`
-# 3) `load_variables` and `allocate_constraint`
+# 3) `load_variables`
 # 4) `load` and `load_constraint`
 # The interface is not meant to be used to create new constraints with `allocate_constraint` followed by `load_constraint` after a solve, it is only meant for being used in this order to implement `MOI.copy_to`.
 
+# TODO deprecate this in MOI v0.7
 """
     needs_allocate_load(model::MOI.ModelLike)::Bool
-
 Return a `Bool` indicating whether `model` does not support `add_variables`/`add_constraint`/`set` but supports `allocate_variables`/`allocate_constraint`/`allocate`/`load_variables`/`load_constraint`/`load`.
 That is, the allocate-load interface need to be used to copy an model to `model`.
 """
 needs_allocate_load(::MOI.ModelLike) = false
+
+"""
+    supports_allocate_load(model::MOI.ModelLike, copy_names::Bool)::Bool
+
+Return a `Bool` indicating whether `model` supports
+[`allocate_load(model, src, copy_names=copy_names)`](@ref) if all the
+attributes set to `src` and constraints added to `src` are supported by `model`.
+"""
+supports_allocate_load(::MOI.ModelLike, copy_names::Bool) = false
 
 """
     allocate_variables(model::MOI.ModelLike, nvars::Integer)
@@ -291,7 +327,9 @@ end
 """
     allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike)
 
-Implements `MOI.copy_to(dest, src)` using the allocate-load interface.
+Implements `MOI.copy_to(dest, src)` using the Allocate-Load API. The function
+[`supports_allocate_load`](@ref) can be used to check whether `dest` supports
+the Allocate-Load API.
 """
 function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
     MOI.empty!(dest)
