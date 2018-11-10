@@ -61,7 +61,7 @@ MOI.supports_default_copy_to(model::MyModel, copy_names::Bool) = !copy_names
 The [`Utilities.default_copy_to`](@ref) function automatically throws an helpful
 error in case `copy_to` is called with `copy_names` equal to `true`.
 """
-supports_default_copy_to(model::MOI.ModelLike) = false
+supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
 
 struct IndexMap
     varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
