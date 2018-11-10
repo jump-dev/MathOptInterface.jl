@@ -96,8 +96,12 @@ end
 # Attributes
 _get(uf, attr::MOI.AbstractOptimizerAttribute)          = uf.optattr[attr]
 _get(uf, attr::MOI.AbstractModelAttribute)              = uf.modattr[attr]
-_get(uf, attr::MOI.AbstractVariableAttribute,   vi::VI) = uf.varattr[attr][vi]
-_get(uf, attr::MOI.AbstractConstraintAttribute, ci::CI) = uf.conattr[attr][ci]
+function _get(uf, attr::MOI.AbstractVariableAttribute, vi::VI)
+    return get(uf.varattr[attr], vi, nothing)
+end
+function _get(uf, attr::MOI.AbstractConstraintAttribute, ci::CI)
+    return get(uf.conattr[attr], ci, nothing)
+end
 function MOI.get(uf::UniversalFallback,
                  attr::Union{MOI.AbstractOptimizerAttribute,
                              MOI.AbstractModelAttribute})

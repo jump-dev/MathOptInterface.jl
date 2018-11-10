@@ -182,6 +182,43 @@ function failcopytestca(dest::MOI.ModelLike)
     @test_throws MOI.UnsupportedAttribute MOI.copy_to(dest, BadConstraintAttributeModel())
 end
 
+function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
+    x, y, z = MOI.add_variables(src, 3)
+    vpattr = MOI.VariablePrimalStart()
+    MOI.set(src, vpattr, x, 1.0)
+    MOI.set(src, vpattr, z, 3.0)
+    a = MOI.add_constraint(src, x, MOI.EqualTo(1.0))
+    b = MOI.add_constraint(src, y, MOI.EqualTo(2.0))
+    c = MOI.add_constraint(src, z, MOI.EqualTo(3.0))
+    cpattr = MOI.ConstraintPrimalStart()
+    MOI.set(src, cpattr, a, 1.0)
+    MOI.set(src, cpattr, b, 2.0)
+    cdattr = MOI.ConstraintDualStart()
+    MOI.set(src, cdattr, b, 2.0)
+    MOI.set(src, cdattr, c, 3.0)
+
+    @test MOI.supports(dest, vpattr, MOI.VariableIndex)
+    F = MOI.SingleVariable
+    S = MOI.EqualTo{Float64}
+    @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F, S})
+    @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F, S})
+
+    dict = MOI.copy_to(dest, src, copy_names=false)
+
+    @test vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet())
+    @test MOI.get(dest, vpattr, dict[x]) == 1.0
+    @test MOI.get(dest, vpattr, dict[y]) === nothing
+    @test MOI.get(dest, vpattr, dict[z]) == 3.0
+    @test cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F, S}())
+    @test MOI.get(dest, cpattr, dict[a]) == 1.0
+    @test MOI.get(dest, cpattr, dict[b]) == 2.0
+    @test MOI.get(dest, cpattr, dict[c]) === nothing
+    @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F, S}())
+    @test MOI.get(dest, cdattr, dict[a]) === nothing
+    @test MOI.get(dest, cdattr, dict[b]) == 2.0
+    @test MOI.get(dest, cdattr, dict[c]) == 3.0
+end
+
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.set(src, MOI.Name(), "ModelName")
     v = MOI.add_variables(src, 3)

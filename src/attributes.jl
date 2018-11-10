@@ -143,7 +143,9 @@ Return an attribute `attr` of the model `model`.
 
     get(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex)
 
-Return an attribute `attr` of the variable `v` in model `model`.
+If the attribute `attr` is set for the variable `v` in the model `model`, return
+return an empty string if `attr` is [`ConstraintName`](@ref) and `nothing`
+otherwise.
 
     get(model::ModelLike, attr::AbstractVariableAttribute, v::Vector{VariableIndex})
 
@@ -151,7 +153,9 @@ Return a vector of attributes corresponding to each variable in the collection `
 
     get(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex)
 
-Return an attribute `attr` of the constraint `c` in model `model`.
+If the attribute `attr` is set for the constraint `c` in the model `model`,
+return its value, otherwise return an empty string if `attr` is
+[`ConstraintName`](@ref) and `nothing` otherwise.
 
     get(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})
 

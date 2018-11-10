@@ -9,11 +9,13 @@ function test_optmodattrs(uf, model, attr, listattr)
     MOI.empty!(uf)
     @test MOI.is_empty(uf)
 end
-function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfun, x, y, z)
+function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index},
+                          addfun, x, y, z)
     @test !MOI.supports(model, attr, I)
     @test MOI.supports(uf, attr, I)
     @test isempty(MOI.get(uf, listattr))
     MOI.set(uf, attr, [x, y], [2, 0])
+    @test MOI.get(uf, attr, z) === nothing
     @test !MOI.is_empty(uf)
     @test MOI.get(uf, listattr) == [attr]
     MOI.set(uf, attr, z, 5)
@@ -22,12 +24,14 @@ function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index}, addfu
     @test MOI.get(uf, listattr) == [attr]
 
     u = addfun(uf)
+    @test MOI.get(uf, attr, u) === nothing
     @test MOI.get(uf, listattr) == [attr]
     MOI.set(uf, attr, u, 8)
     @test MOI.get(uf, listattr) == [attr]
 
     w = addfun(uf)
     @test MOI.get(uf, listattr) == [attr]
+    @test MOI.get(uf, attr, w) === nothing
 
     @test MOI.is_valid(uf, u)
     MOI.delete(uf, u)
@@ -68,6 +72,11 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         @test !MOI.is_empty(uf)
         MOI.empty!(uf)
         @test MOI.is_empty(uf)
+    end
+    @testset "Start Values Test" begin
+        src = MOIU.UniversalFallback(Model{Float64}())
+        dest = MOIU.UniversalFallback(Model{Float64}())
+        MOIT.start_values_test(dest, src)
     end
     @testset "Valid Test" begin
         MOIT.validtest(uf)
