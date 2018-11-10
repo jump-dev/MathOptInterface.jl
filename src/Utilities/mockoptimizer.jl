@@ -272,8 +272,8 @@ MOI.supports_constraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S:
 function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; kws...)
     automatic_copy_to(mock, src; kws...)
 end
-function supports_incremental_copy(mock::MockOptimizer, copy_names::Bool)
-    return !mock.needs_allocate_load && supports_incremental_copy(mock.inner_model, copy_names)
+function supports_default_copy_to(mock::MockOptimizer, copy_names::Bool)
+    return !mock.needs_allocate_load && supports_default_copy_to(mock.inner_model, copy_names)
 end
 
 # Allocate-Load Interface

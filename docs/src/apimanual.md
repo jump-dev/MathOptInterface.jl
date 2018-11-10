@@ -850,14 +850,14 @@ Avoid storing extra copies of the problem when possible. This means that solver 
   ```
   with
   ```julia
-  MOI.Utilities.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = true
+  MOI.Utilities.supports_default_copy_to(model::AbstractModel, copy_names::Bool) = true
   ```
   or
   ```julia
-  MOI.Utilities.supports_incremental_copy(model::AbstractModel, copy_names::Bool) = !copy_names
+  MOI.Utilities.supports_default_copy_to(model::AbstractModel, copy_names::Bool) = !copy_names
   ```
   depending on whether the solver support names; see
-  [`Utilities.supports_incremental_copy`](@ref) for more details.
+  [`Utilities.supports_default_copy_to`](@ref) for more details.
 * If the solver does not support loading the problem incrementally, do not
   implement [`add_variable`](@ref) and [`add_constraint`](@ref) as implementing
   them would require caching the problem. Let users or JuMP decide whether to
@@ -867,7 +867,7 @@ Avoid storing extra copies of the problem when possible. This means that solver 
   do
   ```julia
   function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
-      return MOIU.automatic_copy_to(dest, src, kws...)
+      return MOI.Utilities.automatic_copy_to(dest, src, kws...)
   end
   ```
   with
@@ -879,15 +879,17 @@ Avoid storing extra copies of the problem when possible. This means that solver 
   MOI.Utilities.supports_allocate_load(model::AbstractModel, copy_names::Bool) = !copy_names
   ```
   depending on whether the solver support names; see
-  [`Utilities.supports_allocate_load`](@ref) for more details. Note that even if both
-  writing  a custom implementation of [`copy_to`](@ref) and implementing the
-  [Allocate-Load API](@ref) requires the user to copy the model from a cache,
-  the [Allocate-Load API](@ref) allows MOI layers to be added between the cache
-  and the solver which allows to apply transformation without the need for
-  additional caching. For instance, with [Light bridges](https://github.com/JuliaOpt/MathOptInterface.jl/issues/523),
+  [`Utilities.supports_allocate_load`](@ref) for more details.
+
+  Note that even if both writing a custom implementation of [`copy_to`](@ref)
+  and implementing the [Allocate-Load API](@ref) requires the user to copy the
+  model from a cache, the [Allocate-Load API](@ref) allows MOI layers to be
+  added between the cache and the solver which allows transformations to be
+  applied without the need for additional caching. For instance, with the
+  proposed [Light bridges](https://github.com/JuliaOpt/MathOptInterface.jl/issues/523),
   no cache will be needed to store the bridged model when bridges are used by
-  JuMP so implementing the [Allocate-Load API](@ref) will allow JuMP to use
-  only one cache instead of two.
+  JuMP so implementing the [Allocate-Load API](@ref) will allow JuMP to use only
+  one cache instead of two.
 
 ### JuMP mapping
 

@@ -368,7 +368,7 @@ The following utilities can be used to implement [`copy_to`](@ref). See
 ```@docs
 Utilities.automatic_copy_to
 Utilities.default_copy_to
-Utilities.supports_incremental_copy
+Utilities.supports_default_copy_to
 ```
 
 ### Allocate-Load API
