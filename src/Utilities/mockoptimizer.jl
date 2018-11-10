@@ -187,6 +187,8 @@ function MOI.set(mock::MockOptimizer, ::MOI.ObjectiveBound, value::Float64)
     mock.objectivebound = value
 end
 
+MOI.get(mock::MockOptimizer, ::MOI.SolverName) = "Mock"
+
 function MOI.empty!(mock::MockOptimizer)
     MOI.empty!(mock.inner_model)
     mock.attribute = 0
