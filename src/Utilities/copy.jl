@@ -32,10 +32,10 @@ This function can be used to determine whether a model can be loaded into
 `model` incrementally or whether it should be cached and copied at once instead.
 This is used by JuMP to determine whether to add a cache or not in two
 situations:
-1) A first cache can be used to store the model as entered by the user as well
+1. A first cache can be used to store the model as entered by the user as well
    as the names of variables and constraints. This cache is created if this
    function returns `false` when `copy_names` is `true`.
-2) If bridges are used, then a second cache can be used to store of the bridged
+2. If bridges are used, then a second cache can be used to store the bridged
    model with unnamed variables and constraints. This cache is created if this
    function returns `false` when `copy_names` is `false`.
 
