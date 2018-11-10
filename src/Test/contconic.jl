@@ -1438,7 +1438,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expectedobjval atol=atol rtol=rtol
 
         if logdet
-            @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1. atol=atol rtol=rtol
+            @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1.0 atol=atol rtol=rtol
         end
 
         Qv = MOI.get(model, MOI.VariablePrimal(), Q)
