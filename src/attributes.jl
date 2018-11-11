@@ -143,7 +143,9 @@ Return an attribute `attr` of the model `model`.
 
     get(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex)
 
-Return an attribute `attr` of the variable `v` in model `model`.
+If the attribute `attr` is set for the variable `v` in the model `model`, return
+its value, return `nothing` otherwise. If the attribute `attr` is not supported
+by `model` then an error should be thrown instead of returning `nothing`.
 
     get(model::ModelLike, attr::AbstractVariableAttribute, v::Vector{VariableIndex})
 
@@ -151,7 +153,10 @@ Return a vector of attributes corresponding to each variable in the collection `
 
     get(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex)
 
-Return an attribute `attr` of the constraint `c` in model `model`.
+If the attribute `attr` is set for the constraint `c` in the model `model`,
+return its value, return `nothing` otherwise. If the attribute `attr` is not
+supported by `model` then an error should be thrown instead of returning
+`nothing`.
 
     get(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})
 
@@ -340,7 +345,8 @@ struct ListOfModelAttributesSet <: AbstractModelAttribute end
 """
     Name()
 
-A model attribute for the string identifying the model.
+A model attribute for the string identifying the model. It has a default value
+of `""` if not set`.
 """
 struct Name <: AbstractModelAttribute end
 
@@ -508,7 +514,8 @@ struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 
 A variable attribute for a string identifying the variable. It is *valid* for
 two variables to have the same name; however, variables with duplicate names
-cannot be looked up using [`get`](@ref).
+cannot be looked up using [`get`](@ref). It has a default value of `""` if not
+set`.
 """
 struct VariableName <: AbstractVariableAttribute end
 
@@ -574,7 +581,7 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 A constraint attribute for a string identifying the constraint. It is *valid*
 for constraints variables to have the same name; however, constraints with
 duplicate names cannot be looked up using [`get`](@ref) regardless of if they
-have the same `F`-in`S` type.
+have the same `F`-in`S` type. It has a default value of `""` if not set`.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
