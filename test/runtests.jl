@@ -17,6 +17,8 @@ include("dummy.jl")
     include("isapprox.jl")
     include("interval.jl")
     include("errors.jl")
+    include("functions.jl")
+    include("sets.jl")
     include("attributes.jl")
 end
 
@@ -50,15 +52,15 @@ MOIU.@model(ModelForMock, (MOI.ZeroOne, MOI.Integer),
 
 # Utilities submodule tests
 @testset "MOI.Utilities" begin
-    include("functions.jl")
-    include("sets.jl")
-    include("constraints.jl")
-    include("model.jl")
-    include("universalfallback.jl")
-    include("parser.jl")
-    include("mockoptimizer.jl")
-    include("cachingoptimizer.jl")
-    include("copy.jl")
+    include("Utilities/functions.jl")
+    include("Utilities/sets.jl")
+    include("Utilities/constraints.jl")
+    include("Utilities/model.jl")
+    include("Utilities/universalfallback.jl")
+    include("Utilities/parser.jl")
+    include("Utilities/mockoptimizer.jl")
+    include("Utilities/cachingoptimizer.jl")
+    include("Utilities/copy.jl")
 end
 
 # Test submodule tests

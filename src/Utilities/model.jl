@@ -243,7 +243,7 @@ MOI.supports(model::AbstractModel, ::MOI.ObjectiveFunction) = true
 function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
     model.objectiveset = true
     # f needs to be copied, see #2
-    model.objective = deepcopy(f)
+    model.objective = copy(f)
 end
 
 function MOI.modify(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
@@ -270,10 +270,11 @@ function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.Abst
     if MOI.supports_constraint(model, F, S)
         # We give the index value `nextconstraintid + 1` to the new constraint.
         # As the same counter is used for all pairs of F-in-S constraints,
-        # the index value is unique across all constraint types as mentionned in `@model`'s doc.
+        # the index value is unique across all constraint types as mentioned in
+        # `@model`'s doc.
         ci = CI{F, S}(model.nextconstraintid += 1)
         # f needs to be copied, see #2
-        push!(model.constrmap, _add_constraint(model, ci, deepcopy(f), deepcopy(s)))
+        push!(model.constrmap, _add_constraint(model, ci, copy(f), copy(s)))
         return ci
     else
         throw(MOI.UnsupportedConstraint{F, S}())

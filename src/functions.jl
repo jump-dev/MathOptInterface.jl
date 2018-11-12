@@ -354,6 +354,11 @@ function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFuncti
     isapprox(_constant(f), _constant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
 end
 
+# isbits type, nothing to copy
+Base.copy(func::SingleVariable) = func
+
+Base.copy(func::VectorOfVariables) = VectorOfVariables(copy(func.variables))
+
 """
     copy(func::Union{ScalarAffineFunction, VectorAffineFunction})
 
