@@ -17,6 +17,8 @@ include("dummy.jl")
     include("isapprox.jl")
     include("interval.jl")
     include("errors.jl")
+    include("functions.jl")
+    include("sets.jl")
     include("attributes.jl")
 end
 

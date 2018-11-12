@@ -420,3 +420,19 @@ Base.:(==)(a::SOS2{T}, b::SOS2{T}) where T = a.weights == b.weights
 Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b.weights; kwargs...)
 
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
+
+
+# isbits types, nothing to copy
+function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
+                              GreaterThan, LessThan, EqualTo, Interval,
+                              SecondOrderCone, RotatedSecondOrderCone,
+                              GeometricMeanCone, ExponentialCone,
+                              DualExponentialCone, PowerCone, DualPowerCone,
+                              PositiveSemidefiniteConeTriangle,
+                              PositiveSemidefiniteConeSquare,
+                              LogDetConeTriangle, LogDetConeSquare,
+                              RootDetConeTriangle, RootDetConeSquare,
+                              Integer, ZeroOne, Semicontinuous, Semiinteger})
+    return set
+end
+Base.copy(set::S) where {S <: Union{SOS1, SOS2}} = S(copy(set.weights))
