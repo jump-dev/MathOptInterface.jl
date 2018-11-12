@@ -54,11 +54,19 @@ abstract type AbstractModel{T} <: MOI.ModelLike end
 getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
 # Variables
-MOI.get(model::AbstractModel, ::MOI.NumberOfVariables) = length(model.varindices)
+function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)
+    if model.variable_indices === nothing
+        model.num_variables_created
+    else
+        length(model.variable_indices)
+    end
+end
 function MOI.add_variable(model::AbstractModel)
-    v = VI(model.nextvariableid += 1)
-    push!(model.varindices, v)
-    v
+    vi = VI(model.num_variables_created += 1)
+    if model.variable_indices !== nothing
+        push!(model.variable_indices, vi)
+    end
+    return vi
 end
 function MOI.add_variables(model::AbstractModel, n::Integer)
     [MOI.add_variable(model) for i in 1:n]
@@ -110,7 +118,11 @@ function MOI.delete(model::AbstractModel, vi::VI)
     for ci in rm
         MOI.delete(model, ci)
     end
-    delete!(model.varindices, vi)
+    if model.variable_indices === nothing
+        model.variable_indices = Set(MOI.get(model,
+                                             MOI.ListOfVariableIndices()))
+    end
+    delete!(model.variable_indices, vi)
     model.name_to_var = nothing
     if haskey(model.var_to_name, vi)
         delete!(model.var_to_name, vi)
@@ -131,12 +143,22 @@ function MOI.is_valid(model::AbstractModel, ci::CI{F, S}) where {F, S}
         end
     end
 end
-MOI.is_valid(model::AbstractModel, vi::VI) = in(vi, model.varindices)
+function MOI.is_valid(model::AbstractModel, vi::VI)
+    if model.variable_indices === nothing
+        return 1 ≤ vi.value ≤ model.num_variables_created
+    else
+        return in(vi, model.variable_indices)
+    end
+end
 
 function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
-    vis = collect(model.varindices)
-    sort!(vis, by=vi->vi.value) # It needs to be sorted by order of creation
-    vis
+    if model.variable_indices === nothing
+        return VI.(1:model.num_variables_created)
+    else
+        vis = collect(model.variable_indices)
+        sort!(vis, by=vi->vi.value) # It needs to be sorted by order of creation
+        return vis
+    end
 end
 
 # Names
@@ -327,7 +349,7 @@ end
 function MOI.is_empty(model::AbstractModel)
     isempty(model.name) && !model.senseset && !model.objectiveset &&
     isempty(model.objective.terms) && iszero(model.objective.constant) &&
-    iszero(model.nextvariableid) && iszero(model.nextconstraintid)
+    iszero(model.num_variables_created) && iszero(model.nextconstraintid)
 end
 
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
@@ -491,8 +513,8 @@ mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     name::String
     sense::MOI.OptimizationSense
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
-    nextvariableid::Int64
-    varindices::Set{MOI.VariableIndex}
+    num_variables_created::Int64
+    variable_indices::Union{Nothing, Set{MOI.VariableIndex}}
     var_to_name::Dict{MOI.VariableIndex, String}
     name_to_var::Union{Dict{String, MOI.VariableIndex}, Nothing}
     nextconstraintid::Int64
@@ -537,8 +559,10 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             sense::$MOI.OptimizationSense
             objectiveset::Bool
             objective::Union{$MOI.SingleVariable, $MOI.ScalarAffineFunction{T}, $MOI.ScalarQuadraticFunction{T}}
-            nextvariableid::Int64
-            varindices::Set{$VI}
+            num_variables_created::Int64
+            # If nothing, no variable has been deleted so the indices of the
+            # variables are VI.(1:num_variables_created)
+            variable_indices::Union{Nothing, Set{$VI}}
             var_to_name::Dict{$VI, String}
             # If nothing, the dictionary hasn't been constructed yet.
             name_to_var::Union{Dict{String, $VI}, Nothing}
@@ -567,8 +591,8 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             model.sense = $MOI.FeasibilitySense
             model.objectiveset = false
             model.objective = $SAF{T}(MOI.ScalarAffineTerm{T}[], zero(T))
-            model.nextvariableid = 0
-            empty!(model.varindices)
+            model.num_variables_created = 0
+            model.variable_indices = nothing
             empty!(model.var_to_name)
             model.name_to_var = nothing
             model.nextconstraintid = 0
@@ -629,7 +653,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         $modeldef
         function $esc_modelname{T}() where T
             $esc_modelname{T}("", false, $MOI.FeasibilitySense, false, $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)),
-                              0, Set{$VI}(), Dict{$VI, String}(), nothing,
+                              0, nothing, Dict{$VI, String}(), nothing,
                               0, Dict{$CI, String}(), nothing, Int[],
                               $(_getCV.(funs)...))
         end
