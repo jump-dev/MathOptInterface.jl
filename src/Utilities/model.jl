@@ -1,3 +1,19 @@
+## Storage of constraints
+#
+# All `F`-in-`S` constraints are stored in a vector of `C{F, S}`. The index in
+# this vector of a constraint of index `ci::MOI.ConstraintIndex{F, S}` is
+# given by `model.constrmap[ci.value]`. The advantage of this representation is
+# that it does not require any dictionary hence it never needs to compute a
+# hash.
+#
+# It may seem redundant to store the constraint index `ci` as well as the
+# function and sets in the tuple but it is used to efficiently implement the
+# getter for `MOI.ListOfConstraintIndices{F, S}`. It is also used to implement
+# `MOI.delete`. Indeed, when a constraint is deleted, it is removed from the
+# vector hence the index in the vector of all the functions that were stored
+# after must be decreased by one. As the constraint index is stored in the
+# vector, it readily gives the entries of `model.constrmap` that need to be
+# updated.
 const C{F, S} = Tuple{CI{F, S}, F, S}
 
 const EMPTYSTRING = ""
