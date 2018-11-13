@@ -1,10 +1,10 @@
 ## Storage of constraints
 #
-# All `F`-in-`S` constraints are stored in a vector of `C{F, S}`. The index in
-# this vector of a constraint of index `ci::MOI.ConstraintIndex{F, S}` is
-# given by `model.constrmap[ci.value]`. The advantage of this representation is
-# that it does not require any dictionary hence it never needs to compute a
-# hash.
+# All `F`-in-`S` constraints are stored in a vector of `ConstraintEntry{F, S}`.
+# The index in this vector of a constraint of index
+# `ci::MOI.ConstraintIndex{F, S}` is given by `model.constrmap[ci.value]`. The
+# advantage of this representation is that it does not require any dictionary
+# hence it never needs to compute a hash.
 #
 # It may seem redundant to store the constraint index `ci` as well as the
 # function and sets in the tuple but it is used to efficiently implement the
@@ -14,12 +14,13 @@
 # after must be decreased by one. As the constraint index is stored in the
 # vector, it readily gives the entries of `model.constrmap` that need to be
 # updated.
-const C{F, S} = Tuple{CI{F, S}, F, S}
+const ConstraintEntry{F, S} = Tuple{CI{F, S}, F, S}
 
 const EMPTYSTRING = ""
 
 # Implementation of MOI for vector of constraint
-function _add_constraint(constrs::Vector{C{F, S}}, ci::CI, f::F, s::S) where {F, S}
+function _add_constraint(constrs::Vector{ConstraintEntry{F, S}}, ci::CI, f::F,
+                         s::S) where {F, S}
     push!(constrs, (ci, f, s))
     length(constrs)
 end
@@ -49,20 +50,30 @@ end
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::F) where {F, S} = (ci, change, s)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::S) where {F, S} = (ci, f, change)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modifyfunction(f, change), s)
-function _modify(constrs::Vector{C{F, S}}, ci::CI{F}, i::Int, change) where {F, S}
+function _modify(constrs::Vector{ConstraintEntry{F, S}}, ci::CI{F}, i::Int,
+                 change) where {F, S}
     constrs[i] = _modifyconstr(constrs[i]..., change)
 end
 
-_getnoc(constrs::Vector{C{F, S}}, noc::MOI.NumberOfConstraints{F, S}) where {F, S} = length(constrs)
+function _getnoc(constrs::Vector{ConstraintEntry{F, S}},
+                 ::MOI.NumberOfConstraints{F, S}) where {F, S}
+    return length(constrs)
+end
 # Might be called when calling NumberOfConstraint with different coefficient type than the one supported
-_getnoc(constrs::Vector, noc::MOI.NumberOfConstraints) = 0
+_getnoc(::Vector, ::MOI.NumberOfConstraints) = 0
 
-function _getloc(constrs::Vector{C{F, S}})::Vector{Tuple{DataType, DataType}} where {F, S}
+function _getloc(constrs::Vector{ConstraintEntry{F, S}})::Vector{Tuple{DataType, DataType}} where {F, S}
     isempty(constrs) ? [] : [(F, S)]
 end
 
-_getlocr(constrs::Vector{C{F, S}}, ::MOI.ListOfConstraintIndices{F, S}) where {F, S} = map(constr -> constr[1], constrs)
-_getlocr(constrs::Vector{<:C}, ::MOI.ListOfConstraintIndices{F, S}) where {F, S} = CI{F, S}[]
+function _getlocr(constrs::Vector{ConstraintEntry{F, S}},
+                  ::MOI.ListOfConstraintIndices{F, S}) where {F, S}
+    return map(constr -> constr[1], constrs)
+end
+function _getlocr(constrs::Vector{<:ConstraintEntry},
+                  ::MOI.ListOfConstraintIndices{F, S}) where {F, S}
+    return CI{F, S}[]
+end
 
 # Implementation of MOI for AbstractModel
 abstract type AbstractModel{T} <: MOI.ModelLike end
@@ -106,7 +117,8 @@ function _removevar!(constrs::Vector, vi::VI)
     end
     return []
 end
-function _removevar!(constrs::Vector{<:C{MOI.SingleVariable}}, vi::VI)
+function _removevar!(constrs::Vector{<:ConstraintEntry{MOI.SingleVariable}},
+                     vi::VI)
     # If a variable is removed, the SingleVariable constraints using this variable
     # need to be removed too
     rm = []
@@ -454,7 +466,7 @@ if VERSION >= v"0.7.0-DEV.2813"
 end
 _field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
-_getC(s::SymbolSet) = :(C{F, $(_typedset(s))})
+_getC(s::SymbolSet) = :(ConstraintEntry{F, $(_typedset(s))})
 _getC(s::SymbolFun) = _typedfun(s)
 
 _getCV(s::SymbolSet) = :($(_getC(s))[])
@@ -489,19 +501,20 @@ The model describing an linear program would be:
       (MOI.VectorAffineFunction,))                                #   typed vector functions
 ```
 
-Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities` and `MOIU.C{F, S}` be defined as `MOI.Tuple{CI{F, S}, F, S}`.
+Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities` and
+`MOIU.ConstraintEntry{F, S}` be defined as `MOI.Tuple{CI{F, S}, F, S}`.
 The macro would create the types:
 ```julia
 struct LPModelScalarConstraints{T, F <: MOI.AbstractScalarFunction} <: MOIU.Constraints{F}
-    equalto::Vector{MOIU.C{F, MOI.EqualTo{T}}}
-    greaterthan::Vector{MOIU.C{F, MOI.GreaterThan{T}}}
-    lessthan::Vector{MOIU.C{F, MOI.LessThan{T}}}
-    interval::Vector{MOIU.C{F, MOI.Interval{T}}}
+    equalto::Vector{MOIU.ConstraintEntry{F, MOI.EqualTo{T}}}
+    greaterthan::Vector{MOIU.ConstraintEntry{F, MOI.GreaterThan{T}}}
+    lessthan::Vector{MOIU.ConstraintEntry{F, MOI.LessThan{T}}}
+    interval::Vector{MOIU.ConstraintEntry{F, MOI.Interval{T}}}
 end
 struct LPModelVectorConstraints{T, F <: MOI.AbstractVectorFunction} <: MOIU.Constraints{F}
-    zeros::Vector{MOIU.C{F, MOI.Zeros}}
-    nonnegatives::Vector{MOIU.C{F, MOI.Nonnegatives}}
-    nonpositives::Vector{MOIU.C{F, MOI.Nonpositives}}
+    zeros::Vector{MOIU.ConstraintEntry{F, MOI.Zeros}}
+    nonnegatives::Vector{MOIU.ConstraintEntry{F, MOI.Nonnegatives}}
+    nonpositives::Vector{MOIU.ConstraintEntry{F, MOI.Nonpositives}}
 end
 mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     name::String
