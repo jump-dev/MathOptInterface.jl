@@ -5,7 +5,7 @@ v0.6.3 (November 16, 2018)
 --------------------------
 
 - Variables and constraints are now allowed to have duplicate names. An error is
-  thrown only on lookup. (#549)
+  thrown only on lookup. This change breaks some existing tests. (#549)
 - Performance improvements in Utilities.Model (#549, #567, #568)
 - Fix bug in QuadtoSOC (#558).
 - New `supports_default_copy_to` method that optimizers should implement to
