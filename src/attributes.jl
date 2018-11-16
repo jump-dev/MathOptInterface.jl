@@ -692,34 +692,75 @@ struct TerminationStatus <: AbstractModelAttribute end
 """
     TerminationStatusCode
 
-An Enum of possible values for the `TerminationStatus` attribute.
-This attribute is meant to explain the reason why the optimizer stopped executing.
+An Enum of possible values for the `TerminationStatus` attribute. This attribute
+is meant to explain the reason why the optimizer stopped executing.
 
 ## OK
 
 These are generally OK statuses.
 
-* `Success`: the algorithm ran successfully and has a result; this includes cases where the algorithm converges to an infeasible point (NLP) or converges to a solution of a homogeneous self-dual problem and has a certificate of primal/dual infeasibility
-* `InfeasibleNoResult`: the algorithm stopped because it decided that the problem is infeasible but does not have a result to return
-* `UnboundedNoResult`: the algorithm stopped because it decided that the problem is unbounded but does not have a result to return
-* `InfeasibleOrUnbounded`: the algorithm stopped because it decided that the problem is infeasible or unbounded (no result is available); this occasionally happens during MIP presolve
+* `Success`: the algorithm ran successfully and has a result; this includes
+  cases where the algorithm converges to an infeasible point (NLP) or converges
+  to a solution of a homogeneous self-dual problem and has a certificate of
+  primal/dual infeasibility.
+* `InfeasibleNoResult`: the algorithm stopped because it decided that the
+  problem is infeasible but does not have a result to return.
+* `UnboundedNoResult`: the algorithm stopped because it decided that the problem
+  is unbounded but does not have a result to return.
+* `InfeasibleOrUnbounded`: the algorithm stopped because it decided that the
+  problem is infeasible or unbounded (no result is available); this occasionally
+  happens during MIP presolve.
 
 ## Limits
 
 The optimizer stopped because of some user-defined limit.
-To be documented: `IterationLimit`, `TimeLimit`, `NodeLimit`, `SolutionLimit`, `MemoryLimit`, `ObjectiveLimit`, `NormLimit`, `OtherLimit`.
+
+* `IterationLimit`: an iterative algorithm stopped after conducting the maximum
+  number of iterations.
+* `TimeLimit`: the algorithm stopped after a user-specified computation time.
+* `NodeLimit`: a branch-and-bound algorithm stopped because it explored a
+  maximum number of nodes in the branch-and-bound tree.
+* `SolutionLimit`: the algorithm stopped because it found the required number of
+  solutions. This is often used in MIP's to get the solver to return the first
+  feasible solution it encounters.
+* `MemoryLimit`: the algorithm stopped because it ran out of memory.
+* `ObjectiveLimit`: the algorthm stopped because it found a solution better than
+  a minimum limit set by the user.
+* `NormLimit`: the algorithm stopped because of a criteria involving a norm.
+  This is typically used to terminate an algorithm once successive iterations
+  result in a solution that is within some distance of the previous solution.
+* `OtherLimit`: the algorithm stopped due to a limit not covered by one of the
+  above.
 
 ## Problematic
 
 This group of statuses means that something unexpected or problematic happened.
 
-* `SlowProgress`: the algorithm stopped because it was unable to continue making progress towards the solution
-* `AlmostSuccess` should be used if there is additional information that relaxed convergence tolerances are satisfied
-
-To be documented: `NumericalError`, `InvalidModel`, `InvalidOption`, `Interrupted`, `OtherError`.
+* `SlowProgress`: the algorithm stopped because it was unable to continue making
+  progress towards the solution.
+* `AlmostSuccess` should be used if there is additional information that relaxed
+  convergence tolerances are satisfied
+* `NumericalError`: the algorithm stopped because it encountered unrecoverable
+  numerical error.
+* `InvalidModel`: the algorithm stopped because the model is invalid.
+* `InvalidOption`: the algorithm stopped because it was provided an invalid
+  option.
+* `Interrupted`: the algorithm stopped because of an interrupt signal.
+* `OtherError`: the algorithm stopped because of an error not covered by one of
+  the statuses defined above.
 
 """
-@enum TerminationStatusCode Success AlmostSuccess InfeasibleNoResult UnboundedNoResult InfeasibleOrUnbounded IterationLimit TimeLimit NodeLimit SolutionLimit MemoryLimit ObjectiveLimit NormLimit OtherLimit SlowProgress NumericalError InvalidModel InvalidOption Interrupted OtherError
+@enum(TerminationStatusCode,
+    # OK
+    Success, AlmostSuccess, InfeasibleNoResult, UnboundedNoResult,
+        InfeasibleOrUnbounded,
+    # Limits
+    IterationLimit, TimeLimit,  NodeLimit, SolutionLimit, MemoryLimit,
+        ObjectiveLimit, NormLimit, OtherLimit,
+    # Problematic
+    SlowProgress, NumericalError, InvalidModel, InvalidOption, Interrupted,
+        OtherError
+)
 
 ## Result status
 
@@ -729,18 +770,27 @@ To be documented: `NumericalError`, `InvalidModel`, `InvalidOption`, `Interrupte
 An Enum of possible values for the `PrimalStatus` and `DualStatus` attributes.
 The values indicate how to interpret the result vector.
 
-* `NoSolution`
-* `FeasiblePoint`
-* `NearlyFeasiblePoint`
-* `InfeasiblePoint`
-* `InfeasibilityCertificate`
+* `NoSolution`: the result vector is empty.
+* `FeasiblePoint`: the result vector is a feasible point.
+* `NearlyFeasiblePoint`: the result vector is feasible if some constraint
+  tolerances are relaxed.
+* `InfeasiblePoint`: the result vector is an infeasible point.
+* `InfeasibilityCertificate`: the result vector is an infeasibility certificate.
+  Given a dual feasible solution, an infeasibility certificate in the primal
+  implies that the dual is unbounded, given a primal feasible solution, an
+  infeasibility certificate in the dual implies that the primal is unbounded.
 * `NearlyInfeasibilityCertificate`
 * `ReductionCertificate`
 * `NearlyReductionCertificate`
-* `UnknownResultStatus`
-* `OtherResultStatus`
+* `UnknownResultStatus`: the result vector contains a solution with an unknown
+  interpretation.
+* `OtherResultStatus`: the result vector contains a solution with an
+  interpretation not covered by one of the statuses defined above.
 """
-@enum ResultStatusCode NoSolution FeasiblePoint NearlyFeasiblePoint InfeasiblePoint InfeasibilityCertificate NearlyInfeasibilityCertificate ReductionCertificate NearlyReductionCertificate UnknownResultStatus OtherResultStatus
+@enum(ResultStatusCode, NoSolution, FeasiblePoint, NearlyFeasiblePoint,
+    InfeasiblePoint, InfeasibilityCertificate, NearlyInfeasibilityCertificate,
+    ReductionCertificate, NearlyReductionCertificate, UnknownResultStatus,
+    OtherResultStatus)
 
 """
     PrimalStatus(N)
