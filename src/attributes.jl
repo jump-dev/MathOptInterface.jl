@@ -697,19 +697,19 @@ is meant to explain the reason why the optimizer stopped executing.
 
 ## OK
 
-These are generally OK statuses.
+These are generally OK statuses, i.e., the algorithm ran to completion normally.
 
 * `Success`: the algorithm ran successfully and has a result; this includes
   cases where the algorithm converges to an infeasible point (NLP) or converges
   to a solution of a homogeneous self-dual problem and has a certificate of
   primal/dual infeasibility.
 * `InfeasibleNoResult`: the algorithm stopped because it decided that the
-  problem is infeasible but does not have a result to return.
+  problem is infeasible but does not have a primal or dual result to return.
 * `UnboundedNoResult`: the algorithm stopped because it decided that the problem
-  is unbounded but does not have a result to return.
+  is unbounded but does not have a primal or dual result to return.
 * `InfeasibleOrUnbounded`: the algorithm stopped because it decided that the
-  problem is infeasible or unbounded (no result is available); this occasionally
-  happens during MIP presolve.
+  problem is infeasible or unbounded (no primal or dual result is available);
+  this occasionally happens during MIP presolve.
 
 ## Limits
 
@@ -721,14 +721,14 @@ The optimizer stopped because of some user-defined limit.
 * `NodeLimit`: a branch-and-bound algorithm stopped because it explored a
   maximum number of nodes in the branch-and-bound tree.
 * `SolutionLimit`: the algorithm stopped because it found the required number of
-  solutions. This is often used in MIP's to get the solver to return the first
+  solutions. This is often used in MIPs to get the solver to return the first
   feasible solution it encounters.
 * `MemoryLimit`: the algorithm stopped because it ran out of memory.
 * `ObjectiveLimit`: the algorthm stopped because it found a solution better than
   a minimum limit set by the user.
 * `NormLimit`: the algorithm stopped because of a criteria involving a norm.
-  This is typically used to terminate an algorithm once successive iterations
-  result in a solution that is within some distance of the previous solution.
+  This is typically used to indicate that an algorithm stopped after
+  encountering a sequence of diverging iterations.
 * `OtherLimit`: the algorithm stopped due to a limit not covered by one of the
   above.
 
@@ -779,9 +779,8 @@ The values indicate how to interpret the result vector.
   Given a dual feasible solution, an infeasibility certificate in the primal
   implies that the dual is unbounded, given a primal feasible solution, an
   infeasibility certificate in the dual implies that the primal is unbounded.
-* `NearlyInfeasibilityCertificate`
-* `ReductionCertificate`
-* `NearlyReductionCertificate`
+* `NearlyInfeasibilityCertificate`: the result satisfies a relaxed criterion for
+  a certificate of infeasibility.
 * `UnknownResultStatus`: the result vector contains a solution with an unknown
   interpretation.
 * `OtherResultStatus`: the result vector contains a solution with an
