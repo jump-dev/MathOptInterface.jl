@@ -188,6 +188,7 @@ end
         @test MOI.is_empty(m)
         @test MOIU.state(m) == MOIU.AttachedOptimizer
         @test MOIU.mode(m) == MOIU.Automatic
+        @test MOI.get(m, MOI.SolverName()) == "Mock"
     end
     @testset "Non-empty optimizer" begin
         s = MOIU.MockOptimizer(ModelForMock{Float64}())

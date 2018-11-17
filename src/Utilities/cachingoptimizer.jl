@@ -470,6 +470,18 @@ function MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String)
     return MOI.get(m.model_cache, IdxT, name)
 end
 
+# TODO: MOI.set for MOI.AbstractOptimizerAttribute.
+
+function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
+    # TODO: Better error message.
+    @assert model.state != NoOptimizer
+    # TODO: Copyable attributes (e.g., TimeLimit) could also be stored in the
+    # cache. When MOI.set is implemented for MOI.AbstractOptimizerAttribute,
+    # make sure this case is handled correctly.
+    return attribute_value_map(model.optimizer_to_model_map,
+                               MOI.get(model.optimizer, attr))
+end
+
 # Force users to specify whether the attribute should be queried from the
 # model_cache or the optimizer. Maybe we could consider a small whitelist of
 # attributes to handle automatically.
