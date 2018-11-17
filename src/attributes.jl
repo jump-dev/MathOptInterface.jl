@@ -726,9 +726,8 @@ The optimizer stopped because of some user-defined limit.
 * `MemoryLimit`: the algorithm stopped because it ran out of memory.
 * `ObjectiveLimit`: the algorthm stopped because it found a solution better than
   a minimum limit set by the user.
-* `NormLimit`: the algorithm stopped because of a criteria involving a norm.
-  This is typically used to indicate that an algorithm stopped after
-  encountering a sequence of diverging iterations.
+* `NormLimit`: the algorithm stopped because the norm of an iterate became too
+  large.
 * `OtherLimit`: the algorithm stopped due to a limit not covered by one of the
   above.
 
@@ -788,8 +787,7 @@ The values indicate how to interpret the result vector.
 """
 @enum(ResultStatusCode, NoSolution, FeasiblePoint, NearlyFeasiblePoint,
     InfeasiblePoint, InfeasibilityCertificate, NearlyInfeasibilityCertificate,
-    ReductionCertificate, NearlyReductionCertificate, UnknownResultStatus,
-    OtherResultStatus)
+    UnknownResultStatus, OtherResultStatus)
 
 """
     PrimalStatus(N)
