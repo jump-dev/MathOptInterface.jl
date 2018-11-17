@@ -775,9 +775,10 @@ The values indicate how to interpret the result vector.
   tolerances are relaxed.
 * `InfeasiblePoint`: the result vector is an infeasible point.
 * `InfeasibilityCertificate`: the result vector is an infeasibility certificate.
-  Given a dual feasible solution, an infeasibility certificate in the primal
-  implies that the dual is unbounded, given a primal feasible solution, an
-  infeasibility certificate in the dual implies that the primal is unbounded.
+  If the `PrimalStatus` is `InfeasibilityCertificate`, then the primal result
+  vector is a certificate of dual infeasibility. If the `DualStatus` is
+  `InfeasibilityCertificate`, then the dual result vector is a proof of primal
+  infeasibility.
 * `NearlyInfeasibilityCertificate`: the result satisfies a relaxed criterion for
   a certificate of infeasibility.
 * `UnknownResultStatus`: the result vector contains a solution with an unknown
