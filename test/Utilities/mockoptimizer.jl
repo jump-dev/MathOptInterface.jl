@@ -1,5 +1,6 @@
 @testset "Default statuses" begin
     model = MOIU.MockOptimizer(ModelForMock{Float64}())
+    MOIT.default_status_test(model)
     MOI.empty!(model)
     MOIT.default_status_test(model)
 end
