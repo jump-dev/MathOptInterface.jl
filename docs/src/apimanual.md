@@ -936,12 +936,22 @@ users to avoid extra copies in this case.
 
 Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NearlyFeasiblePoint`, `InfeasiblePoint`, `NearlyInfeasiblePoint`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
 
-### Package Naming
+### Naming
 
-MOI solver interfaces may be in the same package as the solver itself (either the C wrapper if the solver is accessible through C, or the Julia code if the solver is written in Julia, for example).
-The guideline for naming the file containing the MOI wrapper is `src/MOIWrapper.jl` and `test/MOIWrapper.jl` for the tests.
-If the MOI wrapper implementation is spread in several files, they should be stored in a `src/MOIWrapper` folder and included by a `src/MOIWrapper/MOIWrapper.jl` file.
-In some cases it may be more appropriate to host the MOI wrapper in its own package; in this case it is recommended that the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver name.
+MOI solver interfaces may be in the same package as the solver itself (either
+the C wrapper if the solver is accessible through C, or the Julia code if the
+solver is written in Julia, for example). The guideline for naming the file
+containing the MOI wrapper is `src/MOIWrapper.jl` and `test/MOIWrapper.jl` for
+the tests. If the MOI wrapper implementation is spread in several files, they
+should be stored in a `src/MOIWrapper` folder and included by a
+`src/MOIWrapper/MOIWrapper.jl` file. In some cases it may be more appropriate to
+host the MOI wrapper in its own package; in this case it is recommended that the
+MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver
+name.
+
+By convention, optimizers should not be exported and should be named
+`PackageName.Optimizer`. For example, `Cplex.Optimizer`, `Gurobi.Optimizer`, and
+`Xpress.Optimizer`.
 
 ### Testing guideline
 
