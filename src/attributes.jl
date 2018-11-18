@@ -354,7 +354,7 @@ struct Name <: AbstractModelAttribute end
     ObjectiveSense()
 
 A model attribute for the `OptimizationSense` of the objective function, which
-can be `MinSense`, `MaxSense`, or `FeasiblitySense`. The default should be
+can be `MinSense`, `MaxSense`, or `FeasiblitySense`. The default is
 `FeasibilitySense`.
 """
 struct ObjectiveSense <: AbstractModelAttribute end
