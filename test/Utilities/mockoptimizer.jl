@@ -1,3 +1,7 @@
+@testset "Mock optimizer default objective sense" begin
+    MOIT.default_objective_test(MOIU.MockOptimizer(ModelForMock{Float64}()))
+end
+
 @testset "Mock optimizer name test" begin
     MOIT.nametest(MOIU.MockOptimizer(ModelForMock{Float64}()))
 end
