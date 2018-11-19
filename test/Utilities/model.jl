@@ -2,8 +2,7 @@
 
 # We need to test this in a module at the top level because it can't be defined
 # in a testset. If it runs without error, then we're okay.
-module TestExternal
-    using Base: copy
+module TestExternalModel
     using MathOptInterface
     struct NewSet <: MathOptInterface.AbstractScalarSet end
     struct NewFunction <: MathOptInterface.AbstractScalarFunction end
@@ -20,16 +19,17 @@ module TestExternal
         ()
     )
 end
-@testset "External functions and sets" begin
-    model = TestExternal.ExternalModel{Float64}()
+
+@testset "External @model" begin
+    model = TestExternalModel.ExternalModel{Float64}()
     c = MOI.add_constraint(
-        model, TestExternal.NewFunction(), TestExternal.NewSet())
-    @test typeof(c) ==
-        MOI.ConstraintIndex{TestExternal.NewFunction, TestExternal.NewSet}
+        model, TestExternalModel.NewFunction(), TestExternalModel.NewSet())
+    @test typeof(c) == MOI.ConstraintIndex{TestExternalModel.NewFunction,
+        TestExternalModel.NewSet}
     c2 = MOI.add_constraint(
-        model, TestExternal.NewFunction(), MOI.ZeroOne())
+        model, TestExternalModel.NewFunction(), MOI.ZeroOne())
     @test typeof(c2) ==
-        MOI.ConstraintIndex{TestExternal.NewFunction, MOI.ZeroOne}
+        MOI.ConstraintIndex{TestExternalModel.NewFunction, MOI.ZeroOne}
 end
 
 @testset "Name test" begin
