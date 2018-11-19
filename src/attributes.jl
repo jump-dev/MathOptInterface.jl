@@ -695,7 +695,13 @@ struct TerminationStatus <: AbstractModelAttribute end
     TerminationStatusCode
 
 An Enum of possible values for the `TerminationStatus` attribute. This attribute
-is meant to explain the reason why the optimizer stopped executing.
+is meant to explain the reason why the optimizer stopped executing in the most
+recent call to [`optimize!`](@ref).
+
+If no call has been made to [`optimize!`](@ref), then the `TerminationStatus`
+is:
+
+* `OptimizeNotCalled`: the algorithm has not started.
 
 ## OK
 
@@ -749,9 +755,9 @@ This group of statuses means that something unexpected or problematic happened.
 * `Interrupted`: the algorithm stopped because of an interrupt signal.
 * `OtherError`: the algorithm stopped because of an error not covered by one of
   the statuses defined above.
-
 """
 @enum(TerminationStatusCode,
+    OptimizeNotCalled,
     # OK
     Success, AlmostSuccess, InfeasibleNoResult, UnboundedNoResult,
         InfeasibleOrUnbounded,

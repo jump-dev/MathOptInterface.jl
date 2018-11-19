@@ -33,6 +33,8 @@ struct NLPBlockDual <: AbstractModelAttribute
 end
 NLPBlockDual() = NLPBlockDual(1)
 
+is_set_by_optimize(::NLPBlockDual) = true
+
 """
     NLPBlockDualStart()
 

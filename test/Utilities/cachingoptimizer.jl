@@ -1,5 +1,45 @@
 @MOIU.model ModelForCachingOptimizer (MOI.ZeroOne, MOI.Integer) (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone, MOI.PositiveSemidefiniteConeTriangle, MOI.RootDetConeTriangle, MOI.LogDetConeTriangle) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
+@testset "Test default attributes" begin
+    # Without an optimizer attached (i.e., `MOI.state(model) == NoOptimizer`) we
+    # need throw nice errors for attributes that are based on the optimizer. For
+    # `AbstractModelAttribute`s that `is_set_by_optimize` returns `true` for, we
+    # overload `TerminationStatus`, `PrimalStatus`, or `DualStatus` to return
+    # sane default values. Otherwise we throw a nice error.
+    model = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.Manual)
+    @test MOIU.state(model) == MOIU.NoOptimizer
+
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
+    @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
+    x = MOI.add_variables(model, 2)
+    if VERSION < v"0.7"
+        @test_throws Exception MOI.get(model, MOI.VariablePrimal(), x[1])
+        @test_throws Exception MOI.get(model, MOI.VariablePrimal(), x)
+        @test_throws Exception MOI.get(model, MOI.SolverName())
+        @test_throws Exception MOI.get(model, MOI.ResultCount())
+    else
+        attr = MOI.VariablePrimal()
+        exception = ErrorException(
+            "Cannot query $(attr) from caching optimizer because no optimizer" *
+            " is attached.")
+        @test_throws exception MOI.get(model, MOI.VariablePrimal(), x[1])
+        @test_throws exception MOI.get(model, MOI.VariablePrimal(), x)
+
+        attr = MOI.SolverName()
+        exception = ErrorException(
+            "Cannot query $(attr) from caching optimizer because no optimizer" *
+            " is attached.")
+        @test_throws Exception MOI.get(model, MOI.SolverName())
+
+        attr = MOI.ResultCount()
+        exception = ErrorException(
+            "Cannot query $(attr) from caching optimizer because no optimizer" *
+            " is attached.")
+        @test_throws Exception MOI.get(model, MOI.ResultCount())
+    end
+end
+
 @testset "CachingOptimizer Manual mode" begin
     m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.Manual)
     @test MOIU.state(m) == MOIU.NoOptimizer

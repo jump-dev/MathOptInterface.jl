@@ -65,13 +65,13 @@ function MockOptimizer(inner_model::MOI.ModelLike; needs_allocate_load=false,
                          false,
                          false,
                          false,
-                         MOI.Success,
+                         MOI.OptimizeNotCalled,
                          0,
                          eval_objective_value,
                          NaN,
                          NaN,
-                         MOI.UnknownResultStatus,
-                         MOI.UnknownResultStatus,
+                         MOI.NoSolution,
+                         MOI.NoSolution,
                          Dict{MOI.VariableIndex,Float64}(),
                          eval_variable_constraint_dual,
                          Dict{MOI.ConstraintIndex,Any}())
@@ -197,12 +197,12 @@ function MOI.empty!(mock::MockOptimizer)
     mock.solved = false
     mock.hasprimal = false
     mock.hasdual = false
-    mock.terminationstatus = MOI.Success
+    mock.terminationstatus = MOI.OptimizeNotCalled
     mock.resultcount = 0
     mock.objectivevalue = NaN
     mock.objectivebound = NaN
-    mock.primalstatus = MOI.UnknownResultStatus
-    mock.dualstatus = MOI.UnknownResultStatus
+    mock.primalstatus = MOI.NoSolution
+    mock.dualstatus = MOI.NoSolution
     mock.varprimal = Dict{MOI.VariableIndex,Float64}()
     mock.condual = Dict{MOI.ConstraintIndex,Any}()
     return
@@ -214,11 +214,11 @@ function MOI.is_empty(mock::MockOptimizer)
     # TODO: Default values are currently copied in three places, not good.
     return MOI.is_empty(mock.inner_model) && mock.attribute == 0 &&
         !mock.solved && !mock.hasprimal && !mock.hasdual &&
-        mock.terminationstatus == MOI.Success &&
+        mock.terminationstatus == MOI.OptimizeNotCalled &&
         mock.resultcount == 0 && isnan(mock.objectivevalue) &&
         isnan(mock.objectivebound) &&
-        mock.primalstatus == MOI.UnknownResultStatus &&
-        mock.dualstatus == MOI.UnknownResultStatus
+        mock.primalstatus == MOI.NoSolution &&
+        mock.dualstatus == MOI.NoSolution
 end
 
 MOI.is_valid(mock::MockOptimizer, idx::MOI.Index) = MOI.is_valid(mock.inner_model, xor_index(idx))

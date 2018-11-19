@@ -10,6 +10,12 @@ function default_objective_test(model::MOI.ModelLike)
     end
 end
 
+function default_status_test(model::MOI.ModelLike)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
+    @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
+end
+
 function nametest(model::MOI.ModelLike)
     @testset "Name test with $(typeof(model))" begin
         @test MOI.supports(model, MOI.Name())
