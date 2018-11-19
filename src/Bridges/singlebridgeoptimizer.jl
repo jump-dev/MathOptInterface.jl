@@ -43,8 +43,8 @@ macro bridge(modelname, bridge, ss, sst, vs, vst, sf, sft, vf, vft)
 
     esc(quote
         $MOIU.@model $bridged_model_name $ss $sst $vs $vst $sf $sft $vf $vft
-        const $modelname{T, OT<:MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridged_model_name{T}, OT}
+        const $modelname{T, OT<:$MOI.ModelLike} = $MOIB.SingleBridgeOptimizer{$bridge{T}, $bridged_model_name{T}, OT}
         $MOIB.is_bridged(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
-        supports_bridging_constraint(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
+        $MOIB.supports_bridging_constraint(::$modelname, ::Type{<:$bridged_funs}, ::Type{<:$bridged_sets}) = true
     end)
 end
