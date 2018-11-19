@@ -3,6 +3,13 @@
 struct UnknownScalarSet <: MOI.AbstractScalarSet end
 struct UnknownVectorSet <: MOI.AbstractVectorSet end
 
+function default_objective_test(model::MOI.ModelLike)
+    @testset "Test default objective" begin
+        MOI.empty!(model)
+        MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
+    end
+end
+
 function default_status_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
