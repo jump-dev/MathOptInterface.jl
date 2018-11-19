@@ -433,6 +433,18 @@ end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
     if MOI.is_set_by_optimize(attr)
+        if state(model) == NoOptimizer
+            if attr == MOI.TerminationStatus()
+                return MOI.OptimizeNotCalled
+            elseif attr == MOI.PrimalStatus()
+                return MOI.NoSolution
+            elseif attr == MOI.DualStatus()
+                return MOI.NoSolution
+            else
+                error("Cannot query $(attr) from caching optimizer because no" *
+                      " optimizer is attached.")
+            end
+        end
         return attribute_value_map(model.optimizer_to_model_map,
                                    MOI.get(model.optimizer, attr))
     else
@@ -444,6 +456,10 @@ function MOI.get(model::CachingOptimizer,
                              MOI.AbstractConstraintAttribute},
                  index::MOI.Index)
     if MOI.is_set_by_optimize(attr)
+        if state(model) == NoOptimizer
+            error("Cannot query $(attr) from caching optimizer because no " *
+                  "optimizer is attached.")
+        end
         return attribute_value_map(model.optimizer_to_model_map,
                                    MOI.get(model.optimizer, attr,
                                            model.model_to_optimizer_map[index]))
@@ -456,6 +472,10 @@ function MOI.get(model::CachingOptimizer,
                              MOI.AbstractConstraintAttribute},
                  indices::Vector{<:MOI.Index})
     if MOI.is_set_by_optimize(attr)
+        if state(model) == NoOptimizer
+            error("Cannot query $(attr) from caching optimizer because no " *
+                  "optimizer is attached.")
+        end
         return attribute_value_map(model.optimizer_to_model_map,
                                    MOI.get(model.optimizer, attr,
                                            map(index -> model.model_to_optimizer_map[index],
@@ -473,8 +493,10 @@ end
 # TODO: MOI.set for MOI.AbstractOptimizerAttribute.
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
-    # TODO: Better error message.
-    @assert model.state != NoOptimizer
+    if state(model) == NoOptimizer
+        error("Cannot query $(attr) from caching optimizer because no " *
+              "optimizer is attached.")
+    end
     # TODO: Copyable attributes (e.g., TimeLimit) could also be stored in the
     # cache. When MOI.set is implemented for MOI.AbstractOptimizerAttribute,
     # make sure this case is handled correctly.
