@@ -950,7 +950,7 @@ the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver
 name.
 
 By convention, optimizers should not be exported and should be named
-`PackageName.Optimizer`. For example, `Cplex.Optimizer`, `Gurobi.Optimizer`, and
+`PackageName.Optimizer`. For example, `CPLEX.Optimizer`, `Gurobi.Optimizer`, and
 `Xpress.Optimizer`.
 
 ### Testing guideline
