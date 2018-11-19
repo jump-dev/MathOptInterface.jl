@@ -3,8 +3,7 @@ module Hygiene
 using Compat, Compat.Test
 
 import MathOptInterface
-# We do not define MOI and MOIU constants as the macros
-# should not rely on the fact that theses are defined in the outer scope
+const MOI = MathOptInterface
 
 # Dict is used in the @model macro but setting Dict in the outer scope
 # should not affect it

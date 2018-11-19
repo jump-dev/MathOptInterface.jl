@@ -465,8 +465,8 @@ end
 
 # (MOI, :Zeros) -> :(MOI.Zeros)
 # (:Zeros) -> :(MOI.Zeros)
-_set(s::SymbolSet) = s.s
-_fun(s::SymbolFun) = s.s
+_set(s::SymbolSet) = esc(s.s)
+_fun(s::SymbolFun) = esc(s.s)
 function _typedset(s::SymbolSet)
     if s.typed
         :($(_set(s)){T})
