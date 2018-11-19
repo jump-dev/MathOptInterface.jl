@@ -852,6 +852,7 @@ Then, the user can write:
 model = MyPackage.Optimizer()
 MOI.set(model, MyPackage.PrintLevel(), 0)
 ```
+
 ### Implementing copy
 
 Avoid storing extra copies of the problem when possible. This means that solver wrappers should not use
