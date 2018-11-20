@@ -111,18 +111,26 @@ function MOI.get(uf::UniversalFallback,
                  attr::Union{MOI.AbstractOptimizerAttribute,
                              MOI.AbstractModelAttribute})
     if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
-        MOI.get(uf.model, attr)
+        return MOI.get(uf.model, attr)
     else
-        _get(uf, attr)
+        return _get(uf, attr)
     end
 end
-function MOI.get(uf::UniversalFallback,
-                 attr::Union{MOI.AbstractVariableAttribute,
-                             MOI.AbstractConstraintAttribute}, idx::MOI.Index)
-    if MOI.supports(uf.model, attr, typeof(idx))
-        MOI.get(uf.model, attr, idx)
+function MOI.get(uf::UniversalFallback, attr::MOI.AbstractVariableAttribute,
+                 idx::MOI.VariableIndex)
+    if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr, typeof(idx))
+        return MOI.get(uf.model, attr, idx)
     else
-        _get(uf, attr, idx)
+        return _get(uf, attr, idx)
+    end
+end
+function MOI.get(uf::UniversalFallback, attr::MOI.AbstractConstraintAttribute,
+                 idx::MOI.ConstraintIndex{F, S}) where {F, S}
+    if MOI.supports_constraint(uf.model, F, S) &&
+        (!MOI.is_copyable(attr) || MOI.supports(uf.model, attr, typeof(idx)))
+        return MOI.get(uf.model, attr, idx)
+    else
+        return _get(uf, attr, idx)
     end
 end
 function MOI.get(uf::UniversalFallback,
@@ -281,19 +289,29 @@ function MOI.set(uf::UniversalFallback, attr::MOI.AbstractConstraintAttribute, i
 end
 
 # Constraints
-MOI.supports_constraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = true
-function MOI.add_constraint(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.AbstractSet)
+function MOI.supports_constraint(uf::UniversalFallback,
+                                 ::Type{<:MOI.AbstractFunction},
+                                 ::Type{<:MOI.AbstractSet})
+    return true
+end
+function MOI.add_constraint(uf::UniversalFallback, f::MOI.AbstractFunction,
+                            s::MOI.AbstractSet;
+                            allow_modify_function::Bool=false)
     F = typeof(f)
     S = typeof(s)
     if MOI.supports_constraint(uf.model, F, S)
-        return MOI.add_constraint(uf.model, f, s)
+        return MOI.add_constraint(uf.model, f, s,
+                                  allow_modify_function=allow_modify_function)
     else
         constraints = get!(uf.constraints, (F, S)) do
             Dict{CI{F, S}, Tuple{F, S}}()
         end::Dict{CI{F, S}, Tuple{F, S}}
         uf.nextconstraintid += 1
         ci = CI{F, S}(uf.nextconstraintid)
-        constraints[ci] = (f, s)
+        if !allow_modify_function
+            f = copy(f)
+        end
+        constraints[ci] = (f, copy(s))
         return ci
     end
 end

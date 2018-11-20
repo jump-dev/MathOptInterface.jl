@@ -17,6 +17,10 @@ end
     MOIT.supports_constrainttest(Model{Int}(), Int, Float64)
 end
 
+@testset "add_constraint copy function test" begin
+    MOIT.add_constraint_copy_function_test(Model{Float64}())
+end
+
 @testset "OrderedIndices" begin
     MOIT.orderedindicestest(Model{Float64}())
 end

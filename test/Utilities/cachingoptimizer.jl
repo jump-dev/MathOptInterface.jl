@@ -282,3 +282,9 @@ for state in (MOIU.NoOptimizer, MOIU.EmptyOptimizer, MOIU.AttachedOptimizer)
         end
     end
 end
+
+@testset "add_constraint copy function test" begin
+    model = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(),
+                                  MOIU.Manual)
+    MOIT.add_constraint_copy_function_test(model)
+end

@@ -9,6 +9,11 @@ end
     MOIT.default_status_test(model)
 end
 
+@testset "add_constraint copy function test" begin
+    model = MOIU.MockOptimizer(ModelForMock{Float64}())
+    MOIT.add_constraint_copy_function_test(model)
+end
+
 @testset "Mock optimizer name test" begin
     MOIT.nametest(MOIU.MockOptimizer(ModelForMock{Float64}()))
 end

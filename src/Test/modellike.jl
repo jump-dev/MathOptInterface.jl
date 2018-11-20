@@ -3,6 +3,39 @@
 struct UnknownScalarSet <: MOI.AbstractScalarSet end
 struct UnknownVectorSet <: MOI.AbstractVectorSet end
 
+"""
+    add_constraint_copy_function_test(model::ModelLike; set=MOI.EqualTo(0.0))
+
+Tests that by default, a copy of the function is stored in `add_constraint` and
+that when `allow_modify_function=true`, the function is stored without copy. It
+does these tests with constraints of type
+`ScalarAffineFunction{Float64}`-in-`typeof(set)`.
+"""
+function add_constraint_copy_function_test(model::MOI.ModelLike;
+                                           set=MOI.EqualTo(0.0))
+    @testset "add_constraint" begin
+        MOI.empty!(model)
+        x = MOI.add_variable(model)
+        f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 2.0)
+        @testset "allow_modify_function=false (default)" begin
+            ci = MOI.add_constraint(model, f, set)
+            f.constant = 3.0
+            @test MOI.get(model, MOI.ConstraintFunction(), ci).constant == 2.0
+            f.terms[1] = MOI.ScalarAffineTerm(-1.0, x)
+            func = MOI.get(model, MOI.ConstraintFunction(), ci)
+            @test func.terms[1].coefficient == 1.0
+        end
+        @testset "allow_modify_function=true" begin
+            ci = MOI.add_constraint(model, f, set, allow_modify_function=true)
+            f.constant = 3.0
+            @test MOI.get(model, MOI.ConstraintFunction(), ci).constant == 3.0
+            f.terms[1] = MOI.ScalarAffineTerm(-1.0, x)
+            func = MOI.get(model, MOI.ConstraintFunction(), ci)
+            @test func.terms[1].coefficient == -1.0
+        end
+    end
+end
+
 function default_objective_test(model::MOI.ModelLike)
     @testset "Test default objective" begin
         MOI.empty!(model)

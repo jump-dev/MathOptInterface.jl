@@ -40,22 +40,28 @@ AddConstraintNotAllowed{F, S}() where {F, S} = AddConstraintNotAllowed{F, S}("")
 operation_name(::AddConstraintNotAllowed{F, S}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 
 """
-    add_constraint(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
+    add_constraint(model::ModelLike, func::F, set::S;
+                   allow_modify_function::Bool=false)::ConstraintIndex{F,S}
 
-Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
+Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`,
+and ``\\mathcal{S}`` is defined by `set`. If `allow_modify_function` is `true`
+then the function `func`, can be modified.
 
-    add_constraint(model::ModelLike, v::VariableIndex, set::S)::ConstraintIndex{SingleVariable,S} where {S}
-    add_constraint(model::ModelLike, vec::Vector{VariableIndex}, set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
+    add_constraint(model::ModelLike, v::VariableIndex,
+                   set::S)::ConstraintIndex{SingleVariable,S} where {S}
+    add_constraint(model::ModelLike, vec::Vector{VariableIndex},
+                   set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
 
-Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
+Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or
+vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
 
 An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
-`F`-in-`S` constraints and a [`AddConstraintNotAllowed`](@ref) error is thrown if
-it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
+`F`-in-`S` constraints and a [`AddConstraintNotAllowed`](@ref) error is thrown
+if it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
 current state.
 """
 function add_constraint(model::ModelLike, func::AbstractFunction,
-                        set::AbstractSet)
+                        set::AbstractSet; allow_modify_function::Bool=false)
     throw_add_constraint_error_fallback(model, func, set)
 end
 

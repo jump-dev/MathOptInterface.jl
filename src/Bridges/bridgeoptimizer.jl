@@ -290,13 +290,16 @@ function MOI.supports_constraint(b::AbstractBridgeOptimizer,
     end
 end
 function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
-                            s::MOI.AbstractSet)
+                            s::MOI.AbstractSet;
+                            allow_modify_function::Bool=false)
     if is_bridged(b, typeof(f), typeof(s))
-        ci = MOI.add_constraint(b.bridged, f, s)
+        ci = MOI.add_constraint(b.bridged, f, s;
+                                allow_modify_function=allow_modify_function)
         @assert !haskey(b.bridges, ci)
         b.bridges[ci] = concrete_bridge_type(b, typeof(f), typeof(s))(b, f, s)
         return ci
     else
+        # TODO pass `allow_modify_function` in MOI v0.7
         return MOI.add_constraint(b.model, f, s)
     end
 end

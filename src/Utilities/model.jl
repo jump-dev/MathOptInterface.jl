@@ -316,15 +316,19 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{M
 end
 
 # Constraints
-function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+function MOI.add_constraint(model::AbstractModel, f::F, s::S;
+                            allow_modify_function::Bool=false) where {F<:MOI.AbstractFunction,
+                                                                      S<:MOI.AbstractSet}
     if MOI.supports_constraint(model, F, S)
         # We give the index value `nextconstraintid + 1` to the new constraint.
         # As the same counter is used for all pairs of F-in-S constraints,
         # the index value is unique across all constraint types as mentioned in
         # `@model`'s doc.
         ci = CI{F, S}(model.nextconstraintid += 1)
-        # f needs to be copied, see #2
-        push!(model.constrmap, _add_constraint(model, ci, copy(f), copy(s)))
+        if !allow_modify_function
+            f = copy(f)
+        end
+        push!(model.constrmap, _add_constraint(model, ci, f, copy(s)))
         return ci
     else
         throw(MOI.UnsupportedConstraint{F, S}())

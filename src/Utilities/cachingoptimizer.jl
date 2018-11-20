@@ -219,11 +219,20 @@ function MOI.supports_constraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunc
     MOI.supports_constraint(m.model_cache, F, S) && (m.state == NoOptimizer || MOI.supports_constraint(m.optimizer, F, S))
 end
 
-function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set::MOI.AbstractSet)
+function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction,
+                            set::MOI.AbstractSet;
+                            allow_modify_function::Bool=false)
+    # If `allow_modify_function` is `true`, the cache is allowed to modify the
+    # function, but not the optimizer as only one of the two can be allowed to
+    # modify it.
+    # TODO pass `allow_modify_function=false` explicitely to the optimizer
+    # with MOI v0.7
     if m.state == AttachedOptimizer
+        optimizer_func = mapvariables(m.model_to_optimizer_map, func)
         if m.mode == Automatic
             try
-                cindex_optimizer = MOI.add_constraint(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+                cindex_optimizer = MOI.add_constraint(m.optimizer,
+                                                      optimizer_func, set)
             catch err
                 if err isa MOI.NotAllowedError
                     # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
@@ -235,10 +244,12 @@ function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set
                 end
             end
         else
-            cindex_optimizer = MOI.add_constraint(m.optimizer, mapvariables(m.model_to_optimizer_map, func), set)
+            cindex_optimizer = MOI.add_constraint(m.optimizer, optimizer_func,
+                                                  set)
         end
     end
-    cindex = MOI.add_constraint(m.model_cache, func, set)
+    cindex = MOI.add_constraint(m.model_cache, func, set,
+                                allow_modify_function=allow_modify_function)
     if m.state == AttachedOptimizer
         m.model_to_optimizer_map[cindex] = cindex_optimizer
         m.optimizer_to_model_map[cindex_optimizer] = cindex

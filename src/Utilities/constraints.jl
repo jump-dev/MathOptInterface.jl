@@ -13,6 +13,7 @@ function add_scalar_constraint end
 function add_scalar_constraint(model::MOI.ModelLike, func::MOI.SingleVariable,
                                set::MOI.AbstractScalarSet;
                                allow_modify_function::Bool=false)
+    # TODO pass allow_modify_function in MOI v0.7
     return MOI.add_constraint(model, func, set)
 end
 function add_scalar_constraint(model::MOI.ModelLike,
@@ -25,5 +26,6 @@ function add_scalar_constraint(model::MOI.ModelLike,
         func = copy(func)
     end
     func.constant = zero(T)
+    # TODO pass allow_modify_function in MOI v0.7
     return MOI.add_constraint(model, func, set)
 end

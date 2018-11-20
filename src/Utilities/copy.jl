@@ -142,6 +142,7 @@ function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::B
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         f_dest = mapvariables(idxmap, f_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
+        # TODO explicitely pass `allow_modify_function=false` in MOI v0.7
         ci_dest = MOI.add_constraint(dest, f_dest, s)
         idxmap.conmap[ci_src] = ci_dest
     end

@@ -73,6 +73,12 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
         MOI.empty!(uf)
         @test MOI.is_empty(uf)
     end
+    @testset "add_constraint copy function test" begin
+        # `EqualTo` is not supported by `ModelForUniversalFallback` but
+        # `LessThan` is supported
+        MOIT.add_constraint_copy_function_test(uf, set=MOI.EqualTo(0.0))
+        MOIT.add_constraint_copy_function_test(uf, set=MOI.LessThan(0.0))
+    end
     @testset "Start Values Test" begin
         src = MOIU.UniversalFallback(Model{Float64}())
         dest = MOIU.UniversalFallback(Model{Float64}())
