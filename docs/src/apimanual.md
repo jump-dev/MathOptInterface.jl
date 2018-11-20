@@ -839,10 +839,10 @@ will additionally support `ScalarAffineFunction`-in-`Interval`.
 
 Solver-specific attributes should either be passed to the optimizer on creation,
 e.g., `MyPackage.Optimizer(PrintLevel = 0)`, or through a sub-type of
-[`AbstractSolverAttribute`](@ref). For example, inside `MyPackage`, we could add
+[`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could add
 the following:
 ```julia
-struct PrintLevel <: MOI.AbstractSolverAttribute end
+struct PrintLevel <: MOI.AbstractOptimizerAttribute end
 function MOI.set(model::Optimizer, ::PrintLevel, level::Int)
     # ... set the print level ...
 end
