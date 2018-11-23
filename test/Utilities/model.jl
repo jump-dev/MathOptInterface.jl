@@ -1,5 +1,37 @@
 # TODO: It's hard to find where Model is defined!
 
+# We need to test this in a module at the top level because it can't be defined
+# in a testset. If it runs without error, then we're okay.
+module TestExternalModel
+    using MathOptInterface
+    struct NewSet <: MathOptInterface.AbstractScalarSet end
+    struct NewFunction <: MathOptInterface.AbstractScalarFunction end
+    Base.copy(::NewFunction) = NewFunction()
+    Base.copy(::NewSet) = NewSet()
+    MathOptInterface.Utilities.@model(ExternalModel,
+        (MathOptInterface.ZeroOne, NewSet,),
+        (),
+        (),
+        (),
+        (NewFunction,),
+        (),
+        (),
+        ()
+    )
+end
+
+@testset "External @model" begin
+    model = TestExternalModel.ExternalModel{Float64}()
+    c = MOI.add_constraint(
+        model, TestExternalModel.NewFunction(), TestExternalModel.NewSet())
+    @test typeof(c) == MOI.ConstraintIndex{TestExternalModel.NewFunction,
+        TestExternalModel.NewSet}
+    c2 = MOI.add_constraint(
+        model, TestExternalModel.NewFunction(), MOI.ZeroOne())
+    @test typeof(c2) ==
+        MOI.ConstraintIndex{TestExternalModel.NewFunction, MOI.ZeroOne}
+end
+
 @testset "Name test" begin
     MOIT.nametest(Model{Float64}())
 end
