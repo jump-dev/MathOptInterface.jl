@@ -1,6 +1,18 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.6.4 (November 27, 2018)
+--------------------------
+
+- Add `OptimizeNotCalled` termination status (#577) and improve documentation of
+  other statuses (#575).
+- Add a solver naming guideline (#578).
+- Make `FeasibilitySense` the default `ObjectiveSense` (#579).
+- Fix `Utilities.@model` and `Bridges.@bridge` macros for functions and sets
+  defined outside MOI (#582).
+- Document solver-specific attributes (#580) and implement them in
+  `Utilities.CachingOptimizer` (#565).
+
 v0.6.3 (November 16, 2018)
 --------------------------
 
