@@ -69,8 +69,6 @@ Adapting the method from [1, p. 149], we see that ``t \\le u \\log(\\det(X/u))``
 ```
 """
 struct LogDetBridge{T} <: AbstractBridge
-    t::MOI.ScalarAffineFunction{T}
-    u::MOI.ScalarAffineFunction{T}
     Δ::Vector{VI}
     l::Vector{VI}
     sdindex::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
@@ -86,9 +84,9 @@ function LogDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.LogDetCon
     t, u = tu
     l = MOI.add_variables(model, d)
     lcindex = [sublog(model, l[i], u, D[i], T) for i in eachindex(l)]
-    tlindex = subsum(model, copy(t), l, T)
+    tlindex = subsum(model, t, l, T)
 
-    LogDetBridge(t, u, Δ, l, sdindex, lcindex, tlindex)
+    LogDetBridge(Δ, l, sdindex, lcindex, tlindex)
 end
 
 MOI.supports_constraint(::Type{LogDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.LogDetConeTriangle}) where T = true
@@ -139,10 +137,11 @@ end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::LogDetBridge)
     d = length(c.lcindex)
     Δ = MOI.get(model, MOI.VariablePrimal(), c.Δ)
-    t = MOIU.evalvariables(vi -> MOI.get(model, MOI.VariablePrimal(), vi), c.t)
-    u = MOIU.evalvariables(vi -> MOI.get(model, MOI.VariablePrimal(), vi), c.u)
+    t = MOI.get(model, MOI.ConstraintPrimal(), c.tlindex) +
+        sum(MOI.get(model, MOI.ConstraintPrimal(), ci)[1] for ci in c.lcindex)
+    u = MOI.get(model, MOI.ConstraintPrimal(), first(c.lcindex))[2]
     x = MOI.get(model, MOI.ConstraintPrimal(), c.sdindex)[1:length(c.Δ)]
-    [t; u; x]
+    return [t; u; x]
 end
 
 """
