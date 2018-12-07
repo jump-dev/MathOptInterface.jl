@@ -17,10 +17,10 @@ the variables created and the index of the constraint created to extract the eig
 """
 function extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int, offset::Int) where T
     f_scalars = MOIU.eachscalar(f)
-    tu = [f_scalars[i] for i in 1:offset]
+    tu = f_scalars[1:offset]
 
     n = trimap(d, d)
-    X = f_scalars[offset+1:n+offset]
+    X = f_scalars[offset + (1:n)]
     m = length(X.terms)
     M = m + n + d
 
@@ -35,10 +35,14 @@ function extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int, offs
     for j in 1:d
         for i in j:d
             cur += 1
-            terms[cur] = MOI.VectorAffineTerm(trimap(i, d+j), MOI.ScalarAffineTerm(one(T), Δ[trimap(i, j)]))
+            terms[cur] = MOI.VectorAffineTerm(trimap(i, d + j),
+                                              MOI.ScalarAffineTerm(one(T),
+                                                                   Δ[trimap(i, j)]))
         end
         cur += 1
-        terms[cur] = MOI.VectorAffineTerm(trimap(d+j, d+j), MOI.ScalarAffineTerm(one(T), Δ[trimap(j, j)]))
+        terms[cur] = MOI.VectorAffineTerm(trimap(d + j, d + j),
+                                          MOI.ScalarAffineTerm(one(T),
+                                                               Δ[trimap(j, j)]))
     end
     @assert cur == M
     Y = MOI.VectorAffineFunction(terms, constant)
