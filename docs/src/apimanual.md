@@ -442,7 +442,7 @@ Mixed-integer programming solvers fall into this category.
 | Proved infeasibility                             | `Infeasible`            | 0               | `NoSolution`      | `NoSolution`   |
 | Timed out (no solution)                          | `TimeLimit`             | 0               | `NoSolution`      | `NoSolution`   |
 | Timed out (with a solution)                      | `TimeLimit`             | 1               | `FeasiblePoint`   | `NoSolution`   |
-| `CPXMIP_OPTIMAL_INFEAS`                          | `Optimal`               | 1               | `InfeasiblePoint` | `NoSolution`   |
+| `CPXMIP_OPTIMAL_INFEAS`                          | `AlmostOptimal`               | 1               | `InfeasiblePoint` | `NoSolution`   |
 
 [`CPXMIP_OPTIMAL_INFEAS`](https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.6.1/ilog.odms.cplex.help/refcallablelibrary/macros/CPXMIP_OPTIMAL_INFEAS.html)
 is a CPLEX status that indicates that a preprocessed problem was solved to
