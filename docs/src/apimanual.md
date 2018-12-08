@@ -382,6 +382,8 @@ else
 end
 ```
 
+TODO: Update this discussion. MOI.Success doesn't exist anymore.
+
 The `Success` status code specifically implies that the solver has a "result" to
 return. In the case that the solver converged to an optimal solution, this
 result will just be the optimal solution vector. The [`PrimalStatus`](@ref)
@@ -410,31 +412,56 @@ See also the attributes [`ConstraintPrimal`](@ref), and
 See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs
 and certificates.
 
-
-
 ### Common status situations
 
-The sections below describe how to interpret different status cases for three common classes of solvers. Most importantly, it is essential to know if a solver is expected to provide a global or only locally optimal solution when interpreting the result statuses. Solver wrappers may provide additional information on how the solver's statuses map to MOI statuses.
+The sections below describe how to interpret different status cases for three
+common classes of solvers. Solver wrappers may provide additional information on
+how the solver's statuses map to MOI statuses.
+
+`?` in the tables indicate that multiple different values are possible.
 
 #### Primal-dual convex solver
 
-A typical primal-dual solver is capable of certifying optimality of a solution to a convex optimization problem by providing a primal-dual feasible solution with matching objective values. It may also certify that either the primal or dual problem is infeasible by providing a certain ray of the dual or primal, respectively. Typically two solves are required to certify unboundedness, one to find a ray and a second to find a feasible point. A solver may also provide a [facial reduction certificate](http://www.optimization-online.org/DB_FILE/2015/09/5104.pdf). When a primal-dual solver terminates with `Success` status, it is reasonable to assume that a primal and dual statuses of `FeasiblePoint` imply that the corresponding primal-dual results are a (numerically) optimal primal-dual pair. The `AlmostSuccess` status implies that the solve has completed to relaxed tolerances, so in this case `FeasiblePoint` or `NearlyFeasiblePoint` statuses would imply a near-optimal primal-dual pair. For all other termination statuses, there are no specific guarantees on the results returned.
+Linear programming and conic optimization solvers fall into this category.
 
-#### Global mixed-integer or nonconvex solver
+| What happended?                   | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                         | `DualStatus()`                           |
+| --------------------------------- | --------------------- | --------------- | ---------------------------------------- | ---------------------------------------- |
+| Proved optimality                 | `Optimal`             | 1               | `FeasiblePoint`                          | `FeasiblePoint`                          |
+| Proved infeasible                 | `Infeasible`          | 1               | `NoSolution`                             | `InfeasibilityCertificate`               |
+| Optimal within relaxed tolerances | `AlmostOptimal`       | 1               | `FeasiblePoint` or `AlmostFeasiblePoint` | `FeasiblePoint` or `AlmostFeasiblePoint` |
+| Stall                             | `SlowProgress`        | 1               | ?                                        | ?                                        |
 
-When a global solver returns `Success` and the primal result is a
-`FeasiblePoint`, then it is implied that the primal result is indeed a globally
-optimal solution up to the specified tolerances. Typically, no dual certificate
-is available to certify optimality. The [`ObjectiveBound`](@ref) should provide
-extra information on the optimality gap.
+#### Global branch-and-bound solvers
 
-#### Local solver
+Mixed-integer programming solvers fall into this category.
 
-For solvers which perform a search based only on local criteria (for example, gradient descent), without additional knowledge of the structure of the problem, we can say only that `Success` and `FeasiblePoint` imply that the primal result belongs to the class of points which the chosen algorithm is known to converge to. Gradient descent algorithms may converge to saddle points, for example. It is also possible for such algorithms to converge to infeasible points, in which case the termination status would be `Success` and the primal result status would be `InfeasiblePoint`. This does not imply that the problem is infeasible and so cannot be called a certificate of infeasibility.
+| What happended?                                  | `TerminationStatus()`   | `ResultCount()` | `PrimalStatus()`  | `DualStatus()` |
+| ------------------------------------------------ | ----------------------- | --------------- | ----------------- | -------------- |
+| Proved optimality                                | `Optimal`               | 1               | `FeasiblePoint`   | `NoSolution`   |
+| Presolve detected infeasibility or unboundedness | `InfeasibleOrUnbounded` | 0               | `NoSolution`      | `NoSolution`   |
+| Proved infeasibility                             | `Infeasible`            | 0               | `NoSolution`      | `NoSolution`   |
+| Timed out (no solution)                          | `TimeLimit`             | 0               | `NoSolution`      | `NoSolution`   |
+| Timed out (with a solution)                      | `TimeLimit`             | 1               | `FeasiblePoint`   | `NoSolution`   |
+| `CPXMIP_OPTIMAL_INFEAS`                          | `Optimal`               | 1               | `InfeasiblePoint` | `NoSolution`   |
+
+[`CPXMIP_OPTIMAL_INFEAS`](https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.6.1/ilog.odms.cplex.help/refcallablelibrary/macros/CPXMIP_OPTIMAL_INFEAS.html)
+is a CPLEX status that indicates that a preprocessed problem was solved to
+optimality, but the solver was unable to recover a feasible solution to the
+original problem.
+
+#### Local search solvers
+
+Nonlinear programming solvers fall into this category.
+
+| What happended?                  | `TerminationStatus()`           | `ResultCount()` | `PrimalStatus()`  | `DualStatus()`  |
+| -------------------------------- | ------------------------------- | --------------- | ----------------- | --------------- |
+| Converged to a stationary point  | `LocallyConverged`              | 1               | `FeasiblePoint`   | `FeasiblePoint` |
+| Converged to an infeasible point | `LocallyInfeasible`             | 1               | `InfeasiblePoint` | ?               |
+| Iteration limit                  | `IterationLimit`                | 1               | ?                 | ?               |
+| Diverging iterates               | `NormLimit` or `ObjectiveLimit` | 1               | ?                 | ?               |
 
 
 ## A complete example: solving a knapsack problem
-
 
 [ needs formatting help, doc tests ]
 
