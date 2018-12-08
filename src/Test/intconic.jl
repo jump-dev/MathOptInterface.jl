@@ -38,6 +38,9 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     bin2 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.ZeroOne())
 
     if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
+
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
