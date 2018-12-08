@@ -414,7 +414,7 @@ and certificates.
 
 ### Common status situations
 
-The sections below describe how to interpret different status cases for three
+The sections below describe how to interpret typical status cases for three
 common classes of solvers. Solver wrappers may provide additional information on
 how the solver's statuses map to MOI statuses.
 
@@ -424,12 +424,13 @@ how the solver's statuses map to MOI statuses.
 
 Linear programming and conic optimization solvers fall into this category.
 
-| What happended?                   | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                         | `DualStatus()`                           |
-| --------------------------------- | --------------------- | --------------- | ---------------------------------------- | ---------------------------------------- |
-| Proved optimality                 | `Optimal`             | 1               | `FeasiblePoint`                          | `FeasiblePoint`                          |
-| Proved infeasible                 | `Infeasible`          | 1               | `NoSolution`                             | `InfeasibilityCertificate`               |
-| Optimal within relaxed tolerances | `AlmostOptimal`       | 1               | `FeasiblePoint` or `AlmostFeasiblePoint` | `FeasiblePoint` or `AlmostFeasiblePoint` |
-| Stall                             | `SlowProgress`        | 1               | ?                                        | ?                                        |
+| What happended?                         | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                         | `DualStatus()`                           |
+| --------------------------------------- | --------------------- | --------------- | ---------------------------------------- | ---------------------------------------- |
+| Proved optimality                       | `Optimal`             | 1               | `FeasiblePoint`                          | `FeasiblePoint`                          |
+| Proved infeasible                       | `Infeasible`          | 1               | `NoSolution`                             | `InfeasibilityCertificate`               |
+| Optimal within relaxed tolerances       | `AlmostOptimal`       | 1               | `FeasiblePoint` or `AlmostFeasiblePoint` | `FeasiblePoint` or `AlmostFeasiblePoint` |
+| Detected an unbounded ray of the primal | `DualInfeasible`      | 1               | `InfeasibilityCertificate`               | `NoSolution`                             |
+| Stall                                   | `SlowProgress`        | 1               | ?                                        | ?                                        |
 
 #### Global branch-and-bound solvers
 
@@ -442,7 +443,7 @@ Mixed-integer programming solvers fall into this category.
 | Proved infeasibility                             | `Infeasible`            | 0               | `NoSolution`      | `NoSolution`   |
 | Timed out (no solution)                          | `TimeLimit`             | 0               | `NoSolution`      | `NoSolution`   |
 | Timed out (with a solution)                      | `TimeLimit`             | 1               | `FeasiblePoint`   | `NoSolution`   |
-| `CPXMIP_OPTIMAL_INFEAS`                          | `AlmostOptimal`               | 1               | `InfeasiblePoint` | `NoSolution`   |
+| `CPXMIP_OPTIMAL_INFEAS`                          | `AlmostOptimal`         | 1               | `InfeasiblePoint` | `NoSolution`   |
 
 [`CPXMIP_OPTIMAL_INFEAS`](https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.6.1/ilog.odms.cplex.help/refcallablelibrary/macros/CPXMIP_OPTIMAL_INFEAS.html)
 is a CPLEX status that indicates that a preprocessed problem was solved to
