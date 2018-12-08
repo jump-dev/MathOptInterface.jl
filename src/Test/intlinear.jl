@@ -13,6 +13,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     #         y is integer: 0 <= y <= 10
     #         z is binary
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -86,6 +87,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     @testset "SOSI" begin
+        @test MOIU.supports_default_copy_to(model, false)
         @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
         @test MOI.supports(model, MOI.ObjectiveSense())
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SOS1{Float64})
@@ -152,6 +154,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         end
     end
     @testset "SOSII" begin
+        @test MOIU.supports_default_copy_to(model, false)
         @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
         @test MOI.supports(model, MOI.ObjectiveSense())
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SOS1{Float64})
@@ -252,6 +255,7 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
@@ -308,6 +312,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)

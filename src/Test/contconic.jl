@@ -11,6 +11,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     #       x>=0 y>=0 z>=0
     # Opt obj = -11, soln x = 1, y = 0, z = 2
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
@@ -92,6 +93,7 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     # Opt solution = -82
     # x = -4, y = -3, z = 16, s == 0
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
@@ -184,6 +186,7 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
     # s.t. -1 + x ∈ R₊
     #       1 + x ∈ R₋
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
@@ -232,6 +235,7 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
     # s.t. -1 + x ∈ R₊
     #           x ∈ R₋
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
@@ -285,6 +289,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     #  st  x            == 1
     #      x >= ||(y,z)||
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
@@ -359,6 +364,7 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
     #        1 - t ∈ {0}
     #      (t,x,y) ∈ SOC₃
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
@@ -434,6 +440,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
     #      -1 + x ∈ R₋
     #       (x,y) ∈ SOC₂
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64},MOI.Nonnegatives)
@@ -484,6 +491,7 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     # Like SOCINT1 but with copies of variables and integrality relaxed
     # Tests out-of-order indices in cones
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
@@ -551,6 +559,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     #     [0.0] - [    -z] SOCRotated
 
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if abvars
@@ -642,6 +651,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     b = [-2, -1, 1/2]
     c = [0.0,0.0,0.0]
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.SingleVariable,MOI.EqualTo{Float64})
@@ -708,6 +718,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     # [t1/√2, t2/√2, x] in SOC4
     # [x1/√2, u/√2,  v] in SOC3
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
@@ -807,6 +818,7 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
     # Therefore xyz ≤ 1
     # This can be attained using x = y = z = 1 so it is optimal.
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
@@ -869,6 +881,7 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     #      x == 1
     #      y == 2
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
@@ -936,6 +949,7 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)
@@ -1002,6 +1016,7 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -1069,6 +1084,7 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     # X = ⎜       ⎟           y = 2
     #     ⎝ 1   1 ⎠
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
@@ -1202,6 +1218,7 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     α = √(3-2obj-4x2)/2
     β = k*α
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
@@ -1285,6 +1302,7 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
     rtol = config.rtol
     # Caused getdual to fail on SCS and Mosek
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -1385,6 +1403,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     #           |_________|
     #            -Q22 ≥ -1
 
+    @test MOIU.supports_default_copy_to(model, false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
