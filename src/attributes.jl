@@ -713,9 +713,12 @@ These are generally OK statuses, i.e., the algorithm ran to completion normally.
   problem. If, additionally, a feasible (primal) solution is known to
   exist, this status typically implies that the problem is unbounded, with some
   technical exceptions.
-* `LocallyConverged`: The algorithm converged to a stationary point, local
-  optimal solution, or could not find directions for improvement.
-* `LocallyInfeasible`: The algorithm converged to an infeasible point.
+* `LocallySolved`: The algorithm converged to a stationary point, local
+  optimal solution, could not find directions for improvement, or otherwise
+  completed its search without global guarantees.
+* `LocallyInfeasible`: The algorithm converged to an infeasible point or
+  otherwise completed its search without finding a feasible solution, without
+  guarantees that no feasible solution exists.
 * `InfeasibleOrUnbounded`: The algorithm stopped because it decided that the
   problem is infeasible or unbounded; this occasionally happens during MIP
   presolve.
@@ -726,7 +729,7 @@ These are generally OK statuses, i.e., the algorithm ran to completion normally.
   tolerances.
 * `AlmostInfeasible`: The algorithm concluded that no feasible solution exists
   within relaxed tolerances.
-* `AlmostLocallyConverged`: The algorithm converged to a stationary point, local
+* `AlmostLocallySolved`: The algorithm converged to a stationary point, local
   optimal solution, or could not find directions for improvement within relaxed
   tolerances.
 
@@ -768,10 +771,10 @@ This group of statuses means that something unexpected or problematic happened.
 @enum(TerminationStatusCode,
     OptimizeNotCalled,
     # OK
-    Optimal, Infeasible, DualInfeasible, LocallyConverged, LocallyInfeasible,
+    Optimal, Infeasible, DualInfeasible, LocallySolved, LocallyInfeasible,
         InfeasibleOrUnbounded,
     # Solved to relaxed tolerances
-    AlmostOptimal, AlmostInfeasible, AlmostLocallyConverged,
+    AlmostOptimal, AlmostInfeasible, AlmostLocallySolved,
     # Limits
     IterationLimit, TimeLimit,  NodeLimit, SolutionLimit, MemoryLimit,
         ObjectiveLimit, NormLimit, OtherLimit,

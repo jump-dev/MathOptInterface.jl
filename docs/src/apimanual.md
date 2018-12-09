@@ -425,7 +425,7 @@ how the solver's statuses map to MOI statuses.
 
 Linear programming and conic optimization solvers fall into this category.
 
-| What happended?                         | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                         | `DualStatus()`                           |
+| What happened?                          | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                         | `DualStatus()`                           |
 | --------------------------------------- | --------------------- | --------------- | ---------------------------------------- | ---------------------------------------- |
 | Proved optimality                       | `Optimal`             | 1               | `FeasiblePoint`                          | `FeasiblePoint`                          |
 | Proved infeasible                       | `Infeasible`          | 1               | `NoSolution`                             | `InfeasibilityCertificate`               |
@@ -437,7 +437,7 @@ Linear programming and conic optimization solvers fall into this category.
 
 Mixed-integer programming solvers fall into this category.
 
-| What happended?                                  | `TerminationStatus()`   | `ResultCount()` | `PrimalStatus()`  | `DualStatus()` |
+| What happened?                                   | `TerminationStatus()`   | `ResultCount()` | `PrimalStatus()`  | `DualStatus()` |
 | ------------------------------------------------ | ----------------------- | --------------- | ----------------- | -------------- |
 | Proved optimality                                | `Optimal`               | 1               | `FeasiblePoint`   | `NoSolution`   |
 | Presolve detected infeasibility or unboundedness | `InfeasibleOrUnbounded` | 0               | `NoSolution`      | `NoSolution`   |
@@ -453,14 +453,18 @@ original problem.
 
 #### Local search solvers
 
-Nonlinear programming solvers fall into this category.
+Nonlinear programming solvers fall into this category. It also includes
+non-global tree search solvers like
+[Juniper](https://github.com/lanl-ansi/Juniper.jl).
 
-| What happended?                  | `TerminationStatus()`           | `ResultCount()` | `PrimalStatus()`  | `DualStatus()`  |
-| -------------------------------- | ------------------------------- | --------------- | ----------------- | --------------- |
-| Converged to a stationary point  | `LocallyConverged`              | 1               | `FeasiblePoint`   | `FeasiblePoint` |
-| Converged to an infeasible point | `LocallyInfeasible`             | 1               | `InfeasiblePoint` | ?               |
-| Iteration limit                  | `IterationLimit`                | 1               | ?                 | ?               |
-| Diverging iterates               | `NormLimit` or `ObjectiveLimit` | 1               | ?                 | ?               |
+| What happened?                                         | `TerminationStatus()`           | `ResultCount()` | `PrimalStatus()`  | `DualStatus()`  |
+| ------------------------------------------------------ | ------------------------------- | --------------- | ----------------- | --------------- |
+| Converged to a stationary point                        | `LocallySolved`                 | 1               | `FeasiblePoint`   | `FeasiblePoint` |
+| Completed a non-global tree search (with a solution)   | `LocallySolved`                 | 1               | `FeasiblePoint`   | `FeasiblePoint` |
+| Converged to an infeasible point                       | `LocallyInfeasible`             | 1               | `InfeasiblePoint` | ?               |
+| Completed a non-global tree search (no solution found) | `LocallyInfeasible`             | 0               | `NoSolution`      | `NoSolution`    |
+| Iteration limit                                        | `IterationLimit`                | 1               | ?                 | ?               |
+| Diverging iterates                                     | `NormLimit` or `ObjectiveLimit` | 1               | ?                 | ?               |
 
 
 ## A complete example: solving a knapsack problem
