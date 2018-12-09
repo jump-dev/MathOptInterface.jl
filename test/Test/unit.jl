@@ -28,7 +28,7 @@ end
     @testset "solve_blank_obj" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1]),
                 MOI.FeasiblePoint
             )
@@ -37,7 +37,7 @@ end
         # The objective is blank so any primal value ≥ 1 is correct
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [2]),
                 MOI.FeasiblePoint
             )
@@ -47,7 +47,7 @@ end
     @testset "solve_constant_obj" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1]),
                 MOI.FeasiblePoint
             )
@@ -57,7 +57,7 @@ end
     @testset "solve_singlevariable_obj" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1]),
                 MOI.FeasiblePoint
             )
@@ -67,7 +67,7 @@ end
     @testset "solve_with_lowerbound" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1]),
                 MOI.FeasiblePoint,
                     (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0],
@@ -82,7 +82,7 @@ end
     @testset "solve_with_upperbound" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1]),
                 MOI.FeasiblePoint,
                     (MOI.SingleVariable, MOI.LessThan{Float64})    => [-2.0],
@@ -97,7 +97,7 @@ end
     @testset "solve_affine_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [0.5]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
@@ -108,7 +108,7 @@ end
     @testset "solve_affine_greaterthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [0.5]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0.5]
@@ -119,7 +119,7 @@ end
     @testset "solve_affine_equalto" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [0.5]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [0.5]
@@ -130,7 +130,7 @@ end
     @testset "solve_affine_interval" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [2.0]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.5]
@@ -142,11 +142,11 @@ end
     @testset "solve_qcp_edge_cases" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [0.5, 0.5])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [0.5, (√13 - 1)/4])
             )
         )
@@ -156,19 +156,19 @@ end
     @testset "solve_qp_edge_cases" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1.0, 2.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1.0, 2.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1.0, 2.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1.0, 2.0])
             )
         )
@@ -177,7 +177,7 @@ end
     @testset "solve_duplicate_terms_obj" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success,
+                MOI.Optimal,
                 (MOI.FeasiblePoint, [1]),
                 MOI.FeasiblePoint
             )
@@ -187,19 +187,19 @@ end
     @testset "solve_affine_deletion_edge_cases" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [0.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [0.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [2.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [2.0])
             )
         )
         MOIT.solve_affine_deletion_edge_cases(mock, config)
@@ -207,16 +207,16 @@ end
     @testset "solve_integer_edge_cases" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [2.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [2.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [0.0])
             )
         )
         MOIT.solve_integer_edge_cases(mock, config)
@@ -225,19 +225,19 @@ end
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> begin
                 MOI.set(mock, MOI.ObjectiveBound(), 3.0)
-                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [2.0]))
+                MOIU.mock_optimize!(mock, MOI.Optimal, (MOI.FeasiblePoint, [2.0]))
             end,
             (mock::MOIU.MockOptimizer) -> begin
                 MOI.set(mock, MOI.ObjectiveBound(), 3.0)
-                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.0]))
+                MOIU.mock_optimize!(mock, MOI.Optimal, (MOI.FeasiblePoint, [1.0]))
             end,
             (mock::MOIU.MockOptimizer) -> begin
                 MOI.set(mock, MOI.ObjectiveBound(), 2.0)
-                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.5]))
+                MOIU.mock_optimize!(mock, MOI.Optimal, (MOI.FeasiblePoint, [1.5]))
             end,
             (mock::MOIU.MockOptimizer) -> begin
                 MOI.set(mock, MOI.ObjectiveBound(), 4.0)
-                MOIU.mock_optimize!(mock, MOI.Success, (MOI.FeasiblePoint, [1.5]))
+                MOIU.mock_optimize!(mock, MOI.Optimal, (MOI.FeasiblePoint, [1.5]))
             end
         )
         MOIT.solve_objbound_edge_cases(mock, config)
@@ -251,11 +251,11 @@ end
     @testset "solve_set_singlevariable_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0]),
                 MOI.FeasiblePoint
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [2.0]),
                 MOI.FeasiblePoint
             )
         )
@@ -264,11 +264,11 @@ end
     @testset "solve_transform_singlevariable_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0]),
                 MOI.FeasiblePoint
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [2.0]),
                 MOI.FeasiblePoint
             )
         )
@@ -277,12 +277,12 @@ end
     @testset "solve_set_scalaraffine_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [2.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [2.0]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
             )
@@ -292,12 +292,12 @@ end
     @testset "solve_coef_scalaraffine_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.5]),
+                MOI.Optimal, (MOI.FeasiblePoint, [0.5]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
             )
@@ -307,12 +307,12 @@ end
     @testset "solve_func_scalaraffine_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0]),
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0]
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.5]),
+                MOI.Optimal, (MOI.FeasiblePoint, [0.5]),
                 MOI.FeasiblePoint,
                     (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
             )
@@ -322,10 +322,10 @@ end
     @testset "solve_const_vectoraffine_nonpos" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.0, 0.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [0.0, 0.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0, 0.75])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0, 0.75])
             )
         )
         MOIT.solve_const_vectoraffine_nonpos(mock, config)
@@ -333,10 +333,10 @@ end
     @testset "solve_multirow_vectoraffine_nonpos" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.5])
+                MOI.Optimal, (MOI.FeasiblePoint, [0.5])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [0.25])
+                MOI.Optimal, (MOI.FeasiblePoint, [0.25])
             )
         )
         MOIT.solve_multirow_vectoraffine_nonpos(mock, config)
@@ -344,10 +344,10 @@ end
     @testset "solve_const_scalar_objective" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             )
         )
         MOIT.solve_const_scalar_objective(mock, config)
@@ -355,10 +355,10 @@ end
     @testset "solve_coef_scalar_objective" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             ),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                MOI.Success, (MOI.FeasiblePoint, [1.0])
+                MOI.Optimal, (MOI.FeasiblePoint, [1.0])
             )
         )
         MOIT.solve_coef_scalar_objective(mock, config)

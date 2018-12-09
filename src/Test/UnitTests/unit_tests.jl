@@ -15,7 +15,7 @@ const unittests = Dict{String, Function}()
 
 Solve, and then test, various aspects of a model.
 
-First, check that `TerminationStatus == MOI.Success`.
+First, check that `TerminationStatus == MOI.Optimal`.
 
 If `objective_value` is not nothing, check that the attribute `ObjectiveValue()`
 is approximately `objective_value`.
@@ -59,7 +59,7 @@ function test_model_solution(model, config;
     config.solve || return
     atol, rtol = config.atol, config.rtol
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
     if objective_value != nothing
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ objective_value atol=atol rtol=rtol
     end

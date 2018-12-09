@@ -277,11 +277,11 @@ end
         @testset "Quadratic constraints with 2 variables" begin
             MOIU.set_mock_optimize!(mock,
                 (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                    MOI.Success,
+                    MOI.Optimal,
                     (MOI.FeasiblePoint, [0.5, 0.5])
                 ),
                 (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                    MOI.Success,
+                    MOI.Optimal,
                     (MOI.FeasiblePoint, [0.5, (√13 - 1)/4])
                 )
             )

@@ -368,40 +368,34 @@ optimize!(optimizer)
 The optimization procedure may terminate for a number of reasons. The
 [`TerminationStatus`](@ref) attribute of the optimizer returns a
 [`TerminationStatusCode`](@ref) object which explains why the solver stopped.
-Some statuses indicate generally successful termination, some termination
-because of limit, and some termination because of something unexpected like
-invalid problem data or failure to converge. A typical usage of the
-`TerminationStatus` attribute is as follows:
+The termination statuses distinguish between proofs of optimality,
+infeasibility, local convergence, limits, and termination because of something
+unexpected like invalid problem data or failure to converge. A typical usage of
+the `TerminationStatus` attribute is as follows:
 ```julia
 status = MOI.get(optimizer, TerminationStatus())
-if status == Success
-    # Ok, the solver has a result to return
+if status == MOI.Optimal
+    # Ok, we solved the problem!
 else
-    # Handle other cases
-    # The solver may or may not have a result
+    # Handle other cases.
 end
 ```
 
-TODO: Update this discussion. MOI.Success doesn't exist anymore.
+After checking the `TerminationStatus`, one should typically check
+[`ResultCount`](@ref). This attribute returns the number of results that the
+solver has available to return. *A result is defined as a primal-dual pair,
+but either the primal or the dual may be missing from the result.* While the
+`Optimal` termination status normally implies that at least one result is
+available, other statuses do not. For example, in the case of infeasiblity,
+a solver may return no result or a proof of infeasibility. The `ResultCount`
+distinguishes between these two cases.
 
-The `Success` status code specifically implies that the solver has a "result" to
-return. In the case that the solver converged to an optimal solution, this
-result will just be the optimal solution vector. The [`PrimalStatus`](@ref)
-attribute returns a [`ResultStatusCode`](@ref) that explains how to interpret
-the result. In the case that the solver is known to return globally optimal
-solutions (up to numerical tolerances), the combination of `Success` termination
-status and `FeasiblePoint` primal result status implies that the primal result
-vector should be interpreted as a globally optimal solution. A result may be
-available even if the status is not `Success`, for example, if the solver
-stopped because of a time limit and has a feasible but nonoptimal solution. Use
-the [`ResultCount`](@ref) attribute to check if one or more results are
-available.
+The [`PrimalStatus`](@ref) and [`DualStatus`](@ref) attributes return a
+[`ResultStatusCode`](@ref) that indicates if that component of the result
+is present (i.e., not `NoSolution`) and explains how to interpret the result.
 
-In addition to the primal status, the [`DualStatus`](@ref) provides important
-information for primal-dual solvers.
-
-If a result is available, it may be retrieved with the [`VariablePrimal`](@ref)
-attribute:
+If `PrimalStatus` is not `NoSolution`, then the primal may be retrieved with the
+[`VariablePrimal`](@ref) attribute:
 ```julia
 MOI.get(optimizer, VariablePrimal(), x)
 ```
@@ -411,6 +405,11 @@ See also the attributes [`ConstraintPrimal`](@ref), and
 [`ConstraintDual`](@ref).
 See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs
 and certificates.
+
+!!! note
+    We omit discussion of how to handle multiple results, i.e., when
+    `ResultCount` is greater than 1. This is supported in the API but not yet
+    implemented in any solver.
 
 ### Common status situations
 
@@ -510,17 +509,14 @@ MOI.optimize!(optimizer)
 
 termination_status = MOI.get(optimizer, MOI.TerminationStatus())
 obj_value = MOI.get(optimizer, MOI.ObjectiveValue())
-if termination_status != MOI.Success
+if termination_status != MOI.Optimal
     error("Solver terminated with status $termination_status")
 end
 
 @assert MOI.get(optimizer, MOI.ResultCount()) > 0
 
-result_status = MOI.get(optimizer, MOI.PrimalStatus())
-if result_status != MOI.FeasiblePoint
-    error("Solver ran successfully but did not return a feasible point. " *
-          "The problem may be infeasible.")
-end
+@assert MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
 primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 
 @show obj_value

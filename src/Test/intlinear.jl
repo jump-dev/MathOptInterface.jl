@@ -55,7 +55,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -123,7 +123,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -140,7 +140,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -208,7 +208,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -226,7 +226,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         if config.solve
             MOI.optimize!(model)
 
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -277,7 +277,7 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -286,7 +286,7 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
         # test for CPLEX.jl #76
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -333,7 +333,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FeasiblePoint, MOI.NearlyFeasiblePoint ]
 
