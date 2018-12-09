@@ -414,8 +414,9 @@ and certificates.
 
 ### Common status situations
 
-The sections below describe how to interpret typical status cases for three
-common classes of solvers. Solver wrappers may provide additional information on
+The sections below describe how to interpret typical or interesting status cases
+for three common classes of solvers. The example cases are illustrative, not
+comprehensive. Solver wrappers may provide additional information on
 how the solver's statuses map to MOI statuses.
 
 `?` in the tables indicate that multiple different values are possible.
