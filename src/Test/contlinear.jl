@@ -64,8 +64,6 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -390,8 +388,6 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -488,8 +484,6 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -534,8 +528,6 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -630,8 +622,6 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -748,8 +738,6 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -819,8 +807,6 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -903,8 +889,6 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -959,8 +943,6 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1006,8 +988,6 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1083,8 +1063,6 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1130,8 +1108,6 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1221,8 +1197,6 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1276,8 +1250,6 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1328,8 +1300,6 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
         @test MOI.get(model, MOI.ResultCount()) > 0
@@ -1389,8 +1359,6 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1482,8 +1450,6 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 

@@ -39,7 +39,6 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 

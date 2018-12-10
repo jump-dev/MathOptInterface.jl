@@ -55,7 +55,6 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -127,7 +126,6 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
         if config.solve
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-            @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
 
             MOI.optimize!(model)
 
@@ -216,7 +214,6 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
         if config.solve
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-            @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
 
             MOI.optimize!(model)
 
@@ -289,7 +286,6 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -349,7 +345,6 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 

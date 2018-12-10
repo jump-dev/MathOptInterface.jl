@@ -47,8 +47,6 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -146,8 +144,6 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -213,8 +209,6 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -266,8 +260,6 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -340,8 +332,6 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -417,8 +407,6 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -486,8 +474,6 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -540,8 +526,6 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -624,8 +608,6 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -715,8 +697,6 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -796,8 +776,6 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -893,8 +871,6 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -960,8 +936,6 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1028,8 +1002,6 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1095,8 +1067,6 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1176,8 +1146,6 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
     MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1323,8 +1291,6 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1407,8 +1373,6 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
@@ -1509,8 +1473,6 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-        @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
 
         MOI.optimize!(model)
 
