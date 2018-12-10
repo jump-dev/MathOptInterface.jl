@@ -9,7 +9,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
     #       x, y >= 0   (x, y ∈ Nonnegatives)
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
@@ -356,7 +356,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x + y <= 1
     # x, y >= 0
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -418,7 +418,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x >= 0
     #      x >= 3
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -498,7 +498,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
@@ -581,7 +581,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     #
     #   solution: x = 1.3333333, y = 1.3333333, objv = 2.66666666
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -704,7 +704,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -771,7 +771,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
@@ -855,7 +855,7 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
     # s.t. 2x+y <= -1
     # x,y >= 0
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -907,7 +907,7 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
     # s.t. -x+2y <= 0
     # x,y >= 0
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -950,7 +950,7 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
     # s.t. x-y == 0
     # x,y >= 0
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
@@ -1003,7 +1003,7 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
     #   solution: (59.0909, 36.3636)
     #   objv: 71818.1818
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -1062,7 +1062,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     #       s.t.  5 <= x + y <= 10
     #                  x,  y >= 0
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
@@ -1154,7 +1154,7 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     # st   x + y >= 1
     #      x + y >= 2
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
@@ -1203,7 +1203,7 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
     #      y <= 2
     # x,y >= 0
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -1256,7 +1256,7 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
     # s.t. 2x + 3y >= 1
     #      x - y == 0
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
@@ -1307,7 +1307,7 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
     #      x, y, z >= 0
     #      z <= 1
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
@@ -1391,7 +1391,7 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
     # minimize 0
     # s.t. 0 == 0
     #      x == 1
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)

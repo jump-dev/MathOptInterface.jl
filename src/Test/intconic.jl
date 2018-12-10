@@ -10,7 +10,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     #      x >= ||(y,z)||
     #      (y,z) binary
 
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)

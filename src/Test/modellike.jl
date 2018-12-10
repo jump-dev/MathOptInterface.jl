@@ -18,7 +18,7 @@ end
 
 function nametest(model::MOI.ModelLike)
     @testset "Name test with $(typeof(model))" begin
-        @test MOIU.supports_default_copy_to(model, true)
+        @test MOIU.supports_default_copy_to(model, #=copy_names=# true)
         @test MOI.supports(model, MOI.Name())
         @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
         @test MOI.get(model, MOI.Name()) == ""
@@ -105,7 +105,7 @@ end
 
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     v = MOI.add_variables(model, 2)
     @test MOI.is_valid(model, v[1])
     @test MOI.is_valid(model, v[2])
@@ -124,7 +124,7 @@ function validtest(model::MOI.ModelLike)
 end
 
 function emptytest(model::MOI.ModelLike)
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     # Taken from LIN1
     v = MOI.add_variables(model, 3)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
@@ -199,7 +199,7 @@ function failcopytestca(dest::MOI.ModelLike)
 end
 
 function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
-    @test MOIU.supports_default_copy_to(src, false)
+    @test MOIU.supports_default_copy_to(src, #=copy_names=# false)
     x, y, z = MOI.add_variables(src, 3)
     vpattr = MOI.VariablePrimalStart()
     MOI.set(src, vpattr, x, 1.0)
@@ -237,7 +237,7 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
 end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
-    @test MOIU.supports_default_copy_to(src, true)
+    @test MOIU.supports_default_copy_to(src, #=copy_names=# true)
     MOI.set(src, MOI.Name(), "ModelName")
     v = MOI.add_variables(src, 3)
     w = MOI.add_variable(src)
@@ -319,7 +319,7 @@ Test whether the model returns ListOfVariableIndices and ListOfConstraintIndices
 sorted by creation time.
 """
 function orderedindicestest(model::MOI.ModelLike)
-    @test MOIU.supports_default_copy_to(model, false)
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     MOI.empty!(model)
     v1 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]
