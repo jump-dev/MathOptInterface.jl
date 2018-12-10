@@ -9,6 +9,7 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     #     x +  y      >= 1 (c2)
     #     x,y \in R
 
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
     MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
@@ -62,6 +63,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     #     x +  y      >= 1 (c2)
     #     x,y \in R
 
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
 
@@ -134,6 +136,7 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     #       s.t.  x, y >= 0
     #             x + y = 1
 
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
     MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
     MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
@@ -213,6 +216,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     # Optimal solution
     # x = 1/2, y = 7/4
 
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
     @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
@@ -275,6 +279,7 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     # Max x
     # s.t. x^2 <= 2 (c)
 
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})
 
@@ -324,6 +329,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     # Min -x
     # s.t. x^2 <= 2
 
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
 
@@ -385,6 +391,7 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     #      x^2 + y^2 <= t^2 (c2)
     #      t >= 0 (bound)
 
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
