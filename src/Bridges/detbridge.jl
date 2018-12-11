@@ -17,7 +17,7 @@ the variables created and the index of the constraint created to extract the eig
 """
 function extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int, offset::Int) where T
     f_scalars = MOIU.eachscalar(f)
-    tu = f_scalars[1:offset]
+    tu = [f_scalars[i] for i in 1:offset]
 
     n = trimap(d, d)
     X = f_scalars[offset .+ (1:n)]
