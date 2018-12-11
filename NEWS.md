@@ -10,6 +10,7 @@ v0.7.0 (unreleased)
 - Key pieces of information like optimality, infeasibility, etc., are now reported
   through `TerminationStatusCode`. It is typically no longer necessary to check the
   result statuses in addition to the termination status.
+- Add perspective dimension to log-det cone (#593).
 
 v0.6.4 (November 27, 2018)
 --------------------------
