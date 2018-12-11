@@ -20,7 +20,7 @@ function extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int, offs
     tu = f_scalars[1:offset]
 
     n = trimap(d, d)
-    X = f_scalars[offset + (1:n)]
+    X = f_scalars[offset .+ (1:n)]
     m = length(X.terms)
     M = m + n + d
 
