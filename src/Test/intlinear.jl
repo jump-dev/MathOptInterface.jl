@@ -54,6 +54,8 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 
     if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
@@ -123,6 +125,8 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 
         if config.solve
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+
             MOI.optimize!(model)
 
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
@@ -209,6 +213,8 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
 
         if config.solve
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+
             MOI.optimize!(model)
 
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
@@ -279,6 +285,8 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
 
     if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
@@ -336,6 +344,8 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     end
 
     if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
