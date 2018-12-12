@@ -368,38 +368,34 @@ optimize!(optimizer)
 The optimization procedure may terminate for a number of reasons. The
 [`TerminationStatus`](@ref) attribute of the optimizer returns a
 [`TerminationStatusCode`](@ref) object which explains why the solver stopped.
-Some statuses indicate generally successful termination, some termination
-because of limit, and some termination because of something unexpected like
-invalid problem data or failure to converge. A typical usage of the
-`TerminationStatus` attribute is as follows:
+The termination statuses distinguish between proofs of optimality,
+infeasibility, local convergence, limits, and termination because of something
+unexpected like invalid problem data or failure to converge. A typical usage of
+the `TerminationStatus` attribute is as follows:
 ```julia
 status = MOI.get(optimizer, TerminationStatus())
-if status == Success
-    # Ok, the solver has a result to return
+if status == MOI.Optimal
+    # Ok, we solved the problem!
 else
-    # Handle other cases
-    # The solver may or may not have a result
+    # Handle other cases.
 end
 ```
 
-The `Success` status code specifically implies that the solver has a "result" to
-return. In the case that the solver converged to an optimal solution, this
-result will just be the optimal solution vector. The [`PrimalStatus`](@ref)
-attribute returns a [`ResultStatusCode`](@ref) that explains how to interpret
-the result. In the case that the solver is known to return globally optimal
-solutions (up to numerical tolerances), the combination of `Success` termination
-status and `FeasiblePoint` primal result status implies that the primal result
-vector should be interpreted as a globally optimal solution. A result may be
-available even if the status is not `Success`, for example, if the solver
-stopped because of a time limit and has a feasible but nonoptimal solution. Use
-the [`ResultCount`](@ref) attribute to check if one or more results are
-available.
+After checking the `TerminationStatus`, one should typically check
+[`ResultCount`](@ref). This attribute returns the number of results that the
+solver has available to return. *A result is defined as a primal-dual pair,
+but either the primal or the dual may be missing from the result.* While the
+`Optimal` termination status normally implies that at least one result is
+available, other statuses do not. For example, in the case of infeasiblity,
+a solver may return no result or a proof of infeasibility. The `ResultCount`
+distinguishes between these two cases.
 
-In addition to the primal status, the [`DualStatus`](@ref) provides important
-information for primal-dual solvers.
+The [`PrimalStatus`](@ref) and [`DualStatus`](@ref) attributes return a
+[`ResultStatusCode`](@ref) that indicates if that component of the result
+is present (i.e., not `NoSolution`) and explains how to interpret the result.
 
-If a result is available, it may be retrieved with the [`VariablePrimal`](@ref)
-attribute:
+If `PrimalStatus` is not `NoSolution`, then the primal may be retrieved with the
+[`VariablePrimal`](@ref) attribute:
 ```julia
 MOI.get(optimizer, VariablePrimal(), x)
 ```
@@ -410,31 +406,67 @@ See also the attributes [`ConstraintPrimal`](@ref), and
 See [Duals](@ref) for a discussion of the MOI conventions for primal-dual pairs
 and certificates.
 
-
+!!! note
+    We omit discussion of how to handle multiple results, i.e., when
+    `ResultCount` is greater than 1. This is supported in the API but not yet
+    implemented in any solver.
 
 ### Common status situations
 
-The sections below describe how to interpret different status cases for three common classes of solvers. Most importantly, it is essential to know if a solver is expected to provide a global or only locally optimal solution when interpreting the result statuses. Solver wrappers may provide additional information on how the solver's statuses map to MOI statuses.
+The sections below describe how to interpret typical or interesting status cases
+for three common classes of solvers. The example cases are illustrative, not
+comprehensive. Solver wrappers may provide additional information on
+how the solver's statuses map to MOI statuses.
+
+`?` in the tables indicate that multiple different values are possible.
 
 #### Primal-dual convex solver
 
-A typical primal-dual solver is capable of certifying optimality of a solution to a convex optimization problem by providing a primal-dual feasible solution with matching objective values. It may also certify that either the primal or dual problem is infeasible by providing a certain ray of the dual or primal, respectively. Typically two solves are required to certify unboundedness, one to find a ray and a second to find a feasible point. A solver may also provide a [facial reduction certificate](http://www.optimization-online.org/DB_FILE/2015/09/5104.pdf). When a primal-dual solver terminates with `Success` status, it is reasonable to assume that a primal and dual statuses of `FeasiblePoint` imply that the corresponding primal-dual results are a (numerically) optimal primal-dual pair. The `AlmostSuccess` status implies that the solve has completed to relaxed tolerances, so in this case `FeasiblePoint` or `NearlyFeasiblePoint` statuses would imply a near-optimal primal-dual pair. For all other termination statuses, there are no specific guarantees on the results returned.
+Linear programming and conic optimization solvers fall into this category.
 
-#### Global mixed-integer or nonconvex solver
+| What happened?                          | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                         | `DualStatus()`                           |
+| --------------------------------------- | --------------------- | --------------- | ---------------------------------------- | ---------------------------------------- |
+| Proved optimality                       | `Optimal`             | 1               | `FeasiblePoint`                          | `FeasiblePoint`                          |
+| Proved infeasible                       | `Infeasible`          | 1               | `NoSolution`                             | `InfeasibilityCertificate`               |
+| Optimal within relaxed tolerances       | `AlmostOptimal`       | 1               | `FeasiblePoint` or `AlmostFeasiblePoint` | `FeasiblePoint` or `AlmostFeasiblePoint` |
+| Detected an unbounded ray of the primal | `DualInfeasible`      | 1               | `InfeasibilityCertificate`               | `NoSolution`                             |
+| Stall                                   | `SlowProgress`        | 1               | ?                                        | ?                                        |
 
-When a global solver returns `Success` and the primal result is a
-`FeasiblePoint`, then it is implied that the primal result is indeed a globally
-optimal solution up to the specified tolerances. Typically, no dual certificate
-is available to certify optimality. The [`ObjectiveBound`](@ref) should provide
-extra information on the optimality gap.
+#### Global branch-and-bound solvers
 
-#### Local solver
+Mixed-integer programming solvers fall into this category.
 
-For solvers which perform a search based only on local criteria (for example, gradient descent), without additional knowledge of the structure of the problem, we can say only that `Success` and `FeasiblePoint` imply that the primal result belongs to the class of points which the chosen algorithm is known to converge to. Gradient descent algorithms may converge to saddle points, for example. It is also possible for such algorithms to converge to infeasible points, in which case the termination status would be `Success` and the primal result status would be `InfeasiblePoint`. This does not imply that the problem is infeasible and so cannot be called a certificate of infeasibility.
+| What happened?                                   | `TerminationStatus()`   | `ResultCount()` | `PrimalStatus()`  | `DualStatus()` |
+| ------------------------------------------------ | ----------------------- | --------------- | ----------------- | -------------- |
+| Proved optimality                                | `Optimal`               | 1               | `FeasiblePoint`   | `NoSolution`   |
+| Presolve detected infeasibility or unboundedness | `InfeasibleOrUnbounded` | 0               | `NoSolution`      | `NoSolution`   |
+| Proved infeasibility                             | `Infeasible`            | 0               | `NoSolution`      | `NoSolution`   |
+| Timed out (no solution)                          | `TimeLimit`             | 0               | `NoSolution`      | `NoSolution`   |
+| Timed out (with a solution)                      | `TimeLimit`             | 1               | `FeasiblePoint`   | `NoSolution`   |
+| `CPXMIP_OPTIMAL_INFEAS`                          | `AlmostOptimal`         | 1               | `InfeasiblePoint` | `NoSolution`   |
+
+[`CPXMIP_OPTIMAL_INFEAS`](https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.6.1/ilog.odms.cplex.help/refcallablelibrary/macros/CPXMIP_OPTIMAL_INFEAS.html)
+is a CPLEX status that indicates that a preprocessed problem was solved to
+optimality, but the solver was unable to recover a feasible solution to the
+original problem.
+
+#### Local search solvers
+
+Nonlinear programming solvers fall into this category. It also includes
+non-global tree search solvers like
+[Juniper](https://github.com/lanl-ansi/Juniper.jl).
+
+| What happened?                                         | `TerminationStatus()`           | `ResultCount()` | `PrimalStatus()`  | `DualStatus()`  |
+| ------------------------------------------------------ | ------------------------------- | --------------- | ----------------- | --------------- |
+| Converged to a stationary point                        | `LocallySolved`                 | 1               | `FeasiblePoint`   | `FeasiblePoint` |
+| Completed a non-global tree search (with a solution)   | `LocallySolved`                 | 1               | `FeasiblePoint`   | `FeasiblePoint` |
+| Converged to an infeasible point                       | `LocallyInfeasible`             | 1               | `InfeasiblePoint` | ?               |
+| Completed a non-global tree search (no solution found) | `LocallyInfeasible`             | 0               | `NoSolution`      | `NoSolution`    |
+| Iteration limit                                        | `IterationLimit`                | 1               | ?                 | ?               |
+| Diverging iterates                                     | `NormLimit` or `ObjectiveLimit` | 1               | ?                 | ?               |
 
 
 ## A complete example: solving a knapsack problem
-
 
 [ needs formatting help, doc tests ]
 
@@ -477,17 +509,14 @@ MOI.optimize!(optimizer)
 
 termination_status = MOI.get(optimizer, MOI.TerminationStatus())
 obj_value = MOI.get(optimizer, MOI.ObjectiveValue())
-if termination_status != MOI.Success
+if termination_status != MOI.Optimal
     error("Solver terminated with status $termination_status")
 end
 
 @assert MOI.get(optimizer, MOI.ResultCount()) > 0
 
-result_status = MOI.get(optimizer, MOI.PrimalStatus())
-if result_status != MOI.FeasiblePoint
-    error("Solver ran successfully but did not return a feasible point. " *
-          "The problem may be infeasible.")
-end
+@assert MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FeasiblePoint
+
 primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 
 @show obj_value

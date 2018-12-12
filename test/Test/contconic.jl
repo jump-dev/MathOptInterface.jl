@@ -18,15 +18,15 @@
                               (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]],
                               (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[7, 2, -4], [7]])
         MOIT.lin2ftest(mock, config)
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.InfeasiblePoint, MOI.InfeasibilityCertificate)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible, MOI.InfeasiblePoint, MOI.InfeasibilityCertificate)
         MOIT.lin3test(mock, config)
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.InfeasibleNoResult)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible)
         MOIT.lin3test(mock, MOIT.TestConfig(infeas_certificates=false))
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.InfeasibleOrUnbounded)
         MOIT.lin3test(mock, MOIT.TestConfig(infeas_certificates=false))
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.InfeasiblePoint, MOI.InfeasibilityCertificate)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible, MOI.InfeasiblePoint, MOI.InfeasibilityCertificate)
         MOIT.lin4test(mock, config)
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.InfeasibleNoResult)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible)
         MOIT.lin4test(mock, MOIT.TestConfig(infeas_certificates=false))
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.InfeasibleOrUnbounded)
         MOIT.lin4test(mock, MOIT.TestConfig(infeas_certificates=false))
@@ -49,7 +49,7 @@
                               (MOI.VectorAffineFunction{Float64}, MOI.Zeros)           => [[√2]],
                               (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)    => [[-1.0]])
         MOIT.soc2ptest(mock, config)
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.InfeasiblePoint, MOI.InfeasibilityCertificate)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible, MOI.InfeasiblePoint, MOI.InfeasibilityCertificate)
         MOIT.soc3test(mock, config)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 2/√5, 1/√5, 2/√5, 1/√5],
                               (MOI.VectorAffineFunction{Float64}, MOI.Zeros)           => [[-√5, -2.0, -1.0]])
@@ -66,7 +66,7 @@
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√2, 1/√2, -1.0, -1.0]])
         MOIT.rotatedsoc1ftest(mock, config)
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, tuple(),
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible, tuple(),
                               (MOI.SingleVariable,                MOI.LessThan{Float64})      => [-1],
                               (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-1],
                               (MOI.SingleVariable,                MOI.GreaterThan{Float64})   => [1],

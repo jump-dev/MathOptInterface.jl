@@ -42,7 +42,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 

@@ -136,7 +136,7 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.LocallySolved
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -241,7 +241,7 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.LocallySolved
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 

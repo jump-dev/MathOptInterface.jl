@@ -701,66 +701,80 @@ recent call to [`optimize!`](@ref).
 If no call has been made to [`optimize!`](@ref), then the `TerminationStatus`
 is:
 
-* `OptimizeNotCalled`: the algorithm has not started.
+* `OptimizeNotCalled`: The algorithm has not started.
 
 ## OK
 
 These are generally OK statuses, i.e., the algorithm ran to completion normally.
 
-* `Success`: the algorithm ran successfully and has a result; this includes
-  cases where the algorithm converges to an infeasible point (NLP) or converges
-  to a solution of a homogeneous self-dual problem and has a certificate of
-  primal/dual infeasibility.
-* `InfeasibleNoResult`: the algorithm stopped because it decided that the
-  problem is infeasible but does not have a primal or dual result to return.
-* `UnboundedNoResult`: the algorithm stopped because it decided that the problem
-  is unbounded but does not have a primal or dual result to return.
-* `InfeasibleOrUnbounded`: the algorithm stopped because it decided that the
-  problem is infeasible or unbounded (no primal or dual result is available);
-  this occasionally happens during MIP presolve.
+* `Optimal`: The algorithm found a globally optimal solution.
+* `Infeasible`: The algorithm concluded that no feasible solution exists.
+* `DualInfeasible`: The algorithm concluded that no dual bound exists for the
+  problem. If, additionally, a feasible (primal) solution is known to
+  exist, this status typically implies that the problem is unbounded, with some
+  technical exceptions.
+* `LocallySolved`: The algorithm converged to a stationary point, local
+  optimal solution, could not find directions for improvement, or otherwise
+  completed its search without global guarantees.
+* `LocallyInfeasible`: The algorithm converged to an infeasible point or
+  otherwise completed its search without finding a feasible solution, without
+  guarantees that no feasible solution exists.
+* `InfeasibleOrUnbounded`: The algorithm stopped because it decided that the
+  problem is infeasible or unbounded; this occasionally happens during MIP
+  presolve.
+
+## Solved to relaxed tolerances
+
+* `AlmostOptimal`: The algorithm found a globally optimal solution to relaxed
+  tolerances.
+* `AlmostInfeasible`: The algorithm concluded that no feasible solution exists
+  within relaxed tolerances.
+* `AlmostLocallySolved`: The algorithm converged to a stationary point, local
+  optimal solution, or could not find directions for improvement within relaxed
+  tolerances.
 
 ## Limits
 
 The optimizer stopped because of some user-defined limit.
 
-* `IterationLimit`: an iterative algorithm stopped after conducting the maximum
+* `IterationLimit`: An iterative algorithm stopped after conducting the maximum
   number of iterations.
-* `TimeLimit`: the algorithm stopped after a user-specified computation time.
-* `NodeLimit`: a branch-and-bound algorithm stopped because it explored a
+* `TimeLimit`: The algorithm stopped after a user-specified computation time.
+* `NodeLimit`: A branch-and-bound algorithm stopped because it explored a
   maximum number of nodes in the branch-and-bound tree.
-* `SolutionLimit`: the algorithm stopped because it found the required number of
+* `SolutionLimit`: The algorithm stopped because it found the required number of
   solutions. This is often used in MIPs to get the solver to return the first
   feasible solution it encounters.
-* `MemoryLimit`: the algorithm stopped because it ran out of memory.
-* `ObjectiveLimit`: the algorthm stopped because it found a solution better than
+* `MemoryLimit`: The algorithm stopped because it ran out of memory.
+* `ObjectiveLimit`: The algorthm stopped because it found a solution better than
   a minimum limit set by the user.
-* `NormLimit`: the algorithm stopped because the norm of an iterate became too
+* `NormLimit`: The algorithm stopped because the norm of an iterate became too
   large.
-* `OtherLimit`: the algorithm stopped due to a limit not covered by one of the
+* `OtherLimit`: The algorithm stopped due to a limit not covered by one of the
   above.
 
 ## Problematic
 
 This group of statuses means that something unexpected or problematic happened.
 
-* `SlowProgress`: the algorithm stopped because it was unable to continue making
+* `SlowProgress`: The algorithm stopped because it was unable to continue making
   progress towards the solution.
-* `AlmostSuccess` should be used if there is additional information that relaxed
-  convergence tolerances are satisfied
-* `NumericalError`: the algorithm stopped because it encountered unrecoverable
+* `NumericalError`: The algorithm stopped because it encountered unrecoverable
   numerical error.
-* `InvalidModel`: the algorithm stopped because the model is invalid.
-* `InvalidOption`: the algorithm stopped because it was provided an invalid
+* `InvalidModel`: The algorithm stopped because the model is invalid.
+* `InvalidOption`: The algorithm stopped because it was provided an invalid
   option.
-* `Interrupted`: the algorithm stopped because of an interrupt signal.
-* `OtherError`: the algorithm stopped because of an error not covered by one of
+* `Interrupted`: The algorithm stopped because of an interrupt signal.
+* `OtherError`: The algorithm stopped because of an error not covered by one of
   the statuses defined above.
 """
 @enum(TerminationStatusCode,
     OptimizeNotCalled,
     # OK
-    Success, AlmostSuccess, InfeasibleNoResult, UnboundedNoResult,
+    Optimal, Infeasible, DualInfeasible, LocallySolved, LocallyInfeasible,
         InfeasibleOrUnbounded,
+    # Solved to relaxed tolerances
+    AlmostOptimal, AlmostInfeasible, AlmostLocallySolved,
     # Limits
     IterationLimit, TimeLimit,  NodeLimit, SolutionLimit, MemoryLimit,
         ObjectiveLimit, NormLimit, OtherLimit,

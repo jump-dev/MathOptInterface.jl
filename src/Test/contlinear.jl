@@ -67,7 +67,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -102,7 +102,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -157,7 +157,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -189,7 +189,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -214,7 +214,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -239,7 +239,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -266,7 +266,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -295,7 +295,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -391,7 +391,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -450,7 +450,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -487,7 +487,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -531,7 +531,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
@@ -545,7 +545,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ConstraintSet(), c1, MOI.GreaterThan(100.0))
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 100.0 atol=atol rtol=rtol
@@ -559,7 +559,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ConstraintSet(), c2, MOI.LessThan(-100.0))
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 200.0 atol=atol rtol=rtol
@@ -625,7 +625,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -657,7 +657,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -678,7 +678,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -699,7 +699,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -741,7 +741,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
@@ -755,7 +755,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ConstraintSet(), c1, MOI.GreaterThan(100.0))
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 100.0 atol=atol rtol=rtol
@@ -769,7 +769,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     MOI.set(model, MOI.ConstraintSet(), c2, MOI.LessThan(-100.0))
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 200.0 atol=atol rtol=rtol
@@ -810,7 +810,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
@@ -831,7 +831,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 100.0 atol=atol rtol=rtol
@@ -852,7 +852,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
 
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 200.0 atol=atol rtol=rtol
@@ -892,10 +892,12 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Infeasible ||
+            MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         if config.infeas_certificates
             # solver returned an infeasibility ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+
             @test MOI.get(model, MOI.DualStatus()) == MOI.InfeasibilityCertificate
             cd = MOI.get(model, MOI.ConstraintDual(), c)
             @test cd < -atol
@@ -909,8 +911,6 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
         else
             # solver returned nothing
             @test MOI.get(model, MOI.ResultCount()) == 0
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleNoResult ||
-                MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         end
     end
 end
@@ -946,16 +946,15 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.DualInfeasible ||
+            MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         if config.infeas_certificates
             # solver returned an unbounded ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
         else
             # solver returned nothing
             @test MOI.get(model, MOI.ResultCount()) == 0
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.UnboundedNoResult ||
-                MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         end
     end
 end
@@ -991,19 +990,17 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.DualInfeasible ||
+            MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         if config.infeas_certificates
             # solver returned an unbounded ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.InfeasibilityCertificate
             ray = MOI.get(model, MOI.VariablePrimal(), [x,y])
             @test ray[1] ≈ ray[2] atol=atol rtol=rtol
-
         else
             # solver returned nothing
             @test MOI.get(model, MOI.ResultCount()) == 0
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.UnboundedNoResult ||
-                MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         end
     end
 end
@@ -1066,7 +1063,7 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 79e4/11 atol=atol rtol=rtol
@@ -1111,7 +1108,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 10.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 10 atol=atol rtol=rtol
@@ -1129,7 +1126,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 5.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 5 atol=atol rtol=rtol
@@ -1150,7 +1147,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
@@ -1162,7 +1159,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 12.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 12 atol=atol rtol=rtol
@@ -1200,7 +1197,7 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
     end
@@ -1214,7 +1211,7 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol=atol rtol=rtol
     end
@@ -1253,10 +1250,11 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Infeasible ||
+            MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         if config.infeas_certificates
             # solver returned an infeasibility ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
             @test MOI.get(model, MOI.DualStatus()) == MOI.InfeasibilityCertificate
             cd1 = MOI.get(model, MOI.ConstraintDual(), c1)
             cd2 = MOI.get(model, MOI.ConstraintDual(), c2)
@@ -1270,8 +1268,6 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
         else
             # solver returned nothing
             @test MOI.get(model, MOI.ResultCount()) == 0
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleNoResult ||
-                MOI.get(model, MOI.TerminationStatus()) == MOI.InfeasibleOrUnbounded
         end
     end
 end
@@ -1304,7 +1300,7 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
         MOI.optimize!(model)
         @test MOI.get(model, MOI.ResultCount()) > 0
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -1362,7 +1358,7 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -1395,7 +1391,7 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
     if config.solve
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 
@@ -1453,7 +1449,7 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Success
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
 

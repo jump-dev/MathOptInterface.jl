@@ -313,7 +313,7 @@ rec_mock_optimize(mock::MockOptimizer, opt::Function) = opt
 
 Sets the termination status of `mock` to `termstatus` and the primal (resp. dual) status to `primstatus` (resp. `dualstatus`).
 The primal values of the variables in the order returned by `ListOfVariableIndices` are set to `varprim`.
-If `termstatus` is missing, it is assumed to be `MOI.Success`.
+If `termstatus` is missing, it is assumed to be `MOI.Optimal`.
 If `primstatus` is missing, it is assumed to be `MOI.FeasiblePoint`.
 If `dualstatus` is missing, it is assumed to be `MOI.FeasiblePoint` if there is a primal solution and `primstatus` is not `MOI.InfeasiblePoint`, otherwise it is `MOI.InfeasibilityCertificate`.
 The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
@@ -325,7 +325,7 @@ function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCo
     mock_dual!(mock, dual...)
 end
 # Default termination status
-mock_optimize!(mock::MockOptimizer, primdual...) = mock_optimize!(mock, MOI.Success, primdual...)
+mock_optimize!(mock::MockOptimizer, primdual...) = mock_optimize!(mock, MOI.Optimal, primdual...)
 function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode)
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
     MOI.set(mock, MOI.ResultCount(), 0)
