@@ -7,6 +7,9 @@ v0.7.0 (unreleased)
 - Test that `MOI.TerminationStatus` is `MOI.OptimizeNotCalled` before
   `MOI.optimize!` is called.
 - Check `supports_default_copy_to` in tests (#594).
+- Key pieces of information like optimality, infeasibility, etc., are now reported
+  through `TerminationStatusCode`. It is typically no longer necessary to check the
+  result statuses in addition to the termination status.
 
 v0.6.4 (November 27, 2018)
 --------------------------
