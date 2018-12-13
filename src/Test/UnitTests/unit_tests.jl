@@ -59,7 +59,7 @@ function test_model_solution(model, config;
     config.solve || return
     atol, rtol = config.atol, config.rtol
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.Optimal
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     if objective_value != nothing
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ objective_value atol=atol rtol=rtol
     end

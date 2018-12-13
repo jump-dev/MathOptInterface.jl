@@ -6,8 +6,12 @@ struct TestConfig
     modify_lhs::Bool # can modify function of a constraint
     duals::Bool # test dual solutions
     infeas_certificates::Bool # check for infeasibility certificates when appropriate
-    function TestConfig(;atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true, query::Bool = true, 
-                        modify_lhs::Bool = true, duals::Bool = true, infeas_certificates::Bool = true)
+    # The expected "optimal" status returned by the solver. Either
+    # MOI.Optimal or MOI.LocallySolved.
+    optimal_status::MOI.TerminationStatusCode
+    function TestConfig(;atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true, query::Bool = true,
+                        modify_lhs::Bool = true, duals::Bool = true, infeas_certificates::Bool = true,
+                        optimal_status = MOI.Optimal)
         new(
             atol,
             rtol,
@@ -16,6 +20,7 @@ struct TestConfig
             modify_lhs,
             duals,
             infeas_certificates,
+            optimal_status
             )
     end
 end
