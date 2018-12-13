@@ -105,21 +105,21 @@ sets recognized by the solver.
   \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
-  the upper triangle of a PSD matrix}\}``
+  the upper triangle of a PSD matrix }\}``
 * **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**:
-  ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix}\}``
+  ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix} \}``
 * **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**:
-  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} :
-  t \le \log(\det(X)), X \mbox{is the upper triangle of a PSD matrix}\}``
+  ``\{ (t,u,X) \in \mathbb{R}^{2+\mbox{dimension}(1+\mbox{dimension})/2} : t \le
+  u\log(\det(X/u)), X \mbox{is the upper triangle of a PSD matrix}, u > 0 \}``
 * **[`LogDetConeSquare(dimension)`](@ref MathOptInterface.LogDetConeSquare)**:
-  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \log(\det(X)),
-  X \mbox{is a PSD matrix}\}``
+  ``\{ (t,u,X) \in \mathbb{R}^{2+\mbox{dimension}^2} : t \le u \log(\det(X/u)),
+  X \mbox{is a PSD matrix}, u > 0 \}``
 * **[`RootDetConeTriangle(dimension)`](@ref MathOptInterface.RootDetConeTriangle)**:
   ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le
-  det(X)^{1/\mbox{dimension}}, X \mbox{is the upper triangle of a PSD matrix}\}``
+  det(X)^{1/\mbox{dimension}}, X \mbox{is the upper triangle of a PSD matrix} \}``
 * **[`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare)**:
   ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le
-  \det(X)^{1/\mbox{dimension}}, X \mbox{is a PSD matrix}\}``
+  \det(X)^{1/\mbox{dimension}}, X \mbox{is a PSD matrix} \}``
 * **[`Integer()`](@ref MathOptInterface.Integer)**: ``\mathbb{Z}``
 * **[`ZeroOne()`](@ref MathOptInterface.ZeroOne)**: ``\{ 0, 1 \}``
 * **[`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous)**:
