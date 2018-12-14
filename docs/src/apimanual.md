@@ -894,7 +894,7 @@ called `Optimizer`):
   [`set`](@ref) for supported attributes and add:
   ```julia
   function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kws...)
-      return MOI.Utilities.automatic_copy_to(dest, src, kws...)
+      return MOI.Utilities.automatic_copy_to(dest, src; kws...)
   end
   ```
   with
@@ -916,7 +916,7 @@ called `Optimizer`):
   do
   ```julia
   function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kws...)
-      return MOI.Utilities.automatic_copy_to(dest, src, kws...)
+      return MOI.Utilities.automatic_copy_to(dest, src; kws...)
   end
   ```
   with
