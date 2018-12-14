@@ -729,6 +729,8 @@ These are generally OK statuses, i.e., the algorithm ran to completion normally.
   tolerances.
 * `AlmostInfeasible`: The algorithm concluded that no feasible solution exists
   within relaxed tolerances.
+* `AlmostDualInfeasible`: The algorithm concluded that no dual bound exists for
+  the problem within relaxed tolerances.
 * `AlmostLocallySolved`: The algorithm converged to a stationary point, local
   optimal solution, or could not find directions for improvement within relaxed
   tolerances.
@@ -774,7 +776,7 @@ This group of statuses means that something unexpected or problematic happened.
     Optimal, Infeasible, DualInfeasible, LocallySolved, LocallyInfeasible,
         InfeasibleOrUnbounded,
     # Solved to relaxed tolerances
-    AlmostOptimal, AlmostInfeasible, AlmostLocallySolved,
+    AlmostOptimal, AlmostInfeasible, AlmostDualInfeasible, AlmostLocallySolved,
     # Limits
     IterationLimit, TimeLimit,  NodeLimit, SolutionLimit, MemoryLimit,
         ObjectiveLimit, NormLimit, OtherLimit,

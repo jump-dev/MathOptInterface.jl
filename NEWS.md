@@ -1,6 +1,11 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.7.1 (unreleased)
+--------------------------
+
+- Add an `MOI.TerminationStatusCode` called `MOI.AlmostDualInfeasible`.
+
 v0.7.0 (December 13, 2018)
 --------------------------
 
