@@ -884,24 +884,26 @@ MOI.set(model, MyPackage.PrintLevel(), 0)
 
 ### Implementing copy
 
-Avoid storing extra copies of the problem when possible. This means that solver wrappers should not use
-`CachingOptimizer` as part of the wrapper. Instead, do one of the following to load the problem:
+Avoid storing extra copies of the problem when possible. This means that solver
+wrappers should not use `CachingOptimizer` as part of the wrapper. Instead, do
+one of the following to load the problem (assuming the solver wrapper type is
+called `Optimizer`):
 
 * If the solver supports loading the problem incrementally, implement
   [`add_variable`](@ref), [`add_constraint`](@ref) for supported constraints and
   [`set`](@ref) for supported attributes and add:
   ```julia
-  function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
+  function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kws...)
       return MOI.Utilities.automatic_copy_to(dest, src, kws...)
   end
   ```
   with
   ```julia
-  MOI.Utilities.supports_default_copy_to(model::AbstractModel, copy_names::Bool) = true
+  MOI.Utilities.supports_default_copy_to(model::Optimizer, copy_names::Bool) = true
   ```
   or
   ```julia
-  MOI.Utilities.supports_default_copy_to(model::AbstractModel, copy_names::Bool) = !copy_names
+  MOI.Utilities.supports_default_copy_to(model::Optimizer, copy_names::Bool) = !copy_names
   ```
   depending on whether the solver support names; see
   [`Utilities.supports_default_copy_to`](@ref) for more details.
@@ -913,17 +915,17 @@ Avoid storing extra copies of the problem when possible. This means that solver 
   implement the Allocate-Load API,
   do
   ```julia
-  function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
+  function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kws...)
       return MOI.Utilities.automatic_copy_to(dest, src, kws...)
   end
   ```
   with
   ```julia
-  MOI.Utilities.supports_allocate_load(model::AbstractModel, copy_names::Bool) = true
+  MOI.Utilities.supports_allocate_load(model::Optimizer, copy_names::Bool) = true
   ```
   or
   ```julia
-  MOI.Utilities.supports_allocate_load(model::AbstractModel, copy_names::Bool) = !copy_names
+  MOI.Utilities.supports_allocate_load(model::Optimizer, copy_names::Bool) = !copy_names
   ```
   depending on whether the solver support names; see
   [`Utilities.supports_allocate_load`](@ref) for more details.
