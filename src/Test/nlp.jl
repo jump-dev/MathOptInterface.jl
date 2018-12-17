@@ -130,7 +130,7 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     end
 
     MOI.set(model, MOI.NLPBlock(), block_data)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     # TODO: config.query tests
     if config.solve
@@ -140,7 +140,7 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 17.014017145179164 atol=atol rtol=rtol
 
@@ -155,7 +155,7 @@ end
 hs071_test(model, config) = hs071test_template(model, config, HS071(true))
 hs071_no_hessian_test(model, config) = hs071test_template(model, config, HS071(false))
 
-# Test for FeasibilitySense.
+# Test for FEASIBILITY_SENSE.
 # Find x satisfying x^2 == 1.
 struct FeasibilitySenseEvaluator <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
@@ -235,7 +235,7 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
     MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
 
     MOI.set(model, MOI.NLPBlock(), block_data)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
 
     # TODO: config.query tests
     if config.solve
@@ -245,7 +245,7 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
 

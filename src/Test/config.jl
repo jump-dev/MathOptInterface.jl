@@ -7,11 +7,11 @@ struct TestConfig
     duals::Bool # test dual solutions
     infeas_certificates::Bool # check for infeasibility certificates when appropriate
     # The expected "optimal" status returned by the solver. Either
-    # MOI.Optimal or MOI.LocallySolved.
+    # MOI.OPTIMAL or MOI.LOCALLY_SOLVED.
     optimal_status::MOI.TerminationStatusCode
     function TestConfig(;atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true, query::Bool = true,
                         modify_lhs::Bool = true, duals::Bool = true, infeas_certificates::Bool = true,
-                        optimal_status = MOI.Optimal)
+                        optimal_status = MOI.OPTIMAL)
         new(
             atol,
             rtol,

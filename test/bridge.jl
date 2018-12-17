@@ -277,12 +277,12 @@ end
         @testset "Quadratic constraints with 2 variables" begin
             MOIU.set_mock_optimize!(mock,
                 (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                    MOI.Optimal,
-                    (MOI.FeasiblePoint, [0.5, 0.5])
+                    MOI.OPTIMAL,
+                    (MOI.FEASIBLE_POINT, [0.5, 0.5])
                 ),
                 (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
-                    MOI.Optimal,
-                    (MOI.FeasiblePoint, [0.5, (√13 - 1)/4])
+                    MOI.OPTIMAL,
+                    (MOI.FEASIBLE_POINT, [0.5, (√13 - 1)/4])
                 )
             )
             MOIT.solve_qcp_edge_cases(bridgedmock, config)
@@ -304,13 +304,13 @@ end
         end
         @testset "QCP tests" begin
             MOIU.set_mock_optimize!(mock,
-                (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FeasiblePoint))
+                (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FEASIBLE_POINT))
             MOIT.qcp1test(bridgedmock, config)
             MOIU.set_mock_optimize!(mock,
-                (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+                (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
             MOIT.qcp2test(bridgedmock, config)
             MOIU.set_mock_optimize!(mock,
-                (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+                (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
             MOIT.qcp3test(bridgedmock, config)
             @testset "Bridge deletion" begin
                 ci = first(MOI.get(bridgedmock,

@@ -85,7 +85,7 @@ end
         MOI.set(model, MOI.VariableName(), x, "x")
         MOI.set(model, MOI.VariableName(), y, "y")
         MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -2.0], [x, y]), 1.0))
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
         model2 = GeneralModel{Float64}()
         MOIU.loadfromstring!(model2, s)
@@ -103,7 +103,7 @@ end
         MOI.set(model, MOI.VariableName(), x, "x")
         MOI.set(model, MOI.VariableName(), y, "y")
         MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -2.0], [x, y]), 1.0))
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
         model2 = GeneralModel{Float64}()
         MOIU.loadfromstring!(model2, s)

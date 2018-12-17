@@ -6,14 +6,14 @@ struct UnknownVectorSet <: MOI.AbstractVectorSet end
 function default_objective_test(model::MOI.ModelLike)
     @testset "Test default objective" begin
         MOI.empty!(model)
-        MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
+        MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
     end
 end
 
 function default_status_test(model::MOI.ModelLike)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-    @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
+    @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
 end
 
 function nametest(model::MOI.ModelLike)
@@ -132,7 +132,7 @@ function emptytest(model::MOI.ModelLike)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
     c = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0,-2.0]), MOI.Zeros(2))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     @test !MOI.is_empty(model)
 
@@ -251,7 +251,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     cva = MOI.add_constraint(src, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [v[3], v[2]])), [-3.0,-2.0]), MOI.Zeros(2))
     MOI.set(src, MOI.ConstraintName(), cva, "cva")
     MOI.set(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
-    MOI.set(src, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     @test MOI.supports(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports_constraint(dest, MOI.SingleVariable, MOI.EqualTo{Float64})
@@ -294,7 +294,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
 
     @test MOI.get(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], [dict[v[1]], dict[v[2]], dict[v[3]]]), 0.0)
     @test MOI.get(dest, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{Float64}
-    @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MinSense
+    @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 end
 
 function supports_constrainttest(model::MOI.ModelLike, ::Type{GoodT}, ::Type{BadT}) where {GoodT, BadT}

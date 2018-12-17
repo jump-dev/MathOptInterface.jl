@@ -28,8 +28,8 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
 
     obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[], MOI.ScalarQuadraticTerm.([2.0, 1.0, 2.0, 1.0, 2.0], v[[1,1,2,2,3]], v[[1,2,2,3,3]]), 0.0)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 
     if config.query
         @test obj ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
@@ -40,13 +40,13 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     end
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 13/7 atol=atol rtol=rtol
 
@@ -84,8 +84,8 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
 
     obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 
     if config.query
         @test obj ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
@@ -96,13 +96,13 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     end
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 13/7 atol=atol rtol=rtol
 
@@ -112,8 +112,8 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     # change objective to Max -2(x^2 + xy + y^2 + yz + z^2)
     obj2 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj2)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
     if config.query
         @test obj2 ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
@@ -124,7 +124,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -2*13/7 atol=atol rtol=rtol
 
@@ -165,16 +165,16 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
             1.0
           )
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.875 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), [x,y]) ≈ [0.25, 0.75] atol=atol rtol=rtol
@@ -187,14 +187,14 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     # (x,y) = (1,0), obj = 3
     objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0,1.0], [x,y]), 1.0)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
     if config.solve
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), [x,y]) ≈ [1.0, 0.0] atol=atol rtol=rtol
@@ -242,21 +242,21 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [x,y]), 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
     if config.query
         @test c2f ≈ MOI.get(model, MOI.ConstraintFunction(), c2)
     end
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.25 atol=atol rtol=rtol
 
@@ -275,7 +275,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     #
     # @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     #
-    # @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+    # @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
     #
     # @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
 end
@@ -302,24 +302,24 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
     if config.query
         @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
     end
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         if config.duals
-            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ sqrt(2) atol=atol rtol=rtol
@@ -354,24 +354,24 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-1.0, x)], 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 
     if config.query
         @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
     end
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         if config.duals
-            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -sqrt(2) atol=atol rtol=rtol
@@ -429,8 +429,8 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == 1
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, t)], 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 
     if config.query
         @test c1f ≈ MOI.get(model, MOI.ConstraintFunction(), c1)
@@ -439,13 +439,13 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     end
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ sqrt(1/2) atol=atol rtol=rtol
 

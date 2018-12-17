@@ -17,42 +17,42 @@
 """
     max_sense(model::MOI.ModelLike, config::TestConfig)
 
-Test setting objective sense to MaxSense.
+Test setting objective sense to MAX_SENSE.
 """
 function max_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 end
 unittests["max_sense"] = max_sense
 
 """
     min_sense(model::MOI.ModelLike, config::TestConfig)
 
-Test setting objective sense to MinSense.
+Test setting objective sense to MIN_SENSE.
 """
 function min_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MinSense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 end
 unittests["min_sense"] = min_sense
 
 """
     feasibility_sense(model::MOI.ModelLike, config::TestConfig)
 
-Test setting objective sense to FeasibilitySense.
+Test setting objective sense to FEASIBILITY_SENSE.
 """
 function feasibility_sense(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
-    MOI.set(model, MOI.ObjectiveSense(), MOI.FeasibilitySense)
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FeasibilitySense
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
 end
 unittests["feasibility_sense"] = feasibility_sense
 
@@ -135,7 +135,7 @@ function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
     )
     if config.solve
         # The objective is blank so any primal value ≥ 1 is correct
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test MOI.get(model, MOI.VariablePrimal(), x) + atol + rtol ≥ 1.0
         @test MOI.get(model, MOI.ConstraintPrimal(), c) + atol + rtol ≥ 1.0
     end
@@ -180,7 +180,7 @@ If `config.solve=true` confirm that it solves correctly.
 function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
     MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
 
@@ -261,7 +261,7 @@ function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(
             [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(1.0, x)],

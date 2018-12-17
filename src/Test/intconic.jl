@@ -22,7 +22,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     x,y,z = MOI.add_variables(model, 3)
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0,-1.0], [y,z]), 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MinSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     ceq = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Zeros(1))
     csoc = MOI.add_constraint(model, MOI.VectorOfVariables([x,y,z]), MOI.SecondOrderCone(3))
@@ -38,13 +38,13 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     bin2 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.ZeroOne())
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -2 atol=atol rtol=rtol
 

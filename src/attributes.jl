@@ -354,12 +354,12 @@ struct Name <: AbstractModelAttribute end
     ObjectiveSense()
 
 A model attribute for the `OptimizationSense` of the objective function, which
-can be `MinSense`, `MaxSense`, or `FeasiblitySense`. The default is
-`FeasibilitySense`.
+can be `MIN_SENSE`, `MAX_SENSE`, or `FeasiblitySense`. The default is
+`FEASIBILITY_SENSE`.
 """
 struct ObjectiveSense <: AbstractModelAttribute end
 
-@enum OptimizationSense MinSense MaxSense FeasibilitySense
+@enum OptimizationSense MIN_SENSE MAX_SENSE FEASIBILITY_SENSE
 
 """
     NumberOfVariables()
@@ -553,13 +553,15 @@ struct VariableBasisStatus <: AbstractVariableAttribute end
 An Enum of possible values for the `VariableBasisStatus` and `ConstraintBasisStatus` attributes.
 This explains the status of a given element with respect to an optimal solution basis.
 Possible values are:
-* `Basic`: element is in the basis
-* `Nonbasic`: element is not in the basis
-* `NonbasicAtLower`: element is not in the basis and is at its lower bound
-* `NonbasicAtUpper`: element is not in the basis and is at its upper bound
-* `SuperBasic`: element is not in the basis but is also not at one of its bounds
+* `BASIC`: element is in the basis
+* `NONBASIC`: element is not in the basis
+* `NONBASIC_AT_LOWER`: element is not in the basis and is at its lower bound
+* `NONBASIC_AT_UPPER`: element is not in the basis and is at its upper bound
+* `SUPER_BASIC`: element is not in the basis but is also not at one of its
+  bounds
 """
-@enum BasisStatusCode Basic Nonbasic NonbasicAtLower NonbasicAtUpper SuperBasic
+@enum(BasisStatusCode, BASIC, NONBASIC, NONBASIC_AT_LOWER, NONBASIC_AT_UPPER,
+      SUPER_BASIC)
 
 ## Constraint attributes
 
@@ -701,13 +703,13 @@ recent call to [`optimize!`](@ref).
 If no call has been made to [`optimize!`](@ref), then the `TerminationStatus`
 is:
 
-* `OptimizeNotCalled`: The algorithm has not started.
+* `OPTIMIZE_NOT_CALLED`: The algorithm has not started.
 
 ## OK
 
 These are generally OK statuses, i.e., the algorithm ran to completion normally.
 
-* `Optimal`: The algorithm found a globally optimal solution.
+* `OPTIMAL`: The algorithm found a globally optimal solution.
 * `Infeasible`: The algorithm concluded that no feasible solution exists.
 * `DualInfeasible`: The algorithm concluded that no dual bound exists for the
   problem. If, additionally, a feasible (primal) solution is known to
@@ -719,19 +721,19 @@ These are generally OK statuses, i.e., the algorithm ran to completion normally.
 * `LocallyInfeasible`: The algorithm converged to an infeasible point or
   otherwise completed its search without finding a feasible solution, without
   guarantees that no feasible solution exists.
-* `InfeasibleOrUnbounded`: The algorithm stopped because it decided that the
+* `INFEASIBLE_OR_UNBOUNDED`: The algorithm stopped because it decided that the
   problem is infeasible or unbounded; this occasionally happens during MIP
   presolve.
 
 ## Solved to relaxed tolerances
 
-* `AlmostOptimal`: The algorithm found a globally optimal solution to relaxed
+* `ALMOST_OPTIMAL`: The algorithm found a globally optimal solution to relaxed
   tolerances.
-* `AlmostInfeasible`: The algorithm concluded that no feasible solution exists
+* `ALMOST_INFEASIBLE`: The algorithm concluded that no feasible solution exists
   within relaxed tolerances.
-* `AlmostDualInfeasible`: The algorithm concluded that no dual bound exists for
+* `ALMOST_DUAL_INFEASIBLE`: The algorithm concluded that no dual bound exists for
   the problem within relaxed tolerances.
-* `AlmostLocallySolved`: The algorithm converged to a stationary point, local
+* `ALMOST_LOCALLY_SOLVED`: The algorithm converged to a stationary point, local
   optimal solution, or could not find directions for improvement within relaxed
   tolerances.
 
@@ -771,12 +773,13 @@ This group of statuses means that something unexpected or problematic happened.
   the statuses defined above.
 """
 @enum(TerminationStatusCode,
-    OptimizeNotCalled,
+    OPTIMIZE_NOT_CALLED,
     # OK
-    Optimal, Infeasible, DualInfeasible, LocallySolved, LocallyInfeasible,
-        InfeasibleOrUnbounded,
+    OPTIMAL, Infeasible, DualInfeasible, LocallySolved, LocallyInfeasible,
+        INFEASIBLE_OR_UNBOUNDED,
     # Solved to relaxed tolerances
-    AlmostOptimal, AlmostInfeasible, AlmostDualInfeasible, AlmostLocallySolved,
+    ALMOST_OPTIMAL, ALMOST_INFEASIBLE, ALMOST_DUAL_INFEASIBLE,
+    ALMOST_LOCALLY_SOLVED,
     # Limits
     IterationLimit, TimeLimit,  NodeLimit, SolutionLimit, MemoryLimit,
         ObjectiveLimit, NormLimit, OtherLimit,
@@ -793,26 +796,27 @@ This group of statuses means that something unexpected or problematic happened.
 An Enum of possible values for the `PrimalStatus` and `DualStatus` attributes.
 The values indicate how to interpret the result vector.
 
-* `NoSolution`: the result vector is empty.
-* `FeasiblePoint`: the result vector is a feasible point.
-* `NearlyFeasiblePoint`: the result vector is feasible if some constraint
+* `NO_SOLUTION`: the result vector is empty.
+* `FEASIBLE_POINT`: the result vector is a feasible point.
+* `NEARLY_FEASIBLE_POINT`: the result vector is feasible if some constraint
   tolerances are relaxed.
-* `InfeasiblePoint`: the result vector is an infeasible point.
-* `InfeasibilityCertificate`: the result vector is an infeasibility certificate.
-  If the `PrimalStatus` is `InfeasibilityCertificate`, then the primal result
+* `INFEASIBLE_POINT`: the result vector is an infeasible point.
+* `INFEASIBILITY_CERTIFICATE`: the result vector is an infeasibility certificate.
+  If the `PrimalStatus` is `INFEASIBILITY_CERTIFICATE`, then the primal result
   vector is a certificate of dual infeasibility. If the `DualStatus` is
-  `InfeasibilityCertificate`, then the dual result vector is a proof of primal
+  `INFEASIBILITY_CERTIFICATE`, then the dual result vector is a proof of primal
   infeasibility.
-* `NearlyInfeasibilityCertificate`: the result satisfies a relaxed criterion for
+* `NEARLY_INFEASIBILITY_CERTIFICATE`: the result satisfies a relaxed criterion for
   a certificate of infeasibility.
-* `UnknownResultStatus`: the result vector contains a solution with an unknown
+* `UNKNOWN_RESULT_STATUS`: the result vector contains a solution with an unknown
   interpretation.
-* `OtherResultStatus`: the result vector contains a solution with an
+* `OTHER_RESULT_STATUS`: the result vector contains a solution with an
   interpretation not covered by one of the statuses defined above.
 """
-@enum(ResultStatusCode, NoSolution, FeasiblePoint, NearlyFeasiblePoint,
-    InfeasiblePoint, InfeasibilityCertificate, NearlyInfeasibilityCertificate,
-    UnknownResultStatus, OtherResultStatus)
+@enum(ResultStatusCode, NO_SOLUTION, FEASIBLE_POINT, NEARLY_FEASIBLE_POINT,
+    INFEASIBLE_POINT, INFEASIBILITY_CERTIFICATE,
+    NEARLY_INFEASIBILITY_CERTIFICATE, UNKNOWN_RESULT_STATUS,
+    OTHER_RESULT_STATUS)
 
 """
     PrimalStatus(N)

@@ -218,7 +218,7 @@ For example,
 x = add_variables(model, 2)
 set(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]]),1.0))
-set(model, ObjectiveSense(), MinSense)
+set(model, ObjectiveSense(), MIN_SENSE)
 ```
 sets the objective to the function just discussed in the minimization sense.
 
@@ -254,7 +254,7 @@ The code example below encodes the linear optimization problem:
 x = add_variables(model, 2)
 set(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.([3.0, 2.0], x), 0.0))
-set(model, ObjectiveSense(), MaxSense)
+set(model, ObjectiveSense(), MAX_SENSE)
 add_constraint(model, ScalarAffineFunction(ScalarAffineTerm.(1.0, x), 0.0),
                       LessThan(5.0))
 add_constraint(model, SingleVariable(x[1]), GreaterThan(0.0))
@@ -278,7 +278,7 @@ The code example below encodes the convex optimization problem:
 x,y,z = add_variables(model, 3)
 set(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(),
             ScalarAffineFunction(ScalarAffineTerm.(1.0, [y,z]), 0.0))
-set(model, ObjectiveSense(), MaxSense)
+set(model, ObjectiveSense(), MAX_SENSE)
 vector_terms = [VectorAffineTerm(1, ScalarAffineTerm(3.0, x))]
 add_constraint(model, VectorAffineFunction(vector_terms,[-2.0]), Zeros(1))
 add_constraint(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
@@ -374,7 +374,7 @@ unexpected like invalid problem data or failure to converge. A typical usage of
 the `TerminationStatus` attribute is as follows:
 ```julia
 status = MOI.get(optimizer, TerminationStatus())
-if status == MOI.Optimal
+if status == MOI.OPTIMAL
     # Ok, we solved the problem!
 else
     # Handle other cases.
@@ -392,9 +392,9 @@ distinguishes between these two cases.
 
 The [`PrimalStatus`](@ref) and [`DualStatus`](@ref) attributes return a
 [`ResultStatusCode`](@ref) that indicates if that component of the result
-is present (i.e., not `NoSolution`) and explains how to interpret the result.
+is present (i.e., not `NO_SOLUTION`) and explains how to interpret the result.
 
-If `PrimalStatus` is not `NoSolution`, then the primal may be retrieved with the
+If `PrimalStatus` is not `NO_SOLUTION`, then the primal may be retrieved with the
 [`VariablePrimal`](@ref) attribute:
 ```julia
 MOI.get(optimizer, VariablePrimal(), x)
@@ -424,26 +424,26 @@ how the solver's statuses map to MOI statuses.
 
 Linear programming and conic optimization solvers fall into this category.
 
-| What happened?                          | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                         | `DualStatus()`                           |
-| --------------------------------------- | --------------------- | --------------- | ---------------------------------------- | ---------------------------------------- |
-| Proved optimality                       | `Optimal`             | 1               | `FeasiblePoint`                          | `FeasiblePoint`                          |
-| Proved infeasible                       | `Infeasible`          | 1               | `NoSolution`                             | `InfeasibilityCertificate`               |
-| Optimal within relaxed tolerances       | `AlmostOptimal`       | 1               | `FeasiblePoint` or `AlmostFeasiblePoint` | `FeasiblePoint` or `AlmostFeasiblePoint` |
-| Detected an unbounded ray of the primal | `DualInfeasible`      | 1               | `InfeasibilityCertificate`               | `NoSolution`                             |
-| Stall                                   | `SlowProgress`        | 1               | ?                                        | ?                                        |
+| What happened?                          | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                            | `DualStatus()`                              |
+| --------------------------------------- | --------------------- | --------------- | ------------------------------------------- | ------------------------------------------- |
+| Proved optimality                       | `Optimal`             | 1               | `FEASIBLE_POINT`                            | `FEASIBLE_POINT`                            |
+| Proved infeasible                       | `Infeasible`          | 1               | `NO_SOLUTION`                               | `INFEASIBILITY_CERTIFICATE`                 |
+| Optimal within relaxed tolerances       | `ALMOST_OPTIMAL`      | 1               | `FEASIBLE_POINT` or `ALMOST_FEASIBLE_POINT` | `FEASIBLE_POINT` or `ALMOST_FEASIBLE_POINT` |
+| Detected an unbounded ray of the primal | `DUAL_INFEASIBLE`     | 1               | `INFEASIBILITY_CERTIFICATE`                 | `NO_SOLUTION`                               |
+| Stall                                   | `SLOW_PROGRESS`       | 1               | ?                                           | ?                                           |
 
 #### Global branch-and-bound solvers
 
 Mixed-integer programming solvers fall into this category.
 
-| What happened?                                   | `TerminationStatus()`   | `ResultCount()` | `PrimalStatus()`  | `DualStatus()` |
-| ------------------------------------------------ | ----------------------- | --------------- | ----------------- | -------------- |
-| Proved optimality                                | `Optimal`               | 1               | `FeasiblePoint`   | `NoSolution`   |
-| Presolve detected infeasibility or unboundedness | `InfeasibleOrUnbounded` | 0               | `NoSolution`      | `NoSolution`   |
-| Proved infeasibility                             | `Infeasible`            | 0               | `NoSolution`      | `NoSolution`   |
-| Timed out (no solution)                          | `TimeLimit`             | 0               | `NoSolution`      | `NoSolution`   |
-| Timed out (with a solution)                      | `TimeLimit`             | 1               | `FeasiblePoint`   | `NoSolution`   |
-| `CPXMIP_OPTIMAL_INFEAS`                          | `AlmostOptimal`         | 1               | `InfeasiblePoint` | `NoSolution`   |
+| What happened?                                   | `TerminationStatus()`     | `ResultCount()` | `PrimalStatus()`   | `DualStatus()` |
+| ------------------------------------------------ | ------------------------- | --------------- | ------------------ | -------------- |
+| Proved optimality                                | `Optimal`                 | 1               | `FEASIBLE_POINT`   | `NO_SOLUTION`  |
+| Presolve detected infeasibility or unboundedness | `INFEASIBLE_OR_UNBOUNDED` | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
+| Proved infeasibility                             | `Infeasible`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
+| Timed out (no solution)                          | `TIME_LIMIT`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
+| Timed out (with a solution)                      | `TIME_LIMIT`              | 1               | `FEASIBLE_POINT`   | `NO_SOLUTION`  |
+| `CPXMIP_OPTIMAL_INFEAS`                          | `ALMOST_OPTIMAL`          | 1               | `INFEASIBLE_POINT` | `NO_SOLUTION`  |
 
 [`CPXMIP_OPTIMAL_INFEAS`](https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.6.1/ilog.odms.cplex.help/refcallablelibrary/macros/CPXMIP_OPTIMAL_INFEAS.html)
 is a CPLEX status that indicates that a preprocessed problem was solved to
@@ -456,14 +456,14 @@ Nonlinear programming solvers fall into this category. It also includes
 non-global tree search solvers like
 [Juniper](https://github.com/lanl-ansi/Juniper.jl).
 
-| What happened?                                         | `TerminationStatus()`           | `ResultCount()` | `PrimalStatus()`  | `DualStatus()`  |
-| ------------------------------------------------------ | ------------------------------- | --------------- | ----------------- | --------------- |
-| Converged to a stationary point                        | `LocallySolved`                 | 1               | `FeasiblePoint`   | `FeasiblePoint` |
-| Completed a non-global tree search (with a solution)   | `LocallySolved`                 | 1               | `FeasiblePoint`   | `FeasiblePoint` |
-| Converged to an infeasible point                       | `LocallyInfeasible`             | 1               | `InfeasiblePoint` | ?               |
-| Completed a non-global tree search (no solution found) | `LocallyInfeasible`             | 0               | `NoSolution`      | `NoSolution`    |
-| Iteration limit                                        | `IterationLimit`                | 1               | ?                 | ?               |
-| Diverging iterates                                     | `NormLimit` or `ObjectiveLimit` | 1               | ?                 | ?               |
+| What happened?                                         | `TerminationStatus()`             | `ResultCount()` | `PrimalStatus()`   | `DualStatus()`   |
+| ------------------------------------------------------ | --------------------------------- | --------------- | ------------------ | ---------------- |
+| Converged to a stationary point                        | `LOCALLY_SOLVED`                  | 1               | `FEASIBLE_POINT`   | `FEASIBLE_POINT` |
+| Completed a non-global tree search (with a solution)   | `LOCALLY_SOLVED`                  | 1               | `FEASIBLE_POINT`   | `FEASIBLE_POINT` |
+| Converged to an infeasible point                       | `LOCALLY_INFEASIBLE`              | 1               | `INFEASIBLE_POINT` | ?                |
+| Completed a non-global tree search (no solution found) | `LOCALLY_INFEASIBLE`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`    |
+| Iteration limit                                        | `ITERATION_LIMIT`                 | 1               | ?                  | ?                |
+| Diverging iterates                                     | `NORM_LIMIT` or `OBJECTIVE_LIMIT` | 1               | ?                  | ?                |
 
 
 ## A complete example: solving a knapsack problem
@@ -493,7 +493,7 @@ x = MOI.add_variables(optimizer, num_variables)
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
 MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         objective_function)
-MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MaxSense)
+MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
 # Add the knapsack constraint.
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
@@ -509,13 +509,13 @@ MOI.optimize!(optimizer)
 
 termination_status = MOI.get(optimizer, MOI.TerminationStatus())
 obj_value = MOI.get(optimizer, MOI.ObjectiveValue())
-if termination_status != MOI.Optimal
+if termination_status != MOI.OPTIMAL
     error("Solver terminated with status $termination_status")
 end
 
 @assert MOI.get(optimizer, MOI.ResultCount()) > 0
 
-@assert MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FeasiblePoint
+@assert MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
 primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 
@@ -981,7 +981,7 @@ users to avoid extra copies in this case.
 
 ### Statuses
 
-Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FeasiblePoint` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NearlyFeasiblePoint`, `InfeasiblePoint`, `NearlyInfeasiblePoint`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
+Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FEASIBLE_POINT` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NEARLY_FEASIBLE_POINT`, `INFEASIBLE_POINT`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
 
 ### Naming
 

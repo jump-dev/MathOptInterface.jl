@@ -48,9 +48,9 @@ function Base.showerror(io::IO, err::NotAllowedError)
     else
         print(io, ": ", m)
     end
-    print(io, " You may want to use a `CachingOptimizer` in `Automatic` mode",
+    print(io, " You may want to use a `CachingOptimizer` in `AUTOMATIC` mode",
           " or you may need to call `resetoptimizer!` before doing this",
-          " operation if the `CachingOptimizer` is in `Manual` mode.")
+          " operation if the `CachingOptimizer` is in `MANUAL` mode.")
 end
 
 """
