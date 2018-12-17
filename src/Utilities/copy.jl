@@ -48,7 +48,7 @@ be implemented as
 ```julia
 MOI.Utilities.supports_default_copy_to(model::MyModel, copy_names::Bool) = true
 function MOI.copy_to(dest::MyModel, src::MOI.ModelLike; kws...)
-    return MOI.Utilities.automatic_copy_to(dest, src, kws...)
+    return MOI.Utilities.automatic_copy_to(dest, src; kws...)
 end
 ```
 The [`Utilities.automatic_copy_to`](@ref) function automatically redirects to
