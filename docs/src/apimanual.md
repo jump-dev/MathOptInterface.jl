@@ -427,7 +427,7 @@ Linear programming and conic optimization solvers fall into this category.
 | What happened?                          | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                            | `DualStatus()`                              |
 | --------------------------------------- | --------------------- | --------------- | ------------------------------------------- | ------------------------------------------- |
 | Proved optimality                       | `Optimal`             | 1               | `FEASIBLE_POINT`                            | `FEASIBLE_POINT`                            |
-| Proved infeasible                       | `Infeasible`          | 1               | `NO_SOLUTION`                               | `INFEASIBILITY_CERTIFICATE`                 |
+| Proved infeasible                       | `INFEASIBLE`          | 1               | `NO_SOLUTION`                               | `INFEASIBILITY_CERTIFICATE`                 |
 | Optimal within relaxed tolerances       | `ALMOST_OPTIMAL`      | 1               | `FEASIBLE_POINT` or `ALMOST_FEASIBLE_POINT` | `FEASIBLE_POINT` or `ALMOST_FEASIBLE_POINT` |
 | Detected an unbounded ray of the primal | `DUAL_INFEASIBLE`     | 1               | `INFEASIBILITY_CERTIFICATE`                 | `NO_SOLUTION`                               |
 | Stall                                   | `SLOW_PROGRESS`       | 1               | ?                                           | ?                                           |
@@ -440,7 +440,7 @@ Mixed-integer programming solvers fall into this category.
 | ------------------------------------------------ | ------------------------- | --------------- | ------------------ | -------------- |
 | Proved optimality                                | `Optimal`                 | 1               | `FEASIBLE_POINT`   | `NO_SOLUTION`  |
 | Presolve detected infeasibility or unboundedness | `INFEASIBLE_OR_UNBOUNDED` | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
-| Proved infeasibility                             | `Infeasible`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
+| Proved infeasibility                             | `INFEASIBLE`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
 | Timed out (no solution)                          | `TIME_LIMIT`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
 | Timed out (with a solution)                      | `TIME_LIMIT`              | 1               | `FEASIBLE_POINT`   | `NO_SOLUTION`  |
 | `CPXMIP_OPTIMAL_INFEAS`                          | `ALMOST_OPTIMAL`          | 1               | `INFEASIBLE_POINT` | `NO_SOLUTION`  |

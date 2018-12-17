@@ -710,15 +710,15 @@ is:
 These are generally OK statuses, i.e., the algorithm ran to completion normally.
 
 * `OPTIMAL`: The algorithm found a globally optimal solution.
-* `Infeasible`: The algorithm concluded that no feasible solution exists.
-* `DualInfeasible`: The algorithm concluded that no dual bound exists for the
+* `INFEASIBLE`: The algorithm concluded that no feasible solution exists.
+* `DUAL_INFEASIBLE`: The algorithm concluded that no dual bound exists for the
   problem. If, additionally, a feasible (primal) solution is known to
   exist, this status typically implies that the problem is unbounded, with some
   technical exceptions.
-* `LocallySolved`: The algorithm converged to a stationary point, local
+* `LOCALLY_SOLVED`: The algorithm converged to a stationary point, local
   optimal solution, could not find directions for improvement, or otherwise
   completed its search without global guarantees.
-* `LocallyInfeasible`: The algorithm converged to an infeasible point or
+* `LOCALLY_INFEASIBLE`: The algorithm converged to an infeasible point or
   otherwise completed its search without finding a feasible solution, without
   guarantees that no feasible solution exists.
 * `INFEASIBLE_OR_UNBOUNDED`: The algorithm stopped because it decided that the
@@ -741,51 +741,51 @@ These are generally OK statuses, i.e., the algorithm ran to completion normally.
 
 The optimizer stopped because of some user-defined limit.
 
-* `IterationLimit`: An iterative algorithm stopped after conducting the maximum
+* `ITERATION_LIMIT`: An iterative algorithm stopped after conducting the maximum
   number of iterations.
-* `TimeLimit`: The algorithm stopped after a user-specified computation time.
-* `NodeLimit`: A branch-and-bound algorithm stopped because it explored a
+* `TIME_LIMIT`: The algorithm stopped after a user-specified computation time.
+* `NODE_LIMIT`: A branch-and-bound algorithm stopped because it explored a
   maximum number of nodes in the branch-and-bound tree.
-* `SolutionLimit`: The algorithm stopped because it found the required number of
+* `SOLUTION_LIMIT`: The algorithm stopped because it found the required number of
   solutions. This is often used in MIPs to get the solver to return the first
   feasible solution it encounters.
-* `MemoryLimit`: The algorithm stopped because it ran out of memory.
-* `ObjectiveLimit`: The algorthm stopped because it found a solution better than
+* `MEMORY_LIMIT`: The algorithm stopped because it ran out of memory.
+* `OBJECTIVE_LIMIT`: The algorthm stopped because it found a solution better than
   a minimum limit set by the user.
-* `NormLimit`: The algorithm stopped because the norm of an iterate became too
+* `NORM_LIMIT`: The algorithm stopped because the norm of an iterate became too
   large.
-* `OtherLimit`: The algorithm stopped due to a limit not covered by one of the
+* `OTHER_LIMIT`: The algorithm stopped due to a limit not covered by one of the
   above.
 
 ## Problematic
 
 This group of statuses means that something unexpected or problematic happened.
 
-* `SlowProgress`: The algorithm stopped because it was unable to continue making
+* `SLOW_PROGRESS`: The algorithm stopped because it was unable to continue making
   progress towards the solution.
-* `NumericalError`: The algorithm stopped because it encountered unrecoverable
+* `NUMERICAL_ERROR`: The algorithm stopped because it encountered unrecoverable
   numerical error.
-* `InvalidModel`: The algorithm stopped because the model is invalid.
-* `InvalidOption`: The algorithm stopped because it was provided an invalid
+* `INVALID_MODEL`: The algorithm stopped because the model is invalid.
+* `INVALID_OPTION`: The algorithm stopped because it was provided an invalid
   option.
-* `Interrupted`: The algorithm stopped because of an interrupt signal.
-* `OtherError`: The algorithm stopped because of an error not covered by one of
+* `INTERRUPTED`: The algorithm stopped because of an interrupt signal.
+* `OTHER_ERROR`: The algorithm stopped because of an error not covered by one of
   the statuses defined above.
 """
 @enum(TerminationStatusCode,
     OPTIMIZE_NOT_CALLED,
     # OK
-    OPTIMAL, Infeasible, DualInfeasible, LocallySolved, LocallyInfeasible,
-        INFEASIBLE_OR_UNBOUNDED,
+    OPTIMAL, INFEASIBLE, DUAL_INFEASIBLE, LOCALLY_SOLVED, LOCALLY_INFEASIBLE,
+    INFEASIBLE_OR_UNBOUNDED,
     # Solved to relaxed tolerances
     ALMOST_OPTIMAL, ALMOST_INFEASIBLE, ALMOST_DUAL_INFEASIBLE,
     ALMOST_LOCALLY_SOLVED,
     # Limits
-    IterationLimit, TimeLimit,  NodeLimit, SolutionLimit, MemoryLimit,
-        ObjectiveLimit, NormLimit, OtherLimit,
+    ITERATION_LIMIT, TIME_LIMIT,  NODE_LIMIT, SOLUTION_LIMIT, MEMORY_LIMIT,
+    OBJECTIVE_LIMIT, NORM_LIMIT, OTHER_LIMIT,
     # Problematic
-    SlowProgress, NumericalError, InvalidModel, InvalidOption, Interrupted,
-        OtherError
+    SLOW_PROGRESS, NUMERICAL_ERROR, INVALID_MODEL, INVALID_OPTION, INTERRUPTED,
+    OTHER_ERROR
 )
 
 ## Result status
