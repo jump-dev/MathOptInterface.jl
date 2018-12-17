@@ -385,7 +385,7 @@ After checking the `TerminationStatus`, one should typically check
 [`ResultCount`](@ref). This attribute returns the number of results that the
 solver has available to return. *A result is defined as a primal-dual pair,
 but either the primal or the dual may be missing from the result.* While the
-`Optimal` termination status normally implies that at least one result is
+`OPTIMAL` termination status normally implies that at least one result is
 available, other statuses do not. For example, in the case of infeasiblity,
 a solver may return no result or a proof of infeasibility. The `ResultCount`
 distinguishes between these two cases.
@@ -426,7 +426,7 @@ Linear programming and conic optimization solvers fall into this category.
 
 | What happened?                          | `TerminationStatus()` | `ResultCount()` | `PrimalStatus()`                            | `DualStatus()`                              |
 | --------------------------------------- | --------------------- | --------------- | ------------------------------------------- | ------------------------------------------- |
-| Proved optimality                       | `Optimal`             | 1               | `FEASIBLE_POINT`                            | `FEASIBLE_POINT`                            |
+| Proved optimality                       | `OPTIMAL`             | 1               | `FEASIBLE_POINT`                            | `FEASIBLE_POINT`                            |
 | Proved infeasible                       | `INFEASIBLE`          | 1               | `NO_SOLUTION`                               | `INFEASIBILITY_CERTIFICATE`                 |
 | Optimal within relaxed tolerances       | `ALMOST_OPTIMAL`      | 1               | `FEASIBLE_POINT` or `ALMOST_FEASIBLE_POINT` | `FEASIBLE_POINT` or `ALMOST_FEASIBLE_POINT` |
 | Detected an unbounded ray of the primal | `DUAL_INFEASIBLE`     | 1               | `INFEASIBILITY_CERTIFICATE`                 | `NO_SOLUTION`                               |
@@ -438,7 +438,7 @@ Mixed-integer programming solvers fall into this category.
 
 | What happened?                                   | `TerminationStatus()`     | `ResultCount()` | `PrimalStatus()`   | `DualStatus()` |
 | ------------------------------------------------ | ------------------------- | --------------- | ------------------ | -------------- |
-| Proved optimality                                | `Optimal`                 | 1               | `FEASIBLE_POINT`   | `NO_SOLUTION`  |
+| Proved optimality                                | `OPTIMAL`                 | 1               | `FEASIBLE_POINT`   | `NO_SOLUTION`  |
 | Presolve detected infeasibility or unboundedness | `INFEASIBLE_OR_UNBOUNDED` | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
 | Proved infeasibility                             | `INFEASIBLE`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
 | Timed out (no solution)                          | `TIME_LIMIT`              | 0               | `NO_SOLUTION`      | `NO_SOLUTION`  |
