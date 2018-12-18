@@ -981,7 +981,10 @@ users to avoid extra copies in this case.
 
 ### Statuses
 
-Solver wrappers should document how the low-level solver statuses map to the MOI statuses. In particular, the characterization of a result with status `FEASIBLE_POINT` and termination status `Success` is entirely solver defined. It may or may not be a globally optimal solution. Solver wrappers are not responsible for verifying the feasibility of results. Statuses like `NEARLY_FEASIBLE_POINT`, `INFEASIBLE_POINT`, and `NearlyReductionCertificate` are designed to be used when the solver explicitly indicates as much.
+Solver wrappers should document how the low-level statuses map to the MOI
+statuses. Statuses like `NEARLY_FEASIBLE_POINT` and `INFEASIBLE_POINT`, are
+designed to be used when the solver explicitly indicates that relaxed tolerances
+are satisfied or the returned point is infeasible, respectively.
 
 ### Naming
 
