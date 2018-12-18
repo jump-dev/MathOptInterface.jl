@@ -46,7 +46,7 @@ end
 
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.is_empty(s)
-    MOIU.resetoptimizer!(m, s)
+    MOIU.reset_optimizer(m, s)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 
     v = MOI.add_variable(m)
@@ -59,7 +59,7 @@ end
 
     @test_throws AssertionError MOI.optimize!(m)
 
-    MOIU.attachoptimizer!(m)
+    MOIU.attach_optimizer(m)
     @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
 
@@ -95,7 +95,7 @@ end
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
     @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
 
-    MOIU.dropoptimizer!(m)
+    MOIU.drop_optimizer(m)
     @test MOIU.state(m) == MOIU.NO_OPTIMIZER
 
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
@@ -121,7 +121,7 @@ end
 
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.is_empty(s)
-    MOIU.resetoptimizer!(m, s)
+    MOIU.reset_optimizer(m, s)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 
     saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v)], 0.0)
@@ -161,14 +161,14 @@ end
                     MOI.ScalarConstantChange(1.0))
         s.modify_allowed = true
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
-        MOIU.attachoptimizer!(m)
+        MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
         ci = MOI.add_constraint(m, saf, MOI.EqualTo(0.0))
         s.modify_allowed = false
         MOI.modify(m, ci, MOI.ScalarCoefficientChange(v, 1.0))
         s.modify_allowed = true
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
-        MOIU.attachoptimizer!(m)
+        MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
 
@@ -186,11 +186,11 @@ end
         s.add_var_allowed = false # Simulate optimizer that cannot add variables incrementally
         MOI.add_variable(m)
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
-        @test_throws MOI.AddVariableNotAllowed MOIU.attachoptimizer!(m)
+        @test_throws MOI.AddVariableNotAllowed MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 
         s.add_var_allowed = true
-        MOIU.attachoptimizer!(m)
+        MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
         s.add_var_allowed = false
         MOI.add_variables(m, 2)
@@ -204,7 +204,7 @@ end
         MOI.delete(m, vi)
         s.delete_allowed = true
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
-        MOIU.attachoptimizer!(m)
+        MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
 
         vi = MOI.add_variable(m)
@@ -213,7 +213,7 @@ end
         MOI.delete(m, ci)
         s.delete_allowed = true
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
-        MOIU.attachoptimizer!(m)
+        MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
 
@@ -253,9 +253,9 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
         m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), mode)
         if state != MOIU.NO_OPTIMIZER
             s = MOIU.MockOptimizer(ModelForMock{Float64}())
-            MOIU.resetoptimizer!(m, s)
+            MOIU.reset_optimizer(m, s)
             if state == MOIU.ATTACHED_OPTIMIZER
-                MOIU.attachoptimizer!(m)
+                MOIU.attach_optimizer(m)
             end
         end
         @test MOIU.state(m) == state

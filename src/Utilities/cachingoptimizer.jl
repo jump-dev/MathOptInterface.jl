@@ -18,8 +18,8 @@ A `CachingOptimizer` may be in one of three possible states (`CachingOptimizerSt
 
 A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 
-- `MANUAL`: The only methods that change the state of the `CachingOptimizer` are [`resetoptimizer!`](@ref), [`dropoptimizer!`](@ref), and [`attachoptimizer!`](@ref). Attempting to perform an operation in the incorrect state results in an error.
-- `AUTOMATIC`: The `CachingOptimizer` changes its state when necessary. For example, `optimize!` will automatically call `attachoptimizer!` (an optimizer must have been previously set). Attempting to add a constraint or perform a modification not supported by the optimizer results in a drop to `EMPTY_OPTIMIZER` mode.
+- `MANUAL`: The only methods that change the state of the `CachingOptimizer` are [`reset_optimizer`](@ref), [`drop_optimizer`](@ref), and [`attach_optimizer`](@ref). Attempting to perform an operation in the incorrect state results in an error.
+- `AUTOMATIC`: The `CachingOptimizer` changes its state when necessary. For example, `optimize!` will automatically call `attach_optimizer` (an optimizer must have been previously set). Attempting to add a constraint or perform a modification not supported by the optimizer results in a drop to `EMPTY_OPTIMIZER` mode.
 """
 mutable struct CachingOptimizer{OptimizerType, ModelType<:MOI.ModelLike} <: MOI.AbstractOptimizer
     optimizer::Union{Nothing, OptimizerType}
@@ -42,10 +42,10 @@ end
 
 Creates an `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer `optimizer`.
 The model_cache manager returned behaves like an `AbstractOptimizer` as long as no
-`CachingOptimizer`-specific functions (e.g. `resetoptimizer!`) are called on it.
+`CachingOptimizer`-specific functions (e.g. `reset_optimizer`) are called on it.
 The type of the optimizer returned is `CachingOptimizer{typeof(optimizer),
 typeof(model_cache)}` so it does not support the function
-`resetoptimizer!(::CachingOptimizer, new_optimizer)` if the type of
+`reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
 `new_optimizer` is different from the type of `optimizer`.
 """
 function CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer)
@@ -71,12 +71,12 @@ Returns the operating mode of the CachingOptimizer `m`. See [`CachingOptimizer`]
 mode(m::CachingOptimizer) = m.mode
 
 """
-    resetoptimizer!(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
+    reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
 
 Sets or resets `m` to have the given empty optimizer. Can be called
 from any state. The `CachingOptimizer` will be in state `EMPTY_OPTIMIZER` after the call.
 """
-function resetoptimizer!(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
+function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     @assert MOI.is_empty(optimizer)
     m.optimizer = optimizer
     m.state = EMPTY_OPTIMIZER
@@ -84,13 +84,13 @@ function resetoptimizer!(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
 end
 
 """
-    resetoptimizer!(m::CachingOptimizer)
+    reset_optimizer(m::CachingOptimizer)
 
 Detaches and empties the current optimizer. Can be called from `ATTACHED_OPTIMIZER`
 or `EMPTY_OPTIMIZER` state. The `CachingOptimizer` will be in state `EMPTY_OPTIMIZER`
 after the call.
 """
-function resetoptimizer!(m::CachingOptimizer)
+function reset_optimizer(m::CachingOptimizer)
     m.state == EMPTY_OPTIMIZER && return
     @assert m.state == ATTACHED_OPTIMIZER
     MOI.empty!(m.optimizer)
@@ -99,19 +99,19 @@ function resetoptimizer!(m::CachingOptimizer)
 end
 
 """
-    dropoptimizer!(m::CachingOptimizer)
+    drop_optimizer(m::CachingOptimizer)
 
 Drops the optimizer, if one is present. Can be called from any state.
 The `CachingOptimizer` will be in state `NO_OPTIMIZER` after the call.
 """
-function dropoptimizer!(m::CachingOptimizer)
+function drop_optimizer(m::CachingOptimizer)
     m.optimizer = nothing
     m.state = NO_OPTIMIZER
     return
 end
 
 """
-    attachoptimizer!(model::CachingOptimizer)
+    attach_optimizer(model::CachingOptimizer)
 
 Attaches the optimizer to `model`, copying all model data into it. Can be called
 only from the `EMPTY_OPTIMIZER` state. If the copy succeeds, the
@@ -119,7 +119,7 @@ only from the `EMPTY_OPTIMIZER` state. If the copy succeeds, the
 otherwise an error is thrown; see [`copy_to`](@ref) for more details on which
 errors can be thrown.
 """
-function attachoptimizer!(model::CachingOptimizer)
+function attach_optimizer(model::CachingOptimizer)
     @assert model.state == EMPTY_OPTIMIZER
     # We do not need to copy names because name-related operations are handled by `m.model_cache`
     indexmap = MOI.copy_to(model.optimizer, model.model_cache, copy_names=false)
@@ -158,7 +158,7 @@ MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == AUTOMATIC && m.state == EMPTY_OPTIMIZER
-        attachoptimizer!(m)
+        attach_optimizer(m)
     end
     # TODO: better error message if no optimizer is set
     @assert m.state == ATTACHED_OPTIMIZER
@@ -172,7 +172,7 @@ function MOI.add_variable(m::CachingOptimizer)
                 vindex_optimizer = MOI.add_variable(m.optimizer)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -196,7 +196,7 @@ function MOI.add_variables(m::CachingOptimizer, n)
                 vindices_optimizer = MOI.add_variables(m.optimizer, n)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -229,7 +229,7 @@ function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set
                     # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
                     # or S' != S if, e.g., the `F`-in-`S` constraint is bridged
                     # to other constraints in `m.optimizer`
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -255,7 +255,7 @@ function MOI.modify(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFunctio
                 MOI.modify(m.optimizer, cindex_optimizer, change_optimizer)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -278,7 +278,7 @@ function replace_constraint_function_or_set(m::CachingOptimizer, attr, cindex, r
                 MOI.set(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -306,7 +306,7 @@ function MOI.modify(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MOI
                 MOI.modify(m.optimizer, obj, change_optimizer)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -332,7 +332,7 @@ function MOI.delete(m::CachingOptimizer, index::MOI.Index)
                 MOI.delete(m.optimizer, index_optimizer)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -341,7 +341,7 @@ function MOI.delete(m::CachingOptimizer, index::MOI.Index)
             MOI.delete(m.optimizer, index_optimizer)
         end
     end
-    # The state may have changed in AUTOMATIC mode since resetoptimizer! is
+    # The state may have changed in AUTOMATIC mode since reset_optimizer is
     # called in case the deletion is not supported
     if m.state == ATTACHED_OPTIMIZER
         delete!(m.optimizer_to_model_map, m.model_to_optimizer_map[index])
@@ -370,7 +370,7 @@ function MOI.set(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
                 MOI.set(m.optimizer, attr, optimizer_value)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
@@ -391,7 +391,7 @@ function MOI.set(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,
                 MOI.set(m.optimizer, attr, optimizer_index, optimizer_value)
             catch err
                 if err isa MOI.NotAllowedError
-                    resetoptimizer!(m)
+                    reset_optimizer(m)
                 else
                     rethrow(err)
                 end
