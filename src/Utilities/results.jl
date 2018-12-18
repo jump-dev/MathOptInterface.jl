@@ -187,14 +187,14 @@ function variable_dual(model::MOI.ModelLike,
                        ci::MOI.ConstraintIndex,
                        vi::MOI.VariableIndex)
     status = MOI.get(model, MOI.DualStatus())
-    ray = status == MOI.InfeasibilityCertificate ||
-          status == MOI.NearlyInfeasibilityCertificate
+    ray = status == MOI.INFEASIBILITY_CERTIFICATE ||
+          status == MOI.NEARLY_INFEASIBILITY_CERTIFICATE
     dual = 0.0
     if !ray
         sense = MOI.get(model, MOI.ObjectiveSense())
         # Dual definition for maximization problem corresponds to dual
         # definition for minimization problem with flipped objectived in MOI
-        sign = sense == MOI.MaxSense ? -1.0 : 1.0
+        sign = sense == MOI.MAX_SENSE ? -1.0 : 1.0
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         obj_attr = MOI.ObjectiveFunction{F}()
         if F == MOI.SingleVariable

@@ -617,7 +617,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
         function $MOI.empty!(model::$esc_modelname{T}) where T
             model.name = ""
             model.senseset = false
-            model.sense = $MOI.FeasibilitySense
+            model.sense = $MOI.FEASIBILITY_SENSE
             model.objectiveset = false
             model.objective = $SAF{T}(MOI.ScalarAffineTerm{T}[], zero(T))
             model.num_variables_created = 0
@@ -681,7 +681,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
 
         $modeldef
         function $esc_modelname{T}() where T
-            $esc_modelname{T}("", false, $MOI.FeasibilitySense, false, $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)),
+            $esc_modelname{T}("", false, $MOI.FEASIBILITY_SENSE, false, $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)),
                               0, nothing, Dict{$VI, String}(), nothing,
                               0, Dict{$CI, String}(), nothing, Int[],
                               $(_getCV.(funs)...))

@@ -63,25 +63,25 @@
     set_mock_optimize_linear7Test!(mock)
     MOIT.linear7test(mock, config_no_lhs_modif)
     MOIU.set_mock_optimize!(mock,
-         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible,
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE,
                                                            tuple(),
              (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1]))
     MOIT.linear8atest(mock, config)
     MOIU.set_mock_optimize!(mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible))
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE))
     MOIT.linear8atest(mock, MOIT.TestConfig(infeas_certificates=false))
     MOIU.set_mock_optimize!(mock,
-         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DualInfeasible,
-                                                           MOI.InfeasibilityCertificate))
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE,
+                                                           MOI.INFEASIBILITY_CERTIFICATE))
     MOIT.linear8btest(mock, config)
     MOIU.set_mock_optimize!(mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DualInfeasible))
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE))
     MOIT.linear8btest(mock, MOIT.TestConfig(infeas_certificates=false))
     MOIU.set_mock_optimize!(mock,
-         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DualInfeasible, (MOI.InfeasibilityCertificate, [1, 1])))
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE, (MOI.INFEASIBILITY_CERTIFICATE, [1, 1])))
     MOIT.linear8ctest(mock, config)
     MOIU.set_mock_optimize!(mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DualInfeasible))
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE))
     MOIT.linear8ctest(mock, MOIT.TestConfig(infeas_certificates=false))
     MOIU.set_mock_optimize!(mock,
          (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [650/11, 400/11]))
@@ -99,12 +99,12 @@
          (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.5, 0.5]))
     MOIT.linear11test(mock, config)
     MOIU.set_mock_optimize!(mock,
-         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible,
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE,
                                                            tuple(),
               (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-1, -1]))
     MOIT.linear12test(mock, config)
     MOIU.set_mock_optimize!(mock,
-         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.Infeasible))
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE))
     MOIT.linear12test(mock, MOIT.TestConfig(infeas_certificates=false))
     MOIU.set_mock_optimize!(mock,
          (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/5, 1/5],

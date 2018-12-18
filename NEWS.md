@@ -1,10 +1,13 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.7.1 (unreleased)
---------------------------
+v0.8.0 (unreleased)
+-------------------
 
-- Add an `MOI.TerminationStatusCode` called `MOI.AlmostDualInfeasible`.
+- Rename all enum values to follow the JuMP naming guidelines for constants,
+  e.g., `Optimal` becomes `OPTIMAL`, and `DualInfeasible` becomes
+  `DUAL_INFEASIBLE`.
+- Add an `MOI.TerminationStatusCode` called `ALMOST_DUAL_INFEASIBLE`.
 
 v0.7.0 (December 13, 2018)
 --------------------------

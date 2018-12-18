@@ -14,13 +14,13 @@
     end
     @testset "QCP" begin
         MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FeasiblePoint))
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FEASIBLE_POINT))
         MOIT.qcp1test(mock, config)
         MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
         MOIT.qcp2test(mock, config)
         MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FeasiblePoint))
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
         MOIT.qcp3test(mock, config)
     end
     @testset "SOCP" begin

@@ -1,5 +1,5 @@
 @testset "Copy test" begin
-    @testset "Automatic copy" begin
+    @testset "AUTOMATIC copy" begin
         src = DummyModel()
         dest = DummyModel()
         @test_throws ErrorException MOIU.automatic_copy_to(dest, src)

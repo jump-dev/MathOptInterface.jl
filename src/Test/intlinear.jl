@@ -49,12 +49,12 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
 
     objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.1, 2.0, 5.0], v), 0.0)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
-    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
@@ -62,7 +62,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.ResultCount()) >= 1
 
-        @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FeasiblePoint, MOI.NearlyFeasiblePoint ]
+        @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FEASIBLE_POINT, MOI.NEARLY_FEASIBLE_POINT ]
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 19.4 atol=atol rtol=rtol
 
@@ -121,11 +121,11 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
         objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0, 1.0], v), 0.0)
         MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
-        @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+        @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
         if config.solve
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
             MOI.optimize!(model)
 
@@ -133,7 +133,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
@@ -150,7 +150,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 5 atol=atol rtol=rtol
 
@@ -209,11 +209,11 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
         objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [v[9], v[10]]), 0.0)
         MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
-        @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MaxSense
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+        @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
         if config.solve
-            @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+            @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
             MOI.optimize!(model)
 
@@ -221,7 +221,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 15.0 atol=atol rtol=rtol
 
@@ -239,7 +239,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
-            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 30.0 atol=atol rtol=rtol
 
@@ -282,16 +282,16 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     c = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(vcat(1.0, fill(-0.5 / 40, 10)), vcat(z, b)), 0.0), MOI.Interval(0.0, 0.999))
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(vcat(1.0, fill(-0.5 / 40, 3)), vcat(z, b[1:3])), 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
 
@@ -300,7 +300,7 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FeasiblePoint
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
     end
@@ -337,20 +337,20 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([5.0, 3.0, 2.0, 7.0, 4.0], v), 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MaxSense)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
     if MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
         MOI.set(model, MOI.VariablePrimalStart(), v, [0.0, 0.0, 0.0, 0.0, 0.0])
     end
 
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
 
-        @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FeasiblePoint, MOI.NearlyFeasiblePoint ]
+        @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FEASIBLE_POINT, MOI.NEARLY_FEASIBLE_POINT ]
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 16 atol=atol rtol=rtol
 

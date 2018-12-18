@@ -1,17 +1,17 @@
 @MOIU.model ModelForCachingOptimizer (MOI.ZeroOne, MOI.Integer) (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone, MOI.PositiveSemidefiniteConeTriangle, MOI.RootDetConeTriangle, MOI.LogDetConeTriangle) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
 @testset "Test default attributes" begin
-    # Without an optimizer attached (i.e., `MOI.state(model) == NoOptimizer`) we
+    # Without an optimizer attached (i.e., `MOI.state(model) == NO_OPTIMIZER`) we
     # need throw nice errors for attributes that are based on the optimizer. For
     # `AbstractModelAttribute`s that `is_set_by_optimize` returns `true` for, we
     # overload `TerminationStatus`, `PrimalStatus`, or `DualStatus` to return
     # sane default values. Otherwise we throw a nice error.
-    model = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.Manual)
-    @test MOIU.state(model) == MOIU.NoOptimizer
+    model = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.MANUAL)
+    @test MOIU.state(model) == MOIU.NO_OPTIMIZER
 
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OptimizeNotCalled
-    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NoSolution
-    @test MOI.get(model, MOI.DualStatus()) == MOI.NoSolution
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
+    @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
     x = MOI.add_variables(model, 2)
     if VERSION < v"0.7"
         @test_throws Exception MOI.get(model, MOI.VariablePrimal(), x[1])
@@ -40,14 +40,14 @@
     end
 end
 
-@testset "CachingOptimizer Manual mode" begin
-    m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.Manual)
-    @test MOIU.state(m) == MOIU.NoOptimizer
+@testset "CachingOptimizer MANUAL mode" begin
+    m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.MANUAL)
+    @test MOIU.state(m) == MOIU.NO_OPTIMIZER
 
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.is_empty(s)
     MOIU.resetoptimizer!(m, s)
-    @test MOIU.state(m) == MOIU.EmptyOptimizer
+    @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 
     v = MOI.add_variable(m)
     x = MOI.add_variables(m, 2)
@@ -60,14 +60,14 @@ end
     @test_throws AssertionError MOI.optimize!(m)
 
     MOIU.attachoptimizer!(m)
-    @test MOIU.state(m) == MOIU.AttachedOptimizer
+    @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
 
     @test MOI.supports(m, MOI.ObjectiveSense())
-    MOI.set(m, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.get(m, MOI.ObjectiveSense()) == MOI.MaxSense
-    @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MaxSense
-    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MaxSense
+    MOI.set(m, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    @test MOI.get(m, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+    @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MAX_SENSE
+    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MAX_SENSE
 
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()))
     MOI.set(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
@@ -96,7 +96,7 @@ end
     @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
 
     MOIU.dropoptimizer!(m)
-    @test MOIU.state(m) == MOIU.NoOptimizer
+    @test MOIU.state(m) == MOIU.NO_OPTIMIZER
 
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(12.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(12.0)
@@ -110,9 +110,9 @@ end
 
 end
 
-@testset "CachingOptimizer Automatic mode" begin
-    m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.Automatic)
-    @test MOIU.state(m) == MOIU.NoOptimizer
+@testset "CachingOptimizer AUTOMATIC mode" begin
+    m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.AUTOMATIC)
+    @test MOIU.state(m) == MOIU.NO_OPTIMIZER
 
     v = MOI.add_variable(m)
     @test MOI.supports(m, MOI.VariableName(), typeof(v))
@@ -122,7 +122,7 @@ end
     s = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.is_empty(s)
     MOIU.resetoptimizer!(m, s)
-    @test MOIU.state(m) == MOIU.EmptyOptimizer
+    @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 
     saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v)], 0.0)
     @test MOI.supports(m, MOI.ObjectiveFunction{typeof(saf)}())
@@ -130,7 +130,7 @@ end
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveFunction{typeof(saf)}())) ≈ saf
 
     MOI.optimize!(m)
-    @test MOIU.state(m) == MOIU.AttachedOptimizer
+    @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ResultCount())) == 0
 
     @test MOI.get(m, MOI.VariableName(), v) == "v"
@@ -139,9 +139,9 @@ end
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariableName()), v) == ""
 
     @test MOI.supports(m, MOI.ObjectiveSense())
-    MOI.set(m, MOI.ObjectiveSense(), MOI.MaxSense)
-    @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MaxSense
-    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MaxSense
+    MOI.set(m, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.ObjectiveSense())) == MOI.MAX_SENSE
+    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ObjectiveSense())) == MOI.MAX_SENSE
 
     @test MOI.supports(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()))
     MOI.set(m, MOIU.AttributeFromOptimizer(MOIU.MockModelAttribute()), 10)
@@ -160,16 +160,16 @@ end
         MOI.modify(m, MOI.ObjectiveFunction{typeof(saf)}(),
                     MOI.ScalarConstantChange(1.0))
         s.modify_allowed = true
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         MOIU.attachoptimizer!(m)
-        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
         ci = MOI.add_constraint(m, saf, MOI.EqualTo(0.0))
         s.modify_allowed = false
         MOI.modify(m, ci, MOI.ScalarCoefficientChange(v, 1.0))
         s.modify_allowed = true
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         MOIU.attachoptimizer!(m)
-        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
 
     # Simulate that constraints cannot be added
@@ -177,25 +177,25 @@ end
         s.add_con_allowed = false
         MOI.add_constraint(m, MOI.VectorOfVariables([v]), MOI.SecondOrderCone(1))
         s.add_con_allowed = true
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         MOI.empty!(m)
-        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
 
     @testset "Add variable not allowed" begin
         s.add_var_allowed = false # Simulate optimizer that cannot add variables incrementally
         MOI.add_variable(m)
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         @test_throws MOI.AddVariableNotAllowed MOIU.attachoptimizer!(m)
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 
         s.add_var_allowed = true
         MOIU.attachoptimizer!(m)
-        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
         s.add_var_allowed = false
         MOI.add_variables(m, 2)
         s.add_var_allowed = true
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
     end
 
     @testset "Delete not allowed" begin
@@ -203,18 +203,18 @@ end
         s.delete_allowed = false # Simulate optimizer that cannot delete variable
         MOI.delete(m, vi)
         s.delete_allowed = true
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         MOIU.attachoptimizer!(m)
-        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
 
         vi = MOI.add_variable(m)
         ci = MOI.add_constraint(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
         s.delete_allowed = false # Simulate optimizer that cannot delete constraint
         MOI.delete(m, ci)
         s.delete_allowed = true
-        @test MOIU.state(m) == MOIU.EmptyOptimizer
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         MOIU.attachoptimizer!(m)
-        @test MOIU.state(m) == MOIU.AttachedOptimizer
+        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
 
 end
@@ -226,8 +226,8 @@ end
         m = MOIU.CachingOptimizer(model, s)
         @test m isa MOIU.CachingOptimizer{typeof(s), typeof(model)}
         @test MOI.is_empty(m)
-        @test MOIU.state(m) == MOIU.AttachedOptimizer
-        @test MOIU.mode(m) == MOIU.Automatic
+        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
+        @test MOIU.mode(m) == MOIU.AUTOMATIC
         @test MOI.get(m, MOI.SolverName()) == "Mock"
     end
     @testset "Non-empty optimizer" begin
@@ -248,13 +248,13 @@ end
     end
 end
 
-for state in (MOIU.NoOptimizer, MOIU.EmptyOptimizer, MOIU.AttachedOptimizer)
-    @testset "Optimization tests in state $state and mode $mode" for mode in (MOIU.Manual, MOIU.Automatic)
+for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
+    @testset "Optimization tests in state $state and mode $mode" for mode in (MOIU.MANUAL, MOIU.AUTOMATIC)
         m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), mode)
-        if state != MOIU.NoOptimizer
+        if state != MOIU.NO_OPTIMIZER
             s = MOIU.MockOptimizer(ModelForMock{Float64}())
             MOIU.resetoptimizer!(m, s)
-            if state == MOIU.AttachedOptimizer
+            if state == MOIU.ATTACHED_OPTIMIZER
                 MOIU.attachoptimizer!(m)
             end
         end

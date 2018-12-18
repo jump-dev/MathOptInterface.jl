@@ -41,10 +41,10 @@ end
     v1 = MOI.add_variable(optimizer)
 
     # Load fake solution
-    MOI.set(optimizer, MOI.TerminationStatus(), MOI.Infeasible)
+    MOI.set(optimizer, MOI.TerminationStatus(), MOI.INFEASIBLE)
 
     MOI.optimize!(optimizer)
-    @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.Infeasible
+    @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.INFEASIBLE
     @test MOI.get(optimizer, MOI.ResultCount()) == 0
 end
 
@@ -60,22 +60,22 @@ end
 
     # Load fake solution
     # TODO: Provide a more compact API for this.
-    MOI.set(optimizer, MOI.TerminationStatus(), MOI.Optimal)
+    MOI.set(optimizer, MOI.TerminationStatus(), MOI.OPTIMAL)
     MOI.set(optimizer, MOI.ObjectiveValue(), 1.0)
     MOI.set(optimizer, MOI.ResultCount(), 1)
-    MOI.set(optimizer, MOI.PrimalStatus(), MOI.FeasiblePoint)
-    MOI.set(optimizer, MOI.DualStatus(), MOI.FeasiblePoint)
+    MOI.set(optimizer, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(optimizer, MOI.DualStatus(), MOI.FEASIBLE_POINT)
     MOI.set(optimizer, MOI.VariablePrimal(), v, [1.0, 2.0])
     MOI.set(optimizer, MOI.VariablePrimal(), v[1], 3.0)
     MOI.set(optimizer, MOI.ConstraintDual(), c1, 5.9)
     MOI.set(optimizer, MOI.ConstraintDual(), soc, [1.0,2.0])
 
     MOI.optimize!(optimizer)
-    @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.Optimal
+    @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
     @test MOI.get(optimizer, MOI.ResultCount()) == 1
     @test MOI.get(optimizer, MOI.ObjectiveValue()) == 1.0
-    @test MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FeasiblePoint
-    @test MOI.get(optimizer, MOI.DualStatus()) == MOI.FeasiblePoint
+    @test MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    @test MOI.get(optimizer, MOI.DualStatus()) == MOI.FEASIBLE_POINT
     @test MOI.get(optimizer, MOI.VariablePrimal(), v) == [3.0, 2.0]
     @test MOI.get(optimizer, MOI.VariablePrimal(), v[1]) == 3.0
     @test MOI.get(optimizer, MOI.ConstraintDual(), c1) == 5.9
