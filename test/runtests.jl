@@ -3,6 +3,10 @@ using MathOptFormat, Compat.Test
 const MOI = MathOptFormat.MOI
 const MOIU = MathOptFormat.MOIU
 
+@test sprint(show, MathOptFormat.Model()) == "A MathOptFormat Model"
+
+include("nonlinear.jl")
+
 struct UnsupportedSet <: MOI.AbstractSet end
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
@@ -69,6 +73,32 @@ end
         variable_index = MOI.add_variable(model)
         @test MathOptFormat.moi_to_object(variable_index, model) ==
             MathOptFormat.Object("name" => "x1")
+    end
+    @testset "FEASIBILITY_SENSE" begin
+        model = MathOptFormat.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+        MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
+            MOI.SingleVariable(x))
+        MOI.write_to_file(model, "test.mof.json")
+        model_2 = MathOptFormat.Model()
+        MOI.read_from_file(model_2, "test.mof.json")
+        MOIU.test_models_equal(model, model_2, ["x"], String[])
+    end
+    @testset "Empty function term" begin
+        model = MathOptFormat.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        c = MOI.add_constraint(model,
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
+            MOI.GreaterThan(1.0)
+        )
+        MOI.set(model, MOI.ConstraintName(), c, "c")
+        MOI.write_to_file(model, "test.mof.json")
+        model_2 = MathOptFormat.Model()
+        MOI.read_from_file(model_2, "test.mof.json")
+        MOIU.test_models_equal(model, model_2, ["x"], ["c"])
     end
     @testset "min objective" begin
         test_model_equality("""

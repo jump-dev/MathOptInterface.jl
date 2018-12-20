@@ -36,15 +36,19 @@ end
 
 function read_objectives(model::Model, object::Object,
                          name_map::Dict{String, MOI.VariableIndex})
-    if length(object["objectives"]) > 1
+    if length(object["objectives"]) == 0
+        MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    elseif length(object["objectives"]) > 1
         error("Multi-objective models not supported by MathOptFormat.jl.")
+    else
+        objective = first(object["objectives"])
+        MOI.set(model, MOI.ObjectiveSense(),
+                read_objective_sense(objective["sense"]))
+        objective_type = MOI.get(model, MOI.ObjectiveFunctionType())
+        MOI.set(model, MOI.ObjectiveFunction{objective_type}(),
+                function_to_moi(objective["function"], model, name_map))
     end
-    objective = first(object["objectives"])
-    MOI.set(model, MOI.ObjectiveSense(),
-            read_objective_sense(objective["sense"]))
-    objective_type = MOI.get(model, MOI.ObjectiveFunctionType())
-    MOI.set(model, MOI.ObjectiveFunction{objective_type}(),
-            function_to_moi(objective["function"], model, name_map))
+    return
 end
 
 function read_constraints(model::Model, object::Object,
@@ -53,7 +57,9 @@ function read_constraints(model::Model, object::Object,
         foo = function_to_moi(constraint["function"], model, name_map)
         set = set_to_moi(constraint["set"], model, name_map)
         index = MOI.add_constraint(model, foo, set)
-        MOI.set(model, MOI.ConstraintName(), index, constraint["name"])
+        if haskey(constraint, "name")
+            MOI.set(model, MOI.ConstraintName(), index, constraint["name"])
+        end
     end
 end
 

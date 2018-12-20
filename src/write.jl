@@ -7,6 +7,7 @@ function MOI.write_to_file(model::Model, filename::String)
         "constraints" => Object[]
     )
     name_map = write_variables(object, model)
+    write_nlpblock(object, model, name_map)
     write_objectives(object, model, name_map)
     write_constraints(object, model, name_map)
     open(filename, "w") do io
@@ -29,6 +30,11 @@ function write_objectives(object::Object, model::Model,
     sense = MOI.get(model, MOI.ObjectiveSense())
     objective_type = MOI.get(model, MOI.ObjectiveFunctionType())
     objective_function = MOI.get(model, MOI.ObjectiveFunction{objective_type}())
+    if (objective_type == MOI.ScalarAffineFunction{Float64} &&
+        length(objective_function.terms) == 0 &&
+        objective_function.constant == 0.0)
+            return  # The default objective. Don't include.
+    end
     push!(object["objectives"], Object(
         "sense"    => moi_to_object(sense),
         "function" => moi_to_object(objective_function, model, name_map)
@@ -66,10 +72,13 @@ function moi_to_object(index::MOI.ConstraintIndex{F,S}, model::Model,
                    name_map::Dict{MOI.VariableIndex, String}) where {F, S}
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
+    object = Object("function" => moi_to_object(func, model, name_map),
+                    "set"      => moi_to_object(set, model, name_map))
     name = MOI.get(model, MOI.ConstraintName(), index)
-    return Object("function" => moi_to_object(func, model, name_map),
-                  "set"      => moi_to_object(set, model, name_map),
-                  "name"     => name)
+    if name != ""
+        object["name"] = name
+    end
+    return object
 end
 
 function moi_to_object(sense::MOI.OptimizationSense)
@@ -77,7 +86,8 @@ function moi_to_object(sense::MOI.OptimizationSense)
         return "min"
     elseif sense == MOI.MAX_SENSE
         return "max"
-    elseif sense == MOI.FEASIBILITY_SENSE
+    else
+        @assert sense == MOI.FEASIBILITY_SENSE
         return "feasibility"
     end
 end
