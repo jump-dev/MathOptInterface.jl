@@ -73,11 +73,11 @@ function moi_to_object(index::MOI.ConstraintIndex{F,S}, model::Model,
 end
 
 function moi_to_object(sense::MOI.OptimizationSense)
-    if sense == MOI.MinSense
+    if sense == MOI.MIN_SENSE
         return "min"
-    elseif sense == MOI.MaxSense
+    elseif sense == MOI.MAX_SENSE
         return "max"
-    elseif sense == MOI.FeasibilitySense
+    elseif sense == MOI.FEASIBILITY_SENSE
         return "feasibility"
     end
 end

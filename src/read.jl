@@ -59,11 +59,11 @@ end
 
 function read_objective_sense(sense::String)
     if sense == "min"
-        return MOI.MinSense
+        return MOI.MIN_SENSE
     elseif sense == "max"
-        return MOI.MaxSense
+        return MOI.MAX_SENSE
     elseif sense == "feasibility"
-        return MOI.FeasibilitySense
+        return MOI.FEASIBILITY_SENSE
     end
     error("Version $(VERSION) of MathOptFormat does not support the objective" *
           " sense: $(sense).")

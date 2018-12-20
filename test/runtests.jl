@@ -67,7 +67,8 @@ end
     @testset "Blank variable name" begin
         model = MathOptFormat.Model()
         variable_index = MOI.add_variable(model)
-        @test MathOptFormat.moi_to_object(variable_index, model) == MathOptFormat.Object("name" => "x1")
+        @test MathOptFormat.moi_to_object(variable_index, model) ==
+            MathOptFormat.Object("name" => "x1")
     end
     @testset "min objective" begin
         test_model_equality("""
@@ -276,17 +277,17 @@ end
     end
     @testset "LogDetConeTriangle" begin
         test_model_equality("""
-            variables: t, x1, x2, x3
+            variables: t, u, x1, x2, x3
             minobjective: x1
-            c1: [t, x1, x2, x3] in LogDetConeTriangle(2)
-        """, ["t", "x1", "x2", "x3"], ["c1"])
+            c1: [t, u, x1, x2, x3] in LogDetConeTriangle(2)
+        """, ["t", "u", "x1", "x2", "x3"], ["c1"])
     end
     @testset "LogDetConeSquare" begin
         test_model_equality("""
-            variables: t, x1, x2, x3, x4
+            variables: t, u, x1, x2, x3, x4
             minobjective: x1
-            c1: [t, x1, x2, x3, x4] in LogDetConeSquare(2)
-        """, ["t", "x1", "x2", "x3", "x4"], ["c1"])
+            c1: [t, u, x1, x2, x3, x4] in LogDetConeSquare(2)
+        """, ["t", "u", "x1", "x2", "x3", "x4"], ["c1"])
     end
     @testset "RootDetConeTriangle" begin
         test_model_equality("""
