@@ -180,7 +180,7 @@ struct DualExponentialCone <: AbstractVectorSet end
 """
     PowerCone{T <: Real}(exponent::T)
 
-The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{exponent} y^{1-exponent} >= |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `exponent`.
+The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{exponent} y^{1-exponent} \\ge |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `exponent`.
 """
 struct PowerCone{T <: Real} <: AbstractVectorSet
     exponent::T
