@@ -1,33 +1,32 @@
-"""
-    SlackBridge{T}
 
-The `SplackBridge` converts a constraint ``Function in Set`` where `F` is a function different
- from `SingleVariable` and to `VectorOfVariables` into the constraints ``F + F2 in Zeros`` of ``F + F2 in EqualTo{T}``
- and ``F2 in Set\``.
+const ScalarSlackSet{T} = Union{MOI.Interval{T}, MOI.GreaterThan{T}, MOI.LessThan{T}}
+
 """
-struct ScalarSlackBridge{T, F<:MOI.AbstractScalarFunction, S<:MOI.AbstractScalarSet} <: AbstractBridge
+    ScalarSlackBridge{T, F, S}
+
+The `ScalarSlackBridge` converts a constraint `F`-in-`S` where `F` is a function different
+ from `SingleVariable` into the constraints ``F in EqualTo{T}`` and `SingleVariable`-in-`S`.
+"""
+struct ScalarSlackBridge{T, F<:MOI.AbstractScalarFunction, S<:ScalarSlackSet{T}} <: AbstractBridge
     slack::MOI.VariableIndex
     slack_in_set::CI{MOI.SingleVariable, S}
     equality::CI{F, MOI.EqualTo{T}}
 end
-function ScalarSlackBridge{T, F, S}(model, f::F, s::S) where {T, F<:MOI.ScalarAffineFunction{T}, S<:MOI.AbstractScalarSet}
+function ScalarSlackBridge{T, F, S}(model, f::F, s::S) where {T, F<:MOI.ScalarAffineFunction{T}, S<:ScalarSlackSet{T}}
     slack = MOI.add_variable(model)
-    new_f = copy(f)
-    push!(new_f.terms, MOI.ScalarAffineTerm{T}(-one(T), slack))
+    new_f = MOIU.operate(-, T, f, slack)
     slack_in_set = MOI.add_constraint(model, SingleVariable(slack), s)
     equality = MOI.add_constraint(model, new_f, MOI.EqualTo(0.0))
     return ScalarSlackBridge{T, F, S}(slack, equality, slack_in_set)
 end
 
-MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = true
-MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.GreaterThan{T}}) where T = true
-MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.LessThan{T}}) where T = true
+MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{<:ScalarSlackSet{T}}) where {T, F, S} = true
 function added_constraint_types(::Type{ScalarSlackBridge{T, F, S}}) where {T, F<:MOI.AbstractScalarFunction, S}
     return [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
 end
 function concrete_bridge_type(::Type{<:ScalarSlackBridge},
                               F::Type{<:MOI.AbstractScalarFunction},
-                              S::Type{<:MOI.AbstractScalarSet}) where T
+                              S::Type{<:ScalarSlackSet{T}}) where T
     return ScalarSlackBridge{T, F, S}
 end
 
@@ -47,11 +46,11 @@ end
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::ScalarSlackBridge)
-    # ldue to equality, slack should have the same value as original affine function
+    # due to equality, slack should have the same value as original affine function
     return MOI.get(model, attr, c.slack_in_set)
 end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::ScalarSlackBridge)
-    error("")
+    error("ScalarSlackBridge is not returning duals for now")
 end
 
 # Constraints
@@ -61,8 +60,7 @@ end
 
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
                   c::ScalarSlackBridge{T, F, S}, func::F) where {T, F, S}
-    new_func = copy(func)
-    push!(new_func.terms, MOI.ScalarAffineTerm{T}(-one(T), c.slack))
+    new_func = MOIU.operate(-, T, func, c.slack)
     MOI.set(model, MOI.ConstraintFunction(), c.equality, new_func)
 end
 
