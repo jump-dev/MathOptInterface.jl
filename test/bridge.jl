@@ -342,6 +342,27 @@ end
         test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
    end
+    @testset "Scalar slack" begin
+        bridgedmock = MOIB.ScalarSlack{Float64}(mock)
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=[(F, S) for
+                                    F in [MOI.ScalarAffineFunction{Float64},
+                                          MOI.ScalarQuadraticFunction{Float64}],
+                                    S in [MOI.GreaterThan{Float64},
+                                          MOI.LessThan{Float64}]
+                                          ])
+    end
+    @testset "Scalar slack then Interval" begin
+        bridgedmock = MOIB.ScalarSlack{Float64}(MOIB.SplitInterval{Float64}(mock))
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=[(F, S) for
+                                    F in [MOI.ScalarAffineFunction{Float64},
+                                            MOI.ScalarQuadraticFunction{Float64}],
+                                    S in [MOI.Interval{Float64},
+                                            MOI.GreaterThan{Float64},
+                                            MOI.LessThan{Float64}]
+                                            ])
+    end
 
     @testset "RSOC" begin
         bridged_mock = MOIB.RSOC{Float64}(mock)
