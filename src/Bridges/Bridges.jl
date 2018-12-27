@@ -45,7 +45,7 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     cache = MOIU.UniversalFallback(AllBridgedConstraints{T}())
     bridgedmodel = MOIB.LazyBridgeOptimizer(model, cache)
     add_bridge(bridgedmodel, MOIB.VectorizeBridge{T})
-    # add_bridge(bridgedmodel, MOIB.ScalarSlackBridge{T})
+    add_bridge(bridgedmodel, MOIB.ScalarSlackBridge{T})
     add_bridge(bridgedmodel, MOIB.SplitIntervalBridge{T})
     add_bridge(bridgedmodel, MOIB.QuadtoSOCBridge{T})
     add_bridge(bridgedmodel, MOIB.GeoMeanBridge{T})
