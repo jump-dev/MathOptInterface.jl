@@ -594,6 +594,12 @@ function operate_term(::typeof(-), term::MOI.ScalarQuadraticTerm)
                                    term.variable_index_1,
                                    term.variable_index_2)
 end
+function operate_term(::typeof(-), term::MOI.VectorAffineTerm)
+    return MOI.VectorAffineTerm(term.output_index, operate_term(-, term.scalar_term))
+end
+function operate_term(::typeof(-), term::MOI.VectorQuadraticTerm)
+    return MOI.VectorQuadraticTerm(term.output_index, operate_term(-, term.scalar_term))
+end
 
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
@@ -607,9 +613,23 @@ function operate_term(::typeof(*), t1::MOI.ScalarAffineTerm,
     MOI.ScalarQuadraticTerm(t1.coefficient * t2.coefficient, t1.variable_index,
                             t2.variable_index)
 end
+function operate_term(::typeof(*), α::T, t::MOI.VectorAffineTerm{T}) where T
+    MOI.VectorAffineTerm(t.output_index, operate_term(*, α, t.scalar_term))
+end
+function operate_term(::typeof(*), α::T, t::MOI.VectorQuadraticTerm{T}) where T
+    MOI.VectorQuadraticTerm(t.output_index, operate_term(*, α, t.scalar_term))
+end
+function operate_term(::typeof(*), t1::MOI.VectorAffineTerm,
+                      t2::MOI.VectorAffineTerm)
+    @assert t1.output_index == t2.output_index
+    MOI.VectorQuadraticTerm(t1.output_index, operate_term(*, t1.scalar_term, t2.scalar_term))
+end
 
 function operate_term(::typeof(/), t::MOI.ScalarAffineTerm{T}, α::T) where T
     MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
+end
+function operate_term(::typeof(/), t::MOI.VectorAffineTerm{T}, α::T) where T
+    MOI.VectorAffineTerm(t.output_index, operate_term(/, t.scalar_term, α))
 end
 
 # Avoid a copy in the case of +
@@ -618,16 +638,26 @@ function operate_terms(::typeof(+),
                                              MOI.ScalarQuadraticTerm}})
     return terms
 end
+function operate_terms(::typeof(+),
+        terms::Vector{<:Union{MOI.VectorAffineTerm,
+                            MOI.VectorQuadraticTerm}})
+    return terms
+end
 function operate_terms(::typeof(-),
                        terms::Vector{<:Union{MOI.ScalarAffineTerm,
                                              MOI.ScalarQuadraticTerm}})
     return map(term -> operate_term(-, term), terms)
 end
+function operate_terms(::typeof(-),
+        terms::Vector{<:Union{MOI.VectorAffineTerm,
+                            MOI.VectorQuadraticTerm}})
+    return map(term -> operate_term(-, term), terms)
+end
 
-function map_terms!(op, func::MOI.ScalarAffineFunction)
+function map_terms!(op, func::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction})
     map!(op, func.terms, func.terms)
 end
-function map_terms!(op, func::MOI.ScalarQuadraticFunction)
+function map_terms!(op, func::Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction})
     map!(op, func.affine_terms, func.affine_terms)
     map!(op, func.quadratic_terms, func.quadratic_terms)
 end
@@ -641,6 +671,16 @@ const ScalarQuadraticLike{T} = Union{ScalarAffineLike{T}, MOI.ScalarQuadraticFun
 # avoid overloading e.g. `+(::Float64, ::Float64)`
 const ScalarLike{T} = Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T},
                             MOI.ScalarQuadraticFunction{T}}
+
+# Functions convertible to a VectorAffineFunction
+const VectorAffineLike{T} = Union{Vector{T}, MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}
+# Functions convertible to a VectorQuadraticFunction
+const VectorQuadraticLike{T} = Union{VectorAffineLike{T}, MOI.VectorQuadraticFunction{T}}
+
+# Used for overloading Base operator functions so `T` is not in the union to
+# avoid overloading e.g. `+(::Float64, ::Float64)`
+const VectorLike{T} = Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T},
+                            MOI.VectorQuadraticFunction{T}}
 
 ###################################### +/- #####################################
 ## promote_operation
@@ -804,6 +844,179 @@ function Base.:-(f::ScalarLike{T}, α::T) where T
     return operate(-, T, f, α)
 end
 function Base.:-(α::T, f::ScalarLike{T}) where T
+    return operate(-, T, α, f)
+end
+
+# Vector +/-
+
+function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
+                           ::Type{<:VectorAffineLike{T}},
+                           ::Type{<:VectorAffineLike{T}}) where T
+    return MOI.VectorAffineFunction{T}
+end
+function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
+                           ::Type{<:VectorQuadraticLike{T}},
+                           ::Type{<:VectorQuadraticLike{T}}) where T
+    return MOI.VectorQuadraticFunction{T}
+end
+
+# Vector Variable +/- ...
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorOfVariables,
+        g::VectorQuadraticLike) where T
+    return operate(op, T, f, g)
+end
+# Vector Affine +/-! ...
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorAffineFunction{T},
+        g::Vector{T}) where T
+    @assert output_dimension(f) == length(g)
+    f.constant .= op.(f.constant, g)
+    return f
+end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorAffineFunction{T},
+        g::MOI.VectorOfVariables) where T
+    d = output_dimension(g)
+    @assert output_dimension(f) == d
+    push!(f.terms, MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
+    return f
+end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorAffineFunction{T},
+        g::MOI.VectorAffineFunction{T}) where T
+    append!(f.terms, operate_terms(op, g.terms))
+    f.constant .= op.(f.constants, g.constants)
+    return f
+end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorAffineFunction{T},
+        g::MOI.VectorQuadraticFunction{T}) where T
+    return operate(op, T, f, g)
+end
+# Vector Quadratic +/-! ...
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorQuadraticFunction{T},
+        g::Vector{T}) where T
+    @assert output_dimension(f) == length(g)
+    f.constant .= op.(f.constant, g)
+    return f
+end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+                  f::MOI.VectorQuadraticFunction{T},
+                  g::MOI.VectorOfVariables) where T
+    d = output_dimension(g)
+    @assert output_dimension(f) == d
+    push!(f.affine_terms, MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
+    return f
+end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorQuadraticFunction{T},
+        g::MOI.VectorAffineFunction{T}) where T
+    append!(f.affine_terms, operate_terms(op, g.terms))
+    f.constant .= op.(f.constants, g.constants)
+    return f
+end
+function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
+        f::MOI.VectorQuadraticFunction{T},
+        g::MOI.VectorQuadraticFunction{T}) where T
+    append!(f.affine_terms, operate_terms(op, g.affine_terms))
+    append!(f.quadratic_terms, operate_terms(op, g.quadratic_terms))
+    f.constants .= op.(f.constants, g.constants)
+    return f
+end
+
+## operate
+# + with at least 3 arguments, can use in-place as the user cannot use
+# intermediate results
+# overload
+# function operate(op::typeof(+), ::Type{T}, f, g, h, args...) where T
+#     return operate!(+, T, operate(+, T, f, g), h, args...)
+# end
+
+# Vector number +/- ...
+function operate(op::typeof(+), ::Type{T}, α::Vector{T}, f::VectorLike{T}) where T
+    return operate(op, T, f, α)
+end
+function operate(op::typeof(-), ::Type{T}, α::Vector{T}, f::VectorLike{T}) where T
+    return operate!(+, T, operate(-, T, f), α)
+end
+
+# Vector Variable +/- ...
+function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
+    f::MOI.VectorOfVariables, α::Vector{T}) where T
+    d = output_dimension(f)
+    @assert length(α) == d
+    return MOI.VectorAffineFunction{T}(
+            [MOI.VectorAffineTerm.(collect(1:d), 
+             MOI.ScalarAffineTerm.(one(T), f.variables))],
+                         op.(α))
+end
+function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
+                 f::MOI.VectorOfVariables,
+                 g::MOI.VectorOfVariables) where T
+    d = output_dimension(f)
+    @assert output_dimension(g) == d
+    return MOI.VectorAffineFunction{T}([
+        MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(one(T), f.variables)),
+        MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables))
+                          ],
+                         fill(zero(T),d))
+end
+function operate(op::typeof(+), ::Type{T},
+    f::MOI.VectorOfVariables,
+    g::Union{MOI.VectorAffineFunction{T},
+                MOI.VectorQuadraticFunction{T}}) where T
+    return operate(op, T, g, f)
+end
+function operate(op::typeof(-), ::Type{T},
+    f::MOI.VectorOfVariables,
+    g::Union{MOI.VectorAffineFunction{T},
+                MOI.VectorQuadraticFunction{T}}) where T
+    return operate!(+, T, operate(-, T, g), f)
+end
+# Vector Affine +/- ...
+function operate(op::Union{typeof(-)}, ::Type{T},
+    f::MOI.VectorAffineFunction{T}) where T
+    return MOI.VectorAffineFunction(operate_terms(op, f.terms),
+                      op.(f.constants))
+end
+function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::VectorAffineLike{T}) where T
+    return operate!(op, T, copy(f), g)
+end
+function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::MOI.VectorQuadraticFunction{T}) where T
+    MOI.VectorQuadraticFunction([f.terms; operate_terms(op, g.affine_terms)],
+                  operate_terms(op, g.quadratic_terms),
+                  op.(f.constants, g.constants))
+end
+
+# Vector Quadratic +/- ...
+function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::VectorQuadraticLike{T}) where T
+    operate!(op, T, copy(f), g)
+end
+
+function Base.:+(args::VectorLike{T}...) where T
+    return operate(+, T, args...)
+end
+function Base.:+(α::Vector{T}, f::VectorLike{T}...) where T
+    return operate(+, T, α, f...)
+end
+function Base.:+(f::VectorLike{T}, α::Vector{T}) where T
+    return operate(+, T, f, α)
+end
+function Base.:-(args::VectorLike{T}...) where T
+    return operate(-, T, args...)
+end
+function Base.:-(f::VectorLike{T}, α::Vector{T}) where T
+    return operate(-, T, f, α)
+end
+function Base.:-(α::Vector{T}, f::VectorLike{T}) where T
     return operate(-, T, α, f)
 end
 
