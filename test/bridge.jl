@@ -341,7 +341,7 @@ end
         @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ newf
         test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
-   end
+    end
     @testset "Scalar slack" begin
         bridgedmock = MOIB.ScalarSlack{Float64}(mock)
         MOIT.basic_constraint_tests(bridgedmock, config,
@@ -363,6 +363,18 @@ end
                                             MOI.LessThan{Float64}]
                                             ])
     end
+
+    # @testset "Vector slack" begin
+    #     bridgedmock = MOIB.VectorSlack{Float64}(mock)
+    #     MOIT.basic_constraint_tests(bridgedmock, config,
+    #                                 include=[(F, S) for
+    #                                 F in [MOI.VectorAffineFunction{Float64},
+    #                                     #MOI.VectorQuadraticFunction{Float64}
+    #                                     ],
+    #                                 S in [MOI.Nonnegatives,
+    #                                     MOI.Nonpositives]
+    #                                     ])
+    # end
 
     @testset "RSOC" begin
         bridged_mock = MOIB.RSOC{Float64}(mock)
