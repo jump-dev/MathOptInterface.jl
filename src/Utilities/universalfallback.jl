@@ -13,7 +13,7 @@ implemented). In that case, optimizer bridges should be used instead.
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
     constraints::Dict{Tuple{DataType, DataType}, Dict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152
-    nextconstraintid::Int64
+    nextconstraintid::Int
     con_to_name::Dict{CI, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
     optattr::Dict{MOI.AbstractOptimizerAttribute, Any}

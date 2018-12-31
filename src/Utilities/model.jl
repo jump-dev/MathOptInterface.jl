@@ -542,11 +542,11 @@ mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     name::String
     sense::MOI.OptimizationSense
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
-    num_variables_created::Int64
+    num_variables_created::Int
     variable_indices::Union{Nothing, Set{MOI.VariableIndex}}
     var_to_name::Dict{MOI.VariableIndex, String}
     name_to_var::Union{Dict{String, MOI.VariableIndex}, Nothing}
-    nextconstraintid::Int64
+    nextconstraintid::Int
     con_to_name::Dict{MOI.ConstraintIndex, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
     constrmap::Vector{Int}
@@ -588,14 +588,14 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             sense::$MOI.OptimizationSense
             objectiveset::Bool
             objective::Union{$MOI.SingleVariable, $MOI.ScalarAffineFunction{T}, $MOI.ScalarQuadraticFunction{T}}
-            num_variables_created::Int64
+            num_variables_created::Int
             # If nothing, no variable has been deleted so the indices of the
             # variables are VI.(1:num_variables_created)
             variable_indices::Union{Nothing, Set{$VI}}
             var_to_name::Dict{$VI, String}
             # If nothing, the dictionary hasn't been constructed yet.
             name_to_var::Union{Dict{String, $VI}, Nothing}
-            nextconstraintid::Int64
+            nextconstraintid::Int
             con_to_name::Dict{$CI, String}
             name_to_con::Union{Dict{String, $CI}, Nothing}
             constrmap::Vector{Int} # Constraint Reference value ci -> index in array in Constraints
