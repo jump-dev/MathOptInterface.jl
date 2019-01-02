@@ -215,6 +215,34 @@ end
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
     config = MOIT.TestConfig()
 
+    @testset "Vectorize" begin
+        bridgedmock = MOIB.Vectorize{Float64}(mock)
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=Iterators.product(
+                                        [MOI.SingleVariable,
+                                         MOI.ScalarAffineFunction{Float64}],
+                                         # TODO add it when operate(vcat, ...)
+                                         # is implemented for quadratic
+                                         #MOI.ScalarQuadraticFunction{Float64}],
+                                        [MOI.EqualTo{Float64},
+                                         MOI.GreaterThan{Float64},
+                                         MOI.LessThan{Float64}]))
+
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0],
+                (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[-1]],
+                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0], [1]]))
+        MOIT.linear2test(bridgedmock, config)
+
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(3),
+                               (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[2]])
+        MOIT.psdt0vtest(bridgedmock, config)
+        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()))
+        test_delete_bridge(bridgedmock, ci, 3,
+                           ((MOI.VectorAffineFunction{Float64},
+                             MOI.Zeros, 0),))
+   end
+
     @testset "Interval" begin
         bridgedmock = MOIB.SplitInterval{Float64}(mock)
         MOIT.basic_constraint_tests(bridgedmock, config,
