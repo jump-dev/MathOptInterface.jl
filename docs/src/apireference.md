@@ -349,6 +349,7 @@ Bridges.add_bridge
 
 Below is the list of bridges implemented in this package.
 ```@docs
+Bridges.VectorizeBridge
 Bridges.SplitIntervalBridge
 Bridges.RSOCBridge
 Bridges.GeoMeanBridge
