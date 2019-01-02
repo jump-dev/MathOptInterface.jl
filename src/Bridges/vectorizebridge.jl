@@ -65,7 +65,18 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::VectorizeBridge)
     x = MOI.get(model, attr, bridge.vector_constraint)
     @assert length(x) == 1
-    return x[1] + bridge.set_constant
+    y = x[1]
+    status = MOI.get(model, MOI.PrimalStatus(attr.N))
+    if status != MOI.INFEASIBILITY_CERTIFICATE &&
+       status != MOI.NEARLY_INFEASIBILITY_CERTIFICATE
+       # If it is an infeasibility certificate, it is a ray and satisfies the
+       # homogenized problem, see https://github.com/JuliaOpt/MathOptInterface.jl/issues/433
+       # Otherwise, we need to add the set constant since the ConstraintPrimal
+       # is defined as the value of the function and the set_constant was
+       # removed from the original function
+       y += bridge.set_constant
+   end
+   return y
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
                  bridge::VectorizeBridge)
