@@ -14,8 +14,9 @@ vector_set_type(::Type{<:MOI.GreaterThan}) = MOI.Nonnegatives
 Transforms a constraint `AbstractScalarFunction`-in-`S` where `S <: LPCone` to
 `AbstactVectorFunction`-in-`vector_set_type(S)`.
 """
-struct VectorizeBridge{T, F<:MOI.AbstractVectorFunction, S} <: AbstractBridge
+mutable struct VectorizeBridge{T, F, S} <: AbstractBridge
     vector_constraint::CI{F, S}
+    constant::T
     set_constant::T # Need to store it as it is added in ConstraintPrimal
 end
 function VectorizeBridge{T, F, S}(model::MOI.ModelLike,
@@ -23,9 +24,10 @@ function VectorizeBridge{T, F, S}(model::MOI.ModelLike,
                                   set::MOI.AbstractScalarSet) where {T, F, S}
     set_constant = MOIU.getconstant(set)
     g = MOIU.operate(-, T, f, set_constant)
+    constant = MOI._constant(g)[1]
     h = MOIU.operate(vcat, T, g)
     vector_constraint = MOI.add_constraint(model, h, vector_set(set))
-    VectorizeBridge{T, F, S}(vector_constraint, set_constant)
+    VectorizeBridge{T, F, S}(vector_constraint, constant, set_constant)
 end
 
 function MOI.supports_constraint(::Type{VectorizeBridge{T}},
@@ -83,4 +85,18 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
     x = MOI.get(model, attr, bridge.vector_constraint)
     @assert length(x) == 1
     return x[1]
+end
+function MOI.modify(model::MOI.ModelLike, bridge::VectorizeBridge,
+                    change::MOI.ScalarCoefficientChange)
+    MOI.modify(model, bridge.vector_constraint,
+               MOI.MultirowChange(change.variable,
+                                  [(1, change.new_coefficient)]))
+end
+function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
+                 bridge::VectorizeBridge, new_set::LPCone)
+    set_constant = MOIU.getconstant(new_set)
+    bridge.constant = bridge.constant + bridge.set_constant - set_constant
+    bridge.set_constant = set_constant
+    MOI.modify(model, bridge.vector_constraint,
+               MOI.VectorConstantChange([bridge.constant]))
 end
