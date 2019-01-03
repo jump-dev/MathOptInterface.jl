@@ -31,8 +31,8 @@ function VectorizeBridge{T, F, S}(model::MOI.ModelLike,
 end
 
 function MOI.supports_constraint(::Type{VectorizeBridge{T}},
-                                ::Type{<:MOI.AbstractVectorFunction},
-                                ::Type{MOI.RotatedSecondOrderCone}) where T
+                                ::Type{<:MOI.AbstractScalarFunction},
+                                ::Type{<:LPCone{T}}) where T
     return true
 end
 function added_constraint_types(::Type{VectorizeBridge{T, F, S}}) where {T, F, S}
@@ -40,7 +40,7 @@ function added_constraint_types(::Type{VectorizeBridge{T, F, S}}) where {T, F, S
 end
 function concrete_bridge_type(::Type{<:VectorizeBridge{T}},
                               F::Type{<:MOI.AbstractScalarFunction},
-                              S::Type{<:LPCone}) where T
+                              S::Type{<:LPCone{T}}) where T
     G = MOIU.promote_operation(-, T, F, T)
     H = MOIU.promote_operation(vcat, T, G)
     VectorizeBridge{T, H, vector_set_type(S)}
