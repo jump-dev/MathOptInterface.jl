@@ -38,8 +38,8 @@ is_bridged(b::AbstractBridgeOptimizer, ::Type{VI}) = false
 Return a `Bool` indicating whether `b` supports bridging `F`-in-`S` constraints.
 """
 function supports_bridging_constraint(::AbstractBridgeOptimizer,
-                                    ::Type{<:MOI.AbstractFunction},
-                                    ::Type{<:MOI.AbstractSet})
+                                      ::Type{<:MOI.AbstractFunction},
+                                      ::Type{<:MOI.AbstractSet})
     return false
 end
 
