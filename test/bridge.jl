@@ -138,9 +138,16 @@ MOIU.@model(NoRSOCModel,
         x = MOI.add_variables(bridgedmock, 4)
         err = MOI.UnsupportedConstraint{MOI.VectorOfVariables,
                                         MOI.RotatedSecondOrderCone}()
-        @test_throws err begin
-            MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
-                               MOI.RotatedSecondOrderCone(4))
+        if VERSION < v"0.7-"
+            @test_throws typeof(err) begin
+                MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
+                                   MOI.RotatedSecondOrderCone(4))
+            end
+        else
+            @test_throws err begin
+                MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
+                                   MOI.RotatedSecondOrderCone(4))
+            end
         end
     end
 
