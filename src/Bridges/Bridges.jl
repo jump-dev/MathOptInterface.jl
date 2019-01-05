@@ -41,7 +41,8 @@ MOIU.@model(AllBridgedConstraints,
 Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in this package and for the coefficient type `T`.
 """
 function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
-    bridgedmodel = MOIB.LazyBridgeOptimizer(model, AllBridgedConstraints{T}())
+    cache = MOIU.UniversalFallback(AllBridgedConstraints{T}())
+    bridgedmodel = MOIB.LazyBridgeOptimizer(model, cache)
     add_bridge(bridgedmodel, MOIB.VectorizeBridge{T})
     add_bridge(bridgedmodel, MOIB.SplitIntervalBridge{T})
     add_bridge(bridgedmodel, MOIB.QuadtoSOCBridge{T})

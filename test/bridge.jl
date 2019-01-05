@@ -133,6 +133,17 @@ MOIU.@model(NoRSOCModel,
 @testset "LazyBridgeOptimizer" begin
     mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
     bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
+
+    @testset "UnsupportedConstraint when it cannot be bridged" begin
+        x = MOI.add_variables(bridgedmock, 4)
+        err = MOI.UnsupportedConstraint{MOI.VectorOfVariables,
+                                        MOI.RotatedSecondOrderCone}()
+        @test_throws err begin
+            MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
+                               MOI.RotatedSecondOrderCone(4))
+        end
+    end
+
     MOIB.add_bridge(bridgedmock, MOIB.SplitIntervalBridge{Float64})
     MOIB.add_bridge(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
     MOIB.add_bridge(bridgedmock, MOIB.SOCtoPSDBridge{Float64})

@@ -309,9 +309,13 @@ end
 function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                             s::MOI.AbstractSet)
     if is_bridged(b, typeof(f), typeof(s))
+        # We compute `BridgeType` first as might throw an
+        # `UnsupportedConstraint` error in which case, we do not want any
+        # modification to have been done
+        BridgeType = concrete_bridge_type(b, typeof(f), typeof(s))
         ci = MOI.add_constraint(b.bridged, f, s)
         @assert !haskey(b.bridges, ci)
-        b.bridges[ci] = concrete_bridge_type(b, typeof(f), typeof(s))(b, f, s)
+        b.bridges[ci] = BridgeType(b, f, s)
         return ci
     else
         return MOI.add_constraint(b.model, f, s)
