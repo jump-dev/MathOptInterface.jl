@@ -39,6 +39,18 @@ AddConstraintNotAllowed{F, S}() where {F, S} = AddConstraintNotAllowed{F, S}("")
 
 operation_name(::AddConstraintNotAllowed{F, S}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 
+struct ScalarFunctionConstantNotZero{T, F, S} <: Exception
+    constant::T
+end
+
+function Base.showerror(io::IO,
+                    err::ScalarFunctionConstantNotZero{T, F, S}) where {T, F, S}
+    print(io, "In `$F`-in-`$S` constraint: Constant $(err.constant) of the ",
+          "function is not zero. The function constant should be moved to the ",
+          "set. You can use `MOI.Utilities.add_scalar_constraint` which does ",
+          "this automatically.")
+end
+
 """
     add_constraint(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
 
@@ -49,10 +61,14 @@ Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, 
 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
 
-An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
-`F`-in-`S` constraints and a [`AddConstraintNotAllowed`](@ref) error is thrown if
-it supports `F`-in-`S` constraints but it cannot add the constraint(s) in its
-current state.
+* An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
+  `F`-in-`S` constraints,
+* a [`AddConstraintNotAllowed`](@ref) error is thrown if it supports `F`-in-`S`
+  constraints but it cannot add the constraint(s) in its current state and
+* a [`ScalarFunctionConstantNotZero{T, F, S}`](@ref) error may be thrown if
+  `func` is an [`AbstractScalarFunction`](@ref) with nonzero constant and `set`
+  is [`EqualTo`](@ref), [`GreaterThan`](@ref), [`LessThan`](@ref) or
+  [`Interval`](@ref).
 """
 function add_constraint(model::ModelLike, func::AbstractFunction,
                         set::AbstractSet)

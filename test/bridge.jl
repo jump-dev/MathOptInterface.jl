@@ -217,6 +217,9 @@ end
 
     @testset "Vectorize" begin
         bridgedmock = MOIB.Vectorize{Float64}(mock)
+
+        MOIT.scalar_function_constant_not_zero(bridgedmock)
+
         MOIT.basic_constraint_tests(bridgedmock, config,
                                     include=Iterators.product(
                                         [MOI.SingleVariable,
@@ -240,14 +243,11 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]))
         MOIT.linear4test(bridgedmock, config)
 
-        function set_mock_optimize_linear5Test!(mock)
-            MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4/3, 4/3]),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2, 0]),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4, 0]),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2]))
-        end
-        set_mock_optimize_linear5Test!(mock)
+        MOIU.set_mock_optimize!(mock,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4/3, 4/3]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2]))
         MOIT.linear5test(mock, config)
 
         MOIU.set_mock_optimize!(mock,

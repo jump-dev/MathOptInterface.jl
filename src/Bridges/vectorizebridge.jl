@@ -16,18 +16,22 @@ Transforms a constraint `AbstractScalarFunction`-in-`S` where `S <: LPCone` to
 """
 mutable struct VectorizeBridge{T, F, S} <: AbstractBridge
     vector_constraint::CI{F, S}
-    constant::T
-    set_constant::T # Need to store it as it is added in ConstraintPrimal
+    set_constant::T # constant in scalar set
 end
 function VectorizeBridge{T, F, S}(model::MOI.ModelLike,
                                   f::MOI.AbstractScalarFunction,
                                   set::MOI.AbstractScalarSet) where {T, F, S}
     set_constant = MOIU.getconstant(set)
     g = MOIU.operate(-, T, f, set_constant)
-    constant = MOI._constant(g)[1]
+    if -set_constant != MOI._constant(g)[1]
+        # This means the constant in `f` was not zero
+        constant = MOI._constant(g)[1] + set_constant
+        throw(MOI.ScalarFunctionConstantNotZero{typeof(constant), typeof(f),
+                                                typeof(set)}(constant))
+    end
     h = MOIU.operate(vcat, T, g)
     vector_constraint = MOI.add_constraint(model, h, vector_set(set))
-    VectorizeBridge{T, F, S}(vector_constraint, constant, set_constant)
+    return VectorizeBridge{T, F, S}(vector_constraint, set_constant)
 end
 
 function MOI.supports_constraint(::Type{VectorizeBridge{T}},
@@ -43,7 +47,7 @@ function concrete_bridge_type(::Type{<:VectorizeBridge{T}},
                               S::Type{<:LPCone{T}}) where T
     G = MOIU.promote_operation(-, T, F, T)
     H = MOIU.promote_operation(vcat, T, G)
-    VectorizeBridge{T, H, vector_set_type(S)}
+    return VectorizeBridge{T, H, vector_set_type(S)}
 end
 
 # Attributes, Bridge acting as an model
@@ -94,9 +98,7 @@ function MOI.modify(model::MOI.ModelLike, bridge::VectorizeBridge,
 end
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
                  bridge::VectorizeBridge, new_set::LPCone)
-    set_constant = MOIU.getconstant(new_set)
-    bridge.constant = bridge.constant + bridge.set_constant - set_constant
-    bridge.set_constant = set_constant
+    bridge.set_constant = MOIU.getconstant(new_set)
     MOI.modify(model, bridge.vector_constraint,
-               MOI.VectorConstantChange([bridge.constant]))
+               MOI.VectorConstantChange([-bridge.set_constant]))
 end
