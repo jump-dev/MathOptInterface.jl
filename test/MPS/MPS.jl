@@ -1,13 +1,15 @@
 const MPS = MathOptFormat.MPS
 
+const MPS_TEST_FILE = "test.mps"
+
 @test sprint(show, MPS.Model()) == "A Mathematical Programming System (MPS) model"
 
 function test_model_equality(model_string, variables, constraints)
     model = MPS.Model()
     MOIU.loadfromstring!(model, model_string)
-    MOI.write_to_file(model, "test.mps")
+    MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
-    MOI.read_from_file(model_2, "test.mps")
+    MOI.read_from_file(model_2, MPS_TEST_FILE)
     MOIU.test_models_equal(model, model_2, variables, constraints)
 end
 
@@ -16,13 +18,13 @@ end
         model = MPS.Model()
         x = MOI.add_variable(model)
         @test_throws Exception MOI.read_from_file(
-            model, joinpath("failing_models", "bad_name.mps"))
+            model, joinpath("MPS", "failing_models", "bad_name.mps"))
     end
 
     @testset "$(filename)" for filename in filter(
-            f -> endswith(f, ".mps"), readdir("failing_models"))
+            f -> endswith(f, ".mps"), readdir("MPS/failing_models"))
         @test_throws Exception MOI.read_from_file(MPS.Model(),
-            joinpath("failing_models", filename))
+            joinpath("MPS", "failing_models", filename))
     end
 end
 
@@ -75,7 +77,7 @@ end
 
 @testset "stacked_data" begin
     model = MPS.Model()
-    MOI.read_from_file(model, joinpath("passing_models", "stacked_data.mps"))
+    MOI.read_from_file(model, "MPS/stacked_data.mps")
     MOI.set(model, MOI.ConstraintName(), MOI.get(model,
             MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer}())[1],
         "con5")
@@ -100,7 +102,7 @@ end
 
 @testset "free_integer" begin
     model = MPS.Model()
-    MOI.read_from_file(model, joinpath("passing_models", "free_integer.mps"))
+    MOI.read_from_file(model, "MPS/free_integer.mps")
     MOI.set(model, MOI.ConstraintName(), MOI.get(model,
             MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer}())[1],
         "con2")
@@ -166,9 +168,9 @@ end
             c3: z in ZeroOne()
             c4: x >= 1.0
         """)
-        MOI.write_to_file(model, "test.mps")
+        MOI.write_to_file(model, MPS_TEST_FILE)
         model_2 = MPS.Model()
-        MOI.read_from_file(model_2, "test.mps")
+        MOI.read_from_file(model_2, MPS_TEST_FILE)
         for (set_type, constraint_name) in [(MOI.Integer, "c1"),
                                             (MOI.ZeroOne, "c3"),
                                             (MOI.GreaterThan{Float64}, "c4")]
@@ -187,9 +189,9 @@ end
             c1: x >= 0.0
             c2: y <= 0.0
         """)
-        MOI.write_to_file(model, "test.mps")
+        MOI.write_to_file(model, MPS_TEST_FILE)
         model_2 = MPS.Model()
-        MOI.read_from_file(model_2, "test.mps")
+        MOI.read_from_file(model_2, MPS_TEST_FILE)
         for (set_type, constraint_name) in [(MOI.GreaterThan{Float64}, "c1"),
                                             (MOI.LessThan{Float64}, "c2")]
             MOI.set(model_2, MOI.ConstraintName(), MOI.get(model_2,
@@ -209,9 +211,9 @@ end
             c3: z <= 3.0
             c4: w in Interval(4.0, 5.0)
         """)
-        MOI.write_to_file(model, "test.mps")
+        MOI.write_to_file(model, MPS_TEST_FILE)
         model_2 = MPS.Model()
-        MOI.read_from_file(model_2, "test.mps")
+        MOI.read_from_file(model_2, MPS_TEST_FILE)
         for (set_type, constraint_name) in [(MOI.EqualTo{Float64}, "c1"),
                                             (MOI.GreaterThan{Float64}, "c2"),
                                             (MOI.LessThan{Float64}, "c3"),
@@ -227,4 +229,4 @@ end
 
 # Clean up
 sleep(1.0)  # Allow time for unlink to happen.
-rm("test.mps", force = true)
+rm(MPS_TEST_FILE, force = true)

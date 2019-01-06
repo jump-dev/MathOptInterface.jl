@@ -1,9 +1,9 @@
 function roundtrip_nonlinear_expression(expr, variable_to_string,
                                         string_to_variable)
-    node_list = MathOptFormat.Object[]
-    object = MathOptFormat.convert_expr_to_mof(expr, node_list,
+    node_list = MOF.Object[]
+    object = MOF.convert_expr_to_mof(expr, node_list,
                                                variable_to_string)
-    @test MathOptFormat.convert_mof_to_expr(object, node_list,
+    @test MOF.convert_mof_to_expr(object, node_list,
                                             string_to_variable) == expr
 end
 
@@ -32,7 +32,7 @@ end
 
 @testset "Nonlinear functions" begin
     @testset "HS071 via MOI" begin
-        model = MathOptFormat.Model()
+        model = MOF.Model()
         x = MOI.add_variables(model, 4)
         for (index, variable) in enumerate(x)
             MOI.set(model, MOI.VariableName(), variable, "var_$(index)")
@@ -41,55 +41,55 @@ end
                             Ref(MOI.Interval(1.0, 5.0)))
         MOI.set(model, MOI.NLPBlock(), HS071())
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-        MOI.write_to_file(model, "test.mof.json")
+        MOI.write_to_file(model, TEST_MOF_FILE)
         if VERSION >= v"0.7"
-            @test replace(read("test.mof.json", String), '\r' => "") ==
-                replace(read("passing_models/nlp.mof.json", String), '\r' => "")
+            @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
+                replace(read("MOF/nlp.mof.json", String), '\r' => "")
         else
-            @test replace(readstring("test.mof.json"), '\r', "") ==
-                replace(readstring("passing_models/nlp.mof.json"), '\r', "")
+            @test replace(readstring(TEST_MOF_FILE), '\r', "") ==
+                replace(readstring("MOF/nlp.mof.json"), '\r', "")
         end
     end
     @testset "Error handling" begin
-        node_list = MathOptFormat.Object[]
+        node_list = MOF.Object[]
         string_to_variable = Dict{String, MOI.VariableIndex}()
         variable_to_string = Dict{MOI.VariableIndex, String}()
         # Test unsupported function for Expr -> MOF.
-        @test_throws Exception MathOptFormat.convert_expr_to_mof(
+        @test_throws Exception MOF.convert_expr_to_mof(
             :(not_supported_function(x)), node_list, variable_to_string)
         # Test unsupported function for MOF -> Expr.
-        @test_throws Exception MathOptFormat.convert_mof_to_expr(
-            MathOptFormat.Object("head"=>"not_supported_function", "value"=>1),
+        @test_throws Exception MOF.convert_mof_to_expr(
+            MOF.Object("head"=>"not_supported_function", "value"=>1),
             node_list, string_to_variable)
         # Test n-ary function with no arguments.
-        @test_throws Exception MathOptFormat.convert_expr_to_mof(
+        @test_throws Exception MOF.convert_expr_to_mof(
             :(min()), node_list, variable_to_string)
         # Test unary function with two arguments.
-        @test_throws Exception MathOptFormat.convert_expr_to_mof(
+        @test_throws Exception MOF.convert_expr_to_mof(
             :(sin(x, y)), node_list, variable_to_string)
         # Test binary function with one arguments.
-        @test_throws Exception MathOptFormat.convert_expr_to_mof(
+        @test_throws Exception MOF.convert_expr_to_mof(
             :(^(x)), node_list, variable_to_string)
         # An expression with something other than :call as the head.
-        @test_throws Exception MathOptFormat.convert_expr_to_mof(
+        @test_throws Exception MOF.convert_expr_to_mof(
             :(a <= b <= c), node_list, variable_to_string)
         # Hit the default fallback with an un-interpolated complex number.
-        @test_throws Exception MathOptFormat.convert_expr_to_mof(
+        @test_throws Exception MOF.convert_expr_to_mof(
             :(1 + 2im), node_list, variable_to_string)
         # Invalid number of variables.
-        @test_throws Exception MathOptFormat.substitute_variables(
+        @test_throws Exception MOF.substitute_variables(
             :(x[1] * x[2]), [MOI.VariableIndex(1)])
         # Function-in-Set
-        @test_throws Exception MathOptFormat.extract_function_and_set(
+        @test_throws Exception MOF.extract_function_and_set(
             :(foo in set))
         # Not a constraint.
-        @test_throws Exception MathOptFormat.extract_function_and_set(:(x^2))
+        @test_throws Exception MOF.extract_function_and_set(:(x^2))
         # Two-sided constraints
-        @test MathOptFormat.extract_function_and_set(:(1 <= x <= 2)) ==
-            MathOptFormat.extract_function_and_set(:(2 >= x >= 1)) ==
+        @test MOF.extract_function_and_set(:(1 <= x <= 2)) ==
+            MOF.extract_function_and_set(:(2 >= x >= 1)) ==
             (:x, MOI.Interval(1, 2))
         # Less-than constraint.
-        @test MathOptFormat.extract_function_and_set(:(x <= 2)) ==
+        @test MOF.extract_function_and_set(:(x <= 2)) ==
             (:x, MOI.LessThan(2))
     end
     @testset "Roundtrip nonlinear expressions" begin
@@ -109,18 +109,18 @@ end
     end
     @testset "Reading and Writing" begin
         # Write to file.
-        model = MathOptFormat.Model()
+        model = MOF.Model()
         (x, y) = MOI.add_variables(model, 2)
         MOI.set(model, MOI.VariableName(), x, "var_x")
         MOI.set(model, MOI.VariableName(), y, "y")
         con = MOI.add_constraint(model,
-                 MathOptFormat.Nonlinear(:(2 * $x + sin($x)^2 - $y)),
+                 MOF.Nonlinear(:(2 * $x + sin($x)^2 - $y)),
                  MOI.EqualTo(1.0))
         MOI.set(model, MOI.ConstraintName(), con, "con")
-        MOI.write_to_file(model, "test.mof.json")
+        MOI.write_to_file(model, TEST_MOF_FILE)
         # Read the model back in.
-        model2 = MathOptFormat.Model()
-        MOI.read_from_file(model2, "test.mof.json")
+        model2 = MOF.Model()
+        MOI.read_from_file(model2, TEST_MOF_FILE)
         con2 = MOI.get(model2, MOI.ConstraintIndex, "con")
         foo2 = MOI.get(model2, MOI.ConstraintFunction(), con2)
         # Test that we recover the constraint.
