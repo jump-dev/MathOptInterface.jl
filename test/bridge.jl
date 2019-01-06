@@ -177,9 +177,16 @@ MOIU.@model(NoRSOCModel,
         x = MOI.add_variables(bridgedmock, 3)
         err = MOI.UnsupportedConstraint{MOI.VectorAffineFunction{Float64},
                                         MOI.LogDetConeTriangle}()
-        @test_throws err begin
-            MOIB.bridge_type(bridgedmock, MOI.VectorAffineFunction{Float64},
-                             MOI.LogDetConeTriangle)
+        if VERSION < v"0.7-"
+            @test_throws typeof(err) begin
+                MOIB.bridge_type(bridgedmock, MOI.VectorAffineFunction{Float64},
+                                 MOI.LogDetConeTriangle)
+            end
+        else
+            @test_throws err begin
+                MOIB.bridge_type(bridgedmock, MOI.VectorAffineFunction{Float64},
+                                 MOI.LogDetConeTriangle)
+            end
         end
         c = MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
                                MOI.RotatedSecondOrderCone(3))
