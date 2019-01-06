@@ -43,11 +43,11 @@ end
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         MOI.write_to_file(model, "test.mof.json")
         if VERSION >= v"0.7"
-            @test read("test.mof.json", String) ==
-                read("models/nlp.mof.json", String)
+            @test replace(read("test.mof.json", String), '\r' => "") ==
+                replace(read("passing_models/nlp.mof.json", String), '\r' => "")
         else
-            @test readstring("test.mof.json") ==
-                readstring("models/nlp.mof.json")
+            @test replace(readstring("test.mof.json"), '\r', "") ==
+                replace(readstring("passing_models/nlp.mof.json"), '\r', "")
         end
     end
     @testset "Error handling" begin

@@ -1,0 +1,6 @@
+NAME
+ROWS
+ N  c
+ N  d
+COLUMNS
+ENDATA

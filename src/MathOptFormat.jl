@@ -1,5 +1,7 @@
 module MathOptFormat
 
+include("MPS.jl")
+
 const VERSION = 0
 
 using DataStructures, JSON, MathOptInterface

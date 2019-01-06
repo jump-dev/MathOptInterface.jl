@@ -24,39 +24,12 @@ end
         model = MathOptFormat.Model()
         MOI.add_variable(model)
         @test_throws Exception MOI.read_from_file(model,
-            "models/empty_model.mof.json")
+            joinpath("passing_models", "empty_model.mof.json"))
     end
-    @testset "incompatible_version" begin
+    @testset "$(filename)" for filename in filter(
+            f -> endswith(f, ".mof.json"), readdir("failing_models"))
         @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/incompatible_version.mof.json")
-    end
-    @testset "unsupported_constraint_set" begin
-        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/unsupported_constraint_set.mof.json")
-    end
-    @testset "unsupported_constraint_function" begin
-        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/unsupported_constraint_function.mof.json")
-    end
-    @testset "unsupported_objective_function" begin
-        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/unsupported_objective_function.mof.json")
-    end
-    @testset "unsupported_objective_sense" begin
-        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/unsupported_objective_sense.mof.json")
-    end
-    @testset "multiple_objectives" begin
-        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/multiple_objectives.mof.json")
-    end
-    @testset "blank_variable_name" begin
-        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/blank_variable_name.mof.json")
-    end
-    @testset "missing_variable_name" begin
-        @test_throws Exception MOI.read_from_file(MathOptFormat.Model(),
-            "models/missing_variable_name.mof.json")
+            joinpath("failing_models", filename))
     end
 end
 
@@ -337,4 +310,8 @@ end
     # Clean up
     sleep(1.0)  # allow time for unlink to happen
     rm("test.mof.json", force=true)
+end
+
+@testset "MPS" begin
+    include("MPS.jl")
 end
