@@ -105,9 +105,9 @@ function supports_bridging_constraint(b::LazyBridgeOptimizer, F::Type{<:MOI.Abst
 end
 function bridge_type(b::LazyBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) where BT
     update_constraint!(b, F, S)
-    BridgeType = get(b.best, (F, S), nothing)
-    if BridgeType === nothing
+    bridge_type = get(b.best, (F, S), nothing)
+    if bridge_type === nothing
         throw(MOI.UnsupportedConstraint{F, S}())
     end
-    return BridgeType
+    return bridge_type
 end
