@@ -316,6 +316,12 @@ be thrown:
 InvalidIndex
 ```
 
+As discussed in [JuMP mapping](@ref), for scalar constraint with a nonzero
+function constant, a [`ScalarFunctionConstantNotZero`](@ref) should be thrown:
+```@docs
+ScalarFunctionConstantNotZero
+```
+
 The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs

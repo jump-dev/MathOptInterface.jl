@@ -39,6 +39,14 @@ AddConstraintNotAllowed{F, S}() where {F, S} = AddConstraintNotAllowed{F, S}("")
 
 operation_name(::AddConstraintNotAllowed{F, S}) where {F, S} = "Adding `$F`-in-`$S` constraints"
 
+"""
+    struct ScalarFunctionConstantNotZero{T, F, S} <: Exception
+        constant::T
+    end
+
+An error indicating that the constant part of the function in the constraint
+`F`-in-`S` is nonzero.
+"""
 struct ScalarFunctionConstantNotZero{T, F, S} <: Exception
     constant::T
 end
@@ -65,8 +73,8 @@ Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vecto
   `F`-in-`S` constraints,
 * a [`AddConstraintNotAllowed`](@ref) error is thrown if it supports `F`-in-`S`
   constraints but it cannot add the constraint(s) in its current state and
-* a [`ScalarFunctionConstantNotZero{T, F, S}`](@ref) error may be thrown if
-  `func` is an [`AbstractScalarFunction`](@ref) with nonzero constant and `set`
+* a [`ScalarFunctionConstantNotZero`](@ref) error may be thrown if
+  `func` is an `AbstractScalarFunction` with nonzero constant and `set`
   is [`EqualTo`](@ref), [`GreaterThan`](@ref), [`LessThan`](@ref) or
   [`Interval`](@ref).
 """
