@@ -961,8 +961,8 @@ Therefore, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessT
 - `AbstractScalarFunction` in `GreaterThan`, `LessThan`, `EqualTo`, or
   `Interval` with a nonzero constant in the function. Constants in the affine
   function should instead be moved into the parameters of the corresponding
-  sets. The [`ScalarFunctionConstantNotZero`](@ref) should be thrown in this
-  case.
+  sets. The [`ScalarFunctionConstantNotZero`](@ref) exception may be thrown in
+  this case.
 
 - `ScalarAffineFunction` in `Nonnegative`, `Nonpositive` or `Zeros`. Alternative constraints are available by using a `VectorAffineFunction` with one output row or `ScalarAffineFunction` with `GreaterThan`, `LessThan`, or `EqualTo`.
 

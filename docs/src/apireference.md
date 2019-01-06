@@ -317,7 +317,8 @@ InvalidIndex
 ```
 
 As discussed in [JuMP mapping](@ref), for scalar constraint with a nonzero
-function constant, a [`ScalarFunctionConstantNotZero`](@ref) should be thrown:
+function constant, a [`ScalarFunctionConstantNotZero`](@ref) exception may be
+thrown:
 ```@docs
 ScalarFunctionConstantNotZero
 ```

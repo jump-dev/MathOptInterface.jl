@@ -344,7 +344,7 @@ function orderedindicestest(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]
 end
 
-# Test that `MOI.ScalarFunctionConstantNotZero` is thrown when constraint with
+# Test that `MOI.ScalarFunctionConstantNotZero` is thrown when a constraint with
 # a function with nonzero constant is added
 function scalar_function_constant_not_zero(model::MOI.ModelLike)
     @testset "Constraint with nonzero function constant" begin
