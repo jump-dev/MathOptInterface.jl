@@ -350,17 +350,33 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
     @testset "Constraint with nonzero function constant" begin
         err = MOI.ScalarFunctionConstantNotZero{Float64,
                MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}(1.0)
-        @test_throws err begin
-            MOI.add_constraint(model,
-                 MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 1.0),
-                 MOI.EqualTo(2.0))
+        if VERSION < v"0.7-"
+            @test_throws typeof(err) begin
+                MOI.add_constraint(model,
+                     MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 1.0),
+                     MOI.EqualTo(2.0))
+            end
+        else
+            @test_throws err begin
+                MOI.add_constraint(model,
+                     MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 1.0),
+                     MOI.EqualTo(2.0))
+            end
         end
         err = MOI.ScalarFunctionConstantNotZero{Float64,
                MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}(2.0)
-        @test_throws err begin
-            MOI.add_constraint(model,
-                 MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0),
-                 MOI.GreaterThan(1.0))
+        if VERSION < v"0.7-"
+            @test_throws typeof(err) begin
+                MOI.add_constraint(model,
+                     MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0),
+                     MOI.GreaterThan(1.0))
+            end
+        else
+            @test_throws err begin
+                MOI.add_constraint(model,
+                     MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0),
+                     MOI.GreaterThan(1.0))
+            end
         end
     end
 end
