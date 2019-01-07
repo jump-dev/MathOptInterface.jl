@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.8.1 (January 07, 2019)
+v0.8.1 (January 7, 2019)
 -------------------------
 
 - Adding an NLP objective now overrides any objective set using the
