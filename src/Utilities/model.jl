@@ -137,6 +137,7 @@ function _removevar!(constrs::Vector{<:ConstraintEntry{MOI.SingleVariable}},
     end
     return rm
 end
+# TODO Remove this function when #523 is closed
 # Delete the variable of index `vi` in the constraints and delete its
 # `SingleVariable` constraints
 function delete_variable_in_constraints(model::AbstractModel, vi::VI)

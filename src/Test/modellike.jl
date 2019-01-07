@@ -18,6 +18,7 @@ end
 
 function nametest(model::MOI.ModelLike)
     @testset "Name test with $(typeof(model))" begin
+        MOI.empty!(model)
         @test MOIU.supports_default_copy_to(model, #=copy_names=# true)
         @test MOI.supports(model, MOI.Name())
         @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
