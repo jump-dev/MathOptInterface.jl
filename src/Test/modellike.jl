@@ -345,7 +345,8 @@ function orderedindicestest(model::MOI.ModelLike)
 end
 
 # Test that `MOI.ScalarFunctionConstantNotZero` is thrown when a constraint with
-# a function with nonzero constant is added
+# a function with nonzero constant is added. This test is optional because
+# solvers could choose to support scalar functions with nonzero constants.
 function scalar_function_constant_not_zero(model::MOI.ModelLike)
     @testset "Constraint with nonzero function constant" begin
         err = MOI.ScalarFunctionConstantNotZero{Float64,
