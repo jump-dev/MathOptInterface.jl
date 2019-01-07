@@ -1,6 +1,15 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.8.1 (January 07, 2019)
+-------------------------
+
+- Adding an NLP objective now overrides any objective set using the
+  `ObjectiveFunction` attribute (#619).
+- Allow custom constraint types with `fullbridgeoptimizer` (#617).
+- Add `Vectorize` bridge which transforms scalar linear constraints into vector
+  linear constraints (#615).
+
 v0.8.0 (December 18, 2018)
 --------------------------
 
