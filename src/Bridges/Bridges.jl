@@ -26,7 +26,7 @@ include("lazybridgeoptimizer.jl")
 # This is used by JuMP and removes the need to update JuMP everytime a bridge is added
 MOIU.@model(AllBridgedConstraints,
             (),
-            (MOI.Interval,),
+            (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan, MOI.Interval,),
             (MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
              MOI.PositiveSemidefiniteConeSquare,
              MOI.LogDetConeTriangle, MOI.RootDetConeTriangle),
@@ -42,6 +42,7 @@ Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in thi
 """
 function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
     bridgedmodel = MOIB.LazyBridgeOptimizer(model, AllBridgedConstraints{T}())
+    add_bridge(bridgedmodel, MOIB.VectorizeBridge{T})
     add_bridge(bridgedmodel, MOIB.SplitIntervalBridge{T})
     add_bridge(bridgedmodel, MOIB.QuadtoSOCBridge{T})
     add_bridge(bridgedmodel, MOIB.GeoMeanBridge{T})
@@ -54,6 +55,8 @@ function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
     bridgedmodel
 end
 
+include("vectorizebridge.jl")
+@bridge Vectorize VectorizeBridge () (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
 include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (MOI.Interval,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
 include("rsocbridge.jl")

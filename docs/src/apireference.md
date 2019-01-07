@@ -316,6 +316,13 @@ be thrown:
 InvalidIndex
 ```
 
+As discussed in [JuMP mapping](@ref), for scalar constraint with a nonzero
+function constant, a [`ScalarFunctionConstantNotZero`](@ref) exception may be
+thrown:
+```@docs
+ScalarFunctionConstantNotZero
+```
+
 The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs
@@ -349,6 +356,7 @@ Bridges.add_bridge
 
 Below is the list of bridges implemented in this package.
 ```@docs
+Bridges.VectorizeBridge
 Bridges.SplitIntervalBridge
 Bridges.RSOCBridge
 Bridges.GeoMeanBridge

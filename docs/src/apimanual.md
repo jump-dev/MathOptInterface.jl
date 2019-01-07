@@ -958,7 +958,11 @@ One notable difference is that a variable with an upper and lower bound is trans
 
 Therefore, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessThan` constraints, users will not be able to write: `@constraint(m, 2x + y <= 10)` in JuMP. With this in mind, developers should support all the constraint types that they want to be usable from JuMP. That said, from the perspective of JuMP, solvers can safely choose to not support the following constraints:
 
-- `ScalarAffineFunction` in `GreaterThan`, `LessThan`, or `EqualTo` with a nonzero constant in the function. Constants in the affine function should instead be moved into the parameters of the corresponding sets.
+- `AbstractScalarFunction` in `GreaterThan`, `LessThan`, `EqualTo`, or
+  `Interval` with a nonzero constant in the function. Constants in the affine
+  function should instead be moved into the parameters of the corresponding
+  sets. The [`ScalarFunctionConstantNotZero`](@ref) exception may be thrown in
+  this case.
 
 - `ScalarAffineFunction` in `Nonnegative`, `Nonpositive` or `Zeros`. Alternative constraints are available by using a `VectorAffineFunction` with one output row or `ScalarAffineFunction` with `GreaterThan`, `LessThan`, or `EqualTo`.
 

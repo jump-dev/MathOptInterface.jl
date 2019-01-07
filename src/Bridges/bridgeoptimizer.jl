@@ -104,7 +104,20 @@ function MOI.is_valid(b::AbstractBridgeOptimizer, ci::CI)
         return MOI.is_valid(b.model, ci)
     end
 end
-MOI.delete(b::AbstractBridgeOptimizer, vi::VI) = MOI.delete(b.model, vi)
+function MOI.delete(b::AbstractBridgeOptimizer, vi::VI)
+    for (F, S) in MOI.get(b.bridged, MOI.ListOfConstraints())
+        if F == MOI.SingleVariable
+            for ci in MOI.get(b.bridged, MOI.ListOfConstraintIndices{F, S}())
+                f = MOI.get(b.bridged, MOI.ConstraintFunction(), ci)::MOI.SingleVariable
+                if f.variable == vi
+                    MOI.delete(b, ci)
+                end
+            end
+        end
+    end
+    MOIU.delete_variable_in_constraints(b.bridged, vi)
+    MOI.delete(b.model, vi)
+end
 function MOI.delete(b::AbstractBridgeOptimizer, ci::CI)
     if is_bridged(b, typeof(ci))
         if !MOI.is_valid(b, ci)
