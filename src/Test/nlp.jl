@@ -273,6 +273,51 @@ function feasibility_sense_with_no_objective_and_no_hessian_test(model, config)
                                     FeasibilitySenseEvaluator(false))
 end
 
+function nlp_objective_and_moi_objective_test(model::MOI.ModelLike,
+                                              config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+
+    @test MOI.supports(model, MOI.NLPBlock())
+    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    lb = [1.0]
+    ub = [2.0]
+
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub),
+                                  FeasibilitySenseEvaluator(true), true)
+
+    x = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    # Avoid starting at zero because it's a critial point.
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
+
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f_x =  MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    # This objective function should be ignored.
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f_x)}(), f_x)
+
+    # TODO: config.query tests
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+
+        @test 1.0 ≤ MOI.get(model, MOI.VariablePrimal(), x) ≤ 2.0
+    end
+end
+
 const nlptests = Dict("hs071" => hs071_test,
                       "hs071_no_hessian" => hs071_no_hessian_test,
                       "feasibility_sense_with_objective_and_hessian" =>
@@ -282,6 +327,9 @@ const nlptests = Dict("hs071" => hs071_test,
                       "feasibility_sense_with_no_objective_and_with_hessian" =>
                       feasibility_sense_with_no_objective_and_with_hessian_test,
                       "feasibility_sense_with_no_objective_and_no_hessian" =>
-                      feasibility_sense_with_no_objective_and_no_hessian_test)
+                      feasibility_sense_with_no_objective_and_no_hessian_test,
+                      "nlp_objective_and_moi_objective" =>
+                      nlp_objective_and_moi_objective_test
+                      )
 
 @moitestset nlp

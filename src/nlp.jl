@@ -64,11 +64,11 @@ end
 
 A `struct` encoding a set of nonlinear constraints of the form ``lb \\le g(x)
 \\le ub`` and, if `has_objective == true`, a nonlinear objective function
-``f(x)``. `constraint_bounds` holds the pairs of ``lb`` and ``ub`` elements. It
-is an error to set both a nonlinear objective function and another objective
-function using an `ObjectiveFunction` attribute. The `evaluator` is a callback
-object that is used to query function values, derivatives, and expression
-graphs. If `has_objective == false`, then it is an error to query properties of
+``f(x)``. `constraint_bounds` holds the pairs of ``lb`` and ``ub`` elements.
+Nonlinear objectives *override* any objective set by using the
+`ObjectiveFunction` attribute. The `evaluator` is a callback object that is used
+to query function values, derivatives, and expression graphs. If
+`has_objective == false`, then it is an error to query properties of
 the objective function, and in Hessian-of-the-Lagrangian queries, `σ` must be
 set to zero. Throughout the evaluator, all variables are ordered according to
 ListOfVariableIndices(). """

@@ -272,7 +272,8 @@ If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
 `VariableIndex` objects,
 
 ```julia
-set(model, ConstraintFunction(), c, ScalarAffineFunction([v1,v2],[1.0,2.0],5.0))
+set(model, ConstraintFunction(), c,
+    ScalarAffineFunction(ScalarAffineTerm.([1.0, 2.0], [v1, v2]), 5.0))
 set(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
 ```
 """
