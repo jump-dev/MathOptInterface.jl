@@ -226,7 +226,7 @@ MOIU.@model(NoRSOCModel,
     end
 
     @testset "Combining two briges" begin
-        full_bridged_mock = MOIB.full_bridgeoptimizer(mock, Float64)
+        full_bridged_mock = MOIB.full_bridge_optimizer(mock, Float64)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1, √2])
         config = MOIT.TestConfig()
         MOIT.rootdett1vtest(full_bridged_mock, config)
@@ -244,7 +244,7 @@ MOIU.@model(NoRSOCModel,
     end
 
     @testset "Continuous Conic" begin
-        MOIT.contconictest(MOIB.full_bridgeoptimizer(mock, Float64), MOIT.TestConfig(solve=false), ["logdets", "rootdets", "psds"])
+        MOIT.contconictest(MOIB.full_bridge_optimizer(mock, Float64), MOIT.TestConfig(solve=false), ["logdets", "rootdets", "psds"])
     end
 end
 
