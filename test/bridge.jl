@@ -11,10 +11,10 @@ MOIU.@model(SimpleModel,
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction,))
 
-function test_noc(bridgedmock, F, S, n)
-    @test MOI.get(bridgedmock, MOI.NumberOfConstraints{F, S}()) == n
-    @test length(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{F, S}())) == n
-    @test ((F, S) in MOI.get(bridgedmock, MOI.ListOfConstraints())) == !iszero(n)
+function test_noc(bridged_mock, F, S, n)
+    @test MOI.get(bridged_mock, MOI.NumberOfConstraints{F, S}()) == n
+    @test length(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{F, S}())) == n
+    @test ((F, S) in MOI.get(bridged_mock, MOI.ListOfConstraints())) == !iszero(n)
 end
 
 # Test deletion of bridge
@@ -44,40 +44,40 @@ end
 
 @testset "BridgeOptimizer" begin
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-    bridgedmock = MOIB.SplitInterval{Float64}(mock)
+    bridged_mock = MOIB.SplitInterval{Float64}(mock)
 
     @testset "Issue #453" begin
-        MOI.empty!(bridgedmock)
-        MOIU.loadfromstring!(bridgedmock, """
+        MOI.empty!(bridged_mock)
+        MOIU.loadfromstring!(bridged_mock, """
             variables: x
             maxobjective: 3.0x
             c: 2.0x in Interval(1.0, 4.0)
             d: x in LessThan(1.5)
         """)
-        x = MOI.get(bridgedmock, MOI.VariableIndex, "x")
+        x = MOI.get(bridged_mock, MOI.VariableIndex, "x")
         @test isa(x, MOI.VariableIndex)
-        c1 = MOI.get(bridgedmock, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}, "c")
+        c1 = MOI.get(bridged_mock, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}, "c")
         @test isa(c1, MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}})
-        c2 = MOI.get(bridgedmock, MOI.ConstraintIndex, "c")
+        c2 = MOI.get(bridged_mock, MOI.ConstraintIndex, "c")
         @test c1 == c2
-        d1 = MOI.get(bridgedmock, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "d")
+        d1 = MOI.get(bridged_mock, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}, "d")
         @test isa(d1, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}})
-        d2 = MOI.get(bridgedmock, MOI.ConstraintIndex, "d")
+        d2 = MOI.get(bridged_mock, MOI.ConstraintIndex, "d")
         @test d1 == d2
     end
 
-    MOI.empty!(bridgedmock)
+    MOI.empty!(bridged_mock)
 
     @testset "Name test" begin
-        MOIT.nametest(bridgedmock)
+        MOIT.nametest(bridged_mock)
     end
 
     @testset "Copy test" begin
-        MOIT.failcopytestc(bridgedmock)
-        MOIT.failcopytestia(bridgedmock)
-        MOIT.failcopytestva(bridgedmock)
-        MOIT.failcopytestca(bridgedmock)
-        MOIT.copytest(bridgedmock, SimpleModel{Float64}())
+        MOIT.failcopytestc(bridged_mock)
+        MOIT.failcopytestia(bridged_mock)
+        MOIT.failcopytestva(bridged_mock)
+        MOIT.failcopytestca(bridged_mock)
+        MOIT.copytest(bridged_mock, SimpleModel{Float64}())
     end
 
     @testset "Custom test" begin
@@ -114,7 +114,7 @@ end
     end
 
     @testset "Continuous Linear" begin
-        MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
+        MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve=false))
     end
 end
 
@@ -132,119 +132,119 @@ MOIU.@model(NoRSOCModel,
 
 @testset "LazyBridgeOptimizer" begin
     mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
-    bridgedmock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
+    bridged_mock = MOIB.LazyBridgeOptimizer(mock, Model{Float64}())
 
     @testset "UnsupportedConstraint when it cannot be bridged" begin
-        x = MOI.add_variables(bridgedmock, 4)
+        x = MOI.add_variables(bridged_mock, 4)
         err = MOI.UnsupportedConstraint{MOI.VectorOfVariables,
                                         MOI.RotatedSecondOrderCone}()
         if VERSION < v"0.7-"
             @test_throws typeof(err) begin
-                MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
+                MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
                                    MOI.RotatedSecondOrderCone(4))
             end
         else
             @test_throws err begin
-                MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
+                MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
                                    MOI.RotatedSecondOrderCone(4))
             end
         end
     end
 
-    MOIB.add_bridge(bridgedmock, MOIB.SplitIntervalBridge{Float64})
-    MOIB.add_bridge(bridgedmock, MOIB.RSOCtoPSDBridge{Float64})
-    MOIB.add_bridge(bridgedmock, MOIB.SOCtoPSDBridge{Float64})
-    MOIB.add_bridge(bridgedmock, MOIB.RSOCBridge{Float64})
+    MOIB.add_bridge(bridged_mock, MOIB.SplitIntervalBridge{Float64})
+    MOIB.add_bridge(bridged_mock, MOIB.RSOCtoPSDBridge{Float64})
+    MOIB.add_bridge(bridged_mock, MOIB.SOCtoPSDBridge{Float64})
+    MOIB.add_bridge(bridged_mock, MOIB.RSOCBridge{Float64})
 
     @testset "Name test" begin
-        MOIT.nametest(bridgedmock)
+        MOIT.nametest(bridged_mock)
     end
 
     @testset "Copy test" begin
-        MOIT.failcopytestc(bridgedmock)
-        MOIT.failcopytestia(bridgedmock)
-        MOIT.failcopytestva(bridgedmock)
-        MOIT.failcopytestca(bridgedmock)
-        MOIT.copytest(bridgedmock, NoRSOCModel{Float64}())
+        MOIT.failcopytestc(bridged_mock)
+        MOIT.failcopytestia(bridged_mock)
+        MOIT.failcopytestva(bridged_mock)
+        MOIT.failcopytestca(bridged_mock)
+        MOIT.copytest(bridged_mock, NoRSOCModel{Float64}())
     end
 
     # Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path.
     @testset "Bridge selection" begin
-        MOI.empty!(bridgedmock)
-        @test !(MOI.supports_constraint(bridgedmock,
+        MOI.empty!(bridged_mock)
+        @test !(MOI.supports_constraint(bridged_mock,
                                         MOI.VectorAffineFunction{Float64},
                                         MOI.LogDetConeTriangle))
-        x = MOI.add_variables(bridgedmock, 3)
+        x = MOI.add_variables(bridged_mock, 3)
         err = MOI.UnsupportedConstraint{MOI.VectorAffineFunction{Float64},
                                         MOI.LogDetConeTriangle}()
         if VERSION < v"0.7-"
             @test_throws typeof(err) begin
-                MOIB.bridge_type(bridgedmock, MOI.VectorAffineFunction{Float64},
+                MOIB.bridge_type(bridged_mock, MOI.VectorAffineFunction{Float64},
                                  MOI.LogDetConeTriangle)
             end
         else
             @test_throws err begin
-                MOIB.bridge_type(bridgedmock, MOI.VectorAffineFunction{Float64},
+                MOIB.bridge_type(bridged_mock, MOI.VectorAffineFunction{Float64},
                                  MOI.LogDetConeTriangle)
             end
         end
-        c = MOI.add_constraint(bridgedmock, MOI.VectorOfVariables(x),
+        c = MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
                                MOI.RotatedSecondOrderCone(3))
-        @test MOIB.bridge_type(bridgedmock, MOI.VectorOfVariables,
+        @test MOIB.bridge_type(bridged_mock, MOI.VectorOfVariables,
                     MOI.RotatedSecondOrderCone) == MOIB.RSOCtoPSDBridge{Float64}
-        @test MOIB.bridge(bridgedmock, c) isa MOIB.RSOCtoPSDBridge
-        @test bridgedmock.dist[(MOI.VectorOfVariables,
+        @test MOIB.bridge(bridged_mock, c) isa MOIB.RSOCtoPSDBridge
+        @test bridged_mock.dist[(MOI.VectorOfVariables,
                                 MOI.RotatedSecondOrderCone)] == 1
     end
 
     @testset "Supports" begin
-        fullbridgedmock = MOIB.fullbridgeoptimizer(mock, Float64)
+        full_bridged_mock = MOIB.full_bridge_optimizer(mock, Float64)
         for F in [MOI.SingleVariable, MOI.ScalarAffineFunction{Float64},
                   MOI.ScalarQuadraticFunction{Float64}]
-            @test MOI.supports_constraint(fullbridgedmock, F,
+            @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.Interval{Float64})
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
                   MOI.VectorQuadraticFunction{Float64}]
-            @test MOI.supports_constraint(fullbridgedmock, F,
+            @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.PositiveSemidefiniteConeSquare)
-            @test MOI.supports_constraint(fullbridgedmock, F,
+            @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.GeometricMeanCone)
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
             # The bridges in this for loop do not support yet
             # VectorQuadraticFunction. See TODO's for the reason.
             # TODO: Missing vcat for quadratic for supporting quadratic.
-            @test MOI.supports_constraint(fullbridgedmock, F,
+            @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.RotatedSecondOrderCone)
             # TODO: Det bridges need to use MOIU.operate to support quadratic.
-            @test MOI.supports_constraint(fullbridgedmock, F,
+            @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.LogDetConeTriangle)
-            @test MOI.supports_constraint(fullbridgedmock, F,
+            @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.RootDetConeTriangle)
         end
     end
 
     @testset "Combining two briges" begin
-        fullbridgedmock = MOIB.fullbridgeoptimizer(mock, Float64)
+        full_bridged_mock = MOIB.full_bridgeoptimizer(mock, Float64)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1, √2])
         config = MOIT.TestConfig()
-        MOIT.rootdett1vtest(fullbridgedmock, config)
-        MOIT.rootdett1ftest(fullbridgedmock, config)
+        MOIT.rootdett1vtest(full_bridged_mock, config)
+        MOIT.rootdett1ftest(full_bridged_mock, config)
         # Dual is not yet implemented for RootDet and GeoMean bridges
-        ci = first(MOI.get(fullbridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
-        test_delete_bridge(fullbridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+        ci = first(MOI.get(full_bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
+        test_delete_bridge(full_bridged_mock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
                                                     (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone, 0),
                                                     (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
 
     end
 
     @testset "Continuous Linear" begin
-        MOIT.contlineartest(bridgedmock, MOIT.TestConfig(solve=false))
+        MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve=false))
     end
 
     @testset "Continuous Conic" begin
-        MOIT.contconictest(MOIB.fullbridgeoptimizer(mock, Float64), MOIT.TestConfig(solve=false), ["logdets", "rootdets", "psds"])
+        MOIT.contconictest(MOIB.full_bridgeoptimizer(mock, Float64), MOIT.TestConfig(solve=false), ["logdets", "rootdets", "psds"])
     end
 end
 
@@ -253,11 +253,11 @@ end
     config = MOIT.TestConfig()
 
     @testset "Vectorize" begin
-        bridgedmock = MOIB.Vectorize{Float64}(mock)
+        bridged_mock = MOIB.Vectorize{Float64}(mock)
 
-        MOIT.scalar_function_constant_not_zero(bridgedmock)
+        MOIT.scalar_function_constant_not_zero(bridged_mock)
 
-        MOIT.basic_constraint_tests(bridgedmock, config,
+        MOIT.basic_constraint_tests(bridged_mock, config,
                                     include=Iterators.product(
                                         [MOI.SingleVariable,
                                          MOI.ScalarAffineFunction{Float64}],
@@ -272,13 +272,13 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0],
                 (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[-1]],
                 (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0], [1]]))
-        MOIT.linear2test(bridgedmock, config)
+        MOIT.linear2test(bridged_mock, config)
 
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]))
-        MOIT.linear4test(bridgedmock, config)
+        MOIT.linear4test(bridged_mock, config)
 
         MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4/3, 4/3]),
@@ -302,21 +302,21 @@ end
                  (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0]]))
         # linear14 has double variable bounds for the z variable
         mock.eval_variable_constraint_dual = false
-        MOIT.linear14test(bridgedmock, config)
+        MOIT.linear14test(bridged_mock, config)
         mock.eval_variable_constraint_dual = true
 
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(3),
                                (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[2]])
-        MOIT.psdt0vtest(bridgedmock, config)
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()))
-        test_delete_bridge(bridgedmock, ci, 3,
+        MOIT.psdt0vtest(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()))
+        test_delete_bridge(bridged_mock, ci, 3,
                            ((MOI.VectorAffineFunction{Float64},
                              MOI.Zeros, 0),))
    end
 
     @testset "Interval" begin
-        bridgedmock = MOIB.SplitInterval{Float64}(mock)
-        MOIT.basic_constraint_tests(bridgedmock, config,
+        bridged_mock = MOIB.SplitInterval{Float64}(mock)
+        MOIT.basic_constraint_tests(bridged_mock, config,
                                     include=[(MOI.SingleVariable,
                                               MOI.Interval{Float64}),
                                              (MOI.ScalarAffineFunction{Float64},
@@ -332,41 +332,41 @@ end
                   (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [0]),
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0]),
              (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [6.0, 6.0]))
-        MOIT.linear10test(bridgedmock, config)
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
-        newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridgedmock, MOI.ListOfVariableIndices())), 0.0)
-        MOI.set(bridgedmock, MOI.ConstraintFunction(), ci, newf)
-        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
-        test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
+        MOIT.linear10test(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
+        newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridged_mock, MOI.ListOfVariableIndices())), 0.0)
+        MOI.set(bridged_mock, MOI.ConstraintFunction(), ci, newf)
+        @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ newf
+        test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
    end
 
     @testset "RSOC" begin
-        bridgedmock = MOIB.RSOC{Float64}(mock)
+        bridged_mock = MOIB.RSOC{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
                               (MOI.SingleVariable,                MOI.EqualTo{Float64}) => [-√2, -1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
-        MOIT.rotatedsoc1vtest(bridgedmock, config)
+        MOIT.rotatedsoc1vtest(bridged_mock, config)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
-        MOIT.rotatedsoc1ftest(bridgedmock, config)
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
-        test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0),))
+        MOIT.rotatedsoc1ftest(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
+        test_delete_bridge(bridged_mock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone, 0),))
     end
 
     @testset "QuadtoSOC" begin
-        bridgedmock = MOIB.QuadtoSOC{Float64}(mock)
+        bridged_mock = MOIB.QuadtoSOC{Float64}(mock)
         @testset "Error for non-convex quadratic constraints" begin
-            x = MOI.add_variable(bridgedmock)
+            x = MOI.add_variable(bridged_mock)
             @test_throws ErrorException begin
-                MOI.add_constraint(bridgedmock,
+                MOI.add_constraint(bridged_mock,
                                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
                                                                [MOI.ScalarQuadraticTerm(1.0, x, x)],
                                                                0.0),
                                    MOI.GreaterThan(0.0))
             end
             @test_throws ErrorException begin
-                MOI.add_constraint(bridgedmock,
+                MOI.add_constraint(bridged_mock,
                                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
                                                                [MOI.ScalarQuadraticTerm(-1.0, x, x)],
                                                                0.0),
@@ -384,7 +384,7 @@ end
                     (MOI.FEASIBLE_POINT, [0.5, (√13 - 1)/4])
                 )
             )
-            MOIT.solve_qcp_edge_cases(bridgedmock, config)
+            MOIT.solve_qcp_edge_cases(bridged_mock, config)
             ci = first(MOI.get(mock,
                                MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},
                                                            MOI.RotatedSecondOrderCone}()))
@@ -404,35 +404,35 @@ end
         @testset "QCP tests" begin
             MOIU.set_mock_optimize!(mock,
                 (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FEASIBLE_POINT))
-            MOIT.qcp1test(bridgedmock, config)
+            MOIT.qcp1test(bridged_mock, config)
             MOIU.set_mock_optimize!(mock,
                 (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
-            MOIT.qcp2test(bridgedmock, config)
+            MOIT.qcp2test(bridged_mock, config)
             MOIU.set_mock_optimize!(mock,
                 (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
-            MOIT.qcp3test(bridgedmock, config)
+            MOIT.qcp3test(bridged_mock, config)
             @testset "Bridge deletion" begin
-                ci = first(MOI.get(bridgedmock,
+                ci = first(MOI.get(bridged_mock,
                                    MOI.ListOfConstraintIndices{MOI.ScalarQuadraticFunction{Float64},
                                                                MOI.LessThan{Float64}}()))
-                test_delete_bridge(bridgedmock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),))
+                test_delete_bridge(bridged_mock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),))
             end
         end
     end
 
     @testset "SquarePSD" begin
-        bridgedmock = MOIB.SquarePSD{Float64}(mock)
+        bridged_mock = MOIB.SquarePSD{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
                               (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2, 2])
-        MOIT.psds0vtest(bridgedmock, config)
+        MOIT.psds0vtest(bridged_mock, config)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1]],
                               (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2, 2])
-        MOIT.psds0ftest(bridgedmock, config)
-        ci = first(MOI.get(bridgedmock,
+        MOIT.psds0ftest(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock,
                            MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},
                                                        MOI.PositiveSemidefiniteConeSquare}()))
-        test_delete_bridge(bridgedmock, ci, 4,
+        test_delete_bridge(bridged_mock, ci, 4,
                            ((MOI.VectorAffineFunction{Float64},
                              MOI.PositiveSemidefiniteConeTriangle, 0),
                             (MOI.ScalarAffineFunction{Float64},
@@ -441,57 +441,57 @@ end
 
     @testset "GeoMean" begin
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [ones(4); 2; √2; √2])
-        bridgedmock = MOIB.GeoMean{Float64}(mock)
-        MOIT.geomean1vtest(bridgedmock, config)
-        MOIT.geomean1ftest(bridgedmock, config)
+        bridged_mock = MOIB.GeoMean{Float64}(mock)
+        MOIT.geomean1vtest(bridged_mock, config)
+        MOIT.geomean1ftest(bridged_mock, config)
         # Dual is not yet implemented for GeoMean bridge
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
-        test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
+        test_delete_bridge(bridged_mock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},      1)))
     end
 
     @testset "SOCtoPSD" begin
-        bridgedmock = MOIB.SOCtoPSD{Float64}(mock)
+        bridged_mock = MOIB.SOCtoPSD{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1/√2, 1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2/2, -1/2, √2/4, -1/2, √2/4, √2/4]],
                               (MOI.VectorAffineFunction{Float64}, MOI.Zeros)                            => [[-√2]])
-        MOIT.soc1vtest(bridgedmock, config)
-        MOIT.soc1ftest(bridgedmock, config)
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone}()))
-        test_delete_bridge(bridgedmock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
+        MOIT.soc1vtest(bridged_mock, config)
+        MOIT.soc1ftest(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone}()))
+        test_delete_bridge(bridged_mock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
     end
 
     @testset "RSOCtoPSD" begin
-        bridgedmock = MOIB.RSOCtoPSD{Float64}(mock)
+        bridged_mock = MOIB.RSOCtoPSD{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
                               (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√2, -1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2, -1/2, √2/8, -1/2, √2/8, √2/8]])
-        MOIT.rotatedsoc1vtest(bridgedmock, config)
+        MOIT.rotatedsoc1vtest(bridged_mock, config)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2],
                               (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2, -1/2, √2/8, -1/2, √2/8, √2/8]])
-        MOIT.rotatedsoc1ftest(bridgedmock, config)
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
-        test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
+        MOIT.rotatedsoc1ftest(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}()))
+        test_delete_bridge(bridged_mock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
     end
 
     @testset "LogDet" begin
-        bridgedmock = MOIB.LogDet{Float64}(mock)
+        bridged_mock = MOIB.LogDet{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1, 0, 1, 0, 0, 1])
-        MOIT.logdett1vtest(bridgedmock, config)
-        MOIT.logdett1ftest(bridgedmock, config)
+        MOIT.logdett1vtest(bridged_mock, config)
+        MOIT.logdett1ftest(bridged_mock, config)
         # Dual is not yet implemented for LogDet bridge
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle}()))
-        test_delete_bridge(bridgedmock, ci, 5, ((MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone, 0), (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle}()))
+        test_delete_bridge(bridged_mock, ci, 5, ((MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone, 0), (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
     end
 
     @testset "RootDet" begin
-        bridgedmock = MOIB.RootDet{Float64}(mock)
+        bridged_mock = MOIB.RootDet{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1])
-        MOIT.rootdett1vtest(bridgedmock, config)
-        MOIT.rootdett1ftest(bridgedmock, config)
+        MOIT.rootdett1vtest(bridged_mock, config)
+        MOIT.rootdett1ftest(bridged_mock, config)
         # Dual is not yet implemented for RootDet bridge
-        ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
-        test_delete_bridge(bridgedmock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
+        test_delete_bridge(bridged_mock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
                                                 (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone, 0),
                                                 (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
     end
