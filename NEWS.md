@@ -6,7 +6,8 @@ v0.8.1 (January 7, 2019)
 
 - Adding an NLP objective now overrides any objective set using the
   `ObjectiveFunction` attribute (#619).
-- Allow custom constraint types with `fullbridgeoptimizer` (#617).
+- Rename `fullbridgeoptimizer` into `full_bridge_optimizer` (#621).
+- Allow custom constraint types with `full_bridge_optimizer` (#617).
 - Add `Vectorize` bridge which transforms scalar linear constraints into vector
   linear constraints (#615).
 
