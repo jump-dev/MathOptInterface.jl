@@ -36,11 +36,12 @@ MOIU.@model(AllBridgedConstraints,
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 """
-    fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
+    full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
 
-Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in this package and for the coefficient type `T`.
+Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in
+this package and for the coefficient type `T`.
 """
-function fullbridgeoptimizer(model::MOI.ModelLike, ::Type{T}) where T
+function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     cache = MOIU.UniversalFallback(AllBridgedConstraints{T}())
     bridgedmodel = MOIB.LazyBridgeOptimizer(model, cache)
     add_bridge(bridgedmodel, MOIB.VectorizeBridge{T})
