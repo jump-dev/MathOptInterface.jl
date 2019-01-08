@@ -1351,7 +1351,7 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfVariables()) == 7
 
     η = 10.0
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(-1.0, x[1:6]), η), MOI.GreaterThan(0.0))
+    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(-1.0, x[1:6]), 0.0), MOI.GreaterThan(-η))
     c2 = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1:6, MOI.ScalarAffineTerm.(-1.0, x[1:6])), zeros(6)), MOI.Nonpositives(6))
     α = 0.8
     δ = 0.9
@@ -1385,7 +1385,7 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [2η/3, 0, η/3, 0, 0, 0, η*δ*(1 - 1/√3)/2] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ -η atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ [-2η/3, 0, -η/3, 0, 0, 0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c3) ≈ [η*δ*(1/√3+1/3)/2, -η*δ/(3*√2), η*δ*(1/√3-1/3)/2] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c4) ≈ 0.0 atol=atol rtol=rtol
