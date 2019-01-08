@@ -145,16 +145,18 @@ MOF format:
 The arity of a nonlinear function. One of:
  - `Nary` if the function accepts one or more arguments
  - `Unary` if the function accepts exactly one argument
- - `Binary` if the function accepts exactly two arguments.
+ - `Binary` if the function accepts exactly two arguments
+ - `Ternary` if the function accepts exactly three arguments.
 """
-@enum ARITY Nary Unary Binary
+@enum ARITY Nary Unary Binary Ternary
 
 # A nice error message telling the user they supplied the wrong number of
 # arguments to a nonlinear function.
 function validate_arguments(function_name, arity::ARITY, num_arguments::Int)
     if ((arity == Nary && num_arguments < 1) ||
         (arity == Unary && num_arguments != 1) ||
-        (arity == Binary && num_arguments != 2))
+        (arity == Binary && num_arguments != 2) ||
+        (arity == Ternary && num_arguments != 3))
         error("The function $(function_name) is a $(arity) function, but you " *
               "have passed $(num_arguments) arguments.")
     end
@@ -188,6 +190,11 @@ const SUPPORTED_FUNCTIONS = Pair{String, Tuple{Symbol, ARITY}}[
     "min"   => (:min, Nary),
     "max"   => (:max, Nary),
     # ==========================================================================
+    # floor(x) = ⌊x⌋
+    "floor"   => (:floor, Unary),
+    # ceil(x) = ⌈x⌉
+    "ceil"   => (:ceil, Unary),
+    # ==========================================================================
     # The absolute value function: abs(x) = (x >= 0 ? x : -x).
     "abs"   => (:abs, Unary),
     # ==========================================================================
@@ -203,6 +210,23 @@ const SUPPORTED_FUNCTIONS = Pair{String, Tuple{Symbol, ARITY}}[
     # The square root function: sqrt(x) = √x = x^(0.5).
     "sqrt"  => (:sqrt, Unary),
     # ==========================================================================
+    # Boolean operators
+    # A && B = A and B
+    # "&&" => (:&&, Binary),
+    # A || B = A or B
+    # "||" => (:||, Binary),
+    # ==========================================================================
+    # Comparison operators
+    "<" => (:<, Binary),
+    "<=" => (:<=, Binary),
+    ">" => (:>, Binary),
+    ">=" => (:>=, Binary),
+    "==" => (:(==), Binary),
+    "!=" => (:!=, Binary),
+    # ==========================================================================
+    "ifelse" => (:ifelse, Ternary),
+    # "not" => (:!, Unary),
+    # ==========================================================================
     # The unary trigonometric functions. These must have exactly one argument.
     "cos"   => (:cos, Unary),
     "cosh"  => (:cosh, Unary),
@@ -215,6 +239,7 @@ const SUPPORTED_FUNCTIONS = Pair{String, Tuple{Symbol, ARITY}}[
     "tan"   => (:tan, Unary),
     "tanh"  => (:tanh, Unary),
     "atan"  => (:atan, Unary),
+    # "atan2" => (:atan, Binary),
     "atanh" => (:atanh, Unary)
 ]
 

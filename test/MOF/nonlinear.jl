@@ -103,7 +103,11 @@ end
                      :($x / 2), :(2 / $x), :($x / $y), :($x / $y / $z), :(2^$x),
                      :($x^2), :($x^$y), :($x^(2 * $y + 1)), :(sin($x)),
                      :(sin($x + $y)), :(2 * $x + sin($x)^2 + $y),
-                     :(sin($(3im))^2 + cos($(3im))^2), :($(1 + 2im) * $x)]
+                     :(sin($(3im))^2 + cos($(3im))^2), :($(1 + 2im) * $x),
+                     :(ceil($x)), :(floor($x)), :($x < $y), :($x <= $y),
+                     :($x > $y), :($x >= $y), :($x == $y), :($x != $y),
+                     # :($x && $y), :($x || $y), 
+                     :(ifelse($x > 0, 1, $y))]
             roundtrip_nonlinear_expression(expr, var_to_string, string_to_var)
         end
     end
