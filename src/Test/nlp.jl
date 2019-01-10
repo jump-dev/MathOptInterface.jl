@@ -24,11 +24,25 @@ end
 
 function MOI.features_available(d::HS071)
     if d.enable_hessian
-        return [:Grad, :Jac, :Hess]
+        return [:Grad, :Jac, :Hess, :ExprGraph]
     else
-        return [:Grad, :Jac]
+        return [:Grad, :Jac, :ExprGraph]
     end
 end
+
+function MOI.objective_expr(d::HS071)
+    return :(x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3])
+end
+
+function MOI.constraint_expr(d::HS071, i::Int)
+    if i == 1
+        return :(x[1] * x[2] * x[3] * x[4] >= 25)
+    elseif i == 2
+        return :(x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2 == 40)
+    end
+    error("No constraint $i")
+end
+
 
 MOI.eval_objective(d::HS071, x) = x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
 
@@ -178,12 +192,22 @@ end
 
 function MOI.features_available(d::FeasibilitySenseEvaluator)
     if d.enable_hessian
-        return [:Grad, :Jac, :Hess]
+        return [:Grad, :Jac, :Hess, :ExprGraph]
     else
-        return [:Grad, :Jac]
+        return [:Grad, :Jac, :ExprGraph]
     end
 end
 
+function MOI.objective_expr(d::FeasibilitySenseEvaluator)
+    return :(0 * x[1])
+end
+
+function MOI.constraint_expr(d::FeasibilitySenseEvaluator, i::Int)
+    if i == 1
+        return :(x[1]^2 == 1)
+    end
+    error("No constraint $i")
+end
 
 MOI.eval_objective(d::FeasibilitySenseEvaluator, x) = 0.0
 
