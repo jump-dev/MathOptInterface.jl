@@ -113,10 +113,22 @@ end
 _get(uf, attr::MOI.AbstractOptimizerAttribute)          = uf.optattr[attr]
 _get(uf, attr::MOI.AbstractModelAttribute)              = uf.modattr[attr]
 function _get(uf, attr::MOI.AbstractVariableAttribute, vi::VI)
-    return get(uf.varattr[attr], vi, nothing)
+    attribute_dict = get(uf.varattr, attr, nothing)
+    if attribute_dict === nothing
+        # It means the attribute is not set to any variable so in particular, it
+        # is not set for `vi`
+        return nothing
+    end
+    return get(attribute_dict, vi, nothing)
 end
 function _get(uf, attr::MOI.AbstractConstraintAttribute, ci::CI)
-    return get(uf.conattr[attr], ci, nothing)
+    attribute_dict = get(uf.conattr, attr, nothing)
+    if attribute_dict === nothing
+        # It means the attribute is not set to any constraint so in particular,
+        # it is not set for `ci`
+        return nothing
+    end
+    return get(attribute_dict, ci, nothing)
 end
 function MOI.get(uf::UniversalFallback,
                  attr::Union{MOI.AbstractOptimizerAttribute,
