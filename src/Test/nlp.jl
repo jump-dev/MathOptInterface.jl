@@ -199,7 +199,7 @@ function MOI.features_available(d::FeasibilitySenseEvaluator)
 end
 
 function MOI.objective_expr(d::FeasibilitySenseEvaluator)
-    return :(0 * x[1])
+    return :(0.0)
 end
 
 function MOI.constraint_expr(d::FeasibilitySenseEvaluator, i::Int)
