@@ -1,5 +1,5 @@
 @testset "Continuous Linear" begin
-    mock = MOIU.MockOptimizer(ModelForMock{Float64}())
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
     config = MOIT.TestConfig()
     config_no_lhs_modif = MOIT.TestConfig(modify_lhs = false)
 

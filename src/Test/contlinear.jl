@@ -1472,8 +1472,12 @@ function partial_start_test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
+    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
+
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
 
     MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     MOI.add_constraint(model, y, MOI.GreaterThan(0.0))

@@ -55,7 +55,8 @@ end
 
 @testset "Continuous Linear tests" begin
     config = MOIT.TestConfig(solve=false)
-    MOIT.contlineartest(Model{Float64}(), config)
+    exclude = ["partial_start"] # Model doesn't support VariablePrimalStart.
+    MOIT.contlineartest(Model{Float64}(), config, exclude)
 end
 
 @testset "Continuous Conic tests" begin
