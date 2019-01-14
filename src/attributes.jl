@@ -789,6 +789,13 @@ This group of statuses means that something unexpected or problematic happened.
     OTHER_ERROR
 )
 
+"""
+    SpecificTerminationStatus()
+
+A model attribute for a solver specific string explaning why the optimizer stopped.
+"""
+struct SpecificTerminationStatus <: AbstractModelAttribute end
+
 ## Result status
 
 """
@@ -866,6 +873,7 @@ function is_set_by_optimize(::Union{ObjectiveValue,
                                     RawSolver,
                                     ResultCount,
                                     TerminationStatus,
+                                    SpecificTerminationStatus,
                                     PrimalStatus,
                                     DualStatus,
                                     VariablePrimal,
