@@ -1459,6 +1459,45 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+# Exclude this test if the solver isn't intended to support incomplete starting
+# points. However, it's arguably more user-friendly to ignore them with a
+# warning or fill in the missing values with something reasonable.
+function partial_start_test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # maximize 2x + y
+    # s.t. x + y <= 1
+    #      x, y >= 0
+    #      x starts at 1.0. Start point for y is unspecified.
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
+
+    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, y, MOI.GreaterThan(0.0))
+    obj = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], [x, y]),
+                                   0.0)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    x_plus_y = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, [x, y]), 0.0)
+    MOI.add_constraint(model, x_plus_y, MOI.LessThan(1.0))
+
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 0.0 atol=atol rtol=rtol
+    end
+end
+
 const contlineartests = Dict("linear1" => linear1test,
                              "linear2" => linear2test,
                              "linear3" => linear3test,
@@ -1475,6 +1514,7 @@ const contlineartests = Dict("linear1" => linear1test,
                              "linear12" => linear12test,
                              "linear13" => linear13test,
                              "linear14" => linear14test,
-                             "linear15" => linear15test)
+                             "linear15" => linear15test,
+                             "partial_start" => partial_start_test)
 
 @moitestset contlinear

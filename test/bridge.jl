@@ -114,7 +114,8 @@ end
     end
 
     @testset "Continuous Linear" begin
-        MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve=false))
+        exclude = ["partial_start"] # VariablePrimalStart not supported.
+        MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve=false), exclude)
     end
 end
 
@@ -240,7 +241,8 @@ MOIU.@model(NoRSOCModel,
     end
 
     @testset "Continuous Linear" begin
-        MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve=false))
+        exclude = ["partial_start"] # VariablePrimalStart not supported.
+        MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve=false), exclude)
     end
 
     @testset "Continuous Conic" begin
