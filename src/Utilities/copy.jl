@@ -117,15 +117,27 @@ function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
     _pass_attributes(dest, src, copy_names, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), passattr!)
 end
 
-function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, attrs, canargs, getargs, setargs, passattr!::Function=MOI.set)
+function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
+                          copy_names::Bool, idxmap::IndexMap, attrs,
+                          supports_args, get_args, set_args,
+                          pass_attr!::Function=MOI.set)
     for attr in attrs
         @assert MOI.is_copyable(attr)
-        if (copy_names || !(attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName))
-            value = MOI.get(src, attr, getargs...)
-            if value !== nothing
-                mapped_value = attribute_value_map(idxmap, value)
-                passattr!(dest, attr, setargs..., mapped_value)
+        if !copy_names && (attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName)
+            continue
+        end
+        if attr isa MOI.VariablePrimalStart || attr isa MOI.ConstraintPrimalStart || attr isa MOI.ConstraintDualStart
+            # As starting values are simply *hints* for the optimization, not
+            # supporting them gives a warning, not an error
+            if !MOI.supports(dest, attr, supports_args...)
+                @warn("$attr is not supported by $(typeof(dest)).")
+                continue
             end
+        end
+        value = MOI.get(src, attr, get_args...)
+        if value !== nothing
+            mapped_value = attribute_value_map(idxmap, value)
+            pass_attr!(dest, attr, set_args..., mapped_value)
         end
     end
 end
