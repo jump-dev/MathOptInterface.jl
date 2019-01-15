@@ -1459,9 +1459,8 @@ function linear15test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-# Exclude this test if the solver isn't intended to support incomplete starting
-# points. However, it's arguably more user-friendly to ignore them with a
-# warning or fill in the missing values with something reasonable.
+# This test can be passed by solvers that don't support VariablePrimalStart
+# because copy_to drops start information with a warning.
 function partial_start_test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
@@ -1471,8 +1470,6 @@ function partial_start_test(model::MOI.ModelLike, config::TestConfig)
     #      x starts at 1.0. Start point for y is unspecified.
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
-    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)

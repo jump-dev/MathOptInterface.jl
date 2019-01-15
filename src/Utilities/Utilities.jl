@@ -1,6 +1,6 @@
 module Utilities
 
-using Compat # For firstindex, lastindex and Nothing
+using Compat # For firstindex, lastindex, Nothing and `@warn`
 using Compat.LinearAlgebra # For dot
 
 using MathOptInterface
