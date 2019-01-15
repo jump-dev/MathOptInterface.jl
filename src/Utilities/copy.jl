@@ -130,7 +130,8 @@ function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
             # As starting values are simply *hints* for the optimization, not
             # supporting them gives a warning, not an error
             if !MOI.supports(dest, attr, supports_args...)
-                Compat.@warn("$attr is not supported by $(typeof(dest)).")
+                Compat.@warn("$attr is not supported by $(typeof(dest)), this ",
+                             "information will be discarded.")
                 continue
             end
         end
