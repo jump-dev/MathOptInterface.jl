@@ -790,11 +790,11 @@ This group of statuses means that something unexpected or problematic happened.
 )
 
 """
-    SpecificTerminationStatus()
+    RawStatusString()
 
 A model attribute for a solver specific string explaning why the optimizer stopped.
 """
-struct SpecificTerminationStatus <: AbstractModelAttribute end
+struct RawStatusString <: AbstractModelAttribute end
 
 ## Result status
 
@@ -873,7 +873,7 @@ function is_set_by_optimize(::Union{ObjectiveValue,
                                     RawSolver,
                                     ResultCount,
                                     TerminationStatus,
-                                    SpecificTerminationStatus,
+                                    RawStatusString,
                                     PrimalStatus,
                                     DualStatus,
                                     VariablePrimal,

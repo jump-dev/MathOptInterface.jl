@@ -106,7 +106,7 @@ SimplexIterations
 BarrierIterations
 NodeCount
 TerminationStatus
-SpecificTerminationStatus
+RawStatusString
 PrimalStatus
 DualStatus
 ```
