@@ -627,8 +627,8 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1/√2, 1/√2] atol=atol rtol=rtol
 
         if abvars
-            @test MOI.get(model, MOI.ConstraintPrimal(), vc1) ≈ 0.5
-            @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ 1.0
+            @test MOI.get(model, MOI.ConstraintPrimal(), vc1) ≈ 0.5 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ 1.0 atol=atol rtol=rtol
         end
 
         @test MOI.get(model, MOI.ConstraintPrimal(), rsoc) ≈ [0.5, 1.0, 1/√2, 1/√2] atol=atol rtol=rtol
