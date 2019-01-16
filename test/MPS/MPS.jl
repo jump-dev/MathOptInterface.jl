@@ -14,17 +14,19 @@ function test_model_equality(model_string, variables, constraints)
 end
 
 @testset "Errors" begin
+    failing_models_dir = joinpath(@__DIR__, "failing_models")
+
     @testset "Non-empty model" begin
         model = MPS.Model()
-        x = MOI.add_variable(model)
+        MOI.add_variable(model)
         @test_throws Exception MOI.read_from_file(
-            model, joinpath("MPS", "failing_models", "bad_name.mps"))
+            model, joinpath(failing_models_dir, "bad_name.mps"))
     end
 
     @testset "$(filename)" for filename in filter(
-            f -> endswith(f, ".mps"), readdir("MPS/failing_models"))
+        f -> endswith(f, ".mps"), readdir(failing_models_dir))
         @test_throws Exception MOI.read_from_file(MPS.Model(),
-            joinpath("MPS", "failing_models", filename))
+            joinpath(failing_models_dir, filename))
     end
 end
 
@@ -77,7 +79,7 @@ end
 
 @testset "stacked_data" begin
     model = MPS.Model()
-    MOI.read_from_file(model, "MPS/stacked_data.mps")
+    MOI.read_from_file(model, joinpath(@__DIR__, "stacked_data.mps"))
     MOI.set(model, MOI.ConstraintName(), MOI.get(model,
             MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer}())[1],
         "con5")
@@ -102,7 +104,7 @@ end
 
 @testset "free_integer" begin
     model = MPS.Model()
-    MOI.read_from_file(model, "MPS/free_integer.mps")
+    MOI.read_from_file(model, joinpath(@__DIR__, "free_integer.mps"))
     MOI.set(model, MOI.ConstraintName(), MOI.get(model,
             MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer}())[1],
         "con2")

@@ -44,10 +44,10 @@ end
         MOI.write_to_file(model, TEST_MOF_FILE)
         if VERSION >= v"0.7"
             @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
-                replace(read("MOF/nlp.mof.json", String), '\r' => "")
+                replace(read(joinpath(@__DIR__, "nlp.mof.json"), String), '\r' => "")
         else
             @test replace(readstring(TEST_MOF_FILE), '\r', "") ==
-                replace(readstring("MOF/nlp.mof.json"), '\r', "")
+                replace(readstring(joinpath(@__DIR__, "nlp.mof.json")), '\r', "")
         end
     end
     @testset "Error handling" begin

@@ -6,5 +6,6 @@ const MOIU = MOI.Utilities
 
 include("MOF/MOF.jl")
 include("MPS/MPS.jl")
+include("CBF/CBF.jl")
 
 end

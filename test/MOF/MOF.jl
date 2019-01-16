@@ -19,16 +19,19 @@ function test_model_equality(model_string, variables, constraints)
 end
 
 @testset "Error handling: read_from_file" begin
-    @testset "non-empty_model" begin
+    failing_models_dir = joinpath(@__DIR__, "failing_models")
+
+    @testset "Non-empty model" begin
         model = MOF.Model()
         MOI.add_variable(model)
         @test_throws Exception MOI.read_from_file(
-            model, "MOF/empty_model.mof.json")
+            model, joinpath(failing_models_dir, "empty_model.mof.json"))
     end
+
     @testset "$(filename)" for filename in filter(
-            f -> endswith(f, ".mof.json"), readdir("MOF/failing_models"))
+        f -> endswith(f, ".mof.json"), readdir(failing_models_dir))
         @test_throws Exception MOI.read_from_file(MOF.Model(),
-            joinpath("MOF", "failing_models", filename))
+            joinpath(failing_models_dir, filename))
     end
 end
 
