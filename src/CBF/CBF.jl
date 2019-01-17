@@ -119,8 +119,6 @@ function MOI.write_to_file(model::Model, filename::String)
             error("Objective function type $obj_type is not supported.")
         end
 
-        # TODO power cone (parametrized) constraints.
-
         # Non-PSD constraints.
         num_rows = 0 # Number of constraint rows.
         con_cones = Tuple{String, Int}[] # List of cone types/dimensions.
