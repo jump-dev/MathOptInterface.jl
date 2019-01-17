@@ -547,6 +547,14 @@ end
 
 # Arithmetic
 
+function Base.zero(::Type{MOI.ScalarAffineFunction{T}}) where T
+    return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
+end
+function Base.zero(::Type{MOI.ScalarQuadraticFunction{T}}) where T
+    return MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{T}[],
+                                       MOI.ScalarQuadraticTerm{T}[], zero(T))
+end
+
 """
     operate(op::Function, ::Type{T},
             args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
