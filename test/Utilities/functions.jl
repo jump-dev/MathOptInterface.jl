@@ -155,6 +155,10 @@
     end
     @testset "Scalar" begin
         @testset "Affine" begin
+            @testset "zero" begin
+                f = @inferred MOIU.zero(MOI.ScalarAffineFunction{Float64})
+                @test MOIU.isapprox_zero(f, 1e-16)
+            end
             @testset "promote_operation" begin
                 @test MOIU.promote_operation(+, Float64, MOI.SingleVariable,
                                              MOI.SingleVariable) == MOI.ScalarAffineFunction{Float64}
@@ -225,6 +229,10 @@
             end
         end
         @testset "Quadratic" begin
+            @testset "zero" begin
+                f = @inferred MOIU.zero(MOI.ScalarQuadraticFunction{Float64})
+                @test MOIU.isapprox_zero(f, 1e-16)
+            end
             @testset "promote_operation" begin
                 @test MOIU.promote_operation(+, Int,
                                              MOI.ScalarQuadraticFunction{Int},
