@@ -44,9 +44,9 @@ function write_to_file(model::ModelLike, io::IO)
     error("write_to_file not implemented for model of type $(typeof(model))")
 end
 
-function write_to_file(model::MOI.ModelLike, filename::String)
+function write_to_file(model::ModelLike, filename::String)
     open(filename, "w") do io
-        MOI.write_to_file(model, io)
+        write_to_file(model, io)
     end
 end
 
@@ -65,7 +65,7 @@ Once the contents of the file are loaded into the model, users can query the var
 `get(model, ListOfVariableIndices())`. However, some filetypes, such as LP files, do not
 maintain an explicit ordering of the variables, so the returned list may be in an
 arbitrary order. In this case, users should look up each variable index by name:
-`get(model, VariableIndex, "name")`. 
+`get(model, VariableIndex, "name")`.
 """
 function read_from_file end
 
@@ -73,9 +73,9 @@ function read_from_file(model::ModelLike, io::IO)
     error("read_from_file not implemented for model of type $(typeof(model))")
 end
 
-function read_from_file(model::MOI.ModelLike, filename::String)
+function read_from_file(model::ModelLike, filename::String)
     open(filename, "r") do io
-        MOI.read_from_file(model, io)
+        read_from_file(model, io)
     end
 end
 
