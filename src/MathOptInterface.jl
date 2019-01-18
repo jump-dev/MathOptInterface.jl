@@ -33,14 +33,26 @@ function optimize! end
 
 """
     write_to_file(model::ModelLike, filename::String)
+    write_to_file(model::ModelLike, io::IO)
 
 Writes the current model data to the given file.
 Supported file types depend on the model type.
 """
 function write_to_file end
 
+function write_to_file(model::ModelLike, io::IO)
+    error("write_to_file not implemented for model of type $(typeof(model))")
+end
+
+function write_to_file(model::MOI.ModelLike, filename::String)
+    open(filename, "w") do io
+        MOI.write_to_file(model, io)
+    end
+end
+
 """
     read_from_file(model::ModelLike, filename::String)
+    read_from_file(model::ModelLike, io::IO)
 
 Read the file `filename` into the model `model`. If `model` is non-empty, this may
 throw an error.
@@ -51,11 +63,21 @@ Supported file types depend on the model type.
 
 Once the contents of the file are loaded into the model, users can query the variables via
 `get(model, ListOfVariableIndices())`. However, some filetypes, such as LP files, do not
-maintain an explicit ordering of the variables. Therefore, the returned list may be in an
-arbitrary order. To avoid depending on the order of the indices, users should look up each
-variable index by name: `get(model, VariableIndex, "name")`.
+maintain an explicit ordering of the variables, so the returned list may be in an
+arbitrary order. In this case, users should look up each variable index by name:
+`get(model, VariableIndex, "name")`. 
 """
 function read_from_file end
+
+function read_from_file(model::ModelLike, io::IO)
+    error("read_from_file not implemented for model of type $(typeof(model))")
+end
+
+function read_from_file(model::MOI.ModelLike, filename::String)
+    open(filename, "r") do io
+        MOI.read_from_file(model, io)
+    end
+end
 
 """
     is_empty(model::ModelLike)
