@@ -94,9 +94,6 @@ struct VectorSlackBridge{T, F<:MOI.AbstractVectorFunction, S<:MOI.AbstractVector
     equality::CI{F, MOI.Zeros}
 end
 function VectorSlackBridge{T, F, S}(model, f::F, s::S) where {T, F<:MOI.AbstractVectorFunction, S<:MOI.AbstractVectorSet}
-    if S <: MOI.Zeros
-        error("type no allowed")
-    end
     d = MOI.dimension(s)
     slacks = MOI.add_variables(model, d)
     new_f = MOIU.operate(-, T, f, MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(slacks)))
