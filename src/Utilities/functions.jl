@@ -871,7 +871,7 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
         f::MOI.VectorAffineFunction{T},
         g::Vector{T}) where T
     @assert output_dimension(f) == length(g)
-    f.constant .= op.(f.constant, g)
+    f.constants .= op.(f.constants, g)
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -886,7 +886,7 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
         f::MOI.VectorAffineFunction{T},
         g::MOI.VectorAffineFunction{T}) where T
     append!(f.terms, operate_terms(op, g.terms))
-    f.constant .= op.(f.constants, g.constants)
+    f.constants .= op.(f.constants, g.constants)
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -899,7 +899,7 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
         f::MOI.VectorQuadraticFunction{T},
         g::Vector{T}) where T
     @assert output_dimension(f) == length(g)
-    f.constant .= op.(f.constant, g)
+    f.constants .= op.(f.constants, g)
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -914,7 +914,7 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
         f::MOI.VectorQuadraticFunction{T},
         g::MOI.VectorAffineFunction{T}) where T
     append!(f.affine_terms, operate_terms(op, g.terms))
-    f.constant .= op.(f.constants, g.constants)
+    f.constants .= op.(f.constants, g.constants)
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},

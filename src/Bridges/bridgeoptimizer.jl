@@ -342,3 +342,5 @@ end
 # Variables
 MOI.add_variable(b::AbstractBridgeOptimizer) = MOI.add_variable(b.model)
 MOI.add_variables(b::AbstractBridgeOptimizer, n) = MOI.add_variables(b.model, n)
+
+# TODO add transform

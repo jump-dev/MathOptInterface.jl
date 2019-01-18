@@ -66,8 +66,7 @@ include("slackbridge.jl")
 @bridge(VectorSlack, VectorSlackBridge, 
 (),
 (),
-(MOI.Zeros,
-MOI.Nonnegatives,
+(MOI.Nonnegatives,
 MOI.Nonpositives,
 MOI.SecondOrderCone,
 MOI.RotatedSecondOrderCone,
@@ -80,8 +79,7 @@ MOI.RootDetConeTriangle),
 (),
 (),
 (MOI.VectorAffineFunction,
-#MOI.VectorQuadraticFunction
-)
+MOI.VectorQuadraticFunction)
 )
 include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (MOI.Interval,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
