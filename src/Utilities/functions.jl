@@ -948,7 +948,7 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
     d = output_dimension(f)
     @assert length(α) == d
     return MOI.VectorAffineFunction{T}(
-            [MOI.VectorAffineTerm.(collect(1:d), 
+            [MOI.VectorAffineTerm.(collect(1:d),
              MOI.ScalarAffineTerm.(one(T), f.variables))],
                          op.(α))
 end
