@@ -63,24 +63,14 @@ include("vectorizebridge.jl")
 @bridge Vectorize VectorizeBridge () (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
 include("slackbridge.jl")
 @bridge ScalarSlack ScalarSlackBridge () (MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () () (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
-@bridge(VectorSlack, VectorSlackBridge, 
-(),
-(),
-(MOI.Nonnegatives,
-MOI.Nonpositives,
-MOI.SecondOrderCone,
-MOI.RotatedSecondOrderCone,
-MOI.GeometricMeanCone,
-MOI.PositiveSemidefiniteConeSquare,
-MOI.LogDetConeTriangle,
-MOI.RootDetConeTriangle),
-(),
-(),
-(),
-(),
-(MOI.VectorAffineFunction,
-MOI.VectorQuadraticFunction)
-)
+@bridge(VectorSlack, VectorSlackBridge,  (), (),
+    (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
+    MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+    MOI.PositiveSemidefiniteConeSquare, MOI.LogDetConeTriangle,
+    MOI.RootDetConeTriangle, MOI.PowerCone, MOI.DualPowerCone),
+    (), (), (), (),
+    (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
+    )
 include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (MOI.Interval,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
 include("rsocbridge.jl")

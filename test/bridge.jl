@@ -388,6 +388,12 @@ end
         # deletion test wont work due to deleted variable
         # test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
         #                                         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
+
+        for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
+            for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
+                @test MOIB.added_constraint_types(MOIB.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
+            end
+        end
     end
     
     @testset "Vector slack" begin
@@ -404,6 +410,12 @@ end
         MOI.modify(bridgedmock, ci, MOI.VectorConstantChange([1.0]))
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ 
             MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([2.0, 1.0], [x, y])), [1.0])
+        # This power cone test is failing
+        # fp = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2,3], MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], [x, y, y])), [0.0])
+        # cp = MOI.add_constraint(bridgedmock, fp, MOI.PowerCone(0.1))
+        # @test MOI.get(bridgedmock, MOI.ConstraintSet(), cp) == MOI.PowerCone(0.1)
+        # MOI.set(bridgedmock, MOI.ConstraintSet(), cp, MOI.PowerCone(0.2))
+        # @test MOI.get(bridgedmock, MOI.ConstraintSet(), cp) == MOI.PowerCone(0.2)
 
         MOIT.basic_constraint_tests(bridgedmock, config,
                                     include=[(F, S) for
@@ -419,6 +431,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0, 100, 0]),
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100, 100, -100]))
         MOIT.linear7test(bridgedmock, config)
+
         loc = MOI.get(bridgedmock, MOI.ListOfConstraints())
         @test length(loc) == 2
         @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
@@ -428,6 +441,12 @@ end
         @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
         @test (MOI.VectorOfVariables, MOI.Nonnegatives) in loc
         @test (MOI.VectorOfVariables, MOI.Nonpositives) in loc
+
+        for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
+            for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
+                @test MOIB.added_constraint_types(MOIB.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
+            end
+        end
     end
 
     @testset "RSOC" begin

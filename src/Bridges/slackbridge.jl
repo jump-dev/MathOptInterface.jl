@@ -6,12 +6,12 @@
 The `ScalarSlackBridge` converts a constraint `F`-in-`S` where `F` is a function different
  from `SingleVariable` into the constraints ``F in EqualTo{T}`` and `SingleVariable`-in-`S`.
 """
-struct ScalarSlackBridge{T, F<:MOI.AbstractScalarFunction, S<:MOI.AbstractScalarSet} <: AbstractBridge
+struct ScalarSlackBridge{T, F, S} <: AbstractBridge
     slack::MOI.VariableIndex
     slack_in_set::CI{MOI.SingleVariable, S}
     equality::CI{F, MOI.EqualTo{T}}
 end
-function ScalarSlackBridge{T, F, S}(model, f::F, s::S) where {T, F<:MOI.AbstractScalarFunction, S<:MOI.AbstractScalarSet}
+function ScalarSlackBridge{T, F, S}(model, f::MOI.AbstractScalarFunction, s::S) where {T, F, S}
     slack = MOI.add_variable(model)
     new_f = MOIU.operate(-, T, f, MOI.SingleVariable(slack))
     slack_in_set = MOI.add_constraint(model, MOI.SingleVariable(slack), s)
@@ -39,7 +39,8 @@ end
 function concrete_bridge_type(::Type{<:ScalarSlackBridge{T}},
                               F::Type{<:MOI.AbstractScalarFunction},
                               S::Type{<:MOI.AbstractScalarSet}) where T
-    return ScalarSlackBridge{T, F, S}
+    F2 = MOIU.promote_operation(-, T, F, MOI.SingleVariable)
+    return ScalarSlackBridge{T, F2, S}
 end
 
 # Attributes, Bridge acting as an model
@@ -62,7 +63,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::ScalarSlac
     return MOI.get(model, attr, c.slack_in_set)
 end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::ScalarSlackBridge)
-    error("ScalarSlackBridge is not returning duals for now")
+    return MOI.get(model, a, c.slack_in_set)
 end
 
 # Constraints
@@ -88,12 +89,12 @@ end
 The `VectorSlackBridge` converts a constraint `F`-in-`S` where `F` is a function different
  from `VectorOfVariables` into the constraints ``F in Zeros`` and `VectorOfVariables`-in-`S`.
 """
-struct VectorSlackBridge{T, F<:MOI.AbstractVectorFunction, S<:MOI.AbstractVectorSet} <: AbstractBridge
+struct VectorSlackBridge{T, F, S} <: AbstractBridge
     slacks::Vector{MOI.VariableIndex}
     slacks_in_set::CI{MOI.VectorOfVariables, S}
     equality::CI{F, MOI.Zeros}
 end
-function VectorSlackBridge{T, F, S}(model, f::F, s::S) where {T, F<:MOI.AbstractVectorFunction, S<:MOI.AbstractVectorSet}
+function VectorSlackBridge{T, F, S}(model, f::MOI.AbstractVectorFunction, s::S) where {T, F, S}
     d = MOI.dimension(s)
     slacks = MOI.add_variables(model, d)
     new_f = MOIU.operate(-, T, f, MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(slacks)))
@@ -120,7 +121,8 @@ end
 function concrete_bridge_type(::Type{<:VectorSlackBridge{T}},
                               F::Type{<:MOI.AbstractVectorFunction},
                               S::Type{<:MOI.AbstractVectorSet}) where T
-    return VectorSlackBridge{T, F, S}
+    F2 = MOIU.promote_operation(-, T, F, MOI.VectorOfVariables)
+    return VectorSlackBridge{T, F2, S}
 end
 
 # Attributes, Bridge acting as an model
@@ -143,7 +145,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::VectorSlac
     return MOI.get(model, attr, c.slacks_in_set)
 end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::VectorSlackBridge)
-    error("VectorSlackBridge is not returning duals for now")
+    return MOI.get(model, a, c.slacks_in_set)
 end
 
 # Constraints
