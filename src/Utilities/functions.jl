@@ -684,6 +684,7 @@ const VectorLike{T} = Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T},
 
 ###################################### +/- #####################################
 ## promote_operation
+
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:ScalarAffineLike{T}},
                            ::Type{<:ScalarAffineLike{T}}) where T
@@ -848,7 +849,10 @@ function Base.:-(α::T, f::ScalarLike{T}) where T
 end
 
 # Vector +/-
-
+function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
+    ::Type{<:VectorAffineLike{T}}) where T
+return MOI.VectorAffineFunction{T}
+end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:VectorAffineLike{T}},
                            ::Type{<:VectorAffineLike{T}}) where T
@@ -870,16 +874,16 @@ end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
         f::MOI.VectorAffineFunction{T},
         g::Vector{T}) where T
-    @assert output_dimension(f) == length(g)
+    @assert MOI.output_dimension(f) == length(g)
     f.constants .= op.(f.constants, g)
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
         f::MOI.VectorAffineFunction{T},
         g::MOI.VectorOfVariables) where T
-    d = output_dimension(g)
-    @assert output_dimension(f) == d
-    push!(f.terms, MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
+    d = MOI.output_dimension(g)
+    @assert MOI.output_dimension(f) == d
+    append!(f.terms, MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -898,16 +902,16 @@ end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
         f::MOI.VectorQuadraticFunction{T},
         g::Vector{T}) where T
-    @assert output_dimension(f) == length(g)
+    @assert MOI.output_dimension(f) == length(g)
     f.constants .= op.(f.constants, g)
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.VectorQuadraticFunction{T},
                   g::MOI.VectorOfVariables) where T
-    d = output_dimension(g)
-    @assert output_dimension(f) == d
-    push!(f.affine_terms, MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
+    d = MOI.output_dimension(g)
+    @assert MOI.output_dimension(f) == d
+    append!(f.affine_terms, MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
     return f
 end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -934,6 +938,18 @@ end
 #     return operate!(+, T, operate(+, T, f, g), h, args...)
 # end
 
+# function operate(op::typeof(+), ::Type{T}, f::VectorOfVariables) where T
+#     return f
+# end
+
+function operate(op::typeof(-), ::Type{T}, f::MOI.VectorOfVariables) where T
+    d = MOI.output_dimension(f)
+    return MOI.VectorAffineFunction{T}(
+            MOI.VectorAffineTerm.(collect(1:d),
+             MOI.ScalarAffineTerm.(-one(T), f.variables)),
+                         fill(zero(T),d))
+end
+
 # Vector number +/- ...
 function operate(op::typeof(+), ::Type{T}, α::Vector{T}, f::VectorLike{T}) where T
     return operate(op, T, f, α)
@@ -945,22 +961,22 @@ end
 # Vector Variable +/- ...
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
     f::MOI.VectorOfVariables, α::Vector{T}) where T
-    d = output_dimension(f)
+    d = MOI.output_dimension(f)
     @assert length(α) == d
     return MOI.VectorAffineFunction{T}(
-            [MOI.VectorAffineTerm.(collect(1:d),
-             MOI.ScalarAffineTerm.(one(T), f.variables))],
+            MOI.VectorAffineTerm.(collect(1:d),
+             MOI.ScalarAffineTerm.(one(T), f.variables)),
                          op.(α))
 end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.VectorOfVariables,
                  g::MOI.VectorOfVariables) where T
-    d = output_dimension(f)
-    @assert output_dimension(g) == d
-    return MOI.VectorAffineFunction{T}([
-        MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(one(T), f.variables)),
+    d = MOI.output_dimension(f)
+    @assert MOI.output_dimension(g) == d
+    return MOI.VectorAffineFunction{T}(
+        vcat(MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(one(T), f.variables)),
         MOI.VectorAffineTerm.(collect(1:d), MOI.ScalarAffineTerm.(op(one(T)), g.variables))
-                          ],
+        ),
                          fill(zero(T),d))
 end
 function operate(op::typeof(+), ::Type{T},
