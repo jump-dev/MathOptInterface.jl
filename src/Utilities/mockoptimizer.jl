@@ -185,7 +185,7 @@ function MOI.set(mock::MockOptimizer, attr::MOI.Name, value)
 end
 function MOI.supports(mock::MockOptimizer, attr::MOI.VariableName,
                       IdxT::Type{MOI.VariableIndex})
-    return mock.supports_names && MOI.supports(mock, attr, IdxT)
+    return mock.supports_names && MOI.supports(mock.inner_model, attr, IdxT)
 end
 function MOI.set(mock::MockOptimizer,
                  attr::MOI.VariableName,
@@ -198,7 +198,7 @@ function MOI.set(mock::MockOptimizer,
 end
 function MOI.supports(mock::MockOptimizer, attr::MOI.ConstraintName,
                       IdxT::Type{<:MOI.ConstraintIndex})
-    return mock.supports_names && MOI.supports(mock, attr, IdxT)
+    return mock.supports_names && MOI.supports(mock.inner_model, attr, IdxT)
 end
 function MOI.set(mock::MockOptimizer,
                  attr::MOI.ConstraintName,
