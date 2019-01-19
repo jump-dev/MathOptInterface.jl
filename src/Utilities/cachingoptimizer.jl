@@ -403,21 +403,6 @@ function MOI.set(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,
     MOI.set(m.model_cache, attr, index, value)
 end
 
-# Names are not copied, i.e. we use the option `copy_names=false` in
-# `attachoptimizer`, so the caching optimizer can support names even if the
-# optimizer does not.
-function MOI.supports(m::CachingOptimizer,
-                      attr::Union{MOI.VariableName,
-                                  MOI.ConstraintName},
-                      IndexType::Type{<:MOI.Index})
-    return MOI.supports(m.model_cache, attr, IndexType)
-end
-
-function MOI.supports(m::CachingOptimizer,
-                      attr::MOI.Name)
-    return MOI.supports(m.model_cache, attr)
-end
-
 function MOI.supports(m::CachingOptimizer,
                       attr::Union{MOI.AbstractVariableAttribute,
                                   MOI.AbstractConstraintAttribute},
@@ -485,7 +470,33 @@ function MOI.get(model::CachingOptimizer,
   end
 end
 
-# Name
+#####
+##### Names
+#####
+
+# Names are not copied, i.e. we use the option `copy_names=false` in
+# `attachoptimizer`, so the caching optimizer can support names even if the
+# optimizer does not.
+function MOI.supports(model::CachingOptimizer,
+                      attr::Union{MOI.VariableName,
+                                  MOI.ConstraintName},
+                      IndexType::Type{<:MOI.Index})
+    return MOI.supports(model.model_cache, attr, IndexType)
+end
+function MOI.set(model::CachingOptimizer,
+                 attr::Union{MOI.VariableName, MOI.ConstraintName},
+                 index::MOI.Index, value)
+    MOI.set(model.model_cache, attr, index, value)
+end
+
+function MOI.supports(m::CachingOptimizer,
+                      attr::MOI.Name)
+    return MOI.supports(m.model_cache, attr)
+end
+function MOI.set(model::CachingOptimizer, attr::MOI.Name, value)
+    MOI.set(model.model_cache, attr, value)
+end
+
 function MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String)
     return MOI.get(m.model_cache, IdxT, name)
 end

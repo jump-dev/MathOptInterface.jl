@@ -16,6 +16,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     attribute::Int # MockModelAttribute
     varattribute::Dict{MOI.VariableIndex,Int} # MockVariableAttribute
     conattribute::Dict{MOI.ConstraintIndex,Int} # MockConstraintAttribute
+    supports_names::Bool # Allows to test with optimizer not supporting names
     needs_allocate_load::Bool # Allows to tests the Allocate-Load interface, see copy_to
     add_var_allowed::Bool
     add_con_allowed::Bool # If false, the optimizer throws AddConstraintNotAllowed
@@ -49,13 +50,15 @@ xor_index(vi::VI) = VI(xor(vi.value, internal_xor_mask))
 xor_index(ci::CI{F,S}) where {F,S} = CI{F,S}(xor(ci.value, internal_xor_mask))
 xor_variables(f) = mapvariables(xor_index, f)
 
-function MockOptimizer(inner_model::MOI.ModelLike; needs_allocate_load=false,
+function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
+                       needs_allocate_load=false,
                        eval_objective_value=true,
                        eval_variable_constraint_dual=true)
     return MockOptimizer(inner_model,
                          0,
                          Dict{MOI.VariableIndex,Int}(),
                          Dict{MOI.ConstraintIndex,Int}(),
+                         supports_names,
                          needs_allocate_load,
                          true,
                          true,
@@ -108,10 +111,33 @@ function MOI.optimize!(mock::MockOptimizer)
     mock.optimize!(mock)
 end
 
-MOI.supports(mock::MockOptimizer, ::Union{MOI.VariablePrimal,MockVariableAttribute}, ::Type{MOI.VariableIndex}) = true
-MOI.supports(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, IdxT::Type{MOI.VariableIndex}) = MOI.supports(mock.inner_model, attr, IdxT)
-MOI.supports(mock::MockOptimizer, ::Union{MOI.ConstraintDual,MockConstraintAttribute}, ::Type{<:MOI.ConstraintIndex}) = true
-MOI.supports(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute, IdxT::Type{<:MOI.ConstraintIndex}) = MOI.supports(mock.inner_model, attr, IdxT)
+function throw_mock_unsupported_names(attr)
+    throw(MOI.UnsupportedAttribute(
+        attr, "The MockOptimizer was configured not to support names for " *
+        "testing purpose using the `support_names=false` constructor keyword " *
+        "argument."))
+end
+
+function MOI.supports(mock::MockOptimizer,
+                      ::Union{MOI.VariablePrimal, MockVariableAttribute},
+                      ::Type{MOI.VariableIndex})
+    return true
+end
+function MOI.supports(mock::MockOptimizer,
+                      attr::MOI.AbstractVariableAttribute,
+                      IdxT::Type{MOI.VariableIndex})
+    return MOI.supports(mock.inner_model, attr, IdxT)
+end
+function MOI.supports(mock::MockOptimizer,
+                      ::Union{MOI.ConstraintDual, MockConstraintAttribute},
+                      ::Type{<:MOI.ConstraintIndex})
+    return true
+end
+function MOI.supports(mock::MockOptimizer,
+                      attr::MOI.AbstractConstraintAttribute,
+                      IdxT::Type{<:MOI.ConstraintIndex})
+    return MOI.supports(mock.inner_model, attr, IdxT)
+end
 
 MOI.supports(mock::MockOptimizer, ::Union{MOI.ResultCount,MOI.TerminationStatus,MOI.ObjectiveValue,MOI.PrimalStatus,MOI.DualStatus,MockModelAttribute}) = true
 MOI.set(mock::MockOptimizer, ::MOI.ResultCount, value::Integer) = (mock.resultcount = value)
@@ -120,8 +146,12 @@ MOI.set(mock::MockOptimizer, ::MOI.ObjectiveValue, value::Real) = (mock.objectiv
 MOI.set(mock::MockOptimizer, ::MOI.PrimalStatus, value::MOI.ResultStatusCode) = (mock.primalstatus = value)
 MOI.set(mock::MockOptimizer, ::MOI.DualStatus, value::MOI.ResultStatusCode) = (mock.dualstatus = value)
 MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
-MOI.supports(mock::MockOptimizer, attr::MOI.AbstractModelAttribute) = MOI.supports(mock.inner_model, attr)
-MOI.set(mock::MockOptimizer, attr::MOI.AbstractModelAttribute, value) = MOI.set(mock.inner_model, attr, value)
+function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
+    return MOI.supports(mock.inner_model, attr)
+end
+function MOI.set(mock::MockOptimizer, attr::MOI.AbstractModelAttribute, value)
+    MOI.set(mock.inner_model, attr, value)
+end
 MOI.set(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = MOI.set(mock.inner_model, attr, xor_variables(value))
 
 MOI.set(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, idx::MOI.VariableIndex, value) = MOI.set(mock.inner_model, attr, xor_index(idx), value)
@@ -139,7 +169,46 @@ MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveFunction) = xor_variables(MOI.ge
 MOI.get(mock::MockOptimizer, attr::Union{MOI.ConstraintSet}, idx::MOI.ConstraintIndex) = MOI.get(mock.inner_model, attr, xor_index(idx))
 MOI.get(mock::MockOptimizer, attr::Union{MOI.ConstraintFunction}, idx::MOI.ConstraintIndex) = xor_variables(MOI.get(mock.inner_model, attr, xor_index(idx)))
 
-# Name
+#####
+##### Names
+#####
+
+function MOI.supports(mock::MockOptimizer, attr::MOI.Name)
+    return mock.supports_names && MOI.supports(mock.inner_model, attr)
+end
+function MOI.set(mock::MockOptimizer, attr::MOI.Name, value)
+    if mock.supports_names
+        MOI.set(mock.inner_model, attr, value)
+    else
+        throw_mock_unsupported_names(attr)
+    end
+end
+function MOI.supports(mock::MockOptimizer, attr::MOI.VariableName,
+                      IdxT::Type{MOI.VariableIndex})
+    return mock.supports_names && MOI.supports(mock, attr, IdxT)
+end
+function MOI.set(mock::MockOptimizer,
+                 attr::MOI.VariableName,
+                 index::MOI.VariableIndex, value)
+    if mock.supports_names
+        MOI.set(mock.inner_model, attr, xor_index(index), value)
+    else
+        throw_mock_unsupported_names(attr)
+    end
+end
+function MOI.supports(mock::MockOptimizer, attr::MOI.ConstraintName,
+                      IdxT::Type{<:MOI.ConstraintIndex})
+    return mock.supports_names && MOI.supports(mock, attr, IdxT)
+end
+function MOI.set(mock::MockOptimizer,
+                 attr::MOI.ConstraintName,
+                 index::MOI.ConstraintIndex, value)
+    if mock.supports_names
+        MOI.set(mock.inner_model, attr, xor_index(index), value)
+    else
+        throw_mock_unsupported_names(attr)
+    end
+end
 function MOI.get(b::MockOptimizer, IdxT::Type{<:MOI.Index}, name::String)
     index = MOI.get(b.inner_model, IdxT, name)
     if index === nothing
@@ -148,6 +217,10 @@ function MOI.get(b::MockOptimizer, IdxT::Type{<:MOI.Index}, name::String)
         return xor_index(index)
     end
 end
+
+#####
+##### Results
+#####
 
 MOI.get(mock::MockOptimizer, ::MOI.ResultCount) = mock.resultcount
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.terminationstatus
