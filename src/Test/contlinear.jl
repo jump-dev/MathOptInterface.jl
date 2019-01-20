@@ -783,6 +783,23 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
 
+    # Min  x - y
+    # s.t. bx <= x          (c1)
+    #             y <= by   (c2)
+    #
+    # or, in more detail,
+    #
+    # Min    1 x - 1 y
+    # s.t. - 1 x       <= - bx  (z)   (c1)
+    #              1 y <=   by  (w)   (c2)
+    #
+    # with generic dual
+    #
+    # Max  - bx z + by w
+    # s.t. -    z        == - 1     (c1)
+    #                  w ==   1     (c2)
+    # i.e. z == w == 1
+
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -1171,9 +1188,36 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # simple 2 variable, 1 constraint problem
+    #
+    # starts with
+    #
     # min x + y
     # st   x + y >= 1
     #      x + y >= 2
+    # sol: x+y = 2 (degenerate)
+    #
+    # with dual
+    #
+    # max  w + 2z
+    # st   w +  z == 1
+    #      w +  z == 1
+    #      w, z >= 0
+    # sol: z = 1, w = 0
+    #
+    # tranforms problem into:
+    #
+    # min x + y
+    # st   x + y >= 1
+    #      x + y <= 2
+    # sol: x+y = 1 (degenerate)
+    #
+    # with dual
+    #
+    # max  w + 2z
+    # st   w +  z == 1
+    #      w +  z == 1
+    #      w >= 0, z <= 0
+    # sol: w = 1, z = 0
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
