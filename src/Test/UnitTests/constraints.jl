@@ -128,7 +128,7 @@ unittests["solve_affine_interval"] = solve_affine_interval
     solve_duplicate_terms_scalar_affine(model::MOI.ModelLike,
                                         config::TestConfig)
 
-Add an `ScalarAffineFunction`-in-`LessThan` constraint with duplicate terms in
+Add a `ScalarAffineFunction`-in-`LessThan` constraint with duplicate terms in
 the function. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -140,7 +140,7 @@ function solve_duplicate_terms_scalar_affine(model::MOI.ModelLike,
                                                   0.0)
 
     MOI.set(model,
-            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ObjectiveFunction{typeof(objective_function)}(),
             objective_function)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
@@ -160,8 +160,8 @@ unittests["solve_duplicate_terms_scalar_affine"] = solve_duplicate_terms_scalar_
     solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
                                         config::TestConfig)
 
-Add an `ScalarAffineFunction`-in-`LessThan` constraint with duplicate terms in
-the function. If `config.solve=true` confirm that it solves correctly, and if
+Add a `VectorAffineFunction`-in-`Nonpositives` constraint with duplicate terms
+in the function. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
 function solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
@@ -172,7 +172,7 @@ function solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
                                                   0.0)
 
     MOI.set(model,
-            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ObjectiveFunction{typeof(objective_function)}(),
             objective_function)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
