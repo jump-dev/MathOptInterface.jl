@@ -556,11 +556,14 @@ end
                     [4, 2, 0])
     @test v + g ≈ v_plus_g
     @test g + α ≈ g_plus_α
+    @test α + g ≈ g_plus_α
     @test α - v ≈ α_minus_v
     @test MOIU.operate(+, T, MOIU.operate(-, T, v, v), v) ≈ v_minus_v_plus_v
     @test f + α ≈ f_plus_α
     @test f - g ≈ f_minus_g
     @test f - f + f - g ≈ f_minus_g
+    @test v + f + α - v ≈ f_plus_α
+    @test v - f - α - v ≈ - f_plus_α
 
     @test v - α ≈ - α_minus_v
     @test g - f ≈ - f_minus_g
