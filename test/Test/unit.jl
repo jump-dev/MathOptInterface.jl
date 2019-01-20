@@ -17,6 +17,8 @@ end
         "solve_affine_greaterthan",
         "solve_affine_equalto",
         "solve_affine_interval",
+        "solve_duplicate_terms_scalar_affine",
+        "solve_duplicate_terms_vector_affine",
         "solve_qp_edge_cases",
         "solve_qcp_edge_cases",
         "solve_affine_deletion_edge_cases",
@@ -137,6 +139,28 @@ end
             )
         )
         MOIT.solve_affine_interval(mock, config)
+    end
+    @testset "solve_duplicate_terms_scalar_affine" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [0.5]),
+                MOI.FEASIBLE_POINT,
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5]
+            )
+        )
+        MOIT.solve_duplicate_terms_scalar_affine(mock, config)
+    end
+    @testset "solve_duplicate_terms_vector_affine" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [0.5]),
+                MOI.FEASIBLE_POINT,
+                    (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[-0.5]]
+            )
+        )
+        MOIT.solve_duplicate_terms_vector_affine(mock, config)
     end
 
     @testset "solve_qcp_edge_cases" begin
