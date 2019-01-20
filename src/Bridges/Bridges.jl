@@ -67,8 +67,8 @@ include("slackbridge.jl")
     (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
     MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
     MOI.PositiveSemidefiniteConeSquare, MOI.LogDetConeTriangle,
-    MOI.RootDetConeTriangle, MOI.PowerCone, MOI.DualPowerCone),
-    (), (), (), (),
+    MOI.RootDetConeTriangle),
+    (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2), (), (), (),
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
     )
 include("intervalbridge.jl")
