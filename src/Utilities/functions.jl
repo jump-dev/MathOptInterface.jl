@@ -640,7 +640,7 @@ function operate_terms(::typeof(+),
 end
 function operate_terms(::typeof(+),
         terms::Vector{<:Union{MOI.VectorAffineTerm,
-                            MOI.VectorQuadraticTerm}})
+                              MOI.VectorQuadraticTerm}})
     return terms
 end
 function operate_terms(::typeof(-),
