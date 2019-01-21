@@ -613,6 +613,7 @@ function operate_term(::typeof(*), t1::MOI.ScalarAffineTerm,
     MOI.ScalarQuadraticTerm(t1.coefficient * t2.coefficient, t1.variable_index,
                             t2.variable_index)
 end
+
 function operate_term(::typeof(*), α::T, t::MOI.VectorAffineTerm{T}) where T
     MOI.VectorAffineTerm(t.output_index, operate_term(*, α, t.scalar_term))
 end
@@ -628,8 +629,15 @@ end
 function operate_term(::typeof(/), t::MOI.ScalarAffineTerm{T}, α::T) where T
     MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
 end
+function operate_term(::typeof(/), t::MOI.ScalarQuadraticTerm{T}, α::T) where T
+    MOI.ScalarQuadraticTerm(t.coefficient / α, t.variable_index_1,
+                            t.variable_index_2)
+end
 function operate_term(::typeof(/), t::MOI.VectorAffineTerm{T}, α::T) where T
     MOI.VectorAffineTerm(t.output_index, operate_term(/, t.scalar_term, α))
+end
+function operate_term(::typeof(/), t::MOI.VectorQuadraticTerm{T}, α::T) where T
+    MOI.VectorQuadraticTerm(t.output_index, operate_term(/, t.scalar_term, α))
 end
 
 # Avoid a copy in the case of +
