@@ -44,7 +44,7 @@ end
     m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.MANUAL)
     @test MOIU.state(m) == MOIU.NO_OPTIMIZER
 
-    s = MOIU.MockOptimizer(ModelForMock{Float64}())
+    s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
     @test MOI.is_empty(s)
     MOIU.reset_optimizer(m, s)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
@@ -119,7 +119,7 @@ end
     MOI.set(m, MOI.VariableName(), v, "v")
     @test MOI.get(m, MOI.VariableName(), v) == "v"
 
-    s = MOIU.MockOptimizer(ModelForMock{Float64}())
+    s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
     @test MOI.is_empty(s)
     MOIU.reset_optimizer(m, s)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
@@ -221,7 +221,7 @@ end
 
 @testset "CachingOptimizer constructor with optimizer" begin
     @testset "Empty model and optimizer" begin
-        s = MOIU.MockOptimizer(ModelForMock{Float64}())
+        s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
         model = ModelForCachingOptimizer{Float64}()
         m = MOIU.CachingOptimizer(model, s)
         @test m isa MOIU.CachingOptimizer{typeof(s), typeof(model)}
@@ -231,7 +231,7 @@ end
         @test MOI.get(m, MOI.SolverName()) == "Mock"
     end
     @testset "Non-empty optimizer" begin
-        s = MOIU.MockOptimizer(ModelForMock{Float64}())
+        s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
         MOI.add_variable(s)
         model = ModelForCachingOptimizer{Float64}()
         @test MOI.is_empty(model)
@@ -239,7 +239,7 @@ end
         @test_throws AssertionError MOIU.CachingOptimizer(model, s)
     end
     @testset "Non-empty model" begin
-        s = MOIU.MockOptimizer(ModelForMock{Float64}())
+        s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
         model = ModelForCachingOptimizer{Float64}()
         MOI.add_variable(model)
         @test !MOI.is_empty(model)
@@ -252,7 +252,7 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
     @testset "Optimization tests in state $state and mode $mode" for mode in (MOIU.MANUAL, MOIU.AUTOMATIC)
         m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), mode)
         if state != MOIU.NO_OPTIMIZER
-            s = MOIU.MockOptimizer(ModelForMock{Float64}())
+            s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
             MOIU.reset_optimizer(m, s)
             if state == MOIU.ATTACHED_OPTIMIZER
                 MOIU.attach_optimizer(m)
