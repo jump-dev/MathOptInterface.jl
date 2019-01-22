@@ -343,6 +343,7 @@ end
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
     end
     @testset "Scalar slack" begin
+        MOI.empty!(mock)
         bridgedmock = MOIB.ScalarSlack{Float64}(mock)
         x = MOI.add_variable(bridgedmock)
         y = MOI.add_variable(bridgedmock)
@@ -358,6 +359,7 @@ end
         MOI.modify(bridgedmock, ci, MOI.ScalarConstantChange{Float64}(1.0))
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ 
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}.([2.0, 1.0], [x, y]), 1.0)
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, 0),))
 
         MOIT.basic_constraint_tests(bridgedmock, config,
                                     include=[(F, S) for
@@ -395,14 +397,6 @@ end
         @test (MOI.SingleVariable, MOI.LessThan{Float64}) in loc
         @test (MOI.SingleVariable, MOI.GreaterThan{Float64}) in loc
 
-        # ci = first(MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
-        # newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridgedmock, MOI.ListOfVariableIndices())), 0.0)
-        # MOI.set(bridgedmock, MOI.ConstraintFunction(), ci, newf)
-        # @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
-        # deletion test wont work due to deleted variable
-        # test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
-        #                                         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
-
         for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
             for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
                 @test MOIB.added_constraint_types(MOIB.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
@@ -411,6 +405,7 @@ end
     end
 
     @testset "Vector slack" begin
+        MOI.empty!(mock)
         bridgedmock = MOIB.VectorSlack{Float64}(mock)
         x = MOI.add_variable(bridgedmock)
         y = MOI.add_variable(bridgedmock)
@@ -424,7 +419,8 @@ end
         MOI.modify(bridgedmock, ci, MOI.VectorConstantChange([1.0]))
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ 
             MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([2.0, 1.0], [x, y])), [1.0])
-        # This power cone test is failing
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.Zeros, 0),))
+
         fp = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2,3], MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], [x, y, y])), [0.0, 0.0, 0.0])
         cp = MOI.add_constraint(bridgedmock, fp, MOI.PowerCone(0.1))
         @test MOI.get(bridgedmock, MOI.ConstraintSet(), cp) == MOI.PowerCone(0.1)
