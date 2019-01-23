@@ -45,6 +45,8 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     cache = MOIU.UniversalFallback(AllBridgedConstraints{T}())
     bridgedmodel = MOIB.LazyBridgeOptimizer(model, cache)
     add_bridge(bridgedmodel, MOIB.VectorizeBridge{T})
+    add_bridge(bridgedmodel, MOIB.ScalarSlackBridge{T})
+    add_bridge(bridgedmodel, MOIB.VectorSlackBridge{T})
     add_bridge(bridgedmodel, MOIB.SplitIntervalBridge{T})
     add_bridge(bridgedmodel, MOIB.QuadtoSOCBridge{T})
     add_bridge(bridgedmodel, MOIB.GeoMeanBridge{T})
@@ -59,6 +61,16 @@ end
 
 include("vectorizebridge.jl")
 @bridge Vectorize VectorizeBridge () (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
+include("slackbridge.jl")
+@bridge ScalarSlack ScalarSlackBridge () (MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () () (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
+@bridge(VectorSlack, VectorSlackBridge,  (), (),
+    (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
+    MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+    MOI.PositiveSemidefiniteConeSquare, MOI.LogDetConeTriangle,
+    MOI.RootDetConeTriangle),
+    (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2), (), (), (),
+    (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
+    )
 include("intervalbridge.jl")
 @bridge SplitInterval SplitIntervalBridge () (MOI.Interval,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
 include("rsocbridge.jl")

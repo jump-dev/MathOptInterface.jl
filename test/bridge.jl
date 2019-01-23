@@ -1,15 +1,15 @@
 # Model not supporting Interval
 MOIU.@model(SimpleModel,
             (),
-            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
             (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
              MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
-            (),
+            (MOI.PowerCone, MOI.DualPowerCone),
             (MOI.SingleVariable,),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
-            (MOI.VectorAffineFunction,))
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
 function test_noc(bridged_mock, F, S, n)
     @test MOI.get(bridged_mock, MOI.NumberOfConstraints{F, S}()) == n
@@ -341,7 +341,135 @@ end
         @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ newf
         test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
-   end
+    end
+    @testset "Scalar slack" begin
+        MOI.empty!(mock)
+        bridgedmock = MOIB.ScalarSlack{Float64}(mock)
+        x = MOI.add_variable(bridgedmock)
+        y = MOI.add_variable(bridgedmock)
+        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}.([1.0, 2.0], [x, y]), 0.0)
+        ci = MOI.add_constraint(bridgedmock, f, MOI.GreaterThan(0.0))
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ f
+        newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}.([2.0, 1.0], [x, y]), 0.0)
+        MOI.set(bridgedmock, MOI.ConstraintFunction(), ci, newf)
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(0.0)
+        MOI.set(bridgedmock, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(1.0)
+        MOI.modify(bridgedmock, ci, MOI.ScalarConstantChange{Float64}(1.0))
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ 
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}.([2.0, 1.0], [x, y]), 1.0)
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, 0),))
+
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=[(F, S) for
+                                    F in [MOI.ScalarAffineFunction{Float64},
+                                          MOI.ScalarQuadraticFunction{Float64}],
+                                    S in [MOI.GreaterThan{Float64},
+                                          MOI.LessThan{Float64}]
+                                          ])
+
+        # There are extra variables due to the bridge
+        MOIU.set_mock_optimize!(mock,
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0, 2.0, 2.0]),
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.5, 0.5, 1.0, 1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [1, 0],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64})            => [1],
+            (MOI.SingleVariable, MOI.LessThan{Float64})               => [0]))
+        MOIT.linear11test(bridgedmock, MOIT.TestConfig(duals = false))
+
+        c1 = MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
+        @test length(c1) == 1
+        @test MOI.get(bridgedmock, MOI.ConstraintPrimal(), c1[]) ≈ 1.0
+        @test MOI.get(bridgedmock, MOI.ConstraintDual(), c1[]) ≈ 1.0
+        c2 = MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
+        @test length(c2) == 1
+        @test MOI.get(bridgedmock, MOI.ConstraintPrimal(), c2[]) ≈ 1.0
+        @test MOI.get(bridgedmock, MOI.ConstraintDual(), c2[]) ≈ 0.0
+
+        loc = MOI.get(bridgedmock, MOI.ListOfConstraints())
+        @test length(loc) == 2
+        @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in loc
+        @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in loc
+        loc = MOI.get(mock, MOI.ListOfConstraints())
+        @test length(loc) == 3
+        @test (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) in loc
+        @test (MOI.SingleVariable, MOI.LessThan{Float64}) in loc
+        @test (MOI.SingleVariable, MOI.GreaterThan{Float64}) in loc
+
+        for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
+            for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
+                @test MOIB.added_constraint_types(MOIB.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
+            end
+        end
+    end
+
+    @testset "Vector slack" begin
+        MOI.empty!(mock)
+        bridgedmock = MOIB.VectorSlack{Float64}(mock)
+        x = MOI.add_variable(bridgedmock)
+        y = MOI.add_variable(bridgedmock)
+        f = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([1.0, 2.0], [x, y])), [0.0])
+        ci = MOI.add_constraint(bridgedmock, f, MOI.Nonpositives(1))
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ f
+        newf = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([2.0, 1.0], [x, y])), [0.0])
+        MOI.set(bridgedmock, MOI.ConstraintFunction(), ci, newf)
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.Nonpositives(1)
+        MOI.modify(bridgedmock, ci, MOI.VectorConstantChange([1.0]))
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ 
+            MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([2.0, 1.0], [x, y])), [1.0])
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.Zeros, 0),))
+
+        fp = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2,3], MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], [x, y, y])), [0.0, 0.0, 0.0])
+        cp = MOI.add_constraint(bridgedmock, fp, MOI.PowerCone(0.1))
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), cp) == MOI.PowerCone(0.1)
+        MOI.set(bridgedmock, MOI.ConstraintSet(), cp, MOI.PowerCone(0.2))
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), cp) == MOI.PowerCone(0.2)
+
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=[(F, S) for
+                                    F in [MOI.VectorAffineFunction{Float64},
+                                          MOI.VectorQuadraticFunction{Float64}],
+                                    S in [MOI.Nonnegatives,
+                                          MOI.Nonpositives]
+                                        ])
+
+        # There are extra variables due to the bridge
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0, 0, 0]),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0, 100, 0]),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100, 100, -100],
+            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[1.], [1.]],
+            (MOI.VectorOfVariables, MOI.Nonnegatives)      => [[1.]],
+            (MOI.VectorOfVariables, MOI.Nonpositives)      => [[1.]]))
+        MOIT.linear7test(bridgedmock, config)
+
+        c1 = MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}())
+        @test length(c1) == 1
+        @test MOI.get(bridgedmock, MOI.ConstraintPrimal(), c1[]) ≈ [100.0]
+        @test MOI.get(bridgedmock, MOI.ConstraintDual(), c1[]) ≈ [1.0]
+        c2 = MOI.get(bridgedmock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonpositives}())
+        @test length(c2) == 1
+        @test MOI.get(bridgedmock, MOI.ConstraintPrimal(), c2[]) ≈ [-100.0]
+        @test MOI.get(bridgedmock, MOI.ConstraintDual(), c2[]) ≈ [1.0]
+
+        loc = MOI.get(bridgedmock, MOI.ListOfConstraints())
+        @test length(loc) == 2
+        @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+        @test (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) in loc
+        loc = MOI.get(mock, MOI.ListOfConstraints())
+        @test length(loc) == 3
+        @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+        @test (MOI.VectorOfVariables, MOI.Nonnegatives) in loc
+        @test (MOI.VectorOfVariables, MOI.Nonpositives) in loc
+
+        for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
+            for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
+                @test MOIB.added_constraint_types(MOIB.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
+            end
+        end
+    end
 
     @testset "RSOC" begin
         bridged_mock = MOIB.RSOC{Float64}(mock)
