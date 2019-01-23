@@ -123,6 +123,72 @@ function solve_affine_interval(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_affine_interval"] = solve_affine_interval
 
+# Taken from https://github.com/JuliaOpt/MathOptInterfaceMosek.jl/issues/41
+"""
+    solve_duplicate_terms_scalar_affine(model::MOI.ModelLike,
+                                        config::TestConfig)
+
+Add a `ScalarAffineFunction`-in-`LessThan` constraint with duplicate terms in
+the function. If `config.solve=true` confirm that it solves correctly, and if
+`config.duals=true`, check that the duals are computed correctly.
+"""
+function solve_duplicate_terms_scalar_affine(model::MOI.ModelLike,
+                                             config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    objective_function = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)],
+                                                  0.0)
+
+    MOI.set(model,
+            MOI.ObjectiveFunction{typeof(objective_function)}(),
+            objective_function)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x, x]), 0.0)
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, -0.5)]
+    )
+end
+unittests["solve_duplicate_terms_scalar_affine"] = solve_duplicate_terms_scalar_affine
+
+"""
+    solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
+                                        config::TestConfig)
+
+Add a `VectorAffineFunction`-in-`Nonpositives` constraint with duplicate terms
+in the function. If `config.solve=true` confirm that it solves correctly, and if
+`config.duals=true`, check that the duals are computed correctly.
+"""
+function solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
+                                             config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    objective_function = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)],
+                                                  0.0)
+
+    MOI.set(model,
+            MOI.ObjectiveFunction{typeof(objective_function)}(),
+            objective_function)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    f = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(
+        1, MOI.ScalarAffineTerm.([1.0, 1.0], [x, x])), [-1.0])
+    c = MOI.add_constraint(model, f, MOI.Nonpositives(1))
+
+    test_model_solution(model, config;
+        objective_value   = 0.5,
+        variable_primal   = [(x, 0.5)],
+        constraint_primal = [(c, [0.0])],
+        constraint_dual   = [(c, [-0.5])]
+    )
+end
+unittests["solve_duplicate_terms_vector_affine"] = solve_duplicate_terms_vector_affine
+
 """
     solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
 
