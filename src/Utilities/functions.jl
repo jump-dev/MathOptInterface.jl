@@ -778,6 +778,11 @@ function operate(op::typeof(+), ::Type{T}, f, g, h, args...) where T
     return operate!(+, T, operate(+, T, f, g), h, args...)
 end
 
+# Unary +
+function operate(op::typeof(+), ::Type{T}, f::MOI.AbstractFunction) where T
+    return f
+end
+
 # Scalar number +/- ...
 function operate(op::typeof(+), ::Type{T}, α::T, f::ScalarLike{T}) where T
     return operate(op, T, f, α)
