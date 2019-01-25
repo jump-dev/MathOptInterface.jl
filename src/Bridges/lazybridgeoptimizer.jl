@@ -29,9 +29,9 @@ end
 
 function _dist(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     if MOI.supports_constraint(b.model, F, S)
-        0
+        return 0
     else
-        get(b.dist, (F, S), typemax(Int))
+        return get(b.dist, (F, S), typemax(Int))
     end
 end
 
@@ -101,7 +101,7 @@ function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::
 end
 function supports_bridging_constraint(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     update_constraint!(b, F, S)
-    (F, S) in keys(b.best)
+    return (F, S) in keys(b.best)
 end
 function bridge_type(b::LazyBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) where BT
     update_constraint!(b, F, S)
