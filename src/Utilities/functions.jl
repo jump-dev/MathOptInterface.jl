@@ -1192,7 +1192,7 @@ function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
 end
 function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
                  α::T) where T
-    return operate(/, T, copy(f), α)
+    return operate!(/, T, copy(f), α)
 end
 
 function Base.:/(args::ScalarLike{T}...) where T
