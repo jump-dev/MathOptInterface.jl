@@ -1208,6 +1208,17 @@ function operate(::typeof(sum), ::Type{T}, vis::Vector{MOI.VariableIndex}) where
 end
 
 #################### Concatenation of MOI functions: `vcat` ####################
+function fill_vector(vector::Vector, ::Type{T}, fill_func::Function,
+                     dim_func::Function, funcs) where T
+    vector_offset = 0
+    output_offset = 0
+    for func in funcs
+        fill_func(vector, vector_offset, output_offset, func)
+        vector_offset += dim_func(T, func)
+        output_offset += output_dim(T, func)
+    end
+    @assert length(vector) == vector_offset
+end
 function fill_vector(vector::Vector, ::Type, vector_offset::Int,
                      output_offset::Int, fill_func::Function,
                      dim_func::Function)
@@ -1275,6 +1286,15 @@ function fill_constant(constant::Vector{T}, offset::Int,
     constant[offset .+ (1:n)] .= func.constants
 end
 
+function vectorize(funcs::AbstractVector{<:ScalarAffineLike{T}}) where T
+    nterms = sum(func -> number_of_affine_terms(T, func), funcs)
+    out_dim = sum(func -> output_dim(T, func), funcs)
+    terms = Vector{MOI.VectorAffineTerm{T}}(undef, nterms)
+    constant = zeros(T, out_dim)
+    fill_vector(terms, T, fill_terms, number_of_affine_terms, funcs)
+    fill_vector(constant, T, fill_constant, output_dim, funcs)
+    return VAF(terms, constant)
+end
 function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
     return VAF{T}
