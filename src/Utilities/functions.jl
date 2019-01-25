@@ -353,13 +353,6 @@ function test_constraintnames_equal(model, constraintnames)
     end
 end
 
-isapprox_zero(α::AbstractFloat, tol) = -tol < α < tol
-isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
-function isapprox_zero(t::Union{MOI.ScalarAffineTerm,
-                                MOI.ScalarQuadraticTerm}, tol)
-    isapprox_zero(MOI.coefficient(t), tol)
-end
-
 """
     isapprox_zero(f::MOI.AbstractFunction, tol)
 
@@ -379,16 +372,28 @@ then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonical(f))` is
 """
 function isapprox_zero end
 
-function isapprox_zero(f::MOI.ScalarAffineFunction, tol)
-    isapprox_zero(f.constant, tol) && all(t -> isapprox_zero(t, tol),
-                                           f.terms)
+isapprox_zero(α::AbstractFloat, tol) = -tol <= α <= tol
+isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
+function isapprox_zero(f::MOI.AbstractFunction, tol)
+    return _iszero(f, α -> isapprox_zero(α, tol))
 end
-function isapprox_zero(f::MOI.ScalarQuadraticFunction, tol)
-    isapprox_zero(f.constant, tol) &&
-        all(t -> isapprox_zero(t, tol),
-            f.affine_terms) &&
-        all(t -> isapprox_zero(t, tol),
-            f.quadratic_terms)
+
+function Base.iszero(f::Union{MOI.ScalarAffineFunction{T},
+                              MOI.ScalarQuadraticFunction{T}}) where T
+    return _iszero(canonical(f), iszero)
+end
+
+function _iszero(f::MOI.ScalarAffineFunction, _is_zero::Function)
+    _is_zero(f.constant) && all(t -> _iszero(t, _is_zero), f.terms)
+end
+function _iszero(f::MOI.ScalarQuadraticFunction, _is_zero::Function)
+    _is_zero(f.constant) &&
+        all(t -> _iszero(t, _is_zero), f.affine_terms) &&
+        all(t -> _iszero(t, _is_zero), f.quadratic_terms)
+end
+function _iszero(t::Union{MOI.ScalarAffineTerm,
+                          MOI.ScalarQuadraticTerm}, _is_zero::Function)
+    return _is_zero(MOI.coefficient(t))
 end
 
 """
