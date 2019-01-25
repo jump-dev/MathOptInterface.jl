@@ -43,7 +43,7 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
         changed = false
         for BT in b.bridgetypes
             for (F, S) in constraints
-                if MOI.supports_constraint(BT, F, S) && all(C -> MOI.supports_constraint(b, C[1], C[2]), added_constraint_types(BT, F, S))
+                if MOI.supports_constraint(BT, F, S) && all(C -> supports_constraint_no_update(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Number of bridges needed using BT
                     dist = 1 + sum(C -> _dist(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Is it better that what can currently be done ?
@@ -59,7 +59,7 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
 end
 
 function fill_required_constraints!(required::Set{Tuple{DataType, DataType}}, b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    if MOI.supports_constraint(b.model, F, S) || (F, S) in keys(b.best)
+    if supports_constraint_no_update(b, F, S)
         return # The constraint is supported
     end
     if (F, S) in required
@@ -98,6 +98,11 @@ end
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
 function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     !MOI.supports_constraint(b.model, F, S)
+end
+# Same as supports_constraint but do not trigger `update_constraint!`. This is
+# used inside `update_constraint!`.
+function supports_constraint_no_update(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+    return MOI.supports_constraint(b.model, F, S) || (F, S) in keys(b.best)
 end
 function supports_bridging_constraint(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     update_constraint!(b, F, S)
