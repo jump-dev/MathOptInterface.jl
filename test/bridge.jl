@@ -11,6 +11,18 @@ MOIU.@model(SimpleModel,
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
+MOIU.@model(SimpleModel2,
+            (),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
+            (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
+                MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+                MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
+            (MOI.PowerCone, MOI.DualPowerCone),
+            (MOI.SingleVariable,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+
 function test_noc(bridged_mock, F, S, n)
     @test MOI.get(bridged_mock, MOI.NumberOfConstraints{F, S}()) == n
     @test length(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{F, S}())) == n
@@ -224,6 +236,15 @@ MOIU.@model(NoRSOCModel,
             @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.RootDetConeTriangle)
         end
+        mock2 = MOIU.MockOptimizer(SimpleModel2{Float64}())
+        MOI.supports_constraint(::SimpleModel2{Float64},
+                                ::Type{MOI.VectorAffineFunction{Float64}},
+                                ::Type{MOI.SecondOrderCone}) = false
+        @test !MOI.supports_constraint(mock2, MOI.VectorAffineFunction{Float64},
+                                       MOI.SecondOrderCone)
+        full_bridged_mock2 = MOIB.full_bridge_optimizer(mock2, Float64)
+        @test MOI.supports_constraint(full_bridged_mock2, MOI.VectorAffineFunction{Float64},
+                                       MOI.SecondOrderCone)
     end
 
     @testset "Combining two briges" begin
