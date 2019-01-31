@@ -167,7 +167,9 @@ set(model, VariablePrimalStart(), v2, [1.3,6.8,-4.6])
 A variable can be deleted from a model with
 [`delete(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete(::MathOptInterface.ModelLike, ::MathOptInterface.Index)).
 Not all models support deleting variables; an [`DeleteNotAllowed`](@ref)
-error is thrown if this is not supported.
+error is thrown if this is not supported. If a variable is deleted from the
+model, all constraints with the function `SingleVariable` applied to this
+variable are also deleted.
 
 ## Functions
 
