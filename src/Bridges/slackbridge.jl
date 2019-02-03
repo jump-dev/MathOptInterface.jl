@@ -22,19 +22,19 @@ function ScalarSlackBridge{T, F, S}(model, f::MOI.AbstractScalarFunction, s::S) 
 end
 
 # start allowing everything (scalar)
-MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}},
+MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
                         ::Type{<:MOI.AbstractScalarFunction},
-                        ::Type{<:MOI.AbstractScalarSet}) where {T, F, S} = true
+                        ::Type{<:MOI.AbstractScalarSet}) where {T} = true
 # then restrict (careful with ambiguity)
-MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}},
+MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
                         ::Type{<:MOI.SingleVariable},
-                        ::Type{<:MOI.EqualTo}) where {T, F, S} = false
-MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}},
+                        ::Type{<:MOI.EqualTo}) where {T} = false
+MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
                         ::Type{<:MOI.SingleVariable},
-                        ::Type{<:MOI.AbstractScalarSet}) where {T, F, S} = false
-MOI.supports_constraint(::Type{ScalarSlackBridge{T, F, S}},
+                        ::Type{<:MOI.AbstractScalarSet}) where {T} = false
+MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
                         ::Type{<:MOI.AbstractScalarFunction},
-                        ::Type{<:MOI.EqualTo}) where {T, F, S} = false
+                        ::Type{<:MOI.EqualTo}) where {T} = false
 function added_constraint_types(::Type{ScalarSlackBridge{T, F, S}}) where {T, F, S}
     return [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
 end
@@ -111,18 +111,18 @@ function VectorSlackBridge{T, F, S}(model, f::MOI.AbstractVectorFunction, s::S) 
     return VectorSlackBridge{T, F, S}(slacks, slacks_in_set, equality)
 end
 
-MOI.supports_constraint(::Type{VectorSlackBridge{T, F, S}},
+MOI.supports_constraint(::Type{VectorSlackBridge{T}},
                         ::Type{<:MOI.AbstractVectorFunction},
-                        ::Type{<:MOI.AbstractVectorSet}) where {T, F, S} = true
-MOI.supports_constraint(::Type{VectorSlackBridge{T, F, S}},
+                        ::Type{<:MOI.AbstractVectorSet}) where {T} = true
+MOI.supports_constraint(::Type{VectorSlackBridge{T}},
                         ::Type{<:MOI.VectorOfVariables},
-                        ::Type{<:MOI.Zeros}) where {T, F, S} = false
-MOI.supports_constraint(::Type{VectorSlackBridge{T, F, S}},
+                        ::Type{<:MOI.Zeros}) where {T} = false
+MOI.supports_constraint(::Type{VectorSlackBridge{T}},
                         ::Type{<:MOI.AbstractVectorFunction},
-                        ::Type{<:MOI.Zeros}) where {T, F, S} = false
-MOI.supports_constraint(::Type{VectorSlackBridge{T, F, S}},
+                        ::Type{<:MOI.Zeros}) where {T} = false
+MOI.supports_constraint(::Type{VectorSlackBridge{T}},
                         ::Type{<:MOI.VectorOfVariables},
-                        ::Type{<:MOI.AbstractVectorSet}) where {T, F, S} = false
+                        ::Type{<:MOI.AbstractVectorSet}) where {T} = false
 function added_constraint_types(::Type{VectorSlackBridge{T, F, S}}) where {T, F<:MOI.AbstractVectorFunction, S}
     return [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
 end
