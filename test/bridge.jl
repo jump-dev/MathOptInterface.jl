@@ -143,8 +143,8 @@ MOIU.@model(ModelNoVAFinSOC,
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
-MOI.supports_constraint(::ModelNoVAFinSOC{Float64}, 
-                        ::Type{MOI.VectorAffineFunction{Float64}}, 
+MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
+                        ::Type{MOI.VectorAffineFunction{Float64}},
                         ::Type{MOI.SecondOrderCone}) = false
 
 @testset "LazyBridgeOptimizer" begin
@@ -241,7 +241,7 @@ MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
                                           MOI.RootDetConeTriangle)
         end
         mock2 = MOIU.MockOptimizer(ModelNoVAFinSOC{Float64}())
-        @test !MOI.supports_constraint(mock2, MOI.VectorAffineFunction{Float64}, 
+        @test !MOI.supports_constraint(mock2, MOI.VectorAffineFunction{Float64},
                                        MOI.SecondOrderCone)
         full_bridged_mock2 = MOIB.full_bridge_optimizer(mock2, Float64)
         @test MOI.supports_constraint(full_bridged_mock2, MOI.VectorAffineFunction{Float64},
@@ -379,7 +379,7 @@ end
         MOI.set(bridgedmock, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
         @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(1.0)
         MOI.modify(bridgedmock, ci, MOI.ScalarConstantChange{Float64}(1.0))
-        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ 
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}.([2.0, 1.0], [x, y]), 1.0)
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, 0),))
 
@@ -439,7 +439,7 @@ end
         @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ newf
         @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.Nonpositives(1)
         MOI.modify(bridgedmock, ci, MOI.VectorConstantChange([1.0]))
-        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ 
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈
             MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([2.0, 1.0], [x, y])), [1.0])
         test_delete_bridge(bridgedmock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.Zeros, 0),))
 
