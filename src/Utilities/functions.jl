@@ -1286,7 +1286,7 @@ function fill_constant(constant::Vector{T}, offset::Int,
     constant[offset .+ (1:n)] .= func.constants
 end
 
-function vectorize(funcs::AbstractVector{<:ScalarAffineLike{T}}) where T
+function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
     nterms = sum(func -> number_of_affine_terms(T, func), funcs)
     out_dim = sum(func -> output_dim(T, func), funcs)
     terms = Vector{MOI.VectorAffineTerm{T}}(undef, nterms)
