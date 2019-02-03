@@ -204,7 +204,13 @@
                 g = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
                 @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
             end
-            @testset "operate" begin
+            @testset "operate with Float64 coefficient type" begin
+                f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 4.0],
+                                                                   [x, y]),
+                                             5.0)
+                @test f ≈ 2.0f / 2.0
+            end
+            @testset "operate with Int coefficient type" begin
                 f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 3, 1, 2, -3, 2],
                                                                                   [w, y, w, x,  x, z]), 2) +
                                    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -2, -2, 3, 2],
