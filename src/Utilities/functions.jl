@@ -354,6 +354,24 @@ function test_constraintnames_equal(model, constraintnames)
 end
 
 """
+    all_coefficients(p::Function, f::MOI.AbstractFunction)
+
+Determine whether predicate `p` returns `true` for all coefficients of `f`,
+returning `false` as soon as the first coefficient of `f` for which `p`
+returns `false` is encountered (short-circuiting). Similar to `all`.
+"""
+function all_coefficients end
+
+function all_coefficients(p::Function, f::MOI.ScalarAffineFunction)
+    p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
+end
+function all_coefficients(p::Function, f::MOI.ScalarQuadraticFunction)
+    p(f.constant) &&
+        all(t -> p(MOI.coefficient(t)), f.affine_terms) &&
+        all(t -> p(MOI.coefficient(t)), f.quadratic_terms)
+end
+
+"""
     isapprox_zero(f::MOI.AbstractFunction, tol)
 
 Return a `Bool` indicating whether the function `f` is approximately zero using
@@ -375,25 +393,12 @@ function isapprox_zero end
 isapprox_zero(α::AbstractFloat, tol) = -tol <= α <= tol
 isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
 function isapprox_zero(f::MOI.AbstractFunction, tol)
-    return _iszero(f, α -> isapprox_zero(α, tol))
+    return all_coefficients(α -> isapprox_zero(α, tol), f)
 end
 
 function Base.iszero(f::Union{MOI.ScalarAffineFunction{T},
                               MOI.ScalarQuadraticFunction{T}}) where T
-    return _iszero(canonical(f), iszero)
-end
-
-function _iszero(f::MOI.ScalarAffineFunction, _is_zero::Function)
-    _is_zero(f.constant) && all(t -> _iszero(t, _is_zero), f.terms)
-end
-function _iszero(f::MOI.ScalarQuadraticFunction, _is_zero::Function)
-    _is_zero(f.constant) &&
-        all(t -> _iszero(t, _is_zero), f.affine_terms) &&
-        all(t -> _iszero(t, _is_zero), f.quadratic_terms)
-end
-function _iszero(t::Union{MOI.ScalarAffineTerm,
-                          MOI.ScalarQuadraticTerm}, _is_zero::Function)
-    return _is_zero(MOI.coefficient(t))
+    return all_coefficients(iszero, canonical(f))
 end
 
 """
