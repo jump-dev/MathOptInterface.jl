@@ -893,7 +893,7 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
     d = MOI.output_dimension(g)
     @assert MOI.output_dimension(f) == d
     append!(f.terms, MOI.VectorAffineTerm.(
-                         collect(1:d), 
+                         collect(1:d),
                          MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
     return f
 end
