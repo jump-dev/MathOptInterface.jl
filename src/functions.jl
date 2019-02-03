@@ -23,7 +23,11 @@ Abstract supertype for scalar-valued function objects.
 abstract type AbstractScalarFunction <: AbstractFunction end
 output_dimension(::AbstractScalarFunction) = 1
 
-Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
+@static if VERSION >= v"0.7-"
+    # This allows to use `AbstractScalarFunction`s in broadcast calls without
+    # the need to embed it in a `Ref`
+    Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
+end
 
 """
     AbstractVectorFunction
