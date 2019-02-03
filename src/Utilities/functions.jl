@@ -1158,7 +1158,9 @@ end
 function Base.:*(f::T, g::ScalarLike{T}) where T
     return operate(*, T, f, g)
 end
-
+function Base.:*(f::ScalarLike{T}, g::T) where T
+    return operate(*, T, g, f)
+end
 
 ####################################### / ######################################
 function promote_operation(::typeof(/), ::Type{T},

@@ -211,7 +211,8 @@
                                                                                   [ y,  z,  w, x, y]), 3))
                 @test f ≈ MOI.SingleVariable(x) + MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4],
                                                                                                  [x, y]), 5)
-                @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4], [x, y]), 5) + MOI.SingleVariable(x)
+                @test f ≈ f * 1
+                @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 2], [x, y]), 2) * 2 + 1
                 @test f ≈ MOI.SingleVariable(x) - MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -4], [x, y]), -5)
                 @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3, 4], [x, y]), 5) - MOI.SingleVariable(x)
             end
