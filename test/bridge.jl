@@ -762,6 +762,65 @@ end
         end
     end
 
+    @testset "Single variable" begin
+        MOI.empty!(mock)
+        bridgedmock = MOIB.SingleVariableB{Float64}(mock)
+        x = MOI.add_variable(bridgedmock)
+        y = MOI.add_variable(bridgedmock)
+        sx = MOI.SingleVariable(x)
+        sy = MOI.SingleVariable(y)
+        ci = MOI.add_constraint(bridgedmock, sx, MOI.GreaterThan(0.0))
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ sx
+        MOI.set(bridgedmock, MOI.ConstraintFunction(), ci, sy)
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ sy
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(0.0)
+        MOI.set(bridgedmock, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(1.0)
+        test_delete_bridge(bridgedmock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, 0),))
+
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=[(F, S) for
+                                    F in [MOI.SingleVariable],
+                                    S in [MOI.GreaterThan{Float64},
+                                        MOI.LessThan{Float64}]
+                                        ])
+
+        for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
+            @test MOIB.added_constraint_types(MOIB.SingleVariableBridge{T, MOI.ScalarAffineFunction{T}, S}) ==
+                [(MOI.ScalarAffineFunction{T}, S)]
+        end
+    end
+
+    @testset "Vector of variables" begin
+        MOI.empty!(mock)
+        bridgedmock = MOIB.VectorOfVariablesB{Float64}(mock)
+        x = MOI.add_variable(bridgedmock)
+        y = MOI.add_variable(bridgedmock)
+        z = MOI.add_variable(bridgedmock)
+        v1 = MOI.VectorOfVariables([x,y,z])
+        v2 = MOI.VectorOfVariables([x,y,y])
+        ci = MOI.add_constraint(bridgedmock, v1, MOI.PowerCone(0.1))
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ v1
+        MOI.set(bridgedmock, MOI.ConstraintFunction(), ci, v2)
+        @test MOI.get(bridgedmock, MOI.ConstraintFunction(), ci) ≈ v2
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.PowerCone(0.1)
+        MOI.set(bridgedmock, MOI.ConstraintSet(), ci, MOI.PowerCone(0.2))
+        @test MOI.get(bridgedmock, MOI.ConstraintSet(), ci) == MOI.PowerCone(0.2)
+        test_delete_bridge(bridgedmock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),))
+
+        MOIT.basic_constraint_tests(bridgedmock, config,
+                                    include=[(F, S) for
+                                    F in [MOI.VectorOfVariables],
+                                    S in [MOI.Nonnegatives,
+                                        MOI.Nonpositives]
+                                        ])
+
+        for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
+            @test MOIB.added_constraint_types(MOIB.VectorOfVariablesBridge{T, MOI.VectorAffineFunction{T}, S}) ==
+                [(MOI.VectorAffineFunction{T}, S)]
+        end
+    end
+
     @testset "RSOC" begin
         bridged_mock = MOIB.RSOC{Float64}(mock)
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
