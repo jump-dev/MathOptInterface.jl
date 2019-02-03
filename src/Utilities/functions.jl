@@ -705,10 +705,18 @@ const VectorLike{T} = Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T},
 ###################################### +/- #####################################
 ## promote_operation
 
+function promote_operation(::typeof(-), ::Type{T},
+                           ::Type{<:ScalarAffineLike{T}}) where T
+    return MOI.ScalarAffineFunction{T}
+end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:ScalarAffineLike{T}},
                            ::Type{<:ScalarAffineLike{T}}) where T
     return MOI.ScalarAffineFunction{T}
+end
+function promote_operation(::typeof(-), ::Type{T},
+                           ::Type{<:ScalarQuadraticLike{T}}) where T
+    return MOI.ScalarQuadraticFunction{T}
 end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:ScalarQuadraticLike{T}},
@@ -804,6 +812,11 @@ function operate(op::typeof(-), ::Type{T}, α::T, f::ScalarLike{T}) where T
 end
 
 # Scalar Variable +/- ...
+function operate(::typeof(-), ::Type{T}, f::MOI.SingleVariable) where T
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(-one(T),
+                                                             f.variable)],
+                                       zero(T))
+end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.SingleVariable, α::T) where T
     return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T),
@@ -875,10 +888,14 @@ end
 
 # Vector +/-
 ###############################################################################
-# function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
-#     ::Type{<:VectorAffineLike{T}}) where T
-#     return MOI.VectorAffineFunction{T}
-# end
+function promote_operation(::typeof(-), ::Type{T},
+    ::Type{<:VectorAffineLike{T}}) where T
+    return MOI.VectorAffineFunction{T}
+end
+function promote_operation(::typeof(-), ::Type{T},
+    ::Type{<:VectorQuadraticLike{T}}) where T
+    return MOI.VectorQuadraticFunction{T}
+end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:VectorAffineLike{T}},
                            ::Type{<:VectorAffineLike{T}}) where T

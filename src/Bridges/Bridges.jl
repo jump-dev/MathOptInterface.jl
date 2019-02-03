@@ -59,6 +59,11 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     bridgedmodel
 end
 
+include("flip_sign_bridge.jl")
+@bridge GreaterToLess GreaterToLessBridge () (MOI.GreaterThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
+@bridge LessToGreater LessToGreaterBridge () (MOI.LessThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
+@bridge NonnegToNonpos NonnegToNonposBridge () () (MOI.Nonnegatives,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
+@bridge NonposToNonneg NonposToNonnegBridge () () (MOI.Nonpositives,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 include("vectorizebridge.jl")
 @bridge Vectorize VectorizeBridge () (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
 include("slackbridge.jl")
