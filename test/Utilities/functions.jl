@@ -1,26 +1,43 @@
+using Test
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIU = MOI.Utilities
+
 @testset "Function tests" begin
     w = MOI.VariableIndex(0)
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
-    @testset "operate vcat" begin
-        v = MOI.VectorOfVariables([y, w])
-        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4],
-                                                           [x, z]), 5)
+    @testset "Vectorization" begin
         g = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 1],
                                                            MOI.ScalarAffineTerm.([5, 2],
                                                                                  [y, x])),
                                                            [3, 1, 4])
-        wf = MOI.SingleVariable(w)
-        xf = MOI.SingleVariable(x)
-        @test MOIU.promote_operation(vcat, Int, typeof(wf), typeof(f),
-                                     typeof(v), Int, typeof(g), typeof(xf),
-                                     Int) == MOI.VectorAffineFunction{Int}
-        F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
-        @test F.terms == MOI.VectorAffineTerm.([1, 2, 2, 3, 4, 8, 6, 9],
-                                               MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
-                                                                     [w, x, z, y, w, y, x, x]))
-        @test F.constants == [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
+        @testset "vectorize" begin
+            g1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2, x)], 3)
+            g2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Int}[], 1)
+            g3 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(5, y)], 4)
+            @test g ≈ MOIU.vectorize([g1, g2, g3])
+        end
+        @testset "operate vcat" begin
+            v = MOI.VectorOfVariables([y, w])
+            f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4],
+                                                               [x, z]), 5)
+
+            wf = MOI.SingleVariable(w)
+            xf = MOI.SingleVariable(x)
+            @test MOIU.promote_operation(vcat, Int, typeof(wf), typeof(f),
+                                         typeof(v), Int, typeof(g), typeof(xf),
+                                         Int) == MOI.VectorAffineFunction{Int}
+            expected_terms = MOI.VectorAffineTerm.(
+                [1, 2, 2, 3, 4, 8, 6, 9],
+                MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
+                                      [w, x, z, y, w, y, x, x]))
+            expected_constants = [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
+            F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+            @test F.terms == expected_terms
+            @test F.constants == expected_constants
+        end
     end
     @testset "MultirowChange construction" begin
         chg1 = MOI.MultirowChange(w, [(Int32(2), 2.0), (Int32(1), 3.0)])
