@@ -860,6 +860,13 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                                 op(f.constant, g.constant))
 end
 # Scalar Quadratic +/- ...
+function operate(op::Union{typeof(-)}, ::Type{T},
+                 f::MOI.ScalarQuadraticFunction{T}) where T
+    return MOI.ScalarQuadraticFunction(
+        operate_terms(op, f.affine_terms),
+        operate_terms(op, f.quadratic_terms),
+        op(f.constant))
+end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.ScalarQuadraticFunction{T},
                  g::ScalarQuadraticLike{T}) where T
