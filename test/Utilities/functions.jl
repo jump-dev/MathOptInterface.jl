@@ -22,8 +22,8 @@ const MOIU = MOI.Utilities
         end
         @testset "operate vcat" begin
             v = MOI.VectorOfVariables([y, w])
-            f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4],
-                                                               [x, z]), 5)
+            f = MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm.([2, 4], [x, z]), 5)
 
             wf = MOI.SingleVariable(w)
             xf = MOI.SingleVariable(x)
