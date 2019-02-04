@@ -813,22 +813,21 @@ end
 
 # Scalar Variable +/- ...
 function operate(::typeof(-), ::Type{T}, f::MOI.SingleVariable) where T
-    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(-one(T),
-                                                             f.variable)],
-                                       zero(T))
+    return MOI.ScalarAffineFunction{T}(
+        [MOI.ScalarAffineTerm(-one(T), f.variable)], zero(T))
 end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.SingleVariable, α::T) where T
-    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T),
-                                                             f.variable)],
-                                       op(α))
+    return MOI.ScalarAffineFunction{T}(
+        [MOI.ScalarAffineTerm(one(T), f.variable)], op(α))
 end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.SingleVariable,
                  g::MOI.SingleVariable) where T
-    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f.variable),
-                                        MOI.ScalarAffineTerm(op(one(T)), g.variable)],
-                                       zero(T))
+    return MOI.ScalarAffineFunction{T}(
+        [MOI.ScalarAffineTerm(one(T), f.variable),
+         MOI.ScalarAffineTerm(op(one(T)), g.variable)],
+        zero(T))
 end
 function operate(op::typeof(+), ::Type{T},
                  f::MOI.SingleVariable,

@@ -17,7 +17,6 @@ function MOI.supports_constraint(::Type{<:FlipSignBridge{T, S1}},
 end
 function added_constraint_types(
     ::Type{<:FlipSignBridge{S1, S2, F}}) where {S1, S2, F}
-
     return [(S2, F)]
 end
 
@@ -45,9 +44,9 @@ end
 
 function MOI.modify(model::MOI.ModelLike, bridge::FlipSignBridge,
                     change::MOI.ScalarCoefficientChange)
-    MOI.modify(model, bridge.flipped_constraint,
-               MOI.ScalarCoefficientChange(change.variable,
-                                           -change.new_coefficient))
+    MOI.modify(
+        model, bridge.flipped_constraint,
+        MOI.ScalarCoefficientChange(change.variable, -change.new_coefficient))
 end
 
 function MOI.modify(model::MOI.ModelLike, bridge::FlipSignBridge,
