@@ -10,14 +10,17 @@ abstract type FlipSignBridge{
     S1<:MOI.AbstractSet, S2<:MOI.AbstractSet,
     F<:MOI.AbstractFunction} <: AbstractBridge end
 
-function MOI.supports_constraint(::Type{<:FlipSignBridge{T, S1}},
+# Apparently, Julia does not consider, say `GreaterToLessBridge{T}` to be a
+# subtype of `FlipSignBridge{MOI.GreaterTo{T}, MOI.LessThan{T}}` but consider
+# it to be a subtype of `FlipSignBridge{MOI.GreaterTo{T}, MOI.LessThan{T}, <:Any}`
+function MOI.supports_constraint(::Type{<:FlipSignBridge{S1, S2, <:Any}},
                                  ::Type{<:MOI.AbstractScalarFunction},
-                                 ::Type{S1}) where {T, S1}
+                                 ::Type{S1}) where {S1<:MOI.AbstractSet, S2<:MOI.AbstractSet}
     return true
 end
 function added_constraint_types(
     ::Type{<:FlipSignBridge{S1, S2, F}}) where {S1, S2, F}
-    return [(S2, F)]
+    return [(F, S2)]
 end
 
 # Attributes, Bridge acting as an model

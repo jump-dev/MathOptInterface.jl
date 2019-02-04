@@ -22,22 +22,37 @@ const MOIU = MOI.Utilities
         end
         @testset "operate vcat" begin
             v = MOI.VectorOfVariables([y, w])
-            f = MOI.ScalarAffineFunction(
-                MOI.ScalarAffineTerm.([2, 4], [x, z]), 5)
-
             wf = MOI.SingleVariable(w)
             xf = MOI.SingleVariable(x)
-            @test MOIU.promote_operation(vcat, Int, typeof(wf), typeof(f),
-                                         typeof(v), Int, typeof(g), typeof(xf),
-                                         Int) == MOI.VectorAffineFunction{Int}
-            expected_terms = MOI.VectorAffineTerm.(
-                [1, 2, 2, 3, 4, 8, 6, 9],
-                MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
-                                      [w, x, z, y, w, y, x, x]))
-            expected_constants = [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
-            F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
-            @test F.terms == expected_terms
-            @test F.constants == expected_constants
+            @testset "Variable" begin
+                # TODO #616
+            end
+            f = MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm.([2, 4], [x, z]), 5)
+            g = MOI.VectorAffineFunction(
+                MOI.VectorAffineTerm.([3, 1], MOI.ScalarAffineTerm.([5, 2], [y, x])),
+                [3, 1, 4])
+            @testset "Affine" begin
+                @test MOIU.promote_operation(vcat, Int, typeof(wf), typeof(f),
+                                             typeof(v), Int, typeof(g), typeof(xf),
+                                             Int) == MOI.VectorAffineFunction{Int}
+                F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+                expected_terms = MOI.VectorAffineTerm.(
+                    [1, 2, 2, 3, 4, 8, 6, 9],
+                    MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
+                                          [w, x, z, y, w, y, x, x]))
+                expected_constants = [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
+                F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+                @test F.terms == expected_terms
+                @test F.constants == expected_constants
+            end
+            @testset "Quadratic" begin
+                @test MOIU.promote_operation(
+                    vcat, Int, MOI.VectorQuadraticFunction{Int}, typeof(wf),
+                    typeof(f), typeof(v), Int, MOI.ScalarQuadraticFunction{Int},
+                    typeof(g), typeof(xf), Int) == MOI.VectorQuadraticFunction{Int}
+                # TODO
+            end
         end
     end
     @testset "MultirowChange construction" begin
@@ -179,6 +194,12 @@ const MOIU = MOI.Utilities
                 @test MOIU.isapprox_zero(f, 1e-16)
             end
             @testset "promote_operation" begin
+                @test MOIU.promote_operation(
+                    -, Int, MOI.SingleVariable
+                ) == MOI.ScalarAffineFunction{Int}
+                @test MOIU.promote_operation(
+                    -, Int, MOI.ScalarAffineFunction{Int}
+                ) == MOI.ScalarAffineFunction{Int}
                 @test MOIU.promote_operation(+, Float64, MOI.SingleVariable,
                                              MOI.SingleVariable) == MOI.ScalarAffineFunction{Float64}
                 @test MOIU.promote_operation(+, Float64,
@@ -268,6 +289,9 @@ const MOIU = MOI.Utilities
                 @test MOIU.isapprox_zero(f, 1e-16)
             end
             @testset "promote_operation" begin
+                @test MOIU.promote_operation(
+                    -, Int, MOI.ScalarQuadraticFunction{Int}
+                ) == MOI.ScalarQuadraticFunction{Int}
                 @test MOIU.promote_operation(+, Int,
                                              MOI.ScalarQuadraticFunction{Int},
                                              MOI.ScalarQuadraticFunction{Int}) == MOI.ScalarQuadraticFunction{Int}

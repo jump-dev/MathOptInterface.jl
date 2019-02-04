@@ -27,7 +27,8 @@ include("lazybridgeoptimizer.jl")
 MOIU.@model(AllBridgedConstraints,
             (),
             (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan, MOI.Interval,),
-            (MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+            (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
+             MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
              MOI.PositiveSemidefiniteConeSquare,
              MOI.LogDetConeTriangle, MOI.RootDetConeTriangle),
             (),
@@ -43,20 +44,24 @@ this package and for the coefficient type `T`.
 """
 function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     cache = MOIU.UniversalFallback(AllBridgedConstraints{T}())
-    bridgedmodel = MOIB.LazyBridgeOptimizer(model, cache)
-    add_bridge(bridgedmodel, MOIB.VectorizeBridge{T})
-    add_bridge(bridgedmodel, MOIB.ScalarSlackBridge{T})
-    add_bridge(bridgedmodel, MOIB.VectorSlackBridge{T})
-    add_bridge(bridgedmodel, MOIB.SplitIntervalBridge{T})
-    add_bridge(bridgedmodel, MOIB.QuadtoSOCBridge{T})
-    add_bridge(bridgedmodel, MOIB.GeoMeanBridge{T})
-    add_bridge(bridgedmodel, MOIB.SquarePSDBridge{T})
-    add_bridge(bridgedmodel, MOIB.LogDetBridge{T})
-    add_bridge(bridgedmodel, MOIB.RootDetBridge{T})
-    add_bridge(bridgedmodel, MOIB.RSOCBridge{T})
-    add_bridge(bridgedmodel, MOIB.RSOCtoPSDBridge{T})
-    add_bridge(bridgedmodel, MOIB.SOCtoPSDBridge{T})
-    bridgedmodel
+    bridged_model = LazyBridgeOptimizer(model, cache)
+    add_bridge(bridged_model, GreaterToLessBridge{T})
+    add_bridge(bridged_model, LessToGreaterBridge{T})
+    add_bridge(bridged_model, NonnegToNonposBridge{T})
+    add_bridge(bridged_model, NonposToNonnegBridge{T})
+    add_bridge(bridged_model, VectorizeBridge{T})
+    add_bridge(bridged_model, ScalarSlackBridge{T})
+    add_bridge(bridged_model, VectorSlackBridge{T})
+    add_bridge(bridged_model, SplitIntervalBridge{T})
+    add_bridge(bridged_model, QuadtoSOCBridge{T})
+    add_bridge(bridged_model, GeoMeanBridge{T})
+    add_bridge(bridged_model, SquarePSDBridge{T})
+    add_bridge(bridged_model, LogDetBridge{T})
+    add_bridge(bridged_model, RootDetBridge{T})
+    add_bridge(bridged_model, RSOCBridge{T})
+    add_bridge(bridged_model, RSOCtoPSDBridge{T})
+    add_bridge(bridged_model, SOCtoPSDBridge{T})
+    return bridged_model
 end
 
 include("flip_sign_bridge.jl")

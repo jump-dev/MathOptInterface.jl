@@ -140,6 +140,17 @@ MOIU.@model(NoRSOCModel,
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
+MOIU.@model(GreaterNonnegModel,
+            (),
+            (MOI.GreaterThan,),
+            (MOI.Nonnegatives,),
+            (),
+            (MOI.SingleVariable,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+
+
 MOIU.@model(ModelNoVAFinSOC,
             (),
             (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
@@ -226,10 +237,17 @@ MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
 
     @testset "Supports" begin
         full_bridged_mock = MOIB.full_bridge_optimizer(mock, Float64)
+        greater_nonneg_mock = MOIU.MockOptimizer(GreaterNonnegModel{Float64}())
+        full_bridged_greater_nonneg = MOIB.full_bridge_optimizer(
+            greater_nonneg_mock, Float64)
         for F in [MOI.SingleVariable, MOI.ScalarAffineFunction{Float64},
                   MOI.ScalarQuadraticFunction{Float64}]
             @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.Interval{Float64})
+            @test !MOI.supports_constraint(
+                greater_nonneg_mock, F, MOI.LessThan{Float64})
+            @test MOI.supports_constraint(
+                full_bridged_greater_nonneg, F, MOI.LessThan{Float64})
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
                   MOI.VectorQuadraticFunction{Float64}]
@@ -237,6 +255,10 @@ MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
                                           MOI.PositiveSemidefiniteConeSquare)
             @test MOI.supports_constraint(full_bridged_mock, F,
                                           MOI.GeometricMeanCone)
+            @test !MOI.supports_constraint(
+                greater_nonneg_mock, F, MOI.Nonpositives)
+            @test MOI.supports_constraint(
+                full_bridged_greater_nonneg, F, MOI.Nonnegatives)
         end
         for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
             # The bridges in this for loop do not support yet

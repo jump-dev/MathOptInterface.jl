@@ -1369,6 +1369,12 @@ function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
     return VAF{T}
 end
+function promote_operation(
+    ::typeof(vcat), ::Type{T},
+    ::Type{<:Union{ScalarQuadraticLike{T}, VVF, VAF{T}, VQF{T}}}...) where T
+    return VQF{T}
+end
+
 function operate(::typeof(vcat), ::Type{T},
                  funcs::Union{ScalarAffineLike{T}, VVF, VAF{T}}...) where T
     nterms = sum(func -> number_of_affine_terms(T, func), funcs)
