@@ -363,10 +363,10 @@ returns `false` is encountered (short-circuiting). Similar to `all`.
 function all_coefficients end
 
 function all_coefficients(p::Function, f::MOI.ScalarAffineFunction)
-    p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
+    return p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
 end
 function all_coefficients(p::Function, f::MOI.ScalarQuadraticFunction)
-    p(f.constant) &&
+    return p(f.constant) &&
         all(t -> p(MOI.coefficient(t)), f.affine_terms) &&
         all(t -> p(MOI.coefficient(t)), f.quadratic_terms)
 end
