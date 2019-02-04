@@ -1049,8 +1049,10 @@ end
 function Base.:+(args::VectorLike{T}...) where T
     return operate(+, T, args...)
 end
-function Base.:+(α::Vector{T}, f::VectorLike{T}...) where T
-    return operate(+, T, α, f...)
+# Base.:+(α::Vector{T}, f::VectorLike{T}...) is too general as it also covers
+# Base.:+(α::Vector) which is type piracy
+function Base.:+(α::Vector{T}, f::VectorLike{T}, g::VectorLike{T}...) where T
+    return operate(+, T, α, f, g...)
 end
 function Base.:+(f::VectorLike{T}, α::Vector{T}) where T
     return operate(+, T, f, α)
