@@ -1208,6 +1208,25 @@ function operate(::typeof(sum), ::Type{T}, vis::Vector{MOI.VariableIndex}) where
 end
 
 #################### Concatenation of MOI functions: `vcat` ####################
+"""
+    fill_vector(vector::Vector, ::Type{T}, fill_func::Function,
+                dim_func::Function, funcs) where T
+
+Fill the vector `vector` with
+`fill_func(vector, vector_offset, output_offset, func)` for each function `func`
+in `funcs` where `vector_offset` (resp. `output_offset`) is the sum of
+`dim_func(T, func)` (resp. `output_dim(T, func)`) of previous functions of
+`func`.
+
+    fill_vector(vector::Vector, ::Type{T}, vector_offset::Int,
+                     output_offset::Int, fill_func::Function,
+                     dim_func::Function, funcs...) where T
+
+Same than previous method but starting with possible nonzero `vector_offset` and
+`output_offset`.
+"""
+function fill_vector end
+
 function fill_vector(vector::Vector, ::Type{T}, fill_func::Function,
                      dim_func::Function, funcs) where T
     vector_offset = 0
@@ -1286,6 +1305,12 @@ function fill_constant(constant::Vector{T}, offset::Int,
     constant[offset .+ (1:n)] .= func.constants
 end
 
+"""
+    vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
+
+Returns the vector of scalar affine functions in the form of a
+`MOI.VectorAffineFunction{T}`.
+"""
 function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
     nterms = sum(func -> number_of_affine_terms(T, func), funcs)
     out_dim = sum(func -> output_dim(T, func), funcs)
@@ -1295,6 +1320,7 @@ function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
     fill_vector(constant, T, fill_constant, output_dim, funcs)
     return VAF(terms, constant)
 end
+
 function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
     return VAF{T}
