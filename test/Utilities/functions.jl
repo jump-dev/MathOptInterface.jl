@@ -323,6 +323,8 @@ const MOIU = MOI.Utilities
             end
             @testset "operate" begin
                 @test f ≈ 7 + (fx + 2fy) * (1fx + fy) + 3fx
+                @test f ≈ -(-7 - 3fx) + (fx + 2fy) * (1fx + fy)
+                @test f ≈ -((fx + 2fy) * (MOIU.operate(-, Int, fx) - fy)) + 3fx + 7
                 @test f ≈ 7 + MOIU.operate(*, Int, fx, fx) + 3fx * (fy + 1) + 2fy * fy
                 @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
                 @test f ≈ begin
@@ -568,6 +570,11 @@ const MOIU = MOI.Utilities
                     @test MOIU.promote_operation(-, T, t1, t2) == MOI.VectorQuadraticFunction{T}
                 end
             end
+            for t in [MOI.VectorOfVariables, MOI.VectorAffineFunction{T}]
+                @test MOIU.promote_operation(-, T, t) == MOI.VectorAffineFunction{T}
+            end
+            t = MOI.VectorQuadraticFunction{T}
+            @test MOIU.promote_operation(-, T, t) == MOI.VectorQuadraticFunction{T}
         end
 
         α = [1, 2, 3]
