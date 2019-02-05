@@ -10,12 +10,9 @@ abstract type FlipSignBridge{
     S1<:MOI.AbstractSet, S2<:MOI.AbstractSet,
     F<:MOI.AbstractFunction} <: AbstractBridge end
 
-# Apparently, Julia does not consider, say `GreaterToLessBridge{T}` to be a
-# subtype of `FlipSignBridge{MOI.GreaterTo{T}, MOI.LessThan{T}}` but consider
-# it to be a subtype of `FlipSignBridge{MOI.GreaterTo{T}, MOI.LessThan{T}, <:Any}`
-function MOI.supports_constraint(::Type{<:FlipSignBridge{S1, S2, <:Any}},
+function MOI.supports_constraint(::Type{<:FlipSignBridge{S1}},
                                  ::Type{<:MOI.AbstractScalarFunction},
-                                 ::Type{S1}) where {S1<:MOI.AbstractSet, S2<:MOI.AbstractSet}
+                                 ::Type{S1}) where {S1<:MOI.AbstractSet}
     return true
 end
 function added_constraint_types(
@@ -67,14 +64,14 @@ function MOI.modify(model::MOI.ModelLike, bridge::FlipSignBridge,
 end
 
 """
-    GreaterToLessBridge{T, F} <: FlipSignBridge{MOI.GreaterThan{T},
-                                                MOI.LessThan{T}, F}
+    GreaterToLessBridge{T, F<:MOI.AbstractScalarFunction} <:
+        FlipSignBridge{MOI.GreaterThan{T}, MOI.LessThan{T}, F}
 
 Transforms a `G`-in-`GreaterThan{T}` constraint into an `F`-in-`LessThan{T}`
 constraint.
 """
-struct GreaterToLessBridge{T, F} <: FlipSignBridge{MOI.GreaterThan{T},
-                                                   MOI.LessThan{T}, F}
+struct GreaterToLessBridge{T, F<:MOI.AbstractScalarFunction} <:
+    FlipSignBridge{MOI.GreaterThan{T}, MOI.LessThan{T}, F}
     flipped_constraint::CI{F, MOI.LessThan{T}}
 end
 function GreaterToLessBridge{T, F}(model::MOI.ModelLike,
@@ -97,14 +94,14 @@ function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintSet,
 end
 
 """
-    LessToGreaterBridge{T, F} <: FlipSignBridge{MOI.LessThan{T},
-                                                MOI.GreaterThan{T}, F}
+    LessToGreaterBridge{T, F<:MOI.AbstractScalarFunction} <:
+        FlipSignBridge{MOI.LessThan{T}, MOI.GreaterThan{T}, F}
 
 Transforms a `G`-in-`LessThan{T}` constraint into an `F`-in-`GreaterThan{T}`
 constraint.
 """
-struct LessToGreaterBridge{T, F} <: FlipSignBridge{MOI.LessThan{T},
-                                                   MOI.GreaterThan{T}, F}
+struct LessToGreaterBridge{T, F<:MOI.AbstractScalarFunction} <:
+    FlipSignBridge{MOI.LessThan{T}, MOI.GreaterThan{T}, F}
     flipped_constraint::CI{F, MOI.GreaterThan{T}}
 end
 function LessToGreaterBridge{T, F}(model::MOI.ModelLike,
@@ -127,13 +124,13 @@ function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintSet,
 end
 
 """
-    NonnegToNonposBridge{T, F}
+    NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction}
 
 Transforms a `G`-in-`Nonnegatives` constraint into a `F`-in-`Nonpositives`
 constraint.
 """
-struct NonnegToNonposBridge{T, F} <: FlipSignBridge{MOI.Nonnegatives,
-                                                    MOI.Nonpositives, F}
+struct NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction} <:
+    FlipSignBridge{MOI.Nonnegatives, MOI.Nonpositives, F}
     flipped_constraint::CI{F, MOI.Nonpositives}
 end
 function NonnegToNonposBridge{T, F}(model::MOI.ModelLike,
@@ -152,13 +149,13 @@ function concrete_bridge_type(::Type{<:NonnegToNonposBridge{T}},
 end
 
 """
-    NonposToNonnegBridge{T, F}
+    NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction}
 
 Transforms a `G`-in-`Nonpositives` constraint into a `F`-in-`Nonnegatives`
 constraint.
 """
-struct NonposToNonnegBridge{T, F} <: FlipSignBridge{MOI.Nonpositives,
-                                                    MOI.Nonnegatives, F}
+struct NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction} <:
+    FlipSignBridge{MOI.Nonpositives, MOI.Nonnegatives, F}
     flipped_constraint::CI{F, MOI.Nonnegatives}
 end
 function NonposToNonnegBridge{T, F}(model::MOI.ModelLike,
