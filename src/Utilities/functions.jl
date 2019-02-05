@@ -353,11 +353,22 @@ function test_constraintnames_equal(model, constraintnames)
     end
 end
 
-isapprox_zero(α::AbstractFloat, tol) = -tol < α < tol
-isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
-function isapprox_zero(t::Union{MOI.ScalarAffineTerm,
-                                MOI.ScalarQuadraticTerm}, tol)
-    isapprox_zero(MOI.coefficient(t), tol)
+"""
+    all_coefficients(p::Function, f::MOI.AbstractFunction)
+
+Determine whether predicate `p` returns `true` for all coefficients of `f`,
+returning `false` as soon as the first coefficient of `f` for which `p`
+returns `false` is encountered (short-circuiting). Similar to `all`.
+"""
+function all_coefficients end
+
+function all_coefficients(p::Function, f::MOI.ScalarAffineFunction)
+    return p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
+end
+function all_coefficients(p::Function, f::MOI.ScalarQuadraticFunction)
+    return p(f.constant) &&
+        all(t -> p(MOI.coefficient(t)), f.affine_terms) &&
+        all(t -> p(MOI.coefficient(t)), f.quadratic_terms)
 end
 
 """
@@ -379,16 +390,15 @@ then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonical(f))` is
 """
 function isapprox_zero end
 
-function isapprox_zero(f::MOI.ScalarAffineFunction, tol)
-    isapprox_zero(f.constant, tol) && all(t -> isapprox_zero(t, tol),
-                                           f.terms)
+isapprox_zero(α::AbstractFloat, tol) = -tol <= α <= tol
+isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
+function isapprox_zero(f::MOI.AbstractFunction, tol)
+    return all_coefficients(α -> isapprox_zero(α, tol), f)
 end
-function isapprox_zero(f::MOI.ScalarQuadraticFunction, tol)
-    isapprox_zero(f.constant, tol) &&
-        all(t -> isapprox_zero(t, tol),
-            f.affine_terms) &&
-        all(t -> isapprox_zero(t, tol),
-            f.quadratic_terms)
+
+function Base.iszero(f::Union{MOI.ScalarAffineFunction{T},
+                              MOI.ScalarQuadraticFunction{T}}) where T
+    return all_coefficients(iszero, canonical(f))
 end
 
 """

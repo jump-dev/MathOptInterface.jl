@@ -175,6 +175,7 @@ const MOIU = MOI.Utilities
         @testset "Affine" begin
             @testset "zero" begin
                 f = @inferred MOIU.zero(MOI.ScalarAffineFunction{Float64})
+                @test iszero(f)
                 @test MOIU.isapprox_zero(f, 1e-16)
             end
             @testset "promote_operation" begin
@@ -187,7 +188,7 @@ const MOIU = MOI.Utilities
                                              MOI.ScalarAffineFunction{Int},
                                              MOI.ScalarAffineFunction{Int}) == MOI.ScalarAffineFunction{Int}
             end
-            @testset "Comparison tolerance" begin
+            @testset "Comparison" begin
                 @test MOIU.operate(+, Float64, MOI.SingleVariable(x),
                                    MOI.SingleVariable(z)) + 1.0 ≈
                       MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]), 1.0) atol=1e-6
@@ -195,9 +196,16 @@ const MOIU = MOI.Utilities
                 f2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 1.0)
                 @test f1 ≈ f2 atol=1e-6
                 fdiff = f1 - f2
-                MOIU.canonicalize!(fdiff)
-                @test !MOIU.isapprox_zero(fdiff, 1e-8)
-                @test MOIU.isapprox_zero(fdiff, 1e-6)
+                @testset "With iszero" begin
+                    @test !iszero(fdiff)
+                    @test iszero(f1 - f1)
+                    @test iszero(f2 - f2)
+                end
+                @testset "With tolerance" begin
+                    MOIU.canonicalize!(fdiff)
+                    @test !MOIU.isapprox_zero(fdiff, 1e-8)
+                    @test MOIU.isapprox_zero(fdiff, 1e-6)
+                end
             end
             @testset "canonical" begin
                 f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 1, 3, -2, -3], [y, x, z, x, z]), 5))
@@ -290,14 +298,21 @@ const MOIU = MOI.Utilities
             f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
             MOIU.canonicalize!(f)
             @test MOI.output_dimension(f) == 1
-            @testset "isapprox_zero" begin
-                @test !MOIU.isapprox_zero(f, 1e-8)
-                # Test isapprox_zero with zero terms
-                @test MOIU.isapprox_zero(0 * f, 1e-8)
-                g = 1.0fx * fy - (1 + 1e-6) * fy * fx
-                MOIU.canonicalize!(g)
-                @test MOIU.isapprox_zero(g, 1e-5)
-                @test !MOIU.isapprox_zero(g, 1e-7)
+            @testset "Comparison" begin
+                @testset "With iszero" begin
+                    @test !iszero(f)
+                    @test iszero(0 * f)
+                    @test iszero(f - f)
+                end
+                @testset "With tolerance" begin
+                    @test !MOIU.isapprox_zero(f, 1e-8)
+                    # Test isapprox_zero with zero terms
+                    @test MOIU.isapprox_zero(0 * f, 1e-8)
+                    g = 1.0fx * fy - (1 + 1e-6) * fy * fx
+                    MOIU.canonicalize!(g)
+                    @test MOIU.isapprox_zero(g, 1e-5)
+                    @test !MOIU.isapprox_zero(g, 1e-7)
+                end
             end
             @testset "convert" begin
                 @test_throws InexactError convert(MOI.SingleVariable, f)
