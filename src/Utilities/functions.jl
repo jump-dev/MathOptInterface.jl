@@ -570,7 +570,8 @@ end
             args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
 
 Returns an `MOI.AbstractFunction` representing the function resulting from the
-operation `op(args...)`. No argument can be modified.
+operation `op(args...)` on functions of coefficient type `T`. No argument can be
+modified.
 """
 function operate end
 
@@ -579,8 +580,9 @@ function operate end
              args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
 
 Returns an `MOI.AbstractFunction` representing the function resulting from the
-operation `op(args...)`. The first argument can be modified. The return type
-is the same than the method `operate(op, T, args...)` without `!`.
+operation `op(args...)` on functions of coefficient type `T`. The first argument
+can be modified. The return type is the same than the method
+`operate(op, T, args...)` without `!`.
 """
 function operate! end
 
