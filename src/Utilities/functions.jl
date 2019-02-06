@@ -1405,3 +1405,51 @@ function operate(::typeof(vcat), ::Type{T},
     fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
     return VAF(terms, constant)
 end
+
+function scalarize(f::MOI.VectorOfVariable)
+    MOI.SingleVariable.(f.variables)
+end
+function scalarize(f::MOI.VectorAffineFunction)
+    dimension = MOI.output_dimension(f)
+    constants = MOI._constant(f)
+    counting = count_terms(dimension, f.terms)
+    functions = MOI.ScalarAffineFunction.(MOI.ScalarAffineTerm{T}[], constants)
+    for i in 1:dimension
+        sizehint!(functions[i].terms, counting[i])
+    end
+    for term in f.terms
+        push!(vec[term.output_index].terms, term.scalar_term)
+    end
+    functions 
+end
+function scalarize(f::MOI.VectorAffineFunction)
+    dimension = MOI.output_dimension(f)
+    constants = MOI._constant(f)
+    counting_scalars = count_terms(dimension, f.affine_terms)
+    counting_quadratics = count_terms(dimension, f.quadratic_terms)
+    functions = MOI.ScalarQuadraticFunction.(
+        MOI.ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], constants)
+    for i in 1:dimension
+        sizehint!(functions[i].affine_terms, counting_scalars[i])
+        sizehint!(functions[i].quadratic_terms, counting_quadratics[i])
+    end
+    for term in f.affine_terms
+        push!(vec[term.output_index].affine_terms, term.scalar_term)
+    end
+    for term in f.quadratic_terms
+        push!(vec[term.output_index].quadratic_terms, term.scalar_term)
+    end
+    functions 
+end
+
+function count_terms(counting::Vector{<:Integer}, terms::Vector{T}) where T
+    for term in terms
+        counting[term.output_index] += 1
+    end
+    nothing
+end
+function count_terms(dimension::I, terms::Vector{T}) where {I,T}
+    counting = zeros(I, dimension)
+    count_terms(counting, terms)
+    counting
+end
