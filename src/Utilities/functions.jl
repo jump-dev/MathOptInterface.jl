@@ -1406,7 +1406,7 @@ function operate(::typeof(vcat), ::Type{T},
     return VAF(terms, constant)
 end
 
-function scalarize(f::MOI.VectorOfVariable)
+function scalarize(f::MOI.VectorOfVariables)
     MOI.SingleVariable.(f.variables)
 end
 function scalarize(f::MOI.VectorAffineFunction)
@@ -1422,7 +1422,7 @@ function scalarize(f::MOI.VectorAffineFunction)
     end
     functions 
 end
-function scalarize(f::MOI.VectorAffineFunction)
+function scalarize(f::MOI.VectorQuadraticFunction)
     dimension = MOI.output_dimension(f)
     constants = MOI._constant(f)
     counting_scalars = count_terms(dimension, f.affine_terms)
