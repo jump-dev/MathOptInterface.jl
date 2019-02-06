@@ -167,7 +167,21 @@ MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
                         ::Type{MOI.VectorAffineFunction{Float64}},
                         ::Type{MOI.SecondOrderCone}) = false
 
+# Model supporting nothing
+MOIU.@model NothingModel () () () () () () () ()
+
 @testset "LazyBridgeOptimizer" begin
+    @testset "Unsupported constraint with cycles" begin
+        # Test that `supports_constraint` works correctly when it is not
+        # supported but the bridges forms a cycle
+        mock = MOIU.MockOptimizer(NothingModel{Float64}())
+        bridged = MOIB.full_bridge_optimizer(mock, Float64)
+        @test !MOI.supports_constraint(
+            bridged, MOI.SingleVariable, MOI.GreaterThan{Float64})
+        @test !MOI.supports_constraint(
+            bridged, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
+    end
+
     mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
     bridged_mock = MOIB.LazyBridgeOptimizer(
         mock, MOIB.AllBridgedConstraints{Float64}())
