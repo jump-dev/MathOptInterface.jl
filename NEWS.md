@@ -4,13 +4,13 @@ MathOptInterface (MOI) release notes
 v0.8.2 (February ??, 2019)
 -------------------------
 
-- Add `SpecificTerminationStatus` attribute (#629).
+- Add `RawStatusString` attribute (#629).
 - Do not set names to the optimizer but only to the cache in `CachingOptimizer`
   (#638).
 - Make scalar MOI functions act as scalars in broadcast (#646).
 - Add function utilities:
   * Implement `Base.zero` (#634), `Base.iszero` (#643), add missing arithmetic
-    operations (#644, #645) and fixes division (#648).
+    operations (#644, #645) and fix division (#648).
   * Add a `vectorize` function that turns a vector of `ScalarAffineFunction`
     into a `VectorAffineFunction` (#642).
 - Improve support for starting values:
