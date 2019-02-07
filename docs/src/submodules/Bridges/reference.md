@@ -25,6 +25,7 @@ Bridges.add_bridge
 Bridges.remove_bridge
 Bridges.has_bridge
 Bridges.full_bridge_optimizer
+Bridges.ToAdd
 Bridges.debug_supports_constraint
 Bridges.debug_supports
 Bridges.bridged_variable_function

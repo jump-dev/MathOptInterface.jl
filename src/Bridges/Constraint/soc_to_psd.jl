@@ -45,10 +45,12 @@ which is equivalent to
   t^2 & > x^\\top x
 \\end{align*}
 ```
-This bridge is not added by default by [`MOI.Bridges.full_bridge_optimizer`](@ref)
-as bridging second order cone constraints to semidefinite constraints can be
-achieved by the [`SOCtoRSOCBridge`](@ref) followed by the [`RSOCtoPSDBridge`](@ref)
-while creating a smaller semidefinite constraint.
+
+!!! warning
+    This bridge is not added by default by [`MOI.Bridges.full_bridge_optimizer`](@ref)
+    as bridging second order cone constraints to semidefinite constraints can be
+    achieved by the [`SOCtoRSOCBridge`](@ref) followed by the [`RSOCtoPSDBridge`](@ref)
+    while creating a smaller semidefinite constraint.
 """
 struct SOCtoPSDBridge{T,F,G} <: SetMapBridge{
     T,

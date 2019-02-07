@@ -1956,6 +1956,18 @@ function test_wrong_coefficient()
     return
 end
 
+struct OptimizerWithBridgeToAdd <: MOI.AbstractOptimizer end
+struct BridgeToAdd{T} <: MOI.Bridges.Constraint.AbstractBridge end
+function MOI.get(::OptimizerWithBridgeToAdd, ::MOI.Bridges.ToAdd{T}) where {T}
+    return [BridgeToAdd{T}]
+end
+
+function test_toadd()
+    b = MOI.Bridges.full_bridge_optimizer(OptimizerWithBridgeToAdd(), Int)
+    @test MOI.Bridges.has_bridge(b, BridgeToAdd{Int})
+    @test !MOI.Bridges.has_bridge(b, BridgeToAdd{Float64})
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
