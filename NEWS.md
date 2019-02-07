@@ -12,14 +12,13 @@ v0.8.2 (February ??, 2019)
   * Implement `Base.zero` (#634), `Base.iszero` (#643), add missing arithmetic
     operations (#644, #645) and fixes division (#648).
   * Add a `vectorize` function that turns a vector of `ScalarAffineFunction`
-    into a `VectorAffineFunction (#642).
+    into a `VectorAffineFunction` (#642).
 - Improve support for starting values:
   * Show a warning in copy when starting values are not supported instead of
     throwing an error (#630).
   * Fix `UniversalFallback` for getting an variable or constraint attribute set to
     no indices (#623).
   * Add a test in `contlineartest` with partially set `VariablePrimalStart`.
-    no indices (#626).
 - Bridges improvements:
   * Fix `StackOverFlow` in `LazyBridgeOptimizer` when there is a cycle in the
     graph of bridges.
