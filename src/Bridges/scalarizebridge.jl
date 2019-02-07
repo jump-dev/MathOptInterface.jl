@@ -88,10 +88,15 @@ function MOI.modify(model::MOI.ModelLike, bridge::ScalarizeBridge,
 end
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
     bridge::ScalarizeBridge{T}, func) where T
+    old_constants = bridge.constants
     bridge.constants = __constant(func, T)
     new_func = scalarize(func, true)
     MOI.set.(model, MOI.ConstraintFunction(), bridge.scalar_constraints, 
              new_func)
-    MOI.set.(model, MOI.ConstraintSet(), bridge.scalar_constraints, 
-             S.(-bridge.constants))
+    for i in eachindex(bridge.constants)
+        if bridge.constants[i] != old_constants[i]
+            MOI.set(model, MOI.ConstraintSet(), bridge.scalar_constraints, 
+                     S(-bridge.constants[i]))
+        end
+    end
 end
