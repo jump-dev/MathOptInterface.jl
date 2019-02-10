@@ -18,6 +18,16 @@ function test_model_equality(model_string, variables, constraints)
     MOIU.test_models_equal(model, model_2, variables, constraints)
 end
 
+@testset "read_from_file" begin
+    model = MOF.Model()
+    model_zip = MathOptFormat.read_from_file(
+        joinpath(@__DIR__, "empty_model.mof.json.gz"))
+    MOIU.test_models_equal(model, model_zip, String[], String[])
+    model_unzip = MathOptFormat.read_from_file(
+        joinpath(@__DIR__, "empty_model.mof.json"))
+    MOIU.test_models_equal(model, model_unzip, String[], String[])
+end
+
 @testset "Error handling: read_from_file" begin
     failing_models_dir = joinpath(@__DIR__, "failing_models")
 

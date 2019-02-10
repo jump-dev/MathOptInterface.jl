@@ -1,10 +1,8 @@
-function MOI.read_from_file(model::Model, filename::String)
+function MOI.read_from_file(model::Model, io::IO)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")
     end
-    object = open(filename, "r") do io
-        JSON.parse(io; dicttype=Object)
-    end
+    object = JSON.parse(io; dicttype=Object)
     if object["version"] > VERSION
         error("Sorry, the file $(filename) can't be read because this library" *
               " supports version $(VERSION) of MathOptFormat, but the file " *

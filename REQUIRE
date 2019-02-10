@@ -2,4 +2,5 @@ julia 0.6
 Compat
 DataStructures
 JSON
+GZip
 MathOptInterface 0.8-0.9

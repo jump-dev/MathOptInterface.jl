@@ -29,17 +29,15 @@ end
 #
 # ==============================================================================
 
-function MOI.write_to_file(model::Model, filename::String)
-    open(filename, "w") do io
-        write_model_name(io, model)
-        write_rows(io, model)
-        write_columns(io, model)
-        write_rhs(io, model)
-        write_ranges(io, model)
-        write_bounds(io, model)
-        write_sos(io, model)
-        println(io, "ENDATA")
-    end
+function MOI.write_to_file(model::Model, io::IO)
+    write_model_name(io, model)
+    write_rows(io, model)
+    write_columns(io, model)
+    write_rhs(io, model)
+    write_ranges(io, model)
+    write_bounds(io, model)
+    write_sos(io, model)
+    println(io, "ENDATA")
     return
 end
 
@@ -394,43 +392,41 @@ end
 
 const HEADERS = ("ROWS", "COLUMNS", "RHS", "RANGES", "BOUNDS", "SOS", "ENDATA")
 
-function MOI.read_from_file(model::Model, filename::String)
+function MOI.read_from_file(model::Model, io::IO)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
     data = TempMPSModel()
-    open(filename, "r") do io
-        header = "NAME"
-        while !eof(io) && header != "ENDATA"
-            line = strip(readline(io))
-            if line == "" || startswith(line, "*")
-                # Skip blank lines and comments.
-                continue
-            end
-            if uppercase(string(line)) in HEADERS
-                header = uppercase(string(line))
-                continue
-            end
-            # TODO: split into hard fields based on column indices.
-            items = if VERSION >= v"0.7"
-                String.(split(line, " ", keepempty = false))
-            else
-                String.(split(line, " ", keep = false))
-            end
-            if header == "NAME"
-                # A special case. This only happens at the start.
-                parse_name_line(data, items)
-            elseif header == "ROWS"
-                parse_rows_line(data, items)
-            elseif header == "COLUMNS"
-                parse_columns_line(data, items)
-            elseif header == "RHS"
-                parse_rhs_line(data, items)
-            elseif header == "RANGES"
-                parse_ranges_line(data, items)
-            elseif header == "BOUNDS"
-                parse_bounds_line(data, items)
-            end
+    header = "NAME"
+    while !eof(io) && header != "ENDATA"
+        line = strip(readline(io))
+        if line == "" || startswith(line, "*")
+            # Skip blank lines and comments.
+            continue
+        end
+        if uppercase(string(line)) in HEADERS
+            header = uppercase(string(line))
+            continue
+        end
+        # TODO: split into hard fields based on column indices.
+        items = if VERSION >= v"0.7"
+            String.(split(line, " ", keepempty = false))
+        else
+            String.(split(line, " ", keep = false))
+        end
+        if header == "NAME"
+            # A special case. This only happens at the start.
+            parse_name_line(data, items)
+        elseif header == "ROWS"
+            parse_rows_line(data, items)
+        elseif header == "COLUMNS"
+            parse_columns_line(data, items)
+        elseif header == "RHS"
+            parse_rhs_line(data, items)
+        elseif header == "RANGES"
+            parse_ranges_line(data, items)
+        elseif header == "BOUNDS"
+            parse_bounds_line(data, items)
         end
     end
     copy_to(model, data)
