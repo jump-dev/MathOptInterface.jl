@@ -187,6 +187,14 @@ const MOIU = MOI.Utilities
         @test g.constant == 5
     end
     @testset "Scalar" begin
+        @testset "Variable" begin
+            @testset "zero" begin
+                f = MOI.SingleVariable(MOI.VariableIndex(0))
+                g = MOI.SingleVariable(MOI.VariableIndex(1))
+                @test !iszero(f)
+                @test !iszero(g)
+            end
+        end
         @testset "Affine" begin
             @testset "zero" begin
                 f = @inferred MOIU.zero(MOI.ScalarAffineFunction{Float64})

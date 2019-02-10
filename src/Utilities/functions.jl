@@ -396,6 +396,7 @@ function isapprox_zero(f::MOI.AbstractFunction, tol)
     return all_coefficients(α -> isapprox_zero(α, tol), f)
 end
 
+Base.iszero(f::MOI.SingleVariable) = false
 function Base.iszero(f::Union{MOI.ScalarAffineFunction{T},
                               MOI.ScalarQuadraticFunction{T}}) where T
     return all_coefficients(iszero, canonical(f))
