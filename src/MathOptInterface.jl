@@ -117,6 +117,7 @@ include("constraints.jl")
 include("modifications.jl")
 include("variables.jl")
 include("nlp.jl")
+include("callbacks.jl")
 
 # submodules
 include("Utilities/Utilities.jl") # MOI.Utilities
