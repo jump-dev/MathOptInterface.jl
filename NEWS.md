@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.8.2 (February ??, 2019)
+v0.8.2 (February 7, 2019)
 -------------------------
 
 - Add `RawStatusString` attribute (#629).
