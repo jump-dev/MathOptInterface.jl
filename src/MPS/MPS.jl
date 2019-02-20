@@ -237,53 +237,69 @@ end
 #           l is the lower bound on the variable. If none set then defaults to 1
 # ==============================================================================
 
-function write_single_bound(io::IO, set::MOI.LessThan, var_name::String)
-    print(io, " UP bounds    ", rpad(var_name, 8))
-    Base.Grisu.print_shortest(io, set.upper)
-    println(io)
-    println(io, " MI bounds    ", var_name)
+function write_single_bound(io::IO, var_name::String, lower, upper)
+    name = rpad(var_name, 8)
+    if lower == upper
+        print(io, " FX bounds    ", name)
+        Base.Grisu.print_shortest(io, lower)
+        println(io)
+    elseif lower == -Inf && upper == Inf
+        # Skip this for now, we deal with it at the end of write_bounds.
+    else
+        if lower == -Inf
+            println(io, " MI bounds    ", name)
+        else
+            print(io, " LO bounds    ", name)
+            Base.Grisu.print_shortest(io, lower)
+            println(io)
+        end
+        if upper == Inf
+            println(io, " PL bounds    ", name)
+        else
+            print(io, " UP bounds    ", name)
+            Base.Grisu.print_shortest(io, upper)
+            println(io)
+        end
+    end
     return
 end
 
-function write_single_bound(io::IO, set::MOI.GreaterThan, var_name::String)
-    print(io, " LO bounds    ", rpad(var_name, 8))
-    Base.Grisu.print_shortest(io, set.lower)
-    println(io)
-    # For clarity, we also print the Inf upper bound.
-    println(io, " PL bounds    ", var_name)
-    return
+function update_bounds(current::Tuple{Float64, Float64}, set::MOI.GreaterThan)
+    return (max(current[1], set.lower), current[2])
 end
 
-function write_single_bound(io::IO, set::MOI.EqualTo, var_name::String)
-    print(io, " FX bounds    ", rpad(var_name, 8))
-    Base.Grisu.print_shortest(io, set.value)
-    println(io)
-    return
+function update_bounds(current::Tuple{Float64, Float64}, set::MOI.LessThan)
+    return (current[1], min(current[2], set.upper))
 end
 
-function write_single_bound(io::IO, set::MOI.Interval, var_name::String)
-    print(io, " LO bounds    ", rpad(var_name, 8))
-    Base.Grisu.print_shortest(io, set.lower)
-    println(io)
-    print(io, " UP bounds    ", rpad(var_name, 8))
-    Base.Grisu.print_shortest(io, set.upper)
-    println(io)
-    return
+function update_bounds(::Tuple{Float64, Float64}, set::MOI.Interval)
+    return (set.lower, set.upper)
+end
+
+function update_bounds(::Tuple{Float64, Float64}, set::MOI.EqualTo)
+    return (set.value, set.value)
 end
 
 function write_bounds(io::IO, model::Model)
     println(io, "BOUNDS")
     free_variables = Set(MOI.get(model, MOI.ListOfVariableIndices()))
+    bounds = Dict{MOI.VariableIndex, Tuple{Float64, Float64}}()
     for (set_type, sense_char) in LINEAR_CONSTRAINTS
         for index in MOI.get(model, MOI.ListOfConstraintIndices{
                 MOI.SingleVariable, set_type}())
             func = MOI.get(model, MOI.ConstraintFunction(), index)
             variable_index = func.variable::MOI.VariableIndex
+            if !haskey(bounds, variable_index)
+                bounds[variable_index] = (-Inf, Inf)
+            end
             set = MOI.get(model, MOI.ConstraintSet(), index)::set_type
-            var_name = MOI.get(model, MOI.VariableName(), variable_index)
-            write_single_bound(io, set, var_name)
-            pop!(free_variables, variable_index)
+            bounds[variable_index] = update_bounds(bounds[variable_index], set)
         end
+    end
+    for (index, (lower, upper)) in bounds
+        var_name = MOI.get(model, MOI.VariableName(), index)
+        write_single_bound(io, var_name, lower, upper)
+        pop!(free_variables, index)
     end
     for index in MOI.get(model, MOI.ListOfConstraintIndices{
             MOI.SingleVariable, MOI.ZeroOne}())
@@ -291,7 +307,12 @@ function write_bounds(io::IO, model::Model)
         variable_index = func.variable::MOI.VariableIndex
         var_name = MOI.get(model, MOI.VariableName(), variable_index)
         println(io, " BV bounds    ", var_name)
-        pop!(free_variables, variable_index)
+        if variable_index in free_variables
+            # We can remove the variable because it has a bound, but first check
+            # that it is still there because some variables might have two
+            # bounds and so might have alredy been removed.
+            pop!(free_variables, variable_index)
+        end
     end
     for variable_index in free_variables
         var_name = MOI.get(model, MOI.VariableName(), variable_index)
