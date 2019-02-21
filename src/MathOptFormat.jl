@@ -5,9 +5,10 @@ const MOI = MathOptInterface
 
 import GZip
 
+include("CBF/CBF.jl")
+include("LP/LP.jl")
 include("MOF/MOF.jl")
 include("MPS/MPS.jl")
-include("CBF/CBF.jl")
 
 function gzip_open(f::Function, filename::String, mode::String)
     if endswith(filename, ".gz")
@@ -17,7 +18,7 @@ function gzip_open(f::Function, filename::String, mode::String)
     end
 end
 
-const MATH_OPT_FORMATS = Union{MOF.Model, MPS.Model, CBF.Model}
+const MATH_OPT_FORMATS = Union{CBF.Model, LP.Model, MOF.Model, MPS.Model}
 
 function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)
     gzip_open(filename, "w") do io
@@ -44,6 +45,8 @@ function read_from_file(filename::String)
         CBF.Model()
     elseif endswith(filename, ".mps.gz") || endswith(filename, ".mps")
         MPS.Model()
+    elseif endswith(filename, ".lp.gz") || endswith(filename, ".lp")
+        LP.Model()
     else
         error("File-type of $(filename) not supported by MathOptFormat.jl.")
     end
