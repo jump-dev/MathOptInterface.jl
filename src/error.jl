@@ -8,13 +8,13 @@ abstract type UnsupportedError <: Exception end
 """
     element_name(err::UnsupportedError)
 
-Return the name of the element that is not supported
+Return the name of the element that is not supported.
 """
 function element_name end
 
 function Base.showerror(io::IO, err::UnsupportedError)
     print(io, typeof(err), ": ", element_name(err),
-          " is not supported by the the model")
+          " is not supported by the model")
     m = message(err)
     if Base.isempty(m)
         print(io, ".")
@@ -56,9 +56,9 @@ end
 """
     message(err::Union{UnsupportedError, NotAllowedError})
 
-Return a `String` containing a human-friendly explanation why the operation
+Return a `String` containing a human-friendly explanation of why the operation
 is not supported/cannot be performed. It is printed in the error message if it
-is not empty. By convention, it should be stored in the `message` field, it is
-it the case, the `message` method does not have to be implemented.
+is not empty. By convention, it should be stored in the `message` field; if
+this is the case, the `message` method does not have to be implemented.
 """
 message(err::Union{UnsupportedError, NotAllowedError}) = err.message
