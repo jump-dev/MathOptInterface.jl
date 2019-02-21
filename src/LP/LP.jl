@@ -40,7 +40,7 @@ function write_function(io::IO, model::Model, func::MOI.ScalarAffineFunction{Flo
     for term in func.terms
         print(io, term.coefficient < 0 ? " - " : " + ")
         Base.Grisu.print_shortest(io, abs(term.coefficient))
-        print(io, MOI.get(model, MOI.VariableName(), term.variable_index))
+        print(io, " ", MOI.get(model, MOI.VariableName(), term.variable_index))
     end
     return
 end

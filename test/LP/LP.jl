@@ -26,10 +26,10 @@ const LP_TEST_FILE = "test.lp"
             "minimize\n" *
             "obj: x\n" *
             "subject to\n" *
-            "c5: 0 + 1.1x <= 5.1\n" *
-            "c6: -1.4 + 1.3x >= -0.1\n" *
-            "c7: 1.6 + 1.5a == 0.2\n" *
-            "c8: 0.3 <= 1.8 + 1.7a <= 0.4\n" *
+            "c5: 0 + 1.1 x <= 5.1\n" *
+            "c6: -1.4 + 1.3 x >= -0.1\n" *
+            "c7: 1.6 + 1.5 a == 0.2\n" *
+            "c8: 0.3 <= 1.8 + 1.7 a <= 0.4\n" *
             "Bounds\n" *
             "x <= 2\n" *
             "x >= -1\n" *
@@ -49,7 +49,7 @@ const LP_TEST_FILE = "test.lp"
         MOI.write_to_file(model, LP_TEST_FILE)
         @test read(LP_TEST_FILE, String) ==
             "maximize\n" *
-            "obj: -1 + 2x\n" *
+            "obj: -1 + 2 x\n" *
             "subject to\n" *
             "Bounds\n"
     end
