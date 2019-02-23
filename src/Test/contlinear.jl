@@ -1154,6 +1154,8 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
         end
         if config.basis
+            @test (MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC ||
+                   MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC)
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPPER
         end
     end
@@ -1208,7 +1210,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 12.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 12 atol=atol rtol=rtol
         if config.basis
-            @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPER
+            @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPPER
         end
     end
 end

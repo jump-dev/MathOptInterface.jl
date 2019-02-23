@@ -48,6 +48,19 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBr
     return lower_dual > -upper_dual ? lower_dual : upper_dual
 end
 
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, c::SplitIntervalBridge)
+    lower_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.lower)
+    if lower_stat == MOI.NONBASIC || lower_stat == MOI.NONBASIC_AT_LOWER
+        return lower_stat
+    end
+    upper_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.upper)
+    if upper_stat == MOI.NONBASIC || upper_stat == MOI.NONBASIC_AT_UPPER
+        return upper_stat
+    end
+    # lower_stat == upper_stat should hold
+    return lower_stat
+end
+
 # Constraints
 function MOI.modify(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
     MOI.modify(model, c.lower, change)
