@@ -11,8 +11,8 @@ struct TestConfig
     optimal_status::MOI.TerminationStatusCode
     basis::Bool # can get variable and constraint basis status
     function TestConfig(;atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true, query::Bool = true,
-                        modify_lhs::Bool = true, duals::Bool = true, infeas_certificates::Bool =
-                        true, optimal_status = MOI.OPTIMAL, basis::Bool = false)
+                        modify_lhs::Bool = true, duals::Bool = true, infeas_certificates::Bool = true,
+                        optimal_status = MOI.OPTIMAL, basis::Bool = false)
         new(
             atol,
             rtol,
