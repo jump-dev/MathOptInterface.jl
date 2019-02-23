@@ -81,7 +81,7 @@ abstract type AbstractModel{T} <: MOI.ModelLike end
 getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
 # Variables
-function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)
+function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
     if model.variable_indices === nothing
         model.num_variables_created
     else
