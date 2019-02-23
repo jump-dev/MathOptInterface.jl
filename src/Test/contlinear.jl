@@ -413,8 +413,8 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
         end
         if config.basis
             @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC
-            @test MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.NONBASIC_AT_LOWER
-            @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPPER
+            @test MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.NONBASIC
+            @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC
         end
     end
 end
@@ -505,7 +505,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 0 atol=atol rtol=rtol
         if config.basis
-            @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.NONBASIC_AT_UPPER
+            @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.NONBASIC
         end
     end
 end
@@ -1101,8 +1101,8 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC
             @test MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c1[1]) == MOI.BASIC
-            @test MOI.get(model, MOI.ConstraintBasisStatus(), c23[1]) == MOI.NONBASIC_AT_UPPER
-            @test MOI.get(model, MOI.ConstraintBasisStatus(), c23[2]) == MOI.NONBASIC_AT_UPPER
+            @test MOI.get(model, MOI.ConstraintBasisStatus(), c23[1]) == MOI.NONBASIC
+            @test MOI.get(model, MOI.ConstraintBasisStatus(), c23[2]) == MOI.NONBASIC
         end
     end
 end
@@ -1461,10 +1461,10 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.ConstraintDual(), cubz) ≈ -2 atol=atol rtol=rtol
 
             if config.basis
-                @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.NONBASIC_AT_LOWER
+                @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.NONBASIC
                 @test MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC
                 @test MOI.get(model, MOI.VariableBasisStatus(), z) == MOI.NONBASIC_AT_UPPER
-                @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPPER
+                @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC
             end
         end
     end

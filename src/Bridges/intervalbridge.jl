@@ -51,11 +51,11 @@ end
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, c::SplitIntervalBridge)
     lower_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.lower)
     if lower_stat == MOI.NONBASIC || lower_stat == MOI.NONBASIC_AT_LOWER
-        return lower_stat
+        return MOI.NONBASIC_AT_LOWER
     end
     upper_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.upper)
     if upper_stat == MOI.NONBASIC || upper_stat == MOI.NONBASIC_AT_UPPER
-        return upper_stat
+        return MOI.NONBASIC_AT_UPPER
     end
     # lower_stat == upper_stat should hold
     return lower_stat
