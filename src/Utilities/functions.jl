@@ -353,11 +353,22 @@ function test_constraintnames_equal(model, constraintnames)
     end
 end
 
-isapprox_zero(α::AbstractFloat, tol) = -tol < α < tol
-isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
-function isapprox_zero(t::Union{MOI.ScalarAffineTerm,
-                                MOI.ScalarQuadraticTerm}, tol)
-    isapprox_zero(MOI.coefficient(t), tol)
+"""
+    all_coefficients(p::Function, f::MOI.AbstractFunction)
+
+Determine whether predicate `p` returns `true` for all coefficients of `f`,
+returning `false` as soon as the first coefficient of `f` for which `p`
+returns `false` is encountered (short-circuiting). Similar to `all`.
+"""
+function all_coefficients end
+
+function all_coefficients(p::Function, f::MOI.ScalarAffineFunction)
+    return p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
+end
+function all_coefficients(p::Function, f::MOI.ScalarQuadraticFunction)
+    return p(f.constant) &&
+        all(t -> p(MOI.coefficient(t)), f.affine_terms) &&
+        all(t -> p(MOI.coefficient(t)), f.quadratic_terms)
 end
 
 """
@@ -379,16 +390,16 @@ then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonical(f))` is
 """
 function isapprox_zero end
 
-function isapprox_zero(f::MOI.ScalarAffineFunction, tol)
-    isapprox_zero(f.constant, tol) && all(t -> isapprox_zero(t, tol),
-                                           f.terms)
+isapprox_zero(α::AbstractFloat, tol) = -tol <= α <= tol
+isapprox_zero(α::Union{Integer, Rational}, tol) = iszero(α)
+function isapprox_zero(f::MOI.AbstractFunction, tol)
+    return all_coefficients(α -> isapprox_zero(α, tol), f)
 end
-function isapprox_zero(f::MOI.ScalarQuadraticFunction, tol)
-    isapprox_zero(f.constant, tol) &&
-        all(t -> isapprox_zero(t, tol),
-            f.affine_terms) &&
-        all(t -> isapprox_zero(t, tol),
-            f.quadratic_terms)
+
+Base.iszero(f::MOI.SingleVariable) = false
+function Base.iszero(f::Union{MOI.ScalarAffineFunction{T},
+                              MOI.ScalarQuadraticFunction{T}}) where T
+    return all_coefficients(iszero, canonical(f))
 end
 
 """
@@ -560,7 +571,8 @@ end
             args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
 
 Returns an `MOI.AbstractFunction` representing the function resulting from the
-operation `op(args...)`. No argument can be modified.
+operation `op(args...)` on functions of coefficient type `T`. No argument can be
+modified.
 """
 function operate end
 
@@ -569,8 +581,9 @@ function operate end
              args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
 
 Returns an `MOI.AbstractFunction` representing the function resulting from the
-operation `op(args...)`. The first argument can be modified. The return type
-is the same than the method `operate(op, T, args...)` without `!`.
+operation `op(args...)` on functions of coefficient type `T`. The first argument
+can be modified. The return type is the same than the method
+`operate(op, T, args...)` without `!`.
 """
 function operate! end
 
@@ -693,10 +706,18 @@ const VectorLike{T} = Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T},
 ###################################### +/- #####################################
 ## promote_operation
 
+function promote_operation(::typeof(-), ::Type{T},
+                           ::Type{<:ScalarAffineLike{T}}) where T
+    return MOI.ScalarAffineFunction{T}
+end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:ScalarAffineLike{T}},
                            ::Type{<:ScalarAffineLike{T}}) where T
     return MOI.ScalarAffineFunction{T}
+end
+function promote_operation(::typeof(-), ::Type{T},
+                           ::Type{<:ScalarQuadraticLike{T}}) where T
+    return MOI.ScalarQuadraticFunction{T}
 end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:ScalarQuadraticLike{T}},
@@ -778,6 +799,11 @@ function operate(op::typeof(+), ::Type{T}, f, g, h, args...) where T
     return operate!(+, T, operate(+, T, f, g), h, args...)
 end
 
+# Unary +
+function operate(op::typeof(+), ::Type{T}, f::MOI.AbstractFunction) where T
+    return f
+end
+
 # Scalar number +/- ...
 function operate(op::typeof(+), ::Type{T}, α::T, f::ScalarLike{T}) where T
     return operate(op, T, f, α)
@@ -787,18 +813,22 @@ function operate(op::typeof(-), ::Type{T}, α::T, f::ScalarLike{T}) where T
 end
 
 # Scalar Variable +/- ...
+function operate(::typeof(-), ::Type{T}, f::MOI.SingleVariable) where T
+    return MOI.ScalarAffineFunction{T}(
+        [MOI.ScalarAffineTerm(-one(T), f.variable)], zero(T))
+end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.SingleVariable, α::T) where T
-    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T),
-                                                             f.variable)],
-                                       op(α))
+    return MOI.ScalarAffineFunction{T}(
+        [MOI.ScalarAffineTerm(one(T), f.variable)], op(α))
 end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.SingleVariable,
                  g::MOI.SingleVariable) where T
-    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f.variable),
-                                        MOI.ScalarAffineTerm(op(one(T)), g.variable)],
-                                       zero(T))
+    return MOI.ScalarAffineFunction{T}(
+        [MOI.ScalarAffineTerm(one(T), f.variable),
+         MOI.ScalarAffineTerm(op(one(T)), g.variable)],
+        zero(T))
 end
 function operate(op::typeof(+), ::Type{T},
                  f::MOI.SingleVariable,
@@ -831,6 +861,13 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                                 op(f.constant, g.constant))
 end
 # Scalar Quadratic +/- ...
+function operate(op::Union{typeof(-)}, ::Type{T},
+                 f::MOI.ScalarQuadraticFunction{T}) where T
+    return MOI.ScalarQuadraticFunction(
+        operate_terms(op, f.affine_terms),
+        operate_terms(op, f.quadratic_terms),
+        op(f.constant))
+end
 function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
                  f::MOI.ScalarQuadraticFunction{T},
                  g::ScalarQuadraticLike{T}) where T
@@ -858,10 +895,14 @@ end
 
 # Vector +/-
 ###############################################################################
-# function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
-#     ::Type{<:VectorAffineLike{T}}) where T
-#     return MOI.VectorAffineFunction{T}
-# end
+function promote_operation(::typeof(-), ::Type{T},
+    ::Type{<:VectorAffineLike{T}}) where T
+    return MOI.VectorAffineFunction{T}
+end
+function promote_operation(::typeof(-), ::Type{T},
+    ::Type{<:VectorQuadraticLike{T}}) where T
+    return MOI.VectorQuadraticFunction{T}
+end
 function promote_operation(::Union{typeof(+), typeof(-)}, ::Type{T},
                            ::Type{<:VectorAffineLike{T}},
                            ::Type{<:VectorAffineLike{T}}) where T
@@ -893,7 +934,7 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
     d = MOI.output_dimension(g)
     @assert MOI.output_dimension(f) == d
     append!(f.terms, MOI.VectorAffineTerm.(
-                         collect(1:d), 
+                         collect(1:d),
                          MOI.ScalarAffineTerm.(op(one(T)), g.variables)))
     return f
 end
@@ -1044,8 +1085,10 @@ end
 function Base.:+(args::VectorLike{T}...) where T
     return operate(+, T, args...)
 end
-function Base.:+(α::Vector{T}, f::VectorLike{T}...) where T
-    return operate(+, T, α, f...)
+# Base.:+(α::Vector{T}, f::VectorLike{T}...) is too general as it also covers
+# Base.:+(α::Vector) which is type piracy
+function Base.:+(α::Vector{T}, f::VectorLike{T}, g::VectorLike{T}...) where T
+    return operate(+, T, α, f, g...)
 end
 function Base.:+(f::VectorLike{T}, α::Vector{T}) where T
     return operate(+, T, f, α)
@@ -1158,7 +1201,9 @@ end
 function Base.:*(f::T, g::ScalarLike{T}) where T
     return operate(*, T, f, g)
 end
-
+function Base.:*(f::ScalarLike{T}, g::T) where T
+    return operate(*, T, g, f)
+end
 
 ####################################### / ######################################
 function promote_operation(::typeof(/), ::Type{T},
@@ -1192,7 +1237,18 @@ function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
 end
 function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
                  α::T) where T
-    return operate(/, T, copy(f), α)
+    return operate!(/, T, copy(f), α)
+end
+
+function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
+                  α::T) where T
+    map_terms!(term -> operate_term(/, term, α), f)
+    f.constant /= α
+    return f
+end
+function operate(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
+                 α::T) where T
+    return operate!(/, T, copy(f), α)
 end
 
 function Base.:/(args::ScalarLike{T}...) where T
@@ -1208,6 +1264,36 @@ function operate(::typeof(sum), ::Type{T}, vis::Vector{MOI.VariableIndex}) where
 end
 
 #################### Concatenation of MOI functions: `vcat` ####################
+"""
+    fill_vector(vector::Vector, ::Type{T}, fill_func::Function,
+                dim_func::Function, funcs) where T
+
+Fill the vector `vector` with
+`fill_func(vector, vector_offset, output_offset, func)` for each function `func`
+in `funcs` where `vector_offset` (resp. `output_offset`) is the sum of
+`dim_func(T, func)` (resp. `output_dim(T, func)`) of previous functions of
+`func`.
+
+    fill_vector(vector::Vector, ::Type{T}, vector_offset::Int,
+                     output_offset::Int, fill_func::Function,
+                     dim_func::Function, funcs...) where T
+
+Same than previous method but starting with possible nonzero `vector_offset` and
+`output_offset`.
+"""
+function fill_vector end
+
+function fill_vector(vector::Vector, ::Type{T}, fill_func::Function,
+                     dim_func::Function, funcs) where T
+    vector_offset = 0
+    output_offset = 0
+    for func in funcs
+        fill_func(vector, vector_offset, output_offset, func)
+        vector_offset += dim_func(T, func)
+        output_offset += output_dim(T, func)
+    end
+    @assert length(vector) == vector_offset
+end
 function fill_vector(vector::Vector, ::Type, vector_offset::Int,
                      output_offset::Int, fill_func::Function,
                      dim_func::Function)
@@ -1275,10 +1361,32 @@ function fill_constant(constant::Vector{T}, offset::Int,
     constant[offset .+ (1:n)] .= func.constants
 end
 
+"""
+    vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
+
+Returns the vector of scalar affine functions in the form of a
+`MOI.VectorAffineFunction{T}`.
+"""
+function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
+    nterms = sum(func -> number_of_affine_terms(T, func), funcs)
+    out_dim = sum(func -> output_dim(T, func), funcs)
+    terms = Vector{MOI.VectorAffineTerm{T}}(undef, nterms)
+    constant = zeros(T, out_dim)
+    fill_vector(terms, T, fill_terms, number_of_affine_terms, funcs)
+    fill_vector(constant, T, fill_constant, output_dim, funcs)
+    return VAF(terms, constant)
+end
+
 function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
     return VAF{T}
 end
+function promote_operation(
+    ::typeof(vcat), ::Type{T},
+    ::Type{<:Union{ScalarQuadraticLike{T}, VVF, VAF{T}, VQF{T}}}...) where T
+    return VQF{T}
+end
+
 function operate(::typeof(vcat), ::Type{T},
                  funcs::Union{ScalarAffineLike{T}, VVF, VAF{T}}...) where T
     nterms = sum(func -> number_of_affine_terms(T, func), funcs)

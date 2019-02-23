@@ -37,7 +37,7 @@
         catch err
             @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
             " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraints is" *
-            " not supported by the the model."
+            " not supported by the model."
         end
         @test_throws MOI.UnsupportedConstraint begin
             MOI.add_constraint(model, vi, MOI.EqualTo(0))
@@ -174,9 +174,9 @@ end
 
 @testset "Error messages" begin
     @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name())) == "$MOI.UnsupportedAttribute{$MOI.Name}:" *
-    " Attribute $MOI.Name() is not supported by the the model."
+    " Attribute $MOI.Name() is not supported by the model."
     @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name(), "Message")) == "$MOI.UnsupportedAttribute{$MOI.Name}:" *
-    " Attribute $MOI.Name() is not supported by the the model: Message"
+    " Attribute $MOI.Name() is not supported by the model: Message"
     @test sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name())) == "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
     " Setting attribute $MOI.Name() cannot be performed. You may want to use" *
     " a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *

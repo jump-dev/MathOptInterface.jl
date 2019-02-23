@@ -1,26 +1,59 @@
+using Compat
+using Compat.Test
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIU = MOI.Utilities
+
 @testset "Function tests" begin
     w = MOI.VariableIndex(0)
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
-    @testset "operate vcat" begin
-        v = MOI.VectorOfVariables([y, w])
-        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4],
-                                                           [x, z]), 5)
+    @testset "Vectorization" begin
         g = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 1],
                                                            MOI.ScalarAffineTerm.([5, 2],
                                                                                  [y, x])),
                                                            [3, 1, 4])
-        wf = MOI.SingleVariable(w)
-        xf = MOI.SingleVariable(x)
-        @test MOIU.promote_operation(vcat, Int, typeof(wf), typeof(f),
-                                     typeof(v), Int, typeof(g), typeof(xf),
-                                     Int) == MOI.VectorAffineFunction{Int}
-        F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
-        @test F.terms == MOI.VectorAffineTerm.([1, 2, 2, 3, 4, 8, 6, 9],
-                                               MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
-                                                                     [w, x, z, y, w, y, x, x]))
-        @test F.constants == [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
+        @testset "vectorize" begin
+            g1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2, x)], 3)
+            g2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Int}[], 1)
+            g3 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(5, y)], 4)
+            @test g ≈ MOIU.vectorize([g1, g2, g3])
+        end
+        @testset "operate vcat" begin
+            v = MOI.VectorOfVariables([y, w])
+            wf = MOI.SingleVariable(w)
+            xf = MOI.SingleVariable(x)
+            @testset "Variable" begin
+                # TODO #616
+            end
+            f = MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm.([2, 4], [x, z]), 5)
+            g = MOI.VectorAffineFunction(
+                MOI.VectorAffineTerm.([3, 1], MOI.ScalarAffineTerm.([5, 2], [y, x])),
+                [3, 1, 4])
+            @testset "Affine" begin
+                @test MOIU.promote_operation(vcat, Int, typeof(wf), typeof(f),
+                                             typeof(v), Int, typeof(g), typeof(xf),
+                                             Int) == MOI.VectorAffineFunction{Int}
+                F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+                expected_terms = MOI.VectorAffineTerm.(
+                    [1, 2, 2, 3, 4, 8, 6, 9],
+                    MOI.ScalarAffineTerm.([1, 2, 4, 1, 1, 5, 2, 1],
+                                          [w, x, z, y, w, y, x, x]))
+                expected_constants = [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
+                F = MOIU.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+                @test F.terms == expected_terms
+                @test F.constants == expected_constants
+            end
+            @testset "Quadratic" begin
+                @test MOIU.promote_operation(
+                    vcat, Int, MOI.VectorQuadraticFunction{Int}, typeof(wf),
+                    typeof(f), typeof(v), Int, MOI.ScalarQuadraticFunction{Int},
+                    typeof(g), typeof(xf), Int) == MOI.VectorQuadraticFunction{Int}
+                # TODO
+            end
+        end
     end
     @testset "MultirowChange construction" begin
         chg1 = MOI.MultirowChange(w, [(Int32(2), 2.0), (Int32(1), 3.0)])
@@ -154,12 +187,27 @@
         @test g.constant == 5
     end
     @testset "Scalar" begin
+        @testset "Variable" begin
+            @testset "zero" begin
+                f = MOI.SingleVariable(MOI.VariableIndex(0))
+                g = MOI.SingleVariable(MOI.VariableIndex(1))
+                @test !iszero(f)
+                @test !iszero(g)
+            end
+        end
         @testset "Affine" begin
             @testset "zero" begin
                 f = @inferred MOIU.zero(MOI.ScalarAffineFunction{Float64})
+                @test iszero(f)
                 @test MOIU.isapprox_zero(f, 1e-16)
             end
             @testset "promote_operation" begin
+                @test MOIU.promote_operation(
+                    -, Int, MOI.SingleVariable
+                ) == MOI.ScalarAffineFunction{Int}
+                @test MOIU.promote_operation(
+                    -, Int, MOI.ScalarAffineFunction{Int}
+                ) == MOI.ScalarAffineFunction{Int}
                 @test MOIU.promote_operation(+, Float64, MOI.SingleVariable,
                                              MOI.SingleVariable) == MOI.ScalarAffineFunction{Float64}
                 @test MOIU.promote_operation(+, Float64,
@@ -169,7 +217,7 @@
                                              MOI.ScalarAffineFunction{Int},
                                              MOI.ScalarAffineFunction{Int}) == MOI.ScalarAffineFunction{Int}
             end
-            @testset "Comparison tolerance" begin
+            @testset "Comparison" begin
                 @test MOIU.operate(+, Float64, MOI.SingleVariable(x),
                                    MOI.SingleVariable(z)) + 1.0 ≈
                       MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]), 1.0) atol=1e-6
@@ -177,9 +225,16 @@
                 f2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 1.0)
                 @test f1 ≈ f2 atol=1e-6
                 fdiff = f1 - f2
-                MOIU.canonicalize!(fdiff)
-                @test !MOIU.isapprox_zero(fdiff, 1e-8)
-                @test MOIU.isapprox_zero(fdiff, 1e-6)
+                @testset "With iszero" begin
+                    @test !iszero(fdiff)
+                    @test iszero(f1 - f1)
+                    @test iszero(f2 - f2)
+                end
+                @testset "With tolerance" begin
+                    MOIU.canonicalize!(fdiff)
+                    @test !MOIU.isapprox_zero(fdiff, 1e-8)
+                    @test MOIU.isapprox_zero(fdiff, 1e-6)
+                end
             end
             @testset "canonical" begin
                 f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 1, 3, -2, -3], [y, x, z, x, z]), 5))
@@ -204,14 +259,22 @@
                 g = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
                 @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
             end
-            @testset "operate" begin
+            @testset "operate with Float64 coefficient type" begin
+                f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 4.0],
+                                                                   [x, y]),
+                                             5.0)
+                @test f ≈ 2.0f / 2.0
+            end
+            @testset "operate with Int coefficient type" begin
                 f = MOIU.canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 3, 1, 2, -3, 2],
                                                                                   [w, y, w, x,  x, z]), 2) +
                                    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -2, -2, 3, 2],
                                                                                   [ y,  z,  w, x, y]), 3))
+                @test f === +f
                 @test f ≈ MOI.SingleVariable(x) + MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4],
                                                                                                  [x, y]), 5)
-                @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4], [x, y]), 5) + MOI.SingleVariable(x)
+                @test f ≈ f * 1
+                @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 2], [x, y]), 2) * 2 + 1
                 @test f ≈ MOI.SingleVariable(x) - MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -4], [x, y]), -5)
                 @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3, 4], [x, y]), 5) - MOI.SingleVariable(x)
             end
@@ -234,6 +297,9 @@
                 @test MOIU.isapprox_zero(f, 1e-16)
             end
             @testset "promote_operation" begin
+                @test MOIU.promote_operation(
+                    -, Int, MOI.ScalarQuadraticFunction{Int}
+                ) == MOI.ScalarQuadraticFunction{Int}
                 @test MOIU.promote_operation(+, Int,
                                              MOI.ScalarQuadraticFunction{Int},
                                              MOI.ScalarQuadraticFunction{Int}) == MOI.ScalarQuadraticFunction{Int}
@@ -264,14 +330,21 @@
             f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
             MOIU.canonicalize!(f)
             @test MOI.output_dimension(f) == 1
-            @testset "isapprox_zero" begin
-                @test !MOIU.isapprox_zero(f, 1e-8)
-                # Test isapprox_zero with zero terms
-                @test MOIU.isapprox_zero(0 * f, 1e-8)
-                g = 1.0fx * fy - (1 + 1e-6) * fy * fx
-                MOIU.canonicalize!(g)
-                @test MOIU.isapprox_zero(g, 1e-5)
-                @test !MOIU.isapprox_zero(g, 1e-7)
+            @testset "Comparison" begin
+                @testset "With iszero" begin
+                    @test !iszero(f)
+                    @test iszero(0 * f)
+                    @test iszero(f - f)
+                end
+                @testset "With tolerance" begin
+                    @test !MOIU.isapprox_zero(f, 1e-8)
+                    # Test isapprox_zero with zero terms
+                    @test MOIU.isapprox_zero(0 * f, 1e-8)
+                    g = 1.0fx * fy - (1 + 1e-6) * fy * fx
+                    MOIU.canonicalize!(g)
+                    @test MOIU.isapprox_zero(g, 1e-5)
+                    @test !MOIU.isapprox_zero(g, 1e-7)
+                end
             end
             @testset "convert" begin
                 @test_throws InexactError convert(MOI.SingleVariable, f)
@@ -282,8 +355,12 @@
             end
             @testset "operate" begin
                 @test f ≈ 7 + (fx + 2fy) * (1fx + fy) + 3fx
+                @test f ≈ -(-7 - 3fx) + (fx + 2fy) * (1fx + fy)
+                @test f ≈ -((fx + 2fy) * (MOIU.operate(-, Int, fx) - fy)) + 3fx + 7
                 @test f ≈ 7 + MOIU.operate(*, Int, fx, fx) + 3fx * (fy + 1) + 2fy * fy
                 @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
+                @test (2.0*fx*fx + 2.0fx*fy + 2.0fx + 2.0)/2.0 ≈ 1.0fx*fx + 1.0fx*fy + 1.0fx + 1.0
+                @test (2.0fx + 2.0)/2.0 ≈ 1.0fx + 1.0
                 @test f ≈ begin
                     MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
                                                 MOI.ScalarQuadraticTerm.([1], [x], [x]), 4) +
@@ -527,6 +604,11 @@
                     @test MOIU.promote_operation(-, T, t1, t2) == MOI.VectorQuadraticFunction{T}
                 end
             end
+            for t in [MOI.VectorOfVariables, MOI.VectorAffineFunction{T}]
+                @test MOIU.promote_operation(-, T, t) == MOI.VectorAffineFunction{T}
+            end
+            t = MOI.VectorQuadraticFunction{T}
+            @test MOIU.promote_operation(-, T, t) == MOI.VectorQuadraticFunction{T}
         end
 
         α = [1, 2, 3]

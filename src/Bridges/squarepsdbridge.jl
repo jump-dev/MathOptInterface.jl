@@ -46,16 +46,16 @@ matrix.
 For instance, the constraint for the matrix
 ```math
 \\begin{pmatrix}
-  1      & 1 + x & 2 - 3x\\
-  1 +  x & 2 + x & 3 -  x\\
+  1      & 1 + x & 2 - 3x\\\\
+  1 +  x & 2 + x & 3 -  x\\\\
   2 - 3x & 2 + x &     2x
 \\end{pmatrix}
 ```
 to be PSD can be broken down to the constraint of the symmetric matrix
 ```math
 \\begin{pmatrix}
-  1      & 1 + x & 2 - 3x\\
-  \\cdot & 2 + x & 3 -  x\\
+  1      & 1 + x & 2 - 3x\\\\
+  \\cdot & 2 + x & 3 -  x\\\\
   \\cdot & \\cdot &    2x
 \\end{pmatrix}
 ```
