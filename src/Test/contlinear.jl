@@ -411,6 +411,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ 1 atol=atol rtol=rtol
         end
+
         if config.basis
             @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC
             @test MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.NONBASIC
@@ -443,7 +444,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
     MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
     cf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
-    MOI.add_constraint(model, cf, MOI.GreaterThan(3.0))
+    c = MOI.add_constraint(model, cf, MOI.GreaterThan(3.0))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.GreaterThan{Float64}}()) == 1
@@ -464,8 +465,10 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 3 atol=atol rtol=rtol
+
         if config.basis
             @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC
+            @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC
         end
     end
 
@@ -481,7 +484,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 
     MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
     cf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
-    MOI.add_constraint(model, cf, MOI.LessThan(3.0))
+    c = MOI.add_constraint(model, cf, MOI.LessThan(3.0))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
@@ -504,8 +507,10 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0 atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 0 atol=atol rtol=rtol
+
         if config.basis
             @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.NONBASIC
+            @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.BASIC
         end
     end
 end
@@ -1097,9 +1102,11 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 79e4/11 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 650/11 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 400/11 atol=atol rtol=rtol
+
         if config.basis
             @test MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC
             @test MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC
+            # TODO: add test for single variable constraint
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c1[1]) == MOI.BASIC
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c23[1]) == MOI.NONBASIC
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c23[2]) == MOI.NONBASIC
@@ -1153,7 +1160,9 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol=atol rtol=rtol
         end
+
         if config.basis
+            # multiple optimal basis, x or y can in the optimal basis
             @test (MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC ||
                    MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC)
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPPER
@@ -1176,6 +1185,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 1 atol=atol rtol=rtol
         end
+
         if config.basis
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_LOWER
         end
@@ -1194,6 +1204,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
+
         if config.basis
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_LOWER
         end
@@ -1209,6 +1220,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 12.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 12 atol=atol rtol=rtol
+
         if config.basis
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPPER
         end
