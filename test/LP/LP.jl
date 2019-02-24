@@ -58,13 +58,8 @@ end
 @testset "read_from_file" begin
     model = LP.Model()
     exception = ErrorException("Read from file is not implemented for LP files.")
-    if VERSION < v"0.7"
-        @test_throws Exception MOI.read_from_file(model, LP_TEST_FILE)
-        @test_throws Exception MathOptFormat.read_from_file(LP_TEST_FILE)
-    else
-        @test_throws exception MOI.read_from_file(model, LP_TEST_FILE)
-        @test_throws exception MathOptFormat.read_from_file(LP_TEST_FILE)
-    end
+    @test_throws exception MOI.read_from_file(model, LP_TEST_FILE)
+    @test_throws exception MathOptFormat.read_from_file(LP_TEST_FILE)
 end
 
 # Clean up

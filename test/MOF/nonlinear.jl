@@ -42,13 +42,8 @@ end
         MOI.set(model, MOI.NLPBlock(), HS071())
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         MOI.write_to_file(model, TEST_MOF_FILE)
-        if VERSION >= v"0.7"
-            @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
-                replace(read(joinpath(@__DIR__, "nlp.mof.json"), String), '\r' => "")
-        else
-            @test replace(readstring(TEST_MOF_FILE), '\r', "") ==
-                replace(readstring(joinpath(@__DIR__, "nlp.mof.json")), '\r', "")
-        end
+        @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
+            replace(read(joinpath(@__DIR__, "nlp.mof.json"), String), '\r' => "")
     end
     @testset "Error handling" begin
         node_list = MOF.Object[]
@@ -106,7 +101,7 @@ end
                      :(sin($(3im))^2 + cos($(3im))^2), :($(1 + 2im) * $x),
                      :(ceil($x)), :(floor($x)), :($x < $y), :($x <= $y),
                      :($x > $y), :($x >= $y), :($x == $y), :($x != $y),
-                     # :($x && $y), :($x || $y), 
+                     # :($x && $y), :($x || $y),
                      :(ifelse($x > 0, 1, $y))]
             roundtrip_nonlinear_expression(expr, var_to_string, string_to_var)
         end

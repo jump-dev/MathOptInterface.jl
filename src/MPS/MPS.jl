@@ -430,11 +430,7 @@ function MOI.read_from_file(model::Model, io::IO)
             continue
         end
         # TODO: split into hard fields based on column indices.
-        items = if VERSION >= v"0.7"
-            String.(split(line, " ", keepempty = false))
-        else
-            String.(split(line, " ", keep = false))
-        end
+        items = String.(split(line, " ", keepempty = false))
         if header == "NAME"
             # A special case. This only happens at the start.
             parse_name_line(data, items)
