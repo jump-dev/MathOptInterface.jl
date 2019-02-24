@@ -1238,7 +1238,6 @@ end
 function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
                  α::T) where T
     return operate!(/, T, copy(f), α)
-<<<<<<< HEAD
 end
 
 function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
@@ -1250,8 +1249,6 @@ end
 function operate(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
                  α::T) where T
     return operate!(/, T, copy(f), α)
-=======
->>>>>>> 1bdae588867d2c6a88485c94cba9e29ca6e76fbb
 end
 
 function Base.:/(args::ScalarLike{T}...) where T
