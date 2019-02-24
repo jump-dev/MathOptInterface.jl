@@ -560,6 +560,12 @@ Possible values are:
 * `NONBASIC_AT_UPPER`: element is not in the basis and is at its upper bound
 * `SUPER_BASIC`: element is not in the basis but is also not at one of its
   bounds
+
+Note: `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
+constraints with the `Interval` set. In this case they are necessary to
+distinguish which side of the constraint is active. One-sided constraints
+(e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
+`NONBASIC_AT_*` values.
 """
 @enum(BasisStatusCode, BASIC, NONBASIC, NONBASIC_AT_LOWER, NONBASIC_AT_UPPER,
       SUPER_BASIC)
