@@ -562,10 +562,10 @@ Possible values are:
   bounds
 
 Note: `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
-constraints with the `Interval` set. In this case they are necessary to
-distinguish which side of the constraint is active. One-sided constraints
-(e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
-`NONBASIC_AT_*` values.
+constraints with the `Interval` set and for `VariableBasisStatus`. In these
+cases they are necessary to distinguish which side of the constraint or
+variable bound is active. One-sided constraints (e.g., `LessThan` and
+`GreaterThan`) should use `NONBASIC` instead of the `NONBASIC_AT_*` values.
 """
 @enum(BasisStatusCode, BASIC, NONBASIC, NONBASIC_AT_LOWER, NONBASIC_AT_UPPER,
       SUPER_BASIC)
