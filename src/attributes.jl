@@ -542,16 +542,9 @@ end
 VariablePrimal() = VariablePrimal(1)
 
 """
-    VariableBasisStatus()
-
-A variable attribute for the `BasisStatusCode` of some variable, with respect to an available optimal solution basis.
-"""
-struct VariableBasisStatus <: AbstractVariableAttribute end
-
-"""
     BasisStatusCode
 
-An Enum of possible values for the `VariableBasisStatus` and `ConstraintBasisStatus` attributes.
+An Enum of possible values for the `ConstraintBasisStatus` attribute.
 This explains the status of a given element with respect to an optimal solution basis.
 Possible values are:
 * `BASIC`: element is in the basis
@@ -560,6 +553,12 @@ Possible values are:
 * `NONBASIC_AT_UPPER`: element is not in the basis and is at its upper bound
 * `SUPER_BASIC`: element is not in the basis but is also not at one of its
   bounds
+
+Note: `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
+constraints with the `Interval`. In this case cases they are necessary to
+distinguish which side of the constraint. One-sided constraints (e.g.,
+`LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
+`NONBASIC_AT_*` values.
 """
 @enum(BasisStatusCode, BASIC, NONBASIC, NONBASIC_AT_LOWER, NONBASIC_AT_UPPER,
       SUPER_BASIC)
@@ -637,7 +636,11 @@ ConstraintDual() = ConstraintDual(1)
 """
     ConstraintBasisStatus()
 
-A constraint attribute for the `BasisStatusCode` of some constraint, with respect to an available optimal solution basis.
+A constraint attribute for the `BasisStatusCode` of some constraint, with
+respect to an available optimal solution basis.
+
+**For the basis status of a variable, query the corresponding `SingleVariable`
+constraint that enforces the variable's bounds.**
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute end
 
@@ -877,7 +880,6 @@ function is_set_by_optimize(::Union{ObjectiveValue,
                                     PrimalStatus,
                                     DualStatus,
                                     VariablePrimal,
-                                    VariableBasisStatus,
                                     ConstraintPrimal,
                                     ConstraintDual,
                                     ConstraintBasisStatus})

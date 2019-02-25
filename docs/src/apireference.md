@@ -133,8 +133,9 @@ ResultStatusCode
 
 ### Basis Status
 
-The `BasisStatus` attribute of a variable or constraint describes its status with respect to a basis, if one is known.
-The value of the attribute is of type `BasisStatusCode`.
+The `BasisStatus` attribute of a constraint describes its status with respect to
+a basis, if one is known. The value of the attribute is of type
+`BasisStatusCode`.
 
 ```@docs
 BasisStatusCode
@@ -165,7 +166,6 @@ Calls to `get` and `set` should include as an argument a single `VariableIndex` 
 VariableName
 VariablePrimalStart
 VariablePrimal
-VariableBasisStatus
 ```
 
 ### Constraints
