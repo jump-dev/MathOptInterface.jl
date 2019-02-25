@@ -1245,7 +1245,8 @@ function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
 end
 
 function operate(::typeof(/), ::Type{T},
-                 f::Union{MOI.ScalarAffineFunction{T},                                 MOI.ScalarQuadraticFunction{T}}, α::T) where T
+                 f::Union{MOI.ScalarAffineFunction{T},
+                          MOI.ScalarQuadraticFunction{T}}, α::T) where T
     return operate!(/, T, copy(f), α)
 end
 
