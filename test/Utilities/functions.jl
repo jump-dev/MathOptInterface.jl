@@ -397,7 +397,10 @@ const MOIU = MOI.Utilities
                     MOI.SingleVariable(x)
                 end
                 @test f ≈ MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]),
-                                                      MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 10) - 3
+                                              MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 10) - 3
+                @test f ≈
+                2.0 * MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3.0], [x]),
+                                                  MOI.ScalarQuadraticTerm.([1.0, 2.0, 3.0], [x, y, x], [x, y, y]), 7.0) / 2.0
             end
             @testset "modification" begin
                 f = MOIU.modifyfunction(f, MOI.ScalarConstantChange(9))
