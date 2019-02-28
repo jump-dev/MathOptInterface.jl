@@ -13,7 +13,6 @@
 ### Functionality not yet tested
     - VariablePrimalStart
     - VariablePrimal
-    - VariableBasisStatus
     - ListOfVariableIndices
 =#
 
