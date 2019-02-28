@@ -90,60 +90,69 @@ function function_to_moi(::Val{FunctionSymbol}, object::Object, model::Model,
           " $(FunctionSymbol).")
 end
 
-"""
-    parse_vector_or_default(terms, default_type, model::Model, name_map)
-
-Try converting each term in `terms` to a MOI representation, otherwise return an
-empty vector with eltype `default_type`.
-"""
-function parse_vector_or_default(terms, default_type, model::Model, name_map)
-    if length(terms) == 0
-        return default_type[]
-    else
-        return function_to_moi.(terms, Ref(model), Ref(name_map))
-    end
-end
-
 # ========== Non-typed scalar functions ==========
 
 function function_to_moi(::Val{:SingleVariable}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+                         name_map::Dict{String, MOI.VariableIndex})
     return MOI.SingleVariable(name_map[object["variable"]])
 end
 
 # ========== Typed scalar functions ==========
 
-function function_to_moi(::Val{:ScalarAffineTerm}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+# Here, we deal with a special case: ScalarAffineTerm, ScalarQuadraticTerm,
+# VectorAffineTerm, and VectorQuadraticTerm do not contain a "head" field
+# (because it is unnecessary at the JSON level).
+
+function parse_scalar_affine_term(
+        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
     return MOI.ScalarAffineTerm(
-                object["coefficient"],
-                name_map[object["variable_index"]])
+        object["coefficient"],
+        name_map[object["variable"]]
+    )
 end
 
-function function_to_moi(::Val{:ScalarAffineFunction}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
-    terms = parse_vector_or_default(object["terms"],
-                                    MOI.ScalarAffineTerm{Float64},
-                                    model, name_map)
-    return MOI.ScalarAffineFunction(terms, object["constant"])
+function parse_scalar_affine_terms(
+        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    out_terms = MOI.ScalarAffineTerm{Float64}[]
+    for term in terms
+        push!(out_terms, parse_scalar_affine_term(term, model, name_map))
+    end
+    return out_terms
 end
 
-function function_to_moi(::Val{:ScalarQuadraticTerm}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+function function_to_moi(::Val{:ScalarAffineFunction}, object::Object,
+                         model::Model, name_map::Dict{String, MOI.VariableIndex})
+    return MOI.ScalarAffineFunction(
+        parse_scalar_affine_terms(object["terms"], model, name_map),
+        object["constant"]
+    )
+end
+
+function parse_scalar_quadratic_term(
+        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
     return MOI.ScalarQuadraticTerm(
-                object["coefficient"],
-                name_map[object["variable_index_1"]],
-                name_map[object["variable_index_2"]])
+        object["coefficient"],
+        name_map[object["variable_1"]],
+        name_map[object["variable_2"]]
+    )
 end
 
-function function_to_moi(::Val{:ScalarQuadraticFunction}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
-    affine_terms = parse_vector_or_default(object["affine_terms"],
-                       MOI.ScalarAffineTerm{Float64}, model, name_map)
-    quadratic_terms = parse_vector_or_default(object["quadratic_terms"],
-                          MOI.ScalarQuadraticTerm{Float64}, model, name_map)
-    return MOI.ScalarQuadraticFunction(affine_terms, quadratic_terms,
-                                       object["constant"])
+function parse_scalar_quadratic_terms(
+        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    out_terms = MOI.ScalarQuadraticTerm{Float64}[]
+    for term in terms
+        push!(out_terms, parse_scalar_quadratic_term(term, model, name_map))
+    end
+    return out_terms
+end
+
+function function_to_moi(::Val{:ScalarQuadraticFunction}, object::Object,
+                         model::Model, name_map::Dict{String, MOI.VariableIndex})
+    return MOI.ScalarQuadraticFunction(
+        parse_scalar_affine_terms(object["affine_terms"], model, name_map),
+        parse_scalar_quadratic_terms(object["quadratic_terms"], model, name_map),
+        object["constant"]
+    )
 end
 
 # ========== Non-typed vector functions ==========
@@ -151,40 +160,61 @@ end
 function function_to_moi(::Val{:VectorOfVariables}, object::Object, model::Model,
                        name_map::Dict{String, MOI.VariableIndex})
     return MOI.VectorOfVariables(
-                [name_map[variable] for variable in object["variables"]])
+        [name_map[variable] for variable in object["variables"]]
+    )
 end
 
 # ========== Typed vector functions ==========
 
-function function_to_moi(::Val{:VectorAffineTerm}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+function parse_vector_affine_term(
+        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
     return MOI.VectorAffineTerm(
-                object["output_index"],
-                function_to_moi(object["scalar_term"], model, name_map))
+        object["output_index"],
+        parse_scalar_affine_term(object["scalar_term"], model, name_map)
+    )
+end
+
+function parse_vector_affine_terms(
+        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    out_terms = MOI.VectorAffineTerm{Float64}[]
+    for term in terms
+        push!(out_terms, parse_vector_affine_term(term, model, name_map))
+    end
+    return out_terms
 end
 
 function function_to_moi(::Val{:VectorAffineFunction}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
-    terms = parse_vector_or_default(object["terms"],
-                MOI.VectorAffineTerm{Float64}, model, name_map)
-    return MOI.VectorAffineFunction(terms, Float64.(object["constants"]))
+                         name_map::Dict{String, MOI.VariableIndex})
+    return MOI.VectorAffineFunction(
+        parse_vector_affine_terms(object["terms"], model, name_map),
+        Float64.(object["constants"])
+    )
 end
 
-function function_to_moi(::Val{:VectorQuadraticTerm}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+function parse_vector_quadratic_term(
+        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
     return MOI.VectorQuadraticTerm(
-                object["output_index"],
-                function_to_moi(object["scalar_term"], model, name_map))
+        object["output_index"],
+        parse_scalar_quadratic_term(object["scalar_term"], model, name_map)
+    )
+end
+
+function parse_vector_quadratic_terms(
+        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    out_terms = MOI.VectorQuadraticTerm{Float64}[]
+    for term in terms
+        push!(out_terms, parse_vector_quadratic_term(term, model, name_map))
+    end
+    return out_terms
 end
 
 function function_to_moi(::Val{:VectorQuadraticFunction}, object::Object, model::Model,
                        name_map::Dict{String, MOI.VariableIndex})
-    affine_terms = parse_vector_or_default(object["affine_terms"],
-                       MOI.VectorAffineTerm{Float64}, model, name_map)
-    quadratic_terms = parse_vector_or_default(object["quadratic_terms"],
-                          MOI.VectorQuadraticTerm{Float64}, model, name_map)
-    return MOI.VectorQuadraticFunction(affine_terms, quadratic_terms,
-                                       Float64.(object["constants"]))
+    return MOI.VectorQuadraticFunction(
+        parse_vector_affine_terms(object["affine_terms"], model, name_map),
+        parse_vector_quadratic_terms(object["quadratic_terms"], model, name_map),
+        Float64.(object["constants"])
+    )
 end
 
 # ========== Default fallback ==========

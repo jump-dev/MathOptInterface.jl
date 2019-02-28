@@ -105,9 +105,8 @@ end
 function moi_to_object(foo::MOI.ScalarAffineTerm{Float64}, model::Model,
                    name_map::Dict{MOI.VariableIndex, String})
     return Object(
-        "head" => "ScalarAffineTerm",
         "coefficient" => foo.coefficient,
-        "variable_index" => name_map[foo.variable_index]
+        "variable" => name_map[foo.variable_index]
     )
 end
 
@@ -123,10 +122,9 @@ end
 function moi_to_object(foo::MOI.ScalarQuadraticTerm{Float64}, model::Model,
                    name_map::Dict{MOI.VariableIndex, String})
     return Object(
-        "head" => "ScalarQuadraticTerm",
         "coefficient" => foo.coefficient,
-        "variable_index_1" => name_map[foo.variable_index_1],
-        "variable_index_2" => name_map[foo.variable_index_2]
+        "variable_1" => name_map[foo.variable_index_1],
+        "variable_2" => name_map[foo.variable_index_2]
     )
 end
 
@@ -155,7 +153,6 @@ end
 function moi_to_object(foo::MOI.VectorAffineTerm, model::Model,
                    name_map::Dict{MOI.VariableIndex, String})
     return Object(
-        "head" => "VectorAffineTerm",
         "output_index" => foo.output_index,
         "scalar_term" => moi_to_object(foo.scalar_term, model, name_map)
     )
@@ -173,7 +170,6 @@ end
 function moi_to_object(foo::MOI.VectorQuadraticTerm, model::Model,
                    name_map::Dict{MOI.VariableIndex, String})
     return Object(
-        "head" => "VectorQuadraticTerm",
         "output_index" => foo.output_index,
         "scalar_term" => moi_to_object(foo.scalar_term, model, name_map)
     )
