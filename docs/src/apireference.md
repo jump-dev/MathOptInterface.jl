@@ -360,6 +360,7 @@ Below is the list of bridges implemented in this package.
 Bridges.VectorizeBridge
 Bridges.SplitIntervalBridge
 Bridges.RSOCBridge
+Bridges.QuadtoSOCBridge
 Bridges.GeoMeanBridge
 Bridges.SquarePSDBridge
 Bridges.RootDetBridge
