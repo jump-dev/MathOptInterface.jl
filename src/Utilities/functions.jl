@@ -1235,8 +1235,18 @@ function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
     f.constant /= α
     return f
 end
-function operate(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
-                 α::T) where T
+
+function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
+                  α::T) where T
+    f.affine_terms .= operate_term.(/, f.affine_terms, α)
+    f.quadratic_terms .= operate_term.(/, f.quadratic_terms, α)
+    f.constant /= α
+    return f
+end
+
+function operate(::typeof(/), ::Type{T},
+                 f::Union{MOI.ScalarAffineFunction{T},
+                          MOI.ScalarQuadraticFunction{T}}, α::T) where T
     return operate!(/, T, copy(f), α)
 end
 
