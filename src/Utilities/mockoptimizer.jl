@@ -395,14 +395,14 @@ The primal values of the variables in the order returned by `ListOfVariableIndic
 If `termstatus` is missing, it is assumed to be `MOI.OPTIMAL`.
 If `primstatus` is missing, it is assumed to be `MOI.FEASIBLE_POINT`.
 If `dualstatus` is missing, it is assumed to be `MOI.FEASIBLE_POINT` if there is a primal solution and `primstatus` is not `MOI.INFEASIBLE_POINT`, otherwise it is `MOI.INFEASIBILITY_CERTIFICATE`.
-The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
 The bases status are set to the status specified by `conbasis`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of basis status for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
+The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
 """
-function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primal, dual...)
+function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primal, basis_dual...)
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
     MOI.set(mock, MOI.ResultCount(), 1)
     mock_primal!(mock, primal)
-    mock_dual!(mock, dual...)
+    mock_dual!(mock, basis_dual...)
 end
 # Default termination status
 mock_optimize!(mock::MockOptimizer, primdual...) = mock_optimize!(mock, MOI.OPTIMAL, primdual...)
@@ -433,8 +433,16 @@ end
 # Dual
 function mock_dual!(mock::MockOptimizer, dualstatus::MOI.ResultStatusCode, conduals::Pair...)
     MOI.set(mock, MOI.DualStatus(), dualstatus)
-    mock.hasdual = false # If all conduals contain basis status
     mock_condual!(mock, conduals...)
+end
+# Set the provided constraint basis status
+function mock_dual!(mock::MockOptimizer, conbases::Pair{T,Vector{MOI.BasisStatusCode}}, conbases_duals::Pair...) where {T<:Any}
+    F, S = conbases.first
+    bases = conbases.second
+    for (i, ci) in enumerate(MOI.get(mock, MOI.ListOfConstraintIndices{F, S}()))
+        MOI.set(mock, MOI.ConstraintBasisStatus(), ci, bases[i])
+    end
+    mock_dual!(mock, conbases_duals...)
 end
 # Default dual status
 function mock_dual!(mock::MockOptimizer, conduals::Pair...)
@@ -448,16 +456,7 @@ end
 
 # Sets constraint dual to conduals
 function mock_condual!(mock::MockOptimizer) end
-function mock_condual!(mock::MockOptimizer, conbases::Pair{T,Vector{MOI.BasisStatusCode}}, conduals...) where {T<:Any}
-    F, S = conbases.first
-    bases = conbases.second
-    for (i, ci) in enumerate(MOI.get(mock, MOI.ListOfConstraintIndices{F, S}()))
-        MOI.set(mock, MOI.ConstraintBasisStatus(), ci, bases[i])
-    end
-    mock_condual!(mock, conduals...)
-end
 function mock_condual!(mock::MockOptimizer, condual::Pair, conduals...)
-    mock.hasdual = true
     F, S = condual.first
     duals = condual.second
     for (i, ci) in enumerate(MOI.get(mock, MOI.ListOfConstraintIndices{F, S}()))
