@@ -202,12 +202,12 @@ object. All sums and products are flattened out as simple `Expr(:+,...)` and
 vector of decision variables. No other undefined symbols are permitted;
 coefficients are embedded as explicit values. For example, the expression
 ``x_1+\\sin(x_2/\\exp(x_3))`` would be represented as the Julia object
-`:(x[1] + sin(x[2]/exp(x[3])))`. See the
-[Julia manual](https://docs.julialang.org/en/release-0.6/manual/metaprogramming/) for more information
-on the structure of `Expr` objects. There are currently no restrictions on
-recognized functions; typically these will be built-in Julia functions like
-`^`, `exp`, `log`, `cos`, `tan`, `sqrt`, etc., but modeling
-interfaces may choose to extend these basic functions.
+`:(x[1] + sin(x[2]/exp(x[3])))`. Each integer index is wrapped in a [`VariableIndex`](@ref).
+See the [Julia manual](https://docs.julialang.org/en/release-0.6/manual/metaprogramming/)
+for more information on the structure of `Expr` objects.
+There are currently no restrictions on recognized functions; typically these
+will be built-in Julia functions like `^`, `exp`, `log`, `cos`, `tan`, `sqrt`,
+etc., but modeling interfaces may choose to extend these basic functions.
 """
 function objective_expr end
 
