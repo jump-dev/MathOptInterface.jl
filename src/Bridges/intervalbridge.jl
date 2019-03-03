@@ -52,11 +52,11 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, c::SplitInte
     lower_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.lower)
     upper_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.upper)
     if lower_stat == MOI.NONBASIC_AT_LOWER
-        Compat.@warn("Single sided constraints should not have basis status:" *
+        Compat.@warn("GreaterThan constraints should not have basis status:" *
             " NONBASIC_AT_LOWER, instead use NONBASIC.")
     end
     if upper_stat == MOI.NONBASIC_AT_UPPER
-        Compat.@warn("Single sided constraints should not have basis status:" *
+        Compat.@warn("LessThan constraints should not have basis status:" *
             " NONBASIC_AT_UPPER, instead use NONBASIC.")
     end
     if lower_stat == MOI.NONBASIC
@@ -66,7 +66,7 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, c::SplitInte
         return MOI.NONBASIC_AT_UPPER
     end
     if lower_stat != upper_stat
-        Compat.@warn("Basis status of lower ($lower_stat) and upper ($upper_stat) constraint are inconsistent," *
+        Compat.@warn("Basis status of lower (`$lower_stat`) and upper (`$upper_stat`) constraint are inconsistent," *
             " both should be basic or super basic.")
     end
     return lower_stat
