@@ -1,7 +1,8 @@
 module MPS
 
-using MathOptInterface
+import ..MathOptFormat
 
+import MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
@@ -30,6 +31,7 @@ end
 # ==============================================================================
 
 function MOI.write_to_file(model::Model, io::IO)
+    MathOptFormat.create_unique_names(model)
     write_model_name(io, model)
     write_rows(io, model)
     write_columns(io, model)

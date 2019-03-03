@@ -6,6 +6,7 @@ function MOI.write_to_file(model::Model, io::IO)
         "objectives"  => Object[],
         "constraints" => Object[]
     )
+    MathOptFormat.create_unique_names(model)
     name_map = write_variables(object, model)
     write_nlpblock(object, model, name_map)
     write_objectives(object, model, name_map)
@@ -59,9 +60,7 @@ function moi_to_object end
 function moi_to_object(index::MOI.VariableIndex, model::Model)
     name = MOI.get(model, MOI.VariableName(), index)
     if name == ""
-        # TODO(odow): What happens if this is an existing name? We should
-        # generate a unique name here.
-        name = "x$(index.value)"
+        error("Variable name for $(index) cannot be blank in an MOF file.")
     end
     return Object("name" => name)
 end

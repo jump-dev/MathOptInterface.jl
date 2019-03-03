@@ -1,7 +1,8 @@
 module LP
 
-using MathOptInterface
+import ..MathOptFormat
 
+import MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
@@ -116,6 +117,7 @@ function write_objective(io::IO, model::Model)
 end
 
 function MOI.write_to_file(model::Model, io::IO)
+    MathOptFormat.create_unique_names(model)
     write_sense(io, model)
     write_objective(io, model)
     println(io, "subject to")

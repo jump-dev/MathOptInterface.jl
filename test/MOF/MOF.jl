@@ -44,7 +44,28 @@ end
             joinpath(failing_models_dir, filename))
     end
 end
-
+@testset "Names" begin
+    @testset "Blank variable name" begin
+        model = MOF.Model()
+        variable_index = MOI.add_variable(model)
+        @test_throws Exception MOF.moi_to_object(variable_index, model)
+        MathOptFormat.create_unique_names(model)
+        @test MOF.moi_to_object(variable_index, model) ==
+            MOF.Object("name" => "x1")
+    end
+    @testset "Duplicate variable name" begin
+        model = MOF.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        y = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), y, "x")
+        @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
+        @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x")
+        MathOptFormat.create_unique_names(model)
+        @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
+        @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x_1")
+    end
+end
 @testset "round trips" begin
     @testset "Empty model" begin
         model = MOF.Model()
@@ -52,12 +73,6 @@ end
         model_2 = MOF.Model()
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, String[], String[])
-    end
-    @testset "Blank variable name" begin
-        model = MOF.Model()
-        variable_index = MOI.add_variable(model)
-        @test MOF.moi_to_object(variable_index, model) ==
-            MOF.Object("name" => "x1")
     end
     @testset "FEASIBILITY_SENSE" begin
         model = MOF.Model()
