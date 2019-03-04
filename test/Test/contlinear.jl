@@ -113,6 +113,13 @@
               (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.BASIC, MOI.BASIC]]))
     MOIT.linear10test(mock, config)
     MOIU.set_mock_optimize!(mock,
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0], con_basis =
+             [(MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})    => [MOI.BASIC],
+              (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.NONBASIC, MOI.NONBASIC]],
+              (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})    => [0]))
+    MOIT.linear10btest(mock, config)
+
+    MOIU.set_mock_optimize!(mock,
          (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0]),
          (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.5, 0.5]))
     MOIT.linear11test(mock, config)

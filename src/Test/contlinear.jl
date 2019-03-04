@@ -1235,6 +1235,63 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+# inactive ranged constraints
+function linear10btest(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    #   minimize x + y
+    #
+    #       s.t.  -1 <= x + y <= 10
+    #                  x,  y >= 0
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+
+    vc = MOI.add_constraints(model,
+        [MOI.SingleVariable(x), MOI.SingleVariable(y)],
+        [MOI.GreaterThan(0.0), MOI.GreaterThan(0.0)]
+    )
+
+    c = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x,y]), 0.0), MOI.Interval(-1.0, 10.0))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ResultCount()) >= 1
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 0.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), vc[1]) ≈ 1.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), vc[2]) ≈ 1.0 atol=atol rtol=rtol
+        end
+
+        if config.basis
+            @test (MOI.get(model, MOI.ConstraintBasisStatus(), vc[1]) == MOI.NONBASIC)
+            @test (MOI.get(model, MOI.ConstraintBasisStatus(), vc[1]) == MOI.NONBASIC)
+            @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.BASIC
+        end
+    end
+end
+
 # changing constraint sense
 function linear11test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
@@ -1611,6 +1668,7 @@ const contlineartests = Dict("linear1" => linear1test,
                              "linear8c" => linear8ctest,
                              "linear9" => linear9test,
                              "linear10" => linear10test,
+                             "linear10b" => linear10btest,
                              "linear11" => linear11test,
                              "linear12" => linear12test,
                              "linear13" => linear13test,

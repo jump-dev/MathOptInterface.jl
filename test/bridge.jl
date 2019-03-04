@@ -518,11 +518,19 @@ end
                   (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [MOI.NONBASIC],
                   (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.BASIC, MOI.BASIC]]))
         MOIT.linear10test(bridged_mock, config_with_basis)
+        MOIU.set_mock_optimize!(mock,
+             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0], con_basis =
+                 [(MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [MOI.BASIC],
+                  (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [MOI.BASIC],
+                  (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.NONBASIC, MOI.NONBASIC]],
+                  (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0],
+                  (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [0]))
+        MOIT.linear10btest(bridged_mock, config_with_basis)
+
         ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
         newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridged_mock, MOI.ListOfVariableIndices())), 0.0)
         MOI.set(bridged_mock, MOI.ConstraintFunction(), ci, newf)
         @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ newf
-        @test MOI.get(bridged_mock, MOI.ConstraintBasisStatus(), ci) == MOI.NONBASIC_AT_UPPER
         test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
     end
