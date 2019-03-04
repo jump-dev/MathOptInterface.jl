@@ -26,8 +26,13 @@ function test_noc(bridged_mock, F, S, n)
     @test ((F, S) in MOI.get(bridged_mock, MOI.ListOfConstraints())) == !iszero(n)
 end
 
+struct UnknownConstraintAttribute <: MOI.AbstractConstraintAttribute end
+MOI.is_set_by_optimize(::UnknownConstraintAttribute) = true
+
 # Test deletion of bridge
-function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int, nocs::Tuple) where {F, S}
+function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer,
+                            ci::MOI.ConstraintIndex{F, S}, nvars::Int,
+                            nocs::Tuple) where {F, S}
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     test_noc(m, F, S, 1)
     for noc in nocs
@@ -54,6 +59,21 @@ end
 @testset "BridgeOptimizer" begin
     mock = MOIU.MockOptimizer(SimpleModel{Float64}())
     bridged_mock = MOIB.SplitInterval{Float64}(mock)
+
+    @testset "Unsupported constraint attribute" begin
+        attr = UnknownConstraintAttribute()
+        err = ArgumentError(
+            "Constraint bridge of type `MathOptInterface.Bridges.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable}` " *
+            "does not support accessing the attribute `$attr`.")
+        x = MOI.add_variable(bridged_mock)
+        ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),
+                                MOI.Interval(0.0, 1.0))
+        if VERSION < v"0.7-"
+            @test_throws typeof(err) MOI.get(bridged_mock, attr, ci)
+        else
+            @test_throws err MOI.get(bridged_mock, attr, ci)
+        end
+    end
 
     @testset "Issue #453" begin
         MOI.empty!(bridged_mock)
