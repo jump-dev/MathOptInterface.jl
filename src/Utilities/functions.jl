@@ -240,7 +240,8 @@ function is_strictly_sorted(x::AbstractVector, by, filter)
 end
 
 """
-    canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
+    canonical(f::Union{ScalarAffineFunction, VectorAffineFunction,
+                       ScalarQuadraticFunction, VectorQuadraticFunction})
 
 Returns the function in a canonical form, i.e.
 * A term appear only once.
