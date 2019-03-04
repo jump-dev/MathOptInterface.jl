@@ -35,6 +35,9 @@ function _dist(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{
     end
 end
 
+# Compute the sum of `Int`.
+int_sum(f::Function, x) = isempty(x) ? 0 : sum(f, x)
+
 # Update `b.dist` and `b.dest` for constraint types in `constraints`
 function update_dist!(b::LazyBridgeOptimizer, constraints)
     # Bellman-Ford algorithm
@@ -45,9 +48,8 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
             for (F, S) in constraints
                 if MOI.supports_constraint(BT, F, S) && all(C -> supports_constraint_no_update(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Number of bridges needed using BT
-                    dist = 1 + mapreduce(C -> _dist(b, C[1], C[2]), +,
-                                         added_constraint_types(BT, F, S),
-                                         init = 0)
+                    dist = 1 + int_sum(C -> _dist(b, C[1], C[2]),
+                                       added_constraint_types(BT, F, S))
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
                         b.dist[(F, S)] = dist
