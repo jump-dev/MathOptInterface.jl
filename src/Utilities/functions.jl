@@ -462,6 +462,14 @@ end
 
 Return a new function `f` with the variable vi removed.
 """
+function removevariable end
+function removevariable(f::MOI.SingleVariable, vi::MOI.VariableIndex)
+    if f.variable == vi
+        error("Cannot remove variable from a `SingleVariable` function of the",
+              " same variable.")
+    end
+    return f
+end
 function removevariable(f::VVF, vi)
     VVF(_rmvar(f.variables, vi))
 end

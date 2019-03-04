@@ -387,4 +387,14 @@ end
         )
         MOIT.solve_coef_scalar_objective(mock, config)
     end
+    @testset "delete_variable_with_single_variable_obj" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0]),
+                MOI.FEASIBLE_POINT,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0]
+            )
+        )
+        MOIT.delete_variable_with_single_variable_obj(mock, config)
+    end
 end
