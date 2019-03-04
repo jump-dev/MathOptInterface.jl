@@ -19,4 +19,18 @@
         end
         @test MOI.supports(model, MOI.ObjectiveSense())
     end
+    @testset "set vector" begin
+        attr = MOI.VariablePrimalStart()
+        err = DimensionMismatch("Number of indices (1) does not match the " *
+                                "number of values (2) set to `$attr`.")
+        model = DummyModel()
+        x = MOI.VariableIndex(1)
+        if VERSION < v"0.7-"
+            @test_throws DimensionMismatch MOI.set(
+                model, MOI.VariablePrimalStart(), [x], ones(2))
+        else
+            @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x],
+                                     ones(2))
+        end
+    end
 end
