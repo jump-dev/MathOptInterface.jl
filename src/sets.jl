@@ -200,11 +200,13 @@ dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCon
 """
     PositiveSemidefiniteConeTriangle(side_dimension)
 
-The (vectorized) cone of symmetric positive semidefinite matrices, with `side_dimension` rows and columns.
-The entries of the upper-right triangular part of the matrix are given column by column (or equivalently, the entries of the lower-left triangular part are given row by row).
-A vectorized cone of [`dimension`](@ref) ``n`` corresponds to a square matrix with side dimension
-``\\sqrt{1/4 + 2 n} - 1/2``.
-(Because a ``d \\times d`` matrix has ``d(d+1)/2`` elements in the upper or lower triangle.)
+The (vectorized) cone of symmetric positive semidefinite matrices, with
+`side_dimension` rows and columns. The entries of the upper-right triangular
+part of the matrix are given column by column (or equivalently, the entries of
+the lower-left triangular part are given row by row). A vectorized cone of
+[`dimension`](@ref) ``n`` corresponds to a square matrix with side dimension
+``\\sqrt{1/4 + 2 n} - 1/2``. (Because a ``d \\times d`` matrix has
+``d(d + 1) / 2`` elements in the upper or lower triangle.)
 
 ### Examples
 
@@ -220,17 +222,26 @@ corresponds to ``(1, 2, 3, 4, 5, 6)`` for `PositiveSemidefiniteConeTriangle(3)`
 
 ### Note
 
-Two packed storage formats exist for symmetric matrices, the respective orders of the entries are:
+Two packed storage formats exist for symmetric matrices, the respective orders
+of the entries are:
 - upper triangular column by column (or lower triangular row by row);
 - lower triangular column by column (or upper triangular row by row).
 
-The advantage of the first format is the mapping between the `(i, j)` matrix indices and the `k` index of the vectorized form. It is simpler and does not depend on the side dimension of the matrix.
+The advantage of the first format is the mapping between the `(i, j)` matrix
+indices and the `k` index of the vectorized form. It is simpler and does not
+depend on the side dimension of the matrix.
 Indeed,
-- the entry of matrix indices `(i, j)` has vectorized index `k = div((j-1)*j, 2) + i` if ``i \\leq j`` and `k = div((i-1)*i, 2) + j` if ``j \\leq i``;
-- and the entry with vectorized index `k` has matrix indices `i = isqrt(2k)` and `j = k - div((i-1)*i, 2)` or `j = isqrt(2k)` and `i = k - div((j-1)*j, 2)`.
+- the entry of matrix indices `(i, j)` has vectorized index
+  `k = div((j-1)*j, 2) + i` if ``i \\leq j`` and
+  `k = div((i-1)*i, 2) + j` if ``j \\leq i``;
+- and the entry with vectorized index `k` has matrix indices
+  `i = div(1 + isqrt(8k - 7), 2)` and `j = k - div((i - 1) * i, 2)` or
+  `j = div(1 + isqrt(8k - 7), 2)` and `i = k - div((j - 1) * j, 2)`.
 
 ### Duality note
-The scalar product for the symmetric matrix in its vectorized form is the sum of the pairwise product of the diagonal entries plus twice the sum of the pairwise product of the upper diagonal entries; see [p. 634, 1].
+The scalar product for the symmetric matrix in its vectorized form is the sum of
+the pairwise product of the diagonal entries plus twice the sum of the pairwise
+product of the upper diagonal entries; see [p. 634, 1].
 This has important consequence for duality.
 Consider for example the following problem
 ```math
@@ -251,7 +262,9 @@ The dual is the following problem
 \\end{align*}
 ```
 Why do we use ``2y_2`` in the dual constraint instead of ``y_2`` ?
-The reason is that ``2y_2`` is the scalar product between ``y`` and the symmetric matrix whose vectorized form is ``(0, 1, 0)``. Indeed, with our modified scalar products we have
+The reason is that ``2y_2`` is the scalar product between ``y`` and the symmetric
+matrix whose vectorized form is ``(0, 1, 0)``. Indeed, with our modified scalar
+products we have
 ```math
 \\langle
 (0, 1, 0),
