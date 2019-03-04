@@ -296,7 +296,8 @@ function MOI.is_empty(mock::MockOptimizer)
         mock.resultcount == 0 && isnan(mock.objectivevalue) &&
         isnan(mock.objectivebound) &&
         mock.primalstatus == MOI.NO_SOLUTION &&
-        mock.dualstatus == MOI.NO_SOLUTION
+        mock.dualstatus == MOI.NO_SOLUTION &&
+        isempty(mock.con_basis)
 end
 
 MOI.is_valid(mock::MockOptimizer, idx::MOI.Index) = MOI.is_valid(mock.inner_model, xor_index(idx))
@@ -408,7 +409,7 @@ function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCo
     end
 end
 # Default termination status
-mock_optimize!(mock::MockOptimizer, primal, dual...; con_basis = []) = mock_optimize!(mock, MOI.OPTIMAL, primal, con_basis = con_basis, dual...)
+mock_optimize!(mock::MockOptimizer,  primdual...; kws...) = mock_optimize!(mock, MOI.OPTIMAL, primdual...; kws...)
 function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode)
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
     MOI.set(mock, MOI.ResultCount(), 0)
