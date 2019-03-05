@@ -32,7 +32,8 @@ MOI.is_set_by_optimize(::UnknownConstraintAttribute) = true
 # Test deletion of bridge
 function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer,
                             ci::MOI.ConstraintIndex{F, S}, nvars::Int,
-                            nocs::Tuple) where {F, S}
+                            nocs::Tuple; used_bridges = 1) where {F, S}
+    num_bridges = length(m.bridges)
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     test_noc(m, F, S, 1)
     for noc in nocs
@@ -47,7 +48,7 @@ function test_delete_bridge(m::MOIB.AbstractBridgeOptimizer,
         @test err.index == ci
     end
     @test !MOI.is_valid(m, ci)
-    @test isempty(m.bridges)
+    @test length(m.bridges) == num_bridges - used_bridges
     test_noc(m, F, S, 0)
     # As the bridge has been removed, if the constraints it has created where not removed, it wouldn't be there to decrease this counter anymore
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
@@ -324,8 +325,8 @@ MOIU.@model NothingModel () () () () () () () ()
         ci = first(MOI.get(full_bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle}()))
         test_delete_bridge(full_bridged_mock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
                                                     (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone, 0),
-                                                    (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
-
+                                                    (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)),
+                           used_bridges = 3)
     end
 
     @testset "Continuous Linear" begin
@@ -446,14 +447,48 @@ end
 
     @testset "Scalarize" begin
         bridged_mock = MOIB.Scalarize{Float64}(mock)
-
+        # VectorOfVariables-in-Nonnegatives
+        # VectorAffineFunction-in-Zeros
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [-3, -1])
         MOIT.lin1vtest(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Zeros}()))
+        test_delete_bridge(bridged_mock, ci, 3,
+            ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
+             (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0)))
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.Nonnegatives}()))
+        test_delete_bridge(bridged_mock, ci, 3,
+            ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
+             (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0)))
+        # VectorAffineFunction-in-Nonnegatives
+        # VectorAffineFunction-in-Zeros
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0, 2, 0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})     => [-3, -1])
         MOIT.lin1ftest(bridged_mock, config)
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Zeros}()))
+        test_delete_bridge(bridged_mock, ci, 3,
+            ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
+             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)))
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()))
+        test_delete_bridge(bridged_mock, ci, 3,
+            ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
+             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)))
+        # VectorOfVariables-in-Nonnegatives
+        # VectorOfVariables-in-Nonpositives
+        # VectorOfVariables-in-Zeros
+        # VectorAffineFunction-in-Zeros
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-4, -3, 16, 0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})        => [7, 2, -4])
+        MOIT.lin2vtest(bridged_mock, config)
+        # VectorAffineFunction-in-Nonnegatives
+        # VectorAffineFunction-in-Nonpositives
+        # VectorAffineFunction-in-Zeros
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-4, -3, 16, 0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})     => [7, 2, -4, 7])
+        MOIT.lin2ftest(bridged_mock, config)
     end
 
     @testset "Vectorize" begin
