@@ -1242,7 +1242,7 @@ function linear10btest(model::MOI.ModelLike, config::TestConfig)
     #   minimize x + y
     #
     #       s.t.  -1 <= x + y <= 10
-    #                  x,  y >= 0
+    #                   x,  y >= 0
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
