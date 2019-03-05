@@ -1,13 +1,13 @@
 const VectorLPSet = Union{MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives}
 
-scalar_set_type(::Type{<:MOI.Zeros}) = MOI.EqualTo
-scalar_set_type(::Type{<:MOI.Nonpositives}) = MOI.LessThan
-scalar_set_type(::Type{<:MOI.Nonnegatives}) = MOI.GreaterThan
+scalar_set_type(::Type{<:MOI.Zeros}, T::Type) = MOI.EqualTo{T}
+scalar_set_type(::Type{<:MOI.Nonpositives}, T::Type) = MOI.LessThan{T}
+scalar_set_type(::Type{<:MOI.Nonnegatives}, T::Type) = MOI.GreaterThan{T}
 
-__constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}, T::DataType) = MOIU._constant(f)
-__constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}, T::DataType) = MOIU._constant(f)
+__constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}, T::DataType) = MOI._constant(f)
+__constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}, T::DataType) = MOI._constant(f)
 __constant(f::MOI.SingleVariable, T::DataType) = zero(T)
-__constant(f::MOI.VectorOfVariables, T::DataType) = zeroS(T, length(f.variables))
+__constant(f::MOI.VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
 
 """
     ScalarizeBridge{T}
@@ -24,16 +24,16 @@ function ScalarizeBridge{T, F, S}(model::MOI.ModelLike,
                                   set::VectorLPSet) where {T, F, S}
     dimension = MOI.output_dimension(f)
     constants = __constant(f, T)
-    new_f = scalarize(f, true)
+    new_f = MOIU.scalarize(f, true)
     constraints = Vector{CI{F, S}}(undef, dimension)
     for i in 1:dimension
-        constraints[i] = MOI.add_scalar_constraint(model, new_f[i], scalar_set_type(set){T}(constants[i]))
+        constraints[i] = MOIU.add_scalar_constraint(model, new_f[i], S(constants[i]))
     end
     return ScalarizeBridge{T, F, S}(constraints, constants)
 end
 
 function MOI.supports_constraint(::Type{ScalarizeBridge{T}},
-                                 ::Type{<:MOI.AbstractScalarFunction},
+                                 ::Type{<:MOI.AbstractVectorFunction},
                                  ::Type{<:VectorLPSet}) where T
     return true
 end
@@ -43,7 +43,7 @@ end
 function concrete_bridge_type(::Type{<:ScalarizeBridge{T}},
                               F::Type{<:MOI.AbstractVectorFunction},
                               S::Type{<:VectorLPSet}) where T
-    return ScalarizeBridge{T, MOIU.scalar_type(F), scalar_set_type(S)}
+    return ScalarizeBridge{T, MOIU.scalar_type(F), scalar_set_type(S, T)}
 end
 
 # Attributes, Bridge acting as an model
@@ -66,16 +66,16 @@ end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::ScalarizeBridge)
-   MOI.get.(model, attr, bridge.scalar_constraints) .+ bridge.constants
+    return MOI.get.(model, attr, bridge.scalar_constraints) .+ bridge.constants
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
                  bridge::ScalarizeBridge)
-    MOI.get.(model, attr, bridge.scalar_constraints)
+    return MOI.get.(model, attr, bridge.scalar_constraints)
 end
 function MOI.modify(model::MOI.ModelLike, bridge::ScalarizeBridge{T,F,S},
     change::MOI.VectorConstantChange{T}) where {T,F,S}
     bridge.constants = change.new_constant
-    MOI.set.(model, MOI.ConstraintSet(), bridge.scalar_constraints, 
+    MOI.set.(model, MOI.ConstraintSet(), bridge.scalar_constraints,
              S.(-change.new_constant))
 end
 function MOI.modify(model::MOI.ModelLike, bridge::ScalarizeBridge,
@@ -90,12 +90,12 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
     bridge::ScalarizeBridge{T}, func) where T
     old_constants = bridge.constants
     bridge.constants = __constant(func, T)
-    new_func = scalarize(func, true)
-    MOI.set.(model, MOI.ConstraintFunction(), bridge.scalar_constraints, 
+    new_func = MOIU.scalarize(func, true)
+    MOI.set.(model, MOI.ConstraintFunction(), bridge.scalar_constraints,
              new_func)
     for i in eachindex(bridge.constants)
         if bridge.constants[i] != old_constants[i]
-            MOI.set(model, MOI.ConstraintSet(), bridge.scalar_constraints, 
+            MOI.set(model, MOI.ConstraintSet(), bridge.scalar_constraints,
                      S(-bridge.constants[i]))
         end
     end

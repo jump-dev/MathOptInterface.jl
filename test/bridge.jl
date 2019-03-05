@@ -444,6 +444,18 @@ end
                              MOI.Nonnegatives, 0),))
     end
 
+    @testset "Scalarize" begin
+        bridged_mock = MOIB.Scalarize{Float64}(mock)
+
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [-3, -1])
+        MOIT.lin1vtest(bridged_mock, config)
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0, 2, 0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})     => [-3, -1])
+        MOIT.lin1ftest(bridged_mock, config)
+    end
+
     @testset "Vectorize" begin
         bridged_mock = MOIB.Vectorize{Float64}(mock)
 
