@@ -283,6 +283,11 @@ function set(model::ModelLike,
              attr::Union{AbstractVariableAttribute,
                          AbstractConstraintAttribute},
              idxs::Vector, vector_of_values::Vector)
+    if length(idxs) != length(vector_of_values)
+        throw(DimensionMismatch("Number of indices ($(length(idxs))) does " *
+                                "not match the number of values " *
+                                "($(length(vector_of_values))) set to `$attr`."))
+    end
     return set.(model, attr, idxs, vector_of_values)
 end
 
