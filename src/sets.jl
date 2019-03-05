@@ -233,7 +233,7 @@ depend on the side dimension of the matrix.
 Indeed,
 - the entry of matrix indices `(i, j)` has vectorized index
   `k = div((j - 1) * j, 2) + i` if ``i \\leq j`` and
-  `k = div((i-1)*i, 2) + j` if ``j \\leq i``;
+  `k = div((i - 1) * i, 2) + j` if ``j \\leq i``;
 - and the entry with vectorized index `k` has matrix indices
   `i = div(1 + isqrt(8k - 7), 2)` and `j = k - div((i - 1) * i, 2)` or
   `j = div(1 + isqrt(8k - 7), 2)` and `i = k - div((j - 1) * j, 2)`.
