@@ -27,7 +27,7 @@ function ScalarizeBridge{T, F, S}(model::MOI.ModelLike,
     new_f = MOIU.scalarize(f, true)
     constraints = Vector{CI{F, S}}(undef, dimension)
     for i in 1:dimension
-        constraints[i] = MOIU.add_scalar_constraint(model, new_f[i], S(constants[i]))
+        constraints[i] = MOIU.add_scalar_constraint(model, new_f[i], S(-constants[i]))
     end
     return ScalarizeBridge{T, F, S}(constraints, constants)
 end
