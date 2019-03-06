@@ -37,11 +37,22 @@ function write_function(io::IO, model::Model, func::MOI.SingleVariable)
 end
 
 function write_function(io::IO, model::Model, func::MOI.ScalarAffineFunction{Float64})
-    Base.Grisu.print_shortest(io, func.constant)
+    is_first_item = true
+    if !(func.constant ≈ 0.0)
+        Base.Grisu.print_shortest(io, func.constant)
+        is_first_item = false
+    end
     for term in func.terms
-        print(io, term.coefficient < 0 ? " - " : " + ")
-        Base.Grisu.print_shortest(io, abs(term.coefficient))
-        print(io, " ", MOI.get(model, MOI.VariableName(), term.variable_index))
+        if !(term.coefficient ≈ 0.0)
+            if is_first_item
+                Base.Grisu.print_shortest(io, term.coefficient)
+                is_first_item = false
+            else
+                print(io, term.coefficient < 0 ? " - " : " + ")
+                Base.Grisu.print_shortest(io, abs(term.coefficient))
+            end
+            print(io, " ", MOI.get(model, MOI.VariableName(), term.variable_index))
+        end
     end
     return
 end

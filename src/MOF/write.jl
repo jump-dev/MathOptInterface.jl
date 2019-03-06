@@ -69,12 +69,13 @@ function moi_to_object(index::MOI.ConstraintIndex{F,S}, model::Model,
                    name_map::Dict{MOI.VariableIndex, String}) where {F, S}
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
-    object = Object("function" => moi_to_object(func, model, name_map),
-                    "set"      => moi_to_object(set, model, name_map))
     name = MOI.get(model, MOI.ConstraintName(), index)
+    object = Object()
     if name != ""
         object["name"] = name
     end
+    object["function"] = moi_to_object(func, model, name_map)
+    object["set"] = moi_to_object(set, model, name_map)
     return object
 end
 
