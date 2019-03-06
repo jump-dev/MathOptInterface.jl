@@ -190,7 +190,29 @@ MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
 # Model supporting nothing
 MOIU.@model NothingModel () () () () () () () ()
 
+struct BridgeAddingNoConstraint{T} <: MOI.Bridges.AbstractBridge end
+MOIB.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []
+function MOI.supports_constraint(::Type{<:BridgeAddingNoConstraint},
+                                 ::Type{MOI.SingleVariable},
+                                 ::Type{MOI.Integer})
+    return true
+end
+function MOIB.concrete_bridge_type(::Type{<:BridgeAddingNoConstraint{T}},
+                                   ::Type{MOI.SingleVariable},
+                                   ::Type{MOI.Integer}) where {T}
+    return BridgeAddingNoConstraint{T}
+end
+
 @testset "LazyBridgeOptimizer" begin
+    @testset "Bridge adding no constraint" begin
+        mock = MOIU.MockOptimizer(NothingModel{Int}())
+        bridged = MOIB.LazyBridgeOptimizer(mock, NothingModel{Int}())
+        MOI.Bridges.add_bridge(bridged, BridgeAddingNoConstraint{Float64})
+        @test MOI.Bridges.supports_bridging_constraint(bridged,
+                                                       MOI.SingleVariable,
+                                                       MOI.Integer)
+    end
+
     @testset "Unsupported constraint with cycles" begin
         # Test that `supports_constraint` works correctly when it is not
         # supported but the bridges forms a cycle
