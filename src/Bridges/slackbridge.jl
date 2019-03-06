@@ -71,6 +71,9 @@ function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::ScalarSlackBrid
     # equal and we can return either one of them.
     return MOI.get(model, a, c.slack_in_set)
 end
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus,  c::ScalarSlackBridge)
+    MOI.get(model, MOI.ConstraintBasisStatus(), c.slack_in_set)
+end
 
 # Constraints
 function MOI.modify(model::MOI.ModelLike, c::ScalarSlackBridge, change::MOI.AbstractFunctionModification)
