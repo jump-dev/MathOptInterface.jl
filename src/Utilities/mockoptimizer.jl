@@ -237,7 +237,18 @@ MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
 
 MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, idx::MOI.VariableIndex) = MOI.get(mock.inner_model, attr, xor_index(idx))
 MOI.get(mock::MockOptimizer, ::MockVariableAttribute, idx::MOI.VariableIndex) = mock.varattribute[xor_index(idx)]
-MOI.get(mock::MockOptimizer, ::MOI.VariablePrimal, idx::MOI.VariableIndex) = mock.varprimal[xor_index(idx)]
+function MOI.get(mock::MockOptimizer, ::MOI.VariablePrimal,
+                 idx::MOI.VariableIndex)
+    primal = get(mock.varprimal, xor_index(idx), nothing)
+    if primal === nothing
+        if MOI.is_valid(mock, idx)
+            error("No mock primal is set for variable `", idx, "`.")
+        else
+            throw(MOI.InvalidIndex(idx))
+        end
+    end
+    return primal
+end
 function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintPrimal,
                  idx::MOI.ConstraintIndex)
     return get_fallback(mock, attr, idx)
@@ -249,7 +260,15 @@ function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintDual,
         (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
         return get_fallback(mock, attr, idx)
     else
-        return mock.condual[xor_index(idx)]
+        dual = get(mock.condual, xor_index(idx), nothing)
+        if dual === nothing
+            if MOI.is_valid(mock, idx)
+                error("No mock dual is set for constraint `", idx, "`.")
+            else
+                throw(MOI.InvalidIndex(idx))
+            end
+        end
+        return dual
     end
 end
 MOI.get(mock::MockOptimizer, ::MockConstraintAttribute, idx::MOI.ConstraintIndex) = mock.conattribute[xor_index(idx)]
