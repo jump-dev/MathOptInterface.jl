@@ -270,11 +270,24 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.set(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     MOI.set(src, MOI.ConstraintName(), cvv, "cvv")
-    csa = MOI.add_constraint(src, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1., 3.], [v[3], v[1]]), 2.), MOI.LessThan(2.))
+    csa = MOI.add_constraint(
+        src,
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.([1.0, 3.0], [v[3], v[1]]), 0.0),
+        MOI.LessThan(2.))
     MOI.set(src, MOI.ConstraintName(), csa, "csa")
-    cva = MOI.add_constraint(src, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [v[3], v[2]])), [-3.0,-2.0]), MOI.Zeros(2))
+    cva = MOI.add_constraint(
+        src,
+        MOI.VectorAffineFunction(
+            MOI.VectorAffineTerm.(
+                [1, 2],
+                MOI.ScalarAffineTerm.(1.0, [v[3], v[2]])),
+            [-3.0,-2.0]),
+        MOI.Zeros(2))
     MOI.set(src, MOI.ConstraintName(), cva, "cva")
-    MOI.set(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
+    MOI.set(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 2.0))
     MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     @test MOI.supports(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -310,13 +323,16 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) == MOI.VectorOfVariables(getindex.(Ref(dict), v))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.Nonnegatives(3)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), csa) == ""
-    @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1., 3.], [dict[v[3]], dict[v[1]]]), 2.)
+    @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈ MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.([1., 3.], [dict[v[3]], dict[v[1]]]), 0.0)
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csa]) == MOI.LessThan(2.)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), cva) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈ MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [dict[v[3]], dict[v[2]]])), [-3.0,-2.0])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cva]) == MOI.Zeros(2)
 
-    @test MOI.get(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], [dict[v[1]], dict[v[2]], dict[v[3]]]), 0.0)
+    @test MOI.get(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0],
+                              [dict[v[1]], dict[v[2]], dict[v[3]]]), 2.0)
     @test MOI.get(dest, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{Float64}
     @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 end
