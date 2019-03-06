@@ -1405,3 +1405,56 @@ function operate(::typeof(vcat), ::Type{T},
     fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
     return VAF(terms, constant)
 end
+
+# Similar to `eachscalar` but faster, see
+# https://github.com/JuliaOpt/MathOptInterface.jl/issues/418
+function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
+    MOI.SingleVariable.(f.variables)
+end
+function scalarize(f::MOI.VectorAffineFunction{T}, ignore_constants::Bool = false) where T
+    dimension = MOI.output_dimension(f)
+    constants = ignore_constants ? zeros(T, dimension) : MOI._constant(f)
+    counting = count_terms(dimension, f.terms)
+    functions = MOI.ScalarAffineFunction{T}[
+        MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}[], constants[i]) for i in 1:dimension]
+    for i in 1:dimension
+        sizehint!(functions[i].terms, counting[i])
+    end
+    for term in f.terms
+        push!(functions[term.output_index].terms, term.scalar_term)
+    end
+    return functions
+end
+function scalarize(f::MOI.VectorQuadraticFunction{T}, ignore_constants::Bool = false) where T
+    dimension = MOI.output_dimension(f)
+    constants = ignore_constants ? zeros(T, dimension) : MOI._constant(f)
+    counting_scalars = count_terms(dimension, f.affine_terms)
+    counting_quadratics = count_terms(dimension, f.quadratic_terms)
+    functions = MOI.ScalarQuadraticFunction{T}[
+        MOI.ScalarQuadraticFunction{T}(MOI.ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], constants[i]) for i in 1:dimension]
+    functions = MOI.ScalarQuadraticFunction.(
+        MOI.ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], constants)
+    for i in 1:dimension
+        sizehint!(functions[i].affine_terms, counting_scalars[i])
+        sizehint!(functions[i].quadratic_terms, counting_quadratics[i])
+    end
+    for term in f.affine_terms
+        push!(functions[term.output_index].affine_terms, term.scalar_term)
+    end
+    for term in f.quadratic_terms
+        push!(functions[term.output_index].quadratic_terms, term.scalar_term)
+    end
+    return functions
+end
+
+function count_terms(counting::Vector{<:Integer}, terms::Vector{T}) where T
+    for term in terms
+        counting[term.output_index] += 1
+    end
+    return nothing
+end
+function count_terms(dimension::I, terms::Vector{T}) where {I,T}
+    counting = zeros(I, dimension)
+    count_terms(counting, terms)
+    return counting
+end
