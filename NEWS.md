@@ -6,7 +6,7 @@ v0.8.3 (March 6, 2019)
 
 - Use zero constant in scalar constraint function of `MOI.Test.copytest` (#691).
 - Fix variable deletion with `SingleVariable` objective function (#690).
-- Fix LazyBridgeOptimizer with bridges that add no constraints (#689).
+- Fix `LazyBridgeOptimizer` with bridges that add no constraints (#689).
 - Error message improvements (#673, #685, #686, #688).
 - Documentation improvements (#682, #683, #687).
 - Basis status:
