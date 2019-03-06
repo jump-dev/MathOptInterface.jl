@@ -242,7 +242,7 @@ end
 function write_single_bound(io::IO, var_name::String, lower, upper)
     name = rpad(var_name, 8)
     if lower == upper
-        print(io, " FX bounds    ", name)
+        print(io, " FX bounds    ", name, " ")
         Base.Grisu.print_shortest(io, lower)
         println(io)
     elseif lower == -Inf && upper == Inf
@@ -251,14 +251,14 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
         if lower == -Inf
             println(io, " MI bounds    ", name)
         else
-            print(io, " LO bounds    ", name)
+            print(io, " LO bounds    ", name, " ")
             Base.Grisu.print_shortest(io, lower)
             println(io)
         end
         if upper == Inf
             println(io, " PL bounds    ", name)
         else
-            print(io, " UP bounds    ", name)
+            print(io, " UP bounds    ", name, " ")
             Base.Grisu.print_shortest(io, upper)
             println(io)
         end

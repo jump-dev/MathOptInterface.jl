@@ -236,10 +236,10 @@ end
     @testset "Multiple variable bounds" begin
         model = MPS.Model()
         MOIU.loadfromstring!(model, """
-            variables: x
-            minobjective: x
-            c1: x >= 1.0
-            c2: x <= 2.0
+            variables: a_really_long_name
+            minobjective: a_really_long_name
+            c1: a_really_long_name >= 1.0
+            c2: a_really_long_name <= 2.0
         """)
         MOI.write_to_file(model, MPS_TEST_FILE)
         @test read(MPS_TEST_FILE, String) ==
@@ -247,12 +247,12 @@ end
             "ROWS\n" *
             " N  OBJ\n" *
             "COLUMNS\n" *
-            "     x        OBJ      1\n" *
+            "     a_really_long_name OBJ      1\n" *
             "RHS\n" *
             "RANGES\n" *
             "BOUNDS\n" *
-            " LO bounds    x       1\n" *
-            " UP bounds    x       2\n" *
+            " LO bounds    a_really_long_name 1\n" *
+            " UP bounds    a_really_long_name 2\n" *
             "SOS\n" *
             "ENDATA\n"
     end
