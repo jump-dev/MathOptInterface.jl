@@ -45,9 +45,9 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
             for (F, S) in constraints
                 if MOI.supports_constraint(BT, F, S) && all(C -> supports_constraint_no_update(b, C[1], C[2]), added_constraint_types(BT, F, S))
                     # Number of bridges needed using BT
-                    dist = 1 + mapreduce(C -> _dist(b, C[1], C[2]), +,
-                                         added_constraint_types(BT, F, S),
-                                         init = 0)
+                    dist = 1 + Compat.mapreduce(
+                        C -> _dist(b, C[1], C[2]), +,
+                        added_constraint_types(BT, F, S), init = 0)
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
                         b.dist[(F, S)] = dist
