@@ -131,7 +131,7 @@ function emptytest(model::MOI.ModelLike)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
     vc = MOI.add_constraint(model, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
-    c = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0,-2.0]), MOI.Zeros(2))
+    c = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,1,2,2], MOI.ScalarAffineTerm.(1.0, [v;v[2];v[3]])), [-3.0, -2.0]), MOI.Zeros(2))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v), 0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
@@ -282,7 +282,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
             MOI.VectorAffineTerm.(
                 [1, 2],
                 MOI.ScalarAffineTerm.(1.0, [v[3], v[2]])),
-            [-3.0,-2.0]),
+            [-3.0, -2.0]),
         MOI.Zeros(2))
     MOI.set(src, MOI.ConstraintName(), cva, "cva")
     MOI.set(src, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -327,7 +327,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
         MOI.ScalarAffineTerm.([1., 3.], [dict[v[3]], dict[v[1]]]), 0.0)
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csa]) == MOI.LessThan(2.)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), cva) == ""
-    @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈ MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [dict[v[3]], dict[v[2]]])), [-3.0,-2.0])
+    @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈ MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [dict[v[3]], dict[v[2]]])), [-3.0, -2.0])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cva]) == MOI.Zeros(2)
 
     @test MOI.get(dest, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()) ≈ MOI.ScalarAffineFunction(
