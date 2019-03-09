@@ -14,5 +14,3 @@ branches:
     - /^release-.*$/
 after_success:
   - julia -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-  - julia -e 'import Pkg; Pkg.add("Documenter")'
-  - julia --color=yes docs/make.jl
