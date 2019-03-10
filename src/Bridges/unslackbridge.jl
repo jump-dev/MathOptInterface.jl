@@ -84,9 +84,9 @@ function concrete_bridge_type(::Type{<:VectorOfVariablesBridge{T}},
 end
 
 # Attributes, Bridge acting as an model
-MOI.get(b::VectorOfVariablesBridge{T, F, S}, 
+MOI.get(b::VectorOfVariablesBridge{T, F, S},
         ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, S}) where {T, F, S} = 1
-MOI.get(b::VectorOfVariablesBridge{T, F, S}, 
+MOI.get(b::VectorOfVariablesBridge{T, F, S},
         ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, S}) where {T, F, S} = [b.constraint]
 
 # Indices
