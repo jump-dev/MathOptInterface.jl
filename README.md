@@ -1,5 +1,4 @@
 # MathOptFormat.jl
-#### _A new file format for mathematical optimization_
 
 | **Build Status** | **Coverage** |
 |:--------------------:|:----------------:|
@@ -37,6 +36,22 @@ Step 1) assumes that you want to write a MathOptFormat file (.mof.json). For
 other formats, replace `MathOptFormat.MOF.Model` with an appropriate model. See
 [Supported file formats](@ref) for details.
 
+#### Example
+
+```julia
+using MathOptInterface, MathOptFormat, GLPK
+const MOI = MathOptInterface
+
+user_model = GLPK.Optimizer()
+x = MOI.add_variable(user_model)
+MOI.set(user_model, MOI.VariableName(), x, "x")
+MOI.add_constraint(user_model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+
+mathoptformat_model = MathOptFormat.MPS.Model()
+MOI.copy_to(mathoptformat_model, user_model)
+MOI.write_to_file(mathoptformat_model, "my_model.mps")
+```
+
 ## Read from file
 
 To read a file `filename` into `user_model`, steps 2 and 3 are reversed:
@@ -51,6 +66,21 @@ To read a file `filename` into `user_model`, steps 2 and 3 are reversed:
 Step 1) assumes that you want to read a MathOptFormat file (.mof.json). For
 other formats, replace `MathOptFormat.MOF.Model` with an appropriate model. See
 [Supported file formats](@ref) for details.
+
+#### Example
+
+```julia
+using MathOptInterface, MathOptFormat, GLPK
+const MOI = MathOptInterface
+
+mathoptformat_model = MathOptFormat.MPS.Model()
+MOI.read_from_file(mathoptformat_model, "my_model.mps")
+
+user_model = GLPK.Optimizer()
+MOI.copy_to(user_model, mathoptformat_model)
+
+x = MOI.get(user_model, MOI.VariableIndex, "x")
+```
 
 ## Supported file formats
 
