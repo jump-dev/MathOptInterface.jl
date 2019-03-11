@@ -151,27 +151,14 @@ Copy the constraints of type `F`-in-`S` from the model `src` the model `dest` an
 function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
     # Copy constraints
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
-    # for ci_src in cis_src
-    #     @show ci_src
-    #     f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-    #     f_dest = mapvariables(idxmap, f_src)
-    #     s = MOI.get(src, MOI.ConstraintSet(), ci_src)
-    #     @show ci_dest = MOI.add_constraint(dest, f_dest, s)
-    #     idxmap.conmap[ci_src] = ci_dest
-    # end
-
-
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
     # idxmap is wraped with [] to signify singlton
     f_dest = mapvariables.([idxmap], f_src)
     s = MOI.get(src, MOI.ConstraintSet(), cis_src)
     cis_dest = MOI.add_constraints(dest, f_dest, s)
-    for (ci_src,ci_dest) in zip(cis_src,cis_dest)
+    for (ci_src,ci_dest) in zip(cis_src, cis_dest)
         idxmap.conmap[ci_src] = ci_dest
     end
-
-
-
     pass_attributes(dest, src, copy_names, idxmap, cis_src)
 end
 
