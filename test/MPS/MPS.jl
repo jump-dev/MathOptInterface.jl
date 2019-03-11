@@ -253,7 +253,6 @@ end
             "BOUNDS\n" *
             " LO bounds    a_really_long_name 1\n" *
             " UP bounds    a_really_long_name 2\n" *
-            "SOS\n" *
             "ENDATA\n"
     end
 end

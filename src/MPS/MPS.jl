@@ -339,19 +339,20 @@ function write_sos_constraint(io::IO, model::Model, index)
 end
 
 function write_sos(io::IO, model::Model)
-    println(io, "SOS")
-    idx = 1
-    for index in MOI.get(model, MOI.ListOfConstraintIndices{
-            MOI.VectorOfVariables, MOI.SOS1{Float64}}())
-        println(io, " S1 SOS", idx)
-        write_sos_constraint(io, model, index)
-        idx += 1
-    end
-    for index in MOI.get(model, MOI.ListOfConstraintIndices{
-            MOI.VectorOfVariables, MOI.SOS2{Float64}}())
-        println(io, " S2 SOS", idx)
-        write_sos_constraint(io, model, index)
-        idx += 1
+    sos1_indices = MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.SOS1{Float64}}())
+    sos2_indices = MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.SOS2{Float64}}())
+    if length(sos1_indices) + length(sos2_indices) > 0
+        println(io, "SOS")
+        idx = 1
+        for (sos_type, indices) in enumerate([sos1_indices, sos2_indices])
+            for index in indices
+                println(io, " S", sos_type, " SOS", idx)
+                write_sos_constraint(io, model, index)
+                idx += 1
+            end
+        end
     end
     return
 end
