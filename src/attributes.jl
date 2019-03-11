@@ -337,6 +337,17 @@ An optimizer attribute for the string identifying the solver/optimizer.
 """
 struct SolverName <: AbstractOptimizerAttribute end
 
+"""
+    LogLevel(value::Int)
+
+An optimizer attribute for level of verbosity of the optimizer. `0` means
+no output and for positive values, the higher the values the more output is
+allowed.
+"""
+struct LogLevel <: AbstractOptimizerAttribute
+    value::Int
+end
+
 ## Model attributes
 
 """
