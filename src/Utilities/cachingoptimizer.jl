@@ -80,6 +80,11 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     @assert MOI.is_empty(optimizer)
     m.optimizer = optimizer
     m.state = EMPTY_OPTIMIZER
+    for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
+        value = MOI.get(m.model_cache, attr)
+        optimizer_value = attribute_value_map(m.model_to_optimizer_map, value)
+        MOI.set(m.optimizer, attr, optimizer_value)
+    end
     return
 end
 
@@ -502,6 +507,14 @@ function MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String)
 end
 
 # TODO: MOI.set for MOI.AbstractOptimizerAttribute.
+function MOI.set(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute,
+                 value)
+    optimizer_value = attribute_value_map(model.model_to_optimizer_map, value)
+    if model.optimizer !== nothing
+        MOI.set(model.optimizer, attr, optimizer_value)
+    end
+    MOI.set(model.model_cache, attr, value)
+end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
     if state(model) == NO_OPTIMIZER
