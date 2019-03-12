@@ -342,6 +342,8 @@ struct SolverName <: AbstractOptimizerAttribute end
 
 An optimizer attribute for level of verbosity of the optimizer. `0` means
 no output and the meaning is solver specific for positive values.
+If a solver specific attribute controlling the output level is also set, the
+last attributes set gets supremacy over the other one.
 """
 struct LogLevel <: AbstractOptimizerAttribute
     value::Int
