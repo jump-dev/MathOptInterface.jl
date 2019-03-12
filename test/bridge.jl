@@ -790,9 +790,9 @@ end
         end
     end
 
-    @testset "Single variable" begin
+    @testset "Scalar functionize" begin
         MOI.empty!(mock)
-        bridged_mock = MOIB.SingleVariableB{Float64}(mock)
+        bridged_mock = MOIB.ScalarFunctionize{Float64}(mock)
         x = MOI.add_variable(bridged_mock)
         y = MOI.add_variable(bridged_mock)
         sx = MOI.SingleVariable(x)
@@ -814,7 +814,7 @@ end
                                         ])
 
         for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.LessThan{T}]
-            @test MOIB.added_constraint_types(MOIB.SingleVariableBridge{T, S}) ==
+            @test MOIB.added_constraint_types(MOIB.ScalarFunctionizeBridge{T, S}) ==
                 [(MOI.ScalarAffineFunction{T}, S)]
         end
 
@@ -842,9 +842,9 @@ end
         end
     end
 
-    @testset "Vector of variables" begin
+    @testset "Vector functionize" begin
         MOI.empty!(mock)
-        bridged_mock = MOIB.VectorOfVariablesB{Float64}(mock)
+        bridged_mock = MOIB.VectorFunctionize{Float64}(mock)
         x = MOI.add_variable(bridged_mock)
         y = MOI.add_variable(bridged_mock)
         z = MOI.add_variable(bridged_mock)
@@ -867,7 +867,7 @@ end
                                         ])
 
         for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
-            @test MOIB.added_constraint_types(MOIB.VectorOfVariablesBridge{T, S}) ==
+            @test MOIB.added_constraint_types(MOIB.VectorFunctionizeBridge{T, S}) ==
                 [(MOI.VectorAffineFunction{T}, S)]
         end
 

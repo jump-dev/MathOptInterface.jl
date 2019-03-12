@@ -53,8 +53,8 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     add_bridge(bridged_model, VectorizeBridge{T})
     add_bridge(bridged_model, ScalarSlackBridge{T})
     add_bridge(bridged_model, VectorSlackBridge{T})
-    add_bridge(bridged_model, SingleVariableBridge{T})
-    add_bridge(bridged_model, VectorOfVariablesBridge{T})
+    add_bridge(bridged_model, ScalarFunctionizeBridge{T})
+    add_bridge(bridged_model, VectorFunctionizeBridge{T})
     add_bridge(bridged_model, SplitIntervalBridge{T})
     add_bridge(bridged_model, QuadtoSOCBridge{T})
     add_bridge(bridged_model, GeoMeanBridge{T})
@@ -86,9 +86,9 @@ include("slackbridge.jl")
     (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2), (), (), (),
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
     )
-include("unslackbridge.jl")
-@bridge SingleVariableB SingleVariableBridge () (MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () (MOI.SingleVariable,) () () ()
-@bridge(VectorOfVariablesB, VectorOfVariablesBridge,  (), (),
+include("functionize_bridge.jl")
+@bridge ScalarFunctionize ScalarFunctionizeBridge () (MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () (MOI.SingleVariable,) () () ()
+@bridge(VectorFunctionize, VectorFunctionizeBridge,  (), (),
     (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
     MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
     MOI.PositiveSemidefiniteConeSquare, MOI.PositiveSemidefiniteConeTriangle, MOI.LogDetConeTriangle,
