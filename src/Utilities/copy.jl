@@ -184,8 +184,9 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
 
     # Copy variables
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    for vi in vis_src
-        idxmap.varmap[vi] = MOI.add_variable(dest)
+    vars=MOI.add_variables(dest, length(vis_src))
+    for (vi,var) in zip(vis_src, vars)
+        idxmap.varmap[vi] = var
     end
 
     # Copy variable attributes
