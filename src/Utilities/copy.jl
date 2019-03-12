@@ -152,11 +152,10 @@ function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::B
     # Copy constraints
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
-    # idxmap is wraped with [] to signify singlton
-    f_dest = mapvariables.([idxmap], f_src)
+    f_dest = mapvariables.(Ref(idxmap), f_src)
     s = MOI.get(src, MOI.ConstraintSet(), cis_src)
     cis_dest = MOI.add_constraints(dest, f_dest, s)
-    for (ci_src,ci_dest) in zip(cis_src, cis_dest)
+    for (ci_src, ci_dest) in zip(cis_src, cis_dest)
         idxmap.conmap[ci_src] = ci_dest
     end
     pass_attributes(dest, src, copy_names, idxmap, cis_src)
@@ -184,8 +183,8 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
 
     # Copy variables
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    vars=MOI.add_variables(dest, length(vis_src))
-    for (vi,var) in zip(vis_src, vars)
+    vars = MOI.add_variables(dest, length(vis_src))
+    for (vi, var) in zip(vis_src, vars)
         idxmap.varmap[vi] = var
     end
 
