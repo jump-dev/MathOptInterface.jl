@@ -9,7 +9,7 @@
             @test sprint(showerror, err) == "MathOptInterface.AddVariableNotAllowed:" *
             " Adding variables cannot be performed. You may want to use a" *
             " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-            " `resetoptimizer!` before doing this operation if the" *
+            " `reset_optimizer` before doing this operation if the" *
             " `CachingOptimizer` is in `MANUAL` mode."
         end
         @test_throws MOI.AddVariableNotAllowed MOI.add_variables(model, 2)
@@ -61,7 +61,7 @@
             " Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}`" *
             " constraints cannot be performed. You may want to use a" *
             " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-            " `resetoptimizer!` before doing this operation if the" *
+            " `reset_optimizer` before doing this operation if the" *
             " `CachingOptimizer` is in `MANUAL` mode."
         end
         @test_throws MOI.AddConstraintNotAllowed begin
@@ -98,7 +98,7 @@
             @test sprint(showerror, err) == "MathOptInterface.DeleteNotAllowed{MathOptInterface.VariableIndex}:" *
             " Deleting the index MathOptInterface.VariableIndex(1) cannot be" *
             " performed. You may want to use a `CachingOptimizer` in" *
-            " `AUTOMATIC` mode or you may need to call `resetoptimizer!`" *
+            " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
             " before doing this operation if the `CachingOptimizer` is in" *
             " `MANUAL` mode."
         end
@@ -109,7 +109,7 @@
             @test sprint(showerror, err) == "MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}:" *
             " Deleting the index MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1)" *
             " cannot be performed. You may want to use a `CachingOptimizer`" *
-            " in `AUTOMATIC` mode or you may need to call `resetoptimizer!`" *
+            " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
             " before doing this operation if the `CachingOptimizer` is in" *
             " `MANUAL` mode."
         end
@@ -180,15 +180,15 @@ end
     @test sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name())) == "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
     " Setting attribute $MOI.Name() cannot be performed. You may want to use" *
     " a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-    " `resetoptimizer!` before doing this operation if the" *
+    " `reset_optimizer` before doing this operation if the" *
     " `CachingOptimizer` is in `MANUAL` mode."
     @test sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name(), "Message")) == "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
     " Setting attribute $MOI.Name() cannot be performed: Message You may want" *
     " to use a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-    " `resetoptimizer!` before doing this operation if the `CachingOptimizer`" *
+    " `reset_optimizer` before doing this operation if the `CachingOptimizer`" *
     " is in `MANUAL` mode." == "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
     " Setting attribute $MOI.Name() cannot be performed: Message You may want" *
     " to use a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-    " `resetoptimizer!` before doing this operation if the `CachingOptimizer`" *
+    " `reset_optimizer` before doing this operation if the `CachingOptimizer`" *
     " is in `MANUAL` mode."
 end

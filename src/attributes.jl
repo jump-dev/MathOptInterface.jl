@@ -900,7 +900,7 @@ during [`copy_to`](@ref) using [`set`](@ref).
 ## Important note when defining new attributes
 
 By default `is_copyable(attr)` returns `!is_set_by_optimize(attr)`. A specific
-method should be defined for attibutes which are copied indirectly during
+method should be defined for attributes which are copied indirectly during
 [`copy_to`](@ref). For instance, both `is_copyable` and
 [`is_set_by_optimize`](@ref) return `false` for the following attributes:
 
