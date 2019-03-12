@@ -506,7 +506,6 @@ function MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String)
     return MOI.get(m.model_cache, IdxT, name)
 end
 
-# TODO: MOI.set for MOI.AbstractOptimizerAttribute.
 function MOI.set(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute,
                  value)
     optimizer_value = attribute_value_map(model.model_to_optimizer_map, value)
