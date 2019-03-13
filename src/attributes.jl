@@ -337,6 +337,27 @@ An optimizer attribute for the string identifying the solver/optimizer.
 """
 struct SolverName <: AbstractOptimizerAttribute end
 
+"""
+    Silent
+
+An optimizer attribute for silencing the output of an optimizer. When `set`
+to `true`, it takes precedence over any other attribute controlling verbosity
+and requires the solver to produce no output. The default value is `false`
+which has no effect. In this case the verbosity is controlled by other
+attributes.
+
+## Note
+
+Every optimizer should have verbosity on by default. For instance, if a solver
+has a solver-specific log level attribute, the MOI implementation should set it
+to `1` by default. If the user sets `Silent` to `true`, then the log level
+should be set to `0`, even if the user specifically sets a value of log level.
+If the value of `Silent` is `false` then the log level set to the solver is the
+value given by the user for this solver-specific parameter or `1` if none is
+given.
+"""
+struct Silent <: AbstractOptimizerAttribute end
+
 ## Model attributes
 
 """

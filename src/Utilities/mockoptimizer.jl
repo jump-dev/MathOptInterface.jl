@@ -151,7 +151,9 @@ MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attri
 function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
     return MOI.supports(mock.inner_model, attr)
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.AbstractModelAttribute, value)
+function MOI.set(mock::MockOptimizer,
+                 attr::Union{MOI.AbstractModelAttribute,
+                             MOI.AbstractOptimizerAttribute}, value)
     MOI.set(mock.inner_model, attr, value)
 end
 MOI.set(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = MOI.set(mock.inner_model, attr, xor_variables(value))
@@ -164,7 +166,11 @@ MOI.set(mock::MockOptimizer, ::MockConstraintAttribute, idx::MOI.ConstraintIndex
 MOI.set(mock::MockOptimizer, ::MOI.ConstraintDual, idx::MOI.ConstraintIndex, value) = (mock.condual[xor_index(idx)] = value)
 MOI.set(mock::MockOptimizer, ::MOI.ConstraintBasisStatus, idx::MOI.ConstraintIndex, value) = (mock.con_basis[xor_index(idx)] = value)
 
-MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute) = MOI.get(mock.inner_model, attr)
+function MOI.get(mock::MockOptimizer,
+                 attr::Union{MOI.AbstractModelAttribute,
+                             MOI.AbstractOptimizerAttribute})
+    return MOI.get(mock.inner_model, attr)
+end
 MOI.get(mock::MockOptimizer, attr::Union{MOI.ListOfVariableIndices,
                                          MOI.ListOfConstraintIndices}) = xor_index.(MOI.get(mock.inner_model, attr))
 MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveFunction) = xor_variables(MOI.get(mock.inner_model, attr))

@@ -84,10 +84,11 @@ AbstractOptimizer
 optimize!
 ```
 
-List of attributes optimizers attributes
+List of optimizers attributes
 
 ```@docs
 SolverName
+Silent
 ```
 
 List of attributes useful for optimizers
