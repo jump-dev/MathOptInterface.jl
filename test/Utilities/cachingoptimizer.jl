@@ -30,14 +30,43 @@
         exception = ErrorException(
             "Cannot query $(attr) from caching optimizer because no optimizer" *
             " is attached.")
-        @test_throws Exception MOI.get(model, MOI.SolverName())
+        @test_throws exception MOI.get(model, attr)
+        attr = MOI.Silent()
+        exception = ErrorException(
+            "Cannot query $(attr) from caching optimizer because no optimizer" *
+            " is attached.")
+        @test_throws exception MOI.get(model, attr)
 
         attr = MOI.ResultCount()
         exception = ErrorException(
             "Cannot query $(attr) from caching optimizer because no optimizer" *
             " is attached.")
-        @test_throws Exception MOI.get(model, MOI.ResultCount())
+        @test_throws exception MOI.get(model, attr)
     end
+end
+
+@testset "Copyable solver attributes" begin
+    cache = MOIU.UniversalFallback(ModelForCachingOptimizer{Float64}())
+    cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
+    MOI.set(cached, MOI.Silent(), true)
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    MOIU.reset_optimizer(cached, mock)
+    @test MOI.get(mock, MOI.Silent())
+    @test MOI.get(cached, MOI.Silent())
+    MOI.set(cached, MOI.Silent(), false)
+    @test !MOI.get(mock, MOI.Silent())
+    @test !MOI.get(cached, MOI.Silent())
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    MOIU.reset_optimizer(cached, mock)
+    @test !MOI.get(mock, MOI.Silent())
+    @test !MOI.get(cached, MOI.Silent())
+    MOI.set(cached, MOI.Silent(), true)
+    @test MOI.get(mock, MOI.Silent())
+    @test MOI.get(cached, MOI.Silent())
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    MOIU.reset_optimizer(cached, mock)
+    @test MOI.get(mock, MOI.Silent())
+    @test MOI.get(cached, MOI.Silent())
 end
 
 @testset "CachingOptimizer MANUAL mode" begin
