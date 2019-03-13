@@ -333,7 +333,7 @@ function MOI.add_constraints(b::AbstractBridgeOptimizer, f::Vector{F},
         # `add_constraints` might throw an `UnsupportedConstraint` but no
         #  modification has been done in the previous line
         cis = MOI.add_constraints(b.bridged, f, s)
-        for (n,ci) in enumerate(cis)
+        for (n, ci) in enumerate(cis)
             @assert !haskey(b.bridges, ci)
             b.bridges[ci] = BridgeType(b, f[n], s[n])
         end
