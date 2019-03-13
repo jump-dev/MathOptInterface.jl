@@ -88,7 +88,7 @@ List of optimizers attributes
 
 ```@docs
 SolverName
-LogLevel
+Silent
 ```
 
 List of attributes useful for optimizers
