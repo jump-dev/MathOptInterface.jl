@@ -1,6 +1,15 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.8.4 (March 13, 2019)
+-----------------------
+
+- Performance improvement in `default_copy_to` and bridge optimizer (#696).
+- Add `Silent` and implement setting optimizer attributes in caching and mock
+  optimizers (#695).
+- Add functionize bridges (SingleVariable and VectorOfVariables) (#659).
+- Minor typo fixes (#694).
+
 v0.8.3 (March 6, 2019)
 ----------------------
 
