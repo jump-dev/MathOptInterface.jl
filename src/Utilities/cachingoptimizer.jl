@@ -517,10 +517,10 @@ end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
     if state(model) == NO_OPTIMIZER
-        # TODO: Copyable attributes (e.g., Silent, TimeLimit) are also be stored
-        # in the cache so we could return the value stored in the cache instead.
-        # However, for non-copyable attributes( e.g. `SolverName`) the error is
-        # appropriate.
+        # TODO: Copyable attributes (e.g., `Silent`, `TimeLimit`) should also be
+        # stored in the cache so we could return the value stored in the cache
+        # instead. However, for non-copyable attributes( e.g. `SolverName`) the
+        # error is appropriate.
         error("Cannot query $(attr) from caching optimizer because no " *
               "optimizer is attached.")
     end
