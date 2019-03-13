@@ -330,9 +330,11 @@ function MOI.add_constraints(b::AbstractBridgeOptimizer, f::Vector{F},
         # We compute `BridgeType` first as `concrete_bridge_type` calls
         # `bridge_type` which might throw an `UnsupportedConstraint` error in
         # which case, we do not want any modification to have been done
+        # See add_constraint for why we we call `concrete_bridge_type` separately 
+        # before `add_constraints`
         BridgeType = concrete_bridge_type(b, F, S)
-        # `add_constraint` might throw an `UnsupportedConstraint` but no
-        # modification has been done in the previous line
+        # `add_constraints` might throw an `UnsupportedConstraint` but no
+        #  modification has been done in the previous line
         cis = MOI.add_constraints(b.bridged, f, s)
         for (n,ci) in enumerate(cis)
             @assert !haskey(b.bridges, ci)
