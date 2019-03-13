@@ -436,10 +436,62 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+function qcp5test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Find x,y
+    # s.t. x*y == 4 (c)
+    #      x*x == 4 (c2)
+    #      x, y >= 0
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64},MOI.EqualTo{Float64})
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+
+    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+
+    cf = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(0.0, x)], [MOI.ScalarQuadraticTerm(1.0, x, y)], 0.0)
+    c = MOI.add_constraint(model, cf, MOI.EqualTo(4.0))
+
+    cf2 = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(0.0, x)], [MOI.ScalarQuadraticTerm(2.0, x, x)], 0.0)
+    c2 = MOI.add_constraint(model, cf2, MOI.EqualTo(4.0))
+
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.EqualTo{Float64}}()) == 2
+
+    if config.query
+        @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
+        @test cf2 ≈ MOI.get(model, MOI.ConstraintFunction(), c2)
+    end
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 2.0 atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 4.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 4.0 atol=atol rtol=rtol
+    end
+end
+
 const qcptests = Dict("qcp1" => qcp1test,
                       "qcp2" => qcp2test,
                       "qcp3" => qcp3test,
-                      "qcp4" => qcp4test)
+                      "qcp4" => qcp4test,
+                      "qcp5" => qcp5test)
 
 @moitestset qcp
 
