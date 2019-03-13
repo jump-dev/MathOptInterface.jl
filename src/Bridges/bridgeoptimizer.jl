@@ -327,10 +327,7 @@ function MOI.add_constraints(b::AbstractBridgeOptimizer, f::Vector{F},
                              s::Vector{S}) where { F <: MOI.AbstractFunction,
                              S <: MOI.AbstractSet}
     if is_bridged(b, F, S)
-        # We compute `BridgeType` first as `concrete_bridge_type` calls
-        # `bridge_type` which might throw an `UnsupportedConstraint` error in
-        # which case, we do not want any modification to have been done
-        # See add_constraint for why we we call `concrete_bridge_type` separately 
+        # See add_constraint for why we we call `concrete_bridge_type` separately
         # before `add_constraints`
         BridgeType = concrete_bridge_type(b, F, S)
         # `add_constraints` might throw an `UnsupportedConstraint` but no
