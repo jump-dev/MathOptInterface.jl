@@ -1,0 +1,45 @@
+{
+    "description": "The problem: min{0 | [1 2; 3 4][x, y] + [5, 6] ∈ R+.",
+    "version": 0,
+    "variables": [{
+        "name": "x"
+    }, {
+        "name": "y"
+    }],
+    "objectives": [],
+    "constraints": [{
+        "function": {
+            "head": "VectorAffineFunction",
+            "terms": [{
+                "output_index": 1,
+                "scalar_term": {
+                    "coefficient": 1,
+                    "variable": "x"
+                }
+            }, {
+                "output_index": 1,
+                "scalar_term": {
+                    "coefficient": 2,
+                    "variable": "y"
+                }
+            }, {
+                "output_index": 2,
+                "scalar_term": {
+                    "coefficient": 3,
+                    "variable": "x"
+                }
+            }, {
+                "output_index": 2,
+                "scalar_term": {
+                    "coefficient": 4,
+                    "variable": "y"
+                }
+            }],
+            "constants": [5, 6]
+        },
+        "set": {
+            "head": "Nonnegatives",
+            "dimension": 2
+        }
+    }]
+}

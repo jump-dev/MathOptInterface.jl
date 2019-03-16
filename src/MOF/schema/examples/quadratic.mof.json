@@ -1,0 +1,35 @@
+{
+    "description": "The problem: min{x^2 + x * y + y^2}",
+    "version": 0,
+    "variables": [{
+        "name": "x"
+    }, {
+        "name": "y"
+    }],
+    "objectives": [{
+        "sense": "min",
+        "function": {
+            "description": "Note that the format is `a'x + 0.5 x' Q x + c`.",
+            "head": "ScalarQuadraticFunction",
+            "affine_terms": [],
+            "quadratic_terms": [{
+                    "coefficient": 2,
+                    "variable_1": "x",
+                    "variable_2": "x"
+                },
+                {
+                    "coefficient": 1,
+                    "variable_1": "x",
+                    "variable_2": "y"
+                },
+                {
+                    "coefficient": 2,
+                    "variable_1": "y",
+                    "variable_2": "y"
+                }
+            ],
+            "constant": 0
+        }
+    }],
+    "constraints": []
+}

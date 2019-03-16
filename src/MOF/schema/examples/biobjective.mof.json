@@ -1,0 +1,32 @@
+{
+    "description": "The problem: [min{2x - y + 1}, max{y}]",
+    "version": 0,
+    "variables": [{
+        "name": "x"
+    }, {
+        "name": "y"
+    }],
+    "objectives": [{
+        "sense": "min",
+        "function": {
+            "head": "ScalarAffineFunction",
+            "terms": [{
+                    "coefficient": 2,
+                    "variable": "x"
+                },
+                {
+                    "coefficient": -1,
+                    "variable": "y"
+                }
+            ],
+            "constant": 1
+        }
+    }, {
+        "sense": "max",
+        "function": {
+            "head": "SingleVariable",
+            "variable": "y"
+        }
+    }],
+    "constraints": []
+}

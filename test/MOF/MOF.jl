@@ -1,5 +1,12 @@
 const MOF = MathOptFormat.MOF
 
+@testset "Validate schema examples" begin
+    examples_path = joinpath(dirname(MOF.SCHEMA_PATH), "examples")
+    @testset "$example" for example in readdir(examples_path)
+        @test MOF.validate(joinpath(examples_path, example)) === nothing
+    end
+end
+
 const TEST_MOF_FILE = "test.mof.json"
 
 @test sprint(show, MOF.Model()) == "A MathOptFormat Model"
@@ -16,6 +23,7 @@ function test_model_equality(model_string, variables, constraints)
     model_2 = MOF.Model()
     MOI.read_from_file(model_2, TEST_MOF_FILE)
     MOIU.test_models_equal(model, model_2, variables, constraints)
+    MOF.validate(TEST_MOF_FILE)
 end
 
 @testset "read_from_file" begin

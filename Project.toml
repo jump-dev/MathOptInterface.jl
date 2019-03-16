@@ -1,0 +1,15 @@
+name = "MathOptFormat"
+uuid = "f4570300-c277-12e8-125c-4912f86ce65d"
+authors = ["Oscar Dowson <oscar.dowson@northwestern.edu"]
+version = "0.0.0"
+
+[deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+GZip = "92fee26a-97fe-5a0c-ad85-20a5f3185b63"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
+MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+julia = "1.0"

@@ -6,6 +6,10 @@ using DataStructures, JSON
 
 import ..MathOptFormat
 
+import ..MathOptFormat
+import JSONSchema
+const SCHEMA_PATH = joinpath(@__DIR__, "schema", "mof.schema.json")
+
 # we use an ordered dict to make the JSON printing nicer
 const Object = OrderedDict{String, Any}
 
@@ -49,6 +53,25 @@ end
 
 function Base.show(io::IO, ::Model)
     print(io, "A MathOptFormat Model")
+    return
+end
+
+"""
+    validate(filename::String)
+
+Validate that the MOF file `filename` conforms to the MOF JSON schema. Returns
+`nothing` if the file is valid, otherwise throws an error describing why the
+file is not valid.
+"""
+function validate(filename::String)
+    MathOptFormat.gzip_open(filename, "r") do io
+        object = JSON.parse(io)
+        mof_schema = JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH))
+        if !JSONSchema.isvalid(object, mof_schema)
+            error("Unable to read file because it does not conform to the MOF " *
+                  "schema: ", JSONSchema.diagnose(object, mof_schema))
+        end
+    end
     return
 end
 
