@@ -34,10 +34,10 @@ function MOI.write_to_file(model::Model, io::IO)
     MathOptFormat.create_unique_names(model)
     write_model_name(io, model)
     write_rows(io, model)
-    write_columns(io, model)
+    discovered_columns = write_columns(io, model)
     write_rhs(io, model)
     write_ranges(io, model)
-    write_bounds(io, model)
+    write_bounds(io, model, discovered_columns)
     write_sos(io, model)
     println(io, "ENDATA")
     return
@@ -106,23 +106,35 @@ function add_coefficient(coefficients, variable_name, row_name, coefficient)
     return
 end
 
-function extract_terms(model::Model, coefficients, row_name::String,
-                       func::MOI.ScalarAffineFunction)
+function extract_terms(
+        model::Model, coefficients, row_name::String,
+        func::MOI.ScalarAffineFunction, discovered_columns::Set{String})
     for term in func.terms
         variable_name = MOI.get(model, MOI.VariableName(), term.variable_index)
         add_coefficient(coefficients, variable_name, row_name, term.coefficient)
+        push!(discovered_columns, variable_name)
     end
     return
 end
 
-function extract_terms(model::Model, coefficients, row_name::String,
-                       func::MOI.SingleVariable)
+function extract_terms(
+        model::Model, coefficients, row_name::String, func::MOI.SingleVariable,
+        discovered_columns::Set{String})
     variable_name = MOI.get(model, MOI.VariableName(), func.variable)
     add_coefficient(coefficients, variable_name, row_name, 1.0)
+    push!(discovered_columns, variable_name)
     return
 end
 
 function write_columns(io::IO, model::Model)
+    # Many MPS readers (e.g., CPLEX and GAMS) will error if a variable (column)
+    # appears in the BOUNDS section but did not appear in the COLUMNS section.
+    # This is likely because such variables are meaningless - they don't appear
+    # in the objective or constraints and so can be trivially removed.
+    # To avoid generating MPS files that crash existing readers, we cache the
+    # names of all variables seen in COLUMNS into `discovered_columns`, and then
+    # pass this set to `write_bounds` so that it can act appropriately.
+    discovered_columns = Set{String}()
     println(io, "COLUMNS")
     coefficients = Dict{String, Vector{Tuple{String, Float64}}}()
     for (set_type, sense_char) in LINEAR_CONSTRAINTS
@@ -131,12 +143,13 @@ function write_columns(io::IO, model::Model)
                                         set_type}())
             row_name = MOI.get(model, MOI.ConstraintName(), index)
             func = MOI.get(model, MOI.ConstraintFunction(), index)
-            extract_terms(model, coefficients, row_name, func)
+            extract_terms(
+                model, coefficients, row_name, func, discovered_columns)
         end
     end
     obj_func_type = MOI.get(model, MOI.ObjectiveFunctionType())
     obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_func_type}())
-    extract_terms(model, coefficients, "OBJ", obj_func)
+    extract_terms(model, coefficients, "OBJ", obj_func, discovered_columns)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
         # MPS doesn't support maximization so we flip the sign on the objective
         # coefficients.
@@ -162,7 +175,7 @@ function write_columns(io::IO, model::Model)
             println(io, "    MARKER    'MARKER'                 'INTEND'")
         end
     end
-    return
+    return discovered_columns
 end
 
 # ==============================================================================
@@ -282,7 +295,7 @@ function update_bounds(::Tuple{Float64, Float64}, set::MOI.EqualTo)
     return (set.value, set.value)
 end
 
-function write_bounds(io::IO, model::Model)
+function write_bounds(io::IO, model::Model, discovered_columns::Set{String})
     println(io, "BOUNDS")
     free_variables = Set(MOI.get(model, MOI.ListOfVariableIndices()))
     bounds = Dict{MOI.VariableIndex, Tuple{Float64, Float64}}()
@@ -300,7 +313,12 @@ function write_bounds(io::IO, model::Model)
     end
     for (index, (lower, upper)) in bounds
         var_name = MOI.get(model, MOI.VariableName(), index)
-        write_single_bound(io, var_name, lower, upper)
+        if var_name in discovered_columns
+            write_single_bound(io, var_name, lower, upper)
+        else
+            @warn("Variable $var_name is mentioned in BOUNDS, but is not " *
+                  "mentioned in the COLUMNS section. We are ignoring it.")
+        end
         pop!(free_variables, index)
     end
     for index in MOI.get(model, MOI.ListOfConstraintIndices{
@@ -308,17 +326,27 @@ function write_bounds(io::IO, model::Model)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         variable_index = func.variable::MOI.VariableIndex
         var_name = MOI.get(model, MOI.VariableName(), variable_index)
-        println(io, " BV bounds    ", var_name)
+        if var_name in discovered_columns
+            println(io, " BV bounds    ", var_name)
+        else
+            @warn("Variable $var_name is mentioned in BOUNDS, but is not " *
+                  "mentioned in the COLUMNS section. We are ignoring it.")
+        end
         if variable_index in free_variables
             # We can remove the variable because it has a bound, but first check
             # that it is still there because some variables might have two
-            # bounds and so might have alredy been removed.
+            # bounds and so might have already been removed.
             pop!(free_variables, variable_index)
         end
     end
     for variable_index in free_variables
         var_name = MOI.get(model, MOI.VariableName(), variable_index)
-        println(io, " FR bounds    ", var_name)
+        if var_name in discovered_columns
+            println(io, " FR bounds    ", var_name)
+        else
+            @warn("Variable $var_name is mentioned in BOUNDS, but is not " *
+                  "mentioned in the COLUMNS section. We are ignoring it.")
+        end
     end
     return
 end

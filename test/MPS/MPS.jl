@@ -255,6 +255,22 @@ end
             " UP bounds    a_really_long_name 2\n" *
             "ENDATA\n"
     end
+    @testset "Un-used variable" begin
+        # In this test, `x` will not be written to the file since it does not
+        # appear in the objective or in the constriants.
+        model = MPS.Model()
+        MOIU.loadfromstring!(model, """
+            variables: x, y
+            minobjective: y
+            c1: 2.0 * y >= 1.0
+            c2: x >= 0.0
+        """)
+        MOI.write_to_file(model, MPS_TEST_FILE)
+        @test MOI.get(model, MOI.NumberOfVariables()) == 2
+        model2 = MPS.Model()
+        MOI.read_from_file(model2, MPS_TEST_FILE)
+        @test MOI.get(model2, MOI.NumberOfVariables()) == 1
+    end
 end
 
 # Clean up
