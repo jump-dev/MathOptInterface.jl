@@ -236,6 +236,16 @@ function MOI.get(b::AbstractBridgeOptimizer,
         MOI.get(b.model, attr, ci)
     end
 end
+function MOI.supports(b::AbstractBridgeOptimizer,
+                      attr::MOI.AbstractConstraintAttribute,
+                      IndexType::Type{<:MOI.Index})
+    return MOI.supports(b.model, attr, IndexType)
+end
+function MOI.set(b::AbstractBridgeOptimizer,
+                 attr::MOI.AbstractConstraintAttribute,
+                 index::MOI.Index, value)
+    return MOI.set(b.model, attr, index, value)
+end
 ## Setting names
 function MOI.supports(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
                       Index::Type{<:CI})
