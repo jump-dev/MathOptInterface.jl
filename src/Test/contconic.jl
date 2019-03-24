@@ -1406,11 +1406,11 @@ const psdttests = Dict("psdt0v" => psdt0vtest,
                        "psdt1f" => psdt1ftest,
                        "psdt2"  => psdt2test)
 
-# PSDConeSquare
 @moitestset psdt
 
-const psdstests = Dict("psds0v" => psdt0vtest,
-                       "psds0v" => psdt0vtest,
+# PSDConeSquare
+const psdstests = Dict("psds0v" => psds0vtest,
+                       "psds0v" => psds0vtest,
                        "psds1v" => psds1vtest,
                        "psds1f" => psds1ftest)
 
