@@ -1410,7 +1410,7 @@ const psdttests = Dict("psdt0v" => psdt0vtest,
 
 # PSDConeSquare
 const psdstests = Dict("psds0v" => psds0vtest,
-                       "psds0v" => psds0vtest,
+                       "psds0f" => psds0ftest,
                        "psds1v" => psds1vtest,
                        "psds1f" => psds1ftest)
 
