@@ -208,7 +208,7 @@ const qptests = Dict("qp1" => qp1test,
 @moitestset qp
 
 #=
-    Quadratically constrained programs
+    Quadratically constrained (convex) programs
 =#
 
 function qcp1test(model::MOI.ModelLike, config::TestConfig)
@@ -385,7 +385,17 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function qcp4test(model::MOI.ModelLike, config::TestConfig)
+const qcptests = Dict("qcp1" => qcp1test,
+                      "qcp2" => qcp2test,
+                      "qcp3" => qcp3test)
+
+@moitestset qcp
+
+#=
+    Quadratically constrained (non-convex) programs
+=#
+
+function ncqcp1test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # Max 2x + y
@@ -436,7 +446,7 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function qcp5test(model::MOI.ModelLike, config::TestConfig)
+function ncqcp2test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # Find x, y
@@ -487,13 +497,10 @@ function qcp5test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-const qcptests = Dict("qcp1" => qcp1test,
-                      "qcp2" => qcp2test,
-                      "qcp3" => qcp3test,
-                      "qcp4" => qcp4test,
-                      "qcp5" => qcp5test)
+const ncqcptests = Dict("ncqcp1" => ncqcp1test,
+                        "ncqcp2" => ncqcp2test)
 
-@moitestset qcp
+@moitestset ncqcp
 
 #=
     SOCP
@@ -565,6 +572,7 @@ const socptests = Dict("socp1" => socp1test)
 
 const contquadratictests = Dict("qp" => qptest,
                                 "qcp" => qcptest,
+                                "ncqcp" => ncqcptest,
                                 "socp" => socptest)
 
 @moitestset contquadratic true

@@ -22,12 +22,14 @@
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
         MOIT.qcp3test(mock, config)
+    end
+    @testset "Non-convex QCP" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4.0, 1.0], MOI.FEASIBLE_POINT))
-        MOIT.qcp4test(mock, config)
+        MOIT.ncqcp1test(mock, config)
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2.0, 2.0], MOI.FEASIBLE_POINT))
-        MOIT.qcp5test(mock, config)
+        MOIT.ncqcp2test(mock, config)
     end
     @testset "SOCP" begin
         MOIU.set_mock_optimize!(mock,
