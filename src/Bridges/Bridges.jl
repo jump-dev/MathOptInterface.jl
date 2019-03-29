@@ -87,9 +87,9 @@ include("slackbridge.jl")
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
     )
 include("functionize_bridge.jl")
-@bridge ScalarFunctionize ScalarFunctionizeBridge () (MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () (MOI.SingleVariable,) () () ()
+@bridge ScalarFunctionize ScalarFunctionizeBridge () (MOI.EqualTo, MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () (MOI.SingleVariable,) () () ()
 @bridge(VectorFunctionize, VectorFunctionizeBridge,  (), (),
-    (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
+    (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
     MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
     MOI.PositiveSemidefiniteConeSquare, MOI.PositiveSemidefiniteConeTriangle, MOI.LogDetConeTriangle,
     MOI.RootDetConeTriangle),
