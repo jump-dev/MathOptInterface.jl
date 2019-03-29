@@ -394,7 +394,7 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64},MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -445,7 +445,7 @@ function qcp5test(model::MOI.ModelLike, config::TestConfig)
     #      x, y >= 0
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
-    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64},MOI.EqualTo{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.EqualTo{Float64})
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
