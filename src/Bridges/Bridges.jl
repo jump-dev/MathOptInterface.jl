@@ -89,10 +89,11 @@ include("slackbridge.jl")
 include("functionize_bridge.jl")
 @bridge ScalarFunctionize ScalarFunctionizeBridge () (MOI.EqualTo, MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () (MOI.SingleVariable,) () () ()
 @bridge(VectorFunctionize, VectorFunctionizeBridge,  (), (),
-    (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
-    MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
-    MOI.PositiveSemidefiniteConeSquare, MOI.PositiveSemidefiniteConeTriangle, MOI.LogDetConeTriangle,
-    MOI.RootDetConeTriangle),
+    (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
+     MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+     MOI.ExponentialCone, MOI.DualExponentialCone,
+     MOI.PositiveSemidefiniteConeSquare, MOI.PositiveSemidefiniteConeTriangle, MOI.LogDetConeTriangle,
+     MOI.RootDetConeTriangle),
     (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2), (), (),
     (MOI.VectorOfVariables,), ()
     )
