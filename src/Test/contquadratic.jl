@@ -389,7 +389,7 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # Max 2x + y
-    # s.t. x*y <= 4 (c)
+    # s.t. x * y <= 4 (c)
     #      x, y >= 1
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
@@ -439,9 +439,9 @@ end
 function qcp5test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
-    # Find x,y
-    # s.t. x*y == 4 (c)
-    #      x*x == 4 (c2)
+    # Find x, y
+    # s.t. x * y == 4 (c)
+    #      x * x == 4 (c2)
     #      x, y >= 0
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
