@@ -239,12 +239,25 @@ end
 function MOI.supports(b::AbstractBridgeOptimizer,
                       attr::MOI.AbstractConstraintAttribute,
                       IndexType::Type{<:MOI.Index})
-    return MOI.supports(b.model, attr, IndexType)
+    if is_bridged(b, IndexType)
+        return MOI.supports(b.bridged, attr, IndexType)
+    else
+        return MOI.supports(b.model, attr, IndexType)
+    end
 end
+
 function MOI.set(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractConstraintAttribute,
                  index::MOI.Index, value)
-    return MOI.set(b.model, attr, index, value)
+    if is_bridged(b, typeof(index))
+        if MOI.is_set_by_optimize(attr)
+            return MOI.set(b, attr, bridge(b, index), value)
+        else
+            return MOI.set(b.bridged, attr, index, value)
+        end
+    else
+        return MOI.set(b.model, attr, index, value)
+    end
 end
 ## Setting names
 function MOI.supports(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
