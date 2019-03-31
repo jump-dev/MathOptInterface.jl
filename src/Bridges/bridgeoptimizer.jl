@@ -222,15 +222,21 @@ function MOI.set(b::AbstractBridgeOptimizer,
     return MOI.set(b.model, attr, indices, values)
 end
 
+# function MOI.get(::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
+#     bridge::AbstractBridge)
+# throw(ArgumentError("Constraint bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`."))
+# end
+
 # Constraint attributes
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractConstraintAttribute,
                  ci::CI)
     if is_bridged(b, typeof(ci))
-        if MOI.is_set_by_optimize(attr)
-            MOI.get(b, attr, bridge(b, ci))
-        else
+        if attr isa MOI.ConstraintName || attr isa MOI.ConstraintFunction ||
+                attr isa MOI.ConstraintSet
             MOI.get(b.bridged, attr, ci)
+        else
+            MOI.get(b, attr, bridge(b, ci))
         end
     else
         MOI.get(b.model, attr, ci)
@@ -238,9 +244,14 @@ function MOI.get(b::AbstractBridgeOptimizer,
 end
 function MOI.supports(b::AbstractBridgeOptimizer,
                       attr::MOI.AbstractConstraintAttribute,
-                      IndexType::Type{<:MOI.Index})
+                      IndexType::Type{CI{F, S}}) where {F,S}
     if is_bridged(b, IndexType)
-        return MOI.supports(b.bridged, attr, IndexType)
+        if attr isa MOI.ConstraintName || attr isa MOI.ConstraintFunction ||
+                attr isa MOI.ConstraintSet
+            return MOI.supports(b.bridged, attr, IndexType)
+        else
+            return MOI.supports(b, attr, concrete_bridge_type(b, F, S))
+        end
     else
         return MOI.supports(b.model, attr, IndexType)
     end
@@ -248,34 +259,35 @@ end
 
 function MOI.set(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractConstraintAttribute,
-                 index::MOI.Index, value)
+                 index::CI, value)
     if is_bridged(b, typeof(index))
-        if MOI.is_set_by_optimize(attr)
-            return MOI.set(b, attr, bridge(b, index), value)
-        else
+        if attr isa MOI.ConstraintName || attr isa MOI.ConstraintFunction ||
+                attr isa MOI.ConstraintName
             return MOI.set(b.bridged, attr, index, value)
+        else
+            return MOI.set(b, attr, bridge(b, index), value)
         end
     else
         return MOI.set(b.model, attr, index, value)
     end
 end
 ## Setting names
-function MOI.supports(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
-                      Index::Type{<:CI})
-    if is_bridged(b, Index)
-        return MOI.supports(b.bridged, attr, Index)
-    else
-        return MOI.supports(b.model, attr, Index)
-    end
-end
-function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
-                  constraint_index::CI, name::String)
-    if is_bridged(b, typeof(constraint_index))
-        MOI.set(b.bridged, attr, constraint_index, name)
-    else
-        MOI.set(b.model, attr, constraint_index, name)
-    end
-end
+# function MOI.supports(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
+#                       Index::Type{<:CI})
+#     if is_bridged(b, Index)
+#         return MOI.supports(b.bridged, attr, Index)
+#     else
+#         return MOI.supports(b.model, attr, Index)
+#     end
+# end
+# function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
+#                   constraint_index::CI, name::String)
+#     if is_bridged(b, typeof(constraint_index))
+#         MOI.set(b.bridged, attr, constraint_index, name)
+#     else
+#         MOI.set(b.model, attr, constraint_index, name)
+#     end
+# end
 ## Setting functions and sets
 function MOI.set(b::AbstractBridgeOptimizer, ::MOI.ConstraintSet,
                   constraint_index::CI{F, S}, set::S) where {F, S}
