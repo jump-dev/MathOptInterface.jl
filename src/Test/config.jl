@@ -5,7 +5,7 @@ struct TestConfig
     query::Bool # can get objective function, and constraint functions, and constraint sets
     modify_lhs::Bool # can modify function of a constraint
     duals::Bool # test dual solutions
-    infeas_certificates::Bool # check for infeasibility certificates when appropriate
+    infeas_certificates::Bool # check for primal or dual infeasibility certificates when appropriate
     # The expected "optimal" status returned by the solver. Either
     # MOI.OPTIMAL or MOI.LOCALLY_SOLVED.
     optimal_status::MOI.TerminationStatusCode

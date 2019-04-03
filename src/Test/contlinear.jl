@@ -927,7 +927,7 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE ||
             MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE_OR_UNBOUNDED
-        if config.infeas_certificates
+        if config.duals && config.infeas_certificates
             # solver returned an infeasibility ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
 
@@ -1405,7 +1405,7 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE ||
             MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE_OR_UNBOUNDED
-        if config.infeas_certificates
+        if config.duals && config.infeas_certificates
             # solver returned an infeasibility ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
