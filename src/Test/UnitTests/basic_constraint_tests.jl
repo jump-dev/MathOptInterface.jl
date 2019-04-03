@@ -197,8 +197,8 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
         @test length(c_indices) == MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
     end
 
-    if F != MOI.SingleVariable
-        # We can't add multiple single variable constraints as these are
+    if F != MOI.SingleVariable && F != MOI.VectorOfVariables
+        # We can't add multiple variable constraints as these are
         # interpreted as bounds etc.
         @testset "add_constraints" begin
             n = MOI.get(model, MOI.NumberOfConstraints{F,S}())
