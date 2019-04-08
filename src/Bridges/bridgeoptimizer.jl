@@ -262,7 +262,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
 end
 
 function MOI.supports(b::AbstractBridgeOptimizer, attr::MOI.ConstraintName,
-                      Index::Type{CI{F, S}}) where {F,S}
+                      Index::Type{<:CI})
     if is_bridged(b, Index)
         return MOI.supports(b.bridged, attr, Index)
     else
@@ -286,7 +286,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ConstraintSet, ci::CI)
     end
 end
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ConstraintFunction, 
-        ci::CI)
+                 ci::CI)
     if is_bridged(b, typeof(ci))
         return MOI.get(b.bridged, attr, ci)
     else
