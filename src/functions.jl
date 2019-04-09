@@ -162,6 +162,10 @@ Duplicate indices in ``a`` or ``Q`` are accepted, and the corresponding
 coefficients are summed together. "Mirrored" indices `(q,r)` and `(r,q)` (where
 `r` and `q` are `VariableIndex`es) are considered duplicates; only one need be
 specified.
+
+For example, for two scalar variables ``y, z``, the quadratic expression
+``yz + y^2`` is represented by the terms
+`ScalarQuadraticTerm.([1.0, 2.0], [y, y], [z, y])`.
 """
 mutable struct ScalarQuadraticFunction{T} <: AbstractScalarFunction
     affine_terms::Vector{ScalarAffineTerm{T}}
