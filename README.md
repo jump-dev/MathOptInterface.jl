@@ -13,6 +13,8 @@
 Read and write [MathOptInterface](https://github.com/JuliaOpt/MathOptInterface.jl)
 models to a variety of mathematical optimization file formats.
 
+### Using JuMP? Read the [JuMP integration](#jump-integration) section
+
 In order to read or write a mathematical optimization problem to/from a file,
 first create a [MathOptInterface](https://github.com/JuliaOpt/MathOptInterface.jl)
 model. This can be done using [JuMP](https://github.com/JuliaOpt/JuMP.jl) or via
@@ -109,4 +111,21 @@ To read and write GZip'ed files, append `.gz` to the filename. For example:
 MOI.write_to_file(model, "my_model.mps")
 # Compressed version:
 MOI.write_to_file(model, "my_model.mps.gz")
+```
+
+## JuMP integration
+
+To write a JuMP model to a file, pass `backend(jump_model)` to `MOI.copy_to` 
+instead of `user_model`:
+```julia
+using JuMP, MathOptFormat
+
+jump_model = Model()
+@variable(jump_model, x, Int)
+@constraint(jump_model, my_con, 2x + 1 <= 2)
+@objective(jump_model, Max, x)
+
+mps_model = MathOptFormat.MPS.Model()
+MOI.copy_to(mps_model, backend(jump_model))
+MOI.write_to_file(mps_model, "my_model.mps")
 ```
