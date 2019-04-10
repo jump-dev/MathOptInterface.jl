@@ -19,7 +19,7 @@
     {
       "sense": "min",
       "function": {
-        "head": "Nonlinear",
+        "head": "ScalarNonlinearFunction",
         "root": {
           "head": "node",
           "index": 3
@@ -79,7 +79,7 @@
   "constraints": [
     {
       "function": {
-        "head": "Nonlinear",
+        "head": "ScalarNonlinearFunction",
         "root": {
           "head": "node",
           "index": 1
@@ -115,7 +115,7 @@
     },
     {
       "function": {
-        "head": "Nonlinear",
+        "head": "ScalarNonlinearFunction",
         "root": {
           "head": "node",
           "index": 5

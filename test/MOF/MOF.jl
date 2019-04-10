@@ -1,12 +1,5 @@
 const MOF = MathOptFormat.MOF
 
-@testset "Validate schema examples" begin
-    examples_path = joinpath(dirname(MOF.SCHEMA_PATH), "examples")
-    @testset "$example" for example in readdir(examples_path)
-        @test MOF.validate(joinpath(examples_path, example)) === nothing
-    end
-end
-
 const TEST_MOF_FILE = "test.mof.json"
 
 @test sprint(show, MOF.Model()) == "A MathOptFormat Model"

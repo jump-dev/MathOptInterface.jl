@@ -3,13 +3,14 @@ function moi_to_object(foo::Nonlinear, model::Model,
                        name_map::Dict{MOI.VariableIndex, String})
     node_list = Object[]
     foo_object = convert_expr_to_mof(foo.expr, node_list, name_map)
-    return Object("head" => "Nonlinear", "root" => foo_object,
+    return Object("head" => "ScalarNonlinearFunction", "root" => foo_object,
                   "node_list" => node_list)
 end
 
 # Overload for reading.
-function function_to_moi(::Val{:Nonlinear}, object::Object, model::Model,
-                         name_map::Dict{String, MOI.VariableIndex})
+function function_to_moi(
+    ::Val{:ScalarNonlinearFunction}, object::Object, model::Model,
+    name_map::Dict{String, MOI.VariableIndex})
     node_list = Object.(object["node_list"])
     expr = convert_mof_to_expr(object["root"], node_list, name_map)
     return Nonlinear(expr)

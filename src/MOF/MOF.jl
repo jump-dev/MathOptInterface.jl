@@ -1,19 +1,20 @@
 module MOF
 
-const VERSION = 0
-
-using DataStructures, JSON
-
 import ..MathOptFormat
+import DataStructures, JSON, JSONSchema, MathOptInterface
 
-import ..MathOptFormat
-import JSONSchema
-const SCHEMA_PATH = joinpath(@__DIR__, "schema", "mof.schema.json")
+# The file /deps/deps.jl contains a constant `SCHEMA_PATH` that points to the
+# latest version of MathOptFormat, which should have been downloaded on `build`.
+include(joinpath(dirname(dirname(@__DIR__)), "deps", "deps.jl"))
+
+# Extract the MathOptFormat version number from the JSON schema.
+const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
+    data["properties"]["version"]["const"]
+end
 
 # we use an ordered dict to make the JSON printing nicer
-const Object = OrderedDict{String, Any}
+const Object = DataStructures.OrderedDict{String, Any}
 
-import MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
@@ -66,7 +67,7 @@ file is not valid.
 function validate(filename::String)
     MathOptFormat.gzip_open(filename, "r") do io
         object = JSON.parse(io)
-        mof_schema = JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH))
+        mof_schema = JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH, use_mmap=false))
         if !JSONSchema.isvalid(object, mof_schema)
             error("Unable to read file because it does not conform to the MOF " *
                   "schema: ", JSONSchema.diagnose(object, mof_schema))
