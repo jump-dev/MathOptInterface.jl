@@ -438,6 +438,18 @@ Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b
 
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
+"""
+Set of (x,y) that satisfy the indicator constraint:
+    y ∈ 𝔹, y = 1 ==> a^T x ∈ S
+
+S can be one of `SmallerThan, GreaterThan, EqualTo`
+"""
+struct IndicatorSet{T <: Real, S <:Union{SmallerThan,GreaterThan,EqualTo}} <: MOI.AbstractVectorSet
+    a::Vector{T}
+    s::S
+end
+
+dimension(iset::IndicatorSet) = length(iset.a) + 1
 
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
@@ -449,7 +461,7 @@ function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               PositiveSemidefiniteConeSquare,
                               LogDetConeTriangle, LogDetConeSquare,
                               RootDetConeTriangle, RootDetConeSquare,
-                              Integer, ZeroOne, Semicontinuous, Semiinteger})
+                              Integer, ZeroOne, Semicontinuous, Semiinteger, IndicatorSet})
     return set
 end
 Base.copy(set::S) where {S <: Union{SOS1, SOS2}} = S(copy(set.weights))
