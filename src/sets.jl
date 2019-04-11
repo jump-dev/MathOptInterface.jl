@@ -444,12 +444,12 @@ dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 Set of (x,y) that satisfy the indicator constraint:
     y ∈ 𝔹, y = 1 ==> a^T x ∈ S
 
-`S` can be one of `SmallerThan, GreaterThan, EqualTo`
+`S` can be one of `LessThan`, `GreaterThan` or `EqualTo`
 """
-struct IndicatorSet{T <: Real, S <:Union{SmallerThan,GreaterThan,EqualTo}} <: MOI.AbstractVectorSet
+struct IndicatorSet{T <: Real, S <:Union{LessThan,GreaterThan,EqualTo}} <: MOI.AbstractVectorSet
     a::Vector{T}
     s::S
-    function IndicatorSet(a::Vector{T}, s::S) where {T <: Real, S <: Union{SmallerThan,GreaterThan,EqualTo}}
+    function IndicatorSet(a::Vector{T}, s::S) where {T <: Real, S <: Union{LessThan,GreaterThan,EqualTo}}
         new{T,S}(a,s)
     end
 end
