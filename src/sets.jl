@@ -439,14 +439,19 @@ Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
 """
+    IndicatorSet{T <: Real, S <:Union{SmallerThan,GreaterThan,EqualTo}}
+
 Set of (x,y) that satisfy the indicator constraint:
     y ∈ 𝔹, y = 1 ==> a^T x ∈ S
 
-S can be one of `SmallerThan, GreaterThan, EqualTo`
+`S` can be one of `SmallerThan, GreaterThan, EqualTo`
 """
 struct IndicatorSet{T <: Real, S <:Union{SmallerThan,GreaterThan,EqualTo}} <: MOI.AbstractVectorSet
     a::Vector{T}
     s::S
+    function IndicatorSet(a::Vector{T}, s::S) where {T <: Real, S <: Union{SmallerThan,GreaterThan,EqualTo}}
+        new{T,S}(a,s)
+    end
 end
 
 dimension(iset::IndicatorSet) = length(iset.a) + 1
