@@ -446,11 +446,11 @@ Set of (x,y) that satisfy the indicator constraint:
 
 `S` can be one of `LessThan`, `GreaterThan` or `EqualTo`
 """
-struct IndicatorSet{V <: AbstractVector{<:Real}, S <:Union{LessThan,GreaterThan,EqualTo}} <: AbstractVectorSet
-    a::V
+struct IndicatorSet{T <: Real, S <:Union{LessThan,GreaterThan,EqualTo}} <: AbstractVectorSet
+    a::Vector{T}
     s::S
-    function IndicatorSet(a::V, s::S) where {V <: AbstractVector{<:Real}, S <: Union{LessThan,GreaterThan,EqualTo}}
-        new{V,S}(a,s)
+    function IndicatorSet(a::Vector{T}, s::S) where {T <: Real, S <: Union{LessThan,GreaterThan,EqualTo}}
+        new{T,S}(a,s)
     end
 end
 
