@@ -439,7 +439,7 @@ Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
 """
-    IndicatorSet{T <: Real, S <:Union{SmallerThan,GreaterThan,EqualTo}}
+    IndicatorSet{T <: Real, S <:Union{LessThan,GreaterThan,EqualTo}}
 
 Set of (x,y) that satisfy the indicator constraint:
     y ∈ 𝔹, y = 1 ==> a^T x ∈ S
