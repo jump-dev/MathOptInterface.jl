@@ -439,24 +439,21 @@ Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
 """
-    IndicatorSet{T <: Real, S <:Union{LessThan,GreaterThan,EqualTo}}
+    IndicatorSet{S <:Union{LessThan,GreaterThan,EqualTo}}
 
 Set of (x,y) that satisfy the indicator constraint:
     y ∈ 𝔹, y = 1 ==> a^T x ∈ S
 
-`S` can be one of `LessThan`, `GreaterThan` or `EqualTo`
+`S` can be one of `LessThan`, `GreaterThan` or `EqualTo`.
+`IndicatorSet` is used with a `VectorAffineFunction` holding
+the indicator variable first.
 """
-struct IndicatorSet{T <: Real, S <:Union{LessThan,GreaterThan,EqualTo}} <: AbstractVectorSet
-    a::Vector{T}
+struct IndicatorSet{S <:Union{LessThan,GreaterThan,EqualTo}} <: AbstractVectorSet
     s::S
-    function IndicatorSet(a::Vector{T}, s::S) where {T <: Real, S <: Union{LessThan,GreaterThan,EqualTo}}
-        new{T,S}(a,s)
-    end
+    IndicatorSet(s::S) where {S <: Union{LessThan,GreaterThan,EqualTo}} = new{S}(s)
 end
 
-dimension(iset::IndicatorSet) = length(iset.a) + 1
-
-Base.copy(s::IndicatorSet) = IndicatorSet(copy(s.a), copy(s))
+dimension(::IndicatorSet) = 2
 
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
@@ -468,7 +465,7 @@ function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               PositiveSemidefiniteConeSquare,
                               LogDetConeTriangle, LogDetConeSquare,
                               RootDetConeTriangle, RootDetConeSquare,
-                              Integer, ZeroOne, Semicontinuous, Semiinteger})
+                              Integer, ZeroOne, Semicontinuous, Semiinteger, IndicatorSet})
     return set
 end
 Base.copy(set::S) where {S <: Union{SOS1, SOS2}} = S(copy(set.weights))
