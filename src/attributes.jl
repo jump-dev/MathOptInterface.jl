@@ -821,7 +821,8 @@ This group of statuses means that something unexpected or problematic happened.
 """
     RawStatusString()
 
-A model attribute for a solver specific string explaning why the optimizer stopped.
+A model attribute for a solver specific string explaining why the optimizer
+stopped.
 """
 struct RawStatusString <: AbstractModelAttribute end
 
