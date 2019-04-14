@@ -11,18 +11,20 @@ include("MOF/MOF.jl")
 include("MPS/MPS.jl")
 
 """
-    create_unique_names(model::MOI.ModelLike)
+    create_unique_names(model::MOI.ModelLike; warn::Bool=false)
 
 Rename variables in `model` to ensure that all variables and constraints have a
 unique name.
+
+If `warn`, print a warning if a variable or constraint is renamed.
 """
-function create_unique_names(model)
-    create_unique_variable_names(model)
-    create_unique_constraint_names(model)
+function create_unique_names(model::MOI.ModelLike; warn::Bool=false)
+    create_unique_variable_names(model, warn)
+    create_unique_constraint_names(model, warn)
     return
 end
 
-function create_unique_constraint_names(model::MOI.ModelLike)
+function create_unique_constraint_names(model::MOI.ModelLike, warn::Bool)
     original_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
@@ -50,12 +52,14 @@ function create_unique_constraint_names(model::MOI.ModelLike)
             end
             push!(added_names, new_name)
             if new_name != original_name
-                if original_name == ""
-                    @warn("Blank name detected for constraint $(index). " *
-                          "Renamed to $(new_name).")
-                else
-                    @warn("Duplicate name $(original_name) detected for " *
-                          "constraint $(index). Renamed to $(new_name).")
+                if warn
+                    if original_name == ""
+                        @warn("Blank name detected for constraint $(index). " *
+                              "Renamed to $(new_name).")
+                    else
+                        @warn("Duplicate name $(original_name) detected for " *
+                              "constraint $(index). Renamed to $(new_name).")
+                    end
                 end
                 MOI.set(model, MOI.ConstraintName(), index, new_name)
             end
@@ -63,7 +67,7 @@ function create_unique_constraint_names(model::MOI.ModelLike)
     end
 end
 
-function create_unique_variable_names(model::MOI.ModelLike)
+function create_unique_variable_names(model::MOI.ModelLike, warn::Bool)
     variables = MOI.get(model, MOI.ListOfVariableIndices())
     # This is a list of all of the names currently in the model. We're going to
     # use this to make sure we don't rename a variable to a name that already
@@ -91,12 +95,14 @@ function create_unique_variable_names(model::MOI.ModelLike)
         end
         push!(added_names, new_name)
         if new_name != original_name
-            if original_name == ""
-                @warn("Blank name detected for variable $(index). Renamed to " *
-                      "$(new_name).")
-            else
-                @warn("Duplicate name $(original_name) detected for variable " *
-                      "$(index). Renamed to $(new_name).")
+            if warn
+                if original_name == ""
+                    @warn("Blank name detected for variable $(index). Renamed to " *
+                          "$(new_name).")
+                else
+                    @warn("Duplicate name $(original_name) detected for variable " *
+                          "$(index). Renamed to $(new_name).")
+                end
             end
             MOI.set(model, MOI.VariableName(), index, new_name)
         end

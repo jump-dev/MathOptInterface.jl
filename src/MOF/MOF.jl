@@ -43,15 +43,57 @@ MOIU.@model(InnerModel,
 
 const Model = MOIU.UniversalFallback{InnerModel{Float64}}
 
-"""
-    Model()
+struct ModelOptions <: MOI.AbstractModelAttribute end
 
-Create an empty instance of MathOptFormat.Model.
-"""
-function Model()
-    return MOIU.UniversalFallback(InnerModel{Float64}())
+struct Options
+    validate::Bool
+    warn::Bool
 end
 
+"""
+    Model(; kwargs...)
+
+Create an empty instance of MathOptFormat.Model.
+
+Keyword arguments are:
+
+ - `validate::Bool=true`: validate each file prior to reading against the MOF schema
+
+ - `warn::Bool=false`: print a warning when variables or constraints are renamed
+"""
+function Model(; validate::Bool = true, warn::Bool = false)
+    model = MOIU.UniversalFallback(InnerModel{Float64}())
+    MOI.set(model, ModelOptions(), Options(validate, warn))
+    return model
+end
+
+# We re-define is_empty and empty! to prevent the universal fallback from
+# deleting the options. We should really fix `MOIU.@model` to allow an extension
+# dictionary.
+function MOI.is_empty(model::Model)
+    return MOI.is_empty(model.model) &&
+        isempty(model.constraints) &&
+        length(model.modattr) == 1 &&
+        haskey(model.modattr, ModelOptions()) &&
+        isempty(model.varattr) &&
+        isempty(model.conattr) &&
+        isempty(model.optattr)
+end
+
+function MOI.empty!(model::Model)
+    options = MOI.get(model, ModelOptions())
+    MOI.empty!(model.model)
+    empty!(model.constraints)
+    model.nextconstraintid = 0
+    empty!(model.con_to_name)
+    model.name_to_con = nothing
+    empty!(model.modattr)
+    empty!(model.varattr)
+    empty!(model.conattr)
+    empty!(model.optattr)
+    MOI.set(model, ModelOptions(), options)
+    return
+end
 function Base.show(io::IO, ::Model)
     print(io, "A MathOptFormat Model")
     return
@@ -66,12 +108,18 @@ file is not valid.
 """
 function validate(filename::String)
     MathOptFormat.gzip_open(filename, "r") do io
-        object = JSON.parse(io)
-        mof_schema = JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH, use_mmap=false))
-        if !JSONSchema.isvalid(object, mof_schema)
-            error("Unable to read file because it does not conform to the MOF " *
-                  "schema: ", JSONSchema.diagnose(object, mof_schema))
-        end
+        validate(io)
+    end
+    return
+end
+
+function validate(io::IO)
+    object = JSON.parse(io)
+    seekstart(io)
+    mof_schema = JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH, use_mmap=false))
+    if !JSONSchema.isvalid(object, mof_schema)
+        error("Unable to read file because it does not conform to the MOF " *
+              "schema: ", JSONSchema.diagnose(object, mof_schema))
     end
     return
 end

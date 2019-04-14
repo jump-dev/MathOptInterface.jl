@@ -33,10 +33,21 @@ end
     failing_models_dir = joinpath(@__DIR__, "failing_models")
 
     @testset "Non-empty model" begin
-        model = MOF.Model()
+        model = MOF.Model(warn=true)
         MOI.add_variable(model)
-        @test_throws Exception MOI.read_from_file(
-            model, joinpath(failing_models_dir, "empty_model.mof.json"))
+        @test !MOI.is_empty(model)
+        exception = ErrorException(
+            "Cannot read model from file as destination model is not empty.")
+        @test_throws exception MOI.read_from_file(
+            model, joinpath(@__DIR__, "empty_model.mof.json"))
+        options = MOI.get(model, MOF.ModelOptions())
+        @test options.warn
+        MOI.empty!(model)
+        @test MOI.is_empty(model)
+        MOI.read_from_file(
+            model, joinpath(@__DIR__, "empty_model.mof.json"))
+        options2 = MOI.get(model, MOF.ModelOptions())
+        @test options2.warn
     end
 
     @testset "$(filename)" for filename in filter(
@@ -50,7 +61,7 @@ end
         model = MOF.Model()
         variable_index = MOI.add_variable(model)
         @test_throws Exception MOF.moi_to_object(variable_index, model)
-        MathOptFormat.create_unique_names(model)
+        MathOptFormat.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(variable_index, model) ==
             MOF.Object("name" => "x1")
     end
@@ -62,9 +73,33 @@ end
         MOI.set(model, MOI.VariableName(), y, "x")
         @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
         @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x")
-        MathOptFormat.create_unique_names(model)
+        MathOptFormat.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
         @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x_1")
+    end
+    @testset "Blank constraint name" begin
+        model = MOF.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+        name_map = Dict(x => "x")
+        MathOptFormat.create_unique_names(model, warn=true)
+        @test MOF.moi_to_object(c, model, name_map)["name"] == "c1"
+    end
+    @testset "Duplicate constraint name" begin
+        model = MOF.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+        c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        MOI.set(model, MOI.ConstraintName(), c1, "c")
+        MOI.set(model, MOI.ConstraintName(), c2, "c")
+        name_map = Dict(x => "x")
+        @test MOF.moi_to_object(c1, model, name_map)["name"] == "c"
+        @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
+        MathOptFormat.create_unique_names(model, warn=true)
+        @test MOF.moi_to_object(c1, model, name_map)["name"] == "c_1"
+        @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
     end
 end
 @testset "round trips" begin
@@ -76,14 +111,14 @@ end
         MOIU.test_models_equal(model, model_2, String[], String[])
     end
     @testset "FEASIBILITY_SENSE" begin
-        model = MOF.Model()
+        model = MOF.Model(validate=false)
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
         MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
             MOI.SingleVariable(x))
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model()
+        model_2 = MOF.Model(validate=false)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, ["x"], String[])
     end

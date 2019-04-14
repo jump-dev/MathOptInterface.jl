@@ -1,4 +1,5 @@
 function MOI.write_to_file(model::Model, io::IO)
+    options = MOI.get(model, ModelOptions())
     object = Object(
         "name"        => "MathOptFormat Model",
         "version"     => VERSION,
@@ -6,12 +7,13 @@ function MOI.write_to_file(model::Model, io::IO)
         "objectives"  => Object[],
         "constraints" => Object[]
     )
-    MathOptFormat.create_unique_names(model)
+    MathOptFormat.create_unique_names(model, warn=options.warn)
     name_map = write_variables(object, model)
     write_nlpblock(object, model, name_map)
     write_objectives(object, model, name_map)
     write_constraints(object, model, name_map)
     Base.write(io, JSON.json(object, 2))
+    return
 end
 
 function write_variables(object::Object, model::Model)
