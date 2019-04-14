@@ -439,6 +439,17 @@ Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
 """
+	ActivationCond
+
+Activation condition for an indicator constraint.
+Used as first type parameter of `IndicatorSet{ActiveCond,S}`.
+"""
+@enum ActivationCond begin
+    ActivateOnFalse
+    ActivateOnTrue
+end
+
+"""
     IndicatorSet{ActiveCond, S <:Union{LessThan,GreaterThan,EqualTo}}
 
 Set of (x,y) that satisfy the indicator constraint:
@@ -451,12 +462,10 @@ the indicator variable first.
 """
 struct IndicatorSet{ActiveCond, S <:Union{LessThan,GreaterThan,EqualTo}} <: AbstractVectorSet
     s::S
-    IndicatorSet(s::S, active_cond::Bool = true) where {S <: Union{LessThan,GreaterThan,EqualTo}} = new{active_cond, S}(s)
+    IndicatorSet{ActiveCond}(s::S) where {ActiveCond, S <: Union{LessThan,GreaterThan,EqualTo}} = new{ActiveCond,S}(s)
 end
 
 dimension(::IndicatorSet) = 2
-
-const IndicatorSet{ActiveCond} = IndicatorSet{ActiveCond, S} where S <: Union{LessThan,GreaterThan,EqualTo}
 
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
