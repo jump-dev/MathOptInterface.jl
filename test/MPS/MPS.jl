@@ -92,20 +92,24 @@ end
     MOI.set(model, MOI.ConstraintName(), MOI.get(model,
             MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Interval{Float64}}())[1],
         "con6")
+    MOI.set(model, MOI.ConstraintName(), MOI.get(model,
+            MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.ZeroOne}())[1],
+        "con7")
     model_2 = MPS.Model()
     MOIU.loadfromstring!(model_2, """
-    variables: x, y
-    minobjective: x + y
+    variables: x, y, z
+    minobjective: x + y + z
     con1: 1.0 * x in Interval(1.0, 5.0)
     con2: 1.0 * x in Interval(2.0, 6.0)
     con3: 1.0 * x in Interval(3.0, 7.0)
     con4: 2.0 * x in Interval(4.0, 8.0)
     con5: y in Integer()
     con6: y in Interval(1.0, 4.0)
+    con7: z in ZeroOne()
     """)
     MOI.set(model_2, MOI.Name(), "stacked_data")
-    MOIU.test_models_equal(model, model_2, ["x", "y"],
-        ["con1", "con2", "con3", "con4", "con5", "con6"])
+    MOIU.test_models_equal(model, model_2, ["x", "y", "z"],
+        ["con1", "con2", "con3", "con4", "con5", "con6", "con7"])
 end
 
 @testset "free_integer" begin
@@ -130,6 +134,27 @@ end
             variables: x
             minobjective: x
         """, ["x"], String[])
+    end
+    @testset "default RHS >=" begin
+        test_model_equality("""
+            variables: x
+            minobjective: x
+            c1: 2.0 * x >= 0.0
+        """, ["x"], ["c1"])
+    end
+    @testset "default RHS <=" begin
+        test_model_equality("""
+            variables: x
+            minobjective: x
+            c1: 2.0 * x <= 0.0
+        """, ["x"], ["c1"])
+    end
+    @testset "default RHS ==" begin
+        test_model_equality("""
+            variables: x
+            minobjective: x
+            c1: 2.0 * x == 0.0
+        """, ["x"], ["c1"])
     end
     @testset "min scalaraffine" begin
         test_model_equality("""

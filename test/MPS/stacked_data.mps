@@ -8,6 +8,7 @@
 NAME stacked_data
 ROWS
  N  obj
+ N  blank_obj
  G  con1
  L  con2
  E  con3
@@ -18,6 +19,9 @@ COLUMNS
     x         con4      1
     x         con4      1
     y         obj       1
+    z         obj       1
+    x         blank_obj 1
+    y         blank_obj 1              blank_obj 1
 RHS
     rhs       con1      1              con2      6
     rhs       con3      3              con4      8
@@ -26,7 +30,8 @@ RANGES
     ranges    con3      4
     ranges    con4      -4
 BOUNDS
- FR bounds    x
+ FR bounds    x         0
  UI bounds    y         4
  LI bounds    y         1
+ BV bounds    z         1
 ENDATA

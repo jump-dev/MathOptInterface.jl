@@ -450,6 +450,7 @@ function MOI.read_from_file(model::Model, io::IO)
     end
     data = TempMPSModel()
     header = "NAME"
+    multi_objectives = String[]
     while !eof(io) && header != "ENDATA"
         line = strip(readline(io))
         if line == "" || startswith(line, "*")
@@ -466,9 +467,10 @@ function MOI.read_from_file(model::Model, io::IO)
             # A special case. This only happens at the start.
             parse_name_line(data, items)
         elseif header == "ROWS"
-            parse_rows_line(data, items)
+            multi_obj = parse_rows_line(data, items)
+            multi_obj !== nothing && push!(multi_objectives, multi_obj)
         elseif header == "COLUMNS"
-            parse_columns_line(data, items)
+            parse_columns_line(data, items, multi_objectives)
         elseif header == "RHS"
             parse_rhs_line(data, items)
         elseif header == "RANGES"
@@ -541,6 +543,8 @@ function copy_to(model::Model, temp::TempMPSModel)
             if set !== nothing
                 c = MOI.add_constraint(model, constraint_function, set)
                 MOI.set(model, MOI.ConstraintName(), c, c_name)
+            else
+                error("Expected a non-empty set for $(c_name). Got row=$(row)")
             end
         end
     end
@@ -579,13 +583,23 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
     end
     row = TempRow()
     row.sense = sense
-    data.rows[name] = row
     if sense == "N"
         if data.obj_name != ""
-            error("Multiple obectives encountered: $(join(items, " "))")
+            # Detected a duplicate objective. Skip it.
+            return name
         end
         data.obj_name = name
     end
+    # Add some default bounds for the constraints.
+    if sense == "G"
+        row.lower = 0.0
+    elseif sense == "L"
+        row.upper = 0.0
+    elseif sense == "E"
+        row.lower = 0.0
+        row.upper = 0.0
+    end
+    data.rows[name] = row
     return
 end
 
@@ -594,17 +608,19 @@ end
 # ==============================================================================
 
 function parse_single_coefficient(data, row_name, column_name, value)
-    terms = data.rows[row_name].terms
-    value = parse(Float64, value)
-    if haskey(terms, column_name)
-        terms[column_name] += value
+    row = get(data.rows, row_name, nothing)
+    if row === nothing
+        error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
+    end
+    if haskey(row.terms, column_name)
+        row.terms[column_name] += parse(Float64, value)
     else
-        terms[column_name] = value
+        row.terms[column_name] = parse(Float64, value)
     end
     return
 end
 
-function parse_columns_line(data::TempMPSModel, items::Vector{String})
+function parse_columns_line(data::TempMPSModel, items::Vector{String}, multi_objectives::Vector{String})
     if length(items) == 3
         # [column name] [row name] [value]
         column_name, row_name, value = items
@@ -614,6 +630,8 @@ function parse_columns_line(data::TempMPSModel, items::Vector{String})
         elseif uppercase(row_name) == "'MARKER'" &&
                 uppercase(value) == "'INTEND'"
             data.intorg_flag = false
+            return
+        elseif row_name in multi_objectives
             return
         end
         if !haskey(data.columns, column_name)
@@ -630,6 +648,9 @@ function parse_columns_line(data::TempMPSModel, items::Vector{String})
         column_name, row_name_1, value_1, row_name_2, value_2 = items
         if !haskey(data.columns, column_name)
             data.columns[column_name] = TempColumn()
+        end
+        if row_name_1 in multi_objectives || row_name_2 in multi_objectives
+            return
         end
         parse_single_coefficient(data, row_name_1, column_name, value_1)
         parse_single_coefficient(data, row_name_2, column_name, value_2)
@@ -778,6 +799,19 @@ function parse_bounds_line(data::TempMPSModel, items::Vector{String})
             column.is_int = true
         elseif bound_type == "UI"
             column.upper = value
+            column.is_int = true
+        elseif bound_type == "FR"
+            # So even though FR bounds should be of the form:
+            #  FR BOUND1    VARNAME
+            # there are cases in MIPLIB2017 (e.g., leo1 and leo2) like so:
+            #  FR BOUND1    C0000001       .000000
+            # In these situations, just ignore the value.
+            column.lower = -Inf
+            column.upper = Inf
+        elseif bound_type == "BV"
+            # A similar situation happens with BV bounds in leo1 and leo2.
+            column.lower = 0.0
+            column.upper = 1.0
             column.is_int = true
         else
             error("Invalid bound type $(bound_type): $(join(items, " "))")

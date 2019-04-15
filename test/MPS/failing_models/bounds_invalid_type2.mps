@@ -4,5 +4,5 @@ ROWS
 COLUMNS
     x         c                 1
 BOUNDS
- FR bounds    x                 1
+ PL bounds    x                 1
 ENDATA
