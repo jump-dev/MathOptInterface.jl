@@ -445,8 +445,8 @@ Activation condition for an indicator constraint.
 Used as first type parameter of `IndicatorSet{ActiveCond,S}`.
 """
 @enum ActivationCond begin
-    ActivateOnFalse
-    ActivateOnTrue
+    ACTIVATE_ON_FALSE
+    ACTIVATE_ON_TRUE
 end
 
 """
@@ -456,7 +456,7 @@ Set of (x,y) that satisfy the indicator constraint:
     y ∈ 𝔹, y = ActiveCond ==> a^T x ∈ S
 
 `S` can be one of `LessThan`, `GreaterThan` or `EqualTo`.
-`ActiveCond` is either true or false.
+`ActiveCond` is one of the value of the `ActivationCond` enum.
 `IndicatorSet` is used with a `VectorAffineFunction` holding
 the indicator variable first.
 """
