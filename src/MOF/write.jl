@@ -12,7 +12,8 @@ function MOI.write_to_file(model::Model, io::IO)
     write_nlpblock(object, model, name_map)
     write_objectives(object, model, name_map)
     write_constraints(object, model, name_map)
-    Base.write(io, JSON.json(object, 2))
+    indent = options.print_compact ? nothing : 2
+    Base.write(io, JSON.json(object, indent))
     return
 end
 

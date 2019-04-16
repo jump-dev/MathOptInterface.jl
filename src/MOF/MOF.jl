@@ -46,6 +46,7 @@ const Model = MOIU.UniversalFallback{InnerModel{Float64}}
 struct ModelOptions <: MOI.AbstractModelAttribute end
 
 struct Options
+    print_compact::Bool
     validate::Bool
     warn::Bool
 end
@@ -57,13 +58,18 @@ Create an empty instance of MathOptFormat.Model.
 
 Keyword arguments are:
 
- - `validate::Bool=true`: validate each file prior to reading against the MOF schema
+ - `print_compact::Bool=false`: print the JSON file in a compact format without
+   spaces or newlines.
+
+ - `validate::Bool=true`: validate each file prior to reading against the MOF
+   schema
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed
 """
-function Model(; validate::Bool = true, warn::Bool = false)
+function Model(;
+        print_compact::Bool = false, validate::Bool = true, warn::Bool = false)
     model = MOIU.UniversalFallback(InnerModel{Float64}())
-    MOI.set(model, ModelOptions(), Options(validate, warn))
+    MOI.set(model, ModelOptions(), Options(print_compact, validate, warn))
     return model
 end
 
