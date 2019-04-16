@@ -450,19 +450,19 @@ Used as first type parameter of `IndicatorSet{ActiveCond,S}`.
 end
 
 """
-    IndicatorSet{ActiveCond, S <:Union{LessThan,GreaterThan,EqualTo}}
+    IndicatorSet{ActiveCond, S <: AbstractScalarSet}
 
 Set of (x,y) that satisfy the indicator constraint:
     y ∈ 𝔹, y = ActiveCond ==> a^T x ∈ S
 
-`S` can be one of `LessThan`, `GreaterThan` or `EqualTo`.
+`S` has to be an `AbstractScalarSet`.
 `ActiveCond` is one of the value of the `ActivationCond` enum.
 `IndicatorSet` is used with a `VectorAffineFunction` holding
 the indicator variable first.
 """
-struct IndicatorSet{ActiveCond, S <:Union{LessThan,GreaterThan,EqualTo}} <: AbstractVectorSet
+struct IndicatorSet{ActiveCond, S <: AbstractScalarSet} <: AbstractVectorSet
     s::S
-    IndicatorSet{ActiveCond}(s::S) where {ActiveCond, S <: Union{LessThan,GreaterThan,EqualTo}} = new{ActiveCond,S}(s)
+    IndicatorSet{ActiveCond}(s::S) where {ActiveCond, S <: AbstractScalarSet} = new{ActiveCond,S}(s)
 end
 
 dimension(::IndicatorSet) = 2
