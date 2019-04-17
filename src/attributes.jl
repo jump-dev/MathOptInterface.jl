@@ -469,6 +469,17 @@ struct ObjectiveValue <: AbstractModelAttribute
 end
 
 """
+    DualObjectiveValue(result_index::Int=1)
+
+A model attribute for the value of the objective function of the dual problem
+for the `resultindex`th dual result.
+"""
+struct DualObjectiveValue <: AbstractModelAttribute
+    result_index::Int
+    (::Type{DualObjectiveValue})(result_index=1) = new(result_index)
+end
+
+"""
     ObjectiveBound()
 
 A model attribute for the best known bound on the optimal objective value.
