@@ -21,6 +21,6 @@ end
 
 # Update this tag whenever github.com/odow/MathOptFormat releases a new update to
 # the schema (providing that any code in this package is also updated).
-const SCHEMA_GIT_TAG = "v0.0.0-alpha"
+const SCHEMA_GIT_TAG = "v0.0.0-beta"
 
 download_schema(SCHEMA_GIT_TAG)
