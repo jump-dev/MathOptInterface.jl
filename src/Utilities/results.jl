@@ -44,26 +44,29 @@ end
     dual_objective_value(model::MOI.ModelLike,
                          F::Type{<:MOI.AbstractFunction},
                          S::Type{<:MOI.AbstractSet},
-                         T::Type)
+                         T::Type,
+                         result_index::Int64)
 
 Return the part of `DualObjectiveValue` due to the constraint of index `ci` using
 scalar type `T`.
 """
 function dual_objective_value(model::MOI.ModelLike,
                               ci::MOI.ConstraintIndex,
-                              T::Type)
+                              T::Type,
+                              result_index::Int64)
     return set_dot(constraint_constant(model, ci, T),
-                   MOI.get(model, MOI.ConstraintDual(), ci),
+                   MOI.get(model, MOI.ConstraintDual(result_index), ci),
                    MOI.get(model, MOI.ConstraintSet(), ci))
 end
 
 function dual_objective_value(model::MOI.ModelLike,
                               ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
                                                       <:MOI.Interval},
-                              T::Type)
+                              T::Type,
+                              result_index::Int64)
     constant = scalar_constant(T, MOI.get(model, MOI.ConstraintFunction(), ci))
     set = MOI.get(model, MOI.ConstraintSet(), ci)
-    dual = MOI.get(model, MOI.ConstraintDual(), ci)
+    dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
     if dual < zero(dual)
         # The dual is negative so it is in the dual of the MOI.LessThan cone
         # hence the upper bound of the Interval set is tight
@@ -81,7 +84,8 @@ end
     dual_objective_value(model::MOI.ModelLike,
                     F::Type{<:MOI.AbstractFunction},
                     S::Type{<:MOI.AbstractSet},
-                    T::Type)
+                    T::Type,
+                    result_index::Int64)
 
 Return the part of `DualObjectiveValue` due to `F`-in-`S` constraints using scalar
 type `T`.
@@ -89,10 +93,11 @@ type `T`.
 function dual_objective_value(model::MOI.ModelLike,
                          F::Type{<:MOI.AbstractFunction},
                          S::Type{<:MOI.AbstractSet},
-                         T::Type)
+                         T::Type,
+                         result_index::Int64)
     value = zero(T) # sum won't work if there are now constraints.
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
-        value += dual_objective_value(model, ci, T)
+        value += dual_objective_value(model, ci, T, result_index)
     end
     return value
 end
@@ -100,7 +105,8 @@ end
 function dual_objective_value(model::MOI.ModelLike,
                               F::Type{MOI.VectorOfVariables},
                               S::Type{<:MOI.AbstractVectorSet},
-                              T::Type)
+                              T::Type,
+                              result_index::Int64)
     # No constant in the function nor set so no contribution to the dual
     # objective value.
     return zero(T)
@@ -113,10 +119,10 @@ end
 Compute the dual objective value of type `T` using the `ConstraintDual` results
 and the `ConstraintFunction` and `ConstraintSet` values.
 """
-function get_fallback(model::MOI.ModelLike, ::MOI.DualObjectiveValue, T::Type)
+function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Type)
     value = zero(T) # sum will not work if there are zero constraints
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        value += dual_objective_value(model, F, S, T)::T
+        value += dual_objective_value(model, F, S, T, attr.result_index)::T
     end
     if MOI.get(model, MOI.ObjectiveSense()) != MOI.MaxSense
         value = -value
