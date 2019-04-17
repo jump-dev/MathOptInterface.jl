@@ -445,24 +445,28 @@ Activation condition for an indicator constraint.
 Used as first type parameter of `IndicatorSet{ActiveCond,S}`.
 """
 @enum ActivationCond begin
-    ACTIVATE_ON_FALSE
-    ACTIVATE_ON_TRUE
+    ACTIVATE_ON_ZERO
+    ACTIVATE_ON_ONE
 end
 
 """
-    IndicatorSet{ActiveCond, S <: AbstractScalarSet}
+    IndicatorSet{A, S <: AbstractScalarSet}(set::S)
 
-Set of (x,y) that satisfy the indicator constraint:
-    y ∈ 𝔹, y = ActiveCond ==> a^T x ∈ S
+Set ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n``
+Such that: ``y = 0 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_WHEN_ZERO` and
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n``
+Such that: ``y = 1 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_WHEN_ONE`.
 
 `S` has to be an `AbstractScalarSet`.
-`ActiveCond` is one of the value of the `ActivationCond` enum.
+`A` is one of the value of the `ActivationCond` enum.
 `IndicatorSet` is used with a `VectorAffineFunction` holding
 the indicator variable first.
 """
-struct IndicatorSet{ActiveCond, S <: AbstractScalarSet} <: AbstractVectorSet
+struct IndicatorSet{A, S <: AbstractScalarSet} <: AbstractVectorSet
     s::S
-    IndicatorSet{ActiveCond}(s::S) where {ActiveCond, S <: AbstractScalarSet} = new{ActiveCond,S}(s)
+    IndicatorSet{A}(s::S) where {A, S <: AbstractScalarSet} = new{A,S}(s)
 end
 
 dimension(::IndicatorSet) = 2
