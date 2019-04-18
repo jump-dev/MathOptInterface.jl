@@ -411,24 +411,84 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
         MOI.GreaterThan(1.),
     )
 
-    MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3.], [x1, x2]), 0.)
     )
-    MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
 
-        MOI.optimize!(optimizer)
+        MOI.optimize!(model)
 
-        @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
-        @test MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(optimizer, MOI.ObjectiveValue()) ≈ 28.75 atol=atol rtol=rtol
-        @test MOI.get(optimizer, MOI.VariablePrimal(), x1) ≈ 1.25 atol=atol rtol=rtol
-        @test MOI.get(optimizer, MOI.VariablePrimal(), x2) ≈ 8.75 atol=atol rtol=rtol
-        @test MOI.get(optimizer, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
-        @test MOI.get(optimizer, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 28.75 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x1) ≈ 1.25 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x2) ≈ 8.75 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
     end
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    # same model with penalty on z2 switches active constraint to z1
+
+    x1 = MOI.add_variable(model)
+    x2 = MOI.add_variable(model)
+    z1  = MOI.add_variable(model)
+    z2  = MOI.add_variable(model)
+    MOI.add_constraint(model, z1, MOI.ZeroOne())
+    MOI.add_constraint(model, z2, MOI.ZeroOne())
+    f1 = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm(1.0, z1),
+        MOI.ScalarAffineTerm(1.0, x2),
+    )
+    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
+    MOI.add_constraint(model, f1, iset1)
+
+    f2 = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm(1.0, z2),
+        MOI.ScalarAffineTerm(0.2, x1),
+        MOI.ScalarAffineTerm(1.0, x2),
+    )
+    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+
+    MOI.add_constraint(model, f2, iset2)
+
+    # additional regular constraint
+    MOI.add_constraint(model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x1), MOI.ScalarAffineTerm(1.0, x2)], 0.0),
+        MOI.LessThan(10.0),
+    )
+
+    # disjunction z1 ⋁ z2
+    MOI.add_constraint(model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
+        MOI.GreaterThan(1.),
+    )
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3., -30.], [x1, x2, z2]), 0.)
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 28.75 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x1) ≈ 1.25 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x2) ≈ 8.75 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
+    end
+
+
 end
 
 const intlineartests = Dict("knapsack" => knapsacktest,
