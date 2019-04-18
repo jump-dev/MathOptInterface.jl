@@ -417,8 +417,6 @@ struct SOS1{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
-Base.:(==)(a::SOS1{T}, b::SOS1{T}) where T = a.weights == b.weights
-
 """
     SOS2{T <: Real}(weights::Vector{T})
 
@@ -432,10 +430,10 @@ struct SOS2{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
-Base.:(==)(a::SOS2{T}, b::SOS2{T}) where T = a.weights == b.weights
+Base.:(==)(a::T, b::T) where {T <: Union{SOS1, SOS2}} = a.weights == b.weights
+Base.isapprox(a::T, b::T; kwargs...) where {T <: Union{SOS1, SOS2}} = isapprox(a.weights, b.weights; kwargs...)
 
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
-Base.isapprox(a::T, b::T; kwargs...) where T <: Union{MOI.SOS1, MOI.SOS2} = isapprox(a.weights, b.weights; kwargs...)
 
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
