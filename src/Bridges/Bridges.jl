@@ -113,4 +113,6 @@ include("soctopsdbridge.jl")
 @bridge SOCtoPSD SOCtoPSDBridge () () (MOI.SecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 @bridge RSOCtoPSD RSOCtoPSDBridge () () (MOI.RotatedSecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
+include("indicatorbridge.jl")
+
 end # module
