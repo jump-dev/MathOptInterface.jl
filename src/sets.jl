@@ -465,8 +465,8 @@ when `A` is `ACTIVATE_WHEN_ONE`.
 the indicator variable first.
 """
 struct IndicatorSet{A, S <: AbstractScalarSet} <: AbstractVectorSet
-    s::S
-    IndicatorSet{A}(s::S) where {A, S <: AbstractScalarSet} = new{A,S}(s)
+    set::S
+    IndicatorSet{A}(set::S) where {A, S <: AbstractScalarSet} = new{A,S}(set)
 end
 
 dimension(::IndicatorSet) = 2
