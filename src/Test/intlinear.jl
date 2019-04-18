@@ -358,9 +358,84 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+function indtest(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # linear problem with indicator constraint
+    # max  2x1 + 3x2
+    # s.t. x1 + x2 <= 10
+    #      z1 ==> x2 <= 8
+    #      z2 ==> x2 + x1/5 <= 9
+    # z1 + z2 >= 1
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Interval{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})
+    x1 = MOI.add_variable(model)
+    x2 = MOI.add_variable(model)
+    z1  = MOI.add_variable(model)
+    z2  = MOI.add_variable(model)
+    MOI.add_constraint(model, z1, MOI.ZeroOne())
+    MOI.add_constraint(model, z2, MOI.ZeroOne())
+    f1 = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm(1.0, z1),
+        MOI.ScalarAffineTerm(1.0, x2),
+    )
+    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
+    MOI.add_constraint(model, f1, iset1)
+
+    f2 = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm(1.0, z2),
+        MOI.ScalarAffineTerm(0.2, x1),
+        MOI.ScalarAffineTerm(1.0, x2),
+    )
+    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+
+    MOI.add_constraint(model, f2, iset2)
+
+    # additional regular constraint
+    MOI.add_constraint(model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x1), MOI.ScalarAffineTerm(1.0, x2)], 0.0),
+        MOI.LessThan(10.0),
+    )
+
+    # disjunction z1 ⋁ z2
+    MOI.add_constraint(model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
+        MOI.GreaterThan(1.),
+    )
+
+    MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3.], [x1, x2]), 0.)
+    )
+    MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(optimizer)
+
+        @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(optimizer, MOI.ObjectiveValue()) ≈ 28.75 atol=atol rtol=rtol
+        @test MOI.get(optimizer, MOI.VariablePrimal(), x1) ≈ 1.25 atol=atol rtol=rtol
+        @test MOI.get(optimizer, MOI.VariablePrimal(), x2) ≈ 8.75 atol=atol rtol=rtol
+        @test MOI.get(optimizer, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(optimizer, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
+    end
+end
+
 const intlineartests = Dict("knapsack" => knapsacktest,
                             "int1"     => int1test,
                             "int2"     => int2test,
-                            "int3"     => int3test)
+                            "int3"     => int3test,
+                            "indcons"  => indtest,
+                            )
 
 @moitestset intlinear
