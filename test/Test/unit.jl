@@ -254,7 +254,6 @@ end
         MOIT.solve_integer_edge_cases(mock, config)
     end
     @testset "solve_objbound_edge_cases" begin
-        mock.eval_objective_bound = false
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> begin
                 MOI.set(mock, MOI.ObjectiveBound(), 3.0)
@@ -274,7 +273,6 @@ end
             end
         )
         MOIT.solve_objbound_edge_cases(mock, config)
-        mock.eval_objective_bound = true
     end
 
 end
