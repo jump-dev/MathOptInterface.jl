@@ -112,6 +112,10 @@ function dual_objective_value(model::MOI.ModelLike,
     return zero(T)
 end
 
+function is_ray(status::MOI.ResultStatusCode)
+    return status == MOI.INFEASIBILITY_CERTIFICATE ||
+           status == MOI.NEARLY_INFEASIBILITY_CERTIFICATE
+end
 
 """
     get_fallback(model::MOI.ModelLike, ::MOI.DualObjectiveValue, T::Type)::T
@@ -127,9 +131,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Typ
     if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
         value = -value
     end
-    dual_status = MOI.get(model, MOI.DualStatus())
-    if dual_status == MOI.INFEASIBILITY_CERTIFICATE ||
-        status == MOI.NEARLY_INFEASIBILITY_CERTIFICATE
+    if is_ray(MOI.get(model, MOI.DualStatus()))
         # The objective constant should not be present in rays
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         f = MOI.get(model, MOI.ObjectiveFunction{F}())
@@ -301,9 +303,7 @@ function variable_dual(model::MOI.ModelLike,
                        attr::MOI.ConstraintDual,
                        ci::MOI.ConstraintIndex,
                        vi::MOI.VariableIndex)
-    status = MOI.get(model, MOI.DualStatus())
-    ray = status == MOI.INFEASIBILITY_CERTIFICATE ||
-          status == MOI.NEARLY_INFEASIBILITY_CERTIFICATE
+    ray = is_ray(MOI.get(model, MOI.DualStatus()))
     dual = 0.0
     if !ray
         sense = MOI.get(model, MOI.ObjectiveSense())
