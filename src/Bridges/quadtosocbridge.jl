@@ -1,4 +1,4 @@
-using Compat.LinearAlgebra, Compat.SparseArrays
+using LinearAlgebra, SparseArrays
 
 """
     QuadtoSOCBridge{T}
@@ -70,7 +70,7 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
     end
     Q, index_to_variable_map = matrix_from_quadratic_terms(func.quadratic_terms)
     if !less_than
-        Compat.rmul!(Q, -1)
+        rmul!(Q, -1)
     end
     # We have L × L' ≈ Q[p, p]
     L, p = try

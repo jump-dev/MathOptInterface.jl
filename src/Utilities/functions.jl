@@ -1,5 +1,4 @@
-using Compat
-using Compat.Test
+using Test
 
 """
     evalvariables(varval::Function, f::AbstractFunction)
@@ -132,7 +131,7 @@ end
 Base.eltype(it::ScalarFunctionIterator{VVF}) = SVF
 Base.eltype(it::ScalarFunctionIterator{VAF{T}}) where T = SAF{T}
 Base.eltype(it::ScalarFunctionIterator{VQF{T}}) where T = SQF{T}
-Compat.lastindex(it::ScalarFunctionIterator) = length(it)
+Base.lastindex(it::ScalarFunctionIterator) = length(it)
 
 # Define getindex for Vector functions
 

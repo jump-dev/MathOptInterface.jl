@@ -204,14 +204,14 @@ parsedtoMOI(model, s::Union{Float64, Int64}) = s
 for typename in [:ParsedScalarAffineTerm,:ParsedScalarAffineFunction,:ParsedVectorAffineTerm,:ParsedVectorAffineFunction,
                  :ParsedScalarQuadraticTerm,:ParsedScalarQuadraticFunction,:ParsedVectorQuadraticTerm,:ParsedVectorQuadraticFunction,
                  :ParsedSingleVariable,:ParsedVectorOfVariables]
-    moiname = Compat.Meta.parse(replace(string(typename), "Parsed" => "MOI."))
+    moiname = Meta.parse(replace(string(typename), "Parsed" => "MOI."))
     fields = fieldnames(eval(typename))
     constructor = Expr(:call, moiname, [Expr(:call,:parsedtoMOI,:model,Expr(:.,:f,Base.Meta.quot(field))) for field in fields]...)
     @eval parsedtoMOI(model, f::$typename) = $constructor
 end
 
 function loadfromstring!(model, s)
-    parsedlines = filter(ex -> ex != nothing, Compat.Meta.parse.(split(s,"\n")))
+    parsedlines = filter(ex -> ex != nothing, Meta.parse.(split(s,"\n")))
 
     for line in parsedlines
         label, ex = separatelabel(line)
@@ -240,7 +240,7 @@ function loadfromstring!(model, s)
             f = parsedtoMOI(model, parsefunction(ex.args[2]))
             if ex.args[1] == :in
                 # Could be safer here
-                set = Compat.Core.eval(MOI, ex.args[3])
+                set = Core.eval(MOI, ex.args[3])
             elseif ex.args[1] == :<=
                 set = MOI.LessThan(ex.args[3])
             elseif ex.args[1] == :>=

@@ -1,5 +1,5 @@
 # Continuous conic problems
-using Compat.LinearAlgebra # for dot
+using LinearAlgebra # for dot
 
 function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     atol = config.atol

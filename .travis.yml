@@ -4,7 +4,6 @@ os:
   - linux
 #  - osx
 julia:
-  - 0.6
   - 0.7
   - 1.0
   - 1.1
@@ -23,7 +22,7 @@ notifications:
     on_start: never     # options: [always|never|change] default: always
 
 after_success:
-  - julia -e 'if VERSION < v"0.7-"; cd(Pkg.dir("MathOptInterface")); else; import Pkg; end; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  - julia -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 
 jobs:
   include:
@@ -31,7 +30,7 @@ jobs:
       julia: 1.0
       os: linux
       script:
-        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate();
+        - julia --project=docs/ -e 'import Pkg; Pkg.instantiate();
                                     Pkg.develop(PackageSpec(path=pwd()))'
         - julia --project=docs/ docs/make.jl
       after_success: skip
