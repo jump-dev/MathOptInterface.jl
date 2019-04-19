@@ -96,7 +96,7 @@ function MOI.add_variable(model::AbstractModel)
     return vi
 end
 function MOI.add_variables(model::AbstractModel, n::Integer)
-    [MOI.add_variable(model) for i in 1:n]
+    return [MOI.add_variable(model) for i in 1:n]
 end
 
 """
