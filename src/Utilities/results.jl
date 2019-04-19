@@ -124,7 +124,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Typ
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
         value += dual_objective_value(model, F, S, T, attr.result_index)::T
     end
-    if MOI.get(model, MOI.ObjectiveSense()) != MOI.MaxSense
+    if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
         value = -value
     end
     dual_status = MOI.get(model, MOI.DualStatus())
