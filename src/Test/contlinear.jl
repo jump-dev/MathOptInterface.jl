@@ -1228,7 +1228,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             @test MOI.get(model, MOI.ResultCount()) >= 1
-            @test MOI.get(model, MOI.DualStatus()) == MOI.FeasiblePoint
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 1 atol=atol rtol=rtol
         end
