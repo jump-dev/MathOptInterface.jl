@@ -391,8 +391,9 @@ Return the scalar product between a number `x` of the set `set` and a number
 """
 set_dot(x, y, set::MOI.AbstractScalarSet) = dot(x, y)
 
-function triangle_dot(x::Vector{T}, y::Vector{T}, dim::Int, offset::Int) where T
-    result = zero(T)
+function triangle_dot(x::Vector{S}, y::Vector{T}, dim::Int, offset::Int) where {S, T}
+    U = typeof(zero(S) * zero(T) + 2 * zero(S) * zero(T))
+    result = zero(U)
     k = offset
     for i in 1:dim
         for j in 1:i
