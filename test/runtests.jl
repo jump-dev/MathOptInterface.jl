@@ -4,8 +4,7 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
-using Compat
-using Compat.Test
+using Test
 
 # Tests for solvers are located in MOI.Test.
 

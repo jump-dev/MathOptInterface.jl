@@ -96,7 +96,7 @@ function MOI.add_variable(model::AbstractModel)
     return vi
 end
 function MOI.add_variables(model::AbstractModel, n::Integer)
-    [MOI.add_variable(model) for i in 1:n]
+    return [MOI.add_variable(model) for i in 1:n]
 end
 
 """
@@ -491,9 +491,8 @@ function _typedfun(s::SymbolFun)
 end
 
 # Base.lowercase is moved to Unicode.lowercase in Julia v0.7
-if VERSION >= v"0.7.0-DEV.2813"
-    using Unicode
-end
+using Unicode
+
 _field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
 _getC(s::SymbolSet) = :(ConstraintEntry{F, $(_typedset(s))})

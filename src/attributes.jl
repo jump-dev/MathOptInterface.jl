@@ -36,11 +36,9 @@ abstract type AbstractConstraintAttribute end
 
 const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
-@static if VERSION >= v"0.7-"
-    # This allows to use attributes in broadcast calls without the need to
-    # embed it in a `Ref`
-    Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
-end
+# This allows to use attributes in broadcast calls without the need to
+# embed it in a `Ref`
+Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
 
 """
     struct UnsupportedAttribute{AttrType} <: UnsupportedError
@@ -821,7 +819,8 @@ This group of statuses means that something unexpected or problematic happened.
 """
     RawStatusString()
 
-A model attribute for a solver specific string explaning why the optimizer stopped.
+A model attribute for a solver specific string explaining why the optimizer
+stopped.
 """
 struct RawStatusString <: AbstractModelAttribute end
 
