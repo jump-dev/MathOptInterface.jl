@@ -1,3 +1,11 @@
+using Test
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIU = MOI.Utilities
+
+include("../model_for_mock.jl")
+
 function atest(model::MOI.ModelLike, config::MOIT.TestConfig)
     @test config.atol == 1e-8
     @test config.rtol == 1e-8

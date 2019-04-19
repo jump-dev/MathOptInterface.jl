@@ -1,17 +1,17 @@
-@testset "Sets constant" begin
+@testset "Constant" begin
     @test MOIU.getconstant(MOI.EqualTo(3)) == 3
     @test MOIU.getconstant(MOI.GreaterThan(6)) == 6
     @test MOIU.getconstant(MOI.LessThan(2)) == 2
 end
 
-@testset "Sets shifts" begin
+@testset "Shifts" begin
     @test MOIU.shift_constant(MOI.EqualTo(3), 1) == MOI.EqualTo(4)
     @test MOIU.shift_constant(MOI.GreaterThan(6), -1) == MOI.GreaterThan(5)
     @test MOIU.shift_constant(MOI.LessThan(2), 2) == MOI.LessThan(4)
     @test MOIU.shift_constant(MOI.Interval(-2, 3), 1) == MOI.Interval(-1, 4)
 end
 
-@testset "Set dimension" begin
+@testset "Dimension" begin
     @test MOI.dimension(MOI.EqualTo(3.0)) === 1
     @test MOI.dimension(MOI.Reals(8)) === 8
     @test MOI.dimension(MOI.DualExponentialCone()) === 3
