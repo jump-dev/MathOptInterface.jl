@@ -131,7 +131,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Typ
     if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
         value = -value
     end
-    if is_ray(MOI.get(model, MOI.DualStatus()))
+    if !is_ray(MOI.get(model, MOI.DualStatus()))
         # The objective constant should not be present in rays
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         f = MOI.get(model, MOI.ObjectiveFunction{F}())
