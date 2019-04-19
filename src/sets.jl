@@ -452,14 +452,12 @@ end
 """
     IndicatorSet{A, S <: AbstractScalarSet}(set::S)
 
-Set ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n``
-Such that: ``y = 0 \\implies x \\in set\\}``
-when `A` is `ACTIVATE_WHEN_ZERO` and
-``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n``
-Such that: ``y = 1 \\implies x \\in set\\}``
-when `A` is `ACTIVATE_WHEN_ONE`.
+``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_ON_ZERO` and
+``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_ON_ONE`.
 
-`S` has to be an `AbstractScalarSet`.
+`S` has to be a sub-type of `AbstractScalarSet`.
 `A` is one of the value of the `ActivationCond` enum.
 `IndicatorSet` is used with a `VectorAffineFunction` holding
 the indicator variable first.

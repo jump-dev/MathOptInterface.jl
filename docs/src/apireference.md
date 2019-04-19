@@ -251,6 +251,7 @@ Semicontinuous
 Semiinteger
 SOS1
 SOS2
+IndicatorSet
 ```
 
 Functions for getting and setting properties of sets.

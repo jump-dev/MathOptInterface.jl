@@ -383,17 +383,18 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     z2  = MOI.add_variable(model)
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
-    f1 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm(1.0, z1),
-        MOI.ScalarAffineTerm(1.0, x2),
+    f1 = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
     MOI.add_constraint(model, f1, iset1)
 
-    f2 = MOI.ScalarAffineFunction(
+    f2 = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
         MOI.ScalarAffineTerm(1.0, z2),
-        MOI.ScalarAffineTerm(0.2, x1),
-        MOI.ScalarAffineTerm(1.0, x2),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     )
     iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
 
@@ -441,17 +442,18 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     z2  = MOI.add_variable(model)
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
-    f1 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm(1.0, z1),
-        MOI.ScalarAffineTerm(1.0, x2),
+    f1 = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
     MOI.add_constraint(model, f1, iset1)
 
-    f2 = MOI.ScalarAffineFunction(
+    f2 = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
         MOI.ScalarAffineTerm(1.0, z2),
-        MOI.ScalarAffineTerm(0.2, x1),
-        MOI.ScalarAffineTerm(1.0, x2),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     )
     iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
 
@@ -468,7 +470,8 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
         MOI.GreaterThan(1.),
     )
-
+    
+    # objective penalized on z2
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3., -30.], [x1, x2, z2]), 0.)
     )
