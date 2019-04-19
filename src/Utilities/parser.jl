@@ -148,45 +148,23 @@ function parsefunction(ex)
 end
 
 # see tests for examples
-if VERSION > v"0.7-"
-    function separatelabel(ex)
-        if isexpr(ex, :call) && ex.args[1] == :(:)
-            return ex.args[2], ex.args[3]
-        elseif isexpr(ex, :tuple)
-            ex = copy(ex)
-            @assert isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
-            label = ex.args[1].args[2]
-            ex.args[1] = ex.args[1].args[3]
-            return label, ex
-        elseif isexpr(ex, :call)
-            ex = copy(ex)
-            @assert isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
-            label = ex.args[2].args[2]
-            ex.args[2] = ex.args[2].args[3]
-            return label, ex
-        else
-            error("Unrecognized expression $ex")
-        end
-    end
-else
-    function separatelabel(ex)
-        if isexpr(ex, :(:))
-            return ex.args[1], ex.args[2]
-        elseif isexpr(ex, :tuple)
-            ex = copy(ex)
-            @assert isexpr(ex.args[1], :(:))
-            label = ex.args[1].args[1]
-            ex.args[1] = ex.args[1].args[2]
-            return label, ex
-        elseif isexpr(ex, :call)
-            ex = copy(ex)
-            @assert isexpr(ex.args[2], :(:))
-            label = ex.args[2].args[1]
-            ex.args[2] = ex.args[2].args[2]
-            return label, ex
-        else
-            error("Unrecognized expression $ex")
-        end
+function separatelabel(ex)
+    if isexpr(ex, :call) && ex.args[1] == :(:)
+        return ex.args[2], ex.args[3]
+    elseif isexpr(ex, :tuple)
+        ex = copy(ex)
+        @assert isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
+        label = ex.args[1].args[2]
+        ex.args[1] = ex.args[1].args[3]
+        return label, ex
+    elseif isexpr(ex, :call)
+        ex = copy(ex)
+        @assert isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
+        label = ex.args[2].args[2]
+        ex.args[2] = ex.args[2].args[3]
+        return label, ex
+    else
+        error("Unrecognized expression $ex")
     end
 end
 

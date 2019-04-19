@@ -74,13 +74,8 @@ function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
     end
     # We have L × L' ≈ Q[p, p]
     L, p = try
-        @static if VERSION >= v"0.7-"
-            F = cholesky(Symmetric(Q))
-            sparse(F.L), F.p
-        else
-            F = cholfact(Symmetric(Q))
-            sparse(F[:L]), F[:p]
-        end
+        F = cholesky(Symmetric(Q))
+        sparse(F.L), F.p
     catch err
         if err isa PosDefException
             error("The optimizer supports second-order cone constraints and",

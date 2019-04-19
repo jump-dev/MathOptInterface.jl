@@ -23,11 +23,7 @@ Abstract supertype for scalar-valued function objects.
 abstract type AbstractScalarFunction <: AbstractFunction end
 output_dimension(::AbstractScalarFunction) = 1
 
-@static if VERSION >= v"0.7-"
-    # This allows to use `AbstractScalarFunction`s in broadcast calls without
-    # the need to embed it in a `Ref`
-    Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
-end
+Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
 
 """
     AbstractVectorFunction
@@ -396,19 +392,11 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where T
     return VectorAffineFunction(map(i -> VectorAffineTerm(i, ScalarAffineTerm(one(T), f.variables[i])), 1:n), zeros(T, n))
 end
 
-if VERSION < v"0.7-"
-    isone(x) = x == one(x)
-end
-
 # Conversion between scalar functions
 # Conversion to SingleVariable
 function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
     if !iszero(f.constant) || !isone(length(f.terms)) || !isone(f.terms[1].coefficient)
-        if VERSION >= v"0.7-"
-            throw(InexactError(:convert, SingleVariable, f))
-        else
-            throw(InexactError())
-        end
+        throw(InexactError(:convert, SingleVariable, f))
     end
     return SingleVariable(f.terms[1].variable_index)
 end
@@ -425,11 +413,7 @@ end
 function Base.convert(::Type{ScalarAffineFunction{T}},
                       f::ScalarQuadraticFunction{T}) where T
     if !Base.isempty(f.quadratic_terms)
-        if VERSION >= v"0.7-"
-            throw(InexactError(:convert, ScalarAffineFunction{T}, f))
-        else
-            throw(InexactError())
-        end
+        throw(InexactError(:convert, ScalarAffineFunction{T}, f))
     end
     return ScalarAffineFunction{T}(f.affine_terms, f.constant)
 end

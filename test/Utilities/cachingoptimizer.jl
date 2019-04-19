@@ -13,36 +13,29 @@
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
     x = MOI.add_variables(model, 2)
-    if VERSION < v"0.7"
-        @test_throws Exception MOI.get(model, MOI.VariablePrimal(), x[1])
-        @test_throws Exception MOI.get(model, MOI.VariablePrimal(), x)
-        @test_throws Exception MOI.get(model, MOI.SolverName())
-        @test_throws Exception MOI.get(model, MOI.ResultCount())
-    else
-        attr = MOI.VariablePrimal()
-        exception = ErrorException(
-            "Cannot query $(attr) from caching optimizer because no optimizer" *
-            " is attached.")
-        @test_throws exception MOI.get(model, MOI.VariablePrimal(), x[1])
-        @test_throws exception MOI.get(model, MOI.VariablePrimal(), x)
+    attr = MOI.VariablePrimal()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, MOI.VariablePrimal(), x[1])
+    @test_throws exception MOI.get(model, MOI.VariablePrimal(), x)
 
-        attr = MOI.SolverName()
-        exception = ErrorException(
-            "Cannot query $(attr) from caching optimizer because no optimizer" *
-            " is attached.")
-        @test_throws exception MOI.get(model, attr)
-        attr = MOI.Silent()
-        exception = ErrorException(
-            "Cannot query $(attr) from caching optimizer because no optimizer" *
-            " is attached.")
-        @test_throws exception MOI.get(model, attr)
+    attr = MOI.SolverName()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
+    attr = MOI.Silent()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
 
-        attr = MOI.ResultCount()
-        exception = ErrorException(
-            "Cannot query $(attr) from caching optimizer because no optimizer" *
-            " is attached.")
-        @test_throws exception MOI.get(model, attr)
-    end
+    attr = MOI.ResultCount()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
 end
 
 @testset "Copyable solver attributes" begin

@@ -58,17 +58,9 @@ end
     soc = MOI.add_constraint(optimizer, MOI.VectorOfVariables(v), MOI.SecondOrderCone(2))
 
     err = ErrorException("No mock primal is set for variable `$(v[1])`.")
-    if VERSION < v"0.7-"
-        @test_throws ErrorException MOI.get(optimizer, MOI.VariablePrimal(), v[1])
-    else
-        @test_throws err MOI.get(optimizer, MOI.VariablePrimal(), v[1])
-    end
+    @test_throws err MOI.get(optimizer, MOI.VariablePrimal(), v[1])
     err = ErrorException("No mock dual is set for constraint `$c1`.")
-    if VERSION < v"0.7-"
-        @test_throws ErrorException MOI.get(optimizer, MOI.ConstraintDual(), c1)
-    else
-        @test_throws err MOI.get(optimizer, MOI.ConstraintDual(), c1)
-    end
+    @test_throws err MOI.get(optimizer, MOI.ConstraintDual(), c1)
 
     # Load fake solution
     # TODO: Provide a more compact API for this.

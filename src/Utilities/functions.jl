@@ -9,11 +9,7 @@ function evalvariables end
 evalvariables(varval::Function, f::SVF) = varval(f.variable)
 evalvariables(varval::Function, f::VVF) = varval.(f.variables)
 function evalvariables(varval::Function, f::SAF)
-    @static if VERSION >= v"0.7-"
-        return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
-    else
-        return mapreduce(t->evalterm(varval, t), +, f.constant, f.terms)
-    end
+    return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
 end
 function evalvariables(varval::Function, f::VAF)
     out = copy(f.constants)
@@ -24,13 +20,8 @@ function evalvariables(varval::Function, f::VAF)
 end
 function evalvariables(varval::Function, f::SQF)
     init = zero(f.constant)
-    @static if VERSION >= v"0.7-"
-        lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
-        quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
-    else
-        lin = mapreduce(t->evalterm(varval, t), +, init, f.affine_terms)
-        quad = mapreduce(t->evalterm(varval, t), +, init, f.quadratic_terms)
-    end
+    lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
+    quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
     return lin + quad + f.constant
 end
 function evalvariables(varval::Function, f::VQF)
@@ -112,19 +103,15 @@ struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
 end
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
-@static if VERSION >= v"0.7-"
-    function Base.iterate(it::ScalarFunctionIterator, state = 1)
-        if state > length(it)
-            return nothing
-        else
-            return (it[state], state + 1)
-        end
+
+function Base.iterate(it::ScalarFunctionIterator, state = 1)
+    if state > length(it)
+        return nothing
+    else
+        return (it[state], state + 1)
     end
-else
-    Base.start(it::ScalarFunctionIterator) = 1
-    Base.done(it::ScalarFunctionIterator, state) = state > length(it)
-    Base.next(it::ScalarFunctionIterator, state) = (it[state], state+1)
 end
+
 function Base.length(it::ScalarFunctionIterator{<:MOI.AbstractVectorFunction})
     return MOI.output_dimension(it.f)
 end
