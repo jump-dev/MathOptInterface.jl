@@ -491,9 +491,8 @@ function _typedfun(s::SymbolFun)
 end
 
 # Base.lowercase is moved to Unicode.lowercase in Julia v0.7
-if VERSION >= v"0.7.0-DEV.2813"
-    using Unicode
-end
+using Unicode
+
 _field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
 _getC(s::SymbolSet) = :(ConstraintEntry{F, $(_typedset(s))})

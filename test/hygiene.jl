@@ -1,6 +1,6 @@
 module Hygiene
 
-using Compat, Compat.Test
+using Test
 
 import MathOptInterface
 const MOI = MathOptInterface

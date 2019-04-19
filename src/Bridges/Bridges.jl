@@ -1,7 +1,5 @@
 module Bridges
 
-using Compat
-
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities

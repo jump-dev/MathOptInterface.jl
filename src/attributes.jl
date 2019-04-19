@@ -36,11 +36,9 @@ abstract type AbstractConstraintAttribute end
 
 const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
-@static if VERSION >= v"0.7-"
-    # This allows to use attributes in broadcast calls without the need to
-    # embed it in a `Ref`
-    Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
-end
+# This allows to use attributes in broadcast calls without the need to
+# embed it in a `Ref`
+Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
 
 """
     struct UnsupportedAttribute{AttrType} <: UnsupportedError

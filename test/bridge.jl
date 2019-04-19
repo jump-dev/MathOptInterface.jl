@@ -1,5 +1,4 @@
-using Compat
-using Compat.Test
+using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
@@ -69,11 +68,7 @@ end
         x = MOI.add_variable(bridged_mock)
         ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),
                                 MOI.Interval(0.0, 1.0))
-        if VERSION < v"0.7-"
-            @test_throws typeof(err) MOI.get(bridged_mock, attr, ci)
-        else
-            @test_throws err MOI.get(bridged_mock, attr, ci)
-        end
+        @test_throws err MOI.get(bridged_mock, attr, ci)
     end
 
     @testset "Issue #453" begin
@@ -244,16 +239,9 @@ end
         x = MOI.add_variables(bridged_mock, 4)
         err = MOI.UnsupportedConstraint{MOI.VectorOfVariables,
                                         MOI.RotatedSecondOrderCone}()
-        if VERSION < v"0.7-"
-            @test_throws typeof(err) begin
-                MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
-                                   MOI.RotatedSecondOrderCone(4))
-            end
-        else
-            @test_throws err begin
-                MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
-                                   MOI.RotatedSecondOrderCone(4))
-            end
+        @test_throws err begin
+            MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
+                               MOI.RotatedSecondOrderCone(4))
         end
     end
 
@@ -283,16 +271,9 @@ end
         x = MOI.add_variables(bridged_mock, 3)
         err = MOI.UnsupportedConstraint{MOI.VectorAffineFunction{Float64},
                                         MOI.LogDetConeTriangle}()
-        if VERSION < v"0.7-"
-            @test_throws typeof(err) begin
-                MOIB.bridge_type(bridged_mock, MOI.VectorAffineFunction{Float64},
-                                 MOI.LogDetConeTriangle)
-            end
-        else
-            @test_throws err begin
-                MOIB.bridge_type(bridged_mock, MOI.VectorAffineFunction{Float64},
-                                 MOI.LogDetConeTriangle)
-            end
+        @test_throws err begin
+            MOIB.bridge_type(bridged_mock, MOI.VectorAffineFunction{Float64},
+                             MOI.LogDetConeTriangle)
         end
         c = MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
                                MOI.RotatedSecondOrderCone(3))

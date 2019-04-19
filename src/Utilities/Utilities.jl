@@ -1,7 +1,6 @@
 module Utilities
 
-using Compat # For firstindex, lastindex, Nothing and `@warn`
-using Compat.LinearAlgebra # For dot
+using LinearAlgebra # For dot
 
 using MathOptInterface
 const MOI = MathOptInterface

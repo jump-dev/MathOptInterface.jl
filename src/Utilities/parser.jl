@@ -148,45 +148,23 @@ function parsefunction(ex)
 end
 
 # see tests for examples
-if VERSION > v"0.7-"
-    function separatelabel(ex)
-        if isexpr(ex, :call) && ex.args[1] == :(:)
-            return ex.args[2], ex.args[3]
-        elseif isexpr(ex, :tuple)
-            ex = copy(ex)
-            @assert isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
-            label = ex.args[1].args[2]
-            ex.args[1] = ex.args[1].args[3]
-            return label, ex
-        elseif isexpr(ex, :call)
-            ex = copy(ex)
-            @assert isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
-            label = ex.args[2].args[2]
-            ex.args[2] = ex.args[2].args[3]
-            return label, ex
-        else
-            error("Unrecognized expression $ex")
-        end
-    end
-else
-    function separatelabel(ex)
-        if isexpr(ex, :(:))
-            return ex.args[1], ex.args[2]
-        elseif isexpr(ex, :tuple)
-            ex = copy(ex)
-            @assert isexpr(ex.args[1], :(:))
-            label = ex.args[1].args[1]
-            ex.args[1] = ex.args[1].args[2]
-            return label, ex
-        elseif isexpr(ex, :call)
-            ex = copy(ex)
-            @assert isexpr(ex.args[2], :(:))
-            label = ex.args[2].args[1]
-            ex.args[2] = ex.args[2].args[2]
-            return label, ex
-        else
-            error("Unrecognized expression $ex")
-        end
+function separatelabel(ex)
+    if isexpr(ex, :call) && ex.args[1] == :(:)
+        return ex.args[2], ex.args[3]
+    elseif isexpr(ex, :tuple)
+        ex = copy(ex)
+        @assert isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
+        label = ex.args[1].args[2]
+        ex.args[1] = ex.args[1].args[3]
+        return label, ex
+    elseif isexpr(ex, :call)
+        ex = copy(ex)
+        @assert isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
+        label = ex.args[2].args[2]
+        ex.args[2] = ex.args[2].args[3]
+        return label, ex
+    else
+        error("Unrecognized expression $ex")
     end
 end
 
@@ -204,14 +182,14 @@ parsedtoMOI(model, s::Union{Float64, Int64}) = s
 for typename in [:ParsedScalarAffineTerm,:ParsedScalarAffineFunction,:ParsedVectorAffineTerm,:ParsedVectorAffineFunction,
                  :ParsedScalarQuadraticTerm,:ParsedScalarQuadraticFunction,:ParsedVectorQuadraticTerm,:ParsedVectorQuadraticFunction,
                  :ParsedSingleVariable,:ParsedVectorOfVariables]
-    moiname = Compat.Meta.parse(replace(string(typename), "Parsed" => "MOI."))
+    moiname = Meta.parse(replace(string(typename), "Parsed" => "MOI."))
     fields = fieldnames(eval(typename))
     constructor = Expr(:call, moiname, [Expr(:call,:parsedtoMOI,:model,Expr(:.,:f,Base.Meta.quot(field))) for field in fields]...)
     @eval parsedtoMOI(model, f::$typename) = $constructor
 end
 
 function loadfromstring!(model, s)
-    parsedlines = filter(ex -> ex != nothing, Compat.Meta.parse.(split(s,"\n")))
+    parsedlines = filter(ex -> ex != nothing, Meta.parse.(split(s,"\n")))
 
     for line in parsedlines
         label, ex = separatelabel(line)
@@ -240,7 +218,7 @@ function loadfromstring!(model, s)
             f = parsedtoMOI(model, parsefunction(ex.args[2]))
             if ex.args[1] == :in
                 # Could be safer here
-                set = Compat.Core.eval(MOI, ex.args[3])
+                set = Core.eval(MOI, ex.args[3])
             elseif ex.args[1] == :<=
                 set = MOI.LessThan(ex.args[3])
             elseif ex.args[1] == :>=
