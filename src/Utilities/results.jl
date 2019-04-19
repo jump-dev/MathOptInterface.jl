@@ -24,13 +24,13 @@ function get_fallback(model::MOI.ModelLike, ::MOI.ObjectiveValue)
 end
 
 scalar_constant(T::Type, ::MOI.SingleVariable) = zero(T)
-scalar_constant(::Type, f::MOI.AbstractScalarFunction) = _constant(f)
+scalar_constant(::Type, f::MOI.AbstractScalarFunction) = MOI._constant(f)
 
 function constraint_constant(model::MOI.ModelLike,
                              ci::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction,
                                                      <:MOI.AbstractVectorSet},
                              T::Type)
-    return _constant(MOI.get(model, MOI.ConstraintFunction(), ci))
+    return MOI._constant(MOI.get(model, MOI.ConstraintFunction(), ci))
 end
 function constraint_constant(model::MOI.ModelLike,
                              ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
