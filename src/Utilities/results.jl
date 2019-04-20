@@ -45,7 +45,7 @@ end
                          F::Type{<:MOI.AbstractFunction},
                          S::Type{<:MOI.AbstractSet},
                          T::Type,
-                         result_index::Int64)
+                         result_index::Integer)
 
 Return the part of `DualObjectiveValue` due to the constraint of index `ci` using
 scalar type `T`.
@@ -53,7 +53,7 @@ scalar type `T`.
 function dual_objective_value(model::MOI.ModelLike,
                               ci::MOI.ConstraintIndex,
                               T::Type,
-                              result_index::Int64)
+                              result_index::Integer)
     return set_dot(constraint_constant(model, ci, T),
                    MOI.get(model, MOI.ConstraintDual(result_index), ci),
                    MOI.get(model, MOI.ConstraintSet(), ci))
@@ -63,7 +63,7 @@ function dual_objective_value(model::MOI.ModelLike,
                               ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
                                                       <:MOI.Interval},
                               T::Type,
-                              result_index::Int64)
+                              result_index::Integer)
     constant = scalar_constant(T, MOI.get(model, MOI.ConstraintFunction(), ci))
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
@@ -85,7 +85,7 @@ end
                     F::Type{<:MOI.AbstractFunction},
                     S::Type{<:MOI.AbstractSet},
                     T::Type,
-                    result_index::Int64)
+                    result_index::Integer)
 
 Return the part of `DualObjectiveValue` due to `F`-in-`S` constraints using scalar
 type `T`.
@@ -94,7 +94,7 @@ function dual_objective_value(model::MOI.ModelLike,
                          F::Type{<:MOI.AbstractFunction},
                          S::Type{<:MOI.AbstractSet},
                          T::Type,
-                         result_index::Int64)
+                         result_index::Integer)
     value = zero(T) # sum won't work if there are now constraints.
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
         value += dual_objective_value(model, ci, T, result_index)
@@ -106,7 +106,7 @@ function dual_objective_value(model::MOI.ModelLike,
                               F::Type{MOI.VectorOfVariables},
                               S::Type{<:MOI.AbstractVectorSet},
                               T::Type,
-                              result_index::Int64)
+                              result_index::Integer)
     # No constant in the function nor set so no contribution to the dual
     # objective value.
     return zero(T)
