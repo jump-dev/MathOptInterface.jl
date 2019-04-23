@@ -437,7 +437,7 @@ function indicator_test2(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
-    # max  2x1 + 3x2
+    # max  2x1 + 3x2 - 30 z2
     # s.t. x1 + x2 <= 10
     #      z1 ==> x2 <= 8
     #      z2 ==> x2 + x1/5 <= 9
@@ -446,7 +446,8 @@ function indicator_test2(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    # same model with penalty on z2 switches active constraint to z1
+    # same model as indicator_test1 with penalty
+    # on z2 switches active constraint to z1
 
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -496,14 +497,12 @@ function indicator_test2(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 28.75 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x1) ≈ 1.25 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x2) ≈ 8.75 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 28.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x1) ≈ 2.0  atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x2) ≈ 8.0  atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 0.0 atol=atol rtol=rtol
     end
-
-
 end
 
 const intlineartests = Dict("knapsack" => knapsacktest,
