@@ -356,7 +356,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indicator_test(model::MOI.ModelLike, config::TestConfig)
+function indicator_test1(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -431,6 +431,17 @@ function indicator_test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
     end
+end
+
+function indicator_test2(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # linear problem with indicator constraint
+    # max  2x1 + 3x2
+    # s.t. x1 + x2 <= 10
+    #      z1 ==> x2 <= 8
+    #      z2 ==> x2 + x1/5 <= 9
+    #      z1 + z2 >= 1
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -499,7 +510,8 @@ const intlineartests = Dict("knapsack" => knapsacktest,
                             "int1"     => int1test,
                             "int2"     => int2test,
                             "int3"     => int3test,
-                            "indicator_cons"  => indicator_test,
+                            "indicator_cons1"  => indicator_test1,
+                            "indicator_cons2"  => indicator_test2,
                            )
 
 @moitestset intlinear
