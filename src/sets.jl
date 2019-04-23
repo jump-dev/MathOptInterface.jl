@@ -458,6 +458,22 @@ when `A` is `ACTIVATE_ON_ONE`.
 `A` is one of the value of the `ActivationCond` enum.
 `IndicatorSet` is used with a `VectorAffineFunction` holding
 the indicator variable first.
+
+Example: ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\} ``
+
+```julia
+f = MOI.VectorAffineFunction(
+    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+    ],
+    [0., 0.],
+)
+
+indicator_set = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+
+MOI.add_constraint(model, f, indicator_set)
+```
 """
 struct IndicatorSet{A, S <: AbstractScalarSet} <: AbstractVectorSet
     set::S
