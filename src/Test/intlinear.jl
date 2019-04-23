@@ -358,7 +358,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indtest(model::MOI.ModelLike, config::TestConfig)
+function indicator_test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -366,7 +366,7 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     # s.t. x1 + x2 <= 10
     #      z1 ==> x2 <= 8
     #      z2 ==> x2 + x1/5 <= 9
-    # z1 + z2 >= 1
+    #      z1 + z2 >= 1
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -379,22 +379,25 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
-    z1  = MOI.add_variable(model)
-    z2  = MOI.add_variable(model)
+    z1 = MOI.add_variable(model)
+    z2 = MOI.add_variable(model)
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
     f1 = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0., 0.]
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
     MOI.add_constraint(model, f1, iset1)
 
     f2 = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
-        MOI.ScalarAffineTerm(1.0, z2),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0., 0.],
     )
     iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
 
@@ -470,7 +473,7 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
         MOI.GreaterThan(1.),
     )
-    
+
     # objective penalized on z2
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3., -30.], [x1, x2, z2]), 0.)
@@ -498,7 +501,7 @@ const intlineartests = Dict("knapsack" => knapsacktest,
                             "int1"     => int1test,
                             "int2"     => int2test,
                             "int3"     => int3test,
-                            "indcons"  => indtest,
-                            )
+                            "indicator_cons"  => indicator_test,
+                           )
 
 @moitestset intlinear
