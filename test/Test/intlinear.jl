@@ -21,4 +21,12 @@
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0, 0, 1, 1]))
     MOIT.knapsacktest(mock, config)
+    MOIU.set_mock_optimize!(mock,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.25, 8.75, 0., 1.])
+    )
+    MOIT.indicator_test1(mock, config)
+    MOIU.set_mock_optimize!(mock,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2.0, 8.0, 1., 0.])
+    )
+    MOIT.indicator_test2(mock, config)
 end
