@@ -82,8 +82,6 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-Base.isapprox(a::T, b::T; kwargs...) where T <: Union{MOI.SOS1, MOI.SOS2} = isapprox(a.weights, b.weights; kwargs...)
-
 # sos from CPLEX.jl" begin
 function int2test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
