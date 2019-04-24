@@ -436,12 +436,12 @@ Base.isapprox(a::T, b::T; kwargs...) where {T <: Union{SOS1, SOS2}} = isapprox(a
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
 """
-	ActivationCond
+	ActivationCondition
 
 Activation condition for an indicator constraint.
-Used as first type parameter of `IndicatorSet{ActiveCond,S}`.
+The enum value is used as first type parameter of `IndicatorSet{A,S}`.
 """
-@enum ActivationCond begin
+@enum ActivationCondition begin
     ACTIVATE_ON_ZERO
     ACTIVATE_ON_ONE
 end
@@ -467,10 +467,10 @@ f = MOI.VectorAffineFunction(
      MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
      MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     ],
-    [0., 0.],
+    [0.0, 0.0],
 )
 
-indicator_set = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+indicator_set = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
 
 MOI.add_constraint(model, f, indicator_set)
 ```

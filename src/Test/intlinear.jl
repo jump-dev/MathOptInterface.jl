@@ -385,9 +385,9 @@ function indicator1_test(model::MOI.ModelLike, config::TestConfig)
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
         ],
-        [0., 0.]
+        [0.0, 0.0]
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
+    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
 
     f2 = MOI.VectorAffineFunction(
@@ -395,9 +395,9 @@ function indicator1_test(model::MOI.ModelLike, config::TestConfig)
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
         ],
-        [0., 0.],
+        [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
 
     MOI.add_constraint(model, f2, iset2)
 
@@ -410,11 +410,11 @@ function indicator1_test(model::MOI.ModelLike, config::TestConfig)
     # disjunction z1 ⋁ z2
     MOI.add_constraint(model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
-        MOI.GreaterThan(1.),
+        MOI.GreaterThan(1.0),
     )
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3.], [x1, x2]), 0.)
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0], [x1, x2]), 0.0)
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
@@ -459,9 +459,9 @@ function indicator2_test(model::MOI.ModelLike, config::TestConfig)
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
         ],
-        [0., 0.]
+        [0.0, 0.0]
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
+    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
 
     f2 = MOI.VectorAffineFunction(
@@ -469,9 +469,9 @@ function indicator2_test(model::MOI.ModelLike, config::TestConfig)
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
         ],
-        [0., 0.],
+        [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
 
     MOI.add_constraint(model, f2, iset2)
 
@@ -484,12 +484,12 @@ function indicator2_test(model::MOI.ModelLike, config::TestConfig)
     # disjunction z1 ⋁ z2
     MOI.add_constraint(model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
-        MOI.GreaterThan(1.),
+        MOI.GreaterThan(1.0),
     )
 
     # objective penalized on z2
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3., -30.], [x1, x2, z2]), 0.)
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0, -30.0], [x1, x2, z2]), 0.0)
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
