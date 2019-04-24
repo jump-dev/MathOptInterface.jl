@@ -456,17 +456,20 @@ function indicator2_test(model::MOI.ModelLike, config::TestConfig)
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
     f1 = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0., 0.]
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
     MOI.add_constraint(model, f1, iset1)
 
     f2 = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
-        MOI.ScalarAffineTerm(1.0, z2),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0., 0.],
     )
     iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
 

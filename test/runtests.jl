@@ -21,6 +21,8 @@ include("dummy.jl")
     include("attributes.jl")
 end
 
+const LessThanIndicatorSet{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{T}}
+
 # Needed by test spread over several files, defining it here make it easier to comment out tests
 # Model supporting every MOI functions and sets
 MOIU.@model(Model,
@@ -33,7 +35,7 @@ MOIU.@model(Model,
              MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
              MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
              MOI.LogDetConeSquare),
-            (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2),
+            (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2, LessThanIndicatorSet),
             (MOI.SingleVariable,),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
