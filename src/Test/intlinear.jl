@@ -356,7 +356,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indicator_test1(model::MOI.ModelLike, config::TestConfig)
+function indicator1_test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -433,7 +433,7 @@ function indicator_test1(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indicator_test2(model::MOI.ModelLike, config::TestConfig)
+function indicator2_test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -509,8 +509,8 @@ const intlineartests = Dict("knapsack" => knapsacktest,
                             "int1"     => int1test,
                             "int2"     => int2test,
                             "int3"     => int3test,
-                            "indicator_cons1"  => indicator_test1,
-                            "indicator_cons2"  => indicator_test2,
+                            "indicator1"  => indicator1_test,
+                            "indicator2"  => indicator2_test,
                            )
 
 @moitestset intlinear
