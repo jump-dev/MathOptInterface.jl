@@ -22,7 +22,7 @@ struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: Unsupported
 end
 UnsupportedConstraint{F, S}() where {F, S} = UnsupportedConstraint{F, S}("")
 
-element_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constraints"
+element_name(::UnsupportedConstraint{F, S}) where {F, S} = "`$F`-in-`$S` constraint"
 
 """
     struct AddConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet} <: NotAllowedError
