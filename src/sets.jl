@@ -482,6 +482,10 @@ end
 
 dimension(::IndicatorSet) = 2
 
+function Base.copy(set::IndicatorSet{A,S}) where {A,S}
+    return IndicatorSet{A}(copy(set.set))
+end
+
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               GreaterThan, LessThan, EqualTo, Interval,
@@ -492,7 +496,7 @@ function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               PositiveSemidefiniteConeSquare,
                               LogDetConeTriangle, LogDetConeSquare,
                               RootDetConeTriangle, RootDetConeSquare,
-                              Integer, ZeroOne, Semicontinuous, Semiinteger, IndicatorSet})
+                              Integer, ZeroOne, Semicontinuous, Semiinteger})
     return set
 end
 Base.copy(set::S) where {S <: Union{SOS1, SOS2}} = S(copy(set.weights))
