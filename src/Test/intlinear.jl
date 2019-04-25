@@ -446,8 +446,7 @@ function indicator2_test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    # Same model as indicator_test1 with penalty
-    # on z2 switches active constraint to z1.
+    # This is the same model as indicator_test1, except that the penalty on z2 forces z1 to be 1.
 
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
