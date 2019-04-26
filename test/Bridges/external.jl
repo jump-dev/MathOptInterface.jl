@@ -1,3 +1,11 @@
+using Test
+
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIU = MathOptInterface.Utilities
+
+include("simple_model.jl")
+
 # We need to test this in a module at the top level because it can't be defined
 # in a testset. If it runs without error, then we're okay.
 module TestExternalBridge

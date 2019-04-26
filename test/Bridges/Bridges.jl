@@ -1,7 +1,11 @@
-include("bridge.jl")
-include("bridgeoptimizer.jl")
-include("singlebridgeoptimizer.jl")
-include("lazybridgeoptimizer.jl")
+using Test
+
+@testset "BridgeOptimizer" begin
+    include("bridgeoptimizer.jl")
+end
+@testset "LazyBridgeOptimizer" begin
+    include("lazybridgeoptimizer.jl")
+end
 @testset "Separate bridges" begin
     include("flip_sign_bridge.jl")
     include("vectorizebridge.jl")

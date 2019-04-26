@@ -1,3 +1,5 @@
+include("simple_model.jl")
+
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 config = MOIT.TestConfig()
 config_with_basis = MOIT.TestConfig(basis = true)

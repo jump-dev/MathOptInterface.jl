@@ -29,18 +29,12 @@ end
 # Test submodule tests
 # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
 @testset "MOI.Test" begin
-    include("Test/config.jl")
-    include("Test/unit.jl")
-    include("Test/contlinear.jl")
-    include("Test/contconic.jl")
-    include("Test/contquadratic.jl")
-    include("Test/intlinear.jl")
-    include("Test/intconic.jl")
+    include("Test/Test.jl")
 end
 
 @testset "MOI.Bridges" begin
     # Bridges submodule tests
-    include("bridge.jl")
+    include("Bridges/Bridges.jl")
 end
 
 # Test hygiene of @model macro
