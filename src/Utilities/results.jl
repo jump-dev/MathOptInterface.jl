@@ -95,7 +95,7 @@ function dual_objective_value(model::MOI.ModelLike,
                          S::Type{<:MOI.AbstractSet},
                          T::Type,
                          result_index::Integer)
-    value = zero(T) # sum won't work if there are now constraints.
+    value = zero(T) # sum won't work if there are no constraints.
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
         value += dual_objective_value(model, ci, T, result_index)
     end
@@ -121,7 +121,8 @@ end
     get_fallback(model::MOI.ModelLike, ::MOI.DualObjectiveValue, T::Type)::T
 
 Compute the dual objective value of type `T` using the `ConstraintDual` results
-and the `ConstraintFunction` and `ConstraintSet` values.
+and the `ConstraintFunction` and `ConstraintSet` values. Note that the nonlinear
+part of the model is ignored.
 """
 function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Type)
     value = zero(T) # sum will not work if there are zero constraints

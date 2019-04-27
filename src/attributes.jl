@@ -472,7 +472,7 @@ end
     DualObjectiveValue(result_index::Int=1)
 
 A model attribute for the value of the objective function of the dual problem
-for the `resultindex`th dual result.
+for the `result_index`th dual result.
 """
 struct DualObjectiveValue <: AbstractModelAttribute
     result_index::Int
