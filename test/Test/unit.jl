@@ -1,3 +1,11 @@
+using Test
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIU = MOI.Utilities
+
+include("../model.jl")
+
 @testset "Basic Constraint Tests" begin
     mock   = MOIU.MockOptimizer(Model{Float64}())
     config = MOIT.TestConfig()

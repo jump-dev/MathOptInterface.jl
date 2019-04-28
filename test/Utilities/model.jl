@@ -1,3 +1,8 @@
+using Test
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+
 # TODO: It's hard to find where Model is defined!
 
 # We need to test this in a module at the top level because it can't be defined
