@@ -10,6 +10,9 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[compat]
+julia = "1"
+
 [extras]
 
 [targets]

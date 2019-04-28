@@ -1,3 +1,7 @@
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIU = MOI.Utilities
+
 abstract type AbstractDummyModel <: MOI.ModelLike end
 
 function MOI.empty!(::AbstractDummyModel) end
@@ -19,6 +23,7 @@ end
 struct DummyModelWithAdd <: AbstractDummyModel
 end
 MOI.add_variable(::DummyModelWithAdd) = MOI.VariableIndex(0)
+MOI.add_variables(::DummyModelWithAdd, n) = fill(MOI.VariableIndex(0), n)
 function MOI.add_constraint(::DummyModelWithAdd, ::MOI.SingleVariable,
                             ::MOI.EqualTo{Float64})
     return MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}(0)
