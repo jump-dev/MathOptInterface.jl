@@ -28,3 +28,15 @@ MOIT.int3test(mock, config)
 MOIU.set_mock_optimize!(mock,
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0, 0, 1, 1]))
 MOIT.knapsacktest(mock, config)
+MOIU.set_mock_optimize!(mock,
+    (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.25, 8.75, 0., 1.])
+)
+MOIT.indicator1_test(mock, config)
+MOIU.set_mock_optimize!(mock,
+    (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2.0, 8.0, 1., 0.])
+)
+MOIT.indicator2_test(mock, config)
+MOIU.set_mock_optimize!(mock,
+    (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.25, 8.75, 1., 1.])
+)
+MOIT.indicator3_test(mock, config)

@@ -435,6 +435,57 @@ Base.isapprox(a::T, b::T; kwargs...) where {T <: Union{SOS1, SOS2}} = isapprox(a
 
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
+"""
+	ActivationCondition
+
+Activation condition for an indicator constraint.
+The enum value is used as first type parameter of `IndicatorSet{A,S}`.
+"""
+@enum ActivationCondition begin
+    ACTIVATE_ON_ZERO
+    ACTIVATE_ON_ONE
+end
+
+"""
+    IndicatorSet{A, S <: AbstractScalarSet}(set::S)
+
+``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_ON_ZERO` and
+``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_ON_ONE`.
+
+`S` has to be a sub-type of `AbstractScalarSet`.
+`A` is one of the value of the `ActivationCond` enum.
+`IndicatorSet` is used with a `VectorAffineFunction` holding
+the indicator variable first.
+
+Example: ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\} ``
+
+```julia
+f = MOI.VectorAffineFunction(
+    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+    ],
+    [0.0, 0.0],
+)
+
+indicator_set = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+
+MOI.add_constraint(model, f, indicator_set)
+```
+"""
+struct IndicatorSet{A, S <: AbstractScalarSet} <: AbstractVectorSet
+    set::S
+    IndicatorSet{A}(set::S) where {A, S <: AbstractScalarSet} = new{A,S}(set)
+end
+
+dimension(::IndicatorSet) = 2
+
+function Base.copy(set::IndicatorSet{A,S}) where {A,S}
+    return IndicatorSet{A}(copy(set.set))
+end
+
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               GreaterThan, LessThan, EqualTo, Interval,
