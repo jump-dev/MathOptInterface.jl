@@ -76,7 +76,7 @@ end
 
 @testset "Bridge adding no constraint" begin
     mock = MOIU.MockOptimizer(NothingModel{Int}())
-    bridged = MOIB.LazyBridgeOptimizer(mock, NothingModel{Int}())
+    bridged = MOIB.LazyBridgeOptimizer(mock)
     MOI.Bridges.add_bridge(bridged, BridgeAddingNoConstraint{Float64})
     @test MOI.Bridges.supports_bridging_constraint(bridged,
                                                    MOI.SingleVariable,
@@ -95,8 +95,7 @@ end
 end
 
 mock = MOIU.MockOptimizer(NoRSOCModel{Float64}())
-bridged_mock = MOIB.LazyBridgeOptimizer(
-    mock, MOIB.AllBridgedConstraints{Float64}())
+bridged_mock = MOIB.LazyBridgeOptimizer(mock)
 
 @testset "UnsupportedConstraint when it cannot be bridged" begin
     x = MOI.add_variables(bridged_mock, 4)

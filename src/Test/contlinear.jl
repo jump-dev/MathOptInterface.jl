@@ -746,11 +746,24 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     # s.t. 0.0 <= x          (c1)
     #             y <= 0.0   (c2)
 
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], [x,y]), 0.0))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], [x, y]),
+                                     0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0), MOI.GreaterThan(0.0))
-    c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, y)], 0.0), MOI.LessThan(0.0))
+    fx = convert(MOI.ScalarAffineFunction{Float64},
+                 MOI.SingleVariable(x))
+    c1 = MOI.add_constraint(model, fx, MOI.GreaterThan(0.0))
+    fy = convert(MOI.ScalarAffineFunction{Float64},
+                 MOI.SingleVariable(y))
+    c2 = MOI.add_constraint(model, fy, MOI.LessThan(0.0))
+
+    if config.query
+        @test MOI.get(model, MOI.ConstraintFunction(), c1) ≈ fx
+        @test MOI.get(model, MOI.ConstraintSet(), c1) == MOI.GreaterThan(0.0)
+        @test MOI.get(model, MOI.ConstraintFunction(), c2) ≈ fy
+        @test MOI.get(model, MOI.ConstraintSet(), c2) == MOI.LessThan(0.0)
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -769,6 +782,14 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     # s.t. 100.0 <= x
     #               y <= 0.0
     MOI.set(model, MOI.ConstraintSet(), c1, MOI.GreaterThan(100.0))
+
+    if config.query
+        @test MOI.get(model, MOI.ConstraintFunction(), c1) ≈ fx
+        @test MOI.get(model, MOI.ConstraintSet(), c1) == MOI.GreaterThan(100.0)
+        @test MOI.get(model, MOI.ConstraintFunction(), c2) ≈ fy
+        @test MOI.get(model, MOI.ConstraintSet(), c2) == MOI.LessThan(0.0)
+    end
+
     if config.solve
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
@@ -783,6 +804,14 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
     # s.t. 100.0 <= x
     #               y <= -100.0
     MOI.set(model, MOI.ConstraintSet(), c2, MOI.LessThan(-100.0))
+
+    if config.query
+        @test MOI.get(model, MOI.ConstraintFunction(), c1) ≈ fx
+        @test MOI.get(model, MOI.ConstraintSet(), c1) == MOI.GreaterThan(100.0)
+        @test MOI.get(model, MOI.ConstraintFunction(), c2) ≈ fy
+        @test MOI.get(model, MOI.ConstraintSet(), c2) == MOI.LessThan(-100.0)
+    end
+
     if config.solve
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status

@@ -1,3 +1,18 @@
+using Test
+
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MathOptInterface.Test
+const MOIU = MathOptInterface.Utilities
+const MOIB = MathOptInterface.Bridges
+
+include("utilities.jl")
+
+include("simple_model.jl")
+
+mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+config = MOIT.TestConfig()
+
 @testset "QuadtoSOC" begin
     bridged_mock = MOIB.QuadtoSOC{Float64}(mock)
     @testset "Error for non-convex quadratic constraints" begin
@@ -61,5 +76,9 @@
                                                            MOI.LessThan{Float64}}()))
             test_delete_bridge(bridged_mock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),))
         end
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0], MOI.FEASIBLE_POINT))
+        MOIT.qcp4test(bridged_mock, config)
+        MOIT.qcp5test(bridged_mock, config)
     end
 end

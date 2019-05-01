@@ -1,6 +1,6 @@
 # /!\ LazyBridgeOptimizer is still experimental and is meant to be used by JuMP. Use the SingleBridgeOptimizer in the solver tests as explained in the MOI documentation.
 """
-    LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+    LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 
 The `LazyBridgeOptimizer` combines several bridges, which are added using the [`add_bridge`](@ref) function.
 Whenever a constraint is added, it only attempts to bridge it if it is not supported by the internal model (hence its name `Lazy`).
@@ -10,21 +10,25 @@ bridged into a constraint `F2`-in-`S2` (unsupported by the internal model) using
 bridged into a constraint `F3`-in-`S3` (supported by the internal model) using bridge 3,
 it will choose bridge 1 as it allows to bridge `F`-in-`S` using only one bridge instead of two if it uses bridge 2 and 3.
 """
-struct LazyBridgeOptimizer{OT<:MOI.ModelLike, MT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     model::OT   # Internal model
-    bridged::MT # Model containing bridged constraints
-    bridges::Dict{CI, AbstractBridge} # Constraint Index of bridged constraint in bridged -> Bridge
+    con_to_name::Dict{CI, String}
+    name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
+    # Constraint Index of bridged constraint -> Bridge.
+    # It is set to `nothing` when the constraint is deleted.
+    bridges::Vector{Union{Nothing, AbstractBridge}}
+    # Constraint Index of bridged constraint -> Constraint type.
+    constraint_types::Vector{Tuple{DataType, DataType}}
     bridgetypes::Vector{Any} # List of types of available bridges
     dist::Dict{Tuple{DataType, DataType}, Int}      # (F, S) -> Number of bridges that need to be used for an `F`-in-`S` constraint
     best::Dict{Tuple{DataType, DataType}, DataType} # (F, S) -> Bridge to be used for an `F`-in-`S` constraint
 end
-function LazyBridgeOptimizer(model::MOI.ModelLike, bridged::MOI.ModelLike)
-    LazyBridgeOptimizer{typeof(model),
-                             typeof(bridged)}(model, bridged,
-                                              Dict{CI, AbstractBridge}(),
-                                              Any[],
-                                              Dict{Tuple{DataType, DataType}, Int}(),
-                                              Dict{Tuple{DataType, DataType}, DataType}())
+function LazyBridgeOptimizer(model::MOI.ModelLike)
+    return LazyBridgeOptimizer{typeof(model)}(
+        model, Dict{CI, String}(), nothing,
+        Union{Nothing, AbstractBridge}[], Tuple{DataType, DataType}[],
+        Any[], Dict{Tuple{DataType, DataType}, Int}(),
+        Dict{Tuple{DataType, DataType}, DataType}())
 end
 
 function _dist(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})

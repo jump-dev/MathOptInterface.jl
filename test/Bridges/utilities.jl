@@ -8,7 +8,7 @@ end
 function test_delete_bridge(
     m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int,
     nocs::Tuple; used_bridges = 1, num_bridged = 1) where {F, S}
-    num_bridges = length(m.bridges)
+    num_bridges = count(bridge -> bridge !== nothing, m.bridges)
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     test_noc(m, F, S, num_bridged)
     for noc in nocs
@@ -23,7 +23,7 @@ function test_delete_bridge(
         @test err.index == ci
     end
     @test !MOI.is_valid(m, ci)
-    @test length(m.bridges) == num_bridges - used_bridges
+    @test count(bridge -> bridge !== nothing, m.bridges) == num_bridges - used_bridges
     test_noc(m, F, S, num_bridged - 1)
     # As the bridge has been removed, if the constraints it has created where not removed, it wouldn't be there to decrease this counter anymore
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
