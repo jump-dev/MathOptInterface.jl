@@ -353,40 +353,40 @@ function _dicts(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
 end
 
 """
-    getconstant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
+    constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
 
 Returns the constant term of the scalar function
 """
-getconstant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
+constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
 
 """
-    getconstant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
+    constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
 
 Returns the vector of constant terms of the vector function
 """
-getconstant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
+constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
 
 function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction},
                                                      G<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction}}
-    isapprox(getconstant(f), getconstant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
+    isapprox(constant(f), constant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
 end
 
-getconstant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}, T::DataType) = getconstant(f)
-getconstant(f::Union{VectorAffineFunction, VectorQuadraticFunction}, T::DataType) = getconstant(f)
+constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}, T::DataType) = constant(f)
+constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}, T::DataType) = constant(f)
 
 """
-    getconstant(f::SingleVariable, T::DataType)
+    constant(f::SingleVariable, T::DataType)
 
 The constant term of a `SingleVariable` function is zero.
 """
-getconstant(f::SingleVariable, T::DataType) = zero(T)
+constant(f::SingleVariable, T::DataType) = zero(T)
 
 """
-    getconstant(f::VectorOfVariables, T::DataType)
+    constant(f::VectorOfVariables, T::DataType)
 
 The constant term of a `VectorOfVariables` function is a zero vector.
 """
-getconstant(f::VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
+constant(f::VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
 
 # isbits type, nothing to copy
 Base.copy(func::SingleVariable) = func
@@ -399,7 +399,7 @@ Base.copy(func::VectorOfVariables) = VectorOfVariables(copy(func.variables))
 Return a new affine function with a shallow copy of the terms and constant(s)
 from `func`.
 """
-Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(getconstant(func)))
+Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(constant(func)))
 
 """
     copy(func::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
@@ -407,7 +407,7 @@ Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}
 Return a new quadratic function with a shallow copy of the terms and constant(s)
 from `func`.
 """
-Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(getconstant(func)))
+Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(constant(func)))
 
 # Define shortcuts for
 # SingleVariable -> ScalarAffineFunction

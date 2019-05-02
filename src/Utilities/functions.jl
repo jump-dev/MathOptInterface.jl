@@ -64,12 +64,12 @@ function mapvariables(varmap::Function, f::MOI.VectorOfVariables)
     return MOI.VectorOfVariables(varmap.(f.variables))
 end
 function mapvariables(varmap::Function, f::Union{SAF, VAF})
-    typeof(f)(mapvariable.(varmap, f.terms), MOI.getconstant(f))
+    typeof(f)(mapvariable.(varmap, f.terms), MOI.constant(f))
 end
 function mapvariables(varmap::Function, f::Union{SQF, VQF})
     lin = mapvariable.(varmap, f.affine_terms)
     quad = mapvariable.(varmap, f.quadratic_terms)
-    return typeof(f)(lin, quad, MOI.getconstant(f))
+    return typeof(f)(lin, quad, MOI.constant(f))
 end
 mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f)
 mapvariables(varmap::Function, change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange}) = change
@@ -461,11 +461,11 @@ function removevariable(f::VVF, vi)
     VVF(_rmvar(f.variables, vi))
 end
 function removevariable(f::Union{SAF, VAF}, vi)
-    typeof(f)(_rmvar(f.terms, vi), MOI.getconstant(f))
+    typeof(f)(_rmvar(f.terms, vi), MOI.constant(f))
 end
 function removevariable(f::Union{SQF, VQF}, vi)
     terms = _rmvar.((f.affine_terms, f.quadratic_terms), Ref(vi))
-    typeof(f)(terms..., MOI.getconstant(f))
+    typeof(f)(terms..., MOI.constant(f))
 end
 
 """
@@ -1399,7 +1399,7 @@ function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
 end
 function scalarize(f::MOI.VectorAffineFunction{T}, ignore_constants::Bool = false) where T
     dimension = MOI.output_dimension(f)
-    constants = ignore_constants ? zeros(T, dimension) : MOI.getconstant(f)
+    constants = ignore_constants ? zeros(T, dimension) : MOI.constant(f)
     counting = count_terms(dimension, f.terms)
     functions = MOI.ScalarAffineFunction{T}[
         MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}[], constants[i]) for i in 1:dimension]
@@ -1413,7 +1413,7 @@ function scalarize(f::MOI.VectorAffineFunction{T}, ignore_constants::Bool = fals
 end
 function scalarize(f::MOI.VectorQuadraticFunction{T}, ignore_constants::Bool = false) where T
     dimension = MOI.output_dimension(f)
-    constants = ignore_constants ? zeros(T, dimension) : MOI.getconstant(f)
+    constants = ignore_constants ? zeros(T, dimension) : MOI.constant(f)
     counting_scalars = count_terms(dimension, f.affine_terms)
     counting_quadratics = count_terms(dimension, f.quadratic_terms)
     functions = MOI.ScalarQuadraticFunction{T}[

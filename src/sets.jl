@@ -137,13 +137,13 @@ Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
 Interval(s::Interval) = s
 
 """
-    getconstant(s::Union{EqualTo, GreaterThan, LessThan})
+    constant(s::Union{EqualTo, GreaterThan, LessThan})
 
 Returns the constant of the set.
 """
-getconstant(s::EqualTo) = s.value
-getconstant(s::GreaterThan) = s.lower
-getconstant(s::LessThan) = s.upper
+constant(s::EqualTo) = s.value
+constant(s::GreaterThan) = s.lower
+constant(s::LessThan) = s.upper
 
 """
     SecondOrderCone(dimension)

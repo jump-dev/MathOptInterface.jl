@@ -63,7 +63,7 @@ end
 function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
                             set::Union{MOI.LessThan{T},
                                        MOI.GreaterThan{T}}) where T
-    set_constant = MOI.getconstant(set)
+    set_constant = MOI.constant(set)
     less_than = set isa MOI.LessThan
     if !less_than
         set_constant = -set_constant

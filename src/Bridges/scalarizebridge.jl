@@ -18,7 +18,7 @@ function ScalarizeBridge{T, F, S}(model::MOI.ModelLike,
                                   f::MOI.AbstractVectorFunction,
                                   set::VectorLPSet) where {T, F, S}
     dimension = MOI.output_dimension(f)
-    constants = MOI.getconstant(f, T)
+    constants = MOI.constant(f, T)
     new_f = MOIU.scalarize(f, true)
     constraints = Vector{CI{F, S}}(undef, dimension)
     for i in 1:dimension
@@ -84,7 +84,7 @@ end
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
     bridge::ScalarizeBridge{T}, func) where T
     old_constants = bridge.constants
-    bridge.constants = MOI.getconstant(func, T)
+    bridge.constants = MOI.constant(func, T)
     new_func = MOIU.scalarize(func, true)
     MOI.set.(model, MOI.ConstraintFunction(), bridge.scalar_constraints,
              new_func)

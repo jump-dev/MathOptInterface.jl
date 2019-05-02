@@ -28,7 +28,7 @@ function shift_constant(set::Union{MOI.LessThan{T},
                                    MOI.GreaterThan{T},
                                    MOI.EqualTo{T}},
                         offset::T) where T
-    return typeof(set)(MOI.getconstant(set) + offset)
+    return typeof(set)(MOI.constant(set) + offset)
 end
 function shift_constant(set::MOI.Interval, offset)
     return MOI.Interval(set.lower + offset, set.upper + offset)
