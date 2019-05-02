@@ -1,4 +1,3 @@
-
 const DimensionUpdatableSets = Union{MOI.Reals,
                                      MOI.Zeros,
                                      MOI.Nonnegatives,
