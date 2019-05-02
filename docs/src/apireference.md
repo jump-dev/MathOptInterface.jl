@@ -216,6 +216,7 @@ Functions for getting and setting properties of sets.
 
 ```@docs
 output_dimension
+constant
 ```
 
 ## Sets
