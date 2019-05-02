@@ -371,6 +371,23 @@ function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFuncti
     isapprox(getconstant(f), getconstant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
 end
 
+getconstant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}, T::DataType) = getconstant(f)
+getconstant(f::Union{VectorAffineFunction, VectorQuadraticFunction}, T::DataType) = getconstant(f)
+
+"""
+    getconstant(f::SingleVariable, T::DataType)
+
+The constant term of a `SingleVariable` function is zero.
+"""
+getconstant(f::SingleVariable, T::DataType) = zero(T)
+
+"""
+    getconstant(f::VectorOfVariables, T::DataType)
+
+The constant term of a `VectorOfVariables` function is a zero vector.
+"""
+getconstant(f::VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
+
 # isbits type, nothing to copy
 Base.copy(func::SingleVariable) = func
 

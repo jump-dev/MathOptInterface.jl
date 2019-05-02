@@ -1,11 +1,3 @@
-"""
-    getconstant(s::Union{MOI.EqualTo, MOI.GreaterThan, MOI.LessThan})
-
-Returns the constant of the set.
-"""
-MOI.getconstant(s::MOI.EqualTo) = s.value
-MOI.getconstant(s::MOI.GreaterThan) = s.lower
-MOI.getconstant(s::MOI.LessThan) = s.upper
 
 const DimensionUpdatableSets = Union{MOI.Reals,
                                      MOI.Zeros,
