@@ -212,11 +212,14 @@ VectorQuadraticTerm
 VectorQuadraticFunction
 ```
 
-Functions for getting and setting properties of sets.
+Functions for getting and setting properties of function.
 
 ```@docs
 output_dimension
-constant
+constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
+constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
+constant(f::SingleVariable, ::DataType)
+constant(f::VectorOfVariables, T::DataType)
 ```
 
 ## Sets
@@ -259,6 +262,7 @@ Functions for getting and setting properties of sets.
 
 ```@docs
 dimension
+constant(s::EqualTo)
 ```
 
 ## Modifications
