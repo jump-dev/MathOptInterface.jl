@@ -377,14 +377,16 @@ constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}, T::DataType) =
 """
     constant(f::SingleVariable, T::DataType)
 
-The constant term of a `SingleVariable` function is zero.
+The constant term of a `SingleVariable` function is
+the zero value of the specified type `T`.
 """
 constant(f::SingleVariable, T::DataType) = zero(T)
 
 """
     constant(f::VectorOfVariables, T::DataType)
 
-The constant term of a `VectorOfVariables` function is a zero vector.
+The constant term of a `VectorOfVariables` function is a
+vector of zero values of the specified type `T`.
 """
 constant(f::VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
 
