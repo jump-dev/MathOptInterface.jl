@@ -212,7 +212,7 @@ VectorQuadraticTerm
 VectorQuadraticFunction
 ```
 
-Functions for getting and setting properties of function.
+Functions for getting and setting properties of functions.
 
 ```@docs
 output_dimension
