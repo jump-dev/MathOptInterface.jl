@@ -352,12 +352,23 @@ function _dicts(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
             sum_dict(term_pair.(f.quadratic_terms)))
 end
 
-_constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
-_constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
+"""
+    getconstant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
+
+Returns the constant term of the scalar function
+"""
+getconstant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
+
+"""
+    getconstant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
+
+Returns the vector of constant terms of the vector function
+"""
+getconstant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
 
 function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction},
                                                      G<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction}}
-    isapprox(_constant(f), _constant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
+    isapprox(getconstant(f), getconstant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
 end
 
 # isbits type, nothing to copy
@@ -371,7 +382,7 @@ Base.copy(func::VectorOfVariables) = VectorOfVariables(copy(func.variables))
 Return a new affine function with a shallow copy of the terms and constant(s)
 from `func`.
 """
-Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(_constant(func)))
+Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(getconstant(func)))
 
 """
     copy(func::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
@@ -379,7 +390,7 @@ Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}
 Return a new quadratic function with a shallow copy of the terms and constant(s)
 from `func`.
 """
-Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(_constant(func)))
+Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(getconstant(func)))
 
 # Define shortcuts for
 # SingleVariable -> ScalarAffineFunction

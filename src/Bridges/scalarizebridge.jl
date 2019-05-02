@@ -4,8 +4,8 @@ scalar_set_type(::Type{<:MOI.Zeros}, T::Type) = MOI.EqualTo{T}
 scalar_set_type(::Type{<:MOI.Nonpositives}, T::Type) = MOI.LessThan{T}
 scalar_set_type(::Type{<:MOI.Nonnegatives}, T::Type) = MOI.GreaterThan{T}
 
-__constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}, T::DataType) = MOI._constant(f)
-__constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}, T::DataType) = MOI._constant(f)
+__constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}, T::DataType) = MOI.getconstant(f)
+__constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}, T::DataType) = MOI.getconstant(f)
 __constant(f::MOI.SingleVariable, T::DataType) = zero(T)
 __constant(f::MOI.VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
 

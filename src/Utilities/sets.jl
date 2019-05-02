@@ -3,9 +3,9 @@
 
 Returns the constant of the set.
 """
-getconstant(s::MOI.EqualTo) = s.value
-getconstant(s::MOI.GreaterThan) = s.lower
-getconstant(s::MOI.LessThan) = s.upper
+MOI.getconstant(s::MOI.EqualTo) = s.value
+MOI.getconstant(s::MOI.GreaterThan) = s.lower
+MOI.getconstant(s::MOI.LessThan) = s.upper
 
 const DimensionUpdatableSets = Union{MOI.Reals,
                                      MOI.Zeros,
@@ -36,7 +36,7 @@ function shift_constant(set::Union{MOI.LessThan{T},
                                    MOI.GreaterThan{T},
                                    MOI.EqualTo{T}},
                         offset::T) where T
-    return typeof(set)(getconstant(set) + offset)
+    return typeof(set)(MOI.getconstant(set) + offset)
 end
 function shift_constant(set::MOI.Interval, offset)
     return MOI.Interval(set.lower + offset, set.upper + offset)

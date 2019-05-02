@@ -21,11 +21,11 @@ end
 function VectorizeBridge{T, F, S}(model::MOI.ModelLike,
                                   f::MOI.AbstractScalarFunction,
                                   set::MOI.AbstractScalarSet) where {T, F, S}
-    set_constant = MOIU.getconstant(set)
+    set_constant = MOI.getconstant(set)
     g = MOIU.operate(-, T, f, set_constant)
-    if -set_constant != MOI._constant(g)[1]
+    if -set_constant != MOI.getconstant(g)[1]
         # This means the constant in `f` was not zero
-        constant = MOI._constant(g)[1] + set_constant
+        constant = MOI.getconstant(g)[1] + set_constant
         throw(MOI.ScalarFunctionConstantNotZero{typeof(constant), typeof(f),
                                                 typeof(set)}(constant))
     end
@@ -98,7 +98,7 @@ function MOI.modify(model::MOI.ModelLike, bridge::VectorizeBridge,
 end
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
                  bridge::VectorizeBridge, new_set::LPCone)
-    bridge.set_constant = MOIU.getconstant(new_set)
+    bridge.set_constant = MOI.getconstant(new_set)
     MOI.modify(model, bridge.vector_constraint,
                MOI.VectorConstantChange([-bridge.set_constant]))
 end
