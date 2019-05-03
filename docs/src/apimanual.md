@@ -347,14 +347,15 @@ Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `I
 #### Discrete and logical constraints
 
 
-| Mathematical Constraint                                                                    | MOI Function        | MOI Set                            |
-|--------------------------------------------------------------------------------------------|---------------------|------------------------------------|
-| ``x_i \in \mathbb{Z}``                                                                     | `SingleVariable`    | `Integer`                          |
-| ``x_i \in \{0,1\}``                                                                        | `SingleVariable`    | `ZeroOne`                          |
-| ``x_i \in \{0\} \cup [l,u]``                                                               | `SingleVariable`    | `Semicontinuous`                   |
-| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `SingleVariable`    | `Semiinteger`                      |
-| At most one component of ``x`` can be nonzero                                              | `VectorOfVariables` | `SOS1`                             |
-| At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorOfVariables` | `SOS2`                             |
+| Mathematical Constraint                                                                    | MOI Function           | MOI Set                            |
+|--------------------------------------------------------------------------------------------|------------------------|------------------------------------|
+| ``x_i \in \mathbb{Z}``                                                                     | `SingleVariable`       | `Integer`                          |
+| ``x_i \in \{0,1\}``                                                                        | `SingleVariable`       | `ZeroOne`                          |
+| ``x_i \in \{0\} \cup [l,u]``                                                               | `SingleVariable`       | `Semicontinuous`                   |
+| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `SingleVariable`       | `Semiinteger`                      |
+| At most one component of ``x`` can be nonzero                                              | `VectorOfVariables`    | `SOS1`                             |
+| At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorOfVariables`    | `SOS2`                             |
+| ``y = 1 \implies a^T x \in S``                                                             | `VectorAffineFunction` | `IndicatorSet`                     |
 
 ## Solving and retrieving the results
 
