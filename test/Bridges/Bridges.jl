@@ -20,4 +20,3 @@ end
     include("detbridge.jl")
     include("soctopsdbridge.jl")
 end
-include("external.jl")

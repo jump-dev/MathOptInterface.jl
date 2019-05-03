@@ -618,8 +618,11 @@ function operate_term(::typeof(*), α::T, t::MOI.ScalarQuadraticTerm{T}) where T
 end
 function operate_term(::typeof(*), t1::MOI.ScalarAffineTerm,
                       t2::MOI.ScalarAffineTerm)
-    MOI.ScalarQuadraticTerm(t1.coefficient * t2.coefficient, t1.variable_index,
-                            t2.variable_index)
+    coef = t1.coefficient * t2.coefficient
+    if t1.variable_index == t2.variable_index
+        coef *= 2
+    end
+    MOI.ScalarQuadraticTerm(coef, t1.variable_index, t2.variable_index)
 end
 
 function operate_term(::typeof(*), α::T, t::MOI.VectorAffineTerm{T}) where T
@@ -659,6 +662,11 @@ function operate_terms(::typeof(+),
                               MOI.VectorQuadraticTerm}})
     return terms
 end
+function operate_terms!(::typeof(-),
+                        terms::Vector{<:Union{MOI.ScalarAffineTerm,
+                                              MOI.ScalarQuadraticTerm}})
+    return map!(term -> operate_term(-, term), terms, terms)
+end
 function operate_terms(::typeof(-),
                        terms::Vector{<:Union{MOI.ScalarAffineTerm,
                                              MOI.ScalarQuadraticTerm}})
@@ -666,7 +674,7 @@ function operate_terms(::typeof(-),
 end
 function operate_terms(::typeof(-),
         terms::Vector{<:Union{MOI.VectorAffineTerm,
-                            MOI.VectorQuadraticTerm}})
+                              MOI.VectorQuadraticTerm}})
     return map(term -> operate_term(-, term), terms)
 end
 
@@ -726,6 +734,15 @@ function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where T
     operate!(op, T, f, g)
     return operate!(+, T, f, h, args...)
 end
+
+# Unary -
+function operate!(op::typeof(-), ::Type{T}, f::MOI.ScalarQuadraticFunction{T}) where T
+    operate_terms!(-, f.quadratic_terms)
+    operate_terms!(-, f.affine_terms)
+    f.constant = -f.constant
+    return f
+end
+
 
 # Scalar Variable +/- ...
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},

@@ -579,7 +579,7 @@ end
         @test MOIU.operate_term(*, 3.0, at) ==
             MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(30.0, x))
         @test MOIU.operate_term(*, at, at) ==
-            MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(100.0, x, x))
+            MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(200.0, x, x))
         @test MOIU.operate_term(*, 3.0, qt) ==
             MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(18.0, x, y))
         @test MOIU.operate_term(/, at, 2.0) ==

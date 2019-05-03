@@ -88,3 +88,13 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet, c::SplitIntervalBrid
     MOI.set(model, MOI.ConstraintSet(), c.lower, MOI.GreaterThan(change.lower))
     MOI.set(model, MOI.ConstraintSet(), c.upper, MOI.LessThan(change.upper))
 end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::SplitIntervalBridge)
+    return MOI.get(model, attr, b.lower)
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::SplitIntervalBridge)
+    return MOI.Interval(MOI.get(model, attr, b.lower).lower,
+                        MOI.get(model, attr, b.upper).upper)
+end

@@ -1,8 +1,17 @@
+using Test
+
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MathOptInterface.Test
+const MOIU = MathOptInterface.Utilities
+const MOIB = MathOptInterface.Bridges
+
+include("utilities.jl")
+
 include("simple_model.jl")
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 config = MOIT.TestConfig()
-config_with_basis = MOIT.TestConfig(basis = true)
 
 @testset "GreaterToLess" begin
     bridged_mock = MOIB.GreaterToLess{Float64}(mock)

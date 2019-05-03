@@ -60,6 +60,16 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
     MOI.set(model, MOI.ConstraintSet(), c.constraint, change)
 end
 
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::ScalarFunctionizeBridge)
+    f = MOIU.canonical(MOI.get(model, attr, b.constraint))
+    return convert(MOI.SingleVariable, f)
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::ScalarFunctionizeBridge)
+    return MOI.get(model, attr, b.constraint)
+end
+
 # vector version
 
 """
@@ -120,4 +130,19 @@ end
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
                  bridge::VectorFunctionizeBridge{T, S}, change::S) where {T, S}
     MOI.set(model, MOI.ConstraintSet(), bridge.constraint, change)
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::VectorFunctionizeBridge)
+    f = MOIU.canonical(MOI.get(model, attr, b.constraint))
+    @assert all(iszero, f.constants)
+    @assert length(f.terms) == MOI.output_dimension(f)
+    @assert all(t -> isone(t.scalar_term.coefficient), f.terms)
+    terms = sort(f.terms, by = t -> t.output_index)
+    @assert all(i -> terms[i].output_index == i, 1:MOI.output_dimension(f))
+    return MOI.VectorOfVariables([t.scalar_term.variable_index for t in terms])
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::VectorFunctionizeBridge)
+    return MOI.get(model, attr, b.constraint)
 end

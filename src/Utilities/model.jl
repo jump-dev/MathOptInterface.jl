@@ -137,23 +137,17 @@ function _removevar!(constrs::Vector{<:ConstraintEntry{MOI.SingleVariable}},
     end
     return rm
 end
-# TODO Remove this function when #523 is closed
-# Delete the variable of index `vi` in the constraints and delete its
-# `SingleVariable` constraints
-function delete_variable_in_constraints(model::AbstractModel, vi::VI)
+function MOI.delete(model::AbstractModel, vi::VI)
+    if !MOI.is_valid(model, vi)
+        throw(MOI.InvalidIndex(vi))
+    end
+    model.objective = removevariable(model.objective, vi)
     # `ci_to_remove` is the list of indices of the `SingleVariable` constraints
     # of `vi`
     ci_to_remove = broadcastvcat(constrs -> _removevar!(constrs, vi), model)
     for ci in ci_to_remove
         MOI.delete(model, ci)
     end
-end
-function MOI.delete(model::AbstractModel, vi::VI)
-    if !MOI.is_valid(model, vi)
-        throw(MOI.InvalidIndex(vi))
-    end
-    model.objective = removevariable(model.objective, vi)
-    delete_variable_in_constraints(model, vi)
     if model.variable_indices === nothing
         model.variable_indices = Set(MOI.get(model,
                                              MOI.ListOfVariableIndices()))
