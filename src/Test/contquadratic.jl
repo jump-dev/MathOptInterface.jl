@@ -438,7 +438,7 @@ function _qcp4test(model::MOI.ModelLike, config::TestConfig, less_than::Bool)
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1.0 atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ MOIU.getconstant(quad_set) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ MOI.constant(quad_set) atol=atol rtol=rtol
     end
 end
 
