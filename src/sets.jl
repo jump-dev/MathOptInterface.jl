@@ -137,6 +137,15 @@ Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
 Interval(s::Interval) = s
 
 """
+    constant(s::Union{EqualTo, GreaterThan, LessThan})
+
+Returns the constant of the set.
+"""
+constant(s::EqualTo) = s.value
+constant(s::GreaterThan) = s.lower
+constant(s::LessThan) = s.upper
+
+"""
     SecondOrderCone(dimension)
 
 The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_2 \\}`` of dimension `dimension`.
