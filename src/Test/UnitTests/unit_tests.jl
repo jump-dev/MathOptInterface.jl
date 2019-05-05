@@ -59,7 +59,7 @@ function test_model_solution(model, config;
     config.solve || return
     atol, rtol = config.atol, config.rtol
     @test MOI.get(model, MOI.SolverName()) isa AbstractString
-    @test MOI.set(model, MOI.Silent(), config.silent)
+    MOI.set(model, MOI.Silent(), config.silent)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     @test MOI.get(model, MOI.RawStatusString()) isa AbstractString
