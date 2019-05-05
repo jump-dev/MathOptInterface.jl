@@ -37,7 +37,7 @@ function constraint_constant(model::MOI.ModelLike,
                                                      <:MOI.AbstractScalarSet},
                              T::Type)
     return scalar_constant(T, MOI.get(model, MOI.ConstraintFunction(), ci)) -
-           getconstant(MOI.get(model, MOI.ConstraintSet(), ci))
+           MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
 end
 
 """
