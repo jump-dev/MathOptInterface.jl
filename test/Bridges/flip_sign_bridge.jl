@@ -10,7 +10,8 @@ include("utilities.jl")
 
 include("simple_model.jl")
 
-mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+# Unit tests need to set `MOI.Silent` so we need `MOIU.UniversalFallback`
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(SimpleModel{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "GreaterToLess" begin
