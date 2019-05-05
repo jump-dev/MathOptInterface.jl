@@ -461,11 +461,11 @@ struct ObjectiveFunctionType <: AbstractModelAttribute end
 """
     ObjectiveValue(resultidx::Int=1)
 
-A model attribute for the objective value of the `resultindex`th primal result.
+A model attribute for the objective value of the `result_index`th primal result.
 """
 struct ObjectiveValue <: AbstractModelAttribute
-    resultindex::Int
-    (::Type{ObjectiveValue})(resultindex=1) = new(resultindex)
+    result_index::Int
+    (::Type{ObjectiveValue})(result_index=1) = new(result_index)
 end
 
 """
