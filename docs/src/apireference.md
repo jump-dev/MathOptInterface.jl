@@ -100,6 +100,7 @@ ResultCount
 ObjectiveFunction
 ObjectiveFunctionType
 ObjectiveValue
+DualObjectiveValue
 ObjectiveBound
 RelativeGap
 SolveTime

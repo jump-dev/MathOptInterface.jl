@@ -36,7 +36,10 @@ config_with_basis = MOIT.TestConfig(basis = true)
               (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.BASIC, MOI.BASIC]],
               (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1],
               (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [0]),
-         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0], con_basis =
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0],
+                  (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1],
+                  (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [0],
+              con_basis =
              [(MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [MOI.NONBASIC],
               (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [MOI.BASIC],
               (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.BASIC, MOI.BASIC]]),
@@ -46,7 +49,10 @@ config_with_basis = MOIT.TestConfig(basis = true)
               (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.BASIC, MOI.BASIC]]))
     MOIT.linear10test(bridged_mock, config_with_basis)
     MOIU.set_mock_optimize!(mock,
-         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0], con_basis =
+         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0],
+               (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0],
+               (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [-1],
+              con_basis =
              [(MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [MOI.BASIC],
               (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})    => [MOI.BASIC],
               (MOI.SingleVariable, MOI.GreaterThan{Float64})                => [MOI.NONBASIC, MOI.NONBASIC]],
