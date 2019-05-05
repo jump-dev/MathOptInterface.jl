@@ -23,20 +23,17 @@ function get_fallback(model::MOI.ModelLike, ::MOI.ObjectiveValue)
     return evalvariables(vi -> MOI.get(model, MOI.VariablePrimal(), vi), f)
 end
 
-scalar_constant(T::Type, ::MOI.SingleVariable) = zero(T)
-scalar_constant(::Type, f::MOI.AbstractScalarFunction) = MOI._constant(f)
-
 function constraint_constant(model::MOI.ModelLike,
                              ci::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction,
                                                      <:MOI.AbstractVectorSet},
                              T::Type)
-    return MOI._constant(MOI.get(model, MOI.ConstraintFunction(), ci))
+    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci))
 end
 function constraint_constant(model::MOI.ModelLike,
                              ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
                                                      <:MOI.AbstractScalarSet},
                              T::Type)
-    return scalar_constant(T, MOI.get(model, MOI.ConstraintFunction(), ci)) -
+    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T) -
            MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
 end
 
@@ -64,7 +61,7 @@ function dual_objective_value(model::MOI.ModelLike,
                                                       <:MOI.Interval},
                               T::Type,
                               result_index::Integer)
-    constant = scalar_constant(T, MOI.get(model, MOI.ConstraintFunction(), ci))
+    constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
     if dual < zero(dual)
@@ -136,7 +133,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Typ
         # The objective constant should not be present in rays
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         f = MOI.get(model, MOI.ObjectiveFunction{F}())
-        value += scalar_constant(T, f)
+        value += MOI.constant(f, T)
     end
     return value::T
 end
