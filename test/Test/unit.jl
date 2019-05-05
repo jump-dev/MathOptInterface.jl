@@ -13,7 +13,8 @@ include("../model.jl")
 end
 
 @testset "Unit Tests" begin
-    mock = MOIU.MockOptimizer(Model{Float64}())
+    # `UniversalFallback` needed for `MOI.Silent`
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(Model{Float64}()))
     config = MOIT.TestConfig()
     MOIT.unittest(mock, config, [
         "solve_blank_obj",
@@ -278,7 +279,8 @@ end
 end
 
 @testset "modifications" begin
-    mock   = MOIU.MockOptimizer(Model{Float64}())
+    # `UniversalFallback` needed for `MOI.Silent`
+    mock   = MOIU.MockOptimizer(MOIU.UniversalFallback(Model{Float64}()))
     config = MOIT.TestConfig()
     @testset "solve_set_singlevariable_lessthan" begin
         MOIU.set_mock_optimize!(mock,
