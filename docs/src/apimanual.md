@@ -1053,13 +1053,23 @@ end
     MOIT.intconictest(bridged, config)
 end
 ```
-The optimizer `bridged` constructed with [`full_bridge_optimizer`](@ref)
+The optimizer `bridged` constructed with [`Bridges.full_bridge_optimizer`](@ref)
 automatically bridges constraints that are not supported by `optimizer`
 using the bridges listed in [Bridges](@ref). It is recommended for an
 implementation of MOI to only support constraints that are natively supported
 by the solver and let bridges transform the constraint to the appropriate form.
 For this reason it is expected that tests may not pass if `optimizer` is used
 instead of `bridged`.
+
+To test that a specific problem can be solved without bridges, a specific test can
+be run with `optimizer` instead of `bridged`. For instance
+```julia
+@testset "Interval constraints" begin
+    MOIT.linear10test(optimizer, config)
+end
+```
+checks that `optimizer` implements supports for
+[`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref).
 
 If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), then `supports_default_copy_to` can be replaced by `supports_allocate_load` if appropriate (see [Implementing copy](@ref)) and the line `const bridged = ...` can be replaced with
 ```julia
