@@ -388,7 +388,7 @@ Bridges.RSOCtoPSDBridge
 For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
 Moreover, a `LazyBridgeOptimizer` with all the bridges defined in this package can be obtained with
 ```@docs
-full_bridge_optimizer
+Bridges.full_bridge_optimizer
 ```
 
 ## Copy utilities
