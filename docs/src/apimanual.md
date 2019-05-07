@@ -1068,7 +1068,7 @@ be run with `optimizer` instead of `bridged`. For instance
     MOIT.linear10test(optimizer, config)
 end
 ```
-checks that `optimizer` implements supports for
+checks that `optimizer` implements support for
 [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref).
 
 If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), then `supports_default_copy_to` can be replaced by `supports_allocate_load` if appropriate (see [Implementing copy](@ref)) and the line `const bridged = ...` can be replaced with
