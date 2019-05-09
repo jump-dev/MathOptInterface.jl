@@ -379,63 +379,11 @@ end
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
                                             MOI.ScalarQuadraticTerm.([-1, -2, -3], [x, y, x], [x, y, y]), -2)
             end
-<<<<<<< HEAD
-            @testset "operate" begin
-                @test f ≈ 7 + (fx + 2fy) * (1fx + fy) + 3fx
-                @test f ≈ -(-7 - 3fx) + (fx + 2fy) * (1fx + fy)
-                @test f ≈ -((fx + 2fy) * (MOIU.operate(-, Int, fx) - fy)) + 3fx + 7
-                @test f ≈ 7 + MOIU.operate(*, Int, fx, fx) + 3fx * (fy + 1) + 2fy * fy
-                @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
-                @test (2.0*fx*fx + 2.0fx*fy + 2.0fx + 2.0)/2.0 ≈ 1.0fx*fx + 1.0fx*fy + 1.0fx + 1.0
-                @test (2.0fx + 2.0)/2.0 ≈ 1.0fx + 1.0
-                @test f ≈ begin
-                    MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
-                                                MOI.ScalarQuadraticTerm.([1], [x], [x]), 4) +
-                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                            MOI.ScalarQuadraticTerm.([2, 3], [y, x], [y, y]), 3)
-                end
-                @test f ≈ begin
-                    MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
-                                                MOI.ScalarQuadraticTerm.([1], [x], [x]), 10) -
-                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                                MOI.ScalarQuadraticTerm.([-2, -3], [y, x], [y, y]), 3)
-                end
-                @test f ≈ begin
-                    MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) +
-                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                                MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2)
-                end
-                @test f ≈ begin
-                    MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) -
-                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                                MOI.ScalarQuadraticTerm.([-1, -2, -3], [x, y, x], [x, y, y]), -2)
-                end
-                @test f ≈ begin
-                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                                MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2) +
-                    MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5)
-                end
-                @test f ≈ begin
-                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                                MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 12) -
-                    MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-3, x)], 5)
-                end
-                @test f ≈ begin
-                    MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([2], [x]),
-                                                MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7) +
-                    MOI.SingleVariable(x)
-                end
-                @test f ≈ MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]),
-                                              MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 10) - 3
-                @test f ≈
-                2.0 * MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3.0], [x]),
-                                                  MOI.ScalarQuadraticTerm.([1.0, 2.0, 3.0], [x, y, x], [x, y, y]), 7.0) / 2.0
-=======
+
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
                                             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2) +
                 MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5)
->>>>>>> upstream/master
             end
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],

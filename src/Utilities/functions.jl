@@ -1262,17 +1262,6 @@ function operate(::typeof(/), ::Type{T},
     return operate!(/, T, copy(f), α)
 end
 
-function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
-                  α::T) where T
-    map_terms!(term -> operate_term(/, term, α), f)
-    f.constant /= α
-    return f
-end
-function operate(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
-                 α::T) where T
-    return operate!(/, T, copy(f), α)
-end
-
 function Base.:/(args::ScalarLike{T}...) where T
     return operate(/, T, args...)
 end
