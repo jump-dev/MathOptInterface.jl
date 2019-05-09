@@ -379,7 +379,6 @@ end
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
                                             MOI.ScalarQuadraticTerm.([-1, -2, -3], [x, y, x], [x, y, y]), -2)
             end
-
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
                                             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2) +
