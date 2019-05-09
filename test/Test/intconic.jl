@@ -1,9 +1,15 @@
-@testset "Integer Conic" begin
-    mock = MOIU.MockOptimizer(Model{Float64}())
-    config = MOIT.TestConfig()
+using Test
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIU = MOI.Utilities
 
-    @testset "SOC" begin
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0, 0.0])
-        MOIT.intsoc1test(mock, config)
-    end
+include("../model.jl")
+
+mock = MOIU.MockOptimizer(Model{Float64}())
+config = MOIT.TestConfig()
+
+@testset "SOC" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0, 0.0])
+    MOIT.intsoc1test(mock, config)
 end

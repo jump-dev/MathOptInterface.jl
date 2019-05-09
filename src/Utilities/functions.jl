@@ -1,5 +1,4 @@
-using Compat
-using Compat.Test
+using Test
 
 """
     evalvariables(varval::Function, f::AbstractFunction)
@@ -10,11 +9,7 @@ function evalvariables end
 evalvariables(varval::Function, f::SVF) = varval(f.variable)
 evalvariables(varval::Function, f::VVF) = varval.(f.variables)
 function evalvariables(varval::Function, f::SAF)
-    @static if VERSION >= v"0.7-"
-        return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
-    else
-        return mapreduce(t->evalterm(varval, t), +, f.constant, f.terms)
-    end
+    return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
 end
 function evalvariables(varval::Function, f::VAF)
     out = copy(f.constants)
@@ -25,13 +20,8 @@ function evalvariables(varval::Function, f::VAF)
 end
 function evalvariables(varval::Function, f::SQF)
     init = zero(f.constant)
-    @static if VERSION >= v"0.7-"
-        lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
-        quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
-    else
-        lin = mapreduce(t->evalterm(varval, t), +, init, f.affine_terms)
-        quad = mapreduce(t->evalterm(varval, t), +, init, f.quadratic_terms)
-    end
+    lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
+    quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
     return lin + quad + f.constant
 end
 function evalvariables(varval::Function, f::VQF)
@@ -74,12 +64,12 @@ function mapvariables(varmap::Function, f::MOI.VectorOfVariables)
     return MOI.VectorOfVariables(varmap.(f.variables))
 end
 function mapvariables(varmap::Function, f::Union{SAF, VAF})
-    typeof(f)(mapvariable.(varmap, f.terms), MOI._constant(f))
+    typeof(f)(mapvariable.(varmap, f.terms), MOI.constant(f))
 end
 function mapvariables(varmap::Function, f::Union{SQF, VQF})
     lin = mapvariable.(varmap, f.affine_terms)
     quad = mapvariable.(varmap, f.quadratic_terms)
-    return typeof(f)(lin, quad, MOI._constant(f))
+    return typeof(f)(lin, quad, MOI.constant(f))
 end
 mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f)
 mapvariables(varmap::Function, change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange}) = change
@@ -113,26 +103,22 @@ struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
 end
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
-@static if VERSION >= v"0.7-"
-    function Base.iterate(it::ScalarFunctionIterator, state = 1)
-        if state > length(it)
-            return nothing
-        else
-            return (it[state], state + 1)
-        end
+
+function Base.iterate(it::ScalarFunctionIterator, state = 1)
+    if state > length(it)
+        return nothing
+    else
+        return (it[state], state + 1)
     end
-else
-    Base.start(it::ScalarFunctionIterator) = 1
-    Base.done(it::ScalarFunctionIterator, state) = state > length(it)
-    Base.next(it::ScalarFunctionIterator, state) = (it[state], state+1)
 end
+
 function Base.length(it::ScalarFunctionIterator{<:MOI.AbstractVectorFunction})
     return MOI.output_dimension(it.f)
 end
 Base.eltype(it::ScalarFunctionIterator{VVF}) = SVF
 Base.eltype(it::ScalarFunctionIterator{VAF{T}}) where T = SAF{T}
 Base.eltype(it::ScalarFunctionIterator{VQF{T}}) where T = SQF{T}
-Compat.lastindex(it::ScalarFunctionIterator) = length(it)
+Base.lastindex(it::ScalarFunctionIterator) = length(it)
 
 # Define getindex for Vector functions
 
@@ -240,7 +226,8 @@ function is_strictly_sorted(x::AbstractVector, by, filter)
 end
 
 """
-    canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
+    canonical(f::Union{ScalarAffineFunction, VectorAffineFunction,
+                       ScalarQuadraticFunction, VectorQuadraticFunction})
 
 Returns the function in a canonical form, i.e.
 * A term appear only once.
@@ -462,15 +449,23 @@ end
 
 Return a new function `f` with the variable vi removed.
 """
+function removevariable end
+function removevariable(f::MOI.SingleVariable, vi::MOI.VariableIndex)
+    if f.variable == vi
+        error("Cannot remove variable from a `SingleVariable` function of the",
+              " same variable.")
+    end
+    return f
+end
 function removevariable(f::VVF, vi)
     VVF(_rmvar(f.variables, vi))
 end
 function removevariable(f::Union{SAF, VAF}, vi)
-    typeof(f)(_rmvar(f.terms, vi), MOI._constant(f))
+    typeof(f)(_rmvar(f.terms, vi), MOI.constant(f))
 end
 function removevariable(f::Union{SQF, VQF}, vi)
     terms = _rmvar.((f.affine_terms, f.quadratic_terms), Ref(vi))
-    typeof(f)(terms..., MOI._constant(f))
+    typeof(f)(terms..., MOI.constant(f))
 end
 
 """
@@ -623,8 +618,11 @@ function operate_term(::typeof(*), α::T, t::MOI.ScalarQuadraticTerm{T}) where T
 end
 function operate_term(::typeof(*), t1::MOI.ScalarAffineTerm,
                       t2::MOI.ScalarAffineTerm)
-    MOI.ScalarQuadraticTerm(t1.coefficient * t2.coefficient, t1.variable_index,
-                            t2.variable_index)
+    coef = t1.coefficient * t2.coefficient
+    if t1.variable_index == t2.variable_index
+        coef *= 2
+    end
+    MOI.ScalarQuadraticTerm(coef, t1.variable_index, t2.variable_index)
 end
 
 function operate_term(::typeof(*), α::T, t::MOI.VectorAffineTerm{T}) where T
@@ -664,6 +662,11 @@ function operate_terms(::typeof(+),
                               MOI.VectorQuadraticTerm}})
     return terms
 end
+function operate_terms!(::typeof(-),
+                        terms::Vector{<:Union{MOI.ScalarAffineTerm,
+                                              MOI.ScalarQuadraticTerm}})
+    return map!(term -> operate_term(-, term), terms, terms)
+end
 function operate_terms(::typeof(-),
                        terms::Vector{<:Union{MOI.ScalarAffineTerm,
                                              MOI.ScalarQuadraticTerm}})
@@ -671,7 +674,7 @@ function operate_terms(::typeof(-),
 end
 function operate_terms(::typeof(-),
         terms::Vector{<:Union{MOI.VectorAffineTerm,
-                            MOI.VectorQuadraticTerm}})
+                              MOI.VectorQuadraticTerm}})
     return map(term -> operate_term(-, term), terms)
 end
 
@@ -731,6 +734,15 @@ function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where T
     operate!(op, T, f, g)
     return operate!(+, T, f, h, args...)
 end
+
+# Unary -
+function operate!(op::typeof(-), ::Type{T}, f::MOI.ScalarQuadraticFunction{T}) where T
+    operate_terms!(-, f.quadratic_terms)
+    operate_terms!(-, f.affine_terms)
+    f.constant = -f.constant
+    return f
+end
+
 
 # Scalar Variable +/- ...
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
@@ -1406,4 +1418,57 @@ function operate(::typeof(vcat), ::Type{T},
     fill_vector(terms, T, 0, 0, fill_terms, number_of_affine_terms, funcs...)
     fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
     return VAF(terms, constant)
+end
+
+# Similar to `eachscalar` but faster, see
+# https://github.com/JuliaOpt/MathOptInterface.jl/issues/418
+function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
+    MOI.SingleVariable.(f.variables)
+end
+function scalarize(f::MOI.VectorAffineFunction{T}, ignore_constants::Bool = false) where T
+    dimension = MOI.output_dimension(f)
+    constants = ignore_constants ? zeros(T, dimension) : MOI.constant(f)
+    counting = count_terms(dimension, f.terms)
+    functions = MOI.ScalarAffineFunction{T}[
+        MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}[], constants[i]) for i in 1:dimension]
+    for i in 1:dimension
+        sizehint!(functions[i].terms, counting[i])
+    end
+    for term in f.terms
+        push!(functions[term.output_index].terms, term.scalar_term)
+    end
+    return functions
+end
+function scalarize(f::MOI.VectorQuadraticFunction{T}, ignore_constants::Bool = false) where T
+    dimension = MOI.output_dimension(f)
+    constants = ignore_constants ? zeros(T, dimension) : MOI.constant(f)
+    counting_scalars = count_terms(dimension, f.affine_terms)
+    counting_quadratics = count_terms(dimension, f.quadratic_terms)
+    functions = MOI.ScalarQuadraticFunction{T}[
+        MOI.ScalarQuadraticFunction{T}(MOI.ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], constants[i]) for i in 1:dimension]
+    functions = MOI.ScalarQuadraticFunction.(
+        MOI.ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], constants)
+    for i in 1:dimension
+        sizehint!(functions[i].affine_terms, counting_scalars[i])
+        sizehint!(functions[i].quadratic_terms, counting_quadratics[i])
+    end
+    for term in f.affine_terms
+        push!(functions[term.output_index].affine_terms, term.scalar_term)
+    end
+    for term in f.quadratic_terms
+        push!(functions[term.output_index].quadratic_terms, term.scalar_term)
+    end
+    return functions
+end
+
+function count_terms(counting::Vector{<:Integer}, terms::Vector{T}) where T
+    for term in terms
+        counting[term.output_index] += 1
+    end
+    return nothing
+end
+function count_terms(dimension::I, terms::Vector{T}) where {I,T}
+    counting = zeros(I, dimension)
+    count_terms(counting, terms)
+    return counting
 end

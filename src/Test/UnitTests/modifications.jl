@@ -302,4 +302,27 @@ function solve_coef_scalar_objective(model::MOI.ModelLike, config::TestConfig)
 end
 modificationtests["solve_coef_scalar_objective"] = solve_coef_scalar_objective
 
+function delete_variable_with_single_variable_obj(model::MOI.ModelLike,
+                                                  config::TestConfig)
+    atol, rtol = config.atol, config.rtol
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x, y
+        minobjective: x
+        c: x >= 1.0
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    y = MOI.get(model, MOI.VariableIndex, "y")
+    c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    MOI.delete(model, y)
+    test_model_solution(model, config;
+        objective_value   = 1.0,
+        variable_primal   = [(x, 1.0)],
+        constraint_primal = [(c, 1.0)],
+        constraint_dual   = [(c, 1.0)]
+    )
+end
+modificationtests["delete_variable_with_single_variable_obj"] = delete_variable_with_single_variable_obj
+
 @moitestset modification

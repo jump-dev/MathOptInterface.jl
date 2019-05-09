@@ -79,8 +79,11 @@ function MOI.delete(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
         delete!(d, ci)
     end
 end
-# TODO Remove this function when #523 is closed
-function delete_variable_in_universal_constraints(uf::UniversalFallback, vi::VI)
+function MOI.delete(uf::UniversalFallback, vi::VI)
+    MOI.delete(uf.model, vi)
+    for d in values(uf.varattr)
+        delete!(d, vi)
+    end
     for (FS, constraints) in uf.constraints
         for (ci, constraint) in constraints
             f, s = constraint
@@ -93,20 +96,6 @@ function delete_variable_in_universal_constraints(uf::UniversalFallback, vi::VI)
             end
         end
     end
-end
-# TODO Remove this function when #523 is closed
-# Delete the variable of index `vi` in the constraints and delete its
-# `SingleVariable` constraints
-function delete_variable_in_constraints(uf::UniversalFallback, vi::VI)
-    delete_variable_in_constraints(uf.model, vi)
-    delete_variable_in_universal_constraints(uf, vi)
-end
-function MOI.delete(uf::UniversalFallback, vi::VI)
-    MOI.delete(uf.model, vi)
-    for d in values(uf.varattr)
-        delete!(d, vi)
-    end
-    delete_variable_in_universal_constraints(uf, vi)
 end
 
 # Attributes

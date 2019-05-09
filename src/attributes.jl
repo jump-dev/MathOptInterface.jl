@@ -36,11 +36,9 @@ abstract type AbstractConstraintAttribute end
 
 const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
-@static if VERSION >= v"0.7-"
-    # This allows to use attributes in broadcast calls without the need to
-    # embed it in a `Ref`
-    Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
-end
+# This allows to use attributes in broadcast calls without the need to
+# embed it in a `Ref`
+Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
 
 """
     struct UnsupportedAttribute{AttrType} <: UnsupportedError
@@ -283,6 +281,11 @@ function set(model::ModelLike,
              attr::Union{AbstractVariableAttribute,
                          AbstractConstraintAttribute},
              idxs::Vector, vector_of_values::Vector)
+    if length(idxs) != length(vector_of_values)
+        throw(DimensionMismatch("Number of indices ($(length(idxs))) does " *
+                                "not match the number of values " *
+                                "($(length(vector_of_values))) set to `$attr`."))
+    end
     return set.(model, attr, idxs, vector_of_values)
 end
 
@@ -331,6 +334,27 @@ struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 An optimizer attribute for the string identifying the solver/optimizer.
 """
 struct SolverName <: AbstractOptimizerAttribute end
+
+"""
+    Silent
+
+An optimizer attribute for silencing the output of an optimizer. When `set`
+to `true`, it takes precedence over any other attribute controlling verbosity
+and requires the solver to produce no output. The default value is `false`
+which has no effect. In this case the verbosity is controlled by other
+attributes.
+
+## Note
+
+Every optimizer should have verbosity on by default. For instance, if a solver
+has a solver-specific log level attribute, the MOI implementation should set it
+to `1` by default. If the user sets `Silent` to `true`, then the log level
+should be set to `0`, even if the user specifically sets a value of log level.
+If the value of `Silent` is `false` then the log level set to the solver is the
+value given by the user for this solver-specific parameter or `1` if none is
+given.
+"""
+struct Silent <: AbstractOptimizerAttribute end
 
 ## Model attributes
 
@@ -437,11 +461,22 @@ struct ObjectiveFunctionType <: AbstractModelAttribute end
 """
     ObjectiveValue(resultidx::Int=1)
 
-A model attribute for the objective value of the `resultindex`th primal result.
+A model attribute for the objective value of the `result_index`th primal result.
 """
 struct ObjectiveValue <: AbstractModelAttribute
-    resultindex::Int
-    (::Type{ObjectiveValue})(resultindex=1) = new(resultindex)
+    result_index::Int
+    (::Type{ObjectiveValue})(result_index=1) = new(result_index)
+end
+
+"""
+    DualObjectiveValue(result_index::Int=1)
+
+A model attribute for the value of the objective function of the dual problem
+for the `result_index`th dual result.
+"""
+struct DualObjectiveValue <: AbstractModelAttribute
+    result_index::Int
+    (::Type{DualObjectiveValue})(result_index=1) = new(result_index)
 end
 
 """
@@ -795,7 +830,8 @@ This group of statuses means that something unexpected or problematic happened.
 """
     RawStatusString()
 
-A model attribute for a solver specific string explaning why the optimizer stopped.
+A model attribute for a solver specific string explaining why the optimizer
+stopped.
 """
 struct RawStatusString <: AbstractModelAttribute end
 
@@ -895,7 +931,7 @@ during [`copy_to`](@ref) using [`set`](@ref).
 ## Important note when defining new attributes
 
 By default `is_copyable(attr)` returns `!is_set_by_optimize(attr)`. A specific
-method should be defined for attibutes which are copied indirectly during
+method should be defined for attributes which are copied indirectly during
 [`copy_to`](@ref). For instance, both `is_copyable` and
 [`is_set_by_optimize`](@ref) return `false` for the following attributes:
 

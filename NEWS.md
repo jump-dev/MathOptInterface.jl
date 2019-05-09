@@ -1,6 +1,29 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.8.4 (March 13, 2019)
+-----------------------
+
+- Performance improvement in `default_copy_to` and bridge optimizer (#696).
+- Add `Silent` and implement setting optimizer attributes in caching and mock
+  optimizers (#695).
+- Add functionize bridges (SingleVariable and VectorOfVariables) (#659).
+- Minor typo fixes (#694).
+
+v0.8.3 (March 6, 2019)
+----------------------
+
+- Use zero constant in scalar constraint function of `MOI.Test.copytest` (#691).
+- Fix variable deletion with `SingleVariable` objective function (#690).
+- Fix `LazyBridgeOptimizer` with bridges that add no constraints (#689).
+- Error message improvements (#673, #685, #686, #688).
+- Documentation improvements (#682, #683, #687).
+- Basis status:
+  * Remove `VariableBasisStatus` (#679).
+  * Test `ConstraintBasisStatus` and implement it in bridges (#678).
+- Fix inference of `NumberOfVariables` and `NumberOfConstraints` (#677).
+- Implement division between a quadratic function and a number (#675).
+
 v0.8.2 (February 7, 2019)
 -------------------------
 

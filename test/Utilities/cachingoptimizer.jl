@@ -1,4 +1,25 @@
-@MOIU.model ModelForCachingOptimizer (MOI.ZeroOne, MOI.Integer) (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone, MOI.PositiveSemidefiniteConeTriangle, MOI.RootDetConeTriangle, MOI.LogDetConeTriangle) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+using Test
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIU = MOI.Utilities
+
+include("../model.jl")
+include("../model_for_mock.jl")
+
+MOIU.@model(ModelForCachingOptimizer,
+            (MOI.ZeroOne, MOI.Integer),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
+            (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
+             MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+             MOI.ExponentialCone, MOI.DualExponentialCone,
+             MOI.PositiveSemidefiniteConeTriangle, MOI.RootDetConeTriangle,
+             MOI.LogDetConeTriangle),
+            (),
+            (MOI.SingleVariable,),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction,))
 
 @testset "Test default attributes" begin
     # Without an optimizer attached (i.e., `MOI.state(model) == NO_OPTIMIZER`) we
@@ -13,31 +34,53 @@
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
     x = MOI.add_variables(model, 2)
-    if VERSION < v"0.7"
-        @test_throws Exception MOI.get(model, MOI.VariablePrimal(), x[1])
-        @test_throws Exception MOI.get(model, MOI.VariablePrimal(), x)
-        @test_throws Exception MOI.get(model, MOI.SolverName())
-        @test_throws Exception MOI.get(model, MOI.ResultCount())
-    else
-        attr = MOI.VariablePrimal()
-        exception = ErrorException(
-            "Cannot query $(attr) from caching optimizer because no optimizer" *
-            " is attached.")
-        @test_throws exception MOI.get(model, MOI.VariablePrimal(), x[1])
-        @test_throws exception MOI.get(model, MOI.VariablePrimal(), x)
+    attr = MOI.VariablePrimal()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, MOI.VariablePrimal(), x[1])
+    @test_throws exception MOI.get(model, MOI.VariablePrimal(), x)
 
-        attr = MOI.SolverName()
-        exception = ErrorException(
-            "Cannot query $(attr) from caching optimizer because no optimizer" *
-            " is attached.")
-        @test_throws Exception MOI.get(model, MOI.SolverName())
+    attr = MOI.SolverName()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
+    attr = MOI.Silent()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
 
-        attr = MOI.ResultCount()
-        exception = ErrorException(
-            "Cannot query $(attr) from caching optimizer because no optimizer" *
-            " is attached.")
-        @test_throws Exception MOI.get(model, MOI.ResultCount())
-    end
+    attr = MOI.ResultCount()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
+end
+
+@testset "Copyable solver attributes" begin
+    cache = MOIU.UniversalFallback(ModelForCachingOptimizer{Float64}())
+    cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
+    MOI.set(cached, MOI.Silent(), true)
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    MOIU.reset_optimizer(cached, mock)
+    @test MOI.get(mock, MOI.Silent())
+    @test MOI.get(cached, MOI.Silent())
+    MOI.set(cached, MOI.Silent(), false)
+    @test !MOI.get(mock, MOI.Silent())
+    @test !MOI.get(cached, MOI.Silent())
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    MOIU.reset_optimizer(cached, mock)
+    @test !MOI.get(mock, MOI.Silent())
+    @test !MOI.get(cached, MOI.Silent())
+    MOI.set(cached, MOI.Silent(), true)
+    @test MOI.get(mock, MOI.Silent())
+    @test MOI.get(cached, MOI.Silent())
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    MOIU.reset_optimizer(cached, mock)
+    @test MOI.get(mock, MOI.Silent())
+    @test MOI.get(cached, MOI.Silent())
 end
 
 @testset "CachingOptimizer MANUAL mode" begin
@@ -219,7 +262,7 @@ end
 
 end
 
-@testset "CachingOptimizer constructor with optimizer" begin
+@testset "Constructor with optimizer" begin
     @testset "Empty model and optimizer" begin
         s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
         model = ModelForCachingOptimizer{Float64}()

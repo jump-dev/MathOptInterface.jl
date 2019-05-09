@@ -4,8 +4,7 @@ using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-using Compat
-using Compat.Test
+using Test
 
 include("config.jl")
 

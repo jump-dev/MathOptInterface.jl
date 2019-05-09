@@ -10,18 +10,26 @@ These calls are used by the `AbstractBridgeOptimizer` to communicate with the br
 """
 abstract type AbstractBridge end
 
+
+function MOI.get(::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
+                 bridge::AbstractBridge)
+    throw(ArgumentError("Constraint bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`."))
+end
+
 """
     MOI.get(b::AbstractBridge, ::MOI.NumberOfVariables)
 
 The number of variables created by the bridge `b` in the model.
 """
 MOI.get(b::AbstractBridge, ::MOI.NumberOfVariables) = 0
+
 """
     MOI.get(b::AbstractBridge, ::MOI.NumberOfConstraints{F, S}) where {F, S}
 
 The number of constraints of the type `F`-in-`S` created by the bridge `b` in the model.
 """
 MOI.get(b::AbstractBridge, ::MOI.NumberOfConstraints) = 0
+
 """
     MOI.get(b::AbstractBridge, ::MOI.NumberOfConstraints{F, S}) where {F, S}
 

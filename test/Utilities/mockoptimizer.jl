@@ -1,4 +1,12 @@
-@testset "Mock optimizer default objective sense" begin
+using Test
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIU = MOI.Utilities
+
+include("../model_for_mock.jl")
+
+@testset "Default objective sense" begin
     MOIT.default_objective_test(MOIU.MockOptimizer(ModelForMock{Float64}()))
 end
 
@@ -9,11 +17,11 @@ end
     MOIT.default_status_test(model)
 end
 
-@testset "Mock optimizer name test" begin
+@testset "Name test" begin
     MOIT.nametest(MOIU.MockOptimizer(ModelForMock{Float64}()))
 end
 
-@testset "Mock optimizer optimizer attributes" begin
+@testset "Optimizer attributes" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
     @test MOI.supports(optimizer, MOIU.MockModelAttribute())
     MOI.set(optimizer, MOIU.MockModelAttribute(), 10)
@@ -35,7 +43,7 @@ end
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), [c1]) == [-12]
 end
 
-@testset "Mock optimizer optimizer solve no result" begin
+@testset "Optimizer solve no result" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
 
     v1 = MOI.add_variable(optimizer)
@@ -48,7 +56,7 @@ end
     @test MOI.get(optimizer, MOI.ResultCount()) == 0
 end
 
-@testset "Mock optimizer optimizer solve with result" begin
+@testset "Optimizer solve with result" begin
     optimizer = MOIU.MockOptimizer(ModelForMock{Float64}(),
                                    eval_objective_value=false,
                                    eval_variable_constraint_dual=false)
@@ -57,6 +65,10 @@ end
     c1 = MOI.add_constraint(optimizer, MOI.SingleVariable(v[1]), MOI.GreaterThan(1.0))
     soc = MOI.add_constraint(optimizer, MOI.VectorOfVariables(v), MOI.SecondOrderCone(2))
 
+    err = ErrorException("No mock primal is set for variable `$(v[1])`.")
+    @test_throws err MOI.get(optimizer, MOI.VariablePrimal(), v[1])
+    err = ErrorException("No mock dual is set for constraint `$c1`.")
+    @test_throws err MOI.get(optimizer, MOI.ConstraintDual(), c1)
 
     # Load fake solution
     # TODO: Provide a more compact API for this.

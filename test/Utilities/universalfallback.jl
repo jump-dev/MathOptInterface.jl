@@ -61,117 +61,116 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             (),
             ())
 
-@testset "UniversalFallback" begin
-    # TODO: Restructure to avoid sharing state across testsets. It doesn't seem
-    # necessary to use the same uf object for all the tests.
-    model = ModelForUniversalFallback{Float64}()
-    uf = MOIU.UniversalFallback(model)
+# TODO: Restructure to avoid sharing state across testsets. It doesn't seem
+# necessary to use the same uf object for all the tests.
+model = ModelForUniversalFallback{Float64}()
+uf = MOIU.UniversalFallback(model)
+@test MOI.is_empty(uf)
+@testset "Copy Test" begin
+    MOIT.copytest(uf, Model{Float64}())
+    @test !MOI.is_empty(uf)
+    MOI.empty!(uf)
     @test MOI.is_empty(uf)
-    @testset "Copy Test" begin
-        MOIT.copytest(uf, Model{Float64}())
-        @test !MOI.is_empty(uf)
-        MOI.empty!(uf)
-        @test MOI.is_empty(uf)
+end
+@testset "Start Values Test" begin
+    src = MOIU.UniversalFallback(Model{Float64}())
+    dest = MOIU.UniversalFallback(Model{Float64}())
+    MOIT.start_values_test(dest, src)
+end
+@testset "Valid Test" begin
+    MOIT.validtest(uf)
+    @test !MOI.is_empty(uf)
+    MOI.empty!(uf)
+    @test MOI.is_empty(uf)
+end
+@testset "Empty Test" begin
+    MOIT.emptytest(uf)
+    @test MOI.is_empty(uf)
+end
+@testset "Name Test" begin
+    MOIT.nametest(uf)
+    @test !MOI.is_empty(uf)
+    MOI.empty!(uf)
+    @test MOI.is_empty(uf)
+end
+@testset "Optimizer Attribute" begin
+    attr = UnknownOptimizerAttribute()
+    listattr = MOI.ListOfOptimizerAttributesSet()
+    test_optmodattrs(uf, model, attr, listattr)
+end
+@testset "Model Attribute" begin
+    attr = MOIT.UnknownModelAttribute()
+    listattr = MOI.ListOfModelAttributesSet()
+    test_optmodattrs(uf, model, attr, listattr)
+end
+x = MOI.add_variable(uf)
+y, z = MOI.add_variables(uf, 2)
+@testset "Variable Attribute" begin
+    VI = MOI.VariableIndex
+    attr = MOIT.UnknownVariableAttribute()
+    listattr = MOI.ListOfVariableAttributesSet()
+    test_varconattrs(uf, model, attr, listattr, VI, MOI.add_variable, x, y, z)
+end
+@testset "Constraint Attribute" begin
+    global x, y, z
+    attr = MOIT.UnknownConstraintAttribute()
+    @testset "Supported constraint" begin
+        cx = MOI.add_constraint(uf, x, MOI.LessThan(0.))
+        cy = MOI.add_constraint(uf, y, MOI.LessThan(1.))
+        cz = MOI.add_constraint(uf, z, MOI.LessThan(2.))
+        CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}
+        listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.LessThan{Float64}}()
+        test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.LessThan(0.)), cx, cy, cz)
+
+        MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
+        @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
+
+        @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
+        MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
+        @test MOI.get(uf, MOI.ConstraintName(), cx) == "LessThan"
+        @test MOI.get(uf, typeof(cx), "LessThan") == cx
+        MOI.delete(uf, cx)
+        @test MOI.get(uf, typeof(cx), "LessThan") === nothing
     end
-    @testset "Start Values Test" begin
-        src = MOIU.UniversalFallback(Model{Float64}())
-        dest = MOIU.UniversalFallback(Model{Float64}())
-        MOIT.start_values_test(dest, src)
-    end
-    @testset "Valid Test" begin
-        MOIT.validtest(uf)
-        @test !MOI.is_empty(uf)
-        MOI.empty!(uf)
-        @test MOI.is_empty(uf)
-    end
-    @testset "Empty Test" begin
-        MOIT.emptytest(uf)
-        @test MOI.is_empty(uf)
-    end
-    @testset "Name Test" begin
-        MOIT.nametest(uf)
-        @test !MOI.is_empty(uf)
-        MOI.empty!(uf)
-        @test MOI.is_empty(uf)
-    end
-    @testset "Optimizer Attribute" begin
-        attr = UnknownOptimizerAttribute()
-        listattr = MOI.ListOfOptimizerAttributesSet()
-        test_optmodattrs(uf, model, attr, listattr)
-    end
-    @testset "Model Attribute" begin
-        attr = MOIT.UnknownModelAttribute()
-        listattr = MOI.ListOfModelAttributesSet()
-        test_optmodattrs(uf, model, attr, listattr)
-    end
+    # To remove the constraint attributes added in the previous testset
+    MOI.empty!(uf)
     x = MOI.add_variable(uf)
     y, z = MOI.add_variables(uf, 2)
-    @testset "Variable Attribute" begin
-        VI = MOI.VariableIndex
-        attr = MOIT.UnknownVariableAttribute()
-        listattr = MOI.ListOfVariableAttributesSet()
-        test_varconattrs(uf, model, attr, listattr, VI, MOI.add_variable, x, y, z)
-    end
-    @testset "Constraint Attribute" begin
-        attr = MOIT.UnknownConstraintAttribute()
-        @testset "Supported constraint" begin
-            cx = MOI.add_constraint(uf, x, MOI.LessThan(0.))
-            cy = MOI.add_constraint(uf, y, MOI.LessThan(1.))
-            cz = MOI.add_constraint(uf, z, MOI.LessThan(2.))
-            CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}
-            listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.LessThan{Float64}}()
-            test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.LessThan(0.)), cx, cy, cz)
+    @testset "Unsupported constraint" begin
+        cx = MOI.add_constraint(uf, x, MOI.EqualTo(0.))
+        cy = MOI.add_constraint(uf, y, MOI.EqualTo(1.))
+        cz = MOI.add_constraint(uf, z, MOI.EqualTo(2.))
+        CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
+        listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
+        test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
 
-            MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
-            @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
+        MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
+        @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
 
-            @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
-            MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
-            @test MOI.get(uf, MOI.ConstraintName(), cx) == "LessThan"
-            @test MOI.get(uf, typeof(cx), "LessThan") == cx
-            MOI.delete(uf, cx)
-            @test MOI.get(uf, typeof(cx), "LessThan") === nothing
-        end
-        # To remove the constraint attributes added in the previous testset
-        MOI.empty!(uf)
-        x = MOI.add_variable(uf)
-        y, z = MOI.add_variables(uf, 2)
-        @testset "Unsupported constraint" begin
-            cx = MOI.add_constraint(uf, x, MOI.EqualTo(0.))
-            cy = MOI.add_constraint(uf, y, MOI.EqualTo(1.))
-            cz = MOI.add_constraint(uf, z, MOI.EqualTo(2.))
-            CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
-            listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
-            test_varconattrs(uf, model, attr, listattr, CI, uf -> MOI.add_constraint(uf, x, MOI.EqualTo(0.)), cx, cy, cz)
-
-            MOI.set(uf, MOI.ConstraintFunction(), cx, MOI.SingleVariable(y))
-            @test MOI.get(uf, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(y)
-
-            @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
-            MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")
-            @test MOI.get(uf, MOI.ConstraintName(), cx) == "EqualTo"
-            @test MOI.get(uf, typeof(cx), "EqualTo") == cx
-            MOI.delete(uf, cx)
-            @test MOI.get(uf, typeof(cx), "EqualTo") === nothing
-        end
-    end
-    config = MOIT.TestConfig(solve=false)
-    @testset "empty" begin
-        MOI.empty!(uf)
-        @test MOI.is_empty(uf)
-    end
-    @testset "Unit" begin
-        MOIT.unittest(uf, config)
-    end
-    @testset "Modification" begin
-        MOIT.modificationtest(uf, config)
-    end
-    @testset "Continuous Linear" begin
-        MOIT.contlineartest(uf, config)
+        @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
+        MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")
+        @test MOI.get(uf, MOI.ConstraintName(), cx) == "EqualTo"
+        @test MOI.get(uf, typeof(cx), "EqualTo") == cx
+        MOI.delete(uf, cx)
+        @test MOI.get(uf, typeof(cx), "EqualTo") === nothing
     end
 end
+config = MOIT.TestConfig(solve=false)
+@testset "empty" begin
+    MOI.empty!(uf)
+    @test MOI.is_empty(uf)
+end
+@testset "Unit" begin
+    MOIT.unittest(uf, config)
+end
+@testset "Modification" begin
+    MOIT.modificationtest(uf, config)
+end
+@testset "Continuous Linear" begin
+    MOIT.contlineartest(uf, config)
+end
 
-@testset "UniversalFallback duplicate names" begin
+@testset "Duplicate names" begin
     model = ModelForUniversalFallback{Float64}()
     uf = MOIU.UniversalFallback(model)
     x = MOI.add_variable(uf)

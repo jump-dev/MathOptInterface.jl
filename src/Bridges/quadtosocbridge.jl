@@ -1,4 +1,4 @@
-using Compat.LinearAlgebra, Compat.SparseArrays
+using LinearAlgebra, SparseArrays
 
 """
     QuadtoSOCBridge{T}
@@ -10,16 +10,16 @@ The set of points `x` satisfying the constraint
 is a convex set if `Q` is positive semidefinite and is the union of two convex
 cones if `a` and `b` are zero (i.e. *homogeneous* case) and `Q` has only one
 negative eigenvalue. Currently, only the non-homogeneous transformation
-is implemented, see the [Note](@ref) section for more details.
+is implemented, see the Note section below for more details.
 
 ## Non-homogeneous case
 
 If `Q` is positive semidefinite, there exists `U` such that ``Q = U^T U``, the
 inequality can then be rewritten as
 ```math
-\\|U x\\|_2 \\le 2 (a^T x + b)
+\\|U x\\|_2^2 \\le 2 (-a^T x - b)
 ```
-which is equivalent to the membership of `(1, a^T x + b, Ux)` to the rotated
+which is equivalent to the membership of `(1, -a^T x - b, Ux)` to the rotated
 second-order cone.
 
 ## Homogeneous case
@@ -63,24 +63,16 @@ end
 function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
                             set::Union{MOI.LessThan{T},
                                        MOI.GreaterThan{T}}) where T
-    set_constant = MOIU.getconstant(set)
+    set_constant = MOI.constant(set)
     less_than = set isa MOI.LessThan
-    if !less_than
-        set_constant = -set_constant
-    end
     Q, index_to_variable_map = matrix_from_quadratic_terms(func.quadratic_terms)
     if !less_than
-        Compat.rmul!(Q, -1)
+        rmul!(Q, -1)
     end
     # We have L × L' ≈ Q[p, p]
     L, p = try
-        @static if VERSION >= v"0.7-"
-            F = cholesky(Symmetric(Q))
-            sparse(F.L), F.p
-        else
-            F = cholfact(Symmetric(Q))
-            sparse(F[:L]), F[:p]
-        end
+        F = cholesky(Symmetric(Q))
+        sparse(F.L), F.p
     catch err
         if err isa PosDefException
             error("The optimizer supports second-order cone constraints and",
@@ -199,4 +191,35 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
     end
     output += bridge.set_constant
     return output
+end
+
+# TODO
+#function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+#                 b::QuadtoSOCBridge)
+#end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::QuadtoSOCBridge{T}) where T
+    if b.less_than
+        return MOI.LessThan(b.set_constant)
+    else
+        return MOI.GreaterThan(b.set_constant)
+    end
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::QuadtoSOCBridge{T}) where T
+    f = MOI.get(model, attr, b.soc)
+    fs = MOIU.eachscalar(f)
+    q = zero(MOI.ScalarQuadraticFunction{T})
+    for i in 3:MOI.output_dimension(f)
+        term = MOIU.operate(*, T, fs[i], fs[i])
+        term = MOIU.operate!(/, T, term, 2 * one(T))
+        MOIU.operate!(+, T, q, term)
+    end
+    MOIU.operate!(-, T, q, fs[2])
+    if !b.less_than
+        MOIU.operate!(-, T, q)
+    end
+    q.constant += b.set_constant
+    return q
 end
