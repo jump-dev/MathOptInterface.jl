@@ -100,6 +100,7 @@ ResultCount
 ObjectiveFunction
 ObjectiveFunctionType
 ObjectiveValue
+DualObjectiveValue
 ObjectiveBound
 RelativeGap
 SolveTime
@@ -212,10 +213,14 @@ VectorQuadraticTerm
 VectorQuadraticFunction
 ```
 
-Functions for getting and setting properties of sets.
+Functions for getting and setting properties of functions.
 
 ```@docs
 output_dimension
+constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
+constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
+constant(f::SingleVariable, ::DataType)
+constant(f::VectorOfVariables, T::DataType)
 ```
 
 ## Sets
@@ -251,12 +256,14 @@ Semicontinuous
 Semiinteger
 SOS1
 SOS2
+IndicatorSet
 ```
 
 Functions for getting and setting properties of sets.
 
 ```@docs
 dimension
+constant(s::EqualTo)
 ```
 
 ## Modifications
@@ -358,7 +365,16 @@ Bridges.add_bridge
 
 Below is the list of bridges implemented in this package.
 ```@docs
+Bridges.GreaterToLessBridge
+Bridges.LessToGreaterBridge
+Bridges.NonnegToNonposBridge
+Bridges.NonposToNonnegBridge
 Bridges.VectorizeBridge
+Bridges.ScalarizeBridge
+Bridges.ScalarSlackBridge
+Bridges.VectorSlackBridge
+Bridges.ScalarFunctionizeBridge
+Bridges.VectorFunctionizeBridge
 Bridges.SplitIntervalBridge
 Bridges.RSOCBridge
 Bridges.QuadtoSOCBridge
@@ -370,6 +386,10 @@ Bridges.SOCtoPSDBridge
 Bridges.RSOCtoPSDBridge
 ```
 For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
+Moreover, a `LazyBridgeOptimizer` with all the bridges defined in this package can be obtained with
+```@docs
+Bridges.full_bridge_optimizer
+```
 
 ## Copy utilities
 

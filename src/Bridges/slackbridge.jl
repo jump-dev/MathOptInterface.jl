@@ -66,7 +66,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::ScalarSlac
     return MOI.get(model, attr, c.slack_in_set)
 end
 function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::ScalarSlackBridge)
-    # The dual constraint on slack (since it is free) is 
+    # The dual constraint on slack (since it is free) is
     # -dual_slack_in_set + dual_equality = 0 so the two duals are
     # equal and we can return either one of them.
     return MOI.get(model, a, c.slack_in_set)
@@ -90,6 +90,16 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet, c::ScalarSlackBridge
     MOI.set(model, MOI.ConstraintSet(), c.slack_in_set, change)
 end
 
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::ScalarSlackBridge{T}) where T
+    return MOIU.operate(+, T, MOI.get(model, attr, b.equality),
+                        MOI.SingleVariable(b.slack))
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::ScalarSlackBridge)
+    return MOI.get(model, attr, b.slack_in_set)
+end
+
 # vector version
 
 """
@@ -108,7 +118,7 @@ end
 function VectorSlackBridge{T, F, S}(model, f::MOI.AbstractVectorFunction, s::S) where {T, F, S}
     d = MOI.dimension(s)
     slacks = MOI.add_variables(model, d)
-    new_f = MOIU.operate(-, T, f, MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(slacks)))
+    new_f = MOIU.operate(-, T, f, MOI.VectorOfVariables(slacks))
     slacks_in_set = MOI.add_constraint(model, MOI.VectorOfVariables(slacks), s)
     equality = MOI.add_constraint(model, new_f, MOI.Zeros(d))
     return VectorSlackBridge{T, F, S}(slacks, slacks_in_set, equality)
@@ -176,4 +186,14 @@ end
 
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet, c::VectorSlackBridge{T,F,S}, change::S)  where {T, F, S}
     MOI.set(model, MOI.ConstraintSet(), c.slacks_in_set, change)
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::VectorSlackBridge{T}) where T
+    return MOIU.operate(+, T, MOI.get(model, attr, b.equality),
+                        MOI.VectorOfVariables(b.slacks))
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::VectorSlackBridge)
+    return MOI.get(model, attr, b.slacks_in_set)
 end

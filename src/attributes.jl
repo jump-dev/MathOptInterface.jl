@@ -36,11 +36,9 @@ abstract type AbstractConstraintAttribute end
 
 const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
-@static if VERSION >= v"0.7-"
-    # This allows to use attributes in broadcast calls without the need to
-    # embed it in a `Ref`
-    Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
-end
+# This allows to use attributes in broadcast calls without the need to
+# embed it in a `Ref`
+Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
 
 """
     struct UnsupportedAttribute{AttrType} <: UnsupportedError
@@ -463,11 +461,22 @@ struct ObjectiveFunctionType <: AbstractModelAttribute end
 """
     ObjectiveValue(resultidx::Int=1)
 
-A model attribute for the objective value of the `resultindex`th primal result.
+A model attribute for the objective value of the `result_index`th primal result.
 """
 struct ObjectiveValue <: AbstractModelAttribute
-    resultindex::Int
-    (::Type{ObjectiveValue})(resultindex=1) = new(resultindex)
+    result_index::Int
+    (::Type{ObjectiveValue})(result_index=1) = new(result_index)
+end
+
+"""
+    DualObjectiveValue(result_index::Int=1)
+
+A model attribute for the value of the objective function of the dual problem
+for the `result_index`th dual result.
+"""
+struct DualObjectiveValue <: AbstractModelAttribute
+    result_index::Int
+    (::Type{DualObjectiveValue})(result_index=1) = new(result_index)
 end
 
 """
@@ -821,7 +830,8 @@ This group of statuses means that something unexpected or problematic happened.
 """
     RawStatusString()
 
-A model attribute for a solver specific string explaning why the optimizer stopped.
+A model attribute for a solver specific string explaining why the optimizer
+stopped.
 """
 struct RawStatusString <: AbstractModelAttribute end
 

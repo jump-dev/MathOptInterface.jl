@@ -1,19 +1,14 @@
-const VectorLPSet = Union{MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives}
+const VectorLinearSet = Union{MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives}
 
 scalar_set_type(::Type{<:MOI.Zeros}, T::Type) = MOI.EqualTo{T}
 scalar_set_type(::Type{<:MOI.Nonpositives}, T::Type) = MOI.LessThan{T}
 scalar_set_type(::Type{<:MOI.Nonnegatives}, T::Type) = MOI.GreaterThan{T}
 
-__constant(f::Union{MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction}, T::DataType) = MOI._constant(f)
-__constant(f::Union{MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}, T::DataType) = MOI._constant(f)
-__constant(f::MOI.SingleVariable, T::DataType) = zero(T)
-__constant(f::MOI.VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
-
 """
-    ScalarizeBridge{T}
+    ScalarizeBridge{T, F, S}
 
-Transforms a constraint `AbstractVectorFunction`-in-`S` where `S <: LPCone` to
-`AbstactVectorFunction`-in-`scalar_set_type(S)`.
+Transforms a constraint `AbstractVectorFunction`-in-`vector_set(S)` where
+`S <: LPCone{T}` to `F`-in-`S`.
 """
 mutable struct ScalarizeBridge{T, F, S} <: AbstractBridge
     scalar_constraints::Vector{CI{F, S}}
@@ -21,9 +16,9 @@ mutable struct ScalarizeBridge{T, F, S} <: AbstractBridge
 end
 function ScalarizeBridge{T, F, S}(model::MOI.ModelLike,
                                   f::MOI.AbstractVectorFunction,
-                                  set::VectorLPSet) where {T, F, S}
+                                  set::VectorLinearSet) where {T, F, S}
     dimension = MOI.output_dimension(f)
-    constants = __constant(f, T)
+    constants = MOI.constant(f, T)
     new_f = MOIU.scalarize(f, true)
     constraints = Vector{CI{F, S}}(undef, dimension)
     for i in 1:dimension
@@ -34,7 +29,7 @@ end
 
 function MOI.supports_constraint(::Type{ScalarizeBridge{T}},
                                  ::Type{<:MOI.AbstractVectorFunction},
-                                 ::Type{<:VectorLPSet}) where T
+                                 ::Type{<:VectorLinearSet}) where T
     return true
 end
 function added_constraint_types(::Type{ScalarizeBridge{T, F, S}}) where {T, F, S}
@@ -42,7 +37,7 @@ function added_constraint_types(::Type{ScalarizeBridge{T, F, S}}) where {T, F, S
 end
 function concrete_bridge_type(::Type{<:ScalarizeBridge{T}},
                               F::Type{<:MOI.AbstractVectorFunction},
-                              S::Type{<:VectorLPSet}) where T
+                              S::Type{<:VectorLinearSet}) where T
     return ScalarizeBridge{T, MOIU.scalar_type(F), scalar_set_type(S, T)}
 end
 
@@ -89,7 +84,7 @@ end
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
     bridge::ScalarizeBridge{T}, func) where T
     old_constants = bridge.constants
-    bridge.constants = __constant(func, T)
+    bridge.constants = MOI.constant(func, T)
     new_func = MOIU.scalarize(func, true)
     MOI.set.(model, MOI.ConstraintFunction(), bridge.scalar_constraints,
              new_func)

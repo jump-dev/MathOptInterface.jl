@@ -36,7 +36,7 @@
             MOI.add_constraint(model, func, MOI.EqualTo(0))
         catch err
             @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
-            " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraints is" *
+            " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
             " not supported by the model."
         end
         @test_throws MOI.UnsupportedConstraint begin

@@ -1,5 +1,5 @@
 # Continuous conic problems
-using Compat.LinearAlgebra # for dot
+using LinearAlgebra # for dot
 
 function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     atol = config.atol
@@ -58,6 +58,9 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -11 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -11 atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol=atol rtol=rtol
 
@@ -155,6 +158,9 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -82 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -82 atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -4 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ -3 atol=atol rtol=rtol
@@ -343,6 +349,9 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/√2 atol=atol rtol=rtol
@@ -418,6 +427,9 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -1/√2 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -1/√2 atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -1/√2 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/√2 atol=atol rtol=rtol
@@ -537,6 +549,9 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0, 2/√5, 1/√5, 2/√5, 1/√5] atol=atol rtol=rtol
 
@@ -619,6 +634,9 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol=atol rtol=rtol
+        end
 
         if abvars
             @test MOI.get(model, MOI.VariablePrimal(), a) ≈ 0.5 atol=atol rtol=rtol
@@ -787,6 +805,9 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √ub atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √ub atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0; zeros(n-1)] atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), u) ≈ ub atol=atol rtol=rtol
@@ -947,6 +968,10 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1/2) atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1/2) atol=atol rtol=rtol
+        end
+
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1., 2., 2exp(1/2)] atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [1., 2., 2exp(1/2)] atol=atol rtol=rtol
@@ -1013,6 +1038,9 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ exp(-0.3) atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ exp(-0.3) atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0., -0.3, 0., exp(-0.3), exp(-0.3), exp(-0.3), 0., 1.0, 0.] atol=atol rtol=rtol
 
@@ -1078,6 +1106,9 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ log(5) atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ log(5) atol=atol rtol=rtol
+        end
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ log(5) atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 5. atol=atol rtol=rtol
@@ -1157,6 +1188,9 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+        end
 
         Xv = square ? ones(4) : ones(3)
         @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol=atol rtol=rtol
@@ -1302,6 +1336,9 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ obj atol=atol rtol=rtol
+        end
 
         Xv = square ? [α^2, α*β, α^2, α*β, β^2, α*β, α^2, α*β, α^2] : [α^2, α*β, β^2, α^2, α*β, α^2]
         xv = [√2*x2, x2, x2]

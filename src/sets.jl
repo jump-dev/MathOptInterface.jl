@@ -137,6 +137,15 @@ Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
 Interval(s::Interval) = s
 
 """
+    constant(s::Union{EqualTo, GreaterThan, LessThan})
+
+Returns the constant of the set.
+"""
+constant(s::EqualTo) = s.value
+constant(s::GreaterThan) = s.lower
+constant(s::LessThan) = s.upper
+
+"""
     SecondOrderCone(dimension)
 
 The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_2 \\}`` of dimension `dimension`.
@@ -417,9 +426,6 @@ struct SOS1{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
-Base.:(==)(a::SOS1{T}, b::SOS1{T}) where T = a.weights == b.weights
-Base.isapprox(a::SOS1{T}, b::SOS1{T}; kwargs...) where T = isapprox(a.weights, b.weights; kwargs...)
-
 """
     SOS2{T <: Real}(weights::Vector{T})
 
@@ -433,18 +439,18 @@ struct SOS2{T <: Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
-Base.:(==)(a::SOS2{T}, b::SOS2{T}) where T = a.weights == b.weights
-Base.isapprox(a::SOS2{T}, b::SOS2{T}; kwargs...) where T = isapprox(a.weights, b.weights; kwargs...)
+Base.:(==)(a::T, b::T) where {T <: Union{SOS1, SOS2}} = a.weights == b.weights
+Base.isapprox(a::T, b::T; kwargs...) where {T <: Union{SOS1, SOS2}} = isapprox(a.weights, b.weights; kwargs...)
 
 dimension(s::Union{SOS1, SOS2}) = length(s.weights)
 
 """
-	ActivationCond
+	ActivationCondition
 
 Activation condition for an indicator constraint.
-Used as first type parameter of `IndicatorSet{ActiveCond,S}`.
+The enum value is used as first type parameter of `IndicatorSet{A,S}`.
 """
-@enum ActivationCond begin
+@enum ActivationCondition begin
     ACTIVATE_ON_ZERO
     ACTIVATE_ON_ONE
 end
@@ -452,17 +458,31 @@ end
 """
     IndicatorSet{A, S <: AbstractScalarSet}(set::S)
 
-Set ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n``
-Such that: ``y = 0 \\implies x \\in set\\}``
-when `A` is `ACTIVATE_WHEN_ZERO` and
-``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n``
-Such that: ``y = 1 \\implies x \\in set\\}``
-when `A` is `ACTIVATE_WHEN_ONE`.
+``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_ON_ZERO` and
+``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+when `A` is `ACTIVATE_ON_ONE`.
 
-`S` has to be an `AbstractScalarSet`.
+`S` has to be a sub-type of `AbstractScalarSet`.
 `A` is one of the value of the `ActivationCond` enum.
 `IndicatorSet` is used with a `VectorAffineFunction` holding
 the indicator variable first.
+
+Example: ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\} ``
+
+```julia
+f = MOI.VectorAffineFunction(
+    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+    ],
+    [0.0, 0.0],
+)
+
+indicator_set = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+
+MOI.add_constraint(model, f, indicator_set)
+```
 """
 struct IndicatorSet{A, S <: AbstractScalarSet} <: AbstractVectorSet
     set::S
@@ -470,6 +490,10 @@ struct IndicatorSet{A, S <: AbstractScalarSet} <: AbstractVectorSet
 end
 
 dimension(::IndicatorSet) = 2
+
+function Base.copy(set::IndicatorSet{A,S}) where {A,S}
+    return IndicatorSet{A}(copy(set.set))
+end
 
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
@@ -481,7 +505,7 @@ function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               PositiveSemidefiniteConeSquare,
                               LogDetConeTriangle, LogDetConeSquare,
                               RootDetConeTriangle, RootDetConeSquare,
-                              Integer, ZeroOne, Semicontinuous, Semiinteger, IndicatorSet})
+                              Integer, ZeroOne, Semicontinuous, Semiinteger})
     return set
 end
 Base.copy(set::S) where {S <: Union{SOS1, SOS2}} = S(copy(set.weights))

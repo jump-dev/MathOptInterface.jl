@@ -23,6 +23,121 @@ function get_fallback(model::MOI.ModelLike, ::MOI.ObjectiveValue)
     return evalvariables(vi -> MOI.get(model, MOI.VariablePrimal(), vi), f)
 end
 
+function constraint_constant(model::MOI.ModelLike,
+                             ci::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction,
+                                                     <:MOI.AbstractVectorSet},
+                             T::Type)
+    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci))
+end
+function constraint_constant(model::MOI.ModelLike,
+                             ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
+                                                     <:MOI.AbstractScalarSet},
+                             T::Type)
+    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T) -
+           MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
+end
+
+"""
+    dual_objective_value(model::MOI.ModelLike,
+                         F::Type{<:MOI.AbstractFunction},
+                         S::Type{<:MOI.AbstractSet},
+                         T::Type,
+                         result_index::Integer)
+
+Return the part of `DualObjectiveValue` due to the constraint of index `ci` using
+scalar type `T`.
+"""
+function dual_objective_value(model::MOI.ModelLike,
+                              ci::MOI.ConstraintIndex,
+                              T::Type,
+                              result_index::Integer)
+    return set_dot(constraint_constant(model, ci, T),
+                   MOI.get(model, MOI.ConstraintDual(result_index), ci),
+                   MOI.get(model, MOI.ConstraintSet(), ci))
+end
+
+function dual_objective_value(model::MOI.ModelLike,
+                              ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
+                                                      <:MOI.Interval},
+                              T::Type,
+                              result_index::Integer)
+    constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
+    set = MOI.get(model, MOI.ConstraintSet(), ci)
+    dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
+    if dual < zero(dual)
+        # The dual is negative so it is in the dual of the MOI.LessThan cone
+        # hence the upper bound of the Interval set is tight
+        constant -= set.upper
+    else
+        # the lower bound is tight
+        constant -= set.lower
+    end
+    return set_dot(constant, dual, set)
+end
+
+
+
+"""
+    dual_objective_value(model::MOI.ModelLike,
+                    F::Type{<:MOI.AbstractFunction},
+                    S::Type{<:MOI.AbstractSet},
+                    T::Type,
+                    result_index::Integer)
+
+Return the part of `DualObjectiveValue` due to `F`-in-`S` constraints using scalar
+type `T`.
+"""
+function dual_objective_value(model::MOI.ModelLike,
+                         F::Type{<:MOI.AbstractFunction},
+                         S::Type{<:MOI.AbstractSet},
+                         T::Type,
+                         result_index::Integer)
+    value = zero(T) # sum won't work if there are no constraints.
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
+        value += dual_objective_value(model, ci, T, result_index)
+    end
+    return value
+end
+
+function dual_objective_value(model::MOI.ModelLike,
+                              F::Type{MOI.VectorOfVariables},
+                              S::Type{<:MOI.AbstractVectorSet},
+                              T::Type,
+                              result_index::Integer)
+    # No constant in the function nor set so no contribution to the dual
+    # objective value.
+    return zero(T)
+end
+
+function is_ray(status::MOI.ResultStatusCode)
+    return status == MOI.INFEASIBILITY_CERTIFICATE ||
+           status == MOI.NEARLY_INFEASIBILITY_CERTIFICATE
+end
+
+"""
+    get_fallback(model::MOI.ModelLike, ::MOI.DualObjectiveValue, T::Type)::T
+
+Compute the dual objective value of type `T` using the `ConstraintDual` results
+and the `ConstraintFunction` and `ConstraintSet` values. Note that the nonlinear
+part of the model is ignored.
+"""
+function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Type)
+    value = zero(T) # sum will not work if there are zero constraints
+    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+        value += dual_objective_value(model, F, S, T, attr.result_index)::T
+    end
+    if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
+        value = -value
+    end
+    if !is_ray(MOI.get(model, MOI.DualStatus()))
+        # The objective constant should not be present in rays
+        F = MOI.get(model, MOI.ObjectiveFunctionType())
+        f = MOI.get(model, MOI.ObjectiveFunction{F}())
+        value += MOI.constant(f, T)
+    end
+    return value::T
+end
+
 """
     get_fallback(model::MOI.ModelLike, ::MOI.ConstraintPrimal,
                  constraint_index::MOI.ConstraintIndex)
@@ -186,9 +301,7 @@ function variable_dual(model::MOI.ModelLike,
                        attr::MOI.ConstraintDual,
                        ci::MOI.ConstraintIndex,
                        vi::MOI.VariableIndex)
-    status = MOI.get(model, MOI.DualStatus())
-    ray = status == MOI.INFEASIBILITY_CERTIFICATE ||
-          status == MOI.NEARLY_INFEASIBILITY_CERTIFICATE
+    ray = is_ray(MOI.get(model, MOI.DualStatus()))
     dual = 0.0
     if !ray
         sense = MOI.get(model, MOI.ObjectiveSense())
@@ -266,12 +379,19 @@ end
 Return the scalar product between a vector `x` of the set `set` and a vector
 `y` of the dual of the set `s`.
 """
-function set_dot(x::Vector, y::Vector, set::MOI.AbstractVectorSet)
-    return dot(x, y)
-end
+set_dot(x::Vector, y::Vector, set::MOI.AbstractVectorSet) = dot(x, y)
 
-function triangle_dot(x::Vector{T}, y::Vector{T}, dim::Int, offset::Int) where T
-    result = zero(T)
+"""
+    set_dot(x, y, set::AbstractScalarSet)
+
+Return the scalar product between a number `x` of the set `set` and a number
+`y` of the dual of the set `s`.
+"""
+set_dot(x, y, set::MOI.AbstractScalarSet) = dot(x, y)
+
+function triangle_dot(x::Vector{S}, y::Vector{T}, dim::Int, offset::Int) where {S, T}
+    U = typeof(zero(S) * zero(T) + 2 * zero(S) * zero(T))
+    result = zero(U)
     k = offset
     for i in 1:dim
         for j in 1:i

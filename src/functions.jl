@@ -23,11 +23,7 @@ Abstract supertype for scalar-valued function objects.
 abstract type AbstractScalarFunction <: AbstractFunction end
 output_dimension(::AbstractScalarFunction) = 1
 
-@static if VERSION >= v"0.7-"
-    # This allows to use `AbstractScalarFunction`s in broadcast calls without
-    # the need to embed it in a `Ref`
-    Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
-end
+Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
 
 """
     AbstractVectorFunction
@@ -356,13 +352,43 @@ function _dicts(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
             sum_dict(term_pair.(f.quadratic_terms)))
 end
 
-_constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
-_constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
+"""
+    constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
+
+Returns the constant term of the scalar function
+"""
+constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}) = f.constant
+
+"""
+    constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
+
+Returns the vector of constant terms of the vector function
+"""
+constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
 
 function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction},
                                                      G<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction}}
-    isapprox(_constant(f), _constant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
+    isapprox(constant(f), constant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
 end
+
+constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}, T::DataType) = constant(f)
+constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}, T::DataType) = constant(f)
+
+"""
+    constant(f::SingleVariable, T::DataType)
+
+The constant term of a `SingleVariable` function is
+the zero value of the specified type `T`.
+"""
+constant(f::SingleVariable, T::DataType) = zero(T)
+
+"""
+    constant(f::VectorOfVariables, T::DataType)
+
+The constant term of a `VectorOfVariables` function is a
+vector of zero values of the specified type `T`.
+"""
+constant(f::VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
 
 # isbits type, nothing to copy
 Base.copy(func::SingleVariable) = func
@@ -375,7 +401,7 @@ Base.copy(func::VectorOfVariables) = VectorOfVariables(copy(func.variables))
 Return a new affine function with a shallow copy of the terms and constant(s)
 from `func`.
 """
-Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(_constant(func)))
+Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}} = F(copy(func.terms), copy(constant(func)))
 
 """
     copy(func::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
@@ -383,7 +409,7 @@ Base.copy(func::F) where {F <: Union{ScalarAffineFunction, VectorAffineFunction}
 Return a new quadratic function with a shallow copy of the terms and constant(s)
 from `func`.
 """
-Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(_constant(func)))
+Base.copy(func::F) where {F <: Union{ScalarQuadraticFunction, VectorQuadraticFunction}} = F(copy(func.affine_terms), copy(func.quadratic_terms), copy(constant(func)))
 
 # Define shortcuts for
 # SingleVariable -> ScalarAffineFunction
@@ -396,19 +422,11 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where T
     return VectorAffineFunction(map(i -> VectorAffineTerm(i, ScalarAffineTerm(one(T), f.variables[i])), 1:n), zeros(T, n))
 end
 
-if VERSION < v"0.7-"
-    isone(x) = x == one(x)
-end
-
 # Conversion between scalar functions
 # Conversion to SingleVariable
 function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
     if !iszero(f.constant) || !isone(length(f.terms)) || !isone(f.terms[1].coefficient)
-        if VERSION >= v"0.7-"
-            throw(InexactError(:convert, SingleVariable, f))
-        else
-            throw(InexactError())
-        end
+        throw(InexactError(:convert, SingleVariable, f))
     end
     return SingleVariable(f.terms[1].variable_index)
 end
@@ -425,11 +443,7 @@ end
 function Base.convert(::Type{ScalarAffineFunction{T}},
                       f::ScalarQuadraticFunction{T}) where T
     if !Base.isempty(f.quadratic_terms)
-        if VERSION >= v"0.7-"
-            throw(InexactError(:convert, ScalarAffineFunction{T}, f))
-        else
-            throw(InexactError())
-        end
+        throw(InexactError(:convert, ScalarAffineFunction{T}, f))
     end
     return ScalarAffineFunction{T}(f.affine_terms, f.constant)
 end

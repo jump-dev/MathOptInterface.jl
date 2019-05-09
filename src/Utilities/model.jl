@@ -96,7 +96,7 @@ function MOI.add_variable(model::AbstractModel)
     return vi
 end
 function MOI.add_variables(model::AbstractModel, n::Integer)
-    [MOI.add_variable(model) for i in 1:n]
+    return [MOI.add_variable(model) for i in 1:n]
 end
 
 """
@@ -137,23 +137,17 @@ function _removevar!(constrs::Vector{<:ConstraintEntry{MOI.SingleVariable}},
     end
     return rm
 end
-# TODO Remove this function when #523 is closed
-# Delete the variable of index `vi` in the constraints and delete its
-# `SingleVariable` constraints
-function delete_variable_in_constraints(model::AbstractModel, vi::VI)
+function MOI.delete(model::AbstractModel, vi::VI)
+    if !MOI.is_valid(model, vi)
+        throw(MOI.InvalidIndex(vi))
+    end
+    model.objective = removevariable(model.objective, vi)
     # `ci_to_remove` is the list of indices of the `SingleVariable` constraints
     # of `vi`
     ci_to_remove = broadcastvcat(constrs -> _removevar!(constrs, vi), model)
     for ci in ci_to_remove
         MOI.delete(model, ci)
     end
-end
-function MOI.delete(model::AbstractModel, vi::VI)
-    if !MOI.is_valid(model, vi)
-        throw(MOI.InvalidIndex(vi))
-    end
-    model.objective = removevariable(model.objective, vi)
-    delete_variable_in_constraints(model, vi)
     if model.variable_indices === nothing
         model.variable_indices = Set(MOI.get(model,
                                              MOI.ListOfVariableIndices()))
@@ -491,9 +485,8 @@ function _typedfun(s::SymbolFun)
 end
 
 # Base.lowercase is moved to Unicode.lowercase in Julia v0.7
-if VERSION >= v"0.7.0-DEV.2813"
-    using Unicode
-end
+using Unicode
+
 _field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
 _getC(s::SymbolSet) = :(ConstraintEntry{F, $(_typedset(s))})

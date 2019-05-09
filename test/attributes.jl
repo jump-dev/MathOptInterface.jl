@@ -25,12 +25,7 @@
                                 "number of values (2) set to `$attr`.")
         model = DummyModel()
         x = MOI.VariableIndex(1)
-        if VERSION < v"0.7-"
-            @test_throws DimensionMismatch MOI.set(
-                model, MOI.VariablePrimalStart(), [x], ones(2))
-        else
-            @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x],
-                                     ones(2))
-        end
+        @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x],
+                                 ones(2))
     end
 end

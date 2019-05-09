@@ -1,7 +1,5 @@
 module Bridges
 
-using Compat
-
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
@@ -23,19 +21,6 @@ include("bridgeoptimizer.jl")
 include("singlebridgeoptimizer.jl")
 include("lazybridgeoptimizer.jl")
 
-# This is used by JuMP and removes the need to update JuMP everytime a bridge is added
-MOIU.@model(AllBridgedConstraints,
-            (),
-            (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan, MOI.Interval,),
-            (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
-             MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
-             MOI.PositiveSemidefiniteConeSquare,
-             MOI.LogDetConeTriangle, MOI.RootDetConeTriangle),
-            (),
-            (MOI.SingleVariable,),
-            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
-            (MOI.VectorOfVariables,),
-            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 """
     full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
 
@@ -43,8 +28,7 @@ Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in
 this package and for the coefficient type `T`.
 """
 function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
-    cache = MOIU.UniversalFallback(AllBridgedConstraints{T}())
-    bridged_model = LazyBridgeOptimizer(model, cache)
+    bridged_model = LazyBridgeOptimizer(model)
     add_bridge(bridged_model, GreaterToLessBridge{T})
     add_bridge(bridged_model, LessToGreaterBridge{T})
     add_bridge(bridged_model, NonnegToNonposBridge{T})
@@ -68,50 +52,36 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
 end
 
 include("flip_sign_bridge.jl")
-@bridge GreaterToLess GreaterToLessBridge () (MOI.GreaterThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
-@bridge LessToGreater LessToGreaterBridge () (MOI.LessThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
-@bridge NonnegToNonpos NonnegToNonposBridge () () (MOI.Nonnegatives,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
-@bridge NonposToNonneg NonposToNonnegBridge () () (MOI.Nonpositives,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
+const GreaterToLess{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GreaterToLessBridge{T}, OT}
+const LessToGreater{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{LessToGreaterBridge{T}, OT}
+const NonnegToNonpos{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NonnegToNonposBridge{T}, OT}
+const NonposToNonneg{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NonposToNonnegBridge{T}, OT}
 include("vectorizebridge.jl")
-@bridge Vectorize VectorizeBridge () (MOI.EqualTo, MOI.LessThan, MOI.GreaterThan,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
+const Vectorize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorizeBridge{T}, OT}
 include("scalarizebridge.jl")
-@bridge Scalarize ScalarizeBridge () () (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
+const Scalarize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarizeBridge{T}, OT}
 include("slackbridge.jl")
-@bridge ScalarSlack ScalarSlackBridge () (MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () () (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
-@bridge(VectorSlack, VectorSlackBridge,  (), (),
-    (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
-    MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
-    MOI.PositiveSemidefiniteConeSquare, MOI.PositiveSemidefiniteConeTriangle, MOI.LogDetConeTriangle,
-    MOI.RootDetConeTriangle),
-    (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2), (), (), (),
-    (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
-    )
+const ScalarSlack{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarSlackBridge{T}, OT}
+const VectorSlack{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorSlackBridge{T}, OT}
 include("functionize_bridge.jl")
-@bridge ScalarFunctionize ScalarFunctionizeBridge () (MOI.Interval, MOI.LessThan, MOI.GreaterThan) () () (MOI.SingleVariable,) () () ()
-@bridge(VectorFunctionize, VectorFunctionizeBridge,  (), (),
-    (MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
-    MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
-    MOI.PositiveSemidefiniteConeSquare, MOI.PositiveSemidefiniteConeTriangle, MOI.LogDetConeTriangle,
-    MOI.RootDetConeTriangle),
-    (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2), (), (),
-    (MOI.VectorOfVariables,), ()
-    )
+const ScalarFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarFunctionizeBridge{T}, OT}
+const VectorFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorFunctionizeBridge{T}, OT}
 include("intervalbridge.jl")
-@bridge SplitInterval SplitIntervalBridge () (MOI.Interval,) () () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) () ()
+const SplitInterval{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SplitIntervalBridge{T}, OT}
 include("rsocbridge.jl")
-@bridge RSOC RSOCBridge () () (MOI.RotatedSecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+const RSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCBridge{T}, OT}
 include("quadtosocbridge.jl")
-@bridge QuadtoSOC QuadtoSOCBridge () (MOI.LessThan, MOI.GreaterThan) () () () (MOI.ScalarQuadraticFunction,) () ()
+const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}, OT}
 include("geomeanbridge.jl")
-@bridge GeoMean GeoMeanBridge () () (MOI.GeometricMeanCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
 include("squarepsdbridge.jl")
-@bridge SquarePSD SquarePSDBridge () () (MOI.PositiveSemidefiniteConeSquare,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
+const SquarePSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquarePSDBridge{T}, OT}
 include("detbridge.jl")
-@bridge LogDet LogDetBridge () () (MOI.LogDetConeTriangle,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
-@bridge RootDet RootDetBridge () () (MOI.RootDetConeTriangle,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+const LogDet{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{LogDetBridge{T}, OT}
+const RootDet{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T}, OT}
 include("soctopsdbridge.jl")
-@bridge SOCtoPSD SOCtoPSDBridge () () (MOI.SecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
-@bridge RSOCtoPSD RSOCtoPSDBridge () () (MOI.RotatedSecondOrderCone,) () () () (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+const SOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoPSDBridge{T}, OT}
+const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}, OT}
 
 include("indicatorbridge.jl")
 

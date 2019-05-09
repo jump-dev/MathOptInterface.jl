@@ -31,8 +31,11 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     # Computes `ObjectiveValue` by evaluating the `ObjectiveFunction` with
     # `VariablePrimal`. See `get_fallback`.
     eval_objective_value::Bool
-    objectivevalue::Float64
-    objectivebound::Float64  # set this using MOI.set(model, MOI.ObjectiveBound(), value)
+    objective_value::Float64 # set this using MOI.set(model, MOI.ObjectiveValue(), value)
+    # Computes `DualObjectiveValue` using `get_fallback`
+    eval_dual_objective_value::Bool
+    dual_objective_value::Float64 # set this using MOI.set(model, MOI.DualObjectiveValue(), value)
+    objective_bound::Float64  # set this using MOI.set(model, MOI.ObjectiveBound(), value)
     primalstatus::MOI.ResultStatusCode
     dualstatus::MOI.ResultStatusCode
     varprimal::Dict{MOI.VariableIndex,Float64}
@@ -54,6 +57,7 @@ xor_variables(f) = mapvariables(xor_index, f)
 function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                        needs_allocate_load=false,
                        eval_objective_value=true,
+                       eval_dual_objective_value=true,
                        eval_variable_constraint_dual=true)
     return MockOptimizer(inner_model,
                          0,
@@ -72,6 +76,8 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                          MOI.OPTIMIZE_NOT_CALLED,
                          0,
                          eval_objective_value,
+                         NaN,
+                         eval_dual_objective_value,
                          NaN,
                          NaN,
                          MOI.NO_SOLUTION,
@@ -141,10 +147,11 @@ function MOI.supports(mock::MockOptimizer,
     return MOI.supports(mock.inner_model, attr, IdxT)
 end
 
-MOI.supports(mock::MockOptimizer, ::Union{MOI.ResultCount,MOI.TerminationStatus,MOI.ObjectiveValue,MOI.PrimalStatus,MOI.DualStatus,MockModelAttribute}) = true
+MOI.supports(mock::MockOptimizer, ::MockModelAttribute) = true
 MOI.set(mock::MockOptimizer, ::MOI.ResultCount, value::Integer) = (mock.resultcount = value)
 MOI.set(mock::MockOptimizer, ::MOI.TerminationStatus, value::MOI.TerminationStatusCode) = (mock.terminationstatus = value)
-MOI.set(mock::MockOptimizer, ::MOI.ObjectiveValue, value::Real) = (mock.objectivevalue = value)
+MOI.set(mock::MockOptimizer, ::MOI.ObjectiveValue, value::Real) = (mock.objective_value = value)
+MOI.set(mock::MockOptimizer, ::MOI.DualObjectiveValue, value::Real) = (mock.dual_objective_value = value)
 MOI.set(mock::MockOptimizer, ::MOI.PrimalStatus, value::MOI.ResultStatusCode) = (mock.primalstatus = value)
 MOI.set(mock::MockOptimizer, ::MOI.DualStatus, value::MOI.ResultStatusCode) = (mock.dualstatus = value)
 MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
@@ -237,7 +244,14 @@ function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
     if mock.eval_objective_value
         return get_fallback(mock, attr)
     else
-        return mock.objectivevalue
+        return mock.objective_value
+    end
+end
+function MOI.get(mock::MockOptimizer, attr::MOI.DualObjectiveValue)
+    if mock.eval_dual_objective_value
+        return get_fallback(mock, attr, Float64)
+    else
+        return mock.dual_objective_value
     end
 end
 MOI.get(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.primalstatus
@@ -283,10 +297,9 @@ end
 MOI.get(mock::MockOptimizer, ::MockConstraintAttribute, idx::MOI.ConstraintIndex) = mock.conattribute[xor_index(idx)]
 MOI.get(mock::MockOptimizer, ::MOI.ConstraintBasisStatus, idx::MOI.ConstraintIndex) = mock.con_basis[xor_index(idx)]
 
-MOI.supports(mock::MockOptimizer, ::MOI.ObjectiveBound) = true
-MOI.get(mock::MockOptimizer, ::MOI.ObjectiveBound) = mock.objectivebound
+MOI.get(mock::MockOptimizer, ::MOI.ObjectiveBound) = mock.objective_bound
 function MOI.set(mock::MockOptimizer, ::MOI.ObjectiveBound, value::Float64)
-    mock.objectivebound = value
+    mock.objective_bound = value
 end
 
 MOI.get(::MockOptimizer, ::MOI.SolverName) = "Mock"
@@ -301,8 +314,9 @@ function MOI.empty!(mock::MockOptimizer)
     mock.hasdual = false
     mock.terminationstatus = MOI.OPTIMIZE_NOT_CALLED
     mock.resultcount = 0
-    mock.objectivevalue = NaN
-    mock.objectivebound = NaN
+    mock.objective_value = NaN
+    mock.dual_objective_value = NaN
+    mock.objective_bound = NaN
     mock.primalstatus = MOI.NO_SOLUTION
     mock.dualstatus = MOI.NO_SOLUTION
     mock.varprimal = Dict{MOI.VariableIndex,Float64}()
@@ -318,8 +332,8 @@ function MOI.is_empty(mock::MockOptimizer)
     return MOI.is_empty(mock.inner_model) && mock.attribute == 0 &&
         !mock.solved && !mock.hasprimal && !mock.hasdual &&
         mock.terminationstatus == MOI.OPTIMIZE_NOT_CALLED &&
-        mock.resultcount == 0 && isnan(mock.objectivevalue) &&
-        isnan(mock.objectivebound) &&
+        mock.resultcount == 0 && isnan(mock.objective_value) &&
+        isnan(mock.dual_objective_value) && isnan(mock.objective_bound) &&
         mock.primalstatus == MOI.NO_SOLUTION &&
         mock.dualstatus == MOI.NO_SOLUTION &&
         isempty(mock.con_basis)

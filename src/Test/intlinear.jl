@@ -82,8 +82,6 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-Base.isapprox(a::T, b::T; kwargs...) where T <: Union{MOI.SOS1, MOI.SOS2} = isapprox(a.weights, b.weights; kwargs...)
-
 # sos from CPLEX.jl" begin
 function int2test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
@@ -358,7 +356,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indtest(model::MOI.ModelLike, config::TestConfig)
+function indicator1_test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -366,7 +364,7 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     # s.t. x1 + x2 <= 10
     #      z1 ==> x2 <= 8
     #      z2 ==> x2 + x1/5 <= 9
-    # z1 + z2 >= 1
+    #      z1 + z2 >= 1
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -376,43 +374,47 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Interval{Float64})
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
-    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
-    z1  = MOI.add_variable(model)
-    z2  = MOI.add_variable(model)
+    z1 = MOI.add_variable(model)
+    z2 = MOI.add_variable(model)
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
-    f1 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm(1.0, z1),
-        MOI.ScalarAffineTerm(1.0, x2),
+    f1 = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0.0, 0.0]
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
+    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
 
-    f2 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm(1.0, z2),
-        MOI.ScalarAffineTerm(0.2, x1),
-        MOI.ScalarAffineTerm(1.0, x2),
+    f2 = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
 
     MOI.add_constraint(model, f2, iset2)
 
-    # additional regular constraint
+    # Additional regular constraint.
     MOI.add_constraint(model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x1), MOI.ScalarAffineTerm(1.0, x2)], 0.0),
         MOI.LessThan(10.0),
     )
 
-    # disjunction z1 ⋁ z2
+    # Disjunction z1 ⋁ z2
     MOI.add_constraint(model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
-        MOI.GreaterThan(1.),
+        MOI.GreaterThan(1.0),
     )
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3.], [x1, x2]), 0.)
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0], [x1, x2]), 0.0)
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
@@ -429,11 +431,22 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
     end
+end
+
+function indicator2_test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # linear problem with indicator constraint
+    # max  2x1 + 3x2 - 30 z2
+    # s.t. x1 + x2 <= 10
+    #      z1 ==> x2 <= 8
+    #      z2 ==> x2 + x1/5 <= 9
+    #      z1 + z2 >= 1
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    # same model with penalty on z2 switches active constraint to z1
+    # This is the same model as indicator_test1, except that the penalty on z2 forces z1 to be 1.
 
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -441,19 +454,23 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     z2  = MOI.add_variable(model)
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
-    f1 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm(1.0, z1),
-        MOI.ScalarAffineTerm(1.0, x2),
+    f1 = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0.0, 0.0]
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.))
+    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
 
-    f2 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm(1.0, z2),
-        MOI.ScalarAffineTerm(0.2, x1),
-        MOI.ScalarAffineTerm(1.0, x2),
+    f2 = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.))
+    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
 
     MOI.add_constraint(model, f2, iset2)
 
@@ -466,11 +483,90 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
     # disjunction z1 ⋁ z2
     MOI.add_constraint(model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
-        MOI.GreaterThan(1.),
+        MOI.GreaterThan(1.0),
+    )
+
+    # objective penalized on z2
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0, -30.0], [x1, x2, z2]), 0.0)
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 28.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x1) ≈ 2.0  atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x2) ≈ 8.0  atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 0.0 atol=atol rtol=rtol
+    end
+end
+
+function indicator3_test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # linear problem with indicator constraint
+    # similar to indicator1_test with reversed z1
+    # max  2x1 + 3x2
+    # s.t. x1 + x2 <= 10
+    #      z1 == 0 ==> x2 <= 8
+    #      z2 == 1 ==> x2 + x1/5 <= 9
+    #      (1-z1) + z2 >= 1 <=> z2 - z1 >= 0 
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Interval{Float64})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})
+    x1 = MOI.add_variable(model)
+    x2 = MOI.add_variable(model)
+    z1 = MOI.add_variable(model)
+    z2 = MOI.add_variable(model)
+    MOI.add_constraint(model, z1, MOI.ZeroOne())
+    MOI.add_constraint(model, z2, MOI.ZeroOne())
+    f1 = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0.0, 0.0]
+    )
+    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
+    MOI.add_constraint(model, f1, iset1)
+
+    f2 = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0.0, 0.0],
+    )
+    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+
+    MOI.add_constraint(model, f2, iset2)
+
+    # Additional regular constraint.
+    MOI.add_constraint(model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x1), MOI.ScalarAffineTerm(1.0, x2)], 0.0),
+        MOI.LessThan(10.0),
+    )
+
+    # Disjunction (1-z1) ⋁ z2
+    MOI.add_constraint(model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-1.0, z1), MOI.ScalarAffineTerm(1.0, z2)], 0.0),
+        MOI.GreaterThan(0.0),
     )
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2., 3., -30.], [x1, x2, z2]), 0.)
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0], [x1, x2]), 0.0)
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
@@ -484,18 +580,18 @@ function indtest(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 28.75 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), x1) ≈ 1.25 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), x2) ≈ 8.75 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z1) ≈ 1.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), z2) ≈ 1.0 atol=atol rtol=rtol
     end
-
-
 end
 
 const intlineartests = Dict("knapsack" => knapsacktest,
                             "int1"     => int1test,
                             "int2"     => int2test,
                             "int3"     => int3test,
-                            "indcons"  => indtest,
-                            )
+                            "indicator1"  => indicator1_test,
+                            "indicator2"  => indicator2_test,
+                            "indicator3"  => indicator3_test,
+                           )
 
 @moitestset intlinear

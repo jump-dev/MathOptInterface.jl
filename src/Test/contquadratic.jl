@@ -385,7 +385,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function qcp4test(model::MOI.ModelLike, config::TestConfig)
+function _qcp4test(model::MOI.ModelLike, config::TestConfig, less_than::Bool)
     atol = config.atol
     rtol = config.rtol
     # Max  x
@@ -394,7 +394,8 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})
+    quad_set = less_than ? MOI.LessThan(3.0) : MOI.GreaterThan(-3.0)
+    @test MOI.supports_constraint(model, MOI.ScalarQuadraticFunction{Float64}, typeof(quad_set))
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -407,8 +408,11 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
 
     cf = MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(0.0, x)],
                                      MOI.ScalarQuadraticTerm.([2.0, 1.0, 2.0], [x, x, y], [x, y, y]), 0.0)
-    c = MOI.add_constraint(model, cf, MOI.LessThan(3.0))
-    @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}}()) == 1
+    if !less_than
+        MOIU.operate!(-, Float64, cf)
+    end
+    c = MOI.add_constraint(model, cf, quad_set)
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, typeof(quad_set)}()) == 1
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
             MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0))
@@ -417,6 +421,7 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
 
     if config.query
         @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
+        @test quad_set == MOI.get(model, MOI.ConstraintSet(), c)
     end
 
     if config.solve
@@ -433,14 +438,18 @@ function qcp4test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1.0 atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 3.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ MOI.constant(quad_set) atol=atol rtol=rtol
     end
 end
+
+qcp4test(model::MOI.ModelLike, config::TestConfig) = _qcp4test(model, config, true)
+qcp5test(model::MOI.ModelLike, config::TestConfig) = _qcp4test(model, config, false)
 
 const qcptests = Dict("qcp1" => qcp1test,
                       "qcp2" => qcp2test,
                       "qcp3" => qcp3test,
-                      "qcp4" => qcp4test)
+                      "qcp4" => qcp4test,
+                      "qcp5" => qcp5test)
 
 @moitestset qcp
 
