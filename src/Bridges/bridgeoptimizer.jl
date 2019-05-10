@@ -370,7 +370,7 @@ function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         BridgeType = concrete_bridge_type(b, typeof(f), typeof(s))
         # `add_constraint` might throw an `UnsupportedConstraint` but no
         # modification has been done in the previous line
-        push!(b.bridges, BridgeType(b, f, s))
+        push!(b.bridges, bridge_constraint(BridgeType, b, f, s))
         push!(b.constraint_types, (typeof(f), typeof(s)))
         ci = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(b.bridges))
         return ci

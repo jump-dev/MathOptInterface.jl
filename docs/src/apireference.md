@@ -391,6 +391,28 @@ Moreover, a `LazyBridgeOptimizer` with all the bridges defined in this package c
 Bridges.full_bridge_optimizer
 ```
 
+### Bridge interface
+
+A bridge should implement the following functions to be usable by a bridge optimizer:
+```@docs
+supports_constraint(::Type{<:Bridges.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
+Bridges.concrete_bridge_type
+Bridges.bridge_constraint
+Bridges.added_constraint_types
+```
+
+When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
+and [`ListOfConstraintIndices`](@ref), the variables and constraints created
+by the bridges in the underlying model are hidden by the bridge optimizer.
+For this purpose, the bridge should provide access to the variables and
+constraints it has creates by implemented the following methods of
+[`get`](@ref):
+```@docs
+get(::Bridges.AbstractBridge, ::NumberOfVariables)
+get(::Bridges.AbstractBridge, ::NumberOfConstraints)
+get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
+```
+
 ## Copy utilities
 
 The following utilities can be used to implement [`copy_to`](@ref). See

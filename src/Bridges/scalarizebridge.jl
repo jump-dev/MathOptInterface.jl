@@ -14,9 +14,10 @@ mutable struct ScalarizeBridge{T, F, S} <: AbstractBridge
     scalar_constraints::Vector{CI{F, S}}
     constants::Vector{T}
 end
-function ScalarizeBridge{T, F, S}(model::MOI.ModelLike,
-                                  f::MOI.AbstractVectorFunction,
-                                  set::VectorLinearSet) where {T, F, S}
+function bridge_constraint(::Type{ScalarizeBridge{T, F, S}},
+                           model::MOI.ModelLike,
+                           f::MOI.AbstractVectorFunction,
+                           set::VectorLinearSet) where {T, F, S}
     dimension = MOI.output_dimension(f)
     constants = MOI.constant(f, T)
     new_f = MOIU.scalarize(f, true)

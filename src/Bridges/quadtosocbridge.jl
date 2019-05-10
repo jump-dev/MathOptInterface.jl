@@ -60,9 +60,10 @@ struct QuadtoSOCBridge{T} <: AbstractBridge
     less_than::Bool # whether the constraint was ≤ or ≥
     set_constant::T # the constant that was on the set
 end
-function QuadtoSOCBridge{T}(model, func::MOI.ScalarQuadraticFunction{T},
-                            set::Union{MOI.LessThan{T},
-                                       MOI.GreaterThan{T}}) where T
+function bridge_constraint(::Type{QuadtoSOCBridge{T}}, model,
+                           func::MOI.ScalarQuadraticFunction{T},
+                           set::Union{MOI.LessThan{T},
+                                      MOI.GreaterThan{T}}) where T
     set_constant = MOI.constant(set)
     less_than = set isa MOI.LessThan
     Q, index_to_variable_map = matrix_from_quadratic_terms(func.quadratic_terms)

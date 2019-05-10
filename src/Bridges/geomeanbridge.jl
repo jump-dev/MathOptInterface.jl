@@ -47,8 +47,9 @@ struct GeoMeanBridge{T, F, G} <: AbstractBridge
     tubc::CI{F, MOI.LessThan{T}}
     socrc::Vector{CI{G, MOI.RotatedSecondOrderCone}}
 end
-function GeoMeanBridge{T, F, G}(model, f::MOI.AbstractVectorFunction,
-                                s::MOI.GeometricMeanCone) where {T, F, G}
+function bridge_constraint(::Type{GeoMeanBridge{T, F, G}}, model,
+                           f::MOI.AbstractVectorFunction,
+                           s::MOI.GeometricMeanCone) where {T, F, G}
     d = s.dimension
     n = d-1
     l = ilog2(n)
