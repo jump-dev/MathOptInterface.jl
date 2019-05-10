@@ -42,7 +42,7 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     add_bridge(bridged_model, SplitIntervalBridge{T})
     add_bridge(bridged_model, QuadtoSOCBridge{T})
     add_bridge(bridged_model, GeoMeanBridge{T})
-    add_bridge(bridged_model, SquarePSDBridge{T})
+    add_bridge(bridged_model, SquareBridge{T})
     add_bridge(bridged_model, LogDetBridge{T})
     add_bridge(bridged_model, RootDetBridge{T})
     add_bridge(bridged_model, RSOCBridge{T})
@@ -75,7 +75,7 @@ const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}
 include("geomeanbridge.jl")
 const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
 include("square_bridge.jl")
-const SquarePSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquarePSDBridge{T}, OT}
+const Square{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquareBridge{T}, OT}
 include("detbridge.jl")
 const LogDet{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{LogDetBridge{T}, OT}
 const RootDet{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T}, OT}
