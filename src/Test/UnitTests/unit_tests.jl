@@ -58,12 +58,8 @@ function test_model_solution(model, config;
     )
     config.solve || return
     atol, rtol = config.atol, config.rtol
-    @test MOI.get(model, MOI.SolverName()) isa AbstractString
-    MOI.set(model, MOI.Silent(), config.silent)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-    @test MOI.get(model, MOI.RawStatusString()) isa AbstractString
-    @test MOI.get(model, MOI.SolveTime()) isa AbstractFloat
     if objective_value != nothing
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ objective_value atol=atol rtol=rtol
     end
@@ -95,5 +91,6 @@ include("constraints.jl")
 include("basic_constraint_tests.jl")
 include("modifications.jl")
 include("solve.jl")
+include("attributes.jl")
 
 @moitestset unit

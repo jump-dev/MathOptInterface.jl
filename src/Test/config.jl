@@ -3,7 +3,6 @@ struct TestConfig
     rtol::Float64 # relative tolerance for ...
     solve::Bool # optimize and test result
     query::Bool # can get objective function, and constraint functions, and constraint sets
-    silent::Bool # Value of `MOI.Silent` set before calling `optimize!`
     modify_lhs::Bool # can modify function of a constraint
     duals::Bool # test dual solutions
     infeas_certificates::Bool # check for primal or dual infeasibility certificates when appropriate
@@ -11,14 +10,12 @@ struct TestConfig
     # MOI.OPTIMAL or MOI.LOCALLY_SOLVED.
     optimal_status::MOI.TerminationStatusCode
     basis::Bool # can get variable and constraint basis status
-    function TestConfig(
-        ;atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true,
-        query::Bool = true, silent = true, modify_lhs::Bool = true,
-        duals::Bool = true, infeas_certificates::Bool = true,
-        optimal_status = MOI.OPTIMAL, basis::Bool = false)
-        new(atol, rtol, solve,
-            query, silent, modify_lhs,
-            duals, infeas_certificates,
+    function TestConfig(;
+        atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true,
+        query::Bool = true, modify_lhs::Bool = true, duals::Bool = true,
+        infeas_certificates::Bool = true, optimal_status = MOI.OPTIMAL,
+        basis::Bool = false)
+        new(atol, rtol, solve, query, modify_lhs, duals, infeas_certificates,
             optimal_status, basis)
     end
 end

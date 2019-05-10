@@ -455,8 +455,6 @@ The bases status are set to the status specified by `con_basis`. A vector of pai
 """
 function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primal, dual...; con_basis = [])
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
-    MOI.set(mock, MOI.RawStatusString(), "Mock solution set by `mock_optimize!`.")
-    MOI.set(mock, MOI.SolveTime(), 0.0)
     MOI.set(mock, MOI.ResultCount(), 1)
     mock_primal!(mock, primal)
     mock_dual!(mock, dual...)
@@ -468,8 +466,6 @@ end
 mock_optimize!(mock::MockOptimizer,  primdual...; kws...) = mock_optimize!(mock, MOI.OPTIMAL, primdual...; kws...)
 function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode)
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
-    MOI.set(mock, MOI.RawStatusString(), "Mock solution set by `mock_optimize!` with no result.")
-    MOI.set(mock, MOI.SolveTime(), 0.0)
     MOI.set(mock, MOI.ResultCount(), 0)
 end
 
