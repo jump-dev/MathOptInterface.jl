@@ -4,7 +4,9 @@
 Test that the [`MOI.SolverName`](@ref) attributes is implemented for `model`.
 """
 function solver_name(model::MOI.ModelLike, config::TestConfig)
-    @test MOI.get(model, MOI.SolverName()) isa AbstractString
+    if config.solve
+        @test MOI.get(model, MOI.SolverName()) isa AbstractString
+    end
 end
 unittests["solver_name"] = solver_name
 
@@ -25,7 +27,9 @@ function raw_status_string(model::MOI.ModelLike, config::TestConfig)
             MOI.SingleVariable(x))
     test_model_solution(model, config, objective_value = 0.0,
                         variable_primal = [(x, 0.0)])
-    @test MOI.get(model, MOI.RawStatusString()) isa AbstractString
+    if config.solve
+        @test MOI.get(model, MOI.RawStatusString()) isa AbstractString
+    end
 end
 unittests["raw_status_string"] = raw_status_string
 
@@ -45,6 +49,8 @@ function solve_time(model::MOI.ModelLike, config::TestConfig)
             MOI.SingleVariable(x))
     test_model_solution(model, config, objective_value = 0.0,
                         variable_primal = [(x, 0.0)])
-    @test MOI.get(model, MOI.SolveTime()) isa AbstractFloat
+    if config.solve
+        @test MOI.get(model, MOI.SolveTime()) isa AbstractFloat
+    end
 end
 unittests["solve_time"] = solve_time
