@@ -70,10 +70,9 @@ struct SquarePSDBridge{T, F<:MOI.AbstractVectorFunction,
     psd::CI{F, MOI.PositiveSemidefiniteConeTriangle}
     sym::Vector{Pair{Tuple{Int, Int}, CI{G, MOI.EqualTo{T}}}}
 end
-function SquarePSDBridge{T, F, G}(model::MOI.ModelLike, f::F,
-                                  s::MOI.PositiveSemidefiniteConeSquare) where {T,
-                                                                                F <: MOI.AbstractVectorFunction,
-                                                                                G <: MOI.AbstractScalarFunction}
+function bridge_constraint(::Type{SquarePSDBridge{T, F, G}},
+                           model::MOI.ModelLike, f::F,
+                           s::MOI.PositiveSemidefiniteConeSquare) where {T, F, G}
     f_scalars = MOIU.eachscalar(f)
     sym = Pair{Tuple{Int, Int}, CI{G, MOI.EqualTo{T}}}[]
     dim = s.side_dimension

@@ -9,7 +9,8 @@ into the constraint `ScalarAffineFunction{T}`-in-`S`.
 struct ScalarFunctionizeBridge{T, S} <: AbstractBridge
     constraint::CI{MOI.ScalarAffineFunction{T}, S}
 end
-function ScalarFunctionizeBridge{T, S}(model, f::MOI.SingleVariable, s::S) where {T, S}
+function bridge_constraint(::Type{ScalarFunctionizeBridge{T, S}}, model,
+                           f::MOI.SingleVariable, s::S) where {T, S}
     constraint = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(f), s)
     return ScalarFunctionizeBridge{T, S}(constraint)
 end
@@ -81,7 +82,8 @@ into the constraint `VectorAffineFunction{T}`-in-`S`.
 struct VectorFunctionizeBridge{T, S} <: AbstractBridge
     constraint::CI{MOI.VectorAffineFunction{T}, S}
 end
-function VectorFunctionizeBridge{T, S}(model, f::MOI.VectorOfVariables, s::S) where {T, S}
+function bridge_constraint(::Type{VectorFunctionizeBridge{T, S}}, model,
+                           f::MOI.VectorOfVariables, s::S) where {T, S}
     constraint = MOI.add_constraint(model, MOI.VectorAffineFunction{T}(f), s)
     return VectorFunctionizeBridge{T, S}(constraint)
 end
