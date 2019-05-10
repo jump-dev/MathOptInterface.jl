@@ -74,7 +74,7 @@ include("quadtosocbridge.jl")
 const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}, OT}
 include("geomeanbridge.jl")
 const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
-include("squarepsdbridge.jl")
+include("square_bridge.jl")
 const SquarePSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquarePSDBridge{T}, OT}
 include("detbridge.jl")
 const LogDet{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{LogDetBridge{T}, OT}
