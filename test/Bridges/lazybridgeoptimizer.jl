@@ -15,7 +15,7 @@ MOIU.@model(NoRSOCModel,
             (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
              MOI.ExponentialCone, MOI.PositiveSemidefiniteConeTriangle),
             (),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
@@ -30,13 +30,17 @@ MOIU.@model(NoVariableModel,
             (MOI.ScalarAffineFunction,),
             (),
             (MOI.VectorAffineFunction,))
+function MOI.supports_constraint(::NoVariableModel, ::Type{MOI.SingleVariable},
+                                 ::Type{<:MOI.AbstractScalarSet})
+    return false
+end
 
 MOIU.@model(GreaterNonnegModel,
             (),
             (MOI.GreaterThan,),
             (MOI.Nonnegatives,),
             (),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
@@ -49,7 +53,7 @@ MOIU.@model(ModelNoVAFinSOC,
              MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
             (MOI.PowerCone, MOI.DualPowerCone),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))

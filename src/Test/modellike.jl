@@ -267,6 +267,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     w = MOI.add_variable(src)
     MOI.set(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
     csv = MOI.add_constraint(src, MOI.SingleVariable(w), MOI.EqualTo(2.))
+    @test csv.value == w.value
     MOI.set(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     MOI.set(src, MOI.ConstraintName(), cvv, "cvv")
@@ -375,12 +376,15 @@ function orderedindicestest(model::MOI.ModelLike)
     # Note: there are too many combinations to test, so we're just going to
     # check SingleVariable-in-LessThan and hope it works for the rest
     c1 = MOI.add_constraint(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
+    @test c1.value == v2.value
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1]
     c2 = MOI.add_constraint(model, MOI.SingleVariable(v3), MOI.LessThan(2.0))
+    @test c2.value == v3.value
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1, c2]
     MOI.delete(model, c1)
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2]
     c3 = MOI.add_constraint(model, MOI.SingleVariable(v4), MOI.LessThan(3.0))
+    @test c3.value == v4.value
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]
 end
 

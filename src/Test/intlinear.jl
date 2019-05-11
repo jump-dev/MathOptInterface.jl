@@ -36,15 +36,19 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 2
 
 
-    MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Interval(0.0, 5.0))
+    vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Interval(0.0, 5.0))
+    @test vc1.value == v[1].value
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}()) == 1
 
-    MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.Interval(0.0, 10.0))
+    vc2 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.Interval(0.0, 10.0))
+    @test vc2.value == v[2].value
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}()) == 2
-    MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.Integer())
+    vc3 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.Integer())
+    @test vc3.value == v[2].value
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}()) == 1
 
-    MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.ZeroOne())
+    vc4 = MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.ZeroOne())
+    @test vc4.value == v[3].value
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}()) == 1
 
     objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.1, 2.0, 5.0], v), 0.0)
@@ -98,9 +102,12 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
         v = MOI.add_variables(model, 3)
         @test MOI.get(model, MOI.NumberOfVariables()) == 3
-        MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
-        MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
-        MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.LessThan(2.0))
+        vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
+        @test vc1.value == v[1].value
+        vc2 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
+        @test vc2.value == v[2].value
+        vc3 = MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.LessThan(2.0))
+        @test vc3.value == v[3].value
 
         c1 = MOI.add_constraint(model, MOI.VectorOfVariables([v[1], v[2]]), MOI.SOS1([1.0, 2.0]))
         c2 = MOI.add_constraint(model, MOI.VectorOfVariables([v[1], v[3]]), MOI.SOS1([1.0, 2.0]))
@@ -172,8 +179,10 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 
         bin_constraints = []
         for i in 1:8
-            MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.Interval(0.0, 2.0))
+            vc = MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.Interval(0.0, 2.0))
+            @test vc.value == v[i].value
             push!(bin_constraints, MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.ZeroOne()))
+            @test bin_constraints[i].value == v[i].value
         end
 
         MOI.add_constraint(model,
@@ -268,13 +277,16 @@ function int3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
 
     z = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(z), MOI.Integer())
-    MOI.add_constraint(model, MOI.SingleVariable(z), MOI.Interval(0.0, 100.0))
+    vc1 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.Integer())
+    @test vc1.value == z.value
+    vc2 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.Interval(0.0, 100.0))
+    @test vc2.value == z.value
 
     b = MOI.add_variables(model, 10)
 
     for bi in b
-        MOI.add_constraint(model, MOI.SingleVariable(bi), MOI.ZeroOne())
+        vc = MOI.add_constraint(model, MOI.SingleVariable(bi), MOI.ZeroOne())
+        @test vc.value == bi.value
     end
 
     c = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(vcat(1.0, fill(-0.5 / 40, 10)), vcat(z, b)), 0.0), MOI.Interval(0.0, 0.999))
@@ -328,7 +340,8 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
 
     for vi in v
-        MOI.add_constraint(model, MOI.SingleVariable(vi), MOI.ZeroOne())
+        vc = MOI.add_constraint(model, MOI.SingleVariable(vi), MOI.ZeroOne())
+        @test vc.value == vi.value
     end
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}()) == 5
     c = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 8.0, 4.0, 2.0, 5.0], v), 0.0), MOI.LessThan(10.0))
@@ -531,8 +544,10 @@ function indicator3_test(model::MOI.ModelLike, config::TestConfig)
     x2 = MOI.add_variable(model)
     z1 = MOI.add_variable(model)
     z2 = MOI.add_variable(model)
-    MOI.add_constraint(model, z1, MOI.ZeroOne())
-    MOI.add_constraint(model, z2, MOI.ZeroOne())
+    vc1 = MOI.add_constraint(model, z1, MOI.ZeroOne())
+    @test vc1.value == z1.value
+    vc2 = MOI.add_constraint(model, z2, MOI.ZeroOne())
+    @test vc2.value == z2.value
     f1 = MOI.VectorAffineFunction(
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),

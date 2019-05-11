@@ -6,7 +6,7 @@ MOIU.@model(SimpleModel,
              MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
             (MOI.PowerCone, MOI.DualPowerCone),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))

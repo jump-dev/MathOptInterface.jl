@@ -16,7 +16,7 @@ MOIU.@model(ModelForCachingOptimizer,
              MOI.PositiveSemidefiniteConeTriangle, MOI.RootDetConeTriangle,
              MOI.LogDetConeTriangle),
             (),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction,))

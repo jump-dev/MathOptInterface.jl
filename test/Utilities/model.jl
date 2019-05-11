@@ -2,6 +2,7 @@ using Test
 import MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MOI.Test
+const MOIU = MOI.Utilities
 
 # TODO: It's hard to find where Model is defined!
 
@@ -36,6 +37,8 @@ end
     @test typeof(c2) ==
         MOI.ConstraintIndex{TestExternalModel.NewFunction, MOI.ZeroOne}
 end
+
+include("../model.jl")
 
 @testset "Name test" begin
     MOIT.nametest(Model{Float64}())
@@ -167,19 +170,20 @@ end
 struct SetNotSupportedBySolvers <: MOI.AbstractSet end
 @testset "Default fallbacks" begin
     @testset "set" begin
-        m = Model{Float64}()
-        x = MOI.add_variable(m)
-        c = MOI.add_constraint(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
-        @test !MOI.supports_constraint(m, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
+        model = Model{Float64}()
+        x = MOI.add_variable(model)
+        func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
+        c = MOI.add_constraint(model, func, MOI.LessThan(0.0))
+        @test !MOI.supports_constraint(model, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
 
         # set of different type
-        @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
+        @test_throws Exception MOI.set(model, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
         # set not implemented
-        @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
+        @test_throws Exception MOI.set(model, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
 
         # function of different type
-        @test_throws Exception MOI.set(m, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
+        @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
         # function not implemented
-        @test_throws Exception MOI.set(m, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
+        @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
     end
 end

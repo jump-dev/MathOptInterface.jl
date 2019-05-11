@@ -16,6 +16,7 @@ function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestCon
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 1.0,
         variable_primal   = [(x, 1.0)],
@@ -49,6 +50,7 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 1.0,
         variable_primal   = [(x, 1.0)],
@@ -315,6 +317,7 @@ function delete_variable_with_single_variable_obj(model::MOI.ModelLike,
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    @test c.value == x.value
     MOI.delete(model, y)
     test_model_solution(model, config;
         objective_value   = 1.0,
