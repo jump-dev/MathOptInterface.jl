@@ -19,7 +19,6 @@ Test that the [`MOI.RawStatusString`](@ref) attributes is implemented for
 function raw_status_string(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
-    @test MOI.get(model, MOI.SolverName()) isa AbstractString
     x = MOI.add_variable(model)
     MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -41,7 +40,6 @@ Test that the [`MOI.SolveTime`](@ref) attributes is implemented for `model`.
 function solve_time(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
-    @test MOI.get(model, MOI.SolverName()) isa AbstractString
     x = MOI.add_variable(model)
     MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
