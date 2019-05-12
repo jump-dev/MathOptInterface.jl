@@ -57,6 +57,18 @@ Return a `Bool` indicating whether this index refers to a valid object in the mo
 is_valid(model::ModelLike, ref::Index) = false
 
 """
+    throw_if_not_valid(model::ModelLike, index::Index)
+
+Throw an `InvalidIndex(index)` error if `MOI.is_valid(model, index)` returns
+`false`.
+"""
+function throw_if_not_valid(model::ModelLike, index::Index)
+    if !MOI.is_valid(model, index)
+        throw(InvalidIndex(index))
+    end
+end
+
+"""
     struct DeleteNotAllowed{IndexType <: Index} <: NotAllowedError
         index::IndexType
         message::String

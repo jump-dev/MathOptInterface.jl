@@ -149,6 +149,7 @@ BasisStatusCode
 VariableIndex
 ConstraintIndex
 is_valid
+throw_if_not_valid
 delete(::ModelLike, ::Index)
 ```
 
