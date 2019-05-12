@@ -48,7 +48,9 @@ function solve_time(model::MOI.ModelLike, config::TestConfig)
     test_model_solution(model, config, objective_value = 0.0,
                         variable_primal = [(x, 0.0)])
     if config.solve
-        @test MOI.get(model, MOI.SolveTime()) isa AbstractFloat
+        time = MOI.get(model, MOI.SolveTime()) isa AbstractFloat
+        @test time isa AbstractFloat
+        @test time ≥ 0.0
     end
 end
 unittests["solve_time"] = solve_time
