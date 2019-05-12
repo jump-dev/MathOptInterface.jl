@@ -43,7 +43,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     eval_variable_constraint_dual::Bool
     condual::Dict{MOI.ConstraintIndex,Any}
     con_basis::Dict{MOI.ConstraintIndex,MOI.BasisStatusCode}
-    # The attributes set by `MOI.optimize!`cannot be set to `model`.
+    # The attributes set by `MOI.optimize!` cannot be set to `model`.
     # We detect them with `is_set_by_optimize` and store them in the following:
     optimizer_attributes::Dict{MOI.AbstractOptimizerAttribute, Any}
     model_attributes::Dict{MOI.AbstractModelAttribute, Any}
