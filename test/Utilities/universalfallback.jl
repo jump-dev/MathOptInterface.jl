@@ -113,21 +113,22 @@ y, z = MOI.add_variables(uf, 2)
 end
 @testset "Constraint Attribute" begin
     global x, y, z
-    _saf(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
-    function _add_constraint(vi, ub)
-        return MOI.add_constraint(uf, _saf(vi), MOI.LessThan(ub))
+    _affine(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
+    function _add_affine_constraint(vi, ub)
+        return MOI.add_constraint(uf, _affine(vi), MOI.LessThan(ub))
     end
     attr = MOIT.UnknownConstraintAttribute()
     @testset "Supported constraint" begin
-        cx = _add_constraint(x, 0.)
-        cy = _add_constraint(y, 1.)
-        cz = _add_constraint(z, 2.)
+        cx = _add_affine_constraint(x, 0.)
+        cy = _add_affine_constraint(y, 1.)
+        cz = _add_affine_constraint(z, 2.)
         CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}
         listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.LessThan{Float64}}()
-        test_varconattrs(uf, model, attr, listattr, CI, uf -> _add_constraint(x, 0.), cx, cy, cz)
+        test_varconattrs(uf, model, attr, listattr, CI,
+                         uf -> _add_affine_constraint(x, 0.), cx, cy, cz)
 
-        MOI.set(uf, MOI.ConstraintFunction(), cx, _saf(y))
-        @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _saf(y)
+        MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
+        @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
@@ -141,15 +142,16 @@ end
     x = MOI.add_variable(uf)
     y, z = MOI.add_variables(uf, 2)
     @testset "Unsupported constraint" begin
-        cx = _add_constraint(x, 0.)
-        cy = _add_constraint(y, 1.)
-        cz = _add_constraint(z, 2.)
+        cx = _add_affine_constraint(x, 0.)
+        cy = _add_affine_constraint(y, 1.)
+        cz = _add_affine_constraint(z, 2.)
         CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
         listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
-        test_varconattrs(uf, model, attr, listattr, CI, uf -> _add_constraint(x, 0.), cx, cy, cz)
+        test_varconattrs(uf, model, attr, listattr, CI,
+                         uf -> _add_affine_constraint(x, 0.), cx, cy, cz)
 
-        MOI.set(uf, MOI.ConstraintFunction(), cx, _saf(y))
-        @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _saf(y)
+        MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
+        @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")
@@ -179,9 +181,9 @@ end
     uf = MOIU.UniversalFallback(model)
     x = MOI.add_variable(uf)
     # These are both intercepted by the fallback.
-    _saf(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
-    x_eq = MOI.add_constraint(uf, _saf(x), MOI.EqualTo(1.0))
-    x_gt = MOI.add_constraint(uf, _saf(x), MOI.GreaterThan(1.0))
+    _affine(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
+    x_eq = MOI.add_constraint(uf, _affine(x), MOI.EqualTo(1.0))
+    x_gt = MOI.add_constraint(uf, _affine(x), MOI.GreaterThan(1.0))
     MOI.set(uf, MOI.ConstraintName(), x_eq, "a name")
     MOI.set(uf, MOI.ConstraintName(), x_gt, "a name")
     @test_throws Exception MOI.get(uf,
