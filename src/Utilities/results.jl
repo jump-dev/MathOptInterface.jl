@@ -407,8 +407,8 @@ function triangle_dot(x::Vector{S}, y::Vector{T}, dim::Int, offset::Int) where {
 end
 
 function set_dot(x::Vector, y::Vector,
-                 set::MOI.PositiveSemidefiniteConeTriangle)
-    return triangle_dot(x, y, set.side_dimension, 0)
+                 set::MOI.AbstractSymmetricMatrixSetTriangle)
+    return triangle_dot(x, y, MOI.side_dimension(set), 0)
 end
 
 function set_dot(x::Vector, y::Vector, set::MOI.RootDetConeTriangle)
@@ -441,9 +441,9 @@ function triangle_coefficients!(b::Vector{T}, dim::Int, offset::Int) where T
     end
 end
 
-function dot_coefficients(a::Vector, set::MOI.PositiveSemidefiniteConeTriangle)
+function dot_coefficients(a::Vector, set::MOI.AbstractSymmetricMatrixSetTriangle)
     b = copy(a)
-    triangle_coefficients!(b, set.side_dimension, 0)
+    triangle_coefficients!(b, MOI.side_dimension(set), 0)
     return b
 end
 

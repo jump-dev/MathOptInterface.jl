@@ -35,12 +35,14 @@
 # In the last primal program, we have the variables Z = X + Xᵀ and a upper triangular matrix S such that X = Z + S - Sᵀ
 
 """
-    SquarePSDBridge{T}
+    SquareBridge{T, F<:MOI.AbstractVectorFunction,
+                 G<:MOI.AbstractScalarFunction,
+                 TT<:MOI.AbstractSymmetricMatrixSetTriangle,
+                 ST<:MOI.AbstractSymmetricMatrixSetSquare} <: AbstractBridge
 
-The `SquarePSDBridge` reformulates the constraint of a square matrix to be PSD
-and symmetric, i.e. belongs to the [`MOI.PositiveSemidefiniteConeSquare`](@ref),
+The `SquareBridge` reformulates the constraint of a square matrix to be in `ST`
 to a list of equality constraints for pair or off-diagonal entries with
-different expressions and a PSD constraint the upper triangular part of the
+different expressions and a `TT` constraint the upper triangular part of the
 matrix.
 
 For instance, the constraint for the matrix
@@ -64,18 +66,20 @@ and the equality constraint between the off-diagonal entries (2, 3) and (3, 2)
 the off-diagonal entries (1, 2) and (2, 1) or between (1, 3) and (3, 1) since
 the expressions are the same.
 """
-struct SquarePSDBridge{T, F<:MOI.AbstractVectorFunction,
-                       G<:MOI.AbstractScalarFunction} <: AbstractBridge
+struct SquareBridge{T, F<:MOI.AbstractVectorFunction,
+                    G<:MOI.AbstractScalarFunction,
+                    TT<:MOI.AbstractSymmetricMatrixSetTriangle,
+                    ST<:MOI.AbstractSymmetricMatrixSetSquare} <: AbstractBridge
     side_dimension::Int
-    psd::CI{F, MOI.PositiveSemidefiniteConeTriangle}
+    triangle::CI{F, TT}
     sym::Vector{Pair{Tuple{Int, Int}, CI{G, MOI.EqualTo{T}}}}
 end
-function bridge_constraint(::Type{SquarePSDBridge{T, F, G}},
+function bridge_constraint(::Type{SquareBridge{T, F, G, TT, ST}},
                            model::MOI.ModelLike, f::F,
-                           s::MOI.PositiveSemidefiniteConeSquare) where {T, F, G}
+                           s::ST) where {T, F, G, TT, ST}
     f_scalars = MOIU.eachscalar(f)
     sym = Pair{Tuple{Int, Int}, CI{G, MOI.EqualTo{T}}}[]
-    dim = s.side_dimension
+    dim = MOI.side_dimension(s)
     upper_triangle_indices = Int[]
     trilen = div(dim * (dim + 1), 2)
     sizehint!(upper_triangle_indices, trilen)
@@ -109,48 +113,48 @@ function bridge_constraint(::Type{SquarePSDBridge{T, F, G}},
         k += dim - j
     end
     @assert length(upper_triangle_indices) == trilen
-    psd = MOI.add_constraint(model, f_scalars[upper_triangle_indices],
-                             MOI.PositiveSemidefiniteConeTriangle(dim))
-    return SquarePSDBridge(dim, psd, sym)
+    triangle = MOI.add_constraint(model, f_scalars[upper_triangle_indices], MOI.triangular_form(s))
+    return SquareBridge{T, F, G, TT, ST}(dim, triangle, sym)
 end
 
-function MOI.supports_constraint(::Type{SquarePSDBridge{T}},
+function MOI.supports_constraint(::Type{SquareBridge{T}},
                                 ::Type{<:MOI.AbstractVectorFunction},
-                                ::Type{MOI.PositiveSemidefiniteConeSquare}) where T
+                                ::Type{<:MOI.AbstractSymmetricMatrixSetSquare}) where T
     return true
 end
-function added_constraint_types(::Type{SquarePSDBridge{T, F, G}}) where {T, F, G}
-    return [(F, MOI.PositiveSemidefiniteConeTriangle), (G, MOI.EqualTo{T})]
+function added_constraint_types(::Type{SquareBridge{T, F, G, TT, ST}}) where {T, F, G, TT, ST}
+    return [(F, TT), (G, MOI.EqualTo{T})]
 end
-function concrete_bridge_type(::Type{<:SquarePSDBridge{T}},
+function concrete_bridge_type(::Type{<:SquareBridge{T}},
                               F::Type{<:MOI.AbstractVectorFunction},
-                              ::Type{MOI.PositiveSemidefiniteConeSquare}) where T
+                              ST::Type{<:MOI.AbstractSymmetricMatrixSetSquare}) where T
     S = MOIU.scalar_type(F)
     G = MOIU.promote_operation(-, T, S, S)
-    SquarePSDBridge{T, F, G}
+    TT = MOI.triangular_form(ST)
+    SquareBridge{T, F, G, TT, ST}
 end
 
 # Attributes, Bridge acting as an model
-function MOI.get(::SquarePSDBridge{T, F},
-                 ::MOI.NumberOfConstraints{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F}
+function MOI.get(::SquareBridge{T, F, G, TT},
+                 ::MOI.NumberOfConstraints{F, TT}) where {T, F, G, TT}
     return 1
 end
-function MOI.get(bridge::SquarePSDBridge{T, F, G},
+function MOI.get(bridge::SquareBridge{T, F, G},
                  ::MOI.NumberOfConstraints{G, MOI.EqualTo{T}}) where {T, F, G}
     return length(bridge.sym)
 end
-function MOI.get(bridge::SquarePSDBridge{T, F},
-                 ::MOI.ListOfConstraintIndices{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F}
-    return [bridge.psd]
+function MOI.get(bridge::SquareBridge{T, F, G, TT},
+                 ::MOI.ListOfConstraintIndices{F, TT}) where {T, F, G, TT}
+    return [bridge.triangle]
 end
-function MOI.get(bridge::SquarePSDBridge{T, F, G},
+function MOI.get(bridge::SquareBridge{T, F, G},
                  ::MOI.ListOfConstraintIndices{G, MOI.EqualTo{T}}) where {T, F, G}
     return map(pair -> pair.second, bridge.sym)
 end
 
 # Indices
-function MOI.delete(model::MOI.ModelLike, bridge::SquarePSDBridge)
-    MOI.delete(model, bridge.psd)
+function MOI.delete(model::MOI.ModelLike, bridge::SquareBridge)
+    MOI.delete(model, bridge.triangle)
     for pair in bridge.sym
         MOI.delete(model, pair.second)
     end
@@ -158,8 +162,8 @@ end
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-                 bridge::SquarePSDBridge{T}) where T
-    tri = MOI.get(model, attr, bridge.psd)
+                 bridge::SquareBridge{T}) where T
+    tri = MOI.get(model, attr, bridge.triangle)
     dim = bridge.side_dimension
     sqr = Vector{eltype(tri)}(undef, dim^2)
     k = 0
@@ -172,15 +176,15 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
     return sqr
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                 bridge::SquarePSDBridge)
-    tri = MOI.get(model, attr, bridge.psd)
+                 bridge::SquareBridge)
+    tri = MOI.get(model, attr, bridge.triangle)
     dim = bridge.side_dimension
     sqr = Vector{eltype(tri)}(undef, dim^2)
     k = 0
     for j in 1:dim
         for i in 1:j
             k += 1
-            # The psd constraint uses only the upper triangular part
+            # The triangle constraint uses only the upper triangular part
             if i == j
                 sqr[i + (j - 1) * dim] = tri[k]
             else
