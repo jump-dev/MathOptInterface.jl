@@ -337,16 +337,22 @@ single_variable_flag(::Type{MOI.Semicontinuous}) = 0x40
 single_variable_flag(::Type{MOI.Semiinteger}) = 0x80
 
 # Sets setting lower bound:
-lower_bound(set::MOI.EqualTo) = set.value
-lower_bound(set::Union{MOI.GreaterThan, MOI.Interval}) = set.lower
-# 0xb = 0x8 | 0x2 | 0x1
-const LOWER_BOUND_MASK = 0xb
+extract_lower_bound(set::MOI.EqualTo) = set.value
+function extract_lower_bound(set::Union{MOI.GreaterThan, MOI.Interval,
+                                        MOI.Semicontinuous, MOI.Semiinteger})
+    return set.lower
+end
+# 0xb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
+const LOWER_BOUND_MASK = 0xcb
 
 # Sets setting upper bound:
-upper_bound(set::MOI.EqualTo) = set.value
-upper_bound(set::Union{MOI.LessThan, MOI.Interval}) = set.upper
-# 0xd = 0x8 | 0x4 | 0x1
-const UPPER_BOUND_MASK = 0xd
+extract_upper_bound(set::MOI.EqualTo) = set.value
+function extract_upper_bound(set::Union{MOI.LessThan, MOI.Interval,
+                                        MOI.Semicontinuous, MOI.Semiinteger})
+    return set.upper
+end
+# 0xd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
+const UPPER_BOUND_MASK = 0xcd
 
 function MOI.supports_constraint(
     ::AbstractModel{T}, ::Type{MOI.SingleVariable},
@@ -370,12 +376,12 @@ function MOI.add_constraint(model::AbstractModel, f::MOI.SingleVariable,
            error("Cannot add $f-in-$s constraint as another constraint on",
                  " $(f.variable) already sets an upper bound.")
         end
-        # No error should be thrown now, we can modify `model`
+        # No error should be thrown now, we can modify `model`.
         if !iszero(flag & LOWER_BOUND_MASK)
-            model.lower_bound[index] = lower_bound(s)
+            model.lower_bound[index] = extract_lower_bound(s)
         end
         if !iszero(flag & UPPER_BOUND_MASK)
-            model.upper_bound[index] = upper_bound(s)
+            model.upper_bound[index] = extract_upper_bound(s)
         end
         model.single_variable_mask[index] = mask | flag
         return CI{MOI.SingleVariable, typeof(s)}(index)
@@ -428,12 +434,13 @@ function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change:
 end
 function MOI.set(model::AbstractModel, ::MOI.ConstraintSet,
                  ci::CI{MOI.SingleVariable}, change::MOI.AbstractSet)
+    throw_if_not_valid(model, ci)
     flag = single_variable_flag(typeof(change))
     if !iszero(flag & LOWER_BOUND_MASK)
-        model.lower_bound[ci.value] = lower_bound(change)
+        model.lower_bound[ci.value] = extract_lower_bound(change)
     end
     if !iszero(flag & UPPER_BOUND_MASK)
-        model.upper_bound[ci.value] = upper_bound(change)
+        model.upper_bound[ci.value] = extract_upper_bound(change)
     end
 end
 function MOI.set(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
@@ -489,33 +496,36 @@ function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)
     _getfunction(model, ci, getconstrloc(model, ci))
 end
 
-function _get_single_variable_set(model::AbstractModel, ::Type{<:MOI.EqualTo},
+function _get_single_variable_set(model::AbstractModel, S::Type{<:MOI.EqualTo},
                                   index)
-    # lower and upper bounds are equal, we can take either of them
     return MOI.EqualTo(model.lower_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel, ::Type{<:MOI.GreaterThan},
+function _get_single_variable_set(model::AbstractModel,
+                                  S::Type{<:Union{MOI.GreaterThan,
+                                                  MOI.EqualTo}},
                                   index)
-    return MOI.GreaterThan(model.lower_bound[index])
+    # Lower and upper bounds are equal for `EqualTo`, we can take either of them.
+    return S(model.lower_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel, ::Type{<:MOI.LessThan},
+function _get_single_variable_set(model::AbstractModel, S::Type{<:MOI.LessThan},
                                   index)
-    return MOI.LessThan(model.upper_bound[index])
+    return S(model.upper_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel, ::Type{<:MOI.Interval},
+function _get_single_variable_set(model::AbstractModel,
+                                  S::Type{<:Union{MOI.Interval,
+                                                  MOI.Semicontinuous,
+                                                  MOI.Semiinteger}},
                                   index)
-    return MOI.Interval(model.lower_bound[index], model.upper_bound[index])
+    return S(model.lower_bound[index], model.upper_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel, ::Type{MOI.Integer},
+function _get_single_variable_set(model::AbstractModel,
+                                  ::Type{<:Union{MOI.Integer, MOI.ZeroOne}},
                                   index)
-    return MOI.Integer()
-end
-function _get_single_variable_set(model::AbstractModel, ::Type{MOI.ZeroOne},
-                                  index)
-    return MOI.ZeroOne()
+    return S()
 end
 function MOI.get(model::AbstractModel, ::MOI.ConstraintSet,
                  ci::CI{MOI.SingleVariable, S}) where S
+    MOI.throw_if_not_valid(model, ci)
     return _get_single_variable_set(model, S, ci.value)
 end
 function MOI.get(model::AbstractModel, ::MOI.ConstraintSet, ci::CI)
