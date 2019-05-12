@@ -276,9 +276,9 @@ IndicatorSet
 
 ### Matrix sets
 
-Matrix sets are represented in their vectorized form in order to be subtypes
-of [`AbstractVectorSet`](@ref). For sets of symmetric matrices, storing both
-the `(i, j)` and `(j, i)` elements is redundant so there exists the
+Matrix sets are vectorized in order to be subtypes of
+[`AbstractVectorSet`](@ref). For sets of symmetric matrices, storing both the
+`(i, j)` and `(j, i)` elements is redundant so there exists the
 [`AbstractSymmetricMatrixSetTriangle`](@ref) set to represent only the
 vectorization of the upper triangular part of the matrix. When the matrix
 of expressions constrained to be in the set is not symmetric and hence
