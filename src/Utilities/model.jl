@@ -386,7 +386,7 @@ function MOI.add_constraint(model::AbstractModel, f::MOI.SingleVariable,
         model.single_variable_mask[index] = mask | flag
         return CI{MOI.SingleVariable, typeof(s)}(index)
     else
-        throw(MOI.UnsupportedConstraint{F, S}())
+        throw(MOI.UnsupportedConstraint{MOI.SingleVariable, typeof(s)}())
     end
 end
 function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
@@ -434,7 +434,7 @@ function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change:
 end
 function MOI.set(model::AbstractModel, ::MOI.ConstraintSet,
                  ci::CI{MOI.SingleVariable}, change::MOI.AbstractSet)
-    throw_if_not_valid(model, ci)
+    MOI.throw_if_not_valid(model, ci)
     flag = single_variable_flag(typeof(change))
     if !iszero(flag & LOWER_BOUND_MASK)
         model.lower_bound[ci.value] = extract_lower_bound(change)
@@ -519,7 +519,7 @@ function _get_single_variable_set(model::AbstractModel,
     return S(model.lower_bound[index], model.upper_bound[index])
 end
 function _get_single_variable_set(model::AbstractModel,
-                                  ::Type{<:Union{MOI.Integer, MOI.ZeroOne}},
+                                  S::Type{<:Union{MOI.Integer, MOI.ZeroOne}},
                                   index)
     return S()
 end

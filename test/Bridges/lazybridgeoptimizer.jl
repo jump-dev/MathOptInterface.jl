@@ -35,6 +35,7 @@ function MOI.supports_constraint(::NoVariableModel, ::Type{MOI.SingleVariable},
     return false
 end
 
+# Only supports GreaterThan and Nonnegatives
 MOIU.@model(GreaterNonnegModel,
             (),
             (MOI.GreaterThan,),
@@ -44,6 +45,11 @@ MOIU.@model(GreaterNonnegModel,
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+function MOI.supports_constraint(
+    ::GreaterNonnegModel{T}, ::Type{MOI.SingleVariable},
+    ::Type{<:Union{MOI.EqualTo{T}, MOI.LessThan{T}, MOI.Interval{T}}}) where T
+    return false
+end
 
 
 MOIU.@model(ModelNoVAFinSOC,
@@ -64,6 +70,12 @@ MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
 
 # Model supporting nothing
 MOIU.@model NothingModel () () () () () () () ()
+function MOI.supports_constraint(
+    ::NothingModel{T}, ::Type{MOI.SingleVariable},
+    ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
+                   MOI.Interval{T}, MOI.Integer, MOI.ZeroOne}}) where T
+    return false
+end
 
 struct BridgeAddingNoConstraint{T} <: MOI.Bridges.AbstractBridge end
 MOIB.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []

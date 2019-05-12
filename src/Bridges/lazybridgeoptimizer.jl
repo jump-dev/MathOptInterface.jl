@@ -19,6 +19,8 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     bridges::Vector{Union{Nothing, AbstractBridge}}
     # Constraint Index of bridged constraint -> Constraint type.
     constraint_types::Vector{Tuple{DataType, DataType}}
+    # For `SingleVariable` constraints: (variable, set type) -> bridge
+    single_variable_constraints::Dict{Tuple{Int64, DataType}, AbstractBridge}
     bridgetypes::Vector{Any} # List of types of available bridges
     dist::Dict{Tuple{DataType, DataType}, Int}      # (F, S) -> Number of bridges that need to be used for an `F`-in-`S` constraint
     best::Dict{Tuple{DataType, DataType}, DataType} # (F, S) -> Bridge to be used for an `F`-in-`S` constraint
@@ -27,6 +29,7 @@ function LazyBridgeOptimizer(model::MOI.ModelLike)
     return LazyBridgeOptimizer{typeof(model)}(
         model, Dict{CI, String}(), nothing,
         Union{Nothing, AbstractBridge}[], Tuple{DataType, DataType}[],
+        Dict{Tuple{Int64, DataType}, AbstractBridge}(),
         Any[], Dict{Tuple{DataType, DataType}, Int}(),
         Dict{Tuple{DataType, DataType}, DataType}())
 end

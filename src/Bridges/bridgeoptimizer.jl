@@ -67,6 +67,10 @@ Return the `AbstractBridge` used to bridge the constraint with index `ci`.
 bridge(b::AbstractBridgeOptimizer, ci::CI) = b.bridges[ci.value]
 # By convention, they should be stored in a `bridges` field using a
 # dictionary-like object.
+function bridge(b::AbstractBridgeOptimizer,
+                ci::CI{MOI.SingleVariable, S}) where S
+    return b.single_variable_constraints[(ci.value, S)]
+end
 
 # Implementation of the MOI interface for AbstractBridgeOptimizer
 
@@ -74,12 +78,14 @@ MOI.optimize!(b::AbstractBridgeOptimizer) = MOI.optimize!(b.model)
 # By convention, the model should be stored in a `model` field
 
 function MOI.is_empty(b::AbstractBridgeOptimizer)
-    return isempty(b.bridges) && isempty(b.constraint_types) && MOI.is_empty(b.model)
+    return isempty(b.bridges) && isempty(b.constraint_types) &&
+           MOI.is_empty(b.model) && isempty(b.single_variable_constraints)
 end
 function MOI.empty!(b::AbstractBridgeOptimizer)
     MOI.empty!(b.model)
     empty!(b.bridges)
     empty!(b.constraint_types)
+    empty!(b.single_variable_constraints)
 end
 function MOI.supports(b::AbstractBridgeOptimizer,
                       attr::Union{MOI.AbstractModelAttribute,
@@ -361,6 +367,17 @@ function MOI.supports_constraint(b::AbstractBridgeOptimizer,
         return MOI.supports_constraint(b.model, F, S)
     end
 end
+function store_bridge(b::AbstractBridgeOptimizer, func::MOI.SingleVariable,
+                      set::MOI.AbstractSet, bridge)
+    b.single_variable_constraints[(func.variable.value, typeof(set))] = bridge
+    return MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(func.variable.value)
+end
+function store_bridge(b::AbstractBridgeOptimizer, func::MOI.AbstractFunction,
+                      set::MOI.AbstractSet, bridge)
+    push!(b.bridges, bridge)
+    push!(b.constraint_types, (typeof(func), typeof(func)))
+    return MOI.ConstraintIndex{typeof(func), typeof(func)}(length(b.bridges))
+end
 function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                             s::MOI.AbstractSet)
     if is_bridged(b, typeof(f), typeof(s))
@@ -370,10 +387,7 @@ function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
         BridgeType = concrete_bridge_type(b, typeof(f), typeof(s))
         # `add_constraint` might throw an `UnsupportedConstraint` but no
         # modification has been done in the previous line
-        push!(b.bridges, bridge_constraint(BridgeType, b, f, s))
-        push!(b.constraint_types, (typeof(f), typeof(s)))
-        ci = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(b.bridges))
-        return ci
+        return store_bridge(b, f, s, bridge_constraint(BridgeType, b, f, s))
     else
         return MOI.add_constraint(b.model, f, s)
     end

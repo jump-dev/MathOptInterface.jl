@@ -417,7 +417,9 @@ function supports_allocate_load(mock::MockOptimizer, copy_names::Bool)
     return supports_allocate_load(mock.inner_model, copy_names)
 end
 
-allocate_variables(mock::MockOptimizer, nvars) = allocate_variables(mock.inner_model, nvars)
+function allocate_variables(mock::MockOptimizer, nvars)
+    return xor_index.(allocate_variables(mock.inner_model, nvars))
+end
 allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = allocate(mock.inner_model, attr, value)
 allocate(mock::MockOptimizer, attr::MOI.ObjectiveFunction, value) = allocate(mock.inner_model, attr, xor_variables(value))
 allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, idx::MOI.Index, value) = allocate(mock.inner_model, attr, xor_index(idx), value)

@@ -5,6 +5,7 @@ const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
 include("../dummy.jl")
+include("../model.jl")
 
 @testset "AUTOMATIC" begin
     src = DummyModel()
