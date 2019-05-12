@@ -1,7 +1,7 @@
 """
     solver_name(model::MOI.ModelLike, config::TestConfig)
 
-Test that the [`MOI.SolverName`](@ref) attributes is implemented for `model`.
+Test that the [`MOI.SolverName`](@ref) attribute is implemented for `model`.
 """
 function solver_name(model::MOI.ModelLike, config::TestConfig)
     if config.solve
@@ -13,7 +13,7 @@ unittests["solver_name"] = solver_name
 """
     raw_status_string(model::MOI.ModelLike, config::TestConfig)
 
-Test that the [`MOI.RawStatusString`](@ref) attributes is implemented for
+Test that the [`MOI.RawStatusString`](@ref) attribute is implemented for
 `model`.
 """
 function raw_status_string(model::MOI.ModelLike, config::TestConfig)
@@ -35,7 +35,7 @@ unittests["raw_status_string"] = raw_status_string
 """
     solve_time(model::MOI.ModelLike, config::TestConfig)
 
-Test that the [`MOI.SolveTime`](@ref) attributes is implemented for `model`.
+Test that the [`MOI.SolveTime`](@ref) attribute is implemented for `model`.
 """
 function solve_time(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
