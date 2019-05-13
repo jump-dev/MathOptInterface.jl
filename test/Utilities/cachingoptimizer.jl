@@ -174,7 +174,7 @@ end
 
     MOI.optimize!(m)
     @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
-    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ResultCount())) == 0
+    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.TerminationStatus())) == MOI.OPTIMIZE_NOT_CALLED
 
     @test MOI.get(m, MOI.VariableName(), v) == "v"
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.VariableName()), v) == "v"
