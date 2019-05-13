@@ -34,7 +34,11 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
 end
 UniversalFallback(model::MOI.ModelLike) = UniversalFallback{typeof(model)}(model)
 
-MOI.is_empty(uf::UniversalFallback) = MOI.is_empty(uf.model) && isempty(uf.constraints) && isempty(uf.optattr) && isempty(uf.modattr) && isempty(uf.varattr) && isempty(uf.conattr)
+function MOI.is_empty(uf::UniversalFallback)
+    return MOI.is_empty(uf.model) && isempty(uf.constraints) &&
+        isempty(uf.optattr) && isempty(uf.modattr) && isempty(uf.varattr) &&
+        isempty(uf.conattr)
+end
 function MOI.empty!(uf::UniversalFallback)
     MOI.empty!(uf.model)
     empty!(uf.constraints)
@@ -294,6 +298,13 @@ end
 
 # Constraints
 MOI.supports_constraint(uf::UniversalFallback, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = true
+function _new_constraint_index(uf, f::MOI.SingleVariable, s::MOI.AbstractScalarSet)
+    return CI{MOI.SingleVariable, typeof(s)}(f.variable.value)
+end
+function _new_constraint_index(uf, f::MOI.AbstractFunction, s::MOI.AbstractSet)
+    uf.nextconstraintid += 1
+    return CI{typeof(f), typeof(s)}(uf.nextconstraintid)
+end
 function MOI.add_constraint(uf::UniversalFallback, f::MOI.AbstractFunction, s::MOI.AbstractSet)
     F = typeof(f)
     S = typeof(s)
@@ -303,8 +314,7 @@ function MOI.add_constraint(uf::UniversalFallback, f::MOI.AbstractFunction, s::M
         constraints = get!(uf.constraints, (F, S)) do
             Dict{CI{F, S}, Tuple{F, S}}()
         end::Dict{CI{F, S}, Tuple{F, S}}
-        uf.nextconstraintid += 1
-        ci = CI{F, S}(uf.nextconstraintid)
+        ci = _new_constraint_index(uf, f, s)
         constraints[ci] = (f, s)
         return ci
     end

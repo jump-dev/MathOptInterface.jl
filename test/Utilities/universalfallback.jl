@@ -1,3 +1,9 @@
+using Test
+import MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MOI.Test
+const MOIU = MOI.Utilities
+
 function test_optmodattrs(uf, model, attr, listattr)
     @test !MOI.supports(model, attr)
     @test MOI.supports(uf, attr)
@@ -49,6 +55,8 @@ end
 
 struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 
+include("../model.jl")
+
 # A few constraint types are supported to test both the fallback and the
 # delegation to the internal model
 @MOIU.model(ModelForUniversalFallback,
@@ -60,6 +68,12 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             (MOI.ScalarAffineFunction,),
             (),
             ())
+function MOI.supports_constraint(
+    ::ModelForUniversalFallback{T}, ::Type{MOI.SingleVariable},
+    ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.Interval{T},
+                   MOI.Integer, MOI.ZeroOne}}) where T
+    return false
+end
 
 # TODO: Restructure to avoid sharing state across testsets. It doesn't seem
 # necessary to use the same uf object for all the tests.
