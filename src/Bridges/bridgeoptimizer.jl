@@ -375,8 +375,8 @@ end
 function store_bridge(b::AbstractBridgeOptimizer, func::MOI.AbstractFunction,
                       set::MOI.AbstractSet, bridge)
     push!(b.bridges, bridge)
-    push!(b.constraint_types, (typeof(func), typeof(func)))
-    return MOI.ConstraintIndex{typeof(func), typeof(func)}(length(b.bridges))
+    push!(b.constraint_types, (typeof(func), typeof(set)))
+    return MOI.ConstraintIndex{typeof(func), typeof(set)}(length(b.bridges))
 end
 function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                             s::MOI.AbstractSet)
