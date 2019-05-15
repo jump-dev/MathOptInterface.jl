@@ -355,6 +355,11 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 1
 
     if config.query
+        err = MOI.InvalidIndex(vc1)
+        # vc1 should have been deleted with `v[1]`.
+        @test_throws err MOI.get(model, MOI.ConstraintFunction(), vc1)
+        @test_throws err MOI.get(model, MOI.ConstraintSet(), vc1)
+
         @test MOI.get(model, MOI.ConstraintFunction(), c2) ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0, 0.0], [v[2], z]), 0.0)
 
         vrs = MOI.get(model, MOI.ListOfVariableIndices())

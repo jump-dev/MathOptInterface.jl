@@ -4,8 +4,6 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-# TODO: It's hard to find where Model is defined!
-
 # We need to test this in a module at the top level because it can't be defined
 # in a testset. If it runs without error, then we're okay.
 module TestExternalModel
@@ -39,6 +37,21 @@ end
 end
 
 include("../model.jl")
+
+@testset "Setting lower/upper bound twice" begin
+    @testset "flag_to_set_type" begin
+        err = ErrorException("Invalid flag `0x11`.")
+        T = Int
+        @test_throws err MOIU.flag_to_set_type(0x11, T)
+        @test_throws err MOIU.flag_to_set_type(0x10, MOI.Integer)
+        @test_throws err MOIU.flag_to_set_type(0x20, MOI.ZeroOne)
+    end
+    @testset "$T" for T in [Int, Float64]
+        model = Model{T}()
+        Test.set_lower_bound_twice(model, T)
+        Test.set_upper_bound_twice(model, T)
+    end
+end
 
 @testset "Name test" begin
     MOIT.nametest(Model{Float64}())

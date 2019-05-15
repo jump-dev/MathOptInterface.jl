@@ -1,6 +1,29 @@
 const modificationtests = Dict{String, Function}()
 
 """
+    set_function_singlevariable(model::MOI.ModelLike, config::TestConfig)
+
+Test that modifying the function of a `SingleVariable`-in-`LessThan` constraint
+throws a [`SettingSingleVariableFunctionNotAllowed`](@ref) error.
+"""
+function set_function_singlevariable(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x, y
+        maxobjective: 1.0x + 1.0y
+        c: x <= 1.0
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    y = MOI.get(model, MOI.VariableIndex, "y")
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test c.value == x.value
+    err = MOI.SettingSingleVariableFunctionNotAllowed()
+    func = MOI.SingleVariable(y)
+    @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, func)
+end
+modificationtests["set_function_singlevariable"] = set_function_singlevariable
+
+"""
     solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestConfig)
 
 Test set modification SingleVariable-in-LessThan constraint. If

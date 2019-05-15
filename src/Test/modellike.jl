@@ -409,3 +409,51 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
         end
     end
 end
+
+function set_lower_bound_twice(model::MOI.ModelLike, T::Type)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    x = MOI.add_variable(model)
+    f = MOI.SingleVariable(x)
+    lb = zero(T)
+    sets = [MOI.EqualTo(lb), MOI.GreaterThan(lb), MOI.Interval(lb, lb),
+            MOI.Semicontinuous(lb, lb), MOI.Semiinteger(lb, lb)]
+    for set1 in sets
+        if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
+            continue
+        end
+        ci = MOI.add_constraint(model, f, set1)
+        for set2 in sets
+            if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set2))
+                continue
+            end
+            err = MOI.LowerBoundAlreadySet{S1, S2}(x)
+            @test_throws err MOI.add_constraint(model, f, set2)
+        end
+        MOI.delete(model, ci)
+    end
+end
+
+function set_upper_bound_twice(model::MOI.ModelLike, T::Type)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    x = MOI.add_variable(model)
+    f = MOI.SingleVariable(x)
+    ub = zero(T)
+    sets = [MOI.EqualTo(ub), MOI.LessThan(ub), MOI.Interval(ub, ub),
+            MOI.Semicontinuous(ub, ub), MOI.Semiinteger(ub, ub)]
+    for set1 in sets
+        if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
+            continue
+        end
+        ci = MOI.add_constraint(model, f, set1)
+        for set2 in sets
+            if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set2))
+                continue
+            end
+            err = MOI.UpperBoundAlreadySet{S1, S2}(x)
+            @test_throws err MOI.add_constraint(model, f, set2)
+        end
+        MOI.delete(model, ci)
+    end
+end

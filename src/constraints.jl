@@ -139,6 +139,44 @@ function add_constraints end
 add_constraints(model::ModelLike, funcs, sets) = add_constraint.(model, funcs, sets)
 
 """
+    LowerBoundAlreadySet{S1, S2}
+
+Error thrown when setting a `SingleVariable`-in-`S2` when a
+`SingleVariable`-in-`S1` has already been added and the sets `S1`, `S2` both
+set a lower bound, i.e. they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
+[`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
+"""
+struct LowerBoundAlreadySet{S1, S2}
+    vi::MOI.VariableIndex
+end
+
+function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1, S2}) where {S1, S2}
+    print(io, typeof(err), ": Cannot add `SingleVariable`-in`", S2,
+          "` constraint for variable ", err.vi, " as a `SingleVariable`-in`",
+          S1, "` constraint was already set for this variable and both",
+          " constraints set a lower bound.")
+end
+
+"""
+    UpperBoundAlreadySet{S1, S2}
+
+Error thrown when setting a `SingleVariable`-in-`S2` when a
+`SingleVariable`-in-`S1` has already been added and the sets `S1`, `S2` both
+set an upper bound, i.e. they are [`EqualTo`](@ref), [`LessThan`](@ref),
+[`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
+"""
+struct UpperBoundAlreadySet{S1, S2}
+    vi::MOI.VariableIndex
+end
+
+function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1, S2}) where {S1, S2}
+    print(io, typeof(err), ": Cannot add `SingleVariable`-in`", S2,
+          "` constraint for variable ", err.vi, " as a `SingleVariable`-in`",
+          S1, "` constraint was already set for this variable and both",
+          " constraints set an upper bound.")
+end
+
+"""
 ## Transform Constraint Set
 
     transform(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}

@@ -332,6 +332,7 @@ function MOI.get(uf::UniversalFallback, attr::MOI.ConstraintFunction, ci::CI{F, 
     if MOI.supports_constraint(uf.model, F, S)
         MOI.get(uf.model, attr, ci)
     else
+        MOI.throw_if_not_valid(uf, ci)
         uf.constraints[(F, S)][ci][1]
     end
 end
@@ -339,6 +340,7 @@ function MOI.get(uf::UniversalFallback, attr::MOI.ConstraintSet, ci::CI{F, S}) w
     if MOI.supports_constraint(uf.model, F, S)
         MOI.get(uf.model, attr, ci)
     else
+        MOI.throw_if_not_valid(uf, ci)
         uf.constraints[(F, S)][ci][2]
     end
 end
@@ -346,6 +348,10 @@ function MOI.set(uf::UniversalFallback, ::MOI.ConstraintFunction, ci::CI{F,S}, f
     if MOI.supports_constraint(uf.model, F, S)
         MOI.set(uf.model, MOI.ConstraintFunction(), ci, func)
     else
+        MOI.throw_if_not_valid(uf, ci)
+        if F == MOI.SingleVariable
+            throw(MOI.SettingSingleVariableFunctionNotAllowed())
+        end
         (_, s) = uf.constraints[(F, S)][ci]
         uf.constraints[(F, S)][ci] = (func, s)
     end
@@ -354,6 +360,7 @@ function MOI.set(uf::UniversalFallback, ::MOI.ConstraintSet, ci::CI{F,S}, set::S
     if MOI.supports_constraint(uf.model, F, S)
         MOI.set(uf.model, MOI.ConstraintSet(), ci, set)
     else
+        MOI.throw_if_not_valid(uf, ci)
         (f, _) = uf.constraints[(F, S)][ci]
         uf.constraints[(F, S)][ci] = (f, set)
     end

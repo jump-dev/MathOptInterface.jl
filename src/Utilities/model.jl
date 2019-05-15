@@ -333,8 +333,46 @@ single_variable_flag(::Type{<:MOI.LessThan}) = 0x4
 single_variable_flag(::Type{<:MOI.Interval}) = 0x8
 single_variable_flag(::Type{MOI.Integer}) = 0x10
 single_variable_flag(::Type{MOI.ZeroOne}) = 0x20
-single_variable_flag(::Type{MOI.Semicontinuous}) = 0x40
-single_variable_flag(::Type{MOI.Semiinteger}) = 0x80
+single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x40
+single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
+
+function flag_to_set_type(flag::UInt8, T::Type)
+    if flag == 0x1
+        return MOI.EqualTo{T}
+    elseif flag == 0x2
+        return MOI.GreaterThan{T}
+    elseif flag == 0x4
+        return MOI.LessThan{T}
+    elseif flag == 0x8
+        return MOI.Interval{T}
+    elseif flag == 0x10
+        return MOI.Integer
+    elseif flag == 0x20
+        return MOI.ZeroOne
+    elseif flag == 0x40
+        return MOI.Semicontinuous{T}
+    elseif flag == 0x80
+        return MOI.Semiinteger{T}
+    else
+        error("Invalid flag `$flag`.")
+    end
+end
+
+function throw_if_lower_bound_set(variable, S2, mask, T)
+    flag = single_variable_flag(S2)
+    if !iszero(flag & LOWER_BOUND_MASK) && !iszero(mask & LOWER_BOUND_MASK)
+       S1 = flag_to_set_type(mask & LOWER_BOUND_MASK, T)
+       throw(MOI.LowerBoundAlreadySet{S1, S2}(variable))
+    end
+end
+
+function throw_if_upper_bound_set(variable, S2, mask, T)
+    flag = single_variable_flag(S2)
+    if !iszero(flag & UPPER_BOUND_MASK) && !iszero(mask & UPPER_BOUND_MASK)
+       S1 = flag_to_set_type(mask & UPPER_BOUND_MASK, T)
+       throw(MOI.UpperBoundAlreadySet{S1, S2}(variable))
+    end
+end
 
 # Sets setting lower bound:
 extract_lower_bound(set::MOI.EqualTo) = set.value
@@ -360,22 +398,14 @@ function MOI.supports_constraint(
                    MOI.Interval{T}, MOI.Integer, MOI.ZeroOne}}) where T
     return true
 end
-function MOI.add_constraint(model::AbstractModel, f::MOI.SingleVariable,
-                            s::MOI.AbstractScalarSet)
+function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
+                            s::MOI.AbstractScalarSet) where T
     if MOI.supports_constraint(model, MOI.SingleVariable, typeof(s))
         flag = single_variable_flag(typeof(s))
         index = f.variable.value
         mask = model.single_variable_mask[index]
-        if !iszero(flag & LOWER_BOUND_MASK) &&
-           !iszero(mask & LOWER_BOUND_MASK)
-           error("Cannot add $f-in-$s constraint as another constraint on",
-                 " $(f.variable) already sets a lower bound.")
-        end
-        if !iszero(flag & UPPER_BOUND_MASK) &&
-           !iszero(mask & UPPER_BOUND_MASK)
-           error("Cannot add $f-in-$s constraint as another constraint on",
-                 " $(f.variable) already sets an upper bound.")
-        end
+        throw_if_lower_bound_set(f.variable, typeof(s), mask, T)
+        throw_if_upper_bound_set(f.variable, typeof(s), mask, T)
         # No error should be thrown now, we can modify `model`.
         if !iszero(flag & LOWER_BOUND_MASK)
             model.lower_bound[index] = extract_lower_bound(s)
@@ -429,6 +459,10 @@ function MOI.modify(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionMo
     _modify(model, ci, getconstrloc(model, ci), change)
 end
 
+function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI{MOI.SingleVariable},
+                 change::MOI.AbstractFunction)
+    throw(MOI.SettingSingleVariableFunctionNotAllowed())
+end
 function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
     _modify(model, ci, getconstrloc(model, ci), change)
 end
@@ -488,8 +522,9 @@ function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices)
     broadcastvcat(constrs -> _getlocr(constrs, loc), model)
 end
 
-function MOI.get(::AbstractModel, ::MOI.ConstraintFunction,
+function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction,
                  ci::CI{MOI.SingleVariable})
+    MOI.throw_if_not_valid(model, ci)
     return MOI.SingleVariable(MOI.VariableIndex(ci.value))
 end
 function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)

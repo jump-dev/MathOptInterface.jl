@@ -1041,6 +1041,10 @@ const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
     MOIT.unittest(bridged, config)
 end
 
+@testset "Modification" begin
+    MOIT.modificationtest(bridged, config)
+end
+
 @testset "Continuous Linear" begin
     MOIT.contlineartest(bridged, config)
 end
