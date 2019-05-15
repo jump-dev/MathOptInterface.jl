@@ -317,17 +317,17 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}) in loc
     @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
 
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csv)) || MOI.get(dest, MOI.ConstraintName(), csv) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csv)) || MOI.get(dest, MOI.ConstraintName(), dict[csv]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) == MOI.SingleVariable(dict[w])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.)
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), cvv) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), dict[cvv]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) == MOI.VectorOfVariables(getindex.(Ref(dict), v))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.Nonnegatives(3)
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), csa) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), dict[csa]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈ MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1., 3.], [dict[v[3]], dict[v[1]]]), 0.0)
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csa]) == MOI.LessThan(2.)
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), cva) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), dict[cva]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈ MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [dict[v[3]], dict[v[2]]])), [-3.0, -2.0])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cva]) == MOI.Zeros(2)
 
@@ -407,30 +407,6 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
                  MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0),
                  MOI.GreaterThan(1.0))
         end
-    end
-end
-
-function set_lower_bound_twice(model::MOI.ModelLike, T::Type)
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
-    x = MOI.add_variable(model)
-    f = MOI.SingleVariable(x)
-    lb = zero(T)
-    sets = [MOI.EqualTo(lb), MOI.GreaterThan(lb), MOI.Interval(lb, lb),
-            MOI.Semicontinuous(lb, lb), MOI.Semiinteger(lb, lb)]
-    for set1 in sets
-        if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
-            continue
-        end
-        ci = MOI.add_constraint(model, f, set1)
-        for set2 in sets
-            if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set2))
-                continue
-            end
-            err = MOI.LowerBoundAlreadySet{typeof(set1), typeof(set2)}(x)
-            @test_throws err MOI.add_constraint(model, f, set2)
-        end
-        MOI.delete(model, ci)
     end
 end
 

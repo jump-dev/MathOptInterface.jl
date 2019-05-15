@@ -636,7 +636,7 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 A constraint attribute for a string identifying the constraint. It is *valid*
 for constraints variables to have the same name; however, constraints with
 duplicate names cannot be looked up using [`get`](@ref) regardless of if they
-have the same `F`-in`S` type. It has a default value of `""` if not set`.
+have the same `F`-in-`S` type. It has a default value of `""` if not set.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
