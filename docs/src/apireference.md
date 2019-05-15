@@ -197,6 +197,12 @@ ConstraintFunction
 ConstraintSet
 ```
 
+Note that setting the [`ConstraintFunction`](@ref) of a [`SingleVariable`]
+constraint is not allowed:
+```@docs
+SettingSingleVariableFunctionNotAllowed
+```
+
 ## Functions and function modifications
 
 List of recognized functions.
