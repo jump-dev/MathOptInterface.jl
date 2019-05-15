@@ -43,13 +43,13 @@ include("../model.jl")
         err = ErrorException("Invalid flag `0x11`.")
         T = Int
         @test_throws err MOIU.flag_to_set_type(0x11, T)
-        @test_throws err MOIU.flag_to_set_type(0x10, MOI.Integer)
-        @test_throws err MOIU.flag_to_set_type(0x20, MOI.ZeroOne)
+        @test MOIU.flag_to_set_type(0x10, T) == MOI.Integer
+        @test MOIU.flag_to_set_type(0x20, T) == MOI.ZeroOne
     end
     @testset "$T" for T in [Int, Float64]
         model = Model{T}()
-        Test.set_lower_bound_twice(model, T)
-        Test.set_upper_bound_twice(model, T)
+        MOIT.set_lower_bound_twice(model, T)
+        MOIT.set_upper_bound_twice(model, T)
     end
 end
 

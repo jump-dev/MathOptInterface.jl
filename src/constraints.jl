@@ -77,6 +77,12 @@ Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vecto
   `func` is an `AbstractScalarFunction` with nonzero constant and `set`
   is [`EqualTo`](@ref), [`GreaterThan`](@ref), [`LessThan`](@ref) or
   [`Interval`](@ref).
+* a [`LowerBoundAlreadySet`](@ref) error is thrown if `F` is a
+  [`SingleVariable`](@ref) and a constraint was already added to this variable
+  that sets a lower bound.
+* a [`UpperBoundAlreadySet`](@ref) error is thrown if `F` is a
+  [`SingleVariable`](@ref) and a constraint was already added to this variable
+  that sets an upper bound.
 """
 function add_constraint(model::ModelLike, func::AbstractFunction,
                         set::AbstractSet)
@@ -147,7 +153,7 @@ set a lower bound, i.e. they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
 struct LowerBoundAlreadySet{S1, S2}
-    vi::MOI.VariableIndex
+    vi::VariableIndex
 end
 
 function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1, S2}) where {S1, S2}
@@ -166,10 +172,10 @@ set an upper bound, i.e. they are [`EqualTo`](@ref), [`LessThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
 struct UpperBoundAlreadySet{S1, S2}
-    vi::MOI.VariableIndex
+    vi::VariableIndex
 end
 
-function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1, S2}) where {S1, S2}
+function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1, S2}) where {S1, S2}
     print(io, typeof(err), ": Cannot add `SingleVariable`-in`", S2,
           "` constraint for variable ", err.vi, " as a `SingleVariable`-in`",
           S1, "` constraint was already set for this variable and both",

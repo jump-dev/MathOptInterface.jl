@@ -354,7 +354,8 @@ function flag_to_set_type(flag::UInt8, T::Type)
     elseif flag == 0x80
         return MOI.Semiinteger{T}
     else
-        error("Invalid flag `$flag`.")
+        # $flag would print it in decimal
+        error("Invalid flag `$(sprint(show, flag))`.")
     end
 end
 

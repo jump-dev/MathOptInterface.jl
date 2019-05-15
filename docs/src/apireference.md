@@ -372,6 +372,13 @@ thrown:
 ScalarFunctionConstantNotZero
 ```
 
+Some [`SingleVariable`](@ref) constraints cannot be combined on the same
+variable:
+```@docs
+LowerBoundAlreadySet
+UpperBoundAlreadySet
+```
+
 The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs
