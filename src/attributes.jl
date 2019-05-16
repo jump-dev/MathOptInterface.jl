@@ -855,13 +855,14 @@ The values indicate how to interpret the result vector.
   infeasibility.
 * `NEARLY_INFEASIBILITY_CERTIFICATE`: the result satisfies a relaxed criterion for
   a certificate of infeasibility.
-* `REDUCTION_CERTIFICATE`: the result vector is an illposed certificate. If the
+* `REDUCTION_CERTIFICATE`: the result vector is an ill-posed certificate; see
+  [this article](https://doi.org/10.1007/s10107-017-1169-9) for details. If the
   `PrimalStatus` is `REDUCTION_CERTIFICATE`, then the primal result vector is a
-  proof that the dual problem is illposed. If the `DualStatus` is
+  proof that the dual problem is ill-posed. If the `DualStatus` is
   `REDUCTION_CERTIFICATE`, then the dual result vector is a proof that the primal
-  is illposed
+  is ill-posed.
 * `NEARLY_REDUCTION_CERTIFICATE`: the result satisfies a relaxed criterion for
-  an illposed certificate.
+  an ill-posed certificate.
 * `UNKNOWN_RESULT_STATUS`: the result vector contains a solution with an unknown
   interpretation.
 * `OTHER_RESULT_STATUS`: the result vector contains a solution with an
