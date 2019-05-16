@@ -152,8 +152,8 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::CI)
 end
 
 # Attributes
-# List of indices of all constraints, even those bridged
-function get_all_even_bridged(
+# List of indices of all constraints, including those bridged
+function get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
     if is_bridged(b, F, S)
@@ -162,7 +162,7 @@ function get_all_even_bridged(
         return MOI.get(b.model, attr)
     end
 end
-function get_all_even_bridged(
+function get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintIndices{MOI.SingleVariable, S}) where S
     F = MOI.SingleVariable
@@ -183,7 +183,7 @@ function _remove_bridged(list, bridge, attr)
 end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.ListOfConstraintIndices{F, S}) where {F, S}
-    list = get_all_even_bridged(b, attr)
+    list = get_all_including_bridged(b, attr)
     for bridge in b.bridges
         if bridge !== nothing
             _remove_bridged(list, bridge, attr)
@@ -194,7 +194,7 @@ function MOI.get(b::AbstractBridgeOptimizer,
     end
     return list
 end
-function _numberof(b::AbstractBridgeOptimizer, model::MOI.ModelLike,
+function _number_of(b::AbstractBridgeOptimizer, model::MOI.ModelLike,
                    attr::Union{MOI.NumberOfConstraints, MOI.NumberOfVariables})
     s = MOI.get(model, attr)
     for bridge in b.bridges
@@ -208,11 +208,11 @@ function _numberof(b::AbstractBridgeOptimizer, model::MOI.ModelLike,
     return s
 end
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)
-    return _numberof(b, b.model, attr)
+    return _number_of(b, b.model, attr)
 end
 
-# Number of all constraints, even those bridged
-function get_all_even_bridged(
+# Number of all constraints, including those bridged
+function get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.NumberOfConstraints{F, S}) where {F, S}
     if is_bridged(b, F, S)
@@ -221,7 +221,7 @@ function get_all_even_bridged(
         return MOI.get(b.model, attr)
     end
 end
-function get_all_even_bridged(
+function get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.NumberOfConstraints{MOI.SingleVariable, S}) where S
     if is_bridged(b, MOI.SingleVariable, S)
@@ -232,7 +232,7 @@ function get_all_even_bridged(
 end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.NumberOfConstraints{F, S}) where {F, S}
-    s = get_all_even_bridged(b, attr)
+    s = get_all_including_bridged(b, attr)
     # The constraints counted in `s` may have been added by bridges
     for bridge in b.bridges
         if bridge !== nothing
@@ -256,7 +256,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
         push!(list_of_bridged_types, (MOI.SingleVariable, key[2]))
     end
     list_of_types = [list_of_types; collect(list_of_bridged_types)]
-    # Some constraint types show up in `list_of_types` even when all the
+    # Some constraint types show up in `list_of_types` including when all the
     # constraints of that type have been created by bridges and not by the user.
     # The code in `NumberOfConstraints` takes care of removing these constraints
     # from the counter so we can rely on it to remove these constraint types.
