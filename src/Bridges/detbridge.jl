@@ -156,7 +156,7 @@ end
     RootDetBridge{T}
 
 The `RootDetConeTriangle` is representable by a `PositiveSemidefiniteConeTriangle` and an `GeometricMeanCone` constraints; see [1, p. 149].
-Indeed, ``t \\le \\det(X)^(1/n)`` if and only if there exists a lower triangular matrix ``Δ`` such that
+Indeed, ``t \\le \\det(X)^{1/n}`` if and only if there exists a lower triangular matrix ``Δ`` such that
 ```math
 \\begin{align*}
   \\begin{pmatrix}
