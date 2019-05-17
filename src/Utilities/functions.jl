@@ -1322,8 +1322,19 @@ end
 number_of_affine_terms(::Type{T}, ::T) where T = 0
 number_of_affine_terms(::Type, ::SVF) = 1
 number_of_affine_terms(::Type, f::VVF) = length(f.variables)
-number_of_affine_terms(::Type{T},
-                       f::Union{SAF{T}, VAF{T}}) where T  = length(f.terms)
+function number_of_affine_terms(
+    ::Type{T}, f::Union{SAF{T}, VAF{T}}) where T
+    return length(f.terms)
+end
+function number_of_affine_terms(
+    ::Type{T}, f::Union{SQF{T}, VQF{T}}) where T
+    return length(f.affine_terms)
+end
+
+function number_of_quadratic_terms(
+    ::Type{T}, f::Union{SQF{T}, VQF{T}}) where T
+    return length(f.quadratic_terms)
+end
 
 function offset_term(t::MOI.ScalarAffineTerm, offset::Int)
     return MOI.VectorAffineTerm(offset + 1, t)
@@ -1331,26 +1342,41 @@ end
 function offset_term(t::MOI.VectorAffineTerm, offset::Int)
     return MOI.VectorAffineTerm(offset + t.output_index, t.scalar_term)
 end
+function offset_term(t::MOI.ScalarQuadraticTerm, offset::Int)
+    return MOI.VectorQuadraticTerm(offset + 1, t)
+end
+function offset_term(t::MOI.VectorQuadraticTerm, offset::Int)
+    return MOI.VectorQuadraticTerm(offset + t.output_index, t.scalar_term)
+end
 
 function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
                     output_offset::Int, func::T) where T
 end
 function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
                     output_offset::Int, func::SVF) where T
-    terms[offset + 1] = offset_term(MOI.ScalarAffineTerm(one(T), func.variable),
-                                    output_offset)
+    terms[offset + 1] = offset_term(
+        MOI.ScalarAffineTerm(one(T), func.variable), output_offset)
 end
 function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
                     output_offset::Int, func::VVF) where T
     n = number_of_affine_terms(T, func)
-    terms[offset .+ (1:n)] .= MOI.VectorAffineTerm.(output_offset .+ (1:n),
-                                                    MOI.ScalarAffineTerm.(one(T),
-                                                                          func.variables))
+    terms[offset .+ (1:n)] .= MOI.VectorAffineTerm.(
+        output_offset .+ (1:n), MOI.ScalarAffineTerm.(one(T), func.variables))
 end
 function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
                     output_offset::Int, func::Union{SAF{T}, VAF{T}}) where T
     n = number_of_affine_terms(T, func)
     terms[offset .+ (1:n)] .= offset_term.(func.terms, output_offset)
+end
+function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
+                    output_offset::Int, func::Union{SQF{T}, VQF{T}}) where T
+    n = number_of_affine_terms(T, func)
+    terms[offset .+ (1:n)] .= offset_term.(func.affine_terms, output_offset)
+end
+function fill_terms(terms::Vector{MOI.VectorQuadraticTerm{T}}, offset::Int,
+                    output_offset::Int, func::Union{SQF{T}, VQF{T}}) where T
+    n = number_of_quadratic_terms(T, func)
+    terms[offset .+ (1:n)] .= offset_term.(func.quadratic_terms, output_offset)
 end
 
 output_dim(::Type{T}, ::T) where T = 1
@@ -1363,13 +1389,24 @@ function fill_constant(constant::Vector{T}, offset::Int,
                        output_offset::Int, func::Union{SVF, VVF}) where T
 end
 function fill_constant(constant::Vector{T}, offset::Int,
-                       output_offset::Int, func::SAF{T}) where T
+                       output_offset::Int, func::Union{SAF{T}, SQF{T}}) where T
     constant[offset + 1] = func.constant
 end
 function fill_constant(constant::Vector{T}, offset::Int,
-                       output_offset::Int, func::VAF{T}) where T
+                       output_offset::Int, func::Union{VAF{T}, VQF{T}}) where T
     n = MOI.output_dimension(func)
     constant[offset .+ (1:n)] .= func.constants
+end
+
+"""
+    vectorize(funcs::AbstractVector{MOI.SingleVariable})
+
+Returns the vector of scalar affine functions in the form of a
+`MOI.VectorAffineFunction{T}`.
+"""
+function vectorize(funcs::AbstractVector{MOI.SingleVariable})
+    vars = MOI.VariableIndex[func.variable for func in funcs]
+    return MOI.VectorOfVariables(vars)
 end
 
 """
@@ -1387,6 +1424,26 @@ function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
     fill_vector(constant, T, fill_constant, output_dim, funcs)
     return VAF(terms, constant)
 end
+
+"""
+    vectorize(funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}}) where T
+
+Returns the vector of scalar quadratic functions in the form of a
+`MOI.VectorQuadraticFunction{T}`.
+"""
+function vectorize(funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}}) where T
+    num_affine_terms = sum(func -> number_of_affine_terms(T, func), funcs)
+    num_quadratic_terms = sum(func -> number_of_quadratic_terms(T, func), funcs)
+    out_dim = sum(func -> output_dim(T, func), funcs)
+    affine_terms = Vector{MOI.VectorAffineTerm{T}}(undef, num_affine_terms)
+    quadratic_terms = Vector{MOI.VectorQuadraticTerm{T}}(undef, num_quadratic_terms)
+    constant = zeros(T, out_dim)
+    fill_vector(affine_terms, T, fill_terms, number_of_affine_terms, funcs)
+    fill_vector(quadratic_terms, T, fill_terms, number_of_quadratic_terms, funcs)
+    fill_vector(constant, T, fill_constant, output_dim, funcs)
+    return VQF(affine_terms, quadratic_terms, constant)
+end
+
 
 function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
@@ -1434,9 +1491,9 @@ function scalarize(f::MOI.VectorQuadraticFunction{T}, ignore_constants::Bool = f
     counting_scalars = count_terms(dimension, f.affine_terms)
     counting_quadratics = count_terms(dimension, f.quadratic_terms)
     functions = MOI.ScalarQuadraticFunction{T}[
-        MOI.ScalarQuadraticFunction{T}(MOI.ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], constants[i]) for i in 1:dimension]
-    functions = MOI.ScalarQuadraticFunction.(
-        MOI.ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], constants)
+        MOI.ScalarQuadraticFunction{T}(MOI.ScalarAffineTerm{T}[],
+                                       MOI.ScalarQuadraticTerm{T}[],
+                                       constants[i]) for i in 1:dimension]
     for i in 1:dimension
         sizehint!(functions[i].affine_terms, counting_scalars[i])
         sizehint!(functions[i].quadratic_terms, counting_quadratics[i])
