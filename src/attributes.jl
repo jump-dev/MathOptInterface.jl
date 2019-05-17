@@ -356,6 +356,16 @@ given.
 """
 struct Silent <: AbstractOptimizerAttribute end
 
+"""
+    RawParameter(name)
+
+An optimizer attribute for the solver-specific parameter identified by `name`
+which is typically an `Enum` or a `String`.
+"""
+struct RawParameter <: AbstractOptimizerAttribute
+    name::Any
+end
+
 ## Model attributes
 
 """

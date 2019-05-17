@@ -89,6 +89,7 @@ List of optimizers attributes
 ```@docs
 SolverName
 Silent
+RawParameter
 ```
 
 List of attributes useful for optimizers
