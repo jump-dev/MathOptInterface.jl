@@ -13,11 +13,14 @@ mutable struct SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: A
     bridges::Vector{Union{Nothing, AbstractBridge}}
     # Constraint Index of bridged constraint -> Constraint type.
     constraint_types::Vector{Tuple{DataType, DataType}}
+    # For `SingleVariable` constraints: (variable, set type) -> bridge
+    single_variable_constraints::Dict{Tuple{Int64, DataType}, AbstractBridge}
 end
 function SingleBridgeOptimizer{BT}(model::OT) where {BT, OT <: MOI.ModelLike}
     SingleBridgeOptimizer{BT, OT}(
         model, Dict{CI, String}(), nothing,
-        Union{Nothing, AbstractBridge}[], Tuple{DataType, DataType}[])
+        Union{Nothing, AbstractBridge}[], Tuple{DataType, DataType}[],
+        Dict{Tuple{Int64, DataType}, AbstractBridge}())
 end
 
 function supports_bridging_constraint(b::SingleBridgeOptimizer{BT},

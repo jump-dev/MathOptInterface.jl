@@ -15,7 +15,7 @@ MOIU.@model(NoRSOCModel,
             (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
              MOI.ExponentialCone, MOI.PositiveSemidefiniteConeTriangle),
             (),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
@@ -30,16 +30,26 @@ MOIU.@model(NoVariableModel,
             (MOI.ScalarAffineFunction,),
             (),
             (MOI.VectorAffineFunction,))
+function MOI.supports_constraint(::NoVariableModel, ::Type{MOI.SingleVariable},
+                                 ::Type{<:MOI.AbstractScalarSet})
+    return false
+end
 
+# Only supports GreaterThan and Nonnegatives
 MOIU.@model(GreaterNonnegModel,
             (),
             (MOI.GreaterThan,),
             (MOI.Nonnegatives,),
             (),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+function MOI.supports_constraint(
+    ::GreaterNonnegModel{T}, ::Type{MOI.SingleVariable},
+    ::Type{<:Union{MOI.EqualTo{T}, MOI.LessThan{T}, MOI.Interval{T}}}) where T
+    return false
+end
 
 
 MOIU.@model(ModelNoVAFinSOC,
@@ -49,7 +59,7 @@ MOIU.@model(ModelNoVAFinSOC,
              MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
             (MOI.PowerCone, MOI.DualPowerCone),
-            (MOI.SingleVariable,),
+            (),
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
@@ -60,6 +70,12 @@ MOI.supports_constraint(::ModelNoVAFinSOC{Float64},
 
 # Model supporting nothing
 MOIU.@model NothingModel () () () () () () () ()
+function MOI.supports_constraint(
+    ::NothingModel{T}, ::Type{MOI.SingleVariable},
+    ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
+                   MOI.Interval{T}, MOI.Integer, MOI.ZeroOne}}) where T
+    return false
+end
 
 struct BridgeAddingNoConstraint{T} <: MOI.Bridges.AbstractBridge end
 MOIB.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []

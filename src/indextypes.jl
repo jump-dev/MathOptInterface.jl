@@ -1,7 +1,7 @@
 # Index types
 
 """
-    ConstraintIndex{F,S}
+    ConstraintIndex{F, S}
 
 A type-safe wrapper for `Int64` for use in referencing `F`-in-`S` constraints in
 a model.
@@ -9,8 +9,14 @@ The parameter `F` is the type of the function in the constraint, and the
 parameter `S` is the type of set in the constraint. To allow for deletion,
 indices need not be consecutive. Indices within a constraint type (i.e. `F`-in-`S`)
 must be unique, but non-unique indices across different constraint types are allowed.
+If `F` is [`SingleVariable`](@ref) then the index is equal to the index of the
+variable. That is for an `index::ConstraintIndex{SingleVariable}`, we always
+have
+```julia
+index.value == MOI.get(model, MOI.ConstraintFunction(), index).variable.value
+```
 """
-struct ConstraintIndex{F,S}
+struct ConstraintIndex{F, S}
     value::Int64
 end
 
@@ -55,6 +61,18 @@ end
 Return a `Bool` indicating whether this index refers to a valid object in the model `model`.
 """
 is_valid(model::ModelLike, ref::Index) = false
+
+"""
+    throw_if_not_valid(model::ModelLike, index::Index)
+
+Throw an `InvalidIndex(index)` error if `MOI.is_valid(model, index)` returns
+`false`.
+"""
+function throw_if_not_valid(model::ModelLike, index::Index)
+    if !is_valid(model, index)
+        throw(InvalidIndex(index))
+    end
+end
 
 """
     struct DeleteNotAllowed{IndexType <: Index} <: NotAllowedError

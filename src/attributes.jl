@@ -264,6 +264,14 @@ set(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
 Replace the function in constraint `c` with `func`. `F` must match the original
 function type used to define the constraint.
 
+#### Note
+
+Setting the constraint function is not allowed if `F` is
+[`SingleVariable`](@ref), it throws a
+[`SettingSingleVariableFunctionNotAllowed`](@ref) error. Indeed, it would
+require changing the index `c` as the index of `SingleVariable` constraints
+should be the same as the index of the variable.
+
 #### Examples
 
 If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
@@ -318,6 +326,14 @@ function throw_set_error_fallback(model::ModelLike,
         throw(UnsupportedAttribute(attr))
     end
 end
+
+"""
+    ListOfOptimizerAttributesSet()
+
+Error type that should be thrown when the user [`set`](@ref) the
+[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
+"""
+struct SettingSingleVariableFunctionNotAllowed <: Exception end
 
 ## Optimizer attributes
 
@@ -630,7 +646,7 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 A constraint attribute for a string identifying the constraint. It is *valid*
 for constraints variables to have the same name; however, constraints with
 duplicate names cannot be looked up using [`get`](@ref) regardless of if they
-have the same `F`-in`S` type. It has a default value of `""` if not set`.
+have the same `F`-in-`S` type. It has a default value of `""` if not set.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
