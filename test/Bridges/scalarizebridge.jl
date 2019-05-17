@@ -15,6 +15,14 @@ config = MOIT.TestConfig()
 
 @testset "Scalarize" begin
     bridged_mock = MOIB.Scalarize{Float64}(mock)
+
+    MOIT.basic_constraint_tests(
+        bridged_mock, config,
+        include = [(F, S)
+                   for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
+                             MOI.VectorQuadraticFunction{Float64}]
+                   for S in [MOI.Nonnegatives, MOI.Nonpositives, MOI.Zeros]])
+
     # VectorOfVariables-in-Nonnegatives
     # VectorAffineFunction-in-Zeros
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
