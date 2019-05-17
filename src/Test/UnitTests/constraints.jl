@@ -208,6 +208,8 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
         )
         vc1 = MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(0.5))
+        # We test this after the creation of every `SingleVariable` constraint
+        # to ensure a good coverage of corner cases.
         @test vc1.value == x[1].value
         vc2 = MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(0.5))
         @test vc2.value == x[2].value

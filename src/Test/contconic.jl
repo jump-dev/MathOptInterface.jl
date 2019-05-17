@@ -608,6 +608,8 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         a = MOI.add_variable(model)
         b = MOI.add_variable(model)
         vc1 = MOI.add_constraint(model, MOI.SingleVariable(a), MOI.EqualTo(0.5))
+        # We test this after the creation of every `SingleVariable` constraint
+        # to ensure a good coverage of corner cases.
         @test vc1.value == a.value
         vc2 = MOI.add_constraint(model, MOI.SingleVariable(b), MOI.EqualTo(1.0))
         @test vc2.value == b.value

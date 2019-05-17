@@ -157,6 +157,8 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     )
 
     vc1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
     @test vc1.value == x.value
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
     @test vc2.value == y.value

@@ -267,6 +267,8 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     w = MOI.add_variable(src)
     MOI.set(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
     csv = MOI.add_constraint(src, MOI.SingleVariable(w), MOI.EqualTo(2.))
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
     @test csv.value == w.value
     MOI.set(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))

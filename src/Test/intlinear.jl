@@ -37,6 +37,8 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
 
 
     vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Interval(0.0, 5.0))
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
     @test vc1.value == v[1].value
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}()) == 1
 

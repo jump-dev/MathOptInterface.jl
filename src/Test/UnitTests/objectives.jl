@@ -102,6 +102,8 @@ function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
     @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 3.0,

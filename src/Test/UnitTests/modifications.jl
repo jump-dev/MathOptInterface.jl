@@ -16,6 +16,8 @@ function set_function_single_variable(model::MOI.ModelLike, config::TestConfig)
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
     @test c.value == x.value
     err = MOI.SettingSingleVariableFunctionNotAllowed()
     func = MOI.SingleVariable(y)

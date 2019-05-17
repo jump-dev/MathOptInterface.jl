@@ -35,6 +35,8 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     @test (MOI.VectorOfVariables,MOI.SecondOrderCone) in loc
 
     bin1 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.ZeroOne())
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
     @test bin1.value == y.value
     bin2 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.ZeroOne())
     @test bin2.value == z.value
