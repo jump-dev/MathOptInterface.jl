@@ -14,9 +14,10 @@ mutable struct ScalarizeBridge{T, F, S} <: AbstractBridge
     scalar_constraints::Vector{CI{F, S}}
     constants::Vector{T}
 end
-function ScalarizeBridge{T, F, S}(model::MOI.ModelLike,
-                                  f::MOI.AbstractVectorFunction,
-                                  set::VectorLinearSet) where {T, F, S}
+function bridge_constraint(::Type{ScalarizeBridge{T, F, S}},
+                           model::MOI.ModelLike,
+                           f::MOI.AbstractVectorFunction,
+                           set::VectorLinearSet) where {T, F, S}
     dimension = MOI.output_dimension(f)
     constants = MOI.constant(f, T)
     new_f = MOIU.scalarize(f, true)
@@ -58,6 +59,18 @@ function MOI.delete(model::MOI.ModelLike, bridge::ScalarizeBridge)
 end
 
 # Attributes, Bridge acting as a constraint
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 bridge::ScalarizeBridge{T, F, S}) where {T, F, S}
+    func = MOIU.vectorize(MOI.get.(model, attr, bridge.scalar_constraints))
+    if F != MOI.SingleVariable
+        func = MOIU.operate!(+, T, func, bridge.constants)
+    end
+    return func
+end
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet,
+                 bridge::ScalarizeBridge{T, F, S}) where {T, F, S}
+    return vector_set_type(S)(length(bridge.constants))
+end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::ScalarizeBridge)

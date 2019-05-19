@@ -264,6 +264,14 @@ set(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
 Replace the function in constraint `c` with `func`. `F` must match the original
 function type used to define the constraint.
 
+#### Note
+
+Setting the constraint function is not allowed if `F` is
+[`SingleVariable`](@ref), it throws a
+[`SettingSingleVariableFunctionNotAllowed`](@ref) error. Indeed, it would
+require changing the index `c` as the index of `SingleVariable` constraints
+should be the same as the index of the variable.
+
 #### Examples
 
 If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
@@ -319,6 +327,14 @@ function throw_set_error_fallback(model::ModelLike,
     end
 end
 
+"""
+    ListOfOptimizerAttributesSet()
+
+Error type that should be thrown when the user [`set`](@ref) the
+[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
+"""
+struct SettingSingleVariableFunctionNotAllowed <: Exception end
+
 ## Optimizer attributes
 
 """
@@ -355,6 +371,16 @@ value given by the user for this solver-specific parameter or `1` if none is
 given.
 """
 struct Silent <: AbstractOptimizerAttribute end
+
+"""
+    RawParameter(name)
+
+An optimizer attribute for the solver-specific parameter identified by `name`
+which is typically an `Enum` or a `String`.
+"""
+struct RawParameter <: AbstractOptimizerAttribute
+    name::Any
+end
 
 ## Model attributes
 
@@ -620,7 +646,7 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 A constraint attribute for a string identifying the constraint. It is *valid*
 for constraints variables to have the same name; however, constraints with
 duplicate names cannot be looked up using [`get`](@ref) regardless of if they
-have the same `F`-in`S` type. It has a default value of `""` if not set`.
+have the same `F`-in-`S` type. It has a default value of `""` if not set.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
@@ -855,15 +881,24 @@ The values indicate how to interpret the result vector.
   infeasibility.
 * `NEARLY_INFEASIBILITY_CERTIFICATE`: the result satisfies a relaxed criterion for
   a certificate of infeasibility.
+* `REDUCTION_CERTIFICATE`: the result vector is an ill-posed certificate; see
+  [this article](https://arxiv.org/abs/1408.4685) for details. If the
+  `PrimalStatus` is `REDUCTION_CERTIFICATE`, then the primal result vector is a
+  proof that the dual problem is ill-posed. If the `DualStatus` is
+  `REDUCTION_CERTIFICATE`, then the dual result vector is a proof that the primal
+  is ill-posed.
+* `NEARLY_REDUCTION_CERTIFICATE`: the result satisfies a relaxed criterion for
+  an ill-posed certificate.
 * `UNKNOWN_RESULT_STATUS`: the result vector contains a solution with an unknown
   interpretation.
 * `OTHER_RESULT_STATUS`: the result vector contains a solution with an
   interpretation not covered by one of the statuses defined above.
 """
-@enum(ResultStatusCode, NO_SOLUTION, FEASIBLE_POINT, NEARLY_FEASIBLE_POINT,
-    INFEASIBLE_POINT, INFEASIBILITY_CERTIFICATE,
-    NEARLY_INFEASIBILITY_CERTIFICATE, UNKNOWN_RESULT_STATUS,
-    OTHER_RESULT_STATUS)
+@enum(ResultStatusCode, NO_SOLUTION,
+      FEASIBLE_POINT, NEARLY_FEASIBLE_POINT, INFEASIBLE_POINT,
+      INFEASIBILITY_CERTIFICATE, NEARLY_INFEASIBILITY_CERTIFICATE,
+      REDUCTION_CERTIFICATE, NEARLY_REDUCTION_CERTIFICATE,
+      UNKNOWN_RESULT_STATUS, OTHER_RESULT_STATUS)
 
 """
     PrimalStatus(N)

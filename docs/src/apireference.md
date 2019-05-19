@@ -89,6 +89,7 @@ List of optimizers attributes
 ```@docs
 SolverName
 Silent
+RawParameter
 ```
 
 List of attributes useful for optimizers
@@ -149,6 +150,7 @@ BasisStatusCode
 VariableIndex
 ConstraintIndex
 is_valid
+throw_if_not_valid
 delete(::ModelLike, ::Index)
 ```
 
@@ -196,6 +198,12 @@ ConstraintFunction
 ConstraintSet
 ```
 
+Note that setting the [`ConstraintFunction`](@ref) of a [`SingleVariable`]
+constraint is not allowed:
+```@docs
+SettingSingleVariableFunctionNotAllowed
+```
+
 ## Functions and function modifications
 
 List of recognized functions.
@@ -225,18 +233,43 @@ constant(f::VectorOfVariables, T::DataType)
 
 ## Sets
 
-List of recognized sets.
-
+All sets are subtypes of [`AbstractSet`](@ref) and they should either be scalar
+or vector sets.
 ```@docs
 AbstractSet
-Reals
-Zeros
-Nonnegatives
-Nonpositives
+AbstractScalarSet
+AbstractVectorSet
+```
+
+Functions for getting properties of sets.
+```@docs
+dimension
+constant(s::EqualTo)
+```
+
+### Scalar sets
+
+List of recognized scalar sets.
+```@docs
 GreaterThan
 LessThan
 EqualTo
 Interval
+Integer
+ZeroOne
+Semicontinuous
+Semiinteger
+```
+
+
+### Vector sets
+
+List of recognized vector sets.
+```@docs
+Reals
+Zeros
+Nonnegatives
+Nonpositives
 SecondOrderCone
 RotatedSecondOrderCone
 GeometricMeanCone
@@ -244,27 +277,41 @@ ExponentialCone
 DualExponentialCone
 PowerCone
 DualPowerCone
+SOS1
+SOS2
+IndicatorSet
+```
+
+### Matrix sets
+
+Matrix sets are vectorized in order to be subtypes of
+[`AbstractVectorSet`](@ref). For sets of symmetric matrices, storing both the
+`(i, j)` and `(j, i)` elements is redundant so there exists the
+[`AbstractSymmetricMatrixSetTriangle`](@ref) set to represent only the
+vectorization of the upper triangular part of the matrix. When the matrix
+of expressions constrained to be in the set is not symmetric and hence
+the `(i, j)` and `(j, i)` elements should be constrained to be symmetric,
+the [`AbstractSymmetricMatrixSetSquare`](@ref) set can be used. The
+[`Bridges.SquareBridge`](@ref) can transform a set from the square form
+to the [`triangular_form`](@ref) by adding appropriate constraints if
+the `(i, j)` and `(j, i)` expressions are different.
+```@docs
+AbstractSymmetricMatrixSetTriangle
+AbstractSymmetricMatrixSetSquare
+side_dimension
+triangular_form
+```
+List of recognized matrix sets.
+```@docs
 PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeSquare
 LogDetConeTriangle
 LogDetConeSquare
 RootDetConeTriangle
 RootDetConeSquare
-Integer
-ZeroOne
-Semicontinuous
-Semiinteger
-SOS1
-SOS2
-IndicatorSet
 ```
 
-Functions for getting and setting properties of sets.
-
-```@docs
-dimension
-constant(s::EqualTo)
-```
+## Sets
 
 ## Modifications
 
@@ -332,6 +379,13 @@ thrown:
 ScalarFunctionConstantNotZero
 ```
 
+Some [`SingleVariable`](@ref) constraints cannot be combined on the same
+variable:
+```@docs
+LowerBoundAlreadySet
+UpperBoundAlreadySet
+```
+
 The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs
@@ -379,7 +433,7 @@ Bridges.SplitIntervalBridge
 Bridges.RSOCBridge
 Bridges.QuadtoSOCBridge
 Bridges.GeoMeanBridge
-Bridges.SquarePSDBridge
+Bridges.SquareBridge
 Bridges.RootDetBridge
 Bridges.LogDetBridge
 Bridges.SOCtoPSDBridge
@@ -389,6 +443,28 @@ For each bridge defined in this package, a corresponding bridge optimizer is ava
 Moreover, a `LazyBridgeOptimizer` with all the bridges defined in this package can be obtained with
 ```@docs
 Bridges.full_bridge_optimizer
+```
+
+### Bridge interface
+
+A bridge should implement the following functions to be usable by a bridge optimizer:
+```@docs
+supports_constraint(::Type{<:Bridges.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
+Bridges.concrete_bridge_type
+Bridges.bridge_constraint
+Bridges.added_constraint_types
+```
+
+When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
+and [`ListOfConstraintIndices`](@ref), the variables and constraints created
+by the bridges in the underlying model are hidden by the bridge optimizer.
+For this purpose, the bridge should provide access to the variables and
+constraints it has creates by implemented the following methods of
+[`get`](@ref):
+```@docs
+get(::Bridges.AbstractBridge, ::NumberOfVariables)
+get(::Bridges.AbstractBridge, ::NumberOfConstraints)
+get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
 ```
 
 ## Copy utilities

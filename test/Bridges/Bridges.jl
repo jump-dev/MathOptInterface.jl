@@ -16,7 +16,7 @@ end
     include("rsocbridge.jl")
     include("quadtosocbridge.jl")
     include("geomeanbridge.jl")
-    include("squarepsdbridge.jl")
+    include("square_bridge.jl")
     include("detbridge.jl")
     include("soctopsdbridge.jl")
 end

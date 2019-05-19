@@ -79,18 +79,22 @@ struct LogDetBridge{T} <: AbstractBridge
     lcindex::Vector{CI{MOI.VectorAffineFunction{T}, MOI.ExponentialCone}}
     tlindex::CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}
 end
-function LogDetBridge{T}(model, f::MOI.VectorOfVariables, s::MOI.LogDetConeTriangle) where T
-    LogDetBridge{T}(model, MOI.VectorAffineFunction{T}(f), s)
+function bridge_constraint(::Type{LogDetBridge{T}}, model,
+                           f::MOI.VectorOfVariables,
+                           s::MOI.LogDetConeTriangle) where T
+    return bridge_constraint(LogDetBridge{T}, model,
+                             MOI.VectorAffineFunction{T}(f), s)
 end
-function LogDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.LogDetConeTriangle) where T
+function bridge_constraint(::Type{LogDetBridge{T}}, model,
+                           f::MOI.VectorAffineFunction{T},
+                           s::MOI.LogDetConeTriangle) where T
     d = s.side_dimension
     tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 2)
     t, u = tu
     l = MOI.add_variables(model, d)
     lcindex = [sublog(model, l[i], u, D[i], T) for i in eachindex(l)]
     tlindex = subsum(model, t, l, T)
-
-    LogDetBridge(Δ, l, sdindex, lcindex, tlindex)
+    return LogDetBridge(Δ, l, sdindex, lcindex, tlindex)
 end
 
 MOI.supports_constraint(::Type{LogDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.LogDetConeTriangle}) where T = true
@@ -152,7 +156,7 @@ end
     RootDetBridge{T}
 
 The `RootDetConeTriangle` is representable by a `PositiveSemidefiniteConeTriangle` and an `GeometricMeanCone` constraints; see [1, p. 149].
-Indeed, ``t \\le \\det(X)^(1/n)`` if and only if there exists a lower triangular matrix ``Δ`` such that
+Indeed, ``t \\le \\det(X)^{1/n}`` if and only if there exists a lower triangular matrix ``Δ`` such that
 ```math
 \\begin{align*}
   \\begin{pmatrix}
@@ -170,10 +174,15 @@ struct RootDetBridge{T} <: AbstractBridge
     sdindex::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
     gmindex::CI{MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone}
 end
-function RootDetBridge{T}(model, f::MOI.VectorOfVariables, s::MOI.RootDetConeTriangle) where T
-    RootDetBridge{T}(model, MOI.VectorAffineFunction{T}(f), s)
+function bridge_constraint(::Type{RootDetBridge{T}}, model,
+                           f::MOI.VectorOfVariables,
+                           s::MOI.RootDetConeTriangle) where T
+    return bridge_constraint(RootDetBridge{T}, model,
+                             MOI.VectorAffineFunction{T}(f), s)
 end
-function RootDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RootDetConeTriangle) where T
+function bridge_constraint(::Type{RootDetBridge{T}}, model,
+                           f::MOI.VectorAffineFunction{T},
+                           s::MOI.RootDetConeTriangle) where T
     d = s.side_dimension
     tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 1)
     t = tu[1]
@@ -181,7 +190,7 @@ function RootDetBridge{T}(model, f::MOI.VectorAffineFunction{T}, s::MOI.RootDetC
     gmindex = MOI.add_constraint(model, MOIU.operate(vcat, T, t, DF),
                                  MOI.GeometricMeanCone(d+1))
 
-    RootDetBridge(Δ, sdindex, gmindex)
+    return RootDetBridge(Δ, sdindex, gmindex)
 end
 
 MOI.supports_constraint(::Type{RootDetBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.RootDetConeTriangle}) where T = true

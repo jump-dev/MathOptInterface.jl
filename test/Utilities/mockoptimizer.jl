@@ -53,7 +53,6 @@ end
 
     MOI.optimize!(optimizer)
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.INFEASIBLE
-    @test MOI.get(optimizer, MOI.ResultCount()) == 0
 end
 
 @testset "Optimizer solve with result" begin

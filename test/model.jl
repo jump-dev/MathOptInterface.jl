@@ -16,7 +16,6 @@ MOIU.@model(Model,
              MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
              MOI.LogDetConeSquare),
             (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2, LessThanIndicatorSetOne, LessThanIndicatorSetZero),
-            (MOI.SingleVariable,),
-            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (), (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))

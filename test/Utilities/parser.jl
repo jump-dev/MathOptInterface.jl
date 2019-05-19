@@ -31,7 +31,7 @@ end
     @test MOIU.separatelabel(:(con1: [x,y] in S)) == (:con1, :([x,y] in S))
 end
 
-@MOIU.model GeneralModel (MOI.ZeroOne, MOI.Integer) (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.PositiveSemidefiniteConeTriangle) () (MOI.SingleVariable,) (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
+@MOIU.model GeneralModel (MOI.ZeroOne, MOI.Integer) (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.PositiveSemidefiniteConeTriangle) () () (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
 
 @testset "loadfromstring" begin
     @testset "one variable" begin

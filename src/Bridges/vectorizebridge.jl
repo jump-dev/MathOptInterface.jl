@@ -18,8 +18,9 @@ mutable struct VectorizeBridge{T, F, S, G} <: AbstractBridge
     vector_constraint::CI{F, S}
     set_constant::T # constant in scalar set
 end
-function VectorizeBridge{T, F, S, G}(model::MOI.ModelLike, g::G,
-                                     set::MOI.AbstractScalarSet) where {T, F, S, G}
+function bridge_constraint(::Type{VectorizeBridge{T, F, S, G}},
+                           model::MOI.ModelLike, g::G,
+                           set::MOI.AbstractScalarSet) where {T, F, S, G}
     set_constant = MOI.constant(set)
     h = MOIU.operate(-, T, g, set_constant)
     if -set_constant != MOI.constant(h)[1]

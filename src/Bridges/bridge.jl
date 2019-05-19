@@ -10,6 +10,14 @@ These calls are used by the `AbstractBridgeOptimizer` to communicate with the br
 """
 abstract type AbstractBridge end
 
+"""
+    bridge_constraint(BT::Type{<:AbstractBridge}, model::MOI.ModelLike,
+                      func::AbstractFunction, set::MOI.AbstractSet)
+
+Bridge the constraint `func`-in-`set` using bridge `BT` to `model` and returns
+a bridge object of type `BT`.
+"""
+function bridge_constraint end
 
 function MOI.get(::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
                  bridge::AbstractBridge)

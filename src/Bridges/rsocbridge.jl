@@ -19,7 +19,9 @@ That means in particular that the norm is of constraint primal and duals are pre
 struct RSOCBridge{T, F} <: AbstractBridge
     soc::CI{F, MOI.SecondOrderCone}
 end
-function RSOCBridge{T, F}(model, f::MOI.AbstractVectorFunction, s::MOI.RotatedSecondOrderCone) where {T, F}
+function bridge_constraint(::Type{RSOCBridge{T, F}}, model,
+                           f::MOI.AbstractVectorFunction,
+                           s::MOI.RotatedSecondOrderCone) where {T, F}
     d = s.dimension
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]

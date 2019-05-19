@@ -13,7 +13,8 @@ struct ScalarSlackBridge{T, F, S} <: AbstractBridge
     slack_in_set::CI{MOI.SingleVariable, S}
     equality::CI{F, MOI.EqualTo{T}}
 end
-function ScalarSlackBridge{T, F, S}(model, f::MOI.AbstractScalarFunction, s::S) where {T, F, S}
+function bridge_constraint(::Type{ScalarSlackBridge{T, F, S}}, model,
+                           f::MOI.AbstractScalarFunction, s::S) where {T, F, S}
     slack = MOI.add_variable(model)
     new_f = MOIU.operate(-, T, f, MOI.SingleVariable(slack))
     slack_in_set = MOI.add_constraint(model, MOI.SingleVariable(slack), s)
@@ -115,7 +116,8 @@ struct VectorSlackBridge{T, F, S} <: AbstractBridge
     slacks_in_set::CI{MOI.VectorOfVariables, S}
     equality::CI{F, MOI.Zeros}
 end
-function VectorSlackBridge{T, F, S}(model, f::MOI.AbstractVectorFunction, s::S) where {T, F, S}
+function bridge_constraint(::Type{VectorSlackBridge{T, F, S}}, model,
+                           f::MOI.AbstractVectorFunction, s::S) where {T, F, S}
     d = MOI.dimension(s)
     slacks = MOI.add_variables(model, d)
     new_f = MOIU.operate(-, T, f, MOI.VectorOfVariables(slacks))

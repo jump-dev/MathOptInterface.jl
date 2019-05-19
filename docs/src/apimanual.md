@@ -1041,6 +1041,10 @@ const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
     MOIT.unittest(bridged, config)
 end
 
+@testset "Modification" begin
+    MOIT.modificationtest(bridged, config)
+end
+
 @testset "Continuous Linear" begin
     MOIT.contlineartest(bridged, config)
 end
@@ -1074,7 +1078,8 @@ checks that `optimizer` implements support for
 If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), then `supports_default_copy_to` can be replaced by `supports_allocate_load` if appropriate (see [Implementing copy](@ref)) and the line `const bridged = ...` can be replaced with
 ```julia
 # Include here the functions/sets supported by the solver wrapper (not those that are supported through bridges)
-MOIU.@model ModelData () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
+MOIU.@model(ModelData, (), (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives), (),
+            (), (MOI.ScalarAffineFunction,), (MOI.VectorOfVariables,), (MOI.VectorAffineFunction,))
 const cache = MOIU.UniversalFallback(ModelData{Float64}())
 const cached = MOIU.CachingOptimizer(cache, optimizer)
 const bridged = MOIB.full_bridge_optimizer(cached, Float64)
