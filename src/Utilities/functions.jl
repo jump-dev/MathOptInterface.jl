@@ -84,8 +84,8 @@ function mapvariables(varmap, f::MOI.AbstractFunctionModification)
 end
 
 # Vector of constants
-constant(f::Union{SAF, SQF}) = [f.constant]
-constant(f::Union{VAF, VQF}) = f.constants
+constant_vector(f::Union{SAF, SQF}) = [f.constant]
+constant_vector(f::Union{VAF, VQF}) = f.constants
 
 # Implements iterator interface
 """
