@@ -111,17 +111,17 @@ end
     gvq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fvq)
     @test gvq.affine_terms == MOI.VectorAffineTerm.([2, 1], sats)
     @test gvq.quadratic_terms == MOI.VectorQuadraticTerm.([1, 2, 2], sqts)
-    @test MOIU.constant(gvq) == [-3., -2.]
+    @test MOIU.constant_vector(gvq) == [-3., -2.]
 end
 @testset "Conversion VectorOfVariables -> VectorAffineFunction" begin
     f = MOI.VectorAffineFunction{Int}(MOI.VectorOfVariables([z, x, y]))
     @test f isa MOI.VectorAffineFunction{Int}
     @test f.terms == MOI.VectorAffineTerm.(1:3, MOI.ScalarAffineTerm.(ones(Int, 3), [z, x, y]))
-    @test all(iszero.(MOIU.constant(f)))
+    @test all(iszero.(MOIU.constant_vector(f)))
     f = MOI.VectorAffineFunction{Float64}(MOI.VectorOfVariables([x, w]))
     @test f isa MOI.VectorAffineFunction{Float64}
     @test f.terms == MOI.VectorAffineTerm.(1:2, MOI.ScalarAffineTerm.(1.0, [x, w]))
-    @test all(iszero.(MOIU.constant(f)))
+    @test all(iszero.(MOIU.constant_vector(f)))
 end
 @testset "Iteration and indexing on VectorOfVariables" begin
     f = MOI.VectorOfVariables([z, w, x, y])
@@ -155,11 +155,11 @@ end
     h = it[[3, 1]]
     @test h isa MOI.VectorAffineFunction
     @test h.terms == MOI.VectorAffineTerm.([1, 1, 2, 2, 2], MOI.ScalarAffineTerm.([2, 6, 7, 1, 4], [z, x, y, z, x]))
-    @test MOIU.constant(h) == [5, 2]
+    @test MOIU.constant_vector(h) == [5, 2]
     F = MOIU.operate(vcat, Int, it[[1, 2]], it[3])
     @test F isa MOI.VectorAffineFunction{Int}
     @test F.terms == MOI.VectorAffineTerm.([1, 1, 1, 2, 2, 2, 2, 3, 3], MOI.ScalarAffineTerm.([7, 1, 4, 1, 9, 3, 1, 2, 6], [y, z, x, x, z, y, y, z, x]))
-    @test MOIU.constant(F) == MOIU.constant(f)
+    @test MOIU.constant_vector(F) == MOIU.constant_vector(f)
 end
 @testset "Indexing on VectorQuadraticFunction" begin
     f = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1, 3, 2, 2],
@@ -421,9 +421,9 @@ end
                                                                                                 [x, x, z,  y,  y,  x, y,  z, x, y, y,  x, x,  z])), [5, 7]))
         @test MOI.output_dimension(f) == 2
         @test f.terms == MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y]))
-        @test MOIU.constant(f) == [5, 7]
+        @test MOIU.constant_vector(f) == [5, 7]
         f = MOIU.modifyfunction(f, MOI.VectorConstantChange([6, 8]))
-        @test MOIU.constant(f) == [6, 8]
+        @test MOIU.constant_vector(f) == [6, 8]
         g = deepcopy(f)
         @test f ≈ g
         f = MOIU.modifyfunction(f, MOI.MultirowChange(y, [(2, 9)]))
@@ -437,7 +437,7 @@ end
         f = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([1, 2, 2], MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])), MOI.VectorQuadraticTerm.([1, 1, 2], MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])), [7, 3, 4])
         @test MOI.output_dimension(f) == 3
         f = MOIU.modifyfunction(f, MOI.VectorConstantChange([10, 11, 12]))
-        @test MOIU.constant(f) == [10, 11, 12]
+        @test MOIU.constant_vector(f) == [10, 11, 12]
         f = MOIU.modifyfunction(f, MOI.MultirowChange(y, [(2, 0), (1, 1)]))
         @test f.affine_terms == MOI.VectorAffineTerm.([1, 2, 1], MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]))
         g = deepcopy(f)
