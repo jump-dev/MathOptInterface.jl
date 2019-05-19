@@ -438,6 +438,7 @@ Bridges.RootDetBridge
 Bridges.LogDetBridge
 Bridges.SOCtoPSDBridge
 Bridges.RSOCtoPSDBridge
+Bridges.IndicatorActiveOnFalseBridge
 ```
 For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
 Moreover, a `LazyBridgeOptimizer` with all the bridges defined in this package can be obtained with

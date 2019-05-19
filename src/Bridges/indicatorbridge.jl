@@ -1,4 +1,3 @@
-
 """
     IndicatorActiveOnFalseBridge{T}
 
@@ -12,11 +11,12 @@ struct IndicatorActiveOnFalseBridge{F <: MOI.AbstractScalarFunction, S <: MOI.Ab
     indicator_cons_index::MOI.ConstraintIndex{F, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S}}
 end
 
-function IndicatorActiveOnFalseBridge(model::MOI.ModelLike, f::MOI.ScalarAffineFunction{T}, s::IS) where {T <: Real, F, IS <: MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S} where S <: MOI.AbstractScalarSet}
-    z1 = f.terms[1].variable_index
-
+function bridge_constraint(::Type{<:IndicatorActiveOnFalseBridge}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::IS) where {T <: Real, F, IS <: MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S} where S <: MOI.AbstractScalarSet}
+    fs = MOIU.eachscalar(f)
+    z1 = convert(MOI.SingleVariable, fs[1]).variable
     z2 = MOI.add_variable(model)
     zo_cons = MOI.add_constraint(model, MOI.SingleVariable(z2), MOI.ZeroOne())
+
 
     # z1 + z2 == 1
     dcons = MOI.add_constraint(model,
@@ -25,8 +25,8 @@ function IndicatorActiveOnFalseBridge(model::MOI.ModelLike, f::MOI.ScalarAffineF
         ),
         MOI.EqualTo(one(T)),
     )
-
-    ci = MOI.add_constraint(model, f, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(s.set))
+    f2 = MOIU.operate(vcat, T, MOI.SingleVariable(z2), f[2])
+    ci = MOI.add_constraint(model, f2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(s.set))
 
     return IndicatorActiveOnFalseBridge{MOI.ScalarAffineFunction{T}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, IS}, T}(z2, zo_cons, dcons, ci)
 end
