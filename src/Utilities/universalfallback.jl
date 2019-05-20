@@ -36,8 +36,7 @@ UniversalFallback(model::MOI.ModelLike) = UniversalFallback{typeof(model)}(model
 
 function MOI.is_empty(uf::UniversalFallback)
     return MOI.is_empty(uf.model) && isempty(uf.constraints) &&
-        isempty(uf.optattr) && isempty(uf.modattr) && isempty(uf.varattr) &&
-        isempty(uf.conattr)
+        isempty(uf.modattr) && isempty(uf.varattr) && isempty(uf.conattr)
 end
 function MOI.empty!(uf::UniversalFallback)
     MOI.empty!(uf.model)
@@ -45,7 +44,6 @@ function MOI.empty!(uf::UniversalFallback)
     uf.nextconstraintid = 0
     empty!(uf.con_to_name)
     uf.name_to_con = nothing
-    empty!(uf.optattr)
     empty!(uf.modattr)
     empty!(uf.varattr)
     empty!(uf.conattr)

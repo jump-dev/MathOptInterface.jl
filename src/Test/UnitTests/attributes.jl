@@ -11,6 +11,27 @@ end
 unittests["solver_name"] = solver_name
 
 """
+    silent(model::MOI.ModelLike, config::TestConfig)
+
+Test that the [`MOI.Silent`](@ref) attribute is implemented for `model`.
+"""
+function silent(model::MOI.ModelLike, config::TestConfig)
+    if config.solve
+        @test MOI.supports(model, MOI.Silent())
+        # Get the current value to restore it at the end of the test
+        value = MOI.get(model, MOI.Silent())
+        MOI.set(model, MOI.Silent(), !value)
+        @test !value == MOI.get(model, MOI.Silent())
+        # Check that `set` does not just take `!` of the current value
+        MOI.set(model, MOI.Silent(), !value)
+        @test !value == MOI.get(model, MOI.Silent())
+        MOI.set(model, MOI.Silent(), value)
+        @test value == MOI.get(model, MOI.Silent())
+    end
+end
+unittests["silent"] = silent
+
+"""
     raw_status_string(model::MOI.ModelLike, config::TestConfig)
 
 Test that the [`MOI.RawStatusString`](@ref) attribute is implemented for

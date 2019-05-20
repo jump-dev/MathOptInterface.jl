@@ -15,6 +15,7 @@ end
 @testset "Unit Tests" begin
     # `UniversalFallback` needed for `MOI.Silent`
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(Model{Float64}()))
+    MOI.set(mock, MOI.Silent(), true)
     config = MOIT.TestConfig()
     MOIT.unittest(mock, config, [
         "solve_blank_obj",

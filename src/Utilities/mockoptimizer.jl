@@ -156,7 +156,9 @@ MOI.set(mock::MockOptimizer, ::MOI.DualObjectiveValue, value::Real) = (mock.dual
 MOI.set(mock::MockOptimizer, ::MOI.PrimalStatus, value::MOI.ResultStatusCode) = (mock.primalstatus = value)
 MOI.set(mock::MockOptimizer, ::MOI.DualStatus, value::MOI.ResultStatusCode) = (mock.dualstatus = value)
 MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
-function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
+function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
+    # `supports` is not defined if `is_set_by_optimize(attr)` so we pass it to
+    # `mock.inner_model`.
     return MOI.supports(mock.inner_model, attr)
 end
 function MOI.set(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute,
@@ -166,6 +168,11 @@ function MOI.set(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute,
     else
         MOI.set(mock.inner_model, attr, value)
     end
+end
+function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
+    # `supports` is not defined if `is_set_by_optimize(attr)` so we pass it to
+    # `mock.inner_model`.
+    return MOI.supports(mock.inner_model, attr)
 end
 function MOI.set(mock::MockOptimizer, attr::MOI.AbstractModelAttribute, value)
     if MOI.is_set_by_optimize(attr)
