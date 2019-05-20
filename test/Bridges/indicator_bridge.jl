@@ -31,10 +31,10 @@ include("../model.jl")
     vc2 = MOI.add_constraint(model, z2, MOI.ZeroOne())
     @test vc2.value == z2.value
     f1 = MOI.VectorAffineFunction(
-      [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
-       MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
-      ],
-      [0.0, 0.0]
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+        ],
+        [0.0, 0.0]
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
 
@@ -45,7 +45,7 @@ include("../model.jl")
     @test MOI.get(model, MOI.ConstraintSet(), bridge.disjunction_cons) == MOI.EqualTo(1.0)
     disjunction_cons = MOI.get(model, MOI.ConstraintFunction(), bridge.disjunction_cons)
     for t in disjunction_cons.terms
-      @test t.variable_index == z1 || t.variable_index == z1comp
-      @test t.coefficient ≈ 1.0
+        @test t.variable_index == z1 || t.variable_index == z1comp
+        @test t.coefficient ≈ 1.0
     end
 end
