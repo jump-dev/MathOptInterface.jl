@@ -13,10 +13,10 @@ v0.9.0 (May 2?, 2019)
 - Add `REDUCTION_CERTIFICATE` result status (#734).
 - Add abstract matrix sets (#731).
 - Testing improvements:
-  * The testing guideline was update (#728).
-  * Add quadratic tests (#697).
-  * Add unit tests for `RawStatusString`, `SolveTime` and `SolverName` (#726).
-  * Small tweaks to existing tests (#702, #703).
+  * The testing guideline was updated (#728).
+  * Quadratic tests were added (#697).
+  * Unit tests for `RawStatusString`, `SolveTime` and `SolverName` were added (#726).
+  * Existing tests had a few updates (#702, #703).
 - Bridges improvements:
   * The bridges no longer store the constraint function and set before it is
     briged, the bridges now have to implement `ConstraintFunction` and
