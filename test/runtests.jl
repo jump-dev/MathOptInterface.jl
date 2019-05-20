@@ -10,6 +10,11 @@ using Test
 
 include("dummy.jl")
 
+@testset "MOI.Bridges" begin
+    # Bridges submodule tests
+    include("Bridges/Bridges.jl")
+end
+
 # MOI tests not relying on any submodule
 @testset "MOI" begin
     include("isbits.jl")
@@ -30,11 +35,6 @@ end
 # It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
 @testset "MOI.Test" begin
     include("Test/Test.jl")
-end
-
-@testset "MOI.Bridges" begin
-    # Bridges submodule tests
-    include("Bridges/Bridges.jl")
 end
 
 # Test hygiene of @model macro

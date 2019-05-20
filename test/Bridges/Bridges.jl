@@ -7,6 +7,7 @@ end
     include("lazybridgeoptimizer.jl")
 end
 @testset "Separate bridges" begin
+    include("indicator_bridge.jl")
     include("flip_sign_bridge.jl")
     include("vectorizebridge.jl")
     include("scalarizebridge.jl")
