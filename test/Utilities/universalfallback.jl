@@ -11,9 +11,6 @@ function test_optmodattrs(uf, model, attr, listattr)
     MOI.set(uf, attr, 0)
     @test MOI.get(uf, attr) == 0
     @test MOI.get(uf, listattr) == [attr]
-    @test !MOI.is_empty(uf)
-    MOI.empty!(uf)
-    @test MOI.is_empty(uf)
 end
 function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index},
                           addfun, x, y, z)
@@ -116,6 +113,9 @@ end
     attr = MOIT.UnknownModelAttribute()
     listattr = MOI.ListOfModelAttributesSet()
     test_optmodattrs(uf, model, attr, listattr)
+    @test !MOI.is_empty(uf)
+    MOI.empty!(uf)
+    @test MOI.is_empty(uf)
 end
 x = MOI.add_variable(uf)
 y, z = MOI.add_variables(uf, 2)
