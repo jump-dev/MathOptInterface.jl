@@ -4,14 +4,14 @@ MathOptInterface (MOI) release notes
 v0.9.0 (May 2?, 2019)
 ---------------------
 
-- Support for Julia v0.6 and v0.7 are dropped (#714, #717).
-- Add support for indicator constraints (#709).
-- Add `RawParameter` attribute (#733).
+- Support for Julia v0.6 and v0.7 was dropped (#714, #717).
+- Support for indicator constraints was added (#709).
+- `RawParameter` attribute was added (#733).
 - The field of `ObjectiveValue` was renamed to `result_index` (#729).
-- The `_constant` and `Utilities.getconstant` function are renamed to `constant`
-  (#723).
-- Add `REDUCTION_CERTIFICATE` result status (#734).
-- Add abstract matrix sets (#731).
+- The `_constant` and `Utilities.getconstant` function were renamed to `constant`
+- The `Utilities.constant` function was renamed to `Utilities.constant_vector` (#740).
+- `REDUCTION_CERTIFICATE` result status was added (#734).
+- Abstract matrix sets were added (#731).
 - Testing improvements:
   * The testing guideline was updated (#728).
   * Quadratic tests were added (#697).
