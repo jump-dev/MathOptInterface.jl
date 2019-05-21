@@ -90,6 +90,23 @@ function MOIB.concrete_bridge_type(::Type{<:BridgeAddingNoConstraint{T}},
     return BridgeAddingNoConstraint{T}
 end
 
+const LessThanIndicatorSetOne{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{T}}
+MOIU.@model(ModelNoZeroIndicator,
+            (MOI.ZeroOne, MOI.Integer),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
+             MOI.Semicontinuous, MOI.Semiinteger),
+            (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
+             MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
+             MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
+             MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
+             MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
+             MOI.LogDetConeSquare),
+            (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2, LessThanIndicatorSetOne),
+            (), (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+
+
 @testset "Bridge adding no constraint" begin
     mock = MOIU.MockOptimizer(NothingModel{Int}())
     bridged = MOIB.LazyBridgeOptimizer(mock)
@@ -205,6 +222,12 @@ end
     full_bridged_mock2 = MOIB.full_bridge_optimizer(mock2, Float64)
     @test MOI.supports_constraint(full_bridged_mock2, MOI.VectorAffineFunction{Float64},
                                   MOI.SecondOrderCone)
+    mock_indicator = MOIU.MockOptimizer(ModelNoZeroIndicator{Float64}())
+    full_bridged_mock_indicator = MOIB.full_bridge_optimizer(mock_indicator, Float64)
+    @test !MOI.supports_constraint(mock_indicator, MOI.VectorAffineFunction{Float64},
+                                MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.LessThan{Float64}})
+    @test MOI.supports_constraint(full_bridged_mock_indicator, MOI.VectorAffineFunction{Float64},
+                                MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.LessThan{Float64}})
     @testset "Unslack" begin
         for T in [Float64, Int]
             no_variable_mock = MOIU.MockOptimizer(NoVariableModel{T}())
