@@ -19,4 +19,5 @@ end
     include("square_bridge.jl")
     include("detbridge.jl")
     include("soctopsdbridge.jl")
+    include("indicator_bridge.jl")
 end

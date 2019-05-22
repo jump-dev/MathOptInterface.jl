@@ -531,7 +531,7 @@ function indicator3_test(model::MOI.ModelLike, config::TestConfig)
     # s.t. x1 + x2 <= 10
     #      z1 == 0 ==> x2 <= 8
     #      z2 == 1 ==> x2 + x1/5 <= 9
-    #      (1-z1) + z2 >= 1 <=> z2 - z1 >= 0 
+    #      (1-z1) + z2 >= 1 <=> z2 - z1 >= 0
 
     MOI.empty!(model)
     @test MOI.is_empty(model)

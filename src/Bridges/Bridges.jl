@@ -48,6 +48,7 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     add_bridge(bridged_model, RSOCBridge{T})
     add_bridge(bridged_model, RSOCtoPSDBridge{T})
     add_bridge(bridged_model, SOCtoPSDBridge{T})
+    add_bridge(bridged_model, MOIB.IndicatorActiveOnFalseBridge{T})
     return bridged_model
 end
 
@@ -82,5 +83,7 @@ const RootDet{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T}, OT
 include("soctopsdbridge.jl")
 const SOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoPSDBridge{T}, OT}
 const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}, OT}
+
+include("indicatorbridge.jl")
 
 end # module
