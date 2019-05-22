@@ -938,6 +938,7 @@ attributes that are modified by [`optimize!`](@ref).
 """
 is_set_by_optimize(::AnyAttribute) = false
 function is_set_by_optimize(::Union{ObjectiveValue,
+                                    DualObjectiveValue,
                                     ObjectiveBound,
                                     RelativeGap,
                                     SolveTime,
