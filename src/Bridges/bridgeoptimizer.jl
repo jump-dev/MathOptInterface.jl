@@ -310,6 +310,7 @@ end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractConstraintAttribute, ci::CI)
     if is_bridged(b, typeof(ci))
+        MOI.throw_if_not_valid(b, ci)
         return MOI.get(b, attr, bridge(b, ci))
     else
         return MOI.get(b.model, attr, ci)
@@ -329,6 +330,7 @@ function MOI.set(b::AbstractBridgeOptimizer,
                  attr::MOI.AbstractConstraintAttribute,
                  index::CI, value)
     if is_bridged(b, typeof(index))
+        MOI.throw_if_not_valid(b, index)
         return MOI.set(b, attr, bridge(b, index), value)
     else
         return MOI.set(b.model, attr, index, value)
