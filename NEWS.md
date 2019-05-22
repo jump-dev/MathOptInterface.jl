@@ -5,7 +5,7 @@ v0.9.0 (May 2?, 2019)
 ---------------------
 
 - Support for Julia v0.6 and v0.7 was dropped (#714, #717).
-- Support for indicator constraints was added (#709).
+- Support for indicator constraints was added (#709, #712).
 - `RawParameter` attribute was added (#733).
 - The field of `ObjectiveValue` was renamed to `result_index` (#729).
 - The `_constant` and `Utilities.getconstant` function were renamed to `constant`
@@ -15,7 +15,8 @@ v0.9.0 (May 2?, 2019)
 - Testing improvements:
   * The testing guideline was updated (#728).
   * Quadratic tests were added (#697).
-  * Unit tests for `RawStatusString`, `SolveTime` and `SolverName` were added (#726).
+  * Unit tests for `RawStatusString`, `SolveTime`, `Silent` and `SolverName`
+    were added (#726, #741).
   * Existing tests had a few updates (#702, #703).
 - Bridges improvements:
   * The bridges no longer store the constraint function and set before it is
