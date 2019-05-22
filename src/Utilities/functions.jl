@@ -152,7 +152,21 @@ function Base.getindex(it::ScalarFunctionIterator{VAF{T}}, I::AbstractVector) wh
         append!(terms, map(t -> MOI.VectorAffineTerm(i, t), g.terms))
         constant[i] = g.constant
     end
-    VAF(terms, constant)
+    return VAF(terms, constant)
+end
+function Base.getindex(it::ScalarFunctionIterator{VQF{T}}, I::AbstractVector) where T
+    affine_terms = MOI.VectorAffineTerm{T}[]
+    quadratic_terms = MOI.VectorQuadraticTerm{T}[]
+    constant = Vector{T}(undef, length(I))
+    for (i, j) in enumerate(I)
+        g = it[j]
+        append!(affine_terms, map(t -> MOI.VectorAffineTerm(i, t),
+                                  g.affine_terms))
+        append!(quadratic_terms, map(t -> MOI.VectorQuadraticTerm(i, t),
+                                     g.quadratic_terms))
+        constant[i] = g.constant
+    end
+    return VQF(affine_terms, quadratic_terms, constant)
 end
 
 """
@@ -1465,6 +1479,20 @@ function operate(::typeof(vcat), ::Type{T},
     fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
     return VAF(terms, constant)
 end
+function operate(::typeof(vcat), ::Type{T},
+                 funcs::Union{ScalarQuadraticLike{T}, VVF, VAF{T}, VQF{T}}...) where T
+    num_affine_terms = sum(func -> number_of_affine_terms(T, func), funcs)
+    num_quadratic_terms = sum(func -> number_of_quadratic_terms(T, func), funcs)
+    out_dim = sum(func -> output_dim(T, func), funcs)
+    affine_terms = Vector{MOI.VectorAffineTerm{T}}(undef, num_affine_terms)
+    quadratic_terms = Vector{MOI.VectorQuadraticTerm{T}}(undef, num_quadratic_terms)
+    constant = zeros(T, out_dim)
+    fill_vector(affine_terms, T, 0, 0, fill_terms, number_of_affine_terms, funcs...)
+    fill_vector(quadratic_terms, T, 0, 0, fill_terms, number_of_quadratic_terms, funcs...)
+    fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
+    return VQF(affine_terms, quadratic_terms, constant)
+end
+
 
 # Similar to `eachscalar` but faster, see
 # https://github.com/JuliaOpt/MathOptInterface.jl/issues/418
@@ -1517,4 +1545,21 @@ function count_terms(dimension::I, terms::Vector{T}) where {I,T}
     counting = zeros(I, dimension)
     count_terms(counting, terms)
     return counting
+end
+
+convert_approx(::Type{T}, func::T; kws...) where {T} = func
+function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFunction{T};
+                        tol=sqrt(eps(T))) where {T}
+    f = MOIU.canonical(func)
+    i = findfirst(t -> isapprox(t.coefficient, one(T), atol=tol), f.terms)
+    if abs(f.constant) > tol || i === nothing ||
+        any(j -> j != i && abs(f.terms[i]) > tol, eachindex(f.terms))
+        throw(InexactError(:convert_approx, MOI.SingleVariable, func))
+    end
+    return MOI.SingleVariable(f.terms[i].variable_index)
+end
+function convert_approx(::Type{MOI.VectorOfVariables}, func::MOI.VectorAffineFunction{T};
+    tol=sqrt(eps(T))) where {T}
+    return MOI.VectorOfVariables([convert_approx(MOI.SingleVariable, f, tol=tol).variable
+                                  for f in scalarize(func)])
 end
