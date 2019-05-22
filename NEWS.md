@@ -1,6 +1,32 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.0 (May 2?, 2019)
+---------------------
+
+- Support for Julia v0.6 and v0.7 was dropped (#714, #717).
+- Support for indicator constraints was added (#709, #712).
+- `RawParameter` attribute was added (#733).
+- The field of `ObjectiveValue` was renamed to `result_index` (#729).
+- The `_constant` and `Utilities.getconstant` function were renamed to `constant`
+- The `Utilities.constant` function was renamed to `Utilities.constant_vector` (#740).
+- `REDUCTION_CERTIFICATE` result status was added (#734).
+- Abstract matrix sets were added (#731).
+- Testing improvements:
+  * The testing guideline was updated (#728).
+  * Quadratic tests were added (#697).
+  * Unit tests for `RawStatusString`, `SolveTime`, `Silent` and `SolverName`
+    were added (#726, #741).
+  * Existing tests had a few updates (#702, #703).
+- Bridges improvements:
+  * The bridges no longer store the constraint function and set before it is
+    briged, the bridges now have to implement `ConstraintFunction` and
+    `ConstraintSet` if the user wants to recover them. As a consequence, the
+    `@bridge` macro was removed (#722).
+  * Bridge are now instantiated with a `bridge_constraint` function instead of
+    using a constructor (#730).
+  * Fix constraint attributes for bridges (#699).
+
 v0.8.4 (March 13, 2019)
 -----------------------
 
