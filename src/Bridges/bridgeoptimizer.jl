@@ -86,6 +86,8 @@ function MOI.empty!(b::AbstractBridgeOptimizer)
     empty!(b.bridges)
     empty!(b.constraint_types)
     empty!(b.single_variable_constraints)
+    empty!(b.con_to_name)
+    b.name_to_con = nothing
 end
 function MOI.supports(b::AbstractBridgeOptimizer,
                       attr::Union{MOI.AbstractModelAttribute,
@@ -146,6 +148,10 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::CI)
         end
         MOI.delete(b, bridge(b, ci))
         _remove_bridge(b, ci)
+        b.name_to_con = nothing
+        if haskey(b.con_to_name, ci)
+            delete!(b.con_to_name, ci)
+        end
     else
         MOI.delete(b.model, ci)
     end
@@ -381,6 +387,9 @@ function MOI.get(b::AbstractBridgeOptimizer, IdxT::Type{<:MOI.ConstraintIndex},
         if ci == CI{Nothing, Nothing}(-1)
             error("Multiple constraints have the name $name.")
         elseif ci isa IdxT
+            if MOI.get(b.model, CI, name) !== nothing
+                error("Multiple constraints have the name $name.")
+            end
             return ci
         else
             return nothing

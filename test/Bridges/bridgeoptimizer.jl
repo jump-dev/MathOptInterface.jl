@@ -13,7 +13,7 @@ struct UnknownConstraintAttribute <: MOI.AbstractConstraintAttribute end
 MOI.is_set_by_optimize(::UnknownConstraintAttribute) = true
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-bridged_mock = MOIB.SplitInterval{Float64}(mock)
+bridged_mock = MOIB.LessToGreater{Float64}(MOIB.SplitInterval{Float64}(mock))
 
 @testset "Unsupported constraint attribute" begin
     attr = UnknownConstraintAttribute()
@@ -49,6 +49,8 @@ end
 MOI.empty!(bridged_mock)
 
 @testset "Name test" begin
+    MOIT.nametest(bridged_mock)
+    # Test that names are deleted in `MOI.empty!`
     MOIT.nametest(bridged_mock)
 end
 
