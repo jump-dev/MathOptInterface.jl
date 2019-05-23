@@ -254,7 +254,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
     if config.query
-        @test c2f ≈ MOI.get(model, MOI.ConstraintFunction(), c2)
+        @test c2f ≈ MOI.get(model, MOI.ConstraintFunction(), c2) atol=atol rtol=rtol
     end
 
     if config.solve
@@ -314,7 +314,7 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
     if config.query
-        @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
+        @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c) atol=atol rtol=rtol
     end
 
     if config.solve
@@ -366,7 +366,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
 
     if config.query
-        @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
+        @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c) atol=atol rtol=rtol
     end
 
     if config.solve
@@ -429,7 +429,7 @@ function _qcp4test(model::MOI.ModelLike, config::TestConfig, less_than::Bool)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
 
     if config.query
-        @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
+        @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c) atol=atol rtol=rtol
         @test quad_set == MOI.get(model, MOI.ConstraintSet(), c)
     end
 
