@@ -416,7 +416,9 @@ function MOI.supports(m::CachingOptimizer,
         (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr, IndexType))
 end
 
-function MOI.supports(m::CachingOptimizer, attr::MOI.AbstractModelAttribute)
+function MOI.supports(m::CachingOptimizer,
+                      attr::Union{MOI.AbstractModelAttribute,
+                                  MOI.AbstractOptimizerAttribute})
     return MOI.supports(m.model_cache, attr) &&
         (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr))
 end

@@ -17,27 +17,31 @@ end
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(Model{Float64}()))
     MOI.set(mock, MOI.Silent(), true)
     config = MOIT.TestConfig()
-    MOIT.unittest(mock, config, [
-        "solve_blank_obj",
-        "solve_constant_obj",
-        "solve_singlevariable_obj",
-        "solve_with_lowerbound",
-        "solve_with_upperbound",
-        "solve_affine_lessthan",
-        "solve_affine_greaterthan",
-        "solve_affine_equalto",
-        "solve_affine_interval",
-        "solve_duplicate_terms_scalar_affine",
-        "solve_duplicate_terms_vector_affine",
-        "solve_qp_edge_cases",
-        "solve_qcp_edge_cases",
-        "solve_affine_deletion_edge_cases",
-        "solve_duplicate_terms_obj",
-        "solve_integer_edge_cases",
-        "solve_objbound_edge_cases",
-        "raw_status_string",
-        "solve_time"
-        ])
+    for model in [mock, MOIU.CachingOptimizer(MOIU.UniversalFallback(Model{Float64}()),
+                                              mock)]
+        MOIT.unittest(model, config, [
+            "solve_blank_obj",
+            "solve_constant_obj",
+            "solve_singlevariable_obj",
+            "solve_with_lowerbound",
+            "solve_with_upperbound",
+            "solve_affine_lessthan",
+            "solve_affine_greaterthan",
+            "solve_affine_equalto",
+            "solve_affine_interval",
+            "solve_duplicate_terms_scalar_affine",
+            "solve_duplicate_terms_vector_affine",
+            "solve_qp_edge_cases",
+            "solve_qcp_edge_cases",
+            "solve_affine_deletion_edge_cases",
+            "solve_duplicate_terms_obj",
+            "solve_integer_edge_cases",
+            "solve_objbound_edge_cases",
+            "raw_status_string",
+            "solve_time"
+            ])
+        MOI.empty!(model)
+    end
 
     @testset "solve_blank_obj" begin
         MOIU.set_mock_optimize!(mock,
