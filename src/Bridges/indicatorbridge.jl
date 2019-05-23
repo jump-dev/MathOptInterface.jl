@@ -52,6 +52,6 @@ end
 
 function concrete_bridge_type(::Type{<:IndicatorActiveOnFalseBridge{T}},
                               ::Type{F},
-                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {T, F, S}
+                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {T, F<:MOI.VectorAffineFunction, S<:MOI.AbstractScalarSet}
     return IndicatorActiveOnFalseBridge{T, F, S}
 end
