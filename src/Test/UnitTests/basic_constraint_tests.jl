@@ -65,10 +65,16 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_affine, 2, MOI.Nonpositives(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_affine, 2, MOI.Nonnegatives(2) ),
 
+    (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_affine, 3, MOI.SecondOrderCone(3) ),
+    (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_affine, 3, MOI.RotatedSecondOrderCone(3) ),
+
     (MOI.VectorQuadraticFunction{Float64}, MOI.Reals)        => ( dummy_vector_quadratic, 2, MOI.Reals(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros)        => ( dummy_vector_quadratic, 2, MOI.Zeros(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_quadratic, 2, MOI.Nonpositives(2) ),
-    (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) )
+    (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) ),
+
+    (MOI.VectorQuadraticFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_quadratic, 3, MOI.SecondOrderCone(3) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_quadratic, 3, MOI.RotatedSecondOrderCone(3) )
 )
 """
     basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
