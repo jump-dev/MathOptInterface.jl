@@ -15,7 +15,7 @@ struct IndicatorActiveOnFalseBridge{T, F <: MOI.AbstractVectorFunction, S <: MOI
     indicator_cons_index::MOI.ConstraintIndex{F, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S}}
 end
 
-function bridge_constraint(::Type{<:IndicatorActiveOnFalseBridge}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::IS) where {S <: MOI.AbstractScalarSet, T <: Real, F, IS <: MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}
+function bridge_constraint(::Type{IndicatorActiveOnFalseBridge{T,F,S}}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::IS) where {S <: MOI.AbstractScalarSet, T <: Real, F, IS <: MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}
     z1 = f.terms[1].scalar_term.variable_index
     z2 = MOI.add_variable(model)
     zo_cons = MOI.add_constraint(model, MOI.SingleVariable(z2), MOI.ZeroOne())
