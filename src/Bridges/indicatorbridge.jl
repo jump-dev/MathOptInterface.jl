@@ -36,8 +36,7 @@ function bridge_constraint(::Type{IndicatorActiveOnFalseBridge{T,F,S}}, model::M
         f.constants
     )
     ci = MOI.add_constraint(model, f2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(s.set))
-    BT = concrete_bridge_type(IndicatorActiveOnFalseBridge{T}, typeof(f), typeof(s))
-    return BT(z2, zo_cons, dcons, ci)
+    return IndicatorActiveOnFalseBridge{T,F,S}(z2, zo_cons, dcons, ci)
 end
 
 function MOI.supports_constraint(::Type{<:IndicatorActiveOnFalseBridge{T}},
