@@ -40,8 +40,8 @@ function bridge_constraint(::Type{IndicatorActiveOnFalseBridge{T,F,S}}, model::M
 end
 
 function MOI.supports_constraint(::Type{<:IndicatorActiveOnFalseBridge{T}},
-                                 ::Type{F},
-                                 ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}}) where {T,F<:MOI.VectorAffineFunction}
+                                 ::Type{<:MOI.VectorAffineFunction},
+                                 ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}}) where {T}
     return true
 end
 
