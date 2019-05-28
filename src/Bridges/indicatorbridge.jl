@@ -15,7 +15,7 @@ struct IndicatorActiveOnFalseBridge{T, F <: MOI.AbstractVectorFunction, S <: MOI
     indicator_cons_index::MOI.ConstraintIndex{F, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S}}
 end
 
-function bridge_constraint(::Type{<:IndicatorActiveOnFalseBridge}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::IS) where {S <: MOI.AbstractScalarSet, T <: Real, F, IS <: MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}
+function bridge_constraint(::Type{IndicatorActiveOnFalseBridge{T,F,S}}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::IS) where {S <: MOI.AbstractScalarSet, T <: Real, F, IS <: MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}
     z1 = f.terms[1].scalar_term.variable_index
     z2 = MOI.add_variable(model)
     zo_cons = MOI.add_constraint(model, MOI.SingleVariable(z2), MOI.ZeroOne())
@@ -36,13 +36,12 @@ function bridge_constraint(::Type{<:IndicatorActiveOnFalseBridge}, model::MOI.Mo
         f.constants
     )
     ci = MOI.add_constraint(model, f2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(s.set))
-
-    return IndicatorActiveOnFalseBridge{T, MOI.VectorAffineFunction{T}, S}(z2, zo_cons, dcons, ci)
+    return IndicatorActiveOnFalseBridge{T,F,S}(z2, zo_cons, dcons, ci)
 end
 
-function MOI.supports_constraint(::Type{<:IndicatorActiveOnFalseBridge},
+function MOI.supports_constraint(::Type{<:IndicatorActiveOnFalseBridge{T}},
                                  ::Type{<:MOI.VectorAffineFunction},
-                                 ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}})
+                                 ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}}) where {T}
     return true
 end
 
@@ -52,6 +51,12 @@ end
 
 function concrete_bridge_type(::Type{<:IndicatorActiveOnFalseBridge{T}},
                               ::Type{F},
-                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {T, F, S}
+                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {T, F<:MOI.VectorAffineFunction, S<:MOI.AbstractScalarSet}
     return IndicatorActiveOnFalseBridge{T, F, S}
+end
+
+function concrete_bridge_type(::Type{<:IndicatorActiveOnFalseBridge},
+                              ::Type{F},
+                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {F<:MOI.VectorAffineFunction, S<:MOI.AbstractScalarSet}
+    return IndicatorActiveOnFalseBridge{Float64, F, S}
 end
