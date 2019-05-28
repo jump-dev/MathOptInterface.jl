@@ -40,6 +40,12 @@ include("../model.jl")
 
     bridge = MOIB.bridge_constraint(MOIB.IndicatorActiveOnFalseBridge, model, f1, iset1)
 
+    BT = MOIB.concrete_bridge_type(MOIB.IndicatorActiveOnFalseBridge{Float64}, typeof(f1), typeof(iset1))
+    BT2 = MOIB.concrete_bridge_type(MOIB.IndicatorActiveOnFalseBridge, typeof(f1), typeof(iset1))
+
+    @test BT == BT2
+    @test bridge isa BT
+
     z1comp = bridge.variable_index
     @test MOI.get(model, MOI.ConstraintFunction(), bridge.zero_one_cons) == MOI.SingleVariable(z1comp)
     @test MOI.get(model, MOI.ConstraintSet(), bridge.disjunction_cons) == MOI.EqualTo(1.0)

@@ -40,9 +40,9 @@ function bridge_constraint(::Type{<:IndicatorActiveOnFalseBridge}, model::MOI.Mo
     return BT(z2, zo_cons, dcons, ci)
 end
 
-function MOI.supports_constraint(::Type{<:IndicatorActiveOnFalseBridge},
-                                 ::Type{<:MOI.VectorAffineFunction},
-                                 ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}})
+function MOI.supports_constraint(::Type{IndicatorActiveOnFalseBridge{T,F,S}},
+                                 ::Type{F},
+                                 ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {T, S, F<:MOI.VectorAffineFunction}
     return true
 end
 
@@ -54,4 +54,10 @@ function concrete_bridge_type(::Type{<:IndicatorActiveOnFalseBridge{T}},
                               ::Type{F},
                               ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {T, F<:MOI.VectorAffineFunction, S<:MOI.AbstractScalarSet}
     return IndicatorActiveOnFalseBridge{T, F, S}
+end
+
+function concrete_bridge_type(::Type{<:IndicatorActiveOnFalseBridge},
+                              ::Type{F},
+                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}) where {F<:MOI.VectorAffineFunction, S<:MOI.AbstractScalarSet}
+    return IndicatorActiveOnFalseBridge{Float64, F, S}
 end
