@@ -15,7 +15,10 @@ abstract type AbstractBridge end
                       func::AbstractFunction, set::MOI.AbstractSet)
 
 Bridge the constraint `func`-in-`set` using bridge `BT` to `model` and returns
-a bridge object of type `BT`.
+a bridge object of type `BT`. The bridge type `BT` should be a concrete type,
+that is, all the type parameters of the bridge should be set. Use
+[`concrete_bridge_type`](@ref) to obtain a concrete type for given function
+and set types.
 """
 function bridge_constraint end
 
