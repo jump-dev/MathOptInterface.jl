@@ -16,6 +16,7 @@ config = MOIT.TestConfig()
 @testset "Scalar slack" begin
     MOI.empty!(mock)
     bridged_mock = MOIB.ScalarSlack{Float64}(mock)
+
     x = MOI.add_variable(bridged_mock)
     y = MOI.add_variable(bridged_mock)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}.([1.0, 2.0], [x, y]), 0.0)
@@ -37,8 +38,7 @@ config = MOIT.TestConfig()
                                 F in [MOI.ScalarAffineFunction{Float64},
                                       MOI.ScalarQuadraticFunction{Float64}],
                                 S in [MOI.GreaterThan{Float64},
-                                      MOI.LessThan{Float64}]
-                                      ])
+                                      MOI.LessThan{Float64}]])
 
     # There are extra variables due to the bridge
     MOIU.set_mock_optimize!(mock,
@@ -88,6 +88,7 @@ end
 @testset "Vector slack" begin
     MOI.empty!(mock)
     bridged_mock = MOIB.VectorSlack{Float64}(mock)
+
     x = MOI.add_variable(bridged_mock)
     y = MOI.add_variable(bridged_mock)
     f = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([1.0, 2.0], [x, y])), [0.0])
