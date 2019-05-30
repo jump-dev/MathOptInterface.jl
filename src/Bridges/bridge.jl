@@ -1,5 +1,3 @@
-export @bridge
-
 """
     AbstractBridge
 
