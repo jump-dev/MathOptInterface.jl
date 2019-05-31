@@ -16,6 +16,13 @@ config = MOIT.TestConfig()
 @testset "GreaterToLess" begin
     bridged_mock = MOIB.GreaterToLess{Float64}(mock)
 
+    MOIT.basic_constraint_tests(
+        bridged_mock, config,
+        include = [(F, S)
+                   for F in [MOI.SingleVariable, MOI.ScalarAffineFunction{Float64},
+                             MOI.ScalarQuadraticFunction{Float64}]
+                   for S in [MOI.GreaterThan{Float64}]])
+
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
@@ -30,6 +37,13 @@ end
 
 @testset "LessToGreater" begin
     bridged_mock = MOIB.LessToGreater{Float64}(mock)
+
+    MOIT.basic_constraint_tests(
+        bridged_mock, config,
+        include = [(F, S)
+                   for F in [MOI.SingleVariable, MOI.ScalarAffineFunction{Float64},
+                             MOI.ScalarQuadraticFunction{Float64}]
+                   for S in [MOI.LessThan{Float64}]])
 
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
@@ -68,6 +82,13 @@ end
 @testset "NonnegToNonpos" begin
     bridged_mock = MOIB.NonnegToNonpos{Float64}(mock)
 
+    MOIT.basic_constraint_tests(
+        bridged_mock, config,
+        include = [(F, S)
+                   for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
+                             MOI.VectorQuadraticFunction{Float64}]
+                   for S in [MOI.Nonnegatives]])
+
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
@@ -82,6 +103,13 @@ end
 
 @testset "NonposToNonneg" begin
     bridged_mock = MOIB.NonposToNonneg{Float64}(mock)
+
+    MOIT.basic_constraint_tests(
+        bridged_mock, config,
+        include = [(F, S)
+                   for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
+                             MOI.VectorQuadraticFunction{Float64}]
+                   for S in [MOI.Nonpositives]])
 
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
