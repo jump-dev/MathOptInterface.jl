@@ -1,5 +1,5 @@
 """
-    FlipSignBridge{T, S1, S2, F}
+    FlipSignBridge{T, S1, S2, F, G}
 
 Bridge a `G`-in-`S1` constraint into an `F`-in-`S2` constraint by multiplying
 the function by `-1` and taking the point reflection of the set across the
@@ -8,7 +8,7 @@ field by convention.
 """
 abstract type FlipSignBridge{
     T, S1<:MOI.AbstractSet, S2<:MOI.AbstractSet,
-    F<:MOI.AbstractFunction} <: AbstractBridge end
+    F<:MOI.AbstractFunction, G<:MOI.AbstractFunction} <: AbstractBridge end
 
 function MOI.supports_constraint(::Type{<:FlipSignBridge{T, S1}},
                                  ::Type{<:MOI.AbstractFunction},
@@ -43,8 +43,9 @@ function MOI.get(model::MOI.ModelLike,
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 bridge::FlipSignBridge{T}) where T
-    return MOIU.operate(-, T, MOI.get(model, attr, bridge.flipped_constraint))
+                 bridge::FlipSignBridge{T, S1, S2, F, G}) where {T, S1, S2, F, G}
+    func = MOIU.operate(-, T, MOI.get(model, attr, bridge.flipped_constraint))
+    return MOIU.convert_approx(G, func)
 end
 
 function MOI.modify(model::MOI.ModelLike, bridge::FlipSignBridge,
@@ -69,29 +70,29 @@ function MOI.modify(model::MOI.ModelLike, bridge::FlipSignBridge,
 end
 
 """
-    GreaterToLessBridge{T, F<:MOI.AbstractScalarFunction} <:
-        FlipSignBridge{T, MOI.GreaterThan{T}, MOI.LessThan{T}, F}
+    GreaterToLessBridge{T, F<:MOI.AbstractScalarFunction, G<:MOI.AbstractScalarFunction} <:
+        FlipSignBridge{T, MOI.GreaterThan{T}, MOI.LessThan{T}, F, G}
 
 Transforms a `G`-in-`GreaterThan{T}` constraint into an `F`-in-`LessThan{T}`
 constraint.
 """
-struct GreaterToLessBridge{T, F<:MOI.AbstractScalarFunction} <:
-    FlipSignBridge{T, MOI.GreaterThan{T}, MOI.LessThan{T}, F}
+struct GreaterToLessBridge{T, F<:MOI.AbstractScalarFunction, G<:MOI.AbstractScalarFunction} <:
+    FlipSignBridge{T, MOI.GreaterThan{T}, MOI.LessThan{T}, F, G}
     flipped_constraint::CI{F, MOI.LessThan{T}}
 end
-function bridge_constraint(::Type{GreaterToLessBridge{T, F}},
+function bridge_constraint(::Type{GreaterToLessBridge{T, F, G}},
                            model::MOI.ModelLike,
                            g::MOI.AbstractScalarFunction,
-                           s::MOI.GreaterThan) where {T, F}
+                           s::MOI.GreaterThan) where {T, F, G}
     f = MOIU.operate(-, T, g)
     flipped_constraint = MOI.add_constraint(model, f, MOI.LessThan(-s.lower))
-    return GreaterToLessBridge{T, F}(flipped_constraint)
+    return GreaterToLessBridge{T, F, G}(flipped_constraint)
 end
 function concrete_bridge_type(::Type{<:GreaterToLessBridge{T}},
                               G::Type{<:MOI.AbstractScalarFunction},
                               ::Type{MOI.GreaterThan{T}}) where T
     F = MOIU.promote_operation(-, T, G)
-    return GreaterToLessBridge{T, F}
+    return GreaterToLessBridge{T, F, G}
 end
 
 function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintSet,
@@ -106,29 +107,29 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
 end
 
 """
-    LessToGreaterBridge{T, F<:MOI.AbstractScalarFunction} <:
-        FlipSignBridge{T, MOI.LessThan{T}, MOI.GreaterThan{T}, F}
+    LessToGreaterBridge{T, F<:MOI.AbstractScalarFunction, G<:MOI.AbstractScalarFunction} <:
+        FlipSignBridge{T, MOI.LessThan{T}, MOI.GreaterThan{T}, F, G}
 
 Transforms a `G`-in-`LessThan{T}` constraint into an `F`-in-`GreaterThan{T}`
 constraint.
 """
-struct LessToGreaterBridge{T, F<:MOI.AbstractScalarFunction} <:
-    FlipSignBridge{T, MOI.LessThan{T}, MOI.GreaterThan{T}, F}
+struct LessToGreaterBridge{T, F<:MOI.AbstractScalarFunction, G<:MOI.AbstractScalarFunction} <:
+    FlipSignBridge{T, MOI.LessThan{T}, MOI.GreaterThan{T}, F, G}
     flipped_constraint::CI{F, MOI.GreaterThan{T}}
 end
-function bridge_constraint(::Type{LessToGreaterBridge{T, F}},
+function bridge_constraint(::Type{LessToGreaterBridge{T, F, G}},
                            model::MOI.ModelLike,
                            g::MOI.AbstractScalarFunction,
-                           s::MOI.LessThan) where {T, F}
+                           s::MOI.LessThan) where {T, F, G}
     f = MOIU.operate(-, T, g)
     flipped_constraint = MOI.add_constraint(model, f, MOI.GreaterThan(-s.upper))
-    return LessToGreaterBridge{T, F}(flipped_constraint)
+    return LessToGreaterBridge{T, F, G}(flipped_constraint)
 end
 function concrete_bridge_type(::Type{<:LessToGreaterBridge{T}},
                               G::Type{<:MOI.AbstractScalarFunction},
                               ::Type{MOI.LessThan{T}}) where T
     F = MOIU.promote_operation(-, T, G)
-    return LessToGreaterBridge{T, F}
+    return LessToGreaterBridge{T, F, G}
 end
 
 function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintSet,
@@ -143,55 +144,67 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
 end
 
 """
-    NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction} <:
-        FlipSignBridge{T, MOI.Nonnegatives, MOI.Nonpositives, F}
+    NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
+        FlipSignBridge{T, MOI.Nonnegatives, MOI.Nonpositives, F, G}
 
 Transforms a `G`-in-`Nonnegatives` constraint into a `F`-in-`Nonpositives`
 constraint.
 """
-struct NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction} <:
-    FlipSignBridge{T, MOI.Nonnegatives, MOI.Nonpositives, F}
+struct NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
+    FlipSignBridge{T, MOI.Nonnegatives, MOI.Nonpositives, F, G}
     flipped_constraint::CI{F, MOI.Nonpositives}
 end
-function bridge_constraint(::Type{NonnegToNonposBridge{T, F}},
+function bridge_constraint(::Type{NonnegToNonposBridge{T, F, G}},
                            model::MOI.ModelLike,
                            g::MOI.AbstractVectorFunction,
-                           s::MOI.Nonnegatives) where {T, F}
+                           s::MOI.Nonnegatives) where {T, F, G}
     f = MOIU.operate(-, T, g)
     flipped_constraint = MOI.add_constraint(model, f,
                                             MOI.Nonpositives(s.dimension))
-    return NonnegToNonposBridge{T, F}(flipped_constraint)
+    return NonnegToNonposBridge{T, F, G}(flipped_constraint)
 end
 function concrete_bridge_type(::Type{<:NonnegToNonposBridge{T}},
                               G::Type{<:MOI.AbstractVectorFunction},
                               ::Type{MOI.Nonnegatives}) where T
     F = MOIU.promote_operation(-, T, G)
-    return NonnegToNonposBridge{T, F}
+    return NonnegToNonposBridge{T, F, G}
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 bridge::NonnegToNonposBridge)
+    set = MOI.get(model, attr, bridge.flipped_constraint)
+    return MOI.Nonnegatives(MOI.dimension(set))
 end
 
 """
-    NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction} <:
-        FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F}
+    NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
+        FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F, G}
 
 Transforms a `G`-in-`Nonpositives` constraint into a `F`-in-`Nonnegatives`
 constraint.
 """
-struct NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction} <:
-    FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F}
+struct NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
+    FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F, G}
     flipped_constraint::CI{F, MOI.Nonnegatives}
 end
-function bridge_constraint(::Type{NonposToNonnegBridge{T, F}},
+function bridge_constraint(::Type{NonposToNonnegBridge{T, F, G}},
                            model::MOI.ModelLike,
                            g::MOI.AbstractVectorFunction,
-                           s::MOI.Nonpositives) where {T, F}
+                           s::MOI.Nonpositives) where {T, F, G}
     f = MOIU.operate(-, T, g)
     flipped_constraint = MOI.add_constraint(model, f,
                                             MOI.Nonnegatives(s.dimension))
-    return NonposToNonnegBridge{T, F}(flipped_constraint)
+    return NonposToNonnegBridge{T, F, G}(flipped_constraint)
 end
 function concrete_bridge_type(::Type{<:NonposToNonnegBridge{T}},
                               G::Type{<:MOI.AbstractVectorFunction},
                               ::Type{MOI.Nonpositives}) where T
     F = MOIU.promote_operation(-, T, G)
-    return NonposToNonnegBridge{T, F}
+    return NonposToNonnegBridge{T, F, G}
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 bridge::NonposToNonnegBridge)
+    set = MOI.get(model, attr, bridge.flipped_constraint)
+    return MOI.Nonpositives(MOI.dimension(set))
 end
