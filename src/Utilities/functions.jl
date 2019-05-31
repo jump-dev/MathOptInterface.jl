@@ -449,12 +449,13 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
 end
 
 
+_hasvar(v::VI, vi::Vector{VI}) = v in vi
 _hasvar(v::VI, vi::VI) = v == vi
-_hasvar(t::MOI.ScalarAffineTerm, vi::VI) = t.variable_index == vi
-_hasvar(t::MOI.ScalarQuadraticTerm, vi::VI) = t.variable_index_1 == vi || t.variable_index_2 == vi
-_hasvar(t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}, vi::VI) = _hasvar(t.scalar_term, vi)
+_hasvar(t::MOI.ScalarAffineTerm, vi) = _hasvar(t.variable_index, vi)
+_hasvar(t::MOI.ScalarQuadraticTerm, vi) = _hasvar(t.variable_index_1, vi) || _hasvar(t.variable_index_2, vi)
+_hasvar(t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}, vi) = _hasvar(t.scalar_term, vi)
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
-function _rmvar(vis_or_terms::Vector, vi::VI)
+function _rmvar(vis_or_terms::Vector, vi)
     return vis_or_terms[.!_hasvar.(vis_or_terms, Ref(vi))]
 end
 

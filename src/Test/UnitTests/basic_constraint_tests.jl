@@ -135,6 +135,21 @@ function basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
     end
 end
 
+variables(func::MOI.SingleVariable) = func.variable
+variables(func::MOI.VectorOfVariables) = func.variables
+variables(func::MOI.ScalarAffineFunction) = Set(term.variable_index for term in func.terms)
+variables(func::MOI.VectorAffineFunction) = Set(term.scalar_term.variable_index for term in func.terms)
+function variables(func::MOI.ScalarQuadraticFunction)
+    return Set(term.variable_index for term in func.affine_terms) ∪
+        Set(term.variable_index_1 for term in func.quadratic_terms)
+        Set(term.variable_index_2 for term in func.quadratic_terms)
+end
+function variables(func::MOI.VectorQuadraticFunction)
+    return Set(term.scalar_term.variable_index for term in func.affine_terms) ∪
+        Set(term.scalar_term.variable_index_1 for term in func.quadratic_terms)
+        Set(term.scalar_term.variable_index_2 for term in func.quadratic_terms)
+end
+
 """
     basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int;
         delete::Bool                  = true,
@@ -188,7 +203,9 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
 
         if get_constraint_function
             @testset "ConstraintFunction" begin
-                @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ constraint_function
+                func = MOI.get(model, MOI.ConstraintFunction(), c)
+                @test func ≈ constraint_function
+                @test variables(func) == variables(constraint_function)
             end
         end
         if get_constraint_set
