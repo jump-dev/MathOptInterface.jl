@@ -4,6 +4,7 @@ DocTestSetup = quote
     using MathOptInterface
     const MOI = MathOptInterface
 end
+DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
 # Manual
@@ -931,6 +932,31 @@ between `y_i` and the vector of scalar-valued quadratic functions.
 
 ### Automatic reformulation
 
+#### Variable reformulation
+
+A variable is often created constrained in a set unsupported by the solver while
+it could be parametrized by variables constrained in supported sets.
+For example, the [`Bridges.Variable.VectorizeBridge`](@ref) defines the
+reformulation of a constrained variable in [`GreaterThan`](@ref) into a
+constrained vector of one variable in [`Nonnegatives`](@ref).
+The `Bridges.Variable.Vectorize` is the bridge optimizer that applies the
+[`Bridges.Variable.VectorizeBridge`](@ref) rewritting rule. Given an optimizer
+`optimizer` implementing constrained variables in [`Nonnegatives`](@ref) and,
+the optimizer
+```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
+bridged_optimizer = MOI.Bridges.Variable.Vectorize{Float64}(optimizer)
+MOI.supports_constraint(bridged_optimizer, MOI.SingleVariable, MOI.GreaterThan{Float64})
+
+# output
+
+true
+```
+will additionally support constrained variables in [`GreaterThan`](@ref).
+Note that these [`Bridges.Variable.SingleBridgeOptimizer`](@ref) are mainly
+used for testing bridges. It is recommended to rather use
+[`Bridges.full_bridge_optimizer`](@ref) which automatically select the
+appropriate bridges for unsupported constrained variables.
+
 #### Constraint reformulation
 
 A constraint often possess different equivalent formulations, but a solver may only support one of them.
@@ -938,13 +964,28 @@ It would be duplicate work to implement rewritting rules in every solver wrapper
 Constraint bridges provide a way to define a rewritting rule on top of the MOI interface which can be used by any optimizer.
 Some rules also implement constraint modifications and constraint primal and duals translations.
 
-For example, the `SplitIntervalBridge` defines the reformulation of a `ScalarAffineFunction`-in-`Interval` constraint into a `ScalarAffineFunction`-in-`GreaterThan` and a `ScalarAffineFunction`-in-`LessThan` constraint.
-The `SplitInterval` is the bridge optimizer that applies the `SplitIntervalBridge` rewritting rule.
-Given an optimizer `optimizer` implementing `ScalarAffineFunction`-in-`GreaterThan` and `ScalarAffineFunction`-in-`LessThan`, the optimizer
-```
-bridgedoptimizer = SplitInterval(optimizer)
+For example, the [`Bridges.Constraint.SplitIntervalBridge`](@ref) defines the
+reformulation of a [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref)
+constraint into a [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref) and a
+[`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref) constraint.
+The `Bridges.Constraint.SplitInterval` is the bridge optimizer that applies the
+[`Bridges.Constraint.SplitIntervalBridge`](@ref) rewritting rule. Given an
+optimizer `optimizer` implementing [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref)
+and [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref), the optimizer
+```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
+bridged_optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(optimizer)
+MOI.supports_constraint(bridged_optimizer, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
+
+# output
+
+true
 ```
 will additionally support `ScalarAffineFunction`-in-`Interval`.
+Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref) are mainly
+used for testing bridges. It is recommended to rather use
+[`Bridges.full_bridge_optimizer`](@ref) which automatically select the
+appropriate constraint bridges for unsupported constraints.
+
 
 ## Implementing a solver interface
 
