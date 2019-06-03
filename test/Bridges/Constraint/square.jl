@@ -6,15 +6,15 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
-include("utilities.jl")
+include("../utilities.jl")
 
-include("simple_model.jl")
+include("../simple_model.jl")
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 config = MOIT.TestConfig()
 
 @testset "Square" begin
-    bridged_mock = MOIB.Square{Float64}(mock)
+    bridged_mock = MOIB.Constraint.Square{Float64}(mock)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
                           (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2, 2])
     MOIT.psds0vtest(bridged_mock, config)

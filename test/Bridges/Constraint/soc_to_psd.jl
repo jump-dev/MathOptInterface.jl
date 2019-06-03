@@ -1,5 +1,5 @@
 @testset "SOCtoPSD" begin
-    bridged_mock = MOIB.SOCtoPSD{Float64}(mock)
+    bridged_mock = MOIB.Constraint.SOCtoPSD{Float64}(mock)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1/√2, 1/√2],
                           (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2/2, -1/2, √2/4, -1/2, √2/4, √2/4]],
                           (MOI.VectorAffineFunction{Float64}, MOI.Zeros)                            => [[-√2]])
@@ -10,7 +10,7 @@
 end
 
 @testset "RSOCtoPSD" begin
-    bridged_mock = MOIB.RSOCtoPSD{Float64}(mock)
+    bridged_mock = MOIB.Constraint.RSOCtoPSD{Float64}(mock)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
                           (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√2, -1/√2],
                           (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2, -1/2, √2/8, -1/2, √2/8, √2/8]])

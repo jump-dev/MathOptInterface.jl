@@ -1,6 +1,6 @@
 @testset "GeoMean" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [ones(4); 2; √2; √2])
-    bridged_mock = MOIB.GeoMean{Float64}(mock)
+    bridged_mock = MOIB.Constraint.GeoMean{Float64}(mock)
     MOIT.geomean1vtest(bridged_mock, config)
     MOIT.geomean1ftest(bridged_mock, config)
     # Dual is not yet implemented for GeoMean bridge

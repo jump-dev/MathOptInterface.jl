@@ -6,15 +6,15 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
-include("utilities.jl")
+include("../utilities.jl")
 
-include("simple_model.jl")
+include("../simple_model.jl")
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 config = MOIT.TestConfig()
 
 @testset "QuadtoSOC" begin
-    bridged_mock = MOIB.QuadtoSOC{Float64}(mock)
+    bridged_mock = MOIB.Constraint.QuadtoSOC{Float64}(mock)
     @testset "Error for non-convex quadratic constraints" begin
         x = MOI.add_variable(bridged_mock)
         @test_throws ErrorException begin

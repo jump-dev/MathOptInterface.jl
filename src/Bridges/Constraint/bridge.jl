@@ -66,8 +66,8 @@ Return a list of the types of constraints that bridges of concrete type `BT` add
 for `F`-in-`S` constraints.
 """
 function added_constraint_types(BT::Type{<:AbstractBridge},
-                              F::Type{<:MOI.AbstractFunction},
-                              S::Type{<:MOI.AbstractSet})
+                                F::Type{<:MOI.AbstractFunction},
+                                S::Type{<:MOI.AbstractSet})
     added_constraint_types(concrete_bridge_type(BT, F, S))
 end
 
@@ -92,4 +92,10 @@ function concrete_bridge_type(bridge_type::DataType,
                               ::Type{<:MOI.AbstractFunction},
                               ::Type{<:MOI.AbstractSet})
     return bridge_type
+end
+
+function concrete_bridge_type(b::MOIB.AbstractBridgeOptimizer,
+                              F::Type{<:MOI.AbstractFunction},
+                              S::Type{<:MOI.AbstractSet})
+    return concrete_bridge_type(MOIB.bridge_type(b, F, S), F, S)
 end

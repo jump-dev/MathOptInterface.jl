@@ -6,16 +6,16 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
-include("utilities.jl")
+include("../utilities.jl")
 
-include("simple_model.jl")
+include("../simple_model.jl")
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 config = MOIT.TestConfig()
 
 @testset "Scalar slack" begin
     MOI.empty!(mock)
-    bridged_mock = MOIB.ScalarSlack{Float64}(mock)
+    bridged_mock = MOIB.Constraint.ScalarSlack{Float64}(mock)
 
     x = MOI.add_variable(bridged_mock)
     y = MOI.add_variable(bridged_mock)
@@ -80,14 +80,14 @@ config = MOIT.TestConfig()
 
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
         for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
-            @test MOIB.added_constraint_types(MOIB.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
+            @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
         end
     end
 end
 
 @testset "Vector slack" begin
     MOI.empty!(mock)
-    bridged_mock = MOIB.VectorSlack{Float64}(mock)
+    bridged_mock = MOIB.Constraint.VectorSlack{Float64}(mock)
 
     x = MOI.add_variable(bridged_mock)
     y = MOI.add_variable(bridged_mock)
@@ -148,7 +148,7 @@ end
 
     for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
         for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
-            @test MOIB.added_constraint_types(MOIB.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
+            @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
         end
     end
 end

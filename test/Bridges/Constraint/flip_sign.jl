@@ -6,15 +6,15 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
-include("utilities.jl")
+include("../utilities.jl")
 
-include("simple_model.jl")
+include("../simple_model.jl")
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 config = MOIT.TestConfig()
 
 @testset "GreaterToLess" begin
-    bridged_mock = MOIB.GreaterToLess{Float64}(mock)
+    bridged_mock = MOIB.Constraint.GreaterToLess{Float64}(mock)
 
     MOIT.basic_constraint_tests(
         bridged_mock, config,
@@ -36,7 +36,7 @@ config = MOIT.TestConfig()
 end
 
 @testset "LessToGreater" begin
-    bridged_mock = MOIB.LessToGreater{Float64}(mock)
+    bridged_mock = MOIB.Constraint.LessToGreater{Float64}(mock)
 
     MOIT.basic_constraint_tests(
         bridged_mock, config,
@@ -80,7 +80,7 @@ end
 end
 
 @testset "NonnegToNonpos" begin
-    bridged_mock = MOIB.NonnegToNonpos{Float64}(mock)
+    bridged_mock = MOIB.Constraint.NonnegToNonpos{Float64}(mock)
 
     MOIT.basic_constraint_tests(
         bridged_mock, config,
@@ -102,7 +102,7 @@ end
 end
 
 @testset "NonposToNonneg" begin
-    bridged_mock = MOIB.NonposToNonneg{Float64}(mock)
+    bridged_mock = MOIB.Constraint.NonposToNonneg{Float64}(mock)
 
     MOIT.basic_constraint_tests(
         bridged_mock, config,

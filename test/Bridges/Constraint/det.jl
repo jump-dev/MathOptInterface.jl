@@ -1,5 +1,5 @@
 @testset "LogDet" begin
-    bridged_mock = MOIB.LogDet{Float64}(mock)
+    bridged_mock = MOIB.Constraint.LogDet{Float64}(mock)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1, 0, 1, 0, 0, 1])
     MOIT.logdett1vtest(bridged_mock, config)
     MOIT.logdett1ftest(bridged_mock, config)
@@ -9,7 +9,7 @@
 end
 
 @testset "RootDet" begin
-    bridged_mock = MOIB.RootDet{Float64}(mock)
+    bridged_mock = MOIB.Constraint.RootDet{Float64}(mock)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1, 1, 0, 1])
     MOIT.rootdett1vtest(bridged_mock, config)
     MOIT.rootdett1ftest(bridged_mock, config)
