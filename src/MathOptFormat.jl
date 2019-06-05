@@ -1,6 +1,6 @@
 module MathOptFormat
 
-using MathOptInterface
+import MathOptInterface
 const MOI = MathOptInterface
 
 import GZip
