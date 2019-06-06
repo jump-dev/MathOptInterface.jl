@@ -18,7 +18,7 @@ GZip = ">= 0.5.0"
 HTTP = ">= 0.8.2"
 JSON = ">= 0.20.0"
 JSONSchema = ">= 0.1.1"
-MathOptInterface = "0.8, 0.9"
+MathOptInterface = "~0.8.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
