@@ -1,6 +1,6 @@
 module CBF
 
-using MathOptInterface
+import MathOptInterface
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
