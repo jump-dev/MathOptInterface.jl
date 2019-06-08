@@ -292,8 +292,8 @@ vectorization of the upper triangular part of the matrix. When the matrix
 of expressions constrained to be in the set is not symmetric and hence
 the `(i, j)` and `(j, i)` elements should be constrained to be symmetric,
 the [`AbstractSymmetricMatrixSetSquare`](@ref) set can be used. The
-[`Bridges.SquareBridge`](@ref) can transform a set from the square form
-to the [`triangular_form`](@ref) by adding appropriate constraints if
+[`Bridges.Constraint.SquareBridge`](@ref) can transform a set from the square
+form to the [`triangular_form`](@ref) by adding appropriate constraints if
 the `(i, j)` and `(j, i)` expressions are different.
 ```@docs
 AbstractSymmetricMatrixSetTriangle
@@ -410,35 +410,35 @@ DeleteNotAllowed
 
 Bridges can be used for automatic reformulation of a certain constraint type into equivalent constraints.
 ```@docs
-Bridges.AbstractBridge
+Bridges.Constraint.AbstractBridge
 Bridges.AbstractBridgeOptimizer
-Bridges.SingleBridgeOptimizer
+Bridges.Constraint.SingleBridgeOptimizer
 Bridges.LazyBridgeOptimizer
 Bridges.add_bridge
 ```
 
 Below is the list of bridges implemented in this package.
 ```@docs
-Bridges.GreaterToLessBridge
-Bridges.LessToGreaterBridge
-Bridges.NonnegToNonposBridge
-Bridges.NonposToNonnegBridge
-Bridges.VectorizeBridge
-Bridges.ScalarizeBridge
-Bridges.ScalarSlackBridge
-Bridges.VectorSlackBridge
-Bridges.ScalarFunctionizeBridge
-Bridges.VectorFunctionizeBridge
-Bridges.SplitIntervalBridge
-Bridges.RSOCBridge
-Bridges.QuadtoSOCBridge
-Bridges.GeoMeanBridge
-Bridges.SquareBridge
-Bridges.RootDetBridge
-Bridges.LogDetBridge
-Bridges.SOCtoPSDBridge
-Bridges.RSOCtoPSDBridge
-Bridges.IndicatorActiveOnFalseBridge
+Bridges.Constraint.GreaterToLessBridge
+Bridges.Constraint.LessToGreaterBridge
+Bridges.Constraint.NonnegToNonposBridge
+Bridges.Constraint.NonposToNonnegBridge
+Bridges.Constraint.VectorizeBridge
+Bridges.Constraint.ScalarizeBridge
+Bridges.Constraint.ScalarSlackBridge
+Bridges.Constraint.VectorSlackBridge
+Bridges.Constraint.ScalarFunctionizeBridge
+Bridges.Constraint.VectorFunctionizeBridge
+Bridges.Constraint.SplitIntervalBridge
+Bridges.Constraint.RSOCBridge
+Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.GeoMeanBridge
+Bridges.Constraint.SquareBridge
+Bridges.Constraint.RootDetBridge
+Bridges.Constraint.LogDetBridge
+Bridges.Constraint.SOCtoPSDBridge
+Bridges.Constraint.RSOCtoPSDBridge
+Bridges.Constraint.IndicatorActiveOnFalseBridge
 ```
 For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
 Moreover, a `LazyBridgeOptimizer` with all the bridges defined in this package can be obtained with
@@ -450,10 +450,10 @@ Bridges.full_bridge_optimizer
 
 A bridge should implement the following functions to be usable by a bridge optimizer:
 ```@docs
-supports_constraint(::Type{<:Bridges.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
-Bridges.concrete_bridge_type
-Bridges.bridge_constraint
-Bridges.added_constraint_types
+supports_constraint(::Type{<:Bridges.Constraint.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
+Bridges.Constraint.concrete_bridge_type
+Bridges.Constraint.bridge_constraint
+Bridges.Constraint.added_constraint_types
 ```
 
 When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
@@ -463,9 +463,9 @@ For this purpose, the bridge should provide access to the variables and
 constraints it has creates by implemented the following methods of
 [`get`](@ref):
 ```@docs
-get(::Bridges.AbstractBridge, ::NumberOfVariables)
-get(::Bridges.AbstractBridge, ::NumberOfConstraints)
-get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
+get(::Bridges.Constraint.AbstractBridge, ::NumberOfVariables)
+get(::Bridges.Constraint.AbstractBridge, ::NumberOfConstraints)
+get(::Bridges.Constraint.AbstractBridge, ::ListOfConstraintIndices)
 ```
 
 ## Copy utilities

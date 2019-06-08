@@ -102,8 +102,8 @@ function bridge_constraint(::Type{QuadtoSOCBridge{T}}, model,
 end
 
 function matrix_from_quadratic_terms(terms::Vector{MOI.ScalarQuadraticTerm{T}}) where T
-    variable_to_index_map = Dict{VI, Int}()
-    index_to_variable_map = Dict{Int, VI}()
+    variable_to_index_map = Dict{MOI.VariableIndex, Int}()
+    index_to_variable_map = Dict{Int, MOI.VariableIndex}()
     n = 0
     for term in terms
         for variable in (term.variable_index_1, term.variable_index_2)
@@ -136,7 +136,7 @@ end
 
 function matrix_to_vector_affine_terms(L::SparseMatrixCSC{T},
                                        p::Vector,
-                                       index_to_variable_map::Dict{Int, VI}) where T
+                                       index_to_variable_map::Dict{Int, MOI.VariableIndex}) where T
     # We know that L × L' ≈ Q[p, p] hence (L × L')[i, :] ≈ Q[p[i], p]
     # We precompute the map to avoid having to do a dictionary lookup for every
     # term

@@ -13,12 +13,12 @@ struct UnknownConstraintAttribute <: MOI.AbstractConstraintAttribute end
 MOI.is_set_by_optimize(::UnknownConstraintAttribute) = true
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
-bridged_mock = MOIB.LessToGreater{Float64}(MOIB.SplitInterval{Float64}(mock))
+bridged_mock = MOIB.Constraint.LessToGreater{Float64}(MOIB.Constraint.SplitInterval{Float64}(mock))
 
 @testset "Unsupported constraint attribute" begin
     attr = UnknownConstraintAttribute()
     err = ArgumentError(
-        "Constraint bridge of type `MathOptInterface.Bridges.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable}` " *
+        "Constraint bridge of type `MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable}` " *
         "does not support accessing the attribute `$attr`.")
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),
@@ -63,7 +63,7 @@ end
 end
 
 @testset "Custom test" begin
-    model = MOIB.SplitInterval{Int}(SimpleModel{Int}())
+    model = MOIB.Constraint.SplitInterval{Int}(SimpleModel{Int}())
     @test !MOIB.supports_bridging_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
 
     x, y = MOI.add_variables(model, 2)

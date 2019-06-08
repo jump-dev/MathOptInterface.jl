@@ -77,16 +77,16 @@ function MOI.supports_constraint(
     return false
 end
 
-struct BridgeAddingNoConstraint{T} <: MOI.Bridges.AbstractBridge end
-MOIB.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []
+struct BridgeAddingNoConstraint{T} <: MOI.Bridges.Constraint.AbstractBridge end
+MOIB.Constraint.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []
 function MOI.supports_constraint(::Type{<:BridgeAddingNoConstraint},
                                  ::Type{MOI.SingleVariable},
                                  ::Type{MOI.Integer})
     return true
 end
-function MOIB.concrete_bridge_type(::Type{<:BridgeAddingNoConstraint{T}},
-                                   ::Type{MOI.SingleVariable},
-                                   ::Type{MOI.Integer}) where {T}
+function MOIB.Constraint.concrete_bridge_type(::Type{<:BridgeAddingNoConstraint{T}},
+                                              ::Type{MOI.SingleVariable},
+                                              ::Type{MOI.Integer}) where {T}
     return BridgeAddingNoConstraint{T}
 end
 
@@ -140,10 +140,10 @@ bridged_mock = MOIB.LazyBridgeOptimizer(mock)
     end
 end
 
-MOIB.add_bridge(bridged_mock, MOIB.SplitIntervalBridge{Float64})
-MOIB.add_bridge(bridged_mock, MOIB.RSOCtoPSDBridge{Float64})
-MOIB.add_bridge(bridged_mock, MOIB.SOCtoPSDBridge{Float64})
-MOIB.add_bridge(bridged_mock, MOIB.RSOCBridge{Float64})
+MOIB.add_bridge(bridged_mock, MOIB.Constraint.SplitIntervalBridge{Float64})
+MOIB.add_bridge(bridged_mock, MOIB.Constraint.RSOCtoPSDBridge{Float64})
+MOIB.add_bridge(bridged_mock, MOIB.Constraint.SOCtoPSDBridge{Float64})
+MOIB.add_bridge(bridged_mock, MOIB.Constraint.RSOCBridge{Float64})
 
 @testset "Name test" begin
     MOIT.nametest(bridged_mock)
@@ -173,8 +173,8 @@ end
     c = MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
                            MOI.RotatedSecondOrderCone(3))
     @test MOIB.bridge_type(bridged_mock, MOI.VectorOfVariables,
-                MOI.RotatedSecondOrderCone) == MOIB.RSOCtoPSDBridge{Float64}
-    @test MOIB.bridge(bridged_mock, c) isa MOIB.RSOCtoPSDBridge
+                MOI.RotatedSecondOrderCone) == MOIB.Constraint.RSOCtoPSDBridge{Float64}
+    @test MOIB.bridge(bridged_mock, c) isa MOIB.Constraint.RSOCtoPSDBridge
     @test bridged_mock.dist[(MOI.VectorOfVariables,
                             MOI.RotatedSecondOrderCone)] == 1
 end

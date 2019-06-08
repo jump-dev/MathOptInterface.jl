@@ -2,9 +2,11 @@
     SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 
 The `SingleBridgeOptimizer` bridges any constraint supported by the bridge `BT`.
-This is in contrast with the [`LazyBridgeOptimizer`](@ref) which only bridges the constraints that are unsupported by the internal model, even if they are supported by one of its bridges.
+This is in contrast with the [`MathOptInterface.Bridges.LazyBridgeOptimizer`](@ref)
+which only bridges the constraints that are unsupported by the internal model,
+even if they are supported by one of its bridges.
 """
-mutable struct SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
+mutable struct SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: MOIB.AbstractBridgeOptimizer
     model::OT
     con_to_name::Dict{CI, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
@@ -23,13 +25,13 @@ function SingleBridgeOptimizer{BT}(model::OT) where {BT, OT <: MOI.ModelLike}
         Dict{Tuple{Int64, DataType}, AbstractBridge}())
 end
 
-function supports_bridging_constraint(b::SingleBridgeOptimizer{BT},
+function MOIB.supports_bridging_constraint(b::SingleBridgeOptimizer{BT},
                                       F::Type{<:MOI.AbstractFunction},
                                       S::Type{<:MOI.AbstractSet}) where BT
     return MOI.supports_constraint(BT, F, S)
 end
-function is_bridged(b::SingleBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
+function MOIB.is_bridged(b::SingleBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
                     S::Type{<:MOI.AbstractSet})
-    return supports_bridging_constraint(b, F, S)
+    return MOIB.supports_bridging_constraint(b, F, S)
 end
-bridge_type(b::SingleBridgeOptimizer{BT}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) where BT = BT
+MOIB.bridge_type(b::SingleBridgeOptimizer{BT}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) where BT = BT

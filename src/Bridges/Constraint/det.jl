@@ -73,8 +73,8 @@ Adapting the method from [1, p. 149], we see that ``t \\le u \\log(\\det(X/u))``
 ```
 """
 struct LogDetBridge{T} <: AbstractBridge
-    Δ::Vector{VI}
-    l::Vector{VI}
+    Δ::Vector{MOI.VariableIndex}
+    l::Vector{MOI.VariableIndex}
     sdindex::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
     lcindex::Vector{CI{MOI.VectorAffineFunction{T}, MOI.ExponentialCone}}
     tlindex::CI{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}
@@ -170,7 +170,7 @@ Indeed, ``t \\le \\det(X)^{1/n}`` if and only if there exists a lower triangular
 [1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
 """
 struct RootDetBridge{T} <: AbstractBridge
-    Δ::Vector{VI}
+    Δ::Vector{MOI.VariableIndex}
     sdindex::CI{MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle}
     gmindex::CI{MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone}
 end

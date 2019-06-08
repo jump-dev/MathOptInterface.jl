@@ -43,7 +43,7 @@ struct GeoMeanBridge{T, F, G} <: AbstractBridge
     # We create n new variables so that there is 2^l = d-1+n variables x_i
     # We then need to create 2^l-1 new variables (1+2+...+2^{l-1})
     d::Int
-    xij::Vector{VI}
+    xij::Vector{MOI.VariableIndex}
     tubc::CI{F, MOI.LessThan{T}}
     socrc::Vector{CI{G, MOI.RotatedSecondOrderCone}}
 end

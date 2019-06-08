@@ -6,9 +6,9 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
-include("utilities.jl")
+include("../utilities.jl")
 
-include("simple_model.jl")
+include("../simple_model.jl")
 
 mock = MOIU.MockOptimizer(SimpleModel{Float64}())
 config = MOIT.TestConfig()
@@ -16,7 +16,7 @@ config_with_basis = MOIT.TestConfig(basis = true)
 
 @testset "Scalar functionize" begin
     MOI.empty!(mock)
-    bridged_mock = MOIB.ScalarFunctionize{Float64}(mock)
+    bridged_mock = MOIB.Constraint.ScalarFunctionize{Float64}(mock)
     x = MOI.add_variable(bridged_mock)
     y = MOI.add_variable(bridged_mock)
     sx = MOI.SingleVariable(x)
@@ -38,7 +38,7 @@ config_with_basis = MOIT.TestConfig(basis = true)
                                     ])
 
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.LessThan{T}]
-        @test MOIB.added_constraint_types(MOIB.ScalarFunctionizeBridge{T, S}) ==
+        @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.ScalarFunctionizeBridge{T, S}) ==
             [(MOI.ScalarAffineFunction{T}, S)]
     end
 
@@ -68,7 +68,7 @@ end
 
 @testset "Vector functionize" begin
     MOI.empty!(mock)
-    bridged_mock = MOIB.VectorFunctionize{Float64}(mock)
+    bridged_mock = MOIB.Constraint.VectorFunctionize{Float64}(mock)
     x = MOI.add_variable(bridged_mock)
     y = MOI.add_variable(bridged_mock)
     z = MOI.add_variable(bridged_mock)
@@ -91,7 +91,7 @@ end
                                     ])
 
     for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
-        @test MOIB.added_constraint_types(MOIB.VectorFunctionizeBridge{T, S}) ==
+        @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.VectorFunctionizeBridge{T, S}) ==
             [(MOI.VectorAffineFunction{T}, S)]
     end
 

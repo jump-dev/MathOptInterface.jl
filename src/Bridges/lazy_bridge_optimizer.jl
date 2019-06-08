@@ -15,11 +15,11 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
     # Constraint Index of bridged constraint -> Bridge.
     # It is set to `nothing` when the constraint is deleted.
-    bridges::Vector{Union{Nothing, AbstractBridge}}
+    bridges::Vector{Union{Nothing, Constraint.AbstractBridge}}
     # Constraint Index of bridged constraint -> Constraint type.
     constraint_types::Vector{Tuple{DataType, DataType}}
     # For `SingleVariable` constraints: (variable, set type) -> bridge
-    single_variable_constraints::Dict{Tuple{Int64, DataType}, AbstractBridge}
+    single_variable_constraints::Dict{Tuple{Int64, DataType}, Constraint.AbstractBridge}
     bridgetypes::Vector{Any} # List of types of available bridges
     dist::Dict{Tuple{DataType, DataType}, Int}      # (F, S) -> Number of bridges that need to be used for an `F`-in-`S` constraint
     best::Dict{Tuple{DataType, DataType}, DataType} # (F, S) -> Bridge to be used for an `F`-in-`S` constraint
@@ -27,8 +27,8 @@ end
 function LazyBridgeOptimizer(model::MOI.ModelLike)
     return LazyBridgeOptimizer{typeof(model)}(
         model, Dict{CI, String}(), nothing,
-        Union{Nothing, AbstractBridge}[], Tuple{DataType, DataType}[],
-        Dict{Tuple{Int64, DataType}, AbstractBridge}(),
+        Union{Nothing, Constraint.AbstractBridge}[], Tuple{DataType, DataType}[],
+        Dict{Tuple{Int64, DataType}, Constraint.AbstractBridge}(),
         Any[], Dict{Tuple{DataType, DataType}, Int}(),
         Dict{Tuple{DataType, DataType}, DataType}())
 end
@@ -49,15 +49,15 @@ function update_dist!(b::LazyBridgeOptimizer, constraints)
         changed = false
         for BT in b.bridgetypes
             for (F, S) in constraints
-                if MOI.supports_constraint(BT, F, S) && all(C -> supports_constraint_no_update(b, C[1], C[2]), added_constraint_types(BT, F, S))
+                if MOI.supports_constraint(BT, F, S) && all(C -> supports_constraint_no_update(b, C[1], C[2]), Constraint.added_constraint_types(BT, F, S))
                     # Number of bridges needed using BT
                     dist = 1 + mapreduce(
                         C -> _dist(b, C[1], C[2]), +,
-                        added_constraint_types(BT, F, S), init = 0)
+                        Constraint.added_constraint_types(BT, F, S), init = 0)
                     # Is it better that what can currently be done ?
                     if dist < _dist(b, F, S)
                         b.dist[(F, S)] = dist
-                        b.best[(F, S)] = concrete_bridge_type(BT, F, S)
+                        b.best[(F, S)] = Constraint.concrete_bridge_type(BT, F, S)
                         changed = true
                     end
                 end
@@ -77,7 +77,7 @@ function fill_required_constraints!(required::Set{Tuple{DataType, DataType}}, b:
     push!(required, (F, S))
     for BT in b.bridgetypes
         if MOI.supports_constraint(BT, F, S)
-            for C in added_constraint_types(BT, F, S)
+            for C in Constraint.added_constraint_types(BT, F, S)
                 fill_required_constraints!(required, b, C[1], C[2])
             end
         end
@@ -92,11 +92,11 @@ function update_constraint!(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFuncti
 end
 
 """
-    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
 
 Enable the use of the bridges of type `BT` by `b`.
 """
-function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
     push!(b.bridgetypes, BT)
     # Some constraints (F, S) in keys(b.best) may now be bridged
     # with a less briges than `b.dist[(F, S)] using `BT`
