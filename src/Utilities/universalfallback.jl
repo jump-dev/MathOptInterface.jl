@@ -3,7 +3,7 @@
 
 The `UniversalFallback` can be applied on a [`MathOptInterface.ModelLike`](@ref)
 `model` to create the model `UniversalFallback(model)` supporting *any*
-constaints and attributes. This allows to have a specialized implementation in
+constaint and attribute. This allows to have a specialized implementation in
 `model` for performance critical constraints and attributes while still
 supporting other attributes with a small performance penalty. Note that `model`
 is unaware of constraints and attributes stored by `UniversalFallback` so this
