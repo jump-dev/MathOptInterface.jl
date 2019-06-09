@@ -406,17 +406,17 @@ DeleteNotAllowed
 
 ## Models
 
-The interface is generic and does not have a fixed list of functions and sets.
-For performance reasons, one might need to define a [`ModelLike`](@ref)
-specialized for specific constraint types and attributes which are critical for
-performance while still supporting other constraint types and attributes,
-although it does no have any specialized containers, falling back to less
-efficient storage methods.
-To this end, the [`Utilities.@model`](@ref) macro defines a [`ModelLike`](@ref)
-specialized for specific constraint types while
-[`Utilities.UniversalFallback`](@ref) provides non-specialized
-containers that are used as fallback for the constraints and attributes
-not supported by a given [`ModelLike`](@ref).
+MOI is designed to be extensible, so there is no fixed list of possible
+functions and sets. This makes it challenging to define efficient storage
+representations for MOI models. For cases where the functions and sets of
+interest are known in advance (for example, solvers support a fixed list of
+functions and sets), we provide the [`Utilities.@model`](@ref) that macro
+defines a [`ModelLike`](@ref) given a list of functions and sets to support.
+
+[`Utilities.UniversalFallback`](@ref) is a layer that sits on top of any
+`ModelLike` and provides non-specialized (slower) fallbacks for constraints and
+attributes that the underlying `ModeLike` does not support.
+
 ```@docs
 Utilities.@model
 Utilities.UniversalFallback
