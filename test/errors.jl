@@ -26,19 +26,21 @@
             MOI.add_constraint(model, func, MOI.Nonnegatives(2))
         end
     end
-    @testset "Unsupported constraint with $f" for f in (MOI.add_constraint,
-                                                        MOIU.allocate_constraint,
-                                                        MOIU.load_constraint)
+    @testset "Unsupported constraint with $f" for f in (
+        MOI.add_constraint, MOIU.allocate_constraint,
+        (model, func, set) -> MOIU.load_constraint(model, MOI.ConstraintIndex{typeof(func), typeof(set)}(1), func, set))
         @test_throws MOI.UnsupportedConstraint begin
-            MOI.add_constraint(model, func, MOI.EqualTo(0))
+            f(model, func, MOI.EqualTo(0))
         end
         try
-            MOI.add_constraint(model, func, MOI.EqualTo(0))
+            f(model, func, MOI.EqualTo(0))
         catch err
             @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
             " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
             " not supported by the model."
         end
+    end
+    @testset "Unsupported constraint for shortcuts" begin
         @test_throws MOI.UnsupportedConstraint begin
             MOI.add_constraint(model, vi, MOI.EqualTo(0))
         end
@@ -76,13 +78,23 @@
         end
     end
 
-    @testset "$f errors" for f in (MOIU.allocate_constraint,
-                                   MOIU.load_constraint)
+    @testset "allocate_constraint errors" begin
         @test_throws MOI.ErrorException begin
-            f(model, func, MOI.EqualTo(0.0))
+            MOIU.allocate_constraint(model, func, MOI.EqualTo(0.0))
         end
         try
-            f(model, func, MOI.EqualTo(0.0))
+            MOIU.allocate_constraint(model, func, MOI.EqualTo(0.0))
+        catch err
+            @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
+        end
+    end
+    @testset "load_constraint errors" begin
+        ci = MOI.ConstraintIndex{typeof(func), MOI.EqualTo{Float64}}(1)
+        @test_throws MOI.ErrorException begin
+            MOIU.load_constraint(model, ci, func, MOI.EqualTo(0.0))
+        end
+        try
+            MOIU.load_constraint(model, ci, func, MOI.EqualTo(0.0))
         catch err
             @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
         end
