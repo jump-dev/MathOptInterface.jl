@@ -311,8 +311,6 @@ RootDetConeTriangle
 RootDetConeSquare
 ```
 
-## Sets
-
 ## Modifications
 
 Functions for modifying objective and constraint functions.
