@@ -404,6 +404,24 @@ ModifyObjectiveNotAllowed
 DeleteNotAllowed
 ```
 
+## Models
+
+The interface is generic and does not have a fixed list of functions and sets.
+For performance reasons, one might need to define a [`ModelLike`](@ref)
+specialized for specific constraint types and attributes which are critical for
+performance while still supporting other constraint types and attributes,
+although it does no have any specialized containers, falling back to less
+efficient storage methods.
+To this end, the [`Utilities.@model`](@ref) macro defines a [`ModelLike`](@ref)
+specialized for specific constraint types while
+[`Utilities.UniversalFallback`](@ref) provides non-specialized
+containers that are used as fallback for the constraints and attributes
+not supported by a given [`ModelLike`](@ref).
+```@docs
+Utilities.@model
+Utilities.UniversalFallback
+```
+
 ## Bridges
 
 Bridges can be used for automatic reformulation of a certain constraint type into equivalent constraints.
