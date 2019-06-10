@@ -303,7 +303,11 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
 
     @test !MOI.supports(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
-    @test !MOI.supports(dest, MOI.VariableName(), MOI.VariableIndex) || MOI.get(dest, MOI.VariableName(), v) == ["", "", ""]
+    if MOI.supports(dest, MOI.VariableName(), MOI.VariableIndex)
+        for vi in v
+            MOI.get(dest, MOI.VariableName(), dict[vi]) == ""
+        end
+    end
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
     @test MOI.get(dest, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == [dict[csv]]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
