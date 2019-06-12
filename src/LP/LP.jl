@@ -17,7 +17,69 @@ MOIU.@model(InnerLPModel,
     ()
 )
 
-const Model = InnerLPModel{Float64}
+const Model = MOIU.UniversalFallback{InnerLPModel{Float64}}
+
+struct ModelOptions <: MOI.AbstractModelAttribute end
+
+struct Options
+    maximum_length::Int
+    warn::Bool
+    warn_once::Bool
+    warned_start::Set{Char}
+    warned_illegal::Set{Char}
+end
+
+"""
+    Model(; kwargs...)
+
+Create an empty instance of MathOptFormat.LP.Model.
+
+Keyword arguments are:
+
+ - `maximum_length::Int=255`: the maximum length for the name of a variable.
+   lp_solve 5.0 allows only 16 characters, while CPLEX 12.5+ allow 255.
+
+ - `warn::Bool=false`: print a warning when variables or constraints are renamed.
+
+ - `warn_once::Bool=false`: print a warning when variables or constraints are
+   renamed, but only once per kind of replacement (e.g., once per illegal
+   character).
+"""
+function Model(;
+        maximum_length::Int=255, warn::Bool=false, warn_once::Bool=false)
+    model = MOIU.UniversalFallback(InnerLPModel{Float64}())
+    options = Options(maximum_length, warn, warn_once, Set{Char}(), Set{Char}())
+    MOI.set(model, ModelOptions(), options)
+    return model
+end
+
+# We re-define is_empty and empty! to prevent the universal fallback from
+# deleting the options. We should really fix `MOIU.@model` to allow an extension
+# dictionary.
+function MOI.is_empty(model::Model)
+    return MOI.is_empty(model.model) &&
+        isempty(model.constraints) &&
+        length(model.modattr) == 1 &&
+        haskey(model.modattr, ModelOptions()) &&
+        isempty(model.varattr) &&
+        isempty(model.conattr) &&
+        isempty(model.optattr)
+end
+
+function MOI.empty!(model::Model)
+    options = MOI.get(model, ModelOptions())
+    MOI.empty!(model.model)
+    empty!(model.constraints)
+    model.nextconstraintid = 0
+    empty!(model.con_to_name)
+    model.name_to_con = nothing
+    empty!(model.modattr)
+    empty!(model.varattr)
+    empty!(model.conattr)
+    empty!(model.optattr)
+    MOI.set(model, ModelOptions(), options)
+    return
+end
 
 function Base.show(io::IO, ::Model)
     print(io, "A .LP-file model")
@@ -31,35 +93,43 @@ end
 # ==============================================================================
 
 
-const MAX_LENGTH = 255
-# 16 for lp_solve 5.0: http://lpsolve.sourceforge.net/5.0/CPLEX-format.htm
-# 255 for CPLEX 12.5: https://www.ibm.com/support/knowledgecenter/SS9UKU_12.5.0/com.ibm.cplex.zos.help/FileFormats/topics/LP.html
 const START_REG = r"^([\.0-9eE])"
 const NAME_REG = r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])"
 
-function sanitized_name(name::String)
+function sanitized_name(name::String, options::Options)
     m = match(START_REG, name)
     if m !== nothing
         plural = length(m.match) > 1
-        @warn("Name $(name) cannot start with a period, a number, e, or E. " *
-              "Prepending an underscore to name.")
-        return sanitized_name("_" * name)
+
+        if options.warn || (options.warn_once && !(m.match[1] in options.warned_start))
+            @warn("Name $(name) cannot start with a period, a number, e, or E. " *
+                  "Prepending an underscore to name.")
+            push!(options.warned_start, m.match[1])
+        end
+
+        return sanitized_name("_" * name, options)
     end
 
     m = match(NAME_REG, name)
     if m !== nothing
         plural = length(m.match) > 1
-        @warn("Name $(name) contains $(ifelse(plural, "", "an "))" *
-              "illegal character$(ifelse(plural, "s", "")): " *
-              "\"$(m.match)\". Removing the offending " *
-              "character$(ifelse(plural, "s", "")) from name.")
-        return sanitized_name(replace(name, NAME_REG => s"_"))
+
+        if options.warn || (options.warn_once && !(m.match[1] in options.warned_illegal))
+            @warn("Name $(name) contains $(ifelse(plural, "", "an "))" *
+                  "illegal character$(ifelse(plural, "s", "")): " *
+                  "\"$(m.match)\". Removing the offending " *
+                  "character$(ifelse(plural, "s", "")) from name.")
+            push!(options.warned_illegal, m.match[1])
+        end
+
+        return sanitized_name(replace(name, NAME_REG => s"_"), options)
     end
 
     # Truncate at the end to fit as many characters as possible.
-    if length(name) > MAX_LENGTH
-        @warn("Name $(name) too long (length: $(length(name))). Truncating.")
-        return sanitized_name(String(name[1:MAX_LENGTH]))
+    if length(name) > options.maximum_length
+        @warn("Name $(name) too long (length: $(length(name)); " *
+              "maximum: $(options.maximum_length)). Truncating.")
+        return sanitized_name(String(name[1:options.maximum_length]), options)
     end
 
     return name
@@ -163,17 +233,20 @@ function write_objective(io::IO, model::Model, sanitized_names::Dict{MOI.Variabl
 end
 
 function MOI.write_to_file(model::Model, io::IO)
+    # Ensure each variable has a unique name that does not infringe LP constraints.
     MathOptFormat.create_unique_names(model)
     sanitized_names = Dict{MOI.VariableIndex, String}()
     sanitized_names_set = Set{String}()
     for v in MOI.get(model, MOI.ListOfVariableIndices())
-        proposed_sanitized_name = sanitized_name(MOI.get(model, MOI.VariableName(), v))
+        options = MOI.get(model, ModelOptions())
+        max_length = options.maximum_length
+        proposed_sanitized_name = sanitized_name(MOI.get(model, MOI.VariableName(), v), options)
 
         # In case of duplicate names after sanitization, add a number at the end.
         if proposed_sanitized_name in sanitized_names_set
             # If the name is already too long, make some space for the suffix.
-            if length(proposed_sanitized_name) >= MAX_LENGTH
-                proposed_sanitized_name = String(proposed_sanitized_name[1:MAX_LENGTH - 2])
+            if length(proposed_sanitized_name) >= max_length
+                proposed_sanitized_name = String(proposed_sanitized_name[1:max_length - 2])
             end
 
             i = 1
@@ -182,7 +255,7 @@ function MOI.write_to_file(model::Model, io::IO)
 
                 # If the maximum length constraint would be broken with the *next* i,
                 # truncate a bit more the proposed_sanitized_name.
-                if length(proposed_sanitized_name * '_' * string(i)) > MAX_LENGTH
+                if length(proposed_sanitized_name * '_' * string(i)) > max_length
                     proposed_sanitized_name = String(proposed_sanitized_name[1:length(proposed_sanitized_name) - 1])
                 end
             end
