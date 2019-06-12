@@ -11,6 +11,7 @@ function default_objective_test(model::MOI.ModelLike)
 end
 
 function default_status_test(model::MOI.ModelLike)
+    MOI.empty!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
@@ -106,6 +107,7 @@ end
 
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
+    MOI.empty!(model)
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     v = MOI.add_variables(model, 2)
     @test MOI.is_valid(model, v[1])
@@ -125,6 +127,7 @@ function validtest(model::MOI.ModelLike)
 end
 
 function emptytest(model::MOI.ModelLike)
+    MOI.empty!(model)
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     # Taken from LIN1
     v = MOI.add_variables(model, 3)
@@ -200,6 +203,7 @@ function failcopytestca(dest::MOI.ModelLike)
 end
 
 function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
+    MOI.empty!(dest)
     @test MOIU.supports_default_copy_to(src, #=copy_names=# false)
     x, y, z = MOI.add_variables(src, 3)
     a = MOI.add_constraint(src, x, MOI.EqualTo(1.0))
