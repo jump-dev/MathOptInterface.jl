@@ -42,7 +42,7 @@ function concrete_bridge_type(::Type{<:ScalarizeBridge{T}},
     return ScalarizeBridge{T, MOIU.scalar_type(F), scalar_set_type(S, T)}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 function MOI.get(bridge::ScalarizeBridge{T, F, S},
                  ::MOI.NumberOfConstraints{F, S}) where {T, F, S}
     return length(bridge.scalar_constraints)

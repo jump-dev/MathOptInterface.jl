@@ -114,7 +114,7 @@ function concrete_bridge_type(::Type{<:GeoMeanBridge{T}},
     return GeoMeanBridge{T, F, G}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables) = length(b.xij)
 function MOI.get(b::GeoMeanBridge{T, F},
                  ::MOI.NumberOfConstraints{F, MOI.LessThan{T}}) where {T, F}

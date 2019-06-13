@@ -163,7 +163,7 @@ function concrete_bridge_type(::Type{<:QuadtoSOCBridge{T}},
     return QuadtoSOCBridge{T}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 function MOI.get(::QuadtoSOCBridge{T},
                  ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},
                                            MOI.RotatedSecondOrderCone}) where T

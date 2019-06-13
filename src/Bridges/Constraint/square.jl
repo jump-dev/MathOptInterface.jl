@@ -134,7 +134,7 @@ function concrete_bridge_type(::Type{<:SquareBridge{T}},
     SquareBridge{T, F, G, TT, ST}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 function MOI.get(::SquareBridge{T, F, G, TT},
                  ::MOI.NumberOfConstraints{F, TT}) where {T, F, G, TT}
     return 1

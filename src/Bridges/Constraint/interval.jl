@@ -24,7 +24,7 @@ function concrete_bridge_type(::Type{<:SplitIntervalBridge},
     return SplitIntervalBridge{T, F}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.LessThan{T}}) where {T, F} = 1
 MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F} = 1
 MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F} = [b.lower]
