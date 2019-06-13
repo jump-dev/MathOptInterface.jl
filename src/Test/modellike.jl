@@ -266,6 +266,8 @@ end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOIU.supports_default_copy_to(src, #=copy_names=# true)
+    MOI.empty!(src)
+    MOI.empty!(dest)
     MOI.set(src, MOI.Name(), "ModelName")
     v = MOI.add_variables(src, 3)
     w = MOI.add_variable(src)
