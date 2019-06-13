@@ -50,7 +50,7 @@ function concrete_bridge_type(::Type{<:VectorizeBridge{T}},
     return VectorizeBridge{T, F, vector_set_type(S), G}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 function MOI.get(::VectorizeBridge{T, F, S},
                  ::MOI.NumberOfConstraints{F, S}) where {T, F, S}
     return 1

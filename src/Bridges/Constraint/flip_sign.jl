@@ -20,7 +20,7 @@ function added_constraint_types(
     return [(F, S2)]
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 function MOI.get(::FlipSignBridge{T, S1, S2, F},
                  ::MOI.NumberOfConstraints{F, S2}) where {T, S1, S2, F}
     return 1

@@ -28,7 +28,7 @@ function concrete_bridge_type(::Type{<:ScalarFunctionizeBridge{T}},
     return ScalarFunctionizeBridge{T, S}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 MOI.get(b::ScalarFunctionizeBridge{T, S}, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T}, S}) where {T, S} = 1
 MOI.get(b::ScalarFunctionizeBridge{T, S}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, S}) where {T, S} = [b.constraint]
 
@@ -100,7 +100,7 @@ function concrete_bridge_type(::Type{<:VectorFunctionizeBridge{T}},
     return VectorFunctionizeBridge{T, S}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 MOI.get(b::VectorFunctionizeBridge{T, S},
         ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, S}) where {T, S} = 1
 MOI.get(b::VectorFunctionizeBridge{T, S},

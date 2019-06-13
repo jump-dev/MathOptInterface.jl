@@ -60,7 +60,7 @@ function concrete_bridge_type(::Type{<:RSOCBridge{T}},
     RSOCBridge{T, F, G}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 function MOI.get(b::RSOCBridge{T, F},
                  ::MOI.NumberOfConstraints{F, MOI.SecondOrderCone}) where {T, F}
     return 1

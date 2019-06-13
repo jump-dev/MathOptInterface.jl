@@ -46,7 +46,7 @@ function concrete_bridge_type(::Type{<:ScalarSlackBridge{T}},
     return ScalarSlackBridge{T, F2, S}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.NumberOfVariables) where {T, F, S} = 1
 MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{F, MOI.EqualTo{T}}) where {T, F, S} = 1
 MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{MOI.SingleVariable, S}) where {T, F, S} = 1
@@ -147,7 +147,7 @@ function concrete_bridge_type(::Type{<:VectorSlackBridge{T}},
     return VectorSlackBridge{T, F2, S}
 end
 
-# Attributes, Bridge acting as an model
+# Attributes, Bridge acting as a model
 MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.NumberOfVariables) where {T, F, S} = length(b.slacks)
 MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{F, MOI.Zeros}) where {T, F, S} = 1
 MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{MOI.VectorOfVariables, S}) where {T, F, S} = 1
