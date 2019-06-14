@@ -691,15 +691,37 @@ _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
 _broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
 
 """
-macro model(modelname, scalarsets, typedscalarsets, vectorsets, typedvectorsets, scalarfunctions, typedscalarfunctions, vectorfunctions, typedvectorfunctions)
+    macro model(model_name, scalar_sets, typed_scalar_sets, vector_sets, typed_vector_sets, scalar_functions, typed_scalar_functions, vector_functions, typed_vector_functions)
 
-Creates a type `modelname` implementing the MOI model interface and containing `scalarsets` scalar sets `typedscalarsets` typed scalar sets, `vectorsets` vector sets, `typedvectorsets` typed vector sets, `scalarfunctions` scalar functions, `typedscalarfunctions` typed scalar functions, `vectorfunctions` vector functions and `typedvectorfunctions` typed vector functions.
+Creates a type `model_name` implementing the MOI model interface and containing
+`scalar_sets` scalar sets `typed_scalar_sets` typed scalar sets, `vector_sets`
+vector sets, `typed_vector_sets` typed vector sets, `scalar_functions` scalar
+functions, `typed_scalar_functions` typed scalar functions, `vector_functions`
+vector functions and `typed_vector_functions` typed vector functions.
 To give no set/function, write `()`, to give one set `S`, write `(S,)`.
 
-This implementation of the MOI model certifies that the constraint indices, in addition to being different between constraints `F`-in-`S` for the same types `F` and `S`,
-are also different between constraints for different types `F` and `S`.
-This means that for constraint indices `ci1`, `ci2` of this model, `ci1 == ci2` if and only if `ci1.value == ci2.value`.
-This fact can be used to use the the value of the index directly in a dictionary representing a mapping between constraint indices and something else.
+The function [`MathOptInterface.SingleVariable`](@ref) should not be given in
+`scalar_functions`. The model supports [`MathOptInterface.SingleVariable`](@ref)-in-`F`
+constraints where `F` is [`MathOptInterface.EqualTo`](@ref),
+[`MathOptInterface.GreaterThan`](@ref), [`MathOptInterface.LessThan`](@ref),
+[`MathOptInterface.Interval`](@ref), [`MathOptInterface.Integer`](@ref),
+[`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
+or [`MathOptInterface.Semiinteger`](@ref). The sets supported
+with the [`MathOptInterface.SingleVariable`](@ref) cannot be controlled from the
+macro, use the [`UniversalFallback`](@ref) to support more sets.
+
+This macro creates a model specialized for specific types of constraint,
+by defining specialized structures and methods. To create a model that,
+in addition to be optimized for specific constraints, also support arbitrary
+constraints and attributes, use [`UniversalFallback`](@ref).
+
+This implementation of the MOI model certifies that the constraint indices, in
+addition to being different between constraints `F`-in-`S` for the same types
+`F` and `S`, are also different between constraints for different types `F` and
+`S`. This means that for constraint indices `ci1`, `ci2` of this model,
+`ci1 == ci2` if and only if `ci1.value == ci2.value`. This fact can be used to
+use the the value of the index directly in a dictionary representing a mapping
+between constraint indices and something else.
 
 ### Examples
 
@@ -717,7 +739,7 @@ The model describing an linear program would be:
 ```
 
 Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities` and
-`MOIU.ConstraintEntry{F, S}` be defined as `MOI.Tuple{CI{F, S}, F, S}`.
+`MOIU.ConstraintEntry{F, S}` be defined as `MOI.Tuple{MOI.ConstraintIndex{F, S}, F, S}`.
 The macro would create the types:
 ```julia
 struct LPModelScalarConstraints{T, F <: MOI.AbstractScalarFunction} <: MOIU.Constraints{F}
@@ -736,38 +758,50 @@ mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     sense::MOI.OptimizationSense
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
     num_variables_created::Int64
+    # If nothing, no variable has been deleted so the indices of the
+    # variables are VI.(1:num_variables_created)
     variable_indices::Union{Nothing, Set{MOI.VariableIndex}}
+    # Union of flags of `S` such that a `SingleVariable`-in-`S`
+    # constraint was added to the model and not deleted yet.
+    single_variable_mask::Vector{UInt8}
+    # Lower bound set by `SingleVariable`-in-`S` where `S`is
+    # `GreaterThan{T}`, `EqualTo{T}` or `Interval{T}`.
+    lower_bound::Vector{T}
+    # Lower bound set by `SingleVariable`-in-`S` where `S`is
+    # `LessThan{T}`, `EqualTo{T}` or `Interval{T}`.
+    upper_bound::Vector{T}
     var_to_name::Dict{MOI.VariableIndex, String}
+    # If `nothing`, the dictionary hasn't been constructed yet.
     name_to_var::Union{Dict{String, MOI.VariableIndex}, Nothing}
     nextconstraintid::Int64
     con_to_name::Dict{MOI.ConstraintIndex, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
     constrmap::Vector{Int}
-    singlevariable::LPModelScalarConstraints{T, MOI.SingleVariable}
     scalaraffinefunction::LPModelScalarConstraints{T, MOI.ScalarAffineFunction{T}}
     vectorofvariables::LPModelVectorConstraints{T, MOI.VectorOfVariables}
     vectoraffinefunction::LPModelVectorConstraints{T, MOI.VectorAffineFunction{T}}
 end
 ```
-The type `LPModel` implements the MathOptInterface API except methods specific to solver models like `optimize!` or `getattribute` with `VariablePrimal`.
+The type `LPModel` implements the MathOptInterface API except methods specific
+to solver models like `optimize!` or `getattribute` with `VariablePrimal`.
 """
-macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
-    scalarsets = [SymbolSet.(ss.args, false); SymbolSet.(sst.args, true)]
-    vectorsets = [SymbolSet.(vs.args, false); SymbolSet.(vst.args, true)]
+macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
+    scalar_sets = [SymbolSet.(ss.args, false); SymbolSet.(sst.args, true)]
+    vector_sets = [SymbolSet.(vs.args, false); SymbolSet.(vst.args, true)]
 
-    scname = esc(Symbol(string(modelname) * "ScalarConstraints"))
-    vcname = esc(Symbol(string(modelname) * "VectorConstraints"))
-    esc_modelname = esc(modelname)
+    scname = esc(Symbol(string(model_name) * "ScalarConstraints"))
+    vcname = esc(Symbol(string(model_name) * "VectorConstraints"))
+    esc_model_name = esc(model_name)
 
-    scalarfuns = [SymbolFun.(sf.args, false, Ref(scname));
+    scalar_funs = [SymbolFun.(sf.args, false, Ref(scname));
                   SymbolFun.(sft.args, true, Ref(scname))]
-    vectorfuns = [SymbolFun.(vf.args, false, Ref(vcname));
+    vector_funs = [SymbolFun.(vf.args, false, Ref(vcname));
                   SymbolFun.(vft.args, true, Ref(vcname))]
-    funs = [scalarfuns; vectorfuns]
+    funs = [scalar_funs; vector_funs]
 
     scalarconstraints = :(struct $scname{T, F<:$MOI.AbstractScalarFunction} <: Constraints{F}; end)
     vectorconstraints = :(struct $vcname{T, F<:$MOI.AbstractVectorFunction} <: Constraints{F}; end)
-    for (c, sets) in ((scalarconstraints, scalarsets), (vectorconstraints, vectorsets))
+    for (c, sets) in ((scalarconstraints, scalar_sets), (vectorconstraints, vector_sets))
         for s in sets
             field = _field(s)
             push!(c.args[3].args, :($field::Vector{$(_getC(s))}))
@@ -775,7 +809,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     end
 
     modeldef = quote
-        mutable struct $esc_modelname{T} <: AbstractModel{T}
+        mutable struct $esc_model_name{T} <: AbstractModel{T}
             name::String
             senseset::Bool
             sense::$MOI.OptimizationSense
@@ -795,7 +829,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             # `LessThan{T}`, `EqualTo{T}` or `Interval{T}`.
             upper_bound::Vector{T}
             var_to_name::Dict{$VI, String}
-            # If nothing, the dictionary hasn't been constructed yet.
+            # If `nothing`, the dictionary hasn't been constructed yet.
             name_to_var::Union{Dict{String, $VI}, Nothing}
             nextconstraintid::Int64
             con_to_name::Dict{$CI, String}
@@ -810,13 +844,13 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     end
 
     code = quote
-        function $MOIU.broadcastcall(f::Function, model::$esc_modelname)
+        function $MOIU.broadcastcall(f::Function, model::$esc_model_name)
             $(Expr(:block, _broadcastfield.(Ref(:(broadcastcall)), funs)...))
         end
-        function $MOIU.broadcastvcat(f::Function, model::$esc_modelname)
+        function $MOIU.broadcastvcat(f::Function, model::$esc_model_name)
             vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
         end
-        function $MOI.empty!(model::$esc_modelname{T}) where T
+        function $MOI.empty!(model::$esc_model_name{T}) where T
             model.name = ""
             model.senseset = false
             model.sense = $MOI.FEASIBILITY_SENSE
@@ -836,7 +870,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
     end
-    for (cname, sets) in ((scname, scalarsets), (vcname, vectorsets))
+    for (cname, sets) in ((scname, scalar_sets), (vcname, vector_sets))
         code = quote
             $code
             function $MOIU.broadcastcall(f::Function, model::$cname)
@@ -852,7 +886,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     end
 
     for (funct, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
-        for (c, sets) in ((scname, scalarsets), (vcname, vectorsets))
+        for (c, sets) in ((scname, scalar_sets), (vcname, vector_sets))
             for s in sets
                 set = _set(s)
                 field = _field(s)
@@ -868,7 +902,7 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
             field = _field(f)
             code = quote
                 $code
-                $MOIU.$funct(model::$esc_modelname, ci::$T{<:$fun}, args...) = $funct(model.$field, ci, args...)
+                $MOIU.$funct(model::$esc_model_name, ci::$T{<:$fun}, args...) = $funct(model.$field, ci, args...)
             end
         end
     end
@@ -876,25 +910,25 @@ macro model(modelname, ss, sst, vs, vst, sf, sft, vf, vft)
     code = quote
         $scalarconstraints
         function $scname{T, F}() where {T, F}
-            $scname{T, F}($(_getCV.(scalarsets)...))
+            $scname{T, F}($(_getCV.(scalar_sets)...))
         end
 
         $vectorconstraints
         function $vcname{T, F}() where {T, F}
-            $vcname{T, F}($(_getCV.(vectorsets)...))
+            $vcname{T, F}($(_getCV.(vector_sets)...))
         end
 
         $modeldef
-        function $esc_modelname{T}() where T
-            $esc_modelname{T}("", false, $MOI.FEASIBILITY_SENSE, false,
+        function $esc_model_name{T}() where T
+            $esc_model_name{T}("", false, $MOI.FEASIBILITY_SENSE, false,
                               $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)), 0,
                               nothing, UInt8[], T[], T[], Dict{$VI, String}(),
                               nothing, 0, Dict{$CI, String}(), nothing, Int[],
                               $(_getCV.(funs)...))
         end
 
-        $MOI.supports_constraint(model::$esc_modelname{T}, ::Type{<:Union{$(_typedfun.(scalarfuns)...)}}, ::Type{<:Union{$(_typedset.(scalarsets)...)}}) where T = true
-        $MOI.supports_constraint(model::$esc_modelname{T}, ::Type{<:Union{$(_typedfun.(vectorfuns)...)}}, ::Type{<:Union{$(_typedset.(vectorsets)...)}}) where T = true
+        $MOI.supports_constraint(model::$esc_model_name{T}, ::Type{<:Union{$(_typedfun.(scalar_funs)...)}}, ::Type{<:Union{$(_typedset.(scalar_sets)...)}}) where T = true
+        $MOI.supports_constraint(model::$esc_model_name{T}, ::Type{<:Union{$(_typedfun.(vector_funs)...)}}, ::Type{<:Union{$(_typedset.(vector_sets)...)}}) where T = true
 
         $code
     end
