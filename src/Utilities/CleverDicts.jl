@@ -16,10 +16,19 @@ The i'th ordered element can be obtained with `c[LinearIndex(i)]`.
 Note that querying a `LinearIndex` immediately after deleting a key via
 `delete!` is very slow. (It requires a rebuild of an ordered list of variables.)
 
-Use `new_key(c::CleverDict)` to obtain the next key in the sequential order.
+Store an item `val` using `new_item(c::CleverDict, val)`. `new_item` returns a
+key corresponding to the stored item.
 
 Overload the functions `index_to_key` and `key_to_index` to enable mappings
 between the integer index of the vector and the dictionary key.
+
+## Example
+
+    struct MyKey
+        x::Int
+    end
+    index_to_key(::Type{MyKey}, i::Int) = MyKey(i)
+    key_to_index(key::MyKey) = key.x
 """
 mutable struct CleverDict{K, V}
     last_index::Int
