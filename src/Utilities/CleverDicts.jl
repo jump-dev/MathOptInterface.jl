@@ -42,9 +42,7 @@ end
 
 Create a new key associated with the integer value `index`.
 """
-function index_to_key(::Type{K}, index::Int) where {K}
-    error("You need to define `index_to_key`.")
-end
+function index_to_key end
 
 """
     key_to_index(key::K)
@@ -52,9 +50,7 @@ end
 Map `key` to an integer valued index, assuming that there have been no
 deletions.
 """
-function key_to_index(key::K) where {K}
-    error("You need to define `key_to_index`.")
-end
+function key_to_index end
 
 """
     new_item(c::CleverDict{K, V}, val::Val)::K where {K, V}

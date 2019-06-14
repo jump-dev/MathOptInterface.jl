@@ -125,6 +125,27 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
         @test my_values == ["second", "third"]
     end
 
+    @testset "iterate iii" begin
+        d = CleverDicts.CleverDict{MyKey, String}()
+        y = 0
+        for (k, v) in d
+            y += 1
+        end
+        @test y == 0
+    end
+
+    @testset "haskey" begin
+        d = CleverDicts.CleverDict{MyKey, String}()
+        @test !haskey(d, 1)
+        k = CleverDicts.new_item(d, "a")
+        @test haskey(d, k)
+        j = CleverDicts.new_item(d, "b")
+        @test haskey(d, j)
+        delete!(d, k)
+        @test !haskey(d, k)
+        @test haskey(d, j)
+    end
+
     @testset "delete!" begin
         d = CleverDicts.CleverDict{MyKey, String}()
         @test length(d) == 0
