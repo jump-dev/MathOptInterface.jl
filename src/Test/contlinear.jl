@@ -1499,9 +1499,6 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
             @test - 3 * cd1 + cd2 ≈ -bndyd atol=atol rtol=rtol
             @test 2 * cd1 ≈ -bndxd atol=atol rtol=rtol
             @test -7 * cd1 + 2 * cd2 > atol
-        else
-            # solver returned nothing
-            @test MOI.get(model, MOI.ResultCount()) == 0
         end
     end
 end
