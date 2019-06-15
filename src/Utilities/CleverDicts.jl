@@ -149,11 +149,11 @@ function Base.delete!(c::CleverDict{K, V}, key::K)::Nothing where {K, V}
 end
 
 function Base.length(c::CleverDict)::Int
-    return c.dict == nothing ? length(c.vector) : length(c.dict)
+    return c.dict === nothing ? length(c.vector) : length(c.dict)
 end
 
 function Base.isempty(c::CleverDict)
-    return c.dict !== nothing ? isempty(c.dict) : length(c.vector) == 0
+    return c.dict === nothing ? isempty(c.vector) : isempty(c.dict)
 end
 
 Base.haskey(::CleverDict, key) = false
@@ -179,39 +179,39 @@ end
 function Base.iterate(
     c::CleverDict{K, V}
 )::Union{Nothing, Tuple{Pair{K, V}, Int}} where {K, V}
-    if c.dict !== nothing
-        return iterate(c.dict)
-    else
+    if c.dict === nothing
         @assert c.vector !== nothing
-        if length(c.vector) == 0
+        if isempty(c.vector)
             return nothing
         end
         key = index_to_key(K, 1)
         return key => c.vector[1], 2
+    else
+        return iterate(c.dict)
     end
 end
 
 function Base.iterate(
     c::CleverDict{K, V}, s::Int
 )::Union{Nothing, Tuple{Pair{K, V}, Int}} where {K, V}
-    if c.dict !== nothing
-        return iterate(c.dict, s)
-    else
+    if c.dict === nothing
         @assert c.vector !== nothing
         if s > length(c.vector)
             return nothing
         end
         key = index_to_key(K, s)
         return key => c.vector[s], s + 1
+    else
+        return iterate(c.dict, s)
     end
 end
 
 function Base.values(c::CleverDict{K, V}) where {K, V}
-    return c.dict !== nothing ? values(c.dict) : c.vector
+    return c.dict === nothing ? c.vector : values(c.dict)
 end
 
 function Base.keys(c::CleverDict{K, V}) where {K, V}
-    return c.dict !== nothing ? keys(c.dict) : index_to_key.(K, 1:length(c))
+    return c.dict === nothing ? index_to_key.(K, 1:length(c)) : keys(c.dict)
 end
 
 end
