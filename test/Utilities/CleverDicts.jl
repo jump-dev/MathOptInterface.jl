@@ -146,6 +146,17 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
         @test haskey(d, j)
     end
 
+    @testset "haskey" begin
+        d = CleverDicts.CleverDict{MyKey, String}()
+        @test isempty(d) == true
+        k = CleverDicts.add_item(d, "a")
+        @test isempty(d) == false
+        delete!(d, k)
+        @test isempty(d) == true
+        j = CleverDicts.add_item(d, "b")
+        @test isempty(d) == false
+    end
+
     @testset "delete!" begin
         d = CleverDicts.CleverDict{MyKey, String}()
         @test length(d) == 0

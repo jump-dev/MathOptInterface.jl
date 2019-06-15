@@ -152,6 +152,10 @@ function Base.length(c::CleverDict)::Int
     return c.dict == nothing ? length(c.vector) : length(c.dict)
 end
 
+function Base.isempty(c::CleverDict)
+    return c.dict !== nothing ? isempty(c.dict) : length(c.vector) == 0
+end
+
 Base.haskey(::CleverDict, key) = false
 function Base.haskey(c::CleverDict{K, V}, key::K)::Bool where {K, V}
     if c.dict === nothing
