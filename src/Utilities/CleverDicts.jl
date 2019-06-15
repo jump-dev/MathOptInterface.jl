@@ -24,11 +24,13 @@ between the integer index of the vector and the dictionary key.
 
 ## Example
 
-    struct MyKey
-        x::Int
-    end
-    index_to_key(::Type{MyKey}, i::Int) = MyKey(i)
-    key_to_index(key::MyKey) = key.x
+```julia
+struct MyKey
+    x::Int
+end
+index_to_key(::Type{MyKey}, i::Int) = MyKey(i)
+key_to_index(key::MyKey) = key.x
+```
 """
 mutable struct CleverDict{K, V}
     last_index::Int
@@ -159,15 +161,27 @@ function Base.haskey(c::CleverDict{K, V}, key::K)::Bool where {K, V}
     end
 end
 
+# Here, we implement the iterate functions for our `CleverDict`. If the backing
+# datastructure is an `OrderedDict`, we just forward `iterate` to the dict. If
+# it's the vector, we create a key-value pair so that `iterate` returns the same
+# type regardless of the backing datastructure. To help inference, we annotate
+# the return type.
+#
+# Also note that iterating an `OrderedDict` returns an `Int` state variable.
+# This is identical to the type of the state variable that we return when
+# iterating the vector, so we can add a type restriction on
+# `iterate(c, s::Int)`.
+
 function Base.iterate(
     c::CleverDict{K, V}
 )::Union{Nothing, Tuple{Pair{K, V}, Int}} where {K, V}
-    if length(c) == 0
-        return nothing
-    elseif c.dict !== nothing
+    if c.dict !== nothing
         return iterate(c.dict)
     else
         @assert c.vector !== nothing
+        if length(c.vector) == 0
+            return nothing
+        end
         key = index_to_key(K, 1)
         return key => c.vector[1], 2
     end
@@ -176,12 +190,13 @@ end
 function Base.iterate(
     c::CleverDict{K, V}, s::Int
 )::Union{Nothing, Tuple{Pair{K, V}, Int}} where {K, V}
-    if s > length(c)
-        return nothing
-    elseif c.dict !== nothing
+    if c.dict !== nothing
         return iterate(c.dict, s)
     else
         @assert c.vector !== nothing
+        if s > length(c.vector)
+            return nothing
+        end
         key = index_to_key(K, s)
         return key => c.vector[s], s + 1
     end
