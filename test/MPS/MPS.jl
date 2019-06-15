@@ -24,6 +24,11 @@ end
 
     @testset "Non-empty model" begin
         model = MPS.Model()
+        @test MOI.is_empty(model)
+        MOI.add_variable(model)
+        @test !MOI.is_empty(model)
+        MOI.empty!(model)
+        @test MOI.is_empty(model)
         MOI.add_variable(model)
         @test_throws Exception MOI.read_from_file(
             model, joinpath(failing_models_dir, "bad_name.mps"))

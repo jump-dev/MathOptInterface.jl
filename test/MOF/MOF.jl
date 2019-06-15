@@ -40,13 +40,13 @@ end
             "Cannot read model from file as destination model is not empty.")
         @test_throws exception MOI.read_from_file(
             model, joinpath(@__DIR__, "empty_model.mof.json"))
-        options = MOI.get(model, MOF.ModelOptions())
+        options = MOI.get(model, MathOptFormat.ModelOptions())
         @test options.warn
         MOI.empty!(model)
         @test MOI.is_empty(model)
         MOI.read_from_file(
             model, joinpath(@__DIR__, "empty_model.mof.json"))
-        options2 = MOI.get(model, MOF.ModelOptions())
+        options2 = MOI.get(model, MathOptFormat.ModelOptions())
         @test options2.warn
     end
 

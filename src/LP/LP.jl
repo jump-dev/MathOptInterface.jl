@@ -6,7 +6,7 @@ import MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-MOIU.@model(InnerLPModel,
+MOIU.@model(InnerModel,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
@@ -17,9 +17,7 @@ MOIU.@model(InnerLPModel,
     ()
 )
 
-const Model = MOIU.UniversalFallback{InnerLPModel{Float64}}
-
-struct ModelOptions <: MOI.AbstractModelAttribute end
+const Model = MOIU.UniversalFallback{InnerModel{Float64}}
 
 struct Options
     maximum_length::Int
@@ -46,40 +44,16 @@ Keyword arguments are:
    character).
 """
 function Model(;
-        maximum_length::Int=255, warn::Bool=false, warn_once::Bool=false)
-    model = MOIU.UniversalFallback(InnerLPModel{Float64}())
+    maximum_length::Int = 255, warn::Bool = false, warn_once::Bool = false
+)
+    model = MOIU.UniversalFallback(InnerModel{Float64}())
     options = Options(maximum_length, warn, warn_once, Set{Char}(), Set{Char}())
-    MOI.set(model, ModelOptions(), options)
+    MOI.set(model, MathOptFormat.ModelOptions(), options)
     return model
 end
 
-# We re-define is_empty and empty! to prevent the universal fallback from
-# deleting the options. We should really fix `MOIU.@model` to allow an extension
-# dictionary.
-function MOI.is_empty(model::Model)
-    return MOI.is_empty(model.model) &&
-        isempty(model.constraints) &&
-        length(model.modattr) == 1 &&
-        haskey(model.modattr, ModelOptions()) &&
-        isempty(model.varattr) &&
-        isempty(model.conattr) &&
-        isempty(model.optattr)
-end
-
-function MOI.empty!(model::Model)
-    options = MOI.get(model, ModelOptions())
-    MOI.empty!(model.model)
-    empty!(model.constraints)
-    model.nextconstraintid = 0
-    empty!(model.con_to_name)
-    model.name_to_con = nothing
-    empty!(model.modattr)
-    empty!(model.varattr)
-    empty!(model.conattr)
-    empty!(model.optattr)
-    MOI.set(model, ModelOptions(), options)
-    return
-end
+MOI.is_empty(model::Model) = MathOptFormat.is_empty(model)
+MOI.empty!(model::Model) = MathOptFormat.empty_model(model)
 
 function Base.show(io::IO, ::Model)
     print(io, "A .LP-file model")
@@ -233,22 +207,20 @@ function write_objective(io::IO, model::Model, sanitized_names::Dict{MOI.Variabl
 end
 
 function MOI.write_to_file(model::Model, io::IO)
+    options = MOI.get(model, MathOptFormat.ModelOptions())
+    max_length = options.maximum_length
     # Ensure each variable has a unique name that does not infringe LP constraints.
-    MathOptFormat.create_unique_names(model)
+    MathOptFormat.create_unique_names(model, warn = options.warn)
     sanitized_names = Dict{MOI.VariableIndex, String}()
     sanitized_names_set = Set{String}()
     for v in MOI.get(model, MOI.ListOfVariableIndices())
-        options = MOI.get(model, ModelOptions())
-        max_length = options.maximum_length
         proposed_sanitized_name = sanitized_name(MOI.get(model, MOI.VariableName(), v), options)
-
         # In case of duplicate names after sanitization, add a number at the end.
         if proposed_sanitized_name in sanitized_names_set
             # If the name is already too long, make some space for the suffix.
             if length(proposed_sanitized_name) >= max_length
                 proposed_sanitized_name = String(proposed_sanitized_name[1:max_length - 2])
             end
-
             i = 1
             while proposed_sanitized_name * '_' * string(i) in sanitized_names_set
                 i += 1
@@ -261,7 +233,6 @@ function MOI.write_to_file(model::Model, io::IO)
             end
             proposed_sanitized_name *= '_' * string(i)
         end
-
         push!(sanitized_names_set, proposed_sanitized_name)
         sanitized_names[v] = proposed_sanitized_name
     end

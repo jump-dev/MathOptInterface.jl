@@ -1,5 +1,5 @@
 function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, ModelOptions())
+    options = MOI.get(model, MathOptFormat.ModelOptions())
     object = Object(
         "name"        => "MathOptFormat Model",
         "version"     => VERSION,

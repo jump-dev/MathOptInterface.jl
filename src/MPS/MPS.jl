@@ -6,7 +6,7 @@ import MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-MOIU.@model(InnerMPSModel,
+MOIU.@model(InnerModel,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
@@ -17,7 +17,31 @@ MOIU.@model(InnerMPSModel,
     ()
 )
 
-const Model = InnerMPSModel{Float64}
+const Model = MOIU.UniversalFallback{InnerModel{Float64}}
+
+struct Options
+    warn::Bool
+end
+
+"""
+    Model(; kwargs...)
+
+Create an empty instance of MathOptFormat.MPS.Model.
+
+Keyword arguments are:
+
+ - `warn::Bool=false`: print a warning when variables or constraints are renamed.
+"""
+function Model(;
+        warn::Bool = false
+)
+    model = MOIU.UniversalFallback(InnerModel{Float64}())
+    MOI.set(model, MathOptFormat.ModelOptions(), Options(warn))
+    return model
+end
+
+MOI.is_empty(model::Model) = MathOptFormat.is_empty(model)
+MOI.empty!(model::Model) = MathOptFormat.empty_model(model)
 
 function Base.show(io::IO, ::Model)
     print(io, "A Mathematical Programming System (MPS) model")
@@ -31,7 +55,8 @@ end
 # ==============================================================================
 
 function MOI.write_to_file(model::Model, io::IO)
-    MathOptFormat.create_unique_names(model)
+    options = MOI.get(model, MathOptFormat.ModelOptions())
+    MathOptFormat.create_unique_names(model, warn = options.warn)
     write_model_name(io, model)
     write_rows(io, model)
     discovered_columns = write_columns(io, model)

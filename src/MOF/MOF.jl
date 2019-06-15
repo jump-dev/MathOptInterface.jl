@@ -43,8 +43,6 @@ MOIU.@model(InnerModel,
 
 const Model = MOIU.UniversalFallback{InnerModel{Float64}}
 
-struct ModelOptions <: MOI.AbstractModelAttribute end
-
 struct Options
     print_compact::Bool
     validate::Bool
@@ -54,7 +52,7 @@ end
 """
     Model(; kwargs...)
 
-Create an empty instance of MathOptFormat.Model.
+Create an empty instance of MathOptFormat.MOF.Model.
 
 Keyword arguments are:
 
@@ -67,39 +65,16 @@ Keyword arguments are:
  - `warn::Bool=false`: print a warning when variables or constraints are renamed
 """
 function Model(;
-        print_compact::Bool = false, validate::Bool = true, warn::Bool = false)
+    print_compact::Bool = false, validate::Bool = true, warn::Bool = false
+)
     model = MOIU.UniversalFallback(InnerModel{Float64}())
-    MOI.set(model, ModelOptions(), Options(print_compact, validate, warn))
+    MOI.set(model, MathOptFormat.ModelOptions(), Options(print_compact, validate, warn))
     return model
 end
 
-# We re-define is_empty and empty! to prevent the universal fallback from
-# deleting the options. We should really fix `MOIU.@model` to allow an extension
-# dictionary.
-function MOI.is_empty(model::Model)
-    return MOI.is_empty(model.model) &&
-        isempty(model.constraints) &&
-        length(model.modattr) == 1 &&
-        haskey(model.modattr, ModelOptions()) &&
-        isempty(model.varattr) &&
-        isempty(model.conattr) &&
-        isempty(model.optattr)
-end
+MOI.is_empty(model::Model) = MathOptFormat.is_empty(model)
+MOI.empty!(model::Model) = MathOptFormat.empty_model(model)
 
-function MOI.empty!(model::Model)
-    options = MOI.get(model, ModelOptions())
-    MOI.empty!(model.model)
-    empty!(model.constraints)
-    model.nextconstraintid = 0
-    empty!(model.con_to_name)
-    model.name_to_con = nothing
-    empty!(model.modattr)
-    empty!(model.varattr)
-    empty!(model.conattr)
-    empty!(model.optattr)
-    MOI.set(model, ModelOptions(), options)
-    return
-end
 function Base.show(io::IO, ::Model)
     print(io, "A MathOptFormat Model")
     return

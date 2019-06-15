@@ -183,6 +183,23 @@ const LP_TEST_FILE = "test.lp"
             end
 
             @test_logs(
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(2). Renamed to xxxxxxx_1."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(3). Renamed to xxxxxxx_2."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(4). Renamed to xxxxxxx_3."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(5). Renamed to xxxxxxx_4."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(6). Renamed to xxxxxxx_5."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(7). Renamed to xxxxxxx_6."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(8). Renamed to xxxxxxx_7."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(9). Renamed to xxxxxxx_8."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(10). Renamed to xxxxxxx_9."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(11). Renamed to xxxxxxx_10."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(12). Renamed to xxxxxxx_11."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(13). Renamed to xxxxxxx_12."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(14). Renamed to xxxxxxx_13."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(15). Renamed to xxxxxxx_14."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(16). Renamed to xxxxxxx_15."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(17). Renamed to xxxxxxx_16."),
+                (:warn, "Duplicate name xxxxxxx detected for variable MathOptInterface.VariableIndex(18). Renamed to xxxxxxx_17."),
                 (:warn, "Name $(repeat("x", max_length + 1)) too long (length: $(1 + max_length); maximum: $(max_length)). Truncating."),
                 (:warn, "Name $(repeat("x", max_length + 1))_1 too long (length: $(3 + max_length); maximum: $(max_length)). Truncating."),
                 (:warn, "Name $(repeat("x", max_length + 1))_2 too long (length: $(3 + max_length); maximum: $(max_length)). Truncating."),
