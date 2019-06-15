@@ -12,7 +12,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
 @testset "CleverDict" begin
     @testset "get/set" begin
         d = CleverDicts.CleverDict{MyKey, String}()
-        key = CleverDicts.new_item(d, "first")
+        key = CleverDicts.add_item(d, "first")
         @test key == MyKey(1)
         @test d[key] == "first"
         @test haskey(d, key) == true
@@ -21,7 +21,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
         @test_throws KeyError d[key]
         @test_throws KeyError d[key] = "key"
         @test haskey(d, key) == false
-        key2 = CleverDicts.new_item(d, "second")
+        key2 = CleverDicts.add_item(d, "second")
         @test key2 == MyKey(2)
         @test d[key2] == "second"
         @test d.vector === nothing
@@ -31,7 +31,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
 
         empty!(d)
 
-        key = CleverDicts.new_item(d, "first")
+        key = CleverDicts.add_item(d, "first")
         @test key == MyKey(1)
         @test d[key] == "first"
         d[key] = "zeroth"
@@ -42,7 +42,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
         @test_throws KeyError d[key]
         @test_throws KeyError d[key] = "key"
         @test haskey(d, key) == false
-        key2 = CleverDicts.new_item(d, "second")
+        key2 = CleverDicts.add_item(d, "second")
         @test key2 == MyKey(2)
         @test d[key2] == "second"
         @test d.vector === nothing
@@ -51,9 +51,9 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
 
     @testset "LinearIndex" begin
         d = CleverDicts.CleverDict{MyKey, String}()
-        key = CleverDicts.new_item(d, "first")
+        key = CleverDicts.add_item(d, "first")
         @test d[CleverDicts.LinearIndex(1)] == "first"
-        key2 = CleverDicts.new_item(d, "second")
+        key2 = CleverDicts.add_item(d, "second")
         @test d[CleverDicts.LinearIndex(2)] == "second"
         @test length(d) == 2
         delete!(d, key)
@@ -66,20 +66,20 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
 
     @testset "keys/values" begin
         d = CleverDicts.CleverDict{MyKey, String}()
-        key = CleverDicts.new_item(d, "first")
-        key2 = CleverDicts.new_item(d, "second")
+        key = CleverDicts.add_item(d, "first")
+        key2 = CleverDicts.add_item(d, "second")
         @test collect(keys(d)) == [MyKey(1), MyKey(2)]
         @test collect(values(d)) == ["first", "second"]
         delete!(d, key)
-        key3 = CleverDicts.new_item(d, "third")
+        key3 = CleverDicts.add_item(d, "third")
         @test collect(keys(d)) == [MyKey(2), MyKey(3)]
         @test collect(values(d)) == ["second", "third"]
     end
 
     @testset "iterate" begin
         d = CleverDicts.CleverDict{MyKey, String}()
-        key = CleverDicts.new_item(d, "first")
-        key2 = CleverDicts.new_item(d, "second")
+        key = CleverDicts.add_item(d, "first")
+        key2 = CleverDicts.add_item(d, "second")
         my_keys = MyKey[]
         my_values = String[]
         for (k, v) in d
@@ -89,7 +89,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
         @test my_keys == [MyKey(1), MyKey(2)]
         @test my_values == ["first", "second"]
         delete!(d, key)
-        key3 = CleverDicts.new_item(d, "third")
+        key3 = CleverDicts.add_item(d, "third")
         my_keys = MyKey[]
         my_values = String[]
         for (k, v) in d
@@ -102,8 +102,8 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
 
     @testset "iterate ii" begin
         d = CleverDicts.CleverDict{MyKey, String}()
-        key = CleverDicts.new_item(d, "first")
-        key2 = CleverDicts.new_item(d, "second")
+        key = CleverDicts.add_item(d, "first")
+        key2 = CleverDicts.add_item(d, "second")
         my_keys = MyKey[]
         my_values = String[]
         for (k, v) in d
@@ -114,7 +114,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
         @test my_values == ["first", "second"]
         delete!(d, key)
         @test d[CleverDicts.LinearIndex(1)] == "second"
-        key3 = CleverDicts.new_item(d, "third")
+        key3 = CleverDicts.add_item(d, "third")
         my_keys = MyKey[]
         my_values = String[]
         for (k, v) in d
@@ -137,9 +137,9 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
     @testset "haskey" begin
         d = CleverDicts.CleverDict{MyKey, String}()
         @test !haskey(d, 1)
-        k = CleverDicts.new_item(d, "a")
+        k = CleverDicts.add_item(d, "a")
         @test haskey(d, k)
-        j = CleverDicts.new_item(d, "b")
+        j = CleverDicts.add_item(d, "b")
         @test haskey(d, j)
         delete!(d, k)
         @test !haskey(d, k)
@@ -150,12 +150,12 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey(index)
         d = CleverDicts.CleverDict{MyKey, String}()
         @test length(d) == 0
         @test delete!(d, MyKey(0)) == nothing
-        k1 = CleverDicts.new_item(d, "a")
-        k2 = CleverDicts.new_item(d, "b")
+        k1 = CleverDicts.add_item(d, "a")
+        k2 = CleverDicts.add_item(d, "b")
         d[CleverDicts.LinearIndex(2)] == "b"
         delete!(d, k1)
         d[CleverDicts.LinearIndex(1)] == "b"
-        k3 = CleverDicts.new_item(d, "c")
+        k3 = CleverDicts.add_item(d, "c")
         @test d[k3] == "c"
         @test d[CleverDicts.LinearIndex(1)] == "b"
         @test d[CleverDicts.LinearIndex(2)] == "c"

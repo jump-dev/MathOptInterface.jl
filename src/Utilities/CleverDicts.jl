@@ -16,7 +16,7 @@ The i'th ordered element can be obtained with `c[LinearIndex(i)]`.
 Note that querying a `LinearIndex` immediately after deleting a key via
 `delete!` is very slow. (It requires a rebuild of an ordered list of variables.)
 
-Store an item `val` using `new_item(c::CleverDict, val)`. `new_item` returns a
+Store an item `val` using `add_item(c::CleverDict, val)`. `add_item` returns a
 key corresponding to the stored item.
 
 Overload the functions `index_to_key` and `key_to_index` to enable mappings
@@ -55,11 +55,11 @@ deletions.
 function key_to_index end
 
 """
-    new_item(c::CleverDict{K, V}, val::Val)::K where {K, V}
+    add_item(c::CleverDict{K, V}, val::Val)::K where {K, V}
 
 Set `val` in the next available key, and return that key.
 """
-function new_item(c::CleverDict{K, V}, val::V)::K where {K, V}
+function add_item(c::CleverDict{K, V}, val::V)::K where {K, V}
     c.last_index += 1
     key = index_to_key(K, c.last_index)
     if c.dict === nothing
