@@ -1,5 +1,19 @@
 module CleverDicts
 
+# The following two functions are overloaded for `MOI.VariableIndex` here
+# it is the original use-case for `CleverDict`, and it would be type-piracy for
+# solvers using `CleverDicts` to implement it themselves.
+
+import MathOptInterface
+
+function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int)
+    return MathOptInterface.VariableIndex(index)
+end
+
+key_to_index(key::MathOptInterface.VariableIndex) = key.value
+
+# Now, on with `CleverDicts`.
+
 import OrderedCollections
 
 """
