@@ -310,3 +310,51 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConf
     )
 end
 unittests["solve_affine_deletion_edge_cases"] = solve_affine_deletion_edge_cases
+
+function solve_zeroone_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        maxobjective: 2.0x
+        c1: x in ZeroOne()
+        c2: x in Interval(0.0, 1.0)
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    test_model_solution(model, config;
+        objective_value   = 2.0,
+        variable_primal   = [(x, 1.0)]
+    )
+end
+unittests["solve_zeroone_with_bounds_1"] = solve_zeroone_with_bounds_1
+
+function solve_zeroone_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        maxobjective: 2.0x
+        c1: x in ZeroOne()
+        c2: x in Interval(0.0, 0.5)
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    test_model_solution(model, config;
+        objective_value   = 0.0,
+        variable_primal   = [(x, 0.0)]
+    )
+end
+unittests["solve_zeroone_with_bounds_2"] = solve_zeroone_with_bounds_2
+
+function solve_zeroone_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x
+        maxobjective: 2.0x
+        c1: x in ZeroOne()
+        c2: x in Interval(0.2, 0.5)
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    end
+end
+unittests["solve_zeroone_with_bounds_3"] = solve_zeroone_with_bounds_3

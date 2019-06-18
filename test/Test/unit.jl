@@ -38,7 +38,10 @@ end
             "solve_integer_edge_cases",
             "solve_objbound_edge_cases",
             "raw_status_string",
-            "solve_time"
+            "solve_time",
+            "solve_zeroone_with_bounds_1",
+            "solve_zeroone_with_bounds_2",
+            "solve_zeroone_with_bounds_3"
             ])
         MOI.empty!(model)
     end
@@ -306,6 +309,26 @@ end
         MOIT.solve_time(mock, config)
     end
 
+    @testset "solve_zeroone_with_bounds_1" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(
+                    mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])
+                )
+            end,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(
+                    mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])
+                )
+            end,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(mock, MOI.INFEASIBLE)
+            end
+        )
+        MOIT.solve_zeroone_with_bounds_1(mock, config)
+        MOIT.solve_zeroone_with_bounds_2(mock, config)
+        MOIT.solve_zeroone_with_bounds_3(mock, config)
+    end
 end
 
 @testset "modifications" begin
