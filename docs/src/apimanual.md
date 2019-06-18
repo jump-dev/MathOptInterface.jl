@@ -1106,7 +1106,7 @@ MOI.Benchmarks.create_baseline(
     suite, "current"; directory = "/tmp", verbose = true
 )
 ```
-Use the `exclude` argument to [MathOptInterface.Benchmarks.suite`](@ref) to
+Use the `exclude` argument to [`Benchmarks.suite`](@ref) to
 exclude benchmarks that the solver doesn't support.
 
 Second, after making changes to the package, re-run the benchmark suite and
