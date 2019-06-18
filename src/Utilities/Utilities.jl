@@ -29,4 +29,6 @@ include("mockoptimizer.jl")
 include("cachingoptimizer.jl")
 include("universalfallback.jl")
 
+include("CleverDicts.jl")
+
 end # module
