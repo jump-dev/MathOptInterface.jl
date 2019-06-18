@@ -546,3 +546,14 @@ Utilities.load_variables
 Utilities.load
 Utilities.load_constraint
 ```
+
+## Benchmarks
+
+Functions to help benchmark the performance of solver wrappers. See
+[Benchmarking](@ref) for more details.
+
+```@docs
+Benchmarks.suite
+Benchmarks.create_baseline
+Benchmarks.compare_against_baseline
+```
