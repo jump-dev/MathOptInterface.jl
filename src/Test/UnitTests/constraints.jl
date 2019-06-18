@@ -311,7 +311,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConf
 end
 unittests["solve_affine_deletion_edge_cases"] = solve_affine_deletion_edge_cases
 
-function solve_zeroone_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
+function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     MOIU.loadfromstring!(model,"""
         variables: x
@@ -326,9 +326,9 @@ function solve_zeroone_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
         variable_primal   = [(x, 1.0)]
     )
 end
-unittests["solve_zeroone_with_bounds_1"] = solve_zeroone_with_bounds_1
+unittests["solve_zero_one_with_bounds_1"] = solve_zero_one_with_bounds_1
 
-function solve_zeroone_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
+function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     MOIU.loadfromstring!(model,"""
         variables: x
@@ -343,9 +343,9 @@ function solve_zeroone_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
         variable_primal   = [(x, 0.0)]
     )
 end
-unittests["solve_zeroone_with_bounds_2"] = solve_zeroone_with_bounds_2
+unittests["solve_zero_one_with_bounds_2"] = solve_zero_one_with_bounds_2
 
-function solve_zeroone_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
+function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     MOIU.loadfromstring!(model,"""
         variables: x
@@ -360,4 +360,4 @@ function solve_zeroone_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
     end
 end
-unittests["solve_zeroone_with_bounds_3"] = solve_zeroone_with_bounds_3
+unittests["solve_zero_one_with_bounds_3"] = solve_zero_one_with_bounds_3

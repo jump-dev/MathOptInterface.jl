@@ -39,9 +39,9 @@ end
             "solve_objbound_edge_cases",
             "raw_status_string",
             "solve_time",
-            "solve_zeroone_with_bounds_1",
-            "solve_zeroone_with_bounds_2",
-            "solve_zeroone_with_bounds_3"
+            "solve_zero_one_with_bounds_1",
+            "solve_zero_one_with_bounds_2",
+            "solve_zero_one_with_bounds_3"
             ])
         MOI.empty!(model)
     end
@@ -309,7 +309,7 @@ end
         MOIT.solve_time(mock, config)
     end
 
-    @testset "solve_zeroone_with_bounds" begin
+    @testset "solve_zero_one_with_bounds" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> begin
                 MOIU.mock_optimize!(
@@ -325,9 +325,9 @@ end
                 MOIU.mock_optimize!(mock, MOI.INFEASIBLE)
             end
         )
-        MOIT.solve_zeroone_with_bounds_1(mock, config)
-        MOIT.solve_zeroone_with_bounds_2(mock, config)
-        MOIT.solve_zeroone_with_bounds_3(mock, config)
+        MOIT.solve_zero_one_with_bounds_1(mock, config)
+        MOIT.solve_zero_one_with_bounds_2(mock, config)
+        MOIT.solve_zero_one_with_bounds_3(mock, config)
     end
 end
 
