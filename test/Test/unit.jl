@@ -309,7 +309,7 @@ end
         MOIT.solve_time(mock, config)
     end
 
-    @testset "solve_zeroone_with_bounds_1" begin
+    @testset "solve_zeroone_with_bounds" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> begin
                 MOIU.mock_optimize!(

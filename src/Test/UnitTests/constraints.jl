@@ -317,7 +317,8 @@ function solve_zeroone_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
         variables: x
         maxobjective: 2.0x
         c1: x in ZeroOne()
-        c2: x in Interval(0.0, 1.0)
+        c2: x >= 0.0
+        c3: x <= 1.0
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     test_model_solution(model, config;
@@ -333,7 +334,8 @@ function solve_zeroone_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
         variables: x
         maxobjective: 2.0x
         c1: x in ZeroOne()
-        c2: x in Interval(0.0, 0.5)
+        c2: x >= 0.0
+        c3: x <= 0.5
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     test_model_solution(model, config;
@@ -349,7 +351,8 @@ function solve_zeroone_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
         variables: x
         maxobjective: 2.0x
         c1: x in ZeroOne()
-        c2: x in Interval(0.2, 0.5)
+        c2: x >= 0.2
+        c3: x <= 0.5
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     if config.solve
