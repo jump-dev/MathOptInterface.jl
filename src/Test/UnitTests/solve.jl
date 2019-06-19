@@ -79,3 +79,19 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_objbound_edge_cases"] = solve_objbound_edge_cases
+
+function solve_unbounded_model(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 5)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0)
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
+    end
+end
+unittests["solve_unbounded_model"] = solve_unbounded_model

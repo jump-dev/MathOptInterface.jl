@@ -41,7 +41,8 @@ end
             "solve_time",
             "solve_zero_one_with_bounds_1",
             "solve_zero_one_with_bounds_2",
-            "solve_zero_one_with_bounds_3"
+            "solve_zero_one_with_bounds_3",
+            "solve_unbounded_model"
             ])
         MOI.empty!(model)
     end
@@ -328,6 +329,15 @@ end
         MOIT.solve_zero_one_with_bounds_1(mock, config)
         MOIT.solve_zero_one_with_bounds_2(mock, config)
         MOIT.solve_zero_one_with_bounds_3(mock, config)
+    end
+
+    @testset "solve_unbounded_model" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE)
+            end
+        )
+        MOIT.solve_unbounded_model(mock, config)
     end
 end
 
