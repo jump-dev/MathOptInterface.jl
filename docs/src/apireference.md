@@ -546,3 +546,14 @@ Utilities.load_variables
 Utilities.load
 Utilities.load_constraint
 ```
+
+### Caching optimizer
+
+Add some text here.
+
+```@docs
+Utilities.CachingOptimizer
+Utilities.attach_optimizer
+Utilities.reset_optimizer
+Utilities.drop_optimizer
+```
