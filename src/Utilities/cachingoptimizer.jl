@@ -13,8 +13,8 @@ construction and modification even when the optimizer doesn't.
 A `CachingOptimizer` may be in one of three possible states (`CachingOptimizerState`):
 
 - `NO_OPTIMIZER`: The CachingOptimizer does not have any optimizer.
-- `EMPTY_OPTIMIZER`: The CachingOptimizer an empty optimizer. The optimizer is not synchronized with the cached model.
-- `ATTACHED_OPTIMIZER`: The CachingOptimizer an optimizer, and it is synchronized with the cached model.
+- `EMPTY_OPTIMIZER`: The CachingOptimizer has an empty optimizer. The optimizer is not synchronized with the cached model.
+- `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is synchronized with the cached model.
 
 A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 

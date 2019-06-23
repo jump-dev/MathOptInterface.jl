@@ -549,11 +549,37 @@ Utilities.load_constraint
 
 ### Caching optimizer
 
-Add some text here.
+Some solvers do not support incremental definition of optimization
+models. Nevertheless, you are still able to build incrementally an optimization
+model with such solvers. MathOptInterface allows to use a utility,
+[`Utilities.CachingOptimizer`](@ref), that will store in a [`ModelLike`](@ref) `model_cache`
+the optimization model during its incremental definition. Once the
+model completely defined, the `CachingOptimizer` specifies all problem's
+information to the underlying solver, all in once.
+
+The way to operate a `CachingOptimizer` is as follow.
+1) Suppose you want to cache a (empty) [`AbstractOptimizer`](@ref) `optimizer`.
+2) Define a [`ModelLike`](@ref) `model_cache` that will store the incremental definition of the model.
+3) Cache `optimizer` with `model_cache` by calling `CachingOptimizer(model_cache, optimizer)`. This method returns an empty `AbstractOptimizer` `cached_optimizer`.
+4) Define your optimization model as usual by using `cached_optimizer` instead of `optimizer`. This will allocate the model directly to `model_cache` instead of `optimizer`. For instance, to add two variables in the model:
+```julia
+MOI.add_variables(cached_optimizer, 2)
+```
+5) Once the model properly defined, call [`Utilities.attach_optimizer`](@ref) to copy the optimization model all in once inside `optimizer`. This method uses the MathOptInterface method [`copy_to`](@ref) to copy information from `model_cache` to `optimizer`.
+
+Note that:
+- [`Utilities.drop_optimizer`](@ref) drops the underlying `optimizer` from `cached_optimizer`, without emptying it.
+- [`Utilities.reset_optimizer`](@ref) empties `optimizer` inside `cached_optimizer`, without droping it.
+
+Bridging correctly a solver with a `CachingOptimizer` requires to
+implement properly the [Allocate-Load API](@ref) inside the solver's
+MathOptInterface wrapper.
 
 ```@docs
 Utilities.CachingOptimizer
 Utilities.attach_optimizer
 Utilities.reset_optimizer
 Utilities.drop_optimizer
+Utilities.state
+Utilities.mode
 ```
