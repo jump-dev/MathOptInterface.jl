@@ -42,7 +42,7 @@ A type-safe wrapper for `Int64` for use in referencing elements added for
 attribute of type `AttrType`.
 """
 struct AttributeIndex{AttrType}
-    attr:AttrType
+    attr::AttrType
     value::Int64
 end
 
