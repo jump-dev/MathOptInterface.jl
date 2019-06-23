@@ -75,6 +75,24 @@ operation_name(err::SetAttributeNotAllowed) = "Setting attribute $(err.attr)"
 message(err::SetAttributeNotAllowed) = err.message
 
 """
+    struct AddAttributeNotAllowed{AttrType} <: NotAllowedError
+        attr::AttrType
+        message::String # Human-friendly explanation why the attribute cannot be set
+    end
+
+An error indicating that the attribute `attr` is supported (see
+[`supports`](@ref)) but cannot be added for some reason (see the error string).
+"""
+struct AddAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
+    attr::AttrType
+	message::String # Human-friendly explanation why the attribute cannot be set
+end
+AddAttributeNotAllowed(attr::AnyAttribute) = AddAttributeNotAllowed(attr, "")
+
+operation_name(err::AddAttributeNotAllowed) = "Adding attribute $(err.attr)"
+message(err::AddAttributeNotAllowed) = err.message
+
+"""
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the optimizer attribute
@@ -328,7 +346,65 @@ function throw_set_error_fallback(model::ModelLike,
 end
 
 """
-    ListOfOptimizerAttributesSet()
+    add(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute,
+        value)::AttributeIndex{typeof(attr)}
+
+Add `value` to the attribute `attr` of the optimizer `optimizer`.
+
+    add(model::ModelLike, attr::AbstractModelAttribute,
+        value)::AttributeIndex{typeof(attr)}
+
+Add `value` to the attribute `attr` of the model `model`.
+
+    add(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex,
+        value)::AttributeIndex{typeof(attr)}
+
+Add `value` to the attribute `attr` of variable `v` in model `model`.
+
+    add(model::ModelLike, attr::AbstractVariableAttribute,
+        v::Vector{VariableIndex},
+        vector_of_values)::Vector{AttributeIndex{typeof(attr)}}
+
+Add a value respectively to the attribute `attr` of each variable in the
+collection `v` in model `model`.
+
+    set(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex,
+        value)
+
+Add a value to the attribute `attr` of constraint `c` in model `model`.
+
+    set(model::ModelLike, attr::AbstractConstraintAttribute,
+        c::Vector{ConstraintIndex{F,S}}, vector_of_values)
+
+Add a value respectively to the attribute `attr` of each constraint in the
+collection `c` in model `model`.
+
+An [`UnsupportedAttribute`](@ref) error is thrown if `model` does not support
+the attribute `attr` (see [`supports`](@ref)) and a
+[`SetAttributeNotAllowed`](@ref) error is thrown if it supports the attribute
+`attr` but it cannot be set.
+""" # TODO add an example once we have an attribute which can be added, e.g. Lazy constraint
+function add end
+# See note with get
+function add(model::ModelLike,
+             attr::Union{AbstractVariableAttribute,
+                         AbstractConstraintAttribute},
+             idxs::Vector, vector_of_values::Vector)
+    if length(idxs) != length(vector_of_values)
+        throw(DimensionMismatch("Number of indices ($(length(idxs))) does " *
+                                "not match the number of values " *
+                                "($(length(vector_of_values))) added to `$attr`."))
+    end
+    return add.(model, attr, idxs, vector_of_values)
+end
+
+function add(model::ModelLike, attr::AnyAttribute, args...)
+    throw_set_error_fallback(model, attr, args...;
+                             error_if_supported = AddAttributeNotAllowed(attr))
+end
+
+"""
+    SettingSingleVariableFunctionNotAllowed()
 
 Error type that should be thrown when the user [`set`](@ref) the
 [`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.

@@ -35,10 +35,21 @@ end
 # https://github.com/JuliaLang/julia/issues/10208
 Base.hash(v::VariableIndex, h::UInt) = hash(v.value, h)
 
+"""
+    AttributeIndex{AttrType}
+
+A type-safe wrapper for `Int64` for use in referencing elements added for
+attribute of type `AttrType`.
+"""
+struct AttributeIndex{AttrType}
+    attr:AttrType
+    value::Int64
+end
+
 # No need to define isequal because the default matches our implementation of
 # hash.
 
-const Index = Union{ConstraintIndex,VariableIndex}
+const Index = Union{ConstraintIndex, VariableIndex, AttributeIndex}
 
 """
     struct InvalidIndex{IndexType<:Index} <: Exception
