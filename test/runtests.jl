@@ -37,5 +37,9 @@ end
     include("Bridges/Bridges.jl")
 end
 
+@testset "MOI.Benchmarks" begin
+    include("Benchmarks/Benchmarks.jl")
+end
+
 # Test hygiene of @model macro
 include("hygiene.jl")

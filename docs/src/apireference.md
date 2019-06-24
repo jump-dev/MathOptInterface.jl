@@ -583,3 +583,14 @@ Utilities.drop_optimizer
 Utilities.state
 Utilities.mode
 ```
+
+## Benchmarks
+
+Functions to help benchmark the performance of solver wrappers. See
+[Benchmarking](@ref) for more details.
+
+```@docs
+Benchmarks.suite
+Benchmarks.create_baseline
+Benchmarks.compare_against_baseline
+```
