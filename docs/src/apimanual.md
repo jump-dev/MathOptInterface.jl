@@ -844,18 +844,37 @@ details.
 
 #### Dual for convex problem with quadratic functions
 
-If ``Q`` is positive semidefinite, then the constraint ``x^TQx + a^Tx + b \le 0`` can be rewritten as an equivalent SOC constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
-We define the constraint value as ``x^TQx + a^Tx + b`` and the constraint dual as ``\lVert y \rVert_2 - s``.
-Note that these scalar values are always nonpositive for feasible solutions and that complementary slackness holds, i.e. their product is always zero for an optimal primal-dual pair (indeed if two vectors in the second order cone are orthogonal then they are either both on the boundary or one of them is zero).
+Given a program with quadratic functions:
+```math
+\begin{align*}
+& \min_{x \in \mathbb{R}^n} & \frac{1}{2}x^TQ_0x + a_0^T x + b_0
+\\
+& \;\;\text{s.t.} & \frac{1}{2}x^TQ_ix + a_i^T x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
+\end{align*}
+```
+Consider the Lagrangian function
+```math
+L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i (\frac{1}{2}x^TQ_ix + a_i^T x + b_i)
+```
+An pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
+* ``x^\star`` is a minimizer of
+  ```math
+  \min_{x \in \mathbb{R}^n} L(x, y^\star).
+  ```
+  That is,
+  ```math
+  0 = \nabla_x L(x, y^\star) = Q_0x + a_0 - \sum_{i = 1}^m y_i^\star (Q_ix + a_i).
+  ```
+* and ``y^\star`` is a maximizer of
+  ```math
+  \max_{y_i \in \mathcal{C}_i^*} L(x^\star, y).
+  ```
+  That is, for all ``i = 1, \ldots, m``, ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is
+  either zero or in the normal cone of ``\mathcal{C}_i^*`` at ``y^\star``.
+  For instance, if ``\mathcal{C}_i`` is ``MOI.LessThan(0.0)``, it means that
+  if ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is nonzero then ``\lambda_i = 0``,
+  this is the classical complementary slackness condition.
 
-Similarly, if ``Q`` is negative semidefinite, then the constraint ``x^TQx + a^Tx + b \ge 0`` can be rewritten as an equivalent SOC constraint ``\lVert Ax + b\rVert_2 \le c^Tx + d`` which has a dual variable ``(s, y)`` constrained to satisfy ``\lVert y \rVert_2 \leq s``.
-In this case, we define the constraint value as ``x^TQx + a^Tx + b`` and the constraint dual as ``s - \lVert y \rVert_2``.
-Note that these scalar values are always nonnegative for feasible solutions and that complementary slackness holds.
-
-If the objective is a minimization of a convex quadratic function or the maximization of a concave quadratic function then it can be transformed into a linear objective and a second order cone constraint.
-Therefore if the constraints are convex, their dual can be queried as usual.
-
-However, currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i`` that do not enter into one of the cases discussed in this question.
 
 ### Constraint bridges
 
