@@ -26,7 +26,7 @@ end
 suite(exclude = [r"delete"]) do
     Gurobi.Optimizer(OutputFlag=0)
 end
-````
+```
 """
 function suite(new_model::Function; exclude::Vector{Regex} = Regex[])
     group = BenchmarkGroup()
