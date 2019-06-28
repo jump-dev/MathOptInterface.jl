@@ -842,9 +842,9 @@ twice the value of the `coefficients` field in the `VectorAffineFunction` for
 the corresponding rows. See [`PositiveSemidefiniteConeTriangle`](@ref) for
 details.
 
-#### Dual for problem with quadratic functions
+#### Dual for problems with quadratic functions
 
-Given a program with quadratic functions:
+Given a problem with quadratic functions:
 ```math
 \begin{align*}
 & \min_{x \in \mathbb{R}^n} & \frac{1}{2}x^TQ_0x + a_0^T x + b_0
@@ -875,6 +875,9 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
   if ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is nonzero then ``\lambda_i = 0``,
   this is the classical complementary slackness condition.
 
+If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
+``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
+between `y_i` and the vector of scalar-valued quadratic functions.
 
 ### Constraint bridges
 
