@@ -831,9 +831,6 @@ and similarly, the dual is:
 
 An important note for the LP case is that the signs of the feasible duals depend only on the sense of the inequality and not on the objective sense.
 
-
-Currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i``.
-
 #### Duality and scalar product
 
 The scalar product is different from the canonical one for the sets
@@ -845,6 +842,42 @@ twice the value of the `coefficients` field in the `VectorAffineFunction` for
 the corresponding rows. See [`PositiveSemidefiniteConeTriangle`](@ref) for
 details.
 
+#### Dual for problems with quadratic functions
+
+Given a problem with quadratic functions:
+```math
+\begin{align*}
+& \min_{x \in \mathbb{R}^n} & \frac{1}{2}x^TQ_0x + a_0^T x + b_0
+\\
+& \;\;\text{s.t.} & \frac{1}{2}x^TQ_ix + a_i^T x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
+\end{align*}
+```
+Consider the Lagrangian function
+```math
+L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i (\frac{1}{2}x^TQ_ix + a_i^T x + b_i)
+```
+A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
+* ``x^\star`` is a minimizer of
+  ```math
+  \min_{x \in \mathbb{R}^n} L(x, y^\star).
+  ```
+  That is,
+  ```math
+  0 = \nabla_x L(x, y^\star) = Q_0x + a_0 - \sum_{i = 1}^m y_i^\star (Q_ix + a_i).
+  ```
+* and ``y^\star`` is a maximizer of
+  ```math
+  \max_{y_i \in \mathcal{C}_i^*} L(x^\star, y).
+  ```
+  That is, for all ``i = 1, \ldots, m``, ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is
+  either zero or in the normal cone of ``\mathcal{C}_i^*`` at ``y^\star``.
+  For instance, if ``\mathcal{C}_i`` is ``\{ x \in \mathbb{R} : x \le 0 \}``, it means that
+  if ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is nonzero then ``\lambda_i = 0``,
+  this is the classical complementary slackness condition.
+
+If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
+``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
+between `y_i` and the vector of scalar-valued quadratic functions.
 
 ### Constraint bridges
 
