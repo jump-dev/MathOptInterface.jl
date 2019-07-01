@@ -22,7 +22,6 @@ Use `exclude` to exclude a subset of benchmarks.
 suite() do
     GLPK.Optimizer()
 end
-
 suite(exclude = [r"delete"]) do
     Gurobi.Optimizer(OutputFlag=0)
 end
