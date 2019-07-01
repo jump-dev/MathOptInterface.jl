@@ -194,10 +194,44 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
     return output
 end
 
-# TODO
-#function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-#                 b::QuadtoSOCBridge)
-#end
+# Lemma: If (1, s, x), (v, u, y) in RotatedSecondOrderCone and
+#        (1, s, x) ⋅ (v, u, y) = 0, then we have
+#        y = -u*x, v = u*||x||_2^2/2.
+# Proof: We have
+#        (1, s, x) ⋅ (v, u, y) = v + s * u + x ⋅ y
+#        (Cauchy-Schwarz)      ≥ v + s * u - ||x||_2 * ||y||_2
+#        (RotatedSOC)          ≥ v + s * u - 2 * √(s * u * v)
+#        (AM-GM)               ≥ v + s * u - 2 * (v + s * u) / 2
+#                              = 0
+#        By assumption, the left-hand side is zero, hence all inequalities
+#        are equalities. By Cauchy-Schwarz, this means that ∃σ ≥ 0 such
+#        that `y = -σ*x`. By AM-GM, we have `v = s * u`.
+#        By RotatedSOC, we have either:
+#        1) `||y||_2^2 < 2 * u * v` and `||x||_2^2 = 2 * s = 0`: That implies
+#           that `v = 0 * u = 0` hence `||y||_2^2 < 0` which is impossible.
+#        2) `||x||_2^2 < 2 * s` and `||y||_2^2 = 2 * u * v = 0`: we have either:
+#           a) `u = 0`: hence `v = s * u = 0` or
+#           b) `v = 0`: since `s > 0`, `u = v / s = 0`.
+#           In any case, `y = 0` and `u = v = 0` hence the statement holds.
+#        3) `||x||_2^2 = 2 * s` and `||y||_2^2 = 2 * u * v`: we have
+#           `σ^2 * ||x||_2^2 = ||y||_2^2 = 2 * u * v = 2 * u^2 * s` hence
+#           `u = σ`. It follows that at `v = s * u = σ * ||x||_2^2/2`.         □
+#
+# It follows from the Lemma that
+# (1, s, x) ⋅ (v, u, y) = u * (1, s, x) ⋅ (||x||_2^2/2, 1, -x)
+#                       = u * (||x||_2^2/2 + s - ||x||_2^2)
+#                       = u * (-||x||_2^2/2 + s)
+# Given a constraint `z^T Q z/2 + a^T z + b ≤ 0` that was transformed,
+# where Q = U^T * U$, we have `x = U * z` and `s = -a^T z - b` hence, we have
+#                       = -u * (z^T Q z/2 + a^T z + b)
+# So the dual of the quadratic constraint is `-u`, so that the contribution
+# to the lagrangian function of both the quadratic and RotatedSOC formulation
+# is exactly the same. Q.E.D.
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
+                 bridge::QuadtoSOCBridge)
+    λ = MOI.get(model, attr, bridge.soc)[2]
+    return bridge.less_than ? -λ : λ
+end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
                  b::QuadtoSOCBridge{T}) where T

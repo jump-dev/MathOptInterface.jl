@@ -62,13 +62,14 @@ config = MOIT.TestConfig()
     end
     @testset "QCP tests" begin
         MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4], MOI.FEASIBLE_POINT))
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4],
+                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)  => [zeros(2)],
+                (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)  => [[0.25, 1.0, -1/√2]]))
         MOIT.qcp1test(bridged_mock, config)
         MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2],
+                (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)  => [[1/√2, 1/(2 * √2), -1/√2]]))
         MOIT.qcp2test(bridged_mock, config)
-        MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2], MOI.FEASIBLE_POINT))
         MOIT.qcp3test(bridged_mock, config)
         @testset "Bridge deletion" begin
             ci = first(MOI.get(bridged_mock,
@@ -77,7 +78,8 @@ config = MOIT.TestConfig()
             test_delete_bridge(bridged_mock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),))
         end
         MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0], MOI.FEASIBLE_POINT))
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0],
+                (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)  => [[1.0, 1/3, -1/√2, -1/√6]]))
         MOIT.qcp4test(bridged_mock, config)
         MOIT.qcp5test(bridged_mock, config)
     end
