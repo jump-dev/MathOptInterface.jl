@@ -554,26 +554,44 @@ models. Nevertheless, you are still able to build incrementally an optimization
 model with such solvers. MathOptInterface allows to use a utility,
 [`Utilities.CachingOptimizer`](@ref), that will store in a [`ModelLike`](@ref) `model_cache`
 the optimization model during its incremental definition. Once the
-model completely defined, the `CachingOptimizer` specifies all problem's
+model is completely defined, the `CachingOptimizer` specifies all problem's
 information to the underlying solver, all in once.
 
-The way to operate a `CachingOptimizer` is as follow.
-1) Suppose you want to cache a (empty) [`AbstractOptimizer`](@ref) `optimizer`.
-2) Define a [`ModelLike`](@ref) `model_cache` that will store the incremental definition of the model.
-3) Cache `optimizer` with `model_cache` by calling `CachingOptimizer(model_cache, optimizer)`. This method returns an empty `AbstractOptimizer` `cached_optimizer`.
-4) Define your optimization model as usual by using `cached_optimizer` instead of `optimizer`. This will allocate the model directly to `model_cache` instead of `optimizer`. For instance, to add two variables in the model:
-```julia
-MOI.add_variables(cached_optimizer, 2)
-```
-5) Once the model properly defined, call [`Utilities.attach_optimizer`](@ref) to copy the optimization model all in once inside `optimizer`. This method uses the MathOptInterface method [`copy_to`](@ref) to copy information from `model_cache` to `optimizer`.
+The function [`Utilities.state`](@ref) allows to query the state
+of the optimizer cached inside a `CachingOptimizer`. The state
+could be:
+* `NO_OPTIMIZER`, if no optimizer is attached;
+* `EMPTY_OPTIMIZER`, if the attached optimizer is empty;
+* `ATTACHED_OPTIMIZER`, if the attached optimizer is synchronized with the
+  cached model defined in `CachingOptimizer`.
 
-Note that:
-- [`Utilities.drop_optimizer`](@ref) drops the underlying `optimizer` from `cached_optimizer`, without emptying it.
-- [`Utilities.reset_optimizer`](@ref) empties `optimizer` inside `cached_optimizer`, without droping it.
+Note that there exists methods to modify the attached optimizer:
+* [`Utilities.attach_optimizer`](@ref) attachs a new `optimizer`
+  to a `cached_optimizer` with state `EMPTY_OPTIMIZER`.
+  The state of `cached_optimizer` is set to `ATTACHED_OPTIMIZER` after the call.
+* [`Utilities.drop_optimizer`](@ref) drops the underlying `optimizer`
+  from `cached_optimizer`, without emptying it. The state of `cached_optimizer`
+  is set to `NO_OPTIMIZER` after the call.
+* [`Utilities.reset_optimizer`](@ref) empties `optimizer` inside
+  `cached_optimizer`, without droping it. The state of `cached_optimizer`
+  is set to `EMPTY_OPTIMIZER` after the call.
 
-Bridging correctly a solver with a `CachingOptimizer` requires to
-implement properly the [Allocate-Load API](@ref) inside the solver's
-MathOptInterface wrapper.
+The way to operate a `CachingOptimizer` depends whether the mode
+is set to `AUTOMATIC` or to `MANUAL`.
+* In `MANUAL` mode, the state of the `CachingOptimizer` changes only
+  if the methods [`Utilities.attach_optimizer`](@ref),
+  [`Utilities.reset_optimizer`](@ref) or [`Utilities.drop_optimizer`](@ref)
+  are being called.  Any unattended operation results in an error.
+* In `AUTOMATIC` mode, the state of the `CachingOptimizer` changes when
+  necessary. Any modification not supported by the solver (e.g. dropping
+  a constraint) results in a drop to the state `EMPTY_OPTIMIZER`.
+
+Wrapping correctly a solver with a `CachingOptimizer` requires to
+implement properly the [Allocate-Load API](@ref) inside the
+MathOptInterface wrapper of the solver.
+Note that bridges do not yet implement the Allocate-Load API. A `CachingOptimizer`
+is required if you are using a bridged solver and want to use the
+Allocate-Load API, as explained in the section [Implementing copy](@ref).
 
 ```@docs
 Utilities.CachingOptimizer
