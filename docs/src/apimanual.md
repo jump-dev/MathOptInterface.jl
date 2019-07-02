@@ -919,9 +919,9 @@ MOI.set(model, MyPackage.PrintLevel(), 0)
 ### Implementing copy
 
 Avoid storing extra copies of the problem when possible. This means that solver
-wrappers should not use `CachingOptimizer` as part of the wrapper. Instead, do
-one of the following to load the problem (assuming the solver wrapper type is
-called `Optimizer`):
+wrappers should not use [`Utilities.CachingOptimizer`](@ref) as part of the wrapper.
+Instead, do one of the following to load the problem (assuming the solver
+wrapper type is called `Optimizer`):
 
 * If the solver supports loading the problem incrementally, implement
   [`add_variable`](@ref), [`add_constraint`](@ref) for supported constraints and

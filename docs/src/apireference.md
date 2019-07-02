@@ -581,17 +581,14 @@ is set to `AUTOMATIC` or to `MANUAL`.
 * In `MANUAL` mode, the state of the `CachingOptimizer` changes only
   if the methods [`Utilities.attach_optimizer`](@ref),
   [`Utilities.reset_optimizer`](@ref) or [`Utilities.drop_optimizer`](@ref)
-  are being called.  Any unattended operation results in an error.
+  are being called. Any unattended operation results in an error.
 * In `AUTOMATIC` mode, the state of the `CachingOptimizer` changes when
   necessary. Any modification not supported by the solver (e.g. dropping
   a constraint) results in a drop to the state `EMPTY_OPTIMIZER`.
 
-Wrapping correctly a solver with a `CachingOptimizer` requires to
-implement properly the [Allocate-Load API](@ref) inside the
-MathOptInterface wrapper of the solver.
-Note that bridges do not yet implement the Allocate-Load API. A `CachingOptimizer`
-is required if you are using a bridged solver and want to use the
-Allocate-Load API, as explained in the section [Implementing copy](@ref).
+When calling [`Utilities.attach_optimizer`](@ref), the `CachingOptimizer` copies
+the cached model to the optimizer with [`MathOptInterface.copy_to`](@ref).
+We refer to [Implementing copy](@ref) for more details.
 
 ```@docs
 Utilities.CachingOptimizer
