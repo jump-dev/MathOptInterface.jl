@@ -36,20 +36,20 @@ end
 Base.hash(v::VariableIndex, h::UInt) = hash(v.value, h)
 
 """
-    AttributeIndex{AttrType}
+    SubmittedIndex{SubmitType}
 
-A type-safe wrapper for `Int64` for use in referencing elements added for
-attribute of type `AttrType`.
+A type-safe wrapper for `Int64` for use in referencing elements submitted for
+submittable of type `SubmitType`.
 """
-struct AttributeIndex{AttrType}
-    attr::AttrType
+struct SubmittedIndex{SubmitType}
+    attr::SubmitType
     value::Int64
 end
 
 # No need to define isequal because the default matches our implementation of
 # hash.
 
-const Index = Union{ConstraintIndex, VariableIndex, AttributeIndex}
+const Index = Union{ConstraintIndex, VariableIndex, SubmittedIndex}
 
 """
     struct InvalidIndex{IndexType<:Index} <: Exception

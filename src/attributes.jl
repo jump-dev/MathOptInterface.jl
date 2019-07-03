@@ -75,24 +75,53 @@ operation_name(err::SetAttributeNotAllowed) = "Setting attribute $(err.attr)"
 message(err::SetAttributeNotAllowed) = err.message
 
 """
-    struct AddAttributeNotAllowed{AttrType} <: NotAllowedError
-        attr::AttrType
+    AbstractSubmittable
+
+Abstract supertype for objects that can be submitted to the model.
+"""
+abstract type AbstractSubmittable end
+
+# This allows to use submittable in broadcast calls without the need to embed
+# it in a `Ref`.
+Base.broadcastable(sub::AbstractSubmittable) = Ref(sub)
+
+"""
+    struct UnsupportedSubmittable{SubmitType} <: UnsupportedError
+        sub::SubmitType
+        message::String
+    end
+
+An error indicating that the submittable `sub` is not supported by the model,
+i.e. that [`supports`](@ref) returns `false`.
+"""
+struct UnsupportedSubmittable{SubmitType<:AbstractSubmittable} <: UnsupportedError
+    sub::SubmitType
+    message::String
+end
+
+"""
+    struct SubmitNotAllowed{SubmitTyp<:AbstractSubmittable} <: NotAllowedError
+        sub::SubmitType
         message::String # Human-friendly explanation why the attribute cannot be set
     end
 
-An error indicating that the attribute `attr` is supported (see
+An error indicating that the submittable `sub` is supported (see
 [`supports`](@ref)) but cannot be added for some reason (see the error string).
 """
-struct AddAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
-    attr::AttrType
-	message::String # Human-friendly explanation why the attribute cannot be set
+struct SubmitNotAllowed{SubmitType<:AbstractSubmittable} <: NotAllowedError
+    sub::SubmitType
+    message::String # Human-friendly explanation why the attribute cannot be set
 end
-AddAttributeNotAllowed(attr::AnyAttribute) = AddAttributeNotAllowed(attr, "")
+SubmitNotAllowed(sub::AbstractSubmittable) = SubmitNotAllowed(sub, "")
 
-operation_name(err::AddAttributeNotAllowed) = "Adding attribute $(err.attr)"
-message(err::AddAttributeNotAllowed) = err.message
+operation_name(err::SubmitNotAllowed) = "Submitting $(err.sub)"
+message(err::SubmitNotAllowed) = err.message
 
 """
+    supports(model::ModelLike, sub::AbstractSubmittable)::Bool
+
+Return a `Bool` indicating whether `model` supports the submittable `sub`.
+
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the optimizer attribute
@@ -120,7 +149,7 @@ Return a `Bool` indicating whether `model` supports the constraint attribute
 `copy_to(model, src)` cannot be performed in case `attr` is in the
 [`ListOfConstraintAttributesSet`](@ref) of `src`.
 
-For all four methods, if the attribute is only not supported in specific
+For all five methods, if the attribute is only not supported in specific
 circumstances, it should still return `true`.
 
 Note that `supports` is only defined for attributes for which
@@ -128,6 +157,7 @@ Note that `supports` is only defined for attributes for which
 list of attributes set obtained by `ListOf...AttributesSet`.
 """
 function supports end
+supports(::ModelLike, ::AbstractSubmittable) = false
 function supports(::ModelLike, attr::Union{AbstractModelAttribute,
                                            AbstractOptimizerAttribute})
     if !is_copyable(attr)
@@ -346,61 +376,22 @@ function throw_set_error_fallback(model::ModelLike,
 end
 
 """
-    add(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute,
-        value)::AttributeIndex{typeof(attr)}
+    submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
+           value)::Union{Nothing, SubmittedIndex{typeof(sub)}}
 
-Add `value` to the attribute `attr` of the optimizer `optimizer`.
+Submit `value` to the submittable `sub` of the optimizer `optimizer`.
 
-    add(model::ModelLike, attr::AbstractModelAttribute,
-        value)::AttributeIndex{typeof(attr)}
-
-Add `value` to the attribute `attr` of the model `model`.
-
-    add(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex,
-        value)::AttributeIndex{typeof(attr)}
-
-Add `value` to the attribute `attr` of variable `v` in model `model`.
-
-    add(model::ModelLike, attr::AbstractVariableAttribute,
-        v::Vector{VariableIndex},
-        vector_of_values)::Vector{AttributeIndex{typeof(attr)}}
-
-Add a value respectively to the attribute `attr` of each variable in the
-collection `v` in model `model`.
-
-    set(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex,
-        value)
-
-Add a value to the attribute `attr` of constraint `c` in model `model`.
-
-    set(model::ModelLike, attr::AbstractConstraintAttribute,
-        c::Vector{ConstraintIndex{F,S}}, vector_of_values)
-
-Add a value respectively to the attribute `attr` of each constraint in the
-collection `c` in model `model`.
-
-An [`UnsupportedAttribute`](@ref) error is thrown if `model` does not support
-the attribute `attr` (see [`supports`](@ref)) and a
-[`SetAttributeNotAllowed`](@ref) error is thrown if it supports the attribute
-`attr` but it cannot be set.
-""" # TODO add an example once we have an attribute which can be added, e.g. Lazy constraint
-function add end
-# See note with get
-function add(model::ModelLike,
-             attr::Union{AbstractVariableAttribute,
-                         AbstractConstraintAttribute},
-             idxs::Vector, vector_of_values::Vector)
-    if length(idxs) != length(vector_of_values)
-        throw(DimensionMismatch("Number of indices ($(length(idxs))) does " *
-                                "not match the number of values " *
-                                "($(length(vector_of_values))) added to `$attr`."))
+An [`UnsupportedSubmittable`](@ref) error is thrown if `model` does not support
+the attribute `attr` (see [`supports`](@ref)) and a [`SubmitNotAllowed`](@ref)
+error is thrown if it supports the submittable `sub` but it cannot be submitted.
+""" # TODO add an example once we have an attribute which can be submitted, e.g. Lazy constraint
+function submit end
+function submit(model::ModelLike, sub::AbstractSubmittable, args...)
+    if supports(model, sub)
+        throw(SubmitNotAllowed(sub))
+    else
+        throw(UnsupportedSubmittable(sub))
     end
-    return add.(model, attr, idxs, vector_of_values)
-end
-
-function add(model::ModelLike, attr::AnyAttribute, args...)
-    throw_set_error_fallback(model, attr, args...;
-                             error_if_supported = AddAttributeNotAllowed(attr))
 end
 
 """
