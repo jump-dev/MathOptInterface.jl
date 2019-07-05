@@ -52,8 +52,6 @@ end
 
 struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 
-include("../model.jl")
-
 # A few constraint types are supported to test both the fallback and the
 # delegation to the internal model
 @MOIU.model(ModelForUniversalFallback,
@@ -78,14 +76,14 @@ model = ModelForUniversalFallback{Float64}()
 uf = MOIU.UniversalFallback(model)
 @test MOI.is_empty(uf)
 @testset "Copy Test" begin
-    MOIT.copytest(uf, Model{Float64}())
+    MOIT.copytest(uf, MOIU.Model{Float64}())
     @test !MOI.is_empty(uf)
     MOI.empty!(uf)
     @test MOI.is_empty(uf)
 end
 @testset "Start Values Test" begin
-    src = MOIU.UniversalFallback(Model{Float64}())
-    dest = MOIU.UniversalFallback(Model{Float64}())
+    src = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    dest = MOIU.UniversalFallback(MOIU.Model{Float64}())
     MOIT.start_values_test(dest, src)
 end
 @testset "Valid Test" begin

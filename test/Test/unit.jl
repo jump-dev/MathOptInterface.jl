@@ -4,21 +4,20 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-include("../model.jl")
-
 @testset "Basic Constraint Tests" begin
-    mock   = MOIU.MockOptimizer(Model{Float64}())
+    mock   = MOIU.MockOptimizer(MOIU.Model{Float64}())
     config = MOIT.TestConfig()
     MOIT.basic_constraint_tests(mock, config)
 end
 
 @testset "Unit Tests" begin
     # `UniversalFallback` needed for `MOI.Silent`
-    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(Model{Float64}()))
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOI.set(mock, MOI.Silent(), true)
     config = MOIT.TestConfig()
-    for model in [mock, MOIU.CachingOptimizer(MOIU.UniversalFallback(Model{Float64}()),
-                                              mock)]
+    for model in [mock,
+                  MOIU.CachingOptimizer(MOIU.UniversalFallback(
+                                          MOIU.Model{Float64}()), mock)]
         MOIT.unittest(model, config, [
             "solve_blank_obj",
             "solve_constant_obj",
@@ -343,7 +342,7 @@ end
 
 @testset "modifications" begin
     # `UniversalFallback` needed for `MOI.Silent`
-    mock   = MOIU.MockOptimizer(MOIU.UniversalFallback(Model{Float64}()))
+    mock   = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     config = MOIT.TestConfig()
     @testset "solve_set_singlevariable_lessthan" begin
         MOIU.set_mock_optimize!(mock,

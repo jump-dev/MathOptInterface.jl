@@ -3,24 +3,18 @@ using MathOptInterface, Test
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-MOIU.@model(
-    BenchmarkModel,
-    (), (MOI.LessThan, ), (), (),
-    (), (MOI.ScalarAffineFunction, ), (), ()
-)
-
 const NUM_BENCHMARKS = length(MOI.Benchmarks.BENCHMARKS)
 
 @testset "suite" begin
     suite = MOI.Benchmarks.suite() do
-        MOIU.MockOptimizer(BenchmarkModel{Float64}())
+        MOIU.MockOptimizer(MOIU.Model{Float64}())
     end
     @test length(suite.data) == NUM_BENCHMARKS
 
     suite = MOI.Benchmarks.suite(
         exclude = [r"delete_"]
     ) do
-        MOIU.MockOptimizer(BenchmarkModel{Float64}())
+        MOIU.MockOptimizer(MOIU.Model{Float64}())
     end
     # Note: update this value whenever more benchmarks are added to
     # `src/Benchmarks/Benchmarks.jl`.
@@ -34,7 +28,7 @@ end
     @test !isfile(baseline)
     @testset "create_baseline" begin
         suite = MOI.Benchmarks.suite() do
-            MOIU.MockOptimizer(BenchmarkModel{Float64}())
+            MOIU.MockOptimizer(MOIU.Model{Float64}())
         end
         MOI.Benchmarks.create_baseline(
             suite, "baseline"; directory=@__DIR__, seconds = 2, verbose = true
@@ -44,7 +38,7 @@ end
     @test isfile(baseline)
     @testset "compare_against_baseline" begin
         suite = MOI.Benchmarks.suite() do
-            MOIU.MockOptimizer(BenchmarkModel{Float64}())
+            MOIU.MockOptimizer(MOIU.Model{Float64}())
         end
         MOI.Benchmarks.compare_against_baseline(
             suite, "baseline"; directory=@__DIR__, seconds = 2, verbose = true
