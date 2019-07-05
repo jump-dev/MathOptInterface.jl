@@ -418,8 +418,6 @@ For advanced use cases that need efficient support for functions and sets
 defined outside of MOI (but still known at compile time), we provide the
 [`Utilities.@model`](@ref) macro.
 
-
-
 ```@docs
 Utilities.Model
 Utilities.UniversalFallback
