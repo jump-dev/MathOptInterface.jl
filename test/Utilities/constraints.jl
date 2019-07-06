@@ -2,10 +2,8 @@ using Test
 import MathOptInterface
 const MOI = MathOptInterface
 
-include("../model.jl")
-
 @testset "Scalar" begin
-    model = Model{Float64}()
+    model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)
     @testset "SingleVariable" begin
         f = MOI.SingleVariable(x)

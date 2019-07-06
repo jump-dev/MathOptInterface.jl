@@ -4,25 +4,23 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-include("../model_for_mock.jl")
-
 @testset "Default objective sense" begin
-    MOIT.default_objective_test(MOIU.MockOptimizer(ModelForMock{Float64}()))
+    MOIT.default_objective_test(MOIU.MockOptimizer(MOIU.Model{Float64}()))
 end
 
 @testset "Default statuses" begin
-    model = MOIU.MockOptimizer(ModelForMock{Float64}())
+    model = MOIU.MockOptimizer(MOIU.Model{Float64}())
     MOIT.default_status_test(model)
     MOI.empty!(model)
     MOIT.default_status_test(model)
 end
 
 @testset "Name test" begin
-    MOIT.nametest(MOIU.MockOptimizer(ModelForMock{Float64}()))
+    MOIT.nametest(MOIU.MockOptimizer(MOIU.Model{Float64}()))
 end
 
 @testset "Optimizer attributes" begin
-    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
+    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
     @test MOI.supports(optimizer, MOIU.MockModelAttribute())
     MOI.set(optimizer, MOIU.MockModelAttribute(), 10)
     @test MOI.get(optimizer, MOIU.MockModelAttribute()) == 10
@@ -44,7 +42,7 @@ end
 end
 
 @testset "Optimizer solve no result" begin
-    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}())
+    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
 
     v1 = MOI.add_variable(optimizer)
 
@@ -56,7 +54,7 @@ end
 end
 
 @testset "Optimizer solve with result" begin
-    optimizer = MOIU.MockOptimizer(ModelForMock{Float64}(),
+    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}(),
                                    eval_objective_value=false,
                                    eval_variable_constraint_dual=false)
 

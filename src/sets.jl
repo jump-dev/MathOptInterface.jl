@@ -1,5 +1,7 @@
 # Sets
 
+# Note: When adding a new set, also add it to Utilities.Model.
+
 """
     AbstractSet
 

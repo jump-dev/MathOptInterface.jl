@@ -690,6 +690,8 @@ _getCV(s::SymbolFun) = :($(s.cname){T, $(_getC(s))}())
 _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
 _broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
 
+# This macro is for expert/internal use only. Prefer the concrete Model type
+# instantiated below.
 """
     macro model(model_name, scalar_sets, typed_scalar_sets, vector_sets, typed_vector_sets, scalar_functions, typed_scalar_functions, vector_functions, typed_vector_functions)
 
@@ -934,3 +936,36 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
     end
     return code
 end
+
+const LessThanIndicatorSetOne{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{T}}
+const LessThanIndicatorSetZero{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.LessThan{T}}
+
+@model(Model,
+       (MOI.ZeroOne, MOI.Integer),
+       (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
+        MOI.Semicontinuous, MOI.Semiinteger),
+       (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
+        MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
+        MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
+        MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
+        MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
+        MOI.LogDetConeSquare),
+       (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2,
+        LessThanIndicatorSetOne, LessThanIndicatorSetZero),
+       (),
+       (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+       (MOI.VectorOfVariables,),
+       (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+
+@doc raw"""
+
+An implementation of `ModelLike` that supports all functions and sets defined
+in MOI. It is parameterized by the coefficient type.
+
+# Examples
+```jl
+model = Model{Float64}()
+x = add_variable(model)
+```
+"""
+Model

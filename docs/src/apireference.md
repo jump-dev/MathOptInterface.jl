@@ -406,20 +406,22 @@ DeleteNotAllowed
 
 ## Models
 
-MOI is designed to be extensible, so there is no fixed list of possible
-functions and sets. This makes it challenging to define efficient storage
-representations for MOI models. For cases where the functions and sets of
-interest are known in advance (for example, solvers support a fixed list of
-functions and sets), we provide the [`Utilities.@model`](@ref) that macro
-defines a [`ModelLike`](@ref) given a list of functions and sets to support.
+[`Utilities.Model`](@ref) provides an implementation of a [`ModelLike`](@ref)
+that efficiently supports all functions and sets defined within MOI. However,
+given the extensibility of MOI, this might not over all use cases.
 
 [`Utilities.UniversalFallback`](@ref) is a layer that sits on top of any
 `ModelLike` and provides non-specialized (slower) fallbacks for constraints and
 attributes that the underlying `ModeLike` does not support.
 
+For advanced use cases that need efficient support for functions and sets
+defined outside of MOI (but still known at compile time), we provide the
+[`Utilities.@model`](@ref) macro.
+
 ```@docs
-Utilities.@model
+Utilities.Model
 Utilities.UniversalFallback
+Utilities.@model
 ```
 
 ## Bridges

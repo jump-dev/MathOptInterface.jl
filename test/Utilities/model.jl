@@ -36,8 +36,6 @@ end
         MOI.ConstraintIndex{TestExternalModel.NewFunction, MOI.ZeroOne}
 end
 
-include("../model.jl")
-
 @testset "Setting lower/upper bound twice" begin
     @testset "flag_to_set_type" begin
         err = ErrorException("Invalid flag `0x11`.")
@@ -47,47 +45,47 @@ include("../model.jl")
         @test MOIU.flag_to_set_type(0x20, T) == MOI.ZeroOne
     end
     @testset "$T" for T in [Int, Float64]
-        model = Model{T}()
+        model = MOIU.Model{T}()
         MOIT.set_lower_bound_twice(model, T)
         MOIT.set_upper_bound_twice(model, T)
     end
 end
 
 @testset "Name test" begin
-    MOIT.nametest(Model{Float64}())
+    MOIT.nametest(MOIU.Model{Float64}())
 end
 
 @testset "Valid test" begin
-    MOIT.validtest(Model{Float64}())
+    MOIT.validtest(MOIU.Model{Float64}())
 end
 
 @testset "Empty test" begin
-    MOIT.emptytest(Model{Float64}())
+    MOIT.emptytest(MOIU.Model{Float64}())
 end
 
 @testset "supports_constraint test" begin
-    MOIT.supports_constrainttest(Model{Float64}(), Float64, Int)
-    MOIT.supports_constrainttest(Model{Int}(), Int, Float64)
+    MOIT.supports_constrainttest(MOIU.Model{Float64}(), Float64, Int)
+    MOIT.supports_constrainttest(MOIU.Model{Int}(), Int, Float64)
 end
 
 @testset "OrderedIndices" begin
-    MOIT.orderedindicestest(Model{Float64}())
+    MOIT.orderedindicestest(MOIU.Model{Float64}())
 end
 
 @testset "Continuous Linear tests" begin
     config = MOIT.TestConfig(solve=false)
     exclude = ["partial_start"] # Model doesn't support VariablePrimalStart.
-    MOIT.contlineartest(Model{Float64}(), config, exclude)
+    MOIT.contlineartest(MOIU.Model{Float64}(), config, exclude)
 end
 
 @testset "Continuous Conic tests" begin
     config = MOIT.TestConfig(solve=false)
-    MOIT.contconictest(Model{Float64}(), config)
+    MOIT.contconictest(MOIU.Model{Float64}(), config)
 end
 
 @testset "Quadratic functions" begin
 
-    model = Model{Int}()
+    model = MOIU.Model{Int}()
 
     x, y = MOI.add_variables(model, 2)
     @test 2 == @inferred MOI.get(model, MOI.NumberOfVariables())
@@ -183,7 +181,7 @@ end
 struct SetNotSupportedBySolvers <: MOI.AbstractSet end
 @testset "Default fallbacks" begin
     @testset "set" begin
-        model = Model{Float64}()
+        model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
         c = MOI.add_constraint(model, func, MOI.LessThan(0.0))

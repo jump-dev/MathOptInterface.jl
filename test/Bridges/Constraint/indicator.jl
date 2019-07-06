@@ -8,8 +8,6 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-include("../../model.jl")
-
 @testset "Indicator" begin
     # linear problem with indicator constraint
     # similar to indicator1_test with reversed z1
@@ -18,7 +16,7 @@ include("../../model.jl")
     #      z1 == 0 ==> x2 <= 8
     #      z2 == 1 ==> x2 + x1/5 <= 9
     #      (1-z1) + z2 >= 1 <=> z2 - z1 >= 0
-    model = MOIU.MockOptimizer(Model{Float64}());
+    model = MOIU.MockOptimizer(MOIU.Model{Float64}());
     config = MOIT.TestConfig()
 
     x1 = MOI.add_variable(model)
