@@ -551,11 +551,11 @@ Utilities.load_constraint
 
 Some solvers do not support incremental definition of optimization
 models. Nevertheless, you are still able to build incrementally an optimization
-model with such solvers. MathOptInterface allows to use a utility,
-[`Utilities.CachingOptimizer`](@ref), that will store in a [`ModelLike`](@ref) `model_cache`
+model with such solvers. MathOptInterface provides a utility,
+[`Utilities.CachingOptimizer`](@ref), that will store in a [`ModelLike`](@ref)
 the optimization model during its incremental definition. Once the
-model is completely defined, the `CachingOptimizer` specifies all problem's
-information to the underlying solver, all in once.
+model is completely defined, the `CachingOptimizer` specifies all problem
+information to the underlying solver, all at once.
 
 The function [`Utilities.state`](@ref) allows to query the state
 of the optimizer cached inside a `CachingOptimizer`. The state
@@ -565,7 +565,7 @@ could be:
 * `ATTACHED_OPTIMIZER`, if the attached optimizer is synchronized with the
   cached model defined in `CachingOptimizer`.
 
-Note that there exists methods to modify the attached optimizer:
+The following methods modify the state of the attached optimizer:
 * [`Utilities.attach_optimizer`](@ref) attachs a new `optimizer`
   to a `cached_optimizer` with state `EMPTY_OPTIMIZER`.
   The state of `cached_optimizer` is set to `ATTACHED_OPTIMIZER` after the call.
