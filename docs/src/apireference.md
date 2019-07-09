@@ -44,10 +44,14 @@ set
 supports
 ```
 
-## Submit
+### Submit
 
-Objects may be submitted using [`submit`](@ref).
-Note that this is currently no supported by [`Utilities.Cac
+Objects may be submitted to an optimizer using [`submit`](@ref).
+```@docs
+AbstractSubmittable
+submit
+```
+
 
 ## Model Interface
 
@@ -407,6 +411,8 @@ AddConstraintNotAllowed
 ModifyConstraintNotAllowed
 ModifyObjectiveNotAllowed
 DeleteNotAllowed
+UnsupportedSubmittable
+SubmitNotAllowed
 ```
 
 ## Models
