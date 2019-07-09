@@ -377,7 +377,7 @@ end
 
 """
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
-           value)::Union{Nothing, SubmittedIndex{typeof(sub)}}
+           value)::Nothing
 
 Submit `value` to the submittable `sub` of the optimizer `optimizer`.
 
