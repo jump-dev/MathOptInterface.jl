@@ -44,6 +44,11 @@ set
 supports
 ```
 
+## Submit
+
+Objects may be submitted using [`submit`](@ref).
+Note that this is currently no supported by [`Utilities.Cac
+
 ## Model Interface
 
 ```@docs
