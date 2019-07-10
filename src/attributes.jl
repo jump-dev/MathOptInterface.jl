@@ -75,6 +75,53 @@ operation_name(err::SetAttributeNotAllowed) = "Setting attribute $(err.attr)"
 message(err::SetAttributeNotAllowed) = err.message
 
 """
+    AbstractSubmittable
+
+Abstract supertype for objects that can be submitted to the model.
+"""
+abstract type AbstractSubmittable end
+
+# This allows to use submittable in broadcast calls without the need to embed
+# it in a `Ref`.
+Base.broadcastable(sub::AbstractSubmittable) = Ref(sub)
+
+"""
+    struct UnsupportedSubmittable{SubmitType} <: UnsupportedError
+        sub::SubmitType
+        message::String
+    end
+
+An error indicating that the submittable `sub` is not supported by the model,
+i.e. that [`supports`](@ref) returns `false`.
+"""
+struct UnsupportedSubmittable{SubmitType<:AbstractSubmittable} <: UnsupportedError
+    sub::SubmitType
+    message::String
+end
+
+"""
+    struct SubmitNotAllowed{SubmitTyp<:AbstractSubmittable} <: NotAllowedError
+        sub::SubmitType
+        message::String # Human-friendly explanation why the attribute cannot be set
+    end
+
+An error indicating that the submittable `sub` is supported (see
+[`supports`](@ref)) but cannot be added for some reason (see the error string).
+"""
+struct SubmitNotAllowed{SubmitType<:AbstractSubmittable} <: NotAllowedError
+    sub::SubmitType
+    message::String # Human-friendly explanation why the attribute cannot be set
+end
+SubmitNotAllowed(sub::AbstractSubmittable) = SubmitNotAllowed(sub, "")
+
+operation_name(err::SubmitNotAllowed) = "Submitting $(err.sub)"
+message(err::SubmitNotAllowed) = err.message
+
+"""
+    supports(model::ModelLike, sub::AbstractSubmittable)::Bool
+
+Return a `Bool` indicating whether `model` supports the submittable `sub`.
+
     supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
 
 Return a `Bool` indicating whether `model` supports the optimizer attribute
@@ -102,7 +149,7 @@ Return a `Bool` indicating whether `model` supports the constraint attribute
 `copy_to(model, src)` cannot be performed in case `attr` is in the
 [`ListOfConstraintAttributesSet`](@ref) of `src`.
 
-For all four methods, if the attribute is only not supported in specific
+For all five methods, if the attribute is only not supported in specific
 circumstances, it should still return `true`.
 
 Note that `supports` is only defined for attributes for which
@@ -110,6 +157,7 @@ Note that `supports` is only defined for attributes for which
 list of attributes set obtained by `ListOf...AttributesSet`.
 """
 function supports end
+supports(::ModelLike, ::AbstractSubmittable) = false
 function supports(::ModelLike, attr::Union{AbstractModelAttribute,
                                            AbstractOptimizerAttribute})
     if !is_copyable(attr)
@@ -328,7 +376,26 @@ function throw_set_error_fallback(model::ModelLike,
 end
 
 """
-    ListOfOptimizerAttributesSet()
+    submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
+           value)::Nothing
+
+Submit `value` to the submittable `sub` of the optimizer `optimizer`.
+
+An [`UnsupportedSubmittable`](@ref) error is thrown if `model` does not support
+the attribute `attr` (see [`supports`](@ref)) and a [`SubmitNotAllowed`](@ref)
+error is thrown if it supports the submittable `sub` but it cannot be submitted.
+""" # TODO add an example once we have an attribute which can be submitted, e.g. Lazy constraint
+function submit end
+function submit(model::ModelLike, sub::AbstractSubmittable, args...)
+    if supports(model, sub)
+        throw(SubmitNotAllowed(sub))
+    else
+        throw(UnsupportedSubmittable(sub))
+    end
+end
+
+"""
+    SettingSingleVariableFunctionNotAllowed()
 
 Error type that should be thrown when the user [`set`](@ref) the
 [`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.

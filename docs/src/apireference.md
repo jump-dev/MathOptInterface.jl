@@ -44,6 +44,15 @@ set
 supports
 ```
 
+### Submit
+
+Objects may be submitted to an optimizer using [`submit`](@ref).
+```@docs
+AbstractSubmittable
+submit
+```
+
+
 ## Model Interface
 
 ```@docs
@@ -402,6 +411,8 @@ AddConstraintNotAllowed
 ModifyConstraintNotAllowed
 ModifyObjectiveNotAllowed
 DeleteNotAllowed
+UnsupportedSubmittable
+SubmitNotAllowed
 ```
 
 ## Models
