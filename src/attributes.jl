@@ -378,6 +378,14 @@ function throw_set_error_fallback(model::ModelLike,
 end
 
 """
+    SettingSingleVariableFunctionNotAllowed()
+
+Error type that should be thrown when the user [`set`](@ref) the
+[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
+"""
+struct SettingSingleVariableFunctionNotAllowed <: Exception end
+
+"""
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
            values...)::Nothing
 
@@ -397,13 +405,39 @@ function submit(model::ModelLike, sub::AbstractSubmittable, args...)
     end
 end
 
-"""
-    SettingSingleVariableFunctionNotAllowed()
+## Submittables
 
-Error type that should be thrown when the user [`set`](@ref) the
-[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
 """
-struct SettingSingleVariableFunctionNotAllowed <: Exception end
+    LazyConstraint(callback_data)
+
+Lazy constraint `func`-in-`set` submitted as a tuple `(func, set)`. The optimal
+solution returned by [`VariablePrimal`](@ref) will satisfy all lazy
+constraints that have been submitted.
+
+This can be submitted only from the lazy callback (that is, the function set to
+[`LazyCallback`](@ref)). The field `callback_data` is a solver-specific
+callback type that is passed as the argument to the lazy callback.
+"""
+struct LazyConstraint <: AbstractSubmittable
+    callback_data::Any
+end
+
+"""
+    HeuristicSolution(callback_data)
+
+Heuristically obtained integer-feasible solutions. The solution is given by a
+`Dict{VariableIndex, Float64}` mapping the variables to their solution value.
+
+This can be submitted only from the heuristic callback (that is, the function
+set to [`HeuristicCallback`](@ref)). The field `callback_data` is a
+solver-specific callback type that is passed as the argument to the heuristic
+callback.
+
+Note that the solver may silently reject the provided solution.
+"""
+struct HeuristicSolution <: AbstractSubmittable
+    callback_data::Any
+end
 
 ## Optimizer attributes
 
@@ -460,6 +494,74 @@ which is typically an `Enum` or a `String`.
 struct RawParameter <: AbstractOptimizerAttribute
     name::Any
 end
+
+### Callbacks
+
+"""
+    struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
+        attr::AttrType
+    end
+
+Error thrown from optimizer when `MOI.get(optimizer, attr)` is called inside an
+[`AbstractCallback`](@ref) while it is only defined once [`optimize!`](@ref) has
+completed. This is only defined if `is_set_by_optimize(attr)` is `true`.
+"""
+struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
+    attr::AttrType
+end
+
+function Base.showerror(io::IO, err::OptimizeInProgress)
+    print(io, typeof(err), ": Cannot get result as the `MOI.optimize!` has not",
+          " finished.")
+end
+
+"""
+    abstract type AbstractCallback <: AbstractOptimizerAttribute end
+
+Abstract type for optimizer attribute representing a callback functions. The
+value set to subtypes of `AbstractCallback` is a function that may be called
+during [`optimize!`](@ref). As [`optimize!`](@ref) is in progress, the result
+attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
+may not be accessible from the callback hence trying to get result attributes
+might throw a [`OptimizeInProgress`](@ref) error.
+
+The value of the attribute should be a function taking only one argument, that
+is commonly called `callback_data`, that can be used for instance in
+[`LazyCallback`](@ref), [`HeuristicSolution`](@ref).
+"""
+abstract type AbstractCallback <: AbstractOptimizerAttribute end
+
+"""
+    LazyCallback() <: AbstractCallback
+
+The *lazy* callback can be used to submit [`LazyConstraint`](@ref) which are
+added on-demand at integer nodes in the branch and bound tree. Note that there
+is no guarantee that the callback is called at *every* integer primal solution.
+
+The solution at the integer node is accessed through
+[`VariablePrimalAtIntegerNode`](@ref). Trying to access other result
+attributes will throw [`OptimizeInProgress`](@ref) as discussed in
+[`AbstractCallback`](@ref).
+"""
+struct LazyCallback <: AbstractCallback end
+
+"""
+    HeuristicCallback() <: AbstractCallback
+
+The *heuristic* callback can be used to submit [`HeuristicSolution`](@ref) at
+fractional (i.e., non-integer) nodes in the branch and bound tree. Note that
+there is not guarantee that the callback is called *everytime* the solver has a
+fractional solution.
+
+The solution at the fractional node is accessed through
+[`VariablePrimalAtFractionalNode`](@ref). Trying to access other result
+attributes will throw [`OptimizeInProgress`](@ref) as discussed in
+[`AbstractCallback`](@ref).
+
+Some solvers require a complete solution, others only partial solutions. It's up
+to you to provide the appropriate one. If in doubt, give a complete solution.
+"""
+struct HeuristicCallback <: AbstractCallback end
 
 ## Model attributes
 
@@ -680,6 +782,28 @@ struct VariablePrimal <: AbstractVariableAttribute
     N::Int
 end
 VariablePrimal() = VariablePrimal(1)
+
+"""
+    VariablePrimalAtIntegerNode(callback_data)
+
+A variable attribute for the assignment to some primal variable's value at the
+integer node from which the [`LazyCallback`](@ref) corresponding to
+`callback_data` was called.
+"""
+struct VariablePrimalAtIntegerNode <: AbstractVariableAttribute
+    callback_data::Any
+end
+
+"""
+    VariablePrimalAtFractionalNode(callback_data)
+
+A variable attribute for the assignment to some primal variable's value at the
+fractional node from which the [`HeuristicCallback`](@ref) corresponding to
+`callback_data` was called.
+"""
+struct VariablePrimalAtFractionalNode <: AbstractVariableAttribute
+    callback_data::Any
+end
 
 """
     BasisStatusCode
