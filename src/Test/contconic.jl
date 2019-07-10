@@ -1144,6 +1144,90 @@ exptests = Dict("exp1v" => exp1vtest,
 
 @moitestset exp
 
+function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem POW1
+    # max z
+    #  st  x^0.9 * y^(0.1) >= |z| (i.e (x, y, z) are in the 3d power cone with a=0.9)
+    #      x == 2
+    #      y == 1
+    a = 0.9
+    @test MOIU.supports_default_copy_to(model, #=copy_names=#false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+
+    if vecofvars
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.PowerCone{Float64})
+    else
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.PowerCone{Float64})
+    end
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    v = MOI.add_variables(model, 3)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 3
+
+    vov = MOI.VectorOfVariables(v)
+
+    if vecofvars
+        vc = MOI.add_constraint(model, vov, MOI.PowerCone(a));
+    else
+        vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.PowerCone(a))
+    end
+
+    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.), MOI.EqualTo(2.))
+    cy = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.), MOI.EqualTo(1.))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0^0.9 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1. atol=atol rtol=rtol
+
+        if config.duals
+            u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
+            @test u ≈ 0.839729692 atol=atol rtol=rtol
+            @test v ≈ 0.1866065982 atol=atol rtol=rtol
+            @test w ≈ -1 atol=atol rtol=rtol
+
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -0.839729692 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -0.1866065982 atol=atol rtol=rtol
+        end
+    end
+end
+
+
+pow1vtest(model::MOI.ModelLike, config::TestConfig) = _pow1test(model, config, true)
+pow1ftest(model::MOI.ModelLike, config::TestConfig) = _pow1test(model, config, false)
+
+
+
+powtests = Dict("pow1v" => pow1vtest,
+                "pow1f" => pow1ftest)
+
+@moitestset pow
+
+
 function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
@@ -1612,6 +1696,7 @@ const contconictests = Dict("lin" => lintest,
                             "rsoc" => rsoctest,
                             "geomean" => geomeantest,
                             "exp" => exptest,
+                            "pow" => powtest,
                             "sdp" => sdptest,
                             "logdet" => logdettest,
                             "rootdet" => rootdettest)
