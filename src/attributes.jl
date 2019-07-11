@@ -376,14 +376,6 @@ function throw_set_error_fallback(model::ModelLike,
 end
 
 """
-    SettingSingleVariableFunctionNotAllowed()
-
-Error type that should be thrown when the user [`set`](@ref) the
-[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
-"""
-struct SettingSingleVariableFunctionNotAllowed <: Exception end
-
-"""
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
            value)::Nothing
 
@@ -401,6 +393,14 @@ function submit(model::ModelLike, sub::AbstractSubmittable, args...)
         throw(UnsupportedSubmittable(sub))
     end
 end
+
+"""
+    SettingSingleVariableFunctionNotAllowed()
+
+Error type that should be thrown when the user [`set`](@ref) the
+[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
+"""
+struct SettingSingleVariableFunctionNotAllowed <: Exception end
 
 ## Optimizer attributes
 
