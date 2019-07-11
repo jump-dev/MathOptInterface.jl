@@ -1,5 +1,9 @@
 ```@meta
 CurrentModule = MathOptInterface
+DocTestSetup = quote
+    using MathOptInterface
+    const MOI = MathOptInterface
+end
 ```
 
 # Manual
@@ -138,15 +142,25 @@ from the [`ModelLike`](@ref) abstract type.
 Notably missing from the model API is the method to solve an optimization problem.
 `ModelLike` objects may store an instance (e.g., in memory or backed by a file format)
 without being linked to a particular solver. In addition to the model API, MOI
-defines [`AbstractOptimizer`](@ref). *Optimizers* (or solvers) implement the model API (inheriting from `ModelLike`) and additionally
-provide methods to solve the model.
+defines [`AbstractOptimizer`](@ref). *Optimizers* (or solvers) implement the
+model API (inheriting from `ModelLike`) and additionally provide methods to
+solve the model.
 
 Through the rest of the manual, `model` is used as a generic `ModelLike`, and
 `optimizer` is used as a generic `AbstractOptimizer`.
 
-[Discuss how models are constructed, optimizer attributes.]
+Models are constructed by
+* adding variables using [`add_variables`](@ref) (or [`add_variables`](@ref)),
+  see [Adding variables](@ref);
+* setting an objective sense and function using [`set`](@ref),
+  see [Setting objective](@ref).
+* and adding constraints using [`add_constraint`](@ref) (or
+  [`add_constraints`](@ref)), see [Sets and Constraints](@ref).
 
-## Variables
+The way the problem is solved by the optimimizer is controlled by
+[`AbstractOptimizerAttribute`](@ref)s, see [Solver-specific attributes](@ref).
+
+## Adding variables
 
 All variables in MOI are scalar variables.
 New scalar variables are created with [`add_variable`](@ref) or
@@ -209,6 +223,8 @@ the function ``5x_1 - 2.3x_2 + 1``.
     `ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]])` is a shortcut for
     `[ScalarAffineTerm(5.0, x[1]), ScalarAffineTerm(-2.3, x[2])]`. This is
     Julia's broadcast syntax and is used quite often.
+
+### Setting objective
 
 Objective functions are assigned to a model by setting the
 [`ObjectiveFunction`](@ref) attribute. The [`ObjectiveSense`](@ref) attribute is
@@ -290,9 +306,8 @@ add_constraint(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
 
 Below is a list of common constraint types and how they are represented
 as function-set pairs in MOI. In the notation below, ``x`` is a vector of decision variables,
-``x_i`` is a scalar decision variable, and all other terms are fixed constants.
-
-[Define notation more precisely. ``a`` vector; ``A`` matrix; don't reuse ``u,l,b`` as scalar and vector]
+``x_i`` is a scalar decision variable, ``\alpha, \beta`` are scalar constants,
+``a, b`` are a constant vectors and `A` is a constant matrix.
 
 #### Linear constraints
 
@@ -301,11 +316,11 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 | ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`     |
 | ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan`  |
 | ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`      |
-| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`     |
-| ``x_i \le u``                 | `SingleVariable`             | `LessThan`     |
-| ``x_i \ge l``                 | `SingleVariable`             | `GreaterThan`  |
-| ``x_i = b``                   | `SingleVariable`             | `EqualTo`      |
-| ``l \le x_i \le u``           | `SingleVariable`             | `Interval`     |
+| ``\alpha \le a^Tx \le \beta`` | `ScalarAffineFunction`       | `Interval`     |
+| ``x_i \le \beta               | `SingleVariable`             | `LessThan`     |
+| ``x_i \ge \alpha              | `SingleVariable`             | `GreaterThan`  |
+| ``x_i = \beta                 | `SingleVariable`             | `EqualTo`      |
+| ``\alpha \le x_i \le \beta    | `SingleVariable`             | `Interval`     |
 | ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
@@ -470,58 +485,128 @@ non-global tree search solvers like
 ## A complete example: solving a knapsack problem
 
 [ needs formatting help, doc tests ]
-
+We first need to select a solver supporting the given problem (see
+[`supports`](@ref) and [`supports_constraint`](@ref)). In this example, we
+want to solve a binary-constrained knapsack problem:
+`max c'x: w'x <= C, x binary`. Suppose we choose GLPK:
 ```julia
-using MathOptInterface
-const MOI = MathOptInterface
 using GLPK
+optimizer = GLPK.Optimizer()
+```
+we can check that it supports the objective as follows:
+```jldoctest knapsack; setup = :(optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}()); MOI.Utilities.set_mock_optimize!(optimizer, mock -> MOI.Utilities.mock_optimize!(mock, ones(3))))
+MOI.supports(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
 
-# Solves the binary-constrained knapsack problem:
-# max c'x: w'x <= C, x binary using GLPK.
+# output
 
+true
+```
+we can check that it supports the knapsack constraint as follows:
+```jldoctest knapsack
+MOI.supports_constraint(optimizer, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+
+# output
+
+true
+```
+and we can check that it supports binary variables as follows:
+```jldoctest knapsack
+MOI.supports_constraint(optimizer, MOI.SingleVariable, MOI.ZeroOne)
+
+# output
+
+true
+```
+We first define the constants of the problem:
+```jldoctest knapsack
 c = [1.0, 2.0, 3.0]
 w = [0.3, 0.5, 1.0]
 C = 3.2
 
 num_variables = length(c)
 
-optimizer = GLPK.Optimizer()
+# output
 
-# Create the variables in the problem.
+3
+```
+We create the variables of the problem and set the objective function:
+```jldoctest knapsack
 x = MOI.add_variables(optimizer, num_variables)
-
-# Set the objective function.
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
 MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         objective_function)
 MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
-# Add the knapsack constraint.
+# output
+
+MAX_SENSE::OptimizationSense = 1
+```
+We add the knapsack constraint and integrality constraints:
+```jldoctest knapsack
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
 MOI.add_constraint(optimizer, knapsack_function, MOI.LessThan(C))
-
-# Add integrality constraints.
 for i in 1:num_variables
     MOI.add_constraint(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
 end
 
-# All set!
+# output
+
+```
+We are all set! We can now call [`optimize!`](@ref) and wait for the solver to
+find the solution:
+```jldoctest knapsack
 MOI.optimize!(optimizer)
 
-termination_status = MOI.get(optimizer, MOI.TerminationStatus())
-obj_value = MOI.get(optimizer, MOI.ObjectiveValue())
-if termination_status != MOI.OPTIMAL
-    error("Solver terminated with status $termination_status")
-end
+# output
 
-@assert MOI.get(optimizer, MOI.ResultCount()) > 0
+```
+The first thing to check after optimization is why the solver stopped, e.g.,
+did it stop because of a time limit or did it stop because it found the optimal
+solution ?
+```jldoctest knapsack
+MOI.get(optimizer, MOI.TerminationStatus())
 
-@assert MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+# output
 
-primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 
-@show obj_value
-@show primal_variable_result
+OPTIMAL::TerminationStatusCode = 1
+```
+It found the optimal solution! Now let's see what is that solution.
+But first, let's check if it has more than one solution to share:
+```jldoctest knapsack
+MOI.get(optimizer, MOI.ResultCount())
+
+# output
+
+1
+```
+Only one. As the termination status is `MOI.OPTIMAL` and there is only one
+result, this result should be a feasible solution, let's check to confirm:
+```jldoctest knapsack
+MOI.get(optimizer, MOI.PrimalStatus())
+
+# output
+
+FEASIBLE_POINT::ResultStatusCode = 1
+```
+Good, so this is indeed the optimal solution! What is its objective value:
+```jldoctest knapsack
+MOI.get(optimizer, MOI.ObjectiveValue())
+
+# output
+
+6.0
+```
+And what is the value of the variables `x`?
+```jldoctest knapsack
+MOI.get(optimizer, MOI.VariablePrimal(), x)
+
+# output
+
+3-element Array{Float64,1}:
+ 1.0
+ 1.0
+ 1.0
 ```
 
 ## Problem modification
