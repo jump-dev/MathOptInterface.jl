@@ -901,17 +901,18 @@ function operate(op::Union{typeof(+), typeof(-)}, ::Type{T},
     operate!(op, T, copy(f), g)
 end
 
-function Base.:+(args::ScalarLike{T}...) where T
-    return operate(+, T, args...)
+# To avoid type piracy, we add at least one `ScalarLike` outside of the `...`.
+function Base.:+(arg::ScalarLike{T}, args::ScalarLike{T}...) where T
+    return operate(+, T, arg, args...)
 end
-function Base.:+(α::T, f::ScalarLike{T}...) where T
-    return operate(+, T, α, f...)
+function Base.:+(α::T, arg::ScalarLike{T}, args::ScalarLike{T}...) where T
+    return operate(+, T, α, arg, args...)
 end
 function Base.:+(f::ScalarLike{T}, α::T) where T
     return operate(+, T, f, α)
 end
-function Base.:-(args::ScalarLike{T}...) where T
-    return operate(-, T, args...)
+function Base.:-(arg::ScalarLike{T}, args::ScalarLike{T}...) where T
+    return operate(-, T, arg, args...)
 end
 function Base.:-(f::ScalarLike{T}, α::T) where T
     return operate(-, T, f, α)
