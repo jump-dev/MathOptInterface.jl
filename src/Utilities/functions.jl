@@ -1335,6 +1335,30 @@ function fill_vector(vector::Vector, ::Type{T}, vector_offset::Int,
                 funcs...)
 end
 
+function fill_variables(variables::Vector{MOI.VariableIndex}, offset::Int,
+                        output_offset::Int, func::MOI.SingleVariable)
+    variables[offset + 1] = func.variable
+end
+
+function fill_variables(variables::Vector{MOI.VariableIndex}, offset::Int,
+                        output_offset::Int, func::MOI.VectorOfVariables)
+    variables[offset .+ (1:length(func.variables))] .= func.variables
+end
+
+function promote_operation(::typeof(vcat), ::Type{T},
+                           ::Type{<:Union{MOI.SingleVariable,
+                                          MOI.VectorOfVariables}}...) where T
+    return MOI.VectorOfVariables
+end
+function operate(::typeof(vcat), ::Type{T},
+                 funcs::Union{MOI.SingleVariable,
+                              MOI.VectorOfVariables}...) where T
+    out_dim = sum(func -> output_dim(T, func), funcs)
+    variables = Vector{MOI.VariableIndex}(undef, out_dim)
+    fill_vector(variables, T, 0, 0, fill_variables, output_dim, funcs...)
+    return MOI.VectorOfVariables(variables)
+end
+
 number_of_affine_terms(::Type{T}, ::T) where T = 0
 number_of_affine_terms(::Type, ::SVF) = 1
 number_of_affine_terms(::Type, f::VVF) = length(f.variables)

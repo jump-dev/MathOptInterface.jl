@@ -1,3 +1,16 @@
+using Test
+
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MathOptInterface.Test
+const MOIU = MathOptInterface.Utilities
+const MOIB = MathOptInterface.Bridges
+
+include("../utilities.jl")
+
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+config = MOIT.TestConfig()
+
 @testset "GeoMean" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [ones(4); 2; √2; √2])
     bridged_mock = MOIB.Constraint.GeoMean{Float64}(mock)

@@ -22,8 +22,16 @@ z = MOI.VariableIndex(3)
         v = MOI.VectorOfVariables([y, w])
         wf = MOI.SingleVariable(w)
         xf = MOI.SingleVariable(x)
-        @testset "Variable" begin
-            # TODO #616
+        @testset "Variable with $T" for T in [Int, Float64]
+            @test MOI.VectorOfVariables == MOIU.promote_operation(vcat, T, typeof(wf), typeof(v), typeof(xf))
+            vov = MOIU.operate(vcat, T, wf, v, xf)
+            @test vov.variables == [w, y, w, x]
+            @test MOI.VectorOfVariables == MOIU.promote_operation(vcat, T, typeof(v), typeof(wf), typeof(xf))
+            vov = MOIU.operate(vcat, T, v, wf, xf)
+            @test vov.variables == [y, w, w, x]
+            @test MOI.VectorOfVariables == MOIU.promote_operation(vcat, T, typeof(wf), typeof(xf), typeof(v))
+            vov = MOIU.operate(vcat, T, wf, xf, v)
+            @test vov.variables == [w, x, y, w]
         end
         f = MOI.ScalarAffineFunction(
             MOI.ScalarAffineTerm.([2, 4], [x, z]), 5)

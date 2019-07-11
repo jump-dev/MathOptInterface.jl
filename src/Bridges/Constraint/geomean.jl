@@ -59,7 +59,8 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G}}, model,
 
     xl1 = MOI.SingleVariable(xij[1])
     sN = one(T) / √N
-    function _getx(i)
+    A = MOIU.promote_operation(*, T, T, MOI.SingleVariable)
+    function _getx(i)::A
         if i > n
             return sN * xl1
         else
@@ -69,10 +70,9 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G}}, model,
 
     t = f_scalars[1]
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
-    tubc = MOIU.add_scalar_constraint(model,
-                                      MOIU.operate!(+, T, t, -sN * xl1),
-                                      MOI.LessThan(zero(T)),
-                                      allow_modify_function=true)
+    tubc = MOIU.add_scalar_constraint(
+        model, MOIU.operate!(+, T, t, -sN * xl1), MOI.LessThan(zero(T)),
+        allow_modify_function=true)
 
     socrc = Vector{CI{G, MOI.RotatedSecondOrderCone}}(undef, N-1)
     offset = offsetnext = 0
@@ -83,13 +83,13 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G}}, model,
                 a = _getx(2j-1)
                 b = _getx(2j)
             else
-                a = one(T) * MOI.SingleVariable(xij[offsetnext+2j-1])
-                b = one(T) * MOI.SingleVariable(xij[offsetnext+2j])
+                a = convert(A, MOI.SingleVariable(xij[offsetnext+2j-1]))
+                b = convert(A, MOI.SingleVariable(xij[offsetnext+2j]))
             end
             c = MOI.SingleVariable(xij[offset+j])
-            socrc[offset + j] = MOI.add_constraint(model,
-                                                   MOIU.operate(vcat, T, a, b, c),
-                                                   MOI.RotatedSecondOrderCone(3))
+            socrc[offset + j] = MOI.add_constraint(
+                model, MOIU.operate(vcat, T, a, b, c),
+                MOI.RotatedSecondOrderCone(3))
         end
         offset = offsetnext
     end
