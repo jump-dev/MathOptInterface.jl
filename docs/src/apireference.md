@@ -99,6 +99,7 @@ List of optimizers attributes
 SolverName
 Silent
 RawParameter
+AbstractCallback
 ```
 
 List of attributes useful for optimizers
@@ -391,6 +392,12 @@ variable:
 ```@docs
 LowerBoundAlreadySet
 UpperBoundAlreadySet
+```
+
+As discussed in [`AbstractCallback`](@ref), trying to [`get`](@ref) attributes
+inside a callback may throw:
+```@docs
+OptimizeInProgress
 ```
 
 The rest of the errors defined in MOI fall in two categories represented by the
