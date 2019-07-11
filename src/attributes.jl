@@ -449,6 +449,39 @@ struct RawParameter <: AbstractOptimizerAttribute
     name::Any
 end
 
+### Callbacks
+
+"""
+    struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
+        attr::AttrType
+    end
+Error thrown from optimizer when `MOI.get(optimizer, attr)` is called inside an
+[`AbstractCallback`](@ref) while it is only defined once [`optimize!`](@ref) has
+completed. This is only defined if `is_set_by_optimize(attr)` is `true`.
+"""
+struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
+    attr::AttrType
+end
+
+function Base.showerror(io::IO, err::OptimizeInProgress)
+    print(io, typeof(err), ": Cannot get result as the `MOI.optimize!` has not",
+          " finished.")
+end
+
+"""
+    abstract type AbstractCallback <: AbstractOptimizerAttribute end
+Abstract type for optimizer attribute representing a callback functions. The
+value set to subtypes of `AbstractCallback` is a function that may be called
+during [`optimize!`](@ref). As [`optimize!`](@ref) is in progress, the result
+attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
+may not be accessible from the callback hence trying to get result attributes
+might throw a [`OptimizeInProgress`](@ref) error.
+The value of the attribute should be a function taking only one argument, that
+is commonly called `callback_data`, that can be used for instance in
+[`LazyCallback`](@ref), [`HeuristicSolution`](@ref).
+"""
+abstract type AbstractCallback <: AbstractOptimizerAttribute end
+
 ## Model attributes
 
 """
