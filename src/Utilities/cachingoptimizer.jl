@@ -12,14 +12,22 @@ construction and modification even when the optimizer doesn't.
 
 A `CachingOptimizer` may be in one of three possible states (`CachingOptimizerState`):
 
-- `NO_OPTIMIZER`: The CachingOptimizer does not have any optimizer.
-- `EMPTY_OPTIMIZER`: The CachingOptimizer an empty optimizer. The optimizer is not synchronized with the cached model.
-- `ATTACHED_OPTIMIZER`: The CachingOptimizer a optimizer, and it is synchronized with the cached model.
+* `NO_OPTIMIZER`: The CachingOptimizer does not have any optimizer.
+* `EMPTY_OPTIMIZER`: The CachingOptimizer has an empty optimizer.
+  The optimizer is not synchronized with the cached model.
+* `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is synchronized with the cached model.
 
 A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 
-- `MANUAL`: The only methods that change the state of the `CachingOptimizer` are [`reset_optimizer`](@ref), [`drop_optimizer`](@ref), and [`attach_optimizer`](@ref). Attempting to perform an operation in the incorrect state results in an error.
-- `AUTOMATIC`: The `CachingOptimizer` changes its state when necessary. For example, `optimize!` will automatically call `attach_optimizer` (an optimizer must have been previously set). Attempting to add a constraint or perform a modification not supported by the optimizer results in a drop to `EMPTY_OPTIMIZER` mode.
+* `MANUAL`: The only methods that change the state of the `CachingOptimizer`
+  are [`Utilities.reset_optimizer`](@ref), [`Utilities.drop_optimizer`](@ref),
+  and [`Utilities.attach_optimizer`](@ref).
+  Attempting to perform an operation in the incorrect state results in an error.
+* `AUTOMATIC`: The `CachingOptimizer` changes its state when necessary. For
+  example, `optimize!` will automatically call `attach_optimizer` (an
+  optimizer must have been previously set). Attempting to add a constraint or
+  perform a modification not supported by the optimizer results in a drop to
+  `EMPTY_OPTIMIZER` mode.
 """
 mutable struct CachingOptimizer{OptimizerType, ModelType<:MOI.ModelLike} <: MOI.AbstractOptimizer
     optimizer::Union{Nothing, OptimizerType}
@@ -41,7 +49,7 @@ end
     CachingOptimizer(model_cache::MOI.ModelLike, optimizer::AbstractOptimizer)
 
 Creates an `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer `optimizer`.
-The model_cache manager returned behaves like an `AbstractOptimizer` as long as no
+The `model_cache` manager returned behaves like an `AbstractOptimizer` as long as no
 `CachingOptimizer`-specific functions (e.g. `reset_optimizer`) are called on it.
 The type of the optimizer returned is `CachingOptimizer{typeof(optimizer),
 typeof(model_cache)}` so it does not support the function
@@ -59,14 +67,14 @@ end
 """
     state(m::CachingOptimizer)::CachingOptimizerState
 
-Returns the state of the CachingOptimizer `m`. See [`CachingOptimizer`](@ref).
+Returns the state of the CachingOptimizer `m`. See [`Utilities.CachingOptimizer`](@ref).
 """
 state(m::CachingOptimizer) = m.state
 
 """
     mode(m::CachingOptimizer)::CachingOptimizerMode
 
-Returns the operating mode of the CachingOptimizer `m`. See [`CachingOptimizer`](@ref).
+Returns the operating mode of the CachingOptimizer `m`. See [`Utilities.CachingOptimizer`](@ref).
 """
 mode(m::CachingOptimizer) = m.mode
 
@@ -121,7 +129,7 @@ end
 Attaches the optimizer to `model`, copying all model data into it. Can be called
 only from the `EMPTY_OPTIMIZER` state. If the copy succeeds, the
 `CachingOptimizer` will be in state `ATTACHED_OPTIMIZER` after the call,
-otherwise an error is thrown; see [`copy_to`](@ref) for more details on which
+otherwise an error is thrown; see [`MathOptInterface.copy_to`](@ref) for more details on which
 errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)
@@ -387,7 +395,10 @@ function MOI.set(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
     MOI.set(m.model_cache, attr, value)
 end
 
-function MOI.set(m::CachingOptimizer, attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}, index::MOI.Index, value)
+function MOI.set(m::CachingOptimizer,
+                 attr::Union{MOI.AbstractVariableAttribute,
+                             MOI.AbstractConstraintAttribute},
+                 index::MOI.Index, value)
     if m.state == ATTACHED_OPTIMIZER
         optimizer_index = m.model_to_optimizer_map[index]
         optimizer_value = attribute_value_map(m.model_to_optimizer_map, value)

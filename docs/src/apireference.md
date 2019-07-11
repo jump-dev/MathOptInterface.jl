@@ -560,6 +560,58 @@ Utilities.load
 Utilities.load_constraint
 ```
 
+### Caching optimizer
+
+Some solvers do not support incremental definition of optimization
+models. Nevertheless, you are still able to build incrementally an optimization
+model with such solvers. MathOptInterface provides a utility,
+[`Utilities.CachingOptimizer`](@ref), that will store in a [`ModelLike`](@ref)
+the optimization model during its incremental definition. Once the
+model is completely defined, the `CachingOptimizer` specifies all problem
+information to the underlying solver, all at once.
+
+The function [`Utilities.state`](@ref) allows to query the state
+of the optimizer cached inside a `CachingOptimizer`. The state
+could be:
+* `NO_OPTIMIZER`, if no optimizer is attached;
+* `EMPTY_OPTIMIZER`, if the attached optimizer is empty;
+* `ATTACHED_OPTIMIZER`, if the attached optimizer is synchronized with the
+  cached model defined in `CachingOptimizer`.
+
+The following methods modify the state of the attached optimizer:
+* [`Utilities.attach_optimizer`](@ref) attachs a new `optimizer`
+  to a `cached_optimizer` with state `EMPTY_OPTIMIZER`.
+  The state of `cached_optimizer` is set to `ATTACHED_OPTIMIZER` after the call.
+* [`Utilities.drop_optimizer`](@ref) drops the underlying `optimizer`
+  from `cached_optimizer`, without emptying it. The state of `cached_optimizer`
+  is set to `NO_OPTIMIZER` after the call.
+* [`Utilities.reset_optimizer`](@ref) empties `optimizer` inside
+  `cached_optimizer`, without droping it. The state of `cached_optimizer`
+  is set to `EMPTY_OPTIMIZER` after the call.
+
+The way to operate a `CachingOptimizer` depends whether the mode
+is set to `AUTOMATIC` or to `MANUAL`.
+* In `MANUAL` mode, the state of the `CachingOptimizer` changes only
+  if the methods [`Utilities.attach_optimizer`](@ref),
+  [`Utilities.reset_optimizer`](@ref) or [`Utilities.drop_optimizer`](@ref)
+  are being called. Any unattended operation results in an error.
+* In `AUTOMATIC` mode, the state of the `CachingOptimizer` changes when
+  necessary. Any modification not supported by the solver (e.g. dropping
+  a constraint) results in a drop to the state `EMPTY_OPTIMIZER`.
+
+When calling [`Utilities.attach_optimizer`](@ref), the `CachingOptimizer` copies
+the cached model to the optimizer with [`MathOptInterface.copy_to`](@ref).
+We refer to [Implementing copy](@ref) for more details.
+
+```@docs
+Utilities.CachingOptimizer
+Utilities.attach_optimizer
+Utilities.reset_optimizer
+Utilities.drop_optimizer
+Utilities.state
+Utilities.mode
+```
+
 ## Benchmarks
 
 Functions to help benchmark the performance of solver wrappers. See
