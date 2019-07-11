@@ -470,6 +470,7 @@ end
 
 """
     abstract type AbstractCallback <: AbstractOptimizerAttribute end
+
 Abstract type for optimizer attribute representing a callback functions. The
 value set to subtypes of `AbstractCallback` is a function that may be called
 during [`optimize!`](@ref). As [`optimize!`](@ref) is in progress, the result
@@ -477,8 +478,7 @@ attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
 may not be accessible from the callback hence trying to get result attributes
 might throw a [`OptimizeInProgress`](@ref) error.
 The value of the attribute should be a function taking only one argument, that
-is commonly called `callback_data`, that can be used for instance in
-[`LazyCallback`](@ref), [`HeuristicSolution`](@ref).
+is commonly called `callback_data`.
 """
 abstract type AbstractCallback <: AbstractOptimizerAttribute end
 
