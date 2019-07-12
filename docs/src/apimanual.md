@@ -1047,6 +1047,8 @@ By convention, optimizers should not be exported and should be named
 
 The skeleton below can be used for the wrapper test file of a solver named `FooBar`.
 ```julia
+using Test
+
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MOI.Test
