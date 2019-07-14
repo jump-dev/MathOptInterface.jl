@@ -9,7 +9,7 @@ v0.9.0 (May 2?, 2019)
   most use cases of `MOI.Utilities.@model` (#781).
 - `add_constrained_variable` and `add_constrained_variables` were added (#759).
 - Support for indicator constraints was added (#709, #712).
-- ``DualObjectiveValue` attribute was added (#473).
+- `DualObjectiveValue` attribute was added (#473).
 - `RawParameter` attribute was added (#733).
 - A `Benchmarks` submodule was added to facilitate solver benchmarking (#769).
 - A `submit` function was added, this may for intance allow the user to submit
