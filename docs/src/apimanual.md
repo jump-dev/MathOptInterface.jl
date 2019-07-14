@@ -549,27 +549,6 @@ MOI.get(optimizer, MOI.TerminationStatus())
 OPTIMAL::TerminationStatusCode = 1
 ```
 It found the optimal solution! Now let's see what is that solution.
-But first, let's check if it has more than one solution to share:
-```jldoctest knapsack
-MOI.get(optimizer, MOI.ResultCount())
-
-# output
-
-1
-```
-Only one.
-
-!!! note
-    While the value of `MOI.get(optimizer, MOI.ResultCount())` is often one,
-    robust code should check its value. For instance, when the problem is
-    unbounded, the solver might return two results: one feasible primal solution
-    `x` showing that the primal is feasible and one infeasibility ray `r`
-    showing that the dual in infeasible. The unbounded ray is given by
-    `x + λ * r` with `λ ≥ 0`. Note that each result is insufficient alone to
-    certify unboundedness.
-
-As the termination status is `MOI.OPTIMAL` and there is only one result, this
-result should be a feasible solution. Let's check to confirm:
 ```jldoctest knapsack
 MOI.get(optimizer, MOI.PrimalStatus())
 
@@ -577,7 +556,7 @@ MOI.get(optimizer, MOI.PrimalStatus())
 
 FEASIBLE_POINT::ResultStatusCode = 1
 ```
-Good, so this is indeed the optimal solution! What is its objective value:
+What is its objective value?
 ```jldoctest knapsack
 MOI.get(optimizer, MOI.ObjectiveValue())
 
