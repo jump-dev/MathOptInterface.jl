@@ -305,9 +305,11 @@ add_constraint(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
 ### Constraints by function-set pairs
 
 Below is a list of common constraint types and how they are represented
-as function-set pairs in MOI. In the notation below, ``x`` is a vector of decision variables,
-``x_i`` is a scalar decision variable, ``\alpha, \beta`` are scalar constants,
-``a, b`` are a constant vectors and `A` is a constant matrix.
+as function-set pairs in MOI. In the notation below, ``x`` is a vector of
+decision variables, ``x_i`` is a scalar decision variable, ``\alpha, \beta`` are
+scalar constants, ``a, b`` are constant vectors, `A` is a constant matrix and
+``\mathbb{R}_+`` (resp. ``\mathbb{R}_-``) is the set of nonnegative (resp.
+nonpositive) real numbers.
 
 #### Linear constraints
 
@@ -329,8 +331,6 @@ By convention, solvers are not expected to support nonzero constant terms in the
 
 Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `Interval` sets have a natural interpretation as variable bounds. As such, it is typically not natural to impose multiple lower or upper bounds on the same variable, and by convention we do not ask solver interfaces to support this. It is natural, however, to impose upper and lower bounds separately as two different constraints on a single variable. The difference between imposing bounds by using a single `Interval` constraint and by using separate `LessThan` and `GreaterThan` constraints is that the latter will allow the solver to return separate dual multipliers for the two bounds, while the former will allow the solver to return only a single dual for the interval constraint.
 
-[Define ``\mathbb{R}_+, \mathbb{R}_-``]
-
 #### Conic constraints
 
 
@@ -341,12 +341,14 @@ Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `I
 | ``2yz \ge \lVert x \rVert_2^2, y,z \ge 0``                    | `VectorOfVariables`          | `RotatedSecondOrderCone`           |
 | ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``  | `VectorAffineFunction`       | `ExponentialCone`                  |
 | ``A(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeTriangle` |
-| ``A(x) \in \mathcal{S}'_+``                                   | `VectorAffineFunction`       | `PositiveSemidefiniteConeSquare`   |
+| ``B(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeSquare`   |
 | ``x \in \mathcal{S}_+``                                       | `VectorOfVariables`          | `PositiveSemidefiniteConeTriangle` |
-| ``x \in \mathcal{S}'_+``                                      | `VectorOfVariables`          | `PositiveSemidefiniteConeSquare`   |
+| ``x \in \mathcal{S}_+``                                       | `VectorOfVariables`          | `PositiveSemidefiniteConeSquare`   |
 
-
-[Define ``\mathcal{E}`` (exponential cone), ``\mathcal{S}_+`` (smat), ``\mathcal{S}'_+`` (svec). ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
+where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
+``\mathcal{S}_+`` is the set of positive semidefinite symmetric matrices,
+``A`` is an affine map that outputs symmetric matrices and
+``B`` is an affine map that outputs square matrices.
 
 #### Quadratic constraints
 
@@ -537,7 +539,7 @@ MOI.optimize!(optimizer)
 ```
 The first thing to check after optimization is why the solver stopped, e.g.,
 did it stop because of a time limit or did it stop because it found the optimal
-solution ?
+solution?
 ```jldoctest knapsack
 MOI.get(optimizer, MOI.TerminationStatus())
 
@@ -558,13 +560,13 @@ MOI.get(optimizer, MOI.ResultCount())
 Only one.
 
 !!! note
-    While the value of `MOI.get(optimizer, MOI.ResultCount())` is often one, it
-    is important to check its value in order to write a robust code. For
-    instance, when the problem is unbounded, the solver might return two
-    results: one feasible primal solution `x` showing that the primal is
-    feasible and one infeasibility ray `r` showing that the dual in infeasible.
-    The unbounded ray is given by `x + λ * r` with `λ ≥ 0`. Note that each
-    result is insufficient alone to certify unboundedness.
+    While the value of `MOI.get(optimizer, MOI.ResultCount())` is often one,
+    robust code should check its value. For instance, when the problem is
+    unbounded, the solver might return two results: one feasible primal solution
+    `x` showing that the primal is feasible and one infeasibility ray `r`
+    showing that the dual in infeasible. The unbounded ray is given by
+    `x + λ * r` with `λ ≥ 0`. Note that each result is insufficient alone to
+    certify unboundedness.
 
 As the termination status is `MOI.OPTIMAL` and there is only one result, this
 result should be a feasible solution. Let's check to confirm:
