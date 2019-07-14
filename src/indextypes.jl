@@ -99,8 +99,8 @@ Delete the referenced object from the model. Throw [`DeleteNotAllowed`](@ref) if
 if `index` cannot be deleted.
 
 The following modifications also take effect if `Index` is [`VariableIndex`](@ref):
-* If `index` used in the objective function, it is removed from the function;
-  see [`Utilities.remove_variable`](@ref).
+* If `index` used in the objective function, it is removed from the function,
+  i.e., it is substituted for zero.
 * For each `func`-in-`set` constraint of the model:
   - If `func isa SingleVariable` and `func.variable == index` then the
     constraint is deleted.
@@ -110,8 +110,8 @@ The following modifications also take effect if `Index` is [`VariableIndex`](@re
       then the variable is removed from `func` and `set` is replaced by
       `update_dimension(set, MOI.dimension(set) - 1)`.
     * Otherwise, a [`DeleteNotAllowed`](@ref) error is thrown.
-  - Otherwise, the variable is removed from `func`; see
-    [`Utilities.remove_variable`](@ref).
+  - Otherwise, the variable is removed from `func`, i.e., it is substituted for
+    zero.
 """
 delete(model::ModelLike, index::Index) = throw(DeleteNotAllowed(index))
 
