@@ -153,7 +153,7 @@ Models are constructed by
 * adding variables using [`add_variables`](@ref) (or [`add_variables`](@ref)),
   see [Adding variables](@ref);
 * setting an objective sense and function using [`set`](@ref),
-  see [Setting objective](@ref).
+  see [Setting an objective](@ref).
 * and adding constraints using [`add_constraint`](@ref) (or
   [`add_constraints`](@ref)), see [Sets and Constraints](@ref).
 
@@ -224,7 +224,7 @@ the function ``5x_1 - 2.3x_2 + 1``.
     `[ScalarAffineTerm(5.0, x[1]), ScalarAffineTerm(-2.3, x[2])]`. This is
     Julia's broadcast syntax and is used quite often.
 
-### Setting objective
+### Setting an objective
 
 Objective functions are assigned to a model by setting the
 [`ObjectiveFunction`](@ref) attribute. The [`ObjectiveSense`](@ref) attribute is
@@ -484,7 +484,6 @@ non-global tree search solvers like
 
 ## A complete example: solving a knapsack problem
 
-[ needs formatting help, doc tests ]
 We first need to select a solver supporting the given problem (see
 [`supports`](@ref) and [`supports_constraint`](@ref)). In this example, we
 want to solve a binary-constrained knapsack problem:
@@ -493,37 +492,13 @@ want to solve a binary-constrained knapsack problem:
 using GLPK
 optimizer = GLPK.Optimizer()
 ```
-we can check that it supports the objective as follows:
-```jldoctest knapsack; setup = :(optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}()); MOI.Utilities.set_mock_optimize!(optimizer, mock -> MOI.Utilities.mock_optimize!(mock, ones(3))))
-MOI.supports(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
-
-# output
-
-true
-```
-we can check that it supports the knapsack constraint as follows:
-```jldoctest knapsack
-MOI.supports_constraint(optimizer, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
-
-# output
-
-true
-```
-and we can check that it supports binary variables as follows:
-```jldoctest knapsack
-MOI.supports_constraint(optimizer, MOI.SingleVariable, MOI.ZeroOne)
-
-# output
-
-true
-```
 We first define the constants of the problem:
-```jldoctest knapsack
+```jldoctest knapsack; setup = :(optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}()); MOI.Utilities.set_mock_optimize!(optimizer, mock -> MOI.Utilities.mock_optimize!(mock, ones(3))))
 c = [1.0, 2.0, 3.0]
 w = [0.3, 0.5, 1.0]
 C = 3.2
 
-num_variables = length(c)
+num_variables_to_create = length(c)
 
 # output
 
@@ -531,7 +506,7 @@ num_variables = length(c)
 ```
 We create the variables of the problem and set the objective function:
 ```jldoctest knapsack
-x = MOI.add_variables(optimizer, num_variables)
+x = MOI.add_variables(optimizer, num_variables_to_create)
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
 MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         objective_function)
@@ -545,7 +520,7 @@ We add the knapsack constraint and integrality constraints:
 ```jldoctest knapsack
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
 MOI.add_constraint(optimizer, knapsack_function, MOI.LessThan(C))
-for i in 1:num_variables
+for i in 1:num_variables_to_create
     MOI.add_constraint(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
 end
 
@@ -580,8 +555,19 @@ MOI.get(optimizer, MOI.ResultCount())
 
 1
 ```
-Only one. As the termination status is `MOI.OPTIMAL` and there is only one
-result, this result should be a feasible solution, let's check to confirm:
+Only one.
+
+!!! note
+    While the value of `MOI.get(optimizer, MOI.ResultCount())` is often one, it
+    is important to check its value in order to write a robust code. For
+    instance, when the problem is unbounded, the solver might return two
+    results: one feasible primal solution `x` showing that the primal is
+    feasible and one infeasibility ray `r` showing that the dual in infeasible.
+    The unbounded ray is given by `x + λ * r` with `λ ≥ 0`. Note that each
+    result is insufficient alone to certify unboundedness.
+
+As the termination status is `MOI.OPTIMAL` and there is only one result, this
+result should be a feasible solution. Let's check to confirm:
 ```jldoctest knapsack
 MOI.get(optimizer, MOI.PrimalStatus())
 
