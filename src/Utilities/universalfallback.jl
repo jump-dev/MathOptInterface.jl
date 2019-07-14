@@ -73,30 +73,86 @@ function MOI.delete(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
             throw(MOI.InvalidIndex(ci))
         end
         delete!(uf.constraints[(F, S)], ci)
-        if haskey(uf.con_to_name, ci)
-            delete!(uf.con_to_name, ci)
-        end
+        delete!(uf.con_to_name, ci)
         uf.name_to_con = nothing
     end
     for d in values(uf.conattr)
         delete!(d, ci)
     end
 end
+function _remove_variable(uf::UniversalFallback,
+                          constraints::Dict{<:CI{MOI.SingleVariable}}, vi::VI)
+    to_delete = keytype(constraints)[]
+    for (ci, constraint) in constraints
+        f::MOI.SingleVariable = constraint[1]
+        if f.variable == vi
+            push!(to_delete, ci)
+        end
+    end
+    MOI.delete(uf, to_delete)
+end
+function _remove_variable(uf::UniversalFallback,
+                          constraints::Dict{CI{MOI.VectorOfVariables, S}},
+                          vi::VI) where S
+    to_delete = keytype(constraints)[]
+    for (ci, constraint) in constraints
+        f::MOI.VectorOfVariables, s = constraint
+        if vi in f.variables
+            if length(f.variables) > 1
+                if S <: MOIU.DimensionUpdatableSets
+                    constraints[ci] = remove_variable(f, s, vi)
+                else
+                    throw_delete_variable_in_vov(vi)
+                end
+            else
+                push!(to_delete, ci)
+            end
+        end
+    end
+    MOI.delete(uf, to_delete)
+end
+function _remove_variable(::UniversalFallback, constraints::Dict{<:CI}, vi::VI)
+    for (ci, constraint) in constraints
+        f, s = constraint
+        constraints[ci] = remove_variable(f, s, vi)
+    end
+end
+function _remove_vector_of_variables(
+    uf::UniversalFallback, constraints::Dict{<:CI{MOI.VectorOfVariables}},
+    vis::Vector{VI}
+)
+    to_delete = keytype(constraints)[]
+    for (ci, constraint) in constraints
+        f::MOI.VectorOfVariables = constraint[1]
+        if vis == f.variables
+            push!(to_delete, ci)
+        end
+    end
+    MOI.delete(uf, to_delete)
+end
+function _remove_vector_of_variables(
+    ::UniversalFallback, ::Dict{<:CI}, ::Vector{VI})
+end
 function MOI.delete(uf::UniversalFallback, vi::VI)
     MOI.delete(uf.model, vi)
     for d in values(uf.varattr)
         delete!(d, vi)
     end
-    for (FS, constraints) in uf.constraints
-        for (ci, constraint) in constraints
-            f, s = constraint
-            if f isa MOI.SingleVariable
-                if f.variable == vi
-                    delete!(constraints, ci)
-                end
-            else
-                constraints[ci] = removevariable(f, s, vi)
-            end
+    for (_, constraints) in uf.constraints
+        _remove_variable(uf, constraints, vi)
+    end
+end
+function MOI.delete(uf::UniversalFallback, vis::Vector{VI})
+    MOI.delete(uf.model, vis)
+    for d in values(uf.varattr)
+        for vi in vis
+            delete!(d, vi)
+        end
+    end
+    for (_, constraints) in uf.constraints
+        _remove_vector_of_variables(uf, constraints, vis)
+        for vi in vis
+            _remove_variable(uf, constraints, vi)
         end
     end
 end
@@ -214,47 +270,38 @@ function MOI.get(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}) 
 end
 
 MOI.get(uf::UniversalFallback, ::Type{VI}, name::String) = MOI.get(uf.model, VI, name)
+
+check_type_and_multiple_names(::Type, ::Nothing, ::Nothing, name) = nothing
+check_type_and_multiple_names(::Type{T}, value::T, ::Nothing, name) where T = value
+check_type_and_multiple_names(::Type, ::Any, ::Nothing, name) where T = nothing
+check_type_and_multiple_names(::Type{T}, ::Nothing, value::T, name) where T = value
+check_type_and_multiple_names(::Type, ::Nothing, ::Any, name) where T = nothing
+function check_type_and_multiple_names(T::Type, ::Any, ::Any, name)
+    throw_multiple_name_error(T, name)
+end
 function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F, S}
     if uf.name_to_con === nothing
         uf.name_to_con = build_name_to_con_map(uf.con_to_name)
     end
-
     if MOI.supports_constraint(uf.model, F, S)
         ci = MOI.get(uf.model, CI{F, S}, name)
-        if ci !== nothing && haskey(uf.name_to_con, name)
-            error("Multiple constraints have the name $name.")
-        end
-        return ci
     else
-        ci = get(uf.name_to_con, name, nothing)
-        if ci == CI{Nothing, Nothing}(-1)
-            error("Multiple constraints have the name $name.")
-        elseif ci isa CI{F, S}
-            return ci
-        else
-            return nothing
-        end
+        # There is no `F`-in-`S` constraint in `b.model`, `ci` is only got
+        # to check for duplicate names.
+        ci = MOI.get(uf.model, CI, name)
     end
+    ci_uf = get(uf.name_to_con, name, nothing)
+    throw_if_multiple_with_name(ci_uf, name)
+    return check_type_and_multiple_names(CI{F, S}, ci_uf, ci, name)
 end
 function MOI.get(uf::UniversalFallback, ::Type{CI}, name::String)
     if uf.name_to_con === nothing
         uf.name_to_con = build_name_to_con_map(uf.con_to_name)
     end
-
-    ci = MOI.get(uf.model, CI, name)
-    if ci === nothing
-        uf_ci = get(uf.name_to_con, name, nothing)
-        if uf_ci == CI{Nothing, Nothing}(-1)
-            error("Multiple constraints have the name $name.")
-        else
-            return uf_ci
-        end
-    else
-        if haskey(uf.name_to_con, name)
-            error("Multiple constraints have the name $name.")
-        end
-        return ci
-    end
+    ci_uf = get(uf.name_to_con, name, nothing)
+    throw_if_multiple_with_name(ci_uf, name)
+    return check_type_and_multiple_names(
+        CI, ci_uf, MOI.get(uf.model, CI, name), name)
 end
 
 _set(uf, attr::MOI.AbstractOptimizerAttribute, value) = uf.optattr[attr] = value

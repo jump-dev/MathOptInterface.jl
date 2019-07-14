@@ -3,11 +3,11 @@ const DimensionUpdatableSets = Union{MOI.Reals,
                                      MOI.Nonnegatives,
                                      MOI.Nonpositives}
 """
-    updatedimension(s::AbstractVectorSet, newdim)
+    update_dimension(s::AbstractVectorSet, newdim)
 
 Returns a set with the dimension modified to `newdim`.
 """
-function updatedimension(::S, newdim) where S<:DimensionUpdatableSets
+function update_dimension(::S, newdim) where S<:DimensionUpdatableSets
     S(newdim)
 end
 
