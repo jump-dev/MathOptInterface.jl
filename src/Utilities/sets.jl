@@ -14,8 +14,8 @@ gives the `n-1`-dimensional nonnegative orthant. However
 function supports_dimension_update(::Type{<:MOI.AbstractVectorSet})
     return false
 end
-function supports_dimension_update(::Union{
-    MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives})
+function supports_dimension_update(::Type{<:Union{
+    MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives}})
     return true
 end
 
@@ -24,9 +24,9 @@ end
 
 Returns a set with the dimension modified to `new_dim`.
 """
-function update_dimension(S::Union{
+function update_dimension(set::Union{
     MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives}, new_dim)
-    return S(new_dim)
+    return typeof(set)(new_dim)
 end
 
 """

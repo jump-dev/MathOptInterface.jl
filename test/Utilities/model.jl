@@ -163,7 +163,7 @@ end
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
 
     message = string("Cannot delete variable as it is constrained with other",
-                     " other variables in a `MOI.VectorOfVariables`.")
+                     " variables in a `MOI.VectorOfVariables`.")
     err = MOI.DeleteNotAllowed(y, message)
     @test_throws err MOI.delete(model, y)
 

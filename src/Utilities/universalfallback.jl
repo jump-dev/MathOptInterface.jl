@@ -99,7 +99,7 @@ function _remove_variable(uf::UniversalFallback,
         f::MOI.VectorOfVariables, s = constraint
         if vi in f.variables
             if length(f.variables) > 1
-                if S <: MOIU.DimensionUpdatableSets
+                if supports_dimension_update(S)
                     constraints[ci] = remove_variable(f, s, vi)
                 else
                     throw_delete_variable_in_vov(vi)

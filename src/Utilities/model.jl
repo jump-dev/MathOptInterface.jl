@@ -133,7 +133,7 @@ function _vector_of_variables_with(::Vector, ::Union{VI, MOI.Vector{VI}})
 end
 function throw_delete_variable_in_vov(vi::VI)
     message = string("Cannot delete variable as it is constrained with other",
-                     " other variables in a `MOI.VectorOfVariables`.")
+                     " variables in a `MOI.VectorOfVariables`.")
     throw(MOI.DeleteNotAllowed(vi, message))
 end
 function _vector_of_variables_with(
@@ -142,9 +142,9 @@ function _vector_of_variables_with(
     for (ci, f, s) in constrs
         if vi in f.variables
             if length(f.variables) > 1
-                # If `s isa DimensionUpdatableSets` then the variable will be
+                # If `supports_dimension_update(s)` then the variable will be
                 # removed in `_remove_variable`.
-                if !(s isa DimensionUpdatableSets)
+                if !supports_dimension_update(typeof(s))
                     throw_delete_variable_in_vov(vi)
                 end
             else
@@ -176,8 +176,8 @@ function MOI.delete(model::AbstractModel{T}, vi::VI) where T
     for ci in vov_to_remove
         MOI.delete(model, ci)
     end
-    # `VectorOfVariables` constraints with non-`DimensionUpdatableSets` were
-    # either deleted or an error was thrown. The rest is modified now.
+    # `VectorOfVariables` constraints with sets not supporting dimension update
+    # were either deleted or an error was thrown. The rest is modified now.
     broadcastcall(constrs -> _remove_variable(constrs, vi), model)
     model.single_variable_mask[vi.value] = 0x0
     if model.variable_indices === nothing
