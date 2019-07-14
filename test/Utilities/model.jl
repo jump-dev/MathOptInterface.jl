@@ -59,6 +59,10 @@ end
     MOIT.validtest(MOIU.Model{Float64}())
 end
 
+@testset "Delete test" begin
+    MOIT.delete_test(MOIU.Model{Float64}())
+end
+
 @testset "Empty test" begin
     MOIT.emptytest(MOIU.Model{Float64}())
 end
