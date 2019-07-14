@@ -204,13 +204,13 @@ function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
 end
 
 """
-    iscanonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
+    is_canonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
                          VectorAffineFunction, VectorQuadraticTerm})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function iscanonical(f::Union{SAF, VAF, SQF, VQF})
+function is_canonical(f::Union{SAF, VAF, SQF, VQF})
     is_strictly_sorted(f.terms, MOI.term_indices,
                        t -> !iszero(MOI.coefficient(t)))
 end

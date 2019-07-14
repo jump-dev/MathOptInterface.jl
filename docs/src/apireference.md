@@ -626,7 +626,7 @@ Utilities.modifyfunction
 
 The following functions can be used to canonicalize a function:
 ```@docs
-Utilities.iscanonical
+Utilities.is_canonical
 Utilities.canonical
 Utilities.canonicalize!
 ```
