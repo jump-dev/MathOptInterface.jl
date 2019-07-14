@@ -44,6 +44,23 @@ set
 supports
 ```
 
+### Fallbacks
+
+The value of some attributes can be inferred from the value of other
+attributes. For instance, the value of [`ObjectiveValue`](@ref) can be computed
+using [`ObjectiveFunction`](@ref) and [`VariablePrimal`](@ref). When a solver
+gives access to the objective value, it is better to return this value but
+otherwise, [`Utilities.get_fallback`](@ref) can be used.
+```julia
+function MOI.get(optimizer::Optimizer, attr::MOI.ObjectiveValue)
+    return MOI.Utilities.get_fallback(optimizer, attr)
+end
+```
+
+```@docs
+Utilities.get_fallback
+```
+
 ### Submit
 
 Objects may be submitted to an optimizer using [`submit`](@ref).
