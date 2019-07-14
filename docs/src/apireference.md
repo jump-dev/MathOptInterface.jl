@@ -621,7 +621,7 @@ Utilities.remove_variable
 Utilities.all_coefficients
 Utilities.unsafe_add
 Utilities.isapprox_zero
-Utilities.modifyfunction
+Utilities.modify_function
 ```
 
 The following functions can be used to canonicalize a function:
