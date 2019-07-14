@@ -19,7 +19,7 @@ function ModifyConstraintNotAllowed(
     ci::ConstraintIndex{F, S},
     change::AbstractFunctionModification,
     message="") where {F<:AbstractFunction, S<:AbstractSet}
-    ModifyConstraintNotAllowed{F, S, typeof(change)}(ci, change, message)
+    return ModifyConstraintNotAllowed{F, S, typeof(change)}(ci, change, message)
 end
 throw_modify_not_allowed(ci::ConstraintIndex, args...) = throw(ModifyConstraintNotAllowed(ci, args...))
 
@@ -39,7 +39,7 @@ struct ModifyObjectiveNotAllowed{C<:AbstractFunctionModification} <: NotAllowedE
     message::String
 end
 function ModifyObjectiveNotAllowed(change::AbstractFunctionModification)
-    ModifyObjectiveNotAllowed(change, "")
+    return ModifyObjectiveNotAllowed(change, "")
 end
 throw_modify_not_allowed(::ObjectiveFunction, args...) = throw(ModifyObjectiveNotAllowed(args...))
 
