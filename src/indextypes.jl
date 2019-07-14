@@ -95,7 +95,23 @@ end
 """
     delete(model::ModelLike, index::Index)
 
-Delete the referenced object from the model.
+Delete the referenced object from the model. Throw [`DeleteNotAllowed`](@ref) if
+if `index` cannot be deleted.
+
+The following modifications also take effect if `Index` is [`VariableIndex`](@ref):
+* If `index` used in the objective function, it is removed from the function;
+  see [`Utilities.remove_variable`](@ref).
+* For each `func`-in-`set` constraint of the model:
+  - If `func isa SingleVariable` and `func.variable == index` then the
+    constraint is deleted.
+  - If `func isa VectorOfVariables` and `index in func.variable` then
+    * if `length(func.variable) == 1` is one, the constraint is deleted;
+    * if `length(func.variable) > 1` and `supports_dimension_update(set)` then
+      then the variable is removed from `func` and `set` is replaced by
+      `update_dimension(set, MOI.dimension(set) - 1)`.
+    * Otherwise, a [`DeleteNotAllowed`](@ref) error is thrown.
+  - Otherwise, the variable is removed from `func`; see
+    [`Utilities.remove_variable`](@ref).
 """
 delete(model::ModelLike, index::Index) = throw(DeleteNotAllowed(index))
 

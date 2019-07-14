@@ -612,6 +612,43 @@ Utilities.state
 Utilities.mode
 ```
 
+## Function utilities
+
+The following utilities are available for functions:
+```@docs
+Utilities.evalvariables
+Utilities.remove_variable
+Utilities.all_coefficients
+Utilities.unsafe_add
+Utilities.isapprox_zero
+Utilities.modifyfunction
+```
+
+The following functions can be used to canonicalize a function:
+```@docs
+Utilities.iscanonical
+Utilities.canonical
+Utilities.canonicalize!
+```
+
+The following functions can be used to manipulate functions with basic algebra:
+```@docs
+Utilities.scalar_type
+Utilities.promote_operation
+Utilities.operate
+Utilities.operate!
+Utilities.vectorize
+```
+
+## Set utilities
+
+The following utilities are available for sets:
+```@docs
+Utilities.supports_dimension_update
+Utilities.update_dimension
+Utilities.shift_constant
+```
+
 ## Benchmarks
 
 Functions to help benchmark the performance of solver wrappers. See
