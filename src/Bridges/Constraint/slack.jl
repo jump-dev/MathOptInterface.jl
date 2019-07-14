@@ -93,7 +93,7 @@ end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
                  b::ScalarSlackBridge{T}) where T
-    return MOIU.removevariable(MOI.get(model, attr, b.equality), b.slack)
+    return MOIU.remove_variable(MOI.get(model, attr, b.equality), b.slack)
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
                  b::ScalarSlackBridge)
@@ -191,7 +191,7 @@ end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
                  b::VectorSlackBridge{T}) where T
-    return MOIU.removevariable(MOI.get(model, attr, b.equality), b.slacks)
+    return MOIU.remove_variable(MOI.get(model, attr, b.equality), b.slacks)
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
                  b::VectorSlackBridge)
