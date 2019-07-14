@@ -49,7 +49,7 @@ end
 
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::F) where {F, S} = (ci, change, s)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::S) where {F, S} = (ci, f, change)
-_modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modifyfunction(f, change), s)
+_modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modify_function(f, change), s)
 function _modify(constrs::Vector{ConstraintEntry{F, S}}, ci::CI{F}, i::Int,
                  change) where {F, S}
     constrs[i] = _modifyconstr(constrs[i]..., change)
@@ -373,7 +373,7 @@ function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractF
 end
 
 function MOI.modify(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
-    model.objective = modifyfunction(model.objective, change)
+    model.objective = modify_function(model.objective, change)
 end
 
 MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet) = MOI.AbstractOptimizerAttribute[]

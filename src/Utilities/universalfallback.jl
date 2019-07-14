@@ -370,7 +370,7 @@ function MOI.modify(uf::UniversalFallback, ci::CI{F, S}, change::MOI.AbstractFun
         MOI.modify(uf.model, ci, change)
     else
         (f, s) = uf.constraints[(F, S)][ci]
-        uf.constraints[(F, S)][ci] = (modifyfunction(f, change), s)
+        uf.constraints[(F, S)][ci] = (modify_function(f, change), s)
     end
 end
 

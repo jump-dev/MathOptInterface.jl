@@ -616,7 +616,7 @@ Utilities.mode
 
 The following utilities are available for functions:
 ```@docs
-Utilities.evalvariables
+Utilities.eval_variables
 Utilities.remove_variable
 Utilities.all_coefficients
 Utilities.unsafe_add

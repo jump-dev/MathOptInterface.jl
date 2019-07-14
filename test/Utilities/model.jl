@@ -111,8 +111,8 @@ end
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
 
-    f3 = MOIU.modifyfunction(f1, MOI.ScalarConstantChange(9))
-    f3 = MOIU.modifyfunction(f3, MOI.ScalarCoefficientChange(y, 2))
+    f3 = MOIU.modify_function(f1, MOI.ScalarConstantChange(9))
+    f3 = MOIU.modify_function(f3, MOI.ScalarCoefficientChange(y, 2))
 
     @test !(MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3)
     MOI.set(model, MOI.ConstraintFunction(), c1, f3)
