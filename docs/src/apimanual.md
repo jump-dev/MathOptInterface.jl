@@ -500,15 +500,13 @@ c = [1.0, 2.0, 3.0]
 w = [0.3, 0.5, 1.0]
 C = 3.2
 
-num_variables_to_create = length(c)
-
 # output
 
-3
+3.2
 ```
 We create the variables of the problem and set the objective function:
 ```jldoctest knapsack
-x = MOI.add_variables(optimizer, num_variables_to_create)
+x = MOI.add_variables(optimizer, length(c))
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
 MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         objective_function)
@@ -522,8 +520,8 @@ We add the knapsack constraint and integrality constraints:
 ```jldoctest knapsack
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
 MOI.add_constraint(optimizer, knapsack_function, MOI.LessThan(C))
-for i in 1:num_variables_to_create
-    MOI.add_constraint(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
+for x_i in x
+    MOI.add_constraint(optimizer, MOI.SingleVariable(x_i), MOI.ZeroOne())
 end
 
 # output
