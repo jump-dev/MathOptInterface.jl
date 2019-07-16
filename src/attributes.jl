@@ -378,7 +378,7 @@ end
 """
     SettingSingleVariableFunctionNotAllowed()
 
-Error type that should be thrown when the user [`set`](@ref) the
+Error type that should be thrown when the user calls [`set`](@ref) on a
 [`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
 """
 struct SettingSingleVariableFunctionNotAllowed <: Exception end
