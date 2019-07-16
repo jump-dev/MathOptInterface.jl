@@ -29,8 +29,8 @@ v0.9.0 (May 2?, 2019)
   * An unbounded test was added (#773).
   * Existing tests had a few updates (#702, #703, #763).
 - Documentation improvements:
-  * Add a section on `CachingOptimizer` (#777).
-  * Add a section on `UniversalFallback`, `Model` and `@model` (#762).
+  * Added a section on `CachingOptimizer` (#777).
+  * Added a section on `UniversalFallback`, `Model` and `@model` (#762).
   * Transition the knapsack example to a doctest with MockOptimizer (#786).
 - Utilities improvements:
   * A `CleverDict` utility was added for a vector that automatically transform
