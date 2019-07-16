@@ -153,7 +153,7 @@ Models are constructed by
 * adding variables using [`add_variables`](@ref) (or [`add_variables`](@ref)),
   see [Adding variables](@ref);
 * setting an objective sense and function using [`set`](@ref),
-  see [Setting an objective](@ref).
+  see [Setting an objective](@ref);
 * and adding constraints using [`add_constraint`](@ref) (or
   [`add_constraints`](@ref)), see [Sets and Constraints](@ref).
 
