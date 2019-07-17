@@ -286,7 +286,7 @@ function MOI.get(uf::UniversalFallback, ::Type{CI{F, S}}, name::String) where {F
     if MOI.supports_constraint(uf.model, F, S)
         ci = MOI.get(uf.model, CI{F, S}, name)
     else
-        # There is no `F`-in-`S` constraint in `b.model`, `ci` is only got
+        # There is no `F`-in-`S` constraint in `b.model`, `ci` is only queried
         # to check for duplicate names.
         ci = MOI.get(uf.model, CI, name)
     end
