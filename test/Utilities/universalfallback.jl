@@ -204,3 +204,9 @@ end
                                    "a name")
     @test_throws Exception MOI.get(uf, MOI.ConstraintIndex, "a name")
 end
+
+@testset "Delete" begin
+    model = ModelForUniversalFallback{Float64}()
+    uf = MOIU.UniversalFallback(model)
+    MOIT.delete_test(uf)
+end

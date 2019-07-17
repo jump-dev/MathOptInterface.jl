@@ -49,7 +49,7 @@ end
 
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::F) where {F, S} = (ci, change, s)
 _modifyconstr(ci::CI{F, S}, f::F, s::S, change::S) where {F, S} = (ci, f, change)
-_modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modifyfunction(f, change), s)
+_modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modify_function(f, change), s)
 function _modify(constrs::Vector{ConstraintEntry{F, S}}, ci::CI{F}, i::Int,
                  change) where {F, S}
     constrs[i] = _modifyconstr(constrs[i]..., change)
@@ -103,7 +103,7 @@ function MOI.add_variables(model::AbstractModel, n::Integer)
 end
 
 """
-    removevariable(f::MOI.AbstractFunction, s::MOI.AbstractSet, vi::MOI.VariableIndex)
+    remove_variable(f::MOI.AbstractFunction, s::MOI.AbstractSet, vi::MOI.VariableIndex)
 
 Return a tuple `(g, t)` representing the constraint `f`-in-`s` with the
 variable `vi` removed. That is, the terms containing the variable `vi` in the
@@ -111,46 +111,74 @@ function `f` are removed and the dimension of the set `s` is updated if
 needed (e.g. when `f` is a `VectorOfVariables` with `vi` being one of the
 variables).
 """
-removevariable(f, s, vi::VI) = removevariable(f, vi), s
-function removevariable(f::MOI.VectorOfVariables, s, vi::VI)
-    g = removevariable(f, vi)
+remove_variable(f, s, vi::VI) = remove_variable(f, vi), s
+function remove_variable(f::MOI.VectorOfVariables, s, vi::VI)
+    g = remove_variable(f, vi)
     if length(g.variables) != length(f.variables)
-        t = updatedimension(s, length(g.variables))
+        t = MOI.update_dimension(s, length(g.variables))
     else
         t = s
     end
     return g, t
 end
-function _removevar!(constrs::Vector, vi::VI)
+function _remove_variable(constrs::Vector, vi::VI)
     for i in eachindex(constrs)
         ci, f, s = constrs[i]
-        constrs[i] = (ci, removevariable(f, s, vi)...)
+        constrs[i] = (ci, remove_variable(f, s, vi)...)
     end
     return CI{MOI.SingleVariable}[]
 end
-function _removevar!(constrs::Vector{<:ConstraintEntry{MOI.SingleVariable}},
-                     vi::VI)
-    # If a variable is removed, the SingleVariable constraints using this variable
-    # need to be removed too
-    rm = CI{MOI.SingleVariable}[]
+function _vector_of_variables_with(::Vector, ::Union{VI, MOI.Vector{VI}})
+    return CI{MOI.VectorOfVariables}[]
+end
+function throw_delete_variable_in_vov(vi::VI)
+    message = string("Cannot delete variable as it is constrained with other",
+                     " variables in a `MOI.VectorOfVariables`.")
+    throw(MOI.DeleteNotAllowed(vi, message))
+end
+function _vector_of_variables_with(
+    constrs::Vector{<:ConstraintEntry{MOI.VectorOfVariables}}, vi::VI)
+    rm = CI{MOI.VectorOfVariables}[]
     for (ci, f, s) in constrs
-        if f.variable == vi
+        if vi in f.variables
+            if length(f.variables) > 1
+                # If `supports_dimension_update(s)` then the variable will be
+                # removed in `_remove_variable`.
+                if !MOI.supports_dimension_update(typeof(s))
+                    throw_delete_variable_in_vov(vi)
+                end
+            else
+                push!(rm, ci)
+            end
+        end
+    end
+    return rm
+end
+function _vector_of_variables_with(
+    constrs::Vector{<:ConstraintEntry{MOI.VectorOfVariables}},
+    vis::Vector{VI}
+)
+    rm = CI{MOI.VectorOfVariables}[]
+    for (ci, f, s) in constrs
+        if vis == f.variables
             push!(rm, ci)
         end
     end
     return rm
 end
-function MOI.delete(model::AbstractModel, vi::VI)
-    if !MOI.is_valid(model, vi)
-        throw(MOI.InvalidIndex(vi))
-    end
-    model.objective = removevariable(model.objective, vi)
-    # `ci_to_remove` is the list of indices of the `SingleVariable` constraints
-    # of `vi`
-    ci_to_remove = broadcastvcat(constrs -> _removevar!(constrs, vi), model)
-    for ci in ci_to_remove
+function MOI.delete(model::AbstractModel{T}, vi::VI) where T
+    MOI.throw_if_not_valid(model, vi)
+    model.objective = remove_variable(model.objective, vi)
+    # If a variable is removed, the `VectorOfVariables` constraints using this
+    # variable only need to be removed too. `vov_to_remove` is the list of
+    # indices of the `VectorOfVariables` constraints of `vi`.
+    vov_to_remove = broadcastvcat(constrs -> _vector_of_variables_with(constrs, vi), model)
+    for ci in vov_to_remove
         MOI.delete(model, ci)
     end
+    # `VectorOfVariables` constraints with sets not supporting dimension update
+    # were either deleted or an error was thrown. The rest is modified now.
+    broadcastcall(constrs -> _remove_variable(constrs, vi), model)
     model.single_variable_mask[vi.value] = 0x0
     if model.variable_indices === nothing
         model.variable_indices = Set(MOI.get(model,
@@ -158,8 +186,26 @@ function MOI.delete(model::AbstractModel, vi::VI)
     end
     delete!(model.variable_indices, vi)
     model.name_to_var = nothing
-    if haskey(model.var_to_name, vi)
-        delete!(model.var_to_name, vi)
+    delete!(model.var_to_name, vi)
+    model.name_to_con = nothing
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semicontinuous{T}}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semiinteger{T}}(vi.value))
+end
+function MOI.delete(model::AbstractModel, vis::Vector{VI})
+    # Delete `VectorOfVariables(vis)` constraints as otherwise, it will error
+    # when removing variables one by one.
+    vov_to_remove = broadcastvcat(constrs -> _vector_of_variables_with(constrs, vis), model)
+    for ci in vov_to_remove
+        MOI.delete(model, ci)
+    end
+    for vi in vis
+        MOI.delete(model, vi)
     end
 end
 
@@ -214,26 +260,48 @@ function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
 end
 MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.var_to_name, vi, EMPTYSTRING)
 
+"""
+    build_name_to_var_map(con_to_name::Dict{MOI.VariableIndex, String})
+
+Create and return a reverse map from name to variable index, given a map from
+variable index to name. The special value `MOI.VariableIndex(0)` is used to
+indicate that multiple variables have the same name.
+"""
+function build_name_to_var_map(var_to_name::Dict{VI, String})
+    name_to_var = Dict{String, VI}()
+    for (var, var_name) in var_to_name
+        if haskey(name_to_var, var_name)
+            # 0 is a special value that means this string does not map to
+            # a unique variable name.
+            name_to_var[var_name] = VI(0)
+        else
+            name_to_var[var_name] = var
+        end
+    end
+    return name_to_var
+end
+
+function throw_multiple_name_error(::Type{MOI.VariableIndex}, name::String)
+    error("Multiple variables have the name $name.")
+end
+function throw_multiple_name_error(::Type{<:MOI.ConstraintIndex}, name::String)
+    error("Multiple constraints have the name $name.")
+end
+function throw_if_multiple_with_name(::Nothing, ::String) end
+function throw_if_multiple_with_name(index::MOI.Index, name::String)
+    if iszero(index.value)
+        throw_multiple_name_error(typeof(index), name)
+    end
+end
+
 function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
     if model.name_to_var === nothing
         # Rebuild the map.
-        model.name_to_var = Dict{String, VI}()
-        for (var, var_name) in model.var_to_name
-            if haskey(model.name_to_var, var_name)
-                # -1 is a special value that means this string does not map to
-                # a unique variable name.
-                model.name_to_var[var_name] = VI(-1)
-            else
-                model.name_to_var[var_name] = var
-            end
-        end
+        model.name_to_var = build_name_to_var_map(model.var_to_name)
     end
     result = get(model.name_to_var, name, nothing)
-    if result == VI(-1)
-        error("Multiple variables have the name $name.")
-    else
-        return result
-    end
+    throw_if_multiple_with_name(result, name)
+    return result
 end
 
 function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vector{MOI.AbstractVariableAttribute}
@@ -252,14 +320,14 @@ MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.con_to_n
 
 Create and return a reverse map from name to constraint index, given a map from
 constraint index to name. The special value
-`MOI.ConstraintIndex{Nothing, Nothing}(-1)` is used to indicate that multiple
+`MOI.ConstraintIndex{Nothing, Nothing}(0)` is used to indicate that multiple
 constraints have the same name.
 """
 function build_name_to_con_map(con_to_name::Dict{CI, String})
     name_to_con = Dict{String, CI}()
     for (con, con_name) in con_to_name
         if haskey(name_to_con, con_name)
-            name_to_con[con_name] = CI{Nothing, Nothing}(-1)
+            name_to_con[con_name] = CI{Nothing, Nothing}(0)
         else
             name_to_con[con_name] = con
         end
@@ -274,9 +342,8 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
         model.name_to_con = build_name_to_con_map(model.con_to_name)
     end
     ci = get(model.name_to_con, name, nothing)
-    if ci == CI{Nothing, Nothing}(-1)
-        error("Multiple constraints have the name $name.")
-    elseif ci isa ConType
+    throw_if_multiple_with_name(ci, name)
+    if ci isa ConType
         return ci
     else
         return nothing
@@ -308,7 +375,7 @@ function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractF
 end
 
 function MOI.modify(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
-    model.objective = modifyfunction(model.objective, change)
+    model.objective = modify_function(model.objective, change)
 end
 
 MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet) = MOI.AbstractOptimizerAttribute[]
@@ -335,6 +402,8 @@ single_variable_flag(::Type{MOI.Integer}) = 0x10
 single_variable_flag(::Type{MOI.ZeroOne}) = 0x20
 single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x40
 single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
+# If a set is added here, a line should be added in
+# `MOI.delete(::AbstractModel, ::MOI.VariableIndex)`
 
 function flag_to_set_type(flag::UInt8, T::Type)
     if flag == 0x1
@@ -446,14 +515,10 @@ function _delete_constraint(model::AbstractModel, ci::CI)
     model.constrmap[ci.value] = 0
 end
 function MOI.delete(model::AbstractModel, ci::CI)
-    if !MOI.is_valid(model, ci)
-        throw(MOI.InvalidIndex(ci))
-    end
+    MOI.throw_if_not_valid(model, ci)
     _delete_constraint(model, ci)
     model.name_to_con = nothing
-    if haskey(model.con_to_name, ci)
-        delete!(model.con_to_name, ci)
-    end
+    delete!(model.con_to_name, ci)
 end
 
 function MOI.modify(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)

@@ -90,3 +90,8 @@ end
     @test MOI.get(optimizer, MOI.ConstraintDual(), c1) == 5.9
     @test MOI.get(optimizer, MOI.ConstraintDual(), soc) == [1.0,2.0]
 end
+
+@testset "Delete" begin
+    mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+    MOIT.delete_test(mock)
+end

@@ -1,16 +1,3 @@
-const DimensionUpdatableSets = Union{MOI.Reals,
-                                     MOI.Zeros,
-                                     MOI.Nonnegatives,
-                                     MOI.Nonpositives}
-"""
-    updatedimension(s::AbstractVectorSet, newdim)
-
-Returns a set with the dimension modified to `newdim`.
-"""
-function updatedimension(::S, newdim) where S<:DimensionUpdatableSets
-    S(newdim)
-end
-
 """
     shift_constant(set::MOI.AbstractScalarSet,
                    offset)

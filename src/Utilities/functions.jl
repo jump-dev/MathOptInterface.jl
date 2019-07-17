@@ -1,30 +1,30 @@
 using Test
 
 """
-    evalvariables(varval::Function, f::AbstractFunction)
+    eval_variables(varval::Function, f::AbstractFunction)
 
 Returns the value of function `f` if each variable index `vi` is evaluated as `varval(vi)`.
 """
-function evalvariables end
-evalvariables(varval::Function, f::SVF) = varval(f.variable)
-evalvariables(varval::Function, f::VVF) = varval.(f.variables)
-function evalvariables(varval::Function, f::SAF)
+function eval_variables end
+eval_variables(varval::Function, f::SVF) = varval(f.variable)
+eval_variables(varval::Function, f::VVF) = varval.(f.variables)
+function eval_variables(varval::Function, f::SAF)
     return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
 end
-function evalvariables(varval::Function, f::VAF)
+function eval_variables(varval::Function, f::VAF)
     out = copy(f.constants)
     for t in f.terms
         out[t.output_index] += evalterm(varval, t.scalar_term)
     end
     out
 end
-function evalvariables(varval::Function, f::SQF)
+function eval_variables(varval::Function, f::SQF)
     init = zero(f.constant)
     lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
     quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
     return lin + quad + f.constant
 end
-function evalvariables(varval::Function, f::VQF)
+function eval_variables(varval::Function, f::VQF)
     out = copy(f.constants)
     for t in f.affine_terms
         out[t.output_index] += evalterm(varval, t.scalar_term)
@@ -204,13 +204,13 @@ function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
 end
 
 """
-    iscanonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
+    is_canonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
                          VectorAffineFunction, VectorQuadraticTerm})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function iscanonical(f::Union{SAF, VAF, SQF, VQF})
+function is_canonical(f::Union{SAF, VAF, SQF, VQF})
     is_strictly_sorted(f.terms, MOI.term_indices,
                        t -> !iszero(MOI.coefficient(t)))
 end
@@ -460,44 +460,44 @@ function _rmvar(vis_or_terms::Vector, vi)
 end
 
 """
-    removevariable(f::AbstractFunction, vi::VariableIndex)
+    remove_variable(f::AbstractFunction, vi::VariableIndex)
 
 Return a new function `f` with the variable vi removed.
 """
-function removevariable end
-function removevariable(f::MOI.SingleVariable, vi::MOI.VariableIndex)
+function remove_variable end
+function remove_variable(f::MOI.SingleVariable, vi::MOI.VariableIndex)
     if f.variable == vi
         error("Cannot remove variable from a `SingleVariable` function of the",
               " same variable.")
     end
     return f
 end
-function removevariable(f::VVF, vi)
+function remove_variable(f::VVF, vi)
     VVF(_rmvar(f.variables, vi))
 end
-function removevariable(f::Union{SAF, VAF}, vi)
+function remove_variable(f::Union{SAF, VAF}, vi)
     typeof(f)(_rmvar(f.terms, vi), MOI.constant(f))
 end
-function removevariable(f::Union{SQF, VQF}, vi)
+function remove_variable(f::Union{SQF, VQF}, vi)
     terms = _rmvar.((f.affine_terms, f.quadratic_terms), Ref(vi))
     typeof(f)(terms..., MOI.constant(f))
 end
 
 """
-    modifyfunction(f::AbstractFunction, change::AbstractFunctionModification)
+    modify_function(f::AbstractFunction, change::AbstractFunctionModification)
 
 Return a new function `f` modified according to `change`.
 """
-function modifyfunction(f::SAF, change::MOI.ScalarConstantChange)
+function modify_function(f::SAF, change::MOI.ScalarConstantChange)
     return SAF(f.terms, change.new_constant)
 end
-function modifyfunction(f::VAF, change::MOI.VectorConstantChange)
+function modify_function(f::VAF, change::MOI.VectorConstantChange)
     return VAF(f.terms, change.new_constant)
 end
-function modifyfunction(f::SQF, change::MOI.ScalarConstantChange)
+function modify_function(f::SQF, change::MOI.ScalarConstantChange)
     return SQF(f.affine_terms, f.quadratic_terms, change.new_constant)
 end
-function modifyfunction(f::VQF, change::MOI.VectorConstantChange)
+function modify_function(f::VQF, change::MOI.VectorConstantChange)
     return VQF(f.affine_terms, f.quadratic_terms, change.new_constant)
 end
 function _modifycoefficient(terms::Vector{<:MOI.ScalarAffineTerm}, variable::VI, new_coefficient)
@@ -518,11 +518,11 @@ function _modifycoefficient(terms::Vector{<:MOI.ScalarAffineTerm}, variable::VI,
     end
     terms
 end
-function modifyfunction(f::SAF, change::MOI.ScalarCoefficientChange)
+function modify_function(f::SAF, change::MOI.ScalarCoefficientChange)
     lin = _modifycoefficient(f.terms, change.variable, change.new_coefficient)
     return SAF(lin, f.constant)
 end
-function modifyfunction(f::SQF, change::MOI.ScalarCoefficientChange)
+function modify_function(f::SQF, change::MOI.ScalarCoefficientChange)
     lin = _modifycoefficient(f.affine_terms, change.variable, change.new_coefficient)
     return SQF(lin, f.quadratic_terms, f.constant)
 end
@@ -553,13 +553,13 @@ function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable:
     end
     terms
 end
-function modifyfunction(f::VAF, change::MOI.MultirowChange)
+function modify_function(f::VAF, change::MOI.MultirowChange)
     dim = MOI.output_dimension(f)
     coefficients = change.new_coefficients
     lin = _modifycoefficients(dim, f.terms, change.variable, coefficients)
     VAF(lin, f.constants)
 end
-function modifyfunction(f::VQF, change::MOI.MultirowChange)
+function modify_function(f::VQF, change::MOI.MultirowChange)
     dim = MOI.output_dimension(f)
     coefficients = change.new_coefficients
     lin = _modifycoefficients(dim, f.affine_terms, change.variable, coefficients)

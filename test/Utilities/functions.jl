@@ -75,35 +75,35 @@ end
     @test MOI.VectorQuadraticTerm(Int32(3), scalarquad) === MOI.VectorQuadraticTerm(Int64(3), scalarquad)
     @test MOI.VectorQuadraticTerm{Float64}(Int32(3), scalarquad) === MOI.VectorQuadraticTerm(Int64(3), scalarquad)
 end
-@testset "evalvariables" begin
+@testset "eval_variables" begin
     # We do tests twice to make sure the function is not modified
     vals = Dict(w=>0, x=>3, y=>1, z=>5)
     fsv = MOI.SingleVariable(z)
     @test MOI.output_dimension(fsv) == 1
-    @test MOIU.evalvariables(vi -> vals[vi], fsv) ≈ 5
-    @test MOIU.evalvariables(vi -> vals[vi], fsv) ≈ 5
+    @test MOIU.eval_variables(vi -> vals[vi], fsv) ≈ 5
+    @test MOIU.eval_variables(vi -> vals[vi], fsv) ≈ 5
     fvv = MOI.VectorOfVariables([x, z, y])
     @test MOI.output_dimension(fvv) == 3
-    @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
-    @test MOIU.evalvariables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
+    @test MOIU.eval_variables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
+    @test MOIU.eval_variables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
     fsa = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(3.0, z), MOI.ScalarAffineTerm(2.0, y)], 2.0)
     @test MOI.output_dimension(fsa) == 1
-    @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
-    @test MOIU.evalvariables(vi -> vals[vi], fsa) ≈ 22
+    @test MOIU.eval_variables(vi -> vals[vi], fsa) ≈ 22
+    @test MOIU.eval_variables(vi -> vals[vi], fsa) ≈ 22
     fva = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1, 2], MOI.ScalarAffineTerm.([1.0, 3.0, 2.0], [x, z, y])), [-3.0, 2.0])
     @test MOI.output_dimension(fva) == 2
-    @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
-    @test MOIU.evalvariables(vi -> vals[vi], fva) ≈ [12, 7]
+    @test MOIU.eval_variables(vi -> vals[vi], fva) ≈ [12, 7]
+    @test MOIU.eval_variables(vi -> vals[vi], fva) ≈ [12, 7]
     fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
                                       MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]), -3.0)
     @test MOI.output_dimension(fsq) == 1
-    @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
-    @test MOIU.evalvariables(vi -> vals[vi], fsq) ≈ 16
+    @test MOIU.eval_variables(vi -> vals[vi], fsq) ≈ 16
+    @test MOIU.eval_variables(vi -> vals[vi], fsq) ≈ 16
     fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
                                       MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y])), [-3.0, -2.0])
     @test MOI.output_dimension(fvq) == 2
-    @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
-    @test MOIU.evalvariables(vi -> vals[vi], fvq) ≈ [13, 1]
+    @test MOIU.eval_variables(vi -> vals[vi], fvq) ≈ [13, 1]
+    @test MOIU.eval_variables(vi -> vals[vi], fvq) ≈ [13, 1]
 end
 @testset "mapvariables" begin
     fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
@@ -285,15 +285,15 @@ end
             @test f ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3, 4], [x, y]), 5) - MOI.SingleVariable(x)
         end
         @testset "modification" begin
-            f = MOIU.modifyfunction(f, MOI.ScalarConstantChange(6))
+            f = MOIU.modify_function(f, MOI.ScalarConstantChange(6))
             @test f.constant == 6
             g = deepcopy(f)
             @test g ≈ f
-            f = MOIU.modifyfunction(f, MOI.ScalarCoefficientChange(y, 3))
+            f = MOIU.modify_function(f, MOI.ScalarCoefficientChange(y, 3))
             @test !(g ≈ f)
             @test g.terms == MOI.ScalarAffineTerm.([2, 4], [x, y])
             @test f.terms == MOI.ScalarAffineTerm.([2, 3], [x, y])
-            f = MOIU.modifyfunction(f, MOI.ScalarCoefficientChange(x, 0))
+            f = MOIU.modify_function(f, MOI.ScalarCoefficientChange(x, 0))
             @test f.terms == MOI.ScalarAffineTerm.([3], [y])
         end
     end
@@ -409,13 +409,13 @@ end
                                               MOI.ScalarQuadraticTerm.([1.0, 2.0, 3.0], [x, y, x], [x, y, y]), 7.0) / 2.0
         end
         @testset "modification" begin
-            f = MOIU.modifyfunction(f, MOI.ScalarConstantChange(9))
+            f = MOIU.modify_function(f, MOI.ScalarConstantChange(9))
             @test f.constant == 9
-            f = MOIU.modifyfunction(f, MOI.ScalarCoefficientChange(y, 0))
+            f = MOIU.modify_function(f, MOI.ScalarCoefficientChange(y, 0))
             @test f.affine_terms == MOI.ScalarAffineTerm.([3], [x])
             g = deepcopy(f)
             @test f ≈ g
-            f = MOIU.modifyfunction(f, MOI.ScalarCoefficientChange(y, 2))
+            f = MOIU.modify_function(f, MOI.ScalarCoefficientChange(y, 2))
             @test !(f ≈ g)
             @test g.affine_terms == MOI.ScalarAffineTerm.([3], [x])
             @test f.affine_terms == MOI.ScalarAffineTerm.([3, 2], [x, y])
@@ -430,26 +430,26 @@ end
         @test MOI.output_dimension(f) == 2
         @test f.terms == MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y]))
         @test MOIU.constant_vector(f) == [5, 7]
-        f = MOIU.modifyfunction(f, MOI.VectorConstantChange([6, 8]))
+        f = MOIU.modify_function(f, MOI.VectorConstantChange([6, 8]))
         @test MOIU.constant_vector(f) == [6, 8]
         g = deepcopy(f)
         @test f ≈ g
-        f = MOIU.modifyfunction(f, MOI.MultirowChange(y, [(2, 9)]))
+        f = MOIU.modify_function(f, MOI.MultirowChange(y, [(2, 9)]))
         @test !(f ≈ g)
         @test f.terms == MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 9], [x, y, y]))
         @test g.terms == MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y]))
-        f = MOIU.modifyfunction(f, MOI.MultirowChange(y, [(1, 0)]))
+        f = MOIU.modify_function(f, MOI.MultirowChange(y, [(1, 0)]))
         @test f.terms == MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([2, 9], [x, y]))
     end
     @testset "Quadratic" begin
         f = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([1, 2, 2], MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])), MOI.VectorQuadraticTerm.([1, 1, 2], MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])), [7, 3, 4])
         @test MOI.output_dimension(f) == 3
-        f = MOIU.modifyfunction(f, MOI.VectorConstantChange([10, 11, 12]))
+        f = MOIU.modify_function(f, MOI.VectorConstantChange([10, 11, 12]))
         @test MOIU.constant_vector(f) == [10, 11, 12]
-        f = MOIU.modifyfunction(f, MOI.MultirowChange(y, [(2, 0), (1, 1)]))
+        f = MOIU.modify_function(f, MOI.MultirowChange(y, [(2, 0), (1, 1)]))
         @test f.affine_terms == MOI.VectorAffineTerm.([1, 2, 1], MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]))
         g = deepcopy(f)
-        f = MOIU.modifyfunction(f, MOI.MultirowChange(x, [(1, 0), (3, 4)]))
+        f = MOIU.modify_function(f, MOI.MultirowChange(x, [(1, 0), (3, 4)]))
         @test f.affine_terms == MOI.VectorAffineTerm.([2, 1, 3], MOI.ScalarAffineTerm.([1, 1, 4], [x, y, x]))
         @test g.affine_terms == MOI.VectorAffineTerm.([1, 2, 1], MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]))
     end
@@ -461,20 +461,20 @@ end
          (MOI.coefficient.(f1.terms) ≈ MOI.coefficient.(f2.terms)))
     end
     function test_canonicalization(f::T, expected::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
-        @test MOIU.iscanonical(expected)
+        @test MOIU.is_canonical(expected)
         g = @inferred(MOIU.canonical(f))
         @test isapprox_ordered(g, expected)
-        @test MOIU.iscanonical(g)
-        @test MOIU.iscanonical(expected)
+        @test MOIU.is_canonical(g)
+        @test MOIU.is_canonical(expected)
         @test isapprox_ordered(MOIU.canonical(g), g)
         @test MOIU.canonical(g) !== g
         @test @allocated(MOIU.canonicalize!(f)) == 0
     end
     @testset "ScalarAffine" begin
-        @test MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[])), 1.0))
-        @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1])), 1.0))
-        @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], MOI.VariableIndex.([2, 1])), 2.0))
-        @test !MOIU.iscanonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.0], MOI.VariableIndex.([1, 2])), 2.0))
+        @test MOIU.is_canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[])), 1.0))
+        @test !MOIU.is_canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1])), 1.0))
+        @test !MOIU.is_canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], MOI.VariableIndex.([2, 1])), 2.0))
+        @test !MOIU.is_canonical(MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.0], MOI.VariableIndex.([1, 2])), 2.0))
 
         test_canonicalization(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex[]), 1.5),
@@ -526,12 +526,12 @@ end
             )
     end
     @testset "VectorAffine" begin
-        @test MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]))
-        @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1]))), [1.0]))
-        @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([0.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
-        @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
-        @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, -1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
-        @test !MOIU.iscanonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
+        @test MOIU.is_canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]))
+        @test !MOIU.is_canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([0.0], MOI.VariableIndex.([1]))), [1.0]))
+        @test !MOIU.is_canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([0.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
+        @test !MOIU.is_canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 2]))), [1.0]))
+        @test !MOIU.is_canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, -1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
+        @test !MOIU.is_canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1], MOI.ScalarAffineTerm.([1.0, 1.0], MOI.VariableIndex.([1, 1]))), [1.0]))
 
         test_canonicalization(
             MOI.VectorAffineFunction(MOI.VectorAffineTerm.(Int[], MOI.ScalarAffineTerm.(Float64[], MOI.VariableIndex.(Int[]))), Float64[]),

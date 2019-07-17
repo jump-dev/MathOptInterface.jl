@@ -271,6 +271,8 @@ Functions for getting properties of sets.
 ```@docs
 dimension
 constant(s::EqualTo)
+supports_dimension_update
+update_dimension
 ```
 
 ### Scalar sets
@@ -627,6 +629,41 @@ Utilities.reset_optimizer
 Utilities.drop_optimizer
 Utilities.state
 Utilities.mode
+```
+
+## Function utilities
+
+The following utilities are available for functions:
+```@docs
+Utilities.eval_variables
+Utilities.remove_variable
+Utilities.all_coefficients
+Utilities.unsafe_add
+Utilities.isapprox_zero
+Utilities.modify_function
+```
+
+The following functions can be used to canonicalize a function:
+```@docs
+Utilities.is_canonical
+Utilities.canonical
+Utilities.canonicalize!
+```
+
+The following functions can be used to manipulate functions with basic algebra:
+```@docs
+Utilities.scalar_type
+Utilities.promote_operation
+Utilities.operate
+Utilities.operate!
+Utilities.vectorize
+```
+
+## Set utilities
+
+The following utilities are available for sets:
+```@docs
+Utilities.shift_constant
 ```
 
 ## Benchmarks

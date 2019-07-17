@@ -59,6 +59,10 @@ end
     MOIT.validtest(MOIU.Model{Float64}())
 end
 
+@testset "Delete test" begin
+    MOIT.delete_test(MOIU.Model{Float64}())
+end
+
 @testset "Empty test" begin
     MOIT.emptytest(MOIU.Model{Float64}())
 end
@@ -107,8 +111,8 @@ end
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
 
-    f3 = MOIU.modifyfunction(f1, MOI.ScalarConstantChange(9))
-    f3 = MOIU.modifyfunction(f3, MOI.ScalarCoefficientChange(y, 2))
+    f3 = MOIU.modify_function(f1, MOI.ScalarConstantChange(9))
+    f3 = MOIU.modify_function(f3, MOI.ScalarCoefficientChange(y, 2))
 
     @test !(MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3)
     MOI.set(model, MOI.ConstraintFunction(), c1, f3)
@@ -130,6 +134,10 @@ end
     c7 = MOI.add_constraint(model, f7, MOI.Nonpositives(2))
     @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}())
 
+    f8 = MOI.VectorOfVariables([x, y])
+    c8 = MOI.add_constraint(model, f8, MOI.SecondOrderCone(2))
+    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}())
+
     loc1 = MOI.get(model, MOI.ListOfConstraints())
     loc2 = Vector{Tuple{DataType, DataType}}()
     function _pushloc(constrs::Vector{MOIU.ConstraintEntry{F, S}}) where {F, S}
@@ -139,7 +147,7 @@ end
     end
     MOIU.broadcastcall(_pushloc, model)
     for loc in (loc1, loc2)
-        @test length(loc) == 5
+        @test length(loc) == 6
         @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
         @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
         @test (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone) in loc
@@ -154,6 +162,16 @@ end
     @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}())
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
 
+    message = string("Cannot delete variable as it is constrained with other",
+                     " variables in a `MOI.VectorOfVariables`.")
+    err = MOI.DeleteNotAllowed(y, message)
+    @test_throws err MOI.delete(model, y)
+
+    @test MOI.is_valid(model, c8)
+    MOI.delete(model, c8)
+    @test !MOI.is_valid(model, c8)
+    @test 0 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}())
+
     MOI.delete(model, y)
 
     f = MOI.get(model, MOI.ConstraintFunction(), c2)
@@ -165,12 +183,14 @@ end
     @test f.terms == MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([2], [x]))
     @test f.constants == [6, 8]
 
+    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}())
+    @test [c7] == @inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}())
+
     f =  MOI.get(model, MOI.ConstraintFunction(), c7)
     @test f.variables == [x]
 
     s =  MOI.get(model, MOI.ConstraintSet(), c7)
     @test MOI.dimension(s) == 1
-
 end
 
 # We create a new function and set to test catching errors if users create their

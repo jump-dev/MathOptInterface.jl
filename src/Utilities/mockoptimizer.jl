@@ -385,6 +385,19 @@ function MOI.delete(mock::MockOptimizer, index::MOI.VariableIndex)
     MOI.delete(mock.inner_model, xor_index(index))
     delete!(mock.varprimal, index)
 end
+function MOI.delete(mock::MockOptimizer, indices::Vector{MOI.VariableIndex})
+    if !mock.delete_allowed && !isempty(indices)
+        throw(MOI.DeleteNotAllowed(first(indices)))
+    end
+    for index in indices
+        # The index thrown by `mock.inner_model` would be xored
+        MOI.throw_if_not_valid(mock, index)
+    end
+    MOI.delete(mock.inner_model, xor_index.(indices))
+    for index in indices
+        delete!(mock.varprimal, index)
+    end
+end
 function MOI.delete(mock::MockOptimizer, index::MOI.ConstraintIndex)
     if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
