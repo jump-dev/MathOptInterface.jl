@@ -488,6 +488,13 @@ function delete_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y)
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(4)
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) ==
+        Set([(MOI.SingleVariable, MOI.GreaterThan{Float64}),
+             (MOI.VectorOfVariables, MOI.Nonpositives)])
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == [cx]
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
     MOI.delete(model, y[3])
     @test MOI.is_valid(model, x)
     @test MOI.is_valid(model, y[1])
@@ -500,6 +507,13 @@ function delete_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y[[1, 2, 4]])
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(3)
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) ==
+        Set([(MOI.SingleVariable, MOI.GreaterThan{Float64}),
+             (MOI.VectorOfVariables, MOI.Nonpositives)])
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == [cx]
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
     MOI.delete(model, y[1])
     @test MOI.is_valid(model, x)
     @test !MOI.is_valid(model, y[1])
@@ -512,6 +526,13 @@ function delete_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y[[2, 4]])
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) ==
+        Set([(MOI.SingleVariable, MOI.GreaterThan{Float64}),
+             (MOI.VectorOfVariables, MOI.Nonpositives)])
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == [cx]
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
     MOI.delete(model, x)
     @test !MOI.is_valid(model, x)
     @test !MOI.is_valid(model, y[1])
@@ -522,6 +543,12 @@ function delete_test(model::MOI.ModelLike)
     @test MOI.is_valid(model, cy)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y[[2, 4]])
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
+    @test MOI.get(model, MOI.ListOfConstraints()) ==
+        [(MOI.VectorOfVariables, MOI.Nonpositives)]
+    @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
     MOI.delete(model, y[[2, 4]])
     @test !MOI.is_valid(model, x)
     @test !MOI.is_valid(model, y[1])
@@ -530,4 +557,9 @@ function delete_test(model::MOI.ModelLike)
     @test !MOI.is_valid(model, y[4])
     @test !MOI.is_valid(model, cx)
     @test !MOI.is_valid(model, cy)
+    @test isempty(MOI.get(model, MOI.ListOfConstraints()))
+    @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()))
+    @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()))
 end

@@ -254,6 +254,8 @@ Functions for getting properties of sets.
 ```@docs
 dimension
 constant(s::EqualTo)
+supports_dimension_update
+update_dimension
 ```
 
 ### Scalar sets
@@ -644,8 +646,6 @@ Utilities.vectorize
 
 The following utilities are available for sets:
 ```@docs
-Utilities.supports_dimension_update
-Utilities.update_dimension
 Utilities.shift_constant
 ```
 

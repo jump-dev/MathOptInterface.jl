@@ -115,7 +115,7 @@ remove_variable(f, s, vi::VI) = remove_variable(f, vi), s
 function remove_variable(f::MOI.VectorOfVariables, s, vi::VI)
     g = remove_variable(f, vi)
     if length(g.variables) != length(f.variables)
-        t = update_dimension(s, length(g.variables))
+        t = MOI.update_dimension(s, length(g.variables))
     else
         t = s
     end
@@ -144,7 +144,7 @@ function _vector_of_variables_with(
             if length(f.variables) > 1
                 # If `supports_dimension_update(s)` then the variable will be
                 # removed in `_remove_variable`.
-                if !supports_dimension_update(typeof(s))
+                if !MOI.supports_dimension_update(typeof(s))
                     throw_delete_variable_in_vov(vi)
                 end
             else
