@@ -194,6 +194,8 @@ function MOI.delete(model::AbstractModel{T}, vi::VI) where T
     delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}(vi.value))
     delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(vi.value))
     delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semicontinuous{T}}(vi.value))
+    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semiinteger{T}}(vi.value))
 end
 function MOI.delete(model::AbstractModel, vis::Vector{VI})
     # Delete `VectorOfVariables(vis)` constraints as otherwise, it will error
@@ -400,6 +402,8 @@ single_variable_flag(::Type{MOI.Integer}) = 0x10
 single_variable_flag(::Type{MOI.ZeroOne}) = 0x20
 single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x40
 single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
+# If a set is added here, a line should be added in
+# `MOI.delete(::AbstractModel, ::MOI.VariableIndex)`
 
 function flag_to_set_type(flag::UInt8, T::Type)
     if flag == 0x1
