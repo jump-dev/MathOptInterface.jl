@@ -377,9 +377,9 @@ end
 
 """
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
-           value)::Nothing
+           values...)::Nothing
 
-Submit `value` to the submittable `sub` of the optimizer `optimizer`.
+Submit `values` to the submittable `sub` of the optimizer `optimizer`.
 
 An [`UnsupportedSubmittable`](@ref) error is thrown if `model` does not support
 the attribute `attr` (see [`supports`](@ref)) and a [`SubmitNotAllowed`](@ref)
@@ -388,7 +388,8 @@ error is thrown if it supports the submittable `sub` but it cannot be submitted.
 function submit end
 function submit(model::ModelLike, sub::AbstractSubmittable, args...)
     if supports(model, sub)
-        throw(SubmitNotAllowed(sub))
+        throw(ArgumentError(
+            "Submitting $(typeof.(args)) for `$(typeof(sub))` is not valid."))
     else
         throw(UnsupportedSubmittable(sub))
     end
