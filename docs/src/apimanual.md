@@ -929,7 +929,9 @@ If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
 between `y_i` and the vector of scalar-valued quadratic functions.
 
-### Constraint bridges
+### Automatic reformulation
+
+#### Constraint reformulation
 
 A constraint often possess different equivalent formulations, but a solver may only support one of them.
 It would be duplicate work to implement rewritting rules in every solver wrapper for every different formulation of the constraint to express it in the form supported by the solver.
@@ -965,6 +967,34 @@ Then, the user can write:
 model = MyPackage.Optimizer()
 MOI.set(model, MyPackage.PrintLevel(), 0)
 ```
+
+### Supported constrained variables and constraints
+
+The solver interface should only implement support for constrained variables
+or constraints that directly map to a structure exploited by the solver
+algorithm. There is no need to add support for additional types, this is
+handled by the [Automatic reformulation](@ref). Furthermore, this allows
+[`supports_constraint`](@ref) to indicate which types are exploited by the
+solver and hence allow layers such as [`Bridges.LazyBridgeOptimizer`](@ref)
+to accurately select the most appropriate transformations.
+
+As [`add_constrained_variable`](@ref) (resp. [`add_constrained_variables`](@ref))
+falls back to [`add_variable`](@ref) (resp. [`add_variables`](@ref)) followed by
+[`add_constraint`](@ref), there is no need to implement this function
+if `model` supports creating free variables and supports transforming free
+variables into variables in `set`. However,
+
+* if `model` does not support creating free variables, it should only implement
+  `add_constrained_variable` and not [`add_variable`](@ref) nor
+  [`add_constraint`](@ref) for [`SingleVariable`](@ref)-in-`typeof(set)`.
+  In addition, it should implement `supports_constraint(::Optimizer,
+  ::Type{VectorOfVariables}, ::Type{Reals})` and return `false` so that free
+  variables are bridged, see [`supports_constraint`](@ref).
+* if `model` supports free variables but does not support transforming free
+  variables into variables in `set`, then it should implement both
+  [`add_variable`](@ref) and `add_constraint_variable` but should not implement
+  any method for [`add_constraint`](@ref) for
+  [`SingleVariable`](@ref)-in-`typeof(set)`.
 
 ### Implementing copy
 

@@ -8,10 +8,26 @@ is, `copy_to(model, src)` does not throw [`UnsupportedConstraint`](@ref) when
 `src` contains `F`-in-`S` constraints. If `F`-in-`S` constraints are only not
 supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be
 combined with another type of constraint, it should still return `true`.
-"""
+
+    supports_constraint(model::ModelLike, ::Type{VectorOfVariables}, ::Type{Reals})::Bool
+
+Return a `Bool` indicating whether `model` supports free variables. That is,
+`copy_to(model, src)` does error when `src` contains variables that are not
+constrained by any [`SingleVariable`](@ref) or [`VectorOfVariables`](@ref)
+constraint. By default, this method returns `true` so it should only be
+implemented if `model` does not support free variables.
+
+Note that free variables are not explicitly set to be free by calling
+[`add_constraint`](@ref) with the set [`Reals`](@ref), instead, free variables
+are created with [`add_variable`](@ref) and [`add_variables`](@ref).
+If `model` does not support free variables, it should not implement
+[`add_variable`](@ref) nor [`add_variables`](@ref) but should implement
+this method and return `false`. This allows free variables to be bridged as the
+sum of a nonnegative and a nonpositive variables.
+""" # Implemented as only one method to avoid ambiguity
 function supports_constraint(model::ModelLike, F::Type{<:AbstractFunction},
                              S::Type{<:AbstractSet})
-    return false
+    return F == VectorOfVariables && S == Reals
 end
 
 """

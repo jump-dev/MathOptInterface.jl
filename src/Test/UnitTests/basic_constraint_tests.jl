@@ -30,7 +30,6 @@ const BasicConstraintTests = Dict(
 
     (MOI.VectorOfVariables, MOI.SOS1{Float64}) => ( dummy_vectorofvariables, 2, MOI.SOS1([1.0, 2.0]) ),
     (MOI.VectorOfVariables, MOI.SOS2{Float64}) => ( dummy_vectorofvariables, 2, MOI.SOS2([1.0, 2.0]) ),
-    (MOI.VectorOfVariables, MOI.Reals)         => ( dummy_vectorofvariables, 2, MOI.Reals(2) ),
     (MOI.VectorOfVariables, MOI.Zeros)         => ( dummy_vectorofvariables, 2, MOI.Zeros(2) ),
     (MOI.VectorOfVariables, MOI.Nonpositives)  => ( dummy_vectorofvariables, 2, MOI.Nonpositives(2) ),
     (MOI.VectorOfVariables, MOI.Nonnegatives)  => ( dummy_vectorofvariables, 2, MOI.Nonnegatives(2) ),
@@ -60,7 +59,6 @@ const BasicConstraintTests = Dict(
     (MOI.ScalarQuadraticFunction{Float64}, MOI.EqualTo{Float64})     => ( dummy_scalar_quadratic, 1, MOI.EqualTo(1.0) ),
     (MOI.ScalarQuadraticFunction{Float64}, MOI.Interval{Float64})    => ( dummy_scalar_quadratic, 1, MOI.Interval(1.0, 2.0) ),
 
-    (MOI.VectorAffineFunction{Float64}, MOI.Reals)        => ( dummy_vector_affine, 2, MOI.Reals(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => ( dummy_vector_affine, 2, MOI.Zeros(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_affine, 2, MOI.Nonpositives(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_affine, 2, MOI.Nonnegatives(2) ),
@@ -68,7 +66,6 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_affine, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_affine, 3, MOI.RotatedSecondOrderCone(3) ),
 
-    (MOI.VectorQuadraticFunction{Float64}, MOI.Reals)        => ( dummy_vector_quadratic, 2, MOI.Reals(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros)        => ( dummy_vector_quadratic, 2, MOI.Zeros(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_quadratic, 2, MOI.Nonpositives(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) ),
