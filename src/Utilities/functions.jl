@@ -1307,10 +1307,6 @@ function operate(::typeof(/), ::Type{T},
     return operate!(/, T, copy(f), α)
 end
 
-# To avoid type piracy, we add at least one `ScalarLike` outside of the `...`.
-function Base.:/(arg::ScalarLike{T}, args::ScalarLike{T}...) where T
-    return operate(/, T, arg, args...)
-end
 function Base.:/(f::TypedScalarLike{T}, g::T) where T
     return operate(/, T, f, g)
 end
