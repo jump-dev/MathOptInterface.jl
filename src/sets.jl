@@ -37,6 +37,8 @@ Abstract supertype for subsets of ``\\mathbb{R}``.
 """
 abstract type AbstractScalarSet <: AbstractSet end
 
+Base.broadcastable(set::AbstractScalarSet) = Ref(set)
+
 dimension(s::AbstractScalarSet) = 1
 
 """
