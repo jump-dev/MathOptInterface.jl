@@ -971,7 +971,7 @@ MOI.set(model, MyPackage.PrintLevel(), 0)
 ### Supported constrained variables and constraints
 
 The solver interface should only implement support for constrained variables
-(see [`add_constrained_variable`](@ref)/[`add_constrained_variable`](@ref))
+(see [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref))
 or constraints that directly map to a structure exploited by the solver
 algorithm. There is no need to add support for additional types, this is
 handled by the [Automatic reformulation](@ref). Furthermore, this allows

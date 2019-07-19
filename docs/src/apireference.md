@@ -182,16 +182,17 @@ delete(::ModelLike, ::Index)
 
 ### Variables
 
-*Free variables* are created with with [`add_variable`](@ref) or
-[`add_variables`](@ref) and *constrained variables* are created with
-[`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref).
-Note that free variables can be constrained after being created using
+*Free variables* are the variables created with [`add_variable`](@ref) or
+[`add_variables`](@ref) and never constrained while *constrained variables* are
+the variables either created with [`add_constrained_variable`](@ref) or
+[`add_constrained_variables`](@ref) or created with [`add_variable`](@ref) or
+[`add_variables`](@ref) and constrained after being created using
 [`add_constraint`](@ref) with the [`SingleVariable`](@ref) or
 [`VectorOfVariables`](@ref). However, they need to be added with
 [`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) to
 allow Variable bridges to be used.
-Note further that free variables that are constrained after being created using
-[`add_constraint`](@ref) will be copied by [`copy_to`](@ref) with
+Note further that variables that are constrained after being created using
+[`add_constraint`](@ref) may be copied by [`copy_to`](@ref) with
 [`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) by the
 [`Utilities.CachingOptimizer`](@ref).
 For deleting, see index types section.
