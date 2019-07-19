@@ -377,9 +377,9 @@ end
 
 """
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
-           value)::Nothing
+           values...)::Nothing
 
-Submit `value` to the submittable `sub` of the optimizer `optimizer`.
+Submit `values` to the submittable `sub` of the optimizer `optimizer`.
 
 An [`UnsupportedSubmittable`](@ref) error is thrown if `model` does not support
 the attribute `attr` (see [`supports`](@ref)) and a [`SubmitNotAllowed`](@ref)
