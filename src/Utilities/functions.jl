@@ -710,6 +710,11 @@ const ScalarQuadraticLike{T} = Union{ScalarAffineLike{T}, MOI.ScalarQuadraticFun
 # avoid overloading e.g. `+(::Float64, ::Float64)`
 const ScalarLike{T} = Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T},
                             MOI.ScalarQuadraticFunction{T}}
+# `ScalarLike` for which `T` is defined to avoid defining, e.g.,
+# `+(::SingleVariable, ::Any)` which should rather be
+# `+(::SingleVariable, ::Number)`.
+const TypedScalarLike{T} = Union{MOI.ScalarAffineFunction{T},
+                                 MOI.ScalarQuadraticFunction{T}}
 
 # Functions convertible to a VectorAffineFunction
 const VectorAffineLike{T} = Union{Vector{T}, MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}
@@ -905,21 +910,34 @@ end
 function Base.:+(arg::ScalarLike{T}, args::ScalarLike{T}...) where T
     return operate(+, T, arg, args...)
 end
-function Base.:+(α::T, arg::ScalarLike{T}, args::ScalarLike{T}...) where T
+function Base.:+(α::T, arg::TypedScalarLike{T}, args::ScalarLike{T}...) where T
     return operate(+, T, α, arg, args...)
 end
-function Base.:+(f::ScalarLike{T}, α::T) where T
+function Base.:+(α::Number, f::MOI.SingleVariable)
+    return operate(+, typeof(α), α, f)
+end
+function Base.:+(f::TypedScalarLike{T}, α::T) where T
     return operate(+, T, f, α)
+end
+function Base.:+(f::MOI.SingleVariable, α::Number)
+    return operate(+, typeof(α), f, α)
 end
 function Base.:-(arg::ScalarLike{T}, args::ScalarLike{T}...) where T
     return operate(-, T, arg, args...)
 end
-function Base.:-(f::ScalarLike{T}, α::T) where T
+function Base.:-(f::TypedScalarLike{T}, α::T) where T
     return operate(-, T, f, α)
 end
-function Base.:-(α::T, f::ScalarLike{T}) where T
+function Base.:-(f::MOI.SingleVariable, α::Number)
+    return operate(-, typeof(α), f, α)
+end
+function Base.:-(α::T, f::TypedScalarLike{T}) where T
     return operate(-, T, α, f)
 end
+function Base.:-(α::Number, f::MOI.SingleVariable)
+    return operate(-, typeof(α), α, f)
+end
+
 
 # Vector +/-
 ###############################################################################
@@ -1150,7 +1168,10 @@ function operate!(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
     return operate(*, T, α, f)
 end
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
-    MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
+end
+function operate(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
+    return operate(*, T, α, f)
 end
 
 function operate!(::typeof(*), ::Type{T},
@@ -1223,15 +1244,23 @@ function operate(::typeof(*), ::Type{T}, f::MOI.ScalarAffineFunction{T},
     return MOI.ScalarQuadraticFunction(aff_terms, quad_terms, constant)
 end
 
-function Base.:*(args::ScalarLike{T}...) where T
-    return operate(*, T, args...)
+# To avoid type piracy, we add at least one `ScalarLike` outside of the `...`.
+function Base.:*(arg::ScalarLike{T}, args::ScalarLike{T}...) where T
+    return operate(*, T, arg, args...)
 end
-function Base.:*(f::T, g::ScalarLike{T}) where T
+function Base.:*(f::T, g::TypedScalarLike{T}) where T
     return operate(*, T, f, g)
 end
-function Base.:*(f::ScalarLike{T}, g::T) where T
+function Base.:*(f::Number, g::MOI.SingleVariable)
+    return operate(*, typeof(f), f, g)
+end
+function Base.:*(f::TypedScalarLike{T}, g::T) where T
     return operate(*, T, g, f)
 end
+function Base.:*(f::MOI.SingleVariable, g::Number)
+    return operate(*, typeof(g), f, g)
+end
+
 
 ####################################### / ######################################
 function promote_operation(::typeof(/), ::Type{T},
@@ -1278,11 +1307,11 @@ function operate(::typeof(/), ::Type{T},
     return operate!(/, T, copy(f), α)
 end
 
-function Base.:/(args::ScalarLike{T}...) where T
-    return operate(/, T, args...)
-end
-function Base.:/(f::ScalarLike{T}, g::T) where T
+function Base.:/(f::TypedScalarLike{T}, g::T) where T
     return operate(/, T, f, g)
+end
+function Base.:/(f::MOI.SingleVariable, g::Number)
+    return operate(/, typeof(g), f, g)
 end
 
 ## sum
