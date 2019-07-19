@@ -1,3 +1,10 @@
+using Test
+
+using MathOptInterface
+const MOI = MathOptInterface
+
+include("dummy.jl")
+
 """
     MutLessThan{T<:Real} <: MOI.AbstractScalarSet
 
@@ -32,7 +39,17 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
             @test s3.set.upper ≈ 4.0
             s3_copy.set.upper = 5.0
             @test s3.set.upper ≈ 4.0
-            @test s3_copy.set.upper ≈ 5.0    
+            @test s3_copy.set.upper ≈ 5.0
+        end
+    end
+    @testset "Broadcast" begin
+        model = DummyModelWithAdd()
+        x = MOI.add_variables(model, 3)
+        cis = MOI.add_constraint.(model, x, MOI.EqualTo(0.0))
+        @test length(cis) == 3
+        for i in 1:3
+            @test cis[i] == MOI.ConstraintIndex{MOI.SingleVariable,
+                                                MOI.EqualTo{Float64}}(0)
         end
     end
 end
