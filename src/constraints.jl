@@ -17,7 +17,7 @@ constrained by any [`SingleVariable`](@ref) or [`VectorOfVariables`](@ref)
 constraint. By default, this method returns `true` so it should only be
 implemented if `model` does not support free variables. For instance, if a
 solver requires all variables to be nonnegative, it should implement this
-method and return `false` free variables cannot be copied to the solver.
+method and return `false` because free variables cannot be copied to the solver.
 
 Note that free variables are not explicitly set to be free by calling
 [`add_constraint`](@ref) with the set [`Reals`](@ref), instead, free variables
