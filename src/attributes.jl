@@ -388,7 +388,8 @@ error is thrown if it supports the submittable `sub` but it cannot be submitted.
 function submit end
 function submit(model::ModelLike, sub::AbstractSubmittable, args...)
     if supports(model, sub)
-        throw(MethodError(submit, (model, sub, args...)))
+        throw(ArgumentError(
+            "Submitting $(typeof.(args)) for `$(typeof(sub))` is not valid."))
     else
         throw(UnsupportedSubmittable(sub))
     end
