@@ -199,6 +199,11 @@ end
             g = MOI.SingleVariable(MOI.VariableIndex(1))
             @test !iszero(f)
             @test !iszero(g)
+            @test f + 1 ≈ 1 + f
+            @test (f + 1.0) - 1.0 ≈ (2.0f) / 2.0
+            @test (f - 1.0) + 1.0 ≈ (2.0f) / 2.0
+            @test (1.0 + f) - 1.0 ≈ (f * 2.0) / 2.0
+            @test 1.0 - (1.0 - f) ≈ (f / 2.0) * 2.0
         end
     end
     @testset "Affine" begin

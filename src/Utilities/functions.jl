@@ -1168,7 +1168,10 @@ function operate!(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
     return operate(*, T, α, f)
 end
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
-    MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
+end
+function operate(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
+    return operate(*, T, α, f)
 end
 
 function operate!(::typeof(*), ::Type{T},
