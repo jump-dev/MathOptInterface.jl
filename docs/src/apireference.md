@@ -77,8 +77,10 @@ submit
 List of submittables
 
 ```@docs
+RejectSolution
 LazyConstraint
 HeuristicSolution
+UserCut
 ```
 
 ## Model Interface
@@ -129,8 +131,8 @@ Silent
 TimeLimitSec
 RawParameter
 AbstractCallback
-LazyCallback
-HeuristicCallback
+FeasibleSolutionCallback
+InfeasibleSolutionCallback
 ```
 
 List of attributes useful for optimizers
@@ -229,8 +231,7 @@ Calls to `get` and `set` should include as an argument a single `VariableIndex` 
 VariableName
 VariablePrimalStart
 VariablePrimal
-VariablePrimalAtIntegerNode
-VariablePrimalAtFractionalNode
+CallbackVariablePrimal
 ```
 
 ### Constraints
