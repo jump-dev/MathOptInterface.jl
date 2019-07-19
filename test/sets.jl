@@ -46,10 +46,8 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         model = DummyModelWithAdd()
         x = MOI.add_variables(model, 3)
         cis = MOI.add_constraint.(model, x, MOI.EqualTo(0.0))
+        @test cis isa Vector{MOI.ConstraintIndex{MOI.SingleVariable,
+                                                 MOI.EqualTo{Float64}}}
         @test length(cis) == 3
-        for i in 1:3
-            @test cis[i] == MOI.ConstraintIndex{MOI.SingleVariable,
-                                                MOI.EqualTo{Float64}}(0)
-        end
     end
 end
