@@ -47,7 +47,8 @@ variable to belong to `set`.
 
 By default, this function falls back to creating a free variable with
 [`add_variable`](@ref) and then constraining it to belong to `set` with
-[`add_constraint`](@ref).
+[`add_constraint`](@ref), which turns the free variable into a constrained
+variable.
 """
 function add_constrained_variable(model::ModelLike, set::AbstractScalarSet)
     variable = add_variable(model)
@@ -93,7 +94,8 @@ constraining the vector of variables to belong to `set`.
 
 By default, this function falls back to creating free variables with
 [`add_variables`](@ref) and then constraining it to belong to `set` with
-[`add_constraint`](@ref).
+[`add_constraint`](@ref), which turns the free variables into constrained
+variables.
 """
 function add_constrained_variables(model::ModelLike, set::AbstractVectorSet)
     variables = add_variables(model, dimension(set))

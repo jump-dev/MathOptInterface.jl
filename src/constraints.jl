@@ -12,10 +12,12 @@ combined with another type of constraint, it should still return `true`.
     supports_constraint(model::ModelLike, ::Type{VectorOfVariables}, ::Type{Reals})::Bool
 
 Return a `Bool` indicating whether `model` supports free variables. That is,
-`copy_to(model, src)` does error when `src` contains variables that are not
+`copy_to(model, src)` does not error when `src` contains variables that are not
 constrained by any [`SingleVariable`](@ref) or [`VectorOfVariables`](@ref)
 constraint. By default, this method returns `true` so it should only be
-implemented if `model` does not support free variables.
+implemented if `model` does not support free variables. For instance, if a
+solver requires all variables to be nonnegative, it should implement this
+method and return `false` free variables cannot be copied to the solver.
 
 Note that free variables are not explicitly set to be free by calling
 [`add_constraint`](@ref) with the set [`Reals`](@ref), instead, free variables

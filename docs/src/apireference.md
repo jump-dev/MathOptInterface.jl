@@ -195,7 +195,13 @@ Note further that variables that are constrained after being created using
 [`add_constraint`](@ref) may be copied by [`copy_to`](@ref) with
 [`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) by the
 [`Utilities.CachingOptimizer`](@ref).
-For deleting, see index types section.
+More precisely, the attributes do not distinguish constraints on variables
+created with `add_constrained_variable(s)` or `add_variable(s)`/`add_constraint`.
+When the model is copied, if a variable is constrained in several sets,
+the implementation of [`copy_to`](@ref) can determine whether it is added
+using [`add_variable`](@ref) or [`add_constrained_variable`](@ref) with one
+of the sets. The rest of the constraints on the variables are added
+with [`add_constraint`](@ref). For deleting, see [Index types](@ref).
 
 ```@docs
 add_variable
