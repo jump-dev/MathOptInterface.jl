@@ -183,15 +183,12 @@ delete(::ModelLike, ::Index)
 ### Variables
 
 *Free variables* are the variables created with [`add_variable`](@ref) or
-[`add_variables`](@ref) and never constrained while *constrained variables* are
-the variables either created with [`add_constrained_variable`](@ref) or
-[`add_constrained_variables`](@ref) or created with [`add_variable`](@ref) or
-[`add_variables`](@ref) and constrained after being created using
-[`add_constraint`](@ref) with the [`SingleVariable`](@ref) or
-[`VectorOfVariables`](@ref). However, they need to be added with
-[`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) to
-allow Variable bridges to be used.
-Note further that variables that are constrained after being created using
+[`add_variables`](@ref) while *constrained variables* are
+the variables created with [`add_constrained_variable`](@ref) or
+[`add_constrained_variables`](@ref). Adding constrained variables instead of
+constraining free variables with [`add_constraint`](@ref) allows Variable
+bridges to be used.
+Note further that free variables that are constrained with
 [`add_constraint`](@ref) may be copied by [`copy_to`](@ref) with
 [`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) by the
 [`Utilities.CachingOptimizer`](@ref).
