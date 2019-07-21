@@ -182,11 +182,29 @@ delete(::ModelLike, ::Index)
 
 ### Variables
 
-Functions for adding variables. For deleting, see index types section.
+*Free variables* are the variables created with [`add_variable`](@ref) or
+[`add_variables`](@ref) while *constrained variables* are
+the variables created with [`add_constrained_variable`](@ref) or
+[`add_constrained_variables`](@ref). Adding constrained variables instead of
+constraining free variables with [`add_constraint`](@ref) allows Variable
+bridges to be used.
+Note further that free variables that are constrained with
+[`add_constraint`](@ref) may be copied by [`copy_to`](@ref) with
+[`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) by the
+[`Utilities.CachingOptimizer`](@ref).
+More precisely, the attributes do not distinguish constraints on variables
+created with `add_constrained_variable(s)` or `add_variable(s)`/`add_constraint`.
+When the model is copied, if a variable is constrained in several sets,
+the implementation of [`copy_to`](@ref) can determine whether it is added
+using [`add_variable`](@ref) or [`add_constrained_variable`](@ref) with one
+of the sets. The rest of the constraints on the variables are added
+with [`add_constraint`](@ref). For deleting, see [Index types](@ref).
 
 ```@docs
-add_variables
 add_variable
+add_variables
+add_constrained_variable
+add_constrained_variables
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
