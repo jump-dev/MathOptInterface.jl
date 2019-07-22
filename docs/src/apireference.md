@@ -677,11 +677,14 @@ Utilities.operate!
 Utilities.vectorize
 ```
 
-## Set utilities
+## Constraint utilities
 
-The following utilities are available for sets:
+The following utilities are available for moving the function constant to the
+set for scalar constraints:
 ```@docs
 Utilities.shift_constant
+Utilities.add_scalar_constraint
+Utilities.normalize_constant
 ```
 
 ## Benchmarks
