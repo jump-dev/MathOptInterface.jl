@@ -68,7 +68,8 @@ struct IndexMap
     conmap::Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}
 end
 IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(),
-                 Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}())
+                      Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}())
+
 Base.getindex(idxmap::IndexMap, vi::MOI.VariableIndex) = idxmap.varmap[vi]
 function Base.getindex(idxmap::IndexMap, ci::MOI.ConstraintIndex{F, S}) where {F, S}
     idxmap.conmap[ci]::MOI.ConstraintIndex{F, S}
@@ -82,39 +83,42 @@ end
 Base.delete!(idxmap::IndexMap, vi::MOI.VariableIndex) = delete!(idxmap.varmap, vi)
 Base.delete!(idxmap::IndexMap, ci::MOI.ConstraintIndex) = delete!(idxmap.conmap, ci)
 
+Base.haskey(idxmap::IndexMap, ci::MOI.ConstraintIndex) = haskey(idxmap.conmap, ci)
+Base.haskey(idxmap::IndexMap, vi::MOI.VariableIndex) = haskey(idxmap.varmap, vi)
+
 Base.keys(idxmap::IndexMap) = Iterators.flatten((keys(idxmap.varmap), keys(idxmap.conmap)))
 
 """
-    pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, passattr!::Function=MOI.set)
+    pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
 
-Pass the model attributes from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `passattr!` to pass the attribute. Does not copy `Name` if `copy_names` is `false`.
+Pass the model attributes from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `pass_attr` to pass the attribute. Does not copy `Name` if `copy_names` is `false`.
 
-    pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, vis_src::Vector{MOI.VariableIndex}, passattr!::Function=MOI.set)
+    pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, vis_src::Vector{MOI.VariableIndex}, pass_attr::Function=MOI.set)
 
-Pass the variable attributes from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `passattr!` to pass the attribute. Does not copy `VariableName` if `copy_names` is `false`.
+Pass the variable attributes from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `pass_attr` to pass the attribute. Does not copy `VariableName` if `copy_names` is `false`.
 
-    pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, cis_src::Vector{MOI.ConstraintIndex{F, S}}, passattr!::Function=MOI.set) where {F, S}
+    pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, cis_src::Vector{MOI.ConstraintIndex{F, S}}, pass_attr::Function=MOI.set) where {F, S}
 
-Pass the constraint attributes of `F`-in-`S` constraints from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `passattr!` to pass the attribute. Does not copy `ConstraintName` if `copy_names` is `false`.
+Pass the constraint attributes of `F`-in-`S` constraints from the model `src` to the model `dest` using `canpassattr` to check if the attribute can be passed and `pass_attr` to pass the attribute. Does not copy `ConstraintName` if `copy_names` is `false`.
 """
 function pass_attributes end
 
-function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, passattr!::Function=MOI.set)
+function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
     # Copy model attributes
     attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, tuple(), tuple(), tuple(), passattr!)
+    _pass_attributes(dest, src, copy_names, idxmap, attrs, tuple(), tuple(), tuple(), pass_attr)
 end
-function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, vis_src::Vector{VI}, passattr!::Function=MOI.set)
+function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, vis_src::Vector{VI}, pass_attr::Function=MOI.set)
     # Copy variable attributes
     attrs = MOI.get(src, MOI.ListOfVariableAttributesSet())
     vis_dest = map(vi -> idxmap[vi], vis_src)
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), passattr!)
+    _pass_attributes(dest, src, copy_names, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), pass_attr)
 end
-function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, cis_src::Vector{CI{F, S}}, passattr!::Function=MOI.set) where {F, S}
+function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, cis_src::Vector{CI{F, S}}, pass_attr::Function=MOI.set) where {F, S}
     # Copy constraint attributes
     attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F, S}())
     cis_dest = map(ci -> idxmap[ci], cis_src)
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), passattr!)
+    _pass_attributes(dest, src, copy_names, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), pass_attr)
 end
 
 function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
@@ -144,13 +148,77 @@ function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
 end
 
 """
-    copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    copy_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
+                             idxmap::IndexMap,
+                             S::Type{<:MOI.AbstractSet})
 
-Copy the constraints of type `F`-in-`S` from the model `src` the model `dest` and fill `idxmap` accordingly. Does not copy `ConstraintName` if `copy_names` is `false`.
+Copy the constraints of type `MOI.VectorOfVariables`-in-`S` from the model `src`
+to the model `dest` and fill `idxmap` accordingly. The copy is only done when
+the variables to be copied are not already keys of `idxmap`. It returns a list
+of the constraint not copied.
 """
-function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    # Copy constraints
-    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
+function copy_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
+                                  idxmap::IndexMap,
+                                  S::Type{<:MOI.AbstractSet})
+    not_added = MOI.ConstraintIndex{MOI.VectorOfVariables, S}[]
+    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
+    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.VectorOfVariables}
+    for (ci_src, f_src) in zip(cis_src, fs_src)
+        if all(vi -> !haskey(idxmap, vi), f_src.variables)
+            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
+            vis_dest, ci_dest = MOI.add_constrained_variables(dest, set)
+            idxmap[ci_src] = ci_dest
+            for (vi_src, vi_dest) in zip(f_src.variables, vis_dest)
+                idxmap[vi_src] = vi_dest
+            end
+        else
+            push!(not_added, ci_src)
+        end
+    end
+    return not_added
+end
+
+"""
+    copy_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
+                          idxmap::IndexMap,
+                          S::Type{<:MOI.AbstractSet})
+
+Copy the constraints of type `MOI.SingleVariable`-in-`S` from the model `src` to
+the model `dest` and fill `idxmap` accordingly. The copy is only done when the
+variables to be copied are not already keys of `idxmap`. It returns a list of
+the constraint not copied.
+"""
+function copy_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
+                               idxmap::IndexMap,
+                               S::Type{<:MOI.AbstractSet})
+    not_added = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
+    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}())
+    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.SingleVariable}
+    for (ci_src, f_src) in zip(cis_src, fs_src)
+        if !haskey(idxmap, f_src.variable)
+            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
+            vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
+            idxmap[ci_src] = ci_dest
+            idxmap[f_src.variable] = vi_dest
+        else
+            push!(not_added, ci_src)
+        end
+    end
+    return not_added
+end
+
+"""
+    copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
+                     idxmap::IndexMap,
+                     cis_src::Vector{<:MOI.ConstraintIndex})
+
+Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
+`idxmap` accordingly. Note that the attributes are not copied, call
+[`pass_attributes`] to copy the constraint attributes.
+"""
+function copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
+                          idxmap::IndexMap,
+                          cis_src::Vector{<:MOI.ConstraintIndex})
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
     f_dest = mapvariables.(Ref(idxmap), f_src)
     s = MOI.get(src, MOI.ConstraintSet(), cis_src)
@@ -158,7 +226,42 @@ function copyconstraints!(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::B
     for (ci_src, ci_dest) in zip(cis_src, cis_dest)
         idxmap.conmap[ci_src] = ci_dest
     end
-    pass_attributes(dest, src, copy_names, idxmap, cis_src)
+end
+
+function pass_constraints(
+    dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap,
+    single_variable_types, single_variable_indices,
+    vector_of_variables_types, vector_of_variables_indices,
+    pass_cons=copy_constraints, pass_attr=MOI.set
+)
+    for (S, cis_src) in zip(single_variable_types,
+                            single_variable_indices)
+        # do the rest in `pass_cons` which is type stable
+        pass_cons(dest, src, idxmap, cis_src)
+        cis_src = MOI.get(src, MOI.ListOfConstraintIndices{
+            MOI.SingleVariable, S}())
+        pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
+    end
+
+    for (S, cis_src) in zip(vector_of_variables_types,
+                            vector_of_variables_indices)
+        # do the rest in `pass_cons` which is type stable
+        pass_cons(dest, src, idxmap, cis_src)
+        cis_src = MOI.get(src, MOI.ListOfConstraintIndices{
+            MOI.VectorOfVariables, S}())
+        pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
+    end
+
+    nonvariable_constraint_types = [
+        (F, S) for (F, S) in MOI.get(src, MOI.ListOfConstraints())
+        if F != MOI.SingleVariable && F != MOI.VectorOfVariables
+    ]
+    for (F, S) in nonvariable_constraint_types
+        cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
+        # do the rest in `pass_cons` which is type stable
+        pass_cons(dest, src, idxmap, cis_src)
+        pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
+    end
 end
 
 attribute_value_map(idxmap, f::MOI.AbstractFunction) = mapvariables(idxmap, f)
@@ -181,11 +284,29 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
 
     idxmap = IndexMap()
 
-    # Copy variables
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    vars = MOI.add_variables(dest, length(vis_src))
-    for (vi, var) in zip(vis_src, vars)
-        idxmap.varmap[vi] = var
+    constraint_types = MOI.get(src, MOI.ListOfConstraints())
+    single_variable_types = [S for (F, S) in constraint_types
+                             if F == MOI.SingleVariable]
+    vector_of_variables_types = [S for (F, S) in constraint_types
+                                 if F == MOI.VectorOfVariables]
+
+    vector_of_variables_not_added = [
+        copy_vector_of_variables(dest, src, idxmap, S)
+        for S in vector_of_variables_types
+    ]
+    single_variable_not_added = [
+        copy_single_variable(dest, src, idxmap, S)
+        for S in single_variable_types
+    ]
+
+    if length(vis_src) != length(keys(idxmap.varmap))
+        # Copy free variables
+        variables_not_added = setdiff(Set(vis_src), keys(idxmap.varmap))
+        vars = MOI.add_variables(dest, length(variables_not_added))
+        for (vi, var) in zip(variables_not_added, vars)
+            idxmap.varmap[vi] = var
+        end
     end
 
     # Copy variable attributes
@@ -195,10 +316,9 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
     pass_attributes(dest, src, copy_names, idxmap)
 
     # Copy constraints
-    for (F, S) in MOI.get(src, MOI.ListOfConstraints())
-        # do the rest in copyconstraints! which is type stable
-        copyconstraints!(dest, src, copy_names, idxmap, F, S)
-    end
+    pass_constraints(dest, src, copy_names, idxmap,
+                     single_variable_types, single_variable_not_added,
+                     vector_of_variables_types, vector_of_variables_not_added)
 
     return idxmap
 end
@@ -243,6 +363,37 @@ Creates `nvars` variables and returns a vector of `nvars` variable indices.
 """
 function allocate_variables end
 
+"""
+    allocate_constrained_variable(model::MOI.ModelLike,
+                                  set::MOI.AbstractScalarSet)
+
+Returns a tuple with the variable index and the index for the constraint to be
+used in `load_allocate_constraint`.
+"""
+function allocate_constrained_variable(model::MOI.ModelLike,
+                                       set::MOI.AbstractScalarSet)
+    variables = allocate_variables(model, 1)
+    variable = variables[1]
+    func = MOI.SingleVariable(variable)
+    constraint = allocate_constraint(model, func, set)
+    return variable, constraint
+end
+
+"""
+    allocate_constrained_variables(model::MOI.ModelLike,
+                                   set::MOI.AbstractVectorSet)
+
+Returns a tuple with the variable indices and the index for the constraint to be
+used in `load_allocate_constraint`.
+"""
+function allocate_constrained_variables(model::MOI.ModelLike,
+                                        set::MOI.AbstractVectorSet)
+    variables = allocate_variables(model, MOI.dimension(set))
+    func = MOI.VectorOfVariables(variables)
+    constraint = allocate_constraint(model, func, set)
+    return variables, constraint
+end
+
 const ALLOCATE_LOAD_NOT_IMPLEMENTED = ErrorException("The Allocate-Load interface is" *
                                                      " not implemented by the model")
 
@@ -278,9 +429,41 @@ end
 """
     load_variables(model::MOI.ModelLike, nvars::Integer)
 
-Prepares the `model` for `loadobjective!` and `load_constraint`.
+Prepares `model` for [`load`](@ref) and [`load_constraint`](@ref).
 """
 function load_variables end
+
+"""
+    load_constrained_variable(
+        model::MOI.ModelLike, vi::MOI.VariableIndex,
+        ci::MOI.ConstraintIndex{MOI.SingleVariable},
+        set::MOI.AbstractScalarSet)
+
+Load the constrained variable `vi` to set `set` to `model`.
+"""
+function load_constrained_variable(
+        model::MOI.ModelLike, vi::MOI.VariableIndex,
+        ci::MOI.ConstraintIndex{MOI.SingleVariable},
+        set::MOI.AbstractScalarSet)
+    func = MOI.SingleVariable(vi)
+    load_constraint(model, ci, func, set)
+end
+
+"""
+    load_constrained_variables(
+        model::MOI.ModelLike, vi::MOI.VariableIndex,
+        ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
+        set::MOI.AbstractVectorSet)
+
+Load the constrained variable `vi` to set `set` to `model`.
+"""
+function load_constrained_variables(
+        model::MOI.ModelLike, vis::Vector{MOI.VariableIndex},
+        ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
+        set::MOI.AbstractVectorSet)
+    func = MOI.VectorOfVariables(vis)
+    load_constraint(model, ci, func, set)
+end
 
 """
     load(model::ModelLike, attr::ModelLikeAttribute, value)
@@ -301,6 +484,107 @@ function load(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, M
 end
 
 """
+    allocate_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
+                             idxmap::IndexMap, S::Type{<:MOI.AbstractSet})
+
+Allocate the constraints of type `MOI.SingleVariable`-in-`S` from the model
+`src` to the model `dest` and fill `idxmap` accordingly. The copy is only done
+when the variables to be copied are not already keys of `idxmap`. It returns a
+list of the constraint allocated and those not allocated.
+"""
+function allocate_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
+                                  idxmap::IndexMap, S::Type{<:MOI.AbstractSet})
+    allocated = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
+    not_allocated = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
+    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}())
+    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.SingleVariable}
+    for (ci_src, f_src) in zip(cis_src, fs_src)
+        if !haskey(idxmap, f_src.variable)
+            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
+            vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
+            idxmap[ci_src] = ci_dest
+            idxmap[f_src.variable] = vi_dest
+            push!(allocated, ci_src)
+        else
+            push!(not_allocated, ci_src)
+        end
+    end
+    return allocated, not_allocated
+end
+
+"""
+    allocate_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
+                                 idxmap::IndexMap, S::Type{<:MOI.AbstractSet})
+
+Allocate the constraints of type `MOI.VectorOfVariables`-in-`S` from the model
+`src` to the model `dest` and fill `idxmap` accordingly. The copy is only done
+when the variables to be copied are not already keys of `idxmap`. It returns a
+list of the constraint allocated and a list of those not allocated.
+"""
+function allocate_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
+                                      idxmap::IndexMap,
+                                      S::Type{<:MOI.AbstractSet})
+    allocated = MOI.ConstraintIndex{MOI.VectorOfVariables, S}[]
+    not_allocated = MOI.ConstraintIndex{MOI.VectorOfVariables, S}[]
+    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
+    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.VectorOfVariables}
+    for (ci_src, f_src) in zip(cis_src, fs_src)
+        if all(vi -> !haskey(idxmap, vi), f_src.variables)
+            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
+            vis_dest, ci_dest = allocate_constrained_variables(dest, set)
+            idxmap[ci_src] = ci_dest
+            for (vi_src, vi_dest) in zip(f_src.variables, vis_dest)
+                idxmap[vi_src] = vi_dest
+            end
+            push!(allocated, ci_src)
+        else
+            push!(not_allocated, ci_src)
+        end
+    end
+    return allocated, not_allocated
+end
+
+"""
+    load_single_variable(
+        dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
+        cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable, S}}) where S
+
+Load the constraints in `cis_src` from the model `src` to the model `dest`
+using `load_constrained_variable`.
+"""
+function load_single_variable(
+        dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
+        cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable, S}}) where S
+    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.SingleVariable}
+    sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
+    for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
+        vi_dest = idxmap[f_src.variable]
+        ci_dest = idxmap[ci_src]
+        load_constrained_variable(dest, vi_dest, ci_dest, set)
+    end
+end
+
+"""
+    load_vector_of_variables(
+        dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
+        cis_src::Vector{MOI.ConstraintIndex{MOI.VectorOfVariables, S}}) where S
+
+Load the constraints in `cis_src` from the model `src` to the model `dest`
+using `load_constrained_variable`.
+"""
+function load_vector_of_variables(
+        dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
+        cis_src::Vector{MOI.ConstraintIndex{MOI.VectorOfVariables, S}}) where S
+    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.VectorOfVariables}
+    sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
+    for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
+        vis_dest = [idxmap[vi] for vi in f_src.variables]
+        ci_dest = idxmap[ci_src]
+        load_constrained_variables(dest, vis_dest, ci_dest, set)
+    end
+end
+
+"""
     load_constraint(model::MOI.ModelLike, ci::MOI.ConstraintIndex, f::MOI.AbstractFunction, s::MOI.AbstractSet)
 
 Sets the constraint function and set for the constraint of index `ci`.
@@ -311,10 +595,8 @@ function load_constraint(model::MOI.ModelLike, ::MOI.ConstraintIndex,
                                             error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
 end
 
-function allocate_constraints(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    # Allocate constraints
-    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
-
+function allocate_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
+                              idxmap::IndexMap, cis_src::Vector{<:MOI.ConstraintIndex})
     for ci_src in cis_src
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
@@ -322,13 +604,10 @@ function allocate_constraints(dest::MOI.ModelLike, src::MOI.ModelLike, copy_name
         ci_dest = allocate_constraint(dest, f_dest, s)
         idxmap.conmap[ci_src] = ci_dest
     end
-
-    return pass_attributes(dest, src, copy_names, idxmap, cis_src, allocate)
 end
 
-function load_constraints(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, ::Type{F}, ::Type{S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    # Load constraints
-    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
+function load_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
+                          idxmap::IndexMap, cis_src::Vector{<:MOI.ConstraintIndex})
     for ci_src in cis_src
         ci_dest = idxmap[ci_src]
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
@@ -336,8 +615,6 @@ function load_constraints(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::B
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
         load_constraint(dest, ci_dest, f_dest, s)
     end
-
-    return pass_attributes(dest, src, copy_names, idxmap, cis_src, load)
 end
 
 """
@@ -352,12 +629,35 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
 
     idxmap = IndexMap()
 
-    # Allocate variables
-    nvars = MOI.get(src, MOI.NumberOfVariables())
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    vis_dest = allocate_variables(dest, nvars)
-    for (var_src, var_dest) in zip(vis_src, vis_dest)
-        idxmap.varmap[var_src] = var_dest
+    constraint_types = MOI.get(src, MOI.ListOfConstraints())
+    single_variable_types = [S for (F, S) in constraint_types
+                             if F == MOI.SingleVariable]
+    vector_of_variables_types = [S for (F, S) in constraint_types
+                                 if F == MOI.VectorOfVariables]
+
+    # Allocate variables
+    vector_of_variables_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.VectorOfVariables}}}(undef, length(vector_of_variables_types))
+    vector_of_variables_not_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.VectorOfVariables}}}(undef, length(vector_of_variables_types))
+    for (i, S) in enumerate(vector_of_variables_types)
+        vector_of_variables_allocated[i], vector_of_variables_not_allocated[i] =
+            allocate_vector_of_variables(dest, src, idxmap, S)
+    end
+
+    single_variable_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.SingleVariable}}}(undef, length(single_variable_types))
+    single_variable_not_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.SingleVariable}}}(undef, length(single_variable_types))
+    for (i, S) in enumerate(single_variable_types)
+        single_variable_allocated[i], single_variable_not_allocated[i] =
+            allocate_single_variable(dest, src, idxmap, S)
+    end
+
+    if length(vis_src) != length(keys(idxmap.varmap))
+        # Allocate free variables
+        variables_not_added = setdiff(Set(vis_src), keys(idxmap.varmap))
+        vars = allocate_variables(dest, length(variables_not_added))
+        for (vi, var) in zip(variables_not_added, vars)
+            idxmap.varmap[vi] = var
+        end
     end
 
     # Allocate variable attributes
@@ -367,13 +667,19 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
     pass_attributes(dest, src, copy_names, idxmap, allocate)
 
     # Allocate constraints
-    for (F, S) in MOI.get(src, MOI.ListOfConstraints())
-        # do the rest in copyconstraints! which is type stable
-        allocate_constraints(dest, src, copy_names, idxmap, F, S)
-    end
+    pass_constraints(dest, src, copy_names, idxmap,
+                     single_variable_types, single_variable_not_allocated,
+                     vector_of_variables_types, vector_of_variables_not_allocated,
+                     allocate_constraints, allocate)
 
     # Load variables
-    load_variables(dest, nvars)
+    vars = load_variables(dest, length(vis_src))
+    for cis_src in vector_of_variables_allocated
+        load_vector_of_variables(dest, src, idxmap, cis_src)
+    end
+    for cis_src in single_variable_allocated
+        load_single_variable(dest, src, idxmap, cis_src)
+    end
 
     # Load variable attributes
     pass_attributes(dest, src, copy_names, idxmap, vis_src, load)
@@ -381,11 +687,11 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
     # Load model attributes
     pass_attributes(dest, src, copy_names, idxmap, load)
 
-    # Copy constraints
-    for (F, S) in MOI.get(src, MOI.ListOfConstraints())
-        # do the rest in copyconstraints! which is type stable
-        load_constraints(dest, src, copy_names, idxmap, F, S)
-    end
+    # Load constraints
+    pass_constraints(dest, src, copy_names, idxmap,
+                     single_variable_types, single_variable_not_allocated,
+                     vector_of_variables_types, vector_of_variables_not_allocated,
+                     load_constraints, load)
 
     return idxmap
 end
