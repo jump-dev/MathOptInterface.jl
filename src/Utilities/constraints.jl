@@ -25,7 +25,8 @@ end
                        allow_modify_function::Bool=false)
 
 Return the `func`-in-`set` constraint in normalized form. That is, if `func` is
-[`ScalarQuadraticFunction`](@ref) or [`ScalarAffineFunction`](@ref), the
+[`MOI.ScalarQuadraticFunction`](@ref) or
+[`MOI.ScalarAffineFunction`](@ref), the
 constant is moved to the set. If `allow_modify_function` is `true` then the
 function `func` can be modified.
 """
