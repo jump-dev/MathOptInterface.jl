@@ -305,8 +305,8 @@ end
 
 Sets the constraint function and set for the constraint of index `ci`.
 """
-function load_constraint(model::MOI.ModelLike, func::MOI.AbstractFunction,
-                         set::MOI.AbstractSet)
+function load_constraint(model::MOI.ModelLike, ::MOI.ConstraintIndex,
+                         func::MOI.AbstractFunction, set::MOI.AbstractSet)
     MOI.throw_add_constraint_error_fallback(model, func, set;
                                             error_if_supported=ALLOCATE_LOAD_NOT_IMPLEMENTED)
 end

@@ -1,22 +1,11 @@
 using Test
 
 @testset "BridgeOptimizer" begin
-    include("bridgeoptimizer.jl")
+    include("bridge_optimizer.jl")
 end
 @testset "LazyBridgeOptimizer" begin
-    include("lazybridgeoptimizer.jl")
+    include("lazy_bridge_optimizer.jl")
 end
-@testset "Separate bridges" begin
-    include("flip_sign_bridge.jl")
-    include("vectorizebridge.jl")
-    include("scalarizebridge.jl")
-    include("slackbridge.jl")
-    include("functionize_bridge.jl")
-    include("intervalbridge.jl")
-    include("rsocbridge.jl")
-    include("quadtosocbridge.jl")
-    include("geomeanbridge.jl")
-    include("squarepsdbridge.jl")
-    include("detbridge.jl")
-    include("soctopsdbridge.jl")
+@testset "Constraint bridges" begin
+    include("Constraint/Constraint.jl")
 end

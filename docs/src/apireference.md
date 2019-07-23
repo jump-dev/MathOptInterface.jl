@@ -44,6 +44,32 @@ set
 supports
 ```
 
+### Fallbacks
+
+The value of some attributes can be inferred from the value of other
+attributes. For instance, the value of [`ObjectiveValue`](@ref) can be computed
+using [`ObjectiveFunction`](@ref) and [`VariablePrimal`](@ref). When a solver
+gives access to the objective value, it is better to return this value but
+otherwise, [`Utilities.get_fallback`](@ref) can be used.
+```julia
+function MOI.get(optimizer::Optimizer, attr::MOI.ObjectiveValue)
+    return MOI.Utilities.get_fallback(optimizer, attr)
+end
+```
+
+```@docs
+Utilities.get_fallback
+```
+
+### Submit
+
+Objects may be submitted to an optimizer using [`submit`](@ref).
+```@docs
+AbstractSubmittable
+submit
+```
+
+
 ## Model Interface
 
 ```@docs
@@ -89,6 +115,7 @@ List of optimizers attributes
 ```@docs
 SolverName
 Silent
+RawParameter
 ```
 
 List of attributes useful for optimizers
@@ -149,16 +176,35 @@ BasisStatusCode
 VariableIndex
 ConstraintIndex
 is_valid
+throw_if_not_valid
 delete(::ModelLike, ::Index)
 ```
 
 ### Variables
 
-Functions for adding variables. For deleting, see index types section.
+*Free variables* are the variables created with [`add_variable`](@ref) or
+[`add_variables`](@ref) while *constrained variables* are
+the variables created with [`add_constrained_variable`](@ref) or
+[`add_constrained_variables`](@ref). Adding constrained variables instead of
+constraining free variables with [`add_constraint`](@ref) allows Variable
+bridges to be used.
+Note further that free variables that are constrained with
+[`add_constraint`](@ref) may be copied by [`copy_to`](@ref) with
+[`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) by the
+[`Utilities.CachingOptimizer`](@ref).
+More precisely, the attributes do not distinguish constraints on variables
+created with `add_constrained_variable(s)` or `add_variable(s)`/`add_constraint`.
+When the model is copied, if a variable is constrained in several sets,
+the implementation of [`copy_to`](@ref) can determine whether it is added
+using [`add_variable`](@ref) or [`add_constrained_variable`](@ref) with one
+of the sets. The rest of the constraints on the variables are added
+with [`add_constraint`](@ref). For deleting, see [Index types](@ref).
 
 ```@docs
-add_variables
 add_variable
+add_variables
+add_constrained_variable
+add_constrained_variables
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
@@ -196,6 +242,12 @@ ConstraintFunction
 ConstraintSet
 ```
 
+Note that setting the [`ConstraintFunction`](@ref) of a [`SingleVariable`]
+constraint is not allowed:
+```@docs
+SettingSingleVariableFunctionNotAllowed
+```
+
 ## Functions and function modifications
 
 List of recognized functions.
@@ -225,18 +277,45 @@ constant(f::VectorOfVariables, T::DataType)
 
 ## Sets
 
-List of recognized sets.
-
+All sets are subtypes of [`AbstractSet`](@ref) and they should either be scalar
+or vector sets.
 ```@docs
 AbstractSet
-Reals
-Zeros
-Nonnegatives
-Nonpositives
+AbstractScalarSet
+AbstractVectorSet
+```
+
+Functions for getting properties of sets.
+```@docs
+dimension
+constant(s::EqualTo)
+supports_dimension_update
+update_dimension
+```
+
+### Scalar sets
+
+List of recognized scalar sets.
+```@docs
 GreaterThan
 LessThan
 EqualTo
 Interval
+Integer
+ZeroOne
+Semicontinuous
+Semiinteger
+```
+
+
+### Vector sets
+
+List of recognized vector sets.
+```@docs
+Reals
+Zeros
+Nonnegatives
+Nonpositives
 SecondOrderCone
 RotatedSecondOrderCone
 GeometricMeanCone
@@ -244,26 +323,38 @@ ExponentialCone
 DualExponentialCone
 PowerCone
 DualPowerCone
+SOS1
+SOS2
+IndicatorSet
+```
+
+### Matrix sets
+
+Matrix sets are vectorized in order to be subtypes of
+[`AbstractVectorSet`](@ref). For sets of symmetric matrices, storing both the
+`(i, j)` and `(j, i)` elements is redundant so there exists the
+[`AbstractSymmetricMatrixSetTriangle`](@ref) set to represent only the
+vectorization of the upper triangular part of the matrix. When the matrix
+of expressions constrained to be in the set is not symmetric and hence
+the `(i, j)` and `(j, i)` elements should be constrained to be symmetric,
+the [`AbstractSymmetricMatrixSetSquare`](@ref) set can be used. The
+[`Bridges.Constraint.SquareBridge`](@ref) can transform a set from the square
+form to the [`triangular_form`](@ref) by adding appropriate constraints if
+the `(i, j)` and `(j, i)` expressions are different.
+```@docs
+AbstractSymmetricMatrixSetTriangle
+AbstractSymmetricMatrixSetSquare
+side_dimension
+triangular_form
+```
+List of recognized matrix sets.
+```@docs
 PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeSquare
 LogDetConeTriangle
 LogDetConeSquare
 RootDetConeTriangle
 RootDetConeSquare
-Integer
-ZeroOne
-Semicontinuous
-Semiinteger
-SOS1
-SOS2
-IndicatorSet
-```
-
-Functions for getting and setting properties of sets.
-
-```@docs
-dimension
-constant(s::EqualTo)
 ```
 
 ## Modifications
@@ -332,6 +423,13 @@ thrown:
 ScalarFunctionConstantNotZero
 ```
 
+Some [`SingleVariable`](@ref) constraints cannot be combined on the same
+variable:
+```@docs
+LowerBoundAlreadySet
+UpperBoundAlreadySet
+```
+
 The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs
@@ -350,45 +448,90 @@ AddConstraintNotAllowed
 ModifyConstraintNotAllowed
 ModifyObjectiveNotAllowed
 DeleteNotAllowed
+UnsupportedSubmittable
+SubmitNotAllowed
+```
+
+## Models
+
+[`Utilities.Model`](@ref) provides an implementation of a [`ModelLike`](@ref)
+that efficiently supports all functions and sets defined within MOI. However,
+given the extensibility of MOI, this might not over all use cases.
+
+[`Utilities.UniversalFallback`](@ref) is a layer that sits on top of any
+`ModelLike` and provides non-specialized (slower) fallbacks for constraints and
+attributes that the underlying `ModeLike` does not support.
+
+For advanced use cases that need efficient support for functions and sets
+defined outside of MOI (but still known at compile time), we provide the
+[`Utilities.@model`](@ref) macro.
+
+```@docs
+Utilities.Model
+Utilities.UniversalFallback
+Utilities.@model
 ```
 
 ## Bridges
 
 Bridges can be used for automatic reformulation of a certain constraint type into equivalent constraints.
 ```@docs
-Bridges.AbstractBridge
+Bridges.Constraint.AbstractBridge
 Bridges.AbstractBridgeOptimizer
-Bridges.SingleBridgeOptimizer
+Bridges.Constraint.SingleBridgeOptimizer
 Bridges.LazyBridgeOptimizer
 Bridges.add_bridge
 ```
 
 Below is the list of bridges implemented in this package.
 ```@docs
-Bridges.GreaterToLessBridge
-Bridges.LessToGreaterBridge
-Bridges.NonnegToNonposBridge
-Bridges.NonposToNonnegBridge
-Bridges.VectorizeBridge
-Bridges.ScalarizeBridge
-Bridges.ScalarSlackBridge
-Bridges.VectorSlackBridge
-Bridges.ScalarFunctionizeBridge
-Bridges.VectorFunctionizeBridge
-Bridges.SplitIntervalBridge
-Bridges.RSOCBridge
-Bridges.QuadtoSOCBridge
-Bridges.GeoMeanBridge
-Bridges.SquarePSDBridge
-Bridges.RootDetBridge
-Bridges.LogDetBridge
-Bridges.SOCtoPSDBridge
-Bridges.RSOCtoPSDBridge
+Bridges.Constraint.GreaterToLessBridge
+Bridges.Constraint.LessToGreaterBridge
+Bridges.Constraint.NonnegToNonposBridge
+Bridges.Constraint.NonposToNonnegBridge
+Bridges.Constraint.VectorizeBridge
+Bridges.Constraint.ScalarizeBridge
+Bridges.Constraint.ScalarSlackBridge
+Bridges.Constraint.VectorSlackBridge
+Bridges.Constraint.ScalarFunctionizeBridge
+Bridges.Constraint.VectorFunctionizeBridge
+Bridges.Constraint.SplitIntervalBridge
+Bridges.Constraint.RSOCBridge
+Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.GeoMeanBridge
+Bridges.Constraint.SquareBridge
+Bridges.Constraint.RootDetBridge
+Bridges.Constraint.LogDetBridge
+Bridges.Constraint.SOCtoPSDBridge
+Bridges.Constraint.RSOCtoPSDBridge
+Bridges.Constraint.IndicatorActiveOnFalseBridge
 ```
 For each bridge defined in this package, a corresponding bridge optimizer is available with the same name without the "Bridge" suffix, e.g., `SplitInterval` is an `SingleBridgeOptimizer` for the `SplitIntervalBridge`.
 Moreover, a `LazyBridgeOptimizer` with all the bridges defined in this package can be obtained with
 ```@docs
 Bridges.full_bridge_optimizer
+```
+
+### Bridge interface
+
+A bridge should implement the following functions to be usable by a bridge optimizer:
+```@docs
+supports_constraint(::Type{<:Bridges.Constraint.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
+Bridges.Constraint.concrete_bridge_type
+Bridges.Constraint.bridge_constraint
+Bridges.Constraint.added_constraint_types
+```
+
+When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
+and [`ListOfConstraintIndices`](@ref), the variables and constraints created
+by the bridges in the underlying model are hidden by the bridge optimizer.
+For this purpose, the bridge should provide access to the variables and
+constraints it has creates by implemented the following methods of
+[`get`](@ref):
+```@docs
+get(::Bridges.Constraint.AbstractBridge, ::NumberOfVariables)
+get(::Bridges.Constraint.AbstractBridge, ::NumberOfConstraints)
+get(::Bridges.Constraint.AbstractBridge, ::ListOfConstraintIndices)
 ```
 
 ## Copy utilities
@@ -452,4 +595,102 @@ Utilities.allocate_constraint
 Utilities.load_variables
 Utilities.load
 Utilities.load_constraint
+```
+
+### Caching optimizer
+
+Some solvers do not support incremental definition of optimization
+models. Nevertheless, you are still able to build incrementally an optimization
+model with such solvers. MathOptInterface provides a utility,
+[`Utilities.CachingOptimizer`](@ref), that will store in a [`ModelLike`](@ref)
+the optimization model during its incremental definition. Once the
+model is completely defined, the `CachingOptimizer` specifies all problem
+information to the underlying solver, all at once.
+
+The function [`Utilities.state`](@ref) allows to query the state
+of the optimizer cached inside a `CachingOptimizer`. The state
+could be:
+* `NO_OPTIMIZER`, if no optimizer is attached;
+* `EMPTY_OPTIMIZER`, if the attached optimizer is empty;
+* `ATTACHED_OPTIMIZER`, if the attached optimizer is synchronized with the
+  cached model defined in `CachingOptimizer`.
+
+The following methods modify the state of the attached optimizer:
+* [`Utilities.attach_optimizer`](@ref) attachs a new `optimizer`
+  to a `cached_optimizer` with state `EMPTY_OPTIMIZER`.
+  The state of `cached_optimizer` is set to `ATTACHED_OPTIMIZER` after the call.
+* [`Utilities.drop_optimizer`](@ref) drops the underlying `optimizer`
+  from `cached_optimizer`, without emptying it. The state of `cached_optimizer`
+  is set to `NO_OPTIMIZER` after the call.
+* [`Utilities.reset_optimizer`](@ref) empties `optimizer` inside
+  `cached_optimizer`, without droping it. The state of `cached_optimizer`
+  is set to `EMPTY_OPTIMIZER` after the call.
+
+The way to operate a `CachingOptimizer` depends whether the mode
+is set to `AUTOMATIC` or to `MANUAL`.
+* In `MANUAL` mode, the state of the `CachingOptimizer` changes only
+  if the methods [`Utilities.attach_optimizer`](@ref),
+  [`Utilities.reset_optimizer`](@ref) or [`Utilities.drop_optimizer`](@ref)
+  are being called. Any unattended operation results in an error.
+* In `AUTOMATIC` mode, the state of the `CachingOptimizer` changes when
+  necessary. Any modification not supported by the solver (e.g. dropping
+  a constraint) results in a drop to the state `EMPTY_OPTIMIZER`.
+
+When calling [`Utilities.attach_optimizer`](@ref), the `CachingOptimizer` copies
+the cached model to the optimizer with [`MathOptInterface.copy_to`](@ref).
+We refer to [Implementing copy](@ref) for more details.
+
+```@docs
+Utilities.CachingOptimizer
+Utilities.attach_optimizer
+Utilities.reset_optimizer
+Utilities.drop_optimizer
+Utilities.state
+Utilities.mode
+```
+
+## Function utilities
+
+The following utilities are available for functions:
+```@docs
+Utilities.eval_variables
+Utilities.remove_variable
+Utilities.all_coefficients
+Utilities.unsafe_add
+Utilities.isapprox_zero
+Utilities.modify_function
+```
+
+The following functions can be used to canonicalize a function:
+```@docs
+Utilities.is_canonical
+Utilities.canonical
+Utilities.canonicalize!
+```
+
+The following functions can be used to manipulate functions with basic algebra:
+```@docs
+Utilities.scalar_type
+Utilities.promote_operation
+Utilities.operate
+Utilities.operate!
+Utilities.vectorize
+```
+
+## Set utilities
+
+The following utilities are available for sets:
+```@docs
+Utilities.shift_constant
+```
+
+## Benchmarks
+
+Functions to help benchmark the performance of solver wrappers. See
+[Benchmarking](@ref) for more details.
+
+```@docs
+Benchmarks.suite
+Benchmarks.create_baseline
+Benchmarks.compare_against_baseline
 ```

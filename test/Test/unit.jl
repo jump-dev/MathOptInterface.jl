@@ -4,36 +4,47 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-include("../model.jl")
-
 @testset "Basic Constraint Tests" begin
-    mock   = MOIU.MockOptimizer(Model{Float64}())
+    mock   = MOIU.MockOptimizer(MOIU.Model{Float64}())
     config = MOIT.TestConfig()
     MOIT.basic_constraint_tests(mock, config)
 end
 
 @testset "Unit Tests" begin
-    mock = MOIU.MockOptimizer(Model{Float64}())
+    # `UniversalFallback` needed for `MOI.Silent`
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    MOI.set(mock, MOI.Silent(), true)
     config = MOIT.TestConfig()
-    MOIT.unittest(mock, config, [
-        "solve_blank_obj",
-        "solve_constant_obj",
-        "solve_singlevariable_obj",
-        "solve_with_lowerbound",
-        "solve_with_upperbound",
-        "solve_affine_lessthan",
-        "solve_affine_greaterthan",
-        "solve_affine_equalto",
-        "solve_affine_interval",
-        "solve_duplicate_terms_scalar_affine",
-        "solve_duplicate_terms_vector_affine",
-        "solve_qp_edge_cases",
-        "solve_qcp_edge_cases",
-        "solve_affine_deletion_edge_cases",
-        "solve_duplicate_terms_obj",
-        "solve_integer_edge_cases",
-        "solve_objbound_edge_cases"
-        ])
+    for model in [mock,
+                  MOIU.CachingOptimizer(MOIU.UniversalFallback(
+                                          MOIU.Model{Float64}()), mock)]
+        MOIT.unittest(model, config, [
+            "solve_blank_obj",
+            "solve_constant_obj",
+            "solve_singlevariable_obj",
+            "solve_with_lowerbound",
+            "solve_with_upperbound",
+            "solve_affine_lessthan",
+            "solve_affine_greaterthan",
+            "solve_affine_equalto",
+            "solve_affine_interval",
+            "solve_duplicate_terms_scalar_affine",
+            "solve_duplicate_terms_vector_affine",
+            "solve_qp_edge_cases",
+            "solve_qcp_edge_cases",
+            "solve_affine_deletion_edge_cases",
+            "solve_duplicate_terms_obj",
+            "solve_integer_edge_cases",
+            "solve_objbound_edge_cases",
+            "raw_status_string",
+            "solve_time",
+            "solve_zero_one_with_bounds_1",
+            "solve_zero_one_with_bounds_2",
+            "solve_zero_one_with_bounds_3",
+            "solve_unbounded_model"
+            ])
+        MOI.empty!(model)
+    end
 
     @testset "solve_blank_obj" begin
         MOIU.set_mock_optimize!(mock,
@@ -275,10 +286,63 @@ end
         MOIT.solve_objbound_edge_cases(mock, config)
     end
 
+    @testset "raw_status_string" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOI.set(mock, MOI.RawStatusString(),
+                        "Mock solution set by `mock_optimize!`.")
+                MOIU.mock_optimize!(mock, MOI.OPTIMAL,
+                                    (MOI.FEASIBLE_POINT, [0.0]))
+            end
+        )
+        MOIT.raw_status_string(mock, config)
+    end
+
+    @testset "solve_time" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOI.set(mock, MOI.SolveTime(), 0.0)
+                MOIU.mock_optimize!(mock, MOI.OPTIMAL,
+                                    (MOI.FEASIBLE_POINT, [0.0]))
+            end
+        )
+        MOIT.solve_time(mock, config)
+    end
+
+    @testset "solve_zero_one_with_bounds" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(
+                    mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])
+                )
+            end,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(
+                    mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])
+                )
+            end,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(mock, MOI.INFEASIBLE)
+            end
+        )
+        MOIT.solve_zero_one_with_bounds_1(mock, config)
+        MOIT.solve_zero_one_with_bounds_2(mock, config)
+        MOIT.solve_zero_one_with_bounds_3(mock, config)
+    end
+
+    @testset "solve_unbounded_model" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> begin
+                MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE)
+            end
+        )
+        MOIT.solve_unbounded_model(mock, config)
+    end
 end
 
 @testset "modifications" begin
-    mock   = MOIU.MockOptimizer(Model{Float64}())
+    # `UniversalFallback` needed for `MOI.Silent`
+    mock   = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     config = MOIT.TestConfig()
     @testset "solve_set_singlevariable_lessthan" begin
         MOIU.set_mock_optimize!(mock,

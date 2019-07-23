@@ -145,7 +145,11 @@ function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
     """)
     x  = MOI.get(model, MOI.VariableIndex, "x")
     c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c1")
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
+    @test c1.value == x.value
     c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c2")
+    @test c2.value == x.value
     test_model_solution(model, config;
         objective_value   = 2.0,
         variable_primal   = [(x, 1.0)],
@@ -173,7 +177,9 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c1")
+    @test c1.value == x.value
     c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c2")
+    @test c2.value == x.value
     test_model_solution(model, config;
         objective_value   = 2.0,
         variable_primal   = [(x, 1.0)],

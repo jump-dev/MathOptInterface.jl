@@ -2,8 +2,7 @@ using Test
 import MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MOI.Test
-
-# TODO: It's hard to find where Model is defined!
+const MOIU = MOI.Utilities
 
 # We need to test this in a module at the top level because it can't be defined
 # in a testset. If it runs without error, then we're okay.
@@ -37,41 +36,60 @@ end
         MOI.ConstraintIndex{TestExternalModel.NewFunction, MOI.ZeroOne}
 end
 
+@testset "Setting lower/upper bound twice" begin
+    @testset "flag_to_set_type" begin
+        err = ErrorException("Invalid flag `0x11`.")
+        T = Int
+        @test_throws err MOIU.flag_to_set_type(0x11, T)
+        @test MOIU.flag_to_set_type(0x10, T) == MOI.Integer
+        @test MOIU.flag_to_set_type(0x20, T) == MOI.ZeroOne
+    end
+    @testset "$T" for T in [Int, Float64]
+        model = MOIU.Model{T}()
+        MOIT.set_lower_bound_twice(model, T)
+        MOIT.set_upper_bound_twice(model, T)
+    end
+end
+
 @testset "Name test" begin
-    MOIT.nametest(Model{Float64}())
+    MOIT.nametest(MOIU.Model{Float64}())
 end
 
 @testset "Valid test" begin
-    MOIT.validtest(Model{Float64}())
+    MOIT.validtest(MOIU.Model{Float64}())
+end
+
+@testset "Delete test" begin
+    MOIT.delete_test(MOIU.Model{Float64}())
 end
 
 @testset "Empty test" begin
-    MOIT.emptytest(Model{Float64}())
+    MOIT.emptytest(MOIU.Model{Float64}())
 end
 
 @testset "supports_constraint test" begin
-    MOIT.supports_constrainttest(Model{Float64}(), Float64, Int)
-    MOIT.supports_constrainttest(Model{Int}(), Int, Float64)
+    MOIT.supports_constrainttest(MOIU.Model{Float64}(), Float64, Int)
+    MOIT.supports_constrainttest(MOIU.Model{Int}(), Int, Float64)
 end
 
 @testset "OrderedIndices" begin
-    MOIT.orderedindicestest(Model{Float64}())
+    MOIT.orderedindicestest(MOIU.Model{Float64}())
 end
 
 @testset "Continuous Linear tests" begin
     config = MOIT.TestConfig(solve=false)
     exclude = ["partial_start"] # Model doesn't support VariablePrimalStart.
-    MOIT.contlineartest(Model{Float64}(), config, exclude)
+    MOIT.contlineartest(MOIU.Model{Float64}(), config, exclude)
 end
 
 @testset "Continuous Conic tests" begin
     config = MOIT.TestConfig(solve=false)
-    MOIT.contconictest(Model{Float64}(), config)
+    MOIT.contconictest(MOIU.Model{Float64}(), config)
 end
 
 @testset "Quadratic functions" begin
 
-    model = Model{Int}()
+    model = MOIU.Model{Int}()
 
     x, y = MOI.add_variables(model, 2)
     @test 2 == @inferred MOI.get(model, MOI.NumberOfVariables())
@@ -93,8 +111,8 @@ end
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
 
-    f3 = MOIU.modifyfunction(f1, MOI.ScalarConstantChange(9))
-    f3 = MOIU.modifyfunction(f3, MOI.ScalarCoefficientChange(y, 2))
+    f3 = MOIU.modify_function(f1, MOI.ScalarConstantChange(9))
+    f3 = MOIU.modify_function(f3, MOI.ScalarCoefficientChange(y, 2))
 
     @test !(MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3)
     MOI.set(model, MOI.ConstraintFunction(), c1, f3)
@@ -116,6 +134,10 @@ end
     c7 = MOI.add_constraint(model, f7, MOI.Nonpositives(2))
     @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}())
 
+    f8 = MOI.VectorOfVariables([x, y])
+    c8 = MOI.add_constraint(model, f8, MOI.SecondOrderCone(2))
+    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}())
+
     loc1 = MOI.get(model, MOI.ListOfConstraints())
     loc2 = Vector{Tuple{DataType, DataType}}()
     function _pushloc(constrs::Vector{MOIU.ConstraintEntry{F, S}}) where {F, S}
@@ -125,7 +147,7 @@ end
     end
     MOIU.broadcastcall(_pushloc, model)
     for loc in (loc1, loc2)
-        @test length(loc) == 5
+        @test length(loc) == 6
         @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
         @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
         @test (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone) in loc
@@ -140,6 +162,16 @@ end
     @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}())
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
 
+    message = string("Cannot delete variable as it is constrained with other",
+                     " variables in a `MOI.VectorOfVariables`.")
+    err = MOI.DeleteNotAllowed(y, message)
+    @test_throws err MOI.delete(model, y)
+
+    @test MOI.is_valid(model, c8)
+    MOI.delete(model, c8)
+    @test !MOI.is_valid(model, c8)
+    @test 0 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}())
+
     MOI.delete(model, y)
 
     f = MOI.get(model, MOI.ConstraintFunction(), c2)
@@ -151,12 +183,14 @@ end
     @test f.terms == MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([2], [x]))
     @test f.constants == [6, 8]
 
+    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}())
+    @test [c7] == @inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}())
+
     f =  MOI.get(model, MOI.ConstraintFunction(), c7)
     @test f.variables == [x]
 
     s =  MOI.get(model, MOI.ConstraintSet(), c7)
     @test MOI.dimension(s) == 1
-
 end
 
 # We create a new function and set to test catching errors if users create their
@@ -167,19 +201,20 @@ end
 struct SetNotSupportedBySolvers <: MOI.AbstractSet end
 @testset "Default fallbacks" begin
     @testset "set" begin
-        m = Model{Float64}()
-        x = MOI.add_variable(m)
-        c = MOI.add_constraint(m, MOI.SingleVariable(x), MOI.LessThan(0.0))
-        @test !MOI.supports_constraint(m, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
+        model = MOIU.Model{Float64}()
+        x = MOI.add_variable(model)
+        func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
+        c = MOI.add_constraint(model, func, MOI.LessThan(0.0))
+        @test !MOI.supports_constraint(model, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
 
         # set of different type
-        @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
+        @test_throws Exception MOI.set(model, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
         # set not implemented
-        @test_throws Exception MOI.set(m, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
+        @test_throws Exception MOI.set(model, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
 
         # function of different type
-        @test_throws Exception MOI.set(m, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
+        @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
         # function not implemented
-        @test_throws Exception MOI.set(m, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
+        @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
     end
 end

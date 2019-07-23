@@ -20,20 +20,20 @@ end
 @testset "Default" begin
     @test !MOIU.supports_default_copy_to(DummyModel(), false)
     @test !MOIU.supports_default_copy_to(DummyModel(), true)
-    model = Model{Float64}()
+    model = MOIU.Model{Float64}()
     MOIT.failcopytestc(model)
     MOIT.failcopytestia(model)
     MOIT.failcopytestva(model)
     MOIT.failcopytestca(model)
-    MOIT.copytest(model, Model{Float64}())
+    MOIT.copytest(model, MOIU.Model{Float64}())
 end
 @testset "Allocate-Load" begin
     @test !MOIU.supports_allocate_load(DummyModel(), false)
     @test !MOIU.supports_allocate_load(DummyModel(), true)
-    mock = MOIU.MockOptimizer(Model{Float64}(), needs_allocate_load=true)
+    mock = MOIU.MockOptimizer(MOIU.Model{Float64}(), needs_allocate_load=true)
     MOIT.failcopytestc(mock)
     MOIT.failcopytestia(mock)
     MOIT.failcopytestva(mock)
     MOIT.failcopytestca(mock)
-    MOIT.copytest(mock, Model{Float64}())
+    MOIT.copytest(mock, MOIU.Model{Float64}())
 end

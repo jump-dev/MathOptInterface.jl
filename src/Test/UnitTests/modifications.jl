@@ -1,6 +1,31 @@
 const modificationtests = Dict{String, Function}()
 
 """
+    set_function_single_variable(model::MOI.ModelLike, config::TestConfig)
+
+Test that modifying the function of a `SingleVariable`-in-`LessThan` constraint
+throws a [`SettingSingleVariableFunctionNotAllowed`](@ref) error.
+"""
+function set_function_single_variable(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x, y
+        maxobjective: 1.0x + 1.0y
+        c: x <= 1.0
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    y = MOI.get(model, MOI.VariableIndex, "y")
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
+    @test c.value == x.value
+    err = MOI.SettingSingleVariableFunctionNotAllowed()
+    func = MOI.SingleVariable(y)
+    @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, func)
+end
+modificationtests["set_function_single_variable"] = set_function_single_variable
+
+"""
     solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestConfig)
 
 Test set modification SingleVariable-in-LessThan constraint. If
@@ -16,6 +41,7 @@ function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestCon
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 1.0,
         variable_primal   = [(x, 1.0)],
@@ -49,6 +75,7 @@ function solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::T
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 1.0,
         variable_primal   = [(x, 1.0)],
@@ -315,6 +342,7 @@ function delete_variable_with_single_variable_obj(model::MOI.ModelLike,
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    @test c.value == x.value
     MOI.delete(model, y)
     test_model_solution(model, config;
         objective_value   = 1.0,

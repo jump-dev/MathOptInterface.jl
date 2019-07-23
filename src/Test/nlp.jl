@@ -124,8 +124,12 @@ function hs071test_template(model::MOI.ModelLike, config::TestConfig, evaluator:
     start = [1,5,5,1]
 
     for i in 1:4
-        MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.LessThan(u[i]))
-        MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.GreaterThan(l[i]))
+        cub = MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.LessThan(u[i]))
+        # We test this after the creation of every `SingleVariable` constraint
+        # to ensure a good coverage of corner cases.
+        @test cub.value == v[i].value
+        clb = MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.GreaterThan(l[i]))
+        @test clb.value == v[i].value
         MOI.set(model, MOI.VariablePrimalStart(), v[i], start[i])
     end
 

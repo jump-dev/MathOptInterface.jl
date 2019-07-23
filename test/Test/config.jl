@@ -4,8 +4,6 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-include("../model_for_mock.jl")
-
 function atest(model::MOI.ModelLike, config::MOIT.TestConfig)
     @test config.atol == 1e-8
     @test config.rtol == 1e-8
@@ -25,7 +23,7 @@ const customtests = Dict("a" => atest,
 MOIT.@moitestset custom
 
 @testset "TestConfig" begin
-    mock = MOIU.MockOptimizer(ModelForMock{Float64}())
+    mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
     config = MOIT.TestConfig()
     customtest(mock, config, ["b"])
 end

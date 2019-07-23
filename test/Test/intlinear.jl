@@ -4,9 +4,7 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-include("../model.jl")
-
-mock = MOIU.MockOptimizer(Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.TestConfig()
 
 MOIU.set_mock_optimize!(mock,

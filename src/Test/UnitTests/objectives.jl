@@ -102,6 +102,9 @@ function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
+    @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 3.0,
         variable_primal   = [(x, 1.0)],
@@ -129,6 +132,7 @@ function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 0.0,
         constraint_dual   = [(c, 0.0)]
@@ -160,6 +164,7 @@ function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
     """)
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    @test c.value == x.value
     test_model_solution(model, config;
         objective_value   = 1.0,
         variable_primal   = [(x, 1.0)],
@@ -181,8 +186,10 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
-    MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
+    vc1 = MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(1.0))
+    @test vc1.value == x[1].value
+    vc2 = MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(2.0))
+    @test vc2.value == x[2].value
 
     @testset "Basic model" begin
         # min x^2 + y^2 | x>=1, y>=2
@@ -261,6 +268,7 @@ function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    @test c.value == x.value
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(

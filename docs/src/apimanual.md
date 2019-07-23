@@ -1,5 +1,9 @@
 ```@meta
 CurrentModule = MathOptInterface
+DocTestSetup = quote
+    using MathOptInterface
+    const MOI = MathOptInterface
+end
 ```
 
 # Manual
@@ -138,15 +142,25 @@ from the [`ModelLike`](@ref) abstract type.
 Notably missing from the model API is the method to solve an optimization problem.
 `ModelLike` objects may store an instance (e.g., in memory or backed by a file format)
 without being linked to a particular solver. In addition to the model API, MOI
-defines [`AbstractOptimizer`](@ref). *Optimizers* (or solvers) implement the model API (inheriting from `ModelLike`) and additionally
-provide methods to solve the model.
+defines [`AbstractOptimizer`](@ref). *Optimizers* (or solvers) implement the
+model API (inheriting from `ModelLike`) and additionally provide methods to
+solve the model.
 
 Through the rest of the manual, `model` is used as a generic `ModelLike`, and
 `optimizer` is used as a generic `AbstractOptimizer`.
 
-[Discuss how models are constructed, optimizer attributes.]
+Models are constructed by
+* adding variables using [`add_variables`](@ref) (or [`add_variables`](@ref)),
+  see [Adding variables](@ref);
+* setting an objective sense and function using [`set`](@ref),
+  see [Setting an objective](@ref);
+* and adding constraints using [`add_constraint`](@ref) (or
+  [`add_constraints`](@ref)), see [Sets and Constraints](@ref).
 
-## Variables
+The way the problem is solved by the optimimizer is controlled by
+[`AbstractOptimizerAttribute`](@ref)s, see [Solver-specific attributes](@ref).
+
+## Adding variables
 
 All variables in MOI are scalar variables.
 New scalar variables are created with [`add_variable`](@ref) or
@@ -209,6 +223,8 @@ the function ``5x_1 - 2.3x_2 + 1``.
     `ScalarAffineTerm.([5.0,-2.3],[x[1],x[2]])` is a shortcut for
     `[ScalarAffineTerm(5.0, x[1]), ScalarAffineTerm(-2.3, x[2])]`. This is
     Julia's broadcast syntax and is used quite often.
+
+### Setting an objective
 
 Objective functions are assigned to a model by setting the
 [`ObjectiveFunction`](@ref) attribute. The [`ObjectiveSense`](@ref) attribute is
@@ -289,10 +305,11 @@ add_constraint(model, VectorOfVariables([x,y,z]), SecondOrderCone(3))
 ### Constraints by function-set pairs
 
 Below is a list of common constraint types and how they are represented
-as function-set pairs in MOI. In the notation below, ``x`` is a vector of decision variables,
-``x_i`` is a scalar decision variable, and all other terms are fixed constants.
-
-[Define notation more precisely. ``a`` vector; ``A`` matrix; don't reuse ``u,l,b`` as scalar and vector]
+as function-set pairs in MOI. In the notation below, ``x`` is a vector of
+decision variables, ``x_i`` is a scalar decision variable, ``\alpha, \beta`` are
+scalar constants, ``a, b`` are constant vectors, `A` is a constant matrix and
+``\mathbb{R}_+`` (resp. ``\mathbb{R}_-``) is the set of nonnegative (resp.
+nonpositive) real numbers.
 
 #### Linear constraints
 
@@ -301,11 +318,11 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 | ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`     |
 | ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan`  |
 | ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`      |
-| ``l \le a^Tx \le u``          | `ScalarAffineFunction`       | `Interval`     |
-| ``x_i \le u``                 | `SingleVariable`             | `LessThan`     |
-| ``x_i \ge l``                 | `SingleVariable`             | `GreaterThan`  |
-| ``x_i = b``                   | `SingleVariable`             | `EqualTo`      |
-| ``l \le x_i \le u``           | `SingleVariable`             | `Interval`     |
+| ``\alpha \le a^Tx \le \beta`` | `ScalarAffineFunction`       | `Interval`     |
+| ``x_i \le \beta               | `SingleVariable`             | `LessThan`     |
+| ``x_i \ge \alpha              | `SingleVariable`             | `GreaterThan`  |
+| ``x_i = \beta                 | `SingleVariable`             | `EqualTo`      |
+| ``\alpha \le x_i \le \beta    | `SingleVariable`             | `Interval`     |
 | ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
@@ -313,8 +330,6 @@ as function-set pairs in MOI. In the notation below, ``x`` is a vector of decisi
 By convention, solvers are not expected to support nonzero constant terms in the `ScalarAffineFunction`s the first four rows above, because they are redundant with the parameters of the sets. For example, ``2x + 1 \le 2`` should be encoded as ``2x \le 1``.
 
 Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `Interval` sets have a natural interpretation as variable bounds. As such, it is typically not natural to impose multiple lower or upper bounds on the same variable, and by convention we do not ask solver interfaces to support this. It is natural, however, to impose upper and lower bounds separately as two different constraints on a single variable. The difference between imposing bounds by using a single `Interval` constraint and by using separate `LessThan` and `GreaterThan` constraints is that the latter will allow the solver to return separate dual multipliers for the two bounds, while the former will allow the solver to return only a single dual for the interval constraint.
-
-[Define ``\mathbb{R}_+, \mathbb{R}_-``]
 
 #### Conic constraints
 
@@ -326,12 +341,14 @@ Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `I
 | ``2yz \ge \lVert x \rVert_2^2, y,z \ge 0``                    | `VectorOfVariables`          | `RotatedSecondOrderCone`           |
 | ``(a_1^Tx + b_1,a_2^Tx + b_2,a_3^Tx + b_3) \in \mathcal{E}``  | `VectorAffineFunction`       | `ExponentialCone`                  |
 | ``A(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeTriangle` |
-| ``A(x) \in \mathcal{S}'_+``                                   | `VectorAffineFunction`       | `PositiveSemidefiniteConeSquare`   |
+| ``B(x) \in \mathcal{S}_+``                                    | `VectorAffineFunction`       | `PositiveSemidefiniteConeSquare`   |
 | ``x \in \mathcal{S}_+``                                       | `VectorOfVariables`          | `PositiveSemidefiniteConeTriangle` |
-| ``x \in \mathcal{S}'_+``                                      | `VectorOfVariables`          | `PositiveSemidefiniteConeSquare`   |
+| ``x \in \mathcal{S}_+``                                       | `VectorOfVariables`          | `PositiveSemidefiniteConeSquare`   |
 
-
-[Define ``\mathcal{E}`` (exponential cone), ``\mathcal{S}_+`` (smat), ``\mathcal{S}'_+`` (svec). ``A(x)`` is an affine function of ``x`` that outputs a matrix.]
+where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
+``\mathcal{S}_+`` is the set of positive semidefinite symmetric matrices,
+``A`` is an affine map that outputs symmetric matrices and
+``B`` is an affine map that outputs square matrices.
 
 #### Quadratic constraints
 
@@ -469,59 +486,92 @@ non-global tree search solvers like
 
 ## A complete example: solving a knapsack problem
 
-[ needs formatting help, doc tests ]
-
+We first need to select a solver supporting the given problem (see
+[`supports`](@ref) and [`supports_constraint`](@ref)). In this example, we
+want to solve a binary-constrained knapsack problem:
+`max c'x: w'x <= C, x binary`. Suppose we choose GLPK:
 ```julia
-using MathOptInterface
-const MOI = MathOptInterface
 using GLPK
-
-# Solves the binary-constrained knapsack problem:
-# max c'x: w'x <= C, x binary using GLPK.
-
+optimizer = GLPK.Optimizer()
+```
+We first define the constants of the problem:
+```jldoctest knapsack; setup = :(optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}()); MOI.Utilities.set_mock_optimize!(optimizer, mock -> MOI.Utilities.mock_optimize!(mock, ones(3))))
 c = [1.0, 2.0, 3.0]
 w = [0.3, 0.5, 1.0]
 C = 3.2
 
-num_variables = length(c)
+# output
 
-optimizer = GLPK.Optimizer()
-
-# Create the variables in the problem.
-x = MOI.add_variables(optimizer, num_variables)
-
-# Set the objective function.
+3.2
+```
+We create the variables of the problem and set the objective function:
+```jldoctest knapsack
+x = MOI.add_variables(optimizer, length(c))
 objective_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
 MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         objective_function)
 MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
-# Add the knapsack constraint.
+# output
+
+MAX_SENSE::OptimizationSense = 1
+```
+We add the knapsack constraint and integrality constraints:
+```jldoctest knapsack
 knapsack_function = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(w, x), 0.0)
 MOI.add_constraint(optimizer, knapsack_function, MOI.LessThan(C))
-
-# Add integrality constraints.
-for i in 1:num_variables
-    MOI.add_constraint(optimizer, MOI.SingleVariable(x[i]), MOI.ZeroOne())
+for x_i in x
+    MOI.add_constraint(optimizer, MOI.SingleVariable(x_i), MOI.ZeroOne())
 end
 
-# All set!
+# output
+
+```
+We are all set! We can now call [`optimize!`](@ref) and wait for the solver to
+find the solution:
+```jldoctest knapsack
 MOI.optimize!(optimizer)
 
-termination_status = MOI.get(optimizer, MOI.TerminationStatus())
-obj_value = MOI.get(optimizer, MOI.ObjectiveValue())
-if termination_status != MOI.OPTIMAL
-    error("Solver terminated with status $termination_status")
-end
+# output
 
-@assert MOI.get(optimizer, MOI.ResultCount()) > 0
+```
+The first thing to check after optimization is why the solver stopped, e.g.,
+did it stop because of a time limit or did it stop because it found the optimal
+solution?
+```jldoctest knapsack
+MOI.get(optimizer, MOI.TerminationStatus())
 
-@assert MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+# output
 
-primal_variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
 
-@show obj_value
-@show primal_variable_result
+OPTIMAL::TerminationStatusCode = 1
+```
+It found the optimal solution! Now let's see what is that solution.
+```jldoctest knapsack
+MOI.get(optimizer, MOI.PrimalStatus())
+
+# output
+
+FEASIBLE_POINT::ResultStatusCode = 1
+```
+What is its objective value?
+```jldoctest knapsack
+MOI.get(optimizer, MOI.ObjectiveValue())
+
+# output
+
+6.0
+```
+And what is the value of the variables `x`?
+```jldoctest knapsack
+MOI.get(optimizer, MOI.VariablePrimal(), x)
+
+# output
+
+3-element Array{Float64,1}:
+ 1.0
+ 1.0
+ 1.0
 ```
 
 ## Problem modification
@@ -831,9 +881,6 @@ and similarly, the dual is:
 
 An important note for the LP case is that the signs of the feasible duals depend only on the sense of the inequality and not on the objective sense.
 
-
-Currently, a convention for duals is not defined for problems with non-conic sets ``\mathcal{S}_i`` or quadratic functions ``f_0, f_i``.
-
 #### Duality and scalar product
 
 The scalar product is different from the canonical one for the sets
@@ -845,8 +892,46 @@ twice the value of the `coefficients` field in the `VectorAffineFunction` for
 the corresponding rows. See [`PositiveSemidefiniteConeTriangle`](@ref) for
 details.
 
+#### Dual for problems with quadratic functions
 
-### Constraint bridges
+Given a problem with quadratic functions:
+```math
+\begin{align*}
+& \min_{x \in \mathbb{R}^n} & \frac{1}{2}x^TQ_0x + a_0^T x + b_0
+\\
+& \;\;\text{s.t.} & \frac{1}{2}x^TQ_ix + a_i^T x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
+\end{align*}
+```
+Consider the Lagrangian function
+```math
+L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i (\frac{1}{2}x^TQ_ix + a_i^T x + b_i)
+```
+A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
+* ``x^\star`` is a minimizer of
+  ```math
+  \min_{x \in \mathbb{R}^n} L(x, y^\star).
+  ```
+  That is,
+  ```math
+  0 = \nabla_x L(x, y^\star) = Q_0x + a_0 - \sum_{i = 1}^m y_i^\star (Q_ix + a_i).
+  ```
+* and ``y^\star`` is a maximizer of
+  ```math
+  \max_{y_i \in \mathcal{C}_i^*} L(x^\star, y).
+  ```
+  That is, for all ``i = 1, \ldots, m``, ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is
+  either zero or in the normal cone of ``\mathcal{C}_i^*`` at ``y^\star``.
+  For instance, if ``\mathcal{C}_i`` is ``\{ x \in \mathbb{R} : x \le 0 \}``, it means that
+  if ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is nonzero then ``\lambda_i = 0``,
+  this is the classical complementary slackness condition.
+
+If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
+``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
+between `y_i` and the vector of scalar-valued quadratic functions.
+
+### Automatic reformulation
+
+#### Constraint reformulation
 
 A constraint often possess different equivalent formulations, but a solver may only support one of them.
 It would be duplicate work to implement rewritting rules in every solver wrapper for every different formulation of the constraint to express it in the form supported by the solver.
@@ -883,12 +968,34 @@ model = MyPackage.Optimizer()
 MOI.set(model, MyPackage.PrintLevel(), 0)
 ```
 
+### Supported constrained variables and constraints
+
+The solver interface should only implement support for constrained variables
+(see [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref))
+or constraints that directly map to a structure exploited by the solver
+algorithm. There is no need to add support for additional types, this is
+handled by the [Automatic reformulation](@ref). Furthermore, this allows
+[`supports_constraint`](@ref) to indicate which types are exploited by the
+solver and hence allows layers such as [`Bridges.LazyBridgeOptimizer`](@ref)
+to accurately select the most appropriate transformations.
+
+As [`add_constrained_variable`](@ref) (resp. [`add_constrained_variables`](@ref))
+falls back to [`add_variable`](@ref) (resp. [`add_variables`](@ref)) followed by
+[`add_constraint`](@ref), there is no need to implement this function
+if `model` supports creating free variables. However, if `model` does not
+support creating free variables, then it should only implement
+[`add_constrained_variable`](@ref) and not [`add_variable`](@ref) nor
+[`add_constraint`](@ref) for [`SingleVariable`](@ref)-in-`typeof(set)`.
+In addition, it should implement `supports_constraint(::Optimizer,
+::Type{VectorOfVariables}, ::Type{Reals})` and return `false` so that free
+variables are bridged, see [`supports_constraint`](@ref).
+
 ### Implementing copy
 
 Avoid storing extra copies of the problem when possible. This means that solver
-wrappers should not use `CachingOptimizer` as part of the wrapper. Instead, do
-one of the following to load the problem (assuming the solver wrapper type is
-called `Optimizer`):
+wrappers should not use [`Utilities.CachingOptimizer`](@ref) as part of the wrapper.
+Instead, do one of the following to load the problem (assuming the solver
+wrapper type is called `Optimizer`):
 
 * If the solver supports loading the problem incrementally, implement
   [`add_variable`](@ref), [`add_constraint`](@ref) for supported constraints and
@@ -1014,6 +1121,8 @@ By convention, optimizers should not be exported and should be named
 
 The skeleton below can be used for the wrapper test file of a solver named `FooBar`.
 ```julia
+using Test
+
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MOI.Test
@@ -1039,6 +1148,10 @@ const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
 
 @testset "Unit" begin
     MOIT.unittest(bridged, config)
+end
+
+@testset "Modification" begin
+    MOIT.modificationtest(bridged, config)
 end
 
 @testset "Continuous Linear" begin
@@ -1073,9 +1186,50 @@ checks that `optimizer` implements support for
 
 If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), then `supports_default_copy_to` can be replaced by `supports_allocate_load` if appropriate (see [Implementing copy](@ref)) and the line `const bridged = ...` can be replaced with
 ```julia
-# Include here the functions/sets supported by the solver wrapper (not those that are supported through bridges)
-MOIU.@model ModelData () (EqualTo, GreaterThan, LessThan) (Zeros, Nonnegatives, Nonpositives) () (SingleVariable,) (ScalarAffineFunction,) (VectorOfVariables,) (VectorAffineFunction,)
-const cache = MOIU.UniversalFallback(ModelData{Float64}())
+const cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
 const cached = MOIU.CachingOptimizer(cache, optimizer)
 const bridged = MOIB.full_bridge_optimizer(cached, Float64)
 ```
+
+### Benchmarking
+
+To aid the development of efficient solver wrappers, MathOptInterface provides
+benchmarking functionality. Benchmarking a wrapper follows a two-step process.
+
+First, prior to making changes, run and save the benchmark results on a given
+benchmark suite as follows:
+
+```julia
+using SolverPackage, MathOptInterface
+
+const MOI = MathOptInterface
+
+suite = MOI.Benchmarks.suite() do
+    SolverPackage.Optimizer()
+end
+
+MOI.Benchmarks.create_baseline(
+    suite, "current"; directory = "/tmp", verbose = true
+)
+```
+Use the `exclude` argument to [`Benchmarks.suite`](@ref) to
+exclude benchmarks that the solver doesn't support.
+
+Second, after making changes to the package, re-run the benchmark suite and
+compare to the prior saved results:
+
+```julia
+using SolverPackage, MathOptInterface
+
+const MOI = MathOptInterface
+
+suite = MOI.Benchmarks.suite() do
+    SolverPackage.Optimizer()
+end
+
+MOI.Benchmarks.compare_against_baseline(
+    suite, "current"; directory = "/tmp", verbose = true
+)
+```
+
+This comparison will create a report detailing improvements and regressions.

@@ -3,11 +3,34 @@
 """
     supports_constraint(model::ModelLike, ::Type{F}, ::Type{S})::Bool where {F<:AbstractFunction,S<:AbstractSet}
 
-Return a `Bool` indicating whether `model` supports `F`-in-`S` constraints, that is,
-`copy_to(model, src)` does not return `CopyUnsupportedConstraint` when `src` contains `F`-in-`S` constraints.
-If `F`-in-`S` constraints are only not supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be combined with another type of constraint, it should still return `true`.
-"""
-supports_constraint(model::ModelLike, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet}) = false
+Return a `Bool` indicating whether `model` supports `F`-in-`S` constraints, that
+is, `copy_to(model, src)` does not throw [`UnsupportedConstraint`](@ref) when
+`src` contains `F`-in-`S` constraints. If `F`-in-`S` constraints are only not
+supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be
+combined with another type of constraint, it should still return `true`.
+
+    supports_constraint(model::ModelLike, ::Type{VectorOfVariables}, ::Type{Reals})::Bool
+
+Return a `Bool` indicating whether `model` supports free variables. That is,
+`copy_to(model, src)` does not error when `src` contains variables that are not
+constrained by any [`SingleVariable`](@ref) or [`VectorOfVariables`](@ref)
+constraint. By default, this method returns `true` so it should only be
+implemented if `model` does not support free variables. For instance, if a
+solver requires all variables to be nonnegative, it should implement this
+method and return `false` because free variables cannot be copied to the solver.
+
+Note that free variables are not explicitly set to be free by calling
+[`add_constraint`](@ref) with the set [`Reals`](@ref), instead, free variables
+are created with [`add_variable`](@ref) and [`add_variables`](@ref).
+If `model` does not support free variables, it should not implement
+[`add_variable`](@ref) nor [`add_variables`](@ref) but should implement
+this method and return `false`. This allows free variables to be bridged as the
+sum of a nonnegative and a nonpositive variables.
+""" # Implemented as only one method to avoid ambiguity
+function supports_constraint(model::ModelLike, F::Type{<:AbstractFunction},
+                             S::Type{<:AbstractSet})
+    return F == VectorOfVariables && S == Reals
+end
 
 """
     struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
@@ -77,6 +100,12 @@ Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vecto
   `func` is an `AbstractScalarFunction` with nonzero constant and `set`
   is [`EqualTo`](@ref), [`GreaterThan`](@ref), [`LessThan`](@ref) or
   [`Interval`](@ref).
+* a [`LowerBoundAlreadySet`](@ref) error is thrown if `F` is a
+  [`SingleVariable`](@ref) and a constraint was already added to this variable
+  that sets a lower bound.
+* a [`UpperBoundAlreadySet`](@ref) error is thrown if `F` is a
+  [`SingleVariable`](@ref) and a constraint was already added to this variable
+  that sets an upper bound.
 """
 function add_constraint(model::ModelLike, func::AbstractFunction,
                         set::AbstractSet)
@@ -137,6 +166,44 @@ function add_constraints end
 
 # default fallback
 add_constraints(model::ModelLike, funcs, sets) = add_constraint.(model, funcs, sets)
+
+"""
+    LowerBoundAlreadySet{S1, S2}
+
+Error thrown when setting a `SingleVariable`-in-`S2` when a
+`SingleVariable`-in-`S1` has already been added and the sets `S1`, `S2` both
+set a lower bound, i.e. they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
+[`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
+"""
+struct LowerBoundAlreadySet{S1, S2}
+    vi::VariableIndex
+end
+
+function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1, S2}) where {S1, S2}
+    print(io, typeof(err), ": Cannot add `SingleVariable`-in`", S2,
+          "` constraint for variable ", err.vi, " as a `SingleVariable`-in`",
+          S1, "` constraint was already set for this variable and both",
+          " constraints set a lower bound.")
+end
+
+"""
+    UpperBoundAlreadySet{S1, S2}
+
+Error thrown when setting a `SingleVariable`-in-`S2` when a
+`SingleVariable`-in-`S1` has already been added and the sets `S1`, `S2` both
+set an upper bound, i.e. they are [`EqualTo`](@ref), [`LessThan`](@ref),
+[`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
+"""
+struct UpperBoundAlreadySet{S1, S2}
+    vi::VariableIndex
+end
+
+function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1, S2}) where {S1, S2}
+    print(io, typeof(err), ": Cannot add `SingleVariable`-in`", S2,
+          "` constraint for variable ", err.vi, " as a `SingleVariable`-in`",
+          S1, "` constraint was already set for this variable and both",
+          " constraints set an upper bound.")
+end
 
 """
 ## Transform Constraint Set

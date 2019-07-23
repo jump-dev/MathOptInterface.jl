@@ -1,3 +1,9 @@
+using Test
+using MathOptInterface
+const MOI = MathOptInterface
+
+include("dummy.jl")
+
 @testset "Fallbacks for `set` methods" begin
     model = DummyModel()
 
@@ -26,19 +32,21 @@
             MOI.add_constraint(model, func, MOI.Nonnegatives(2))
         end
     end
-    @testset "Unsupported constraint with $f" for f in (MOI.add_constraint,
-                                                        MOIU.allocate_constraint,
-                                                        MOIU.load_constraint)
+    @testset "Unsupported constraint with $f" for f in (
+        MOI.add_constraint, MOIU.allocate_constraint,
+        (model, func, set) -> MOIU.load_constraint(model, MOI.ConstraintIndex{typeof(func), typeof(set)}(1), func, set))
         @test_throws MOI.UnsupportedConstraint begin
-            MOI.add_constraint(model, func, MOI.EqualTo(0))
+            f(model, func, MOI.EqualTo(0))
         end
         try
-            MOI.add_constraint(model, func, MOI.EqualTo(0))
+            f(model, func, MOI.EqualTo(0))
         catch err
             @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
             " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
             " not supported by the model."
         end
+    end
+    @testset "Unsupported constraint for shortcuts" begin
         @test_throws MOI.UnsupportedConstraint begin
             MOI.add_constraint(model, vi, MOI.EqualTo(0))
         end
@@ -76,13 +84,23 @@
         end
     end
 
-    @testset "$f errors" for f in (MOIU.allocate_constraint,
-                                   MOIU.load_constraint)
+    @testset "allocate_constraint errors" begin
         @test_throws MOI.ErrorException begin
-            f(model, func, MOI.EqualTo(0.0))
+            MOIU.allocate_constraint(model, func, MOI.EqualTo(0.0))
         end
         try
-            f(model, func, MOI.EqualTo(0.0))
+            MOIU.allocate_constraint(model, func, MOI.EqualTo(0.0))
+        catch err
+            @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
+        end
+    end
+    @testset "load_constraint errors" begin
+        ci = MOI.ConstraintIndex{typeof(func), MOI.EqualTo{Float64}}(1)
+        @test_throws MOI.ErrorException begin
+            MOIU.load_constraint(model, ci, func, MOI.EqualTo(0.0))
+        end
+        try
+            MOIU.load_constraint(model, ci, func, MOI.EqualTo(0.0))
         catch err
             @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
         end
@@ -168,6 +186,32 @@
         end
         @test_throws ArgumentError begin
             MOI.set(model, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
+        end
+    end
+
+    @testset "ModifyNotAllowed" begin
+        change = MOI.ScalarConstantChange(1.0)
+        @testset "Constraint" begin
+            err = MOI.ModifyConstraintNotAllowed(ci, change)
+            @test_throws err MOI.modify(model, ci, change)
+            @test sprint(showerror, err) == "MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}:" *
+            " Modifying the constraints MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1)" *
+            " with MathOptInterface.ScalarConstantChange{Float64}(1.0) cannot" *
+            " be performed. You may want to use a `CachingOptimizer` in" *
+            " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
+            " before doing this operation if the `CachingOptimizer` is in" *
+            " `MANUAL` mode."
+        end
+        @testset "Objective" begin
+            attr = MOI.ObjectiveFunction{MOI.SingleVariable}()
+            err = MOI.ModifyObjectiveNotAllowed(change)
+            @test_throws err MOI.modify(model, attr, change)
+            @test sprint(showerror, err) == "MathOptInterface.ModifyObjectiveNotAllowed{MathOptInterface.ScalarConstantChange{Float64}}:" *
+            " Modifying the objective function with MathOptInterface.ScalarConstantChange{Float64}(1.0)" *
+            " cannot be performed. You may want to use a `CachingOptimizer`" *
+            " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
+            " before doing this operation if the `CachingOptimizer` is in" *
+            " `MANUAL` mode."
         end
     end
 end

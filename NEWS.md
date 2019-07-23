@@ -1,6 +1,63 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.0 (May 2?, 2019)
+---------------------
+
+- Support for Julia v0.6 and v0.7 was dropped (#714, #717).
+- A `MOI.Utilities.Model` implementation of `ModelLike`, this should replace
+  most use cases of `MOI.Utilities.@model` (#781).
+- `add_constrained_variable` and `add_constrained_variables` were added (#759).
+- Support for indicator constraints was added (#709, #712).
+- `DualObjectiveValue` attribute was added (#473).
+- `RawParameter` attribute was added (#733).
+- A `Benchmarks` submodule was added to facilitate solver benchmarking (#769).
+- A `submit` function was added, this may for intance allow the user to submit
+  solutions or cuts to the solver from a callback (#775).
+- The field of `ObjectiveValue` was renamed to `result_index` (#729).
+- The `_constant` and `Utilities.getconstant` function were renamed to `constant`
+- `REDUCTION_CERTIFICATE` result status was added (#734).
+- Abstract matrix sets were added (#731).
+- Testing improvements:
+  * The testing guideline was updated (#728).
+  * Quadratic tests were added (#697).
+  * Unit tests for `RawStatusString`, `SolveTime`, `Silent` and `SolverName`
+    were added (#726, #741).
+  * A rotated second-order cone test was added (#759).
+  * A power cone test was added (#768).
+  * Tests for `ZeroOne` variables with variable bounds were added (#772).
+  * An unbounded test was added (#773).
+  * Existing tests had a few updates (#702, #703, #763).
+- Documentation improvements:
+  * Added a section on `CachingOptimizer` (#777).
+  * Added a section on `UniversalFallback`, `Model` and `@model` (#762).
+  * Transition the knapsack example to a doctest with MockOptimizer (#786).
+- Utilities improvements:
+  * A `CleverDict` utility was added for a vector that automatically transform
+    into a dictionary once a first index is removed (#767).
+  * The `Utilities.constant` function was renamed to `Utilities.constant_vector`
+    (#740).
+  * Implement optimizer attributes for CachingOptimizer (#745).
+  * `operate` with `vcat`, `SingleVariable` and `VectorOfVariables` now returns
+    a `VectorOfVariables` (#616).
+  * Fix a type piracy of `operate` (#784).
+  * The `load_constraint` fallback signature was fixed (#760).
+- Bridges improvements:
+  * The bridges no longer store the constraint function and set before it is
+    briged, the bridges now have to implement `ConstraintFunction` and
+    `ConstraintSet` if the user wants to recover them. As a consequence, the
+    `@bridge` macro was removed (#722).
+  * Bridge are now instantiated with a `bridge_constraint` function instead of
+    using a constructor (#730).
+  * Fix constraint attributes for bridges (#699).
+  * Fix constraint attributes for bridges (#699).
+  * Constraint bridges were moved to the `Bridges/Constraint` submodule so they
+    should now inherit from `MOI.Bridges.Constraint.Abstract` and should
+    implement `MOI.Bridges.Constraint.concrete_bridge_type` instead of
+    `MOI.Bridges.concrete_bridge_type` (#756).
+  * Variable bridges were added in (#759).
+  * Various improvements (#746, #747).
+
 v0.8.4 (March 13, 2019)
 -----------------------
 

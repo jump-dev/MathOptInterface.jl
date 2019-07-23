@@ -4,30 +4,13 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-include("../model.jl")
-include("../model_for_mock.jl")
-
-MOIU.@model(ModelForCachingOptimizer,
-            (MOI.ZeroOne, MOI.Integer),
-            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
-            (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
-             MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
-             MOI.ExponentialCone, MOI.DualExponentialCone,
-             MOI.PositiveSemidefiniteConeTriangle, MOI.RootDetConeTriangle,
-             MOI.LogDetConeTriangle),
-            (),
-            (MOI.SingleVariable,),
-            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
-            (MOI.VectorOfVariables,),
-            (MOI.VectorAffineFunction,))
-
 @testset "Test default attributes" begin
     # Without an optimizer attached (i.e., `MOI.state(model) == NO_OPTIMIZER`) we
     # need throw nice errors for attributes that are based on the optimizer. For
     # `AbstractModelAttribute`s that `is_set_by_optimize` returns `true` for, we
     # overload `TerminationStatus`, `PrimalStatus`, or `DualStatus` to return
     # sane default values. Otherwise we throw a nice error.
-    model = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.MANUAL)
+    model = MOIU.CachingOptimizer(MOIU.Model{Float64}(), MOIU.MANUAL)
     @test MOIU.state(model) == MOIU.NO_OPTIMIZER
 
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -60,34 +43,34 @@ MOIU.@model(ModelForCachingOptimizer,
 end
 
 @testset "Copyable solver attributes" begin
-    cache = MOIU.UniversalFallback(ModelForCachingOptimizer{Float64}())
+    cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
     cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
     MOI.set(cached, MOI.Silent(), true)
-    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
     MOI.set(cached, MOI.Silent(), false)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
-    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
     MOI.set(cached, MOI.Silent(), true)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
-    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(ModelForMock{Float64}()))
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
 end
 
 @testset "CachingOptimizer MANUAL mode" begin
-    m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.MANUAL)
+    m = MOIU.CachingOptimizer(MOIU.Model{Float64}(), MOIU.MANUAL)
     @test MOIU.state(m) == MOIU.NO_OPTIMIZER
 
-    s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
+    s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)
     @test MOI.is_empty(s)
     MOIU.reset_optimizer(m, s)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
@@ -126,9 +109,6 @@ end
     @test MOI.get(m, MOI.VariablePrimal(), [v]) == [3.0]
     @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v) == 3.0
 
-    # ModelForMock doesn't support RotatedSecondOrderCone
-    @test !MOI.supports_constraint(m, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
-
     @test MOI.supports_constraint(m.model_cache, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supports_constraint(m.optimizer.inner_model, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supports_constraint(m.optimizer, MOI.SingleVariable, MOI.LessThan{Float64})
@@ -154,7 +134,7 @@ end
 end
 
 @testset "CachingOptimizer AUTOMATIC mode" begin
-    m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), MOIU.AUTOMATIC)
+    m = MOIU.CachingOptimizer(MOIU.Model{Float64}(), MOIU.AUTOMATIC)
     @test MOIU.state(m) == MOIU.NO_OPTIMIZER
 
     v = MOI.add_variable(m)
@@ -162,7 +142,7 @@ end
     MOI.set(m, MOI.VariableName(), v, "v")
     @test MOI.get(m, MOI.VariableName(), v) == "v"
 
-    s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
+    s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)
     @test MOI.is_empty(s)
     MOIU.reset_optimizer(m, s)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
@@ -174,7 +154,7 @@ end
 
     MOI.optimize!(m)
     @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
-    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.ResultCount())) == 0
+    @test MOI.get(m, MOIU.AttributeFromOptimizer(MOI.TerminationStatus())) == MOI.OPTIMIZE_NOT_CALLED
 
     @test MOI.get(m, MOI.VariableName(), v) == "v"
     @test MOI.get(m, MOIU.AttributeFromModelCache(MOI.VariableName()), v) == "v"
@@ -264,8 +244,8 @@ end
 
 @testset "Constructor with optimizer" begin
     @testset "Empty model and optimizer" begin
-        s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
-        model = ModelForCachingOptimizer{Float64}()
+        s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)
+        model = MOIU.Model{Float64}()
         m = MOIU.CachingOptimizer(model, s)
         @test m isa MOIU.CachingOptimizer{typeof(s), typeof(model)}
         @test MOI.is_empty(m)
@@ -274,16 +254,16 @@ end
         @test MOI.get(m, MOI.SolverName()) == "Mock"
     end
     @testset "Non-empty optimizer" begin
-        s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
+        s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)
         MOI.add_variable(s)
-        model = ModelForCachingOptimizer{Float64}()
+        model = MOIU.Model{Float64}()
         @test MOI.is_empty(model)
         @test !MOI.is_empty(s)
         @test_throws AssertionError MOIU.CachingOptimizer(model, s)
     end
     @testset "Non-empty model" begin
-        s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
-        model = ModelForCachingOptimizer{Float64}()
+        s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)
+        model = MOIU.Model{Float64}()
         MOI.add_variable(model)
         @test !MOI.is_empty(model)
         @test MOI.is_empty(s)
@@ -293,9 +273,9 @@ end
 
 for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
     @testset "Optimization tests in state $state and mode $mode" for mode in (MOIU.MANUAL, MOIU.AUTOMATIC)
-        m = MOIU.CachingOptimizer(ModelForCachingOptimizer{Float64}(), mode)
+        m = MOIU.CachingOptimizer(MOIU.Model{Float64}(), mode)
         if state != MOIU.NO_OPTIMIZER
-            s = MOIU.MockOptimizer(ModelForMock{Float64}(), supports_names=false)
+            s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)
             MOIU.reset_optimizer(m, s)
             if state == MOIU.ATTACHED_OPTIMIZER
                 MOIU.attach_optimizer(m)
@@ -313,7 +293,7 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
             MOIT.failcopytestia(m)
             MOIT.failcopytestva(m)
             MOIT.failcopytestca(m)
-            MOIT.copytest(m, Model{Float64}())
+            MOIT.copytest(m, MOIU.Model{Float64}())
         end
 
         config = MOIT.TestConfig(solve=false)

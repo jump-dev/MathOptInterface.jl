@@ -30,7 +30,6 @@ const BasicConstraintTests = Dict(
 
     (MOI.VectorOfVariables, MOI.SOS1{Float64}) => ( dummy_vectorofvariables, 2, MOI.SOS1([1.0, 2.0]) ),
     (MOI.VectorOfVariables, MOI.SOS2{Float64}) => ( dummy_vectorofvariables, 2, MOI.SOS2([1.0, 2.0]) ),
-    (MOI.VectorOfVariables, MOI.Reals)         => ( dummy_vectorofvariables, 2, MOI.Reals(2) ),
     (MOI.VectorOfVariables, MOI.Zeros)         => ( dummy_vectorofvariables, 2, MOI.Zeros(2) ),
     (MOI.VectorOfVariables, MOI.Nonpositives)  => ( dummy_vectorofvariables, 2, MOI.Nonpositives(2) ),
     (MOI.VectorOfVariables, MOI.Nonnegatives)  => ( dummy_vectorofvariables, 2, MOI.Nonnegatives(2) ),
@@ -40,8 +39,8 @@ const BasicConstraintTests = Dict(
     (MOI.VectorOfVariables, MOI.GeometricMeanCone)      => ( dummy_vectorofvariables, 3, MOI.GeometricMeanCone(3) ),
     (MOI.VectorOfVariables, MOI.ExponentialCone)        => ( dummy_vectorofvariables, 3, MOI.ExponentialCone() ),
     (MOI.VectorOfVariables, MOI.DualExponentialCone)    => ( dummy_vectorofvariables, 3, MOI.DualExponentialCone() ),
-    (MOI.VectorOfVariables, MOI.PowerCone)              => ( dummy_vectorofvariables, 3, MOI.PowerCone(2.0) ),
-    (MOI.VectorOfVariables, MOI.DualPowerCone)          => ( dummy_vectorofvariables, 3, MOI.DualPowerCone(2.0) ),
+    (MOI.VectorOfVariables, MOI.PowerCone{Float64})     => ( dummy_vectorofvariables, 3, MOI.PowerCone(2.0) ),
+    (MOI.VectorOfVariables, MOI.DualPowerCone{Float64}) => ( dummy_vectorofvariables, 3, MOI.DualPowerCone(2.0) ),
 
     (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) => ( dummy_vectorofvariables,  7, MOI.PositiveSemidefiniteConeTriangle(3) ),
     (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeSquare)   => ( dummy_vectorofvariables, 10, MOI.PositiveSemidefiniteConeSquare(3) ),
@@ -60,15 +59,19 @@ const BasicConstraintTests = Dict(
     (MOI.ScalarQuadraticFunction{Float64}, MOI.EqualTo{Float64})     => ( dummy_scalar_quadratic, 1, MOI.EqualTo(1.0) ),
     (MOI.ScalarQuadraticFunction{Float64}, MOI.Interval{Float64})    => ( dummy_scalar_quadratic, 1, MOI.Interval(1.0, 2.0) ),
 
-    (MOI.VectorAffineFunction{Float64}, MOI.Reals)        => ( dummy_vector_affine, 2, MOI.Reals(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => ( dummy_vector_affine, 2, MOI.Zeros(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_affine, 2, MOI.Nonpositives(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_affine, 2, MOI.Nonnegatives(2) ),
 
-    (MOI.VectorQuadraticFunction{Float64}, MOI.Reals)        => ( dummy_vector_quadratic, 2, MOI.Reals(2) ),
+    (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_affine, 3, MOI.SecondOrderCone(3) ),
+    (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_affine, 3, MOI.RotatedSecondOrderCone(3) ),
+
     (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros)        => ( dummy_vector_quadratic, 2, MOI.Zeros(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_quadratic, 2, MOI.Nonpositives(2) ),
-    (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) )
+    (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) ),
+
+    (MOI.VectorQuadraticFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_quadratic, 3, MOI.SecondOrderCone(3) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_quadratic, 3, MOI.RotatedSecondOrderCone(3) )
 )
 """
     basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
@@ -129,6 +132,21 @@ function basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
     end
 end
 
+variables(func::MOI.SingleVariable) = func.variable
+variables(func::MOI.VectorOfVariables) = func.variables
+variables(func::MOI.ScalarAffineFunction) = Set(term.variable_index for term in func.terms)
+variables(func::MOI.VectorAffineFunction) = Set(term.scalar_term.variable_index for term in func.terms)
+function variables(func::MOI.ScalarQuadraticFunction)
+    return Set(term.variable_index for term in func.affine_terms) ∪
+        Set(term.variable_index_1 for term in func.quadratic_terms)
+        Set(term.variable_index_2 for term in func.quadratic_terms)
+end
+function variables(func::MOI.VectorQuadraticFunction)
+    return Set(term.scalar_term.variable_index for term in func.affine_terms) ∪
+        Set(term.scalar_term.variable_index_1 for term in func.quadratic_terms)
+        Set(term.scalar_term.variable_index_2 for term in func.quadratic_terms)
+end
+
 """
     basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int;
         delete::Bool                  = true,
@@ -182,7 +200,9 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
 
         if get_constraint_function
             @testset "ConstraintFunction" begin
-                @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ constraint_function
+                func = MOI.get(model, MOI.ConstraintFunction(), c)
+                @test func ≈ constraint_function
+                @test variables(func) == variables(constraint_function)
             end
         end
         if get_constraint_set

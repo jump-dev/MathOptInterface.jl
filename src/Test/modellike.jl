@@ -11,6 +11,7 @@ function default_objective_test(model::MOI.ModelLike)
 end
 
 function default_status_test(model::MOI.ModelLike)
+    MOI.empty!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
@@ -106,6 +107,7 @@ end
 
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
+    MOI.empty!(model)
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     v = MOI.add_variables(model, 2)
     @test MOI.is_valid(model, v[1])
@@ -125,6 +127,7 @@ function validtest(model::MOI.ModelLike)
 end
 
 function emptytest(model::MOI.ModelLike)
+    MOI.empty!(model)
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     # Taken from LIN1
     v = MOI.add_variables(model, 3)
@@ -200,6 +203,7 @@ function failcopytestca(dest::MOI.ModelLike)
 end
 
 function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
+    MOI.empty!(dest)
     @test MOIU.supports_default_copy_to(src, #=copy_names=# false)
     x, y, z = MOI.add_variables(src, 3)
     a = MOI.add_constraint(src, x, MOI.EqualTo(1.0))
@@ -262,11 +266,16 @@ end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test MOIU.supports_default_copy_to(src, #=copy_names=# true)
+    MOI.empty!(src)
+    MOI.empty!(dest)
     MOI.set(src, MOI.Name(), "ModelName")
     v = MOI.add_variables(src, 3)
     w = MOI.add_variable(src)
     MOI.set(src, MOI.VariableName(), v, ["var1", "var2", "var3"])
     csv = MOI.add_constraint(src, MOI.SingleVariable(w), MOI.EqualTo(2.))
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
+    @test csv.value == w.value
     MOI.set(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     MOI.set(src, MOI.ConstraintName(), cvv, "cvv")
@@ -300,7 +309,11 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
 
     @test !MOI.supports(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
-    @test !MOI.supports(dest, MOI.VariableName(), MOI.VariableIndex) || MOI.get(dest, MOI.VariableName(), v) == ["", "", ""]
+    if MOI.supports(dest, MOI.VariableName(), MOI.VariableIndex)
+        for vi in v
+            MOI.get(dest, MOI.VariableName(), dict[vi]) == ""
+        end
+    end
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
     @test MOI.get(dest, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == [dict[csv]]
     @test MOI.get(dest, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
@@ -316,17 +329,17 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test (MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}) in loc
     @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
 
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csv)) || MOI.get(dest, MOI.ConstraintName(), csv) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csv)) || MOI.get(dest, MOI.ConstraintName(), dict[csv]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) == MOI.SingleVariable(dict[w])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.)
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), cvv) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cvv)) || MOI.get(dest, MOI.ConstraintName(), dict[cvv]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) == MOI.VectorOfVariables(getindex.(Ref(dict), v))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.Nonnegatives(3)
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), csa) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) || MOI.get(dest, MOI.ConstraintName(), dict[csa]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈ MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1., 3.], [dict[v[3]], dict[v[1]]]), 0.0)
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csa]) == MOI.LessThan(2.)
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), cva) == ""
+    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) || MOI.get(dest, MOI.ConstraintName(), dict[cva]) == ""
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈ MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [dict[v[3]], dict[v[2]]])), [-3.0, -2.0])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cva]) == MOI.Zeros(2)
 
@@ -375,12 +388,15 @@ function orderedindicestest(model::MOI.ModelLike)
     # Note: there are too many combinations to test, so we're just going to
     # check SingleVariable-in-LessThan and hope it works for the rest
     c1 = MOI.add_constraint(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
+    @test c1.value == v2.value
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1]
     c2 = MOI.add_constraint(model, MOI.SingleVariable(v3), MOI.LessThan(2.0))
+    @test c2.value == v3.value
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c1, c2]
     MOI.delete(model, c1)
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2]
     c3 = MOI.add_constraint(model, MOI.SingleVariable(v4), MOI.LessThan(3.0))
+    @test c3.value == v4.value
     @test MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}()) == [c2, c3]
 end
 
@@ -404,4 +420,146 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
                  MOI.GreaterThan(1.0))
         end
     end
+end
+
+function set_lower_bound_twice(model::MOI.ModelLike, T::Type)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    x = MOI.add_variable(model)
+    f = MOI.SingleVariable(x)
+    lb = zero(T)
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{T})
+    sets = [MOI.EqualTo(lb), MOI.Interval(lb, lb),
+             MOI.Semicontinuous(lb, lb), MOI.Semiinteger(lb, lb)]
+    set2 = MOI.GreaterThan(lb)
+    for set1 in sets
+        if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
+            continue
+        end
+        ci = MOI.add_constraint(model, f, set1)
+        err = MOI.LowerBoundAlreadySet{typeof(set1), typeof(set2)}(x)
+        @test_throws err MOI.add_constraint(model, f, set2)
+        MOI.delete(model, ci)
+        ci = MOI.add_constraint(model, f, set2)
+        err = MOI.LowerBoundAlreadySet{typeof(set2), typeof(set1)}(x)
+        @test_throws err MOI.add_constraint(model, f, set1)
+        MOI.delete(model, ci)
+    end
+end
+
+function set_upper_bound_twice(model::MOI.ModelLike, T::Type)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    x = MOI.add_variable(model)
+    f = MOI.SingleVariable(x)
+    ub = zero(T)
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{T})
+    sets = [MOI.EqualTo(ub), MOI.Interval(ub, ub),
+             MOI.Semicontinuous(ub, ub), MOI.Semiinteger(ub, ub)]
+    set2 = MOI.LessThan(ub)
+    for set1 in sets
+        if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
+            continue
+        end
+        ci = MOI.add_constraint(model, f, set1)
+        err = MOI.UpperBoundAlreadySet{typeof(set1), typeof(set2)}(x)
+        @test_throws err MOI.add_constraint(model, f, set2)
+        MOI.delete(model, ci)
+        ci = MOI.add_constraint(model, f, set2)
+        err = MOI.UpperBoundAlreadySet{typeof(set2), typeof(set1)}(x)
+        @test_throws err MOI.add_constraint(model, f, set1)
+        MOI.delete(model, ci)
+    end
+end
+
+function delete_test(model::MOI.ModelLike)
+    x = MOI.add_variable(model)
+    cx = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    y = MOI.add_variables(model, 4)
+    cy = MOI.add_constraint(model, y, MOI.Nonpositives(4))
+    @test MOI.is_valid(model, x)
+    @test MOI.is_valid(model, y[1])
+    @test MOI.is_valid(model, y[2])
+    @test MOI.is_valid(model, y[3])
+    @test MOI.is_valid(model, y[4])
+    @test MOI.is_valid(model, cx)
+    @test MOI.is_valid(model, cy)
+    @test MOI.get(model, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
+    @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y)
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(4)
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) ==
+        Set([(MOI.SingleVariable, MOI.GreaterThan{Float64}),
+             (MOI.VectorOfVariables, MOI.Nonpositives)])
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == [cx]
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
+    MOI.delete(model, y[3])
+    @test MOI.is_valid(model, x)
+    @test MOI.is_valid(model, y[1])
+    @test MOI.is_valid(model, y[2])
+    @test !MOI.is_valid(model, y[3])
+    @test MOI.is_valid(model, y[4])
+    @test MOI.is_valid(model, cx)
+    @test MOI.is_valid(model, cy)
+    @test MOI.get(model, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
+    @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y[[1, 2, 4]])
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(3)
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) ==
+        Set([(MOI.SingleVariable, MOI.GreaterThan{Float64}),
+             (MOI.VectorOfVariables, MOI.Nonpositives)])
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == [cx]
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
+    MOI.delete(model, y[1])
+    @test MOI.is_valid(model, x)
+    @test !MOI.is_valid(model, y[1])
+    @test MOI.is_valid(model, y[2])
+    @test !MOI.is_valid(model, y[3])
+    @test MOI.is_valid(model, y[4])
+    @test MOI.is_valid(model, cx)
+    @test MOI.is_valid(model, cy)
+    @test MOI.get(model, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
+    @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y[[2, 4]])
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) ==
+        Set([(MOI.SingleVariable, MOI.GreaterThan{Float64}),
+             (MOI.VectorOfVariables, MOI.Nonpositives)])
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == [cx]
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, x)
+    @test !MOI.is_valid(model, y[1])
+    @test MOI.is_valid(model, y[2])
+    @test !MOI.is_valid(model, y[3])
+    @test MOI.is_valid(model, y[4])
+    @test !MOI.is_valid(model, cx)
+    @test MOI.is_valid(model, cy)
+    @test MOI.get(model, MOI.ConstraintFunction(), cy) == MOI.VectorOfVariables(y[[2, 4]])
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
+    @test MOI.get(model, MOI.ListOfConstraints()) ==
+        [(MOI.VectorOfVariables, MOI.Nonpositives)]
+    @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()) == [cy]
+    MOI.delete(model, y[[2, 4]])
+    @test !MOI.is_valid(model, x)
+    @test !MOI.is_valid(model, y[1])
+    @test !MOI.is_valid(model, y[2])
+    @test !MOI.is_valid(model, y[3])
+    @test !MOI.is_valid(model, y[4])
+    @test !MOI.is_valid(model, cx)
+    @test !MOI.is_valid(model, cy)
+    @test isempty(MOI.get(model, MOI.ListOfConstraints()))
+    @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()))
+    @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{
+        MOI.VectorOfVariables, MOI.Nonpositives}()))
 end

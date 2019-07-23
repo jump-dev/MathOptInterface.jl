@@ -27,3 +27,7 @@ end
 @testset "Copy" begin
     include("copy.jl")
 end
+
+@testset "CleverDicts" begin
+    include("CleverDicts.jl")
+end
