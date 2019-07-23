@@ -37,15 +37,15 @@ Return the dual set of `s`, if there is no dual set returns an error.
 
 ### Examples
 
-```julia-repl
-julia> dual_set(Reals(4))
-Zeros(4)
+```jldoctest
+julia> MOI.dual_set(Reals(4))
+MOI.Zeros(4)
 
-julia> dual_set(SecondOrderCone(5))
-SecondOrderCone(5)
+julia> MOI.dual_set(SecondOrderCone(5))
+MOI.SecondOrderCone(5)
 
-julia> dual_set(ExponentialCone())
-DualExponentialCone()
+julia> MOI.dual_set(ExponentialCone())
+MOI.DualExponentialCone()
 ```
 """
 function dual_set end
