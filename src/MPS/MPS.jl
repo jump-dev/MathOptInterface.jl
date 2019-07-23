@@ -56,6 +56,12 @@ end
 
 function MOI.write_to_file(model::Model, io::IO)
     options = MOI.get(model, MathOptFormat.ModelOptions())
+    if typeof(options) != Options
+        # Okay, we must have copied another MathOptFormat model here and it had
+        # some existing options. Reset to the default options.
+        options = Options(false)
+        MOI.set(model, MathOptFormat.ModelOptions(), options)
+    end
     MathOptFormat.create_unique_names(
         model, warn = options.warn, replacements = [' ' => '_']
     )

@@ -1,11 +1,12 @@
 module CBF
 
 import MathOptInterface
+import ..MathOptFormat
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-MOIU.@model(InnerCBFModel,
+MOIU.@model(InnerModel,
     (MOI.Integer,),
     (),
     (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
@@ -19,7 +20,23 @@ MOIU.@model(InnerCBFModel,
     (MOI.VectorAffineFunction,)
 )
 
-const Model = InnerCBFModel{Float64}
+const Model = MOIU.UniversalFallback{InnerModel{Float64}}
+
+struct Options end
+
+"""
+    Model()
+
+Create an empty instance of `MathOptFormat.CBF.Model`.
+"""
+function Model()
+    model = MOIU.UniversalFallback(InnerModel{Float64}())
+    MOI.set(model, MathOptFormat.ModelOptions(), Options())
+    return model
+end
+
+MOI.is_empty(model::Model) = MathOptFormat.is_empty(model)
+MOI.empty!(model::Model) = MathOptFormat.empty_model(model)
 
 Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 
@@ -30,6 +47,13 @@ Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 # ==============================================================================
 
 function MOI.write_to_file(model::Model, io::IO)
+    options = MOI.get(model, MathOptFormat.ModelOptions())
+    if typeof(options) != Options
+        # Okay, we must have copied another MathOptFormat model here and it had
+        # some existing options. Reset to the default options.
+        options = Options()
+        MOI.set(model, MathOptFormat.ModelOptions(), options)
+    end
     # Helper functions for MOI constraints.
     model_cons(con_func, con_set) = MOI.get(model,
         MOI.ListOfConstraintIndices{con_func, con_set}())
