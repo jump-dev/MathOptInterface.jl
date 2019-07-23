@@ -56,7 +56,9 @@ end
 
 function MOI.write_to_file(model::Model, io::IO)
     options = MOI.get(model, MathOptFormat.ModelOptions())
-    MathOptFormat.create_unique_names(model, warn = options.warn)
+    MathOptFormat.create_unique_names(
+        model, warn = options.warn, replacements = [' ' => '_']
+    )
     write_model_name(io, model)
     write_rows(io, model)
     discovered_columns = write_columns(io, model)

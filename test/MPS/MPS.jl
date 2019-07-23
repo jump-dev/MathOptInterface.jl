@@ -301,6 +301,35 @@ end
         MOI.read_from_file(model2, MPS_TEST_FILE)
         @test MOI.get(model2, MOI.NumberOfVariables()) == 1
     end
+    @testset "Names with spaces" begin
+        model = MPS.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x[1, 2]")
+        c = MOI.add_constraint(
+            model,
+            MOI.ScalarAffineFunction(
+                [MOI.ScalarAffineTerm(1.0, x)],
+                0.0
+            ),
+            MOI.EqualTo(1.0)
+        )
+        MOI.set(model, MOI.ConstraintName(), c, "c c")
+        @test sprint(io -> MOI.write_to_file(model, io)) == join([
+            "NAME          ",
+            "ROWS",
+            " N  OBJ",
+            " E  c_c",
+            "COLUMNS",
+            "     x[1,_2]  c_c      1",
+            "RHS",
+            "    rhs       c_c       1",
+            "RANGES",
+            "BOUNDS",
+            " FR bounds    x[1,_2]",
+            "ENDATA",
+            ""
+        ], '\n')
+    end
 end
 
 # Clean up
