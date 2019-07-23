@@ -82,4 +82,6 @@ end
     @test MOI.dual_set(dual_pow03) == pow03
     @test MOI.dual_set(dual_pow03) != pow04
     @test MOI.dual_set(dual_pow03) != dual_pow03
+    # Not implemented Set
+    @test_throws ErrorException MOI.dual_set(MOI.PositiveSemidefiniteConeSquare(4))
 end
