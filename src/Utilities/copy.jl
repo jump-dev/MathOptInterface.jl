@@ -155,7 +155,7 @@ end
 Copy the constraints of type `MOI.VectorOfVariables`-in-`S` from the model `src`
 to the model `dest` and fill `idxmap` accordingly. The copy is only done when
 the variables to be copied are not already keys of `idxmap`. It returns a list
-of the constraint not copied.
+of the constraints not copied.
 """
 function copy_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
                                   idxmap::IndexMap,
@@ -186,7 +186,7 @@ end
 Copy the constraints of type `MOI.SingleVariable`-in-`S` from the model `src` to
 the model `dest` and fill `idxmap` accordingly. The copy is only done when the
 variables to be copied are not already keys of `idxmap`. It returns a list of
-the constraint not copied.
+the constraints not copied.
 """
 function copy_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
                                idxmap::IndexMap,
@@ -213,7 +213,7 @@ end
                      cis_src::Vector{<:MOI.ConstraintIndex})
 
 Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
-`idxmap` accordingly. Note that the attributes are not copied, call
+`idxmap` accordingly. Note that the attributes are not copied; call
 [`pass_attributes`] to copy the constraint attributes.
 """
 function copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
@@ -490,7 +490,7 @@ end
 Allocate the constraints of type `MOI.SingleVariable`-in-`S` from the model
 `src` to the model `dest` and fill `idxmap` accordingly. The copy is only done
 when the variables to be copied are not already keys of `idxmap`. It returns a
-list of the constraint allocated and those not allocated.
+list of the constraints allocated and those not allocated.
 """
 function allocate_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
                                   idxmap::IndexMap, S::Type{<:MOI.AbstractSet})
@@ -519,7 +519,7 @@ end
 Allocate the constraints of type `MOI.VectorOfVariables`-in-`S` from the model
 `src` to the model `dest` and fill `idxmap` accordingly. The copy is only done
 when the variables to be copied are not already keys of `idxmap`. It returns a
-list of the constraint allocated and a list of those not allocated.
+list of the constraints allocated and a list of those not allocated.
 """
 function allocate_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
                                       idxmap::IndexMap,
@@ -549,7 +549,7 @@ end
         dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
         cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable, S}}) where S
 
-Load the constraints in `cis_src` from the model `src` to the model `dest`
+Load the constraints in `cis_src` from the model `src` into the model `dest`
 using `load_constrained_variable`.
 """
 function load_single_variable(
@@ -569,7 +569,7 @@ end
         dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
         cis_src::Vector{MOI.ConstraintIndex{MOI.VectorOfVariables, S}}) where S
 
-Load the constraints in `cis_src` from the model `src` to the model `dest`
+Load the constraints in `cis_src` from the model `src` into the model `dest`
 using `load_constrained_variable`.
 """
 function load_vector_of_variables(
