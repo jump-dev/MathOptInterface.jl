@@ -82,7 +82,12 @@ end
     @test MOI.dual_set(dual_pow03) == pow03
     @test MOI.dual_set(dual_pow03) != pow04
     @test MOI.dual_set(dual_pow03) != dual_pow03
-    # Not implemented Set
-    err = ErrorException("Dual of $(MOI.PositiveSemidefiniteConeSquare(4)) is not implemented.")
+    # PSDSquare error
+    s = MOI.PositiveSemidefiniteConeSquare(4)
+    err = ErrorException("Dual of $s is not defined, $s can be a non-covex set.")
     @test_throws err MOI.dual_set(MOI.PositiveSemidefiniteConeSquare(4))
+    # Not implemented
+    s = MOI.LogDetConeTriangle(4)
+    err = ErrorException("Dual of $s is not implemented.")
+    @test_throws err MOI.dual_set(MOI.LogDetConeTriangle(4))
 end

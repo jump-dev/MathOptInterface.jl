@@ -33,7 +33,8 @@ function dimension end
 """
     dual_set(s::AbstractSet)
 
-Return the dual set of `s`, if there is no dual set returns an error.
+Return the dual set of `s`, in terms of the dual cone of the set. 
+See https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone for more information.
 
 ### Examples
 
@@ -454,6 +455,8 @@ It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `Po
 struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
     side_dimension::Int
 end
+
+dual_set(s::PositiveSemidefiniteConeSquare) = error("Dual of $s is not defined, $s can be a non-covex set.")
 
 triangular_form(::Type{PositiveSemidefiniteConeSquare}) = PositiveSemidefiniteConeTriangle
 
