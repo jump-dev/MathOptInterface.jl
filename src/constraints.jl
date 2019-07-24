@@ -78,7 +78,7 @@ function Base.showerror(io::IO,
                     err::ScalarFunctionConstantNotZero{T, F, S}) where {T, F, S}
     print(io, "In `$F`-in-`$S` constraint: Constant $(err.constant) of the ",
           "function is not zero. The function constant should be moved to the ",
-          "set. You can use `MOI.Utilities.add_scalar_constraint` which does ",
+          "set. You can use `MOI.Utilities.normalize_and_add_constraint` which does ",
           "this automatically.")
 end
 
