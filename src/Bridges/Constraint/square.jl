@@ -105,9 +105,8 @@ function bridge_constraint(::Type{SquareBridge{T, F, G, TT, ST}},
                         " coefficients is smaller than 1e-8 but larger than" *
                         " 1e-10."
                 end
-                push!(sym, (i, j) => MOIU.add_scalar_constraint(model, diff,
-                                                                MOI.EqualTo(zero(T)),
-                                                                allow_modify_function=true))
+                push!(sym, (i, j) => MOIU.normalize_and_add_constraint(
+                    model, diff, MOI.EqualTo(zero(T)), allow_modify_function=true))
             end
         end
         k += dim - j

@@ -38,6 +38,8 @@ v0.9.0 (May 2?, 2019)
   * The `Utilities.constant` function was renamed to `Utilities.constant_vector`
     (#740).
   * Implement optimizer attributes for CachingOptimizer (#745).
+  * Rename `Utilities.add_scalar_constraint` to
+    `Utilities.normalize_and_add_constraint` (#801).
   * `operate` with `vcat`, `SingleVariable` and `VectorOfVariables` now returns
     a `VectorOfVariables` (#616).
   * Fix a type piracy of `operate` (#784).

@@ -428,12 +428,12 @@ end
 # `dot_coefficients`.
 
 """
-    set_dot(x::Vector, y::Vector, set::AbstractVectorSet)
+    set_dot(x::AbstractVector, y::AbstractVector, set::AbstractVectorSet)
 
 Return the scalar product between a vector `x` of the set `set` and a vector
 `y` of the dual of the set `s`.
 """
-set_dot(x::Vector, y::Vector, set::MOI.AbstractVectorSet) = dot(x, y)
+set_dot(x::AbstractVector, y::AbstractVector, set::MOI.AbstractVectorSet) = dot(x, y)
 
 """
     set_dot(x, y, set::AbstractScalarSet)
@@ -443,7 +443,7 @@ Return the scalar product between a number `x` of the set `set` and a number
 """
 set_dot(x, y, set::MOI.AbstractScalarSet) = dot(x, y)
 
-function triangle_dot(x::Vector{S}, y::Vector{T}, dim::Int, offset::Int) where {S, T}
+function triangle_dot(x::AbstractVector{S}, y::AbstractVector{T}, dim::Int, offset::Int) where {S, T}
     U = typeof(zero(S) * zero(T) + 2 * zero(S) * zero(T))
     result = zero(U)
     k = offset
@@ -460,30 +460,30 @@ function triangle_dot(x::Vector{S}, y::Vector{T}, dim::Int, offset::Int) where {
     return result
 end
 
-function set_dot(x::Vector, y::Vector,
+function set_dot(x::AbstractVector, y::AbstractVector,
                  set::MOI.AbstractSymmetricMatrixSetTriangle)
     return triangle_dot(x, y, MOI.side_dimension(set), 0)
 end
 
-function set_dot(x::Vector, y::Vector, set::MOI.RootDetConeTriangle)
+function set_dot(x::AbstractVector, y::AbstractVector, set::MOI.RootDetConeTriangle)
     return x[1] * y[1] + triangle_dot(x, y, set.side_dimension, 1)
 end
 
-function set_dot(x::Vector, y::Vector, set::MOI.LogDetConeTriangle)
+function set_dot(x::AbstractVector, y::AbstractVector, set::MOI.LogDetConeTriangle)
     return x[1] * y[1] + x[2] * y[2] + triangle_dot(x, y, set.side_dimension, 2)
 end
 
 """
-    dot_coefficients(a::Vector, set::AbstractVectorSet)
+    dot_coefficients(a::AbstractVector, set::AbstractVectorSet)
 
 Return the vector `b` such that for all vector `x` of the set `set`,
 `set_dot(b, x, set)` is equal to `dot(a, x)`.
 """
-function dot_coefficients(a::Vector, set::MOI.AbstractVectorSet)
+function dot_coefficients(a::AbstractVector, set::MOI.AbstractVectorSet)
     return a
 end
 
-function triangle_coefficients!(b::Vector{T}, dim::Int, offset::Int) where T
+function triangle_coefficients!(b::AbstractVector{T}, dim::Int, offset::Int) where T
     k = offset
     for i in 1:dim
         for j in 1:i
@@ -495,19 +495,19 @@ function triangle_coefficients!(b::Vector{T}, dim::Int, offset::Int) where T
     end
 end
 
-function dot_coefficients(a::Vector, set::MOI.AbstractSymmetricMatrixSetTriangle)
+function dot_coefficients(a::AbstractVector, set::MOI.AbstractSymmetricMatrixSetTriangle)
     b = copy(a)
     triangle_coefficients!(b, MOI.side_dimension(set), 0)
     return b
 end
 
-function dot_coefficients(a::Vector, set::MOI.RootDetConeTriangle)
+function dot_coefficients(a::AbstractVector, set::MOI.RootDetConeTriangle)
     b = copy(a)
     triangle_coefficients!(b, set.side_dimension, 1)
     return b
 end
 
-function dot_coefficients(a::Vector, set::MOI.LogDetConeTriangle)
+function dot_coefficients(a::AbstractVector, set::MOI.LogDetConeTriangle)
     b = copy(a)
     triangle_coefficients!(b, set.side_dimension, 2)
     return b
