@@ -86,8 +86,8 @@ end
     @test MOI.dual_set(dual_pow03) != dual_pow03
     # PSDSquare error
     s = MOI.PositiveSemidefiniteConeSquare(4)
-    err = ErrorException("""Dual of $s is not defined because $s is not a proper cone. 
-    For more details please see comments on https://github.com/JuliaOpt/MathOptInterface.jl/blob/master/src/Bridges/Constraint/square.jl""")
+    err = ErrorException("""Dual of $s is not defined in MathOptInterface.
+                            For more details see the comments in src/Bridges/Constraint/square.jl""")
     @test_throws err MOI.dual_set(MOI.PositiveSemidefiniteConeSquare(4))
     # Not implemented
     s = MOI.LogDetConeTriangle(4)
