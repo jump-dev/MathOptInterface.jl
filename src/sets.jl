@@ -34,8 +34,8 @@ function dimension end
     dual_set(s::AbstractSet)
 
 Return the dual set of `s`, that is the dual cone of the set. This follows the 
-definition of `MathOptInterface` discussed in http://www.juliaopt.org/MathOptInterface.jl/stable/apimanual/#Advanced-1
-See https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone for more information.
+definition of duality discussed in [Duals](@ref).
+See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more information.
 If the dual cone is not defined it returns an error.
 
 ### Examples
@@ -459,8 +459,8 @@ struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
 end
 
 function dual_set(s::PositiveSemidefiniteConeSquare)
-    return error("""Dual of $s is not defined because $s is not a proper cone. 
-                    For more details please see comments on https://github.com/JuliaOpt/MathOptInterface.jl/blob/master/src/Bridges/Constraint/square.jl""")
+    return error("""Dual of $s is not defined in MathOptInterface.
+                    For more details see the comments in src/Bridges/Constraint/square.jl""")
 end
 
 triangular_form(::Type{PositiveSemidefiniteConeSquare}) = PositiveSemidefiniteConeTriangle
