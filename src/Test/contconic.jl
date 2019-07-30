@@ -114,7 +114,20 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    x,y,z,s = MOI.add_variables(model, 4)
+    x = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    if vecofvars
+        ys, vc = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+        y = ys[1]
+    else
+        y = MOI.add_variable(model)
+        func = MOI.VectorAffineFunction{Float64}(MOI.VectorOfVariables([y]))
+        vc = MOI.add_constraint(model, func, MOI.Nonpositives(1))
+    end
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+
+    z, s = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0, 2.0, -4.0], [x,y,z]), 0.0))
@@ -122,12 +135,6 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
 
     c = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,1,2,3,3], MOI.ScalarAffineTerm.([1.0,-1.0,1.0,1.0,1.0], [x,s,y,x,z])), [4.0,3.0,-12.0]), MOI.Zeros(3))
 
-    vov = MOI.VectorOfVariables([y])
-    if vecofvars
-        vc = MOI.add_constraint(model, vov, MOI.Nonpositives(1))
-    else
-        vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.Nonpositives(1))
-    end
     if vecofvars
         # test fallback
         vz = MOI.add_constraint(model, [z], MOI.Nonnegatives(1))
@@ -256,10 +263,10 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    x = MOI.add_variable(model)
+    xs, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    x = xs[1]
 
     MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Nonnegatives(1))
-    MOI.add_constraint(model, MOI.VectorOfVariables([x]), MOI.Nonpositives(1))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}()) == 1
@@ -603,18 +610,18 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    x = MOI.add_variables(model, 2)
     if abvars
-        a = MOI.add_variable(model)
-        b = MOI.add_variable(model)
+        abx, rsoc = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
+        a, b, x1, x2 = abx
+        x = [x1, x2]
         vc1 = MOI.add_constraint(model, MOI.SingleVariable(a), MOI.EqualTo(0.5))
         # We test this after the creation of every `SingleVariable` constraint
         # to ensure a good coverage of corner cases.
         @test vc1.value == a.value
         vc2 = MOI.add_constraint(model, MOI.SingleVariable(b), MOI.EqualTo(1.0))
         @test vc2.value == b.value
-        rsoc = MOI.add_constraint(model, MOI.VectorOfVariables([a; b; x]), MOI.RotatedSecondOrderCone(4))
     else
+        x = MOI.add_variables(model, 2)
         a = 0.5
         b = 1.0
         rsoc = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 4], MOI.ScalarAffineTerm.([1., 1.], x)), [a, b, 0., 0.]), MOI.RotatedSecondOrderCone(4))
@@ -702,7 +709,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    x = MOI.add_variables(model, 3)
+    x, rsoc = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(3))
 
     vc1 = MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
     @test vc1.value == x[1].value
@@ -710,8 +717,6 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     @test vc2.value == x[2].value
     vc3 = MOI.add_constraint(model, MOI.SingleVariable(x[3]), MOI.GreaterThan(2.0))
     @test vc3.value == x[3].value
-
-    rsoc = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.RotatedSecondOrderCone(3))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}()) == 1
@@ -775,8 +780,11 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    x = MOI.add_variables(model, n)
-    u = MOI.add_variable(model)
+    x, cx  = MOI.add_constrained_variables(model, MOI.Nonnegatives(n))
+    u, cu1 = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
+    @test cu1.value == u.value
+    cu2 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.LessThan(ub))
+    @test cu2.value == u.value
     v = MOI.add_variable(model)
     t = MOI.add_variables(model, 2)
 
@@ -784,11 +792,6 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     @test ct1.value == t[1].value
     ct2 = MOI.add_constraint(model, MOI.SingleVariable(t[2]), MOI.EqualTo(1.0))
     @test ct2.value == t[2].value
-    cx  = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(n))
-    cu1 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.GreaterThan(0.0))
-    @test cu1.value == u.value
-    cu2 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.LessThan(ub))
-    @test cu2.value == u.value
 
     c1 = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1:(2+n), MOI.ScalarAffineTerm.([1/√2; 1/√2; ones(n)], [t; x])), zeros(2+n)), MOI.RotatedSecondOrderCone(2+n))
     c2 = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2, 3], MOI.ScalarAffineTerm.([1/√2; 1/√2; 1.0], [x[1], u, v])), zeros(3)), MOI.RotatedSecondOrderCone(3))
@@ -847,11 +850,87 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     end
 end
 
+function rotatedsoc4test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem SOCRotated4
+    # max x + y
+    # s.t.
+    #      t + u ≤ 2              (1)
+    # [t, u, x, y] in RSOC(4)     (2)
+    # Solution:
+    # By AM-QM: (x+y)/2 ≤ √((x^2+y^2)/2) with equality iff x = y
+    # That is,
+    #     (x + y)^2/2 ≤ x^2 + y^2 (3)
+    # By AM-GM: √tu ≤ (t+u)/2 with equality iff t = u
+    # That is,
+    #    2tu ≤ (t + u)^2/2        (4)
+    # Combining (2), (3) and (4), we have
+    #    |x + y| ≤ t + u          (5)
+    # with equality iff x = y and t = u.
+    # Combining (1) and (5), we have
+    #    x + y ≤ 2
+    # with equality iff x = y.
+    # We conclude that the optimal solution is x = y = t = u = 1
+    # with objective value 2.
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    v, cv  = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
+    t, u, x, y = v
+    ft = MOI.SingleVariable(t)
+    fu = MOI.SingleVariable(u)
+    c = MOI.add_constraint(model, 1.0ft + 1.0fu, MOI.LessThan(2.0))
+    fx = MOI.SingleVariable(x)
+    fy = MOI.SingleVariable(y)
+    func = 1.0fx + 1.0fy
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1.0 atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ ones(4) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2.0 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ [1.0, 1.0, -1.0, -1.0] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1.0 atol=atol rtol=rtol
+        end
+    end
+end
 
 const rsoctests = Dict("rotatedsoc1v" => rotatedsoc1vtest,
                        "rotatedsoc1f" => rotatedsoc1ftest,
                        "rotatedsoc2"  => rotatedsoc2test,
-                       "rotatedsoc3"  => rotatedsoc3test)
+                       "rotatedsoc3"  => rotatedsoc3test,
+                       "rotatedsoc4"  => rotatedsoc4test)
 
 @moitestset rsoc
 
@@ -1094,12 +1173,12 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.is_empty(model)
 
     x = MOI.add_variable(model)
-    y = MOI.add_variable(model)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
     xc = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0), MOI.LessThan(4.0))
-    yc = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.LessThan(5.0))
+    y, yc = MOI.add_constrained_variable(model, MOI.LessThan(5.0))
     @test yc.value == y.value
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
     ec = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 3], MOI.ScalarAffineTerm.(1.0, [x, y])), [0.0, 1.0, 0.0]), MOI.ExponentialCone())
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0))
@@ -1594,8 +1673,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
 
     if logdet
-        u = MOI.add_variable(model)
-        vc = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.EqualTo(1.0))
+        u, vc = MOI.add_constrained_variable(model, MOI.EqualTo(1.0))
         @test vc.value == u.value
         vov = MOI.VectorOfVariables([t; u; Q])
     else

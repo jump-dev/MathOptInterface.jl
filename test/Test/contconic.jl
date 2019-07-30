@@ -61,7 +61,7 @@ end
     MOIT.soc4test(mock, config)
 end
 @testset "RSOC" begin
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.5, 1.0, 1/√2, 1/√2],
                           (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√2, -1/√2],
                           (MOI.VectorOfVariables,             MOI.RotatedSecondOrderCone) => [[√2, 1/√2, -1.0, -1.0]])
     # double variable bounds on a and b variables
@@ -92,6 +92,12 @@ end
     mock.eval_variable_constraint_dual = false
     MOIT.rotatedsoc3test(mock, config)
     mock.eval_variable_constraint_dual = true
+
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})       => [-1.0],
+        (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) => [[1.0, 1.0, -1.0, -1.0]])
+    MOIT.rotatedsoc4test(mock, config)
+
 end
 @testset "GeoMean" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4))
