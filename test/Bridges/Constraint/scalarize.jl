@@ -8,9 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-include("../simple_model.jl")
-
-mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.TestConfig()
 
 @testset "Scalarize" begin

@@ -8,9 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-include("../simple_model.jl")
-
-mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.TestConfig()
 config_with_basis = MOIT.TestConfig(basis = true)
 
@@ -61,9 +59,15 @@ config_with_basis = MOIT.TestConfig(basis = true)
     MOIT.linear10btest(bridged_mock, config_with_basis)
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}}()))
-    newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], MOI.get(bridged_mock, MOI.ListOfVariableIndices())), 0.0)
+    vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
+    newf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -1.0], vis), 0.0)
     MOI.set(bridged_mock, MOI.ConstraintFunction(), ci, newf)
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ newf
+
+    MOI.modify(bridged_mock, ci, MOI.ScalarCoefficientChange(vis[2], 1.0))
+    modified_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(ones(2), vis), 0.0)
+    @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ modified_f
+
     test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
 end
