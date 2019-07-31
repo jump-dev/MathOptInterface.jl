@@ -1,5 +1,10 @@
 ```@meta
 CurrentModule = MathOptInterface
+DocTestSetup = quote
+    using MathOptInterface
+    const MOI = MathOptInterface
+end
+DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
 # API Reference
@@ -476,6 +481,7 @@ Utilities.@model
 
 Bridges can be used for automatic reformulation of a certain constraint type into equivalent constraints.
 ```@docs
+Bridges.AbstractBridge
 Bridges.Constraint.AbstractBridge
 Bridges.AbstractBridgeOptimizer
 Bridges.Constraint.SingleBridgeOptimizer
