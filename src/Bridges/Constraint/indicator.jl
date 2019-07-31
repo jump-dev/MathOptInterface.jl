@@ -45,7 +45,7 @@ function MOI.supports_constraint(::Type{<:IndicatorActiveOnFalseBridge{T}},
     return true
 end
 
-function added_constraint_types(::Type{IndicatorActiveOnFalseBridge{T, F, S}}) where {T, F, S}
+function MOIB.added_constraint_types(::Type{IndicatorActiveOnFalseBridge{T, F, S}}) where {T, F, S}
     return [(F, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S})]
 end
 

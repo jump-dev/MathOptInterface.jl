@@ -153,7 +153,7 @@ function MOI.supports_constraint(::Type{QuadtoSOCBridge{T}},
                                                 MOI.GreaterThan{T}}}) where T
     return true
 end
-function added_constraint_types(::Type{QuadtoSOCBridge{T}}) where T
+function MOIB.added_constraint_types(::Type{QuadtoSOCBridge{T}}) where T
     return [(MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
 end
 function concrete_bridge_type(::Type{<:QuadtoSOCBridge{T}},
