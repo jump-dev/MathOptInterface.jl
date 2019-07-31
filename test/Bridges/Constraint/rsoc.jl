@@ -8,9 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-include("../simple_model.jl")
-
-mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.TestConfig()
 
 @testset "RSOC" begin
@@ -23,7 +21,7 @@ config = MOIT.TestConfig()
                              MOI.VectorQuadraticFunction{Float64}]
                    for S in [MOI.RotatedSecondOrderCone]])
 
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2, 1/√2, 0.5, 1.0],
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.5, 1.0, 1/√2, 1/√2],
                           (MOI.SingleVariable,                MOI.EqualTo{Float64}) => [-√2, -1/√2],
                           (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)  => [[3/2, 1/2, -1.0, -1.0]])
     MOIT.rotatedsoc1vtest(bridged_mock, config)

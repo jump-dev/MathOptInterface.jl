@@ -1,3 +1,5 @@
+using Test
+
 @testset "Config" begin
     include("config.jl")
 end
