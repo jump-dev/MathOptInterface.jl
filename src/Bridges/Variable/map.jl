@@ -97,7 +97,7 @@ end
 function Base.keys(map::Map)
     return Base.Iterators.Filter(
         vi -> haskey(map, vi),
-        MOI.Bridges.LazyMap{MOI.VariableIndex}(
+        MOIU.LazyMap{MOI.VariableIndex}(
             i -> MOI.VariableIndex(-i),
             eachindex(map.bridges)))
 end
@@ -369,8 +369,8 @@ struct EmptyMap <: AbstractDict{MOI.VariableIndex, AbstractBridge} end
 Base.isempty(::EmptyMap) = true
 function Base.empty!(::EmptyMap) end
 Base.length(::EmptyMap) = 0
-Base.keys(::EmptyMap) = MOIB.EmptyVector{MOI.VariableIndex}()
-Base.values(::EmptyMap) = MOIB.EmptyVector{AbstractBridge}()
+Base.keys(::EmptyMap) = MOIU.EmptyVector{MOI.VariableIndex}()
+Base.values(::EmptyMap) = MOIU.EmptyVector{AbstractBridge}()
 has_bridges(::EmptyMap) = false
 number_of_variables(::EmptyMap) = 0
 number_with_set(::EmptyMap, ::Type{<:MOI.AbstractSet}) = 0
