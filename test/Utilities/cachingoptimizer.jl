@@ -34,14 +34,11 @@ const MOIU = MOI.Utilities
         "Cannot query $(attr) from caching optimizer because no optimizer" *
         " is attached.")
     @test_throws exception MOI.get(model, attr)
-
-    @test_throws exception MOI.get(model, attr)
-    attr = MOI.TimeLimit()
+    attr = MOI.TimeLimitSec()
     exception = ErrorException(
         "Cannot query $(attr) from caching optimizer because no optimizer" *
         " is attached.")
     @test_throws exception MOI.get(model, attr)
-
     attr = MOI.ResultCount()
     exception = ErrorException(
         "Cannot query $(attr) from caching optimizer because no optimizer" *
@@ -53,37 +50,37 @@ end
     cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
     cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
     MOI.set(cached, MOI.Silent(), true)
-    MOI.set(cached, MOI.TimeLimit(), 0)
+    MOI.set(cached, MOI.TimeLimitSec(), 0.0)
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
-    @test MOI.get(mock, MOI.TimeLimit()) == 0
-    @test MOI.get(cached, MOI.TimeLimit()) == 0
+    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
+    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
     MOI.set(cached, MOI.Silent(), false)
-    MOI.set(cached, MOI.TimeLimit(), 1)
+    MOI.set(cached, MOI.TimeLimitSec(), 1.0)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
-    @test MOI.get(mock, MOI.TimeLimit()) == 1
-    @test MOI.get(cached, MOI.TimeLimit()) == 1
+    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
+    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
-    @test MOI.get(mock, MOI.TimeLimit()) == 1
-    @test MOI.get(cached, MOI.TimeLimit()) == 1
+    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
+    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
     MOI.set(cached, MOI.Silent(), true)
-    MOI.set(cached, MOI.TimeLimit(), 0)
+    MOI.set(cached, MOI.TimeLimitSec(), 0.0)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
-    @test MOI.get(mock, MOI.TimeLimit()) == 0
-    @test MOI.get(cached, MOI.TimeLimit()) == 0
+    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
+    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
-    @test MOI.get(mock, MOI.TimeLimit()) == 0
-    @test MOI.get(cached, MOI.TimeLimit()) == 0
+    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
+    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
 end
 
 @testset "CachingOptimizer MANUAL mode" begin

@@ -32,25 +32,25 @@ end
 unittests["silent"] = silent
 
 """
-    timelimit(model::MOI.ModelLike, config::TestConfig)
+    timelimitsec(model::MOI.ModelLike, config::TestConfig)
 
-Test that the [`MOI.TimeLimit`](@ref) attribute is implemented for `model`.
+Test that the [`MOI.TimeLimitSec`](@ref) attribute is implemented for `model`.
 """
-function timelimit(model::MOI.ModelLike, config::TestConfig)
+function timelimitsec(model::MOI.ModelLike, config::TestConfig)
     if config.solve
-        @test MOI.supports(model, MOI.TimeLimit())
+        @test MOI.supports(model, MOI.TimeLimitSec())
         # Get the current value to restore it at the end of the test
-        value = MOI.get(model, MOI.TimeLimit())
-        MOI.set(model, MOI.TimeLimit(), value + 1)
-        @test value + 1 == MOI.get(model, MOI.TimeLimit())
-        # Check that `set` does not just increment the current value
-        MOI.set(model, MOI.TimeLimit(), value + 1)
-        @test value + 1 == MOI.get(model, MOI.TimeLimit())
-        MOI.set(model, MOI.TimeLimit(), value)
-        @test value == MOI.get(model, MOI.TimeLimit())
+        value = MOI.get(model, MOI.TimeLimitSec())
+        MOI.set(model, MOI.TimeLimitSec(), 0.0)
+        @test isapprox(MOI.get(model, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
+        # Check that `set` does not just set TimeLimitSec to `0.0`
+        MOI.set(model, MOI.TimeLimitSec(), 1.0)
+        @test isapprox(MOI.get(model, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
+        MOI.set(model, MOI.TimeLimitSec(), value)
+        @test value == MOI.get(model, MOI.TimeLimitSec()) # Equality should hold
     end
 end
-unittests["timelimit"] = timelimit
+unittests["timelimitsec"] = timelimitsec
 
 """
     raw_status_string(model::MOI.ModelLike, config::TestConfig)
