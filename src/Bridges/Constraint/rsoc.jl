@@ -47,7 +47,7 @@ function MOI.supports_constraint(::Type{RSOCBridge{T}},
                                 ::Type{MOI.RotatedSecondOrderCone}) where T
     return true
 end
-function added_constraint_types(::Type{<:RSOCBridge{T, F}}) where {T, F}
+function MOIB.added_constraint_types(::Type{<:RSOCBridge{T, F}}) where {T, F}
     return [(F, MOI.SecondOrderCone)]
 end
 function concrete_bridge_type(::Type{<:RSOCBridge{T}},

@@ -36,7 +36,7 @@ config_with_basis = MOIT.TestConfig(basis = true)
                                     ])
 
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.LessThan{T}]
-        @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.ScalarFunctionizeBridge{T, S}) ==
+        @test MOIB.added_constraint_types(MOIB.Constraint.ScalarFunctionizeBridge{T, S}) ==
             [(MOI.ScalarAffineFunction{T}, S)]
     end
 
@@ -89,7 +89,7 @@ end
                                     ])
 
     for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
-        @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.VectorFunctionizeBridge{T, S}) ==
+        @test MOIB.added_constraint_types(MOIB.Constraint.VectorFunctionizeBridge{T, S}) ==
             [(MOI.VectorAffineFunction{T}, S)]
     end
 

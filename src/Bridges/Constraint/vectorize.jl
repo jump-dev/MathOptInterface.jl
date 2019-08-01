@@ -39,7 +39,7 @@ function MOI.supports_constraint(::Type{VectorizeBridge{T}},
                                 ::Type{<:ScalarLinearSet{T}}) where T
     return true
 end
-function added_constraint_types(::Type{<:VectorizeBridge{T, F, S}}) where {T, F, S}
+function MOIB.added_constraint_types(::Type{<:VectorizeBridge{T, F, S}}) where {T, F, S}
     return [(F, S)]
 end
 function concrete_bridge_type(::Type{<:VectorizeBridge{T}},

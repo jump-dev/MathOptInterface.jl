@@ -121,7 +121,7 @@ function MOI.supports_constraint(::Type{SquareBridge{T}},
                                 ::Type{<:MOI.AbstractSymmetricMatrixSetSquare}) where T
     return true
 end
-function added_constraint_types(::Type{SquareBridge{T, F, G, TT, ST}}) where {T, F, G, TT, ST}
+function MOIB.added_constraint_types(::Type{SquareBridge{T, F, G, TT, ST}}) where {T, F, G, TT, ST}
     return [(F, TT), (G, MOI.EqualTo{T})]
 end
 function concrete_bridge_type(::Type{<:SquareBridge{T}},

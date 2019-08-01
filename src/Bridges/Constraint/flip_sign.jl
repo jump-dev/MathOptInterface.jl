@@ -15,7 +15,7 @@ function MOI.supports_constraint(::Type{<:FlipSignBridge{T, S1}},
                                  ::Type{S1}) where {T, S1<:MOI.AbstractSet}
     return true
 end
-function added_constraint_types(
+function MOIB.added_constraint_types(
     ::Type{<:FlipSignBridge{T, S1, S2, F}}) where {T, S1, S2, F}
     return [(F, S2)]
 end
