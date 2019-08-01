@@ -10,11 +10,17 @@ abstract type FlipSignBridge{
     T, S1<:MOI.AbstractSet, S2<:MOI.AbstractSet,
     F<:MOI.AbstractFunction, G<:MOI.AbstractFunction} <: AbstractBridge end
 
-function MOI.supports_constraint(::Type{<:FlipSignBridge{T, S1}},
-                                 ::Type{<:MOI.AbstractFunction},
-                                 ::Type{S1}) where {T, S1<:MOI.AbstractSet}
+function MOI.supports_constraint(
+    ::Type{<:FlipSignBridge{T, S1}}, ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{S1}) where {T, S1<:MOI.AbstractScalarSet}
     return true
 end
+function MOI.supports_constraint(
+    ::Type{<:FlipSignBridge{T, S1}}, ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{S1}) where {T, S1<:MOI.AbstractVectorSet}
+    return true
+end
+MOIB.added_constrained_variable_types(::Type{<:FlipSignBridge}) = Tuple{DataType}[]
 function MOIB.added_constraint_types(
     ::Type{<:FlipSignBridge{T, S1, S2, F}}) where {T, S1, S2, F}
     return [(F, S2)]
