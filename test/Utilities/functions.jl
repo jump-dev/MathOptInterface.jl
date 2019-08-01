@@ -4,9 +4,13 @@ const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
 w = MOI.VariableIndex(0)
+fw = MOI.SingleVariable(w)
 x = MOI.VariableIndex(1)
+fx = MOI.SingleVariable(x)
 y = MOI.VariableIndex(2)
+fy = MOI.SingleVariable(y)
 z = MOI.VariableIndex(3)
+fz = MOI.SingleVariable(z)
 @testset "Vectorization" begin
     g = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 1],
                                                        MOI.ScalarAffineTerm.([5, 2],
@@ -104,6 +108,32 @@ end
     @test MOI.output_dimension(fvq) == 2
     @test MOIU.eval_variables(vi -> vals[vi], fvq) ≈ [13, 1]
     @test MOIU.eval_variables(vi -> vals[vi], fvq) ≈ [13, 1]
+end
+@testset "substitute_variables" begin
+    # We do tests twice to make sure the function is not modified
+    subs = Dict(w => fy + fz, x => 2fy, y => fy, z => -1fw)
+    vals = Dict(w => 0, x => 3, y => 1, z => 5)
+    subs_vals = Dict(w => 2, x => 2, y => 1, z => 0)
+    fsa = fx + 3fz + 2fy + 2
+    subs_sa = -3fw + 4fy + 2
+    @test MOIU.eval_variables(vi -> subs_vals[vi], fsa) == MOIU.eval_variables(vi -> vals[vi], subs_sa)
+    @test MOIU.substitute_variables(vi -> subs[vi], fsa) ≈ subs_sa
+    @test MOIU.substitute_variables(vi -> subs[vi], fsa) ≈ subs_sa
+    fva = MOIU.operate(vcat, Int, 3fz - 3, fx + 2fy + 2)
+    subs_va = MOIU.operate(vcat, Int, -3fw - 3, 4fy + 2)
+    @test MOIU.eval_variables(vi -> subs_vals[vi], fva) == MOIU.eval_variables(vi -> vals[vi], subs_va)
+    @test MOIU.substitute_variables(vi -> subs[vi], fva) ≈ subs_va
+    @test MOIU.substitute_variables(vi -> subs[vi], fva) ≈ subs_va
+    fsq = 1.0fx + 1.0fy + 1.0fx * fz + 1.0fw * fz + 1.0fw * fy + 2.0fw * fw - 3.0
+    # TODO finish
+    subs_sq = 4.0fy - fw - 3.0fy * fw + 2.0fy * fy - 1.0fz * fw + 1.0fz * fy - 3.0
+    @test MOIU.eval_variables(vi -> subs_vals[vi], fsq) == MOIU.eval_variables(vi -> vals[vi], subs_sq)
+    @test MOIU.substitute_variables(vi -> subs[vi], fsq) ≈ subs_sq
+    @test MOIU.substitute_variables(vi -> subs[vi], fsq) ≈ subs_sq
+    fvq = MOIU.operate(vcat, Int, 1fy + 1fx*fz - 3, 1fx + 1fw*fz + 1fw*fy - 2)
+    # TODO
+    @show MOIU.substitute_variables(vi -> subs[vi], fvq)
+    @show MOIU.substitute_variables(vi -> subs[vi], fvq)
 end
 @testset "mapvariables" begin
     fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
@@ -336,8 +366,6 @@ end
                                          MOI.ScalarQuadraticFunction{Float64},
                                          Float64) == MOI.ScalarQuadraticFunction{Float64}
         end
-        fx = MOI.SingleVariable(x)
-        fy = MOI.SingleVariable(y)
         f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
         MOIU.canonicalize!(f)
         @test MOI.output_dimension(f) == 1
