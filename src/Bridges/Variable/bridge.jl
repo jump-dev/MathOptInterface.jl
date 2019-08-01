@@ -67,7 +67,7 @@ end
                                      S::Type{<:MOI.AbstractSet})
 
 Return a list of the types of constrained variables that bridges of type `BT`
-add for bridging constrained variabled in `S`. This fallbacks to
+add for bridging constrained variabled in `S`. This falls back to
 `added_constrained_variable_types(concrete_bridge_type(BT, S))`
 so bridges should not implement this.
 
@@ -96,7 +96,7 @@ end
                            S::Type{<:MOI.AbstractSet})
 
 Return a list of the types of constraints that bridges of type `BT` add for
-for bridging constrained variabled in `S`. This fallbacks to
+for bridging constrained variabled in `S`. This falls back to
 `added_constraint_types(concrete_bridge_type(BT, S))`
 so bridges should not implement this method.
 

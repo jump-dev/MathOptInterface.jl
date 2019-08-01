@@ -45,7 +45,7 @@ MOI.supports_constraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}
                                      S::Type{<:MOI.AbstractSet})
 
 Return a list of the types of constrained variables that bridges of type `BT`
-add for bridging an `F`-in-`S` constraints. This fallbacks to
+add for bridging `F`-in-`S` constraints. This falls back to
 `added_constrained_variable_types(concrete_bridge_type(BT, F, S))`
 so bridges should not implement this method.
 """
@@ -61,7 +61,7 @@ end
                            S::Type{<:MOI.AbstractSet})
 
 Return a list of the types of constraints that bridges of type `BT` add for
-bridging an `F`-in-`S` constraints. This fallbacks to
+bridging `F`-in-`S` constraints. This falls back to
 `added_constraint_types(concrete_bridge_type(BT, F, S))`
 so bridges should not implement this method.
 """
@@ -86,7 +86,7 @@ constraint is bridged into a
 [`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.GreaterThan`](@ref)
 and a
 [`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.LessThan`](@ref)
-by teh [`SplitIntervalBridge`](@ref),
+by the [`SplitIntervalBridge`](@ref),
 ```jldoctest
 BT = MOI.Bridges.Constraint.SplitIntervalBridge{Float64}
 F = MOI.SingleVariable
