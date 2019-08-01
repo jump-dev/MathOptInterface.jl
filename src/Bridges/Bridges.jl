@@ -9,6 +9,8 @@ const CI = MOI.ConstraintIndex
 include("bridge.jl")
 include("bridge_optimizer.jl")
 
+# Variable bridges
+include("Variable/Variable.jl")
 # Constraint bridges
 include("Constraint/Constraint.jl")
 
