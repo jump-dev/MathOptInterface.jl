@@ -151,14 +151,14 @@ end
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{F, S}}) where {F, S}
     return Base.Iterators.Filter(
         ci -> haskey(map, ci),
-        MOI.Bridges.LazyMap{C}(
+        MOIU.LazyMap{C}(
             i -> C(i), eachindex(map.bridges)))
 end
 function number_of_type(map::Map, C::Type{MOI.ConstraintIndex{MOI.SingleVariable, S}}) where S
     return count(key -> key[2] == S, keys(map.single_variable_constraints))
 end
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{MOI.SingleVariable, S}}) where S
-    return MOI.Bridges.LazyMap{C}(
+    return MOIU.LazyMap{C}(
         key -> C(key[1]),
         Base.Iterators.Filter(key -> key[2] == S, keys(map.single_variable_constraints))
     )
@@ -167,7 +167,7 @@ function number_of_type(map::Map, C::Type{MOI.ConstraintIndex{MOI.VectorOfVariab
     return count(key -> key[2] == S, keys(map.vector_of_variables_constraints))
 end
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{MOI.VectorOfVariables, S}}) where S
-    return MOI.Bridges.LazyMap{C}(
+    return MOIU.LazyMap{C}(
         key -> C(key[1]),
         Base.Iterators.Filter(key -> key[2] == S, keys(map.vector_of_variables_constraints))
     )
@@ -279,7 +279,7 @@ not bridge any constraint.
 struct EmptyMap <: AbstractDict{MOI.VariableIndex, AbstractBridge} end
 Base.isempty(::EmptyMap) = true
 function Base.empty!(::EmptyMap) end
-Base.keys(::EmptyMap) = MOIB.EmptyVector{MOI.VariableIndex}()
-Base.values(::EmptyMap) = MOIB.EmptyVector{AbstractBridge}()
+Base.keys(::EmptyMap) = MOIU.EmptyVector{MOI.VariableIndex}()
+Base.values(::EmptyMap) = MOIU.EmptyVector{AbstractBridge}()
 has_bridges(::EmptyMap) = false
 number_of_type(::EmptyMap, ::Type{<:MOI.ConstraintIndex}) = 0
