@@ -31,6 +31,31 @@ julia> dimension(PositiveSemidefiniteConeTriangle(2))
 function dimension end
 
 """
+    dual_set(s::AbstractSet)
+
+Return the dual set of `s`, that is the dual cone of the set. This follows the 
+definition of duality discussed in [Duals](@ref).
+See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more information.
+If the dual cone is not defined it returns an error.
+
+### Examples
+
+```jldocstest
+julia> dual_set(Reals(4))
+Zeros(4)
+
+julia> dual_set(SecondOrderCone(5))
+SecondOrderCone(5)
+
+julia> dual_set(ExponentialCone())
+DualExponentialCone()
+```
+"""
+function dual_set end
+
+dual_set(s::AbstractSet) = error("Dual of $s is not implemented.")
+
+"""
     AbstractScalarSet
 
 Abstract supertype for subsets of ``\\mathbb{R}``.
@@ -59,6 +84,8 @@ struct Reals <: AbstractVectorSet
     dimension::Int
 end
 
+dual_set(s::Reals) = Zeros(dimension(s))
+
 """
     Zeros(dimension)
 
@@ -67,6 +94,8 @@ The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension `dim
 struct Zeros <: AbstractVectorSet
     dimension::Int
 end
+
+dual_set(s::Zeros) = Reals(dimension(s))
 
 """
     Nonnegatives(dimension)
@@ -77,6 +106,8 @@ struct Nonnegatives <: AbstractVectorSet
     dimension::Int
 end
 
+dual_set(s::Nonnegatives) = copy(s)
+
 """
     Nonpositives(dimension)
 
@@ -85,6 +116,8 @@ The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of
 struct Nonpositives <: AbstractVectorSet
     dimension::Int
 end
+
+dual_set(s::Nonpositives) = copy(s)
 
 """
     GreaterThan{T <: Real}(lower::T)
@@ -158,6 +191,8 @@ struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
 end
 
+dual_set(s::SecondOrderCone) = copy(s)
+
 """
     RotatedSecondOrderCone(dimension)
 
@@ -166,6 +201,8 @@ The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int
 end
+
+dual_set(s::RotatedSecondOrderCone) = copy(s)
 
 """
     GeometricMeanCone(dimension)
@@ -183,12 +220,16 @@ The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x
 """
 struct ExponentialCone <: AbstractVectorSet end
 
+dual_set(s::ExponentialCone) = DualExponentialCone()
+
 """
     DualExponentialCone()
 
 The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\exp (v/u) \\le \\exp(1) w, u < 0 \\}``.
 """
 struct DualExponentialCone <: AbstractVectorSet end
+
+dual_set(s::DualExponentialCone) = ExponentialCone()
 
 """
     PowerCone{T <: Real}(exponent::T)
@@ -199,6 +240,8 @@ struct PowerCone{T <: Real} <: AbstractVectorSet
     exponent::T
 end
 
+dual_set(s::PowerCone{T}) where T <: Real = DualPowerCone{T}(s.exponent)
+
 """
     DualPowerCone{T <: Real}(exponent::T)
 
@@ -207,6 +250,8 @@ The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{expon
 struct DualPowerCone{T <: Real} <: AbstractVectorSet
     exponent::T
 end
+
+dual_set(s::DualPowerCone{T}) where T <: Real = PowerCone{T}(s.exponent)
 
 dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
 
@@ -383,6 +428,8 @@ struct PositiveSemidefiniteConeTriangle <: AbstractSymmetricMatrixSetTriangle
     side_dimension::Int
 end
 
+dual_set(s::PositiveSemidefiniteConeTriangle) = copy(s)
+
 """
     PositiveSemidefiniteConeSquare(side_dimension) <: AbstractSymmetricMatrixSetSquare
 
@@ -409,6 +456,11 @@ It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `Po
 """
 struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
     side_dimension::Int
+end
+
+function dual_set(s::PositiveSemidefiniteConeSquare)
+    return error("""Dual of $s is not defined in MathOptInterface.
+                    For more details see the comments in src/Bridges/Constraint/square.jl""")
 end
 
 triangular_form(::Type{PositiveSemidefiniteConeSquare}) = PositiveSemidefiniteConeTriangle

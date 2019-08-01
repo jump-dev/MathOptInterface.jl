@@ -6,6 +6,7 @@ const MOIU = MOI.Utilities
 
 const CI = MOI.ConstraintIndex
 
+include("bridge.jl")
 include("bridge_optimizer.jl")
 
 # Constraint bridges

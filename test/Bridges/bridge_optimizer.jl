@@ -6,23 +6,33 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
-include("simple_model.jl")
 include("utilities.jl")
 
-struct UnknownConstraintAttribute <: MOI.AbstractConstraintAttribute end
-MOI.is_set_by_optimize(::UnknownConstraintAttribute) = true
+# Model not supporting Interval
+MOIU.@model(NoIntervalModel,
+            (),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
+            (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone,
+             MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+             MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
+            (MOI.PowerCone, MOI.DualPowerCone),
+            (),
+            (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
-mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+mock = MOIU.MockOptimizer(NoIntervalModel{Float64}())
 bridged_mock = MOIB.Constraint.LessToGreater{Float64}(MOIB.Constraint.SplitInterval{Float64}(mock))
 
 @testset "Unsupported constraint attribute" begin
-    attr = UnknownConstraintAttribute()
+    attr = MOIT.UnknownConstraintAttribute()
     err = ArgumentError(
-        "Constraint bridge of type `MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable}` " *
+        "Bridge of type `MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable}` " *
         "does not support accessing the attribute `$attr`.")
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),
                             MOI.Interval(0.0, 1.0))
+    @test !MOI.supports(bridged_mock, attr, typeof(ci))
     @test_throws err MOI.get(bridged_mock, attr, ci)
 end
 
@@ -59,11 +69,11 @@ end
     MOIT.failcopytestia(bridged_mock)
     MOIT.failcopytestva(bridged_mock)
     MOIT.failcopytestca(bridged_mock)
-    MOIT.copytest(bridged_mock, SimpleModel{Float64}())
+    MOIT.copytest(bridged_mock, MOIU.Model{Float64}())
 end
 
 @testset "Custom test" begin
-    model = MOIB.Constraint.SplitInterval{Int}(SimpleModel{Int}())
+    model = MOIB.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
     @test !MOIB.supports_bridging_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Interval{Float64})
 
     x, y = MOI.add_variables(model, 2)

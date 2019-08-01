@@ -8,9 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-include("../simple_model.jl")
-
-mock = MOIU.MockOptimizer(SimpleModel{Float64}())
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.TestConfig()
 
 @testset "Scalar slack" begin
@@ -80,7 +78,7 @@ config = MOIT.TestConfig()
 
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
         for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
-            @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
+            @test MOIB.added_constraint_types(MOIB.Constraint.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
         end
     end
 end
@@ -148,7 +146,7 @@ end
 
     for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
         for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
-            @test MOIB.Constraint.added_constraint_types(MOIB.Constraint.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
+            @test MOIB.added_constraint_types(MOIB.Constraint.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
         end
     end
 end

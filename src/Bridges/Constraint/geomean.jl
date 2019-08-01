@@ -70,7 +70,7 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G}}, model,
 
     t = f_scalars[1]
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and ConstraintDual
-    tubc = MOIU.add_scalar_constraint(
+    tubc = MOIU.normalize_and_add_constraint(
         model, MOIU.operate!(+, T, t, -sN * xl1), MOI.LessThan(zero(T)),
         allow_modify_function=true)
 
@@ -101,7 +101,7 @@ function MOI.supports_constraint(::Type{GeoMeanBridge{T}},
                                 ::Type{MOI.GeometricMeanCone}) where T
     return true
 end
-function added_constraint_types(::Type{GeoMeanBridge{T, F, G}}) where {T, F, G}
+function MOIB.added_constraint_types(::Type{GeoMeanBridge{T, F, G}}) where {T, F, G}
     return [(F, MOI.LessThan{T}), (G, MOI.RotatedSecondOrderCone)]
 end
 function concrete_bridge_type(::Type{<:GeoMeanBridge{T}},

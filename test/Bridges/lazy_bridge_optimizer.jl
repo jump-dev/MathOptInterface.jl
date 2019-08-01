@@ -78,7 +78,7 @@ function MOI.supports_constraint(
 end
 
 struct BridgeAddingNoConstraint{T} <: MOI.Bridges.Constraint.AbstractBridge end
-MOIB.Constraint.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []
+MOIB.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []
 function MOI.supports_constraint(::Type{<:BridgeAddingNoConstraint},
                                  ::Type{MOI.SingleVariable},
                                  ::Type{MOI.Integer})
