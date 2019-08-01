@@ -55,32 +55,32 @@ end
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
-    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
-    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
     MOI.set(cached, MOI.Silent(), false)
     MOI.set(cached, MOI.TimeLimitSec(), 1.0)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
-    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
-    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
+    @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
-    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
-    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 1.0, atol = eps(0.0))
+    @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
     MOI.set(cached, MOI.Silent(), true)
     MOI.set(cached, MOI.TimeLimitSec(), 0.0)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
-    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
-    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
-    @test isapprox(MOI.get(mock, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
-    @test isapprox(MOI.get(cached, MOI.TimeLimitSec()), 0.0, atol = eps(0.0))
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
 end
 
 @testset "CachingOptimizer MANUAL mode" begin
