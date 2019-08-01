@@ -1,3 +1,7 @@
+using Test
+@testset "Map" begin
+    include("map.jl")
+end
 include("flip_sign.jl")
 include("vectorize.jl")
 include("scalarize.jl")
