@@ -32,7 +32,7 @@ end
 unittests["silent"] = silent
 
 """
-    timelimitsec(model::MOI.ModelLike, config::TestConfig)
+    time_limit_sec(model::MOI.ModelLike, config::TestConfig)
 
 Test that the [`MOI.TimeLimitSec`](@ref) attribute is implemented for `model`.
 """
