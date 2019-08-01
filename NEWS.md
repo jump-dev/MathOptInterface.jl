@@ -11,6 +11,7 @@ v0.9.0 (May 2?, 2019)
 - Support for indicator constraints was added (#709, #712).
 - `DualObjectiveValue` attribute was added (#473).
 - `RawParameter` attribute was added (#733).
+- A `dual_set` function was added (#804).
 - A `Benchmarks` submodule was added to facilitate solver benchmarking (#769).
 - A `submit` function was added, this may for intance allow the user to submit
   solutions or cuts to the solver from a callback (#775).
@@ -44,6 +45,7 @@ v0.9.0 (May 2?, 2019)
     a `VectorOfVariables` (#616).
   * Fix a type piracy of `operate` (#784).
   * The `load_constraint` fallback signature was fixed (#760).
+  * The `set_dot` function was extended to work with sparse arrays (#805).
 - Bridges improvements:
   * The bridges no longer store the constraint function and set before it is
     briged, the bridges now have to implement `ConstraintFunction` and
