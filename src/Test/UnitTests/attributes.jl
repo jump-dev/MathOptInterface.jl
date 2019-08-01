@@ -32,6 +32,27 @@ end
 unittests["silent"] = silent
 
 """
+    timelimit(model::MOI.ModelLike, config::TestConfig)
+
+Test that the [`MOI.TimeLimit`](@ref) attribute is implemented for `model`.
+"""
+function timelimit(model::MOI.ModelLike, config::TestConfig)
+    if config.solve
+        @test MOI.supports(model, MOI.TimeLimit())
+        # Get the current value to restore it at the end of the test
+        value = MOI.get(model, MOI.TimeLimit())
+        MOI.set(model, MOI.TimeLimit(), value + 1)
+        @test value + 1 == MOI.get(model, MOI.TimeLimit())
+        # Check that `set` does not just increment the current value
+        MOI.set(model, MOI.TimeLimit(), value + 1)
+        @test value + 1 == MOI.get(model, MOI.TimeLimit())
+        MOI.set(model, MOI.TimeLimit(), value)
+        @test value == MOI.get(model, MOI.TimeLimit())
+    end
+end
+unittests["timelimit"] = timelimit
+
+"""
     raw_status_string(model::MOI.ModelLike, config::TestConfig)
 
 Test that the [`MOI.RawStatusString`](@ref) attribute is implemented for

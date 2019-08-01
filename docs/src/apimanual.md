@@ -1132,6 +1132,7 @@ const MOIB = MOI.Bridges
 import FooBar
 const optimizer = FooBar.Optimizer()
 MOI.set(optimizer, MOI.Silent(), true)
+MOI.set(optimizer, MOI.TimeLimit(), 0)
 
 @testset "SolverName" begin
     @test MOI.get(optimizer, MOI.SolverName()) == "FooBar"

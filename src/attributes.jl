@@ -441,6 +441,15 @@ given.
 struct Silent <: AbstractOptimizerAttribute end
 
 """
+    TimeLimit
+
+An optimizer attribute for setting a time limit to an optimization. When `set`
+to `0`, it deactivate the solver time limit. The default value is `0`. The time
+limit is `set` in seconds.
+"""
+struct TimeLimit <: AbstractOptimizerAttribute end
+
+"""
     RawParameter(name)
 
 An optimizer attribute for the solver-specific parameter identified by `name`

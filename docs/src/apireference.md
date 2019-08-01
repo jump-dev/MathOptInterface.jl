@@ -115,6 +115,7 @@ List of optimizers attributes
 ```@docs
 SolverName
 Silent
+TimeLimit
 RawParameter
 ```
 
