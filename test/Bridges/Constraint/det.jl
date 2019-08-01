@@ -1,3 +1,16 @@
+using Test
+
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIT = MathOptInterface.Test
+const MOIU = MathOptInterface.Utilities
+const MOIB = MathOptInterface.Bridges
+
+include("../utilities.jl")
+
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+config = MOIT.TestConfig()
+
 @testset "LogDet" begin
     bridged_mock = MOIB.Constraint.LogDet{Float64}(mock)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1, 0, 1, 0, 0, 1])

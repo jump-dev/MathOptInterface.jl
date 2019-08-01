@@ -16,25 +16,12 @@ struct IndicatorActiveOnFalseBridge{T, F <: MOI.AbstractVectorFunction, S <: MOI
 end
 
 function bridge_constraint(::Type{IndicatorActiveOnFalseBridge{T,F,S}}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::IS) where {S <: MOI.AbstractScalarSet, T <: Real, F, IS <: MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, S}}
-    z1 = f.terms[1].scalar_term.variable_index
-    z2 = MOI.add_variable(model)
-    zo_cons = MOI.add_constraint(model, MOI.SingleVariable(z2), MOI.ZeroOne())
-
+    f_scalars = MOIU.eachscalar(f)
+    z2, zo_cons = MOI.add_constrained_variable(model, MOI.ZeroOne())
     # z1 + z2 == 1
-    dcons = MOI.add_constraint(model,
-        MOI.ScalarAffineFunction(
-            [MOI.ScalarAffineTerm(one(T), z1), MOI.ScalarAffineTerm(one(T), z2)], zero(T),
-        ),
-        MOI.EqualTo(one(T)),
-    )
-    vec_terms2 = [t for t in f.terms if t.output_index == 2]
-    f2 = MOI.VectorAffineFunction(
-        vcat(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z2))],
-            vec_terms2,
-        ),
-        f.constants
-    )
+    z1_z2 = MOIU.operate(+, T, f_scalars[1], MOI.SingleVariable(z2))
+    dcons = MOIU.normalize_and_add_constraint(model, z1_z2, MOI.EqualTo(one(T)))
+    f2 = MOIU.operate(vcat, T, MOI.SingleVariable(z2), f_scalars[2])
     ci = MOI.add_constraint(model, f2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(s.set))
     return IndicatorActiveOnFalseBridge{T,F,S}(z2, zo_cons, dcons, ci)
 end
@@ -45,8 +32,12 @@ function MOI.supports_constraint(::Type{<:IndicatorActiveOnFalseBridge{T}},
     return true
 end
 
+function MOIB.added_constrained_variable_types(::Type{<:IndicatorActiveOnFalseBridge})
+    return [(MOI.ZeroOne,)]
+end
 function MOIB.added_constraint_types(::Type{IndicatorActiveOnFalseBridge{T, F, S}}) where {T, F, S}
-    return [(F, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S})]
+    return [(MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}),
+            (F, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S})]
 end
 
 function concrete_bridge_type(::Type{<:IndicatorActiveOnFalseBridge{T}},
