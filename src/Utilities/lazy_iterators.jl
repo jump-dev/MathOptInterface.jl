@@ -1,4 +1,5 @@
 struct EmptyVector{T} <: AbstractVector{T} end
+Base.size(::EmptyVector) = (0,)
 Base.isempty(::EmptyVector) = true
 Base.eltype(::EmptyVector{T}) where {T} = T
 Base.iterate(::EmptyVector) = nothing
@@ -10,6 +11,7 @@ end
 function LazyMap{T}(f::Function, data) where {T}
     return LazyMap{T, typeof(data)}(f, data)
 end
+Base.size(it::LazyMap) = size(it.data)
 function Base.iterate(it::LazyMap, args...)
     elem_state = iterate(it.data, args...)
     if elem_state === nothing
