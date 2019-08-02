@@ -213,7 +213,7 @@ end
 """
     variable_constraints(map::Map, vis::Vector{MOI.VariableIndex})
 
-Return the list of all keys that *may* corresponding to
+Return the list of all keys that *may* correspond to
 [`MathOptInterface.VectorOfVariables`](@ref) constraints on the variables `vis`.
 """
 function variable_constraints(map::Map, vis::Vector{MOI.VariableIndex})
@@ -229,7 +229,7 @@ end
 """
     has_bridges(map::Map)::Bool
 
-Return a `Bool` indicating whether any bridge were added yet. Note that it
+Return a `Bool` indicating whether any bridge was added yet. Note that it
 returns `false` even if all bridges were deleted while `isempty` would return
 `true`. It is computed in `O(1)` while `isempty` needs `O(n)` hence it is used
 by [`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref) to shortcut
