@@ -160,14 +160,14 @@ end
    unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
                  vi::MOI.VariableIndex)
 
-For a bridge constrained scalar variable, return a tuple of pairs mapping the
-variables created by the bridge to an affine expression in terms of the bridged
-variable `vi`.
+For a bridged variable in a scalar set, return a tuple of pairs mapping the
+variables created by the bridge to an affine expression in terms of the
+bridged variable `vi`.
 
    unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
                  vi::MOI.VariableIndex, i::IndexInVector)
 
-For a bridge constrained vector of variable, return a tuple of pairs mapping the
+For a bridged variable in a vector set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the bridged
 variable `vi` corresponding to the `i`th variable of the vector.
 

@@ -227,7 +227,7 @@ end
 """
     has_bridges(map::Map)::Bool
 
-Return a `Bool` indicating whether any bridge were added yet. Note that it
+Return a `Bool` indicating whether any bridge was added yet. Note that it
 returns `false` even if all bridges were deleted while `isempty` would return
 `true`. It is computed in `O(1)` while `isempty` needs `O(n)` hence it is used
 by [`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref) to shortcut
@@ -239,7 +239,7 @@ has_bridges(map::Map) = !isempty(map.info)
     add_key_for_bridge(map::Map, bridge::AbstractBridge,
                        set::MOI.AbstractScalarSet)
 
-Create a new variable index `vi`, stores the mapping `vi => bridge` and
+Create a new variable index `vi`, store the mapping `vi => bridge` and
 associate `vi` to `typeof(set)`. It returns a tuple with `vi` and the
 constraint index
 `MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(vi.value)`.
