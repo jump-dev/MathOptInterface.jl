@@ -111,29 +111,34 @@ end
 end
 @testset "substitute_variables" begin
     # We do tests twice to make sure the function is not modified
-    subs = Dict(w => fy + fz, x => 2fy, y => fy, z => -1fw)
-    vals = Dict(w => 0, x => 3, y => 1, z => 5)
-    subs_vals = Dict(w => 2, x => 2, y => 1, z => 0)
-    fsa = fx + 3fz + 2fy + 2
-    subs_sa = -3fw + 4fy + 2
+    subs = Dict(w => 1.0fy + 1.0fz, x => 2.0fy + 1.0, y => 1.0fy, z => -1.0fw)
+    vals = Dict(w => 0.0, x => 3.0, y => 1.0, z => 5.0)
+    subs_vals = Dict(w => 6.0, x => 3.0, y => 1.0, z => 0.0)
+    fsa = fx + 3.0fz + 2.0fy + 2.0
+    subs_sa = -3.0fw + 4.0fy + 3.0
     @test MOIU.eval_variables(vi -> subs_vals[vi], fsa) == MOIU.eval_variables(vi -> vals[vi], subs_sa)
     @test MOIU.substitute_variables(vi -> subs[vi], fsa) ≈ subs_sa
     @test MOIU.substitute_variables(vi -> subs[vi], fsa) ≈ subs_sa
-    fva = MOIU.operate(vcat, Int, 3fz - 3, fx + 2fy + 2)
-    subs_va = MOIU.operate(vcat, Int, -3fw - 3, 4fy + 2)
+    fva = MOIU.operate(vcat, Float64, 3.0fz - 3.0, fx + 2.0fy + 2.0)
+    subs_va = MOIU.operate(vcat, Float64, -3.0fw - 3.0, 4.0fy + 3.0)
     @test MOIU.eval_variables(vi -> subs_vals[vi], fva) == MOIU.eval_variables(vi -> vals[vi], subs_va)
     @test MOIU.substitute_variables(vi -> subs[vi], fva) ≈ subs_va
     @test MOIU.substitute_variables(vi -> subs[vi], fva) ≈ subs_va
-    fsq = 1.0fx + 1.0fy + 1.0fx * fz + 1.0fw * fz + 1.0fw * fy + 2.0fw * fw - 3.0
-    # TODO finish
-    subs_sq = 4.0fy - fw - 3.0fy * fw + 2.0fy * fy - 1.0fz * fw + 1.0fz * fy - 3.0
+    fsq = 1.0fx  + 1.0fy + 1.0fx * fz + 1.0fw * fz     + 1.0fw   * fy + 2.0fw     * fw      - 3.0
+    #     2y + 1 +     y - 2yw - w    + (y + z) * (-w) + (y + z) * y  + 2 (y + z) * (y + z) - 3
+    #     2y     +     y - 2yw - w    - yw - zw        + y^2 + zy     + 2y^2 + 2z^2 + 4yz   - 2
+    #     3y - w + 3y^2 + 2z^2 - 3yw - zw + 5yz - 2
+    subs_sq = 3.0fy - 1.0fw + 3.0fy * fy + 2.0fz * fz - 3.0fy * fw - 1.0fz * fw + 5.0fy * fz - 2.0
     @test MOIU.eval_variables(vi -> subs_vals[vi], fsq) == MOIU.eval_variables(vi -> vals[vi], subs_sq)
     @test MOIU.substitute_variables(vi -> subs[vi], fsq) ≈ subs_sq
     @test MOIU.substitute_variables(vi -> subs[vi], fsq) ≈ subs_sq
-    fvq = MOIU.operate(vcat, Int, 1fy + 1fx*fz - 3, 1fx + 1fw*fz + 1fw*fy - 2)
-    # TODO
-    @show MOIU.substitute_variables(vi -> subs[vi], fvq)
-    @show MOIU.substitute_variables(vi -> subs[vi], fvq)
+    fvq = MOIU.operate(vcat, Float64, 1.0fy + 1.0fx*fz - 3.0, 1.0fx + 1.0fw*fz + 1.0fw*fy - 2.0)
+    subs_vq = MOIU.operate(vcat, Float64,
+        1.0fy - fw - 2.0fy*fw - 3.0,
+        2.0fy + 1.0fy*fy - 1.0fw*fy - 1.0fw*fz + 1.0fy*fz - 1.0)
+    @test MOIU.eval_variables(vi -> subs_vals[vi], fvq) == MOIU.eval_variables(vi -> vals[vi], subs_vq)
+    @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
+    @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
 end
 @testset "mapvariables" begin
     fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
@@ -393,6 +398,29 @@ end
             @test convert(MOI.SingleVariable, g) == fx
         end
         @testset "operate" begin
+            @testset "No zero affine term" begin
+                # Test that no affine 0y term is created when multiplying 1fx by fy
+                for fxfy in [1fx * fy, fx * 1fy]
+                    @test isempty(fxfy.affine_terms)
+                    @test length(fxfy.quadratic_terms) == 1
+                    @test fxfy.quadratic_terms[1] == MOI.ScalarQuadraticTerm(1, x, y) ||
+                        fxfy.quadratic_terms[1] == MOI.ScalarQuadraticTerm(1, y, x)
+                end
+                for fxfx in [1fx * fx, fx * 1fx]
+                    @test isempty(fxfx.affine_terms)
+                    @test length(fxfx.quadratic_terms) == 1
+                    @test fxfx.quadratic_terms[1] == MOI.ScalarQuadraticTerm(2, x, x)
+                end
+            end
+            @testset "operate!" begin
+                q = 1.0fx + 1.0fy + (1.0fx) * fz + (1.0fw) * fz
+                @test q ≈ 1.0fx + 1.0fy + (1.0fw) * fz + (1.0fx) * fz
+                # This calls
+                aff = 1.0fx + 1.0fy
+                # which tries to mutate `aff`, gets a quadratic expression
+                # and mutate it with the remaining term
+                @test MOIU.operate!(+, Float64, aff, (1.0fx) * fz, (1.0fw) * fz) ≈ q
+            end
             @test f ≈ 7 + (fx + 2fy) * (1fx + fy) + 3fx
             @test f ≈ -(-7 - 3fx) + (fx + 2fy) * (1fx + fy)
             @test f ≈ -((fx + 2fy) * (MOIU.operate(-, Int, fx) - fy)) + 3fx + 7
@@ -400,46 +428,46 @@ end
             @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
-                                            MOI.ScalarQuadraticTerm.([1], [x], [x]), 4) +
+                                            MOI.ScalarQuadraticTerm.([2], [x], [x]), 4) +
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                        MOI.ScalarQuadraticTerm.([2, 3], [y, x], [y, y]), 3)
+                                        MOI.ScalarQuadraticTerm.([4, 3], [y, x], [y, y]), 3)
             end
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction([MOI.ScalarAffineTerm(3, x)],
-                                            MOI.ScalarQuadraticTerm.([1], [x], [x]), 10) -
+                                            MOI.ScalarQuadraticTerm.([2], [x], [x]), 10) -
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                            MOI.ScalarQuadraticTerm.([-2, -3], [y, x], [y, y]), 3)
+                                            MOI.ScalarQuadraticTerm.([-4, -3], [y, x], [y, y]), 3)
             end
             @test f ≈ begin
                 MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) +
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2)
+                                            MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]), 2)
             end
             @test f ≈ begin
                 MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) -
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                            MOI.ScalarQuadraticTerm.([-1, -2, -3], [x, y, x], [x, y, y]), -2)
+                                            MOI.ScalarQuadraticTerm.([-2, -4, -3], [x, y, x], [x, y, y]), -2)
             end
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 2) +
+                                            MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]), 2) +
                 MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5)
             end
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Int}[],
-                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 12) -
+                                            MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]), 12) -
                 MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-3, x)], 5)
             end
             @test f ≈ begin
                 MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([2], [x]),
-                                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7) +
+                                            MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]), 7) +
                 MOI.SingleVariable(x)
             end
             @test f ≈ MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]),
-                                          MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 10) - 3
-            @test f ≈
-            2.0 * MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3.0], [x]),
-                                              MOI.ScalarQuadraticTerm.([1.0, 2.0, 3.0], [x, y, x], [x, y, y]), 7.0) / 2.0
+                                          MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]), 10) - 3
+            @test f ≈ 2.0 * MOI.ScalarQuadraticFunction(
+                MOI.ScalarAffineTerm.([3.0], [x]),
+                MOI.ScalarQuadraticTerm.([2.0, 4.0, 3.0], [x, y, x], [x, y, y]), 7.0) / 2.0
         end
         @testset "modification" begin
             f = MOIU.modify_function(f, MOI.ScalarConstantChange(9))
