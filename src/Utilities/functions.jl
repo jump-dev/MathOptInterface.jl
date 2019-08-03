@@ -1,5 +1,8 @@
 using Test
 
+variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.SingleVariable
+variable_function_type(::Type{<:MOI.AbstractVectorSet}) = MOI.VectorOfVariables
+
 """
     eval_variables(varval::Function, f::AbstractFunction)
 

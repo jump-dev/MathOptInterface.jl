@@ -155,3 +155,24 @@ function concrete_bridge_type(b::MOIB.AbstractBridgeOptimizer,
                               S::Type{<:MOI.AbstractSet})
     return concrete_bridge_type(MOIB.bridge_type(b, S), S)
 end
+
+"""
+   unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
+                 vi::MOI.VariableIndex)
+
+For a bridged variable in a scalar set, return a tuple of pairs mapping the
+variables created by the bridge to an affine expression in terms of the
+bridged variable `vi`.
+
+   unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
+                 vi::MOI.VariableIndex, i::IndexInVector)
+
+For a bridged variable in a vector set, return a tuple of pairs mapping the
+variables created by the bridge to an affine expression in terms of the bridged
+variable `vi` corresponding to the `i`th variable of the vector.
+
+If there is no way to recover the expression in terms of the bridged variable
+`vi`, return `nothing`. See [`ZerosBridge`](@ref) for an example of bridge
+returning `nothing`.
+"""
+function unbridged_map end
