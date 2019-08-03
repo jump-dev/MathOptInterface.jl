@@ -10,6 +10,9 @@ const CI = MOI.ConstraintIndex
 # Definition of a constraint bridge
 include("bridge.jl")
 
+# Mapping between constraint indices and bridges
+include("map.jl")
+
 # Bridge optimizer bridging a specific constraint bridge
 include("single_bridge_optimizer.jl")
 
