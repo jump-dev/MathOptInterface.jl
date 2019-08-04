@@ -86,8 +86,8 @@ function mapvariables(varmap, f::MOI.AbstractFunctionModification)
     return mapvariables(vi -> varmap[vi], f)
 end
 
-# For performance reason, we assume that the type of the function is unchanged
-# `substitute_variables`.
+# For performance reason, we assume that the type of the function does not
+# change in `substitute_variables`.
 """
     substitute_variables(variable_map::Function, x)
 
@@ -700,7 +700,8 @@ function operate! end
 Returns an `MOI.AbstractVectorFunction` where the function at `output_index`
 is the result of the operation `op` applied to the function at `output_index`
 of `func` and `args`. The functions at output index different to `output_index`
-are the same as the functions at the same output index in `func`.
+are the same as the functions at the same output index in `func`. The first
+argument can be modified.
 """
 function operate_output_index! end
 
