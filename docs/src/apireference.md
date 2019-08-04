@@ -681,6 +681,7 @@ Utilities.scalar_type
 Utilities.promote_operation
 Utilities.operate
 Utilities.operate!
+Utilities.operate_output_index!
 Utilities.vectorize
 ```
 
