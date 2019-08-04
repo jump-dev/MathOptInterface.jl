@@ -661,6 +661,7 @@ Utilities.mode
 The following utilities are available for functions:
 ```@docs
 Utilities.eval_variables
+Utilities.substitute_variables
 Utilities.remove_variable
 Utilities.all_coefficients
 Utilities.unsafe_add
@@ -681,6 +682,7 @@ Utilities.scalar_type
 Utilities.promote_operation
 Utilities.operate
 Utilities.operate!
+Utilities.operate_output_index!
 Utilities.vectorize
 ```
 

@@ -5,7 +5,9 @@
 """
     AbstractSet
 
-Abstract supertype for set objects used to encode constraints.
+Abstract supertype for set objects used to encode constraints. A set object
+should not contain any [`VariableIndex`](@ref) or [`ConstraintIndex`](@ref)
+as the set is passed unmodifed during [`copy_to`](@ref).
 """
 abstract type AbstractSet end
 
