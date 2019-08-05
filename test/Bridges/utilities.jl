@@ -9,8 +9,7 @@ function test_delete_bridge(
     m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int,
     nocs::Tuple; used_bridges = 1, num_bridged = 1) where {F, S}
     function num_bridges()
-        return count(bridge -> bridge !== nothing, m.bridges) +
-            length(m.single_variable_constraints)
+        return count(bridge -> true, values(MOIB.Constraint.bridges(m)))
     end
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
