@@ -8,8 +8,8 @@ even if they are supported by one of its bridges.
 
 !!! note
     Two bridge optimizers using variable bridges cannot be used together as both
-    of them assume that the underlying model only return variable indices with
-    nonnegative index.
+    of them assume that the underlying model only returns variable indices with
+    nonnegative values.
 """
 mutable struct SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: MOIB.AbstractBridgeOptimizer
     model::OT

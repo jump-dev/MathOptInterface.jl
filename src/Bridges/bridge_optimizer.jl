@@ -98,7 +98,7 @@ function bridge_type end
 
 Returns whether `ci` is the constraint of a bridged constrained variable. That
 is, if it was returned by `Variable.add_key_for_bridge` or
-`Variable.add_keys_for_bridge`. Note that it is note equivalent to
+`Variable.add_keys_for_bridge`. Note that it is not equivalent to
 `ci.value < 0` as, it can also simply be a constraint on a bridged variable.
 """
 is_variable_bridged(::AbstractBridgeOptimizer, ::MOI.ConstraintIndex) = false
@@ -232,7 +232,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
 end
 function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     if Constraint.has_bridges(Constraint.bridges(b))
-        # Delete all `MOI.SingleVariable` constraint of this variable
+        # Delete all `MOI.SingleVariable` constraints of this variable
         for ci in Constraint.variable_constraints(Constraint.bridges(b), vi)
             MOI.delete(b, ci)
         end
@@ -295,6 +295,12 @@ starts with `value = MOI.get(b.model, args...)`, otherwise, starts with
 * if `F`-in-`S` constraints may correspond to
     bridged constraints, modify it with `operate_constraint_bridges!`;
 then return the final `value`.
+
+For instance, [`MOI.supports`](@ref) calls this function with
+`init = () -> true`, `operate_variable_bridges(ok) =
+ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S))` and
+`operate_constraint_bridges(ok) = ok &&
+MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S))`.
 """
 function reduce_bridged(
     b::AbstractBridgeOptimizer,
@@ -402,7 +408,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
         set_of_types = Constraint.list_of_key_types(Constraint.bridges(b))
         union!(set_of_types, Variable.list_of_constraint_types(Variable.bridges(b)))
         # There may be types already in `list_of_types` of a supported constraint
-        # was force-bridged because a variable in the `SingleVariable` or
+        # that was force-bridged because a variable in the `SingleVariable` or
         # `VectorOfVariables` function was bridged even though the constraint type
         # is supported by `b.model`. As `set_of_types` is a set, these duplicates
         # are merge automatically.
