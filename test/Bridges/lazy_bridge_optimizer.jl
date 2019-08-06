@@ -78,7 +78,8 @@ function MOI.supports_constraint(
 end
 
 struct BridgeAddingNoConstraint{T} <: MOI.Bridges.Constraint.AbstractBridge end
-MOIB.added_constraint_types(::Type{BridgeAddingNoConstraint{T}}) where {T} = []
+MOIB.added_constrained_variable_types(::Type{<:BridgeAddingNoConstraint}) = Tuple{DataType}[]
+MOIB.added_constraint_types(::Type{<:BridgeAddingNoConstraint}) = Tuple{DataType, DataType}[]
 function MOI.supports_constraint(::Type{<:BridgeAddingNoConstraint},
                                  ::Type{MOI.SingleVariable},
                                  ::Type{MOI.Integer})
@@ -175,8 +176,8 @@ end
     @test MOIB.bridge_type(bridged_mock, MOI.VectorOfVariables,
                 MOI.RotatedSecondOrderCone) == MOIB.Constraint.RSOCtoPSDBridge{Float64, MOI.VectorOfVariables}
     @test MOIB.bridge(bridged_mock, c) isa MOIB.Constraint.RSOCtoPSDBridge
-    @test bridged_mock.dist[(MOI.VectorOfVariables,
-                            MOI.RotatedSecondOrderCone)] == 1
+    @test bridged_mock.constraint_dist[(MOI.VectorOfVariables,
+                                        MOI.RotatedSecondOrderCone)] == 1
 end
 
 @testset "Supports" begin

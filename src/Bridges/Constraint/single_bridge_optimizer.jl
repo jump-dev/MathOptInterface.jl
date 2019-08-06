@@ -8,30 +8,37 @@ even if they are supported by one of its bridges.
 """
 mutable struct SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: MOIB.AbstractBridgeOptimizer
     model::OT
-    con_to_name::Dict{CI, String}
+    map::Map # index of bridged constraint -> constraint bridge
+    con_to_name::Dict{MOI.ConstraintIndex, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
-    # Constraint Index of bridged constraint -> Bridge.
-    # It is set to `nothing` when the constraint is deleted.
-    bridges::Vector{Union{Nothing, AbstractBridge}}
-    # Constraint Index of bridged constraint -> Constraint type.
-    constraint_types::Vector{Tuple{DataType, DataType}}
-    # For `SingleVariable` constraints: (variable, set type) -> bridge
-    single_variable_constraints::Dict{Tuple{Int64, DataType}, AbstractBridge}
 end
 function SingleBridgeOptimizer{BT}(model::OT) where {BT, OT <: MOI.ModelLike}
     SingleBridgeOptimizer{BT, OT}(
-        model, Dict{CI, String}(), nothing,
-        Union{Nothing, AbstractBridge}[], Tuple{DataType, DataType}[],
-        Dict{Tuple{Int64, DataType}, AbstractBridge}())
+        model, Map(), Dict{MOI.ConstraintIndex, String}(), nothing)
 end
 
-function MOIB.supports_bridging_constraint(b::SingleBridgeOptimizer{BT},
-                                      F::Type{<:MOI.AbstractFunction},
-                                      S::Type{<:MOI.AbstractSet}) where BT
+function bridges(bridge::MOI.Bridges.AbstractBridgeOptimizer)
+    return EmptyMap()
+end
+function bridges(bridge::SingleBridgeOptimizer)
+    return bridge.map
+end
+
+MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = true
+function MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{<:MOI.AbstractSet})
+    return false
+end
+function MOIB.supports_bridging_constraint(
+    ::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet}) where BT
     return MOI.supports_constraint(BT, F, S)
 end
 function MOIB.is_bridged(b::SingleBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
                     S::Type{<:MOI.AbstractSet})
     return MOIB.supports_bridging_constraint(b, F, S)
 end
-MOIB.bridge_type(b::SingleBridgeOptimizer{BT}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) where BT = BT
+function MOIB.bridge_type(::SingleBridgeOptimizer{BT},
+                          ::Type{<:MOI.AbstractFunction},
+                          ::Type{<:MOI.AbstractSet}) where BT
+    return BT
+end
