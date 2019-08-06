@@ -10,12 +10,6 @@ end
 struct MockConstraintAttribute <: MOI.AbstractConstraintAttribute
 end
 
-# Default values of AbstractOptimizerAttribute
-DefaultAbstractOptimizerAttribute = Dict{MOI.AbstractOptimizerAttribute, Any}(
-    MOI.Silent() => false,
-    MOI.TimeLimitSec() => nothing
-)
-
 # A mock optimizer used for testing.
 mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     inner_model::MT
@@ -67,7 +61,7 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                        eval_objective_value=true,
                        eval_dual_objective_value=true,
                        eval_variable_constraint_dual=true)
-    mock = MockOptimizer(inner_model,
+    return MockOptimizer(inner_model,
                          0,
                          Dict{MOI.VariableIndex,Int}(),
                          Dict{MOI.ConstraintIndex,Int}(),
@@ -94,10 +88,6 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                          Dict{MOI.ConstraintIndex,MOI.BasisStatusCode}(),
                          Dict{MOI.AbstractOptimizerAttribute, Any}(),
                          Dict{MOI.AbstractModelAttribute, Any}())
-    for (attr, value) in DefaultAbstractOptimizerAttribute
-        MOI.set(mock, attr, value)
-    end
-    return mock
 end
 
 function MOI.add_variable(mock::MockOptimizer)
@@ -173,10 +163,10 @@ function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
 end
 function MOI.set(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute,
                  value)
-    try
-        MOI.set(mock.inner_model, attr, value)
-    catch
+    if MOI.is_set_by_optimize(attr)
         mock.optimizer_attributes[attr] = value
+    else
+        MOI.set(mock.inner_model, attr, value)
     end
 end
 function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
@@ -205,12 +195,11 @@ MOI.set(mock::MockOptimizer, ::MOI.ConstraintDual, idx::MOI.ConstraintIndex, val
 MOI.set(mock::MockOptimizer, ::MOI.ConstraintBasisStatus, idx::MOI.ConstraintIndex, value) = (mock.con_basis[xor_index(idx)] = value)
 
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
-    try
-        return MOI.get(mock.inner_model, attr)
-    catch
+    if MOI.is_set_by_optimize(attr)
         return mock.optimizer_attributes[attr]
+    else
+        return MOI.get(mock.inner_model, attr)
     end
-
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
     if MOI.is_set_by_optimize(attr)
@@ -364,9 +353,6 @@ function MOI.empty!(mock::MockOptimizer)
     empty!(mock.condual)
     empty!(mock.con_basis)
     empty!(mock.optimizer_attributes)
-    for (attr, value) in DefaultAbstractOptimizerAttribute
-        MOI.set(mock, attr, value)
-    end
     empty!(mock.model_attributes)
     return
 end
@@ -382,9 +368,7 @@ function MOI.is_empty(mock::MockOptimizer)
         isnan(mock.dual_objective_value) &&
         mock.primalstatus == MOI.NO_SOLUTION &&
         mock.dualstatus == MOI.NO_SOLUTION &&
-        isempty(mock.con_basis) &&
-        (isempty(mock.optimizer_attributes) ||
-        mock.optimizer_attributes == DefaultAbstractOptimizerAttribute) &&
+        isempty(mock.con_basis) && isempty(mock.optimizer_attributes) &&
         isempty(mock.model_attributes)
 end
 
