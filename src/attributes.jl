@@ -420,7 +420,7 @@ An optimizer attribute for the string identifying the solver/optimizer.
 struct SolverName <: AbstractOptimizerAttribute end
 
 """
-    Silent
+    Silent()
 
 An optimizer attribute for silencing the output of an optimizer. When `set`
 to `true`, it takes precedence over any other attribute controlling verbosity
@@ -439,6 +439,15 @@ value given by the user for this solver-specific parameter or `1` if none is
 given.
 """
 struct Silent <: AbstractOptimizerAttribute end
+
+"""
+    TimeLimitSec()
+
+An optimizer attribute for setting a time limit for an optimization. When `set`
+to `nothing`, it deactivates the solver time limit. The default value is
+`nothing`. The time limit is in seconds.
+""" # TODO add a test checking if the solver returns TIME_LIMIT status when the time limit is hit
+struct TimeLimitSec <: AbstractOptimizerAttribute end
 
 """
     RawParameter(name)
