@@ -35,6 +35,8 @@ const BasicConstraintTests = Dict(
     (MOI.VectorOfVariables, MOI.Nonnegatives)  => ( dummy_vectorofvariables, 2, MOI.Nonnegatives(2) ),
 
     (MOI.VectorOfVariables, MOI.SecondOrderCone)        => ( dummy_vectorofvariables, 3, MOI.SecondOrderCone(3) ),
+    (MOI.VectorOfVariables, MOI.NormInfinityCone)       => ( dummy_vectorofvariables, 3, MOI.NormInfinityCone(3) ),
+    (MOI.VectorOfVariables, MOI.NormOneCone)            => ( dummy_vectorofvariables, 3, MOI.NormOneCone(3) ),
     (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) => ( dummy_vectorofvariables, 3, MOI.RotatedSecondOrderCone(3) ),
     (MOI.VectorOfVariables, MOI.GeometricMeanCone)      => ( dummy_vectorofvariables, 3, MOI.GeometricMeanCone(3) ),
     (MOI.VectorOfVariables, MOI.ExponentialCone)        => ( dummy_vectorofvariables, 3, MOI.ExponentialCone() ),

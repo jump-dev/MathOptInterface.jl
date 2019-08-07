@@ -35,7 +35,7 @@ function dimension end
 """
     dual_set(s::AbstractSet)
 
-Return the dual set of `s`, that is the dual cone of the set. This follows the 
+Return the dual set of `s`, that is the dual cone of the set. This follows the
 definition of duality discussed in [Duals](@ref).
 See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more information.
 If the dual cone is not defined it returns an error.
@@ -183,6 +183,28 @@ Returns the constant of the set.
 constant(s::EqualTo) = s.value
 constant(s::GreaterThan) = s.lower
 constant(s::LessThan) = s.upper
+
+"""
+    NormInfinityCone(dimension)
+
+The epigraph of the L∞ norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_∞ = \\max_i |x_i| \\}`` of dimension `dimension`.
+"""
+struct NormInfinityCone <: AbstractVectorSet
+    dimension::Int
+end
+
+dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
+
+"""
+    NormOneCone(dimension)
+
+The epigraph of the L1 norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_1 = \\sum_i |x_i| \\}`` of dimension `dimension`.
+"""
+struct NormOneCone <: AbstractVectorSet
+    dimension::Int
+end
+
+dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
 
 """
     SecondOrderCone(dimension)
@@ -636,6 +658,7 @@ end
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               GreaterThan, LessThan, EqualTo, Interval,
+                              NormInfinityCone, NormOneCone,
                               SecondOrderCone, RotatedSecondOrderCone,
                               GeometricMeanCone, ExponentialCone,
                               DualExponentialCone, PowerCone, DualPowerCone,
