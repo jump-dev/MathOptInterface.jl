@@ -400,7 +400,7 @@ function norminf2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
-    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormInfCone)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -409,11 +409,11 @@ function norminf2test(model::MOI.ModelLike, config::TestConfig)
 
     MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [-2.0]), MOI.Nonnegatives(1))
     MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Nonpositives(1))
-    MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2], MOI.ScalarAffineTerm.(1.0, [x,y])), zeros(2)), MOI.NormInfCone(2))
+    MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2], MOI.ScalarAffineTerm.(1.0, [x,y])), zeros(2)), MOI.NormInfinityCone(2))
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
-    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.NormInfCone}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.NormInfinityCone}()) == 1
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
