@@ -17,5 +17,7 @@ include("single_bridge_optimizer.jl")
 # Variable bridges
 include("zeros.jl")
 const Zeros{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZerosBridge{T}, OT}
+include("flip_sign.jl")
+const NonposToNonneg{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NonposToNonnegBridge{T}, OT}
 
 end
