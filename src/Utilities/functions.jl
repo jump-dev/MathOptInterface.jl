@@ -106,12 +106,10 @@ or submittable value.
 """
 function substitute_variables end
 
-function substitute_variables(
-    ::Function, x::Union{Number, Enum, AbstractArray{<:Union{Number, Enum}}})
-    return x
-end
+const ObjectWithoutIndex = Union{Number, Enum, MOI.AnyAttribute, MOI.AbstractSet}
+const ObjectOrArrayWithoutIndex = Union{ObjectWithoutIndex, AbstractArray{<:ObjectWithoutIndex}}
 
-substitute_variables(::Function, set::MOI.AbstractSet) = set
+substitute_variables(::Function, x::ObjectOrArrayWithoutIndex) = x
 
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T

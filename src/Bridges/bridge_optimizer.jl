@@ -931,6 +931,12 @@ function bridged_function(b::AbstractBridgeOptimizer,
     end
     return func
 end
+# Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
+function bridge_function(
+    ::AbstractBridgeOptimizer, value::MOIU.ObjectOrArrayWithoutIndex)
+    return value
+end
+
 
 """
     unbridged_variable_function(b::AbstractBridgeOptimizer,
@@ -974,6 +980,11 @@ end
 function unbridged_function(bridge::AbstractBridgeOptimizer,
                             func::Union{MOI.SingleVariable, MOI.VectorOfVariables})
     return func # bridged variables are not allowed in non-bridged constraints
+end
+# Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
+function unbridged_function(
+    ::AbstractBridgeOptimizer, value::MOIU.ObjectOrArrayWithoutIndex)
+    return value
 end
 
 """

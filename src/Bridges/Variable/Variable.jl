@@ -14,4 +14,8 @@ include("map.jl")
 # Bridge optimizer bridging a specific variable bridge
 include("single_bridge_optimizer.jl")
 
+# Variable bridges
+include("zeros.jl")
+const Zeros{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZerosBridge{T}, OT}
+
 end

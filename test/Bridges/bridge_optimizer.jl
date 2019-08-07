@@ -83,16 +83,16 @@ end
     c1 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
 
     @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
-    test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
-    test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+    test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
+    test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
 
     f2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, -1], [x, y]), 2)
     c2 = MOI.add_constraint(model, f1, MOI.GreaterThan(-2))
 
     @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
-    test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
-    test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+    test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
+    test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
 
@@ -100,8 +100,8 @@ end
     MOI.delete(model, c2)
 
     @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
-    test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
-    test_noc(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+    test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
+    test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
 end
 
