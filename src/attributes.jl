@@ -34,6 +34,8 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 """
 abstract type AbstractConstraintAttribute end
 
+# Attributes should not contain any `VariableIndex` or `ConstraintIndex` as the
+# set is passed unmodifed during `copy_to`.
 const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 # This allows to use attributes in broadcast calls without the need to
