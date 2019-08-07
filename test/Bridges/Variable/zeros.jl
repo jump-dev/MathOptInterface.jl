@@ -14,16 +14,44 @@ config = MOIT.TestConfig()
 bridged_mock = MOIB.Variable.Zeros{Float64}(mock)
 
 x, cx = MOI.add_constrained_variable(bridged_mock, MOI.GreaterThan(0.0))
+MOI.set(bridged_mock, MOI.VariableName(), x, "x")
+MOI.set(bridged_mock, MOI.ConstraintName(), cx, "cx")
 yz, cyz = MOI.add_constrained_variables(bridged_mock, MOI.Zeros(2))
+MOI.set(bridged_mock, MOI.VariableName(), yz, ["y", "z"])
+MOI.set(bridged_mock, MOI.ConstraintName(), cyz, "cyz")
 y, z = yz
 fx = MOI.SingleVariable(x)
 fy = MOI.SingleVariable(y)
 fz = MOI.SingleVariable(z)
+
+@testset "SingleVariable objective" begin
+    err = ErrorException("Using bridged variable in `SingleVariable` function.")
+    @test_throws err MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fy)}(), fy)
+    MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    @test MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}()) == fx
+end
+
+# Test before adding affine constraints are affine expressions cannot be
+# unbridged when `Variable.ZerosBridge` is used.
+@testset "Test bridged model" begin
+    s = """
+    variables: x, y, z
+    cx: x >= 0.0
+    cyz: [y, z] in MathOptInterface.Zeros(2)
+    minobjective: x
+    """
+    model = MOIU.Model{Float64}()
+    MOIU.loadfromstring!(model, s)
+    MOIU.test_models_equal(bridged_mock, model, ["x", "y", "z"], ["cx", "cyz"])
+end
+
 c1, c2 = MOI.add_constraints(
     bridged_mock, [1.0fy + 1.0fz, 1.0fx + 1.0fy + 1.0fz],
     [MOI.EqualTo(0.0), MOI.GreaterThan(1.0)]
 )
-#c2 = MOI.add_constraint(bridged_mock, , )
+MOI.set(bridged_mock, MOI.ConstraintName(), c1, "con1")
+MOI.set(bridged_mock, MOI.ConstraintName(), c2, "con2")
 MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 obj = 1.0fx - 1.0fy - 1.0fz
 MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}(), obj)
@@ -104,11 +132,17 @@ end
     @test MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.Zeros}()) == [cyz]
 end
 
-@testset "SingleVariable objective" begin
-    err = ErrorException("Using bridged variable in `SingleVariable` function.")
-    @test_throws err MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fy)}(), fy)
-    MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-    @test MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}()) == fx
+@testset "Test mock model" begin
+    s = """
+    variables: x
+    cx: x >= 0.0
+    con1: x + 0.0 == 0.0
+    con2: x + 0.0 >= 1.0
+    minobjective: x
+    """
+    model = MOIU.Model{Float64}()
+    MOIU.loadfromstring!(model, s)
+    MOIU.test_models_equal(mock, model, ["x"], ["cx", "con1", "con2"])
 end
 
 @testset "Delete" begin

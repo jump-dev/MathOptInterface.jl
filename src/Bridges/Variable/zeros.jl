@@ -7,7 +7,7 @@ The bridged variables are therefore similar to parameters with zero values.
 Parameters with non-zero value can be created with constrained variables in
 [`MOI.EqualTo`](@ref) by combining a [`VectorizeBridge`](@ref) and this bridge.
 The functions cannot be unbridged, given a function, we cannot determine, if
-the bridged variables were use.
+the bridged variables were used.
 The dual values cannot be determined by the bridge but they can be determined
 by the bridged optimizer using [`MathOptInterface.Utilities.get_fallback`](@ref)
 if a `CachingOptimizer` is used (since `ConstraintFunction` cannot be got
@@ -43,6 +43,11 @@ end
 function MOI.delete(::MOI.ModelLike, ::ZerosBridge) end
 
 # Attributes, Bridge acting as a constraint
+
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet,
+                 bridge::ZerosBridge)
+    return MOI.Zeros(bridge.n)
+end
 
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintPrimal,
                  bridge::ZerosBridge{T}) where T

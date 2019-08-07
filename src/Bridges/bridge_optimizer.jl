@@ -933,8 +933,7 @@ function bridged_function(b::AbstractBridgeOptimizer,
 end
 # Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
 function bridge_function(
-    ::AbstractBridgeOptimizer,
-    value::Union{Number, Enum, AbstractArray{<:Union{Number, Enum}}})
+    ::AbstractBridgeOptimizer, value::MOIU.ObjectOrArrayWithoutIndex)
     return value
 end
 
@@ -984,8 +983,7 @@ function unbridged_function(bridge::AbstractBridgeOptimizer,
 end
 # Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
 function unbridged_function(
-    ::AbstractBridgeOptimizer,
-    value::Union{Number, Enum, AbstractArray{<:Union{Number, Enum}}})
+    ::AbstractBridgeOptimizer, value::MOIU.ObjectOrArrayWithoutIndex)
     return value
 end
 
