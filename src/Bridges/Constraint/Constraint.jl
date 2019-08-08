@@ -40,6 +40,7 @@ include("quad_to_soc.jl")
 const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}, OT}
 include("norm_to_lp.jl")
 const NormOne{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T}, OT}
+const NormInfinity{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormInfinityBridge{T}, OT}
 include("geomean.jl")
 const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
 include("square.jl")
