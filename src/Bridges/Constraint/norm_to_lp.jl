@@ -6,21 +6,26 @@ The `NormInfinityCone` is representable with LP constraints, since ``t \\ge \\ma
 struct NormInfinityBridge{T} <: AbstractBridge
     ge_index::CI{MOI.VectorAffineFunction{T}, MOI.Nonnegatives}
 end
-function bridge_constraint(::Type{NormInfinityBridge{T}}, model, f::MOI.VectorOfVariables, s::MOI.NormInfinityCone) where T
-    return bridge_constraint(NormInfinityBridge{T}, model, MOI.VectorAffineFunction{T}(f), s)
-end
-function bridge_constraint(::Type{NormInfinityBridge{T}}, model, f::MOI.VectorAffineFunction{T}, s::MOI.NormInfinityCone) where T
+function bridge_constraint(::Type{NormInfinityBridge{T}}, model, f::MOI.AbstractVectorFunction, s::MOI.NormInfinityCone) where T
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]
+    if t isa MOI.SingleVariable # TODO currently needed for operate_output_index!
+        t = MOI.ScalarAffineFunction{T}(t)
+    end
     d = MOI.dimension(s)
-    new_f = MOIU.vectorize(vcat([MOIU.operate(-, T, t, f_scalars[i]) for i in 2:d], [MOIU.operate(+, T, t, f_scalars[i]) for i in 2:d]))
-    ge_index = MOI.add_constraint(model, new_f, MOI.Nonnegatives(2d - 2))
+    lb = f_scalars[2:d]
+    ub = MOIU.operate(-, T, lb)
+    f_new = MOIU.operate(vcat, T, ub, lb)
+    for i in 1:MOI.output_dimension(f_new)
+        MOIU.operate_output_index!(+, T, i, f_new, t)
+    end
+    ge_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(MOI.output_dimension(f_new)))
     return NormInfinityBridge(ge_index)
 end
 
-MOI.supports_constraint(::Type{NormInfinityBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.NormInfinityCone}) where T = true
+MOI.supports_constraint(::Type{NormInfinityBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormInfinityCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormInfinityBridge}) = Tuple{DataType}[]
-MOIB.added_constraint_types(::Type{NormInfinityBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.NormInfinityCone}) where T = [(MOI.VectorAffineFunction{T}, MOI.Nonnegatives),]
+MOIB.added_constraint_types(::Type{NormInfinityBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormInfinityCone}) where T = [(MOI.VectorAffineFunction{T}, MOI.Nonnegatives),]
 
 # Attributes, Bridge acting as a model
 MOI.get(b::NormInfinityBridge{T}, ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T}, MOI.Nonnegatives}) where T = 1
@@ -50,21 +55,26 @@ struct NormOneBridge{T} <: AbstractBridge
     eq_index::CI{MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}}
     ge_index::CI{MOI.VectorAffineFunction{T}, MOI.Nonnegatives}
 end
-function bridge_constraint(::Type{NormOneBridge{T}}, model, f::MOI.VectorOfVariables, s::MOI.NormOneCone) where T
-    return bridge_constraint(NormOneBridge{T}, model, MOI.VectorAffineFunction{T}(f), s)
-end
-function bridge_constraint(::Type{NormOneBridge{T}}, model, f::MOI.VectorAffineFunction{T}, s::MOI.NormOneCone) where T
+function bridge_constraint(::Type{NormOneBridge{T}}, model, f::MOI.AbstractVectorFunction, s::MOI.NormOneCone) where T
+    if f isa MOI.VectorOfVariables # TODO currently needed for test to pass
+        f = MOI.VectorAffineFunction{T}(f)
+    end
     f_scalars = MOIU.eachscalar(f)
-    y = MOI.add_variables(model, MOI.dimension(s) - 1)
+    d = MOI.dimension(s)
+    y = MOI.add_variables(model, d - 1)
     eq_index = MOI.add_constraint(model, MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y)), MOI.EqualTo(zero(T)))
-    new_f = MOIU.vectorize(vcat([MOIU.operate(-, T, MOI.SingleVariable(y[i]), f_scalars[1 + i]) for i in eachindex(y)], [MOIU.operate(+, T, MOI.SingleVariable(y[i]), f_scalars[1 + i]) for i in eachindex(y)]))
-    ge_index = MOI.add_constraint(model, new_f, MOI.Nonnegatives(2 * MOI.dimension(s) - 2))
+    lb = f_scalars[2:d]
+    ub = MOIU.operate(-, T, lb)
+    MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
+    MOIU.operate!(+, T, ub, MOI.VectorOfVariables(y))
+    f_new = MOIU.operate(vcat, T, ub, lb)
+    ge_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(2d - 2))
     return NormOneBridge(y, eq_index, ge_index)
 end
 
-MOI.supports_constraint(::Type{NormOneBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.NormOneCone}) where T = true
+MOI.supports_constraint(::Type{NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormOneBridge}) = Tuple{DataType}[]
-MOIB.added_constraint_types(::Type{NormOneBridge{T}}, ::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}}, ::Type{MOI.NormOneCone}) where T = [(MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}), (MOI.VectorAffineFunction{T}, MOI.Nonnegatives)]
+MOIB.added_constraint_types(::Type{NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = [(MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}), (MOI.VectorAffineFunction{T}, MOI.Nonnegatives)]
 
 # Attributes, Bridge acting as a model
 MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables) = length(b.y)
