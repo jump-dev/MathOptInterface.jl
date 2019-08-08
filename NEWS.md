@@ -4,7 +4,7 @@ MathOptInterface (MOI) release notes
 v0.9.0 (May 2?, 2019)
 ---------------------
 
-- L_1 and L_∞ norm epigraph cones were added (#818).
+- L_1 and L_∞ norm epigraph cones and corresponding bridges to LP were added (#818).
 - Support for Julia v0.6 and v0.7 was dropped (#714, #717).
 - A `MOI.Utilities.Model` implementation of `ModelLike`, this should replace
   most use cases of `MOI.Utilities.@model` (#781).
