@@ -99,11 +99,16 @@ end
 
 # Attributes, Bridge acting as a constraint
 
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet,
+                 bridge::RSOCtoPSDBridge{T}) where T
+    return MOI.RotatedSecondOrderCone(length(bridge.diag) + 3)
+end
+
 function trimap(i::Integer, j::Integer)
     if i < j
-        trimap(j, i)
+        return trimap(j, i)
     else
-        div((i-1)*i, 2) + j
+        return div((i-1) * i, 2) + j
     end
 end
 function _variable_map(i::IndexInVector)
@@ -122,7 +127,7 @@ end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::RSOCtoPSDBridge{T}) where T
     values = MOI.get(model, attr, bridge.psd)
-    n = length(bridge.diag) + 3
+    n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
     mapped = [values[_variable_map(IndexInVector(i))] for i in 1:n]
     mapped[2] /= 2
     return mapped
@@ -130,7 +135,7 @@ end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
                  bridge::RSOCtoPSDBridge{T}) where T
     dual = MOI.get(model, attr, bridge.psd)
-    n = length(bridge.diag) + 3
+    n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
     mapped = [dual[_variable_map(IndexInVector(i))] for i in 1:n]
     for ci in bridge.diag
         mapped[2] += MOI.get(model, attr, ci)
