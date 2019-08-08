@@ -9,7 +9,7 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-config = MOIT.TestConfig()
+config = MOIT.TestConfig(duals = false)
 
 @testset "NormInfinity" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.5, 1.0])
@@ -28,5 +28,5 @@ end
     MOIT.normone1ftest(bridged_mock, config)
     # Dual is not yet implemented for NormOne bridge
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormOneCone}()))
-    test_delete_bridge(bridged_mock, ci, 3, ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 2), (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
+    test_delete_bridge(bridged_mock, ci, 3, ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0), (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
 end

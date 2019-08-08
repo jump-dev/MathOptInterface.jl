@@ -12,9 +12,9 @@ end
 function bridge_constraint(::Type{NormInfinityBridge{T}}, model, f::MOI.VectorAffineFunction{T}, s::MOI.NormInfinityCone) where T
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]
-    x = f_scalars[2:end]
-    d = MOI.dimension(s) - 1
-    ge_index = MOI.add_constraint(model, MOIU.operate(vcat, T, t - x, t + x), MOI.Nonnegatives(2d)) # TODO fix
+    d = MOI.dimension(s)
+    new_f = MOIU.vectorize(vcat([MOIU.operate(-, T, t, f_scalars[i]) for i in 2:d], [MOIU.operate(+, T, t, f_scalars[i]) for i in 2:d]))
+    ge_index = MOI.add_constraint(model, new_f, MOI.Nonnegatives(2d - 2))
     return NormInfinityBridge(ge_index)
 end
 
@@ -55,12 +55,10 @@ function bridge_constraint(::Type{NormOneBridge{T}}, model, f::MOI.VectorOfVaria
 end
 function bridge_constraint(::Type{NormOneBridge{T}}, model, f::MOI.VectorAffineFunction{T}, s::MOI.NormOneCone) where T
     f_scalars = MOIU.eachscalar(f)
-    t = f_scalars[1]
-    x = f_scalars[2:end]
-    d = MOI.dimension(s) - 1
-    y = MOI.add_variables(model, d)
-    eq_index = MOI.add_constraint(model, t - sum(y), MOI.EqualTo(zero(T))) # TODO fix
-    ge_index = MOI.add_constraint(model, MOIU.operate(vcat, T, y - x, y + x), MOI.Nonnegatives(2d)) # TODO fix
+    y = MOI.add_variables(model, MOI.dimension(s) - 1)
+    eq_index = MOI.add_constraint(model, MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y)), MOI.EqualTo(zero(T)))
+    new_f = MOIU.vectorize(vcat([MOIU.operate(-, T, MOI.SingleVariable(y[i]), f_scalars[1 + i]) for i in eachindex(y)], [MOIU.operate(+, T, MOI.SingleVariable(y[i]), f_scalars[1 + i]) for i in eachindex(y)]))
+    ge_index = MOI.add_constraint(model, new_f, MOI.Nonnegatives(2 * MOI.dimension(s) - 2))
     return NormOneBridge(y, eq_index, ge_index)
 end
 
