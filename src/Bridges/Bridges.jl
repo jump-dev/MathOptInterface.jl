@@ -36,6 +36,7 @@ function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
     add_bridge(bridged_model, Constraint.VectorFunctionizeBridge{T})
     add_bridge(bridged_model, Constraint.SplitIntervalBridge{T})
     add_bridge(bridged_model, Constraint.QuadtoSOCBridge{T})
+    add_bridge(bridged_model, Constraint.NormOneBridge{T})
     add_bridge(bridged_model, Constraint.GeoMeanBridge{T})
     add_bridge(bridged_model, Constraint.SquareBridge{T})
     add_bridge(bridged_model, Constraint.LogDetBridge{T})
