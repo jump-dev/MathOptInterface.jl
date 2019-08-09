@@ -999,13 +999,11 @@ scalar.
 function unbridged_constraint_function end
 
 function unbridged_constraint_function(
-    b::AbstractBridgeOptimizer,
-    func::Union{MOI.AbstractVectorSet, MOI.SingleVariable}
-)
+    b::AbstractBridgeOptimizer, func::MOI.AbstractVectorFunction)
     return unbridged_function(b, func)
 end
-function unbridged_constraint_function(b::AbstractBridgeOptimizer,
-                                       func::MOI.AbstractScalarFunction)
+function unbridged_constraint_function(
+    b::AbstractBridgeOptimizer, func::MOI.AbstractScalarFunction)
     if !Variable.has_bridges(Variable.bridges(b))
         return func
     end
@@ -1017,8 +1015,8 @@ function unbridged_constraint_function(b::AbstractBridgeOptimizer,
     return f
 end
 function unbridged_constraint_function(
-    ::AbstractBridgeOptimizer, func::MOI.AbstractVectorFunction)
-    return func
+    ::AbstractBridgeOptimizer, func::MOI.SingleVariable)
+    return unbridged_function(b, func)
 end
 
 

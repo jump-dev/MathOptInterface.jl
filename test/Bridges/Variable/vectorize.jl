@@ -25,6 +25,36 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
     c = MOI.add_constraint(bridged_mock, func, set)
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), c) ≈ func
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), c) == set
+    MOI.set(bridged_mock, MOI.ConstraintName(), c, "c")
+
+    @testset "Mock model" begin
+        MOI.set(mock, MOI.VariableName(),
+                MOI.get(mock, MOI.ListOfVariableIndices()), ["y"])
+        MOI.set(mock, MOI.ConstraintName(),
+                MOI.get(mock, MOI.ListOfConstraintIndices{
+                    MOI.VectorOfVariables, MOI.Nonnegatives}()),
+                ["cy"])
+        s = """
+        variables: y
+        cy: [y] in MathOptInterface.Nonnegatives(1)
+        c: 2.0y >= 3.0
+        """
+        model = MOIU.Model{Float64}()
+        MOIU.loadfromstring!(model, s)
+        MOIU.test_models_equal(mock, model, ["y"], ["cy", "c"])
+    end
+    @testset "Bridged model" begin
+        MOI.set(bridged_mock, MOI.VariableName(), x, "x")
+        MOI.set(bridged_mock, MOI.ConstraintName(), cx, "cx")
+        s = """
+        variables: x
+        cx: x >= 1.0
+        c: 2.0x >= 5.0
+        """
+        model = MOIU.Model{Float64}()
+        MOIU.loadfromstring!(model, s)
+        MOIU.test_models_equal(bridged_mock, model, ["x"], ["cx", "c"])
+    end
 end
 
 @testset "exp3 with add_constrained_variable for `y`" begin
@@ -98,6 +128,40 @@ end
             " contains variables bridged into a function with nonzero constant."
         err = MOI.ModifyObjectiveNotAllowed(change, message)
         @test_throws err MOI.modify(bridged_mock, attr, change)
+    end
+
+    MOI.set(bridged_mock, MOI.VariableName(), x, "x")
+    MOI.set(bridged_mock, MOI.ConstraintName(), xc, "xc")
+    MOI.set(bridged_mock, MOI.ConstraintName(), ec, "ec")
+    @testset "Mock model" begin
+        MOI.set(mock, MOI.VariableName(),
+                MOI.get(mock, MOI.ListOfVariableIndices())[2], "z")
+        MOI.set(mock, MOI.ConstraintName(),
+                MOI.get(mock, MOI.ListOfConstraintIndices{
+                    MOI.VectorOfVariables, MOI.Nonpositives}()),
+                ["zc"])
+        s = """
+        variables: x, z
+        zc: [z] in MathOptInterface.Nonpositives(1)
+        xc: 2.0x <= 4.0
+        ec: [x, 1.0, z + 5.0] in MathOptInterface.ExponentialCone()
+        """
+        model = MOIU.Model{Float64}()
+        MOIU.loadfromstring!(model, s)
+        MOIU.test_models_equal(mock, model, ["x", "z"], ["zc", "xc", "ec"])
+    end
+    @testset "Bridged model" begin
+        MOI.set(bridged_mock, MOI.VariableName(), y, "y")
+        MOI.set(bridged_mock, MOI.ConstraintName(), yc, "yc")
+        s = """
+        variables: x, y
+        yc: y <= 5.0
+        xc: 2.0x <= 4.0
+        ec: [x, 1.0, y] in MathOptInterface.ExponentialCone()
+        """
+        model = MOIU.Model{Float64}()
+        MOIU.loadfromstring!(model, s)
+        MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["yc", "xc", "ec"])
     end
 
     test_delete_bridged_variable(bridged_mock, y, MOI.LessThan{Float64}, 2, (
