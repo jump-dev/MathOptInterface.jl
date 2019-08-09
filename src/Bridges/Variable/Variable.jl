@@ -26,4 +26,19 @@ const Vectorize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorizeBridge{T}
 include("rsoc_to_psd.jl")
 const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}, OT}
 
+"""
+    add_all_bridges(bridged_model, T::Type)
+
+Add all bridges defined in the `Bridges.Variable` submodule to `bridged_model`.
+The coefficient type used is `T`.
+"""
+function add_all_bridges(bridged_model, T::Type)
+    MOIB.add_bridge(bridged_model, ZerosBridge{T})
+    MOIB.add_bridge(bridged_model, FreeBridge{T})
+    MOIB.add_bridge(bridged_model, NonposToNonnegBridge{T})
+    MOIB.add_bridge(bridged_model, VectorizeBridge{T})
+    MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
+    return
+end
+
 end
