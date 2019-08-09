@@ -78,7 +78,7 @@ config = MOIT.TestConfig()
 
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
         for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
-            @test MOIB.added_constraint_types(MOIB.Constraint.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
+            @test MOIB.added_constraint_types(MOIB.Constraint.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T})]
         end
     end
 end
@@ -146,7 +146,7 @@ end
 
     for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
         for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
-            @test MOIB.added_constraint_types(MOIB.Constraint.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
+            @test MOIB.added_constraint_types(MOIB.Constraint.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros)]
         end
     end
 end
