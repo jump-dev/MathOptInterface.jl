@@ -1,3 +1,7 @@
+using Test
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIU = MOI.Utilities
 
 structeq(a::T, b::T) where {T} = all(f->getfield(a, f) == getfield(b, f), fieldnames(T))
 
@@ -14,7 +18,8 @@ structeq(a::T, b::T) where {T} = all(f->getfield(a, f) == getfield(b, f), fieldn
     @test structeq(MOIU.parsefunction(:(2*x*y + y + 1.0)),
                    MOIU.ParsedScalarQuadraticFunction(MOIU.ParsedScalarAffineTerm.([1.0],[:y]), MOIU.ParsedScalarQuadraticTerm.([2.0],[:x],[:y]), 1.0))
 
-    @test_throws AssertionError MOIU.parsefunction(:(x - y))
+    err = ErrorException("Expected `+`, got `-`.")
+    @test_throws err MOIU.parsefunction(:(x - y))
 
     @test structeq(MOIU.parsefunction(:([x, 2x+y+5.0])),
                    MOIU.ParsedVectorAffineFunction(MOIU.ParsedVectorAffineTerm.([1,2,2],MOIU.ParsedScalarAffineTerm.([1.0,2.0,1.0],[:x,:x,:y])), [0.0,5.0]))
@@ -31,21 +36,19 @@ end
     @test MOIU.separatelabel(:(con1: [x,y] in S)) == (:con1, :([x,y] in S))
 end
 
-@MOIU.model GeneralModel (MOI.ZeroOne, MOI.Integer) (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval) (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.PositiveSemidefiniteConeTriangle) () () (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction) (MOI.VectorOfVariables,) (MOI.VectorAffineFunction,)
-
 @testset "loadfromstring" begin
     @testset "one variable" begin
         s = """
         variables: x
         bound: x >= 1.0
         """
-        model = GeneralModel{Float64}()
+        model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         bound = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
         MOI.set(model, MOI.ConstraintName(), bound, "bound")
 
-        model2 = GeneralModel{Float64}()
+        model2 = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model2, s)
         MOIU.test_models_equal(model, model2, ["x"], ["bound"])
     end
@@ -57,7 +60,7 @@ end
         linear2: x + y <= 1.0
         linear3: x + y == 1.0
         """
-        model = GeneralModel{Float64}()
+        model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         y = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
@@ -69,7 +72,7 @@ end
         MOI.set(model, MOI.ConstraintName(), linear2, "linear2")
         MOI.set(model, MOI.ConstraintName(), linear3, "linear3")
 
-        model2 = GeneralModel{Float64}()
+        model2 = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model2, s)
         MOIU.test_models_equal(model, model2, ["x", "y"], ["linear1", "linear2", "linear3"])
     end
@@ -79,7 +82,7 @@ end
         variables: x, y
         minobjective: x + -2y + 1.0
         """
-        model = GeneralModel{Float64}()
+        model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         y = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
@@ -87,7 +90,7 @@ end
         MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -2.0], [x, y]), 1.0))
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
-        model2 = GeneralModel{Float64}()
+        model2 = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model2, s)
         MOIU.test_models_equal(model, model2, ["x", "y"], String[])
     end
@@ -97,7 +100,7 @@ end
         variables: x, y
         maxobjective: x + -2y + 1.0
         """
-        model = GeneralModel{Float64}()
+        model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         y = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
@@ -105,7 +108,7 @@ end
         MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, -2.0], [x, y]), 1.0))
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
-        model2 = GeneralModel{Float64}()
+        model2 = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model2, s)
         MOIU.test_models_equal(model, model2, ["x", "y"], String[])
     end
@@ -117,7 +120,7 @@ end
         affsoc: [2x,y+1,-1*z] in SecondOrderCone(3)
         affsoc2: [1.0,2.0,3.0] in SecondOrderCone(3)
         """
-        model = GeneralModel{Float64}()
+        model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         y = MOI.add_variable(model)
         z = MOI.add_variable(model)
@@ -131,9 +134,19 @@ end
         MOI.set(model, MOI.ConstraintName(), affsoc, "affsoc")
         MOI.set(model, MOI.ConstraintName(), affsoc2, "affsoc2")
 
-        model2 = GeneralModel{Float64}()
+        model2 = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model2, s)
         MOIU.test_models_equal(model, model2, ["x", "y", "z"], ["varsoc", "affsoc", "affsoc2"])
+    end
+
+    @testset "Invalid variable name" begin
+        s = """
+        variables: x
+        bound: y >= 1.0
+        """
+        model = MOIU.Model{Float64}()
+        err = ErrorException("Invalid variable name y.")
+        @test_throws err MOIU.loadfromstring!(model, s)
     end
 
 end
