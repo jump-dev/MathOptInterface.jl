@@ -1015,7 +1015,7 @@ function unbridged_constraint_function(
     return f
 end
 function unbridged_constraint_function(
-    ::AbstractBridgeOptimizer, func::MOI.SingleVariable)
+    b::AbstractBridgeOptimizer, func::MOI.SingleVariable)
     return unbridged_function(b, func)
 end
 
