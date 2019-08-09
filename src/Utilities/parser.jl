@@ -108,7 +108,10 @@ function parsefunction(ex)
         if ex isa Number
             ex = Expr(:call,:+,ex)
         end
-        @assert isexpr(ex, :call) && ex.args[1] == :+
+        @assert isexpr(ex, :call)
+        if ex.args[1] != :+
+            error("Expected `+`, got `$(ex.args[1])`.")
+        end
         affine_terms = ParsedScalarAffineTerm[]
         quadratic_terms = ParsedScalarQuadraticTerm[]
         constant = 0.0
@@ -169,7 +172,11 @@ function separatelabel(ex)
 end
 
 function parsedtoMOI(model, s::Symbol)
-    return MOI.get(model, MOI.VariableIndex, String(s))
+    index = MOI.get(model, MOI.VariableIndex, String(s))
+    if index === nothing
+        error("Invalid variable name $s.")
+    end
+    return index
 end
 
 # Used for Vector{Symbol}, Vector{ParsedScalarAffineTerm}, Vector{ParsedVectorAffineTerm},
