@@ -668,7 +668,7 @@ MOI.get(model, MOI.ListOfConstraints())
  (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})
  (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
 ```
-However, `bridged_model` hides transparently hides these constraints and create the
+However, `bridged_model` transparently hides these constraints and creates the
 illusion that an interval constraint was created.
 ```jldoctest split_interval
 MOI.get(bridged_model, MOI.ListOfConstraints())
