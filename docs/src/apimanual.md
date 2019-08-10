@@ -940,7 +940,7 @@ For example, the [`Bridges.Variable.VectorizeBridge`](@ref) defines the
 reformulation of a constrained variable in [`GreaterThan`](@ref) into a
 constrained vector of one variable in [`Nonnegatives`](@ref).
 The `Bridges.Variable.Vectorize` is the bridge optimizer that applies the
-[`Bridges.Variable.VectorizeBridge`](@ref) rewritting rule. Given an optimizer
+[`Bridges.Variable.VectorizeBridge`](@ref) rewriting rule. Given an optimizer
 `optimizer` implementing constrained variables in [`Nonnegatives`](@ref) and,
 the optimizer
 ```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
