@@ -140,10 +140,11 @@ end
     @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
     @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
 end
-@testset "mapvariables" begin
+@testset "map_indices" begin
     fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
                                       MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]), -3.0)
-    gsq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fsq)
+    index_map = Dict(x => y, y => z, w => w, z => x)
+    gsq = MOIU.map_indices(index_map, fsq)
     sats = MOI.ScalarAffineTerm.(1.0, [y, z])
     sqts = MOI.ScalarQuadraticTerm.(1.0, [y, w, w], [x, x, z])
     @test gsq.affine_terms == sats
@@ -151,7 +152,7 @@ end
     @test gsq.constant == -3.
     fvq = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
                                       MOI.VectorQuadraticTerm.([1, 2, 2], MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y])), [-3.0, -2.0])
-    gvq = MOIU.mapvariables(Dict(x => y, y => z, w => w, z => x), fvq)
+    gvq = MOIU.map_indices(index_map, fvq)
     @test gvq.affine_terms == MOI.VectorAffineTerm.([2, 1], sats)
     @test gvq.quadratic_terms == MOI.VectorQuadraticTerm.([1, 2, 2], sqts)
     @test MOIU.constant_vector(gvq) == [-3., -2.]

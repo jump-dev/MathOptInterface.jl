@@ -120,6 +120,7 @@ List of optimizers attributes
 ```@docs
 SolverName
 Silent
+TimeLimitSec
 RawParameter
 ```
 
@@ -661,6 +662,7 @@ Utilities.mode
 The following utilities are available for functions:
 ```@docs
 Utilities.eval_variables
+Utilities.map_indices
 Utilities.substitute_variables
 Utilities.remove_variable
 Utilities.all_coefficients

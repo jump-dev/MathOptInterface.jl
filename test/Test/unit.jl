@@ -14,6 +14,9 @@ end
     # `UniversalFallback` needed for `MOI.Silent`
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOI.set(mock, MOI.Silent(), true)
+    # TimeLimitSec() has to be set to default value since the mock optimizer
+    # doesn't handle this
+    MOI.set(mock, MOI.TimeLimitSec(), nothing)
     config = MOIT.TestConfig()
     for model in [mock,
                   MOIU.CachingOptimizer(MOIU.UniversalFallback(

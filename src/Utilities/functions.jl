@@ -15,78 +15,114 @@ function eval_variables end
 eval_variables(varval::Function, f::SVF) = varval(f.variable)
 eval_variables(varval::Function, f::VVF) = varval.(f.variables)
 function eval_variables(varval::Function, f::SAF)
-    return mapreduce(t->evalterm(varval, t), +, f.terms, init=f.constant)
+    return mapreduce(t->eval_term(varval, t), +, f.terms, init=f.constant)
 end
 function eval_variables(varval::Function, f::VAF)
     out = copy(f.constants)
     for t in f.terms
-        out[t.output_index] += evalterm(varval, t.scalar_term)
+        out[t.output_index] += eval_term(varval, t.scalar_term)
     end
     out
 end
 function eval_variables(varval::Function, f::SQF)
     init = zero(f.constant)
-    lin = mapreduce(t->evalterm(varval, t), +, f.affine_terms, init=init)
-    quad = mapreduce(t->evalterm(varval, t), +, f.quadratic_terms, init=init)
+    lin = mapreduce(t->eval_term(varval, t), +, f.affine_terms, init=init)
+    quad = mapreduce(t->eval_term(varval, t), +, f.quadratic_terms, init=init)
     return lin + quad + f.constant
 end
 function eval_variables(varval::Function, f::VQF)
     out = copy(f.constants)
     for t in f.affine_terms
-        out[t.output_index] += evalterm(varval, t.scalar_term)
+        out[t.output_index] += eval_term(varval, t.scalar_term)
     end
     for t in f.quadratic_terms
-        out[t.output_index] += evalterm(varval, t.scalar_term)
+        out[t.output_index] += eval_term(varval, t.scalar_term)
     end
     out
 end
 # Affine term
-function evalterm(varval::Function, t::MOI.ScalarAffineTerm)
+function eval_term(varval::Function, t::MOI.ScalarAffineTerm)
     return t.coefficient * varval(t.variable_index)
 end
 # Quadratic term
-function evalterm(varval::Function, t::MOI.ScalarQuadraticTerm)
+function eval_term(varval::Function, t::MOI.ScalarQuadraticTerm)
     tval = t.coefficient * varval(t.variable_index_1) * varval(t.variable_index_2)
     t.variable_index_1 == t.variable_index_2 ? tval/2 : tval
 end
 
-function mapvariable(varmap::Function, t::MOI.ScalarAffineTerm)
-    return MOI.ScalarAffineTerm(t.coefficient, varmap(t.variable_index))
+"""
+    map_indices(index_map::Function, x)
+
+Substitute any [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
+in `x` by the [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
+of the same type given by `index_map(x)`.
+
+This function is used by implementations of [`MOI.copy_to`](@ref) on constraint
+functions, attribute values and submittable values hence it needs to be
+implemented for custom types that are meant to be used as attribute or
+submittable value.
+"""
+function map_indices end
+
+"""
+    map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
+
+Shortcut for `map_indices(vi -> variable_map[vi], x)`.
+"""
+function map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
+    return map_indices(vi -> variable_map[vi], x)
 end
-function mapvariable(varmap::Function, t::MOI.VectorAffineTerm)
-    return MOI.VectorAffineTerm(t.output_index, mapvariable(varmap, t.scalar_term))
+
+const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet}
+const ObjectOrTupleWithoutIndex = Union{ObjectWithoutIndex, Tuple{Vararg{ObjectWithoutIndex}}}
+const ObjectOrTupleOrArrayWithoutIndex = Union{ObjectOrTupleWithoutIndex, AbstractArray{<:ObjectOrTupleWithoutIndex}}
+
+map_indices(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
+
+map_indices(index_map::Function, vi::MOI.VariableIndex) = index_map(vi)
+map_indices(index_map::Function, ci::MOI.ConstraintIndex) = index_map(ci)
+function map_indices(index_map::Function, array::AbstractArray{<:MOI.Index})
+    return map(index_map, array)
 end
-function mapvariable(varmap::Function, t::MOI.ScalarQuadraticTerm)
-    inds = varmap.((t.variable_index_1, t.variable_index_2))
+
+# Terms
+function map_indices(index_map::Function, t::MOI.ScalarAffineTerm)
+    return MOI.ScalarAffineTerm(t.coefficient, index_map(t.variable_index))
+end
+function map_indices(index_map::Function, t::MOI.VectorAffineTerm)
+    return MOI.VectorAffineTerm(t.output_index, map_indices(index_map, t.scalar_term))
+end
+function map_indices(index_map::Function, t::MOI.ScalarQuadraticTerm)
+    inds = index_map.((t.variable_index_1, t.variable_index_2))
     return MOI.ScalarQuadraticTerm(t.coefficient, inds...)
 end
-function mapvariable(varmap::Function, t::MOI.VectorQuadraticTerm)
-    MOI.VectorQuadraticTerm(t.output_index, mapvariable(varmap, t.scalar_term))
+function map_indices(index_map::Function, t::MOI.VectorQuadraticTerm)
+    MOI.VectorQuadraticTerm(t.output_index, map_indices(index_map, t.scalar_term))
 end
-function mapvariables(varmap::Function, f::MOI.SingleVariable)
-    return MOI.SingleVariable(varmap(f.variable))
+
+# Functions
+function map_indices(index_map::Function, f::MOI.SingleVariable)
+    return MOI.SingleVariable(index_map(f.variable))
 end
-function mapvariables(varmap::Function, f::MOI.VectorOfVariables)
-    return MOI.VectorOfVariables(varmap.(f.variables))
+function map_indices(index_map::Function, f::MOI.VectorOfVariables)
+    return MOI.VectorOfVariables(index_map.(f.variables))
 end
-function mapvariables(varmap::Function, f::Union{SAF, VAF})
-    typeof(f)(mapvariable.(varmap, f.terms), MOI.constant(f))
+function map_indices(index_map::Function, f::Union{SAF, VAF})
+    typeof(f)(map_indices.(index_map, f.terms), MOI.constant(f))
 end
-function mapvariables(varmap::Function, f::Union{SQF, VQF})
-    lin = mapvariable.(varmap, f.affine_terms)
-    quad = mapvariable.(varmap, f.quadratic_terms)
+function map_indices(index_map::Function, f::Union{SQF, VQF})
+    lin = map_indices.(index_map, f.affine_terms)
+    quad = map_indices.(index_map, f.quadratic_terms)
     return typeof(f)(lin, quad, MOI.constant(f))
 end
-mapvariables(varmap, f::MOI.AbstractFunction) = mapvariables(vi -> varmap[vi], f)
-mapvariables(varmap::Function, change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange}) = change
-function mapvariables(varmap::Function, change::MOI.ScalarCoefficientChange)
-    return MOI.ScalarCoefficientChange(varmap(change.variable), change.new_coefficient)
+
+# Function changes
+map_indices(index_map::Function, change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange}) = change
+function map_indices(index_map::Function, change::MOI.ScalarCoefficientChange)
+    return MOI.ScalarCoefficientChange(index_map(change.variable), change.new_coefficient)
 end
-function mapvariables(varmap::Function, change::MOI.MultirowChange)
-    return MOI.MultirowChange(varmap(change.variable), change.new_coefficients)
-end
-function mapvariables(varmap, f::MOI.AbstractFunctionModification)
-    return mapvariables(vi -> varmap[vi], f)
+function map_indices(index_map::Function, change::MOI.MultirowChange)
+    return MOI.MultirowChange(index_map(change.variable), change.new_coefficients)
 end
 
 # For performance reason, we assume that the type of the function does not
@@ -106,12 +142,7 @@ or submittable value.
 """
 function substitute_variables end
 
-function substitute_variables(
-    ::Function, x::Union{Number, Enum, AbstractArray{<:Union{Number, Enum}}})
-    return x
-end
-
-substitute_variables(::Function, set::MOI.AbstractSet) = set
+substitute_variables(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
 
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T
@@ -526,7 +557,7 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
         f2 = MOI.get(model2, MOI.ConstraintFunction(), index2)
         s1 = MOI.get(model1, MOI.ConstraintSet(), index1)
         s2 = MOI.get(model2, MOI.ConstraintSet(), index2)
-        @test isapprox(f1, mapvariables(variablemap_2to1, f2))
+        @test isapprox(f1, map_indices(variablemap_2to1, f2))
         @test s1 == s2
     end
     attrs1 = MOI.get(model1, MOI.ListOfModelAttributesSet())
@@ -537,7 +568,7 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
         value2 = MOI.get(model2, attr)
         if value1 isa MOI.AbstractFunction
             @test value2 isa MOI.AbstractFunction
-            @test isapprox(value1, attribute_value_map(variablemap_2to1, value2))
+            @test isapprox(value1, map_indices(variablemap_2to1, value2))
         else
             @test !(value2 isa MOI.AbstractFunction)
             @test value1 == value2

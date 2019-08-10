@@ -63,7 +63,7 @@ error in case `copy_to` is called with `copy_names` equal to `true`.
 """
 supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
 
-struct IndexMap
+struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
     varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
     conmap::Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}
 end
@@ -141,7 +141,7 @@ function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
         end
         value = MOI.get(src, attr, get_args...)
         if value !== nothing
-            mapped_value = attribute_value_map(idxmap, value)
+            mapped_value = map_indices(idxmap, value)
             pass_attr!(dest, attr, set_args..., mapped_value)
         end
     end
@@ -220,7 +220,7 @@ function copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
                           idxmap::IndexMap,
                           cis_src::Vector{<:MOI.ConstraintIndex})
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
-    f_dest = mapvariables.(Ref(idxmap), f_src)
+    f_dest = map_indices.(Ref(idxmap), f_src)
     s = MOI.get(src, MOI.ConstraintSet(), cis_src)
     cis_dest = MOI.add_constraints(dest, f_dest, s)
     for (ci_src, ci_dest) in zip(cis_src, cis_dest)
@@ -264,8 +264,6 @@ function pass_constraints(
     end
 end
 
-attribute_value_map(idxmap, f::MOI.AbstractFunction) = mapvariables(idxmap, f)
-attribute_value_map(idxmap, attribute_value) = attribute_value
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     Base.depwarn("default_copy_to(dest, src) is deprecated, use default_copy_to(dest, src, true) instead or default_copy_to(dest, src, false) if you do not want to copy names.", :default_copy_to)
     default_copy_to(dest, src, true)
@@ -600,7 +598,7 @@ function allocate_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
     for ci_src in cis_src
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
-        f_dest = mapvariables(idxmap, f_src)
+        f_dest = map_indices(idxmap, f_src)
         ci_dest = allocate_constraint(dest, f_dest, s)
         idxmap.conmap[ci_src] = ci_dest
     end
@@ -611,7 +609,7 @@ function load_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
     for ci_src in cis_src
         ci_dest = idxmap[ci_src]
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-        f_dest = mapvariables(idxmap, f_src)
+        f_dest = map_indices(idxmap, f_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
         load_constraint(dest, ci_dest, f_dest, s)
     end

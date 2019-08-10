@@ -34,7 +34,11 @@ const MOIU = MOI.Utilities
         "Cannot query $(attr) from caching optimizer because no optimizer" *
         " is attached.")
     @test_throws exception MOI.get(model, attr)
-
+    attr = MOI.TimeLimitSec()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
     attr = MOI.ResultCount()
     exception = ErrorException(
         "Cannot query $(attr) from caching optimizer because no optimizer" *
@@ -46,24 +50,71 @@ end
     cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
     cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
     MOI.set(cached, MOI.Silent(), true)
+    MOI.set(cached, MOI.TimeLimitSec(), 0.0)
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
     MOI.set(cached, MOI.Silent(), false)
+    MOI.set(cached, MOI.TimeLimitSec(), 1.0)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
     MOI.set(cached, MOI.Silent(), true)
+    MOI.set(cached, MOI.TimeLimitSec(), 0.0)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
+end
+
+@testset "Mapping of variables" begin
+    mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+    model = MOIU.CachingOptimizer(MOIU.Model{Float64}(), mock)
+    x = MOI.add_variable(model)
+    y = first(MOI.get(mock, MOI.ListOfVariableIndices()))
+    @test !MOI.is_valid(model, y)
+    @test !MOI.is_valid(mock, x)
+    fx = MOI.SingleVariable(x)
+    fy = MOI.SingleVariable(y)
+
+    cfx = MOI.add_constraint(model, fx, MOI.GreaterThan(1.0))
+    cfy = first(MOI.get(mock, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()))
+    @test !MOI.is_valid(model, cfy)
+    @test !MOI.is_valid(mock, cfx)
+    @test MOI.get(mock, MOI.ConstraintFunction(), cfy) == fy
+
+    c2fx = MOI.add_constraint(model, 2.0fx, MOI.GreaterThan(1.0))
+    c2fy = first(MOI.get(mock, MOI.ListOfConstraintIndices{
+        MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()))
+    @test !MOI.is_valid(model, c2fy)
+    @test !MOI.is_valid(mock, c2fx)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 2.0fy
+
+    MOI.set(model, MOI.ConstraintFunction(), c2fx, 3.0fx)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 3.0fy
+
+    MOI.set(model, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(fy)}()) == fy
+
+    MOI.set(model, MOI.ObjectiveFunction{typeof(2.0fx)}(), 2.0fx)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0fy)}()) ≈ 2.0fy
 end
 
 @testset "CachingOptimizer MANUAL mode" begin

@@ -53,4 +53,36 @@ const SOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoPSDBridge{T}, 
 const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}, OT}
 include("indicator.jl")
 
+"""
+    add_all_bridges(bridged_model, T::Type)
+
+Add all bridges defined in the `Bridges.Constraint` submodule to
+`bridged_model`. The coefficient type used is `T`.
+"""
+function add_all_bridges(bridged_model, T::Type)
+    MOIB.add_bridge(bridged_model, GreaterToLessBridge{T})
+    MOIB.add_bridge(bridged_model, LessToGreaterBridge{T})
+    MOIB.add_bridge(bridged_model, NonnegToNonposBridge{T})
+    MOIB.add_bridge(bridged_model, NonposToNonnegBridge{T})
+    MOIB.add_bridge(bridged_model, ScalarizeBridge{T})
+    MOIB.add_bridge(bridged_model, VectorizeBridge{T})
+    MOIB.add_bridge(bridged_model, ScalarSlackBridge{T})
+    MOIB.add_bridge(bridged_model, VectorSlackBridge{T})
+    MOIB.add_bridge(bridged_model, ScalarFunctionizeBridge{T})
+    MOIB.add_bridge(bridged_model, VectorFunctionizeBridge{T})
+    MOIB.add_bridge(bridged_model, SplitIntervalBridge{T})
+    MOIB.add_bridge(bridged_model, QuadtoSOCBridge{T})
+    MOIB.add_bridge(bridged_model, NormInfinityBridge{T})
+    MOIB.add_bridge(bridged_model, NormOneBridge{T})
+    MOIB.add_bridge(bridged_model, GeoMeanBridge{T})
+    MOIB.add_bridge(bridged_model, SquareBridge{T})
+    MOIB.add_bridge(bridged_model, LogDetBridge{T})
+    MOIB.add_bridge(bridged_model, RootDetBridge{T})
+    MOIB.add_bridge(bridged_model, RSOCBridge{T})
+    MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
+    MOIB.add_bridge(bridged_model, SOCtoPSDBridge{T})
+    MOIB.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
+    return
+end
+
 end
