@@ -941,7 +941,7 @@ reformulation of a constrained variable in [`GreaterThan`](@ref) into a
 constrained vector of one variable in [`Nonnegatives`](@ref).
 The `Bridges.Variable.Vectorize` is the bridge optimizer that applies the
 [`Bridges.Variable.VectorizeBridge`](@ref) rewriting rule. Given an optimizer
-`optimizer` implementing constrained variables in [`Nonnegatives`](@ref) and,
+`optimizer` implementing constrained variables in [`Nonnegatives`](@ref),
 the optimizer
 ```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
 bridged_optimizer = MOI.Bridges.Variable.Vectorize{Float64}(optimizer)
@@ -961,7 +961,7 @@ appropriate bridges for unsupported constrained variables.
 
 A constraint often possesses different equivalent formulations, but a solver may only support one of them.
 It would be duplicate work to implement rewriting rules in every solver wrapper for every different formulation of the constraint to express it in the form supported by the solver.
-Constraint bridges provide a way to define a rewritting rule on top of the MOI interface which can be used by any optimizer.
+Constraint bridges provide a way to define a rewriting rule on top of the MOI interface which can be used by any optimizer.
 Some rules also implement constraint modifications and constraint primal and duals translations.
 
 For example, the [`Bridges.Constraint.SplitIntervalBridge`](@ref) defines the
@@ -969,7 +969,7 @@ reformulation of a [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref)
 constraint into a [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref) and a
 [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref) constraint.
 The `Bridges.Constraint.SplitInterval` is the bridge optimizer that applies the
-[`Bridges.Constraint.SplitIntervalBridge`](@ref) rewritting rule. Given an
+[`Bridges.Constraint.SplitIntervalBridge`](@ref) rewriting rule. Given an
 optimizer `optimizer` implementing [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref)
 and [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref), the optimizer
 ```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
@@ -983,7 +983,7 @@ true
 will additionally support `ScalarAffineFunction`-in-`Interval`.
 Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref) are mainly
 used for testing bridges. It is recommended to rather use
-[`Bridges.full_bridge_optimizer`](@ref) which automatically select the
+[`Bridges.full_bridge_optimizer`](@ref) which automatically selects the
 appropriate constraint bridges for unsupported constraints.
 
 
