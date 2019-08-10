@@ -954,7 +954,7 @@ true
 will additionally support constrained variables in [`GreaterThan`](@ref).
 Note that these [`Bridges.Variable.SingleBridgeOptimizer`](@ref) are mainly
 used for testing bridges. It is recommended to rather use
-[`Bridges.full_bridge_optimizer`](@ref) which automatically select the
+[`Bridges.full_bridge_optimizer`](@ref), which automatically selects the
 appropriate bridges for unsupported constrained variables.
 
 #### Constraint reformulation
