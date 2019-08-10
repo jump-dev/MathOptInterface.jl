@@ -187,7 +187,7 @@ constant(s::LessThan) = s.upper
 """
     NormInfinityCone(dimension)
 
-The epigraph of the L∞ norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_∞ = \\max_i |x_i| \\}`` of dimension `dimension`.
+The epigraph of the ``\\ell_\\infty``-norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_∞ = \\max_i |x_i| \\}`` of dimension `dimension`.
 """
 struct NormInfinityCone <: AbstractVectorSet
     dimension::Int
@@ -198,7 +198,7 @@ dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
 """
     NormOneCone(dimension)
 
-The epigraph of the L1 norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_1 = \\sum_i |x_i| \\}`` of dimension `dimension`.
+The epigraph of the \\ell_1``-norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_1 = \\sum_i |x_i| \\}`` of dimension `dimension`.
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int

@@ -11,13 +11,13 @@ end
 function bridge_constraint(::Type{NormInfinityBridge{T, F}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormInfinityCone) where {T, F}
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]
-    if t isa MOI.SingleVariable # TODO currently needed for operate_output_index!
-        t = MOI.ScalarAffineFunction{T}(t)
-    end
     d = MOI.dimension(s)
     lb = f_scalars[2:d]
     ub = MOIU.operate(-, T, lb)
     f_new = MOIU.operate(vcat, T, ub, lb)
+    if t isa MOI.SingleVariable # TODO currently needed for operate_output_index!
+        t = MOI.ScalarAffineFunction{T}(t)
+    end
     for i in 1:MOI.output_dimension(f_new)
         MOIU.operate_output_index!(+, T, i, f_new, t)
     end
@@ -72,17 +72,14 @@ struct NormOneBridge{T, F, G} <: AbstractBridge
     nn_index::CI{G, MOI.Nonnegatives}
 end
 function bridge_constraint(::Type{NormOneBridge{T, F, G}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormOneCone) where {T, F, G}
-    if f isa MOI.VectorOfVariables # TODO currently needed for test to pass
-        f = MOI.VectorAffineFunction{T}(f)
-    end
     f_scalars = MOIU.eachscalar(f)
     d = MOI.dimension(s)
     y = MOI.add_variables(model, d - 1)
     ge_index = MOIU.normalize_and_add_constraint(model, MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y)), MOI.GreaterThan(zero(T)), allow_modify_function=true)
     lb = f_scalars[2:d]
     ub = MOIU.operate(-, T, lb)
-    MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
-    MOIU.operate!(+, T, ub, MOI.VectorOfVariables(y))
+    lb = MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
+    ub = MOIU.operate!(+, T, ub, MOI.VectorOfVariables(y))
     f_new = MOIU.operate(vcat, T, ub, lb)
     nn_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(2d - 2))
     return NormOneBridge{T, F, G}(y, ge_index, nn_index)
