@@ -594,7 +594,7 @@ MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm
 
     MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[], 0.0)
     ```
-    However, it's not possible to invert this operations. Indeed, since the
+    However, it's not possible to invert this operation. Indeed, since the
     bridged variables are substituted for zeros, we cannot deduce whether
     they were present in the initial function.
     ```jldoctest cannot_unbridge_zero; filter = r"Stacktrace:.*"s
