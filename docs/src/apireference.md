@@ -480,8 +480,9 @@ Utilities.@model
 
 ## Bridges
 
-Bridges can be used for automatic reformulation of constrained variables or
-constraints into equivalent formulations using constrained variables and
+Bridges can be used for automatic reformulation of constrained variables (i.e.
+variables added with [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref))
+or constraints into equivalent formulations using constrained variables and
 constraints of different types. There are two important concepts to distinguish:
 * [`Bridges.AbstractBridge`](@ref)s are recipes implementing a specific
   reformulation. Bridges are not directly subtypes of
@@ -496,8 +497,8 @@ constraints of different types. There are two important concepts to distinguish:
   [`Bridges.add_bridge`](@ref). [`Bridges.full_bridge_optimizer`](@ref) wraps a
   model in a [`Bridges.LazyBridgeOptimizer`](@ref) where all the bridges defined
   in MOI are added. This is the recommended way to use bridges in the
-  [Testing guideline](@ref), and JuMP automatically calls this function when
-  attaching an optimizer.
+  [Testing guideline](@ref), and JuMP automatically calls
+  [`Bridges.full_bridge_optimizer`](@ref) when attaching an optimizer.
 
 ```@docs
 Bridges.AbstractBridge
