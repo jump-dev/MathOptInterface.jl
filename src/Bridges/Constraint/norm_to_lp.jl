@@ -8,7 +8,7 @@ The `NormInfinityCone` is representable with LP constraints, since
 struct NormInfinityBridge{T, F} <: AbstractBridge
     nn_index::CI{F, MOI.Nonnegatives}
 end
-function bridge_constraint(::Type{NormInfinityBridge{T}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormInfinityCone) where T
+function bridge_constraint(::Type{NormInfinityBridge{T, F}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormInfinityCone) where {T, F}
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]
     if t isa MOI.SingleVariable # TODO currently needed for operate_output_index!
@@ -22,17 +22,14 @@ function bridge_constraint(::Type{NormInfinityBridge{T}}, model::MOI.ModelLike, 
         MOIU.operate_output_index!(+, T, i, f_new, t)
     end
     nn_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(MOI.output_dimension(f_new)))
-    return NormInfinityBridge(nn_index)
+    return NormInfinityBridge{T, F}(nn_index)
 end
 
-MOI.supports_constraint(::Type{NormInfinityBridge}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormInfinityCone}) = true
+MOI.supports_constraint(::Type{NormInfinityBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormInfinityCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormInfinityBridge}) = Tuple{DataType}[]
 MOIB.added_constraint_types(::Type{NormInfinityBridge{T, F}}) where {T, F} = [(F, MOI.Nonnegatives)]
 function concrete_bridge_type(::Type{<:NormInfinityBridge{T}}, H::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormInfinityCone}) where T
-    G1 = MOIU.promote_operation(-, T, H)
-    S = MOIU.scalar_type(H)
-    G2 = MOIU.promote_operation(+, T, S, H)
-    F = MOIU.promote_operation(vcat, T, G1, G2)
+    F = MOIU.promote_operation(+, T, H, H)
     return NormInfinityBridge{T, F}
 end
 
@@ -74,34 +71,30 @@ struct NormOneBridge{T, F, G} <: AbstractBridge
     ge_index::CI{F, MOI.GreaterThan{T}}
     nn_index::CI{G, MOI.Nonnegatives}
 end
-function bridge_constraint(::Type{NormOneBridge{T}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormOneCone) where T
+function bridge_constraint(::Type{NormOneBridge{T, F, G}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormOneCone) where {T, F, G}
     if f isa MOI.VectorOfVariables # TODO currently needed for test to pass
         f = MOI.VectorAffineFunction{T}(f)
     end
     f_scalars = MOIU.eachscalar(f)
     d = MOI.dimension(s)
     y = MOI.add_variables(model, d - 1)
-    ge_index = MOI.add_constraint(model, MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y)), MOI.GreaterThan(zero(T)))
+    ge_index = MOIU.normalize_and_add_constraint(model, MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y)), MOI.GreaterThan(zero(T)), allow_modify_function=true)
     lb = f_scalars[2:d]
     ub = MOIU.operate(-, T, lb)
     MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
     MOIU.operate!(+, T, ub, MOI.VectorOfVariables(y))
     f_new = MOIU.operate(vcat, T, ub, lb)
     nn_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(2d - 2))
-    return NormOneBridge(y, ge_index, nn_index)
+    return NormOneBridge{T, F, G}(y, ge_index, nn_index)
 end
 
-MOI.supports_constraint(::Type{NormOneBridge}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) = true
+MOI.supports_constraint(::Type{NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormOneBridge}) = Tuple{DataType}[]
 MOIB.added_constraint_types(::Type{NormOneBridge{T, F, G}}) where {T, F, G} = [(F, MOI.GreaterThan{T}), (G, MOI.Nonnegatives)]
 function concrete_bridge_type(::Type{<:NormOneBridge{T}}, H::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T
     S = MOIU.scalar_type(H)
-    F1 = MOIU.promote_operation(+, T, MOI.SingleVariable, MOI.SingleVariable)
-    F = MOIU.promote_operation(-, T, S, F1)
-    G1 = MOIU.promote_operation(-, T, H)
-    G2 = MOIU.promote_operation(+, T, G1, MOI.VectorOfVariables)
-    G3 = MOIU.promote_operation(+, T, H, MOI.VectorOfVariables)
-    G = MOIU.promote_operation(vcat, T, G2, G3)
+    F = MOIU.promote_operation(+, T, S, S)
+    G = MOIU.promote_operation(+, T, H, H)
     return NormOneBridge{T, F, G}
 end
 
