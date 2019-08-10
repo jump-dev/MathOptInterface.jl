@@ -192,7 +192,7 @@ delete(::ModelLike, ::Index)
 the variables created with [`add_constrained_variable`](@ref) or
 [`add_constrained_variables`](@ref). Adding constrained variables instead of
 constraining free variables with [`add_constraint`](@ref) allows
-[variable bridges](@ref Variable bridges) to be used.
+[variable bridges](@ref variable_bridges) to be used.
 Note further that free variables that are constrained with
 [`add_constraint`](@ref) may be copied by [`copy_to`](@ref) with
 [`add_constrained_variable`](@ref) or [`add_constrained_variables`](@ref) by the
@@ -508,7 +508,7 @@ Bridges.add_bridge
 Bridges.full_bridge_optimizer
 ```
 
-### Variable bridges
+### [Variable bridges](@id variable_bridges)
 
 When variables are added, either free with
 [`add_variable`](@ref)/[`add_variables`](@ref),
