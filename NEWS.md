@@ -54,7 +54,6 @@ v0.9.0 (May 2?, 2019)
   * Bridge are now instantiated with a `bridge_constraint` function instead of
     using a constructor (#730).
   * Fix constraint attributes for bridges (#699).
-  * Fix constraint attributes for bridges (#699).
   * Constraint bridges were moved to the `Bridges/Constraint` submodule so they
     should now inherit from `MOI.Bridges.Constraint.Abstract` and should
     implement `MOI.Bridges.Constraint.concrete_bridge_type` instead of
