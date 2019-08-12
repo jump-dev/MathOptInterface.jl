@@ -187,7 +187,7 @@ constant(s::LessThan) = s.upper
 """
     NormInfinityCone(dimension)
 
-The epigraph of the ``\\ell_\\infty``-norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_∞ = \\max_i |x_i| \\}`` of dimension `dimension`.
+The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty = \\max_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
 """
 struct NormInfinityCone <: AbstractVectorSet
     dimension::Int
@@ -198,7 +198,7 @@ dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
 """
     NormOneCone(dimension)
 
-The epigraph of the \\ell_1``-norm function ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_1 = \\sum_i |x_i| \\}`` of dimension `dimension`.
+The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
@@ -209,7 +209,7 @@ dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
 """
     SecondOrderCone(dimension)
 
-The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_2 \\}`` of dimension `dimension`.
+The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_2 \\}`` of dimension `dimension`.
 """
 struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
@@ -220,7 +220,7 @@ dual_set(s::SecondOrderCone) = copy(s)
 """
     RotatedSecondOrderCone(dimension)
 
-The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
+The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \\ge \\lVert x \\rVert_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int

@@ -2,7 +2,7 @@
     NormInfinityBridge{T}
 
 The `NormInfinityCone` is representable with LP constraints, since
-``t \\ge \\max_i |x_i|`` if and only if
+``t \\ge \\max_i \\lvert x_i \\rvert`` if and only if
 ``t \\ge x_i`` and ``t \\ge -x_i`` for all ``i``.
 """
 struct NormInfinityBridge{T, F} <: AbstractBridge
@@ -63,7 +63,7 @@ end
     NormOneBridge{T}
 
 The `NormOneCone` is representable with LP constraints, since
-``t \\ge \\sum_i |x_i|`` if and only if there exists a vector y such that
+``t \\ge \\sum_i \\lvert x_i \\rvert`` if and only if there exists a vector y such that
 ``t \\ge \\sum_i y_i`` and ``y_i \\ge x_i``, ``y_i \\ge -x_i`` for all ``i``.
 """
 struct NormOneBridge{T, F, G} <: AbstractBridge
