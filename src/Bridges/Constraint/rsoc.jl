@@ -58,7 +58,7 @@ function concrete_bridge_type(::Type{<:RSOCBridge{T}},
     Y = MOIU.promote_operation(-, T, S, S)
     Z = MOIU.promote_operation(+, T, S, S)
     F = MOIU.promote_operation(vcat, T, Z, Y, G)
-    RSOCBridge{T, F, G}
+    return RSOCBridge{T, F, G}
 end
 
 # Attributes, Bridge acting as a model
@@ -72,8 +72,8 @@ function MOI.get(b::RSOCBridge{T, F},
 end
 
 # References
-function MOI.delete(model::MOI.ModelLike, c::RSOCBridge)
-    MOI.delete(model, c.soc)
+function MOI.delete(model::MOI.ModelLike, bridge::RSOCBridge)
+    MOI.delete(model, bridge.soc)
 end
 
 # Attributes, Bridge acting as a constraint
@@ -88,12 +88,22 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet, bridge::RSOCBrid
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
 # As the linear transformation is a symmetric involution,
-# the constraint primal and dual both need to be processed by reapplying the same transformation
-function _get(model, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual}, c::RSOCBridge)
-    x = MOI.get(model, attr, c.soc)
+# the constraint primal and dual both need to be processed by reapplying the
+# same transformation
+function rotate_result(model,
+                       attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual},
+                       ci::MOI.ConstraintIndex)
+    x = MOI.get(model, attr, ci)
     s2 = √2
-    [x[1]/s2+x[2]/s2; x[1]/s2-x[2]/s2; x[3:end]]
+    return [x[1]/s2 + x[2]/s2; x[1]/s2 - x[2]/s2; x[3:end]]
 end
-# Need to define both `get` methods and redirect to `_get` to avoid ambiguity in dispatch
-MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::RSOCBridge) = _get(model, attr, c)
-MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, c::RSOCBridge) = _get(model, attr, c)
+# Need to define both `get` methods and redirect to `rotate_result` to avoid
+# ambiguity in dispatch
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
+                 bridge::RSOCBridge)
+    return rotate_result(model, attr, bridge.soc)
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
+                 bridge::RSOCBridge)
+    return rotate_result(model, attr, bridge.soc)
+end
