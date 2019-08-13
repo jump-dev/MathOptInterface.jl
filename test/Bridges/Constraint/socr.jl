@@ -11,7 +11,7 @@ include("../utilities.jl")
 mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.TestConfig()
 
-@testset "RSOC" begin
+@testset "SOCR" begin
     bridged_mock = MOIB.Constraint.SOCR{Float64}(mock)
 
     MOIT.basic_constraint_tests(

@@ -1,10 +1,8 @@
 """
     SOCRBridge{T, F, G}
 
-The `SecondOrderCone` is `RotatedSecondOrderCone`. We simply do the inverse
-transformation of [`RSOCBridge`](@ref). In fact, as the transformation is an
-involution, we do the same transformation.
-
+We simply do the inverse transformation of [`RSOCBridge`](@ref). In fact, as the
+transformation is an involution, we do the same transformation.
 """
 struct SOCRBridge{T, F, G} <: AbstractBridge
     rsoc::CI{F, MOI.RotatedSecondOrderCone}
