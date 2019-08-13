@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.9.0 (May 2?, 2019)
+v0.9.0 (August 13, 2019)
 ---------------------
 
 - Support for Julia v0.6 and v0.7 was dropped (#714, #717).
