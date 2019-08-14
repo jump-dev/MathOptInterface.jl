@@ -41,6 +41,23 @@ MOI.get(b::NormInfinityBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.Nonneg
 MOI.delete(model::MOI.ModelLike, c::NormInfinityBridge) = MOI.delete(model, c.nn_index)
 
 # Attributes, Bridge acting as a constraint
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormInfinityBridge{T, F}) where {T, F}
+    ge = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.nn_index))
+    t = MOIU.operate!(/, T, sum(ge), T(length(ge)))
+    d = div(length(ge), 2)
+    x = MOIU.operate!(-, T, ge[(d + 1):end], ge[1:d])
+    # x = x / T(2)
+    # x = MOIU.operate!(/, T, x, T(2))
+    # for i in 1:d
+    #     MOIU.operate_output_index!(/, T, i, x, T(2))
+    # end
+    @show MOIU.canonicalize!(MOIU.operate(vcat, T, t, x))
+    return MOIU.canonicalize!(MOIU.operate(vcat, T, t, x))
+end
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormInfinityBridge)
+    dim = 1 + div(MOI.dimension(MOI.get(model, MOI.ConstraintSet(), c.nn_index)), 2)
+    return MOI.NormInfinityCone(dim)
+end
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::NormInfinityBridge)
     ge_value = MOI.get(model, MOI.ConstraintPrimal(), c.nn_index)
     t = sum(ge_value) / length(ge_value)
