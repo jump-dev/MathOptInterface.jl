@@ -42,16 +42,10 @@ MOI.delete(model::MOI.ModelLike, c::NormInfinityBridge) = MOI.delete(model, c.nn
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormInfinityBridge{T, F}) where {T, F}
-    ge = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.nn_index))
-    t = MOIU.operate!(/, T, sum(ge), T(length(ge)))
-    d = div(length(ge), 2)
-    x = MOIU.operate!(-, T, ge[(d + 1):end], ge[1:d])
-    # x = x / T(2)
-    # x = MOIU.operate!(/, T, x, T(2))
-    # for i in 1:d
-    #     MOIU.operate_output_index!(/, T, i, x, T(2))
-    # end
-    @show MOIU.canonicalize!(MOIU.operate(vcat, T, t, x))
+    nn_func = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.nn_index))
+    t = MOIU.operate!(/, T, sum(nn_func), T(length(nn_func)))
+    d = div(length(nn_func), 2)
+    x = MOIU.operate!(/, T, MOIU.operate!(-, T, nn_func[(d + 1):end], nn_func[1:d]), T(2))
     return MOIU.canonicalize!(MOIU.operate(vcat, T, t, x))
 end
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormInfinityBridge)
@@ -59,20 +53,20 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormInfinityBridg
     return MOI.NormInfinityCone(dim)
 end
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::NormInfinityBridge)
-    ge_value = MOI.get(model, MOI.ConstraintPrimal(), c.nn_index)
-    t = sum(ge_value) / length(ge_value)
-    d = div(length(ge_value), 2)
-    x = (ge_value[(d + 1):end] - ge_value[1:d]) / 2
+    nn_primal = MOI.get(model, MOI.ConstraintPrimal(), c.nn_index)
+    t = sum(nn_primal) / length(nn_primal)
+    d = div(length(nn_primal), 2)
+    x = (nn_primal[(d + 1):end] - nn_primal[1:d]) / 2
     return vcat(t, x)
 end
 # Given a_i is dual on t - x_i >= 0 and b_i is dual on t + x_i >= 0,
 # the dual on (t, x) in NormInfinityCone is (u, v) in NormOneCone, where
 # v_i = -a_i + b_i and u = sum(a) + sum(b).
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintDual, c::NormInfinityBridge)
-    ge_dual = MOI.get(model, MOI.ConstraintDual(), c.nn_index)
-    t = sum(ge_dual)
-    d = div(length(ge_dual), 2)
-    x = (ge_dual[(d + 1):end] - ge_dual[1:d])
+    nn_dual = MOI.get(model, MOI.ConstraintDual(), c.nn_index)
+    t = sum(nn_dual)
+    d = div(length(nn_dual), 2)
+    x = (nn_dual[(d + 1):end] - nn_dual[1:d])
     return vcat(t, x)
 end
 
@@ -128,12 +122,24 @@ function MOI.delete(model::MOI.ModelLike, c::NormOneBridge)
 end
 
 # Attributes, Bridge acting as a constraint
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormOneBridge{T, F, G}) where {T, F, G}
+    ge_func = MOI.get(model, MOI.ConstraintFunction(), c.ge_index)
+    nn_func = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.nn_index))
+    t = MOIU.operate!(+, T, ge_func, MOIU.operate!(/, T, sum(nn_func), T(2)))
+    d = div(length(nn_func), 2)
+    x = MOIU.operate!(/, T, MOIU.operate!(-, T, nn_func[(d + 1):end], nn_func[1:d]), T(2))
+    return MOIU.canonicalize!(MOIU.operate(vcat, T, t, x))
+end
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormOneBridge)
+    dim = 1 + div(MOI.dimension(MOI.get(model, MOI.ConstraintSet(), c.nn_index)), 2)
+    return MOI.NormOneCone(dim)
+end
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::NormOneBridge)
-    ge_value = MOI.get(model, MOI.ConstraintPrimal(), c.ge_index)
-    nn_value = MOI.get(model, MOI.ConstraintPrimal(), c.nn_index)
-    t = ge_value + sum(nn_value) / 2
+    ge_primal = MOI.get(model, MOI.ConstraintPrimal(), c.ge_index)
+    nn_primal = MOI.get(model, MOI.ConstraintPrimal(), c.nn_index)
+    t = ge_primal + sum(nn_primal) / 2
     d = length(c.y)
-    x = (nn_value[(d + 1):end] - nn_value[1:d]) / 2
+    x = (nn_primal[(d + 1):end] - nn_primal[1:d]) / 2
     return vcat(t, x)
 end
 # Given a_i is dual on y_i - x_i >= 0 and b_i is dual on y_i + x_i >= 0 and c is dual on t - sum(y) >= 0,
