@@ -34,9 +34,9 @@ const BasicConstraintTests = Dict(
     (MOI.VectorOfVariables, MOI.Nonpositives)  => ( dummy_vectorofvariables, 2, MOI.Nonpositives(2) ),
     (MOI.VectorOfVariables, MOI.Nonnegatives)  => ( dummy_vectorofvariables, 2, MOI.Nonnegatives(2) ),
 
-    (MOI.VectorOfVariables, MOI.SecondOrderCone)        => ( dummy_vectorofvariables, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorOfVariables, MOI.NormInfinityCone)       => ( dummy_vectorofvariables, 3, MOI.NormInfinityCone(3) ),
     (MOI.VectorOfVariables, MOI.NormOneCone)            => ( dummy_vectorofvariables, 3, MOI.NormOneCone(3) ),
+    (MOI.VectorOfVariables, MOI.SecondOrderCone)        => ( dummy_vectorofvariables, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) => ( dummy_vectorofvariables, 3, MOI.RotatedSecondOrderCone(3) ),
     (MOI.VectorOfVariables, MOI.GeometricMeanCone)      => ( dummy_vectorofvariables, 3, MOI.GeometricMeanCone(3) ),
     (MOI.VectorOfVariables, MOI.ExponentialCone)        => ( dummy_vectorofvariables, 3, MOI.ExponentialCone() ),
@@ -65,6 +65,8 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_affine, 2, MOI.Nonpositives(2) ),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_affine, 2, MOI.Nonnegatives(2) ),
 
+    (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone)       => ( dummy_vector_affine, 3, MOI.NormInfinityCone(3) ),
+    (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone)            => ( dummy_vector_affine, 3, MOI.NormOneCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_affine, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_affine, 3, MOI.RotatedSecondOrderCone(3) ),
 
@@ -72,6 +74,8 @@ const BasicConstraintTests = Dict(
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_quadratic, 2, MOI.Nonpositives(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) ),
 
+    (MOI.VectorQuadraticFunction{Float64}, MOI.NormInfinityCone)       => ( dummy_vector_quadratic, 3, MOI.NormInfinityCone(3) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.NormOneCone)            => ( dummy_vector_quadratic, 3, MOI.NormOneCone(3) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_quadratic, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_quadratic, 3, MOI.RotatedSecondOrderCone(3) )
 )
