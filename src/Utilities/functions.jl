@@ -848,25 +848,30 @@ const ScalarAffineLike{T} = Union{T, MOI.SingleVariable, MOI.ScalarAffineFunctio
 # Functions convertible to a ScalarQuadraticFunction
 const ScalarQuadraticLike{T} = Union{ScalarAffineLike{T}, MOI.ScalarQuadraticFunction{T}}
 
-# Used for overloading Base operator functions so `T` is not in the union to
-# avoid overloading e.g. `+(::Float64, ::Float64)`
-const ScalarLike{T} = Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T},
-                            MOI.ScalarQuadraticFunction{T}}
 # `ScalarLike` for which `T` is defined to avoid defining, e.g.,
 # `+(::SingleVariable, ::Any)` which should rather be
 # `+(::SingleVariable, ::Number)`.
 const TypedScalarLike{T} = Union{MOI.ScalarAffineFunction{T},
                                  MOI.ScalarQuadraticFunction{T}}
+# Used for overloading Base operator functions so `T` is not in the union to
+# avoid overloading e.g. `+(::Float64, ::Float64)`
+const ScalarLike{T} = Union{MOI.SingleVariable, TypedScalarLike{T}}
 
 # Functions convertible to a VectorAffineFunction
 const VectorAffineLike{T} = Union{Vector{T}, MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}
 # Functions convertible to a VectorQuadraticFunction
 const VectorQuadraticLike{T} = Union{VectorAffineLike{T}, MOI.VectorQuadraticFunction{T}}
 
+# `VectorLike` for which `T` is defined to avoid defining, e.g.,
+# `+(::VectorOfVariables, ::Any)` which should rather be
+# `+(::VectorOfVariables, ::Number)`.
+const TypedVectorLike{T} = Union{MOI.VectorAffineFunction{T},
+                                 MOI.VectorQuadraticFunction{T}}
 # Used for overloading Base operator functions so `T` is not in the union to
 # avoid overloading e.g. `+(::Float64, ::Float64)`
-const VectorLike{T} = Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T},
-                            MOI.VectorQuadraticFunction{T}}
+const VectorLike{T} = Union{MOI.VectorOfVariables, TypedVectorLike{T}}
+
+const TypedLike{T} = Union{TypedScalarLike{T}, TypedVectorLike{T}}
 
 ###################################### +/- #####################################
 ## promote_operation
@@ -1354,7 +1359,14 @@ end
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where T
     return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f.variable)], zero(T))
 end
-function operate(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where T
+function operate(::typeof(*), ::Type{T}, α::T, f::MOI.VectorOfVariables) where T
+    return MOI.VectorAffineFunction{T}(
+        [MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(α, f.variables[i]))
+         for i in eachindex(f.variables)], zeros(T, MOI.output_dimension(f)))
+end
+function operate(::typeof(*), ::Type{T},
+                 f::Union{MOI.SingleVariable, MOI.VectorOfVariables},
+                 α::T) where T
     return operate(*, T, α, f)
 end
 
@@ -1365,12 +1377,14 @@ function operate!(::typeof(*), ::Type{T},
     f.constant *= α
     return f
 end
-function operate(::typeof(*), ::Type{T}, α::T, f::MOI.ScalarAffineFunction) where T
-    return operate!(*, T, copy(f), α)
+function operate!(::typeof(*), ::Type{T},
+                  f::Union{MOI.VectorAffineFunction{T},
+                           MOI.VectorQuadraticFunction{T}}, α::T) where T
+    map_terms!(term -> operate_term(*, α, term), f)
+    rmul!(f.constants, α)
+    return f
 end
-
-function operate(::typeof(*), ::Type{T}, α::T,
-                 f::MOI.ScalarQuadraticFunction) where T
+function operate(::typeof(*), ::Type{T}, α::T, f::TypedLike{T}) where T
     return operate!(*, T, copy(f), α)
 end
 
@@ -1439,16 +1453,16 @@ end
 function Base.:*(arg::ScalarLike{T}, args::ScalarLike{T}...) where T
     return operate(*, T, arg, args...)
 end
-function Base.:*(f::T, g::TypedScalarLike{T}) where T
+function Base.:*(f::T, g::TypedLike{T}) where T
     return operate(*, T, f, g)
 end
-function Base.:*(f::Number, g::MOI.SingleVariable)
+function Base.:*(f::Number, g::Union{MOI.SingleVariable, MOI.VectorOfVariables})
     return operate(*, typeof(f), f, g)
 end
-function Base.:*(f::TypedScalarLike{T}, g::T) where T
+function Base.:*(f::TypedLike{T}, g::T) where T
     return operate(*, T, g, f)
 end
-function Base.:*(f::MOI.SingleVariable, g::Number)
+function Base.:*(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}, g::Number)
     return operate(*, typeof(g), f, g)
 end
 
@@ -1477,10 +1491,21 @@ function operate(::typeof(/), ::Type{T}, f::MOI.SingleVariable,
                                        zero(T))
 end
 
-function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarAffineFunction{T},
+function operate!(::typeof(/), ::Type{T},
+                  f::Union{MOI.ScalarAffineFunction{T},
+                           MOI.ScalarQuadraticFunction{T}},
                   α::T) where T
-    f.terms .= operate_term.(/, f.terms, α)
+    map_terms!(term -> operate_term(/, term, α), f)
     f.constant /= α
+    return f
+end
+
+function operate!(::typeof(/), ::Type{T},
+                  f::Union{MOI.VectorAffineFunction{T},
+                           MOI.VectorQuadraticFunction{T}},
+                  α::T) where T
+    map_terms!(term -> operate_term(/, term, α), f)
+    rmul!(f.constants, inv(α))
     return f
 end
 
@@ -1492,16 +1517,19 @@ function operate!(::typeof(/), ::Type{T}, f::MOI.ScalarQuadraticFunction{T},
     return f
 end
 
-function operate(::typeof(/), ::Type{T},
-                 f::Union{MOI.ScalarAffineFunction{T},
-                          MOI.ScalarQuadraticFunction{T}}, α::T) where T
+function operate(::typeof(/), ::Type{T}, f::TypedLike{T}, α::T) where T
     return operate!(/, T, copy(f), α)
 end
+function operate(::typeof(/), ::Type{T},
+                 f::Union{MOI.SingleVariable, MOI.VectorOfVariables},
+                 α::T) where T
+    return operate(*, T, inv(α), f)
+end
 
-function Base.:/(f::TypedScalarLike{T}, g::T) where T
+function Base.:/(f::TypedLike{T}, g::T) where T
     return operate(/, T, f, g)
 end
-function Base.:/(f::MOI.SingleVariable, g::Number)
+function Base.:/(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}, g::Number)
     return operate(/, typeof(g), f, g)
 end
 
