@@ -27,7 +27,7 @@ end
 
 MOI.supports_constraint(::Type{NormInfinityBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormInfinityCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormInfinityBridge}) = Tuple{DataType}[]
-MOIB.added_constraint_types(::Type{NormInfinityBridge{T, F}}) where {T, F} = [(F, MOI.Nonnegatives)]
+MOIB.added_constraint_types(::Type{NormInfinityBridge{T, F, G}}) where {T, F, G} = [(F, MOI.Nonnegatives)]
 function concrete_bridge_type(::Type{<:NormInfinityBridge{T}}, G::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormInfinityCone}) where T
     F = MOIU.promote_operation(+, T, G, G)
     return NormInfinityBridge{T, F, G}
