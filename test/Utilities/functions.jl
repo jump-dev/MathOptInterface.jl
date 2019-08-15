@@ -680,59 +680,90 @@ end
         @test MOIU.promote_operation(-, T, t) == MOI.VectorQuadraticFunction{T}
     end
 
-    α = [1, 2, 3]
-    v = MOI.VectorOfVariables([y, w, y])
-    g = MOI.VectorAffineFunction(
-            MOI.VectorAffineTerm.([3, 1],
-                MOI.ScalarAffineTerm.([5, 2], [y, x])),
-            [3, 1, 4])
-    f = MOI.VectorQuadraticFunction(
+    @testset "Vector + and - Vector" begin
+        α = [1, 2, 3]
+        v = MOI.VectorOfVariables([y, w, y])
+        g = MOI.VectorAffineFunction(
+                MOI.VectorAffineTerm.([3, 1],
+                    MOI.ScalarAffineTerm.([5, 2], [y, x])),
+                [3, 1, 4])
+        f = MOI.VectorQuadraticFunction(
             MOI.VectorAffineTerm.([1, 2, 2],
                 MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])),
             MOI.VectorQuadraticTerm.([1, 1, 2],
                 MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])),
             [7, 3, 4])
-    v_plus_g = MOI.VectorAffineFunction(
-                MOI.VectorAffineTerm.([3, 1, 1, 2, 3],
-                    MOI.ScalarAffineTerm.([5, 2, 1, 1, 1], [y, x, y, w, y])),
-                [3, 1, 4])
-    g_plus_α = MOI.VectorAffineFunction(
-                MOI.VectorAffineTerm.([3, 1],
-                    MOI.ScalarAffineTerm.([5, 2],  [y, x])),
-                [4, 3, 7])
-    α_minus_v = MOI.VectorAffineFunction(
-                    MOI.VectorAffineTerm.([1, 2, 3],
-                        MOI.ScalarAffineTerm.([-1, -1, -1], [y, w, y])),
-                    [1, 2, 3])
-    v_minus_v_plus_v = MOI.VectorAffineFunction(
-                        MOI.VectorAffineTerm.([1, 2, 3, 1, 2, 3, 1, 2, 3],
-                            MOI.ScalarAffineTerm.([1, 1, 1, -1, -1, -1, 1, 1, 1],
-                                [y, w, y, y, w, y, y, w, y])),
-                        [0, 0, 0])
-    f_plus_α = MOI.VectorQuadraticFunction(
-                MOI.VectorAffineTerm.([1, 2, 2],
-                    MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])),
-                MOI.VectorQuadraticTerm.([1, 1, 2],
-                    MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])),
-                [8, 5, 7])
-    f_minus_g = MOI.VectorQuadraticFunction(
-                    MOI.VectorAffineTerm.([1, 2, 2, 3, 1],
-                        MOI.ScalarAffineTerm.([3, 1, 2, -5, -2], [x, x, y, y, x])),
+        v_plus_g = MOI.VectorAffineFunction(
+                    MOI.VectorAffineTerm.([3, 1, 1, 2, 3],
+                        MOI.ScalarAffineTerm.([5, 2, 1, 1, 1], [y, x, y, w, y])),
+                    [3, 1, 4])
+        g_plus_α = MOI.VectorAffineFunction(
+                    MOI.VectorAffineTerm.([3, 1],
+                        MOI.ScalarAffineTerm.([5, 2],  [y, x])),
+                    [4, 3, 7])
+        α_minus_v = MOI.VectorAffineFunction(
+                        MOI.VectorAffineTerm.([1, 2, 3],
+                            MOI.ScalarAffineTerm.([-1, -1, -1], [y, w, y])),
+                        [1, 2, 3])
+        v_minus_v_plus_v = MOI.VectorAffineFunction(
+                            MOI.VectorAffineTerm.([1, 2, 3, 1, 2, 3, 1, 2, 3],
+                                MOI.ScalarAffineTerm.([1, 1, 1, -1, -1, -1, 1, 1, 1],
+                                    [y, w, y, y, w, y, y, w, y])),
+                            [0, 0, 0])
+        f_plus_α = MOI.VectorQuadraticFunction(
+                    MOI.VectorAffineTerm.([1, 2, 2],
+                        MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])),
                     MOI.VectorQuadraticTerm.([1, 1, 2],
                         MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])),
-                    [4, 2, 0])
-    @test v + g ≈ v_plus_g
-    @test g + α ≈ g_plus_α
-    @test α + g ≈ g_plus_α
-    @test α - v ≈ α_minus_v
-    @test MOIU.operate(+, Int, MOIU.operate(-, Int, v, v), v) ≈ v_minus_v_plus_v
-    @test f + α ≈ f_plus_α
-    @test f - g ≈ f_minus_g
-    @test f - f + f - g ≈ f_minus_g
-    @test v + f + α - v ≈ f_plus_α
-    @test v - f - α - v ≈ - f_plus_α
-    @test MOIU.operate!(-, Int, v, f) - v  ≈ - f
-    @test (g + v + g + v + f) - (v + g + v + g) ≈ f
-    @test v - α ≈ - α_minus_v
-    @test g - f ≈ - f_minus_g
+                    [8, 5, 7])
+        f_minus_g = MOI.VectorQuadraticFunction(
+                        MOI.VectorAffineTerm.([1, 2, 2, 3, 1],
+                            MOI.ScalarAffineTerm.([3, 1, 2, -5, -2], [x, x, y, y, x])),
+                        MOI.VectorQuadraticTerm.([1, 1, 2],
+                            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])),
+                        [4, 2, 0])
+        @test v + g ≈ v_plus_g
+        @test g + α ≈ g_plus_α
+        @test α + g ≈ g_plus_α
+        @test α - v ≈ α_minus_v
+        @test MOIU.operate(+, Int, MOIU.operate(-, Int, v, v), v) ≈ v_minus_v_plus_v
+        @test f + α ≈ f_plus_α
+        @test f - g ≈ f_minus_g
+        @test f - f + f - g ≈ f_minus_g
+        @test v + f + α - v ≈ f_plus_α
+        @test v - f - α - v ≈ - f_plus_α
+        @test MOIU.operate!(-, Int, v, f) - v  ≈ - f
+        @test (g + v + g + v + f) - (v + g + v + g) ≈ f
+        @test v - α ≈ - α_minus_v
+        @test g - f ≈ - f_minus_g
+    end
+    @testset "Vector * and / constant" begin
+        v = MOI.VectorOfVariables([y, w, y])
+        v2 = MOIU.operate(
+            vcat, Float64,
+            2.0fy,
+            2.0fw,
+            2.0fy)
+        f = MOIU.operate(
+            vcat, Float64,
+            2.0fx + 3.0fy + 1.0,
+            3.0fx + 2.0fy + 3.0)
+        f2 = MOIU.operate(
+            vcat, Float64,
+            4.0fx + 6.0fy + 2.0,
+            6.0fx + 4.0fy + 6.0)
+        g = MOIU.operate(
+            vcat, Float64,
+            7.0fx * fy + 2.0fx + 3.0fy + 1.0,
+            6.0fx * fx + 5.0fy * fy + 3.0fx + 2.0fy + 3.0)
+        g2 = MOIU.operate(
+            vcat, Float64,
+            14.0fx * fy + 4.0fx + 6.0fy + 2.0,
+            12.0fx * fx + 10.0fy * fy + 6.0fx + 4.0fy + 6.0)
+        @testset "$(typeof(a))" for (a, a2) in [(v, v2), (f, f2), (g, g2)]
+            @test a * 2.0 ≈ a2
+            @test 2.0 * a ≈ a2
+            @test a / 0.5 ≈ a2
+        end
+    end
 end
