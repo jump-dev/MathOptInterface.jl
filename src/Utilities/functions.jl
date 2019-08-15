@@ -328,7 +328,7 @@ Sums the coefficients of `t1` and `t2` and returns an output `MOI.VectorAffineTe
 function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
                                                       MOI.VectorQuadraticTerm}
     scalar_term = unsafe_add(t1.scalar_term, t2.scalar_term)
-    return MOI.VectorAffineTerm(t1.output_index, scalar_term)
+    return VT(t1.output_index, scalar_term)
 end
 
 """
@@ -1821,9 +1821,9 @@ function count_terms(dimension::I, terms::Vector{T}) where {I,T}
     return counting
 end
 
-convert_approx(::Type{T}, func::T; kws...) where {T} = func
+convert_approx(::Type{T}, func::T; kws...) where {T} = MOIU.canonical(func)
 function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFunction{T};
-                        tol=sqrt(eps(T))) where {T}
+    tol=sqrt(eps(T))) where {T}
     f = MOIU.canonical(func)
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol=tol), f.terms)
     if abs(f.constant) > tol || i === nothing ||
@@ -1835,5 +1835,5 @@ end
 function convert_approx(::Type{MOI.VectorOfVariables}, func::MOI.VectorAffineFunction{T};
     tol=sqrt(eps(T))) where {T}
     return MOI.VectorOfVariables([convert_approx(MOI.SingleVariable, f, tol=tol).variable
-                                  for f in scalarize(func)])
+        for f in scalarize(func)])
 end
