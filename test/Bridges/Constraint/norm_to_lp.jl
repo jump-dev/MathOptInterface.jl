@@ -23,8 +23,8 @@ config = MOIT.TestConfig()
         (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.0, 1.0, 0.0, 0.0]],
         (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]])
 
-    MOIT.norminf1ftest(bridged_mock, config)
     MOIT.norminf1vtest(bridged_mock, config)
+    MOIT.norminf1ftest(bridged_mock, config)
 
     @testset "Test mock model" begin
         var_names = ["x", "y", "z"]
@@ -52,7 +52,7 @@ config = MOIT.TestConfig()
     @testset "Test bridged model" begin
         var_names = ["x", "y", "z"]
         MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
-        norminf = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.NormInfinityCone}())
+        norminf = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone}())
         @test length(norminf) == 1
         MOI.set(bridged_mock, MOI.ConstraintName(), norminf[1], "norminf")
         zeros = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Zeros}())
@@ -62,7 +62,7 @@ config = MOIT.TestConfig()
 
         s = """
         variables: x, y, z
-        norminf: [x, y, z] in MathOptInterface.NormInfinityCone(3)
+        norminf: [1.0x, y, z] in MathOptInterface.NormInfinityCone(3)
         x_eq: [-1.0 + x] in MathOptInterface.Zeros(1)
         y_eq: [-0.5 + y] in MathOptInterface.Zeros(1)
         maxobjective: y + z
@@ -72,7 +72,7 @@ config = MOIT.TestConfig()
         MOIU.test_models_equal(bridged_mock, model, var_names, ["norminf", "x_eq", "y_eq"])
     end
 
-    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.NormInfinityCone}()))
+    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone}()))
     test_delete_bridge(bridged_mock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),))
 end
 
@@ -89,8 +89,8 @@ end
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [[1.0]],
         (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]])
 
-    MOIT.normone1ftest(bridged_mock, config)
     MOIT.normone1vtest(bridged_mock, config)
+    MOIT.normone1ftest(bridged_mock, config)
 
     @testset "Test mock model" begin
         var_names = ["x", "y", "z", "u", "v"]
@@ -122,7 +122,7 @@ end
     @testset "Test bridged model" begin
         var_names = ["x", "y", "z"]
         MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
-        normone = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.NormOneCone}())
+        normone = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormOneCone}())
         @test length(normone) == 1
         MOI.set(bridged_mock, MOI.ConstraintName(), normone[1], "normone")
         zeros = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Zeros}())
@@ -132,7 +132,7 @@ end
 
         s = """
         variables: x, y, z
-        normone: [x, y, z] in MathOptInterface.NormOneCone(3)
+        normone: [1.0x, y, z] in MathOptInterface.NormOneCone(3)
         x_eq: [-1.0 + x] in MathOptInterface.Zeros(1)
         y_eq: [-0.5 + y] in MathOptInterface.Zeros(1)
         maxobjective: y + z
@@ -142,7 +142,7 @@ end
         MOIU.test_models_equal(bridged_mock, model, var_names, ["normone", "x_eq", "y_eq"])
     end
 
-    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.NormOneCone}()))
+    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormOneCone}()))
     test_delete_bridge(bridged_mock, ci, 3, (
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
         (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
