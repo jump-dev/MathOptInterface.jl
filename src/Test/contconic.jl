@@ -496,11 +496,11 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.TerminationStatus()) in (MOI.INFEASIBLE, 
+                                                          MOI.INFEASIBLE_OR_UNBOUNDED)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
-                                                     MOI.INFEASIBLE_POINT,
-                                                     MOI.INFEASIBLE_OR_UNBOUNDED)
+                                                     MOI.INFEASIBLE_POINT)
         if config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
