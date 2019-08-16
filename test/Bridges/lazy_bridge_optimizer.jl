@@ -319,8 +319,10 @@ end
     end
     c = MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(x),
                            MOI.RotatedSecondOrderCone(3))
-    @test MOIB.bridge_type(bridged_mock, MOI.VectorOfVariables,
-                MOI.RotatedSecondOrderCone) == MOIB.Constraint.RSOCtoPSDBridge{Float64, MOI.VectorOfVariables}
+    @test MOIB.bridge_type(
+        bridged_mock, MOI.VectorOfVariables,
+        MOI.RotatedSecondOrderCone) == MOIB.Constraint.RSOCtoPSDBridge{
+            Float64, MOI.VectorAffineFunction{Float64}, MOI.VectorOfVariables}
     @test MOIB.bridge(bridged_mock, c) isa MOIB.Constraint.RSOCtoPSDBridge
     @test bridged_mock.constraint_dist[(MOI.VectorOfVariables,
                                         MOI.RotatedSecondOrderCone)] == 1
