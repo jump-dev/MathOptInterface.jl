@@ -15,9 +15,6 @@ function bridge_constraint(::Type{NormInfinityBridge{T, F, G}}, model::MOI.Model
     lb = f_scalars[2:d]
     ub = MOIU.operate(-, T, lb)
     f_new = MOIU.operate(vcat, T, ub, lb)
-    if t isa MOI.SingleVariable # TODO currently needed for operate_output_index!
-        t = MOI.ScalarAffineFunction{T}(t)
-    end
     for i in 1:MOI.output_dimension(f_new)
         MOIU.operate_output_index!(+, T, i, f_new, t)
     end
