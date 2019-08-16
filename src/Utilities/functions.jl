@@ -297,6 +297,19 @@ function Base.getindex(it::ScalarFunctionIterator{VQF{T}}, I::AbstractVector) wh
     return VQF(affine_terms, quadratic_terms, constant)
 end
 
+function zero_with_output_dimension(::Type{<:MOI.VectorAffineFunction{T}}, n::Integer) where T
+    return MOI.VectorAffineFunction{T}(
+        MOI.VectorAffineTerm{T}[],
+        zeros(T, n))
+end
+function zero_with_output_dimension(::Type{<:MOI.VectorQuadraticFunction{T}}, n::Integer) where T
+    return MOI.VectorQuadraticFunction{T}(
+        MOI.VectorAffineTerm{T}[],
+        MOI.VectorQuadraticTerm{T}[],
+        zeros(T, n))
+end
+
+
 """
     unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm)
 
@@ -1127,6 +1140,15 @@ function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
     f.constants .= op.(f.constants, g)
     return f
 end
+function operate_output_index!(
+    op::Union{typeof(+), typeof(-)}, ::Type{T},
+    output_index::Integer,
+    f::MOI.VectorAffineFunction{T},
+    g::MOI.SingleVariable) where T
+    push!(f.terms, MOI.VectorAffineTerm(
+        output_index, MOI.ScalarAffineTerm(op(one(T)), g.variable)))
+    return f
+end
 function operate!(op::Union{typeof(+), typeof(-)}, ::Type{T},
                   f::MOI.VectorAffineFunction{T},
                   g::MOI.VectorOfVariables) where T
@@ -1343,6 +1365,10 @@ function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
                            ::Type{<:Union{MOI.SingleVariable,
                                           MOI.ScalarAffineFunction{T}}}) where T
     return MOI.ScalarAffineFunction{T}
+end
+function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
+                           ::Type{MOI.ScalarQuadraticFunction{T}}) where T
+    return MOI.ScalarQuadraticFunction{T}
 end
 function promote_operation(::typeof(*), ::Type{T},
                            ::Type{<:Union{MOI.SingleVariable,
