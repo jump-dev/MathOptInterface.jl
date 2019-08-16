@@ -13,6 +13,12 @@ config = MOIT.TestConfig()
 
 @testset "SOCtoPSD" begin
     bridged_mock = MOIB.Constraint.SOCtoPSD{Float64}(mock)
+
+    MOIT.basic_constraint_tests(bridged_mock, config,
+        include = [(F, MOI.SecondOrderCone) for F in [
+            MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}, MOI.VectorQuadraticFunction{Float64}
+    ]])
+
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1/√2, 1/√2],
                           (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[√2/2, -1/2, √2/4, -1/2, √2/4, √2/4]],
                           (MOI.VectorAffineFunction{Float64}, MOI.Zeros)                            => [[-√2]])
@@ -27,9 +33,9 @@ end
 
     MOIT.basic_constraint_tests(
         bridged_mock, config,
-        include = [(F, S)
-                   for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
-                   for S in [MOI.RotatedSecondOrderCone]])
+        include = [(F, MOI.RotatedSecondOrderCone)
+                   for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}, MOI.VectorQuadraticFunction{Float64}
+    ]])
 
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.5, 1.0, 1/√2, 1/√2],
                           (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√2, -1/√2],
