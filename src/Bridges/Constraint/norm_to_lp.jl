@@ -128,7 +128,7 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormOneBridg
     t = MOIU.operate!(+, T, ge_func, MOIU.operate!(/, T, sum(nn_func), T(2)))
     d = div(length(nn_func), 2)
     x = MOIU.operate!(/, T, MOIU.operate!(-, T, nn_func[(d + 1):end], nn_func[1:d]), T(2))
-    return MOIU.convert_approx(H, MOIU.operate(vcat, T, t, x))
+    return MOIU.convert_approx(H, MOIU.remove_variable(MOIU.operate(vcat, T, t, x), c.y))
 end
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormOneBridge)
     dim = 1 + div(MOI.dimension(MOI.get(model, MOI.ConstraintSet(), c.nn_index)), 2)
