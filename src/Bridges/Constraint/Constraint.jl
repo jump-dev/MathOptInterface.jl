@@ -38,6 +38,9 @@ include("rsoc.jl")
 const RSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCBridge{T}, OT}
 include("quad_to_soc.jl")
 const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}, OT}
+include("norm_to_lp.jl")
+const NormInfinity{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormInfinityBridge{T}, OT}
+const NormOne{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T}, OT}
 include("geomean.jl")
 const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
 include("square.jl")
@@ -69,6 +72,8 @@ function add_all_bridges(bridged_model, T::Type)
     MOIB.add_bridge(bridged_model, VectorFunctionizeBridge{T})
     MOIB.add_bridge(bridged_model, SplitIntervalBridge{T})
     MOIB.add_bridge(bridged_model, QuadtoSOCBridge{T})
+    MOIB.add_bridge(bridged_model, NormInfinityBridge{T})
+    MOIB.add_bridge(bridged_model, NormOneBridge{T})
     MOIB.add_bridge(bridged_model, GeoMeanBridge{T})
     MOIB.add_bridge(bridged_model, SquareBridge{T})
     MOIB.add_bridge(bridged_model, LogDetBridge{T})

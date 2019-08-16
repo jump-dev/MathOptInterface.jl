@@ -1,6 +1,11 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.1 (?)
+---------------------
+
+- L_1 and L_∞ norm epigraph cones and corresponding bridges to LP were added (#818).
+
 v0.9.0 (August 13, 2019)
 ---------------------
 

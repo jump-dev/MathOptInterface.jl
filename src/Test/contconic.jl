@@ -302,12 +302,284 @@ const lintests = Dict("lin1v" => lin1vtest,
 
 @moitestset lin
 
+function _norminf1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormInf1
+    # max 0x + 1y + 1z
+    #  st  x == 1
+    #      y == 1/2
+    #      x >= ||(y,z)||_∞
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    if vecofvars
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+    else
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+    end
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.NormInfinityCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x,y,z = MOI.add_variables(model, 3)
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [y,z]), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    ceq1 = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Zeros(1))
+    ceq2 = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [-0.5]), MOI.Zeros(1))
+    vov = MOI.VectorOfVariables([x,y,z])
+    if vecofvars
+        ccone = MOI.add_constraint(model, vov, MOI.NormInfinityCone(3))
+    else
+        ccone = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.NormInfinityCone(3))
+    end
+
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 2
+    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},MOI.NormInfinityCone}()) == 1
+    loc = MOI.get(model, MOI.ListOfConstraints())
+    @test length(loc) == 2
+    @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
+    @test (vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) in loc
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.5 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1.5 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 0.5 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1 atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), ceq1) ≈ [0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), ceq2) ≈ [0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), ccone) ≈ [1.0, 0.5, 1.0] atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), ceq1) ≈ [-1] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), ceq2) ≈ [-1] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), ccone) ≈ [1.0, 0.0, -1.0] atol=atol rtol=rtol
+        end
+    end
+end
+
+norminf1vtest(model::MOI.ModelLike, config::TestConfig) = _norminf1test(model, config, true)
+norminf1ftest(model::MOI.ModelLike, config::TestConfig) = _norminf1test(model, config, false)
+
+function norminf2test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormInf2 - Infeasible
+    # min 0
+    # s.t. y ≥ 2
+    #      x ≤ 1
+    #      |y| ≤ x
+    # in conic form:
+    # min 0
+    # s.t. -2 + y ∈ R₊
+    #      -1 + x ∈ R₋
+    #       (x,y) ∈ NormInf₂
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x,y = MOI.add_variables(model, 2)
+
+    MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [-2.0]), MOI.Nonnegatives(1))
+    MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Nonpositives(1))
+    MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2], MOI.ScalarAffineTerm.(1.0, [x,y])), zeros(2)), MOI.NormInfinityCone(2))
+
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.NormInfinityCone}()) == 1
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+
+        @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
+                                                     MOI.INFEASIBLE_POINT)
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        end
+
+        # TODO test dual feasibility and objective sign
+    end
+end
+
+const norminftests = Dict("norminf1v" => norminf1vtest,
+                          "norminf1f" => norminf1ftest,
+                          "norminf2"  => norminf2test)
+
+@moitestset norminf
+
+function _normone1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormOne1
+    # max 0x + 1y + 1z
+    #  st  x == 1
+    #      y == 1/2
+    #      x >= ||(y,z)||_1
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    if vecofvars
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+    else
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+    end
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.NormOneCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x,y,z = MOI.add_variables(model, 3)
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [y,z]), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    ceq1 = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Zeros(1))
+    ceq2 = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [-0.5]), MOI.Zeros(1))
+    vov = MOI.VectorOfVariables([x,y,z])
+    if vecofvars
+        ccone = MOI.add_constraint(model, vov, MOI.NormOneCone(3))
+    else
+        ccone = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.NormOneCone(3))
+    end
+
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 2
+    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},MOI.NormOneCone}()) == 1
+    loc = MOI.get(model, MOI.ListOfConstraints())
+    @test length(loc) == 2
+    @test (MOI.VectorAffineFunction{Float64},MOI.Zeros) in loc
+    @test (vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) in loc
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
+        if config.duals
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 0.5 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 0.5 atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), ceq1) ≈ [0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), ceq2) ≈ [0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), ccone) ≈ [1.0, 0.5, 0.5] atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), ceq1) ≈ [-1] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), ceq2) ≈ [0] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), ccone) ≈ [1.0, -1.0, -1.0] atol=atol rtol=rtol
+        end
+    end
+end
+
+normone1vtest(model::MOI.ModelLike, config::TestConfig) = _normone1test(model, config, true)
+normone1ftest(model::MOI.ModelLike, config::TestConfig) = _normone1test(model, config, false)
+
+function normone2test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormOne2 - Infeasible
+    # min 0
+    # s.t. y ≥ 2
+    #      x ≤ 1
+    #      |y| ≤ x
+    # in conic form:
+    # min 0
+    # s.t. -2 + y ∈ R₊
+    #      -1 + x ∈ R₋
+    #       (x,y) ∈ NormOne₂
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormOneCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x,y = MOI.add_variables(model, 2)
+
+    MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))], [-2.0]), MOI.Nonnegatives(1))
+    MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Nonpositives(1))
+    MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2], MOI.ScalarAffineTerm.(1.0, [x,y])), zeros(2)), MOI.NormOneCone(2))
+
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Nonpositives}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.NormOneCone}()) == 1
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+
+        @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
+                                                     MOI.INFEASIBLE_POINT)
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        end
+
+        # TODO test dual feasibility and objective sign
+    end
+end
+
+const normonetests = Dict("normone1v" => normone1vtest,
+                          "normone1f" => normone1ftest,
+                          "normone2"  => normone2test)
+
+@moitestset normone
+
 function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem SOC1
     # max 0x + 1y + 1z
-    #  st  x            == 1
+    #  st  x == 1
     #      x >= ||(y,z)||
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
@@ -1772,6 +2044,8 @@ const rootdettests = Dict("rootdett" => rootdetttest,
 @moitestset rootdet true
 
 const contconictests = Dict("lin" => lintest,
+                            "norminf" => norminftest,
+                            "normone" => normonetest,
                             "soc" => soctest,
                             "rsoc" => rsoctest,
                             "geomean" => geomeantest,

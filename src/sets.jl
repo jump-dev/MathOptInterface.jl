@@ -35,7 +35,7 @@ function dimension end
 """
     dual_set(s::AbstractSet)
 
-Return the dual set of `s`, that is the dual cone of the set. This follows the 
+Return the dual set of `s`, that is the dual cone of the set. This follows the
 definition of duality discussed in [Duals](@ref).
 See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more information.
 If the dual cone is not defined it returns an error.
@@ -185,9 +185,31 @@ constant(s::GreaterThan) = s.lower
 constant(s::LessThan) = s.upper
 
 """
+    NormInfinityCone(dimension)
+
+The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty = \\max_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
+"""
+struct NormInfinityCone <: AbstractVectorSet
+    dimension::Int
+end
+
+dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
+
+"""
+    NormOneCone(dimension)
+
+The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
+"""
+struct NormOneCone <: AbstractVectorSet
+    dimension::Int
+end
+
+dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
+
+"""
     SecondOrderCone(dimension)
 
-The second-order cone (or Lorenz cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge || x ||_2 \\}`` of dimension `dimension`.
+The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_2 \\}`` of dimension `dimension`.
 """
 struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
@@ -198,7 +220,7 @@ dual_set(s::SecondOrderCone) = copy(s)
 """
     RotatedSecondOrderCone(dimension)
 
-The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \\ge || x ||_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
+The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \\ge \\lVert x \\rVert_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int
@@ -636,6 +658,7 @@ end
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
                               GreaterThan, LessThan, EqualTo, Interval,
+                              NormInfinityCone, NormOneCone,
                               SecondOrderCone, RotatedSecondOrderCone,
                               GeometricMeanCone, ExponentialCone,
                               DualExponentialCone, PowerCone, DualPowerCone,

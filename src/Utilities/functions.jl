@@ -341,7 +341,7 @@ Sums the coefficients of `t1` and `t2` and returns an output `MOI.VectorAffineTe
 function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
                                                       MOI.VectorQuadraticTerm}
     scalar_term = unsafe_add(t1.scalar_term, t2.scalar_term)
-    return MOI.VectorAffineTerm(t1.output_index, scalar_term)
+    return VT(t1.output_index, scalar_term)
 end
 
 """
