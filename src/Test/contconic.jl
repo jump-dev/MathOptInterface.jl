@@ -496,8 +496,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
 
         MOI.optimize!(model)
 
-        @test MOI.get(model, MOI.TerminationStatus()) in (MOI.INFEASIBLE, 
-                                                          MOI.INFEASIBLE_OR_UNBOUNDED)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
