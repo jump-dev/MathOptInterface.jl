@@ -772,7 +772,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
-        if config.duals
+        if config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
 
