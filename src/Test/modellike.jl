@@ -18,6 +18,53 @@ function default_status_test(model::MOI.ModelLike)
 end
 
 function nametest(model::MOI.ModelLike)
+    @testset "Variables" begin
+        MOI.empty!(model)
+        x = MOI.add_variables(model, 2)
+        MOI.set(model, MOI.VariableName(), x[1], "x1")
+        @test MOI.get(model, MOI.VariableIndex, "x1") == x[1]
+        MOI.set(model, MOI.VariableName(), x[1], "x2")
+        @test MOI.get(model, MOI.VariableIndex, "x1") === nothing
+        @test MOI.get(model, MOI.VariableIndex, "x2") == x[1]
+        MOI.set(model, MOI.VariableName(), x[2], "x1")
+        @test MOI.get(model, MOI.VariableIndex, "x1") == x[2]
+        MOI.set(model, MOI.VariableName(), x[1], "x1")
+        @test_throws ErrorException MOI.get(model, MOI.VariableIndex, "x1")
+    end
+
+    @testset "Variable bounds" begin
+        MOI.empty!(model)
+        x = MOI.add_variable(model)
+        c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+        c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+        MOI.set(model, MOI.ConstraintName(), c1, "c1")
+        @test MOI.get(model, MOI.ConstraintIndex, "c1") == c1
+        MOI.set(model, MOI.ConstraintName(), c1, "c2")
+        @test MOI.get(model, MOI.ConstraintIndex, "c1") === nothing
+        @test MOI.get(model, MOI.ConstraintIndex, "c2") == c1
+        MOI.set(model, MOI.ConstraintName(), c2, "c1")
+        @test MOI.get(model, MOI.ConstraintIndex, "c1") == c2
+        MOI.set(model, MOI.ConstraintName(), c1, "c1")
+        @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
+    end
+
+    @testset "Affine constraints" begin
+        MOI.empty!(model)
+        x = MOI.add_variable(model)
+        f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+        c1 = MOI.add_constraint(model, f, MOI.GreaterThan(0.0))
+        c2 = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+        MOI.set(model, MOI.ConstraintName(), c1, "c1")
+        @test MOI.get(model, MOI.ConstraintIndex, "c1") == c1
+        MOI.set(model, MOI.ConstraintName(), c1, "c2")
+        @test MOI.get(model, MOI.ConstraintIndex, "c1") === nothing
+        @test MOI.get(model, MOI.ConstraintIndex, "c2") == c1
+        MOI.set(model, MOI.ConstraintName(), c2, "c1")
+        @test MOI.get(model, MOI.ConstraintIndex, "c1") == c2
+        MOI.set(model, MOI.ConstraintName(), c1, "c1")
+        @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
+    end
+
     @testset "Name test with $(typeof(model))" begin
         MOI.empty!(model)
         @test MOIU.supports_default_copy_to(model, #=copy_names=# true)
