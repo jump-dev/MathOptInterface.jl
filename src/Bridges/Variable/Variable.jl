@@ -18,9 +18,8 @@ include("single_bridge_optimizer.jl")
 # fixed) gets stuck compiling add_constrained_variable for some inputs. This
 # method seemed necessary to fix it.
 # See https://github.com/JuliaLang/julia/issues/32167 for more.
-@nospecialize f s
 function MOI.Bridges.Variable.bridge_constrained_variable(BridgeType, b, s)
-    throw(MOI.UnsupportedConstraint{MOI.SingleVariable, typeof(s)}())
+    throw(MOI.UnsupportedConstraint{MOIU.variable_function_type(typeof(s)), typeof(s)}())
 end
 
 # Variable bridges
