@@ -681,12 +681,6 @@ function MOI.supports_constraint(b::AbstractBridgeOptimizer,
 end
 function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                             s::MOI.AbstractSet)
-    # TODO(odow): the compiler in Julia <= 1.2 (and in later versions unless
-    # fixed) gets stuck compiling this method for some combinations of f and s.
-    # As a hacky work-around, we just prevent (well, hint not to) the compiler
-    # from specializing on f and s.
-    # See https://github.com/JuliaLang/julia/issues/32167 for more.
-    @nospecialize f s
     if Variable.has_bridges(Variable.bridges(b))
         if f isa MOI.SingleVariable
             if is_bridged(b, f.variable)
@@ -854,12 +848,6 @@ end
 
 function MOI.add_constrained_variables(b::AbstractBridgeOptimizer,
                                        set::MOI.AbstractVectorSet)
-    # TODO(odow): the compiler in Julia <= 1.2 (and in later versions unless
-    # fixed) gets stuck compiling this method for some combinations of b and set.
-    # As a hacky work-around, we just prevent (well, hint not to) the compiler
-    # from specializing on set.
-    # See https://github.com/JuliaLang/julia/issues/32167 for more.
-    @nospecialize set
     if is_bridged(b, typeof(set)) ||
         is_bridged(b, MOI.VectorOfVariables, typeof(set))
         if supports_bridging_constrained_variable(b, typeof(set))
@@ -877,12 +865,6 @@ function MOI.add_constrained_variables(b::AbstractBridgeOptimizer,
 end
 function MOI.add_constrained_variable(b::AbstractBridgeOptimizer,
                                       set::MOI.AbstractScalarSet)
-    # TODO(odow): the compiler in Julia <= 1.2 (and in later versions unless
-    # fixed) gets stuck compiling this method for some combinations of b and set.
-    # As a hacky work-around, we just prevent (well, hint not to) the compiler
-    # from specializing on set.
-    # See https://github.com/JuliaLang/julia/issues/32167 for more.
-    @nospecialize set
     if is_bridged(b, typeof(set)) ||
         is_bridged(b, MOI.SingleVariable, typeof(set))
         if supports_bridging_constrained_variable(b, typeof(set))

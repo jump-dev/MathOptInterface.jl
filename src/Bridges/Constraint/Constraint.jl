@@ -16,6 +16,14 @@ include("map.jl")
 # Bridge optimizer bridging a specific constraint bridge
 include("single_bridge_optimizer.jl")
 
+# TODO(odow): the compiler in Julia <= 1.2 (and in later versions unless
+# fixed) gets stuck compiling add_constrained_variable for some inputs. This
+# method seemed necessary to fix it.
+# See https://github.com/JuliaLang/julia/issues/32167 for more.
+function MOI.Bridges.Constraint.bridge_constraint(BridgeType, b, f, s)
+    throw(MOI.UnsupportedConstraint{typeof(f), typeof(s)}())
+end
+
 # Constraint bridges
 include("flip_sign.jl")
 const GreaterToLess{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GreaterToLessBridge{T}, OT}
