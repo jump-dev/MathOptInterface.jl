@@ -112,12 +112,15 @@ end
     @test !haskey(map, v1)
     @test MOIB.Variable.has_keys(map, v2)
 
-    err = ArgumentError(
+    err_str = if VERSION >= v"1.2"
+        "`MathOptInterface.VariableIndex[MathOptInterface.VariableIndex(-3), " *
+        "MathOptInterface.VariableIndex(-2)]` is not a valid key vector as " *
+        "returned by `add_keys_for_bridge`."
+    else
         "`MathOptInterface.VariableIndex[VariableIndex(-3), VariableIndex(-2)]`" *
         " is not a valid key vector as returned by `add_keys_for_bridge`."
-    )
-    @test_throws err delete!(map, v2[2:-1:1])
-
+    end
+    @test_throws ArgumentError(err_str) delete!(map, v2[2:-1:1])
     delete!(map, v2[3])
     left = [1, 2, 4]
     @test MOIB.Variable.number_of_variables(map) == 3
