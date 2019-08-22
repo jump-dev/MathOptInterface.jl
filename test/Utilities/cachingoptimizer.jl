@@ -83,9 +83,14 @@ end
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
 end
 
+struct DummyModelAttribute <: MOI.AbstractModelAttribute end
+struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
+struct DummyVariableAttribute <: MOI.AbstractVariableAttribute end
+struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
+
 @testset "Mapping of variables" begin
-    mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    model = MOIU.CachingOptimizer(MOIU.Model{Float64}(), mock)
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    model = MOIU.CachingOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()), mock)
     x = MOI.add_variable(model)
     y = first(MOI.get(mock, MOI.ListOfVariableIndices()))
     @test !MOI.is_valid(model, y)
@@ -105,16 +110,60 @@ end
         MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()))
     @test !MOI.is_valid(model, c2fy)
     @test !MOI.is_valid(mock, c2fx)
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(1.0)
     @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 2.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(1.0)
+
+    MOI.set(model, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(2.0))
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 2.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(2.0)
 
     MOI.set(model, MOI.ConstraintFunction(), c2fx, 3.0fx)
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
     @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 3.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(2.0)
+
+    MOI.set(model, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(4.0))
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(4.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 3.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(4.0)
 
     MOI.set(model, MOI.ObjectiveFunction{typeof(fx)}(), fx)
     @test MOI.get(mock, MOI.ObjectiveFunction{typeof(fy)}()) == fy
 
     MOI.set(model, MOI.ObjectiveFunction{typeof(2.0fx)}(), 2.0fx)
     @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0fy)}()) ≈ 2.0fy
+
+    MOI.set(model, DummyModelAttribute(), 2.0fx + 1.0)
+    @test MOI.get(model, DummyModelAttribute()) ≈ 2.0fx + 1.0
+    @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0fy + 1.0
+
+    for (attr, cache_index, optimizer_index) in [
+        (DummyVariableAttribute(), x, y),
+        (DummyConstraintAttribute(), cfx, cfy)]
+        MOI.set(model, attr, cache_index, 1.0fx)
+        @test MOI.get(model, attr, cache_index) ≈ 1.0fx
+        @test MOI.get(mock, attr, optimizer_index) ≈ 1.0fy
+
+        MOI.set(model, attr, [cache_index], [3.0fx])
+        @test MOI.get(model, attr, [cache_index])[1] ≈ 3.0fx
+        @test MOI.get(mock, attr, [optimizer_index])[1] ≈ 3.0fy
+    end
+
+    nlp_data = MOI.NLPBlockData(
+        [MOI.NLPBoundsPair(1.0, 2.0)],
+        DummyEvaluator(), false)
+    MOI.set(model, MOI.NLPBlock(), nlp_data)
+    for nlp_data in [MOI.get(model, MOI.NLPBlock()), MOI.get(mock, MOI.NLPBlock())]
+        @test nlp_data.constraint_bounds == [MOI.NLPBoundsPair(1.0, 2.0)]
+        @test nlp_data.evaluator isa DummyEvaluator
+        @test nlp_data.has_objective == false
+    end
 end
 
 @testset "CachingOptimizer MANUAL mode" begin

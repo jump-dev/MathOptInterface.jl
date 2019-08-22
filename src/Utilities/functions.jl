@@ -85,6 +85,8 @@ function map_indices(index_map::Function, array::AbstractArray{<:MOI.Index})
     return map(index_map, array)
 end
 
+map_indices(::Function, block::MOI.NLPBlockData) = block
+
 # Terms
 function map_indices(index_map::Function, t::MOI.ScalarAffineTerm)
     return MOI.ScalarAffineTerm(t.coefficient, index_map(t.variable_index))
@@ -143,6 +145,7 @@ or submittable value.
 function substitute_variables end
 
 substitute_variables(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
+substitute_variables(::Function, block::MOI.NLPBlockData) = block
 
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T
@@ -1850,7 +1853,7 @@ end
 convert_approx(::Type{T}, func::T; kws...) where {T} = func
 function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFunction{T};
                         tol=sqrt(eps(T))) where {T}
-    f = MOIU.canonical(func)
+    f = canonical(func)
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol=tol), f.terms)
     if abs(f.constant) > tol || i === nothing ||
         any(j -> j != i && abs(f.terms[i]) > tol, eachindex(f.terms))
