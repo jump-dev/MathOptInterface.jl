@@ -112,11 +112,11 @@ end
     @test !haskey(map, v1)
     @test MOIB.Variable.has_keys(map, v2)
 
+    rev_v2 = reverse(v2)
     err = ArgumentError(
-        "`MathOptInterface.VariableIndex[VariableIndex(-3), VariableIndex(-2)]`" *
-        " is not a valid key vector as returned by `add_keys_for_bridge`."
+        "`$rev_v2` is not a valid key vector as returned by `add_keys_for_bridge`."
     )
-    @test_throws err delete!(map, v2[2:-1:1])
+    @test_throws err delete!(map, rev_v2)
 
     delete!(map, v2[3])
     left = [1, 2, 4]
