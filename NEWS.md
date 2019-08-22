@@ -1,10 +1,20 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.9.1 (?)
+v0.9.1 (August 22, 2019)
 ---------------------
 
+- Fix support for Julia v1.2 (#834).
 - L_1 and L_∞ norm epigraph cones and corresponding bridges to LP were added (#818).
+- Added tests to `MOI.Test.nametest` (#833).
+- Fix `MOI.Test.soc3test` for solvers not supporting infeasibility certificates (#839).
+- Implements `operate` for operators `*` and `/` between vector function and
+  constant (#837).
+- Implements `show` for `MOI.Utilities.IndexMap` (#847).
+- Fix corner cases for mapping of variables in `MOI.Utilities.CachingOptimizer`
+  and substitution of variables in `MOI.Bridges.AbstractBridgeOptimizer` (#848).
+- Fix transformation of constant terms for `MOI.Bridges.Constraint.SOCtoPSDBridge`
+  and `MOI.Bridges.Constraint.RSOCtoPSDBridge` (#840).
 
 v0.9.0 (August 13, 2019)
 ---------------------
