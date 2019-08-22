@@ -88,6 +88,9 @@ Base.haskey(idxmap::IndexMap, vi::MOI.VariableIndex) = haskey(idxmap.varmap, vi)
 
 Base.keys(idxmap::IndexMap) = Iterators.flatten((keys(idxmap.varmap), keys(idxmap.conmap)))
 
+Base.length(idxmap::IndexMap) = length(idxmap.varmap) + length(idxmap.conmap)
+Base.iterate(idxmap::MOIU.IndexMap, args...) = iterate(Base.Iterators.flatten((idxmap.varmap, idxmap.conmap)), args...)
+
 """
     pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
 
