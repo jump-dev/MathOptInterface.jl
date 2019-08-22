@@ -21,7 +21,7 @@ end
     cy = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(2)
     map = MOIU.IndexMap(Dict(x => y), Dict(cx => cy))
     @test length(map) == 2
-	compare_without_moi(sprint(show, map), "Utilities.IndexMap($x=>$y,Pair{ConstraintIndex,ConstraintIndex}($cx, $cy))")
+    compare_without_moi(sprint(show, map), "Utilities.IndexMap($(x => y),Pair{ConstraintIndex,ConstraintIndex}($cx, $cy))")
 end
 
 @testset "AUTOMATIC" begin
