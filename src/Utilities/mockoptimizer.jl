@@ -298,7 +298,10 @@ MOI.get(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.primalstatus
 MOI.get(mock::MockOptimizer, ::MOI.DualStatus) = mock.dualstatus
 MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
 
-MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute, idx::MOI.VariableIndex) = MOI.get(mock.inner_model, attr, xor_index(idx))
+function MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute,
+                 idx::MOI.VariableIndex)
+    return xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx)))
+end
 MOI.get(mock::MockOptimizer, ::MockVariableAttribute, idx::MOI.VariableIndex) = mock.varattribute[xor_index(idx)]
 function MOI.get(mock::MockOptimizer, ::MOI.VariablePrimal,
                  idx::MOI.VariableIndex)

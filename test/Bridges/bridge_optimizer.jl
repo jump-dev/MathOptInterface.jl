@@ -8,6 +8,76 @@ const MOIB = MathOptInterface.Bridges
 
 include("utilities.jl")
 
+struct DummyModelAttribute <: MOI.AbstractModelAttribute end
+struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
+struct DummyVariableAttribute <: MOI.AbstractVariableAttribute end
+struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
+
+@testset "Substitution of variables" begin
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    bridged = MOIB.Variable.Vectorize{Float64}(mock)
+    x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
+    fx = MOI.SingleVariable(x)
+    y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
+    fy = MOI.SingleVariable(y)
+
+    c2fx = MOI.add_constraint(bridged, 2.0fx, MOI.GreaterThan(1.0))
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(1.0)
+    # The constant was moved to the set
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 2.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(-1.0)
+
+    MOI.set(bridged, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(2.0))
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 2.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(0.0)
+
+    MOI.set(bridged, MOI.ConstraintFunction(), c2fx, 3.0fx)
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 3.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(-1.0)
+
+    MOI.set(bridged, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(4.0))
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(4.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 3.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(1.0)
+
+    MOI.set(bridged, MOI.ObjectiveFunction{typeof(2.0fx)}(), 2.0fx)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0fy)}()) ≈ 2.0fy + 2.0
+
+    MOI.set(bridged, DummyModelAttribute(), 2.0fx + 1.0)
+    @test MOI.get(bridged, DummyModelAttribute()) ≈ 2.0fx + 1.0
+    @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0fy + 3.0
+
+    z = MOI.add_variable(bridged)
+    fz = MOI.SingleVariable(z)
+    for (attr, index) in [
+        (DummyVariableAttribute(), z),
+        (DummyConstraintAttribute(), c2fx)]
+        MOI.set(bridged, attr, index, 1.0fx)
+        @test MOI.get(bridged, attr, index) ≈ 1.0fx
+        @test MOI.get(mock, attr, index) ≈ 1.0fy + 1.0
+
+        MOI.set(bridged, attr, [index], [3.0fx + 1.0fz])
+        @test MOI.get(bridged, attr, [index])[1] ≈ 3.0fx + 1.0fz
+        @test MOI.get(mock, attr, [index])[1] ≈ 3.0fy + 1.0fz + 3.0
+    end
+
+    nlp_data = MOI.NLPBlockData(
+        [MOI.NLPBoundsPair(1.0, 2.0)],
+        DummyEvaluator(), false)
+    MOI.set(bridged, MOI.NLPBlock(), nlp_data)
+    for nlp_data in [MOI.get(bridged, MOI.NLPBlock()), MOI.get(mock, MOI.NLPBlock())]
+        @test nlp_data.constraint_bounds == [MOI.NLPBoundsPair(1.0, 2.0)]
+        @test nlp_data.evaluator isa DummyEvaluator
+        @test nlp_data.has_objective == false
+    end
+end
+
 # Model not supporting Interval
 MOIU.@model(NoIntervalModel,
             (),
