@@ -267,6 +267,21 @@ function pass_constraints(
     end
 end
 
+function copy_free_variables(dest::MOI.ModelLike, idxmap::IndexMap, vis_src, copy_variables::Function)
+    if length(vis_src) != length(keys(idxmap.varmap))
+        vars = copy_variables(dest, length(vis_src) - length(idxmap.varmap))
+        i = 1
+        for vi in vis_src
+            if !haskey(idxmap.varmap, vi)
+                idxmap.varmap[vi] = vars[i]
+                i += 1
+            end
+        end
+        @assert i == length(vars) + 1
+        @assert length(vis_src) == length(idxmap.varmap)
+    end
+end
+
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     Base.depwarn("default_copy_to(dest, src) is deprecated, use default_copy_to(dest, src, true) instead or default_copy_to(dest, src, false) if you do not want to copy names.", :default_copy_to)
     default_copy_to(dest, src, true)
@@ -292,23 +307,28 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
     vector_of_variables_types = [S for (F, S) in constraint_types
                                  if F == MOI.VectorOfVariables]
 
-    vector_of_variables_not_added = [
-        copy_vector_of_variables(dest, src, idxmap, S)
-        for S in vector_of_variables_types
-    ]
-    single_variable_not_added = [
-        copy_single_variable(dest, src, idxmap, S)
-        for S in single_variable_types
-    ]
-
-    if length(vis_src) != length(keys(idxmap.varmap))
-        # Copy free variables
-        variables_not_added = setdiff(Set(vis_src), keys(idxmap.varmap))
-        vars = MOI.add_variables(dest, length(variables_not_added))
-        for (vi, var) in zip(variables_not_added, vars)
-            idxmap.varmap[vi] = var
-        end
+    # The `NLPBlock` assumes that the order of variables does not change (#849)
+    if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
+        vector_of_variables_not_added = [
+            MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
+            for S in vector_of_variables_types
+        ]
+        single_variable_not_added = [
+            MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}())
+            for S in single_variable_types
+        ]
+    else
+        vector_of_variables_not_added = [
+            copy_vector_of_variables(dest, src, idxmap, S)
+            for S in vector_of_variables_types
+        ]
+        single_variable_not_added = [
+            copy_single_variable(dest, src, idxmap, S)
+            for S in single_variable_types
+        ]
     end
+
+    copy_free_variables(dest, idxmap, vis_src, MOI.add_variables)
 
     # Copy variable attributes
     pass_attributes(dest, src, copy_names, idxmap, vis_src)
@@ -652,14 +672,7 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
             allocate_single_variable(dest, src, idxmap, S)
     end
 
-    if length(vis_src) != length(keys(idxmap.varmap))
-        # Allocate free variables
-        variables_not_added = setdiff(Set(vis_src), keys(idxmap.varmap))
-        vars = allocate_variables(dest, length(variables_not_added))
-        for (vi, var) in zip(variables_not_added, vars)
-            idxmap.varmap[vi] = var
-        end
-    end
+    copy_free_variables(dest, idxmap, vis_src, allocate_variables)
 
     # Allocate variable attributes
     pass_attributes(dest, src, copy_names, idxmap, vis_src, allocate)
