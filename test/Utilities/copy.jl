@@ -57,3 +57,25 @@ end
     MOIT.failcopytestca(mock)
     MOIT.copytest(mock, MOIU.Model{Float64}())
 end
+
+struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
+
+@testset "Create variables in same ordering when NLPBlock is used (#849)" begin
+    model = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    a = MOI.add_variable(model)
+    b, c = MOI.add_variables(model, 2)
+    x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
+    y, cy = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    nlp_data = MOI.NLPBlockData(
+        [MOI.NLPBoundsPair(0.0, 1.0) for i in 1:5],
+        DummyEvaluator(), false)
+    MOI.set(model, MOI.NLPBlock(), nlp_data)
+    copy = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    index_map = MOIU.default_copy_to(copy, model, true)
+    for vi in [a, b, c, x, y[1]]
+        @test index_map[vi] == vi
+    end
+    for ci in [cx, cy]
+        @test index_map[ci] == ci
+    end
+end
