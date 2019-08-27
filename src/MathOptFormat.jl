@@ -5,24 +5,22 @@ const MOI = MathOptInterface
 
 import GZip
 
-struct ModelOptions <: MOI.AbstractModelAttribute end
-
 # We re-define is_empty and empty! to prevent the universal fallback from
 # deleting the options. We should really fix `MOIU.@model` to allow an extension
 # dictionary.
 
-function is_empty(model)
+function is_empty(model, model_options)
     return MOI.is_empty(model.model) &&
         isempty(model.constraints) &&
         length(model.modattr) == 1 &&
-        haskey(model.modattr, ModelOptions()) &&
+        haskey(model.modattr, model_options) &&
         isempty(model.varattr) &&
         isempty(model.conattr) &&
         isempty(model.optattr)
 end
 
-function empty_model(model)
-    options = MOI.get(model, ModelOptions())
+function empty_model(model, model_options)
+    options = MOI.get(model, model_options)
     MOI.empty!(model.model)
     empty!(model.constraints)
     model.nextconstraintid = 0
@@ -32,7 +30,7 @@ function empty_model(model)
     empty!(model.varattr)
     empty!(model.conattr)
     empty!(model.optattr)
-    MOI.set(model, ModelOptions(), options)
+    MOI.set(model, model_options, options)
     return
 end
 

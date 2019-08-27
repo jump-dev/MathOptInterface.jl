@@ -1,11 +1,5 @@
 function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, MathOptFormat.ModelOptions())
-    if typeof(options) != Options
-        # Okay, we must have copied another MathOptFormat model here and it had
-        # some existing options. Reset to the default options.
-        options = Options(false, true, false)
-        MOI.set(model, MathOptFormat.ModelOptions(), options)
-    end
+    options = MOI.get(model, ModelOptions())
     object = Object(
         "name"        => "MathOptFormat Model",
         "version"     => VERSION,
@@ -237,6 +231,8 @@ head_name(::Type{MOI.RotatedSecondOrderCone}) = "RotatedSecondOrderCone"
 head_name(::Type{MOI.GeometricMeanCone}) = "GeometricMeanCone"
 head_name(::Type{MOI.ExponentialCone}) = "ExponentialCone"
 head_name(::Type{MOI.DualExponentialCone}) = "DualExponentialCone"
+head_name(::Type{MOI.NormOneCone}) = "NormOneCone"
+head_name(::Type{MOI.NormInfinityCone}) = "NormInfinityCone"
 head_name(::Type{MOI.RootDetConeTriangle}) = "RootDetConeTriangle"
 head_name(::Type{MOI.RootDetConeSquare}) = "RootDetConeSquare"
 head_name(::Type{MOI.LogDetConeTriangle}) = "LogDetConeTriangle"
@@ -253,3 +249,15 @@ head_name(::Type{<:MOI.PowerCone}) = "PowerCone"
 head_name(::Type{<:MOI.DualPowerCone}) = "DualPowerCone"
 head_name(::Type{<:MOI.SOS1}) = "SOS1"
 head_name(::Type{<:MOI.SOS2}) = "SOS2"
+
+function moi_to_object(
+    set::MOI.IndicatorSet{I, S}, model::Model,
+    name_map::Dict{MOI.VariableIndex, String}
+) where {I, S}
+    @assert I == MOI.ACTIVATE_ON_ONE || I == MOI.ACTIVATE_ON_ZERO
+    return Object(
+        "head" => "IndicatorSet",
+        "set" => moi_to_object(set.set, model, name_map),
+        "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero"
+    )
+end

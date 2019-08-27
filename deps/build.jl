@@ -19,8 +19,8 @@ function download_schema(schema_git_tag)
     end
 end
 
-# Update this tag whenever github.com/odow/MathOptFormat releases a new update to
-# the schema (providing that any code in this package is also updated).
-const SCHEMA_GIT_TAG = "v0.1.0"
+# Update this tag whenever github.com/odow/MathOptFormat releases a new update
+# to the schema (providing that any code in this package is also updated).
+const SCHEMA_GIT_TAG = "v0.2.1"
 
 download_schema(SCHEMA_GIT_TAG)

@@ -4,9 +4,8 @@ import MathOptInterface
 import ..MathOptFormat
 
 const MOI = MathOptInterface
-const MOIU = MOI.Utilities
 
-MOIU.@model(InnerModel,
+MOI.Utilities.@model(InnerModel,
     (MOI.Integer,),
     (),
     (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
@@ -14,15 +13,21 @@ MOIU.@model(InnerModel,
         MOI.PositiveSemidefiniteConeTriangle,
         MOI.ExponentialCone, MOI.DualExponentialCone),
     (MOI.PowerCone, MOI.DualPowerCone),
-    (MOI.SingleVariable,),
+    (),
     (MOI.ScalarAffineFunction,),
     (MOI.VectorOfVariables,),
     (MOI.VectorAffineFunction,)
 )
 
-const Model = MOIU.UniversalFallback{InnerModel{Float64}}
+const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
+
+struct ModelOptions <: MOI.AbstractModelAttribute end
+MOI.is_empty(model::Model) = MathOptFormat.is_empty(model, ModelOptions())
+MOI.empty!(model::Model) = MathOptFormat.empty_model(model, ModelOptions())
 
 struct Options end
+
+MOI.Utilities.map_indices(::Function, attr::Options) = attr
 
 """
     Model()
@@ -30,13 +35,10 @@ struct Options end
 Create an empty instance of `MathOptFormat.CBF.Model`.
 """
 function Model()
-    model = MOIU.UniversalFallback(InnerModel{Float64}())
-    MOI.set(model, MathOptFormat.ModelOptions(), Options())
+    model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
+    MOI.set(model, ModelOptions(), Options())
     return model
 end
-
-MOI.is_empty(model::Model) = MathOptFormat.is_empty(model)
-MOI.empty!(model::Model) = MathOptFormat.empty_model(model)
 
 Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 
@@ -47,13 +49,7 @@ Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 # ==============================================================================
 
 function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, MathOptFormat.ModelOptions())
-    if typeof(options) != Options
-        # Okay, we must have copied another MathOptFormat model here and it had
-        # some existing options. Reset to the default options.
-        options = Options()
-        MOI.set(model, MathOptFormat.ModelOptions(), options)
-    end
+    options = MOI.get(model, ModelOptions())
     # Helper functions for MOI constraints.
     model_cons(con_func, con_set) = MOI.get(model,
         MOI.ListOfConstraintIndices{con_func, con_set}())

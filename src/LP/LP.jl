@@ -4,20 +4,23 @@ import ..MathOptFormat
 
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIU = MOI.Utilities
 
-MOIU.@model(InnerModel,
+MOI.Utilities.@model(InnerModel,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
     (),
-    (MOI.SingleVariable,),
+    (),
     (MOI.ScalarAffineFunction,),
     (),
     ()
 )
 
-const Model = MOIU.UniversalFallback{InnerModel{Float64}}
+const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
+
+struct ModelOptions <: MOI.AbstractModelAttribute end
+MOI.is_empty(model::Model) = MathOptFormat.is_empty(model, ModelOptions())
+MOI.empty!(model::Model) = MathOptFormat.empty_model(model, ModelOptions())
 
 struct Options
     maximum_length::Int
@@ -26,6 +29,8 @@ struct Options
     warned_start::Set{Char}
     warned_illegal::Set{Char}
 end
+
+MOI.Utilities.map_indices(::Function, attr::Options) = attr
 
 """
     Model(; kwargs...)
@@ -46,14 +51,11 @@ Keyword arguments are:
 function Model(;
     maximum_length::Int = 255, warn::Bool = false, warn_once::Bool = false
 )
-    model = MOIU.UniversalFallback(InnerModel{Float64}())
+    model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
     options = Options(maximum_length, warn, warn_once, Set{Char}(), Set{Char}())
-    MOI.set(model, MathOptFormat.ModelOptions(), options)
+    MOI.set(model, ModelOptions(), options)
     return model
 end
-
-MOI.is_empty(model::Model) = MathOptFormat.is_empty(model)
-MOI.empty!(model::Model) = MathOptFormat.empty_model(model)
 
 function Base.show(io::IO, ::Model)
     print(io, "A .LP-file model")
@@ -207,13 +209,7 @@ function write_objective(io::IO, model::Model, sanitized_names::Dict{MOI.Variabl
 end
 
 function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, MathOptFormat.ModelOptions())
-    if typeof(options) != Options
-        # Okay, we must have copied another MathOptFormat model here and it had
-        # some existing options. Reset to the default options.
-        options=  Options(255, false, false, Set{Char}(), Set{Char}())
-        MOI.set(model, MathOptFormat.ModelOptions(), options)
-    end
+    options = MOI.get(model, ModelOptions())
     max_length = options.maximum_length
     # Ensure each variable has a unique name that does not infringe LP constraints.
     MathOptFormat.create_unique_names(model, warn = options.warn)

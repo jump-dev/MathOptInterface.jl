@@ -4,24 +4,29 @@ import ..MathOptFormat
 
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIU = MOI.Utilities
 
-MOIU.@model(InnerModel,
+MOI.Utilities.@model(InnerModel,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
     (MOI.SOS1, MOI.SOS2),
-    (MOI.SingleVariable,),
+    (),
     (MOI.ScalarAffineFunction,),
     (MOI.VectorOfVariables,),
     ()
 )
 
-const Model = MOIU.UniversalFallback{InnerModel{Float64}}
+const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
+
+struct ModelOptions <: MOI.AbstractModelAttribute end
+MOI.is_empty(model::Model) = MathOptFormat.is_empty(model, ModelOptions())
+MOI.empty!(model::Model) = MathOptFormat.empty_model(model, ModelOptions())
 
 struct Options
     warn::Bool
 end
+
+MOI.Utilities.map_indices(::Function, attr::Options) = attr
 
 """
     Model(; kwargs...)
@@ -35,13 +40,10 @@ Keyword arguments are:
 function Model(;
         warn::Bool = false
 )
-    model = MOIU.UniversalFallback(InnerModel{Float64}())
-    MOI.set(model, MathOptFormat.ModelOptions(), Options(warn))
+    model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
+    MOI.set(model, ModelOptions(), Options(warn))
     return model
 end
-
-MOI.is_empty(model::Model) = MathOptFormat.is_empty(model)
-MOI.empty!(model::Model) = MathOptFormat.empty_model(model)
 
 function Base.show(io::IO, ::Model)
     print(io, "A Mathematical Programming System (MPS) model")
@@ -55,13 +57,7 @@ end
 # ==============================================================================
 
 function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, MathOptFormat.ModelOptions())
-    if typeof(options) != Options
-        # Okay, we must have copied another MathOptFormat model here and it had
-        # some existing options. Reset to the default options.
-        options = Options(false)
-        MOI.set(model, MathOptFormat.ModelOptions(), options)
-    end
+    options = MOI.get(model, ModelOptions())
     MathOptFormat.create_unique_names(
         model, warn = options.warn, replacements = [' ' => '_']
     )

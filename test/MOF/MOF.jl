@@ -40,13 +40,13 @@ end
             "Cannot read model from file as destination model is not empty.")
         @test_throws exception MOI.read_from_file(
             model, joinpath(@__DIR__, "empty_model.mof.json"))
-        options = MOI.get(model, MathOptFormat.ModelOptions())
+        options = MOI.get(model, MOF.ModelOptions())
         @test options.warn
         MOI.empty!(model)
         @test MOI.is_empty(model)
         MOI.read_from_file(
             model, joinpath(@__DIR__, "empty_model.mof.json"))
-        options2 = MOI.get(model, MathOptFormat.ModelOptions())
+        options2 = MOI.get(model, MOF.ModelOptions())
         @test options2.warn
     end
 
@@ -369,7 +369,37 @@ end
             c1: [t, x1, x2, x3, x4] in RootDetConeSquare(2)
         """, ["t", "x1", "x2", "x3", "x4"], ["c1"])
     end
+    @testset "IndicatorSet" begin
+        test_model_equality("""
+            variables: x, y
+            minobjective: x
+            c1: [x, y] in IndicatorSet{ACTIVATE_ON_ONE}(GreaterThan(1.0))
+            c2: x >= 0.0
+        """, ["x", "y"], ["c1", "c2"])
 
+        test_model_equality("""
+            variables: x, y
+            minobjective: x
+            c1: [x, y] in IndicatorSet{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
+            c2: x >= 0.0
+        """, ["x", "y"], ["c1", "c2"])
+    end
+    @testset "NormOneCone" begin
+        test_model_equality("""
+            variables: x, y
+            minobjective: x
+            c1: [x, y] in NormOneCone(2)
+            c2: x >= 0.0
+        """, ["x", "y"], ["c1", "c2"])
+    end
+    @testset "NormInfinityCone" begin
+        test_model_equality("""
+            variables: x, y
+            minobjective: x
+            c1: [x, y] in NormInfinityCone(2)
+            c2: x >= 0.0
+        """, ["x", "y"], ["c1", "c2"])
+    end
     # Clean up
     sleep(1.0)  # allow time for unlink to happen
     rm(TEST_MOF_FILE, force=true)
