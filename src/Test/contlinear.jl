@@ -1,10 +1,9 @@
 # Continuous linear problems
 
 # Basic solver, query, resolve
-function linear1test(model::MOI.ModelLike, config::TestConfig)
+function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # simple 2 variable, 1 constraint problem
     # min -x
     # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
@@ -372,10 +371,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # add_variable (one by one)
-function linear2test(model::MOI.ModelLike, config::TestConfig)
+function linear2test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # Min -x
     # s.t. x + y <= 1
     # x, y >= 0
@@ -446,10 +444,9 @@ function linear2test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # Issue #40 from Gurobi.jl
-function linear3test(model::MOI.ModelLike, config::TestConfig)
+function linear3test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # min  x
     # s.t. x >= 0
     #      x >= 3
@@ -544,10 +541,9 @@ function linear3test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # Modify GreaterThan{T} and LessThan{T} sets as bounds
-function linear4test(model::MOI.ModelLike, config::TestConfig)
+function linear4test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
@@ -616,10 +612,9 @@ function linear4test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # Change coeffs, del constr, del var
-function linear5test(model::MOI.ModelLike, config::TestConfig)
+function linear5test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     #@test MOI.get(model, MOI.SupportsDeleteVariable())
     #####################################
     # Start from simple LP
@@ -760,10 +755,9 @@ function linear5test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # Modify GreaterThan{T} and LessThan{T} sets as linear constraints
-function linear6test(model::MOI.ModelLike, config::TestConfig)
+function linear6test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
@@ -859,10 +853,9 @@ function linear6test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # Modify constants in Nonnegatives and Nonpositives
-function linear7test(model::MOI.ModelLike, config::TestConfig)
+function linear7test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
 
     # Min  x - y
     # s.t. bx <= x          (c1)
@@ -960,10 +953,9 @@ function linear7test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # infeasible problem
-function linear8atest(model::MOI.ModelLike, config::TestConfig)
+function linear8atest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # min x
     # s.t. 2x+y <= -1
     # x,y >= 0
@@ -1017,10 +1009,9 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig)
 end
 
 # unbounded problem
-function linear8btest(model::MOI.ModelLike, config::TestConfig)
+function linear8btest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # min -x-y
     # s.t. -x+2y <= 0
     # x,y >= 0
@@ -1064,10 +1055,9 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig)
 end
 
 # unbounded problem with unique ray
-function linear8ctest(model::MOI.ModelLike, config::TestConfig)
+function linear8ctest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # min -x-y
     # s.t. x-y == 0
     # x,y >= 0
@@ -1113,10 +1103,9 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig)
 end
 
 # add_constraints
-function linear9test(model::MOI.ModelLike, config::TestConfig)
+function linear9test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     #   maximize 1000 x + 350 y
     #
     #       s.t.                x >= 30
@@ -1191,10 +1180,9 @@ function linear9test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # ranged constraints
-function linear10test(model::MOI.ModelLike, config::TestConfig)
+function linear10test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     #   maximize x + y
     #
     #       s.t.  5 <= x + y <= 10
@@ -1325,10 +1313,9 @@ function linear10test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # inactive ranged constraints
-function linear10btest(model::MOI.ModelLike, config::TestConfig)
+function linear10btest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     #   minimize x + y
     #
     #       s.t.  -1 <= x + y <= 10
@@ -1385,10 +1372,9 @@ function linear10btest(model::MOI.ModelLike, config::TestConfig)
 end
 
 # changing constraint sense
-function linear11test(model::MOI.ModelLike, config::TestConfig)
+function linear11test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # simple 2 variable, 1 constraint problem
     #
     # starts with
@@ -1464,10 +1450,9 @@ function linear11test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # infeasible problem with 2 linear constraints
-function linear12test(model::MOI.ModelLike, config::TestConfig)
+function linear12test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # min x
     # s.t. 2x-3y <= -7
     #      y <= 2
@@ -1519,10 +1504,9 @@ function linear12test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # feasibility problem
-function linear13test(model::MOI.ModelLike, config::TestConfig)
+function linear13test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # find x, y
     # s.t. 2x + 3y >= 1
     #      x - y == 0
@@ -1572,10 +1556,9 @@ function linear13test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # Deletion of vector of variables
-function linear14test(model::MOI.ModelLike, config::TestConfig)
+function linear14test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # max x + 2y + 3z + 4
     # s.t. 3x + 2y + z <= 2
     #      x, y, z >= 0
@@ -1675,10 +1658,9 @@ function linear14test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # Empty vector affine function rows (LQOI Issue #48)
-function linear15test(model::MOI.ModelLike, config::TestConfig)
+function linear15test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # minimize 0
     # s.t. 0 == 0
     #      x == 1
@@ -1729,10 +1711,9 @@ end
 
 # This test can be passed by solvers that don't support VariablePrimalStart
 # because copy_to drops start information with a warning.
-function partial_start_test(model::MOI.ModelLike, config::TestConfig)
+function partial_start_test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Number}
     atol = config.atol
     rtol = config.rtol
-    T = config.number_type
     # maximize 2x + y
     # s.t. x + y <= 1
     #      x, y >= 0
