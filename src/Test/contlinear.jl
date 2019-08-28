@@ -333,12 +333,12 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
             @test MOI.get(model, MOI.DualStatus(1)) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 atol=atol rtol=rtol
 
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -T(3)/T(2) atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ T(1)/T(2) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -T(3//2) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ T(1//2) atol=atol rtol=rtol
 
             @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 0 atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ 0 atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc3) ≈ T(3)/T(2) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), vc3) ≈ T(3//2) atol=atol rtol=rtol
         end
     end
 
@@ -674,9 +674,9 @@ function linear5test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(8)/T(3) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(8//3) atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.VariablePrimal(), [x, y]) ≈ [T(4)/T(3), T(4)/T(3)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), [x, y]) ≈ [T(4//3), T(4//3)] atol=atol rtol=rtol
     end
 
     # copy and solve again
@@ -1138,7 +1138,7 @@ function linear9test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     @test vc12[2].value == y.value
 
     c1 = MOI.add_constraints(model,
-        [MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -T(3)/T(2)], [x, y]), zero(T))],
+        [MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -T(3//2)], [x, y]), zero(T))],
         [MOI.GreaterThan{T}(zero(T))]
     )
 
