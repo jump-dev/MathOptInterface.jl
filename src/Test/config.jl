@@ -10,13 +10,14 @@ struct TestConfig
     # MOI.OPTIMAL or MOI.LOCALLY_SOLVED.
     optimal_status::MOI.TerminationStatusCode
     basis::Bool # can get variable and constraint basis status
+    number_type::Type{<:Number}
     function TestConfig(;
         atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true,
         query::Bool = true, modify_lhs::Bool = true, duals::Bool = true,
         infeas_certificates::Bool = true, optimal_status = MOI.OPTIMAL,
-        basis::Bool = false)
+        basis::Bool = false, number_type::Type{<:Number} = Float64)
         new(atol, rtol, solve, query, modify_lhs, duals, infeas_certificates,
-            optimal_status, basis)
+            optimal_status, basis, number_type)
     end
 end
 
