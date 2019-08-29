@@ -16,7 +16,7 @@ struct TestConfig{T <: Number}
         infeas_certificates::Bool = true, optimal_status = MOI.OPTIMAL,
         basis::Bool = false) where {T <: Number}
         new(atol, rtol, solve, query, modify_lhs, duals, infeas_certificates,
-            optimal_status, basis) 
+            optimal_status, basis)
     end
     TestConfig(;kwargs...) = TestConfig{Float64}(; kwargs...)
 end
