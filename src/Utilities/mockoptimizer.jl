@@ -18,7 +18,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     conattribute::Dict{MOI.ConstraintIndex,Int} # MockConstraintAttribute
     supports_names::Bool # Allows to test with optimizer not supporting names
     needs_allocate_load::Bool # Allows to tests the Allocate-Load interface, see copy_to
-    add_var_allowed::Bool
+    add_var_allowed::Bool # If false, the optimizer throws AddVariableNotAllowed
     add_con_allowed::Bool # If false, the optimizer throws AddConstraintNotAllowed
     modify_allowed::Bool # If false, the optimizer throws Modify...NotAllowed
     delete_allowed::Bool # If false, the optimizer throws DeleteNotAllowed
@@ -58,6 +58,8 @@ xor_indices(x) = map_indices(xor_index, x)
 
 function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                        needs_allocate_load=false,
+                       add_var_allowed=!needs_allocate_load,
+                       add_con_allowed=!needs_allocate_load,
                        eval_objective_value=true,
                        eval_dual_objective_value=true,
                        eval_variable_constraint_dual=true)
@@ -67,8 +69,8 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                          Dict{MOI.ConstraintIndex,Int}(),
                          supports_names,
                          needs_allocate_load,
-                         true,
-                         true,
+                         add_var_allowed,
+                         add_con_allowed,
                          true,
                          true,
                          (::MockOptimizer) -> begin end,
