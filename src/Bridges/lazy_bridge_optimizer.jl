@@ -20,6 +20,8 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     constraint_map::Constraint.Map
     con_to_name::Dict{MOI.ConstraintIndex, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
+    # Bridged objective
+    objective_map::Objective.Map
     # Bellman-Ford
     # List of types of available bridges
     variable_bridge_types::Vector{Any}
@@ -33,16 +35,25 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     constraint_dist::Dict{Tuple{DataType, DataType}, Int}
     # (F, S) -> Bridge to be used for an `F`-in-`S` constraint
     constraint_best::Dict{Tuple{DataType, DataType}, DataType}
+    # List of types of available bridges
+    objective_bridge_types::Vector{Any}
+    # (F, S) -> Number of bridges that need to be used for an `F`-in-`S` constraint
+    objective_dist::Dict{Tuple{DataType}, Int}
+    # (F, S) -> Bridge to be used for an `F`-in-`S` constraint
+    objective_best::Dict{Tuple{DataType}, DataType}
 end
 function LazyBridgeOptimizer(model::MOI.ModelLike)
     return LazyBridgeOptimizer{typeof(model)}(
         model,
         Variable.Map(), Dict{MOI.VariableIndex, String}(), nothing,
         Constraint.Map(), Dict{MOI.ConstraintIndex, String}(), nothing,
+        Objective.Map(),
         Any[], Dict{Tuple{DataType}, Int}(),
         Dict{Tuple{DataType}, DataType}(),
         Any[], Dict{Tuple{DataType, DataType}, Int}(),
-        Dict{Tuple{DataType, DataType}, DataType}())
+        Dict{Tuple{DataType, DataType}, DataType}(),
+        Any[], Dict{Tuple{DataType}, Int}(),
+        Dict{Tuple{DataType}, DataType}())
 end
 
 function Variable.bridges(bridge::LazyBridgeOptimizer)
@@ -51,14 +62,17 @@ end
 function Constraint.bridges(bridge::LazyBridgeOptimizer)
     return bridge.constraint_map
 end
+function Objective.bridges(b::LazyBridgeOptimizer)
+    return b.objective_map
+end
 
-variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.SingleVariable
-variable_function_type(::Type{<:MOI.AbstractVectorSet}) = MOI.VectorOfVariables
 function _dist(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
-    if MOI.supports_constraint(b.model, variable_function_type(S), S)
+    F = MOIU.variable_function_type(S)
+    if MOI.supports_constraint(b.model, F, S)
         return 0
     else
-        return get(b.variable_dist, (S,), typemax(Int))
+        return min(get(b.variable_dist, (S,), typemax(Int)),
+                   get(b.constraint_dist, (F, S), typemax(Int) - 1) + 1)
     end
 end
 
@@ -70,22 +84,61 @@ function _dist(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{
     end
 end
 
-function added_dist(b::LazyBridgeOptimizer, args...)
+function _dist(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
+    if MOI.supports(b.model, MOI.ObjectiveFunction{F}())
+        return 0
+    else
+        return get(b.objective_dist, (F,), typemax(Int))
+    end
+end
+
+function _added_dist(b::LazyBridgeOptimizer, args...)
     dist = mapreduce(C -> _dist(b, C[1]), +,
                      added_constrained_variable_types(args...), init = 0)
     dist += mapreduce(C -> _dist(b, C[1], C[2]), +,
                       added_constraint_types(args...), init = 0)
     return dist
 end
-function supports_added_no_update(b::LazyBridgeOptimizer, args...)
+function added_dist(b::LazyBridgeOptimizer,
+                    BT::Type{<:Union{Variable.AbstractBridge,
+                                     Constraint.AbstractBridge}},
+                    args...)
+    return _added_dist(b, BT, args...)
+end
+function added_dist(b::LazyBridgeOptimizer,
+                    BT::Type{<:Objective.AbstractBridge},
+                    args...)
+    F = set_objective_function_type(BT, args...)
+    return _added_dist(b, BT, args...) + _dist(b, F)
+end
+
+function _supports_added_no_update(b::LazyBridgeOptimizer, args...)
     return all(C -> supports_no_update(b, C[1]), added_constrained_variable_types(args...)) &&
         all(C -> supports_no_update(b, C[1], C[2]), added_constraint_types(args...))
 end
+function supports_added_no_update(
+    b::LazyBridgeOptimizer,
+    BT::Type{<:Union{Variable.AbstractBridge,
+                     Constraint.AbstractBridge}},
+    args...
+)
+    return _supports_added_no_update(b, BT, args...)
+end
+function supports_added_no_update(
+    b::LazyBridgeOptimizer,
+    BT::Type{<:Objective.AbstractBridge},
+    args...
+)
+    F = set_objective_function_type(BT, args...)
+    return _supports_added_no_update(b, BT, args...) &&
+        supports_no_update(b, F)
+end
+
 
 # Update `b.variable_dist`, `b.constraint_dist` `b.variable_best` and
 # `b.constraint_best` for constrained variable types in `variables` and
 # constraint types in `constraints`.
-function update_dist!(b::LazyBridgeOptimizer, variables, constraints)
+function update_dist!(b::LazyBridgeOptimizer, variables, constraints, objectives)
     # Bellman-Ford algorithm
     changed = true # Has b.constraint_dist changed in the last iteration ?
     while changed
@@ -120,11 +173,49 @@ function update_dist!(b::LazyBridgeOptimizer, variables, constraints)
                 end
             end
         end
+        for BT in b.objective_bridge_types
+            for (F,) in objectives
+                if Objective.supports_objective_function(BT, F) &&
+                    supports_added_no_update(b, BT, F)
+                    # Number of bridges needed using BT
+                    dist = 1 + added_dist(b, BT, F)
+                    # Is it better that what can currently be done ?
+                    if dist < _dist(b, F)
+                        b.objective_dist[(F,)] = dist
+                        b.objective_best[(F,)] = Objective.concrete_bridge_type(BT, F)
+                        changed = true
+                    end
+                end
+            end
+        end
     end
 end
 
 function fill_required!(required_variables::Set{Tuple{DataType}},
                         required_constraints::Set{Tuple{DataType, DataType}},
+                        required_objectives::Set{Tuple{DataType}},
+                        b::LazyBridgeOptimizer,
+                        BT::Type{<:AbstractBridge})
+    for C in added_constrained_variable_types(BT)
+        fill_required!(required_variables, required_constraints,
+                       required_objectives, b, C[1])
+        F = MOIU.variable_function_type(C[1])
+        fill_required!(required_variables, required_constraints,
+                       required_objectives, b, F, C[1])
+    end
+    for C in added_constraint_types(BT)
+        fill_required!(required_variables, required_constraints,
+                       required_objectives, b, C[1], C[2])
+    end
+    if BT <: Objective.AbstractBridge
+        fill_required!(required_variables, required_constraints, required_objectives, b,
+                       set_objective_function_type(BT))
+    end
+end
+
+function fill_required!(required_variables::Set{Tuple{DataType}},
+                        required_constraints::Set{Tuple{DataType, DataType}},
+                        required_objectives::Set{Tuple{DataType}},
                         b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     if supports_no_update(b, S)
         return # The constraint is supported
@@ -137,18 +228,16 @@ function fill_required!(required_variables::Set{Tuple{DataType}},
     push!(required_variables, (S,))
     for BT in b.variable_bridge_types
         if Variable.supports_constrained_variable(BT, S)
-            for C in added_constrained_variable_types(BT, S)
-                fill_required!(required_variables, required_constraints, b, C[1])
-            end
-            for C in added_constraint_types(BT, S)
-                fill_required!(required_variables, required_constraints, b, C[1], C[2])
-            end
+            fill_required!(required_variables, required_constraints,
+                           required_objectives, b,
+                           Variable.concrete_bridge_type(BT, S))
         end
     end
 end
 
 function fill_required!(required_variables::Set{Tuple{DataType}},
                         required_constraints::Set{Tuple{DataType, DataType}},
+                        required_objectives::Set{Tuple{DataType}},
                         b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
                         S::Type{<:MOI.AbstractSet})
     if supports_no_update(b, F, S)
@@ -164,22 +253,61 @@ function fill_required!(required_variables::Set{Tuple{DataType}},
     push!(required_constraints, (F, S))
     for BT in b.constraint_bridge_types
         if MOI.supports_constraint(BT, F, S)
-            for C in added_constrained_variable_types(BT, F, S)
-                fill_required!(required_variables, required_constraints, b, C[1])
-            end
-            for C in added_constraint_types(BT, F, S)
-                fill_required!(required_variables, required_constraints, b, C[1], C[2])
-            end
+            fill_required!(required_variables, required_constraints,
+                           required_objectives, b,
+                           Constraint.concrete_bridge_type(BT, F, S))
         end
     end
 end
 
-# Compute dist[(F, S)], dist[(S,)] and best[(F, S)], best[(S,)]
-function update!(b::LazyBridgeOptimizer, types::Tuple)
+function fill_required!(required_variables::Set{Tuple{DataType}},
+                        required_constraints::Set{Tuple{DataType, DataType}},
+                        required_objectives::Set{Tuple{DataType}},
+                        b::LazyBridgeOptimizer,
+                        F::Type{<:MOI.AbstractScalarFunction})
+    if supports_no_update(b, F)
+        return # The objective is supported
+    end
+    if (F,) in required_objectives
+        return # The requirements for this objective have already been added or are being added
+    end
+    # The objective is not supported yet, add
+    # * in `required_variables` the required constrained variables types,
+    # * in `required_constraints` the required constraint types and
+    # * in `required_objectives` the required objective types
+    # to bridge it.
+    push!(required_objectives, (F,))
+    for BT in b.objective_bridge_types
+        if Objective.supports_objective_function(BT, F)
+            fill_required!(required_variables, required_constraints,
+                           required_objectives, b,
+                           Objective.concrete_bridge_type(BT, F))
+        end
+    end
+end
+
+function required(b::LazyBridgeOptimizer, types::Tuple)
     required_variables = Set{Tuple{DataType}}()
     required_constraints = Set{Tuple{DataType, DataType}}()
-    fill_required!(required_variables, required_constraints, b, types...)
-    update_dist!(b, required_variables, required_constraints)
+    required_objectives = Set{Tuple{DataType}}()
+    fill_required!(required_variables, required_constraints,
+                   required_objectives, b, types...)
+    return required_variables, required_constraints, required_objectives
+end
+
+# Compute dist[(F, S)], dist[(S,)] and best[(F, S)], best[(S,)]
+function update!(b::LazyBridgeOptimizer, types::Tuple)
+    update_dist!(b, required(b, types)...)
+end
+
+# After `add_bridge(b, BT)`, some constrained variables `(S,)` in
+# `keys(b.variable_best)` or constraints `(F, S)` in `keys(b.constraint_best)`
+# or `(F,)` in `keys(b.objective_best)` may be bridged
+# with less bridges than `b.variable_dist[(S,)]`,
+# `b.constraint_dist[(F, S)]` or `b.objective_dist[(F,)]` using `BT`.
+function _update_key_dists!(b)
+    # TODO we should call `fill_required!`.
+    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
 end
 
 """
@@ -189,11 +317,7 @@ Enable the use of the variable bridges of type `BT` by `b`.
 """
 function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.AbstractBridge})
     push!(b.variable_bridge_types, BT)
-    # Some constrained variables `(S,)` in `keys(b.variable_best)` or
-    # constraints `(F, S)` in `keys(b.constraint_best)` may now be bridged
-    # with a less bridges than `b.variable_dist[(F, S)]` or
-    # `b.constraint_dist[(F, S)]` using `BT`.
-    update_dist!(b, keys(b.variable_best), keys(b.constraint_best))
+    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
 end
 
 """
@@ -203,11 +327,17 @@ Enable the use of the constraint bridges of type `BT` by `b`.
 """
 function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
     push!(b.constraint_bridge_types, BT)
-    # Some constrained variables `(S,)` in `keys(b.variable_best)` or
-    # constraints `(F, S)` in `keys(b.constraint_best)` may now be bridged
-    # with a less bridges than `b.variable_dist[(F, S)]` or
-    # `b.constraint_dist[(F, S)]` using `BT`.
-    update_dist!(b, keys(b.variable_best), keys(b.constraint_best))
+    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
+end
+
+"""
+    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Objective.AbstractBridge})
+
+Enable the use of the objective bridges of type `BT` by `b`.
+"""
+function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Objective.AbstractBridge})
+    push!(b.objective_bridge_types, BT)
+    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
 end
 
 function _remove_bridge(bridge_types::Vector, BT::Type)
@@ -250,18 +380,26 @@ end
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
 function is_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
-    return !MOI.supports_constraint(b.model, variable_function_type(S), S)
+    return !MOI.supports_constraint(b.model, MOIU.variable_function_type(S), S)
 end
 function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     return !MOI.supports_constraint(b.model, F, S)
 end
+function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
+    return !MOI.supports(b.model, MOI.ObjectiveFunction{F}())
+end
 # Same as supports_constraint but do not trigger `update!`. This is
 # used inside `update!`.
 function supports_no_update(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
-    return MOI.supports_constraint(b.model, variable_function_type(S), S) || (S,) in keys(b.variable_best)
+    F = MOIU.variable_function_type(S)
+    return MOI.supports_constraint(b.model, MOIU.variable_function_type(S), S) ||
+        (S,) in keys(b.variable_best) || (F, S) in keys(b.constraint_best)
 end
 function supports_no_update(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     return MOI.supports_constraint(b.model, F, S) || (F, S) in keys(b.constraint_best)
+end
+function supports_no_update(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
+    return MOI.supports(b.model, MOI.ObjectiveFunction{F}()) || (F,) in keys(b.objective_best)
 end
 
 supports_constraint_bridges(::LazyBridgeOptimizer) = true
@@ -278,19 +416,33 @@ function supports_bridging_constraint(
     update!(b, (F, S))
     return (F, S) in keys(b.constraint_best)
 end
-function bridge_type(b::LazyBridgeOptimizer{BT}, S::Type{<:MOI.AbstractSet}) where BT
+function supports_bridging_objective_function(
+    b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction}
+)
+    update!(b, (F,))
+    return (F,) in keys(b.objective_best)
+end
+function bridge_type(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     update!(b, (S,))
     result = get(b.variable_best, (S,), nothing)
     if result === nothing
-        throw(MOI.UnsupportedConstraint{variable_function_type(S), S}())
+        throw(MOI.UnsupportedConstraint{MOIU.variable_function_type(S), S}())
     end
     return result
 end
-function bridge_type(b::LazyBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) where BT
+function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     update!(b, (F, S))
     result = get(b.constraint_best, (F, S), nothing)
     if result === nothing
         throw(MOI.UnsupportedConstraint{F, S}())
+    end
+    return result
+end
+function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
+    update!(b, (F,))
+    result = get(b.objective_best, (F,), nothing)
+    if result === nothing
+        throw(MOI.UnsupportedAttribute(MOI.ObjectiveFunction{F}()))
     end
     return result
 end

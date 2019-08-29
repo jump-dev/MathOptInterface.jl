@@ -152,6 +152,19 @@ end
                                    MOI.LessThan{T}) == MOIB.Constraint.QuadtoSOCBridge{T}
         end
     end
+    @testset "Objective" begin
+        F = MOI.ScalarQuadraticFunction{T}
+        @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
+        @test !MOI.supports(bridged, MOI.ObjectiveFunction{F}())
+        MOIB.add_bridge(bridged, MOIB.Objective.SlackBridge{T})
+        @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
+        @test !MOI.supports(bridged, MOI.ObjectiveFunction{F}())
+        MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
+        @test MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
+        @test MOIB.bridge_type(bridged, MOI.SingleVariable) == MOIB.Objective.FunctionizeBridge{T}
+        @test MOI.supports(bridged, MOI.ObjectiveFunction{F}())
+        @test MOIB.bridge_type(bridged, F) == MOIB.Objective.SlackBridge{T, F, F}
+    end
 end
 
 @testset "Continuous Linear" begin

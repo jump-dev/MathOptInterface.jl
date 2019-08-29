@@ -37,6 +37,9 @@ function MOIB.is_bridged(b::SingleBridgeOptimizer, F::Type{<:MOI.AbstractFunctio
                     S::Type{<:MOI.AbstractSet})
     return MOIB.supports_bridging_constraint(b, F, S)
 end
+function MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{<:MOI.AbstractScalarFunction})
+    return false
+end
 function MOIB.bridge_type(::SingleBridgeOptimizer{BT},
                           ::Type{<:MOI.AbstractFunction},
                           ::Type{<:MOI.AbstractSet}) where BT
