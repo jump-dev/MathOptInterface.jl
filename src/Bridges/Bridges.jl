@@ -17,6 +17,7 @@ include("Constraint/Constraint.jl")
 include("Objective/Objective.jl")
 
 include("lazy_bridge_optimizer.jl")
+include("debug.jl")
 
 """
     full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
