@@ -322,6 +322,8 @@ Reals
 Zeros
 Nonnegatives
 Nonpositives
+NormInfinityCone
+NormOneCone
 SecondOrderCone
 RotatedSecondOrderCone
 GeometricMeanCone
