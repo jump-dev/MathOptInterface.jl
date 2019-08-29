@@ -28,7 +28,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
-    cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),one(T)], v), zero(T))
+    cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], v), zero(T))
     c = MOI.add_constraint(model, cf, MOI.LessThan(one(T)))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}()) == 1
 
@@ -42,7 +42,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}()) == 2
 
     # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
-    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([zero(T),zero(T),-one(T),zero(T),zero(T),zero(T)], [v; v; v]), zero(T))
+    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([zero(T), zero(T), -one(T), zero(T), zero(T), zero(T)], [v; v; v]), zero(T))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
@@ -94,7 +94,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
 
     # change objective to Max +x
 
-    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),zero(T)], v), zero(T))
+    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), zero(T)], v), zero(T))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
@@ -149,7 +149,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
         MOI.modify(model, c, MOI.ScalarCoefficientChange{T}(z, one(T)))
     else
         MOI.delete(model, c)
-        cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),one(T),one(T)], v), zero(T))
+        cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T), one(T)], v), zero(T))
         c = MOI.add_constraint(model, cf, MOI.LessThan(one(T)))
     end
 
@@ -245,7 +245,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     # x,y >= 0, z = 0
     MOI.delete(model, c)
     # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
-    cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([zero(T),zero(T),zero(T),one(T),one(T),one(T),zero(T),zero(T),zero(T)], [v; v; v]), zero(T))
+    cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([zero(T), zero(T), zero(T), one(T), one(T), one(T), zero(T), zero(T), zero(T)], [v; v; v]), zero(T))
     c = MOI.add_constraint(model, cf, MOI.EqualTo(T(2)))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}()) == 0
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}()) == 1
@@ -269,7 +269,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     # s.t. x + y + z == 2 (c)
     # x,y >= 0, z = 0
 
-    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),T(2),zero(T)], v), zero(T))
+    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), T(2), zero(T)], v), zero(T))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
@@ -392,7 +392,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
 
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
-    cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),one(T)], [x, y]), zero(T))
+    cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]), zero(T))
     c = MOI.add_constraint(model, cf, MOI.LessThan(one(T)))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}()) == 1
 
@@ -402,7 +402,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     @test vc2.value == y.value
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}()) == 2
 
-    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([-one(T),zero(T)], [x, y]), zero(T))
+    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([-one(T), zero(T)], [x, y]), zero(T))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
@@ -561,7 +561,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     # s.t. zero(T) <= x          (c1)
     #             y <= zero(T)   (c2)
 
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -one(T)], [x,y]), zero(T)))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -one(T)], [x, y]), zero(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(zero(T)))
@@ -646,8 +646,8 @@ function linear5test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
 
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
-    cf1 = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2),one(T)], [x, y]), zero(T))
-    cf2 = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),T(2)], [x, y]), zero(T))
+    cf1 = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2), one(T)], [x, y]), zero(T))
+    cf2 = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), T(2)], [x, y]), zero(T))
 
     c1 = MOI.add_constraint(model, cf1, MOI.LessThan(T(4)))
     c2 = MOI.add_constraint(model, cf2, MOI.LessThan(T(4)))
@@ -661,7 +661,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}()) == 2
 
-    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),one(T)], [x, y]), zero(T))
+    objf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]), zero(T))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
@@ -695,7 +695,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
         MOI.modify(model, c1, MOI.ScalarCoefficientChange(y, T(3)))
     else
         MOI.delete(model, c1)
-        cf1 = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2),T(3)], [x,y]), zero(T))
+        cf1 = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2), T(3)], [x, y]), zero(T))
         c1 = MOI.add_constraint(model, cf1, MOI.LessThan(T(4)))
     end
 
@@ -890,7 +890,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: Nu
     # s.t. zero(T) <= x          (c1)
     #             y <= zero(T)   (c2)
 
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -one(T)], [x,y]), zero(T)))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -one(T)], [x, y]), zero(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     c1 = MOI.add_constraint(model, MOI.VectorAffineFunction{T}([MOI.VectorAffineTerm{T}(1, MOI.ScalarAffineTerm{T}(one(T), x))], [zero(T)]), MOI.Nonnegatives(1))
@@ -971,7 +971,7 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2),one(T)], [x,y]), zero(T)), MOI.LessThan(-one(T)))
+    c = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2), one(T)], [x, y]), zero(T)), MOI.LessThan(-one(T)))
     bndx = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(zero(T)))
     @test bndx.value == x.value
     bndy = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(zero(T)))
@@ -1027,7 +1027,7 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([-one(T),T(2)], [x,y]), zero(T)), MOI.LessThan(zero(T)))
+    MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([-one(T), T(2)], [x, y]), zero(T)), MOI.LessThan(zero(T)))
     vc1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(zero(T)))
     @test vc1.value == x.value
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(zero(T)))
@@ -1073,7 +1073,7 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),-one(T)], [x,y]), zero(T)), MOI.EqualTo(zero(T)))
+    MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -one(T)], [x, y]), zero(T)), MOI.EqualTo(zero(T)))
     vc1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(zero(T)))
     @test vc1.value == x.value
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(zero(T)))
@@ -1093,7 +1093,7 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
             # solver returned an unbounded ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.PrimalStatus()) == MOI.INFEASIBILITY_CERTIFICATE
-            ray = MOI.get(model, MOI.VariablePrimal(), [x,y])
+            ray = MOI.get(model, MOI.VariablePrimal(), [x, y])
             @test ray[1] ≈ ray[2] atol=atol rtol=rtol
         else
             # solver returned nothing
@@ -1207,7 +1207,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
     @test vc[1].value == x.value
     @test vc[2].value == y.value
 
-    c = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x,y]), zero(T)), MOI.Interval(T(5), T(10)))
+    c = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]), zero(T)), MOI.Interval(T(5), T(10)))
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]), zero(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -1340,7 +1340,7 @@ function linear10btest(model::MOI.ModelLike, config::TestConfig{T}) where {T <: 
     @test vc[1].value == x.value
     @test vc[2].value == y.value
 
-    c = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x,y]), zero(T)), MOI.Interval(-one(T), T(10)))
+    c = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]), zero(T)), MOI.Interval(-one(T), T(10)))
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]), zero(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -1418,10 +1418,10 @@ function linear11test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
 
     v = MOI.add_variables(model, 2)
 
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),one(T)], v), zero(T)), MOI.GreaterThan(one(T)))
-    c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),one(T)], v), zero(T)), MOI.GreaterThan(T(2)))
+    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], v), zero(T)), MOI.GreaterThan(one(T)))
+    c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], v), zero(T)), MOI.GreaterThan(T(2)))
 
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),one(T)], v), zero(T)))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), one(T)], v), zero(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     if config.solve
@@ -1469,7 +1469,7 @@ function linear12test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2),-T(3)], [x,y]), zero(T)), MOI.LessThan(-T(7)))
+    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2), -T(3)], [x, y]), zero(T)), MOI.LessThan(-T(7)))
     c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm{T}(one(T), y)], zero(T)), MOI.LessThan(T(2)))
     bndx = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(zero(T)))
     @test bndx.value == x.value
@@ -1520,8 +1520,8 @@ function linear13test(model::MOI.ModelLike, config::TestConfig{T}) where {T <: N
 
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2),T(3)], [x,y]), zero(T)), MOI.GreaterThan(one(T)))
-    c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T),-one(T)], [x,y]), zero(T)), MOI.EqualTo(zero(T)))
+    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([T(2), T(3)], [x, y]), zero(T)), MOI.GreaterThan(one(T)))
+    c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -one(T)], [x, y]), zero(T)), MOI.EqualTo(zero(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
 
