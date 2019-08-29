@@ -930,6 +930,30 @@ If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
 between `y_i` and the vector of scalar-valued quadratic functions.
 
+!!! note
+    For quadratic programs with only affine constraints, the optimality condition
+    ``\nabla_x L(x, y^\star) = 0`` can be simplified as follows
+    ```math
+    0 = \nabla_x L(x, y^\star) = Q_0x + a_0 - \sum_{i = 1}^m y_i^\star a_i
+    ```
+    which gives
+    ```math
+    Q_0x = \sum_{i = 1}^m y_i^\star a_i - a_0
+    ```
+    The Lagrangian function
+    ```math
+    L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i (a_i^T x + b_i)
+    ```
+    can be rewritten as
+    ```math
+    L(x, y) = \frac{1}{2}x^TQ_0x - (\sum_{i = 1}^m y_i a_i^T - a_0^T) x + b_0 - \sum_{i = 1}^m y_i (a_i^T x + b_i)
+    ```
+    which, using the optimality condition ``\nabla_x L(x, y^\star) = 0``, can be simplified as
+    ```math
+    L(x, y) = -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i (a_i^T x + b_i)
+    ```
+
+
 ### Automatic reformulation
 
 #### Variable reformulation
