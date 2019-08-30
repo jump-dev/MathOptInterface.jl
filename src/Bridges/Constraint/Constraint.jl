@@ -44,6 +44,8 @@ include("interval.jl")
 const SplitInterval{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SplitIntervalBridge{T}, OT}
 include("rsoc.jl")
 const RSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCBridge{T}, OT}
+include("socr.jl")
+const SOCR{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCRBridge{T}, OT}
 include("quad_to_soc.jl")
 const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}, OT}
 include("norm_to_lp.jl")
@@ -87,8 +89,10 @@ function add_all_bridges(bridged_model, T::Type)
     MOIB.add_bridge(bridged_model, LogDetBridge{T})
     MOIB.add_bridge(bridged_model, RootDetBridge{T})
     MOIB.add_bridge(bridged_model, RSOCBridge{T})
+    MOIB.add_bridge(bridged_model, SOCRBridge{T})
+    # We do not add `SOCtoPSDBridge` as transforming the `SOC` to `RSOC` and
+    # then to `PSD` produces a smaller SDP constraint.
     MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
-    MOIB.add_bridge(bridged_model, SOCtoPSDBridge{T})
     MOIB.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
     return
 end
