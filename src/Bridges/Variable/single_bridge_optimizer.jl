@@ -26,16 +26,6 @@ function SingleBridgeOptimizer{BT}(model::OT) where {BT, OT <: MOI.ModelLike}
         Dict{MOI.ConstraintIndex, String}(), nothing)
 end
 
-function Base.show(io::IO, B::SingleBridgeOptimizer)
-    s(n) = n == 1 ? "" : "s"
-    indent = " "^get(io, :indent, 0)
-    n_var = length(bridges(B))
-    MOIU._print(io, summary(B))
-    print(io, "\n$(indent)with $(n_var) variable bridge$(s(n_var))")
-    print(io, "\n$(indent)with inner model ")
-    show(IOContext(io, :indent => get(io, :indent, 0)+2), B.model)
-end
-
 function bridges(bridge::MOI.Bridges.AbstractBridgeOptimizer)
     return EmptyMap()
 end
