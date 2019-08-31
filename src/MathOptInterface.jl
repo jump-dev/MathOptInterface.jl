@@ -12,6 +12,8 @@ abstract type ModelLike end
 # embed it in a `Ref`
 Base.broadcastable(model::ModelLike) = Ref(model)
 
+Base.show(io::IO, model::ModelLike) = Utilities._print(io, summary(model))
+
 
 """
     AbstractOptimizer

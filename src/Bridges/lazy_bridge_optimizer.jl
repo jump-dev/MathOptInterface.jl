@@ -45,6 +45,18 @@ function LazyBridgeOptimizer(model::MOI.ModelLike)
         Dict{Tuple{DataType, DataType}, DataType}())
 end
 
+function Base.show(io::IO, B::LazyBridgeOptimizer)
+    s(n) = n == 1 ? "" : "s"
+    indent = " "^get(io, :indent, 0)
+    n_var = length(Variable.bridges(B))
+    n_con = length(Constraint.bridges(B))
+    MOIU._print(io, summary(B))
+    print(io, "\n$(indent)with $(n_var) variable bridge$(s(n_var))")
+    print(io, "\n$(indent)with $(n_con) constraint bridge$(s(n_con))")
+    print(io, "\n$(indent)with inner model ")
+    show(IOContext(io, :indent => get(io, :indent, 0)+2), B.model)
+end
+
 function Variable.bridges(bridge::LazyBridgeOptimizer)
     return bridge.variable_map
 end
