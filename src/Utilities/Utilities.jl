@@ -18,10 +18,10 @@ const VI = MOI.VariableIndex
 const CI{F,S} = MOI.ConstraintIndex{F,S}
 
 function _print(io::IO, s::AbstractString)
-    s = replace(s,  "MathOptInterface.Utilities" => "MOIU")
-    s = replace(s,  "MathOptInterface.Bridges" => "MOIB")
-    s = replace(s,  "MathOptInterface.Test" => "MOIT")
-    s = replace(s,  "MathOptInterface" => "MOI")
+    s = replace(s, "MathOptInterface.Utilities" => "MOIU")
+    s = replace(s, "MathOptInterface.Bridges" => "MOIB")
+    s = replace(s, "MathOptInterface.Test" => "MOIT")
+    s = replace(s, "MathOptInterface" => "MOI")
     print(io, s)
 end
 
