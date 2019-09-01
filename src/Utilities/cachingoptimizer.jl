@@ -47,7 +47,7 @@ end
 
 function Base.show(io::IO, C::CachingOptimizer)
     indent = " "^get(io, :indent, 0)
-    MOIU._print(io, summary(C))
+    MOIU.print_with_acronym(io, summary(C))
     print(io, "\n$(indent)in state $(C.state)")
     print(io, "\n$(indent)in mode $(C.mode)")
     print(io, "\n$(indent)with model cache ")

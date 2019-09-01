@@ -46,7 +46,7 @@ function print_num_bridges(io::IO, B::Variable.Map)
 end
 
 function Base.show(io::IO, B::AbstractBridgeOptimizer)
-    MOIU._print(io, summary(B))
+    MOIU.print_with_acronym(io, summary(B))
     print_num_bridges(io, Variable.bridges(B))
     print_num_bridges(io, Constraint.bridges(B))
     if :model in propertynames(B)

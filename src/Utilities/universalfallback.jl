@@ -38,7 +38,7 @@ UniversalFallback(model::MOI.ModelLike) = UniversalFallback{typeof(model)}(model
 function Base.show(io::IO, U::UniversalFallback)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
-    MOIU._print(io, summary(U))
+    MOIU.print_with_acronym(io, summary(U))
     for (attr, name) in (   (U.constraints, "constraint"),
                             (U.optattr, "optimizer attribute"), 
                             (U.modattr, "model attribute"), 
