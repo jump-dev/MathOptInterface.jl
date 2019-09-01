@@ -79,7 +79,6 @@ end
     delete!(map, c1)
     @test length(map) == 2
     @test sprint(MOIB.print_num_bridges, map) == "\nwith 2 constraint bridges"
-
     @test !isempty(map)
     @test MOIB.Constraint.has_bridges(map)
 
