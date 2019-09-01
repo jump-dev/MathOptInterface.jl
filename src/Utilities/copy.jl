@@ -522,7 +522,7 @@ function allocate_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if !haskey(idxmap, f_src.variable)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
+            vi_dest, ci_dest = allocate_constrained_variable(dest, set)
             idxmap[ci_src] = ci_dest
             idxmap[f_src.variable] = vi_dest
             push!(allocated, ci_src)
