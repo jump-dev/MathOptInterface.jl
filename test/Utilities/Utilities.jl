@@ -35,6 +35,6 @@ end
     include("lazy_iterators.jl")
 end
 
-@testset "print_with_acronym" begin
+@testset "Print with acronym" begin
     include("print_with_acronym.jl")
 end
