@@ -595,18 +595,19 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     MOI.empty!(model)
     @test MOI.is_empty(model)
 
-    x,y,z = MOI.add_variables(model, 3)
+    if vecofvars
+        xyz, csoc = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
+        x, y, z = xyz
+    else
+        x, y, z = MOI.add_variables(model, 3)
+        vov = MOI.VectorOfVariables([x,y,z])
+        csoc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.SecondOrderCone(3))
+    end
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [y,z]), 0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
     ceq = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [-1.0]), MOI.Zeros(1))
-    vov = MOI.VectorOfVariables([x,y,z])
-    if vecofvars
-        csoc = MOI.add_constraint(model, vov, MOI.SecondOrderCone(3))
-    else
-        csoc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.SecondOrderCone(3))
-    end
 
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 1
     @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},MOI.SecondOrderCone}()) == 1

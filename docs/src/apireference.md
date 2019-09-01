@@ -625,6 +625,7 @@ Bridges.Variable.ZerosBridge
 Bridges.Variable.FreeBridge
 Bridges.Variable.NonposToNonnegBridge
 Bridges.Variable.VectorizeBridge
+Bridges.Variable.SOCtoRSOCBridge
 Bridges.Variable.RSOCtoPSDBridge
 ```
 

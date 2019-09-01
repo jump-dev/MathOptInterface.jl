@@ -165,14 +165,36 @@ variables created by the bridge to an affine expression in terms of the
 bridged variable `vi`.
 
    unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
-                 vi::MOI.VariableIndex, i::IndexInVector)
+                 vis::Vector{MOI.VariableIndex})
+
+For a bridged variable in a vector set, return a tuple of pairs mapping the
+variables created by the bridge to an affine expression in terms of the bridged
+variable `vis`. If this method is not implemented, it falls back to calling
+the following method for every variable of `vis`.
+
+    unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
+                  vi::MOI.VariableIndex, i::IndexInVector)
 
 For a bridged variable in a vector set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the bridged
 variable `vi` corresponding to the `i`th variable of the vector.
 
-If there is no way to recover the expression in terms of the bridged variable
-`vi`, return `nothing`. See [`ZerosBridge`](@ref) for an example of bridge
+If there is no way to recover the expression in terms of the bridged variable(s)
+`vi(s)`, return `nothing`. See [`ZerosBridge`](@ref) for an example of bridge
 returning `nothing`.
 """
 function unbridged_map end
+
+function unbridged_map(bridge::AbstractBridge, vis::Vector{MOI.VariableIndex})
+    mappings = Pair{MOI.VariableIndex, MOI.AbstractScalarFunction}[]
+    for (i, vi) in enumerate(vis)
+        vi_mappings = unbridged_map(bridge, vi, IndexInVector(i))
+        if vi_mappings === nothing
+            return nothing
+        end
+        for mapping in vi_mappings
+            push!(mappings, mapping)
+        end
+    end
+    return mappings
+end

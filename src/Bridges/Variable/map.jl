@@ -290,12 +290,12 @@ function add_keys_for_bridge(map::Map, bridge::AbstractBridge,
             push!(map.sets, nothing)
         end
         if map.unbridged_function !== nothing
-            for i in 1:MOI.dimension(set)
-                mappings = unbridged_map(bridge, variables[i], IndexInVector(i))
-                if mappings === nothing
-                    map.unbridged_function = nothing
-                else
-                    push!(map.unbridged_function, mappings...)
+            mappings = unbridged_map(bridge, variables)
+            if mappings === nothing
+                map.unbridged_function = nothing
+            else
+                for mapping in mappings
+                    push!(map.unbridged_function, mapping)
                 end
             end
         end

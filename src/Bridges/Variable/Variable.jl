@@ -31,6 +31,8 @@ include("flip_sign.jl")
 const NonposToNonneg{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NonposToNonnegBridge{T}, OT}
 include("vectorize.jl")
 const Vectorize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorizeBridge{T}, OT}
+include("soc_to_rsoc.jl")
+const SOCtoRSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoRSOCBridge{T}, OT}
 include("rsoc_to_psd.jl")
 const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}, OT}
 
@@ -45,6 +47,7 @@ function add_all_bridges(bridged_model, T::Type)
     MOIB.add_bridge(bridged_model, FreeBridge{T})
     MOIB.add_bridge(bridged_model, NonposToNonnegBridge{T})
     MOIB.add_bridge(bridged_model, VectorizeBridge{T})
+    MOIB.add_bridge(bridged_model, SOCtoRSOCBridge{T})
     MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
     return
 end
