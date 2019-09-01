@@ -182,15 +182,11 @@ end
 end
 
 @testset "Show" begin
-    io = IOBuffer()
-    output = raw"""
+    @test sprint(show, bridged_mock) == raw"""
     MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.LessToGreaterBridge{Float64,F,G} where G<:MOI.AbstractScalarFunction where F<:MOI.AbstractScalarFunction,MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F} where F<:MOI.AbstractScalarFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}}
     with 1 constraint bridge
     with inner model MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F} where F<:MOI.AbstractScalarFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}
       with 0 constraint bridges
       with inner model MOIU.MockOptimizer{NoIntervalModel{Float64}}"""
-    show(io, bridged_mock)
-    str = String(take!(io))
-    @test str == output
 
 end

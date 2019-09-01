@@ -34,3 +34,7 @@ end
 @testset "Lazy iterators" begin
     include("lazy_iterators.jl")
 end
+
+@testset "_print" begin
+    include("_print.jl")
+end

@@ -37,6 +37,27 @@ MOI.supports(::SDPAModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     MOIT.nametest(bridged)
 end
+
+@testset "Show SPDA model" begin
+    model = SDPAModel{Float64}()
+    bridged = MOIB.full_bridge_optimizer(model, Float64)
+    # no bridges
+    @test sprint(show, bridged) === raw"""
+    MOIB.LazyBridgeOptimizer{SDPAModel{Float64}}
+    with 0 variable bridges
+    with 0 constraint bridges
+    with inner model SDPAModel{Float64}"""
+
+    MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
+    # add variable bridges
+    @test sprint(show, bridged) == raw"""
+    MOIB.LazyBridgeOptimizer{SDPAModel{Float64}}
+    with 2 variable bridges
+    with 0 constraint bridges
+    with inner model SDPAModel{Float64}"""
+end
+
+
 @testset "SDPA format with $T" for T in [Float64, Int]
     model = SDPAModel{T}()
     bridged = MOIB.LazyBridgeOptimizer(model)

@@ -78,6 +78,8 @@ end
 @testset "Delete" begin
     delete!(map, c1)
     @test length(map) == 2
+    @test sprint(MOIB.print_num_bridges, map) == "\nwith 2 constraint bridges"
+
     @test !isempty(map)
     @test MOIB.Constraint.has_bridges(map)
 
@@ -93,6 +95,7 @@ end
 
     delete!(map, c2)
     @test length(map) == 1
+    @test sprint(MOIB.print_num_bridges, map) == "\nwith 1 constraint bridge"
     @test !isempty(map)
     @test MOIB.Constraint.has_bridges(map)
 
@@ -126,4 +129,5 @@ end
     @test iszero(MOIB.Constraint.number_of_type(map, typeof(c1)))
     @test iszero(MOIB.Constraint.number_of_type(map, typeof(c2)))
     @test iszero(MOIB.Constraint.number_of_type(map, typeof(c3)))
+    @test sprint(MOIB.print_num_bridges, map) == ""
 end
