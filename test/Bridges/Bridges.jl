@@ -23,3 +23,9 @@ end
         _timed_include(joinpath(constraint_dir, file))
     end
 end
+@testset "Objective bridges" begin
+    objective_dir = joinpath(@__DIR__, "Objective")
+    @testset "$(file)" for file in readdir(objective_dir)
+        _timed_include(joinpath(objective_dir, file))
+    end
+end

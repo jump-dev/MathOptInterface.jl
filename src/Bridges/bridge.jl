@@ -76,3 +76,11 @@ Return a list of the types of constraints that bridges of concrete type `BT`
 add. This is used by the [`LazyBridgeOptimizer`](@ref).
 """
 function added_constraint_types end
+
+"""
+    set_objective_function_type(BT::Type{<:Objective.AbstractBridge})::Bool
+
+Return the type of objective function that bridges of concrete type `BT`
+set. This is used by the [`LazyBridgeOptimizer`](@ref).
+"""
+function set_objective_function_type end
