@@ -71,6 +71,7 @@ v2, c2 = MOIB.Variable.add_keys_for_bridge(map, b2, set2)
     @test MOIB.Variable.number_of_variables(map) == 5
     @test MOIB.Variable.list_of_constraint_types(map) == Set([(F1, S1), (F2, S2)])
     @test length(map) == 2
+    @test sprint(MOIB.print_num_bridges, map) == "\nwith 2 variable bridges"
     @test !isempty(map)
     @test MOIB.Variable.has_bridges(map)
     @test collect(keys(map)) == [v1; v2]
@@ -97,6 +98,7 @@ end
     delete!(map, v1)
     @test MOIB.Variable.number_of_variables(map) == 4
     @test length(map) == 1
+    @test sprint(MOIB.print_num_bridges, map) == "\nwith 1 variable bridge"
     @test !isempty(map)
     @test MOIB.Variable.has_bridges(map)
     elements = collect(map)
@@ -212,4 +214,5 @@ end
     @test iszero(MOIB.Variable.number_with_set(map, S2))
     @test isempty(MOIB.Variable.constraints_with_set(map, S1))
     @test isempty(MOIB.Variable.constraints_with_set(map, S2))
+    @test sprint(MOIB.print_num_bridges, map) == ""
 end

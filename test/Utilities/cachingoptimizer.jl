@@ -231,6 +231,12 @@ end
     # TODO: test more constraint modifications
 
 
+    @test sprint(show, m) == raw"""
+    MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}}
+    in state NO_OPTIMIZER
+    in mode MANUAL
+    with model cache MOIU.Model{Float64}
+    with optimizer nothing"""
 end
 
 @testset "CachingOptimizer AUTOMATIC mode" begin
@@ -340,6 +346,12 @@ end
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
 
+    @test sprint(show, m) == raw"""
+    MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}}
+    in state ATTACHED_OPTIMIZER
+    in mode AUTOMATIC
+    with model cache MOIU.Model{Float64}
+    with optimizer MOIU.MockOptimizer{MOIU.Model{Float64}}"""
 end
 
 @testset "Constructor with optimizer" begin
@@ -352,6 +364,12 @@ end
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
         @test MOIU.mode(m) == MOIU.AUTOMATIC
         @test MOI.get(m, MOI.SolverName()) == "Mock"
+        @test sprint(show, m) == raw"""
+        MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64}},MOIU.Model{Float64}}
+        in state ATTACHED_OPTIMIZER
+        in mode AUTOMATIC
+        with model cache MOIU.Model{Float64}
+        with optimizer MOIU.MockOptimizer{MOIU.Model{Float64}}"""
     end
     @testset "Non-empty optimizer" begin
         s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)

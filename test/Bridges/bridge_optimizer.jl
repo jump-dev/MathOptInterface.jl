@@ -180,3 +180,13 @@ end
     exclude = ["partial_start"] # VariablePrimalStart not supported.
     MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve=false), exclude)
 end
+
+@testset "Show" begin
+    @test sprint(show, bridged_mock) == raw"""
+    MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.LessToGreaterBridge{Float64,F,G} where G<:MOI.AbstractScalarFunction where F<:MOI.AbstractScalarFunction,MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F} where F<:MOI.AbstractScalarFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}}
+    with 1 constraint bridge
+    with inner model MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F} where F<:MOI.AbstractScalarFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}
+      with 0 constraint bridges
+      with inner model MOIU.MockOptimizer{NoIntervalModel{Float64}}"""
+
+end

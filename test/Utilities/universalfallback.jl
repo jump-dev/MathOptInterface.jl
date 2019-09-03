@@ -210,3 +210,11 @@ end
     uf = MOIU.UniversalFallback(model)
     MOIT.delete_test(uf)
 end
+
+@testset "Show" begin
+    model = ModelForUniversalFallback{Float64}()
+    uf = MOIU.UniversalFallback(model)
+    @test sprint(show, uf) == raw"""
+    MOIU.UniversalFallback{ModelForUniversalFallback{Float64}}
+    fallback for ModelForUniversalFallback{Float64}"""
+end
