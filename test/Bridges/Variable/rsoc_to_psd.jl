@@ -77,6 +77,9 @@ bridged_mock = MOIB.Variable.RSOCtoPSD{Float64}(mock)
 
     test_delete_bridged_variables(bridged_mock, xy, MOI.RotatedSecondOrderCone, 2, (
         (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+        (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle, 0),
+        (MOI.SingleVariable, MOI.EqualTo{Float64}, 0),
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1)
     ))
 end
@@ -164,9 +167,10 @@ end
         end
 
         test_delete_bridged_variables(bridged_mock, v, MOI.RotatedSecondOrderCone, 4, (
+            (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle, 0),
             (MOI.SingleVariable, MOI.EqualTo{Float64}, 0),
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0)
         ))
     end
 end
