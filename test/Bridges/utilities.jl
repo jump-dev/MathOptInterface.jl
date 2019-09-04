@@ -112,22 +112,23 @@ function test_delete_bridged_variables(
 end
 function test_delete_objective(
     m::MOIB.AbstractBridgeOptimizer, nvars::Int,
-    nocs::Tuple; used_bridges = 1)
+    list_num_constraints::Tuple; used_bridges = 1)
+    warn_incomplete_list_num_constraints(typeof(MOIB.Objective.root_bridge(MOIB.Objective.bridges(m))), list_num_constraints)
     function num_bridges()
         return length(MOIB.Objective.bridges(m))
     end
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     @test length(MOI.get(m, MOI.ListOfVariableIndices())) == nvars
-    for noc in nocs
-        test_noc(m, noc...)
+    for num_constraints in list_num_constraints
+        test_num_constraints(m, num_constraints...)
     end
     MOI.set(m, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     @test MOI.get(m, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
     @test num_bridges() == start_num_bridges - used_bridges
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     @test length(MOI.get(m, MOI.ListOfVariableIndices())) == nvars
-    for noc in nocs
-        test_noc(m, noc...)
+    for num_constraints in list_num_constraints
+        test_num_constraints(m, num_constraints...)
     end
 end

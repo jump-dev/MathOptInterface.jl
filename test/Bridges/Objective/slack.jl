@@ -26,20 +26,24 @@ end
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0, 2.0])
+            (MOI.FEASIBLE_POINT, [1.0, 2.0, 5.0])
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0, 2.0])
+            (MOI.FEASIBLE_POINT, [1.0, 2.0, 7.0])
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0, 2.0])
+            (MOI.FEASIBLE_POINT, [1.0, 2.0, 2.0])
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0, 2.0])
+            (MOI.FEASIBLE_POINT, [1.0, 2.0, 7.0])
         )
     )
-    MOIT.solve_qp_edge_cases(mock, config)
+    MOIT.solve_qp_edge_cases(bridged_mock, config)
+    test_delete_objective(bridged_mock, 2, (
+        (MOI.ScalarQuadraticFunction{Float64}, MOI.GreaterThan{Float64}, 0),
+        (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}, 0),
+    ))
 end

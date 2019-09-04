@@ -28,7 +28,7 @@ function bridge_objective(::Type{SlackBridge{T, F, G}}, model::MOI.ModelLike,
         error("Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when",
               " using `MOI.Bridges.Objective.SlackBridge`.")
     end
-    constraint = MOIU.add_scalar_constraint(model, f, set)
+    constraint = MOIU.normalize_and_add_constraint(model, f, set)
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), fslack)
     return SlackBridge{T, F, G}(slack, constraint)
 end
@@ -54,6 +54,25 @@ function concrete_bridge_type(::Type{<:SlackBridge{T}},
     return SlackBridge{T, F, G}
 end
 
+# Attributes, Bridge acting as a model
+function MOI.get(bridge::SlackBridge, ::MOI.NumberOfVariables)
+    return 1
+end
+function MOI.get(bridge::SlackBridge, ::MOI.ListOfVariableIndices)
+    return [bridge.slack]
+end
+function MOI.get(bridge::SlackBridge{T, F}, ::MOI.NumberOfConstraints{F, S}) where {
+        T, F, S <: Union{MOI.GreaterThan{T}, MOI.LessThan{T}}}
+    return bridge.constraint isa MOI.ConstraintIndex{F, S} ? 1 : 0
+end
+function MOI.get(bridge::SlackBridge{T, F}, ::MOI.ListOfConstraintIndices{F, S}) where {
+        T, F, S <: Union{MOI.GreaterThan{T}, MOI.LessThan{T}}}
+    if bridge.constraint isa MOI.ConstraintIndex{F, S}
+        return [bridge.constraint]
+    else
+        return MOI.ConstraintIndex{F, S}[]
+    end
+end
 
 function MOI.delete(model::MOI.ModelLike, bridge::SlackBridge)
     MOI.delete(model, bridge.constraint)

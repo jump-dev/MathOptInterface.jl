@@ -357,7 +357,12 @@ end
 # Objective
 MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
 MOI.supports(model::AbstractModel, ::MOI.ObjectiveSense) = true
-function MOI.set(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+function MOI.set(model::AbstractModel{T}, ::MOI.ObjectiveSense,
+                 sense::MOI.OptimizationSense) where T
+    if sense == MOI.FEASIBILITY_SENSE
+        model.objectiveset = false
+        model.objective = zero(MOI.ScalarAffineFunction{T})
+    end
     model.senseset = true
     model.sense = sense
 end
@@ -922,7 +927,7 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             model.senseset = false
             model.sense = $MOI.FEASIBILITY_SENSE
             model.objectiveset = false
-            model.objective = $SAF{T}(MOI.ScalarAffineTerm{T}[], zero(T))
+            model.objective = zero($MOI.ScalarAffineFunction{T})
             model.num_variables_created = 0
             model.variable_indices = nothing
             model.single_variable_mask = UInt8[]

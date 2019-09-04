@@ -24,6 +24,14 @@ function MOIB.set_objective_function_type(::Type{FunctionizeBridge{T}}) where T
     return MOI.ScalarAffineFunction{T}
 end
 
+# Attributes, Bridge acting as a model
+function MOI.get(bridge::FunctionizeBridge, ::MOI.NumberOfVariables)
+    return 0
+end
+function MOI.get(bridge::FunctionizeBridge, ::MOI.ListOfVariableIndices)
+    return MOI.VariableIndex[]
+end
+
 # No variables or constraints are created in this bridge so there is nothing to
 # delete.
 function MOI.delete(model::MOI.ModelLike, bridge::FunctionizeBridge) end

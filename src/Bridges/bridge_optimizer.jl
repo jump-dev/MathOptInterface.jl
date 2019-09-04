@@ -412,6 +412,9 @@ function MOI.get(b::AbstractBridgeOptimizer,
     for bridge in values(Constraint.bridges(b))
         _remove_bridged(list, bridge, attr)
     end
+    for bridge in values(Objective.bridges(b))
+        _remove_bridged(list, bridge, attr)
+    end
     return list
 end
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)
@@ -420,6 +423,9 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)
         s -= MOI.get(bridge, attr)
     end
     for bridge in values(Constraint.bridges(b))
+        s -= MOI.get(bridge, attr)
+    end
+    for bridge in values(Objective.bridges(b))
         s -= MOI.get(bridge, attr)
     end
     return s
@@ -444,6 +450,9 @@ function MOI.get(b::AbstractBridgeOptimizer,
         s -= MOI.get(bridge, attr)
     end
     for bridge in values(Constraint.bridges(b))
+        s -= MOI.get(bridge, attr)
+    end
+    for bridge in values(Objective.bridges(b))
         s -= MOI.get(bridge, attr)
     end
     return s
@@ -569,6 +578,7 @@ function MOI.get(b::AbstractBridgeOptimizer,
 end
 function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveSense,
                  value::MOI.OptimizationSense)
+    MOI.set(b.model, attr, value)
     if is_objective_bridged(b)
         if value == MOI.FEASIBILITY_SENSE
             _delete_objective_bridges(b)
@@ -578,7 +588,6 @@ function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveSense,
             end
         end
     end
-    MOI.set(b.model, attr, value)
 end
 function _bridge_objective(b, BridgeType, func)
     bridge = Objective.bridge_objective(BridgeType, b, func)
@@ -588,7 +597,16 @@ function MOI.set(b::AbstractBridgeOptimizer,
                  attr::MOI.ObjectiveFunction,
                  func::MOI.AbstractScalarFunction)
     if is_objective_bridged(b)
+        # Clear objective function by setting sense to `MOI.FEASIBILITY_SENSE`
+        # first. This is needed if the objective function of `b.model` is
+        # `MOI.SingleVariable(slack)` where `slack` is the slack variable
+        # created by `Objective.SlackBridge`.
+        sense = MOI.get(b.model, MOI.ObjectiveSense())
+        MOI.set(b.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
         _delete_objective_bridges(b)
+        if sense != MOI.FEASIBILITY_SENSE
+            MOI.set(b.model, MOI.ObjectiveSense(), sense)
+        end
     end
     if Variable.has_bridges(Variable.bridges(b))
         if func isa MOI.SingleVariable
