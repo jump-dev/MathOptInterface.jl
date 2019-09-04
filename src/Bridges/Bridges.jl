@@ -13,6 +13,8 @@ include("bridge_optimizer.jl")
 include("Variable/Variable.jl")
 # Constraint bridges
 include("Constraint/Constraint.jl")
+# Objective bridges
+include("Objective/Objective.jl")
 
 include("lazy_bridge_optimizer.jl")
 

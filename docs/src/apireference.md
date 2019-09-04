@@ -731,6 +731,12 @@ Bridges.Constraint.SingleBridgeOptimizer
 Bridges.Constraint.add_all_bridges
 ```
 
+### Objective bridges
+
+```@docs
+Bridges.Objective.AbstractBridge
+```
+
 ### Bridge interface
 
 A bridge should implement the following functions to be usable by a bridge optimizer:
@@ -744,11 +750,17 @@ Bridges.Variable.supports_constrained_variable
 Bridges.Variable.concrete_bridge_type
 Bridges.Variable.bridge_constrained_variable
 ```
-and constraint bridges should implement
+constraint bridges should implement:
 ```@docs
 supports_constraint(::Type{<:Bridges.Constraint.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
 Bridges.Constraint.concrete_bridge_type
 Bridges.Constraint.bridge_constraint
+```
+and objective bridges should implement:
+```@docs
+Bridges.set_objective_function_type
+Bridges.Objective.concrete_bridge_type
+Bridges.Objective.bridge_objective
 ```
 
 When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
