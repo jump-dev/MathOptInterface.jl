@@ -24,10 +24,14 @@ function MOIB.set_objective_function_type(::Type{FunctionizeBridge{T}}) where T
     return MOI.ScalarAffineFunction{T}
 end
 
+# No variables or constraints are created in this bridge so there is nothing to
+# delete.
 function MOI.delete(model::MOI.ModelLike, bridge::FunctionizeBridge) end
 
 function MOI.set(::MOI.ModelLike, ::MOI.ObjectiveSense,
                  ::FunctionizeBridge, ::MOI.OptimizationSense)
+    # `FunctionizeBridge` is sense agnostic, therefore, we don't need to change
+    # anything.
 end
 function MOI.get(model::MOI.ModelLike,
                  attr::MOIB.ObjectiveFunctionValue{MOI.SingleVariable},
