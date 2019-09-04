@@ -8,12 +8,12 @@ function warn_incomplete_list_num_constraints(BT, list_num_constraints)
     for (S,) in MOIB.added_constrained_variable_types(BT)
         F = MOIU.variable_function_type(S)
         if !any(c -> c[1] == F && c[2] == S, list_num_constraints)
-            @warn("Bridges of type $BT add constrained variable in $S but their number is not tested.")
+            error("Bridges of type $BT add constrained variable in $S but their number is not tested.")
         end
     end
     for (F, S) in MOIB.added_constraint_types(BT)
         if !any(c -> c[1] == F && c[2] == S, list_num_constraints)
-            @warn("Bridges of type $BT add $F-in-$S constraints but their number is not tested.")
+            error("Bridges of type $BT add $F-in-$S constraints but their number is not tested.")
         end
     end
 end
