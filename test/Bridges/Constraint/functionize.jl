@@ -26,7 +26,7 @@ config_with_basis = MOIT.TestConfig(basis = true)
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(0.0)
     MOI.set(bridged_mock, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(1.0)
-    test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, 0),))
+    test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),))
 
     MOIT.basic_constraint_tests(bridged_mock, config,
                                 include=[(F, S) for
@@ -79,7 +79,7 @@ end
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.PowerCone(0.1)
     MOI.set(bridged_mock, MOI.ConstraintSet(), ci, MOI.PowerCone(0.2))
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.PowerCone(0.2)
-    test_delete_bridge(bridged_mock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),))
+    test_delete_bridge(bridged_mock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.PowerCone{Float64}, 0),))
 
     MOIT.basic_constraint_tests(bridged_mock, config,
                                 include=[(F, S) for
