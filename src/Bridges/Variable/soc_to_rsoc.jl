@@ -6,6 +6,11 @@ function rotate_result(
     return [x[1]/s2 + x[2]/s2; x[1]/s2 - x[2]/s2; x[3:end]]
 end
 
+"""
+    SOCtoRSOCBridge{T} <: Bridges.Variable.AbstractBridge
+
+Same transformation as [`MOI.Bridges.Constraint.SOCRBridge`](@ref).
+"""
 struct SOCtoRSOCBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.RotatedSecondOrderCone}
