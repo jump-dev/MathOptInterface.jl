@@ -518,6 +518,15 @@ function MOI.supports(b::AbstractBridgeOptimizer,
         return MOI.supports(b.model, attr)
     end
 end
+
+"""
+    struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction} end
+
+Attribute for the value of the objective function of type `F`. If the objective
+of the objective function does not depend on `F`, the type `F` determines
+whether the computation is redirected to an objective bridge or to the
+underlying model.
+"""
 struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction} end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::ObjectiveFunctionValue{F}) where F

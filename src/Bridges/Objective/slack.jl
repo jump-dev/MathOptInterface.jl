@@ -8,7 +8,7 @@ The `SlackBridge` converts an objective function of type `G` into a
 `MOI.Utilities.promote_operation(-, T, G, MOI.SingleVariable}`.
 Note that when using this bridge, changing the optimization sense
 is not supported. Set the sense to `MOI.FEASIBILITY_SENSE` first
-in order to delete the bridge in order to change the sense.
+to delete the bridge in order to change the sense, then re-add the objective.
 """
 struct SlackBridge{T, F<:MOI.AbstractScalarFunction, G<:MOI.AbstractScalarFunction} <: AbstractBridge
     slack::MOI.VariableIndex
