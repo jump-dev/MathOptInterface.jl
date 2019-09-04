@@ -7,7 +7,8 @@ bridges.
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
 """
-    bridge_objective(BT::Type{<:AbstractBridge}, model::MOI.ModelLike,
+    bridge_objective(BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+                     model::MOI.ModelLike,
                      func::MOI.AbstractScalarFunction)
 
 Bridge the objective function `func` using bridge `BT` to `model` and returns
@@ -23,7 +24,8 @@ end
 
 """
     function MOI.set(model::MOI.ModelLike, ::MOI.ObjectiveSense,
-                     bridge::AbstractBridge, sense::MOI.ObjectiveSense)
+                     bridge::MOI.Bridges.Objective.AbstractBridge,
+                     sense::MOI.ObjectiveSense)
 
 Informs `bridge` that the objective sense is changed to `sense`. If changing
 the objective sense is not supported, the bridge should not implement this
@@ -40,9 +42,9 @@ end
 
 """
     function MOI.get(model::MOI.ModelLike, attr::MOI.ObjectiveFunction,
-                     bridge::AbstractBridge)
+                     bridge::MOI.Bridges.Objective.AbstractBridge)
 
-Return the value of the objective function bridged by `bridge` for the model
+Return the objective function object bridged by `bridge` for the model
 `model`.
 """
 function MOI.get(::MOI.ModelLike, ::MOI.ObjectiveFunction,
@@ -53,8 +55,18 @@ function MOI.get(::MOI.ModelLike, ::MOI.ObjectiveFunction,
 end
 
 """
+    function MOI.delete(model::MOI.ModelLike, bridge::MOI.Bridges.Objective.AbstractBridge)
+
+Delete any variable or constraint added by `bridge`.
+"""
+function MOI.delete(::MOI.ModelLike, bridge::AbstractBridge)
+    throw(ArgumentError(
+        "`MOI.delete` not implemented for `ObjectiveFunction` bridges of type `$(typeof(bridge))`"))
+end
+
+"""
     supports_objective_function(
-        BT::Type{<:AbstractBridge},
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
         F::Type{<:MOI.AbstractScalarFunction})::Bool
 
 Return a `Bool` indicating whether the bridges of type `BT` support bridging

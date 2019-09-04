@@ -1,7 +1,8 @@
 """
     Map <: AbstractDict{MOI.ObjectiveFunction, AbstractBridge}
 
-Mapping between bridged variables and the bridge that bridged the variable.
+A mapping from a bridged objective function type to the bridge responsible for
+bridging that type of objective function.
 """
 mutable struct Map <: AbstractDict{MOI.ObjectiveFunction, AbstractBridge}
     bridges::Dict{MOI.ObjectiveFunction, AbstractBridge}
@@ -68,8 +69,9 @@ end
     EmptyMap <: AbstractDict{MOI.ObjectiveFunction, AbstractBridge}
 
 Empty version of [`Map`](@ref). It is used by
-[`MathOptInterface.Bridges.Constraint.SingleBridgeOptimizer`](@ref) as it does
-not bridge any variable.
+[`MathOptInterface.Bridges.Variable.SingleBridgeOptimizer`](@ref) and
+[`MathOptInterface.Bridges.Constraint.SingleBridgeOptimizer`](@ref) as they do
+not bridge any objective function.
 """
 struct EmptyMap <: AbstractDict{MOI.ObjectiveFunction, AbstractBridge} end
 Base.isempty(::EmptyMap) = true
