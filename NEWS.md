@@ -1,6 +1,24 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.2 (September 5, 2019)
+---------------------
+
+- Implemented model printing for `MOI.ModelLike` and specialized it for models
+  defined in MOI (864).
+- Generalized `contlinear` tests for arbitary coefficient type (#855).
+- Fixed `supports_constraint` for `Semiinteger` and `Semicontinuous` and
+  `supports` for `ObjectiveFunction` (#859).
+- Fixed Allocate-Load copy for single variable constraints (#856).
+- Bridges improvements:
+  * Add objective bridges (#789).
+  * Fixed `Variable.RSOCtoPSDBridge` for dimension 2 (#869).
+  * Added `Variable.SOCtoRSOCBridge` (#865).
+  * Added `Constraint.SOCRBridge` and disable
+    `MOI.Bridges.Constraint.SOCtoPSDBridge` (#751).
+  * Fixed `added_constraint_types` for `Contraint.LogDetBridge` and
+    `Constraint.RootDetBridge` (#870).
+
 v0.9.1 (August 22, 2019)
 ---------------------
 
