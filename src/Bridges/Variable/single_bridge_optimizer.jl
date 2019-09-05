@@ -44,6 +44,9 @@ function MOIB.is_bridged(::SingleBridgeOptimizer,
                          ::Type{<:MOI.AbstractSet})
     return false
 end
+function MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{<:MOI.AbstractScalarFunction})
+    return false
+end
 function MOIB.bridge_type(::SingleBridgeOptimizer{BT},
                           ::Type{<:MOI.AbstractSet}) where BT
     return BT

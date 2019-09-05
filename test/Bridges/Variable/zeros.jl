@@ -25,8 +25,6 @@ fy = MOI.SingleVariable(y)
 fz = MOI.SingleVariable(z)
 
 @testset "SingleVariable objective" begin
-    err = ErrorException("Using bridged variable in `SingleVariable` function.")
-    @test_throws err MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fy)}(), fy)
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}(), fx)
     @test MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}()) == fx
