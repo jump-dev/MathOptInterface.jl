@@ -46,6 +46,7 @@ end
     MOIB.LazyBridgeOptimizer{SDPAModel{Float64}}
     with 0 variable bridges
     with 0 constraint bridges
+    with 0 objective bridges
     with inner model SDPAModel{Float64}"""
 
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
@@ -54,6 +55,7 @@ end
     MOIB.LazyBridgeOptimizer{SDPAModel{Float64}}
     with 2 variable bridges
     with 0 constraint bridges
+    with 0 objective bridges
     with inner model SDPAModel{Float64}"""
 end
 

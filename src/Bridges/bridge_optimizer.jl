@@ -201,6 +201,7 @@ function MOI.empty!(b::AbstractBridgeOptimizer)
     end
     empty!(Variable.bridges(b))
     empty!(Constraint.bridges(b))
+    empty!(Objective.bridges(b))
 end
 function MOI.supports(b::AbstractBridgeOptimizer,
                       attr::Union{MOI.AbstractModelAttribute,

@@ -140,3 +140,30 @@ end
         (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}, 0),
     ))
 end
+
+@testset "QP" begin
+    @testset "QP1" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4/7, 3/7, 6/7, 13/7],
+                (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})  => [5/7, 6/7]))
+        MOIT.qp1test(bridged_mock, config)
+    end
+    @testset "QP2" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4/7, 3/7, 6/7, 13/7],
+                (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})  => [5/7, 6/7]),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4/7, 3/7, 6/7, -2*13/7],
+                (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})  => [10/7, 12/7]))
+        MOIT.qp2test(bridged_mock, config)
+    end
+    @testset "QP3" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/4, 3/4, 2.875],
+                (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [11/4],
+                (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})  => [-1.0]),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 3.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-2.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64})  => [1.0]))
+        MOIT.qp3test(bridged_mock, config)
+    end
+end
