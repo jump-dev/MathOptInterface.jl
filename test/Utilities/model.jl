@@ -36,6 +36,39 @@ end
         MOI.ConstraintIndex{TestExternalModel.NewFunction, MOI.ZeroOne}
 end
 
+struct DummyFunction <: MOI.AbstractScalarFunction end
+struct DummySet <: MOI.AbstractScalarSet end
+
+@testset "Supports with $T" for T in [Float64, Int]
+    model = MOIU.Model{T}()
+    @testset "ObjectiveFunction" begin
+        @test !MOI.supports(model, MOI.ObjectiveFunction{DummyFunction}())
+        for F in [MOI.SingleVariable,
+                  MOI.ScalarAffineFunction{T},
+                  MOI.ScalarQuadraticFunction{T}]
+            @test MOI.supports(model, MOI.ObjectiveFunction{F}())
+        end
+        U = Float32
+        for F in [MOI.ScalarAffineFunction{U}, MOI.ScalarQuadraticFunction{U}]
+            @test !MOI.supports(model, MOI.ObjectiveFunction{F}())
+        end
+    end
+    @testset "`SingleVariable`-in-`S`" begin
+        @test !MOI.supports_constraint(model, DummyFunction, DummySet)
+        @test !MOI.supports_constraint(model, MOI.SingleVariable, DummySet)
+        for S in [MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
+                  MOI.Interval{T}, MOI.Integer, MOI.ZeroOne,
+                  MOI.Semicontinuous{T}, MOI.Semiinteger{T}]
+            @test MOI.supports_constraint(model, MOI.SingleVariable, S)
+        end
+        U = Float32
+        for S in [MOI.EqualTo{U}, MOI.GreaterThan{U}, MOI.LessThan{U},
+                  MOI.Interval{U}, MOI.Semicontinuous{U}, MOI.Semiinteger{U}]
+            @test !MOI.supports_constraint(model, MOI.SingleVariable, S)
+        end
+    end
+end
+
 @testset "Setting lower/upper bound twice" begin
     @testset "flag_to_set_type" begin
         err = ErrorException("Invalid flag `0x11`.")
