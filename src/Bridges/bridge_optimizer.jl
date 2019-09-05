@@ -493,6 +493,18 @@ end
 
 # Model an optimizer attributes
 function MOI.get(b::AbstractBridgeOptimizer,
+                 attr::MOI.ListOfModelAttributesSet)
+    list = MOI.get(b.model, attr)
+    if is_objective_bridged(b)
+        list = copy(list)
+        # There should be a `MOI.ObjectiveFunction` in `list` otherwise
+        # `is_objective_bridged` would return `false`.
+        deleteat!(list, findfirst(attr -> attr isa MOI.ObjectiveFunction, list))
+        push!(list, MOI.ObjectiveFunction{MOI.get(b, MOI.ObjectiveFunctionType())}())
+    end
+    return unbridged_function(b, list)
+end
+function MOI.get(b::AbstractBridgeOptimizer,
                  attr::Union{MOI.AbstractModelAttribute,
                              MOI.AbstractOptimizerAttribute})
     return unbridged_function(b, MOI.get(b.model, attr))
@@ -589,6 +601,11 @@ function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveSense,
         end
     end
 end
+function objective_functionize_bridge(b::AbstractBridgeOptimizer)
+    error("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge` to a",
+          " `SingleVariable` objective function because the variable is",
+          " bridged but objective bridges are not supported by `$(typeof(b))`.")
+end
 function _bridge_objective(b, BridgeType, func)
     bridge = Objective.bridge_objective(BridgeType, b, func)
     Objective.add_key_for_bridge(Objective.bridges(b), bridge, func)
@@ -612,7 +629,7 @@ function MOI.set(b::AbstractBridgeOptimizer,
         if func isa MOI.SingleVariable
             if is_bridged(b, func.variable)
                 BridgeType = Objective.concrete_bridge_type(
-                    Objective.FunctionizeBridge{Float64}, typeof(func))
+                    objective_functionize_bridge(b), typeof(func))
                 _bridge_objective(b, BridgeType, func)
                 return
             end
@@ -1059,7 +1076,7 @@ function MOI.add_constrained_variables(b::AbstractBridgeOptimizer,
                                        set::MOI.AbstractVectorSet)
     if is_bridged(b, typeof(set)) ||
         is_bridged(b, MOI.VectorOfVariables, typeof(set))
-        if supports_bridging_constrained_variable(b, typeof(set))
+        if set isa MOI.Reals || supports_bridging_constrained_variable(b, typeof(set))
             BridgeType = Variable.concrete_bridge_type(b, typeof(set))
             bridge = Variable.bridge_constrained_variable(BridgeType, b, set)
             return Variable.add_keys_for_bridge(Variable.bridges(b), bridge, set)

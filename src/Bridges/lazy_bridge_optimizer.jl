@@ -446,3 +446,15 @@ function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunctio
     end
     return result
 end
+
+function objective_functionize_bridge(b::LazyBridgeOptimizer)
+    index = findfirst(bridge_type -> bridge_type <: Objective.FunctionizeBridge,
+                      b.objective_bridge_types)
+    if index === nothing
+        error("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge` to a",
+              " `SingleVariable` objective function because the variable is",
+              " bridged but no such objective bridge type was added. Add one",
+              " with `add_bridge`.")
+    end
+    return b.objective_bridge_types[index]
+end

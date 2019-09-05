@@ -88,8 +88,8 @@ function MOI.get(model::MOI.ModelLike,
     constant = MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.constraint))
     return obj_slack_constant + slack + constant
 end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ObjectiveFunction{MOI.SingleVariable},
-                 bridge::SlackBridge{T}) where T
-    func = MOI.get(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
-    return MOIU.remove_variable(func, bridge.slack)
+function MOI.get(model::MOI.ModelLike, attr::MOI.ObjectiveFunction{G},
+                 bridge::SlackBridge{T, F, G}) where {T, F, G<:MOI.AbstractScalarFunction}
+    func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
+    return MOIU.convert_approx(G, MOIU.remove_variable(func, bridge.slack))
 end

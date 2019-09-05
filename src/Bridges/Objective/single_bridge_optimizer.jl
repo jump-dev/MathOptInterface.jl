@@ -29,7 +29,7 @@ function MOIB.is_bridged(::SingleBridgeOptimizer,
     return false
 end
 function MOIB.supports_bridging_objective_function(
-   ::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractScalarFunction}) where BT
+    ::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractScalarFunction}) where BT
     return supports_objective_function(BT, F)
 end
 function MOIB.is_bridged(
