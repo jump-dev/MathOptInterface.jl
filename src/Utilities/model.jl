@@ -367,7 +367,14 @@ end
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     return model.objective
 end
-MOI.supports(model::AbstractModel, ::MOI.ObjectiveFunction) = true
+function MOI.supports(
+    model::AbstractModel{T},
+    ::MOI.ObjectiveFunction{<:Union{
+        MOI.SingleVariable,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T}}}) where T
+    return true
+end
 function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
     model.objectiveset = true
     # f needs to be copied, see #2
