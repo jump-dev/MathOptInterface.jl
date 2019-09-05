@@ -734,8 +734,31 @@ Bridges.Constraint.add_all_bridges
 
 ### Objective bridges
 
+When an objective is set with [`set`](@ref), objective bridges
+allow to set a *bridged objective* to the underlying model that do not
+correspond to the objective set by the user. This equivalent formulation may add
+constraints (and possibly also variables) in the underlying model in addition
+to setting an objective function.
+
 ```@docs
 Bridges.Objective.AbstractBridge
+```
+
+Below is the list of objective bridges implemented in this package.
+```@docs
+Bridges.Objective.SlackBridge
+Bridges.Objective.FunctionizeBridge
+```
+For each bridge defined in this package, a corresponding
+[`Bridges.Objective.SingleBridgeOptimizer`](@ref) is available with the same
+name without the "Bridge" suffix, e.g., `Slack` is a `SingleBridgeOptimizer`
+for the `SlackBridge`. Moreover, they are all added in the
+[`Bridges.LazyBridgeOptimizer`](@ref) returned by
+[`Bridges.full_bridge_optimizer`](@ref) as it calls
+[`Bridges.Objective.add_all_bridges`](@ref).
+```@docs
+Bridges.Objective.SingleBridgeOptimizer
+Bridges.Objective.add_all_bridges
 ```
 
 ### Bridge interface

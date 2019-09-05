@@ -2,9 +2,9 @@
     SlackBridge{T, F, G}
 
 The `SlackBridge` converts an objective function of type `G` into a
-[`SingleVariable`](@ref) objective by creating a slack variable and a
-`F`-in-[`LessThan`](@ref) constraint for minimization or
-`F`-in-[`LessThan`](@ref) constraint for maximization where `F` is
+[`MOI.SingleVariable`](@ref) objective by creating a slack variable and a
+`F`-in-[`MOI.LessThan`](@ref) constraint for minimization or
+`F`-in-[`MOI.LessThan`](@ref) constraint for maximization where `F` is
 `MOI.Utilities.promote_operation(-, T, G, MOI.SingleVariable}`.
 Note that when using this bridge, changing the optimization sense
 is not supported. Set the sense to `MOI.FEASIBILITY_SENSE` first
@@ -83,10 +83,14 @@ function MOI.get(model::MOI.ModelLike,
                  attr::MOIB.ObjectiveFunctionValue{G},
                  bridge::SlackBridge{T, F, G}) where {T, F, G}
     slack = MOI.get(model, MOIB.ObjectiveFunctionValue{MOI.SingleVariable}())
+    # There may be a gap between the value of the original objective `g` and the
+    # value of `bridge.slack`. Since `bridge.constraint` is `g - slack`, we can
+    # get the value of the original objective by summing the value of `slack`
+    # with the `ConstraintPrimal` of the constraint.
     obj_slack_constant = MOI.get(model, MOI.ConstraintPrimal(), bridge.constraint)
     # The constant was moved to the set as it is a scalar constraint.
     constant = MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.constraint))
-    return obj_slack_constant + slack + constant
+    return obj_slack_constant + slack - constant
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ObjectiveFunction{G},
                  bridge::SlackBridge{T, F, G}) where {T, F, G<:MOI.AbstractScalarFunction}
