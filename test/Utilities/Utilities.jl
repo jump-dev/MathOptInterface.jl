@@ -31,3 +31,10 @@ end
 @testset "CleverDicts" begin
     include("CleverDicts.jl")
 end
+@testset "Lazy iterators" begin
+    include("lazy_iterators.jl")
+end
+
+@testset "Print with acronym" begin
+    include("print_with_acronym.jl")
+end

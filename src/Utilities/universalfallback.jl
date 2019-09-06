@@ -35,6 +35,24 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
 end
 UniversalFallback(model::MOI.ModelLike) = UniversalFallback{typeof(model)}(model)
 
+function Base.show(io::IO, U::UniversalFallback)
+    s(n) = n == 1 ? "" : "s"
+    indent = " "^get(io, :indent, 0)
+    MOIU.print_with_acronym(io, summary(U))
+    for (attr, name) in (   (U.constraints, "constraint"),
+                            (U.optattr, "optimizer attribute"), 
+                            (U.modattr, "model attribute"), 
+                            (U.varattr, "variable attribute"), 
+                            (U.conattr, "constraint attribute") )
+        n = length(attr)
+        if n > 0
+            print(io, "\n$(indent)with $n $name$(s(n))")
+        end
+    end
+    print(io, "\n$(indent)fallback for ")
+    show(IOContext(io, :indent => get(io, :indent, 0)+2), U.model)
+end
+
 function MOI.is_empty(uf::UniversalFallback)
     return MOI.is_empty(uf.model) && isempty(uf.constraints) &&
         isempty(uf.modattr) && isempty(uf.varattr) && isempty(uf.conattr)

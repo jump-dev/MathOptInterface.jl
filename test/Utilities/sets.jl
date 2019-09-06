@@ -16,6 +16,8 @@ end
 @testset "Dimension" begin
     @test MOI.dimension(MOI.EqualTo(3.0)) === 1
     @test MOI.dimension(MOI.Reals(8)) === 8
+    @test MOI.dimension(MOI.NormInfinityCone(5)) === 5
+    @test MOI.dimension(MOI.NormOneCone(5)) === 5
     @test MOI.dimension(MOI.DualExponentialCone()) === 3
     @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(4)) === 10
     @test MOI.dimension(MOI.PositiveSemidefiniteConeSquare(5)) === 25
@@ -50,6 +52,15 @@ end
     @test MOI.dual_set(zeros4) == reals4
     @test MOI.dual_set(reals4) == zeros4
     @test MOI.dual_set(zeros4) != reals3
+    # Norm-1 and norm-∞ cones
+    norminf2 = MOI.NormInfinityCone(2)
+    norminf3 = MOI.NormInfinityCone(3)
+    normone2 = MOI.NormOneCone(2)
+    normone3 = MOI.NormOneCone(3)
+    @test MOI.dual_set(norminf2) == normone2
+    @test MOI.dual_set(normone2) == norminf2
+    @test MOI.dual_set(norminf2) != normone3
+    @test MOI.dual_set(normone2) != norminf3
     #SOC
     soc2 = MOI.SecondOrderCone(2)
     soc3 = MOI.SecondOrderCone(3)
@@ -118,7 +129,7 @@ end
     @test MOIU. set_dot(vec, vec, MOI.LogDetConeTriangle(3)) == 0
     vec[5] = 1
     @test MOIU.set_dot(vec, vec, MOI.LogDetConeTriangle(3)) == 1
-    
+
     sp_vec = spzeros(6)
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.SecondOrderCone(6)) == 0
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeTriangle(3)) == 0

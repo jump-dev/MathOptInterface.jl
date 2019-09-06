@@ -26,10 +26,10 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [v[1],v[2]]), 0.0), MOI.GreaterThan(1.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 2
 
-    obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[], MOI.ScalarQuadraticTerm.([2.0, 1.0, 2.0, 1.0, 2.0], v[[1,1,2,2,3]], v[[1,2,2,3,3]]), 0.0)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+    obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[], MOI.ScalarQuadraticTerm.([2.0, 1.0, 2.0, 1.0, 2.0], v[[1,1,2,2,3]], v[[1,2,2,3,3]]), 0.0)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
 
     if config.query
         @test obj ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
@@ -91,10 +91,10 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     c2 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0,1.0], [v[1],v[2]]), 0.0), MOI.GreaterThan(1.0))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()) == 2
 
-    obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+    obj = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
 
     if config.query
         @test obj ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
@@ -125,10 +125,12 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     end
 
     # change objective to Max -2(x^2 + xy + y^2 + yz + z^2)
-    obj2 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj2)
+    # First clear the objective, this is needed if a `Bridges.Objective.SlackBridge` is used.
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+    obj2 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(0.0, v), MOI.ScalarQuadraticTerm.([-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0], [v[1], v[1], v[1], v[2], v[2], v[3], v[3]], [v[1], v[2], v[2], v[2], v[3], v[3], v[3]]), 0.0)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj2)
 
     if config.query
         @test obj2 ≈ MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}())
@@ -184,13 +186,13 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
     @test vc2.value == y.value
 
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     obj = MOI.ScalarQuadraticFunction(
         MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]),
         MOI.ScalarQuadraticTerm.([4.0, 2.0, 1.0], [x, y, x], [x, y, y]),
         1.0
     )
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -222,9 +224,11 @@ function qp3test(model::MOI.ModelLike, config::TestConfig)
     #       s.t.  x, y >= 0
     #             x + y = 1
     # (x,y) = (1,0), obj = 3
+    # First clear the objective, this is needed if a `Bridges.Objective.SlackBridge` is used.
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], [x, y]), 1.0)
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
     if config.solve
         MOI.optimize!(model)

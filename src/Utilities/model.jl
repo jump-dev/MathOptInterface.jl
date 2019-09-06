@@ -357,7 +357,12 @@ end
 # Objective
 MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
 MOI.supports(model::AbstractModel, ::MOI.ObjectiveSense) = true
-function MOI.set(model::AbstractModel, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+function MOI.set(model::AbstractModel{T}, ::MOI.ObjectiveSense,
+                 sense::MOI.OptimizationSense) where T
+    if sense == MOI.FEASIBILITY_SENSE
+        model.objectiveset = false
+        model.objective = zero(MOI.ScalarAffineFunction{T})
+    end
     model.senseset = true
     model.sense = sense
 end
@@ -367,7 +372,14 @@ end
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
     return model.objective
 end
-MOI.supports(model::AbstractModel, ::MOI.ObjectiveFunction) = true
+function MOI.supports(
+    model::AbstractModel{T},
+    ::MOI.ObjectiveFunction{<:Union{
+        MOI.SingleVariable,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T}}}) where T
+    return true
+end
 function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
     model.objectiveset = true
     # f needs to be copied, see #2
@@ -465,7 +477,8 @@ const UPPER_BOUND_MASK = 0xcd
 function MOI.supports_constraint(
     ::AbstractModel{T}, ::Type{MOI.SingleVariable},
     ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
-                   MOI.Interval{T}, MOI.Integer, MOI.ZeroOne}}) where T
+                   MOI.Interval{T}, MOI.Integer, MOI.ZeroOne,
+                   MOI.Semicontinuous{T}, MOI.Semiinteger{T}}}) where T
     return true
 end
 function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
@@ -922,7 +935,7 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             model.senseset = false
             model.sense = $MOI.FEASIBILITY_SENSE
             model.objectiveset = false
-            model.objective = $SAF{T}(MOI.ScalarAffineTerm{T}[], zero(T))
+            model.objective = zero($MOI.ScalarAffineFunction{T})
             model.num_variables_created = 0
             model.variable_indices = nothing
             model.single_variable_mask = UInt8[]
@@ -1010,6 +1023,7 @@ const LessThanIndicatorSetZero{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.L
        (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
         MOI.Semicontinuous, MOI.Semiinteger),
        (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
+        MOI.NormInfinityCone, MOI.NormOneCone,
         MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
         MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,

@@ -15,6 +15,7 @@ function bridge_constraint(::Type{SplitIntervalBridge{T, F}}, model, f::F,
 end
 
 MOI.supports_constraint(::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = true
+MOIB.added_constrained_variable_types(::Type{<:SplitIntervalBridge}) = Tuple{DataType}[]
 function MOIB.added_constraint_types(::Type{SplitIntervalBridge{T, F}}) where {T, F}
     return [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
 end

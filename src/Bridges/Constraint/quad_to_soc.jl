@@ -153,6 +153,7 @@ function MOI.supports_constraint(::Type{QuadtoSOCBridge{T}},
                                                 MOI.GreaterThan{T}}}) where T
     return true
 end
+MOIB.added_constrained_variable_types(::Type{<:QuadtoSOCBridge}) = Tuple{DataType}[]
 function MOIB.added_constraint_types(::Type{QuadtoSOCBridge{T}}) where T
     return [(MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
 end

@@ -15,9 +15,8 @@ struct ScalarSlackBridge{T, F, S} <: AbstractBridge
 end
 function bridge_constraint(::Type{ScalarSlackBridge{T, F, S}}, model,
                            f::MOI.AbstractScalarFunction, s::S) where {T, F, S}
-    slack = MOI.add_variable(model)
+    slack, slack_in_set = MOI.add_constrained_variable(model, s)
     new_f = MOIU.operate(-, T, f, MOI.SingleVariable(slack))
-    slack_in_set = MOI.add_constraint(model, MOI.SingleVariable(slack), s)
     equality = MOI.add_constraint(model, new_f, MOI.EqualTo(0.0))
     return ScalarSlackBridge{T, F, S}(slack, slack_in_set, equality)
 end
@@ -36,8 +35,11 @@ MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
 MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
                         ::Type{<:MOI.AbstractScalarFunction},
                         ::Type{<:MOI.EqualTo}) where {T} = false
+function MOIB.added_constrained_variable_types(::Type{<:ScalarSlackBridge{T, F, S}}) where {T, F, S}
+    return [(S,)]
+end
 function MOIB.added_constraint_types(::Type{ScalarSlackBridge{T, F, S}}) where {T, F, S}
-    return [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
+    return [(F, MOI.EqualTo{T})]
 end
 function concrete_bridge_type(::Type{<:ScalarSlackBridge{T}},
                               F::Type{<:MOI.AbstractScalarFunction},
@@ -47,16 +49,16 @@ function concrete_bridge_type(::Type{<:ScalarSlackBridge{T}},
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.NumberOfVariables) where {T, F, S} = 1
-MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{F, MOI.EqualTo{T}}) where {T, F, S} = 1
+MOI.get(b::ScalarSlackBridge, ::MOI.NumberOfVariables) = 1
+MOI.get(b::ScalarSlackBridge, ::MOI.ListOfVariableIndices) = [b.slack]
+MOI.get(b::ScalarSlackBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.EqualTo{T}}) where {T, F} = 1
 MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{MOI.SingleVariable, S}) where {T, F, S} = 1
-MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.ListOfConstraintIndices{F, MOI.EqualTo{T}}) where {T, F, S} = [b.equality]
+MOI.get(b::ScalarSlackBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.EqualTo{T}}) where {T, F} = [b.equality]
 MOI.get(b::ScalarSlackBridge{T, F, S}, ::MOI.ListOfConstraintIndices{MOI.SingleVariable, S}) where {T, F, S} = [b.slack_in_set]
 
 # Indices
 function MOI.delete(model::MOI.ModelLike, c::ScalarSlackBridge)
     MOI.delete(model, c.equality)
-    MOI.delete(model, c.slack_in_set)
     MOI.delete(model, c.slack)
     return
 end
@@ -118,9 +120,8 @@ end
 function bridge_constraint(::Type{VectorSlackBridge{T, F, S}}, model,
                            f::MOI.AbstractVectorFunction, s::S) where {T, F, S}
     d = MOI.dimension(s)
-    slacks = MOI.add_variables(model, d)
+    slacks, slacks_in_set = MOI.add_constrained_variables(model, s)
     new_f = MOIU.operate(-, T, f, MOI.VectorOfVariables(slacks))
-    slacks_in_set = MOI.add_constraint(model, MOI.VectorOfVariables(slacks), s)
     equality = MOI.add_constraint(model, new_f, MOI.Zeros(d))
     return VectorSlackBridge{T, F, S}(slacks, slacks_in_set, equality)
 end
@@ -137,8 +138,11 @@ MOI.supports_constraint(::Type{VectorSlackBridge{T}},
 MOI.supports_constraint(::Type{VectorSlackBridge{T}},
                         ::Type{<:MOI.VectorOfVariables},
                         ::Type{<:MOI.AbstractVectorSet}) where {T} = false
+function MOIB.added_constrained_variable_types(::Type{<:VectorSlackBridge{T, F, S}}) where {T, F, S}
+    return [(S,)]
+end
 function MOIB.added_constraint_types(::Type{VectorSlackBridge{T, F, S}}) where {T, F<:MOI.AbstractVectorFunction, S}
-    return [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
+    return [(F, MOI.Zeros)]
 end
 function concrete_bridge_type(::Type{<:VectorSlackBridge{T}},
                               F::Type{<:MOI.AbstractVectorFunction},
@@ -148,16 +152,16 @@ function concrete_bridge_type(::Type{<:VectorSlackBridge{T}},
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.NumberOfVariables) where {T, F, S} = length(b.slacks)
-MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{F, MOI.Zeros}) where {T, F, S} = 1
+MOI.get(b::VectorSlackBridge, ::MOI.NumberOfVariables) = length(b.slacks)
+MOI.get(b::VectorSlackBridge, ::MOI.ListOfVariableIndices) = b.slacks
+MOI.get(b::VectorSlackBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.Zeros}) where {T, F} = 1
 MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.NumberOfConstraints{MOI.VectorOfVariables, S}) where {T, F, S} = 1
-MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.ListOfConstraintIndices{F, MOI.Zeros}) where {T, F, S} = [b.equality]
+MOI.get(b::VectorSlackBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.Zeros}) where {T, F} = [b.equality]
 MOI.get(b::VectorSlackBridge{T, F, S}, ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}) where {T, F, S} = [b.slacks_in_set]
 
 # Indices
 function MOI.delete(model::MOI.ModelLike, c::VectorSlackBridge)
     MOI.delete(model, c.equality)
-    MOI.delete(model, c.slacks_in_set)
     MOI.delete(model, c.slacks)
     return
 end

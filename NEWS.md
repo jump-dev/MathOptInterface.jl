@@ -1,7 +1,40 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.9.0 (May 2?, 2019)
+v0.9.2 (September 5, 2019)
+---------------------
+
+- Implemented model printing for `MOI.ModelLike` and specialized it for models
+  defined in MOI (864).
+- Generalized `contlinear` tests for arbitary coefficient type (#855).
+- Fixed `supports_constraint` for `Semiinteger` and `Semicontinuous` and
+  `supports` for `ObjectiveFunction` (#859).
+- Fixed Allocate-Load copy for single variable constraints (#856).
+- Bridges improvements:
+  * Add objective bridges (#789).
+  * Fixed `Variable.RSOCtoPSDBridge` for dimension 2 (#869).
+  * Added `Variable.SOCtoRSOCBridge` (#865).
+  * Added `Constraint.SOCRBridge` and disable
+    `MOI.Bridges.Constraint.SOCtoPSDBridge` (#751).
+  * Fixed `added_constraint_types` for `Contraint.LogDetBridge` and
+    `Constraint.RootDetBridge` (#870).
+
+v0.9.1 (August 22, 2019)
+---------------------
+
+- Fix support for Julia v1.2 (#834).
+- L_1 and L_∞ norm epigraph cones and corresponding bridges to LP were added (#818).
+- Added tests to `MOI.Test.nametest` (#833).
+- Fix `MOI.Test.soc3test` for solvers not supporting infeasibility certificates (#839).
+- Implements `operate` for operators `*` and `/` between vector function and
+  constant (#837).
+- Implements `show` for `MOI.Utilities.IndexMap` (#847).
+- Fix corner cases for mapping of variables in `MOI.Utilities.CachingOptimizer`
+  and substitution of variables in `MOI.Bridges.AbstractBridgeOptimizer` (#848).
+- Fix transformation of constant terms for `MOI.Bridges.Constraint.SOCtoPSDBridge`
+  and `MOI.Bridges.Constraint.RSOCtoPSDBridge` (#840).
+
+v0.9.0 (August 13, 2019)
 ---------------------
 
 - Support for Julia v0.6 and v0.7 was dropped (#714, #717).
@@ -11,6 +44,7 @@ v0.9.0 (May 2?, 2019)
 - Support for indicator constraints was added (#709, #712).
 - `DualObjectiveValue` attribute was added (#473).
 - `RawParameter` attribute was added (#733).
+- A `dual_set` function was added (#804).
 - A `Benchmarks` submodule was added to facilitate solver benchmarking (#769).
 - A `submit` function was added, this may for intance allow the user to submit
   solutions or cuts to the solver from a callback (#775).
@@ -44,6 +78,7 @@ v0.9.0 (May 2?, 2019)
     a `VectorOfVariables` (#616).
   * Fix a type piracy of `operate` (#784).
   * The `load_constraint` fallback signature was fixed (#760).
+  * The `set_dot` function was extended to work with sparse arrays (#805).
 - Bridges improvements:
   * The bridges no longer store the constraint function and set before it is
     briged, the bridges now have to implement `ConstraintFunction` and
@@ -51,7 +86,6 @@ v0.9.0 (May 2?, 2019)
     `@bridge` macro was removed (#722).
   * Bridge are now instantiated with a `bridge_constraint` function instead of
     using a constructor (#730).
-  * Fix constraint attributes for bridges (#699).
   * Fix constraint attributes for bridges (#699).
   * Constraint bridges were moved to the `Bridges/Constraint` submodule so they
     should now inherit from `MOI.Bridges.Constraint.Abstract` and should

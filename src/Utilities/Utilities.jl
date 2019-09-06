@@ -17,6 +17,14 @@ const VQF{T} = MOI.VectorQuadraticFunction{T}
 const VI = MOI.VariableIndex
 const CI{F,S} = MOI.ConstraintIndex{F,S}
 
+function print_with_acronym(io::IO, s::AbstractString)
+    s = replace(s, "MathOptInterface.Utilities" => "MOIU")
+    s = replace(s, "MathOptInterface.Bridges" => "MOIB")
+    s = replace(s, "MathOptInterface.Test" => "MOIT")
+    s = replace(s, "MathOptInterface" => "MOI")
+    print(io, s)
+end
+
 include("functions.jl")
 include("sets.jl")
 include("constraints.jl")
@@ -30,5 +38,6 @@ include("cachingoptimizer.jl")
 include("universalfallback.jl")
 
 include("CleverDicts.jl")
+include("lazy_iterators.jl")
 
 end # module

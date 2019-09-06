@@ -29,7 +29,10 @@ config = MOIT.TestConfig()
     MOI.modify(bridged_mock, ci, MOI.ScalarConstantChange{Float64}(1.0))
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}.([2.0, 1.0], [x, y]), 1.0)
-    test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, 0),))
+    test_delete_bridge(bridged_mock, ci, 2, (
+        (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0),
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0)
+    ))
 
     MOIT.basic_constraint_tests(bridged_mock, config,
                                 include=[(F, S) for
@@ -78,7 +81,7 @@ config = MOIT.TestConfig()
 
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
         for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
-            @test MOIB.added_constraint_types(MOIB.Constraint.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T}), (MOI.SingleVariable, S)]
+            @test MOIB.added_constraint_types(MOIB.Constraint.ScalarSlackBridge{T, F, S}) == [(F, MOI.EqualTo{T})]
         end
     end
 end
@@ -99,7 +102,10 @@ end
     MOI.modify(bridged_mock, ci, MOI.VectorConstantChange([1.0]))
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈
         MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([2.0, 1.0], [x, y])), [1.0])
-    test_delete_bridge(bridged_mock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.Zeros, 0),))
+    test_delete_bridge(bridged_mock, ci, 2, (
+        (MOI.VectorOfVariables, MOI.Nonpositives, 0),
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros, 0)
+    ))
 
     fp = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1,2,3], MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], [x, y, y])), [0.0, 0.0, 0.0])
     cp = MOI.add_constraint(bridged_mock, fp, MOI.PowerCone(0.1))
@@ -146,7 +152,7 @@ end
 
     for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
         for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
-            @test MOIB.added_constraint_types(MOIB.Constraint.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros), (MOI.VectorOfVariables, S)]
+            @test MOIB.added_constraint_types(MOIB.Constraint.VectorSlackBridge{T, F, S}) == [(F, MOI.Zeros)]
         end
     end
 end

@@ -34,7 +34,11 @@ const MOIU = MOI.Utilities
         "Cannot query $(attr) from caching optimizer because no optimizer" *
         " is attached.")
     @test_throws exception MOI.get(model, attr)
-
+    attr = MOI.TimeLimitSec()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
     attr = MOI.ResultCount()
     exception = ErrorException(
         "Cannot query $(attr) from caching optimizer because no optimizer" *
@@ -46,24 +50,120 @@ end
     cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
     cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
     MOI.set(cached, MOI.Silent(), true)
+    MOI.set(cached, MOI.TimeLimitSec(), 0.0)
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
     MOI.set(cached, MOI.Silent(), false)
+    MOI.set(cached, MOI.TimeLimitSec(), 1.0)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
     MOI.set(cached, MOI.Silent(), true)
+    MOI.set(cached, MOI.TimeLimitSec(), 0.0)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
+    @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
+end
+
+struct DummyModelAttribute <: MOI.AbstractModelAttribute end
+struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
+struct DummyVariableAttribute <: MOI.AbstractVariableAttribute end
+struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
+
+@testset "Mapping of variables" begin
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    model = MOIU.CachingOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()), mock)
+    x = MOI.add_variable(model)
+    y = first(MOI.get(mock, MOI.ListOfVariableIndices()))
+    @test !MOI.is_valid(model, y)
+    @test !MOI.is_valid(mock, x)
+    fx = MOI.SingleVariable(x)
+    fy = MOI.SingleVariable(y)
+
+    cfx = MOI.add_constraint(model, fx, MOI.GreaterThan(1.0))
+    cfy = first(MOI.get(mock, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.GreaterThan{Float64}}()))
+    @test !MOI.is_valid(model, cfy)
+    @test !MOI.is_valid(mock, cfx)
+    @test MOI.get(mock, MOI.ConstraintFunction(), cfy) == fy
+
+    c2fx = MOI.add_constraint(model, 2.0fx, MOI.GreaterThan(1.0))
+    c2fy = first(MOI.get(mock, MOI.ListOfConstraintIndices{
+        MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()))
+    @test !MOI.is_valid(model, c2fy)
+    @test !MOI.is_valid(mock, c2fx)
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(1.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 2.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(1.0)
+
+    MOI.set(model, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(2.0))
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 2.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(2.0)
+
+    MOI.set(model, MOI.ConstraintFunction(), c2fx, 3.0fx)
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 3.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(2.0)
+
+    MOI.set(model, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(4.0))
+    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
+    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(4.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 3.0fy
+    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(4.0)
+
+    MOI.set(model, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(fy)}()) == fy
+
+    MOI.set(model, MOI.ObjectiveFunction{typeof(2.0fx)}(), 2.0fx)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0fy)}()) ≈ 2.0fy
+
+    MOI.set(model, DummyModelAttribute(), 2.0fx + 1.0)
+    @test MOI.get(model, DummyModelAttribute()) ≈ 2.0fx + 1.0
+    @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0fy + 1.0
+
+    for (attr, cache_index, optimizer_index) in [
+        (DummyVariableAttribute(), x, y),
+        (DummyConstraintAttribute(), cfx, cfy)]
+        MOI.set(model, attr, cache_index, 1.0fx)
+        @test MOI.get(model, attr, cache_index) ≈ 1.0fx
+        @test MOI.get(mock, attr, optimizer_index) ≈ 1.0fy
+
+        MOI.set(model, attr, [cache_index], [3.0fx])
+        @test MOI.get(model, attr, [cache_index])[1] ≈ 3.0fx
+        @test MOI.get(mock, attr, [optimizer_index])[1] ≈ 3.0fy
+    end
+
+    nlp_data = MOI.NLPBlockData(
+        [MOI.NLPBoundsPair(1.0, 2.0)],
+        DummyEvaluator(), false)
+    MOI.set(model, MOI.NLPBlock(), nlp_data)
+    for nlp_data in [MOI.get(model, MOI.NLPBlock()), MOI.get(mock, MOI.NLPBlock())]
+        @test nlp_data.constraint_bounds == [MOI.NLPBoundsPair(1.0, 2.0)]
+        @test nlp_data.evaluator isa DummyEvaluator
+        @test nlp_data.has_objective == false
+    end
 end
 
 @testset "CachingOptimizer MANUAL mode" begin
@@ -131,6 +231,12 @@ end
     # TODO: test more constraint modifications
 
 
+    @test sprint(show, m) == raw"""
+    MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}}
+    in state NO_OPTIMIZER
+    in mode MANUAL
+    with model cache MOIU.Model{Float64}
+    with optimizer nothing"""
 end
 
 @testset "CachingOptimizer AUTOMATIC mode" begin
@@ -240,6 +346,12 @@ end
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
 
+    @test sprint(show, m) == raw"""
+    MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}}
+    in state ATTACHED_OPTIMIZER
+    in mode AUTOMATIC
+    with model cache MOIU.Model{Float64}
+    with optimizer MOIU.MockOptimizer{MOIU.Model{Float64}}"""
 end
 
 @testset "Constructor with optimizer" begin
@@ -252,6 +364,12 @@ end
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
         @test MOIU.mode(m) == MOIU.AUTOMATIC
         @test MOI.get(m, MOI.SolverName()) == "Mock"
+        @test sprint(show, m) == raw"""
+        MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64}},MOIU.Model{Float64}}
+        in state ATTACHED_OPTIMIZER
+        in mode AUTOMATIC
+        with model cache MOIU.Model{Float64}
+        with optimizer MOIU.MockOptimizer{MOIU.Model{Float64}}"""
     end
     @testset "Non-empty optimizer" begin
         s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)

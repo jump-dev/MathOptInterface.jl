@@ -63,7 +63,7 @@ error in case `copy_to` is called with `copy_names` equal to `true`.
 """
 supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
 
-struct IndexMap
+struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
     varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
     conmap::Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}
 end
@@ -87,6 +87,9 @@ Base.haskey(idxmap::IndexMap, ci::MOI.ConstraintIndex) = haskey(idxmap.conmap, c
 Base.haskey(idxmap::IndexMap, vi::MOI.VariableIndex) = haskey(idxmap.varmap, vi)
 
 Base.keys(idxmap::IndexMap) = Iterators.flatten((keys(idxmap.varmap), keys(idxmap.conmap)))
+
+Base.length(idxmap::IndexMap) = length(idxmap.varmap) + length(idxmap.conmap)
+Base.iterate(idxmap::MOIU.IndexMap, args...) = iterate(Base.Iterators.flatten((idxmap.varmap, idxmap.conmap)), args...)
 
 """
     pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
@@ -141,7 +144,7 @@ function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
         end
         value = MOI.get(src, attr, get_args...)
         if value !== nothing
-            mapped_value = attribute_value_map(idxmap, value)
+            mapped_value = map_indices(idxmap, value)
             pass_attr!(dest, attr, set_args..., mapped_value)
         end
     end
@@ -220,7 +223,7 @@ function copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
                           idxmap::IndexMap,
                           cis_src::Vector{<:MOI.ConstraintIndex})
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
-    f_dest = mapvariables.(Ref(idxmap), f_src)
+    f_dest = map_indices.(Ref(idxmap), f_src)
     s = MOI.get(src, MOI.ConstraintSet(), cis_src)
     cis_dest = MOI.add_constraints(dest, f_dest, s)
     for (ci_src, ci_dest) in zip(cis_src, cis_dest)
@@ -264,8 +267,21 @@ function pass_constraints(
     end
 end
 
-attribute_value_map(idxmap, f::MOI.AbstractFunction) = mapvariables(idxmap, f)
-attribute_value_map(idxmap, attribute_value) = attribute_value
+function copy_free_variables(dest::MOI.ModelLike, idxmap::IndexMap, vis_src, copy_variables::Function)
+    if length(vis_src) != length(keys(idxmap.varmap))
+        vars = copy_variables(dest, length(vis_src) - length(idxmap.varmap))
+        i = 1
+        for vi in vis_src
+            if !haskey(idxmap.varmap, vi)
+                idxmap.varmap[vi] = vars[i]
+                i += 1
+            end
+        end
+        @assert i == length(vars) + 1
+        @assert length(vis_src) == length(idxmap.varmap)
+    end
+end
+
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     Base.depwarn("default_copy_to(dest, src) is deprecated, use default_copy_to(dest, src, true) instead or default_copy_to(dest, src, false) if you do not want to copy names.", :default_copy_to)
     default_copy_to(dest, src, true)
@@ -291,23 +307,28 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
     vector_of_variables_types = [S for (F, S) in constraint_types
                                  if F == MOI.VectorOfVariables]
 
-    vector_of_variables_not_added = [
-        copy_vector_of_variables(dest, src, idxmap, S)
-        for S in vector_of_variables_types
-    ]
-    single_variable_not_added = [
-        copy_single_variable(dest, src, idxmap, S)
-        for S in single_variable_types
-    ]
-
-    if length(vis_src) != length(keys(idxmap.varmap))
-        # Copy free variables
-        variables_not_added = setdiff(Set(vis_src), keys(idxmap.varmap))
-        vars = MOI.add_variables(dest, length(variables_not_added))
-        for (vi, var) in zip(variables_not_added, vars)
-            idxmap.varmap[vi] = var
-        end
+    # The `NLPBlock` assumes that the order of variables does not change (#849)
+    if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
+        vector_of_variables_not_added = [
+            MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
+            for S in vector_of_variables_types
+        ]
+        single_variable_not_added = [
+            MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}())
+            for S in single_variable_types
+        ]
+    else
+        vector_of_variables_not_added = [
+            copy_vector_of_variables(dest, src, idxmap, S)
+            for S in vector_of_variables_types
+        ]
+        single_variable_not_added = [
+            copy_single_variable(dest, src, idxmap, S)
+            for S in single_variable_types
+        ]
     end
+
+    copy_free_variables(dest, idxmap, vis_src, MOI.add_variables)
 
     # Copy variable attributes
     pass_attributes(dest, src, copy_names, idxmap, vis_src)
@@ -501,7 +522,7 @@ function allocate_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if !haskey(idxmap, f_src.variable)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
+            vi_dest, ci_dest = allocate_constrained_variable(dest, set)
             idxmap[ci_src] = ci_dest
             idxmap[f_src.variable] = vi_dest
             push!(allocated, ci_src)
@@ -600,7 +621,7 @@ function allocate_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
     for ci_src in cis_src
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
-        f_dest = mapvariables(idxmap, f_src)
+        f_dest = map_indices(idxmap, f_src)
         ci_dest = allocate_constraint(dest, f_dest, s)
         idxmap.conmap[ci_src] = ci_dest
     end
@@ -611,7 +632,7 @@ function load_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
     for ci_src in cis_src
         ci_dest = idxmap[ci_src]
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-        f_dest = mapvariables(idxmap, f_src)
+        f_dest = map_indices(idxmap, f_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
         load_constraint(dest, ci_dest, f_dest, s)
     end
@@ -651,14 +672,7 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
             allocate_single_variable(dest, src, idxmap, S)
     end
 
-    if length(vis_src) != length(keys(idxmap.varmap))
-        # Allocate free variables
-        variables_not_added = setdiff(Set(vis_src), keys(idxmap.varmap))
-        vars = allocate_variables(dest, length(variables_not_added))
-        for (vi, var) in zip(variables_not_added, vars)
-            idxmap.varmap[vi] = var
-        end
-    end
+    copy_free_variables(dest, idxmap, vis_src, allocate_variables)
 
     # Allocate variable attributes
     pass_attributes(dest, src, copy_names, idxmap, vis_src, allocate)

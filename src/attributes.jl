@@ -34,6 +34,8 @@ Abstract supertype for attribute objects that can be used to set or get attribut
 """
 abstract type AbstractConstraintAttribute end
 
+# Attributes should not contain any `VariableIndex` or `ConstraintIndex` as the
+# set is passed unmodifed during `copy_to`.
 const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
 
 # This allows to use attributes in broadcast calls without the need to
@@ -420,7 +422,7 @@ An optimizer attribute for the string identifying the solver/optimizer.
 struct SolverName <: AbstractOptimizerAttribute end
 
 """
-    Silent
+    Silent()
 
 An optimizer attribute for silencing the output of an optimizer. When `set`
 to `true`, it takes precedence over any other attribute controlling verbosity
@@ -439,6 +441,15 @@ value given by the user for this solver-specific parameter or `1` if none is
 given.
 """
 struct Silent <: AbstractOptimizerAttribute end
+
+"""
+    TimeLimitSec()
+
+An optimizer attribute for setting a time limit for an optimization. When `set`
+to `nothing`, it deactivates the solver time limit. The default value is
+`nothing`. The time limit is in seconds.
+""" # TODO add a test checking if the solver returns TIME_LIMIT status when the time limit is hit
+struct TimeLimitSec <: AbstractOptimizerAttribute end
 
 """
     RawParameter(name)
@@ -472,9 +483,9 @@ struct Name <: AbstractModelAttribute end
 """
     ObjectiveSense()
 
-A model attribute for the `OptimizationSense` of the objective function, which
-can be `MIN_SENSE`, `MAX_SENSE`, or `FeasiblitySense`. The default is
-`FEASIBILITY_SENSE`.
+A model attribute for the objective sense of the objective function, which
+must be an `OptimizationSense`: `MIN_SENSE`, `MAX_SENSE`, or
+`FEASIBILITY_SENSE`. The default is `FEASIBILITY_SENSE`.
 """
 struct ObjectiveSense <: AbstractModelAttribute end
 
