@@ -1501,10 +1501,12 @@ function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     atol = config.atol
     rtol = config.rtol
     # Problem dual exp
-    # max u + v + w
-    #  st  -u e^(v/u) <= exp(1)w, u < 0 (i.e (u, v, w) are in the dual exponential primal cone)
-    #      u == 1
-    #      v == 2
+    #max 2x_2 + x_1
+    # s.t.
+    # x_1 + u == 1
+    # x_2 + v == 1
+    # w == 1
+    # (u, v, w) ∈ DualExponentialCone
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1520,7 +1522,8 @@ function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 3)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 3
+    x = MOI.add_variables(model, 2)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 5
 
     vov = MOI.VectorOfVariables(v)
     if vecofvars
@@ -1529,11 +1532,12 @@ function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
         vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.DualExponentialCone())
     end
 
-    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.), MOI.EqualTo(1.))
-    cy = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.), MOI.EqualTo(2.))
+    cu = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], v[1]]), 0.), MOI.EqualTo(1.))
+    cv = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[2], v[2]]), 0.), MOI.EqualTo(1.))
+    cw = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.), MOI.EqualTo(1.))
 
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, v), 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -1552,21 +1556,24 @@ function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1/2) atol=atol rtol=rtol
         end
 
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1., 2., 2exp(1/2)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [-exp(1/2), -exp(1/2)/2, 1.] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1 + exp(1/2), 1 + exp(1/2)/2] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [1., 2., 2exp(1/2)] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [-exp(1/2), -exp(1/2)/2, 1.] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 1 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 1 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 1 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1 atol=atol rtol=rtol
 
         if config.duals
-            u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test u ≈ -exp(1/2) atol=atol rtol=rtol
-            @test v ≈ -exp(1/2)/2 atol=atol rtol=rtol
-            @test w ≈ 1 atol=atol rtol=rtol
+            x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
+            @test x ≈ 1. atol=atol rtol=rtol
+            @test y ≈ 2. atol=atol rtol=rtol
+            @test z ≈ 2exp(1/2) atol=atol rtol=rtol
 
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ 1 + exp(1/2) atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ 1 + exp(1/2)/2 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -1 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -2  atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cw) ≈ -2exp(1/2) atol=atol rtol=rtol
         end
     end
 end

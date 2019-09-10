@@ -123,18 +123,13 @@ end
     MOIT.exp3test(mock, config)
 end
 @testset "Dual Exponential" begin
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1., 2., 2exp(1/2)],
-                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [1 + exp(1/2), 1 + exp(1/2)/2])
-    MOIT.exp1vtest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1., 2., 2exp(1/2)],
-                          (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)   => [[-exp(1/2), -exp(1/2)/2, 1.]],
-                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [1 + exp(1/2), 1 + exp(1/2)/2])
-    MOIT.exp1ftest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0., -0.3, 0., exp(-0.3), exp(-0.3), exp(-0.3), 0., 1.0, 0.],
-                          (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)   => [[-exp(-0.3)/2, -1.3exp(-0.3)/2, 0.5], [-exp(-0.3)/2, -1.3exp(-0.3)/2, 0.5]],
-                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1.0, exp(-0.3)*0.3],
-                          (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-exp(-0.3)*0.3],
-                          (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)      => [[0.0, exp(-0.3), exp(-0.3)/2], [0.0, 0.0, exp(-0.3)/2]])
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-exp(1/2), -exp(1/2)/2, 1., 1 + exp(1/2), 1 + exp(1/2)/2],
+                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1., -2., -2exp(1/2)])
+    MOIT.dualexp1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-exp(1/2), -exp(1/2)/2, 1., 1 + exp(1/2), 1 + exp(1/2)/2],
+                          (MOI.VectorAffineFunction{Float64}, MOI.DualExponentialCone)   => [[1., 2., 2exp(1/2)]],
+                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1., -2., -2exp(1/2)])
+    MOIT.dualexp1ftest(mock, config)
 end
 @testset "PSD" begin
     # PSD0
