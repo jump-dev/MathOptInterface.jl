@@ -1501,7 +1501,7 @@ function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     atol = config.atol
     rtol = config.rtol
     # Problem dual exp
-    #max 2x_2 + x_1
+    # max 2x_2 + x_1
     # s.t.
     # x_1 + u == 1
     # x_2 + v == 1
@@ -1512,9 +1512,9 @@ function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ExponentialCone)
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.DualExponentialCone)
     else
-        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.DualExponentialCone)
     end
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
