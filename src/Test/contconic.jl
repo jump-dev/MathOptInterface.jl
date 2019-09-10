@@ -1673,19 +1673,21 @@ function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     atol = config.atol
     rtol = config.rtol
     # Problem dual POW1
-    # max w
-    #  st  (u/0.9)^0.9 * (v/0.1)^(0.1) >= |w| (i.e (u, v, w) are in the 3d power cone with a=0.9)
-    #      u == 2
-    #      v == 1
+    # min -2x_1 - x_2
+    #  st  x_1 + u == 0
+    #      x_2 + v == 0
+    #      w == -1
+    #     (u, v, w) ∈ DualPowerCone(0.9)
+
     a = 0.9
     @test MOIU.supports_default_copy_to(model, #=copy_names=#false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
 
     if vecofvars
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.PowerCone{Float64})
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.DualPowerCone{Float64})
     else
-        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.PowerCone{Float64})
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.DualPowerCone{Float64})
     end
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 
@@ -1693,21 +1695,23 @@ function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     @test MOI.is_empty(model)
 
     v = MOI.add_variables(model, 3)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 3
+    x = MOI.add_variables(model, 2)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 5
 
     vov = MOI.VectorOfVariables(v)
 
     if vecofvars
-        vc = MOI.add_constraint(model, vov, MOI.PowerCone(a));
+        vc = MOI.add_constraint(model, vov, MOI.DualPowerCone(a));
     else
         vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.DualPowerCone(a))
     end
 
-    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.), MOI.EqualTo(2.))
-    cy = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.), MOI.EqualTo(1.))
+    cu = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], v[1]]), 0.), MOI.EqualTo(0.))
+    cv = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[2], v[2]]), 0.), MOI.EqualTo(0.))
+    cw = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.), MOI.EqualTo(1.))
 
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], [x[1], x[2]]), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -1722,28 +1726,31 @@ function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0^0.9 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0.839729692, 0.1866065982, 1.] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [-0.839729692, -0.1866065982] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [0.839729692, 0.1866065982, 1.] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2. atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 0. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 0. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1. atol=atol rtol=rtol
 
         if config.duals
-            u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test u ≈ 0.839729692 atol=atol rtol=rtol
-            @test v ≈ 0.1866065982 atol=atol rtol=rtol
-            @test w ≈ -1 atol=atol rtol=rtol
+            x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
+            @test x ≈ 2. atol=atol rtol=rtol
+            @test y ≈ 1. atol=atol rtol=rtol
+            @test z ≈ -2^0.9 atol=atol rtol=rtol
 
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -0.839729692 atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -0.1866065982 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -2. atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -1. atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cw) ≈ 2^0.9 atol=atol rtol=rtol
         end
     end
 end
 
 
-dualpow1vtest(model::MOI.ModelLike, config::TestConfig) = _pow1test(model, config, true)
-dualpow1ftest(model::MOI.ModelLike, config::TestConfig) = _pow1test(model, config, false)
+dualpow1vtest(model::MOI.ModelLike, config::TestConfig) = _dualpow1test(model, config, true)
+dualpow1ftest(model::MOI.ModelLike, config::TestConfig) = _dualpow1test(model, config, false)
 
 dualpowtests = Dict("dualpow1v" => dualpow1vtest,
                     "dualpow1f" => dualpow1ftest)
@@ -2229,3 +2236,26 @@ const contconictests = Dict("lin" => lintest,
                             "rootdet" => rootdettest)
 
 @moitestset contconic true
+
+# using MathOptInterface, JuMP, COSMO
+# model = Model(with_optimizer(COSMO.Optimizer))
+# @variable(model, u)
+# @variable(model, v)
+# @variable(model, w)
+# @variable(model, x[1:2])
+# @constraint(model, cu,  x[1] + u == 0)
+# @constraint(model, cv, x[2] + v == 0)
+# @constraint(model, cw, w == 1)
+# @constraint(model, con, [u, v, w] in MathOptInterface.DualPowerCone(0.9))
+# @objective(model, Min, -2x[1] - x[2])
+# optimize!(model)
+
+# u = JuMP.value(u)
+# v = JuMP.value(v)
+# w = JuMP.value(w)
+# x = JuMP.value.(x)
+# JuMP.objective_value(model)
+# 1^0.9
+# dual(cu)
+# dual(cv)
+# dual(cw)
