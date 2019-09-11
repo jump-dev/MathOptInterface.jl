@@ -64,12 +64,12 @@ const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}
 include("indicator.jl")
 
 """
-    add_all_bridges(bridged_model, T::Type)
+    add_all_bridges(bridged_model, ::Type{T})
 
 Add all bridges defined in the `Bridges.Constraint` submodule to
 `bridged_model`. The coefficient type used is `T`.
 """
-function add_all_bridges(bridged_model, T::Type)
+function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, GreaterToLessBridge{T})
     MOIB.add_bridge(bridged_model, LessToGreaterBridge{T})
     MOIB.add_bridge(bridged_model, NonnegToNonposBridge{T})
@@ -94,6 +94,7 @@ function add_all_bridges(bridged_model, T::Type)
     # then to `PSD` produces a smaller SDP constraint.
     MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
     MOIB.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
+    MOIB.add_bridge(bridged_model, IndicatorSOS1Bridge{T})
     return
 end
 
