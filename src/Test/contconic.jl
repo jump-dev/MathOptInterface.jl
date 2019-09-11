@@ -2236,26 +2236,3 @@ const contconictests = Dict("lin" => lintest,
                             "rootdet" => rootdettest)
 
 @moitestset contconic true
-
-# using MathOptInterface, JuMP, COSMO
-# model = Model(with_optimizer(COSMO.Optimizer))
-# @variable(model, u)
-# @variable(model, v)
-# @variable(model, w)
-# @variable(model, x[1:2])
-# @constraint(model, cu,  x[1] + u == 0)
-# @constraint(model, cv, x[2] + v == 0)
-# @constraint(model, cw, w == 1)
-# @constraint(model, con, [u, v, w] in MathOptInterface.DualPowerCone(0.9))
-# @objective(model, Min, -2x[1] - x[2])
-# optimize!(model)
-
-# u = JuMP.value(u)
-# v = JuMP.value(v)
-# w = JuMP.value(w)
-# x = JuMP.value.(x)
-# JuMP.objective_value(model)
-# 1^0.9
-# dual(cu)
-# dual(cv)
-# dual(cw)
