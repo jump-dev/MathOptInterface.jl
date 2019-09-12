@@ -251,3 +251,17 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
         @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
     end
 end
+
+@testset "ListOfSupportedConstraints" begin
+    @testset "$set" for set in (
+        MOI.EqualTo(1.0), MOI.GreaterThan(1.0), MOI.LessThan(1.0),
+        MOI.Interval(1.0, 2.0), MOI.Semicontinuous(1.0, 2.0),
+        MOI.Semiinteger(1.0, 2.0), MOI.Integer(), MOI.ZeroOne()
+    )
+        model = MOIU.Model{Float64}()
+        x = MOI.add_variable(model)
+        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+        @test MOI.get(model, MOI.ListOfConstraints()) ==
+            [(MOI.SingleVariable, typeof(set))]
+    end
+end
