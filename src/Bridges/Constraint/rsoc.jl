@@ -25,7 +25,7 @@ function rotate_function(f::MOI.AbstractVectorFunction, T::Type)
     t = f_scalars[1]
     u = f_scalars[2]
     x = f_scalars[3:d]
-    s2 = √2
+    s2 = √T(2)
     ts = MOIU.operate!(/, T, t, s2)
     us = MOIU.operate!(/, T, u, s2)
     # Cannot use `operate!` here since `ts` and `us` are needed for the next
@@ -94,7 +94,8 @@ function rotate_result(model,
                        attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual},
                        ci::MOI.ConstraintIndex)
     x = MOI.get(model, attr, ci)
-    s2 = √2
+    T = eltype(x)
+    s2 = √T(2)
     return [x[1]/s2 + x[2]/s2; x[1]/s2 - x[2]/s2; x[3:end]]
 end
 # Need to define both `get` methods and redirect to `rotate_result` to avoid
