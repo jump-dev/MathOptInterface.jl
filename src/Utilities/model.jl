@@ -577,12 +577,12 @@ function _add_contraint_type(list, model::AbstractModel,
 end
 function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where T
     list = broadcastvcat(_getloc, model)
-    _add_contraint_type(list, model, MOI.EqualTo{T})
-    _add_contraint_type(list, model, MOI.GreaterThan{T})
-    _add_contraint_type(list, model, MOI.LessThan{T})
-    _add_contraint_type(list, model, MOI.Interval{T})
-    _add_contraint_type(list, model, MOI.Integer)
-    _add_contraint_type(list, model, MOI.ZeroOne)
+    for S in (
+        MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.Interval{T},
+        MOI.Semicontinuous{T}, MOI.Semiinteger{T}, MOI.Integer, MOI.ZeroOne
+    )
+        _add_contraint_type(list, model, S)
+    end
     return list
 end
 
