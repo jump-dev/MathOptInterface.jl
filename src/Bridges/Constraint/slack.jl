@@ -17,7 +17,7 @@ function bridge_constraint(::Type{ScalarSlackBridge{T, F, S}}, model,
                            f::MOI.AbstractScalarFunction, s::S) where {T, F, S}
     slack, slack_in_set = MOI.add_constrained_variable(model, s)
     new_f = MOIU.operate(-, T, f, MOI.SingleVariable(slack))
-    equality = MOI.add_constraint(model, new_f, MOI.EqualTo(0.0))
+    equality = MOI.add_constraint(model, new_f, MOI.EqualTo(zero(T)))
     return ScalarSlackBridge{T, F, S}(slack, slack_in_set, equality)
 end
 

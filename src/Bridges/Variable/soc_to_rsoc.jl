@@ -2,7 +2,8 @@ function rotate_result(
     model, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual},
     ci::MOI.ConstraintIndex)
     x = MOI.get(model, attr, ci)
-    s2 = √2
+    T = eltype(x)
+    s2 = √T(2)
     return [x[1]/s2 + x[2]/s2; x[1]/s2 - x[2]/s2; x[3:end]]
 end
 
@@ -75,7 +76,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.VariablePrimal,
                  bridge::SOCtoRSOCBridge{T}, i::IndexInVector) where T
     if i.value == 1 || i.value == 2
         t, u = MOI.get(model, attr, bridge.variables[1:2])
-        s2 = convert(T, √2)
+        s2 = √T(2)
         if i.value == 1
             return t/s2 + u/s2
         else
@@ -87,7 +88,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.VariablePrimal,
 end
 
 function MOIB.bridged_function(bridge::SOCtoRSOCBridge{T}, i::IndexInVector) where T
-    s2 = convert(T, √2)
+    s2 = √T(2)
     if i.value == 1 || i.value == 2
         t = MOIU.operate(/, T, MOI.SingleVariable(bridge.variables[1]), s2)
         u = MOIU.operate(/, T, MOI.SingleVariable(bridge.variables[2]), s2)
@@ -102,7 +103,7 @@ function MOIB.bridged_function(bridge::SOCtoRSOCBridge{T}, i::IndexInVector) whe
 end
 function unbridged_map(bridge::SOCtoRSOCBridge{T}, vis::Vector{MOI.VariableIndex}) where T
     umap = Pair{MOI.VariableIndex, MOI.ScalarAffineFunction{T}}[]
-    s2 = convert(T, √2)
+    s2 = √T(2)
     t = MOIU.operate(/, T, MOI.SingleVariable(vis[1]), s2)
     u = MOIU.operate(/, T, MOI.SingleVariable(vis[2]), s2)
     push!(umap, bridge.variables[1] => MOIU.operate(+, T, t, u))
