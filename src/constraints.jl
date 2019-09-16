@@ -27,9 +27,9 @@ If `model` does not support free variables, it should not implement
 this method and return `false`. This allows free variables to be bridged as the
 sum of a nonnegative and a nonpositive variables.
 """ # Implemented as only one method to avoid ambiguity
-function supports_constraint(model::ModelLike, F::Type{<:AbstractFunction},
+function supports_constraint(::ModelLike, F::Type{<:AbstractFunction},
                              S::Type{<:AbstractSet})
-    return F == VectorOfVariables && S == Reals
+    return F === VectorOfVariables && S === Reals
 end
 
 """

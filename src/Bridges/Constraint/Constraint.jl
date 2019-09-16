@@ -61,7 +61,8 @@ const RootDet{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T}, OT
 include("soc_to_psd.jl")
 const SOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoPSDBridge{T}, OT}
 const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}, OT}
-include("indicator.jl")
+include("indicator_activate_on_zero.jl")
+include("indicator_sos.jl")
 
 """
     add_all_bridges(bridged_model, ::Type{T})
