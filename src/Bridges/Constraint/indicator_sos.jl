@@ -70,9 +70,9 @@ function MOIB.added_constraint_types(::Type{<:IndicatorSOS1Bridge{T, S}}) where 
            ]
 end
 
-function concrete_bridge_type(::Type{<:IndicatorSOS1Bridge},
+function concrete_bridge_type(::Type{<:IndicatorSOS1Bridge{T}},
                               ::Type{<:MOI.VectorAffineFunction},
-                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S}}) where {T, S<:Union{MOI.LessThan{T}, MOI.GreaterThan{T}}}
+                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S}}) where {T, S<:Union{MOI.LessThan, MOI.GreaterThan}}
     return IndicatorSOS1Bridge{T, S, MOI.ConstraintIndex{MOI.SingleVariable, S}}
 end
 
