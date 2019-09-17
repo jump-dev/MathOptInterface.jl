@@ -371,7 +371,7 @@ end
                 (MOI.FEASIBLE_POINT, [1.0]),
                 MOI.FEASIBLE_POINT,
                 (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [1.0]
+                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0]
             )
         )
         MOIT.solve_single_variable_dual_max(mock, config)
