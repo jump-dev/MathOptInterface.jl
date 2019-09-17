@@ -111,7 +111,8 @@ function solve_single_variable_dual_min(model::MOI.ModelLike, config::TestConfig
         sl = MOI.get(model, MOI.ConstraintDual(), xl)
         su = MOI.get(model, MOI.ConstraintDual(), xu)
         @test isapprox(sl + su, 1.0, atol = config.atol)
-        @test sl > su
+        @test sl >= -config.atol
+        @test su <= config.atol
     end
 end
 unittests["solve_single_variable_dual_min"] = solve_single_variable_dual_min
@@ -131,7 +132,8 @@ function solve_single_variable_dual_max(model::MOI.ModelLike, config::TestConfig
         sl = MOI.get(model, MOI.ConstraintDual(), xl)
         su = MOI.get(model, MOI.ConstraintDual(), xu)
         @test isapprox(sl + su, -1.0, atol = config.atol)
-        @test sl > su
+        @test sl >= -config.atol
+        @test su <= config.atol
     end
 end
 unittests["solve_single_variable_dual_max"] = solve_single_variable_dual_max
