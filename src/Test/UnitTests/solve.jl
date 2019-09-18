@@ -95,3 +95,45 @@ function solve_unbounded_model(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_unbounded_model"] = solve_unbounded_model
+
+function solve_single_variable_dual_min(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    if config.solve && config.duals
+        MOI.optimize!(model)
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), x), 1.0, atol = config.atol
+        )
+        sl = MOI.get(model, MOI.ConstraintDual(), xl)
+        su = MOI.get(model, MOI.ConstraintDual(), xu)
+        @test isapprox(sl + su, 1.0, atol = config.atol)
+        @test sl >= -config.atol
+        @test su <= config.atol
+    end
+end
+unittests["solve_single_variable_dual_min"] = solve_single_variable_dual_min
+
+function solve_single_variable_dual_max(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    if config.solve && config.duals
+        MOI.optimize!(model)
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), x), 1.0, atol = config.atol
+        )
+        sl = MOI.get(model, MOI.ConstraintDual(), xl)
+        su = MOI.get(model, MOI.ConstraintDual(), xu)
+        @test isapprox(sl + su, -1.0, atol = config.atol)
+        @test sl >= -config.atol
+        @test su <= config.atol
+    end
+end
+unittests["solve_single_variable_dual_max"] = solve_single_variable_dual_max
