@@ -340,7 +340,7 @@ variable, and the solver interfaces should throw respectively
 [`LowerBoundAlreadySet`](@ref) or [`UpperBoundAlreadySet`](@ref).
 Moreover, adding two `SingleVariable` constraints on the same variable with the
 same set is impossible because they share the same index as it is the index of
-the variable.
+the variable, see [`ConstraintIndex`](@ref).
 It is natural, however, to impose upper and lower bounds separately as two
 different constraints on a single variable. The difference between imposing
 bounds by using a single `Interval` constraint and by using separate `LessThan`
