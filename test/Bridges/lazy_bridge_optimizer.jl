@@ -224,7 +224,7 @@ end
 @testset "Continuous Conic" begin
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
-    exclude = ["exp", "pow", "logdet", "rootdets"]
+    exclude = ["exp", "dualexp", "pow", "dualpow", "logdet", "rootdets"]
     MOIT.contconictest(bridged, MOIT.TestConfig(solve=false), exclude)
 end
 
