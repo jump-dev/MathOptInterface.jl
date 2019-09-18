@@ -79,3 +79,77 @@ struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
         @test index_map[ci] == ci
     end
 end
+
+# Model that distinguish variables created constrained
+struct ConstrainedVariablesModel <: MOI.ModelLike
+    allocate_load::Bool
+    added_constrained::Vector{Bool}
+end
+function ConstrainedVariablesModel(allocate_load::Bool)
+    return ConstrainedVariablesModel(allocate_load, Bool[])
+end
+function MOI.empty!(model::ConstrainedVariablesModel)
+    empty!(model.added_constrained)
+end
+
+function MOIU.supports_default_copy_to(model::ConstrainedVariablesModel, ::Bool)
+    return !model.allocate_load
+end
+function MOIU.supports_allocate_load(model::ConstrainedVariablesModel, ::Bool)
+    return model.allocate_load
+end
+function MOI.copy_to(dest::ConstrainedVariablesModel, src::MOI.ModelLike; kws...)
+    MOIU.automatic_copy_to(dest, src; kws...)
+end
+
+function MOI.add_variables(model::ConstrainedVariablesModel, n)
+    m = length(model.added_constrained)
+    for i in 1:n
+        push!(model.added_constrained, false)
+    end
+    return MOI.VariableIndex.(m .+ (1:n))
+end
+function MOIU.allocate_variables(model::ConstrainedVariablesModel, n)
+    return MOI.add_variables(model, n)
+end
+function MOIU.load_variables(model::ConstrainedVariablesModel, n)
+end
+function MOI.add_constrained_variables(model::ConstrainedVariablesModel,
+                                       set::MOI.AbstractVectorSet)
+    m = length(model.added_constrained)
+    for i in 1:MOI.dimension(set)
+        push!(model.added_constrained, true)
+    end
+    ci = MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}(m + 1)
+    return MOI.VariableIndex.(m .+ (1:MOI.dimension(set))), ci
+end
+function MOIU.allocate_constrained_variables(model::ConstrainedVariablesModel, set::MOI.AbstractVectorSet)
+    return MOI.add_constrained_variables(model, set)
+end
+function MOIU.load_constrained_variables(model::ConstrainedVariablesModel, vis::Vector{MOI.VariableIndex}, ci::MOI.ConstraintIndex{MOI.VectorOfVariables}, set::MOI.AbstractVectorSet)
+end
+function MOI.add_constraint(model::ConstrainedVariablesModel,
+                            func::MOI.VectorOfVariables,
+                            set::MOI.AbstractVectorSet)
+    return MOI.ConstraintIndex{typeof(func), typeof(set)}(func.variables[1].value)
+end
+function MOIU.allocate_constraint(model::ConstrainedVariablesModel, func::MOI.VectorOfVariables, set::MOI.AbstractVectorSet)
+    return MOI.add_constraint(model, func, set)
+end
+function MOIU.load_constraint(model::ConstrainedVariablesModel, ::MOI.ConstraintIndex{MOI.VectorOfVariables}, ::MOI.VectorOfVariables, ::MOI.AbstractVectorSet)
+end
+
+@testset "Duplicates in VectorOfVariables: $allocate_load" for allocate_load in [false, true]
+    src = MOIU.Model{Int}()
+    x = MOI.add_variables(src, 3)
+    cx = MOI.add_constraint(src, [x[1], x[3], x[1], x[2]], MOI.Nonnegatives(4))
+    y, cy = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
+    dest = ConstrainedVariablesModel(allocate_load)
+    idxmap = MOI.copy_to(dest, src)
+    for vi in x
+        @test !dest.added_constrained[idxmap[vi].value]
+    end
+    for vi in y
+        @test dest.added_constrained[idxmap[vi].value]
+    end
+end
