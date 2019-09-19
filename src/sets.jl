@@ -148,6 +148,10 @@ struct EqualTo{T <: Number} <: AbstractScalarSet
     value::T
 end
 
+function Base.:(==)(set1::S, set2::S) where S <: Union{GreaterThan, LessThan, EqualTo}
+    return constant(set1) == constant(set2)
+end
+
 """
     Interval{T <: Real}(lower::T,upper::T)
 
@@ -278,6 +282,10 @@ end
 dual_set(s::DualPowerCone{T}) where T <: Real = PowerCone{T}(s.exponent)
 
 dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
+
+function Base.:(==)(set1::S, set2::S) where S <: Union{PowerCone, DualPowerCone}
+    return set1.exponent == set2.exponent
+end
 
 """
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
@@ -573,6 +581,10 @@ struct Semiinteger{T <: Real} <: AbstractScalarSet
     upper::T
 end
 
+function Base.:(==)(set1::S, set2::S) where S <: Union{Interval, Semicontinuous, Semiinteger}
+    return set1.lower == set2.lower && set1.upper == set2.upper
+end
+
 """
     SOS1{T <: Real}(weights::Vector{T})
 
@@ -654,6 +666,8 @@ dimension(::IndicatorSet) = 2
 function Base.copy(set::IndicatorSet{A,S}) where {A,S}
     return IndicatorSet{A}(copy(set.set))
 end
+
+Base.:(==)(set1::IndicatorSet{A, S}, set2::IndicatorSet{A, S}) where {A, S} = set1.set == set2.set
 
 # isbits types, nothing to copy
 function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,

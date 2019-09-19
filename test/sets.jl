@@ -18,6 +18,36 @@ end
 Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
 
 @testset "Sets" begin
+    @testset "==" begin
+        # By default, `==` redirects to `===`, it works for bits type
+        # but not for `BigInt`s. We define functions creating different
+        # instances so that `a() !== a()`.
+        a() = big(1)
+        b() = big(2)
+        @test a() !== a()
+        @test b() !== b()
+        for S in [MOI.LessThan, MOI.GreaterThan, MOI.EqualTo, MOI.PowerCone, MOI.DualPowerCone]
+            @test S(a()) == S(a())
+            @test S(a()) != S(b())
+            @test S(b()) == S(b())
+            @test S(b()) != S(a())
+        end
+        for S in [MOI.Interval, MOI.Semicontinuous, MOI.Semiinteger]
+            @test S(a(), b()) == S(a(), b())
+            @test S(a(), b()) != S(b(), a())
+            @test S(a(), b()) != S(b(), b())
+            @test S(a(), b()) != S(a(), a())
+            @test S(a(), a()) != S(b(), b())
+            @test S(a(), a()) == S(a(), a())
+        end
+        S = MOI.IndicatorSet
+        A() = MOI.LessThan(a())
+        B() = MOI.LessThan(b())
+        @test S{MOI.ACTIVATE_ON_ZERO}(A()) == S{MOI.ACTIVATE_ON_ZERO}(A())
+        @test S{MOI.ACTIVATE_ON_ZERO}(A()) != S{MOI.ACTIVATE_ON_ONE}(A())
+        @test S{MOI.ACTIVATE_ON_ZERO}(A()) != S{MOI.ACTIVATE_ON_ZERO}(B())
+        @test S{MOI.ACTIVATE_ON_ONE}(A()) != S{MOI.ACTIVATE_ON_ONE}(B())
+    end
     @testset "Copy" begin
         @testset "for $S" for S in [MOI.SOS1, MOI.SOS2]
             s = S([1.0])
