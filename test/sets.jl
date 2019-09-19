@@ -30,8 +30,7 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
             @test S(a()) == S(a())
             @test S(a()) != S(b())
             @test S(b()) == S(b())
-            @test S(b()) == S(b())
-            @test S(b()) == S(b())
+            @test S(b()) != S(a())
         end
         for S in [MOI.Interval, MOI.Semicontinuous, MOI.Semiinteger]
             @test S(a(), b()) == S(a(), b())
