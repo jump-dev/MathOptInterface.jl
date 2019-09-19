@@ -17,7 +17,7 @@ function bridge_constraint(::Type{ScalarizeBridge{T, F, S}},
     new_f = MOIU.scalarize(f, true)
     constraints = Vector{CI{F, S}}(undef, dimension)
     for i in 1:dimension
-        constraints[i] = MOIU.normalize_and_add_constraint(model, new_f[i], S(-constants[i]))
+        constraints[i] = MOI.add_constraint(model, new_f[i], S(-constants[i]))
     end
     return ScalarizeBridge{T, F, S}(constraints, constants)
 end
@@ -55,16 +55,22 @@ end
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 bridge::ScalarizeBridge{T, F, S}) where {T, F, S}
+                 bridge::ScalarizeBridge{T}) where T
     func = MOIU.vectorize(MOI.get.(model, attr, bridge.scalar_constraints))
-    if F != MOI.SingleVariable
-        func = MOIU.operate!(+, T, func, bridge.constants)
+    if !(func isa MOI.VectorOfVariables)
+        # `func` is in terms of bridged variables here while in
+        # `bridge_constraint` it was in terms of the solver variables so
+        # `MOI.constant(set)` might be different than `bridge.constants[i]`.
+        for i in eachindex(bridge.scalar_constraints)
+            set = MOI.get(model, MOI.ConstraintSet(), bridge.scalar_constraints[i])
+            func = MOIU.operate_output_index!(-, T, i, func, MOI.constant(set))
+        end
     end
     return func
 end
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet,
                  bridge::ScalarizeBridge{T, F, S}) where {T, F, S}
-    return MOIU.vector_set_type(S)(length(bridge.constants))
+    return MOIU.vector_set_type(S)(length(bridge.scalar_constraints))
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
