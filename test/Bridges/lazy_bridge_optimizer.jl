@@ -251,8 +251,8 @@ MOIU.@model(NoVariableModel,
             (MOI.ScalarAffineFunction,),
             (),
             (MOI.VectorAffineFunction,))
-function MOI.supports_constraint(::NoVariableModel, ::Type{MOI.SingleVariable},
-                                 ::Type{<:MOI.AbstractScalarSet})
+function MOI.supports_constraint(::NoVariableModel{T}, ::Type{MOI.SingleVariable},
+                                 ::Type{<:MOIU.SUPPORTED_SCALAR_SETS{T}}) where T
     return false
 end
 
