@@ -3,15 +3,6 @@ using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-w = MOI.VariableIndex(0)
-fw = MOI.SingleVariable(w)
-x = MOI.VariableIndex(1)
-fx = MOI.SingleVariable(x)
-y = MOI.VariableIndex(2)
-fy = MOI.SingleVariable(y)
-z = MOI.VariableIndex(3)
-fz = MOI.SingleVariable(z)
-
 @testset "get_bounds" begin
     @testset "Float64" begin
         T = Float64
