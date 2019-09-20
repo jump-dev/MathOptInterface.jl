@@ -951,7 +951,6 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             empty!(model.con_to_name)
             model.name_to_con = nothing
             empty!(model.constrmap)
-            empty!(model.ext)
             $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
     end
