@@ -916,6 +916,9 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             con_to_name::Dict{$CI, String}
             name_to_con::Union{Dict{String, $CI}, Nothing}
             constrmap::Vector{Int} # Constraint Reference value ci -> index in array in Constraints
+            # A useful dictionary for extensions to store things. These are
+            # _not_ copied between models!
+            ext::Dict{Symbol, Any}
         end
     end
     for f in funs
@@ -948,6 +951,7 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             empty!(model.con_to_name)
             model.name_to_con = nothing
             empty!(model.constrmap)
+            empty!(model.ext)
             $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
     end
@@ -1005,7 +1009,7 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
                               $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)), 0,
                               nothing, UInt8[], T[], T[], Dict{$VI, String}(),
                               nothing, 0, Dict{$CI, String}(), nothing, Int[],
-                              $(_getCV.(funs)...))
+                              Dict{Symbol, Any}(), $(_getCV.(funs)...))
         end
 
         $MOI.supports_constraint(model::$esc_model_name{T}, ::Type{<:Union{$(_typedfun.(scalar_funs)...)}}, ::Type{<:Union{$(_typedset.(scalar_sets)...)}}) where T = true
