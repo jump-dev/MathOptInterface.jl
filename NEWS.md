@@ -1,6 +1,24 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.3 (September 20, 2019)
+---------------------
+
+- Fixed ambiguity detected in Julia v1.3 (#891, #893).
+- Fixed missing sets from `ListOfSupportedConstraints` (#880).
+- Fixed copy of `VectorOfVariables` constraints with duplicate indices (#886).
+- Added extension dictionary to MOIU.Model (#884).
+- Implemented `MOI.get` for function and set for `GeoMeanBridge` (#888).
+- Updated documentation for SingleVariable indices and bridges (#885).
+- Testing improvements:
+  * Added more comprehensive tests for names (#882).
+  * Added tests for `SingleVariable` duals (#883).
+  * Added tests for `DualExponentialCone` and `DualPowerCone` (#873).
+- Improvements for arbitary coefficient type:
+  * Fixed `==` for sets with mutable fields (#887).
+  * Removed some `Float64` assumptions in bridges (#878).
+  * Automatic selection of `Constraint.[Scalar|Vector]FunctionizeBridge` (#889).
+
 v0.9.2 (September 5, 2019)
 ---------------------
 
