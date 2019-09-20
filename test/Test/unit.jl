@@ -17,7 +17,7 @@ end
     # optimizer doesn't handle this
     MOI.set(mock, MOI.Silent(), true)
     MOI.set(mock, MOI.TimeLimitSec(), nothing)
-    MOI.set(mock, MOI.NumberThreads(), 1)
+    MOI.set(mock, MOI.NumberOfThreads(), 1)
     config = MOIT.TestConfig()
     for model in [mock,
                   MOIU.CachingOptimizer(MOIU.UniversalFallback(

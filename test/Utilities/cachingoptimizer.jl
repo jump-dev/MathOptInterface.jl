@@ -39,7 +39,7 @@ const MOIU = MOI.Utilities
         "Cannot query $(attr) from caching optimizer because no optimizer" *
         " is attached.")
     @test_throws exception MOI.get(model, attr)
-    attr = MOI.NumberThreads()
+    attr = MOI.NumberOfThreads()
     exception = ErrorException(
         "Cannot query $(attr) from caching optimizer because no optimizer" *
         " is attached.")
@@ -56,49 +56,49 @@ end
     cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
     MOI.set(cached, MOI.Silent(), true)
     MOI.set(cached, MOI.TimeLimitSec(), 0.0)
-    MOI.set(cached, MOI.NumberThreads(), 1)
+    MOI.set(cached, MOI.NumberOfThreads(), 1)
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
-    @test MOI.get(mock, MOI.NumberThreads()) == 1
-    @test MOI.get(cached, MOI.NumberThreads()) == 1
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 1
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 1
     MOI.set(cached, MOI.Silent(), false)
     MOI.set(cached, MOI.TimeLimitSec(), 1.0)
-    MOI.set(cached, MOI.NumberThreads(), 2)
+    MOI.set(cached, MOI.NumberOfThreads(), 2)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
     @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
-    @test MOI.get(mock, MOI.NumberThreads()) == 2
-    @test MOI.get(cached, MOI.NumberThreads()) == 2
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 2
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 2
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
     @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
-    @test MOI.get(mock, MOI.NumberThreads()) == 2
-    @test MOI.get(cached, MOI.NumberThreads()) == 2
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 2
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 2
     MOI.set(cached, MOI.Silent(), true)
     MOI.set(cached, MOI.TimeLimitSec(), 0.0)
-    MOI.set(cached, MOI.NumberThreads(), 1)
+    MOI.set(cached, MOI.NumberOfThreads(), 1)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
-    @test MOI.get(mock, MOI.NumberThreads()) == 1
-    @test MOI.get(cached, MOI.NumberThreads()) == 1
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 1
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 1
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
-    @test MOI.get(mock, MOI.NumberThreads()) == 1
-    @test MOI.get(cached, MOI.NumberThreads()) == 1
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 1
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 1
 end
 
 struct DummyModelAttribute <: MOI.AbstractModelAttribute end

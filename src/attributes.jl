@@ -462,12 +462,12 @@ struct RawParameter <: AbstractOptimizerAttribute
 end
 
 """
-    NumberThreads()
+    NumberOfThreads()
 
 An optimizer attribute for setting the number of threads used for an
 optimization. Values are integers and the default value is 1.
 """
-struct NumberThreads <: AbstractOptimizerAttribute end
+struct NumberOfThreads <: AbstractOptimizerAttribute end
 
 ## Model attributes
 

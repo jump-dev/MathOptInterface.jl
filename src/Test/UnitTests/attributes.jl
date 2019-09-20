@@ -54,19 +54,19 @@ unittests["time_limit_sec"] = time_limit_sec
 """
     number_threads(model::MOI.ModelLike, config::TestConfig)
 
-Test that the [`MOI.NumberThreads`](@ref) attribute is implemented for `model`.
+Test that the [`MOI.NumberOfThreads`](@ref) attribute is implemented for `model`.
 """
 function number_threads(model::MOI.ModelLike, config::TestConfig)
     if config.solve
-        @test MOI.supports(model, MOI.NumberThreads())
+        @test MOI.supports(model, MOI.NumberOfThreads())
         # Get the current value to restore it at the end of the test
-        value = MOI.get(model, MOI.NumberThreads())
-        MOI.set(model, MOI.NumberThreads(), 2)
-        @test MOI.get(model, MOI.NumberThreads()) == 2
-        MOI.set(model, MOI.NumberThreads(), 3)
-        @test MOI.get(model, MOI.NumberThreads()) == 3
-        MOI.set(model, MOI.NumberThreads(), value)
-        @test value == MOI.get(model, MOI.NumberThreads())
+        value = MOI.get(model, MOI.NumberOfThreads())
+        MOI.set(model, MOI.NumberOfThreads(), 2)
+        @test MOI.get(model, MOI.NumberOfThreads()) == 2
+        MOI.set(model, MOI.NumberOfThreads(), 3)
+        @test MOI.get(model, MOI.NumberOfThreads()) == 3
+        MOI.set(model, MOI.NumberOfThreads(), value)
+        @test value == MOI.get(model, MOI.NumberOfThreads())
     end
 end
 unittests["number_threads"] = number_threads
