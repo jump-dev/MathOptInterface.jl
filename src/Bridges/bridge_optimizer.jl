@@ -178,6 +178,21 @@ Return the `Objective.AbstractBridge` used to bridge the objective function
 function bridge(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
     return Objective.bridges(b)[attr]
 end
+function _functionize_bridge(b::AbstractBridgeOptimizer, bridge_type)
+    func, name = _func_name(bridge_type)
+    error("Need to apply a `$bridge_type` to a `$func` $name because the",
+          " variable is bridged but $name bridges are not supported by",
+          " `$(typeof(b))`.")
+end
+function constraint_scalar_functionize_bridge(b::AbstractBridgeOptimizer)
+    _functionize_bridge(b, Constraint.ScalarFunctionizeBridge)
+end
+function constraint_vector_functionize_bridge(b::AbstractBridgeOptimizer)
+    _functionize_bridge(b, Constraint.VectorFunctionizeBridge)
+end
+function objective_functionize_bridge(b::AbstractBridgeOptimizer)
+    _functionize_bridge(b, Objective.FunctionizeBridge)
+end
 
 # Implementation of the MOI interface for AbstractBridgeOptimizer
 
@@ -602,11 +617,6 @@ function MOI.set(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveSense,
         end
     end
 end
-function objective_functionize_bridge(b::AbstractBridgeOptimizer)
-    error("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge` to a",
-          " `SingleVariable` objective function because the variable is",
-          " bridged but objective bridges are not supported by `$(typeof(b))`.")
-end
 function _bridge_objective(b, BridgeType, func)
     bridge = Objective.bridge_objective(BridgeType, b, func)
     Objective.add_key_for_bridge(Objective.bridges(b), bridge, func)
@@ -938,7 +948,7 @@ function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                           " on the same variable $(f.variable).")
                 end
                 BridgeType = Constraint.concrete_bridge_type(
-                    Constraint.ScalarFunctionizeBridge{Float64}, typeof(f), typeof(s))
+                    constraint_scalar_functionize_bridge(b), typeof(f), typeof(s))
                 bridge = Constraint.bridge_constraint(BridgeType, b, f, s)
                 return Constraint.add_key_for_bridge(Constraint.bridges(b), bridge, f, s)
             end
@@ -958,7 +968,7 @@ function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                           " first one `$(first(f.variables))`.")
                 end
                 BridgeType = Constraint.concrete_bridge_type(
-                    Constraint.VectorFunctionizeBridge{Float64}, typeof(f), typeof(s))
+                    constraint_vector_functionize_bridge(b), typeof(f), typeof(s))
                 bridge = Constraint.bridge_constraint(BridgeType, b, f, s)
                 return Constraint.add_key_for_bridge(Constraint.bridges(b), bridge, f, s)
             end

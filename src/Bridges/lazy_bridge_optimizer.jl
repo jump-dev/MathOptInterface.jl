@@ -447,14 +447,27 @@ function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunctio
     return result
 end
 
-function objective_functionize_bridge(b::LazyBridgeOptimizer)
-    index = findfirst(bridge_type -> bridge_type <: Objective.FunctionizeBridge,
-                      b.objective_bridge_types)
+_func_name(::Type{Constraint.ScalarFunctionizeBridge}) = "SingleVariable", "constraint"
+_func_name(::Type{Constraint.VectorFunctionizeBridge}) = "VectorOfVariables", "constraint"
+_func_name(::Type{Objective.FunctionizeBridge}) = "SingleVariable", "objective"
+function _functionize_bridge(bridge_types, target_type)
+    index = findfirst(bridge_type -> bridge_type <: target_type,
+                      bridge_types)
     if index === nothing
-        error("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge` to a",
-              " `SingleVariable` objective function because the variable is",
-              " bridged but no such objective bridge type was added. Add one",
+        func, name = _func_name(target_type)
+        error("Need to apply a `$target_type` to a",
+              " `$func` $name because the variable is",
+              " bridged but no such $name bridge type was added. Add one",
               " with `add_bridge`.")
     end
-    return b.objective_bridge_types[index]
+    return bridge_types[index]
+end
+function constraint_vector_functionize_bridge(b::LazyBridgeOptimizer)
+    return _functionize_bridge(b.constraint_bridge_types, Constraint.VectorFunctionizeBridge)
+end
+function constraint_scalar_functionize_bridge(b::LazyBridgeOptimizer)
+    return _functionize_bridge(b.constraint_bridge_types, Constraint.ScalarFunctionizeBridge)
+end
+function objective_functionize_bridge(b::LazyBridgeOptimizer)
+    return _functionize_bridge(b.objective_bridge_types, Objective.FunctionizeBridge)
 end
