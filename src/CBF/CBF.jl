@@ -19,15 +19,9 @@ MOI.Utilities.@model(InnerModel,
     (MOI.VectorAffineFunction,)
 )
 
-const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
-
-struct ModelOptions <: MOI.AbstractModelAttribute end
-MOI.is_empty(model::Model) = MathOptFormat.is_empty(model, ModelOptions())
-MOI.empty!(model::Model) = MathOptFormat.empty_model(model, ModelOptions())
-
 struct Options end
 
-MOI.Utilities.map_indices(::Function, attr::Options) = attr
+get_options(m::InnerModel) = get(m.ext, :CBF_OPTIONS, Options())
 
 """
     Model()
@@ -35,12 +29,12 @@ MOI.Utilities.map_indices(::Function, attr::Options) = attr
 Create an empty instance of `MathOptFormat.CBF.Model`.
 """
 function Model()
-    model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
-    MOI.set(model, ModelOptions(), Options())
+    model = InnerModel{Float64}()
+    model.ext[:CBF_OPTIONS] = Options()
     return model
 end
 
-Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
+Base.show(io::IO, ::InnerModel) = print(io, "A Conic Benchmark Format (CBF) model")
 
 # ==============================================================================
 #
@@ -48,8 +42,8 @@ Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 #
 # ==============================================================================
 
-function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, ModelOptions())
+function MOI.write_to_file(model::InnerModel, io::IO)
+    options = get_options(model)
     # Helper functions for MOI constraints.
     model_cons(con_func, con_set) = MOI.get(model,
         MOI.ListOfConstraintIndices{con_func, con_set}())
@@ -377,7 +371,7 @@ function powcone_to_moi_cone(cone_str::AbstractString,
     end
 end
 
-function MOI.read_from_file(model::Model, io::IO)
+function MOI.read_from_file(model::InnerModel, io::IO)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end

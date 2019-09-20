@@ -2,7 +2,7 @@ function MOI.read_from_file(model::Model, io::IO)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")
     end
-    options = MOI.get(model, ModelOptions())
+    options = get_options(model)
     if options.validate
         validate(io)
     end

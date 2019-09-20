@@ -45,17 +45,15 @@ MOI.Utilities.@model(InnerModel,
 
 const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 
-struct ModelOptions <: MOI.AbstractModelAttribute end
-MOI.is_empty(model::Model) = MathOptFormat.is_empty(model, ModelOptions())
-MOI.empty!(model::Model) = MathOptFormat.empty_model(model, ModelOptions())
-
 struct Options
     print_compact::Bool
     validate::Bool
     warn::Bool
 end
 
-MOI.Utilities.map_indices(::Function, attr::Options) = attr
+function get_options(m::Model)
+    return get(m.model.ext, :MOF_OPTIONS, Options(false, true, false))
+end
 
 """
     Model(; kwargs...)
@@ -76,7 +74,7 @@ function Model(;
     print_compact::Bool = false, validate::Bool = true, warn::Bool = false
 )
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
-    MOI.set(model, ModelOptions(), Options(print_compact, validate, warn))
+    model.model.ext[:MOF_OPTIONS] = Options(print_compact, validate, warn)
     return model
 end
 

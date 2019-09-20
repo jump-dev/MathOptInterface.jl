@@ -16,12 +16,6 @@ MOI.Utilities.@model(InnerModel,
     ()
 )
 
-const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
-
-struct ModelOptions <: MOI.AbstractModelAttribute end
-MOI.is_empty(model::Model) = MathOptFormat.is_empty(model, ModelOptions())
-MOI.empty!(model::Model) = MathOptFormat.empty_model(model, ModelOptions())
-
 struct Options
     maximum_length::Int
     warn::Bool
@@ -30,7 +24,10 @@ struct Options
     warned_illegal::Set{Char}
 end
 
-MOI.Utilities.map_indices(::Function, attr::Options) = attr
+function get_options(m::InnerModel)
+    default_options = Options(255, false, false, Set{Char}(), Set{Char}())
+    return get(m.ext, :LP_OPTIONS, default_options)
+end
 
 """
     Model(; kwargs...)
@@ -51,13 +48,13 @@ Keyword arguments are:
 function Model(;
     maximum_length::Int = 255, warn::Bool = false, warn_once::Bool = false
 )
-    model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
+    model = InnerModel{Float64}()
     options = Options(maximum_length, warn, warn_once, Set{Char}(), Set{Char}())
-    MOI.set(model, ModelOptions(), options)
+    model.ext[:LP_OPTIONS] = options
     return model
 end
 
-function Base.show(io::IO, ::Model)
+function Base.show(io::IO, ::InnerModel)
     print(io, "A .LP-file model")
     return
 end
@@ -111,12 +108,12 @@ function sanitized_name(name::String, options::Options)
     return name
 end
 
-function write_function(io::IO, model::Model, func::MOI.SingleVariable, sanitized_names::Dict{MOI.VariableIndex, String})
+function write_function(io::IO, model::InnerModel, func::MOI.SingleVariable, sanitized_names::Dict{MOI.VariableIndex, String})
     print(io, sanitized_names[func.variable])
     return
 end
 
-function write_function(io::IO, model::Model, func::MOI.ScalarAffineFunction{Float64}, sanitized_names::Dict{MOI.VariableIndex, String})
+function write_function(io::IO, model::InnerModel, func::MOI.ScalarAffineFunction{Float64}, sanitized_names::Dict{MOI.VariableIndex, String})
     is_first_item = true
     if !(func.constant ≈ 0.0)
         Base.Grisu.print_shortest(io, func.constant)
@@ -174,7 +171,7 @@ end
 
 write_constraint_prefix(io::IO, set) = nothing
 
-function write_constraint(io::IO, model::Model, index, sanitized_names::Dict{MOI.VariableIndex, String}; write_name::Bool = true)
+function write_constraint(io::IO, model::InnerModel, index, sanitized_names::Dict{MOI.VariableIndex, String}; write_name::Bool = true)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     if write_name
@@ -190,7 +187,7 @@ const SCALAR_SETS = (
     MOI.Interval{Float64}
 )
 
-function write_sense(io::IO, model::Model)
+function write_sense(io::IO, model::InnerModel)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
         println(io, "maximize")
     else
@@ -199,7 +196,7 @@ function write_sense(io::IO, model::Model)
     return
 end
 
-function write_objective(io::IO, model::Model, sanitized_names::Dict{MOI.VariableIndex, String})
+function write_objective(io::IO, model::InnerModel, sanitized_names::Dict{MOI.VariableIndex, String})
     print(io, "obj: ")
     obj_func_type = MOI.get(model, MOI.ObjectiveFunctionType())
     obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_func_type}())
@@ -208,8 +205,8 @@ function write_objective(io::IO, model::Model, sanitized_names::Dict{MOI.Variabl
     return
 end
 
-function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, ModelOptions())
+function MOI.write_to_file(model::InnerModel, io::IO)
+    options = get_options(model)
     max_length = options.maximum_length
     # Ensure each variable has a unique name that does not infringe LP constraints.
     MathOptFormat.create_unique_names(model, warn = options.warn)
@@ -277,7 +274,7 @@ end
 #
 # ==============================================================================
 
-function MOI.read_from_file(model::Model, io::IO)
+function MOI.read_from_file(model::InnerModel, io::IO)
     error("Read from file is not implemented for LP files.")
 end
 

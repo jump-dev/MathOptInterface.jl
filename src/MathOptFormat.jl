@@ -5,35 +5,6 @@ const MOI = MathOptInterface
 
 import GZip
 
-# We re-define is_empty and empty! to prevent the universal fallback from
-# deleting the options. We should really fix `MOIU.@model` to allow an extension
-# dictionary.
-
-function is_empty(model, model_options)
-    return MOI.is_empty(model.model) &&
-        isempty(model.constraints) &&
-        length(model.modattr) == 1 &&
-        haskey(model.modattr, model_options) &&
-        isempty(model.varattr) &&
-        isempty(model.conattr) &&
-        isempty(model.optattr)
-end
-
-function empty_model(model, model_options)
-    options = MOI.get(model, model_options)
-    MOI.empty!(model.model)
-    empty!(model.constraints)
-    model.nextconstraintid = 0
-    empty!(model.con_to_name)
-    model.name_to_con = nothing
-    empty!(model.modattr)
-    empty!(model.varattr)
-    empty!(model.conattr)
-    empty!(model.optattr)
-    MOI.set(model, model_options, options)
-    return
-end
-
 include("CBF/CBF.jl")
 include("LP/LP.jl")
 include("MOF/MOF.jl")
@@ -170,7 +141,9 @@ function gzip_open(f::Function, filename::String, mode::String)
     end
 end
 
-const MATH_OPT_FORMATS = Union{CBF.Model, LP.Model, MOF.Model, MPS.Model}
+const MATH_OPT_FORMATS = Union{
+    CBF.InnerModel, LP.InnerModel, MOF.Model, MPS.InnerModel
+}
 
 function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)
     gzip_open(filename, "w") do io

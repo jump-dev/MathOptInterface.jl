@@ -16,17 +16,11 @@ MOI.Utilities.@model(InnerModel,
     ()
 )
 
-const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
-
-struct ModelOptions <: MOI.AbstractModelAttribute end
-MOI.is_empty(model::Model) = MathOptFormat.is_empty(model, ModelOptions())
-MOI.empty!(model::Model) = MathOptFormat.empty_model(model, ModelOptions())
-
 struct Options
     warn::Bool
 end
 
-MOI.Utilities.map_indices(::Function, attr::Options) = attr
+get_options(m::InnerModel) = get(m.ext, :MPS_OPTIONS, Options(false))
 
 """
     Model(; kwargs...)
@@ -40,12 +34,12 @@ Keyword arguments are:
 function Model(;
         warn::Bool = false
 )
-    model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
-    MOI.set(model, ModelOptions(), Options(warn))
+    model = InnerModel{Float64}()
+    model.ext[:MPS_OPTIONS] = Options(warn)
     return model
 end
 
-function Base.show(io::IO, ::Model)
+function Base.show(io::IO, ::InnerModel)
     print(io, "A Mathematical Programming System (MPS) model")
     return
 end
@@ -56,8 +50,8 @@ end
 #
 # ==============================================================================
 
-function MOI.write_to_file(model::Model, io::IO)
-    options = MOI.get(model, ModelOptions())
+function MOI.write_to_file(model::InnerModel, io::IO)
+    options = get_options(model)
     MathOptFormat.create_unique_names(
         model, warn = options.warn, replacements = [' ' => '_']
     )
@@ -76,7 +70,7 @@ end
 #   Model name
 # ==============================================================================
 
-function write_model_name(io::IO, model::Model)
+function write_model_name(io::IO, model::InnerModel)
     model_name = MOI.get(model, MOI.Name())
     println(io, "NAME          ", model_name)
     return
@@ -93,7 +87,7 @@ const LINEAR_CONSTRAINTS = (
     (MOI.Interval{Float64}, 'L')  # See the note in the RANGES section.
 )
 
-function write_rows(io::IO, model::Model)
+function write_rows(io::IO, model::InnerModel)
     println(io, "ROWS\n N  OBJ")
     for (set_type, sense_char) in LINEAR_CONSTRAINTS
         for index in MOI.get(model, MOI.ListOfConstraintIndices{
@@ -113,7 +107,7 @@ end
 #   COLUMNS
 # ==============================================================================
 
-function list_of_integer_variables(model::Model)
+function list_of_integer_variables(model::InnerModel)
     integer_variables = Set{String}()
     for set_type in (MOI.ZeroOne, MOI.Integer)
         for index in MOI.get(model, MOI.ListOfConstraintIndices{
@@ -136,7 +130,7 @@ function add_coefficient(coefficients, variable_name, row_name, coefficient)
 end
 
 function extract_terms(
-        model::Model, coefficients, row_name::String,
+        model::InnerModel, coefficients, row_name::String,
         func::MOI.ScalarAffineFunction, discovered_columns::Set{String})
     for term in func.terms
         variable_name = MOI.get(model, MOI.VariableName(), term.variable_index)
@@ -147,7 +141,7 @@ function extract_terms(
 end
 
 function extract_terms(
-        model::Model, coefficients, row_name::String, func::MOI.SingleVariable,
+        model::InnerModel, coefficients, row_name::String, func::MOI.SingleVariable,
         discovered_columns::Set{String})
     variable_name = MOI.get(model, MOI.VariableName(), func.variable)
     add_coefficient(coefficients, variable_name, row_name, 1.0)
@@ -155,7 +149,7 @@ function extract_terms(
     return
 end
 
-function write_columns(io::IO, model::Model)
+function write_columns(io::IO, model::InnerModel)
     # Many MPS readers (e.g., CPLEX and GAMS) will error if a variable (column)
     # appears in the BOUNDS section but did not appear in the COLUMNS section.
     # This is likely because such variables are meaningless - they don't appear
@@ -216,7 +210,7 @@ value(set::MOI.GreaterThan) = set.lower
 value(set::MOI.EqualTo) = set.value
 value(set::MOI.Interval) = set.upper  # See the note in the RANGES section.
 
-function write_rhs(io::IO, model::Model)
+function write_rhs(io::IO, model::InnerModel)
     println(io, "RHS")
     for (set_type, sense_char) in LINEAR_CONSTRAINTS
         for index in MOI.get(model, MOI.ListOfConstraintIndices{
@@ -249,7 +243,7 @@ end
 # bound, and the RANGE term to upper - lower.
 # ==============================================================================
 
-function write_ranges(io::IO, model::Model)
+function write_ranges(io::IO, model::InnerModel)
     println(io, "RANGES")
     for index in MOI.get(model, MOI.ListOfConstraintIndices{
                                     MOI.ScalarAffineFunction{Float64},
@@ -324,7 +318,7 @@ function update_bounds(::Tuple{Float64, Float64}, set::MOI.EqualTo)
     return (set.value, set.value)
 end
 
-function write_bounds(io::IO, model::Model, discovered_columns::Set{String})
+function write_bounds(io::IO, model::InnerModel, discovered_columns::Set{String})
     println(io, "BOUNDS")
     free_variables = Set(MOI.get(model, MOI.ListOfVariableIndices()))
     bounds = Dict{MOI.VariableIndex, Tuple{Float64, Float64}}()
@@ -384,7 +378,7 @@ end
 #   SOS
 # ==============================================================================
 
-function write_sos_constraint(io::IO, model::Model, index)
+function write_sos_constraint(io::IO, model::InnerModel, index)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     for (variable, weight) in zip(func.variables, set.weights)
@@ -395,7 +389,7 @@ function write_sos_constraint(io::IO, model::Model, index)
     end
 end
 
-function write_sos(io::IO, model::Model)
+function write_sos(io::IO, model::InnerModel)
     sos1_indices = MOI.get(model, MOI.ListOfConstraintIndices{
         MOI.VectorOfVariables, MOI.SOS1{Float64}}())
     sos2_indices = MOI.get(model, MOI.ListOfConstraintIndices{
@@ -473,7 +467,7 @@ end
 
 const HEADERS = ("ROWS", "COLUMNS", "RHS", "RANGES", "BOUNDS", "SOS", "ENDATA")
 
-function MOI.read_from_file(model::Model, io::IO)
+function MOI.read_from_file(model::InnerModel, io::IO)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
@@ -525,7 +519,7 @@ function bounds_to_set(lower, upper)
     return nothing
 end
 
-function copy_to(model::Model, temp::TempMPSModel)
+function copy_to(model::InnerModel, temp::TempMPSModel)
     MOI.set(model, MOI.Name(), temp.name)
     variable_map = Dict{String, MOI.VariableIndex}()
     # Add variables.
