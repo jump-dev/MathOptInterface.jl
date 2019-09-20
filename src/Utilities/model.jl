@@ -474,12 +474,12 @@ end
 # 0xd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
 const UPPER_BOUND_MASK = 0xcd
 
-const SUPPORTED_SCALAR_SETS{T} = Union{
+const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
     MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.Interval{T},
     MOI.Integer, MOI.ZeroOne, MOI.Semicontinuous{T}, MOI.Semiinteger{T}}
 function MOI.supports_constraint(
     ::AbstractModel{T}, ::Type{MOI.SingleVariable},
-    ::Type{<:SUPPORTED_SCALAR_SETS{T}}) where T
+    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return true
 end
 function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
