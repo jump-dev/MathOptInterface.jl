@@ -69,7 +69,7 @@ function number_threads(model::MOI.ModelLike, config::TestConfig)
         @test value == MOI.get(model, MOI.NumberThreads())
     end
 end
-unittests["time_limit_sec"] = time_limit_sec
+unittests["number_threads"] = number_threads
 
 """
     raw_status_string(model::MOI.ModelLike, config::TestConfig)
