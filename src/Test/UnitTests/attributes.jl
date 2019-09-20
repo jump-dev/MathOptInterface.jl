@@ -61,8 +61,8 @@ function number_threads(model::MOI.ModelLike, config::TestConfig)
         @test MOI.supports(model, MOI.NumberOfThreads())
         # Get the current value to restore it at the end of the test
         value = MOI.get(model, MOI.NumberOfThreads())
-        MOI.set(model, MOI.NumberOfThreads(), 2)
-        @test MOI.get(model, MOI.NumberOfThreads()) == 2
+        MOI.set(model, MOI.NumberOfThreads(), 1)
+        @test MOI.get(model, MOI.NumberOfThreads()) == 1
         MOI.set(model, MOI.NumberOfThreads(), 3)
         @test MOI.get(model, MOI.NumberOfThreads()) == 3
         MOI.set(model, MOI.NumberOfThreads(), value)

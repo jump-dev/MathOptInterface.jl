@@ -465,7 +465,8 @@ end
     NumberOfThreads()
 
 An optimizer attribute for setting the number of threads used for an
-optimization. Values are integers and the default value is 1.
+optimization. When set to `nothing` use solver default. Values are positive
+integers. The default value is `nothing`.
 """
 struct NumberOfThreads <: AbstractOptimizerAttribute end
 
