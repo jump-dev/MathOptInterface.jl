@@ -52,6 +52,26 @@ end
 unittests["time_limit_sec"] = time_limit_sec
 
 """
+    number_threads(model::MOI.ModelLike, config::TestConfig)
+
+Test that the [`MOI.NumberThreads`](@ref) attribute is implemented for `model`.
+"""
+function number_threads(model::MOI.ModelLike, config::TestConfig)
+    if config.solve
+        @test MOI.supports(model, MOI.NumberThreads())
+        # Get the current value to restore it at the end of the test
+        value = MOI.get(model, MOI.NumberThreads())
+        MOI.set(model, MOI.NumberThreads(), 2)
+        @test MOI.get(model, MOI.NumberThreads()) == 2
+        MOI.set(model, MOI.NumberThreads(), 3)
+        @test MOI.get(model, MOI.NumberThreads()) == 3
+        MOI.set(model, MOI.NumberThreads(), value)
+        @test value == MOI.get(model, MOI.NumberThreads())
+    end
+end
+unittests["time_limit_sec"] = time_limit_sec
+
+"""
     raw_status_string(model::MOI.ModelLike, config::TestConfig)
 
 Test that the [`MOI.RawStatusString`](@ref) attribute is implemented for

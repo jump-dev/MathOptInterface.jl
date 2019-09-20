@@ -121,6 +121,7 @@ SolverName
 Silent
 TimeLimitSec
 RawParameter
+NumberThreads
 ```
 
 List of attributes useful for optimizers

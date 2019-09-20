@@ -13,10 +13,11 @@ end
 @testset "Unit Tests" begin
     # `UniversalFallback` needed for `MOI.Silent`
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    # Optimizers attributes have to be set to default value since the mock
+    # optimizer doesn't handle this
     MOI.set(mock, MOI.Silent(), true)
-    # TimeLimitSec() has to be set to default value since the mock optimizer
-    # doesn't handle this
     MOI.set(mock, MOI.TimeLimitSec(), nothing)
+    MOI.set(mock, MOI.NumberThreads(), 1)
     config = MOIT.TestConfig()
     for model in [mock,
                   MOIU.CachingOptimizer(MOIU.UniversalFallback(
