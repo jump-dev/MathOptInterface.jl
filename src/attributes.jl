@@ -408,26 +408,13 @@ end
 ## Submittables
 
 """
-    RejectSolution(callback_data)
-
-Reject feasible solution provided by [`CallbackVariablePrimal`](@ref).
-
-This can be submitted only from the [`FeasibleSolutionCallback`](@ref). The
-field `callback_data` is a solver-specific callback type that is passed as the
-argument to the feasible solution callback.
-"""
-struct RejectSolution{CBDT} <: AbstractSubmittable
-    callback_data::CBDT
-end
-
-"""
     LazyConstraint(callback_data)
 
 Lazy constraint `func`-in-`set` submitted as `func, set`. The optimal
 solution returned by [`VariablePrimal`](@ref) will satisfy all lazy
 constraints that have been submitted.
 
-This can be submitted only from the [`FeasibleSolutionCallback`](@ref). The
+This can be submitted only from the [`LazyConstraint`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
 argument to the feasible solution callback.
 """
@@ -442,9 +429,9 @@ Heuristically obtained feasible solution. The solution is submitted as
 `variables, values` where `values[i]` gives the value of `variables[i]`,
 similarly to [`set`](@ref).
 
-This can be submitted only from the [`InfeasibleSolutionCallback`](@ref). The
+This can be submitted only from the [`HeuristicCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
-argument to the infeasible solution callback.
+argument to the heuristic callback.
 
 Note that the solver may silently reject the provided solution.
 """
@@ -464,7 +451,7 @@ off. Note that, as opposed to [`LazyConstraint`](@ref), the provided constraint
 cannot modify the feasible set, the constraint should be redundant, e.g., it
 may be a consequence of affine and integrality constraints.
 
-This can be submitted only from the [`InfeasibleSolutionCallback`](@ref). The
+This can be submitted only from the [`UserCutCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
 argument to the infeasible solution callback.
 
@@ -565,16 +552,18 @@ to you to provide the appropriate one. If in doubt, give a complete solution.
 
 The value of the attribute should be a function taking only one argument, that
 is commonly called `callback_data`, that can be used for instance in
-[`FeasibleSolutionCallback`](@ref), [`InfeasibleSolutionCallback`](@ref).
+[`LazyConstraintCallback`](@ref), [`HeuristicCallback`](@ref) and
+[`UserCutCallback`](@ref).
 """
 abstract type AbstractCallback <: AbstractOptimizerAttribute end
 
 """
-    FeasibleSolutionCallback() <: AbstractCallback
+    LazyConstraintCallback() <: AbstractCallback
 
-The callback can be used to reject a feasible primal solution by submitting
-[`RejectSolution`](@ref) and/or [`LazyConstraint`](@ref). Note that there
-is no guarantee that the callback is called at *every* feasible primal solution.
+The callback can be used to reduce the feasible set given the current primal
+solution by submitting a [`LazyConstraint`](@ref). For instance, it may be
+called at an incumbent of a mixed-integer problem. Note that there is no
+guarantee that the callback is called at *every* feasible primal solution.
 
 The feasible primal solution is accessed through
 [`CallbackVariablePrimal`](@ref). Trying to access other result
@@ -585,34 +574,23 @@ attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
-MOI.submit(optimizer, MOI.FeasibleSolutionCallback(), callback_data -> begin
+MOI.submit(optimizer, MOI.LazyConstraintCallback(), callback_data -> begin
     sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
-    if MOI.supports(optimizer, MOI.RejectSolution(callback_data))
-        # determine if it should be rejected only if it's supported as it may
-        # be time consuming.
-        if # should reject
-            MOI.submit(optimizer, MOI.RejectSolution(callback_data))
-        end
-    end
-    if MOI.supports(optimizer, MOI.LazyConstraint(callback_data))
-        # determine the lazy constraint only if it's supported as it may be time
-        # consuming.
-        if # should add a lazy constraint
-            func = # computes function
-            set = # computes set
-            MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
-        end
+    if # should add a lazy constraint
+        func = # computes function
+        set = # computes set
+        MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
     end
 end
 ```
 """
-struct FeasibleSolutionCallback <: AbstractCallback end
+struct LazyConstraintCallback <: AbstractCallback end
 
 """
-    InfeasibleSolutionCallback() <: AbstractCallback
+    HeuristicCallback() <: AbstractCallback
 
-The callback can be used to submit [`HeuristicSolution`](@ref) and/or
-[`UserCut`](@ref) given an infeasible primal solution.
+The callback can be used to submit [`HeuristicSolution`](@ref) given the
+current primal solution.
 For instance, it may be called at fractional (i.e., non-integer) nodes in the
 branch and bound tree of a mixed-integer problem. Note that there is not
 guarantee that the callback is called *everytime* the solver has an infeasible
@@ -627,30 +605,47 @@ attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
-MOI.submit(optimizer, MOI.InfeasibleSolutionCallback(), callback_data -> begin
+MOI.submit(optimizer, MOI.HeuristicCallback(), callback_data -> begin
     sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
-    if MOI.supports(optimizer, MOI.HeuristicSolution(callback_data))
-        # determine the heuristic solution only if it it's supported as it may
-        # be time consuming.
-        if # can find a heuristic solution
-            values = # computes heuristic solution
-            MOI.submit(optimizer, MOI.HeuristicSolution(callback_data), x,
-                       values)
-        end
-    end
-    if MOI.supports(optimizer, MOI.UserCut(callback_data))
-        # determine the user cut only if it's supported as it may be time
-        # consuming.
-        if # can find a user cut
-            func = # computes function
-            set = # computes set
-            MOI.submit(optimizer, MOI.UserCut(callback_data), func, set)
-        end
+    if # can find a heuristic solution
+        values = # computes heuristic solution
+        MOI.submit(optimizer, MOI.HeuristicSolution(callback_data), x,
+                   values)
     end
 end
 ```
 """
-struct InfeasibleSolutionCallback <: AbstractCallback end
+struct HeuristicCallback <: AbstractCallback end
+
+"""
+    UserCutCallback() <: AbstractCallback
+
+The callback can be used to submit [`UserCut`](@ref) given the current primal
+solution. For instance, it may be called at fractional (i.e., non-integer) nodes
+in the branch and bound tree of a mixed-integer problem. Note that there is not
+guarantee that the callback is called *everytime* the solver has an infeasible
+solution.
+
+The infeasible solution is accessed through
+[`CallbackVariablePrimal`](@ref). Trying to access other result
+attributes will throw [`OptimizeInProgress`](@ref) as discussed in
+[`AbstractCallback`](@ref).
+
+## Examples
+
+```julia
+x = MOI.add_variables(optimizer, 8)
+MOI.submit(optimizer, MOI.UserCutCallback(), callback_data -> begin
+    sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
+    if # can find a user cut
+        func = # computes function
+        set = # computes set
+        MOI.submit(optimizer, MOI.UserCut(callback_data), func, set)
+    end
+end
+```
+"""
+struct UserCutCallback <: AbstractCallback end
 
 ## Model attributes
 

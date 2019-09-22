@@ -77,7 +77,6 @@ submit
 List of submittables
 
 ```@docs
-RejectSolution
 LazyConstraint
 HeuristicSolution
 UserCut
@@ -131,8 +130,9 @@ Silent
 TimeLimitSec
 RawParameter
 AbstractCallback
-FeasibleSolutionCallback
-InfeasibleSolutionCallback
+LazyConstraintCallback
+HeuristicCallback
+UserCutCallback
 ```
 
 List of attributes useful for optimizers
