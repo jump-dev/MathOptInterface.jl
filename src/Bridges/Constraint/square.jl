@@ -70,7 +70,7 @@ struct SquareBridge{T, F<:MOI.AbstractVectorFunction,
                     G<:MOI.AbstractScalarFunction,
                     TT<:MOI.AbstractSymmetricMatrixSetTriangle,
                     ST<:MOI.AbstractSymmetricMatrixSetSquare} <: AbstractBridge
-    side_dimension::Int
+    square_set::ST
     triangle::CI{F, TT}
     sym::Vector{Pair{Tuple{Int, Int}, CI{G, MOI.EqualTo{T}}}}
 end
@@ -113,7 +113,7 @@ function bridge_constraint(::Type{SquareBridge{T, F, G, TT, ST}},
     end
     @assert length(upper_triangle_indices) == trilen
     triangle = MOI.add_constraint(model, f_scalars[upper_triangle_indices], MOI.triangular_form(s))
-    return SquareBridge{T, F, G, TT, ST}(dim, triangle, sym)
+    return SquareBridge{T, F, G, TT, ST}(s, triangle, sym)
 end
 
 function MOI.supports_constraint(::Type{SquareBridge{T}},
@@ -161,10 +161,38 @@ function MOI.delete(model::MOI.ModelLike, bridge::SquareBridge)
 end
 
 # Attributes, Bridge acting as a constraint
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 bridge::SquareBridge{T}) where T
+    tri = MOIU.eachscalar(MOI.get(model, attr, bridge.triangle))
+    dim = MOI.side_dimension(bridge.square_set)
+    sqr = Vector{eltype(tri)}(undef, dim^2)
+    sqrmap(i, j) = (j - 1) * dim + i
+    k = 0
+    for j in 1:dim
+        for i in 1:j
+            k += 1
+            sqr[sqrmap(i, j)] = tri[k]
+            sqr[sqrmap(j, i)] = tri[k]
+        end
+    end
+    for sym in bridge.sym
+        i, j = sym.first
+        diff = MOI.get(model, attr, sym.second)
+        set = MOI.get(model, MOI.ConstraintSet(), sym.second)
+        upper = sqr[sqrmap(i, j)]
+        lower = MOIU.operate(-, T, upper, diff)
+        lower = MOIU.operate!(-, T, lower, MOI.constant(set))
+        sqr[sqrmap(j, i)] = MOIU.convert_approx(eltype(tri), lower)
+    end
+    return MOIU.vectorize(sqr)
+end
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SquareBridge)
+    return bridge.square_set
+end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::SquareBridge{T}) where T
     tri = MOI.get(model, attr, bridge.triangle)
-    dim = bridge.side_dimension
+    dim = MOI.side_dimension(bridge.square_set)
     sqr = Vector{eltype(tri)}(undef, dim^2)
     k = 0
     for j in 1:dim
@@ -178,7 +206,7 @@ end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
                  bridge::SquareBridge)
     tri = MOI.get(model, attr, bridge.triangle)
-    dim = bridge.side_dimension
+    dim = MOI.side_dimension(bridge.square_set)
     sqr = Vector{eltype(tri)}(undef, dim^2)
     k = 0
     for j in 1:dim

@@ -45,7 +45,7 @@ const BasicConstraintTests = Dict(
     (MOI.VectorOfVariables, MOI.DualPowerCone{Float64}) => ( dummy_vectorofvariables, 3, MOI.DualPowerCone(2.0) ),
 
     (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) => ( dummy_vectorofvariables,  7, MOI.PositiveSemidefiniteConeTriangle(3) ),
-    (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeSquare)   => ( dummy_vectorofvariables, 10, MOI.PositiveSemidefiniteConeSquare(3) ),
+    (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeSquare)   => ( dummy_vectorofvariables,  9, MOI.PositiveSemidefiniteConeSquare(3) ),
     (MOI.VectorOfVariables, MOI.LogDetConeTriangle)               => ( dummy_vectorofvariables,  8, MOI.LogDetConeTriangle(3) ),
     (MOI.VectorOfVariables, MOI.LogDetConeSquare)                 => ( dummy_vectorofvariables, 11, MOI.LogDetConeSquare(3) ),
     (MOI.VectorOfVariables, MOI.RootDetConeTriangle)              => ( dummy_vectorofvariables,  7, MOI.RootDetConeTriangle(3) ),
@@ -70,6 +70,7 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_affine, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_affine, 3, MOI.RotatedSecondOrderCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone)      => ( dummy_vector_affine, 3, MOI.GeometricMeanCone(3) ),
+    (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => ( dummy_vector_affine, 9, MOI.GeometricMeanCone(3) ),
 
     (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros)        => ( dummy_vector_quadratic, 2, MOI.Zeros(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_quadratic, 2, MOI.Nonpositives(2) ),
@@ -79,7 +80,8 @@ const BasicConstraintTests = Dict(
     (MOI.VectorQuadraticFunction{Float64}, MOI.NormOneCone)            => ( dummy_vector_quadratic, 3, MOI.NormOneCone(3) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_quadratic, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_quadratic, 3, MOI.RotatedSecondOrderCone(3) ),
-    (MOI.VectorQuadraticFunction{Float64}, MOI.GeometricMeanCone)      => ( dummy_vector_quadratic, 3, MOI.GeometricMeanCone(3) )
+    (MOI.VectorQuadraticFunction{Float64}, MOI.GeometricMeanCone)      => ( dummy_vector_quadratic, 3, MOI.GeometricMeanCone(3) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => ( dummy_vector_quadratic, 9, MOI.GeometricMeanCone(3) )
 )
 """
     basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
