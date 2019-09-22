@@ -999,19 +999,29 @@ appropriate bridges for unsupported constrained variables.
 
 #### Constraint reformulation
 
-A constraint often possesses different equivalent formulations, but a solver may only support one of them.
-It would be duplicate work to implement rewriting rules in every solver wrapper for every different formulation of the constraint to express it in the form supported by the solver.
-Constraint bridges provide a way to define a rewriting rule on top of the MOI interface which can be used by any optimizer.
-Some rules also implement constraint modifications and constraint primal and duals translations.
+A constraint can often be written in a number of equivalent formulations. For
+example, the constraint ``l \le a^\top x \le u``
+(`ScalarAffineFunction`-in-`Interval`) could be re-formulated as two
+constraints: ``a^\top x ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
+``a^\top x \le u`` (`ScalarAffineFunction`-in-`LessThan`). An alternative
+re-formulation is to add a dummy variable `y` with the constraints ``l \le y \le
+u`` (`SingleVariable`-in-`Interval`) and ``a^\top x - y = 0``
+(`ScalarAffineFunction`-in-`EqualTo`).
 
-For example, the [`Bridges.Constraint.SplitIntervalBridge`](@ref) defines the
-reformulation of a [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref)
-constraint into a [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref) and a
-[`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref) constraint.
-The `Bridges.Constraint.SplitInterval` is the bridge optimizer that applies the
-[`Bridges.Constraint.SplitIntervalBridge`](@ref) rewriting rule. Given an
-optimizer `optimizer` implementing [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref)
-and [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref), the optimizer
+To avoid each solver having to code these transformations manually,
+MathOptInterface provides *bridges*. A bridge is a small transformation from one
+constraint type to another (potentially collection of) constraint type. Because
+these bridges are included in MathOptInterface, they can be re-used by any
+optimizer. Some bridges also implement constraint modifications and constraint
+primal and dual translations.
+
+For example, the `SplitIntervalBridge` defines the reformulation of a
+`ScalarAffineFunction`-in-`Interval` constraint into a
+`ScalarAffineFunction`-in-`GreaterThan` and a
+`ScalarAffineFunction`-in-`LessThan` constraint. `SplitInterval` is the
+bridge optimizer that applies the `SplitIntervalBridge` rewriting rule. Given
+an optimizer `optimizer` implementing `ScalarAffineFunction`-in-`GreaterThan`
+and `ScalarAffineFunction`-in-`LessThan`, the optimizer
 ```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
 bridged_optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(optimizer)
 MOI.supports_constraint(bridged_optimizer, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
@@ -1035,8 +1045,8 @@ appropriate constraint bridges for unsupported constraints.
 
 Solver-specific attributes should either be passed to the optimizer on creation,
 e.g., `MyPackage.Optimizer(PrintLevel = 0)`, or through a sub-type of
-[`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could add
-the following:
+[`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could
+add the following:
 ```julia
 struct PrintLevel <: MOI.AbstractOptimizerAttribute end
 function MOI.set(model::Optimizer, ::PrintLevel, level::Int)
@@ -1070,6 +1080,27 @@ support creating free variables, then it should only implement
 In addition, it should implement `supports_constraint(::Optimizer,
 ::Type{VectorOfVariables}, ::Type{Reals})` and return `false` so that free
 variables are bridged, see [`supports_constraint`](@ref).
+
+### Handling duplicate coefficients
+
+Solvers should expect that functions such as `ScalarAffineFunction` and
+`VectorQuadraticFunction` may contain duplicate coefficents, for example,
+`ScalarAffineFunction([ScalarAffineTerm(x, 1), ScalarAffineTerm(x, 1)], 0.0)`.
+These duplicate terms can be aggregated by calling
+[`Utilities.canonical`](@ref).
+
+```jldoctest; setup = :(using MathOptInterface)
+x = MathOptInterface.VariableIndex(1)
+term = MathOptInterface.ScalarAffineTerm(1, x)
+func = MathOptInterface.ScalarAffineFunction([term, term], 0)
+func_canon = MathOptInterface.Utilities.canonical(func)
+func_canon ≈ MathOptInterface.ScalarAffineFunction(
+    [MathOptInterface.ScalarAffineTerm(2, x)], 0)
+
+# output
+
+true
+```
 
 ### Implementing copy
 
@@ -1141,7 +1172,8 @@ The following bullet points show examples of how JuMP constraints are translated
  - `@constraint(m, 2x + y >= 10)` becomes `ScalarAffineFunction`-in-`GreaterThan`;
  - `@constraint(m, 2x + y == 10)` becomes `ScalarAffineFunction`-in-`EqualTo`;
  - `@constraint(m, 0 <= 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`Interval`;
- - `@constraint(m, 2x + y in ArbitrarySet())` becomes `ScalarAffineFunction`-in-`ArbitrarySet`.
+ - `@constraint(m, 2x + y in ArbitrarySet())` becomes
+   `ScalarAffineFunction`-in-`ArbitrarySet`.
 
 Variable bounds are handled in a similar fashion:
  - `@variable(m, x <= 1)` becomes `SingleVariable`-in-`LessThan`;
