@@ -1013,7 +1013,7 @@ MathOptInterface provides *bridges*. A bridge is a small transformation from one
 constraint type to another (potentially collection of) constraint type. Because
 these bridges are included in MathOptInterface, they can be re-used by any
 optimizer. Some bridges also implement constraint modifications and constraint
-primal and duals translations.
+primal and dual translations.
 
 For example, the `SplitIntervalBridge` defines the reformulation of a
 `ScalarAffineFunction`-in-`Interval` constraint into a
