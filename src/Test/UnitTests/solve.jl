@@ -137,3 +137,23 @@ function solve_single_variable_dual_max(model::MOI.ModelLike, config::TestConfig
     end
 end
 unittests["solve_single_variable_dual_max"] = solve_single_variable_dual_max
+
+function solve_result_index(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.VariablePrimal(1), x) == 1.0
+        @test_throws ErrorException MOI.get(model, MOI.VariablePrimal(2), x)
+        @test MOI.get(model, MOI.ConstraintPrimal(1), c) == 1.0
+        @test_throws ErrorException MOI.get(model, MOI.ConstraintPrimal(2), c)
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(1), c) == 1.0
+            @test_throws ErrorException MOI.get(model, MOI.ConstraintDual(2), c)
+        end
+    end
+end
+unittests["solve_result_index"] = solve_result_index

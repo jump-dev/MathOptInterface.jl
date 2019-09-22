@@ -305,22 +305,32 @@ function MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute,
     return xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx)))
 end
 MOI.get(mock::MockOptimizer, ::MockVariableAttribute, idx::MOI.VariableIndex) = mock.varattribute[xor_index(idx)]
-function MOI.get(mock::MockOptimizer, ::MOI.VariablePrimal,
-                 idx::MOI.VariableIndex)
-    primal = get(mock.varprimal, xor_index(idx), nothing)
-    if primal === nothing
-        if MOI.is_valid(mock, idx)
-            error("No mock primal is set for variable `", idx, "`.")
-        else
-            throw(MOI.InvalidIndex(idx))
-        end
+
+function MOI.get(
+    mock::MockOptimizer, attr::MOI.VariablePrimal, idx::MOI.VariableIndex
+)
+    if attr.N != 1
+        error("Unable to query VariablePrimal(N=$(attr.N)).")
     end
-    return primal
+    primal = get(mock.varprimal, xor_index(idx), nothing)
+    if primal !== nothing
+        return primal
+    elseif MOI.is_valid(mock, idx)
+        error("No mock primal is set for variable `", idx, "`.")
+    else
+        throw(MOI.InvalidIndex(idx))
+    end
 end
-function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintPrimal,
-                 idx::MOI.ConstraintIndex)
+
+function MOI.get(
+    mock::MockOptimizer, attr::MOI.ConstraintPrimal, idx::MOI.ConstraintIndex
+)
+    if attr.N != 1
+        error("Unable to query ConstraintPrimal(N=$(attr.N)).")
+    end
     return get_fallback(mock, attr, idx)
 end
+
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute,
                  idx::MOI.ConstraintIndex)
     # If it is thrown by `mock.inner_model`, the index will be xor'ed.
@@ -333,9 +343,13 @@ function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintFunction,
     MOI.throw_if_not_valid(mock, idx)
     return xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx)))
 end
-function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintDual,
-                 idx::MOI.ConstraintIndex{F}) where F
-    if mock.eval_variable_constraint_dual &&
+
+function MOI.get(
+    mock::MockOptimizer, attr::MOI.ConstraintDual, idx::MOI.ConstraintIndex{F}
+) where {F}
+    if attr.N != 1
+        error("Unable to query VariablePrimal(N=$(attr.N)).")
+    elseif mock.eval_variable_constraint_dual &&
         (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
         return get_fallback(mock, attr, idx)
     else
