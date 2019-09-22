@@ -283,14 +283,18 @@ end
 
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.terminationstatus
 function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
-    if mock.eval_objective_value
+    if attr.result_index != 1
+        error("Unable to get ObjectiveValue(result_index=$(attr.result_index))")
+    elseif mock.eval_objective_value
         return get_fallback(mock, attr)
     else
         return mock.objective_value
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.DualObjectiveValue)
-    if mock.eval_dual_objective_value
+    if attr.result_index != 1
+        error("Unable to get DualObjectiveValue(result_index=$(attr.result_index))")
+    elseif mock.eval_dual_objective_value
         return get_fallback(mock, attr, Float64)
     else
         return mock.dual_objective_value
