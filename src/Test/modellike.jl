@@ -1,6 +1,14 @@
 # TODO: Move generic model tests from MOIU to here
 
-struct UnknownScalarSet <: MOI.AbstractScalarSet end
+struct UnknownScalarSet{T} <: MOI.AbstractScalarSet
+    constant::T
+end
+MOI.constant(set::UnknownScalarSet) = set.constant
+Base.copy(set::UnknownScalarSet) = UnknownScalarSet(copy(MOI.constant(set)))
+function MOIU.shift_constant(set::UnknownScalarSet, offset)
+    return UnknownScalarSet(MOI.constant(set) + offset)
+end
+
 struct UnknownVectorSet <: MOI.AbstractVectorSet end
 
 function default_objective_test(model::MOI.ModelLike)
@@ -342,9 +350,9 @@ MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariabl
 MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[]
 
 struct BadConstraintModel <: BadModel end
-MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownScalarSet)]
-MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownScalarSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
-MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownScalarSet}) = UnknownScalarSet()
+MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownScalarSet{Float64})]
+MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable, <:UnknownScalarSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
+MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable, UnknownScalarSet{T}}) where T = UnknownScalarSet(one(T))
 
 struct UnknownModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
@@ -362,7 +370,7 @@ MOI.get(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::MOI.Const
 MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[UnknownConstraintAttribute()]
 
 function failcopytestc(dest::MOI.ModelLike)
-    @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownScalarSet)
+    @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownScalarSet{Float64})
     @test_throws MOI.UnsupportedConstraint MOI.copy_to(dest, BadConstraintModel())
 end
 function failcopytestia(dest::MOI.ModelLike)
