@@ -784,7 +784,7 @@ is 1 by default.
 constraint that enforces the variable's bounds.**
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
-    N::Int
+    result_index::Int
 end
 ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
