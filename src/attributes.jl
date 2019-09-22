@@ -433,6 +433,9 @@ This can be submitted only from the [`HeuristicCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
 argument to the heuristic callback.
 
+Some solvers require a complete solution, others only partial solutions. It's up
+to you to provide the appropriate one. If in doubt, give a complete solution.
+
 Note that the solver may silently reject the provided solution.
 """
 struct HeuristicSolution{CBDT} <: AbstractSubmittable
@@ -547,8 +550,9 @@ attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
 may not be accessible from the callback hence trying to get result attributes
 might throw a [`OptimizeInProgress`](@ref) error.
 
-Some solvers require a complete solution, others only partial solutions. It's up
-to you to provide the appropriate one. If in doubt, give a complete solution.
+At most one callback of each type can be registered. If an optimizer already
+has a function for a callback type, and the user registers a new function,
+then the old one is erased, and the new one is registered.
 
 The value of the attribute should be a function taking only one argument, that
 is commonly called `callback_data`, that can be used for instance in
@@ -574,7 +578,7 @@ attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
-MOI.submit(optimizer, MOI.LazyConstraintCallback(), callback_data -> begin
+MOI.set(optimizer, MOI.LazyConstraintCallback(), callback_data -> begin
     sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
     if # should add a lazy constraint
         func = # computes function
@@ -596,7 +600,7 @@ branch and bound tree of a mixed-integer problem. Note that there is not
 guarantee that the callback is called *everytime* the solver has an infeasible
 solution.
 
-The infeasible solution is accessed through
+The current primal solution is accessed through
 [`CallbackVariablePrimal`](@ref). Trying to access other result
 attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 [`AbstractCallback`](@ref).
@@ -605,7 +609,7 @@ attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
-MOI.submit(optimizer, MOI.HeuristicCallback(), callback_data -> begin
+MOI.set(optimizer, MOI.HeuristicCallback(), callback_data -> begin
     sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
     if # can find a heuristic solution
         values = # computes heuristic solution
@@ -635,7 +639,7 @@ attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
-MOI.submit(optimizer, MOI.UserCutCallback(), callback_data -> begin
+MOI.set(optimizer, MOI.UserCutCallback(), callback_data -> begin
     sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
     if # can find a user cut
         func = # computes function
