@@ -1,6 +1,6 @@
 module MOF
 
-import DataStructures, JSON, JSONSchema, MathOptInterface
+import JSON, JSONSchema, MathOptInterface, OrderedCollections
 
 # The file /deps/deps.jl contains a constant `SCHEMA_PATH` that points to the
 # latest version of MathOptFormat, which should have been downloaded on `build`.
@@ -14,7 +14,7 @@ const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
 end
 
 # we use an ordered dict to make the JSON printing nicer
-const Object = DataStructures.OrderedDict{String, Any}
+const Object = OrderedCollections.OrderedDict{String, Any}
 
 const MOI = MathOptInterface
 
