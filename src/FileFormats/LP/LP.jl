@@ -30,7 +30,7 @@ end
 """
     Model(; kwargs...)
 
-Create an empty instance of Formats.LP.Model.
+Create an empty instance of FileFormats.LP.Model.
 
 Keyword arguments are:
 
@@ -207,7 +207,7 @@ function MOI.write_to_file(model::InnerModel, io::IO)
     options = get_options(model)
     max_length = options.maximum_length
     # Ensure each variable has a unique name that does not infringe LP constraints.
-    MOI.Formats.create_unique_names(model, warn = options.warn)
+    MOI.FileFormats.create_unique_names(model, warn = options.warn)
     sanitized_names = Dict{MOI.VariableIndex, String}()
     sanitized_names_set = Set{String}()
     for v in MOI.get(model, MOI.ListOfVariableIndices())

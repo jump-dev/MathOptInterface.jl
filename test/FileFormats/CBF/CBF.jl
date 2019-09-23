@@ -2,7 +2,7 @@ using MathOptInterface, Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const CBF = MOI.Formats.CBF
+const CBF = MOI.FileFormats.CBF
 const CBF_TEST_FILE = "test.cbf"
 const MODELS_DIR = joinpath(@__DIR__, "models")
 
@@ -72,10 +72,10 @@ end
 
 @test sprint(show, CBF.Model()) == "A Conic Benchmark Format (CBF) model"
 
-@testset "MOI.Formats.read_from_file" begin
+@testset "MOI.FileFormats.read_from_file" begin
     file_to_read = joinpath(@__DIR__, "models", "example_C.cbf")
-    @test !MOI.is_empty(MOI.Formats.read_from_file(file_to_read))
-    @test !MOI.is_empty(MOI.Formats.read_from_file(file_to_read * ".gz"))
+    @test !MOI.is_empty(MOI.FileFormats.read_from_file(file_to_read))
+    @test !MOI.is_empty(MOI.FileFormats.read_from_file(file_to_read * ".gz"))
 end
 
 @testset "Read errors" begin

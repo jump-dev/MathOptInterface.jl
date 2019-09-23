@@ -2,7 +2,7 @@ using MathOptInterface, Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const LP = MOI.Formats.LP
+const LP = MOI.FileFormats.LP
 const LP_TEST_FILE = "test.lp"
 
 @test sprint(show, LP.Model()) == "A .LP-file model"
@@ -256,7 +256,7 @@ end
     model = LP.Model()
     exception = ErrorException("Read from file is not implemented for LP files.")
     @test_throws exception MOI.read_from_file(model, LP_TEST_FILE)
-    @test_throws exception MOI.Formats.read_from_file(LP_TEST_FILE)
+    @test_throws exception MOI.FileFormats.read_from_file(LP_TEST_FILE)
 end
 
 # Clean up

@@ -1,4 +1,4 @@
-module Formats
+module FileFormats
 
 import MathOptInterface
 const MOI = MathOptInterface

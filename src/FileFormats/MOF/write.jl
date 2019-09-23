@@ -7,7 +7,7 @@ function MOI.write_to_file(model::Model, io::IO)
         "objectives"  => Object[],
         "constraints" => Object[]
     )
-    MOI.Formats.create_unique_names(model, warn=options.warn)
+    MOI.FileFormats.create_unique_names(model, warn=options.warn)
     name_map = write_variables(object, model)
     write_nlpblock(object, model, name_map)
     write_objectives(object, model, name_map)

@@ -25,7 +25,7 @@ get_options(m::InnerModel) = get(m.ext, :CBF_OPTIONS, Options())
 """
     Model()
 
-Create an empty instance of `Formats.CBF.Model`.
+Create an empty instance of `FileFormats.CBF.Model`.
 """
 function Model()
     model = InnerModel{Float64}()

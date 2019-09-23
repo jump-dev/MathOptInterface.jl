@@ -37,8 +37,8 @@ end
     include("Bridges/Bridges.jl")
 end
 
-@testset "MOI.Formats" begin
-    include("Formats/Formats.jl")
+@testset "MOI.FileFormats" begin
+    include("FileFormats/FileFormats.jl")
 end
 
 @testset "MOI.Benchmarks" begin

@@ -1,17 +1,17 @@
 using MathOptInterface, Test
 const MOI = MathOptInterface
 
-@testset "MOI.Formats tests" begin
+@testset "MOI.FileFormats tests" begin
     @testset "$(file)" for file in ["CBF", "LP", "MOF", "MPS"]
         include(joinpath(@__DIR__, file, "$(file).jl"))
     end
 
     @testset "Copying options" begin
         models = [
-            MOI.Formats.CBF.Model,
-            MOI.Formats.LP.Model,
-            MOI.Formats.MOF.Model,
-            MOI.Formats.MPS.Model
+            MOI.FileFormats.CBF.Model,
+            MOI.FileFormats.LP.Model,
+            MOI.FileFormats.MOF.Model,
+            MOI.FileFormats.MPS.Model
         ]
         for src in models
             model_src = src()

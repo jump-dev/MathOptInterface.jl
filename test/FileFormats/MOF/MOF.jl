@@ -2,7 +2,7 @@ using MathOptInterface, Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const MOF = MOI.Formats.MOF
+const MOF = MOI.FileFormats.MOF
 const TEST_MOF_FILE = "test.mof.json"
 
 @test sprint(show, MOF.Model()) == "A MathOptFormat Model"
@@ -155,10 +155,10 @@ end
 
 @testset "read_from_file" begin
     model = MOF.Model()
-    model_zip = MOI.Formats.read_from_file(
+    model_zip = MOI.FileFormats.read_from_file(
         joinpath(@__DIR__, "empty_model.mof.json.gz"))
     MOIU.test_models_equal(model, model_zip, String[], String[])
-    model_unzip = MOI.Formats.read_from_file(
+    model_unzip = MOI.FileFormats.read_from_file(
         joinpath(@__DIR__, "empty_model.mof.json"))
     MOIU.test_models_equal(model, model_unzip, String[], String[])
 end
@@ -195,7 +195,7 @@ end
         model = MOF.Model()
         variable_index = MOI.add_variable(model)
         @test_throws Exception MOF.moi_to_object(variable_index, model)
-        MOI.Formats.create_unique_names(model, warn=true)
+        MOI.FileFormats.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(variable_index, model) ==
             MOF.Object("name" => "x1")
     end
@@ -207,7 +207,7 @@ end
         MOI.set(model, MOI.VariableName(), y, "x")
         @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
         @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x")
-        MOI.Formats.create_unique_names(model, warn=true)
+        MOI.FileFormats.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
         @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x_1")
     end
@@ -217,7 +217,7 @@ end
         MOI.set(model, MOI.VariableName(), x, "x")
         c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
         name_map = Dict(x => "x")
-        MOI.Formats.create_unique_names(model, warn=true)
+        MOI.FileFormats.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(c, model, name_map)["name"] == "c1"
     end
     @testset "Duplicate constraint name" begin
@@ -231,7 +231,7 @@ end
         name_map = Dict(x => "x")
         @test MOF.moi_to_object(c1, model, name_map)["name"] == "c"
         @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
-        MOI.Formats.create_unique_names(model, warn=true)
+        MOI.FileFormats.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(c1, model, name_map)["name"] == "c_1"
         @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
     end

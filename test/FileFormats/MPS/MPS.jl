@@ -2,7 +2,7 @@ using MathOptInterface, Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const MPS = MOI.Formats.MPS
+const MPS = MOI.FileFormats.MPS
 const MPS_TEST_FILE = "test.mps"
 
 @test sprint(show, MPS.Model()) == "A Mathematical Programming System (MPS) model"
@@ -18,8 +18,8 @@ end
 
 @testset "read_from_file" begin
     file_to_read = joinpath(@__DIR__, "free_integer.mps")
-    @test !MOI.is_empty(MOI.Formats.read_from_file(file_to_read))
-    @test !MOI.is_empty(MOI.Formats.read_from_file(file_to_read * ".gz"))
+    @test !MOI.is_empty(MOI.FileFormats.read_from_file(file_to_read))
+    @test !MOI.is_empty(MOI.FileFormats.read_from_file(file_to_read * ".gz"))
 end
 
 @testset "Errors" begin

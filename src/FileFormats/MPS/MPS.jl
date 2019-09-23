@@ -23,7 +23,7 @@ get_options(m::InnerModel) = get(m.ext, :MPS_OPTIONS, Options(false))
 """
     Model(; kwargs...)
 
-Create an empty instance of Formats.MPS.Model.
+Create an empty instance of FileFormats.MPS.Model.
 
 Keyword arguments are:
 
@@ -50,7 +50,7 @@ end
 
 function MOI.write_to_file(model::InnerModel, io::IO)
     options = get_options(model)
-    MOI.Formats.create_unique_names(
+    MOI.FileFormats.create_unique_names(
         model, warn = options.warn, replacements = [' ' => '_']
     )
     write_model_name(io, model)
