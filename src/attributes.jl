@@ -126,14 +126,7 @@ end
 # TODO: rename the .N -> .result_index field in necessary attributes (e.g.,
 # VariablePrimal, ConstraintPrimal, ConstraintDual), and remove this helper
 # function.
-function _result_index_field(attr)
-    if :result_index in fieldnames(typeof(attr))
-        return attr.result_index
-    else
-        @assert :N in fieldnames(typeof(attr))
-        return attr.N
-    end
-end
+_result_index_field(attr) = attr.result_index
 function check_result_index_bounds(model::ModelLike, attr)
     result_count = get(model, ResultCount())
     if !(1 <= _result_index_field(attr) <= result_count)
@@ -708,6 +701,7 @@ struct VariablePrimal <: AbstractVariableAttribute
     N::Int
 end
 VariablePrimal() = VariablePrimal(1)
+_result_index_field(attr::VariablePrimal) = attr.N
 
 """
     BasisStatusCode
@@ -788,6 +782,7 @@ struct ConstraintPrimal <: AbstractConstraintAttribute
     N::Int
 end
 ConstraintPrimal() = ConstraintPrimal(1)
+_result_index_field(attr::ConstraintPrimal) = attr.N
 
 """
     ConstraintDual(N)
@@ -800,6 +795,7 @@ struct ConstraintDual <: AbstractConstraintAttribute
     N::Int
 end
 ConstraintDual() = ConstraintDual(1)
+_result_index_field(attr::ConstraintDual) = attr.N
 
 """
     ConstraintBasisStatus()
@@ -1018,6 +1014,7 @@ struct PrimalStatus <: AbstractModelAttribute
     N::Int
 end
 PrimalStatus() = PrimalStatus(1)
+_result_index_field(attr::PrimalStatus) = attr.N
 
 """
     DualStatus(N)
@@ -1030,6 +1027,7 @@ struct DualStatus <: AbstractModelAttribute
     N::Int
 end
 DualStatus() = DualStatus(1)
+_result_index_field(attr::DualStatus) = attr.N
 
 """
     is_set_by_optimize(::AnyAttribute)
