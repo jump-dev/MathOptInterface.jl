@@ -956,6 +956,12 @@ Utilities.normalize_and_add_constraint
 Utilities.normalize_constant
 ```
 
+The following utility identifies those constraints imposing bounds on a given
+variable, and returns those bound values:
+```@docs
+Utilities.get_bounds
+```
+
 ## Benchmarks
 
 Functions to help benchmark the performance of solver wrappers. See
