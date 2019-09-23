@@ -37,6 +37,10 @@ end
     include("Bridges/Bridges.jl")
 end
 
+@testset "MOI.Formats" begin
+    include("Formats/Formats.jl")
+end
+
 @testset "MOI.Benchmarks" begin
     include("Benchmarks/Benchmarks.jl")
 end

@@ -1,0 +1,253 @@
+{
+  "name": "MathOptFormat Model",
+  "version": 0,
+  "variables": [
+    {
+      "name": "var_1"
+    },
+    {
+      "name": "var_2"
+    },
+    {
+      "name": "var_3"
+    },
+    {
+      "name": "var_4"
+    }
+  ],
+  "objectives": [
+    {
+      "sense": "min",
+      "function": {
+        "head": "ScalarNonlinearFunction",
+        "root": {
+          "head": "node",
+          "index": 3
+        },
+        "node_list": [
+          {
+            "head": "+",
+            "args": [
+              {
+                "head": "variable",
+                "name": "var_1"
+              },
+              {
+                "head": "variable",
+                "name": "var_2"
+              },
+              {
+                "head": "variable",
+                "name": "var_3"
+              }
+            ]
+          },
+          {
+            "head": "*",
+            "args": [
+              {
+                "head": "variable",
+                "name": "var_1"
+              },
+              {
+                "head": "variable",
+                "name": "var_4"
+              },
+              {
+                "head": "node",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "head": "+",
+            "args": [
+              {
+                "head": "node",
+                "index": 2
+              },
+              {
+                "head": "variable",
+                "name": "var_3"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "function": {
+        "head": "ScalarNonlinearFunction",
+        "root": {
+          "head": "node",
+          "index": 1
+        },
+        "node_list": [
+          {
+            "head": "*",
+            "args": [
+              {
+                "head": "variable",
+                "name": "var_1"
+              },
+              {
+                "head": "variable",
+                "name": "var_2"
+              },
+              {
+                "head": "variable",
+                "name": "var_3"
+              },
+              {
+                "head": "variable",
+                "name": "var_4"
+              }
+            ]
+          }
+        ]
+      },
+      "set": {
+        "head": "GreaterThan",
+        "lower": 25
+      }
+    },
+    {
+      "function": {
+        "head": "ScalarNonlinearFunction",
+        "root": {
+          "head": "node",
+          "index": 5
+        },
+        "node_list": [
+          {
+            "head": "^",
+            "args": [
+              {
+                "head": "variable",
+                "name": "var_1"
+              },
+              {
+                "head": "real",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "head": "^",
+            "args": [
+              {
+                "head": "variable",
+                "name": "var_2"
+              },
+              {
+                "head": "real",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "head": "^",
+            "args": [
+              {
+                "head": "variable",
+                "name": "var_3"
+              },
+              {
+                "head": "real",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "head": "^",
+            "args": [
+              {
+                "head": "variable",
+                "name": "var_4"
+              },
+              {
+                "head": "real",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "head": "+",
+            "args": [
+              {
+                "head": "node",
+                "index": 1
+              },
+              {
+                "head": "node",
+                "index": 2
+              },
+              {
+                "head": "node",
+                "index": 3
+              },
+              {
+                "head": "node",
+                "index": 4
+              }
+            ]
+          }
+        ]
+      },
+      "set": {
+        "head": "EqualTo",
+        "value": 40
+      }
+    },
+    {
+      "name": "c1",
+      "function": {
+        "head": "SingleVariable",
+        "variable": "var_1"
+      },
+      "set": {
+        "head": "Interval",
+        "lower": 1.0,
+        "upper": 5.0
+      }
+    },
+    {
+      "name": "c2",
+      "function": {
+        "head": "SingleVariable",
+        "variable": "var_2"
+      },
+      "set": {
+        "head": "Interval",
+        "lower": 1.0,
+        "upper": 5.0
+      }
+    },
+    {
+      "name": "c3",
+      "function": {
+        "head": "SingleVariable",
+        "variable": "var_3"
+      },
+      "set": {
+        "head": "Interval",
+        "lower": 1.0,
+        "upper": 5.0
+      }
+    },
+    {
+      "name": "c4",
+      "function": {
+        "head": "SingleVariable",
+        "variable": "var_4"
+      },
+      "set": {
+        "head": "Interval",
+        "lower": 1.0,
+        "upper": 5.0
+      }
+    }
+  ]
+}

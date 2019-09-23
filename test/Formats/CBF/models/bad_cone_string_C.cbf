@@ -1,0 +1,19 @@
+VER
+3
+
+POW*CONES
+1 2
+2
+4.0
+1.0
+
+OBJSENSE
+MAX
+
+VAR
+3 1
+@0:bad_cone_string 3
+
+OBJACOORD
+1
+2 1.0

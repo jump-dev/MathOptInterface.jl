@@ -1,0 +1,10 @@
+{
+  "name": "MathOptFormat Model",
+  "version": 0,
+  "variables": [{"name": "x"}],
+  "objectives": [{
+      "sense": "feasibility",
+      "function": {"head": "UnsupportedObjectiveFunction"}
+  }],
+  "constraints": []
+}
