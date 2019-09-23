@@ -26,6 +26,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     solved::Bool
     hasprimal::Bool
     hasdual::Bool
+    result_count::Int
     terminationstatus::MOI.TerminationStatusCode
     # Computes `ObjectiveValue` by evaluating the `ObjectiveFunction` with
     # `VariablePrimal`. See `get_fallback`.
@@ -77,6 +78,7 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                          false,
                          false,
                          false,
+                         1,
                          MOI.OPTIMIZE_NOT_CALLED,
                          eval_objective_value,
                          NaN,
@@ -280,6 +282,9 @@ end
 #####
 ##### Results
 #####
+
+MOI.get(mock::MockOptimizer, ::MOI.ResultCount) = mock.result_count
+MOI.set(mock::MockOptimizer, ::MOI.ResultCount, x) = (mock.result_count = x)
 
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.terminationstatus
 function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
