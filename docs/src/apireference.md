@@ -78,6 +78,7 @@ List of submittables
 
 ```@docs
 LazyConstraint
+HeuristicSolutionStatus
 HeuristicSolution
 UserCut
 ```

@@ -380,8 +380,8 @@ end
 """
     SettingSingleVariableFunctionNotAllowed()
 
-Error type that should be thrown when the user [`set`](@ref) the
-[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
+Error type that should be thrown when the user calls [`set`](@ref) to change
+the [`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
 """
 struct SettingSingleVariableFunctionNotAllowed <: Exception end
 
@@ -414,45 +414,73 @@ Lazy constraint `func`-in-`set` submitted as `func, set`. The optimal
 solution returned by [`VariablePrimal`](@ref) will satisfy all lazy
 constraints that have been submitted.
 
-This can be submitted only from the [`LazyConstraint`](@ref). The
+This can be submitted only from the [`LazyConstraintCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
 argument to the feasible solution callback.
+
+## Examples
+
+Suppose `fx = MOI.SingleVariable(x)` and `fx = MOI.SingleVariable(y)`
+where `x` and `y` are [`VariableIndex`](@ref)s of `optimizer`. To add a
+`LazyConstraint` for `2x + 3y <= 1`, write
+```julia
+func = 2.0fx + 3.0fy
+set = MOI.LessThan(1.0)
+MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
+```
+inside a [`LazyConstraintCallback`](@ref) of data `callback_data`.
 """
-struct LazyConstraint{CBDT} <: AbstractSubmittable
-    callback_data::CBDT
+struct LazyConstraint{CallbackDataType} <: AbstractSubmittable
+    callback_data::CallbackDataType
 end
+
+"""
+    HeuristicSolutionStatus
+
+An Enum of possible return values for [`submit`](@ref) with
+[`HeuristicSolution`](@ref).
+This informs whether the heuristic solution was accepted or rejected.
+Possible values are:
+* `HEURISTIC_SOLUTION_ACCEPTED`: The heuristic solution was accepted.
+* `HEURISTIC_SOLUTION_REJECTED`: The heuristic solution was rejected.
+* `HEURISTIC_SOLUTION_UNKNOWN`: No information available on the acceptance.
+"""
+@enum(HeuristicSolutionStatus,
+      HEURISTIC_SOLUTION_ACCEPTED,
+      HEURISTIC_SOLUTION_REJECTED,
+      HEURISTIC_SOLUTION_UNKNOWN)
 
 """
     HeuristicSolution(callback_data)
 
 Heuristically obtained feasible solution. The solution is submitted as
 `variables, values` where `values[i]` gives the value of `variables[i]`,
-similarly to [`set`](@ref).
+similarly to [`set`](@ref). The [`submit`](@ref) call returns a
+[`HeuristicSolutionStatus`](@ref) indicating whether the provided solution
+was accepted or rejected.
 
 This can be submitted only from the [`HeuristicCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
 argument to the heuristic callback.
 
-Some solvers require a complete solution, others only partial solutions. It's up
-to you to provide the appropriate one. If in doubt, give a complete solution.
-
-Note that the solver may silently reject the provided solution.
+Some solvers require a complete solution, others only partial solutions.
 """
-struct HeuristicSolution{CBDT} <: AbstractSubmittable
-    callback_data::CBDT
+struct HeuristicSolution{CallbackDataType} <: AbstractSubmittable
+    callback_data::CallbackDataType
 end
 
 """
     UserCut(callback_data)
 
-Constraint `func`-to-`set` suggested to render the solution given by
-[`CallbackVariablePrimal`](@ref) trivially infeasible. The solution is submitted
-as `func, set`. For instance, for a solution satisfying all constraints except
-[`SingleVariable`](@ref)-in-[`Integer`](@ref) constraints, a
-[`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref) may be submitted cut it
-off. Note that, as opposed to [`LazyConstraint`](@ref), the provided constraint
-cannot modify the feasible set, the constraint should be redundant, e.g., it
-may be a consequence of affine and integrality constraints.
+Constraint `func`-to-`set` suggested to help the solver detect the solution
+given by [`CallbackVariablePrimal`](@ref) as infeasible. The cut is submitted
+as `func, set`.
+Typically [`CallbackVariablePrimal`](@ref) will violate integrality constraints,
+and a cut would be of the form [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref)
+or [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref). Note that, as
+opposed to [`LazyConstraint`](@ref), the provided constraint cannot modify the
+feasible set, the constraint should be redundant, e.g., it may be a consequence
+of affine and integrality constraints.
 
 This can be submitted only from the [`UserCutCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
@@ -460,8 +488,8 @@ argument to the infeasible solution callback.
 
 Note that the solver may silently ignore the provided constraint.
 """
-struct UserCut{CBDT} <: AbstractSubmittable
-    callback_data::CBDT
+struct UserCut{CallbackDataType} <: AbstractSubmittable
+    callback_data::CallbackDataType
 end
 
 ## Optimizer attributes
@@ -529,7 +557,7 @@ end
 
 Error thrown from optimizer when `MOI.get(optimizer, attr)` is called inside an
 [`AbstractCallback`](@ref) while it is only defined once [`optimize!`](@ref) has
-completed. This is only defined if `is_set_by_optimize(attr)` is `true`.
+completed. This can only happen when `is_set_by_optimize(attr)` is `true`.
 """
 struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
     attr::AttrType
@@ -543,19 +571,19 @@ end
 """
     abstract type AbstractCallback <: AbstractOptimizerAttribute end
 
-Abstract type for optimizer attribute representing a callback functions. The
+Abstract type for optimizer attribute representing a callback function. The
 value set to subtypes of `AbstractCallback` is a function that may be called
 during [`optimize!`](@ref). As [`optimize!`](@ref) is in progress, the result
 attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
-may not be accessible from the callback hence trying to get result attributes
+may not be accessible from the callback, hence trying to get result attributes
 might throw a [`OptimizeInProgress`](@ref) error.
 
 At most one callback of each type can be registered. If an optimizer already
 has a function for a callback type, and the user registers a new function,
-then the old one is erased, and the new one is registered.
+then the old one is replaced.
 
-The value of the attribute should be a function taking only one argument, that
-is commonly called `callback_data`, that can be used for instance in
+The value of the attribute should be a function taking only one argument,
+commonly called `callback_data`, that can be used for instance in
 [`LazyConstraintCallback`](@ref), [`HeuristicCallback`](@ref) and
 [`UserCutCallback`](@ref).
 """
@@ -877,8 +905,8 @@ VariablePrimal() = VariablePrimal(1)
 A variable attribute for the assignment to some primal variable's value during
 the callback identified by `callback_data`.
 """
-struct CallbackVariablePrimal{CBDT} <: AbstractVariableAttribute
-    callback_data::CBDT
+struct CallbackVariablePrimal{CallbackDataType} <: AbstractVariableAttribute
+    callback_data::CallbackDataType
 end
 
 """
