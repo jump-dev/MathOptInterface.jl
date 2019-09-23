@@ -283,18 +283,16 @@ end
 
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.terminationstatus
 function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
-    if attr.result_index != 1
-        error("Unable to get ObjectiveValue(result_index=$(attr.result_index))")
-    elseif mock.eval_objective_value
+    MOI.check_result_index_bounds(mock, attr)
+    if mock.eval_objective_value
         return get_fallback(mock, attr)
     else
         return mock.objective_value
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.DualObjectiveValue)
-    if attr.result_index != 1
-        error("Unable to get DualObjectiveValue(result_index=$(attr.result_index))")
-    elseif mock.eval_dual_objective_value
+    MOI.check_result_index_bounds(mock, attr)
+    if mock.eval_dual_objective_value
         return get_fallback(mock, attr, Float64)
     else
         return mock.dual_objective_value
@@ -313,9 +311,7 @@ MOI.get(mock::MockOptimizer, ::MockVariableAttribute, idx::MOI.VariableIndex) = 
 function MOI.get(
     mock::MockOptimizer, attr::MOI.VariablePrimal, idx::MOI.VariableIndex
 )
-    if attr.N != 1
-        error("Unable to query VariablePrimal(N=$(attr.N)).")
-    end
+    MOI.check_result_index_bounds(mock, attr)
     primal = get(mock.varprimal, xor_index(idx), nothing)
     if primal !== nothing
         return primal
@@ -329,9 +325,7 @@ end
 function MOI.get(
     mock::MockOptimizer, attr::MOI.ConstraintPrimal, idx::MOI.ConstraintIndex
 )
-    if attr.N != 1
-        error("Unable to query ConstraintPrimal(N=$(attr.N)).")
-    end
+    MOI.check_result_index_bounds(mock, attr)
     return get_fallback(mock, attr, idx)
 end
 
@@ -351,9 +345,8 @@ end
 function MOI.get(
     mock::MockOptimizer, attr::MOI.ConstraintDual, idx::MOI.ConstraintIndex{F}
 ) where {F}
-    if attr.N != 1
-        error("Unable to query VariablePrimal(N=$(attr.N)).")
-    elseif mock.eval_variable_constraint_dual &&
+    MOI.check_result_index_bounds(mock, attr)
+    if mock.eval_variable_constraint_dual &&
         (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
         return get_fallback(mock, attr, idx)
     else

@@ -119,6 +119,34 @@ SubmitNotAllowed(sub::AbstractSubmittable) = SubmitNotAllowed(sub, "")
 operation_name(err::SubmitNotAllowed) = "Submitting $(err.sub)"
 message(err::SubmitNotAllowed) = err.message
 
+struct ResultIndexBoundsError{AttrType} <: Exception
+    attr::AttrType
+    result_count::Int
+end
+# TODO: rename the .N -> .result_index field in necessary attributes (e.g.,
+# VariablePrimal, ConstraintPrimal, ConstraintDual), and remove this helper
+# function.
+function _result_index_field(attr)
+    if :result_index in fieldnames(typeof(attr))
+        return attr.result_index
+    else
+        @assert :N in fieldnames(typeof(attr))
+        return attr.N
+    end
+end
+function check_result_index_bounds(model::ModelLike, attr)
+    result_count = get(model, ResultCount())
+    if !(1 <= _result_index_field(attr) <= result_count)
+        throw(ResultIndexBoundsError(attr, result_count))
+    end
+end
+function Base.showerror(io::IO, err::ResultIndexBoundsError)
+    print(io,
+        "Result index of attribute $(err.attr) out of bounds. There are " *
+        "currently $(err.result_count) solution(s) in the model.")
+end
+
+
 """
     supports(model::ModelLike, sub::AbstractSubmittable)::Bool
 

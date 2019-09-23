@@ -144,19 +144,20 @@ function solve_result_index(model::MOI.ModelLike, config::TestConfig)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    result_err(attr) = MOI.ResultIndexBoundsError{typeof(attr)}(attr, 1)
     if config.solve
         MOI.optimize!(model)
         @test MOI.get(model, MOI.ObjectiveValue(1)) == 1.0
-        @test_throws ErrorException MOI.get(model, MOI.ObjectiveValue(2))
-        @test MOI.get(model, MOI.DualObjectiveValue(1)) == 1.0
-        @test_throws ErrorException MOI.get(model, MOI.DualObjectiveValue(2))
+        @test_throws result_err(MOI.ObjectiveValue(2)) MOI.get(model, MOI.ObjectiveValue(2))
         @test MOI.get(model, MOI.VariablePrimal(1), x) == 1.0
-        @test_throws ErrorException MOI.get(model, MOI.VariablePrimal(2), x)
+        @test_throws result_err(MOI.VariablePrimal(2)) MOI.get(model, MOI.VariablePrimal(2), x)
         @test MOI.get(model, MOI.ConstraintPrimal(1), c) == 1.0
-        @test_throws ErrorException MOI.get(model, MOI.ConstraintPrimal(2), c)
+        @test_throws result_err(MOI.ConstraintPrimal(2)) MOI.get(model, MOI.ConstraintPrimal(2), c)
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(1), c) == 1.0
-            @test_throws ErrorException MOI.get(model, MOI.ConstraintDual(2), c)
+            @test_throws result_err(MOI.ConstraintDual(2)) MOI.get(model, MOI.ConstraintDual(2), c)
+            @test MOI.get(model, MOI.DualObjectiveValue(1)) == 1.0
+            @test_throws result_err(MOI.DualObjectiveValue(2)) MOI.get(model, MOI.DualObjectiveValue(2))
         end
     end
 end
