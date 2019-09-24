@@ -119,3 +119,26 @@ mps_model = MOI.FileFormats.MPS.Model()
 MOI.copy_to(mps_model, backend(jump_model))
 MOI.write_to_file(mps_model, "my_model.mps")
 ```
+
+Some file-formats may not support all constraints in your model. If this is the
+case, calling `MOI.write_to_file` will result in an error like:
+`ERROR: the constraint <F>-in-<S> is not supported by the model.`
+To work around this problem, wrap `mps_model` in a
+[`Bridges.full_bridge_optimizer`](@ref):
+```julia
+using JuMP
+
+jump_model = Model()
+@variable(jump_model, x, Int)
+@constraint(jump_model, my_con, 2x + 1 <= 2)
+@objective(jump_model, Max, x)
+
+mps_model = MOI.FileFormats.MPS.Model()
+bridged_mps_model = MOI.Bridges.full_bridge_optimizer(mps_model, Float64)
+MOI.copy_to(bridged_mps_model, backend(jump_model))
+MOI.write_to_file(mps_model, "bridged_my_model.mps")
+```
+
+!!! note
+    The file `bridged_my_model.mps` is equivalent, but not identical to, your
+    original `jump_model`. Some constraints and names may have been re-written.
