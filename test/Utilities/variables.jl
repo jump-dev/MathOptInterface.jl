@@ -16,6 +16,7 @@ const MOIU = MOI.Utilities
             model, MOI.Semicontinuous{T}(1.0, 3.5))
         v_v, v_c = MOI.add_constrained_variable(
             model, MOI.Semiinteger{T}(-1.0, 2.5))
+        e_v, e_c = MOI.add_constrained_variable(model, MOI.EqualTo(1.35))
 
         @test -Inf == @inferred MOIU.get_bounds(model, T, x)[1]
         @test Inf == @inferred MOIU.get_bounds(model, T, x)[2]
@@ -34,6 +35,9 @@ const MOIU = MOI.Utilities
 
         @test -1.0 == @inferred MOIU.get_bounds(model, T, v_v)[1]
         @test 2.5 == @inferred MOIU.get_bounds(model, T, v_v)[2]
+
+        @test 1.35 == @inferred MOIU.get_bounds(model, T, e_v)[1]
+        @test 1.35 == @inferred MOIU.get_bounds(model, T, e_v)[2]
 
         MOI.add_constraint(model, MOI.SingleVariable(y_v), MOI.LessThan{T}(3.6))
 
