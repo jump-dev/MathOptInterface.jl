@@ -26,6 +26,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     solved::Bool
     hasprimal::Bool
     hasdual::Bool
+    result_count::Int
     terminationstatus::MOI.TerminationStatusCode
     # Computes `ObjectiveValue` by evaluating the `ObjectiveFunction` with
     # `VariablePrimal`. See `get_fallback`.
@@ -77,6 +78,7 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                          false,
                          false,
                          false,
+                         1,
                          MOI.OPTIMIZE_NOT_CALLED,
                          eval_objective_value,
                          NaN,
@@ -281,8 +283,12 @@ end
 ##### Results
 #####
 
+MOI.get(mock::MockOptimizer, ::MOI.ResultCount) = mock.result_count
+MOI.set(mock::MockOptimizer, ::MOI.ResultCount, x) = (mock.result_count = x)
+
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.terminationstatus
 function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
+    MOI.check_result_index_bounds(mock, attr)
     if mock.eval_objective_value
         return get_fallback(mock, attr)
     else
@@ -290,14 +296,21 @@ function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.DualObjectiveValue)
+    MOI.check_result_index_bounds(mock, attr)
     if mock.eval_dual_objective_value
         return get_fallback(mock, attr, Float64)
     else
         return mock.dual_objective_value
     end
 end
-MOI.get(mock::MockOptimizer, ::MOI.PrimalStatus) = mock.primalstatus
-MOI.get(mock::MockOptimizer, ::MOI.DualStatus) = mock.dualstatus
+function MOI.get(mock::MockOptimizer, attr::MOI.PrimalStatus)
+    MOI.check_result_index_bounds(mock, attr)
+    return mock.primalstatus
+end
+function MOI.get(mock::MockOptimizer, attr::MOI.DualStatus)
+    MOI.check_result_index_bounds(mock, attr)
+    return mock.dualstatus
+end
 MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
 
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute,
@@ -305,22 +318,28 @@ function MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute,
     return xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx)))
 end
 MOI.get(mock::MockOptimizer, ::MockVariableAttribute, idx::MOI.VariableIndex) = mock.varattribute[xor_index(idx)]
-function MOI.get(mock::MockOptimizer, ::MOI.VariablePrimal,
-                 idx::MOI.VariableIndex)
+
+function MOI.get(
+    mock::MockOptimizer, attr::MOI.VariablePrimal, idx::MOI.VariableIndex
+)
+    MOI.check_result_index_bounds(mock, attr)
     primal = get(mock.varprimal, xor_index(idx), nothing)
-    if primal === nothing
-        if MOI.is_valid(mock, idx)
-            error("No mock primal is set for variable `", idx, "`.")
-        else
-            throw(MOI.InvalidIndex(idx))
-        end
+    if primal !== nothing
+        return primal
+    elseif MOI.is_valid(mock, idx)
+        error("No mock primal is set for variable `", idx, "`.")
+    else
+        throw(MOI.InvalidIndex(idx))
     end
-    return primal
 end
-function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintPrimal,
-                 idx::MOI.ConstraintIndex)
+
+function MOI.get(
+    mock::MockOptimizer, attr::MOI.ConstraintPrimal, idx::MOI.ConstraintIndex
+)
+    MOI.check_result_index_bounds(mock, attr)
     return get_fallback(mock, attr, idx)
 end
+
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute,
                  idx::MOI.ConstraintIndex)
     # If it is thrown by `mock.inner_model`, the index will be xor'ed.
@@ -333,8 +352,11 @@ function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintFunction,
     MOI.throw_if_not_valid(mock, idx)
     return xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx)))
 end
-function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintDual,
-                 idx::MOI.ConstraintIndex{F}) where F
+
+function MOI.get(
+    mock::MockOptimizer, attr::MOI.ConstraintDual, idx::MOI.ConstraintIndex{F}
+) where {F}
+    MOI.check_result_index_bounds(mock, attr)
     if mock.eval_variable_constraint_dual &&
         (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
         return get_fallback(mock, attr, idx)

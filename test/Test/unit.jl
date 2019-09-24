@@ -47,6 +47,7 @@ end
             "solve_unbounded_model",
             "solve_single_variable_dual_min",
             "solve_single_variable_dual_max",
+            "solve_result_index",
             ])
         MOI.empty!(model)
     end
@@ -376,6 +377,19 @@ end
         )
         MOIT.solve_single_variable_dual_max(mock, config)
         mock.eval_variable_constraint_dual = flag
+    end
+
+    @testset "solve_result_index" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0]),
+                MOI.FEASIBLE_POINT,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+            )
+        )
+        MOIT.solve_result_index(mock, config)
     end
 end
 

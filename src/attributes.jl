@@ -119,6 +119,27 @@ SubmitNotAllowed(sub::AbstractSubmittable) = SubmitNotAllowed(sub, "")
 operation_name(err::SubmitNotAllowed) = "Submitting $(err.sub)"
 message(err::SubmitNotAllowed) = err.message
 
+struct ResultIndexBoundsError{AttrType} <: Exception
+    attr::AttrType
+    result_count::Int
+end
+# TODO: rename the .N -> .result_index field in necessary attributes (e.g.,
+# VariablePrimal, ConstraintPrimal, ConstraintDual), and remove this helper
+# function.
+_result_index_field(attr) = attr.result_index
+function check_result_index_bounds(model::ModelLike, attr)
+    result_count = get(model, ResultCount())
+    if !(1 <= _result_index_field(attr) <= result_count)
+        throw(ResultIndexBoundsError(attr, result_count))
+    end
+end
+function Base.showerror(io::IO, err::ResultIndexBoundsError)
+    print(io,
+        "Result index of attribute $(err.attr) out of bounds. There are " *
+        "currently $(err.result_count) solution(s) in the model.")
+end
+
+
 """
     supports(model::ModelLike, sub::AbstractSubmittable)::Bool
 
@@ -898,6 +919,7 @@ struct VariablePrimal <: AbstractVariableAttribute
     N::Int
 end
 VariablePrimal() = VariablePrimal(1)
+_result_index_field(attr::VariablePrimal) = attr.N
 
 """
     CallbackVariablePrimal(callback_data)
@@ -988,6 +1010,7 @@ struct ConstraintPrimal <: AbstractConstraintAttribute
     N::Int
 end
 ConstraintPrimal() = ConstraintPrimal(1)
+_result_index_field(attr::ConstraintPrimal) = attr.N
 
 """
     ConstraintDual(N)
@@ -1000,6 +1023,7 @@ struct ConstraintDual <: AbstractConstraintAttribute
     N::Int
 end
 ConstraintDual() = ConstraintDual(1)
+_result_index_field(attr::ConstraintDual) = attr.N
 
 """
     ConstraintBasisStatus()
@@ -1218,6 +1242,7 @@ struct PrimalStatus <: AbstractModelAttribute
     N::Int
 end
 PrimalStatus() = PrimalStatus(1)
+_result_index_field(attr::PrimalStatus) = attr.N
 
 """
     DualStatus(N)
@@ -1230,6 +1255,7 @@ struct DualStatus <: AbstractModelAttribute
     N::Int
 end
 DualStatus() = DualStatus(1)
+_result_index_field(attr::DualStatus) = attr.N
 
 """
     is_set_by_optimize(::AnyAttribute)
