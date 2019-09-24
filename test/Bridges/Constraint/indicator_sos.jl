@@ -94,10 +94,4 @@ include("../utilities.jl")
     lin_func3 = MOI.get(model, MOI.ConstraintFunction(), lin_cons3)
     @test lin_func3 ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x1), MOI.ScalarAffineTerm(1.0, w3)], 0.0)
     @test MOI.get(model, MOI.ConstraintSet(), lin_cons3) == MOI.GreaterThan(5.0)
-
-    for test_func in (MOIT.indicator1_test, MOIT.indicator2_test, MOIT.indicator2_test)
-        model = MOIU.MockOptimizer(MOIU.Model{Float64}());
-        config = MOIT.TestConfig()
-        test_func(model, config)
-    end
 end
