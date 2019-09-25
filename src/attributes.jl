@@ -1026,15 +1026,20 @@ ConstraintDual() = ConstraintDual(1)
 _result_index_field(attr::ConstraintDual) = attr.N
 
 """
+    ConstraintBasisStatus(result_index)
     ConstraintBasisStatus()
 
-A constraint attribute for the `BasisStatusCode` of some constraint, with
-respect to an available optimal solution basis.
+A constraint attribute for the `BasisStatusCode` of some constraint in result
+`result_index`, with respect to an available optimal solution basis. If
+`result_index` is omitted, it is 1 by default.
 
 **For the basis status of a variable, query the corresponding `SingleVariable`
 constraint that enforces the variable's bounds.**
 """
-struct ConstraintBasisStatus <: AbstractConstraintAttribute end
+struct ConstraintBasisStatus <: AbstractConstraintAttribute
+    result_index::Int
+end
+ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
 """
     ConstraintFunction()
