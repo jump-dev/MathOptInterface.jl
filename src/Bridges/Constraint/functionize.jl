@@ -138,13 +138,8 @@ end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
                  b::VectorFunctionizeBridge)
-    f = MOIU.canonical(MOI.get(model, attr, b.constraint))
-    @assert all(iszero, f.constants)
-    @assert length(f.terms) == MOI.output_dimension(f)
-    @assert all(t -> isone(t.scalar_term.coefficient), f.terms)
-    terms = sort(f.terms, by = t -> t.output_index)
-    @assert all(i -> terms[i].output_index == i, 1:MOI.output_dimension(f))
-    return MOI.VectorOfVariables([t.scalar_term.variable_index for t in terms])
+    f = MOI.get(model, attr, b.constraint)
+    return MOIU.convert_approx(MOI.VectorOfVariables, f)
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
                  b::VectorFunctionizeBridge)

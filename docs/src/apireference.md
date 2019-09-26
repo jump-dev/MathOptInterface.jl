@@ -74,6 +74,15 @@ AbstractSubmittable
 submit
 ```
 
+List of submittables
+
+```@docs
+LazyConstraint
+HeuristicSolutionStatus
+HeuristicSolution
+UserCut
+```
+
 ## Model Interface
 
 ```@docs
@@ -122,6 +131,10 @@ Silent
 TimeLimitSec
 RawParameter
 NumberOfThreads
+AbstractCallback
+LazyConstraintCallback
+HeuristicCallback
+UserCutCallback
 ```
 
 List of attributes useful for optimizers
@@ -220,6 +233,7 @@ Calls to `get` and `set` should include as an argument a single `VariableIndex` 
 VariableName
 VariablePrimalStart
 VariablePrimal
+CallbackVariablePrimal
 ```
 
 ### Constraints
@@ -437,6 +451,12 @@ variable:
 ```@docs
 LowerBoundAlreadySet
 UpperBoundAlreadySet
+```
+
+As discussed in [`AbstractCallback`](@ref), trying to [`get`](@ref) attributes
+inside a callback may throw:
+```@docs
+OptimizeInProgress
 ```
 
 The rest of the errors defined in MOI fall in two categories represented by the
@@ -955,6 +975,12 @@ set for scalar constraints:
 Utilities.shift_constant
 Utilities.normalize_and_add_constraint
 Utilities.normalize_constant
+```
+
+The following utility identifies those constraints imposing bounds on a given
+variable, and returns those bound values:
+```@docs
+Utilities.get_bounds
 ```
 
 ## Benchmarks

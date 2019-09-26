@@ -1854,9 +1854,11 @@ function count_terms(dimension::I, terms::Vector{T}) where {I,T}
     return counting
 end
 
+tol_default(T::Type{<:Union{Integer, Rational}}) = zero(T)
+tol_default(T::Type{<:AbstractFloat}) = sqrt(eps(T))
 convert_approx(::Type{T}, func::T; kws...) where {T} = func
 function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFunction{T};
-                        tol=sqrt(eps(T))) where {T}
+                        tol=tol_default(T)) where {T}
     f = canonical(func)
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol=tol), f.terms)
     if abs(f.constant) > tol || i === nothing ||
@@ -1866,7 +1868,7 @@ function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFuncti
     return MOI.SingleVariable(f.terms[i].variable_index)
 end
 function convert_approx(::Type{MOI.VectorOfVariables}, func::MOI.VectorAffineFunction{T};
-    tol=sqrt(eps(T))) where {T}
+                        tol=tol_default(T)) where {T}
     return MOI.VectorOfVariables([convert_approx(MOI.SingleVariable, f, tol=tol).variable
                                   for f in scalarize(func)])
 end

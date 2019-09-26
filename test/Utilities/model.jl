@@ -265,3 +265,16 @@ end
             [(MOI.SingleVariable, typeof(set))]
     end
 end
+
+@testset "Extension dictionary" begin
+    model = MOIU.Model{Float64}()
+    model.ext[:my_store] = 1
+    @test model.ext[:my_store] == 1
+    MOI.empty!(model)
+    @test model.ext[:my_store] == 1
+    model.ext[:my_store] = 2
+    dest = MOIU.Model{Float64}()
+    MOI.copy_to(dest, model)
+    @test !haskey(dest.ext, :my_store)
+    @test model.ext[:my_store] == 2
+end

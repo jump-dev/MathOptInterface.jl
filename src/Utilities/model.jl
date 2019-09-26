@@ -474,11 +474,12 @@ end
 # 0xd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
 const UPPER_BOUND_MASK = 0xcd
 
+const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
+    MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.Interval{T},
+    MOI.Integer, MOI.ZeroOne, MOI.Semicontinuous{T}, MOI.Semiinteger{T}}
 function MOI.supports_constraint(
     ::AbstractModel{T}, ::Type{MOI.SingleVariable},
-    ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
-                   MOI.Interval{T}, MOI.Integer, MOI.ZeroOne,
-                   MOI.Semicontinuous{T}, MOI.Semiinteger{T}}}) where T
+    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return true
 end
 function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
@@ -915,6 +916,9 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             con_to_name::Dict{$CI, String}
             name_to_con::Union{Dict{String, $CI}, Nothing}
             constrmap::Vector{Int} # Constraint Reference value ci -> index in array in Constraints
+            # A useful dictionary for extensions to store things. These are
+            # _not_ copied between models!
+            ext::Dict{Symbol, Any}
         end
     end
     for f in funs
@@ -1004,7 +1008,7 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
                               $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)), 0,
                               nothing, UInt8[], T[], T[], Dict{$VI, String}(),
                               nothing, 0, Dict{$CI, String}(), nothing, Int[],
-                              $(_getCV.(funs)...))
+                              Dict{Symbol, Any}(), $(_getCV.(funs)...))
         end
 
         $MOI.supports_constraint(model::$esc_model_name{T}, ::Type{<:Union{$(_typedfun.(scalar_funs)...)}}, ::Type{<:Union{$(_typedset.(scalar_sets)...)}}) where T = true

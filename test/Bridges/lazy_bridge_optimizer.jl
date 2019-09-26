@@ -8,6 +8,129 @@ const MOIB = MathOptInterface.Bridges
 
 include("utilities.jl")
 
+_functionize_error(b, bridge_type, func, name) = ErrorException(
+    "Need to apply a `$bridge_type` to a `$func` $name because the" *
+    " variable is bridged but $name bridges are not supported by" *
+    " `$(typeof(b))`."
+)
+
+_lazy_functionize_error(bridge_type, func, name) = ErrorException(
+    "Need to apply a `$bridge_type` to a `$func` $name because the variable is" *
+    " bridged but no such $name bridge type was added. Add one" *
+    " with `add_bridge`."
+)
+
+MOIU.@model(StandardLPModel,
+            (), (MOI.EqualTo, MOIT.UnknownScalarSet), (MOI.Nonnegatives,), (),
+            (), (MOI.ScalarAffineFunction,), (MOI.VectorOfVariables,), ())
+MOI.supports_constraint(::StandardLPModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan{T}}) where {T} = false
+MOI.supports_constraint(::StandardLPModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{T}}) where {T} = false
+MOI.supports_constraint(::StandardLPModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.EqualTo{T}}) where {T} = false
+MOI.supports_constraint(::StandardLPModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Reals}) = false
+MOI.supports(::StandardLPModel{T}, ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}) where {T} = false
+MOI.supports(::StandardLPModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
+
+@testset "Bridged variable in `SingleVariable` constraint with $S" for T in [Float64, Int], S in [MOIT.UnknownScalarSet{T}]
+    set = S(one(T))
+    @testset "No constraint bridge" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.Variable.Vectorize{T}(model)
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        err = _functionize_error(bridged, MOIB.Constraint.ScalarFunctionizeBridge, "SingleVariable", "constraint")
+        @test_throws err MOI.add_constraint(bridged, fx, set)
+    end
+    @testset "LazyBridgeOptimizer" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        @testset "without `Constraint.ScalarFunctionizeBridge`" begin
+            err = _lazy_functionize_error(MOIB.Constraint.ScalarFunctionizeBridge, "SingleVariable", "constraint")
+            @test_throws err MOI.add_constraint(bridged, fx, set)
+        end
+        @testset "with `Constraint.ScalarFunctionizeBridge`" begin
+            MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
+            cx = MOI.add_constraint(bridged, fx, set)
+            @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+            @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
+            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+            fa = MOI.SingleVariable(a)
+            ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, S}())[1]
+            @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
+            @test MOI.get(model, MOI.ConstraintSet(), ca) == MOIU.shift_constant(set, -one(T))
+        end
+    end
+end
+
+@testset "Bridged variable in `VectorOfVariables` constraint with $T" for T in [Float64, Int]
+    set = MOI.Zeros(1)
+    @testset "No constraint bridge" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.Variable.Vectorize{T}(model)
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.VectorOfVariables([x])
+        err = _functionize_error(bridged, MOIB.Constraint.VectorFunctionizeBridge, "VectorOfVariables", "constraint")
+        @test_throws err MOI.add_constraint(bridged, fx, set)
+    end
+    @testset "LazyBridgeOptimizer" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.VectorOfVariables([x])
+        @testset "without `Constraint.ScalarFunctionizeBridge`" begin
+            err = _lazy_functionize_error(MOIB.Constraint.VectorFunctionizeBridge, "VectorOfVariables", "constraint")
+            @test_throws err MOI.add_constraint(bridged, fx, set)
+        end
+        @testset "with `Constraint.ScalarFunctionizeBridge`" begin
+            MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+            cx = MOI.add_constraint(bridged, fx, set)
+            @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+            @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
+            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+            fa = MOI.SingleVariable(a)
+            ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}}())[1]
+            @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
+            @test MOI.get(model, MOI.ConstraintSet(), ca) == MOI.EqualTo(-one(T))
+        end
+    end
+end
+
+@testset "Bridged variable in `SingleVariable` objective function with $T" for T in [Float64, Int]
+    @testset "No objective bridge" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.Variable.Vectorize{T}(model)
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        err = _functionize_error(bridged, MOIB.Objective.FunctionizeBridge, "SingleVariable", "objective")
+        @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    end
+    @testset "LazyBridgeOptimizer" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        @testset "without `Objective.FunctionizeBridge`" begin
+            err = _lazy_functionize_error(MOIB.Objective.FunctionizeBridge, "SingleVariable", "objective")
+            @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+        end
+        @testset "with `Objective.FunctionizeBridge`" begin
+            MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
+            MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+            @test MOI.get(bridged, MOI.ObjectiveFunctionType()) == MOI.SingleVariable
+            @test MOI.get(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}()) ≈ fx
+            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+            fa = MOI.SingleVariable(a)
+            @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{T}
+            @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()) ≈ fa + one(T)
+        end
+    end
+end
+
 MOIU.@model(
     LPModel,
     (), (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan), (), (),
@@ -57,43 +180,6 @@ end
     with 0 constraint bridges
     with 0 objective bridges
     with inner model SDPAModel{Float64}"""
-end
-
-@testset "Bridged variable in `SingleVariable` objective function with $T" for T in [Float64, Int]
-    @testset "No objective bridge" begin
-        model = SDPAModel{T}()
-        bridged = MOIB.Variable.Vectorize{T}(model)
-        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.SingleVariable(x)
-        err = ErrorException("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge` to a" *
-            " `SingleVariable` objective function because the variable is" *
-            " bridged but objective bridges are not supported by" *
-            " `MathOptInterface.Bridges.Variable.SingleBridgeOptimizer{MathOptInterface.Bridges.Variable.VectorizeBridge{$T,S} where S,SDPAModel{$T}}`.")
-        @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-    end
-    @testset "LazyBridgeOptimizer" begin
-        model = SDPAModel{T}()
-        bridged = MOIB.LazyBridgeOptimizer(model)
-        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
-        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.SingleVariable(x)
-        @testset "without `Objective.FunctionizeBridge`" begin
-            err = ErrorException("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge`" *
-                " to a `SingleVariable` objective function because the" *
-                " variable is bridged but no such objective bridge type was" *
-                " added. Add one with `add_bridge`.")
-            @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-        end
-        @testset "with `Objective.FunctionizeBridge`" begin
-            MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
-            MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-            @test MOI.get(bridged, MOI.ObjectiveFunctionType()) == MOI.SingleVariable
-            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-            fa = MOI.SingleVariable(a)
-            @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{T}
-            @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()) ≈ fa + one(T)
-        end
-    end
 end
 
 @testset "SDPA format with $T" for T in [Float64, Int]
@@ -251,8 +337,8 @@ MOIU.@model(NoVariableModel,
             (MOI.ScalarAffineFunction,),
             (),
             (MOI.VectorAffineFunction,))
-function MOI.supports_constraint(::NoVariableModel, ::Type{MOI.SingleVariable},
-                                 ::Type{<:MOI.AbstractScalarSet})
+function MOI.supports_constraint(::NoVariableModel{T}, ::Type{MOI.SingleVariable},
+                                 ::Type{<:MOIU.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return false
 end
 

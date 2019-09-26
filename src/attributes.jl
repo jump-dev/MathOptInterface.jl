@@ -119,6 +119,27 @@ SubmitNotAllowed(sub::AbstractSubmittable) = SubmitNotAllowed(sub, "")
 operation_name(err::SubmitNotAllowed) = "Submitting $(err.sub)"
 message(err::SubmitNotAllowed) = err.message
 
+struct ResultIndexBoundsError{AttrType} <: Exception
+    attr::AttrType
+    result_count::Int
+end
+# TODO: rename the .N -> .result_index field in necessary attributes (e.g.,
+# VariablePrimal, ConstraintPrimal, ConstraintDual), and remove this helper
+# function.
+_result_index_field(attr) = attr.result_index
+function check_result_index_bounds(model::ModelLike, attr)
+    result_count = get(model, ResultCount())
+    if !(1 <= _result_index_field(attr) <= result_count)
+        throw(ResultIndexBoundsError(attr, result_count))
+    end
+end
+function Base.showerror(io::IO, err::ResultIndexBoundsError)
+    print(io,
+        "Result index of attribute $(err.attr) out of bounds. There are " *
+        "currently $(err.result_count) solution(s) in the model.")
+end
+
+
 """
     supports(model::ModelLike, sub::AbstractSubmittable)::Bool
 
@@ -378,6 +399,14 @@ function throw_set_error_fallback(model::ModelLike,
 end
 
 """
+    SettingSingleVariableFunctionNotAllowed()
+
+Error type that should be thrown when the user calls [`set`](@ref) to change
+the [`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
+"""
+struct SettingSingleVariableFunctionNotAllowed <: Exception end
+
+"""
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
            values...)::Nothing
 
@@ -397,13 +426,92 @@ function submit(model::ModelLike, sub::AbstractSubmittable, args...)
     end
 end
 
-"""
-    SettingSingleVariableFunctionNotAllowed()
+## Submittables
 
-Error type that should be thrown when the user [`set`](@ref) the
-[`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
 """
-struct SettingSingleVariableFunctionNotAllowed <: Exception end
+    LazyConstraint(callback_data)
+
+Lazy constraint `func`-in-`set` submitted as `func, set`. The optimal
+solution returned by [`VariablePrimal`](@ref) will satisfy all lazy
+constraints that have been submitted.
+
+This can be submitted only from the [`LazyConstraintCallback`](@ref). The
+field `callback_data` is a solver-specific callback type that is passed as the
+argument to the feasible solution callback.
+
+## Examples
+
+Suppose `fx = MOI.SingleVariable(x)` and `fx = MOI.SingleVariable(y)`
+where `x` and `y` are [`VariableIndex`](@ref)s of `optimizer`. To add a
+`LazyConstraint` for `2x + 3y <= 1`, write
+```julia
+func = 2.0fx + 3.0fy
+set = MOI.LessThan(1.0)
+MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
+```
+inside a [`LazyConstraintCallback`](@ref) of data `callback_data`.
+"""
+struct LazyConstraint{CallbackDataType} <: AbstractSubmittable
+    callback_data::CallbackDataType
+end
+
+"""
+    HeuristicSolutionStatus
+
+An Enum of possible return values for [`submit`](@ref) with
+[`HeuristicSolution`](@ref).
+This informs whether the heuristic solution was accepted or rejected.
+Possible values are:
+* `HEURISTIC_SOLUTION_ACCEPTED`: The heuristic solution was accepted.
+* `HEURISTIC_SOLUTION_REJECTED`: The heuristic solution was rejected.
+* `HEURISTIC_SOLUTION_UNKNOWN`: No information available on the acceptance.
+"""
+@enum(HeuristicSolutionStatus,
+      HEURISTIC_SOLUTION_ACCEPTED,
+      HEURISTIC_SOLUTION_REJECTED,
+      HEURISTIC_SOLUTION_UNKNOWN)
+
+"""
+    HeuristicSolution(callback_data)
+
+Heuristically obtained feasible solution. The solution is submitted as
+`variables, values` where `values[i]` gives the value of `variables[i]`,
+similarly to [`set`](@ref). The [`submit`](@ref) call returns a
+[`HeuristicSolutionStatus`](@ref) indicating whether the provided solution
+was accepted or rejected.
+
+This can be submitted only from the [`HeuristicCallback`](@ref). The
+field `callback_data` is a solver-specific callback type that is passed as the
+argument to the heuristic callback.
+
+Some solvers require a complete solution, others only partial solutions.
+"""
+struct HeuristicSolution{CallbackDataType} <: AbstractSubmittable
+    callback_data::CallbackDataType
+end
+
+"""
+    UserCut(callback_data)
+
+Constraint `func`-to-`set` suggested to help the solver detect the solution
+given by [`CallbackVariablePrimal`](@ref) as infeasible. The cut is submitted
+as `func, set`.
+Typically [`CallbackVariablePrimal`](@ref) will violate integrality constraints,
+and a cut would be of the form [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref)
+or [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref). Note that, as
+opposed to [`LazyConstraint`](@ref), the provided constraint cannot modify the
+feasible set, the constraint should be redundant, e.g., it may be a consequence
+of affine and integrality constraints.
+
+This can be submitted only from the [`UserCutCallback`](@ref). The
+field `callback_data` is a solver-specific callback type that is passed as the
+argument to the infeasible solution callback.
+
+Note that the solver may silently ignore the provided constraint.
+"""
+struct UserCut{CallbackDataType} <: AbstractSubmittable
+    callback_data::CallbackDataType
+end
 
 ## Optimizer attributes
 
@@ -465,10 +573,141 @@ end
     NumberOfThreads()
 
 An optimizer attribute for setting the number of threads used for an
-optimization. When set to `nothing` use solver default. Values are positive
+optimization. When set to `nothing` uses solver default. Values are positive
 integers. The default value is `nothing`.
 """
 struct NumberOfThreads <: AbstractOptimizerAttribute end
+
+### Callbacks
+
+"""
+    struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
+        attr::AttrType
+    end
+
+Error thrown from optimizer when `MOI.get(optimizer, attr)` is called inside an
+[`AbstractCallback`](@ref) while it is only defined once [`optimize!`](@ref) has
+completed. This can only happen when `is_set_by_optimize(attr)` is `true`.
+"""
+struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
+    attr::AttrType
+end
+
+function Base.showerror(io::IO, err::OptimizeInProgress)
+    print(io, typeof(err), ": Cannot get result as the `MOI.optimize!` has not",
+          " finished.")
+end
+
+"""
+    abstract type AbstractCallback <: AbstractOptimizerAttribute end
+
+Abstract type for optimizer attribute representing a callback function. The
+value set to subtypes of `AbstractCallback` is a function that may be called
+during [`optimize!`](@ref). As [`optimize!`](@ref) is in progress, the result
+attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
+may not be accessible from the callback, hence trying to get result attributes
+might throw a [`OptimizeInProgress`](@ref) error.
+
+At most one callback of each type can be registered. If an optimizer already
+has a function for a callback type, and the user registers a new function,
+then the old one is replaced.
+
+The value of the attribute should be a function taking only one argument,
+commonly called `callback_data`, that can be used for instance in
+[`LazyConstraintCallback`](@ref), [`HeuristicCallback`](@ref) and
+[`UserCutCallback`](@ref).
+"""
+abstract type AbstractCallback <: AbstractOptimizerAttribute end
+
+"""
+    LazyConstraintCallback() <: AbstractCallback
+
+The callback can be used to reduce the feasible set given the current primal
+solution by submitting a [`LazyConstraint`](@ref). For instance, it may be
+called at an incumbent of a mixed-integer problem. Note that there is no
+guarantee that the callback is called at *every* feasible primal solution.
+
+The feasible primal solution is accessed through
+[`CallbackVariablePrimal`](@ref). Trying to access other result
+attributes will throw [`OptimizeInProgress`](@ref) as discussed in
+[`AbstractCallback`](@ref).
+
+## Examples
+
+```julia
+x = MOI.add_variables(optimizer, 8)
+MOI.set(optimizer, MOI.LazyConstraintCallback(), callback_data -> begin
+    sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
+    if # should add a lazy constraint
+        func = # computes function
+        set = # computes set
+        MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
+    end
+end
+```
+"""
+struct LazyConstraintCallback <: AbstractCallback end
+
+"""
+    HeuristicCallback() <: AbstractCallback
+
+The callback can be used to submit [`HeuristicSolution`](@ref) given the
+current primal solution.
+For instance, it may be called at fractional (i.e., non-integer) nodes in the
+branch and bound tree of a mixed-integer problem. Note that there is not
+guarantee that the callback is called *everytime* the solver has an infeasible
+solution.
+
+The current primal solution is accessed through
+[`CallbackVariablePrimal`](@ref). Trying to access other result
+attributes will throw [`OptimizeInProgress`](@ref) as discussed in
+[`AbstractCallback`](@ref).
+
+## Examples
+
+```julia
+x = MOI.add_variables(optimizer, 8)
+MOI.set(optimizer, MOI.HeuristicCallback(), callback_data -> begin
+    sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
+    if # can find a heuristic solution
+        values = # computes heuristic solution
+        MOI.submit(optimizer, MOI.HeuristicSolution(callback_data), x,
+                   values)
+    end
+end
+```
+"""
+struct HeuristicCallback <: AbstractCallback end
+
+"""
+    UserCutCallback() <: AbstractCallback
+
+The callback can be used to submit [`UserCut`](@ref) given the current primal
+solution. For instance, it may be called at fractional (i.e., non-integer) nodes
+in the branch and bound tree of a mixed-integer problem. Note that there is not
+guarantee that the callback is called *everytime* the solver has an infeasible
+solution.
+
+The infeasible solution is accessed through
+[`CallbackVariablePrimal`](@ref). Trying to access other result
+attributes will throw [`OptimizeInProgress`](@ref) as discussed in
+[`AbstractCallback`](@ref).
+
+## Examples
+
+```julia
+x = MOI.add_variables(optimizer, 8)
+MOI.set(optimizer, MOI.UserCutCallback(), callback_data -> begin
+    sol = MOI.get(optimizer, MOI.CallbackVariablePrimal(callback_data), x)
+    if # can find a user cut
+        func = # computes function
+        set = # computes set
+        MOI.submit(optimizer, MOI.UserCut(callback_data), func, set)
+    end
+end
+```
+"""
+struct UserCutCallback <: AbstractCallback end
 
 ## Model attributes
 
@@ -689,6 +928,17 @@ struct VariablePrimal <: AbstractVariableAttribute
     N::Int
 end
 VariablePrimal() = VariablePrimal(1)
+_result_index_field(attr::VariablePrimal) = attr.N
+
+"""
+    CallbackVariablePrimal(callback_data)
+
+A variable attribute for the assignment to some primal variable's value during
+the callback identified by `callback_data`.
+"""
+struct CallbackVariablePrimal{CallbackDataType} <: AbstractVariableAttribute
+    callback_data::CallbackDataType
+end
 
 """
     BasisStatusCode
@@ -769,6 +1019,7 @@ struct ConstraintPrimal <: AbstractConstraintAttribute
     N::Int
 end
 ConstraintPrimal() = ConstraintPrimal(1)
+_result_index_field(attr::ConstraintPrimal) = attr.N
 
 """
     ConstraintDual(N)
@@ -781,17 +1032,23 @@ struct ConstraintDual <: AbstractConstraintAttribute
     N::Int
 end
 ConstraintDual() = ConstraintDual(1)
+_result_index_field(attr::ConstraintDual) = attr.N
 
 """
+    ConstraintBasisStatus(result_index)
     ConstraintBasisStatus()
 
-A constraint attribute for the `BasisStatusCode` of some constraint, with
-respect to an available optimal solution basis.
+A constraint attribute for the `BasisStatusCode` of some constraint in result
+`result_index`, with respect to an available optimal solution basis. If
+`result_index` is omitted, it is 1 by default.
 
 **For the basis status of a variable, query the corresponding `SingleVariable`
 constraint that enforces the variable's bounds.**
 """
-struct ConstraintBasisStatus <: AbstractConstraintAttribute end
+struct ConstraintBasisStatus <: AbstractConstraintAttribute
+    result_index::Int
+end
+ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
 """
     ConstraintFunction()
@@ -999,6 +1256,7 @@ struct PrimalStatus <: AbstractModelAttribute
     N::Int
 end
 PrimalStatus() = PrimalStatus(1)
+_result_index_field(attr::PrimalStatus) = attr.N
 
 """
     DualStatus(N)
@@ -1011,6 +1269,7 @@ struct DualStatus <: AbstractModelAttribute
     N::Int
 end
 DualStatus() = DualStatus(1)
+_result_index_field(attr::DualStatus) = attr.N
 
 """
     is_set_by_optimize(::AnyAttribute)
