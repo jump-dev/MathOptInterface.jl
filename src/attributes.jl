@@ -513,6 +513,27 @@ struct UserCut{CallbackDataType} <: AbstractSubmittable
     callback_data::CallbackDataType
 end
 
+"""
+    struct InvalidCallbackUsage{C, S} <: Exception
+        callback::C
+        submittable::S
+    end
+
+An error indicating that `submittable` cannot be submitted inside `callback`.
+
+For example, [`UserCut`](@ref) cannot be submitted inside
+[`LazyConstraintCallback`](@ref).
+"""
+struct InvalidCallbackUsage{C, S} <: Exception
+    callback::C
+    submittable::S
+end
+
+function Base.showerror(io::IO, err::InvalidCallbackUsage)
+    print(io, "InvalidCallbackUsage: Cannot submit $(err.submittable) inside a $(err.callback).")
+end
+
+
 ## Optimizer attributes
 
 """
