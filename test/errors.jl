@@ -245,5 +245,5 @@ end
     @test sprint(
         showerror,
         MOI.InvalidCallbackUsage(MOI.LazyConstraintCallback(), MOI.UserCut(1))
-    ) == "InvalidCallbackUsage: Cannot submit MathOptInterface.UserCut{Int64}(1) inside a MathOptInterface.LazyConstraintCallback()."
+    ) == "InvalidCallbackUsage: Cannot submit $(MOI.UserCut(1)) inside a MathOptInterface.LazyConstraintCallback()."
 end
