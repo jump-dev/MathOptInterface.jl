@@ -458,6 +458,13 @@ inside a callback may throw:
 OptimizeInProgress
 ```
 
+Trying to submit the wrong type of [`AbstractSubmittable`](@ref) inside an
+[`AbstractCallback`](@ref) (e.g., a [`UserCut`](@ref) inside a
+[`LazyConstraintCallback`](@ref)) will throw:
+```@docs
+InvalidCallbackUsage
+```
+
 The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs
