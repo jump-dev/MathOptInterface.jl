@@ -113,6 +113,18 @@ function delete_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
     @test_throws MOI.InvalidIndex(v[1]) MOI.delete(model, v[1])
     @test !MOI.is_valid(model, cv)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
+end
+unittests["delete_nonnegative_variables"] = delete_nonnegative_variables
+
+"""
+    update_dimension_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+
+Test adding, and then deleting one by one, nonnegative variables.
+"""
+function update_dimension_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     MOI.delete(model, v[1])
@@ -130,12 +142,12 @@ function delete_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
     @test_throws MOI.InvalidIndex(v[2]) MOI.delete(model, v[2])
     @test !MOI.is_valid(model, cv)
 end
-unittests["delete_nonnegative_variables"] = delete_nonnegative_variables
+unittests["update_dimension_nonnegative_variables"] = update_dimension_nonnegative_variables
 
 """
     delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
 
-Test adding, and then deleting, nonnegative variables.
+Test adding, and then deleting, second-order cone variables.
 """
 function delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
