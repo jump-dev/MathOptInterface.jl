@@ -147,6 +147,18 @@ function substitute_variables end
 substitute_variables(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
 substitute_variables(::Function, block::MOI.NLPBlockData) = block
 
+# Used when submitting `HeuristicSolution`.
+function substitute_variables(variable_map::Function, vis::Vector{MOI.VariableIndex})
+    return substitute_variables.(variable_map, vis)
+end
+function substitute_variables(variable_map::Function, vi::MOI.VariableIndex)
+    func = variable_map(vi)
+    if func != MOI.SingleVariable(vi)
+        error("Cannot substitute `$vi` as it is bridged into `$func`.")
+    end
+    return vi
+end
+
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T
     f1 = variable_map(term.variable_index_1)

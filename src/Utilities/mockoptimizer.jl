@@ -48,6 +48,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     # We detect them with `is_set_by_optimize` and store them in the following:
     optimizer_attributes::Dict{MOI.AbstractOptimizerAttribute, Any}
     model_attributes::Dict{MOI.AbstractModelAttribute, Any}
+    submitted::Dict{MOI.AbstractSubmittable, Vector{Tuple}}
 end
 
 # All user-facing indices are xor'd with this mask to produce unusual indices.
@@ -91,7 +92,8 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                          Dict{MOI.ConstraintIndex,Any}(),
                          Dict{MOI.ConstraintIndex,MOI.BasisStatusCode}(),
                          Dict{MOI.AbstractOptimizerAttribute, Any}(),
-                         Dict{MOI.AbstractModelAttribute, Any}())
+                         Dict{MOI.AbstractModelAttribute, Any}(),
+                         Dict{MOI.AbstractSubmittable, Vector{Tuple}}())
 end
 
 function MOI.add_variable(mock::MockOptimizer)
@@ -395,6 +397,7 @@ function MOI.empty!(mock::MockOptimizer)
     empty!(mock.con_basis)
     empty!(mock.optimizer_attributes)
     empty!(mock.model_attributes)
+    empty!(mock.submitted)
     return
 end
 
@@ -410,7 +413,7 @@ function MOI.is_empty(mock::MockOptimizer)
         mock.primalstatus == MOI.NO_SOLUTION &&
         mock.dualstatus == MOI.NO_SOLUTION &&
         isempty(mock.con_basis) && isempty(mock.optimizer_attributes) &&
-        isempty(mock.model_attributes)
+        isempty(mock.model_attributes) && isempty(mock.submitted)
 end
 
 MOI.is_valid(mock::MockOptimizer, idx::MOI.Index) = MOI.is_valid(mock.inner_model, xor_index(idx))
@@ -475,6 +478,14 @@ function MOI.modify(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI
         throw(MOI.ModifyObjectiveNotAllowed(change))
     end
     MOI.modify(mock.inner_model, obj, xor_indices(change))
+end
+
+MOI.supports(::MockOptimizer, ::MOI.AbstractSubmittable) = true
+function MOI.submit(mock::MockOptimizer, sub::MOI.AbstractSubmittable, args...)
+    if !haskey(mock.submitted, sub)
+        mock.submitted[sub] = Tuple[]
+    end
+    push!(mock.submitted[sub], args)
 end
 
 # TODO: transform

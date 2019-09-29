@@ -1118,6 +1118,12 @@ function MOI.add_constrained_variable(b::AbstractBridgeOptimizer,
     end
 end
 
+function MOI.supports(b::AbstractBridgeOptimizer, sub::MOI.AbstractSubmittable)
+    return MOI.supports(b.model, sub)
+end
+function MOI.submit(b::AbstractBridgeOptimizer, sub::MOI.AbstractSubmittable, args...)
+    return MOI.submit(b.model, sub, bridged_function.(b, args)...)
+end
 
 """
     bridged_variable_function(b::AbstractBridgeOptimizer,

@@ -93,6 +93,7 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
     model = MOIU.CachingOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()), mock)
     x = MOI.add_variable(model)
     y = first(MOI.get(mock, MOI.ListOfVariableIndices()))
+    @test x != y # Otherwise, these tests will trivially pass
     @test !MOI.is_valid(model, y)
     @test !MOI.is_valid(mock, x)
     fx = MOI.SingleVariable(x)
@@ -153,6 +154,22 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         MOI.set(model, attr, [cache_index], [3.0fx])
         @test MOI.get(model, attr, [cache_index])[1] ≈ 3.0fx
         @test MOI.get(mock, attr, [optimizer_index])[1] ≈ 3.0fy
+    end
+
+    @testset "LazyConstraint" begin
+        sub = MOI.LazyConstraint(nothing)
+        @test MOI.supports(model, sub)
+        MOI.submit(model, sub, 2.0fx, MOI.GreaterThan(1.0))
+        @show mock.submitted[sub]
+        @test mock.submitted[sub][1][1] ≈ 2.0fy
+        @test mock.submitted[sub][1][2] == MOI.GreaterThan(1.0)
+    end
+    @testset "HeuristicSolution" begin
+        sub = MOI.HeuristicSolution(nothing)
+        @test MOI.supports(model, sub)
+        MOI.submit(model, sub, [x], [1.0])
+        @test mock.submitted[sub][1][1] == [y]
+        @test mock.submitted[sub][1][2] == [1.0]
     end
 
     nlp_data = MOI.NLPBlockData(
