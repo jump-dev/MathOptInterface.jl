@@ -590,6 +590,15 @@ struct RawParameter <: AbstractOptimizerAttribute
     name::Any
 end
 
+"""
+    NumberOfThreads()
+
+An optimizer attribute for setting the number of threads used for an
+optimization. When set to `nothing` uses solver default. Values are positive
+integers. The default value is `nothing`.
+"""
+struct NumberOfThreads <: AbstractOptimizerAttribute end
+
 ### Callbacks
 
 """

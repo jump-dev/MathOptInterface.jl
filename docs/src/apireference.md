@@ -130,6 +130,7 @@ SolverName
 Silent
 TimeLimitSec
 RawParameter
+NumberOfThreads
 AbstractCallback
 LazyConstraintCallback
 HeuristicCallback
