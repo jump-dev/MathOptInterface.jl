@@ -3,7 +3,7 @@ module MathOptFormat
 import MathOptInterface
 const MOI = MathOptInterface
 
-import GZip
+import CodecZlib
 
 include("CBF/CBF.jl")
 include("LP/LP.jl")
@@ -135,7 +135,17 @@ end
 
 function gzip_open(f::Function, filename::String, mode::String)
     if endswith(filename, ".gz")
-        GZip.open(f, filename, mode)
+        if mode == "r"
+            open(CodecZlib.GzipDecompressorStream, filename, mode) do io
+                f(io)
+            end
+        elseif mode == "w"
+            open(CodecZlib.GzipCompressorStream, filename, mode) do io
+                f(io)
+            end
+        else
+            throw(ArgumentError("Mode must be \"r\" or \"w\""))
+        end
     else
         return open(f, filename, mode)
     end

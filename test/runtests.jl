@@ -26,4 +26,16 @@ const MOIU = MOI.Utilities
             MOI.copy_to(model_dest, model_src)
         end
     end
+
+    @testset "Calling gzip_open" begin
+        @test_throws ArgumentError MathOptFormat.gzip_open((x) -> nothing,
+                                                           "dummy.gz", "a")
+        @test_throws ArgumentError MathOptFormat.gzip_open((x) -> nothing,
+                                                           "dummy.gz", "r+")
+        @test_throws ArgumentError MathOptFormat.gzip_open((x) -> nothing,
+                                                           "dummy.gz", "w+")
+        @test_throws ArgumentError MathOptFormat.gzip_open((x) -> nothing,
+                                                           "dummy.gz", "a+")
+        
+    end
 end

@@ -9,14 +9,14 @@ include("nonlinear.jl")
 struct UnsupportedSet <: MOI.AbstractSet end
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
-function test_model_equality(model_string, variables, constraints)
+function test_model_equality(model_string, variables, constraints; suffix="")
     model = MOF.Model()
     MOIU.loadfromstring!(model, model_string)
-    MOI.write_to_file(model, TEST_MOF_FILE)
+    MOI.write_to_file(model, TEST_MOF_FILE * suffix)
     model_2 = MOF.Model()
-    MOI.read_from_file(model_2, TEST_MOF_FILE)
+    MOI.read_from_file(model_2, TEST_MOF_FILE * suffix)
     MOIU.test_models_equal(model, model_2, variables, constraints)
-    MOF.validate(TEST_MOF_FILE)
+    MOF.validate(TEST_MOF_FILE * suffix)
 end
 
 @testset "read_from_file" begin
@@ -146,7 +146,7 @@ end
         test_model_equality("""
             variables: x
             maxobjective: x
-        """, ["x"], String[])
+        """, ["x"], String[], suffix=".gz")
     end
     @testset "min scalaraffine" begin
         test_model_equality("""
@@ -158,7 +158,7 @@ end
         test_model_equality("""
             variables: x
             maxobjective: 1.2x + 0.5
-        """, ["x"], String[])
+        """, ["x"], String[], suffix=".gz")
     end
     @testset "singlevariable-in-lower" begin
         test_model_equality("""
@@ -172,7 +172,7 @@ end
             variables: x
             maxobjective: 1.2x + 0.5
             c1: x <= 1.0
-        """, ["x"], ["c1"])
+        """, ["x"], ["c1"], suffix=".gz")
     end
     @testset "singlevariable-in-interval" begin
         test_model_equality("""

@@ -4,8 +4,8 @@ authors = ["Oscar Dowson <oscar.dowson@northwestern.edu"]
 version = "0.2.1"
 
 [deps]
+CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-GZip = "92fee26a-97fe-5a0c-ad85-20a5f3185b63"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
