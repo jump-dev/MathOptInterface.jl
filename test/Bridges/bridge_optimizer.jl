@@ -67,6 +67,24 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         @test MOI.get(mock, attr, [index])[1] ≈ 3.0fy + 1.0fz + 3.0
     end
 
+    @testset "HeuristicCallback" begin
+        attr = MOI.HeuristicCallback()
+        f(callback_data) = nothing
+        MOI.set(bridged, attr, f)
+        @test MOI.get(bridged, attr) === f
+    end
+
+    @testset "CallbackVariablePrimal" begin
+        attr = MOI.CallbackVariablePrimal(nothing)
+        err = ErrorException("No mock callback primal is set for variable `$z`.")
+        @test_throws err MOI.get(bridged, attr, z)
+        MOI.set(mock, attr, y, 1.0)
+        MOI.set(mock, attr, z, 2.0)
+        @test MOI.get(bridged, attr, z) == 2.0
+        err = ArgumentError("Variable bridge of type `$(typeof(MOIB.bridge(bridged, x)))` does not support accessing the attribute `$attr`.")
+        @test_throws err MOI.get(bridged, attr, x)
+    end
+
     @testset "LazyConstraint" begin
         sub = MOI.LazyConstraint(nothing)
         @test MOI.supports(bridged, sub)

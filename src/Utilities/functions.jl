@@ -73,7 +73,7 @@ function map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
     return map_indices(vi -> variable_map[vi], x)
 end
 
-const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet}
+const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet, Function}
 const ObjectOrTupleWithoutIndex = Union{ObjectWithoutIndex, Tuple{Vararg{ObjectWithoutIndex}}}
 const ObjectOrTupleOrArrayWithoutIndex = Union{ObjectOrTupleWithoutIndex, AbstractArray{<:ObjectOrTupleWithoutIndex}}
 

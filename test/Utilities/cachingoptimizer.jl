@@ -156,11 +156,27 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         @test MOI.get(mock, attr, [optimizer_index])[1] ≈ 3.0fy
     end
 
+    @testset "HeuristicCallback" begin
+        attr = MOI.HeuristicCallback()
+        f(callback_data) = nothing
+        MOI.set(model, attr, f)
+        @test MOI.get(model, attr) === f
+    end
+
+    @testset "CallbackVariablePrimal" begin
+        attr = MOI.CallbackVariablePrimal(nothing)
+        err = ErrorException("No mock callback primal is set for variable `$y`.")
+        @test_throws err MOI.get(model, attr, x)
+        MOI.set(mock, attr, y, 1.0)
+        @test_throws MOI.InvalidIndex(x) MOI.get(mock, attr, x)
+        @test MOI.get(mock, attr, y) == 1.0
+        @test MOI.get(model, attr, x) == 1.0
+    end
+
     @testset "LazyConstraint" begin
         sub = MOI.LazyConstraint(nothing)
         @test MOI.supports(model, sub)
         MOI.submit(model, sub, 2.0fx, MOI.GreaterThan(1.0))
-        @show mock.submitted[sub]
         @test mock.submitted[sub][1][1] ≈ 2.0fy
         @test mock.submitted[sub][1][2] == MOI.GreaterThan(1.0)
     end
