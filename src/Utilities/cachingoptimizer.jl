@@ -608,17 +608,17 @@ end
 
 function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}) where {T <: MOI.AbstractModelAttribute}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map,MOI.get(m.optimizer, attr.attr))
+    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr))
 end
 
 function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx::MOI.Index) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map,MOI.get(m.optimizer, attr.attr, m.model_to_optimizer_map[idx]))
+    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr, m.model_to_optimizer_map[idx]))
 end
 
 function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx::Vector{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map,MOI.get(m.optimizer, attr.attr, getindex.(m.model_to_optimizer_map,idx)))
+    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr, getindex.(m.model_to_optimizer_map,idx)))
 end
 
 function MOI.set(m::CachingOptimizer, attr::AttributeFromModelCache{T}, v) where {T <: MOI.AbstractModelAttribute}
@@ -658,6 +658,14 @@ end
 function MOI.supports(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == ATTACHED_OPTIMIZER
     return MOI.supports(m.optimizer, attr.attr, idxtype)
+end
+
+function MOI.supports(caching_opt::CachingOptimizer, sub::MOI.AbstractSubmittable)
+    return caching_opt.optimizer !== nothing && MOI.supports(caching_opt.optimizer, sub)
+end
+function MOI.submit(caching_opt::CachingOptimizer, sub::MOI.AbstractSubmittable, args...)
+    MOI.submit(caching_opt.optimizer, sub,
+               map_indices.(Ref(caching_opt.model_to_optimizer_map), args)...)
 end
 
 # TODO: get and set methods to look up/set name strings

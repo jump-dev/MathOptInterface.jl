@@ -67,6 +67,46 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         @test MOI.get(mock, attr, [index])[1] ≈ 3.0fy + 1.0fz + 3.0
     end
 
+    @testset "HeuristicCallback" begin
+        attr = MOI.HeuristicCallback()
+        f(callback_data) = nothing
+        MOI.set(bridged, attr, f)
+        @test MOI.get(bridged, attr) === f
+    end
+
+    @testset "CallbackVariablePrimal" begin
+        attr = MOI.CallbackVariablePrimal(nothing)
+        err = ErrorException("No mock callback primal is set for variable `$z`.")
+        @test_throws err MOI.get(bridged, attr, z)
+        MOI.set(mock, attr, y, 1.0)
+        MOI.set(mock, attr, z, 2.0)
+        @test MOI.get(bridged, attr, z) == 2.0
+        err = ArgumentError("Variable bridge of type `$(typeof(MOIB.bridge(bridged, x)))` does not support accessing the attribute `$attr`.")
+        @test_throws err MOI.get(bridged, attr, x)
+    end
+
+    @testset "LazyConstraint" begin
+        sub = MOI.LazyConstraint(nothing)
+        @test MOI.supports(bridged, sub)
+        MOI.submit(bridged, sub, 2.0fx, MOI.GreaterThan(1.0))
+        mock.submitted[sub][1][1] ≈ 2.0fy + 2.0
+        mock.submitted[sub][1][2] == MOI.GreaterThan(1.0)
+    end
+    @testset "HeuristicSolution" begin
+        sub = MOI.HeuristicSolution(nothing)
+        @test MOI.supports(bridged, sub)
+        @testset "Non-bridged variable" begin
+            MOI.submit(bridged, sub, [z], [1.0])
+            mock.submitted[sub][1][1] == [z]
+            mock.submitted[sub][1][2] == [1.0]
+        end
+        @testset "Bridged variable" begin
+            err = ErrorException("Cannot substitute `$x` as it is bridged into `$(1.0fy + 1.0)`.")
+            @test_throws err MOI.submit(bridged, sub, [x], [1.0])
+
+        end
+    end
+
     nlp_data = MOI.NLPBlockData(
         [MOI.NLPBoundsPair(1.0, 2.0)],
         DummyEvaluator(), false)

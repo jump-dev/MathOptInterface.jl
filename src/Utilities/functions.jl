@@ -73,7 +73,7 @@ function map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
     return map_indices(vi -> variable_map[vi], x)
 end
 
-const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet}
+const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet, Function}
 const ObjectOrTupleWithoutIndex = Union{ObjectWithoutIndex, Tuple{Vararg{ObjectWithoutIndex}}}
 const ObjectOrTupleOrArrayWithoutIndex = Union{ObjectOrTupleWithoutIndex, AbstractArray{<:ObjectOrTupleWithoutIndex}}
 
@@ -146,6 +146,18 @@ function substitute_variables end
 
 substitute_variables(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
 substitute_variables(::Function, block::MOI.NLPBlockData) = block
+
+# Used when submitting `HeuristicSolution`.
+function substitute_variables(variable_map::Function, vis::Vector{MOI.VariableIndex})
+    return substitute_variables.(variable_map, vis)
+end
+function substitute_variables(variable_map::Function, vi::MOI.VariableIndex)
+    func = variable_map(vi)
+    if func != MOI.SingleVariable(vi)
+        error("Cannot substitute `$vi` as it is bridged into `$func`.")
+    end
+    return vi
+end
 
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T

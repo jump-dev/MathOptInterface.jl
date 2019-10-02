@@ -960,6 +960,7 @@ the callback identified by `callback_data`.
 struct CallbackVariablePrimal{CallbackDataType} <: AbstractVariableAttribute
     callback_data::CallbackDataType
 end
+is_set_by_optimize(::CallbackVariablePrimal) = true
 
 """
     BasisStatusCode
