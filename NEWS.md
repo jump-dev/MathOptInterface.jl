@@ -1,6 +1,25 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.4 (October 2, 2019)
+---------------------
+
+- Added solver-independent MIP callbacks (#782).
+- Implements submit for `Utilities.CachingOptimizer` and
+  `Bridges.AbstractBridgeOptimizer` (#906).
+- Added tests for result count of solution attributes (#901, #904).
+- Added `NumberOfThreads` attribute (#892).
+- Added `Utilities.get_bounds` to get the bounds on a variable (#890).
+- Added a note on duplicate coefficients in documentation (#581).
+- Added result index in `ConstraintBasisStatus` (#898).
+- Added extension dictionary to `Utilities.Model` (#884, #895).
+- Fixed deletion of constrained variables for CachingOptimizer (#905).
+- Implemented `Utilities.shift_constraint` for `Test.UnknownScalarSet` (#896).
+- Bridges improvements:
+  * Added Variable.RSOCtoSOCBridge (#907).
+  * Implemented `MOI.get` for `ConstraintFunction`/`ConstraintSet` for
+    `Bridges.Constraint.SquareBridge` (#899).
+
 v0.9.3 (September 20, 2019)
 ---------------------
 
