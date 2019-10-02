@@ -155,7 +155,7 @@ MOI.supports_constraint(::SDPAModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.R
 MOI.supports(::SDPAModel{T}, ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}) where {T} = false
 MOI.supports(::SDPAModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
 
-@testset "Name test" begin
+@testset "Name test with SDPAModel{Float64}" begin
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     MOIT.nametest(bridged)
@@ -293,21 +293,21 @@ end
     end
 end
 
-@testset "Continuous Linear" begin
-    model = SDPAModel{Float64}()
-    bridged = MOIB.full_bridge_optimizer(model, Float64)
+@testset "Continuous Linear with SDPAModel{$T}" for T in [Float64, Rational{Int}]
+    model = SDPAModel{T}()
+    bridged = MOIB.full_bridge_optimizer(model, T)
     # For `ScalarAffineFunction`-in-`GreaterThan`,
     # `Constraint.ScalarSlackBridge` -> `Variable.VectorizeBridge`
     # is equivalent to
     # `Constraint.VectorizeBridge` -> `Constraint.VectorSlackBridge`
     # however, `Variable.VectorizeBridge` do not support modification of the
     # set hence it makes some tests of `contlineartest` fail so we disable it.
-    MOIB.remove_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{Float64})
+    MOIB.remove_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{T})
     exclude = ["partial_start"] # `VariablePrimalStart` not supported.
-    MOIT.contlineartest(bridged, MOIT.TestConfig(solve=false), exclude)
+    MOIT.contlineartest(bridged, MOIT.TestConfig{T}(solve=false), exclude)
 end
 
-@testset "Continuous Conic" begin
+@testset "Continuous Conic with SDPAModel{Float64}" begin
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     exclude = ["exp", "dualexp", "pow", "dualpow", "logdet", "rootdets"]
@@ -326,6 +326,21 @@ MOIU.@model(NoRSOCModel,
             (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+
+# We only use floating point types as there is √2
+@testset "Constrained variables in RSOC with $T" for T in [Float64, BigFloat]
+    bridged = MOIB.full_bridge_optimizer(NoRSOCModel{T}(), T)
+    @test MOI.supports_constraint(bridged, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+    # It should be selected over `MOIB.Variable.RSOCtoPSDBridge` even if they
+    # are tied in terms of number of bridges because it is added first in
+    # `MOIB.full_bridge_optimizer`.
+    @test MOIB.bridge_type(bridged, MOI.RotatedSecondOrderCone) == MOIB.Variable.RSOCtoSOCBridge{T}
+    x, cx = MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(3))
+    for i in 1:3
+        @test MOIB.bridge(bridged, x[i]) isa MOIB.Variable.RSOCtoSOCBridge{T}
+    end
+    @test MOIB.bridge(bridged, cx) isa MOIB.Variable.RSOCtoSOCBridge{T}
+end
 
 # Model not supporting VectorOfVariables and SingleVariable
 MOIU.@model(NoVariableModel,
