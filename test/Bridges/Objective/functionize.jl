@@ -32,3 +32,18 @@ bridged_mock = MOIB.Objective.Functionize{Float64}(mock)
     @test MOI.get(bridged_mock, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     test_delete_objective(bridged_mock, 1, tuple())
 end
+
+# Tests that the `ObjectiveValue` attribute passed has the correct
+# `result_index`.
+@testset "solve_result_index" begin
+    MOIU.set_mock_optimize!(mock,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [1.0]),
+            MOI.FEASIBLE_POINT,
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+        )
+    )
+    MOIT.solve_result_index(bridged_mock, config)
+end

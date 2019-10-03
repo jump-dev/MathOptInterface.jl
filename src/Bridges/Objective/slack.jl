@@ -82,7 +82,7 @@ end
 function MOI.get(model::MOI.ModelLike,
                  attr::MOIB.ObjectiveFunctionValue{G},
                  bridge::SlackBridge{T, F, G}) where {T, F, G}
-    slack = MOI.get(model, MOIB.ObjectiveFunctionValue{MOI.SingleVariable}())
+    slack = MOI.get(model, MOIB.ObjectiveFunctionValue{MOI.SingleVariable}(attr.result_index))
     # There may be a gap between the value of the original objective `g` and the
     # value of `bridge.slack`. Since `bridge.constraint` is `g - slack`, we can
     # get the value of the original objective by summing the value of `slack`
