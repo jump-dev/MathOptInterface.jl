@@ -564,21 +564,23 @@ of the objective function does not depend on `F`, the type `F` determines
 whether the computation is redirected to an objective bridge or to the
 underlying model.
 """
-struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction} end
+struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction}
+    result_index::Int
+end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::ObjectiveFunctionValue{F}) where F
     obj_attr = MOI.ObjectiveFunction{F}()
     if is_bridged(b, obj_attr)
         return MOI.get(b, attr, bridge(b, obj_attr))
     else
-        return MOI.get(b.model, MOI.ObjectiveValue())
+        return MOI.get(b.model, MOI.ObjectiveValue(attr.result_index))
     end
 end
 function MOI.get(b::AbstractBridgeOptimizer,
                  attr::MOI.ObjectiveValue)
     if is_objective_bridged(b)
         F =  Objective.function_type(Objective.bridges(b))
-        return MOI.get(b, ObjectiveFunctionValue{F}())
+        return MOI.get(b, ObjectiveFunctionValue{F}(attr.result_index))
     else
         return MOI.get(b.model, attr)
     end
