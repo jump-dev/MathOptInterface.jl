@@ -139,6 +139,8 @@ end
 unittests["solve_single_variable_dual_max"] = solve_single_variable_dual_max
 
 function solve_result_index(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
     MOI.empty!(model)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
@@ -147,20 +149,20 @@ function solve_result_index(model::MOI.ModelLike, config::TestConfig)
     result_err(attr) = MOI.ResultIndexBoundsError{typeof(attr)}(attr, 1)
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.ObjectiveValue(1)) == 1.0
+        @test MOI.get(model, MOI.ObjectiveValue(1)) ≈ 1.0 atol=atol rtol=rtol
         @test_throws result_err(MOI.ObjectiveValue(2)) MOI.get(model, MOI.ObjectiveValue(2))
         @test MOI.get(model, MOI.PrimalStatus(1)) == MOI.FEASIBLE_POINT
         @test_throws result_err(MOI.PrimalStatus(2)) MOI.get(model, MOI.PrimalStatus(2))
-        @test MOI.get(model, MOI.VariablePrimal(1), x) == 1.0
+        @test MOI.get(model, MOI.VariablePrimal(1), x) ≈ 1.0 atol=atol rtol=rtol
         @test_throws result_err(MOI.VariablePrimal(2)) MOI.get(model, MOI.VariablePrimal(2), x)
-        @test MOI.get(model, MOI.ConstraintPrimal(1), c) == 1.0
+        @test MOI.get(model, MOI.ConstraintPrimal(1), c) ≈ 1.0 atol=atol rtol=rtol
         @test_throws result_err(MOI.ConstraintPrimal(2)) MOI.get(model, MOI.ConstraintPrimal(2), c)
         if config.duals
             @test MOI.get(model, MOI.DualStatus(1)) == MOI.FEASIBLE_POINT
             @test_throws result_err(MOI.DualStatus(2)) MOI.get(model, MOI.DualStatus(2))
-            @test MOI.get(model, MOI.ConstraintDual(1), c) == 1.0
+            @test MOI.get(model, MOI.ConstraintDual(1), c) ≈ 1.0 atol=atol rtol=rtol
             @test_throws result_err(MOI.ConstraintDual(2)) MOI.get(model, MOI.ConstraintDual(2), c)
-            @test MOI.get(model, MOI.DualObjectiveValue(1)) == 1.0
+            @test MOI.get(model, MOI.DualObjectiveValue(1)) ≈ 1.0 atol=atol rtol=rtol
             @test_throws result_err(MOI.DualObjectiveValue(2)) MOI.get(model, MOI.DualObjectiveValue(2))
         end
     end
