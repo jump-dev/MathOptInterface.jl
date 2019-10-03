@@ -293,6 +293,12 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
 end
 function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     if Constraint.has_bridges(Constraint.bridges(b))
+        # Delete all `MOI.VectorOfVariables` constraints of this variables.
+        for ci in Constraint.variable_constraints(Constraint.bridges(b), [vi])
+            if [vi] == MOI.get(b, MOI.ConstraintFunction(), ci).variables
+                MOI.delete(b, ci)
+            end
+        end
         # Delete all `MOI.SingleVariable` constraints of this variable
         for ci in Constraint.variable_constraints(Constraint.bridges(b), vi)
             MOI.delete(b, ci)
