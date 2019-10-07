@@ -49,8 +49,16 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::ScalarizeBridge)
-    MOI.delete.(model, bridge.scalar_constraints)
-    nothing
+    for ci in bridge.scalar_constraints
+        MOI.delete(model, ci)
+    end
+end
+function MOI.delete(model::MOI.ModelLike, bridge::ScalarizeBridge,
+                    i::IndexInVector)
+    MOI.delete(model, bridge.scalar_constraints[i.value])
+    deleteat!(bridge.scalar_constraints, i.value)
+    deleteat!(bridge.constants, i.value)
+    return
 end
 
 # Attributes, Bridge acting as a constraint

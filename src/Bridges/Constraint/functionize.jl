@@ -80,7 +80,7 @@ end
 The `VectorFunctionizeBridge` converts a constraint `VectorOfVariables`-in-`S`
 into the constraint `VectorAffineFunction{T}`-in-`S`.
 """
-struct VectorFunctionizeBridge{T, S} <: AbstractBridge
+mutable struct VectorFunctionizeBridge{T, S} <: AbstractBridge
     constraint::CI{MOI.VectorAffineFunction{T}, S}
 end
 function bridge_constraint(::Type{VectorFunctionizeBridge{T, S}}, model,
@@ -112,6 +112,16 @@ MOI.get(b::VectorFunctionizeBridge{T, S},
 function MOI.delete(model::MOI.ModelLike, bridge::VectorFunctionizeBridge)
     MOI.delete(model, bridge.constraint)
     return
+end
+function MOI.delete(model::MOI.ModelLike, bridge::VectorFunctionizeBridge,
+                    i::IndexInVector)
+    func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
+    idx = setdiff(1:MOI.output_dimension(func), i.value)
+    new_func = MOIU.eachscalar(func)[idx]
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
+    new_set = MOI.update_dimension(set, MOI.dimension(set) - 1)
+    MOI.delete(model, bridge.constraint)
+    bridge.constraint = MOI.add_constraint(model, new_func, new_set)
 end
 
 # Attributes, Bridge acting as a constraint

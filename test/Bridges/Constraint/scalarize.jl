@@ -31,9 +31,15 @@ config = MOIT.TestConfig()
         ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
          (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0)))
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.Nonnegatives}()))
-    test_delete_bridge(bridged_mock, ci, 3,
+    func = MOI.get(bridged_mock, MOI.ConstraintFunction(), ci)
+    MOI.delete(bridged_mock, func.variables[2])
+    new_func = MOI.VectorOfVariables(func.variables[[1, 3]])
+    @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) == new_func
+    @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.Nonnegatives(2)
+    test_delete_bridge(bridged_mock, ci, 2,
         ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
          (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0)))
+
     # VectorAffineFunction-in-Nonnegatives
     # VectorAffineFunction-in-Zeros
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
@@ -48,6 +54,7 @@ config = MOIT.TestConfig()
     test_delete_bridge(bridged_mock, ci, 3,
         ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
          (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)))
+
     # VectorOfVariables-in-Nonnegatives
     # VectorOfVariables-in-Nonpositives
     # VectorOfVariables-in-Zeros
@@ -55,6 +62,7 @@ config = MOIT.TestConfig()
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-4, -3, 16, 0],
         (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})        => [7, 2, -4])
     MOIT.lin2vtest(bridged_mock, config)
+
     # VectorAffineFunction-in-Nonnegatives
     # VectorAffineFunction-in-Nonpositives
     # VectorAffineFunction-in-Zeros
