@@ -302,6 +302,88 @@ end
     end
 end
 
+@testset "SDPA debug with $T" for T in [Float64, Int]
+    model = SDPAModel{T}()
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    function debug_string(f, args...)
+        s = IOBuffer()
+        f(bridged, args...; io = s)
+        return String(resize!(s.data, s.size))
+    end
+    @testset "Quadratic objective" begin
+        F = MOI.ScalarQuadraticFunction{T}
+        attr = MOI.ObjectiveFunction{F}()
+        @test debug_string(MOIB.debug_supports, attr) == """
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Objective.SlackBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == """
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported because no added bridge supports bridging it.
+(2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported because no added bridge supports bridging it.
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported
+  (2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported
+  |2| objective function of type `MOI.SingleVariable` not supported
+|2| objective function of type `MOI.SingleVariable` not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.QuadtoSOCBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == """
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported because no added bridge supports bridging it.
+(3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported
+  (3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported
+"""
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorSlackBridge{T})
+        # TODO (3) should be referenced from [1]
+        @test debug_string(MOIB.debug_supports, attr) == """
+[1] constraint variables in `MOI.RotatedSecondOrderCone` not supported because no added bridge supports bridging it.
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported because:
+  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
+  [1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported
+  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints not supported
+(3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints not supported because no added bridge supports bridging it.
+(4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints not supported because no added bridge supports bridging it.
+(5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported
+  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported
+"""
+        MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoPSDBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == """
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported because:
+  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
+  (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints not supported
+(3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints not supported because no added bridge supports bridging it.
+(4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints not supported
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints not supported
+  (4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints not supported
+"""
+    end
+end
+
 @testset "Continuous Linear with SDPAModel{$T}" for T in [Float64, Rational{Int}]
     model = SDPAModel{T}()
     bridged = MOIB.full_bridge_optimizer(model, T)

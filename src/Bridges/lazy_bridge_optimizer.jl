@@ -1,3 +1,5 @@
+using OrderedCollections
+
 """
     LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 
@@ -191,17 +193,28 @@ function update_dist!(b::LazyBridgeOptimizer, variables, constraints, objectives
     end
 end
 
-function fill_required!(required_variables::Set{Tuple{DataType}},
-                        required_constraints::Set{Tuple{DataType, DataType}},
-                        required_objectives::Set{Tuple{DataType}},
+function fill_required!(required_variables::OrderedSet{Tuple{DataType}},
+                        required_constraints::OrderedSet{Tuple{DataType, DataType}},
+                        required_objectives::OrderedSet{Tuple{DataType}},
                         b::LazyBridgeOptimizer,
                         BT::Type{<:AbstractBridge})
     for C in added_constrained_variable_types(BT)
-        fill_required!(required_variables, required_constraints,
-                       required_objectives, b, C[1])
-        F = MOIU.variable_function_type(C[1])
-        fill_required!(required_variables, required_constraints,
-                       required_objectives, b, F, C[1])
+        # The constrained variables in `C[1]` might be supported while the
+        # constraints `F`-in-`C[1]` are not supported. In this case, the second
+        # `fill_requires!` would add `F`-in-`C[1]` while we know that:
+        # * either `C[1]` is natively supported in which case we don't need to
+        #   worry about `F`-in-`C[1]`;
+        # * either, `C[1]` was found to be supported via variable bridges in
+        #   but in this run of Bellman-Ford, `F`-in-`C[1]` was also in required
+        #   so we know that it is not supported and we don't need to add it
+        #   again in required as it would arrive to the same conclusion.
+        if !supports_no_update(b, C[1])
+            fill_required!(required_variables, required_constraints,
+                           required_objectives, b, C[1])
+            F = MOIU.variable_function_type(C[1])
+            fill_required!(required_variables, required_constraints,
+                           required_objectives, b, F, C[1])
+        end
     end
     for C in added_constraint_types(BT)
         fill_required!(required_variables, required_constraints,
@@ -213,9 +226,9 @@ function fill_required!(required_variables::Set{Tuple{DataType}},
     end
 end
 
-function fill_required!(required_variables::Set{Tuple{DataType}},
-                        required_constraints::Set{Tuple{DataType, DataType}},
-                        required_objectives::Set{Tuple{DataType}},
+function fill_required!(required_variables::OrderedSet{Tuple{DataType}},
+                        required_constraints::OrderedSet{Tuple{DataType, DataType}},
+                        required_objectives::OrderedSet{Tuple{DataType}},
                         b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     if supports_no_update(b, S)
         return # The constraint is supported
@@ -235,9 +248,9 @@ function fill_required!(required_variables::Set{Tuple{DataType}},
     end
 end
 
-function fill_required!(required_variables::Set{Tuple{DataType}},
-                        required_constraints::Set{Tuple{DataType, DataType}},
-                        required_objectives::Set{Tuple{DataType}},
+function fill_required!(required_variables::OrderedSet{Tuple{DataType}},
+                        required_constraints::OrderedSet{Tuple{DataType, DataType}},
+                        required_objectives::OrderedSet{Tuple{DataType}},
                         b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
                         S::Type{<:MOI.AbstractSet})
     if supports_no_update(b, F, S)
@@ -260,9 +273,9 @@ function fill_required!(required_variables::Set{Tuple{DataType}},
     end
 end
 
-function fill_required!(required_variables::Set{Tuple{DataType}},
-                        required_constraints::Set{Tuple{DataType, DataType}},
-                        required_objectives::Set{Tuple{DataType}},
+function fill_required!(required_variables::OrderedSet{Tuple{DataType}},
+                        required_constraints::OrderedSet{Tuple{DataType, DataType}},
+                        required_objectives::OrderedSet{Tuple{DataType}},
                         b::LazyBridgeOptimizer,
                         F::Type{<:MOI.AbstractScalarFunction})
     if supports_no_update(b, F)
@@ -287,9 +300,9 @@ function fill_required!(required_variables::Set{Tuple{DataType}},
 end
 
 function required(b::LazyBridgeOptimizer, types::Tuple)
-    required_variables = Set{Tuple{DataType}}()
-    required_constraints = Set{Tuple{DataType, DataType}}()
-    required_objectives = Set{Tuple{DataType}}()
+    required_variables = OrderedSet{Tuple{DataType}}()
+    required_constraints = OrderedSet{Tuple{DataType, DataType}}()
+    required_objectives = OrderedSet{Tuple{DataType}}()
     fill_required!(required_variables, required_constraints,
                    required_objectives, b, types...)
     return required_variables, required_constraints, required_objectives
