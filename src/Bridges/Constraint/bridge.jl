@@ -6,6 +6,16 @@ bridges.
 """
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
+# TODO [breaking] merge with `Bridges.Variable.IndexInVector` into `Bridges.IndexInVector`
+"""
+    IndexInVector
+
+Index of variable in vector of variables.
+"""
+struct IndexInVector
+    value::Int
+end
+
 """
     bridge_constraint(BT::Type{<:AbstractBridge}, model::MOI.ModelLike,
                       func::AbstractFunction, set::MOI.AbstractSet)

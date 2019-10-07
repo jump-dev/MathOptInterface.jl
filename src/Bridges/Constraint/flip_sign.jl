@@ -40,6 +40,15 @@ end
 function MOI.delete(model::MOI.ModelLike, bridge::FlipSignBridge)
     MOI.delete(model, bridge.flipped_constraint)
 end
+function MOI.delete(model::MOI.ModelLike, bridge::FlipSignBridge, i::IndexInVector)
+    func = MOI.get(model, MOI.ConstraintFunction(), bridge.flipped_constraint)
+    idx = setdiff(1:MOI.output_dimension(func), i.value)
+    new_func = MOIU.eachscalar(func)[idx]
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.flipped_constraint)
+    new_set = MOI.update_dimension(set, MOI.dimension(set) - 1)
+    MOI.delete(model, bridge.flipped_constraint)
+    bridge.flipped_constraint = MOI.add_constraint(model, new_func, new_set)
+end
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike,
@@ -156,7 +165,7 @@ end
 Transforms a `G`-in-`Nonnegatives` constraint into a `F`-in-`Nonpositives`
 constraint.
 """
-struct NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
+mutable struct NonnegToNonposBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
     FlipSignBridge{T, MOI.Nonnegatives, MOI.Nonpositives, F, G}
     flipped_constraint::CI{F, MOI.Nonpositives}
 end
@@ -189,7 +198,7 @@ end
 Transforms a `G`-in-`Nonpositives` constraint into a `F`-in-`Nonnegatives`
 constraint.
 """
-struct NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
+mutable struct NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
     FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F, G}
     flipped_constraint::CI{F, MOI.Nonnegatives}
 end

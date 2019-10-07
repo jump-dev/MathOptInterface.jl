@@ -147,8 +147,6 @@ end
     model = LPModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     MOIT.unittest(bridged, MOIT.TestConfig(solve=false), [
-        # FIXME
-        "update_dimension_nonnegative_variables",
         # SOC and quadratic constraints not supported
         "solve_qcp_edge_cases", "delete_soc_variables"
     ])

@@ -97,6 +97,19 @@ end
     test_delete_bridge(bridged_mock, ci, 2,
                        ((MOI.VectorAffineFunction{Float64},
                          MOI.Nonpositives, 1),))
+
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0, -2, 0]],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[-3, -1]])
+    MOIT.lin1vtest(bridged_mock, config)
+    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.Nonnegatives}()))
+    func = MOI.get(bridged_mock, MOI.ConstraintFunction(), ci)
+    MOI.delete(bridged_mock, func.variables[2])
+    new_func = MOI.VectorOfVariables(func.variables[[1, 3]])
+    @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) == new_func
+    @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.Nonnegatives(2)
+    test_delete_bridge(bridged_mock, ci, 2,
+        ((MOI.VectorAffineFunction{Float64}, MOI.Nonpositives, 0),))
 end
 
 @testset "NonposToNonneg" begin
