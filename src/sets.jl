@@ -682,22 +682,38 @@ defines a complementarity constraint between the scalar function `F[i]` and the
 variable in `F[i + dimension]`. Thus, `F[i + dimension]` must be interpretable
 as a single variable `x_i` (e.g., `1.0 * x + 0.0`).
 
-If the variable `x_i` is constrained in `Interval(lb, ub)`, then mathematically,
-the mixed complementarity problem is to find a solution such that at least one
-of the following holds:
+If the variable `x_i` is constrained in `Interval(lb_i, ub_i)`, then
+mathematically, the mixed complementarity problem is to find a solution such
+that at least one of the following holds:
 
-  1.  F_i(x) = 0, lb <= x_i <= ub_i
-  2.  F_i(x) > 0, lb == x_i
-  3.  F_i(x) < 0,       x_i == ub_i
+  1.  F_i(x) = 0, lb_i <= x_i <= ub_i
+  2.  F_i(x) > 0, lb_i == x_i
+  3.  F_i(x) < 0,         x_i == ub_i
 
 Classically, the bounding set for `x_i` is `Interval(0, Inf)`, which recovers:
 0 <= F_i(x) ⟂ x >= 0, where the `⟂` operator implies F_i(x) * x = 0.
 
 ### Examples
 
-    [x, y] -in- Complements(1)
-    [x, y, u, w] -in- Complements(2)
+The problem:
+
+    x -in- Interval(-1, 1)
     [2 * x - 3, x] -in- Complements(1)
+
+defines the mixed complementarity problem where at least one of the following
+holds:
+
+  1. `2 * x - 3 = 0` if `-1 <= x <= 1`
+  2. `2 * x - 3 > 0` if `x == -1`
+  3. `2 * x - 3 < 0` if `x == 1`
+
+The problem:
+
+    [x_3, x_4] -in- Nonnegatives(2)
+    [x_1, x_2, x_3, x_4] -in- Complements(2)
+
+defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
+`0 <= x_2 ⟂ x_4 >= 0`.
 """
 struct Complements <: AbstractVectorSet
     dimension::Int
