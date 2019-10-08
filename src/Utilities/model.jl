@@ -1027,7 +1027,7 @@ const LessThanIndicatorSetZero{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.L
        (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
         MOI.Semicontinuous, MOI.Semiinteger),
        (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
-        MOI.NormInfinityCone, MOI.NormOneCone,
+        MOI.Complements, MOI.NormInfinityCone, MOI.NormOneCone,
         MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
         MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,

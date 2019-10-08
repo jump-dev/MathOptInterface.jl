@@ -669,18 +669,53 @@ end
 
 Base.:(==)(set1::IndicatorSet{A, S}, set2::IndicatorSet{A, S}) where {A, S} = set1.set == set2.set
 
+"""
+    Complements(dimension::Int)
+
+The set corresponding to a mixed complementarity constraint.
+
+Complementarity constraints should be specified with an
+[`AbstractVectorFunction`](@ref)-in-`Complements(dimension)` constraint.
+
+If `F` function, then the dimension of `F` must be `2 * dimension`. This defines
+a complementarity constraint between `F[i]` and `F[i + dimension]`. Thus,
+`F[i + dimension]` must be interpretable as a single variable (e.g., `1.0 * x +
+0.0`).
+
+If a variable `x_i` is constrained in `Interval(lb, ub)`, then mathematically,
+the mixed complementarity problem is to find a solution such that at least one
+of the following holds:
+
+  1.  F_i(x) = 0, lb <= x_i <= ub_i
+  2.  F_i(x) > 0, lb == x_i
+  3.  F_i(x) < 0,       x_i == ub_i
+
+Classically, the bounding set for `x_i` is `Interval(0, Inf)`, which recovers:
+0 <= F_i(x) ⟂ x >= 0, where the `⟂` operator implies F_i(x) * x = 0.
+
+### Examples
+
+    [x, y] -in- Complements(1)
+    [x, y, u, w] -in- Complements(2)
+    [2 * x - 3, x] -in- Complements(1)
+"""
+struct Complements <: AbstractVectorSet
+    dimension::Int
+end
+
 # isbits types, nothing to copy
-function Base.copy(set::Union{Reals, Zeros, Nonnegatives, Nonpositives,
-                              GreaterThan, LessThan, EqualTo, Interval,
-                              NormInfinityCone, NormOneCone,
-                              SecondOrderCone, RotatedSecondOrderCone,
-                              GeometricMeanCone, ExponentialCone,
-                              DualExponentialCone, PowerCone, DualPowerCone,
-                              PositiveSemidefiniteConeTriangle,
-                              PositiveSemidefiniteConeSquare,
-                              LogDetConeTriangle, LogDetConeSquare,
-                              RootDetConeTriangle, RootDetConeSquare,
-                              Integer, ZeroOne, Semicontinuous, Semiinteger})
+function Base.copy(
+    set::Union{
+        Reals, Zeros, Nonnegatives, Nonpositives, GreaterThan, LessThan,
+        EqualTo, Interval, NormInfinityCone, NormOneCone, SecondOrderCone,
+        RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone,
+        DualExponentialCone, PowerCone, DualPowerCone,
+        PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
+        LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
+        RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,
+        Semiinteger
+    }
+)
     return set
 end
 Base.copy(set::S) where {S <: Union{SOS1, SOS2}} = S(copy(set.weights))

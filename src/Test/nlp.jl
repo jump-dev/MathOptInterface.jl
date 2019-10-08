@@ -337,3 +337,44 @@ const nlptests = Dict("hs071" => hs071_test,
                       )
 
 @moitestset nlp
+
+function test_linear_mcp(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 4)
+    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
+    MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
+    M = Float64[0  0 -1 -1; 0  0  1 -2; 1 -1  2 -2; 1  2 -2  4]
+    q = [2; 2; -2; -6]
+    terms = MOI.VectorAffineTerm{Float64}[]
+    for i = 1:4
+        push!(
+            terms,
+            MOI.VectorAffineTerm(4 + i, MOI.ScalarAffineTerm(1.0, x[i]))
+        )
+        for j = 1:4
+            iszero(M[i, j]) && continue
+            push!(
+                terms,
+                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(M[i, j], x[j]))
+            )
+        end
+    end
+    MOI.add_constraint(
+        model,
+        MOI.VectorAffineFunction(terms, [q; 0.0; 0.0; 0.0; 0.0]),
+        MOI.Complements(4)
+    )
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
+    x_val = MOI.get.(model, MOI.VariablePrimal(), x)
+    @test isapprox(
+        x_val, [2.8, 0.0, 0.8, 1.2], atol = config.atol, rtol = config.rtol
+    )
+end
+
+const complementaritytests = Dict(
+    "linear_mcp" => test_linear_mcp,
+)
+
+@moitestset complementarity
