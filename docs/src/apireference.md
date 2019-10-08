@@ -349,6 +349,7 @@ DualPowerCone
 SOS1
 SOS2
 IndicatorSet
+Complements
 ```
 
 ### Matrix sets
