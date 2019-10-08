@@ -372,7 +372,7 @@ function test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestCon
     )
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     x_val = MOI.get.(model, MOI.VariablePrimal(), x)
     @test isapprox(
         x_val, [2.8, 0.0, 0.8, 1.2], atol = config.atol, rtol = config.rtol
