@@ -7,13 +7,13 @@ const MOI = MathOptInterface
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     )
-    config = MOI.Test.TestConfig()
+    config = MOI.Test.TestConfig(optimal_status = MOI.LOCALLY_SOLVED)
 
     MOI.Utilities.set_mock_optimize!(
         mock,
         (mock) -> MOI.Utilities.mock_optimize!(
-            mock, MOI.LOCALLY_SOLVED, [2.8, 0.0, 0.8, 1.2]
+            mock, config.optimal_status, [2.8, 0.0, 0.8, 1.2]
         )
     )
-    MOI.Test.test_linear_mcp(mock, config)
+    MOI.Test.test_linear_mixed_complementarity(mock, config)
 end

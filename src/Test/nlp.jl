@@ -338,7 +338,13 @@ const nlptests = Dict("hs071" => hs071_test,
 
 @moitestset nlp
 
-function test_linear_mcp(model::MOI.ModelLike, config::TestConfig)
+"""
+    test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
+
+Test the solution of the linear mixed-complementarity problem:
+`F(x) complements x`, where `F(x) = M * x .+ q` and `0 <= x <= 10`.
+"""
+function test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variables(model, 4)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
@@ -374,7 +380,7 @@ function test_linear_mcp(model::MOI.ModelLike, config::TestConfig)
 end
 
 const complementaritytests = Dict(
-    "linear_mcp" => test_linear_mcp,
+    "linear_mixed_complementarity" => test_linear_mixed_complementarity,
 )
 
 @moitestset complementarity
