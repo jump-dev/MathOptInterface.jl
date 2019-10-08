@@ -529,6 +529,9 @@ constraints of different types. There are two important concepts to distinguish:
   in MOI are added. This is the recommended way to use bridges in the
   [Testing guideline](@ref), and JuMP automatically calls
   [`Bridges.full_bridge_optimizer`](@ref) when attaching an optimizer.
+  [`Bridges.debug_supports_constraint`](@ref) and [`Bridges.debug_supports`](@ref)
+  allow introspection into the bridge selection rationale of
+  [`Bridges.LazyBridgeOptimizer`](@ref).
 
 ```@docs
 Bridges.AbstractBridge
@@ -536,6 +539,8 @@ Bridges.AbstractBridgeOptimizer
 Bridges.LazyBridgeOptimizer
 Bridges.add_bridge
 Bridges.full_bridge_optimizer
+Bridges.debug_supports_constraint
+Bridges.debug_supports
 ```
 
 ### [Variable bridges](@id variable_bridges)
