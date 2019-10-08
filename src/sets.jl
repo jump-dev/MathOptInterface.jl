@@ -677,12 +677,12 @@ The set corresponding to a mixed complementarity constraint.
 Complementarity constraints should be specified with an
 [`AbstractVectorFunction`](@ref)-in-`Complements(dimension)` constraint.
 
-If `F` function, then the dimension of `F` must be `2 * dimension`. This defines
-a complementarity constraint between `F[i]` and `F[i + dimension]`. Thus,
-`F[i + dimension]` must be interpretable as a single variable (e.g., `1.0 * x +
-0.0`).
+The dimension of the vector-valued function `F` must be `2 * dimension`. This
+defines a complementarity constraint between the scalar function `F[i]` and the
+variable in `F[i + dimension]`. Thus, `F[i + dimension]` must be interpretable
+as a single variable `x_i` (e.g., `1.0 * x + 0.0`).
 
-If a variable `x_i` is constrained in `Interval(lb, ub)`, then mathematically,
+If the variable `x_i` is constrained in `Interval(lb, ub)`, then mathematically,
 the mixed complementarity problem is to find a solution such that at least one
 of the following holds:
 
