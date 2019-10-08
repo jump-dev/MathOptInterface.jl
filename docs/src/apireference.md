@@ -273,6 +273,7 @@ SettingSingleVariableFunctionNotAllowed
 List of recognized functions.
 ```@docs
 AbstractFunction
+AbstractVectorFunction
 SingleVariable
 VectorOfVariables
 ScalarAffineTerm
