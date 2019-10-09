@@ -6,7 +6,10 @@ v0.9.5 (October 9, 2019)
 
 - Clarified `PrimalStatus`/`DualStatus` to be `NO_SOLUTION` if `result_index` is
   out of bounds (#912).
-- Added tolerance for checks in `MOI.Test.solve_result_status` (#910).
+- Added tolerance for checks  and use `ResultCount` + 1 for the `result_index`
+  in `MOI.Test.solve_result_status` (#910, #917).
+- Use `0.5` instead of `2.0` for power in PowerCone in `basic_constraint_test`
+  (#916).
 - Bridges improvements:
   * Added debug utilities for unsupported variable/constraint/objective (#861).
   * Fixed deletion of variables in bridged `VectorOfVariables` constraints (#909).
