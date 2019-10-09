@@ -312,12 +312,18 @@ function MOI.get(mock::MockOptimizer, attr::MOI.DualObjectiveValue)
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.PrimalStatus)
-    MOI.check_result_index_bounds(mock, attr)
-    return mock.primalstatus
+    if attr.N > mock.result_count
+        return MOI.NO_SOLUTION
+    else
+        return mock.primalstatus
+    end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.DualStatus)
-    MOI.check_result_index_bounds(mock, attr)
-    return mock.dualstatus
+    if attr.N > mock.result_count
+        return MOI.NO_SOLUTION
+    else
+        return mock.dualstatus
+    end
 end
 MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
 

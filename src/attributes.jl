@@ -1272,7 +1272,8 @@ The values indicate how to interpret the result vector.
     PrimalStatus()
 
 A model attribute for the `ResultStatusCode` of the primal result `N`.
-If `N` is omitted, it defaults to 1.
+If `N` is omitted, it defaults to 1. If `N` is larger than the value of
+[`ResultCount`](@ref) then `NO_SOLUTION` is returned.
 """
 struct PrimalStatus <: AbstractModelAttribute
     N::Int
@@ -1285,7 +1286,8 @@ _result_index_field(attr::PrimalStatus) = attr.N
     DualStatus()
 
 A model attribute for the `ResultStatusCode` of the dual result `N`.
-If `N` is omitted, it defaults to 1.
+If `N` is omitted, it defaults to 1. If `N` is larger than the value of
+[`ResultCount`](@ref) then `NO_SOLUTION` is returned.
 """
 struct DualStatus <: AbstractModelAttribute
     N::Int
