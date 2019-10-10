@@ -16,4 +16,5 @@ const MOI = MathOptInterface
         )
     )
     MOI.Test.test_linear_mixed_complementarity(mock, config)
+    MOI.Test.test_qp_mixed_complementarity(mock, config)
 end
