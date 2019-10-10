@@ -415,43 +415,43 @@ function test_qp_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
     x = MOI.add_variables(model, 8)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
     for i in 1:8
-        MOI.add_constraint(model, MOI.SingleVariable(x[i]), MOI.GreaterThan(0.))
+        MOI.add_constraint(model, MOI.SingleVariable(x[i]), MOI.GreaterThan(0.0))
     end
 
     obj = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(-10., x[1]), MOI.ScalarAffineTerm(4., x[2])],
-        [MOI.ScalarQuadraticTerm(2., x[1], x[1]), MOI.ScalarQuadraticTerm(8., x[2], x[2])],
-        26.)
+        [MOI.ScalarAffineTerm(-10.0, x[1]), MOI.ScalarAffineTerm(4.0, x[2])],
+        [MOI.ScalarQuadraticTerm(2.0, x[1], x[1]), MOI.ScalarQuadraticTerm(8.0, x[2], x[2])],
+        26.0)
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
 
     cf1 = MOI.ScalarAffineFunction([
                                     MOI.ScalarAffineTerm(-1.5, x[1]),
-                                    MOI.ScalarAffineTerm(2., x[2]),
-                                    MOI.ScalarAffineTerm(1., x[3]),
-                                    MOI.ScalarAffineTerm(.5, x[4]),
-                                    MOI.ScalarAffineTerm(1., x[5])
-                                   ], 0.)
+                                    MOI.ScalarAffineTerm(2.0, x[2]),
+                                    MOI.ScalarAffineTerm(1.0, x[3]),
+                                    MOI.ScalarAffineTerm(0.5, x[4]),
+                                    MOI.ScalarAffineTerm(1.0, x[5])
+                                   ], 0.0)
     cf2 = MOI.ScalarAffineFunction([
-                                    MOI.ScalarAffineTerm(3., x[1]),
-                                    MOI.ScalarAffineTerm(-1., x[2]),
-                                    MOI.ScalarAffineTerm(-1., x[6]),
-                                   ], 0.)
+                                    MOI.ScalarAffineTerm(3.0, x[1]),
+                                    MOI.ScalarAffineTerm(-1.0, x[2]),
+                                    MOI.ScalarAffineTerm(-1.0, x[6]),
+                                   ], 0.0)
     cf3 = MOI.ScalarAffineFunction([
-                                    MOI.ScalarAffineTerm(-1., x[1]),
-                                    MOI.ScalarAffineTerm(.5, x[2]),
-                                    MOI.ScalarAffineTerm(-1., x[7]),
-                                   ], 0.)
+                                    MOI.ScalarAffineTerm(-1.0, x[1]),
+                                    MOI.ScalarAffineTerm(0.5, x[2]),
+                                    MOI.ScalarAffineTerm(-1.0, x[7]),
+                                   ], 0.0)
     cf4 = MOI.ScalarAffineFunction([
-                                    MOI.ScalarAffineTerm(-1., x[1]),
-                                    MOI.ScalarAffineTerm(-1., x[2]),
-                                    MOI.ScalarAffineTerm(-1., x[8]),
-                                   ], 0.)
+                                    MOI.ScalarAffineTerm(-1.0, x[1]),
+                                    MOI.ScalarAffineTerm(-1.0, x[2]),
+                                    MOI.ScalarAffineTerm(-1.0, x[8]),
+                                   ], 0.0)
 
-    MOI.add_constraint(model, cf1, MOI.EqualTo(2.))
-    MOI.add_constraint(model, cf2, MOI.EqualTo(3.))
-    MOI.add_constraint(model, cf3, MOI.EqualTo(-4.))
-    MOI.add_constraint(model, cf4, MOI.EqualTo(-7.))
+    MOI.add_constraint(model, cf1, MOI.EqualTo(2.0))
+    MOI.add_constraint(model, cf2, MOI.EqualTo(3.0))
+    MOI.add_constraint(model, cf3, MOI.EqualTo(-4.0))
+    MOI.add_constraint(model, cf4, MOI.EqualTo(-7.0))
 
     MOI.add_constraint(
         model,
@@ -464,7 +464,7 @@ function test_qp_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         x_val = MOI.get.(model, MOI.VariablePrimal(), x)
         @test isapprox(
-            x_val, [1., 0., 3.5, 0., 0., 0., 3., 6], atol = config.atol, rtol = config.rtol
+            x_val, [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0], atol = config.atol, rtol = config.rtol
         )
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 17.0 atol=config.atol rtol=config.rtol
     end
@@ -472,7 +472,7 @@ end
 
 const complementaritytests = Dict(
     "linear_mixed_complementarity" => test_linear_mixed_complementarity,
-    "qp_mixed_complementarity" => test_linear_mixed_complementarity,
+    "qp_mixed_complementarity" => test_qp_mixed_complementarity,
 )
 
 @moitestset complementarity

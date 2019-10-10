@@ -16,5 +16,12 @@ const MOI = MathOptInterface
         )
     )
     MOI.Test.test_linear_mixed_complementarity(mock, config)
+
+    MOI.Utilities.set_mock_optimize!(
+        mock,
+        (mock) -> MOI.Utilities.mock_optimize!(
+            mock, config.optimal_status, [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0]
+        )
+    )
     MOI.Test.test_qp_mixed_complementarity(mock, config)
 end
