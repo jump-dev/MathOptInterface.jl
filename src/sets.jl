@@ -686,9 +686,9 @@ If the variable `x_i` is constrained in `Interval(lb_i, ub_i)`, then
 mathematically, the mixed complementarity problem is to find a solution such
 that at least one of the following holds:
 
-  1. `F_i(x) = 0` if `lb_i <= x_i <= ub_i`
-  2. `F_i(x) > 0` if `lb_i == x_i`
-  3. `F_i(x) < 0` if `x_i == ub_i`
+  1. `F_i(x) == 0` if `lb_i < x_i < ub_i`
+  2. `F_i(x) >= 0` if `lb_i == x_i`
+  3. `F_i(x) <= 0` if `x_i == ub_i`
 
 Classically, the bounding set for `x_i` is `Interval(0, Inf)`, which recovers:
 `0 <= F_i(x) ⟂ x_i >= 0`, where the `⟂` operator implies `F_i(x) * x_i = 0`.
@@ -703,9 +703,9 @@ The problem:
 defines the mixed complementarity problem where at least one of the following
 holds:
 
-  1. `2 * x - 3 = 0` if `-1 <= x <= 1`
-  2. `2 * x - 3 > 0` if `x == -1`
-  3. `2 * x - 3 < 0` if `x == 1`
+  1. `2 * x - 3 == 0` if `-1 < x < 1`
+  2. `2 * x - 3 >= 0` if `x == -1`
+  3. `2 * x - 3 <= 0` if `x == 1`
 
 The problem:
 
