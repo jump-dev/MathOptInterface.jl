@@ -361,7 +361,7 @@ function test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestCon
             iszero(M[i, j]) && continue
             push!(
                 terms,
-                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(M[i, j], x[j]))
+                MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(M[i, j], x[j]))
             )
         end
     end
@@ -421,38 +421,39 @@ function test_qp_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
     obj = MOI.ScalarQuadraticFunction(
         [MOI.ScalarAffineTerm(-10.0, x[1]), MOI.ScalarAffineTerm(4.0, x[2])],
         [MOI.ScalarQuadraticTerm(2.0, x[1], x[1]), MOI.ScalarQuadraticTerm(8.0, x[2], x[2])],
-        26.0)
+        26.0
+    )
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
 
-    cf1 = MOI.ScalarAffineFunction([
-                                    MOI.ScalarAffineTerm(-1.5, x[1]),
-                                    MOI.ScalarAffineTerm(2.0, x[2]),
-                                    MOI.ScalarAffineTerm(1.0, x[3]),
-                                    MOI.ScalarAffineTerm(0.5, x[4]),
-                                    MOI.ScalarAffineTerm(1.0, x[5])
-                                   ], 0.0)
-    cf2 = MOI.ScalarAffineFunction([
-                                    MOI.ScalarAffineTerm(3.0, x[1]),
-                                    MOI.ScalarAffineTerm(-1.0, x[2]),
-                                    MOI.ScalarAffineTerm(-1.0, x[6]),
-                                   ], 0.0)
-    cf3 = MOI.ScalarAffineFunction([
-                                    MOI.ScalarAffineTerm(-1.0, x[1]),
-                                    MOI.ScalarAffineTerm(0.5, x[2]),
-                                    MOI.ScalarAffineTerm(-1.0, x[7]),
-                                   ], 0.0)
-    cf4 = MOI.ScalarAffineFunction([
-                                    MOI.ScalarAffineTerm(-1.0, x[1]),
-                                    MOI.ScalarAffineTerm(-1.0, x[2]),
-                                    MOI.ScalarAffineTerm(-1.0, x[8]),
-                                   ], 0.0)
-
-    MOI.add_constraint(model, cf1, MOI.EqualTo(2.0))
-    MOI.add_constraint(model, cf2, MOI.EqualTo(3.0))
-    MOI.add_constraint(model, cf3, MOI.EqualTo(-4.0))
-    MOI.add_constraint(model, cf4, MOI.EqualTo(-7.0))
-
+    MOI.add_constraint(
+        model, 
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.([-1.5, 2.0, 1.0, 0.5, 1.0], x[1:5]), 0.0
+        ),
+        MOI.EqualTo(2.0)
+   )
+    MOI.add_constraint(
+        model, 
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.([3.0, -1.0, -1.0], x[[1, 2, 6]]), 0.0
+        ),
+        MOI.EqualTo(3.0)
+   )
+    MOI.add_constraint(
+        model, 
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.([-1.0, 0.5, -1.0], x[[1, 2, 7]]), 0.0
+        ),
+        MOI.EqualTo(-4.0)
+   )
+    MOI.add_constraint(
+        model, 
+        MOI.ScalarAffineFunction(
+           MOI.ScalarAffineTerm.(-1.0, x[[1, 2, 8]]), 0.0
+        ),
+        MOI.EqualTo(-7.0)
+   )
     MOI.add_constraint(
         model,
         MOI.VectorOfVariables([x[3], x[4], x[5], x[6], x[7], x[8]]),
