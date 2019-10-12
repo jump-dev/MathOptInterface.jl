@@ -567,6 +567,24 @@ function MOI.supports_constraint(::NoVariableModel{T}, ::Type{MOI.SingleVariable
     return false
 end
 
+@testset "Context of substitution with $T" for T in [Float32, Float64]
+    model = NoVariableModel{T}()
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoSOCBridge{T})
+    MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+    x, cx = MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(4))
+    y = MOI.add_variable(bridged)
+    @test MOI.get(bridged, MOI.NumberOfVariables()) == 5
+    @test MOI.is_valid(bridged, y)
+    MOI.delete(bridged, y)
+    @test MOI.get(bridged, MOI.NumberOfVariables()) == 4
+    @test !MOI.is_valid(bridged, y)
+    test_delete_bridged_variables(bridged, x, MOI.RotatedSecondOrderCone, 4, (
+        (MOI.VectorOfVariables, MOI.SecondOrderCone, 0),
+        (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone, 0)
+    ))
+end
+
 # Only supports GreaterThan and Nonnegatives
 MOIU.@model(GreaterNonnegModel,
             (),
