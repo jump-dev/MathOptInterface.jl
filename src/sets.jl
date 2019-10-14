@@ -682,9 +682,8 @@ defines a complementarity constraint between the scalar function `F[i]` and the
 variable in `F[i + dimension]`. Thus, `F[i + dimension]` must be interpretable
 as a single variable `x_i` (e.g., `1.0 * x + 0.0`).
 
-If the variable `x_i` is constrained in `Interval(lb_i, ub_i)`, then
-mathematically, the mixed complementarity problem is to find a solution such
-that at least one of the following holds:
+The mixed complementarity problem consists of finding `x_i` in the interval
+`[lb, ub]` (i.e., in the set `Interval(lb, ub)`), such that the following holds:
 
   1. `F_i(x) == 0` if `lb_i < x_i < ub_i`
   2. `F_i(x) >= 0` if `lb_i == x_i`
@@ -700,8 +699,7 @@ The problem:
     x -in- Interval(-1, 1)
     [2 * x - 3, x] -in- Complements(1)
 
-defines the mixed complementarity problem where at least one of the following
-holds:
+defines the mixed complementarity problem where the following holds:
 
   1. `2 * x - 3 == 0` if `-1 < x < 1`
   2. `2 * x - 3 >= 0` if `x == -1`

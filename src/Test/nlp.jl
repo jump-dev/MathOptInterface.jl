@@ -381,10 +381,16 @@ function test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestCon
     end
 end
 
-"""
-    test_qp_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
+const mixed_complementaritytests = Dict(
+    "test_linear_mixed_complementarity" => test_linear_mixed_complementarity,
+)
 
-Test the solution of the quadratic mixed-complementarity problem:
+@moitestset mixed_complementarity
+
+"""
+    test_qp_complementarity_constraint(model::MOI.ModelLike, config::TestConfig)
+
+Test the solution of the quadratic program with complementarity constraints:
 
 ```
     min  (x0 - 5)^2 +(2 x1 + 1)^2
@@ -410,45 +416,45 @@ which rewrites, with auxiliary variables
 
 ```
 """
-function test_qp_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
+function test_qp_complementarity_constraint(
+    model::MOI.ModelLike, config::TestConfig
+)
     MOI.empty!(model)
     x = MOI.add_variables(model, 8)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
-    for i in 1:8
-        MOI.add_constraint(model, MOI.SingleVariable(x[i]), MOI.GreaterThan(0.0))
-    end
-
-    obj = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(-10.0, x[1]), MOI.ScalarAffineTerm(4.0, x[2])],
-        [MOI.ScalarQuadraticTerm(2.0, x[1], x[1]), MOI.ScalarQuadraticTerm(8.0, x[2], x[2])],
-        26.0
+    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+        MOI.ScalarQuadraticFunction(
+            MOI.ScalarAffineTerm.([-10.0, 4.0], x[[1, 2]]),
+            MOI.ScalarQuadraticTerm.([2.0, 8.0], x[1:2], x[1:2]),
+            26.0
+        )
     )
-
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(), obj)
-
     MOI.add_constraint(
-        model, 
+        model,
         MOI.ScalarAffineFunction(
             MOI.ScalarAffineTerm.([-1.5, 2.0, 1.0, 0.5, 1.0], x[1:5]), 0.0
         ),
         MOI.EqualTo(2.0)
    )
     MOI.add_constraint(
-        model, 
+        model,
         MOI.ScalarAffineFunction(
             MOI.ScalarAffineTerm.([3.0, -1.0, -1.0], x[[1, 2, 6]]), 0.0
         ),
         MOI.EqualTo(3.0)
    )
     MOI.add_constraint(
-        model, 
+        model,
         MOI.ScalarAffineFunction(
             MOI.ScalarAffineTerm.([-1.0, 0.5, -1.0], x[[1, 2, 7]]), 0.0
         ),
         MOI.EqualTo(-4.0)
    )
     MOI.add_constraint(
-        model, 
+        model,
         MOI.ScalarAffineFunction(
            MOI.ScalarAffineTerm.(-1.0, x[[1, 2, 8]]), 0.0
         ),
@@ -465,15 +471,21 @@ function test_qp_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         x_val = MOI.get.(model, MOI.VariablePrimal(), x)
         @test isapprox(
-            x_val, [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0], atol = config.atol, rtol = config.rtol
+            x_val,
+            [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0],
+            atol = config.atol, rtol = config.rtol
         )
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 17.0 atol=config.atol rtol=config.rtol
+        @test isapprox(
+            MOI.get(model, MOI.ObjectiveValue()),
+            17.0,
+            atol = config.atol,
+            rtol = config.rtol
+        )
     end
 end
 
-const complementaritytests = Dict(
-    "linear_mixed_complementarity" => test_linear_mixed_complementarity,
-    "qp_mixed_complementarity" => test_qp_mixed_complementarity,
+const math_program_complementarity_constraintstests = Dict(
+    "test_qp_complementarity_constraint" => test_qp_complementarity_constraint,
 )
 
-@moitestset complementarity
+@moitestset math_program_complementarity_constraints
