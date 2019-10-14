@@ -697,15 +697,22 @@ Classically, the bounding set for `x_i` is `Interval(0, Inf)`, which recovers:
 The problem:
 
     x -in- Interval(-1, 1)
-    [2 * x - 3, x] -in- Complements(1)
+    [-4 * x - 3, x] -in- Complements(1)
 
 defines the mixed complementarity problem where the following holds:
 
-  1. `2 * x - 3 == 0` if `-1 < x < 1`
-  2. `2 * x - 3 >= 0` if `x == -1`
-  3. `2 * x - 3 <= 0` if `x == 1`
+  1. `-4 * x - 3 == 0` if `-1 < x < 1`
+  2. `-4 * x - 3 >= 0` if `x == -1`
+  3. `-4 * x - 3 <= 0` if `x == 1`
 
-The problem:
+There are three solutions:
+
+  1. `x = -3/4` with `F(x) = 0`
+  2. `x = -1` with `F(x) = 1`
+  3. `x = 1` with `F(x) = -7`
+
+The function `F` can also be defined in terms of single variables. For example,
+the problem:
 
     [x_3, x_4] -in- Nonnegatives(2)
     [x_1, x_2, x_3, x_4] -in- Complements(2)

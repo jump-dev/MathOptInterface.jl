@@ -473,7 +473,8 @@ function test_qp_complementarity_constraint(
         @test isapprox(
             x_val,
             [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0],
-            atol = config.atol, rtol = config.rtol
+            atol = config.atol,
+            rtol = config.rtol
         )
         @test isapprox(
             MOI.get(model, MOI.ObjectiveValue()),
