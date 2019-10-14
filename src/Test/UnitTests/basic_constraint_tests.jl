@@ -249,9 +249,17 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
     if delete
         @testset "delete" begin
             c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            MOI.delete(model, c_indices[1])
+            c_index = c_indices[1]
+            MOI.delete(model, c_index)
             @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == length(c_indices)-1
-            @test !MOI.is_valid(model, c_indices[1])
+            @test !MOI.is_valid(model, c_index)
+            @test_throws MOI.InvalidIndex(c_index) MOI.delete(model, c_index)
+            if get_constraint_function
+                @test_throws MOI.InvalidIndex(c_index) MOI.get(model, MOI.ConstraintFunction(), c_index)
+            end
+            if get_constraint_set
+                @test_throws MOI.InvalidIndex(c_index) MOI.get(model, MOI.ConstraintSet(), c_index)
+            end
         end
     end
 end
