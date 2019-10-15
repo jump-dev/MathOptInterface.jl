@@ -25,6 +25,63 @@ function MOI.Bridges.Constraint.bridge_constraint(BridgeType, b, f, s)
 end
 
 # Constraint bridges
+# Function conversion bridges
+
+"""
+    abstract type AbstractFunctionConversionBridge <: AbstractBridge end
+
+Bridge a constraint `F`-in-`S` into a constraint `G`-in-`S` where `F` and `G`
+are equivalent representations of the same function. By convention, the
+transformed function is stored in the `constraint` field.
+"""
+abstract type AbstractFunctionConversionBridge <: AbstractBridge end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
+                 bridge::AbstractFunctionConversionBridge)
+    if invariant_under_function_conversion(attr)
+        return MOI.get(model, attr, bridge.constraint)
+    else
+        throw(ArgumentError("Bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`."))
+    end
+end
+
+function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
+                 bridge::AbstractFunctionConversionBridge, value)
+    if invariant_under_function_conversion(attr)
+        return MOI.set(model, attr, bridge.constraint, value)
+    else
+        throw(ArgumentError("Bridge of type `$(typeof(bridge))` does not support setting the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`."))
+    end
+end
+
+"""
+    invariant_under_function_conversion(attr::MOI.AbstractConstraintAttribute)
+
+Returns whether the value of the attribute does not change if the constraint
+`F`-in-`S` is transformed into a constraint `G`-in-`S` where `F` and `G` are
+equivalent representations of the same function. If it returns true, then
+subtypes of [`Constraint.AbstractFunctionConversionBridge`](@ref) such as
+[`Constraint.ScalarFunctionizeBridge`](@ref) and
+[`Constraint.VectorFunctionizeBridge`](@ref) will automatically support
+[`MOI.get`](@ref) and [`MOI.set`](@ref) for `attr`.
+"""
+invariant_under_function_conversion(::MOI.AbstractConstraintAttribute) = false
+
+function invariant_under_function_conversion(::Union{
+       MOI.ConstraintSet,
+       MOI.ConstraintBasisStatus,
+       MOI.ConstraintPrimal,
+       MOI.ConstraintPrimalStart,
+       MOI.ConstraintDual,
+       MOI.ConstraintDualStart})
+    return true
+end
+
+include("functionize.jl")
+const ScalarFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarFunctionizeBridge{T}, OT}
+const VectorFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorFunctionizeBridge{T}, OT}
+# TODO add affine -> quadratic conversion bridge
+
 include("flip_sign.jl")
 const GreaterToLess{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GreaterToLessBridge{T}, OT}
 const LessToGreater{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{LessToGreaterBridge{T}, OT}
@@ -37,9 +94,6 @@ const Scalarize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarizeBridge{T}
 include("slack.jl")
 const ScalarSlack{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarSlackBridge{T}, OT}
 const VectorSlack{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorSlackBridge{T}, OT}
-include("functionize.jl")
-const ScalarFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarFunctionizeBridge{T}, OT}
-const VectorFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorFunctionizeBridge{T}, OT}
 include("interval.jl")
 const SplitInterval{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SplitIntervalBridge{T}, OT}
 include("rsoc.jl")

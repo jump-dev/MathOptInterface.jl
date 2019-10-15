@@ -6,7 +6,7 @@
 The `ScalarFunctionizeBridge` converts a constraint `SingleVariable`-in-`S`
 into the constraint `ScalarAffineFunction{T}`-in-`S`.
 """
-struct ScalarFunctionizeBridge{T, S} <: AbstractBridge
+struct ScalarFunctionizeBridge{T, S} <: AbstractFunctionConversionBridge
     constraint::CI{MOI.ScalarAffineFunction{T}, S}
 end
 function bridge_constraint(::Type{ScalarFunctionizeBridge{T, S}}, model,
@@ -39,37 +39,15 @@ function MOI.delete(model::MOI.ModelLike, c::ScalarFunctionizeBridge)
     return
 end
 
-# Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::ScalarFunctionizeBridge)
-    return MOI.get(model, attr, c.constraint)
-end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::ScalarFunctionizeBridge)
-    return MOI.get(model, a, c.constraint)
-end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintBasisStatus,
-                 bridge::ScalarFunctionizeBridge)
-    return MOI.get(model, attr, bridge.constraint)
-end
-
-
 # Constraints
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
                  c::ScalarFunctionizeBridge{T}, f::MOI.SingleVariable) where {T}
     MOI.set(model, MOI.ConstraintFunction(), c.constraint, MOI.ScalarAffineFunction{T}(f))
 end
-function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
-                 c::ScalarFunctionizeBridge{T, S}, change::S) where {T, S}
-    MOI.set(model, MOI.ConstraintSet(), c.constraint, change)
-end
-
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
                  b::ScalarFunctionizeBridge)
     f = MOIU.canonical(MOI.get(model, attr, b.constraint))
     return convert(MOI.SingleVariable, f)
-end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
-                 b::ScalarFunctionizeBridge)
-    return MOI.get(model, attr, b.constraint)
 end
 
 # vector version
@@ -80,7 +58,7 @@ end
 The `VectorFunctionizeBridge` converts a constraint `VectorOfVariables`-in-`S`
 into the constraint `VectorAffineFunction{T}`-in-`S`.
 """
-mutable struct VectorFunctionizeBridge{T, S} <: AbstractBridge
+mutable struct VectorFunctionizeBridge{T, S} <: AbstractFunctionConversionBridge
     constraint::CI{MOI.VectorAffineFunction{T}, S}
 end
 function bridge_constraint(::Type{VectorFunctionizeBridge{T, S}}, model,
@@ -124,16 +102,6 @@ function MOI.delete(model::MOI.ModelLike, bridge::VectorFunctionizeBridge,
     bridge.constraint = MOI.add_constraint(model, new_func, new_set)
 end
 
-# Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-                 bridge::VectorFunctionizeBridge)
-    return MOI.get(model, attr, bridge.constraint)
-end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual,
-                 bridge::VectorFunctionizeBridge)
-    return MOI.get(model, a, bridge.constraint)
-end
-
 # Constraints
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
                  bridge::VectorFunctionizeBridge{T},
@@ -141,17 +109,8 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
     MOI.set(model, MOI.ConstraintFunction(), bridge.constraint,
             MOI.VectorAffineFunction{T}(func))
 end
-function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
-                 bridge::VectorFunctionizeBridge{T, S}, change::S) where {T, S}
-    MOI.set(model, MOI.ConstraintSet(), bridge.constraint, change)
-end
-
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
                  b::VectorFunctionizeBridge)
     f = MOI.get(model, attr, b.constraint)
     return MOIU.convert_approx(MOI.VectorOfVariables, f)
-end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
-                 b::VectorFunctionizeBridge)
-    return MOI.get(model, attr, b.constraint)
 end
