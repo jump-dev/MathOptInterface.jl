@@ -153,6 +153,10 @@ function solve_result_index(model::MOI.ModelLike, config::TestConfig)
         result_index = result_count + 1
         @test MOI.get(model, MOI.ObjectiveValue(1)) ≈ 1.0 atol=atol rtol=rtol
         @test_throws result_err(MOI.ObjectiveValue(result_index)) MOI.get(model, MOI.ObjectiveValue(result_index))
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue(1)) ≈ 1.0 atol=atol rtol=rtol
+            @test_throws result_err(MOI.DualObjectiveValue(result_index)) MOI.get(model, MOI.DualObjectiveValue(result_index))
+        end
         @test MOI.get(model, MOI.PrimalStatus(1)) == MOI.FEASIBLE_POINT
         @test MOI.get(model, MOI.PrimalStatus(result_index)) == MOI.NO_SOLUTION
         @test MOI.get(model, MOI.VariablePrimal(1), x) ≈ 1.0 atol=atol rtol=rtol
@@ -164,8 +168,6 @@ function solve_result_index(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.DualStatus(result_index)) == MOI.NO_SOLUTION
             @test MOI.get(model, MOI.ConstraintDual(1), c) ≈ 1.0 atol=atol rtol=rtol
             @test_throws result_err(MOI.ConstraintDual(result_index)) MOI.get(model, MOI.ConstraintDual(result_index), c)
-            @test MOI.get(model, MOI.DualObjectiveValue(1)) ≈ 1.0 atol=atol rtol=rtol
-            @test_throws result_err(MOI.DualObjectiveValue(result_index)) MOI.get(model, MOI.DualObjectiveValue(result_index))
         end
     end
 end

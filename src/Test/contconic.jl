@@ -58,7 +58,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -11 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -11 atol=atol rtol=rtol
         end
 
@@ -165,7 +165,7 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -82 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -82 atol=atol rtol=rtol
         end
 
@@ -358,7 +358,7 @@ function _norminf1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.5 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1.5 atol=atol rtol=rtol
         end
 
@@ -494,7 +494,7 @@ function _normone1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1 atol=atol rtol=rtol
         end
 
@@ -629,7 +629,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol=atol rtol=rtol
         end
 
@@ -707,7 +707,7 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -1/√2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -1/√2 atol=atol rtol=rtol
         end
 
@@ -829,7 +829,7 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
         end
 
@@ -918,7 +918,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol=atol rtol=rtol
         end
 
@@ -1093,7 +1093,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √ub atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √ub atol=atol rtol=rtol
         end
 
@@ -1181,7 +1181,7 @@ function rotatedsoc4test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
         end
 
@@ -1332,7 +1332,7 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1/2) atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1/2) atol=atol rtol=rtol
         end
 
@@ -1402,7 +1402,7 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ exp(-0.3) atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ exp(-0.3) atol=atol rtol=rtol
         end
 
@@ -1471,7 +1471,7 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ log(5) atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ log(5) atol=atol rtol=rtol
         end
 
@@ -1552,7 +1552,7 @@ function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol=atol rtol=rtol
         end
 
@@ -1824,7 +1824,7 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol=atol rtol=rtol
         end
 
@@ -1972,7 +1972,7 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ obj atol=atol rtol=rtol
         end
 
