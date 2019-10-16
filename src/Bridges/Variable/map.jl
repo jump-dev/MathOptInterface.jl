@@ -10,29 +10,29 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex, AbstractBridge}
     #              `add_constrained_variables` with a set of dimension `j`.
     # `i` ->  `j`: `VariableIndex(-i)` was the `j`th  variable of
     #             ` add_constrained_variables`.
-    info::Vector{Int}
+    info::Vector{Int64}
     # `i` ->  `-1`: `VariableIndex(-i)` was deleted.
     # `i` ->  `0`: `VariableIndex(-i)` was added with `add_constrained_variable`.
     # `i` ->  `j`: `VariableIndex(-i)` is the `j`th  variable of a constrained
     #               vector of variables, taking deletion into account.
-    index_in_vector::Vector{Int}
+    index_in_vector::Vector{Int64}
     # `i` -> `bridge`: `VariableIndex(-i)` was bridged by `bridge`.
     bridges::Vector{Union{Nothing, AbstractBridge}}
     sets::Vector{Union{Nothing, DataType}}
     # If `nothing`, it cannot be computed because some bridges does not support it
-    unbridged_function::Union{Nothing, Dict{MOI.VariableIndex, Tuple{Int, MOI.AbstractScalarFunction}}}
+    unbridged_function::Union{Nothing, Dict{MOI.VariableIndex, Tuple{Int64, MOI.AbstractScalarFunction}}}
     # Bridge that created this bridge, 0 if it is no bridge.
-    parent_index::Vector{Int}
+    parent_index::Vector{Int64}
     # Current bridge, 0 otherwise.
-    current_context::Int
+    current_context::Int64
     # Context of constraint bridged by constraint bridges
-    constraint_context::Dict{MOI.ConstraintIndex, Int}
+    constraint_context::Dict{MOI.ConstraintIndex, Int64}
 end
 function Map()
-    return Map(Int[], Int[], Union{Nothing, AbstractBridge}[],
+    return Map(Int64[], Int64[], Union{Nothing, AbstractBridge}[],
                Union{Nothing, DataType}[],
                Dict{MOI.VariableIndex, MOI.AbstractScalarFunction}(),
-               Int[], 0, Dict{MOI.ConstraintIndex, Int}())
+               Int64[], 0, Dict{MOI.ConstraintIndex, Int64}())
 end
 
 # Implementation of `AbstractDict` interface.
@@ -44,7 +44,7 @@ function Base.empty!(map::Map)
     empty!(map.bridges)
     empty!(map.sets)
     if map.unbridged_function === nothing
-        map.unbridged_function = Dict{MOI.VariableIndex, Tuple{Int, MOI.AbstractScalarFunction}}()
+        map.unbridged_function = Dict{MOI.VariableIndex, Tuple{Int64, MOI.AbstractScalarFunction}}()
     else
         empty!(map.unbridged_function)
     end
@@ -257,7 +257,7 @@ constraint index
 function add_key_for_bridge(map::Map, bridge_fun::Function,
                             set::MOI.AbstractScalarSet)
     push!(map.parent_index, map.current_context)
-    bridge_index = length(map.parent_index)
+    bridge_index = Int64(length(map.parent_index))
     push!(map.info, 0)
     push!(map.index_in_vector, 0)
     push!(map.bridges, nothing)
@@ -293,7 +293,7 @@ function add_keys_for_bridge(map::Map, bridge_fun::Function,
         return MOI.VariableIndex[], MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}(0)
     else
         push!(map.parent_index, map.current_context)
-        bridge_index = length(map.parent_index)
+        bridge_index = Int64(length(map.parent_index))
         push!(map.info, -MOI.dimension(set))
         push!(map.index_in_vector, 1)
         push!(map.bridges, nothing)
@@ -393,13 +393,13 @@ function unbridged_function(map::Map, vi::MOI.VariableIndex)
 end
 
 """
-    call_in_context(map::Map, bridge_index::Int, f::Function)
+    call_in_context(map::Map, bridge_index::Int64, f::Function)
 
 Call function `f` in the context of the variable bridge of index `bridge_index`.
 That is, the variable indices bridged by this bridge or the bridges that
 created it will not be unbridged in [`unbridged_function`](@ref).
 """
-function call_in_context(map::Map, bridge_index::Int, f::Function)
+function call_in_context(map::Map, bridge_index::Int64, f::Function)
     if iszero(bridge_index)
         return f()
     end
