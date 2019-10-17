@@ -100,7 +100,7 @@ function solve_single_variable_dual_min(model::MOI.ModelLike, config::TestConfig
     MOI.empty!(model)
     x = MOI.add_variable(model)
     xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
-    xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(2.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
     if config.solve && config.duals
@@ -120,7 +120,7 @@ unittests["solve_single_variable_dual_min"] = solve_single_variable_dual_min
 function solve_single_variable_dual_max(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variable(model)
-    xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
     xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
