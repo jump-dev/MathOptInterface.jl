@@ -337,3 +337,156 @@ const nlptests = Dict("hs071" => hs071_test,
                       )
 
 @moitestset nlp
+
+"""
+    test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
+
+Test the solution of the linear mixed-complementarity problem:
+`F(x) complements x`, where `F(x) = M * x .+ q` and `0 <= x <= 10`.
+"""
+function test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 4)
+    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
+    MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
+    M = Float64[0  0 -1 -1; 0  0  1 -2; 1 -1  2 -2; 1  2 -2  4]
+    q = [2; 2; -2; -6]
+    terms = MOI.VectorAffineTerm{Float64}[]
+    for i = 1:4
+        push!(
+            terms,
+            MOI.VectorAffineTerm(4 + i, MOI.ScalarAffineTerm(1.0, x[i]))
+        )
+        for j = 1:4
+            iszero(M[i, j]) && continue
+            push!(
+                terms,
+                MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(M[i, j], x[j]))
+            )
+        end
+    end
+    MOI.add_constraint(
+        model,
+        MOI.VectorAffineFunction(terms, [q; 0.0; 0.0; 0.0; 0.0]),
+        MOI.Complements(4)
+    )
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        x_val = MOI.get.(model, MOI.VariablePrimal(), x)
+        @test isapprox(
+            x_val, [2.8, 0.0, 0.8, 1.2], atol = config.atol, rtol = config.rtol
+        )
+    end
+end
+
+const mixed_complementaritytests = Dict(
+    "test_linear_mixed_complementarity" => test_linear_mixed_complementarity,
+)
+
+@moitestset mixed_complementarity
+
+"""
+    test_qp_complementarity_constraint(model::MOI.ModelLike, config::TestConfig)
+
+Test the solution of the quadratic program with complementarity constraints:
+
+```
+    min  (x0 - 5)^2 +(2 x1 + 1)^2
+    s.t.  -1.5 x0 + 2 x1 + x2 - 0.5 x3 + x4 = 2
+        x2 complements(3 x0 - x1 - 3)
+        x3 complements(-x0 + 0.5 x1 + 4)
+        x4 complements(-x0 - x1 + 7)
+        x0, x1, x2, x3, x4 >= 0
+
+```
+which rewrites, with auxiliary variables
+
+```
+    min  (x0 - 5)^2 +(2 x1 + 1)^2
+    s.t.  -1.5 x0 + 2 x1 + x2 - 0.5 x3 + x4 = 2  (cf1)
+        3 x0 - x1 - 3 - x5 = 0                 (cf2)
+        -x0 + 0.5 x1 + 4 - x6 = 0              (cf3)
+        -x0 - x1 + 7 - x7 = 0                  (cf4)
+        x2 complements x5
+        x3 complements x6
+        x4 complements x7
+        x0, x1, x2, x3, x4, x5, x6, x7 >= 0
+
+```
+"""
+function test_qp_complementarity_constraint(
+    model::MOI.ModelLike, config::TestConfig
+)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 8)
+    MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
+    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+        MOI.ScalarQuadraticFunction(
+            MOI.ScalarAffineTerm.([-10.0, 4.0], x[[1, 2]]),
+            MOI.ScalarQuadraticTerm.([2.0, 8.0], x[1:2], x[1:2]),
+            26.0
+        )
+    )
+    MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.([-1.5, 2.0, 1.0, 0.5, 1.0], x[1:5]), 0.0
+        ),
+        MOI.EqualTo(2.0)
+   )
+    MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.([3.0, -1.0, -1.0], x[[1, 2, 6]]), 0.0
+        ),
+        MOI.EqualTo(3.0)
+   )
+    MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.([-1.0, 0.5, -1.0], x[[1, 2, 7]]), 0.0
+        ),
+        MOI.EqualTo(-4.0)
+   )
+    MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(
+           MOI.ScalarAffineTerm.(-1.0, x[[1, 2, 8]]), 0.0
+        ),
+        MOI.EqualTo(-7.0)
+   )
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([x[3], x[4], x[5], x[6], x[7], x[8]]),
+        MOI.Complements(3)
+    )
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        x_val = MOI.get.(model, MOI.VariablePrimal(), x)
+        @test isapprox(
+            x_val,
+            [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0],
+            atol = config.atol,
+            rtol = config.rtol
+        )
+        @test isapprox(
+            MOI.get(model, MOI.ObjectiveValue()),
+            17.0,
+            atol = config.atol,
+            rtol = config.rtol
+        )
+    end
+end
+
+const math_program_complementarity_constraintstests = Dict(
+    "test_qp_complementarity_constraint" => test_qp_complementarity_constraint,
+)
+
+@moitestset math_program_complementarity_constraints

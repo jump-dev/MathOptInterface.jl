@@ -273,6 +273,7 @@ SettingSingleVariableFunctionNotAllowed
 List of recognized functions.
 ```@docs
 AbstractFunction
+AbstractVectorFunction
 SingleVariable
 VectorOfVariables
 ScalarAffineTerm
@@ -349,6 +350,7 @@ DualPowerCone
 SOS1
 SOS2
 IndicatorSet
+Complements
 ```
 
 ### Matrix sets
