@@ -29,7 +29,7 @@ function debug(b::LazyBridgeOptimizer, variable_to_index::OrderedDict,
                io::IO = Base.stdout)
     for (v, i) in variable_to_index
         S = v[1]
-        MOIU.print_with_acronym(io, "[$i] constraint variables in `$S` are not supported because")
+        MOIU.print_with_acronym(io, "[$i] constrained variables in `$S` are not supported because")
         no_bridge = true
         for BT in b.variable_bridge_types
             if Variable.supports_constrained_variable(BT, S)
@@ -109,7 +109,7 @@ function debug(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
     if MOI.supports_constraint(b, F, S)
         if F == MOIU.variable_function_type(S)
             # This may be thanks to a variable bridge so `F`-in-`S` constraints
-            # are maybe not supported but constraint variables in `S` are
+            # are maybe not supported but constrained variables in `S` are
             # definitely supported.
             MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported.\n")
         else
