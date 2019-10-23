@@ -316,7 +316,7 @@ end
         S = MOI.LessThan{T}
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constraint variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
+[1] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (1) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
 (1) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
@@ -324,12 +324,12 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
         MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constraint variables in `MOI.LessThan{$T}` are not supported because:
+[1] constrained variables in `MOI.LessThan{$T}` are not supported because:
   Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
   [2] constrained variables in `MOI.Nonpositives` are not supported
   Cannot add free variables and then constrain them because:
   (2) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
-[2] constraint variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+[2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (1) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are not supported
 (1) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are not supported because no added bridge supports bridging it.
@@ -359,13 +359,13 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
         MOIB.add_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constraint variables in `MOI.GreaterThan{$T}` are not supported because no added bridge supports bridging it.
+[1] constrained variables in `MOI.GreaterThan{$T}` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (3) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are not supported
-[2] constraint variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
+[2] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (5) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
-[3] constraint variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
+[3] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (6) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are not supported
 (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
@@ -390,15 +390,15 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
         MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constraint variables in `MOI.LessThan{$T}` are not supported because:
+[1] constrained variables in `MOI.LessThan{$T}` are not supported because:
   Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
   [2] constrained variables in `MOI.Nonpositives` are not supported
   Cannot add free variables and then constrain them because:
   (4) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
-[2] constraint variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+[2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (3) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are not supported
-[3] constraint variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
+[3] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (5) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are not supported
 (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
@@ -459,7 +459,7 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
         MOIB.add_bridge(bridged, MOIB.Constraint.VectorSlackBridge{T})
         @test debug_string(MOIB.debug_supports, attr) == """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
-[1] constraint variables in `MOI.RotatedSecondOrderCone` are not supported because no added bridge supports bridging it.
+[1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because:
   (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
 (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
