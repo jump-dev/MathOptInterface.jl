@@ -223,6 +223,7 @@ function MOI.set(mock::MockOptimizer, ::MOI.ConstraintBasisStatus,
     mock.con_basis[xor_index(idx)] = value
 end
 
+MOI.get(mock::MockOptimizer, ::MOI.RawSolver) = mock
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
     if MOI.is_set_by_optimize(attr)
         return mock.optimizer_attributes[attr]
