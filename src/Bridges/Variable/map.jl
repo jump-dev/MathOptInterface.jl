@@ -432,7 +432,7 @@ Shortcut for `call_in_context(map, bridge_index, f)` where `bridge_index` is the
 variable bridge that created `ci` (directly or indirectly) or 0 otherwise.
 """
 function call_in_context(map::Map, ci::MOI.ConstraintIndex, f::Function)
-    return call_in_context(map, map.constraint_context[ci], f)
+    return call_in_context(map, get(map.constraint_context, ci, 0), f)
 end
 
 """
@@ -442,7 +442,13 @@ Register the current context as the variable bridge that created `ci` (directly
 or indirectly) or 0 otherwise.
 """
 function register_context(map::Map, ci::MOI.ConstraintIndex)
-    map.constraint_context[ci] = map.current_context
+    if !iszero(map.current_context)
+        # By only storing non-zero values, we avoid any dictionary access for
+        # constraint not created (directly or indirectly) by variable bridges.
+        # This ensures that there is no performance hit of the bridge layer when
+        # no variable bridge is used.
+        map.constraint_context[ci] = map.current_context
+    end
     return
 end
 

@@ -566,23 +566,92 @@ function MOI.supports_constraint(::NoVariableModel{T}, ::Type{MOI.SingleVariable
                                  ::Type{<:MOIU.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return false
 end
+MOIU.@model(OnlyNonnegVAF,
+            (), (), (MOI.Nonnegatives,), (),
+            (), (), (), (MOI.VectorAffineFunction,))
+function MOI.supports_constraint(::OnlyNonnegVAF{T}, ::Type{MOI.SingleVariable},
+                                 ::Type{<:MOIU.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
+    return false
+end
+struct InvariantUnderFunctionConversionAttribute <: MOI.AbstractConstraintAttribute end
+MOIB.Constraint.invariant_under_function_conversion(::InvariantUnderFunctionConversionAttribute) = true
+function _dict(model::OnlyNonnegVAF)
+    if !haskey(model.ext, :InvariantUnderFunctionConversionAttribute)
+        model.ext[:InvariantUnderFunctionConversionAttribute] = Dict{MOI.ConstraintIndex, Any}()
+    end
+    return model.ext[:InvariantUnderFunctionConversionAttribute]
+end
+function MOI.set(model::OnlyNonnegVAF,
+                 ::InvariantUnderFunctionConversionAttribute,
+                 ci::MOI.ConstraintIndex, value)
+    _dict(model)[ci] = value
+end
+function MOI.get(model::OnlyNonnegVAF,
+                 ::InvariantUnderFunctionConversionAttribute,
+                 ci::MOI.ConstraintIndex)
+    return _dict(model)[ci]
+end
 
 @testset "Context of substitution with $T" for T in [Float32, Float64]
-    model = NoVariableModel{T}()
-    bridged = MOIB.LazyBridgeOptimizer(model)
-    MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoSOCBridge{T})
-    MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
-    x, cx = MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(4))
-    y = MOI.add_variable(bridged)
-    @test MOI.get(bridged, MOI.NumberOfVariables()) == 5
-    @test MOI.is_valid(bridged, y)
-    MOI.delete(bridged, y)
-    @test MOI.get(bridged, MOI.NumberOfVariables()) == 4
-    @test !MOI.is_valid(bridged, y)
-    test_delete_bridged_variables(bridged, x, MOI.RotatedSecondOrderCone, 4, (
-        (MOI.VectorOfVariables, MOI.SecondOrderCone, 0),
-        (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone, 0)
-    ))
+    @testset "Attribute" begin
+        # Two Variable bridge in context
+        model = OnlyNonnegVAF{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.LessThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        vectorize = MOIB.bridge(bridged, x)
+        @test vectorize isa MOIB.Variable.VectorizeBridge
+        y = vectorize.variable
+        fy = MOI.SingleVariable(y)
+        flip = MOIB.bridge(bridged, y)
+        @test flip isa MOIB.Variable.NonposToNonnegBridge
+        Z = flip.flipped_variables
+        z = Z[1]
+        fz = MOI.SingleVariable(z)
+        vov_ci = flip.flipped_constraint
+        functionize = MOIB.bridge(bridged, vov_ci)
+        @test functionize isa MOIB.Constraint.VectorFunctionizeBridge
+        aff_ci = functionize.constraint
+
+        f(vi) = MOIB.Variable.unbridged_function(MOIB.Variable.bridges(bridged), vi)
+        @test f(y) ≈ one(T) * fx - one(T)
+        @test MOIB.call_in_context(bridged, x, bridge -> f(y)) === nothing
+        @test MOIB.call_in_context(bridged, y, bridge -> f(y)) === nothing
+        @test f(z) ≈ -one(T) * fy
+        @test MOIB.call_in_context(bridged, x, bridge -> f(z)) ≈ f(z)
+        @test MOIB.call_in_context(bridged, y, bridge -> f(z)) === nothing
+
+
+        attr = InvariantUnderFunctionConversionAttribute()
+        for func in [T(2) * fx, T(2) * fy, T(2) * fz]
+            MOI.set(model, attr, aff_ci, func)
+            @test MOI.get(model, attr, aff_ci) ≈ func
+            @test MOIB.call_in_context(bridged, vov_ci, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ func
+            @test MOIB.call_in_context(bridged, y, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ func
+            #@test MOIB.call_in_context(bridged, z, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ func
+        end
+    end
+    @testset "Delete" begin
+        # One Variable bridge in context
+        model = NoVariableModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoSOCBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+        x, cx = MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(4))
+        y = MOI.add_variable(bridged)
+        @test MOI.get(bridged, MOI.NumberOfVariables()) == 5
+        @test MOI.is_valid(bridged, y)
+        MOI.delete(bridged, y)
+        @test MOI.get(bridged, MOI.NumberOfVariables()) == 4
+        @test !MOI.is_valid(bridged, y)
+        test_delete_bridged_variables(bridged, x, MOI.RotatedSecondOrderCone, 4, (
+            (MOI.VectorOfVariables, MOI.SecondOrderCone, 0),
+            (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone, 0)
+        ))
+    end
 end
 
 # Only supports GreaterThan and Nonnegatives
