@@ -67,6 +67,10 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         @test MOI.get(mock, attr, [index])[1] ≈ 3.0fy + 1.0fz + 3.0
     end
 
+    @testset "RawSolver" begin
+        MOI.get(bridged, MOI.RawSolver()) === mock
+    end
+
     @testset "HeuristicCallback" begin
         attr = MOI.HeuristicCallback()
         f(callback_data) = nothing
