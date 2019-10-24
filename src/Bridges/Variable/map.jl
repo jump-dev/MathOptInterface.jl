@@ -432,7 +432,7 @@ Shortcut for `call_in_context(map, bridge_index, f)` where `bridge_index` is the
 variable bridge that created `ci` (directly or indirectly) or 0 otherwise.
 """
 function call_in_context(map::Map, ci::MOI.ConstraintIndex, f::Function)
-    return call_in_context(map, get(map.constraint_context, ci, 0), f)
+    return call_in_context(map, get(map.constraint_context, ci, Int64(0)), f)
 end
 
 """
