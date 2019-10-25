@@ -37,12 +37,18 @@ end
 
 _getfun(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = f
 function _getfunction(constrs::Vector, ci::CI, i::Int)
+    if !(1 ≤ i ≤ length(constrs))
+        throw(MOI.InvalidIndex(ci))
+    end
     @assert ci.value == constrs[i][1].value
     _getfun(constrs[i]...)
 end
 
 _gets(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = s
 function _getset(constrs::Vector, ci::CI, i::Int)
+    if !(1 ≤ i ≤ length(constrs))
+        throw(MOI.InvalidIndex(ci))
+    end
     @assert ci.value == constrs[i][1].value
     _gets(constrs[i]...)
 end
