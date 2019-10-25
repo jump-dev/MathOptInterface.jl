@@ -609,8 +609,8 @@ function indicator4_test(model::MOI.ModelLike, config::TestConfig)
     # linear problem with indicator constraint and
     # max  2x1 + 3x2
     # s.t. x1 + x2 <= 10
-    #      z1 ==> x2 + 1 <= 7
-    #      z2 ==> x2 + x1/5 - 1 <= 10
+    #      z1 ==> x2 - 1 <= 7
+    #      z2 ==> x2 + x1/5 + 1 <= 10
     #      z1 + z2 >= 1
 
 
@@ -633,7 +633,7 @@ function indicator4_test(model::MOI.ModelLike, config::TestConfig)
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
         ],
-        [0.0, 1.0]
+        [0.0, -1.0]
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(7.0))
     MOI.add_constraint(model, f1, iset1)
@@ -643,7 +643,7 @@ function indicator4_test(model::MOI.ModelLike, config::TestConfig)
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
         ],
-        [0.0, -1.0],
+        [0.0, 1.0],
     )
     iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(10.0))
 
