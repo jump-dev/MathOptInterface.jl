@@ -4,6 +4,11 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
+@testset "Basic constraint tests" begin
+    model = MOIU.Model{Float64}()
+    MOIT.basic_constraint_tests(model, MOIT.TestConfig())
+end
+
 # We need to test this in a module at the top level because it can't be defined
 # in a testset. If it runs without error, then we're okay.
 module TestExternalModel
