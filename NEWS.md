@@ -1,6 +1,20 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.6 (October 25, 2019)
+---------------------
+
+- Added complementarity constraints (#913).
+- Allowed `ModelLike` objects as value of attributes (#928).
+- Testing improvements:
+  * Added `dual_objective_value` option to `MOI.Test.TestConfig` (#922).
+  * Added `InvalidIndex` tests in `basic_constraint_tests` (#921).
+  * Added tests for the constant term in indicator constraint (#929).
+- Bridges improvements:
+  * Added support for starting values for functionize bridges (#923).
+  * Added variable indices context to variable bridges (#920).
+  * Fixed a typo in printing o `debug_supports` (#927).
+
 v0.9.5 (October 9, 2019)
 ---------------------
 
