@@ -246,6 +246,7 @@ struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
 end
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
+eachscalar(f::AbstractVector) = f
 
 function Base.iterate(it::ScalarFunctionIterator, state = 1)
     if state > length(it)
@@ -742,6 +743,8 @@ modified.
 """
 function operate end
 
+operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T} = op(α...)
+
 """
     operate!(op::Function, ::Type{T},
              args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
@@ -752,6 +755,8 @@ can be modified. The return type is the same than the method
 `operate(op, T, args...)` without `!`.
 """
 function operate! end
+
+operate!(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T} = op(α...)
 
 """
     operate_output_index!(
@@ -766,6 +771,10 @@ are the same as the functions at the same output index in `func`. The first
 argument can be modified.
 """
 function operate_output_index! end
+
+function operate_output_index!(op::Function, ::Type{T}, i::Integer, x::Vector{T}, args...) where T
+    x[i] = operate!(op, T, x[i], args...)
+end
 
 """
     promote_operation(op::Function, ::Type{T},

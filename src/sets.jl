@@ -389,6 +389,16 @@ function dimension(set::AbstractSymmetricMatrixSetTriangle)
 end
 
 """
+    side_dimension_for_vectorized_dimension(n::Integer)
+
+Return the dimension `d` such that
+`MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(d))` is `n`.
+"""
+function side_dimension_for_vectorized_dimension(n::Base.Integer)
+    return div(isqrt(1 + 8n), 2) - 1
+end
+
+"""
     abstract type AbstractSymmetricMatrixSetSquare <: AbstractVectorSet end
 
 Abstract supertype for subsets of the (vectorized) cone of symmetric matrices,

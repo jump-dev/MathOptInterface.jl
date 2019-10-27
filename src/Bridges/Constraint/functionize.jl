@@ -6,7 +6,7 @@
 The `ScalarFunctionizeBridge` converts a constraint `SingleVariable`-in-`S`
 into the constraint `ScalarAffineFunction{T}`-in-`S`.
 """
-struct ScalarFunctionizeBridge{T, S} <: AbstractFunctionConversionBridge
+struct ScalarFunctionizeBridge{T, S} <: AbstractFunctionConversionBridge{MOI.ScalarAffineFunction{T}, S}
     constraint::CI{MOI.ScalarAffineFunction{T}, S}
 end
 function bridge_constraint(::Type{ScalarFunctionizeBridge{T, S}}, model,
@@ -58,7 +58,7 @@ end
 The `VectorFunctionizeBridge` converts a constraint `VectorOfVariables`-in-`S`
 into the constraint `VectorAffineFunction{T}`-in-`S`.
 """
-mutable struct VectorFunctionizeBridge{T, S} <: AbstractFunctionConversionBridge
+mutable struct VectorFunctionizeBridge{T, S} <: AbstractFunctionConversionBridge{MOI.VectorAffineFunction{T}, S}
     constraint::CI{MOI.VectorAffineFunction{T}, S}
 end
 function bridge_constraint(::Type{VectorFunctionizeBridge{T, S}}, model,

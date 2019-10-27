@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "NormInfinity" begin
@@ -73,6 +73,14 @@ config = MOIT.TestConfig()
     end
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        value = [4.0, 1.0, -2.0]
+        MOI.set(bridged_mock, attr, ci, value)
+        @test MOI.get(bridged_mock, attr, ci) ≈ value
+    end
+
     test_delete_bridge(bridged_mock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),))
 end
 

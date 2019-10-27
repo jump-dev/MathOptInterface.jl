@@ -62,6 +62,22 @@ function MOI.get(::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
 end
 
 """
+    function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
+                     bridge::AbstractBridge, value)
+
+Set the value of the attribute `attr` of the model `model` for the
+constraint bridged by `bridge`.
+"""
+function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
+                 bridge::AbstractBridge, value)
+    if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
+        throw(MOI.UnsupportedAttribute(attr))
+    else
+        throw(MOI.SetAttributeNotAllowed(attr))
+    end
+end
+
+"""
     added_constrained_variable_types(BT::Type{<:Variable.AbstractBridge})::Vector{Tuple{DataType}}
 
 Return a list of the types of constrained variables that bridges of concrete
