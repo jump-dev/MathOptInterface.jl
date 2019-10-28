@@ -30,3 +30,13 @@ vector_set_type(::Type{<:MOI.GreaterThan}) = MOI.Nonnegatives
 scalar_set_type(::Type{<:MOI.Zeros}, T::Type) = MOI.EqualTo{T}
 scalar_set_type(::Type{<:MOI.Nonpositives}, T::Type) = MOI.LessThan{T}
 scalar_set_type(::Type{<:MOI.Nonnegatives}, T::Type) = MOI.GreaterThan{T}
+
+"""
+    side_dimension_for_vectorized_dimension(n::Integer)
+
+Return the dimension `d` such that
+`MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(d))` is `n`.
+"""
+function side_dimension_for_vectorized_dimension(n::Base.Integer)
+    return div(isqrt(1 + 8n), 2)
+end

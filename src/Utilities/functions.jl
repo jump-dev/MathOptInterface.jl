@@ -747,6 +747,7 @@ function operate end
 # fails at precompilation with a StackOverflowError.
 operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}) where T = op(α)
 operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}, β::Union{T, AbstractVector{T}}) where T = op(α, β)
+operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}, β::Union{T, AbstractVector{T}}, γ::Union{T, AbstractVector{T}}) where T = op(α, β, γ)
 
 """
     operate!(op::Function, ::Type{T},
