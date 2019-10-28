@@ -540,6 +540,8 @@ Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
 Bridges.LazyBridgeOptimizer
 Bridges.add_bridge
+Bridges.remove_bridge
+Bridges.has_bridge
 Bridges.full_bridge_optimizer
 Bridges.debug_supports_constraint
 Bridges.debug_supports
