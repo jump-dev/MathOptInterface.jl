@@ -743,7 +743,10 @@ modified.
 """
 function operate end
 
-operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T} = op(α...)
+# With only one method with `α::Union{T, AbstractVector{T}}...`, Julia v1.1.1
+# fails at precompilation with a StackOverflowError.
+operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}) where T = op(α)
+operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}, β::Union{T, AbstractVector{T}}) where T = op(α, β)
 
 """
     operate!(op::Function, ::Type{T},
