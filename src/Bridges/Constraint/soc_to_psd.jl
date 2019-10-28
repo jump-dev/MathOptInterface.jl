@@ -5,8 +5,10 @@ Builds a VectorAffineFunction representing the upper (or lower) triangular part 
 [ f[1]     f[2:end]' ]
 [ f[2:end] g * I     ]
 """
-function _SOCtoPSDaff(T::Type, F::Type{<:MOI.AbstractVectorFunction},
-                      f::MOI.AbstractVectorFunction, g::MOI.AbstractScalarFunction)
+function _SOCtoPSDaff(T::Type,
+                      f::MOI.AbstractVectorFunction,
+                      g::MOI.AbstractScalarFunction)
+    F = MOIU.promote_operation(vcat, T, typeof(g), T)
     dim = MOI.output_dimension(f)
     n = div(dim * (dim+1), 2)
     h = MOIU.zero_with_output_dimension(F, n)
@@ -46,26 +48,8 @@ as bridging second order cone constraints to semidefinite constraints can be
 achieved by the [`SOCRBridge`](@ref) followed by the [`RSOCtoPSDBridge`](@ref)
 while creating a smaller semidefinite constraint.
 """
-struct SOCtoPSDBridge{T, F, G} <: AbstractBridge
-    dim::Int
-    cr::MOI.ConstraintIndex{F, MOI.PositiveSemidefiniteConeTriangle}
-end
-function bridge_constraint(::Type{SOCtoPSDBridge{T, F, G}}, model::MOI.ModelLike, g::G,
-                           s::MOI.SecondOrderCone) where {T, F, G}
-    d = MOI.dimension(s)
-    f = _SOCtoPSDaff(T, F, g, MOIU.eachscalar(g)[1])
-    cr = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeTriangle(d))
-    return SOCtoPSDBridge{T, F, G}(d, cr)
-end
-
-function MOI.supports_constraint(
-    ::Type{<:SOCtoPSDBridge}, ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.SecondOrderCone})
-    return true
-end
-MOIB.added_constrained_variable_types(::Type{<:SOCtoPSDBridge}) = Tuple{DataType}[]
-function MOIB.added_constraint_types(::Type{<:SOCtoPSDBridge{T, F}}) where {T, F}
-    return [(F, MOI.PositiveSemidefiniteConeTriangle)]
+struct SOCtoPSDBridge{T, F, G} <: SetMapBridge{T, MOI.SecondOrderCone, MOI.PositiveSemidefiniteConeTriangle, F, G}
+    constraint::MOI.ConstraintIndex{F, MOI.PositiveSemidefiniteConeTriangle}
 end
 function concrete_bridge_type(::Type{<:SOCtoPSDBridge{T}},
                               G::Type{<:MOI.AbstractVectorFunction},
@@ -74,43 +58,27 @@ function concrete_bridge_type(::Type{<:SOCtoPSDBridge{T}},
     return SOCtoPSDBridge{T, F, G}
 end
 
-
-# Attributes, Bridge acting as a model
-function MOI.get(
-    ::SOCtoPSDBridge{T, F},
-    ::MOI.NumberOfConstraints{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F}
-    return 1
+function map_set(::Type{<:SOCtoPSDBridge}, set::MOI.PositiveSemidefiniteConeTriangle)
+    return MOI.SecondOrderCone(MOI.side_dimension(set))
 end
-function MOI.get(
-    bridge::SOCtoPSDBridge{T},
-    ::MOI.ListOfConstraintIndices{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F}
-    return [bridge.cr]
+function inverse_map_set(::Type{<:SOCtoPSDBridge}, set::MOI.SecondOrderCone)
+    return MOI.PositiveSemidefiniteConeTriangle(MOI.dimension(set))
 end
 
-# References
-function MOI.delete(model::MOI.ModelLike, c::SOCtoPSDBridge)
-    MOI.delete(model, c.cr)
+function map_function(::Type{<:SOCtoPSDBridge{T}}, func) where T
+    return _SOCtoPSDaff(T, g, MOIU.eachscalar(g)[1])
 end
-
-# Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 bridge::SOCtoPSDBridge{T, F, G}) where {T, F, G}
-    f = MOI.get(model, attr, bridge.cr)
-    g = MOIU.eachscalar(f)[trimap.(1, 1:bridge.dim)]
-    return MOIU.convert_approx(G, g)
+function inverse_map_function(::Type{<:SOCtoPSDBridge}, func)
+    scalars = MOIU.eachscalar(func)
+    dim = side_dimension_for_vectorized_dimension(length(scalars))
+    return scalars[trimap.(1, 1:dim)]
 end
-function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SOCtoPSDBridge)
-    return MOI.SecondOrderCone(bridge.dim)
+function adjoint_map_function(::Type{<:SOCtoPSDBridge{T}}, func) where T
+    scalars = MOIU.eachscalar(func)
+    dim = side_dimension_for_vectorized_dimension(length(scalars))
+    tdual = sum(i -> func[trimap(i, i)], 1:dim)
+    return MOIU.operate(vcat, T, tdual, func[trimap.(2:c.dim, 1)]*2)
 end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::SOCtoPSDBridge)
-    return MOI.get(model, a, c.cr)[trimap.(1, 1:c.dim)]
-end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SOCtoPSDBridge)
-    dual = MOI.get(model, a, c.cr)
-    tdual = sum(i -> dual[trimap(i, i)], 1:c.dim)
-    return [tdual; dual[trimap.(2:c.dim, 1)]*2]
-end
-
 
 """
 The `RSOCtoPSDBridge` transforms the second order cone constraint ``\\lVert x \\rVert \\le 2tu`` with ``u \\ge 0`` into the semidefinite cone constraints
@@ -135,29 +103,8 @@ which is equivalent to
 \\end{align*}
 ```
 """
-struct RSOCtoPSDBridge{T, F, G} <: AbstractBridge
-    dim::Int
-    cr::MOI.ConstraintIndex{F, MOI.PositiveSemidefiniteConeTriangle}
-end
-function bridge_constraint(::Type{RSOCtoPSDBridge{T, F, G}}, model::MOI.ModelLike, g::G,
-                           set::MOI.RotatedSecondOrderCone) where {T, F, G}
-    dim = MOI.dimension(set) - 1
-    g_scalars = MOIU.eachscalar(g)
-    h = MOIU.operate!(*, T, g_scalars[2], convert(T, 2))
-    f = _SOCtoPSDaff(T, F, g_scalars[[1; 3:MOI.output_dimension(g)]], h)
-    cr = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeTriangle(dim))
-    return RSOCtoPSDBridge{T, F, G}(dim, cr)
-end
-
-
-function MOI.supports_constraint(
-    ::Type{<:RSOCtoPSDBridge}, ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.RotatedSecondOrderCone})
-    return true
-end
-MOIB.added_constrained_variable_types(::Type{<:RSOCtoPSDBridge}) = Tuple{DataType}[]
-function MOIB.added_constraint_types(::Type{<:RSOCtoPSDBridge{T, F}}) where {T, F}
-    return [(F, MOI.PositiveSemidefiniteConeTriangle)]
+struct RSOCtoPSDBridge{T, F, G} <: SetMapBridge{T, MOI.RotatedSecondOrderCone, MOI.PositiveSemidefiniteConeTriangle, F, G}
+    constraint::MOI.ConstraintIndex{F, MOI.PositiveSemidefiniteConeTriangle}
 end
 function concrete_bridge_type(::Type{<:RSOCtoPSDBridge{T}},
                               G::Type{<:MOI.AbstractVectorFunction},
@@ -168,45 +115,33 @@ function concrete_bridge_type(::Type{<:RSOCtoPSDBridge{T}},
     return RSOCtoPSDBridge{T, F, G}
 end
 
-# Attributes, Bridge acting as a model
-function MOI.get(
-    ::RSOCtoPSDBridge{T, F},
-    ::MOI.NumberOfConstraints{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F}
-    return 1
+function map_set(::Type{<:RSOCtoPSDBridge}, set::MOI.PositiveSemidefiniteConeTriangle)
+    return MOI.RotatedSecondOrderCone(MOI.side_dimension(set) + 1)
 end
-function MOI.get(
-    bridge::RSOCtoPSDBridge{T},
-    ::MOI.ListOfConstraintIndices{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F}
-    return [bridge.cr]
+function inverse_map_set(::Type{<:RSOCtoPSDBridge}, set::MOI.RotatedSecondOrderCone)
+    return MOI.PositiveSemidefiniteConeTriangle(MOI.dimension(set) - 1)
 end
 
-# References
-function MOI.delete(model::MOI.ModelLike, bridge::RSOCtoPSDBridge)
-    MOI.delete(model, bridge.cr)
+function map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where T
+    scalars = MOIU.eachscalar(func)
+    h = MOIU.operate!(*, T, scalars[2], convert(T, 2))
+    return _SOCtoPSDaff(T, scalars[[1; 3:MOI.output_dimension(g)]], h)
 end
-
-# Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 bridge::RSOCtoPSDBridge{T, F, G}) where {T, F, G}
-    f_scalars = MOIU.eachscalar(MOI.get(model, attr, bridge.cr))
-    t = f_scalars[1]
-    u = MOIU.operate!(/, T, f_scalars[3], convert(T, 2))
+function inverse_map_function(::Type{<:RSOCtoPSDBridge}, func)
+    scalars = MOIU.eachscalar(func)
+    dim = side_dimension_for_vectorized_dimension(length(scalars))
+    t = scalars[1]
+    # It is (2u*I)[1,1] so it needs to be divided by 2 to get u
+    u = MOIU.operate!(/, T, scalars[3], convert(T, 2))
     funcs = [t, u]
-    for i in 2:bridge.dim
-        push!(funcs, f_scalars[trimap(1, i)])
+    for i in 2:dim
+        push!(funcs, scalars[trimap(1, i)])
     end
-    return MOIU.convert_approx(G, MOIU.vectorize(funcs))
+    return MOIU.vectorize(funcs)
 end
-function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::RSOCtoPSDBridge)
-    return MOI.RotatedSecondOrderCone(bridge.dim + 1)
-end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, bridge::RSOCtoPSDBridge)
-    x = MOI.get(model, MOI.ConstraintPrimal(), bridge.cr)[[trimap(1, 1); trimap(2, 2); trimap.(2:bridge.dim, 1)]]
-    x[2] /= 2 # It is (2u*I)[1,1] so it needs to be divided by 2 to get u
-    return x
-end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, bridge::RSOCtoPSDBridge)
-    dual = MOI.get(model, MOI.ConstraintDual(), bridge.cr)
-    udual = sum(i -> dual[trimap(i, i)], 2:bridge.dim)
-    return [dual[1]; 2udual; dual[trimap.(2:bridge.dim, 1)]*2]
+function adjoint_map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where T
+    scalars = MOIU.eachscalar(func)
+    dim = side_dimension_for_vectorized_dimension(length(scalars))
+    udual = sum(i -> func[trimap(i, i)], 2:dim)
+    return MOIU.operate(vcat, T, dual[1],  2udual, func[trimap.(2:dim, 1)]*2)
 end
