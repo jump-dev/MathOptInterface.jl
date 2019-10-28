@@ -318,78 +318,67 @@ end
 # or `(F,)` in `keys(b.objective_best)` may be bridged
 # with less bridges than `b.variable_dist[(S,)]`,
 # `b.constraint_dist[(F, S)]` or `b.objective_dist[(F,)]` using `BT`.
-function _update_key_dists!(b)
-    # TODO we should call `fill_required!`.
-    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
-end
-
-"""
-    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.AbstractBridge})
-
-Enable the use of the variable bridges of type `BT` by `b`.
-"""
-function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.AbstractBridge})
-    push!(b.variable_bridge_types, BT)
-    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
-end
-
-"""
-    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
-
-Enable the use of the constraint bridges of type `BT` by `b`.
-"""
-function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
-    push!(b.constraint_bridge_types, BT)
-    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
-end
-
-"""
-    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Objective.AbstractBridge})
-
-Enable the use of the objective bridges of type `BT` by `b`.
-"""
-function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Objective.AbstractBridge})
-    push!(b.objective_bridge_types, BT)
-    update_dist!(b, keys(b.variable_best), keys(b.constraint_best), keys(b.objective_best))
-end
-
-function _remove_bridge(bridge_types::Vector, BT::Type)
-    i = findfirst(isequal(BT), bridge_types)
-    if i === nothing
-        error("Cannot remove bridge `BT` as it was never added or was already",
-              " removed.")
-    else
-        deleteat!(bridge_types, i)
-    end
-    return
-end
+# We could either recompute the distance from every node or clear the
+# dictionary so that the distance is computed lazily at the next `supports_constraint`
+# call. We prefer clearing the dictionaries so as this is called for each
+# bridge added and recomputing the distance for each bridge would be a wase
+# if several bridges are added consecutively.
 function _reset_dist(b::LazyBridgeOptimizer)
     empty!(b.variable_dist)
     empty!(b.variable_best)
     empty!(b.constraint_dist)
     empty!(b.constraint_best)
+    empty!(b.objective_dist)
+    empty!(b.objective_best)
+end
+
+function _bridge_types(b::LazyBridgeOptimizer, BT::Type{<:Variable.AbstractBridge})
+    return b.variable_bridge_types
+end
+function _bridge_types(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
+    return b.constraint_bridge_types
+end
+function _bridge_types(b::LazyBridgeOptimizer, BT::Type{<:Objective.AbstractBridge})
+    return b.objective_bridge_types
 end
 
 """
-    remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.AbstractBridge})
+    add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
-Disable the use of the variable bridges of type `BT` by `b`.
+Enable the use of the bridges of type `BT` by `b`.
 """
-function remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.AbstractBridge})
-    _remove_bridge(b.variable_bridge_types, BT)
+function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+    if !has_bridge(b, BT)
+        push!(_bridge_types(b, BT), BT)
+        _reset_dist(b)
+    end
+end
+
+"""
+    remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+
+Disable the use of the bridges of type `BT` by `b`.
+"""
+function remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+    bridge_types = _bridge_types(b, BT)
+    i = findfirst(isequal(BT), bridge_types)
+    if i === nothing
+        error("Cannot remove bridge `$BT` as it was never added or was already",
+              " removed.")
+    else
+        deleteat!(bridge_types, i)
+    end
     _reset_dist(b)
 end
 
 """
-    remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
+    has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
-Disable the use of the constraint bridges of type `BT` by `b`.
+Return a `Bool` indicating whether the bridges of type `BT` are used by `b`.
 """
-function remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:Constraint.AbstractBridge})
-    _remove_bridge(b.constraint_bridge_types, BT)
-    _reset_dist(b)
+function has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+    return findfirst(isequal(BT), _bridge_types(b, BT)) !== nothing
 end
-
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
 function is_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
