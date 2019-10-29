@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "Vectorize" begin
@@ -67,7 +67,15 @@ config = MOIT.TestConfig()
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(3),
                            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[2]])
     MOIT.psdt0vtest(bridged_mock, config)
+
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        MOI.set(bridged_mock, attr, ci, 2.0)
+        @test MOI.get(bridged_mock, attr, ci) == 2.0
+    end
+
     test_delete_bridge(bridged_mock, ci, 3,
                        ((MOI.VectorAffineFunction{Float64},
                          MOI.Zeros, 0),))
