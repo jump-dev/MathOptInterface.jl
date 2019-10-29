@@ -313,12 +313,15 @@ function Base.getindex(it::ScalarFunctionIterator{VQF{T}}, I::AbstractVector) wh
     return VQF(affine_terms, quadratic_terms, constant)
 end
 
-function zero_with_output_dimension(::Type{<:MOI.VectorAffineFunction{T}}, n::Integer) where T
+function zero_with_output_dimension(::Type{Vector{T}}, n::Integer) where T
+    return zeros(T, n)
+end
+function zero_with_output_dimension(::Type{MOI.VectorAffineFunction{T}}, n::Integer) where T
     return MOI.VectorAffineFunction{T}(
         MOI.VectorAffineTerm{T}[],
         zeros(T, n))
 end
-function zero_with_output_dimension(::Type{<:MOI.VectorQuadraticFunction{T}}, n::Integer) where T
+function zero_with_output_dimension(::Type{MOI.VectorQuadraticFunction{T}}, n::Integer) where T
     return MOI.VectorQuadraticFunction{T}(
         MOI.VectorAffineTerm{T}[],
         MOI.VectorQuadraticTerm{T}[],
@@ -743,11 +746,8 @@ modified.
 """
 function operate end
 
-# With only one method with `α::Union{T, AbstractVector{T}}...`, Julia v1.1.1
-# fails at precompilation with a StackOverflowError.
-operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}) where T = op(α)
-operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}, β::Union{T, AbstractVector{T}}) where T = op(α, β)
-operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}, β::Union{T, AbstractVector{T}}, γ::Union{T, AbstractVector{T}}) where T = op(α, β, γ)
+# Without `<:Number`, Julia v1.1.1 fails at precompilation with a StackOverflowError.
+operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T<:Number} = op(α...)
 
 """
     operate!(op::Function, ::Type{T},
@@ -1790,7 +1790,9 @@ function vectorize(funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}}) where 
     return VQF(affine_terms, quadratic_terms, constant)
 end
 
-
+function promote_operation(::typeof(vcat), ::Type{T}, ::Type{T}...) where T
+    return Vector{T}
+end
 function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
     return VAF{T}
