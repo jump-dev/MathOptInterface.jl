@@ -32,6 +32,7 @@ struct NLPBlockDual <: AbstractModelAttribute
     N::Int
 end
 NLPBlockDual() = NLPBlockDual(1)
+_result_index_field(attr::NLPBlockDual) = attr.N
 
 is_set_by_optimize(::NLPBlockDual) = true
 
