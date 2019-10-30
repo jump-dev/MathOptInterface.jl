@@ -6,6 +6,29 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
+@testset "Add/remove/has bridges" begin
+    T = Int
+    model = MOIU.Model{T}()
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    for BT in [MOIB.Variable.VectorizeBridge{T},
+               MOIB.Constraint.VectorizeBridge{T},
+               MOIB.Objective.FunctionizeBridge{T},
+               MOIB.Constraint.ScalarFunctionizeBridge{T}]
+        @test !MOIB.has_bridge(bridged, BT)
+        MOIB.add_bridge(bridged, BT)
+        @test MOIB.has_bridge(bridged, BT)
+        @test length(MOIB._bridge_types(bridged, BT)) == 1
+        MOIB.add_bridge(bridged, BT)
+        @test MOIB.has_bridge(bridged, BT)
+        @test length(MOIB._bridge_types(bridged, BT)) == 1
+        MOIB.remove_bridge(bridged, BT)
+        @test !MOIB.has_bridge(bridged, BT)
+        @test isempty(MOIB._bridge_types(bridged, BT))
+        err = ErrorException("Cannot remove bridge `$BT` as it was never added or was already removed.")
+        @test_throws err MOIB.remove_bridge(bridged, BT)
+    end
+end
+
 include("utilities.jl")
 
 _functionize_error(b, bridge_type, func, name) = ErrorException(
