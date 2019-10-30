@@ -390,11 +390,14 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.empty!(dest)
     @test MOIU.supports_default_copy_to(src, #=copy_names=# false)
     x, y, z = MOI.add_variables(src, 3)
+    fz = MOI.SingleVariable(z)
     a = MOI.add_constraint(src, x, MOI.EqualTo(1.0))
     b = MOI.add_constraint(src, y, MOI.EqualTo(2.0))
-    c = MOI.add_constraint(src, z, MOI.EqualTo(3.0))
-    F = MOI.SingleVariable
-    S = MOI.EqualTo{Float64}
+    F1 = MOI.SingleVariable
+    S1 = MOI.EqualTo{Float64}
+    c = MOI.add_constraint(src, MOIU.operate(vcat, Float64, 2.0fz + 1.0), MOI.Nonnegatives(1))
+    F2 = MOI.VectorAffineFunction{Float64}
+    S2 = MOI.Nonnegatives
 
     vpattr = MOI.VariablePrimalStart()
     cpattr = MOI.ConstraintPrimalStart()
@@ -402,8 +405,10 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
 
     @testset "Supports" begin
         @test MOI.supports(dest, vpattr, MOI.VariableIndex)
-        @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F, S})
-        @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F, S})
+        @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F1, S1})
+        @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F2, S2})
+        @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F1, S1})
+        @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F2, S2})
     end
 
     @testset "Attribute set to no indices" begin
@@ -413,13 +418,15 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         @test MOI.get(dest, vpattr, dict[x]) === nothing
         @test MOI.get(dest, vpattr, dict[y]) === nothing
         @test MOI.get(dest, vpattr, dict[z]) === nothing
-        @test !(cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F, S}()))
+        @test !(cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}()))
         @test MOI.get(dest, cpattr, dict[a]) === nothing
         @test MOI.get(dest, cpattr, dict[b]) === nothing
+        @test !(cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}()))
         @test MOI.get(dest, cpattr, dict[c]) === nothing
-        @test !(cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F, S}()))
+        @test !(cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}()))
         @test MOI.get(dest, cdattr, dict[a]) === nothing
         @test MOI.get(dest, cdattr, dict[b]) === nothing
+        @test !(cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}()))
         @test MOI.get(dest, cdattr, dict[c]) === nothing
     end
 
@@ -429,7 +436,7 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         MOI.set(src, cpattr, a, 1.0)
         MOI.set(src, cpattr, b, 2.0)
         MOI.set(src, cdattr, b, 2.0)
-        MOI.set(src, cdattr, c, 3.0)
+        MOI.set(src, cdattr, c, [3.0])
 
         dict = MOI.copy_to(dest, src, copy_names=false)
 
@@ -437,14 +444,15 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         @test MOI.get(dest, vpattr, dict[x]) == 1.0
         @test MOI.get(dest, vpattr, dict[y]) === nothing
         @test MOI.get(dest, vpattr, dict[z]) == 3.0
-        @test cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F, S}())
+        @test cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}())
         @test MOI.get(dest, cpattr, dict[a]) == 1.0
         @test MOI.get(dest, cpattr, dict[b]) == 2.0
         @test MOI.get(dest, cpattr, dict[c]) === nothing
-        @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F, S}())
+        @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}())
         @test MOI.get(dest, cdattr, dict[a]) === nothing
         @test MOI.get(dest, cdattr, dict[b]) == 2.0
-        @test MOI.get(dest, cdattr, dict[c]) == 3.0
+        @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        @test MOI.get(dest, cdattr, dict[c]) == [3.0]
     end
 end
 
