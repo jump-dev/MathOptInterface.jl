@@ -167,7 +167,7 @@ function copy_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
     fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.VectorOfVariables}
     for (ci_src, f_src) in zip(cis_src, fs_src)
-        if all(vi -> !haskey(idxmap, vi), f_src.variables)
+        if all(vi -> !haskey(idxmap, vi), f_src.variables) && allunique(f_src.variables)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
             vis_dest, ci_dest = MOI.add_constrained_variables(dest, set)
             idxmap[ci_src] = ci_dest
@@ -550,7 +550,7 @@ function allocate_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
     fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.VectorOfVariables}
     for (ci_src, f_src) in zip(cis_src, fs_src)
-        if all(vi -> !haskey(idxmap, vi), f_src.variables)
+        if all(vi -> !haskey(idxmap, vi), f_src.variables) && allunique(f_src.variables)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
             vis_dest, ci_dest = allocate_constrained_variables(dest, set)
             idxmap[ci_src] = ci_dest

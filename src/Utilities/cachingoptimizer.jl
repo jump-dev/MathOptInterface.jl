@@ -375,6 +375,39 @@ function MOI.delete(m::CachingOptimizer, index::MOI.Index)
     MOI.delete(m.model_cache, index)
 end
 
+function MOI.delete(m::CachingOptimizer, indices::Vector{<:MOI.Index})
+    if m.state == ATTACHED_OPTIMIZER
+        for index in indices
+            if !MOI.is_valid(m, index)
+                # The index thrown by m.model_cache would be xored
+                throw(MOI.InvalidIndex(index))
+            end
+        end
+        indices_optimizer = [m.model_to_optimizer_map[index] for index in indices]
+        if m.mode == AUTOMATIC
+            try
+                MOI.delete(m.optimizer, indices_optimizer)
+            catch err
+                if err isa MOI.NotAllowedError
+                    reset_optimizer(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            MOI.delete(m.optimizer, indices_optimizer)
+        end
+    end
+    # The state may have changed in AUTOMATIC mode since reset_optimizer is
+    # called in case the deletion is not supported
+    if m.state == ATTACHED_OPTIMIZER
+        for index in indices
+            delete!(m.optimizer_to_model_map, m.model_to_optimizer_map[index])
+            delete!(m.model_to_optimizer_map, index)
+        end
+    end
+    MOI.delete(m.model_cache, indices)
+end
 
 # TODO: add_constraints, transform
 
@@ -539,10 +572,10 @@ end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
     if state(model) == NO_OPTIMIZER
-        # TODO: Copyable attributes (e.g., `Silent`, `TimeLimitSec`) should also be
-        # stored in the cache so we could return the value stored in the cache
-        # instead. However, for non-copyable attributes( e.g. `SolverName`) the
-        # error is appropriate.
+        # TODO: Copyable attributes (e.g., `Silent`, `TimeLimitSec`,
+        # `NumberOfThreads`) should also be stored in the cache so we could
+        # return the value stored in the cache instead. However, for
+        # non-copyable attributes( e.g. `SolverName`) the error is appropriate.
         error("Cannot query $(attr) from caching optimizer because no " *
               "optimizer is attached.")
     end
@@ -575,17 +608,17 @@ end
 
 function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}) where {T <: MOI.AbstractModelAttribute}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map,MOI.get(m.optimizer, attr.attr))
+    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr))
 end
 
 function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx::MOI.Index) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map,MOI.get(m.optimizer, attr.attr, m.model_to_optimizer_map[idx]))
+    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr, m.model_to_optimizer_map[idx]))
 end
 
 function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx::Vector{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map,MOI.get(m.optimizer, attr.attr, getindex.(m.model_to_optimizer_map,idx)))
+    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr, getindex.(m.model_to_optimizer_map,idx)))
 end
 
 function MOI.set(m::CachingOptimizer, attr::AttributeFromModelCache{T}, v) where {T <: MOI.AbstractModelAttribute}
@@ -625,6 +658,14 @@ end
 function MOI.supports(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
     @assert m.state == ATTACHED_OPTIMIZER
     return MOI.supports(m.optimizer, attr.attr, idxtype)
+end
+
+function MOI.supports(caching_opt::CachingOptimizer, sub::MOI.AbstractSubmittable)
+    return caching_opt.optimizer !== nothing && MOI.supports(caching_opt.optimizer, sub)
+end
+function MOI.submit(caching_opt::CachingOptimizer, sub::MOI.AbstractSubmittable, args...)
+    MOI.submit(caching_opt.optimizer, sub,
+               map_indices.(Ref(caching_opt.model_to_optimizer_map), args)...)
 end
 
 # TODO: get and set methods to look up/set name strings

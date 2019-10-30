@@ -19,7 +19,7 @@ b1 = VariableDummyBridge(1)
 set1 = MOI.EqualTo(0.0)
 F1 = MOI.SingleVariable
 S1 = typeof(set1)
-v1, c1 = MOIB.Variable.add_key_for_bridge(map, b1, set1)
+v1, c1 = MOIB.Variable.add_key_for_bridge(map, () -> b1, set1)
 cannot_unbridge_err = ErrorException(
     "Cannot unbridge function because some variables are bridged by variable" *
     " bridges that do not support reverse mapping, e.g., `ZerosBridge`."
@@ -49,7 +49,7 @@ b2 = VariableDummyBridge(2)
 set2 = MOI.Zeros(4)
 F2 = MOI.VectorOfVariables
 S2 = typeof(set2)
-v2, c2 = MOIB.Variable.add_keys_for_bridge(map, b2, set2)
+v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
 @testset "Vector set" begin
     @test v2[1].value == c2.value == -2
     @test MOIB.Variable.has_keys(map, v2)
@@ -80,7 +80,7 @@ end
 
 b3 = VariableDummyBridge(3)
 set3 = MOI.Zeros(0)
-v3, c3 = MOIB.Variable.add_keys_for_bridge(map, b3, set3)
+v3, c3 = MOIB.Variable.add_keys_for_bridge(map, () -> b3, set3)
 @testset "Vector set of length 0" begin
     @test isempty(v3)
     @test c3.value == 0

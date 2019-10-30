@@ -74,6 +74,15 @@ AbstractSubmittable
 submit
 ```
 
+List of submittables
+
+```@docs
+LazyConstraint
+HeuristicSolutionStatus
+HeuristicSolution
+UserCut
+```
+
 ## Model Interface
 
 ```@docs
@@ -121,6 +130,11 @@ SolverName
 Silent
 TimeLimitSec
 RawParameter
+NumberOfThreads
+AbstractCallback
+LazyConstraintCallback
+HeuristicCallback
+UserCutCallback
 ```
 
 List of attributes useful for optimizers
@@ -219,6 +233,7 @@ Calls to `get` and `set` should include as an argument a single `VariableIndex` 
 VariableName
 VariablePrimalStart
 VariablePrimal
+CallbackVariablePrimal
 ```
 
 ### Constraints
@@ -258,6 +273,7 @@ SettingSingleVariableFunctionNotAllowed
 List of recognized functions.
 ```@docs
 AbstractFunction
+AbstractVectorFunction
 SingleVariable
 VectorOfVariables
 ScalarAffineTerm
@@ -334,6 +350,7 @@ DualPowerCone
 SOS1
 SOS2
 IndicatorSet
+Complements
 ```
 
 ### Matrix sets
@@ -438,6 +455,19 @@ LowerBoundAlreadySet
 UpperBoundAlreadySet
 ```
 
+As discussed in [`AbstractCallback`](@ref), trying to [`get`](@ref) attributes
+inside a callback may throw:
+```@docs
+OptimizeInProgress
+```
+
+Trying to submit the wrong type of [`AbstractSubmittable`](@ref) inside an
+[`AbstractCallback`](@ref) (e.g., a [`UserCut`](@ref) inside a
+[`LazyConstraintCallback`](@ref)) will throw:
+```@docs
+InvalidCallbackUsage
+```
+
 The rest of the errors defined in MOI fall in two categories represented by the
 following two abstract types:
 ```@docs
@@ -501,13 +531,20 @@ constraints of different types. There are two important concepts to distinguish:
   in MOI are added. This is the recommended way to use bridges in the
   [Testing guideline](@ref), and JuMP automatically calls
   [`Bridges.full_bridge_optimizer`](@ref) when attaching an optimizer.
+  [`Bridges.debug_supports_constraint`](@ref) and [`Bridges.debug_supports`](@ref)
+  allow introspection into the bridge selection rationale of
+  [`Bridges.LazyBridgeOptimizer`](@ref).
 
 ```@docs
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
 Bridges.LazyBridgeOptimizer
 Bridges.add_bridge
+Bridges.remove_bridge
+Bridges.has_bridge
 Bridges.full_bridge_optimizer
+Bridges.debug_supports_constraint
+Bridges.debug_supports
 ```
 
 ### [Variable bridges](@id variable_bridges)
@@ -626,6 +663,7 @@ Bridges.Variable.FreeBridge
 Bridges.Variable.NonposToNonnegBridge
 Bridges.Variable.VectorizeBridge
 Bridges.Variable.SOCtoRSOCBridge
+Bridges.Variable.RSOCtoSOCBridge
 Bridges.Variable.RSOCtoPSDBridge
 ```
 
@@ -712,6 +750,8 @@ Bridges.Constraint.SplitIntervalBridge
 Bridges.Constraint.RSOCBridge
 Bridges.Constraint.SOCRBridge
 Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.NormInfinityBridge
+Bridges.Constraint.NormOneBridge
 Bridges.Constraint.GeoMeanBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge
@@ -954,6 +994,12 @@ set for scalar constraints:
 Utilities.shift_constant
 Utilities.normalize_and_add_constraint
 Utilities.normalize_constant
+```
+
+The following utility identifies those constraints imposing bounds on a given
+variable, and returns those bound values:
+```@docs
+Utilities.get_bounds
 ```
 
 ## Benchmarks

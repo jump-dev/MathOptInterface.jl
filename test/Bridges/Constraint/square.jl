@@ -13,6 +13,15 @@ config = MOIT.TestConfig()
 
 @testset "Square" begin
     bridged_mock = MOIB.Constraint.Square{Float64}(mock)
+
+    MOIT.basic_constraint_tests(
+        bridged_mock, config,
+        include = [(F, S)
+                   for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
+                             MOI.VectorQuadraticFunction{Float64}]
+                   for S in [MOI.PositiveSemidefiniteConeSquare]])
+
+
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
                           (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [2, 2])
     MOIT.psds0vtest(bridged_mock, config)

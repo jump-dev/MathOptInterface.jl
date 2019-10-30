@@ -1,6 +1,14 @@
 # TODO: Move generic model tests from MOIU to here
 
-struct UnknownScalarSet <: MOI.AbstractScalarSet end
+struct UnknownScalarSet{T} <: MOI.AbstractScalarSet
+    constant::T
+end
+MOI.constant(set::UnknownScalarSet) = set.constant
+Base.copy(set::UnknownScalarSet) = UnknownScalarSet(copy(MOI.constant(set)))
+function MOIU.shift_constant(set::UnknownScalarSet, offset)
+    return UnknownScalarSet(MOI.constant(set) + offset)
+end
+
 struct UnknownVectorSet <: MOI.AbstractVectorSet end
 
 function default_objective_test(model::MOI.ModelLike)
@@ -219,6 +227,66 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, typeof(c2), "Con4") === c2
         @test MOI.get(model, MOI.ConstraintIndex, "Con4") === c2
     end
+    @testset "Duplicate names" begin
+        @testset "Variables" begin
+            MOI.empty!(model)
+            (x, y, z) = MOI.add_variables(model, 3)
+            MOI.set(model, MOI.VariableName(), x, "x")
+            MOI.set(model, MOI.VariableName(), y, "x")
+            MOI.set(model, MOI.VariableName(), z, "z")
+            @test MOI.get(model, MOI.VariableIndex, "z") == z
+            @test_throws ErrorException MOI.get(model, MOI.VariableIndex, "x")
+            MOI.set(model, MOI.VariableName(), y, "y")
+            @test MOI.get(model, MOI.VariableIndex, "x") == x
+            @test MOI.get(model, MOI.VariableIndex, "y") == y
+            MOI.set(model, MOI.VariableName(), z, "x")
+            @test_throws ErrorException MOI.get(model, MOI.VariableIndex, "x")
+            MOI.delete(model, x)
+            @test MOI.get(model, MOI.VariableIndex, "x") == z
+        end
+        @testset "SingleVariable" begin
+            MOI.empty!(model)
+            x = MOI.add_variables(model, 3)
+            c = MOI.add_constraints(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+            MOI.set(model, MOI.ConstraintName(), c[1], "x")
+            MOI.set(model, MOI.ConstraintName(), c[2], "x")
+            MOI.set(model, MOI.ConstraintName(), c[3], "z")
+            @test MOI.get(model, MOI.ConstraintIndex, "z") == c[3]
+            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
+            MOI.set(model, MOI.ConstraintName(), c[2], "y")
+            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[1]
+            @test MOI.get(model, MOI.ConstraintIndex, "y") == c[2]
+            MOI.set(model, MOI.ConstraintName(), c[3], "x")
+            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
+            MOI.delete(model, c[1])
+            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[3]
+            MOI.set(model, MOI.ConstraintName(), c[2], "x")
+            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
+            MOI.delete(model, x[3])
+            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[2]
+        end
+        @testset "ScalarAffineFunction" begin
+            MOI.empty!(model)
+            x = MOI.add_variables(model, 3)
+            fs = [
+                MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, xi)], 0.0)
+                for xi in x
+            ]
+            c = MOI.add_constraints(model, fs, MOI.GreaterThan(0.0))
+            MOI.set(model, MOI.ConstraintName(), c[1], "x")
+            MOI.set(model, MOI.ConstraintName(), c[2], "x")
+            MOI.set(model, MOI.ConstraintName(), c[3], "z")
+            @test MOI.get(model, MOI.ConstraintIndex, "z") == c[3]
+            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
+            MOI.set(model, MOI.ConstraintName(), c[2], "y")
+            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[1]
+            @test MOI.get(model, MOI.ConstraintIndex, "y") == c[2]
+            MOI.set(model, MOI.ConstraintName(), c[3], "x")
+            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
+            MOI.delete(model, c[1])
+            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[3]
+        end
+    end
 end
 
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
@@ -282,9 +350,9 @@ MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariabl
 MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[]
 
 struct BadConstraintModel <: BadModel end
-MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownScalarSet)]
-MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownScalarSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
-MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownScalarSet}) = UnknownScalarSet()
+MOI.get(::BadConstraintModel, ::MOI.ListOfConstraints) = [(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.SingleVariable, UnknownScalarSet{Float64})]
+MOI.get(::BadModel, ::MOI.ConstraintFunction, ::MOI.ConstraintIndex{MOI.SingleVariable, <:UnknownScalarSet}) = MOI.SingleVariable(MOI.VariableIndex(1))
+MOI.get(::BadModel, ::MOI.ConstraintSet, ::MOI.ConstraintIndex{MOI.SingleVariable, UnknownScalarSet{T}}) where T = UnknownScalarSet(one(T))
 
 struct UnknownModelAttribute <: MOI.AbstractModelAttribute end
 struct BadModelAttributeModel <: BadModel end
@@ -302,7 +370,7 @@ MOI.get(::BadConstraintAttributeModel, ::UnknownConstraintAttribute, ::MOI.Const
 MOI.get(::BadConstraintAttributeModel, ::MOI.ListOfConstraintAttributesSet) = MOI.AbstractConstraintAttribute[UnknownConstraintAttribute()]
 
 function failcopytestc(dest::MOI.ModelLike)
-    @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownScalarSet)
+    @test !MOI.supports_constraint(dest, MOI.SingleVariable, UnknownScalarSet{Float64})
     @test_throws MOI.UnsupportedConstraint MOI.copy_to(dest, BadConstraintModel())
 end
 function failcopytestia(dest::MOI.ModelLike)

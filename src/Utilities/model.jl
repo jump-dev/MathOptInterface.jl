@@ -37,12 +37,18 @@ end
 
 _getfun(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = f
 function _getfunction(constrs::Vector, ci::CI, i::Int)
+    if !(1 ≤ i ≤ length(constrs))
+        throw(MOI.InvalidIndex(ci))
+    end
     @assert ci.value == constrs[i][1].value
     _getfun(constrs[i]...)
 end
 
 _gets(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = s
 function _getset(constrs::Vector, ci::CI, i::Int)
+    if !(1 ≤ i ≤ length(constrs))
+        throw(MOI.InvalidIndex(ci))
+    end
     @assert ci.value == constrs[i][1].value
     _gets(constrs[i]...)
 end
@@ -474,11 +480,12 @@ end
 # 0xd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
 const UPPER_BOUND_MASK = 0xcd
 
+const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
+    MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.Interval{T},
+    MOI.Integer, MOI.ZeroOne, MOI.Semicontinuous{T}, MOI.Semiinteger{T}}
 function MOI.supports_constraint(
     ::AbstractModel{T}, ::Type{MOI.SingleVariable},
-    ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
-                   MOI.Interval{T}, MOI.Integer, MOI.ZeroOne,
-                   MOI.Semicontinuous{T}, MOI.Semiinteger{T}}}) where T
+    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return true
 end
 function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
@@ -577,12 +584,12 @@ function _add_contraint_type(list, model::AbstractModel,
 end
 function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where T
     list = broadcastvcat(_getloc, model)
-    _add_contraint_type(list, model, MOI.EqualTo{T})
-    _add_contraint_type(list, model, MOI.GreaterThan{T})
-    _add_contraint_type(list, model, MOI.LessThan{T})
-    _add_contraint_type(list, model, MOI.Interval{T})
-    _add_contraint_type(list, model, MOI.Integer)
-    _add_contraint_type(list, model, MOI.ZeroOne)
+    for S in (
+        MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.Interval{T},
+        MOI.Semicontinuous{T}, MOI.Semiinteger{T}, MOI.Integer, MOI.ZeroOne
+    )
+        _add_contraint_type(list, model, S)
+    end
     return list
 end
 
@@ -915,6 +922,9 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             con_to_name::Dict{$CI, String}
             name_to_con::Union{Dict{String, $CI}, Nothing}
             constrmap::Vector{Int} # Constraint Reference value ci -> index in array in Constraints
+            # A useful dictionary for extensions to store things. These are
+            # _not_ copied between models!
+            ext::Dict{Symbol, Any}
         end
     end
     for f in funs
@@ -1004,7 +1014,7 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
                               $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)), 0,
                               nothing, UInt8[], T[], T[], Dict{$VI, String}(),
                               nothing, 0, Dict{$CI, String}(), nothing, Int[],
-                              $(_getCV.(funs)...))
+                              Dict{Symbol, Any}(), $(_getCV.(funs)...))
         end
 
         $MOI.supports_constraint(model::$esc_model_name{T}, ::Type{<:Union{$(_typedfun.(scalar_funs)...)}}, ::Type{<:Union{$(_typedset.(scalar_sets)...)}}) where T = true
@@ -1023,7 +1033,7 @@ const LessThanIndicatorSetZero{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.L
        (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
         MOI.Semicontinuous, MOI.Semiinteger),
        (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
-        MOI.NormInfinityCone, MOI.NormOneCone,
+        MOI.Complements, MOI.NormInfinityCone, MOI.NormOneCone,
         MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
         MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,

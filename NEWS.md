@@ -1,6 +1,71 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.6 (October 25, 2019)
+---------------------
+
+- Added complementarity constraints (#913).
+- Allowed `ModelLike` objects as value of attributes (#928).
+- Testing improvements:
+  * Added `dual_objective_value` option to `MOI.Test.TestConfig` (#922).
+  * Added `InvalidIndex` tests in `basic_constraint_tests` (#921).
+  * Added tests for the constant term in indicator constraint (#929).
+- Bridges improvements:
+  * Added support for starting values for functionize bridges (#923).
+  * Added variable indices context to variable bridges (#920).
+  * Fixed a typo in printing o `debug_supports` (#927).
+
+v0.9.5 (October 9, 2019)
+---------------------
+
+- Clarified `PrimalStatus`/`DualStatus` to be `NO_SOLUTION` if `result_index` is
+  out of bounds (#912).
+- Added tolerance for checks  and use `ResultCount` + 1 for the `result_index`
+  in `MOI.Test.solve_result_status` (#910, #917).
+- Use `0.5` instead of `2.0` for power in PowerCone in `basic_constraint_test`
+  (#916).
+- Bridges improvements:
+  * Added debug utilities for unsupported variable/constraint/objective (#861).
+  * Fixed deletion of variables in bridged `VectorOfVariables` constraints (#909).
+  * Fixed `result_index` with objective bridges (#911).
+
+v0.9.4 (October 2, 2019)
+---------------------
+
+- Added solver-independent MIP callbacks (#782).
+- Implements submit for `Utilities.CachingOptimizer` and
+  `Bridges.AbstractBridgeOptimizer` (#906).
+- Added tests for result count of solution attributes (#901, #904).
+- Added `NumberOfThreads` attribute (#892).
+- Added `Utilities.get_bounds` to get the bounds on a variable (#890).
+- Added a note on duplicate coefficients in documentation (#581).
+- Added result index in `ConstraintBasisStatus` (#898).
+- Added extension dictionary to `Utilities.Model` (#884, #895).
+- Fixed deletion of constrained variables for CachingOptimizer (#905).
+- Implemented `Utilities.shift_constraint` for `Test.UnknownScalarSet` (#896).
+- Bridges improvements:
+  * Added Variable.RSOCtoSOCBridge (#907).
+  * Implemented `MOI.get` for `ConstraintFunction`/`ConstraintSet` for
+    `Bridges.Constraint.SquareBridge` (#899).
+
+v0.9.3 (September 20, 2019)
+---------------------
+
+- Fixed ambiguity detected in Julia v1.3 (#891, #893).
+- Fixed missing sets from `ListOfSupportedConstraints` (#880).
+- Fixed copy of `VectorOfVariables` constraints with duplicate indices (#886).
+- Added extension dictionary to MOIU.Model (#884).
+- Implemented `MOI.get` for function and set for `GeoMeanBridge` (#888).
+- Updated documentation for SingleVariable indices and bridges (#885).
+- Testing improvements:
+  * Added more comprehensive tests for names (#882).
+  * Added tests for `SingleVariable` duals (#883).
+  * Added tests for `DualExponentialCone` and `DualPowerCone` (#873).
+- Improvements for arbitary coefficient type:
+  * Fixed `==` for sets with mutable fields (#887).
+  * Removed some `Float64` assumptions in bridges (#878).
+  * Automatic selection of `Constraint.[Scalar|Vector]FunctionizeBridge` (#889).
+
 v0.9.2 (September 5, 2019)
 ---------------------
 

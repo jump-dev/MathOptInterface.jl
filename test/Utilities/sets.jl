@@ -1,4 +1,15 @@
-using SparseArrays
+using SparseArrays, Test
+using MathOptInterface
+const MOI = MathOptInterface
+const MOIU = MOI.Utilities
+
+@testset "Side dimension" begin
+    for side_dim in 1:10
+        set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
+        vec_dim = MOI.dimension(set)
+        @test MOIU.side_dimension_for_vectorized_dimension(vec_dim) == side_dim
+    end
+end
 
 @testset "Constant" begin
     @test MOI.constant(MOI.EqualTo(3)) == 3

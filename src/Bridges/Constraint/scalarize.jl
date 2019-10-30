@@ -17,7 +17,7 @@ function bridge_constraint(::Type{ScalarizeBridge{T, F, S}},
     new_f = MOIU.scalarize(f, true)
     constraints = Vector{CI{F, S}}(undef, dimension)
     for i in 1:dimension
-        constraints[i] = MOIU.normalize_and_add_constraint(model, new_f[i], S(-constants[i]))
+        constraints[i] = MOI.add_constraint(model, new_f[i], S(-constants[i]))
     end
     return ScalarizeBridge{T, F, S}(constraints, constants)
 end
@@ -49,31 +49,63 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::ScalarizeBridge)
-    MOI.delete.(model, bridge.scalar_constraints)
-    nothing
+    for ci in bridge.scalar_constraints
+        MOI.delete(model, ci)
+    end
+end
+function MOI.delete(model::MOI.ModelLike, bridge::ScalarizeBridge,
+                    i::IndexInVector)
+    MOI.delete(model, bridge.scalar_constraints[i.value])
+    deleteat!(bridge.scalar_constraints, i.value)
+    deleteat!(bridge.constants, i.value)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 bridge::ScalarizeBridge{T, F, S}) where {T, F, S}
+                 bridge::ScalarizeBridge{T}) where T
     func = MOIU.vectorize(MOI.get.(model, attr, bridge.scalar_constraints))
-    if F != MOI.SingleVariable
-        func = MOIU.operate!(+, T, func, bridge.constants)
+    if !(func isa MOI.VectorOfVariables)
+        # `func` is in terms of bridged variables here while in
+        # `bridge_constraint` it was in terms of the solver variables so
+        # `MOI.constant(set)` might be different than `bridge.constants[i]`.
+        for i in eachindex(bridge.scalar_constraints)
+            set = MOI.get(model, MOI.ConstraintSet(), bridge.scalar_constraints[i])
+            func = MOIU.operate_output_index!(-, T, i, func, MOI.constant(set))
+        end
     end
     return func
 end
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet,
                  bridge::ScalarizeBridge{T, F, S}) where {T, F, S}
-    return MOIU.vector_set_type(S)(length(bridge.constants))
+    return MOIU.vector_set_type(S)(length(bridge.scalar_constraints))
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart},
+    ::Type{<:ScalarizeBridge})
+
+    return true
+end
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart},
                  bridge::ScalarizeBridge)
     return MOI.get.(model, attr, bridge.scalar_constraints) .+ bridge.constants
 end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
+                 bridge::ScalarizeBridge, value)
+    # TODO do no add constant if the primal status is a ray like in Vectorize
+    return MOI.set.(model, attr, bridge.scalar_constraints, value .- bridge.constants)
+end
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart},
                  bridge::ScalarizeBridge)
     return MOI.get.(model, attr, bridge.scalar_constraints)
+end
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintDualStart,
+                 bridge::ScalarizeBridge, value)
+    return MOI.set.(model, attr, bridge.scalar_constraints, value)
 end
 function MOI.modify(model::MOI.ModelLike, bridge::ScalarizeBridge{T,F,S},
     change::MOI.VectorConstantChange{T}) where {T,F,S}

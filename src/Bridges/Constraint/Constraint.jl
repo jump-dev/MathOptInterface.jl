@@ -25,11 +25,11 @@ function MOI.Bridges.Constraint.bridge_constraint(BridgeType, b, f, s)
 end
 
 # Constraint bridges
-include("flip_sign.jl")
-const GreaterToLess{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GreaterToLessBridge{T}, OT}
-const LessToGreater{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{LessToGreaterBridge{T}, OT}
-const NonnegToNonpos{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NonnegToNonposBridge{T}, OT}
-const NonposToNonneg{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NonposToNonnegBridge{T}, OT}
+# Function conversion bridges
+include("function_conversion.jl")
+# Transformation between a set S1 and a set S2 such that A*S1 = S2 for some linear map A
+include("set_map.jl")
+
 include("vectorize.jl")
 const Vectorize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorizeBridge{T}, OT}
 include("scalarize.jl")
@@ -37,15 +37,8 @@ const Scalarize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarizeBridge{T}
 include("slack.jl")
 const ScalarSlack{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarSlackBridge{T}, OT}
 const VectorSlack{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorSlackBridge{T}, OT}
-include("functionize.jl")
-const ScalarFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ScalarFunctionizeBridge{T}, OT}
-const VectorFunctionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{VectorFunctionizeBridge{T}, OT}
 include("interval.jl")
 const SplitInterval{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SplitIntervalBridge{T}, OT}
-include("rsoc.jl")
-const RSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCBridge{T}, OT}
-include("socr.jl")
-const SOCR{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCRBridge{T}, OT}
 include("quad_to_soc.jl")
 const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}, OT}
 include("norm_to_lp.jl")

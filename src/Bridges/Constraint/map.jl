@@ -211,19 +211,16 @@ function variable_constraints(map::Map, vi::MOI.VariableIndex)
 end
 
 """
-    variable_constraints(map::Map, vis::Vector{MOI.VariableIndex})
+    vector_of_variables_constraints(map::Map)
 
-Return the list of all keys that *may* correspond to
-[`MathOptInterface.VectorOfVariables`](@ref) constraints on the variables `vis`.
+Return the list of all keys that correspond to
+[`MathOptInterface.VectorOfVariables`](@ref) constraints.
 """
-function variable_constraints(map::Map, vis::Vector{MOI.VariableIndex})
-    cis = MOI.ConstraintIndex{MOI.VectorOfVariables}[]
-    for key in keys(map.vector_of_variables_constraints)
-        if key[1] == first(vis).value
-            push!(cis, MOI.ConstraintIndex{MOI.VectorOfVariables, key[2]}(key[1]))
-        end
-    end
-    return cis
+function vector_of_variables_constraints(map::Map)
+    return MOIU.LazyMap{MOI.ConstraintIndex{MOI.VectorOfVariables}}(
+        key -> MOI.ConstraintIndex{MOI.VectorOfVariables, key[2]}(key[1]),
+        keys(map.vector_of_variables_constraints)
+    )
 end
 
 """

@@ -61,10 +61,19 @@ end
     v = MOI.add_variables(optimizer, 2)
     c1 = MOI.add_constraint(optimizer, MOI.SingleVariable(v[1]), MOI.GreaterThan(1.0))
     soc = MOI.add_constraint(optimizer, MOI.VectorOfVariables(v), MOI.SecondOrderCone(2))
-
-    err = ErrorException("No mock primal is set for variable `$(v[1])`.")
+    MOI.set(optimizer, MOI.ResultCount(), 1)
+    @test_throws(
+        ErrorException("No mock primal is set for variable `$(v[1])`."),
+        MOI.get(optimizer, MOI.VariablePrimal(), v[1])
+    )
+    @test_throws(
+        MOI.InvalidIndex(MOI.VariableIndex(-1)),
+        MOI.get(optimizer, MOI.VariablePrimal(), MOI.VariableIndex(-1))
+    )
+    MOI.set(optimizer, MOI.ResultCount(), 0)
+    err = MOI.ResultIndexBoundsError(MOI.VariablePrimal(1), 0)
     @test_throws err MOI.get(optimizer, MOI.VariablePrimal(), v[1])
-    err = ErrorException("No mock dual is set for constraint `$c1`.")
+    err = MOI.ResultIndexBoundsError(MOI.ConstraintDual(1), 0)
     @test_throws err MOI.get(optimizer, MOI.ConstraintDual(), c1)
 
     # Load fake solution

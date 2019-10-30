@@ -58,13 +58,21 @@ end
 
 # Attributes, Bridge acting as a constraint
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart},
+    ::Type{<:VectorizeBridge})
+
+    return true
+end
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart},
                  bridge::VectorizeBridge)
     x = MOI.get(model, attr, bridge.vector_constraint)
     @assert length(x) == 1
     y = x[1]
-    status = MOI.get(model, MOI.PrimalStatus(attr.N))
-    if !MOIU.is_ray(status)
+    if !(attr isa MOI.ConstraintPrimal &&
+         MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.N))))
        # If it is an infeasibility certificate, it is a ray and satisfies the
        # homogenized problem, see https://github.com/JuliaOpt/MathOptInterface.jl/issues/433
        # Otherwise, we need to add the set constant since the ConstraintPrimal
@@ -74,11 +82,20 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
    end
    return y
 end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
+                 bridge::VectorizeBridge, value)
+    MOI.set(model, attr, bridge.vector_constraint, [value - bridge.set_constant])
+end
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart},
                  bridge::VectorizeBridge)
     x = MOI.get(model, attr, bridge.vector_constraint)
     @assert length(x) == 1
     return x[1]
+end
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintDualStart,
+                 bridge::VectorizeBridge, value)
+    MOI.set(model, attr, bridge.vector_constraint, [value])
 end
 function MOI.modify(model::MOI.ModelLike, bridge::VectorizeBridge,
                     change::MOI.ScalarCoefficientChange)

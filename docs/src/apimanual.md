@@ -328,9 +328,25 @@ nonpositive) real numbers.
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
 
-By convention, solvers are not expected to support nonzero constant terms in the `ScalarAffineFunction`s the first four rows above, because they are redundant with the parameters of the sets. For example, ``2x + 1 \le 2`` should be encoded as ``2x \le 1``.
+By convention, solvers are not expected to support nonzero constant terms in the
+`ScalarAffineFunction`s the first four rows above, because they are redundant
+with the parameters of the sets. For example, ``2x + 1 \le 2`` should be encoded
+as ``2x \le 1``.
 
-Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or `Interval` sets have a natural interpretation as variable bounds. As such, it is typically not natural to impose multiple lower or upper bounds on the same variable, and by convention we do not ask solver interfaces to support this. It is natural, however, to impose upper and lower bounds separately as two different constraints on a single variable. The difference between imposing bounds by using a single `Interval` constraint and by using separate `LessThan` and `GreaterThan` constraints is that the latter will allow the solver to return separate dual multipliers for the two bounds, while the former will allow the solver to return only a single dual for the interval constraint.
+Constraints with `SingleVariable` in `LessThan`, `GreaterThan`, `EqualTo`, or
+`Interval` sets have a natural interpretation as variable bounds. As such, it is
+typically not natural to impose multiple lower or upper bounds on the same
+variable, and the solver interfaces should throw respectively
+[`LowerBoundAlreadySet`](@ref) or [`UpperBoundAlreadySet`](@ref).
+Moreover, adding two `SingleVariable` constraints on the same variable with the
+same set is impossible because they share the same index as it is the index of
+the variable, see [`ConstraintIndex`](@ref).
+It is natural, however, to impose upper and lower bounds separately as two
+different constraints on a single variable. The difference between imposing
+bounds by using a single `Interval` constraint and by using separate `LessThan`
+and `GreaterThan` constraints is that the latter will allow the solver to return
+separate dual multipliers for the two bounds, while the former will allow the
+solver to return only a single dual for the interval constraint.
 
 #### Conic constraints
 
@@ -983,19 +999,29 @@ appropriate bridges for unsupported constrained variables.
 
 #### Constraint reformulation
 
-A constraint often possesses different equivalent formulations, but a solver may only support one of them.
-It would be duplicate work to implement rewriting rules in every solver wrapper for every different formulation of the constraint to express it in the form supported by the solver.
-Constraint bridges provide a way to define a rewriting rule on top of the MOI interface which can be used by any optimizer.
-Some rules also implement constraint modifications and constraint primal and duals translations.
+A constraint can often be written in a number of equivalent formulations. For
+example, the constraint ``l \le a^\top x \le u``
+(`ScalarAffineFunction`-in-`Interval`) could be re-formulated as two
+constraints: ``a^\top x ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
+``a^\top x \le u`` (`ScalarAffineFunction`-in-`LessThan`). An alternative
+re-formulation is to add a dummy variable `y` with the constraints ``l \le y \le
+u`` (`SingleVariable`-in-`Interval`) and ``a^\top x - y = 0``
+(`ScalarAffineFunction`-in-`EqualTo`).
 
-For example, the [`Bridges.Constraint.SplitIntervalBridge`](@ref) defines the
-reformulation of a [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref)
-constraint into a [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref) and a
-[`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref) constraint.
-The `Bridges.Constraint.SplitInterval` is the bridge optimizer that applies the
-[`Bridges.Constraint.SplitIntervalBridge`](@ref) rewriting rule. Given an
-optimizer `optimizer` implementing [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref)
-and [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref), the optimizer
+To avoid each solver having to code these transformations manually,
+MathOptInterface provides *bridges*. A bridge is a small transformation from one
+constraint type to another (potentially collection of) constraint type. Because
+these bridges are included in MathOptInterface, they can be re-used by any
+optimizer. Some bridges also implement constraint modifications and constraint
+primal and dual translations.
+
+For example, the `SplitIntervalBridge` defines the reformulation of a
+`ScalarAffineFunction`-in-`Interval` constraint into a
+`ScalarAffineFunction`-in-`GreaterThan` and a
+`ScalarAffineFunction`-in-`LessThan` constraint. `SplitInterval` is the
+bridge optimizer that applies the `SplitIntervalBridge` rewriting rule. Given
+an optimizer `optimizer` implementing `ScalarAffineFunction`-in-`GreaterThan`
+and `ScalarAffineFunction`-in-`LessThan`, the optimizer
 ```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
 bridged_optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(optimizer)
 MOI.supports_constraint(bridged_optimizer, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64})
@@ -1019,8 +1045,8 @@ appropriate constraint bridges for unsupported constraints.
 
 Solver-specific attributes should either be passed to the optimizer on creation,
 e.g., `MyPackage.Optimizer(PrintLevel = 0)`, or through a sub-type of
-[`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could add
-the following:
+[`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could
+add the following:
 ```julia
 struct PrintLevel <: MOI.AbstractOptimizerAttribute end
 function MOI.set(model::Optimizer, ::PrintLevel, level::Int)
@@ -1054,6 +1080,27 @@ support creating free variables, then it should only implement
 In addition, it should implement `supports_constraint(::Optimizer,
 ::Type{VectorOfVariables}, ::Type{Reals})` and return `false` so that free
 variables are bridged, see [`supports_constraint`](@ref).
+
+### Handling duplicate coefficients
+
+Solvers should expect that functions such as `ScalarAffineFunction` and
+`VectorQuadraticFunction` may contain duplicate coefficents, for example,
+`ScalarAffineFunction([ScalarAffineTerm(x, 1), ScalarAffineTerm(x, 1)], 0.0)`.
+These duplicate terms can be aggregated by calling
+[`Utilities.canonical`](@ref).
+
+```jldoctest; setup = :(using MathOptInterface)
+x = MathOptInterface.VariableIndex(1)
+term = MathOptInterface.ScalarAffineTerm(1, x)
+func = MathOptInterface.ScalarAffineFunction([term, term], 0)
+func_canon = MathOptInterface.Utilities.canonical(func)
+func_canon ≈ MathOptInterface.ScalarAffineFunction(
+    [MathOptInterface.ScalarAffineTerm(2, x)], 0)
+
+# output
+
+true
+```
 
 ### Implementing copy
 
@@ -1115,12 +1162,18 @@ wrapper type is called `Optimizer`):
 
 ### JuMP mapping
 
-MOI defines a very general interface, with multiple possible ways to describe the same constraint. This is considered a feature, not a bug. MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level. When implementing an interface, it is important to keep in mind that the constraints which a solver supports via MOI will have a near 1-to-1 correspondence with how users can express problems in JuMP, because JuMP does not perform automatic transformations. (Alternative systems like Convex.jl do.) The following bullet points show examples of how JuMP constraints are translated into MOI function-set pairs:
+MOI defines a very general interface, with multiple possible ways to describe the same constraint.
+This is considered a feature, not a bug.
+MOI is designed to make it possible to experiment with alternative representations of an optimization problem at both the solving and modeling level.
+When implementing an interface, it is important to keep in mind that the way the user can express problems in JuMP is not directly limited by the constraints which a solver supports via MOI as JuMP performs [Automatic reformulation](@ref).
+Therefore, we recommend to only support the constraint types that directly map to a structure exploited by the solver algorithm.
+The following bullet points show examples of how JuMP constraints are translated into MOI function-set pairs:
  - `@constraint(m, 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`LessThan`;
  - `@constraint(m, 2x + y >= 10)` becomes `ScalarAffineFunction`-in-`GreaterThan`;
  - `@constraint(m, 2x + y == 10)` becomes `ScalarAffineFunction`-in-`EqualTo`;
  - `@constraint(m, 0 <= 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`Interval`;
- - `@constraint(m, 2x + y in ArbitrarySet())` becomes `ScalarAffineFunction`-in-`ArbitrarySet`.
+ - `@constraint(m, 2x + y in ArbitrarySet())` becomes
+   `ScalarAffineFunction`-in-`ArbitrarySet`.
 
 Variable bounds are handled in a similar fashion:
  - `@variable(m, x <= 1)` becomes `SingleVariable`-in-`LessThan`;
@@ -1129,17 +1182,11 @@ Variable bounds are handled in a similar fashion:
 One notable difference is that a variable with an upper and lower bound is translated into two constraints, rather than an interval. i.e.:
  - `@variable(m, 0 <= x <= 1)` becomes `SingleVariable`-in-`LessThan` *and* `SingleVariable`-in-`GreaterThan`.
 
-Therefore, if a solver wrapper does not support `ScalarAffineFunction`-in-`LessThan` constraints, users will not be able to write: `@constraint(m, 2x + y <= 10)` in JuMP. With this in mind, developers should support all the constraint types that they want to be usable from JuMP. That said, from the perspective of JuMP, solvers can safely choose to not support the following constraints:
-
-- `AbstractScalarFunction` in `GreaterThan`, `LessThan`, `EqualTo`, or
-  `Interval` with a nonzero constant in the function. Constants in the affine
-  function should instead be moved into the parameters of the corresponding
-  sets. The [`ScalarFunctionConstantNotZero`](@ref) exception may be thrown in
-  this case.
-
-- `ScalarAffineFunction` in `Nonnegative`, `Nonpositive` or `Zeros`. Alternative constraints are available by using a `VectorAffineFunction` with one output row or `ScalarAffineFunction` with `GreaterThan`, `LessThan`, or `EqualTo`.
-
-- Two `SingleVariable`-in-`LessThan` constraints applied to the same variable (similarly with `GreaterThan`). These should be interpreted as variable bounds, and each variable naturally has at most one upper or lower bound.
+Solvers are not expected to support `AbstractScalarFunction` in `GreaterThan`,
+`LessThan`, `EqualTo`, or `Interval` with a nonzero constant in the function.
+Constants in the affine function should instead be moved into the parameters of
+the corresponding sets. The [`ScalarFunctionConstantNotZero`](@ref) exception
+may be thrown in this case.
 
 ### Column Generation
 

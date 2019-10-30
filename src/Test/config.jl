@@ -5,6 +5,7 @@ struct TestConfig{T <: Number}
     query::Bool # can get objective function, and constraint functions, and constraint sets
     modify_lhs::Bool # can modify function of a constraint
     duals::Bool # test dual solutions
+    dual_objective_value::Bool # test `DualObjectiveValue`
     infeas_certificates::Bool # check for primal or dual infeasibility certificates when appropriate
     # The expected "optimal" status returned by the solver. Either
     # MOI.OPTIMAL or MOI.LOCALLY_SOLVED.
@@ -13,10 +14,10 @@ struct TestConfig{T <: Number}
     function TestConfig{T}(;
         atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true,
         query::Bool = true, modify_lhs::Bool = true, duals::Bool = true,
-        infeas_certificates::Bool = true, optimal_status = MOI.OPTIMAL,
-        basis::Bool = false) where {T <: Number}
-        new(atol, rtol, solve, query, modify_lhs, duals, infeas_certificates,
-            optimal_status, basis)
+        dual_objective_value::Bool = duals, infeas_certificates::Bool = true,
+        optimal_status = MOI.OPTIMAL, basis::Bool = false) where {T <: Number}
+        new(atol, rtol, solve, query, modify_lhs, duals, dual_objective_value,
+            infeas_certificates, optimal_status, basis)
     end
     TestConfig(;kwargs...) = TestConfig{Float64}(; kwargs...)
 end

@@ -122,6 +122,24 @@ end
                           (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone)   => [[-1., log(5)-1, 1/5]])
     MOIT.exp3test(mock, config)
 end
+@testset "Dual Exponential" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-exp(1 / 2), -exp(1 / 2) / 2, 1.0, 1 + exp(1 / 2), 1 + exp(1 / 2) / 2],
+                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1.0, -2.0, -2exp(1 / 2)])
+    MOIT.dualexp1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [-exp(1 / 2), -exp(1 / 2) / 2, 1.0, 1 + exp(1 / 2), 1 + exp(1 / 2) / 2],
+                          (MOI.VectorAffineFunction{Float64}, MOI.DualExponentialCone)   => [[1., 2.0, 2exp(1 / 2)]],
+                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1.0, -2.0, -2exp(1 / 2)])
+    MOIT.dualexp1ftest(mock, config)
+end
+@testset "Dual Power" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.9, 0.1, 1.0, -0.9, -0.1],
+                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1.0, -1.0, 1.0])
+    MOIT.dualpow1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.9, 0.1, 1.0, -0.9, -0.1],
+                          (MOI.VectorAffineFunction{Float64}, MOI.DualPowerCone{Float64})   => [[1.0, 1.0, -1.0]],
+                          (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})  => [-1.0, -1.0, 1.0])
+    MOIT.dualpow1ftest(mock, config)
+end
 @testset "PSD" begin
     # PSD0
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(3),

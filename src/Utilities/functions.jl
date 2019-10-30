@@ -73,7 +73,7 @@ function map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
     return map_indices(vi -> variable_map[vi], x)
 end
 
-const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet}
+const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet, Function, MOI.ModelLike}
 const ObjectOrTupleWithoutIndex = Union{ObjectWithoutIndex, Tuple{Vararg{ObjectWithoutIndex}}}
 const ObjectOrTupleOrArrayWithoutIndex = Union{ObjectOrTupleWithoutIndex, AbstractArray{<:ObjectOrTupleWithoutIndex}}
 
@@ -146,6 +146,18 @@ function substitute_variables end
 
 substitute_variables(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
 substitute_variables(::Function, block::MOI.NLPBlockData) = block
+
+# Used when submitting `HeuristicSolution`.
+function substitute_variables(variable_map::Function, vis::Vector{MOI.VariableIndex})
+    return substitute_variables.(variable_map, vis)
+end
+function substitute_variables(variable_map::Function, vi::MOI.VariableIndex)
+    func = variable_map(vi)
+    if func != MOI.SingleVariable(vi)
+        error("Cannot substitute `$vi` as it is bridged into `$func`.")
+    end
+    return vi
+end
 
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T
@@ -234,6 +246,7 @@ struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
 end
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
+eachscalar(f::AbstractVector) = f
 
 function Base.iterate(it::ScalarFunctionIterator, state = 1)
     if state > length(it)
@@ -300,12 +313,15 @@ function Base.getindex(it::ScalarFunctionIterator{VQF{T}}, I::AbstractVector) wh
     return VQF(affine_terms, quadratic_terms, constant)
 end
 
-function zero_with_output_dimension(::Type{<:MOI.VectorAffineFunction{T}}, n::Integer) where T
+function zero_with_output_dimension(::Type{Vector{T}}, n::Integer) where T
+    return zeros(T, n)
+end
+function zero_with_output_dimension(::Type{MOI.VectorAffineFunction{T}}, n::Integer) where T
     return MOI.VectorAffineFunction{T}(
         MOI.VectorAffineTerm{T}[],
         zeros(T, n))
 end
-function zero_with_output_dimension(::Type{<:MOI.VectorQuadraticFunction{T}}, n::Integer) where T
+function zero_with_output_dimension(::Type{MOI.VectorQuadraticFunction{T}}, n::Integer) where T
     return MOI.VectorQuadraticFunction{T}(
         MOI.VectorAffineTerm{T}[],
         MOI.VectorQuadraticTerm{T}[],
@@ -730,6 +746,9 @@ modified.
 """
 function operate end
 
+# Without `<:Number`, Julia v1.1.1 fails at precompilation with a StackOverflowError.
+operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T<:Number} = op(α...)
+
 """
     operate!(op::Function, ::Type{T},
              args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
@@ -740,6 +759,8 @@ can be modified. The return type is the same than the method
 `operate(op, T, args...)` without `!`.
 """
 function operate! end
+
+operate!(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T} = op(α...)
 
 """
     operate_output_index!(
@@ -754,6 +775,10 @@ are the same as the functions at the same output index in `func`. The first
 argument can be modified.
 """
 function operate_output_index! end
+
+function operate_output_index!(op::Function, ::Type{T}, i::Integer, x::Vector{T}, args...) where T
+    x[i] = operate!(op, T, x[i], args...)
+end
 
 """
     promote_operation(op::Function, ::Type{T},
@@ -1648,6 +1673,7 @@ function number_of_affine_terms(
     return length(f.affine_terms)
 end
 
+number_of_quadratic_terms(::Type{T}, ::Union{T, SVF, VVF, SAF{T}, VAF{T}}) where {T} = 0
 function number_of_quadratic_terms(
     ::Type{T}, f::Union{SQF{T}, VQF{T}}) where T
     return length(f.quadratic_terms)
@@ -1666,8 +1692,7 @@ function offset_term(t::MOI.VectorQuadraticTerm, offset::Int)
     return MOI.VectorQuadraticTerm(offset + t.output_index, t.scalar_term)
 end
 
-function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
-                    output_offset::Int, func::T) where T
+function fill_terms(::Vector{MOI.VectorAffineTerm{T}}, ::Int, ::Int, ::T) where T
 end
 function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
                     output_offset::Int, func::SVF) where T
@@ -1689,6 +1714,10 @@ function fill_terms(terms::Vector{MOI.VectorAffineTerm{T}}, offset::Int,
                     output_offset::Int, func::Union{SQF{T}, VQF{T}}) where T
     n = number_of_affine_terms(T, func)
     terms[offset .+ (1:n)] .= offset_term.(func.affine_terms, output_offset)
+end
+
+function fill_terms(::Vector{MOI.VectorQuadraticTerm{T}}, ::Int, ::Int,
+                    ::Union{T, SVF, VVF, SAF{T}, VAF{T}}) where T
 end
 function fill_terms(terms::Vector{MOI.VectorQuadraticTerm{T}}, offset::Int,
                     output_offset::Int, func::Union{SQF{T}, VQF{T}}) where T
@@ -1761,7 +1790,9 @@ function vectorize(funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}}) where 
     return VQF(affine_terms, quadratic_terms, constant)
 end
 
-
+function promote_operation(::typeof(vcat), ::Type{T}, ::Type{T}...) where T
+    return Vector{T}
+end
 function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
     return VAF{T}
@@ -1850,9 +1881,11 @@ function count_terms(dimension::I, terms::Vector{T}) where {I,T}
     return counting
 end
 
+tol_default(T::Type{<:Union{Integer, Rational}}) = zero(T)
+tol_default(T::Type{<:AbstractFloat}) = sqrt(eps(T))
 convert_approx(::Type{T}, func::T; kws...) where {T} = func
 function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFunction{T};
-                        tol=sqrt(eps(T))) where {T}
+                        tol=tol_default(T)) where {T}
     f = canonical(func)
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol=tol), f.terms)
     if abs(f.constant) > tol || i === nothing ||
@@ -1862,7 +1895,7 @@ function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFuncti
     return MOI.SingleVariable(f.terms[i].variable_index)
 end
 function convert_approx(::Type{MOI.VectorOfVariables}, func::MOI.VectorAffineFunction{T};
-    tol=sqrt(eps(T))) where {T}
+                        tol=tol_default(T)) where {T}
     return MOI.VectorOfVariables([convert_approx(MOI.SingleVariable, f, tol=tol).variable
                                   for f in scalarize(func)])
 end

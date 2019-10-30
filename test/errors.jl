@@ -235,4 +235,15 @@ end
     " to use a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
     " `reset_optimizer` before doing this operation if the `CachingOptimizer`" *
     " is in `MANUAL` mode."
+
+    @test sprint(
+        showerror,
+        MOI.ResultIndexBoundsError(MOI.VariablePrimal(1), 0)
+    ) == "Result index of attribute MathOptInterface.VariablePrimal(1) out of" *
+         " bounds. There are currently 0 solution(s) in the model."
+
+    @test sprint(
+        showerror,
+        MOI.InvalidCallbackUsage(MOI.LazyConstraintCallback(), MOI.UserCut(1))
+    ) == "InvalidCallbackUsage: Cannot submit $(MOI.UserCut(1)) inside a MathOptInterface.LazyConstraintCallback()."
 end

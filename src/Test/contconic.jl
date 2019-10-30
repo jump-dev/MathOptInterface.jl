@@ -58,7 +58,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -11 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -11 atol=atol rtol=rtol
         end
 
@@ -165,7 +165,7 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -82 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -82 atol=atol rtol=rtol
         end
 
@@ -358,7 +358,7 @@ function _norminf1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.5 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1.5 atol=atol rtol=rtol
         end
 
@@ -494,7 +494,7 @@ function _normone1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1 atol=atol rtol=rtol
         end
 
@@ -629,7 +629,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol=atol rtol=rtol
         end
 
@@ -707,7 +707,7 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -1/√2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -1/√2 atol=atol rtol=rtol
         end
 
@@ -829,7 +829,7 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -√5 atol=atol rtol=rtol
         end
 
@@ -918,7 +918,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol=atol rtol=rtol
         end
 
@@ -1093,7 +1093,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √ub atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √ub atol=atol rtol=rtol
         end
 
@@ -1181,7 +1181,7 @@ function rotatedsoc4test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
         end
 
@@ -1332,7 +1332,7 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1/2) atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1/2) atol=atol rtol=rtol
         end
 
@@ -1402,7 +1402,7 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ exp(-0.3) atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ exp(-0.3) atol=atol rtol=rtol
         end
 
@@ -1471,7 +1471,7 @@ function exp3test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ log(5) atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ log(5) atol=atol rtol=rtol
         end
 
@@ -1496,6 +1496,95 @@ exptests = Dict("exp1v" => exp1vtest,
                 "exp3"  => exp3test)
 
 @moitestset exp
+
+function _dualexp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem dual exp
+    # max 2x_2 + x_1
+    # s.t.
+    # x_1 + u == 1
+    # x_2 + v == 1
+    # w == 1
+    # (u, v, w) ∈ DualExponentialCone
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    if vecofvars
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.DualExponentialCone)
+    else
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.DualExponentialCone)
+    end
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    v = MOI.add_variables(model, 3)
+    x = MOI.add_variables(model, 2)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 5
+
+    vov = MOI.VectorOfVariables(v)
+    if vecofvars
+        vc = MOI.add_constraint(model, vov, MOI.DualExponentialCone())
+    else
+        vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.DualExponentialCone())
+    end
+
+    cu = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], v[1]]), 0.0), MOI.EqualTo(1.0))
+    cv = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[2], v[2]]), 0.0), MOI.EqualTo(1.0))
+    cw = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.), MOI.EqualTo(1.0))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [-exp(1 / 2), -exp(1 / 2) / 2, 1.0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1 + exp(1 / 2), 1 + exp(1 / 2) / 2] atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [-exp(1 / 2), -exp(1 / 2) / 2, 1.0] atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 1 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 1 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1 atol=atol rtol=rtol
+
+        if config.duals
+            x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
+            @test x ≈ 1.0 atol=atol rtol=rtol
+            @test y ≈ 2.0 atol=atol rtol=rtol
+            @test z ≈ 2exp(1 / 2) atol=atol rtol=rtol
+
+            @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -1 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -2  atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cw) ≈ -2exp(1 / 2) atol=atol rtol=rtol
+        end
+    end
+end
+
+dualexp1vtest(model::MOI.ModelLike, config::TestConfig) = _dualexp1test(model, config, true)
+dualexp1ftest(model::MOI.ModelLike, config::TestConfig) = _dualexp1test(model, config, false)
+
+dualexptests = Dict("dualexp1v" => dualexp1vtest,
+                    "dualexp1f" => dualexp1ftest)
+
+@moitestset dualexp
 
 function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     atol = config.atol
@@ -1580,6 +1669,104 @@ powtests = Dict("pow1v" => pow1vtest,
 
 @moitestset pow
 
+function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool; exponent::Float64 = 0.9)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem dual POW1
+    # min -x_1 - x_2
+    #  st  x_1 + u == 0
+    #      x_2 + v == 0
+    #      w == 1
+    #     (u, v, w) ∈ DualPowerCone(exponent)
+
+
+    # By the Weighted AM–GM inequality, you have
+    # 0.9a + 0.1b >= a^0.9 b^0.1
+    # with equality if and only if a == b
+    # here taking a = u/0.9 and b = v/0.1, we have
+    # u + v >= (u/0.9)^0.9 (v/0.1)^0.1
+    # with equality if and only if u/0.9 == v/0.1.
+    # Here the best you can do is u + v == 1 and for that inequality must hold so u = 9v 
+    # hence you get v = 0.1 and u = 0.9.
+    # The same works for other values of exponent as key word argument
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+
+    if vecofvars
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.DualPowerCone{Float64})
+    else
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.DualPowerCone{Float64})
+    end
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    v = MOI.add_variables(model, 3)
+    x = MOI.add_variables(model, 2)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 5
+
+    vov = MOI.VectorOfVariables(v)
+
+    if vecofvars
+        vc = MOI.add_constraint(model, vov, MOI.DualPowerCone(exponent));
+    else
+        vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.DualPowerCone(exponent))
+    end
+
+    cu = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], v[1]]), 0.0), MOI.EqualTo(0.0))
+    cv = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x[2], v[2]]), 0.0), MOI.EqualTo(0.0))
+    cw = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0), MOI.EqualTo(1.0))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0, -1.0], [x[1], x[2]]), 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [exponent, (1 - exponent), 1.] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [-exponent, -(1 - exponent)] atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [exponent, (1 - exponent), 1.0] atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1.0 atol=atol rtol=rtol
+
+        if config.duals
+            x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
+            @test x ≈ 1.0 atol=atol rtol=rtol
+            @test y ≈ 1.0 atol=atol rtol=rtol
+            @test z ≈ -1 atol=atol rtol=rtol
+
+            @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -1.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -1.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cw) ≈ 1.0 atol=atol rtol=rtol
+        end
+    end
+end
+
+
+dualpow1vtest(model::MOI.ModelLike, config::TestConfig) = _dualpow1test(model, config, true)
+dualpow1ftest(model::MOI.ModelLike, config::TestConfig) = _dualpow1test(model, config, false)
+
+dualpowtests = Dict("dualpow1v" => dualpow1vtest,
+                    "dualpow1f" => dualpow1ftest)
+
+@moitestset dualpow
+
 
 function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestConfig)
     atol = config.atol
@@ -1637,7 +1824,7 @@ function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol=atol rtol=rtol
         end
 
@@ -1785,7 +1972,7 @@ function _psd1test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestC
         end
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol=atol rtol=rtol
-        if config.duals
+        if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ obj atol=atol rtol=rtol
         end
 
@@ -2051,7 +2238,9 @@ const contconictests = Dict("lin" => lintest,
                             "rsoc" => rsoctest,
                             "geomean" => geomeantest,
                             "exp" => exptest,
+                            "dualexp" => dualexptest,
                             "pow" => powtest,
+                            "dualpow" => dualpowtest,
                             "sdp" => sdptest,
                             "logdet" => logdettest,
                             "rootdet" => rootdettest)

@@ -9,6 +9,9 @@ end
 @testset "Constraints" begin
     include("constraints.jl")
 end
+@testset "Variables" begin
+    include("variables.jl")
+end
 @testset "Model" begin
     include("model.jl")
 end

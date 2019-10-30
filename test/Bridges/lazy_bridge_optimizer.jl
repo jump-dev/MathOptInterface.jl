@@ -6,7 +6,153 @@ const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
+@testset "Add/remove/has bridges" begin
+    T = Int
+    model = MOIU.Model{T}()
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    for BT in [MOIB.Variable.VectorizeBridge{T},
+               MOIB.Constraint.VectorizeBridge{T},
+               MOIB.Objective.FunctionizeBridge{T},
+               MOIB.Constraint.ScalarFunctionizeBridge{T}]
+        @test !MOIB.has_bridge(bridged, BT)
+        MOIB.add_bridge(bridged, BT)
+        @test MOIB.has_bridge(bridged, BT)
+        @test length(MOIB._bridge_types(bridged, BT)) == 1
+        MOIB.add_bridge(bridged, BT)
+        @test MOIB.has_bridge(bridged, BT)
+        @test length(MOIB._bridge_types(bridged, BT)) == 1
+        MOIB.remove_bridge(bridged, BT)
+        @test !MOIB.has_bridge(bridged, BT)
+        @test isempty(MOIB._bridge_types(bridged, BT))
+        err = ErrorException("Cannot remove bridge `$BT` as it was never added or was already removed.")
+        @test_throws err MOIB.remove_bridge(bridged, BT)
+    end
+end
+
 include("utilities.jl")
+
+_functionize_error(b, bridge_type, func, name) = ErrorException(
+    "Need to apply a `$bridge_type` to a `$func` $name because the" *
+    " variable is bridged but $name bridges are not supported by" *
+    " `$(typeof(b))`."
+)
+
+_lazy_functionize_error(bridge_type, func, name) = ErrorException(
+    "Need to apply a `$bridge_type` to a `$func` $name because the variable is" *
+    " bridged but no such $name bridge type was added. Add one" *
+    " with `add_bridge`."
+)
+
+MOIU.@model(StandardLPModel,
+            (), (MOI.EqualTo, MOIT.UnknownScalarSet), (MOI.Nonnegatives,), (),
+            (), (MOI.ScalarAffineFunction,), (MOI.VectorOfVariables,), ())
+MOI.supports_constraint(::StandardLPModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan{T}}) where {T} = false
+MOI.supports_constraint(::StandardLPModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{T}}) where {T} = false
+MOI.supports_constraint(::StandardLPModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.EqualTo{T}}) where {T} = false
+MOI.supports_constraint(::StandardLPModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Reals}) = false
+MOI.supports(::StandardLPModel{T}, ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}) where {T} = false
+MOI.supports(::StandardLPModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
+
+@testset "Bridged variable in `SingleVariable` constraint with $S" for T in [Float64, Int], S in [MOIT.UnknownScalarSet{T}]
+    set = S(one(T))
+    @testset "No constraint bridge" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.Variable.Vectorize{T}(model)
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        err = _functionize_error(bridged, MOIB.Constraint.ScalarFunctionizeBridge, "SingleVariable", "constraint")
+        @test_throws err MOI.add_constraint(bridged, fx, set)
+    end
+    @testset "LazyBridgeOptimizer" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        @testset "without `Constraint.ScalarFunctionizeBridge`" begin
+            err = _lazy_functionize_error(MOIB.Constraint.ScalarFunctionizeBridge, "SingleVariable", "constraint")
+            @test_throws err MOI.add_constraint(bridged, fx, set)
+        end
+        @testset "with `Constraint.ScalarFunctionizeBridge`" begin
+            MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
+            cx = MOI.add_constraint(bridged, fx, set)
+            @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+            @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
+            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+            fa = MOI.SingleVariable(a)
+            ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, S}())[1]
+            @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
+            @test MOI.get(model, MOI.ConstraintSet(), ca) == MOIU.shift_constant(set, -one(T))
+        end
+    end
+end
+
+@testset "Bridged variable in `VectorOfVariables` constraint with $T" for T in [Float64, Int]
+    set = MOI.Zeros(1)
+    @testset "No constraint bridge" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.Variable.Vectorize{T}(model)
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.VectorOfVariables([x])
+        err = _functionize_error(bridged, MOIB.Constraint.VectorFunctionizeBridge, "VectorOfVariables", "constraint")
+        @test_throws err MOI.add_constraint(bridged, fx, set)
+    end
+    @testset "LazyBridgeOptimizer" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.VectorOfVariables([x])
+        @testset "without `Constraint.ScalarFunctionizeBridge`" begin
+            err = _lazy_functionize_error(MOIB.Constraint.VectorFunctionizeBridge, "VectorOfVariables", "constraint")
+            @test_throws err MOI.add_constraint(bridged, fx, set)
+        end
+        @testset "with `Constraint.ScalarFunctionizeBridge`" begin
+            MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+            cx = MOI.add_constraint(bridged, fx, set)
+            @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+            @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
+            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+            fa = MOI.SingleVariable(a)
+            ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}}())[1]
+            @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
+            @test MOI.get(model, MOI.ConstraintSet(), ca) == MOI.EqualTo(-one(T))
+        end
+    end
+end
+
+@testset "Bridged variable in `SingleVariable` objective function with $T" for T in [Float64, Int]
+    @testset "No objective bridge" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.Variable.Vectorize{T}(model)
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        err = _functionize_error(bridged, MOIB.Objective.FunctionizeBridge, "SingleVariable", "objective")
+        @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    end
+    @testset "LazyBridgeOptimizer" begin
+        model = StandardLPModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        @testset "without `Objective.FunctionizeBridge`" begin
+            err = _lazy_functionize_error(MOIB.Objective.FunctionizeBridge, "SingleVariable", "objective")
+            @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+        end
+        @testset "with `Objective.FunctionizeBridge`" begin
+            MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
+            MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+            @test MOI.get(bridged, MOI.ObjectiveFunctionType()) == MOI.SingleVariable
+            @test MOI.get(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}()) ≈ fx
+            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+            fa = MOI.SingleVariable(a)
+            @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{T}
+            @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()) ≈ fa + one(T)
+        end
+    end
+end
 
 MOIU.@model(
     LPModel,
@@ -20,6 +166,15 @@ MOIU.@model(
     MOIT.nametest(bridged)
 end
 
+@testset "Unit" begin
+    model = LPModel{Float64}()
+    bridged = MOIB.full_bridge_optimizer(model, Float64)
+    MOIT.unittest(bridged, MOIT.TestConfig(solve=false), [
+        # SOC and quadratic constraints not supported
+        "solve_qcp_edge_cases", "delete_soc_variables"
+    ])
+end
+
 # Model similar to SDPA format, it gives a good example because it does not
 # support a lot hence need a lot of bridges
 MOIU.@model(SDPAModel,
@@ -28,11 +183,12 @@ MOIU.@model(SDPAModel,
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan{T}}) where {T} = false
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{T}}) where {T} = false
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.EqualTo{T}}) where {T} = false
+MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.Interval{T}}) where {T} = false
 MOI.supports_constraint(::SDPAModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Reals}) = false
 MOI.supports(::SDPAModel{T}, ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}) where {T} = false
 MOI.supports(::SDPAModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
 
-@testset "Name test" begin
+@testset "Name test with SDPAModel{Float64}" begin
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     MOIT.nametest(bridged)
@@ -57,43 +213,6 @@ end
     with 0 constraint bridges
     with 0 objective bridges
     with inner model SDPAModel{Float64}"""
-end
-
-@testset "Bridged variable in `SingleVariable` objective function with $T" for T in [Float64, Int]
-    @testset "No objective bridge" begin
-        model = SDPAModel{T}()
-        bridged = MOIB.Variable.Vectorize{T}(model)
-        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.SingleVariable(x)
-        err = ErrorException("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge` to a" *
-            " `SingleVariable` objective function because the variable is" *
-            " bridged but objective bridges are not supported by" *
-            " `MathOptInterface.Bridges.Variable.SingleBridgeOptimizer{MathOptInterface.Bridges.Variable.VectorizeBridge{$T,S} where S,SDPAModel{$T}}`.")
-        @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-    end
-    @testset "LazyBridgeOptimizer" begin
-        model = SDPAModel{T}()
-        bridged = MOIB.LazyBridgeOptimizer(model)
-        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
-        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.SingleVariable(x)
-        @testset "without `Objective.FunctionizeBridge`" begin
-            err = ErrorException("Need to apply a `MOI.Bridges.Objective.FunctionizeBridge`" *
-                " to a `SingleVariable` objective function because the" *
-                " variable is bridged but no such objective bridge type was" *
-                " added. Add one with `add_bridge`.")
-            @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-        end
-        @testset "with `Objective.FunctionizeBridge`" begin
-            MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
-            MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-            @test MOI.get(bridged, MOI.ObjectiveFunctionType()) == MOI.SingleVariable
-            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-            fa = MOI.SingleVariable(a)
-            @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{T}
-            @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()) ≈ fa + one(T)
-        end
-    end
 end
 
 @testset "SDPA format with $T" for T in [Float64, Int]
@@ -207,24 +326,224 @@ end
     end
 end
 
-@testset "Continuous Linear" begin
-    model = SDPAModel{Float64}()
-    bridged = MOIB.full_bridge_optimizer(model, Float64)
+@testset "SDPA debug with $T" for T in [Float64, Int]
+    model = SDPAModel{T}()
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    function debug_string(f, args...)
+        s = IOBuffer()
+        f(bridged, args...; io = s)
+        return String(resize!(s.data, s.size))
+    end
+    @testset "LessThan variables" begin
+        F = MOI.SingleVariable
+        S = MOI.LessThan{T}
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == """
+Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+[1] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (1) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
+(1) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == """
+Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+[1] constrained variables in `MOI.LessThan{$T}` are not supported because:
+  Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
+  [2] constrained variables in `MOI.Nonpositives` are not supported
+  Cannot add free variables and then constrain them because:
+  (2) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
+[2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (1) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are not supported
+(1) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are not supported because no added bridge supports bridging it.
+(2) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == "Constrained variables in `MOI.LessThan{$T}` are supported.\n"
+    end
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    @testset "Interval constraint" begin
+        F = MOI.ScalarAffineFunction{T}
+        S = MOI.Interval{T}
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == """
+`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Constraint.SplitIntervalBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == """
+`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T}}` because:
+  (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+(2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
+(3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == """
+`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+[1] constrained variables in `MOI.GreaterThan{$T}` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (3) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are not supported
+[2] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (5) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
+[3] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (6) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are not supported
+(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T}}` because:
+  (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (4) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T}}` because:
+  [3] constrained variables in `MOI.Interval{$T}` are not supported
+(2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.GreaterThan{$T}}` because:
+  [1] constrained variables in `MOI.GreaterThan{$T}` are not supported
+(3) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
+(4) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.LessThan{$T}}` because:
+  [2] constrained variables in `MOI.LessThan{$T}` are not supported
+(5) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+(6) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.SingleVariable}` because:
+  (3) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (5) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
+"""
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == """
+`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+[1] constrained variables in `MOI.LessThan{$T}` are not supported because:
+  Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
+  [2] constrained variables in `MOI.Nonpositives` are not supported
+  Cannot add free variables and then constrain them because:
+  (4) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
+[2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (3) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are not supported
+[3] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (5) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are not supported
+(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T}}` because:
+  (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T}}` because:
+  [3] constrained variables in `MOI.Interval{$T}` are not supported
+(2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.LessThan{$T}}` because:
+  [1] constrained variables in `MOI.LessThan{$T}` are not supported
+(3) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are not supported because no added bridge supports bridging it.
+(4) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+(5) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.SingleVariable}` because:
+  (6) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (4) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
+(6) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == "`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are supported.\n"
+    end
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    @testset "Quadratic objective" begin
+        F = MOI.ScalarQuadraticFunction{T}
+        attr = MOI.ObjectiveFunction{F}()
+        @test debug_string(MOIB.debug_supports, attr) == """
+Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Objective.SlackBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == """
+Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
+(2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+  |2| objective function of type `MOI.SingleVariable` is not supported
+|2| objective function of type `MOI.SingleVariable` is not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.QuadtoSOCBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == """
+Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because no added bridge supports bridging it.
+(3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+"""
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorSlackBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == """
+Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
+[1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
+  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
+  [1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported
+  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+(3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because no added bridge supports bridging it.
+(4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+(5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+"""
+        MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoPSDBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == """
+Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
+(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
+  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
+  (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+(3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+(4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+  (4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+"""
+        MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
+        @test debug_string(MOIB.debug_supports, attr) == "Objective function of type `MOI.ScalarQuadraticFunction{$T}` is supported.\n"
+    end
+end
+
+@testset "Continuous Linear with SDPAModel{$T}" for T in [Float64, Rational{Int}]
+    model = SDPAModel{T}()
+    bridged = MOIB.full_bridge_optimizer(model, T)
     # For `ScalarAffineFunction`-in-`GreaterThan`,
     # `Constraint.ScalarSlackBridge` -> `Variable.VectorizeBridge`
     # is equivalent to
     # `Constraint.VectorizeBridge` -> `Constraint.VectorSlackBridge`
     # however, `Variable.VectorizeBridge` do not support modification of the
     # set hence it makes some tests of `contlineartest` fail so we disable it.
-    MOIB.remove_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{Float64})
+    MOIB.remove_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{T})
     exclude = ["partial_start"] # `VariablePrimalStart` not supported.
-    MOIT.contlineartest(bridged, MOIT.TestConfig(solve=false), exclude)
+    MOIT.contlineartest(bridged, MOIT.TestConfig{T}(solve=false), exclude)
 end
 
-@testset "Continuous Conic" begin
+@testset "Continuous Conic with SDPAModel{Float64}" begin
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
-    exclude = ["exp", "pow", "logdet", "rootdets"]
+    exclude = ["exp", "dualexp", "pow", "dualpow", "logdet", "rootdets"]
     MOIT.contconictest(bridged, MOIT.TestConfig(solve=false), exclude)
 end
 
@@ -241,6 +560,21 @@ MOIU.@model(NoRSOCModel,
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
+# We only use floating point types as there is √2
+@testset "Constrained variables in RSOC with $T" for T in [Float64, BigFloat]
+    bridged = MOIB.full_bridge_optimizer(NoRSOCModel{T}(), T)
+    @test MOI.supports_constraint(bridged, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+    # It should be selected over `MOIB.Variable.RSOCtoPSDBridge` even if they
+    # are tied in terms of number of bridges because it is added first in
+    # `MOIB.full_bridge_optimizer`.
+    @test MOIB.bridge_type(bridged, MOI.RotatedSecondOrderCone) == MOIB.Variable.RSOCtoSOCBridge{T}
+    x, cx = MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(3))
+    for i in 1:3
+        @test MOIB.bridge(bridged, x[i]) isa MOIB.Variable.RSOCtoSOCBridge{T}
+    end
+    @test MOIB.bridge(bridged, cx) isa MOIB.Variable.RSOCtoSOCBridge{T}
+end
+
 # Model not supporting VectorOfVariables and SingleVariable
 MOIU.@model(NoVariableModel,
             (MOI.ZeroOne, MOI.Integer),
@@ -251,9 +585,96 @@ MOIU.@model(NoVariableModel,
             (MOI.ScalarAffineFunction,),
             (),
             (MOI.VectorAffineFunction,))
-function MOI.supports_constraint(::NoVariableModel, ::Type{MOI.SingleVariable},
-                                 ::Type{<:MOI.AbstractScalarSet})
+function MOI.supports_constraint(::NoVariableModel{T}, ::Type{MOI.SingleVariable},
+                                 ::Type{<:MOIU.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return false
+end
+MOIU.@model(OnlyNonnegVAF,
+            (), (), (MOI.Nonnegatives,), (),
+            (), (), (), (MOI.VectorAffineFunction,))
+function MOI.supports_constraint(::OnlyNonnegVAF{T}, ::Type{MOI.SingleVariable},
+                                 ::Type{<:MOIU.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
+    return false
+end
+struct InvariantUnderFunctionConversionAttribute <: MOI.AbstractConstraintAttribute end
+MOIB.Constraint.invariant_under_function_conversion(::InvariantUnderFunctionConversionAttribute) = true
+function _dict(model::OnlyNonnegVAF)
+    if !haskey(model.ext, :InvariantUnderFunctionConversionAttribute)
+        model.ext[:InvariantUnderFunctionConversionAttribute] = Dict{MOI.ConstraintIndex, Any}()
+    end
+    return model.ext[:InvariantUnderFunctionConversionAttribute]
+end
+function MOI.set(model::OnlyNonnegVAF,
+                 ::InvariantUnderFunctionConversionAttribute,
+                 ci::MOI.ConstraintIndex, value)
+    _dict(model)[ci] = value
+end
+function MOI.get(model::OnlyNonnegVAF,
+                 ::InvariantUnderFunctionConversionAttribute,
+                 ci::MOI.ConstraintIndex)
+    return _dict(model)[ci]
+end
+
+@testset "Context of substitution with $T" for T in [Float32, Float64]
+    @testset "Attribute" begin
+        # Two Variable bridge in context
+        model = OnlyNonnegVAF{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        x, cx = MOI.add_constrained_variable(bridged, MOI.LessThan(one(T)))
+        fx = MOI.SingleVariable(x)
+        vectorize = MOIB.bridge(bridged, x)
+        @test vectorize isa MOIB.Variable.VectorizeBridge
+        y = vectorize.variable
+        fy = MOI.SingleVariable(y)
+        flip = MOIB.bridge(bridged, y)
+        @test flip isa MOIB.Variable.NonposToNonnegBridge
+        Z = flip.flipped_variables
+        z = Z[1]
+        fz = MOI.SingleVariable(z)
+        vov_ci = flip.flipped_constraint
+        functionize = MOIB.bridge(bridged, vov_ci)
+        @test functionize isa MOIB.Constraint.VectorFunctionizeBridge
+        aff_ci = functionize.constraint
+
+        f(vi) = MOIB.Variable.unbridged_function(MOIB.Variable.bridges(bridged), vi)
+        @test f(y) ≈ one(T) * fx - one(T)
+        @test MOIB.call_in_context(bridged, x, bridge -> f(y)) === nothing
+        @test MOIB.call_in_context(bridged, y, bridge -> f(y)) === nothing
+        @test f(z) ≈ -one(T) * fy
+        @test MOIB.call_in_context(bridged, x, bridge -> f(z)) ≈ f(z)
+        @test MOIB.call_in_context(bridged, y, bridge -> f(z)) === nothing
+
+
+        attr = InvariantUnderFunctionConversionAttribute()
+        for func in [T(2) * fx, T(2) * fy, T(2) * fz]
+            MOI.set(model, attr, aff_ci, func)
+            @test MOI.get(model, attr, aff_ci) ≈ func
+            @test MOIB.call_in_context(bridged, vov_ci, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ func
+            @test MOIB.call_in_context(bridged, y, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ func
+            #@test MOIB.call_in_context(bridged, z, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ func
+        end
+    end
+    @testset "Delete" begin
+        # One Variable bridge in context
+        model = NoVariableModel{T}()
+        bridged = MOIB.LazyBridgeOptimizer(model)
+        MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoSOCBridge{T})
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+        x, cx = MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(4))
+        y = MOI.add_variable(bridged)
+        @test MOI.get(bridged, MOI.NumberOfVariables()) == 5
+        @test MOI.is_valid(bridged, y)
+        MOI.delete(bridged, y)
+        @test MOI.get(bridged, MOI.NumberOfVariables()) == 4
+        @test !MOI.is_valid(bridged, y)
+        test_delete_bridged_variables(bridged, x, MOI.RotatedSecondOrderCone, 4, (
+            (MOI.VectorOfVariables, MOI.SecondOrderCone, 0),
+            (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone, 0)
+        ))
+    end
 end
 
 # Only supports GreaterThan and Nonnegatives

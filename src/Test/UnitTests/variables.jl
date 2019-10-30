@@ -89,6 +89,86 @@ end
 unittests["delete_variables"] = delete_variable
 
 """
+    delete_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+
+Test adding, and then deleting, nonnegative variables.
+"""
+function delete_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    MOI.delete(model, v)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    @test !MOI.is_valid(model, v[1])
+    @test_throws MOI.InvalidIndex(v[1]) MOI.delete(model, v[1])
+    @test !MOI.is_valid(model, v[2])
+    @test_throws MOI.InvalidIndex(v[2]) MOI.delete(model, v[2])
+    @test !MOI.is_valid(model, cv)
+    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    MOI.delete(model, v[1])
+    @test !MOI.is_valid(model, v[1])
+    @test_throws MOI.InvalidIndex(v[1]) MOI.delete(model, v[1])
+    @test !MOI.is_valid(model, cv)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+end
+unittests["delete_nonnegative_variables"] = delete_nonnegative_variables
+
+"""
+    update_dimension_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+
+Test adding, and then deleting one by one, nonnegative variables.
+"""
+function update_dimension_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    MOI.delete(model, v[1])
+    @test !MOI.is_valid(model, v[1])
+    @test_throws MOI.InvalidIndex(v[1]) MOI.delete(model, v[1])
+    @test MOI.is_valid(model, cv)
+    @test MOI.is_valid(model, v[2])
+    @test MOI.get(model, MOI.ConstraintFunction(), cv) == MOI.VectorOfVariables([v[2]])
+    @test MOI.get(model, MOI.ConstraintSet(), cv) == MOI.Nonnegatives(1)
+    MOI.delete(model, v[2])
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    @test !MOI.is_valid(model, v[1])
+    @test_throws MOI.InvalidIndex(v[1]) MOI.delete(model, v[1])
+    @test !MOI.is_valid(model, v[2])
+    @test_throws MOI.InvalidIndex(v[2]) MOI.delete(model, v[2])
+    @test !MOI.is_valid(model, cv)
+end
+unittests["update_dimension_nonnegative_variables"] = update_dimension_nonnegative_variables
+
+"""
+    delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
+
+Test adding, and then deleting, second-order cone variables.
+"""
+function delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    v, cv = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 3
+    MOI.delete(model, v)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    @test !MOI.is_valid(model, v[1])
+    @test_throws MOI.InvalidIndex(v[1]) MOI.delete(model, v[1])
+    @test !MOI.is_valid(model, v[2])
+    @test_throws MOI.InvalidIndex(v[2]) MOI.delete(model, v[2])
+    @test !MOI.is_valid(model, cv)
+    v, cv = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 3
+    @test_throws MOI.DeleteNotAllowed MOI.delete(model, v[1])
+end
+unittests["delete_soc_variables"] = delete_soc_variables
+
+"""
     getvariable(model::MOI.ModelLike, config::TestConfig)
 
 Test getting variables by name.

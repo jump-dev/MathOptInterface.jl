@@ -4,6 +4,11 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
+@testset "Basic constraint tests" begin
+    model = MOIU.Model{Float64}()
+    MOIT.basic_constraint_tests(model, MOIT.TestConfig())
+end
+
 # We need to test this in a module at the top level because it can't be defined
 # in a testset. If it runs without error, then we're okay.
 module TestExternalModel
@@ -250,4 +255,31 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
         # function not implemented
         @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
     end
+end
+
+@testset "ListOfSupportedConstraints" begin
+    @testset "$set" for set in (
+        MOI.EqualTo(1.0), MOI.GreaterThan(1.0), MOI.LessThan(1.0),
+        MOI.Interval(1.0, 2.0), MOI.Semicontinuous(1.0, 2.0),
+        MOI.Semiinteger(1.0, 2.0), MOI.Integer(), MOI.ZeroOne()
+    )
+        model = MOIU.Model{Float64}()
+        x = MOI.add_variable(model)
+        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+        @test MOI.get(model, MOI.ListOfConstraints()) ==
+            [(MOI.SingleVariable, typeof(set))]
+    end
+end
+
+@testset "Extension dictionary" begin
+    model = MOIU.Model{Float64}()
+    model.ext[:my_store] = 1
+    @test model.ext[:my_store] == 1
+    MOI.empty!(model)
+    @test model.ext[:my_store] == 1
+    model.ext[:my_store] = 2
+    dest = MOIU.Model{Float64}()
+    MOI.copy_to(dest, model)
+    @test !haskey(dest.ext, :my_store)
+    @test model.ext[:my_store] == 2
 end

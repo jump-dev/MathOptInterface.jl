@@ -39,6 +39,11 @@ const MOIU = MOI.Utilities
         "Cannot query $(attr) from caching optimizer because no optimizer" *
         " is attached.")
     @test_throws exception MOI.get(model, attr)
+    attr = MOI.NumberOfThreads()
+    exception = ErrorException(
+        "Cannot query $(attr) from caching optimizer because no optimizer" *
+        " is attached.")
+    @test_throws exception MOI.get(model, attr)
     attr = MOI.ResultCount()
     exception = ErrorException(
         "Cannot query $(attr) from caching optimizer because no optimizer" *
@@ -51,36 +56,49 @@ end
     cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
     MOI.set(cached, MOI.Silent(), true)
     MOI.set(cached, MOI.TimeLimitSec(), 0.0)
+    MOI.set(cached, MOI.NumberOfThreads(), 1)
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 1
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 1
     MOI.set(cached, MOI.Silent(), false)
     MOI.set(cached, MOI.TimeLimitSec(), 1.0)
+    MOI.set(cached, MOI.NumberOfThreads(), 2)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
     @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 2
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 2
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
     @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 2
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 2
     MOI.set(cached, MOI.Silent(), true)
     MOI.set(cached, MOI.TimeLimitSec(), 0.0)
+    MOI.set(cached, MOI.NumberOfThreads(), 1)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 1
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 1
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
     @test MOI.get(mock, MOI.Silent())
     @test MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(mock, MOI.NumberOfThreads()) == 1
+    @test MOI.get(cached, MOI.NumberOfThreads()) == 1
 end
 
 struct DummyModelAttribute <: MOI.AbstractModelAttribute end
@@ -93,6 +111,7 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
     model = MOIU.CachingOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()), mock)
     x = MOI.add_variable(model)
     y = first(MOI.get(mock, MOI.ListOfVariableIndices()))
+    @test x != y # Otherwise, these tests will trivially pass
     @test !MOI.is_valid(model, y)
     @test !MOI.is_valid(mock, x)
     fx = MOI.SingleVariable(x)
@@ -153,6 +172,42 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         MOI.set(model, attr, [cache_index], [3.0fx])
         @test MOI.get(model, attr, [cache_index])[1] ≈ 3.0fx
         @test MOI.get(mock, attr, [optimizer_index])[1] ≈ 3.0fy
+    end
+
+    @testset "RawSolver" begin
+        MOI.get(model, MOI.RawSolver()) === mock
+    end
+
+    @testset "HeuristicCallback" begin
+        attr = MOI.HeuristicCallback()
+        f(callback_data) = nothing
+        MOI.set(model, attr, f)
+        @test MOI.get(model, attr) === f
+    end
+
+    @testset "CallbackVariablePrimal" begin
+        attr = MOI.CallbackVariablePrimal(nothing)
+        err = ErrorException("No mock callback primal is set for variable `$y`.")
+        @test_throws err MOI.get(model, attr, x)
+        MOI.set(mock, attr, y, 1.0)
+        @test_throws MOI.InvalidIndex(x) MOI.get(mock, attr, x)
+        @test MOI.get(mock, attr, y) == 1.0
+        @test MOI.get(model, attr, x) == 1.0
+    end
+
+    @testset "LazyConstraint" begin
+        sub = MOI.LazyConstraint(nothing)
+        @test MOI.supports(model, sub)
+        MOI.submit(model, sub, 2.0fx, MOI.GreaterThan(1.0))
+        @test mock.submitted[sub][1][1] ≈ 2.0fy
+        @test mock.submitted[sub][1][2] == MOI.GreaterThan(1.0)
+    end
+    @testset "HeuristicSolution" begin
+        sub = MOI.HeuristicSolution(nothing)
+        @test MOI.supports(model, sub)
+        MOI.submit(model, sub, [x], [1.0])
+        @test mock.submitted[sub][1][1] == [y]
+        @test mock.submitted[sub][1][2] == [1.0]
     end
 
     nlp_data = MOI.NLPBlockData(

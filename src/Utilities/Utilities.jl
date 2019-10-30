@@ -30,6 +30,7 @@ include("sets.jl")
 include("constraints.jl")
 include("copy.jl")
 include("results.jl")
+include("variables.jl")
 
 include("model.jl")
 include("parser.jl")

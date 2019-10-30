@@ -45,7 +45,7 @@ function MOI.get(model::MOI.ModelLike,
                  attr::MOIB.ObjectiveFunctionValue{MOI.SingleVariable},
                  bridge::FunctionizeBridge{T}) where T
     F = MOI.ScalarAffineFunction{T}
-    return MOI.get(model, MOIB.ObjectiveFunctionValue{F}())
+    return MOI.get(model, MOIB.ObjectiveFunctionValue{F}(attr.result_index))
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ObjectiveFunction{MOI.SingleVariable},
                  bridge::FunctionizeBridge{T}) where T
