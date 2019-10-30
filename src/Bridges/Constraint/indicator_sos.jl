@@ -23,7 +23,7 @@ end
 function bridge_constraint(::Type{IndicatorSOS1Bridge{T,BC,MaybeBC}}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, BC}) where {T <: Real, BC, MaybeBC}
     f_scalars = MOIU.eachscalar(f)
     (w, bound_constraint) = _add_bound_constraint!(model, BC)
-    z = convert(MOI.SingleVariable, f_scalars[1])
+    z = convert(MOI.SingleVariable, f_scalars[1]).variable
     sos_vector = MOI.VectorOfVariables([w, z])
     sos_constraint = MOI.add_constraint(model, sos_vector, MOI.SOS1{T}([0.4, 0.6]))
     affine_func = f_scalars[2]
