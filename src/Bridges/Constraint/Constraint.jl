@@ -56,6 +56,7 @@ const SOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoPSDBridge{T}, 
 const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}, OT}
 include("indicator_activate_on_zero.jl")
 include("indicator_sos.jl")
+const IndicatortoSOS1{T, BC <: MOI.AbstractScalarSet, MaybeBC} = SingleBridgeOptimizer{IndicatorSOS1Bridge{T, BC, MaybeBC}}
 
 """
     add_all_bridges(bridged_model, ::Type{T})
