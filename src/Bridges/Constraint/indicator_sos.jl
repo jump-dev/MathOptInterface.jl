@@ -55,8 +55,7 @@ function MOIB.added_constrained_variable_types(::Type{<:IndicatorSOS1Bridge{T, B
 end
 
 function MOIB.added_constraint_types(::Type{<:IndicatorSOS1Bridge{T, BC}}) where {T, BC <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}}}
-    return [(MOI.SingleVariable, BC),
-            (MOI.VectorOfVariables, MOI.SOS1{T}),
+    return [(MOI.VectorOfVariables, MOI.SOS1{T}),
             (MOI.ScalarAffineFunction{T}, BC),
             ]
 end
