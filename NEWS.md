@@ -1,6 +1,20 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.7 (October 30, 2019)
+---------------------
+
+- Implemented `_result_index_field` for `NLPBlockDual` (#934).
+- Fixed copy of model with starting values for vector constraints (#941).
+- Bridges improvements:
+  * Improved performance of `add_bridge` and added `has_bridge` (#935).
+  * Added `AbstractSetMapBridge` for bridges between sets `S1`, `S2` such that
+    there is a linear map `A` such that `A*S1 = S2` (#933).
+  * Added support for starting values for `FlipSignBridge`, `VectorizeBridge`,
+    `ScalarizeBridge`, `SlackBridge`, `SplitIntervalBridge`, `RSOCBridge`,
+    `SOCRBridge` `NormInfinityBridge`, `SOCtoPSDBridge` and `RSOCtoPSDBridge`
+    (#933, #936, #937, #938, #939).
+
 v0.9.6 (October 25, 2019)
 ---------------------
 
