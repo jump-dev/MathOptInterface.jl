@@ -38,16 +38,40 @@ function MOI.delete(model::MOI.ModelLike, c::SplitIntervalBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, c::SplitIntervalBridge)
-    # lower and upper should give the same value
-    return MOI.get(model, attr, c.lower)
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart},
+    ::Type{<:SplitIntervalBridge})
+
+    return true
 end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::SplitIntervalBridge)
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart},
+                 bridge::SplitIntervalBridge)
+    # lower and upper should give the same value
+    return MOI.get(model, attr, bridge.lower)
+end
+function MOI.set(model::MOI.ModelLike, a::MOI.ConstraintPrimalStart,
+                 bridge::SplitIntervalBridge, value)
+    MOI.set(model, a, bridge.lower, value)
+    MOI.set(model, a, bridge.upper, value)
+end
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart},
+                 bridge::SplitIntervalBridge)
     # Should be nonnegative
-    lower_dual = MOI.get(model, MOI.ConstraintDual(), c.lower)
+    lower_dual = MOI.get(model, attr, bridge.lower)
     # Should be nonpositive
-    upper_dual = MOI.get(model, MOI.ConstraintDual(), c.upper)
+    upper_dual = MOI.get(model, attr, bridge.upper)
     return lower_dual > -upper_dual ? lower_dual : upper_dual
+end
+function MOI.set(model::MOI.ModelLike, a::MOI.ConstraintDualStart,
+                 bridge::SplitIntervalBridge, value)
+    if value < 0
+        MOI.set(model, a, bridge.lower, 0.0)
+        MOI.set(model, a, bridge.upper, value)
+    else
+        MOI.set(model, a, bridge.lower, value)
+        MOI.set(model, a, bridge.upper, 0.0)
+    end
 end
 
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, c::SplitIntervalBridge)

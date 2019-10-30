@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 config_with_basis = MOIT.TestConfig(basis = true)
 
@@ -67,6 +67,29 @@ config_with_basis = MOIT.TestConfig(basis = true)
     MOI.modify(bridged_mock, ci, MOI.ScalarCoefficientChange(vis[2], 1.0))
     modified_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(ones(2), vis), 0.0)
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ modified_f
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        MOI.set(bridged_mock, attr, ci, 2.0)
+        @test MOI.get(bridged_mock, attr, ci) == 2.0
+        bridge = MOIB.bridge(bridged_mock, ci)
+        if attr isa MOI.ConstraintPrimalStart
+            @test MOI.get(bridged_mock, attr, bridge.lower) == 2.0
+            @test MOI.get(bridged_mock, attr, bridge.upper) == 2.0
+        else
+            @test MOI.get(bridged_mock, attr, bridge.lower) == 2.0
+            @test MOI.get(bridged_mock, attr, bridge.upper) == 0.0
+        end
+        MOI.set(bridged_mock, attr, ci, -2.0)
+        @test MOI.get(bridged_mock, attr, ci) == -2.0
+        if attr isa MOI.ConstraintPrimalStart
+            @test MOI.get(bridged_mock, attr, bridge.lower) == -2.0
+            @test MOI.get(bridged_mock, attr, bridge.upper) == -2.0
+        else
+            @test MOI.get(bridged_mock, attr, bridge.lower) == 0.0
+            @test MOI.get(bridged_mock, attr, bridge.upper) == -2.0
+        end
+    end
 
     test_delete_bridge(bridged_mock, ci, 2, ((MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
                                             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},    0)))
