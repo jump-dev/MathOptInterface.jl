@@ -23,14 +23,11 @@ end
 function bridge_constraint(::Type{IndicatorSOS1Bridge{T,BC,MaybeBC}}, model::MOI.ModelLike, f::MOI.VectorAffineFunction{T}, s::MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, BC}) where {T <: Real, BC, MaybeBC}
     f_scalars = MOIU.eachscalar(f)
     (w, bound_constraint) = _add_bound_constraint!(model, BC)
-    z = f_scalars[1].terms[1].variable_index
+    z = convert(MOI.SingleVariable, f_scalars[1])
     sos_vector = MOI.VectorOfVariables([w, z])
     sos_constraint = MOI.add_constraint(model, sos_vector, MOI.SOS1{T}([0.4, 0.6]))
-    affine_func = copy(f_scalars[2])
-    push!(
-        affine_func.terms,
-        MOI.ScalarAffineTerm{T}(one(T), w)
-    )
+    affine_func = f_scalars[2]
+    MOIU.operate!(+, T, affine_func, MOI.SingleVariable(w))
     linear_constraint = MOI.add_constraint(model, affine_func, s.set)
     return IndicatorSOS1Bridge{T,BC,MaybeBC}(w, bound_constraint, sos_constraint, linear_constraint)
 end
@@ -80,10 +77,4 @@ function concrete_bridge_type(::Type{<:IndicatorSOS1Bridge{T}},
                               ::Type{<:MOI.VectorAffineFunction},
                               ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S}}) where {T, S <: MOI.AbstractScalarSet}
     return IndicatorSOS1Bridge{T, S, Nothing}
-end
-
-function concrete_bridge_type(::Type{<:IndicatorSOS1Bridge},
-                              ::Type{<:MOI.VectorAffineFunction},
-                              ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, S}}) where {S <: MOI.AbstractScalarSet}
-    return IndicatorSOS1Bridge{Float64, S, Nothing}
 end
