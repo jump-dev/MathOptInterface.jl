@@ -246,6 +246,7 @@ struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
 end
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
+eachscalar(f::AbstractVector) = f
 
 function Base.iterate(it::ScalarFunctionIterator, state = 1)
     if state > length(it)
@@ -312,12 +313,15 @@ function Base.getindex(it::ScalarFunctionIterator{VQF{T}}, I::AbstractVector) wh
     return VQF(affine_terms, quadratic_terms, constant)
 end
 
-function zero_with_output_dimension(::Type{<:MOI.VectorAffineFunction{T}}, n::Integer) where T
+function zero_with_output_dimension(::Type{Vector{T}}, n::Integer) where T
+    return zeros(T, n)
+end
+function zero_with_output_dimension(::Type{MOI.VectorAffineFunction{T}}, n::Integer) where T
     return MOI.VectorAffineFunction{T}(
         MOI.VectorAffineTerm{T}[],
         zeros(T, n))
 end
-function zero_with_output_dimension(::Type{<:MOI.VectorQuadraticFunction{T}}, n::Integer) where T
+function zero_with_output_dimension(::Type{MOI.VectorQuadraticFunction{T}}, n::Integer) where T
     return MOI.VectorQuadraticFunction{T}(
         MOI.VectorAffineTerm{T}[],
         MOI.VectorQuadraticTerm{T}[],
@@ -742,6 +746,9 @@ modified.
 """
 function operate end
 
+# Without `<:Number`, Julia v1.1.1 fails at precompilation with a StackOverflowError.
+operate(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T<:Number} = op(α...)
+
 """
     operate!(op::Function, ::Type{T},
              args::Union{T, MOI.AbstractFunction}...)::MOI.AbstractFunction where T
@@ -752,6 +759,8 @@ can be modified. The return type is the same than the method
 `operate(op, T, args...)` without `!`.
 """
 function operate! end
+
+operate!(op::Function, ::Type{T}, α::Union{T, AbstractVector{T}}...) where {T} = op(α...)
 
 """
     operate_output_index!(
@@ -766,6 +775,10 @@ are the same as the functions at the same output index in `func`. The first
 argument can be modified.
 """
 function operate_output_index! end
+
+function operate_output_index!(op::Function, ::Type{T}, i::Integer, x::Vector{T}, args...) where T
+    x[i] = operate!(op, T, x[i], args...)
+end
 
 """
     promote_operation(op::Function, ::Type{T},
@@ -1777,7 +1790,9 @@ function vectorize(funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}}) where 
     return VQF(affine_terms, quadratic_terms, constant)
 end
 
-
+function promote_operation(::typeof(vcat), ::Type{T}, ::Type{T}...) where T
+    return Vector{T}
+end
 function promote_operation(::typeof(vcat), ::Type{T},
                            ::Type{<:Union{ScalarAffineLike{T}, VVF, VAF{T}}}...) where T
     return VAF{T}

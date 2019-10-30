@@ -748,6 +748,8 @@ Bridges.Constraint.SplitIntervalBridge
 Bridges.Constraint.RSOCBridge
 Bridges.Constraint.SOCRBridge
 Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.NormInfinityBridge
+Bridges.Constraint.NormOneBridge
 Bridges.Constraint.GeoMeanBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge

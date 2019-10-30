@@ -58,6 +58,7 @@ config_with_basis = MOIT.TestConfig(basis = true)
 
         @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
             for ci in cis
+                @test MOI.supports(bridged_mock, attr, typeof(ci))
                 MOI.set(bridged_mock, attr, ci, 2.0)
                 @test MOI.get(bridged_mock, attr, ci) == 2.0
             end
@@ -126,6 +127,7 @@ end
         @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.Nonnegatives(2)
 
         @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+            @test MOI.supports(bridged_mock, attr, typeof(ci))
             MOI.set(bridged_mock, attr, ci, [1.0, 2.0])
             @test MOI.get(bridged_mock, attr, ci) == [1.0, 2.0]
         end

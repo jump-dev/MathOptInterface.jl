@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "GreaterToLess" begin
@@ -22,12 +22,19 @@ config = MOIT.TestConfig()
                    for S in [MOI.GreaterThan{Float64}]])
 
     MOIU.set_mock_optimize!(mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]))
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100.0, 0.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100.0, -100.0]))
     MOIT.linear6test(bridged_mock, config)
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        MOI.set(bridged_mock, attr, ci, 2.0)
+        @test MOI.get(bridged_mock, attr, ci) ≈ 2.0
+    end
+
     test_delete_bridge(bridged_mock, ci, 2,
                        ((MOI.ScalarAffineFunction{Float64},
                          MOI.LessThan{Float64}, 1),))
@@ -72,6 +79,13 @@ end
     MOIT.solve_coef_scalaraffine_lessthan(bridged_mock, config)
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        MOI.set(bridged_mock, attr, ci, 2.0)
+        @test MOI.get(bridged_mock, attr, ci) ≈ 2.0
+    end
+
     test_delete_bridge(bridged_mock, ci, 1,
                        ((MOI.ScalarAffineFunction{Float64},
                          MOI.GreaterThan{Float64}, 0),))
@@ -88,9 +102,9 @@ end
                    for S in [MOI.Nonnegatives]])
 
     MOIU.set_mock_optimize!(mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]))
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100.0, 0.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100.0, -100.0]))
     MOIT.linear7test(bridged_mock, config)
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()))
@@ -99,8 +113,8 @@ end
                          MOI.Nonpositives, 1),))
 
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.0, 2.0],
-        (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0, -2, 0]],
-        (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[-3, -1]])
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0.0, -2.0, 0.0]],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros)        => [[-3.0, -1.0]])
     MOIT.lin1vtest(bridged_mock, config)
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.Nonnegatives}()))
     func = MOI.get(bridged_mock, MOI.ConstraintFunction(), ci)
@@ -108,6 +122,13 @@ end
     new_func = MOI.VectorOfVariables(func.variables[[1, 3]])
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) == new_func
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.Nonnegatives(2)
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        MOI.set(bridged_mock, attr, ci, [1.0, 2.0])
+        @test MOI.get(bridged_mock, attr, ci) ≈ [1.0, 2.0]
+    end
+
     test_delete_bridge(bridged_mock, ci, 2,
         ((MOI.VectorAffineFunction{Float64}, MOI.Nonpositives, 0),))
 end
@@ -123,9 +144,9 @@ end
                    for S in [MOI.Nonpositives]])
 
     MOIU.set_mock_optimize!(mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]))
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100.0, 0.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100.0, -100.0]))
     MOIT.linear7test(bridged_mock, config)
 
     MOIU.set_mock_optimize!(mock,
@@ -149,6 +170,13 @@ end
     MOIT.solve_multirow_vectoraffine_nonpos(bridged_mock, config)
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonpositives}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        MOI.set(bridged_mock, attr, ci, [1.0, 2.0])
+        @test MOI.get(bridged_mock, attr, ci) ≈ [1.0, 2.0]
+    end
+
     test_delete_bridge(bridged_mock, ci, 1,
                        ((MOI.VectorAffineFunction{Float64},
                          MOI.Nonnegatives, 0),))
