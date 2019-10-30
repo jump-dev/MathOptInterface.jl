@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "Scalarize" begin
@@ -36,6 +36,14 @@ config = MOIT.TestConfig()
     new_func = MOI.VectorOfVariables(func.variables[[1, 3]])
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) == new_func
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.Nonnegatives(2)
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        values = [1.0, 2.0]
+        MOI.set(bridged_mock, attr, ci, values)
+        @test MOI.get(bridged_mock, attr, ci) == values
+    end
+
     test_delete_bridge(bridged_mock, ci, 2,
         ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
          (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0)))
@@ -46,11 +54,29 @@ config = MOIT.TestConfig()
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0, 2, 0],
         (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})     => [-3, -1])
     MOIT.lin1ftest(bridged_mock, config)
+
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Zeros}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        values = [1.0, -2.0]
+        MOI.set(bridged_mock, attr, ci, values)
+        @test MOI.get(bridged_mock, attr, ci) == values
+    end
+
     test_delete_bridge(bridged_mock, ci, 3,
         ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
          (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)))
+
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        values = [1.0, -2.0, 3.0]
+        MOI.set(bridged_mock, attr, ci, values)
+        @test MOI.get(bridged_mock, attr, ci) == values
+    end
+
     test_delete_bridge(bridged_mock, ci, 3,
         ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
          (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)))
