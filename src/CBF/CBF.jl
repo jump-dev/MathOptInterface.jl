@@ -18,6 +18,16 @@ MOI.Utilities.@model(InnerModel,
     (MOI.VectorOfVariables,),
     (MOI.VectorAffineFunction,)
 )
+function MOI.supports_constraint(
+    ::InnerModel{T}, ::Type{MOI.SingleVariable},
+    ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
+
+    return false
+end
+function MOI.supports_constraint(
+    ::InnerModel, ::Type{MOI.SingleVariable}, ::Type{MOI.Integer})
+    return true
+end
 
 struct Options end
 

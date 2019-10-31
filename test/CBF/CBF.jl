@@ -76,6 +76,27 @@ end
     @test !MOI.is_empty(MathOptFormat.read_from_file(file_to_read * ".gz"))
 end
 
+@testset "Support errors" begin
+    @testset "$set variable bound" for set in [
+            MOI.EqualTo(1.0),
+            MOI.LessThan(1.0),
+            MOI.GreaterThan(1.0),
+            MOI.Interval(1.0, 2.0),
+            MOI.Semiinteger(1.0, 2.0),
+            MOI.Semicontinuous(1.0, 2.0),
+            MOI.ZeroOne()
+        ]
+        model_string = """
+        variables: x
+        minobjective: x
+        c: x in $set
+        """
+        model = CBF.Model()
+        err = MOI.UnsupportedConstraint{MOI.SingleVariable, typeof(set)}
+        @test_throws err MOIU.loadfromstring!(model, model_string)
+    end
+end
+
 @testset "Read errors" begin
     @testset "Non-empty model" begin
         model = CBF.Model()
