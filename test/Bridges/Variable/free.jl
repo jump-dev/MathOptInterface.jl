@@ -119,9 +119,12 @@ end
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cy) == [0.0]
 
     @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), typeof(MOIB.bridge(bridged_mock, x)))
     MOI.set(bridged_mock, MOI.VariablePrimalStart(), [x, y], [1.0, -1.0])
     xa, xb, ya, yb = MOI.get(mock, MOI.ListOfVariableIndices())
     @test MOI.get(mock, MOI.VariablePrimalStart(), [xa, xb, ya, yb]) == [1.0, 0.0, 0.0, 1.0]
+    @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), x) == 1
+    @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), y) == -1
 end
 
 @testset "Linear11" begin

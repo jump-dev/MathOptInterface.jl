@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
@@ -133,9 +133,9 @@ end
     MOI.set(bridged_mock, MOI.VariableName(), x, "x")
     MOI.set(bridged_mock, MOI.ConstraintName(), xc, "xc")
     MOI.set(bridged_mock, MOI.ConstraintName(), ec, "ec")
+    z = MOI.get(mock, MOI.ListOfVariableIndices())[2]
     @testset "Mock model" begin
-        MOI.set(mock, MOI.VariableName(),
-                MOI.get(mock, MOI.ListOfVariableIndices())[2], "z")
+        MOI.set(mock, MOI.VariableName(), z, "z")
         MOI.set(mock, MOI.ConstraintName(),
                 MOI.get(mock, MOI.ListOfConstraintIndices{
                     MOI.VectorOfVariables, MOI.Nonpositives}()),
@@ -163,6 +163,12 @@ end
         MOIU.loadfromstring!(model, s)
         MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["yc", "xc", "ec"])
     end
+
+    @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), typeof(MOIB.bridge(bridged_mock, y)))
+    MOI.set(bridged_mock, MOI.VariablePrimalStart(), y, 1.0)
+    @test MOI.get(mock, MOI.VariablePrimalStart(), z) == -4
+    @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), y) == 1
 
     test_delete_bridged_variable(bridged_mock, y, MOI.LessThan{Float64}, 2, (
         (MOI.VectorOfVariables, MOI.Nonpositives, 0),

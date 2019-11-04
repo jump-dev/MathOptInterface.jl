@@ -78,7 +78,8 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
     return MOI.get(model, attr, bridge.constraint)[1:n]
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.VariablePrimal,
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.VariablePrimal, MOI.VariablePrimalStart},
                  bridge::FreeBridge{T}, i::IndexInVector) where T
     n = div(length(bridge.variables), 2)
     return MOI.get(model, attr, bridge.variables[i.value]) -
@@ -101,7 +102,10 @@ function unbridged_map(bridge::FreeBridge{T}, vi::MOI.VariableIndex,
     return bridge.variables[i.value] => func,
         bridge.variables[n + i.value] => zero(MOI.ScalarAffineFunction{T})
 end
-
+function MOI.supports(model::MOI.ModelLike, attr::MOI.VariablePrimalStart,
+                      ::Type{<:FreeBridge})
+    return MOI.supports(model, attr, MOI.VariableIndex)
+end
 function MOI.set(model::MOI.ModelLike, attr::MOI.VariablePrimalStart,
                  bridge::FreeBridge, value, i::IndexInVector)
     if value < 0
