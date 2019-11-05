@@ -55,7 +55,8 @@ function MOI.get(model::MOI.ModelLike,
     return -MOI.get(model, attr, bridge.flipped_constraint)
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.VariablePrimal,
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.VariablePrimal, MOI.VariablePrimalStart},
                  bridge::FlipSignBridge, i::IndexInVector)
     return -MOI.get(model, attr, bridge.flipped_variables[i.value])
 end
@@ -70,6 +71,10 @@ function unbridged_map(bridge::FlipSignBridge{T}, vi::MOI.VariableIndex,
     return (bridge.flipped_variables[i.value] => func,)
 end
 
+function MOI.supports(model::MOI.ModelLike, attr::MOI.VariablePrimalStart,
+                      ::Type{<:FlipSignBridge})
+    return MOI.supports(model, attr, MOI.VariableIndex)
+end
 function MOI.set(model::MOI.ModelLike, attr::MOI.VariablePrimalStart,
                  bridge::FlipSignBridge, value, i::IndexInVector)
     MOI.set(model, attr, bridge.flipped_variables[i.value], -value)

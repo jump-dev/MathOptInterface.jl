@@ -51,6 +51,33 @@ function MOI.get(::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
 end
 
 """
+    MOI.supports(model::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
+                 BT::Type{<:AbstractBridge})
+
+Return a `Bool` indicating whether `BT` supports setting `attr` to `model`.
+"""
+function MOI.supports(::MOI.ModelLike, ::MOI.AbstractVariableAttribute,
+                      ::Type{<:AbstractBridge})
+    return false
+end
+
+"""
+    function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
+        bridge::AbstractBridge, value[, ::IndexInVector])
+
+Return the value of the attribute `attr` of the model `model` for the
+variable bridged by `bridge`.
+"""
+function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
+                 bridge::AbstractBridge, value, ::IndexInVector...)
+    if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
+        throw(MOI.UnsupportedAttribute(attr))
+    else
+        throw(MOI.SetAttributeNotAllowed(attr))
+    end
+end
+
+"""
     supports_constrained_variable(::Type{<:AbstractBridge},
                                    ::Type{<:MOI.AbstractSet})::Bool
 
