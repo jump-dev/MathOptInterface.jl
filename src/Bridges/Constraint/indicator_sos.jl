@@ -41,7 +41,7 @@ function _add_bound_constraint!(model::MOI.ModelLike, ::Type{<:MOI.AbstractScala
 end
 
 function MOI.supports_constraint(::Type{<:IndicatorSOS1Bridge},
-                                 ::Type{<:MOI.VectorAffineFunction},
+                                 ::Type{<:MOI.AbstractVectorFunction},
                                  ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, <:MOI.AbstractScalarSet}})
     return true
 end
