@@ -26,9 +26,11 @@ config = MOIT.TestConfig()
         @test y.value == -1
 
         @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), MOI.VariableIndex)
+        @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), typeof(MOIB.bridge(bridged_mock, y)))
         MOI.set(bridged_mock, MOI.VariablePrimalStart(), y, 1.0)
         x, y_flipped, z, s = MOI.get(mock, MOI.ListOfVariableIndices())
         @test MOI.get(mock, MOI.VariablePrimalStart(), y_flipped) == -1
+        @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), y) == 1
     end
 
     @testset "lin4" begin

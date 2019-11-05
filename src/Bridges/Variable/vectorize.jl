@@ -93,13 +93,23 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
     return x[1]
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.VariablePrimal,
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.VariablePrimal, MOI.VariablePrimalStart},
                  bridge::VectorizeBridge)
     value = MOI.get(model, attr, bridge.variable)
-    if !MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.N)))
+    if !(attr isa MOI.VariablePrimal &&
+         MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.N))))
         value += bridge.set_constant
     end
     return value
+end
+function MOI.supports(model::MOI.ModelLike, attr::MOI.VariablePrimalStart,
+                      ::Type{<:VectorizeBridge})
+    return MOI.supports(model, attr, MOI.VariableIndex)
+end
+function MOI.set(model::MOI.ModelLike, attr::MOI.VariablePrimalStart,
+                 bridge::VectorizeBridge, value)
+    MOI.set(model, attr, bridge.variable, value - bridge.set_constant)
 end
 
 function MOIB.bridged_function(bridge::VectorizeBridge{T}) where T
