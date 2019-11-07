@@ -102,38 +102,50 @@ function _added_dist(b::LazyBridgeOptimizer, args...)
     return dist
 end
 function added_dist(b::LazyBridgeOptimizer,
-                    BT::Type{<:Union{Variable.AbstractBridge,
-                                     Constraint.AbstractBridge}},
-                    args...)
-    return _added_dist(b, BT, args...)
+                    BT::Type{<:Variable.AbstractBridge},
+                    S::Type{<:MOI.AbstractSet})
+    return _added_dist(b, BT, S)
+end
+function added_dist(b::LazyBridgeOptimizer,
+                    BT::Type{<:Constraint.AbstractBridge},
+                    F::Type{<:MOI.AbstractFunction},
+                    S::Type{<:MOI.AbstractSet})
+    return _added_dist(b, BT, F, S)
 end
 function added_dist(b::LazyBridgeOptimizer,
                     BT::Type{<:Objective.AbstractBridge},
-                    args...)
-    F = set_objective_function_type(BT, args...)
-    return _added_dist(b, BT, args...) + _dist(b, F)
+                    F1::Type{<:MOI.AbstractScalarFunction})
+    F2 = set_objective_function_type(BT, F1)
+    return _added_dist(b, BT, F1) + _dist(b, F2)
 end
 
-function _supports_added_no_update(b::LazyBridgeOptimizer, args...)
+function _supports_added_no_update(b::LazyBridgeOptimizer, args::Vararg{Any, N}) where N
     return all(C -> supports_no_update(b, C[1]), added_constrained_variable_types(args...)) &&
         all(C -> supports_no_update(b, C[1], C[2]), added_constraint_types(args...))
 end
 function supports_added_no_update(
     b::LazyBridgeOptimizer,
-    BT::Type{<:Union{Variable.AbstractBridge,
-                     Constraint.AbstractBridge}},
-    args...
+    BT::Type{<:Variable.AbstractBridge},
+    S::Type{<:MOI.AbstractSet}
 )
-    return _supports_added_no_update(b, BT, args...)
+    return _supports_added_no_update(b, BT, S)
+end
+function supports_added_no_update(
+    b::LazyBridgeOptimizer,
+    BT::Type{<:Constraint.AbstractBridge},
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet}
+)
+    return _supports_added_no_update(b, BT, F, S)
 end
 function supports_added_no_update(
     b::LazyBridgeOptimizer,
     BT::Type{<:Objective.AbstractBridge},
-    args...
+    F1::Type{<:MOI.AbstractScalarFunction}
 )
-    F = set_objective_function_type(BT, args...)
-    return _supports_added_no_update(b, BT, args...) &&
-        supports_no_update(b, F)
+    F2 = set_objective_function_type(BT, F1)
+    return _supports_added_no_update(b, BT, F1) &&
+        supports_no_update(b, F2)
 end
 
 
