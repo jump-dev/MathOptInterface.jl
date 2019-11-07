@@ -724,6 +724,8 @@ struct Complements <: AbstractVectorSet
     dimension::Int
 end
 
+dimension(set::Complements) = 2 * set.dimension
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{

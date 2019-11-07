@@ -80,4 +80,21 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
                                                  MOI.EqualTo{Float64}}}
         @test length(cis) == 3
     end
+
+    @testset "dimension" begin
+        @test MOI.dimension(MOI.ExponentialCone()) == 3
+        @test MOI.dimension(MOI.DualExponentialCone()) == 3
+        @test MOI.dimension(MOI.PowerCone(1/2)) == 3
+        @test MOI.dimension(MOI.DualPowerCone(1/2)) == 3
+        @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(5)) == 15
+        @test MOI.dimension(MOI.PositiveSemidefiniteConeSquare(5)) == 25
+        @test MOI.dimension(MOI.LogDetConeTriangle(5)) == 17
+        @test MOI.dimension(MOI.LogDetConeSquare(5)) == 27
+        @test MOI.dimension(MOI.RootDetConeTriangle(5)) == 16
+        @test MOI.dimension(MOI.RootDetConeSquare(5)) == 26
+        @test MOI.dimension(MOI.SOS1([1.0, 2.0])) == 2
+        @test MOI.dimension(MOI.SOS2([1.0, 2.0])) == 2
+        @test MOI.dimension(MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(1.0))) == 2
+        @test MOI.dimension(MOI.Complements(5)) == 10
+    end
 end
