@@ -106,7 +106,6 @@ end
     for BC in [MOI.LessThan{Float64}, MOI.GreaterThan{Float64}]
         bridged_mock = MOIB.Constraint.IndicatortoSOS1{Float64, BC, MOI.ConstraintIndex{MOI.SingleVariable, BC}}(mock)
         MOIT.basic_constraint_tests(bridged_mock, config,
-            delete=false,
             include=[
                 (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, BC}),
             ],

@@ -67,6 +67,16 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
     )
 end
 
+function MOI.delete(model::MOI.ModelLike, bridge::IndicatorSOS1Bridge)
+    if bridge.bound_constraint_index !== nothing
+        MOI.delete(model, bridge.bound_constraint_index)
+    end
+    MOI.delete(model, bridge.sos_constraint_index)
+    MOI.delete(model, bridge.linear_constraint_index)
+    MOI.delete(model, bridge.w_variable_index)
+    return
+end
+
 function MOIB.added_constrained_variable_types(::Type{<:IndicatorSOS1Bridge{T, BC}}) where {T, BC <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}}}
     return [(MOI.ZeroOne,), (BC,)]
 end
