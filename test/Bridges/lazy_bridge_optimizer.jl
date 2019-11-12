@@ -80,8 +80,8 @@ MOI.supports(::StandardLPModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = f
             @test_throws err MOI.add_constraints(bridged, [fx], [set])
         end
         @testset "with `Constraint.ScalarFunctionizeBridge`" begin
-            for (i, data) in enumerate([_bridged(), _bridged()])
-                model, bridged, fx = data
+            for i in 1:2
+                model, bridged, fx = _bridged()
                 MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
                 if i == 1
                     cx = MOI.add_constraint(bridged, fx, set)
@@ -128,8 +128,8 @@ end
             @test_throws err MOI.add_constraints(bridged, [fx], [set])
         end
         @testset "with `Constraint.ScalarFunctionizeBridge`" begin
-            for (i, data) in enumerate([_bridged(), _bridged()])
-                model, bridged, fx = data
+            for i in 1:2
+                model, bridged, fx = _bridged()
                 MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
                 if i == 1
                     cx = MOI.add_constraint(bridged, fx, set)
