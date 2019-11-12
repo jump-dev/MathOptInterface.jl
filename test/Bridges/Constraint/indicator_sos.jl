@@ -94,4 +94,22 @@ include("../utilities.jl")
     lin_func3 = MOI.get(model, MOI.ConstraintFunction(), lin_cons3)
     @test lin_func3 ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x1), MOI.ScalarAffineTerm(1.0, w3)], 0.0)
     @test MOI.get(model, MOI.ConstraintSet(), lin_cons3) == MOI.GreaterThan(5.0)
+
+    ## MOI.get on bridge
+    @test MOI.get(model, MOI.ConstraintSet(), bridge3) == iset3
+    @test MOI.get(model, MOI.ConstraintFunction(), bridge3) ≈ f3
+end
+
+@testset "Basic constraint test" begin
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    config = MOIT.TestConfig()
+    for BC in [MOI.LessThan{Float64}, MOI.GreaterThan{Float64}]
+        bridged_mock = MOIB.Constraint.IndicatortoSOS1{Float64, BC, MOI.ConstraintIndex{MOI.SingleVariable, BC}}(mock)
+        MOIT.basic_constraint_tests(bridged_mock, config,
+            delete=false,
+            include=[
+                (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, BC}),
+            ],
+        )
+    end
 end

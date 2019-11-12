@@ -71,7 +71,8 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_affine, 3, MOI.RotatedSecondOrderCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone)      => ( dummy_vector_affine, 3, MOI.GeometricMeanCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => ( dummy_vector_affine, 9, MOI.GeometricMeanCone(3) ),
-
+    (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})    => ( dummy_vector_affine, 2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(3.0))),
+    (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.GreaterThan{Float64}}) => ( dummy_vector_affine, 2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(3.0))),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros)        => ( dummy_vector_quadratic, 2, MOI.Zeros(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) => ( dummy_vector_quadratic, 2, MOI.Nonpositives(2) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) => ( dummy_vector_quadratic, 2, MOI.Nonnegatives(2) ),
@@ -130,6 +131,7 @@ function basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
     test_keys = length(include) > 0 ? include : Iterators.filter(x->!(x in exclude), keys(BasicConstraintTests))
     for (F,S) in test_keys
         if MOI.supports_constraint(model, F, S)
+            @info "Here $F $S"
             @testset "$(F)-$(S)" begin
                 (cf, N, set) = BasicConstraintTests[(F,S)]
                 basic_constraint_test_helper(model, config, cf, set, N;

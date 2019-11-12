@@ -15,6 +15,8 @@ If `BC !<: Union{LessThan, GreaterThan}`, `bound_constraint_index` is `nothing`.
 """
 struct IndicatorSOS1Bridge{T, BC <: MOI.AbstractScalarSet, MaybeBC <: Union{MOI.ConstraintIndex{MOI.SingleVariable, BC}, Nothing}} <: AbstractBridge
     w_variable_index::MOI.VariableIndex
+    z_variable_index::MOI.VariableIndex
+    affine_func::MOI.ScalarAffineFunction{T}
     bound_constraint_index::MaybeBC
     sos_constraint_index::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SOS1{T}}
     linear_constraint_index::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T}, BC}
@@ -27,9 +29,9 @@ function bridge_constraint(::Type{IndicatorSOS1Bridge{T,BC,MaybeBC}}, model::MOI
     sos_vector = MOI.VectorOfVariables([w, z])
     sos_constraint = MOI.add_constraint(model, sos_vector, MOI.SOS1{T}([0.4, 0.6]))
     affine_func = f_scalars[2]
-    affine_expr = MOIU.operate!(+, T, affine_func, MOI.SingleVariable(w))
+    affine_expr = MOIU.operate(+, T, affine_func, MOI.SingleVariable(w))
     linear_constraint = MOI.add_constraint(model, affine_expr, s.set)
-    return IndicatorSOS1Bridge{T,BC,MaybeBC}(w, bound_constraint, sos_constraint, linear_constraint)
+    return IndicatorSOS1Bridge{T,BC,MaybeBC}(w, z, affine_func, bound_constraint, sos_constraint, linear_constraint)
 end
 
 function _add_bound_constraint!(model::MOI.ModelLike, ::Type{BC}) where {T <: Real, BC <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}}}
@@ -44,6 +46,25 @@ function MOI.supports_constraint(::Type{<:IndicatorSOS1Bridge},
                                  ::Type{<:MOI.AbstractVectorFunction},
                                  ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, <:MOI.AbstractScalarSet}})
     return true
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::IndicatorSOS1Bridge)
+    return MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(
+        MOI.get(model, attr, b.linear_constraint_index),
+    )
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::IndicatorSOS1Bridge{T}) where {T}
+    z = b.z_variable_index
+    terms = [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), z))]
+    for affine_term in b.affine_func.terms
+        push!(terms, MOI.VectorAffineTerm(2, affine_term))
+    end
+    return MOI.VectorAffineFunction(
+        terms, [zero(T), b.affine_func.constant]
+    )
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:IndicatorSOS1Bridge{T, BC}}) where {T, BC <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}}}
