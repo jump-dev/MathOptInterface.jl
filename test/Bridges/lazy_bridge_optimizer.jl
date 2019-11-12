@@ -62,27 +62,40 @@ MOI.supports(::StandardLPModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = f
         fx = MOI.SingleVariable(x)
         err = _functionize_error(bridged, MOIB.Constraint.ScalarFunctionizeBridge, "SingleVariable", "constraint")
         @test_throws err MOI.add_constraint(bridged, fx, set)
+        @test_throws err MOI.add_constraints(bridged, [fx], [set])
     end
     @testset "LazyBridgeOptimizer" begin
-        model = StandardLPModel{T}()
-        bridged = MOIB.LazyBridgeOptimizer(model)
-        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
-        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.SingleVariable(x)
+        function _bridged()
+            model = StandardLPModel{T}()
+            bridged = MOIB.LazyBridgeOptimizer(model)
+            MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+            x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+            fx = MOI.SingleVariable(x)
+            return model, bridged, fx
+        end
         @testset "without `Constraint.ScalarFunctionizeBridge`" begin
+            _, bridged, fx = _bridged()
             err = _lazy_functionize_error(MOIB.Constraint.ScalarFunctionizeBridge, "SingleVariable", "constraint")
             @test_throws err MOI.add_constraint(bridged, fx, set)
+            @test_throws err MOI.add_constraints(bridged, [fx], [set])
         end
         @testset "with `Constraint.ScalarFunctionizeBridge`" begin
-            MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
-            cx = MOI.add_constraint(bridged, fx, set)
-            @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
-            @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
-            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-            fa = MOI.SingleVariable(a)
-            ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, S}())[1]
-            @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
-            @test MOI.get(model, MOI.ConstraintSet(), ca) == MOIU.shift_constant(set, -one(T))
+            for (i, data) in enumerate([_bridged(), _bridged()])
+                model, bridged, fx = data
+                MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
+                if i == 1
+                    cx = MOI.add_constraint(bridged, fx, set)
+                else
+                    cx = MOI.add_constraints(bridged, [fx], [set])[1]
+                end
+                @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+                @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
+                a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+                fa = MOI.SingleVariable(a)
+                ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, S}())[1]
+                @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
+                @test MOI.get(model, MOI.ConstraintSet(), ca) == MOIU.shift_constant(set, -one(T))
+            end
         end
     end
 end
@@ -96,28 +109,41 @@ end
         fx = MOI.VectorOfVariables([x])
         err = _functionize_error(bridged, MOIB.Constraint.VectorFunctionizeBridge, "VectorOfVariables", "constraint")
         @test_throws err MOI.add_constraint(bridged, fx, set)
+        @test_throws err MOI.add_constraints(bridged, [fx], [set])
     end
     @testset "LazyBridgeOptimizer" begin
-        model = StandardLPModel{T}()
-        bridged = MOIB.LazyBridgeOptimizer(model)
-        MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
-        MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
-        x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.VectorOfVariables([x])
+        function _bridged()
+            model = StandardLPModel{T}()
+            bridged = MOIB.LazyBridgeOptimizer(model)
+            MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+            MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
+            x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
+            fx = MOI.VectorOfVariables([x])
+            return model, bridged, fx
+        end
         @testset "without `Constraint.ScalarFunctionizeBridge`" begin
+            _, bridged, fx = _bridged()
             err = _lazy_functionize_error(MOIB.Constraint.VectorFunctionizeBridge, "VectorOfVariables", "constraint")
             @test_throws err MOI.add_constraint(bridged, fx, set)
+            @test_throws err MOI.add_constraints(bridged, [fx], [set])
         end
         @testset "with `Constraint.ScalarFunctionizeBridge`" begin
-            MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
-            cx = MOI.add_constraint(bridged, fx, set)
-            @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
-            @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
-            a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-            fa = MOI.SingleVariable(a)
-            ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}}())[1]
-            @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
-            @test MOI.get(model, MOI.ConstraintSet(), ca) == MOI.EqualTo(-one(T))
+            for (i, data) in enumerate([_bridged(), _bridged()])
+                model, bridged, fx = data
+                MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+                if i == 1
+                    cx = MOI.add_constraint(bridged, fx, set)
+                else
+                    cx = MOI.add_constraints(bridged, [fx], [set])[1]
+                end
+                @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+                @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
+                a = MOI.get(model, MOI.ListOfVariableIndices())[1]
+                fa = MOI.SingleVariable(a)
+                ca = MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}}())[1]
+                @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈ convert(MOI.ScalarAffineFunction{T}, fa)
+                @test MOI.get(model, MOI.ConstraintSet(), ca) == MOI.EqualTo(-one(T))
+            end
         end
     end
 end
