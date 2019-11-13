@@ -1050,11 +1050,11 @@ function MOI.add_constraints(b::AbstractBridgeOptimizer, f::Vector{F},
         return MOI.add_constraint.(b, f, s)
     else
         if Variable.has_bridges(Variable.bridges(b))
-            if S == MOI.SingleVariable
+            if F == MOI.SingleVariable
                 if any(func -> is_bridged(b, func.variable), f)
                     return MOI.add_constraint.(b, f, s)
                 end
-            elseif S == MOI.VectorOfVariables
+            elseif F == MOI.VectorOfVariables
                 if any(func -> any(vi -> is_bridged(b, vi), func.variables), f)
                     return MOI.add_constraint.(b, f, s)
                 end
