@@ -151,6 +151,13 @@ function MOI.get(b::IndicatorSOS1Bridge{T, BC}, ::MOI.ListOfConstraintIndices{MO
     return [b.linear_constraint_index]
 end
 
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintPrimalStart,
+    ::Type{<:IndicatorSOS1Bridge})
+    return true
+end
+
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::IndicatorSOS1Bridge)
     if attr.N == 1
         return MOI.get(model, MOI.VariablePrimal(), bridge.z_variable_index)
