@@ -18,7 +18,21 @@ function warn_incomplete_list_num_constraints(BT, list_num_constraints)
     end
 end
 
-# Test deletion of constraint bridge used for constraint `ci`
+"""
+    test_delete_bridge(
+        m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex, nvars::Int,
+        list_num_constraints::Tuple; used_bridges = 1, num_bridged = 1)
+
+Test deletion of the constraint `ci` in model `m`.
+
+* The number of variables added in `m` is `nvars` (ignoring the variables added by the bridges).
+* For each `(F, S, n)` in `list_num_constraints`, the number of `F`-in-`S` constraints added
+  to `m` is `n` (ignoring the constraints added by the bridges).
+  All constraint types added by the bridge bridging `ci` should appear in `list_num_constraints`.
+  Otherwise a error is thrown to ensure good test coverage.
+* The number of bridges that will be deleted when deleted `ci` is `used_bridges`.
+* The number of `F`-in-`S` constraints is `num_bridged`.
+"""
 function test_delete_bridge(
     m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int,
     list_num_constraints::Tuple; used_bridges = 1, num_bridged = 1) where {F, S}
