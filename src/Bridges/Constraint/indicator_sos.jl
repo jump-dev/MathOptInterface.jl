@@ -78,11 +78,11 @@ function MOI.delete(model::MOI.ModelLike, bridge::IndicatorSOS1Bridge)
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:IndicatorSOS1Bridge{T, BC}}) where {T, BC <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}}}
-    return [(MOI.ZeroOne,), (BC,)]
+    return [(BC,)]
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:IndicatorSOS1Bridge{T, BC}}) where {T, BC}
-    return [(MOI.ZeroOne,)]
+    return []
 end
 
 function MOIB.added_constraint_types(::Type{<:IndicatorSOS1Bridge{T, BC}}) where {T, BC <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}}}
