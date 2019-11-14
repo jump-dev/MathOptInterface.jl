@@ -20,13 +20,13 @@ end
 
 """
     test_delete_bridge(
-        m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex, nvars::Int,
-        list_num_constraints::Tuple; used_bridges = 1, num_bridged = 1)
+        m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int,
+        list_num_constraints::Tuple; used_bridges = 1, num_bridged = 1) where {F, S}
 
 Test deletion of the constraint `ci` in model `m`.
 
 * The number of variables added in `m` is `nvars` (ignoring the variables added by the bridges).
-* For each `(F, S, n)` in `list_num_constraints`, the number of `F`-in-`S` constraints added
+* For each `(Fi, Si, n)` in `list_num_constraints`, the number of `Fi`-in-`Si` constraints added
   to `m` is `n` (ignoring the constraints added by the bridges).
   All constraint types added by the bridge bridging `ci` should appear in `list_num_constraints`.
   Otherwise a error is thrown to ensure good test coverage.
