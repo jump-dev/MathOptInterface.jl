@@ -150,3 +150,28 @@ end
 function MOI.get(b::IndicatorSOS1Bridge{T, BC}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, BC}) where {T, BC}
     return [b.linear_constraint_index]
 end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::IndicatorSOS1Bridge)
+    if attr.N == 1
+        return MOI.get(model, MOI.VariablePrimal(), bridge.z_variable_index)
+    end
+    wv = MOI.get(model, MOI.VariablePrimal(), bridge.w_variable_index)
+    lin_primal = MOI.get(model, MOI.ConstraintPrimal(), b.linear_constraint_index)
+    return lin_primal - wv
+end
+
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimalStart, bridge::IndicatorSOS1Bridge)
+    zstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.z_variable_index)
+    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
+    lin_primal_start = MOI.get(model, MOI.ConstraintPrimalStart(), b.linear_constraint_index)
+    return [zstart, lin_primal_start - wstart]
+end
+
+function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintPrimalStart,
+                 bridge::IndicatorSOS1Bridge, value)
+    zvalue = value[1]
+    lin_start = value[2]
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.z_variable_index, zvalue)
+    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
+    MOI.set(model, MOI.ConstraintPrimalStart(), bridge.linear_constraint_index, lin_start + wstart)
+end
