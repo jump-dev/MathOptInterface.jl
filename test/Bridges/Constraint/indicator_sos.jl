@@ -32,7 +32,7 @@ include("../utilities.jl")
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
         ],
-        [0.0, 0.0]
+        [0.0, 0.0],
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
 
@@ -132,7 +132,7 @@ end
     iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     ci = MOI.add_constraint(bridged_mock, f, iset)
     @test length(MOI.get(mock, MOI.ListOfVariableIndices())) == 3
-    MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+    MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
     sos_cons_list = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.SOS1{Float64}}())
     @test length(sos_cons_list) == 1
     MOI.set(mock, MOI.ConstraintName(), sos_cons_list[1], "sos1")
@@ -156,13 +156,13 @@ end
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
     MOIU.test_models_equal(mock, model, var_names, ["sos1", "wless", "ineq", "bin_cons"])
-    
+
     test_delete_bridge(
         bridged_mock, ci, 2, (
             (MOI.SingleVariable, MOI.ZeroOne, 1),
-            (MOI.SingleVariable, MathOptInterface.LessThan{Float64}, 1),
-            (MOI.VectorOfVariables, MathOptInterface.SOS1{Float64}, 1),
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
+            (MOI.SingleVariable, MathOptInterface.LessThan{Float64}, 0),
+            (MOI.VectorOfVariables, MathOptInterface.SOS1{Float64}, 0),
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
         ), used_bridges = 1, num_bridged = 1,
     )
 end
