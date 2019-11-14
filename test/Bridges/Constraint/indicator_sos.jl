@@ -117,8 +117,9 @@ end
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     config = MOIT.TestConfig()
     bridged_mock = MOIB.Constraint.IndicatortoSOS1{Float64, MOI.LessThan{Float64}, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}}(mock)
-    z = MOI.add_variable(bridged_mock)
+    (z, bin_cons) = MOI.add_constrained_variable(bridged_mock, MOI.ZeroOne())
     MOI.set(bridged_mock, MOI.VariableName(), z, "z")
+    MOI.set(mock, MOI.ConstraintName(), bin_cons, "bin_cons")
     x = MOI.add_variable(bridged_mock)
     MOI.set(bridged_mock, MOI.VariableName(), x, "x")
     var_names = ["z", "x", "w"]
@@ -132,14 +133,14 @@ end
     ci = MOI.add_constraint(bridged_mock, f, iset)
     @test length(MOI.get(mock, MOI.ListOfVariableIndices())) == 3
     MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
-    sos_cons_list = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.SOS1{Float64}}())
+    sos_cons_list = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.SOS1{Float64}}())
     @test length(sos_cons_list) == 1
     MOI.set(mock, MOI.ConstraintName(), sos_cons_list[1], "sos1")
-    single_less_cons = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.SingleVariable, MathOptInterface.LessThan{Float64}}())
+    single_less_cons = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.LessThan{Float64}}())
     @test length(single_less_cons) == 1
     MOI.set(mock, MOI.ConstraintName(), single_less_cons[1], "wless")
 
-    inequality_list = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.LessThan{Float64}}())
+    inequality_list = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
     @test length(inequality_list) == 1
     MOI.set(mock, MOI.ConstraintName(), inequality_list[1], "ineq")
     MOI.set(mock, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(z))
@@ -149,9 +150,19 @@ end
     sos1: [w, z] in MathOptInterface.SOS1([0.4, 0.6])
     wless: w <= 0.0
     ineq: x + w <= 8.0
+    bin_cons: z in MathOptInterface.ZeroOne()
     maxobjective: z
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
-    MOIU.test_models_equal(mock, model, var_names, ["sos1", "wless", "ineq"])
+    MOIU.test_models_equal(mock, model, var_names, ["sos1", "wless", "ineq", "bin_cons"])
+    
+    test_delete_bridge(
+        bridged_mock, ci, 2, (
+            (MOI.SingleVariable, MOI.ZeroOne, 1),
+            (MOI.SingleVariable, MathOptInterface.LessThan{Float64}, 1),
+            (MOI.VectorOfVariables, MathOptInterface.SOS1{Float64}, 1),
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
+        ), used_bridges = 1, num_bridged = 1,
+    )
 end
