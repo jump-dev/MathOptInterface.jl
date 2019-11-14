@@ -20,8 +20,8 @@ end
 
 # Test deletion of constraint bridge used for constraint `ci`
 function test_delete_bridge(
-    m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int,
-    list_num_constraints::Tuple; used_bridges = 1, num_bridged = 1) where {F, S}
+        m::MOIB.AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F, S}, nvars::Int,
+        list_num_constraints::Tuple; used_bridges = 1, num_bridged = 1) where {F, S}
     warn_incomplete_list_num_constraints(typeof(MOIB.bridge(m, ci)), list_num_constraints)
     function num_bridges()
         return count(bridge -> true, values(MOIB.Constraint.bridges(m)))

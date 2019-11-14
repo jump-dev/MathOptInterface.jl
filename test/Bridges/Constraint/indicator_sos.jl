@@ -25,8 +25,8 @@ include("../utilities.jl")
     z2 = MOI.add_variable(model)
     z3 = MOI.add_variable(model)
 
-    vc1 = MOI.add_constraint(model, z1, MOI.ZeroOne())
     vc2 = MOI.add_constraint(model, z2, MOI.ZeroOne())
+    vc1 = MOI.add_constraint(model, z1, MOI.ZeroOne())
     vc3 = MOI.add_constraint(model, z3, MOI.ZeroOne())
     f1 = MOI.VectorAffineFunction(
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z1)),
@@ -111,4 +111,47 @@ end
             ],
         )
     end
+end
+
+@testset "Model equality" begin
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    config = MOIT.TestConfig()
+    bridged_mock = MOIB.Constraint.IndicatortoSOS1{Float64, MOI.LessThan{Float64}, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}}(mock)
+    z = MOI.add_variable(bridged_mock)
+    MOI.set(bridged_mock, MOI.VariableName(), z, "z")
+    x = MOI.add_variable(bridged_mock)
+    MOI.set(bridged_mock, MOI.VariableName(), x, "x")
+    var_names = ["z", "x", "w"]
+    f = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x)),
+        ],
+        [0.0, 0.0]
+    )
+    iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    ci = MOI.add_constraint(bridged_mock, f, iset)
+    @test length(MOI.get(mock, MOI.ListOfVariableIndices())) == 3
+    MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+    sos_cons_list = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.SOS1{Float64}}())
+    @test length(sos_cons_list) == 1
+    MOI.set(mock, MOI.ConstraintName(), sos_cons_list[1], "sos1")
+    single_less_cons = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.SingleVariable, MathOptInterface.LessThan{Float64}}())
+    @test length(single_less_cons) == 1
+    MOI.set(mock, MOI.ConstraintName(), single_less_cons[1], "wless")
+
+    inequality_list = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.LessThan{Float64}}())
+    @test length(inequality_list) == 1
+    MOI.set(mock, MOI.ConstraintName(), inequality_list[1], "ineq")
+    MOI.set(mock, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(z))
+    MOI.set(mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    s = """
+    variables: z, x, w
+    sos1: [w, z] in MathOptInterface.SOS1([0.4, 0.6])
+    wless: w <= 0.0
+    ineq: x + w <= 8.0
+    maxobjective: z
+    """
+    model = MOIU.Model{Float64}()
+    MOIU.loadfromstring!(model, s)
+    MOIU.test_models_equal(mock, model, var_names, ["sos1", "wless", "ineq"])
 end
