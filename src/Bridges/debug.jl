@@ -1,108 +1,136 @@
-function debug_variable(io::IO, variable_to_index, BT, args...)
-    for C in added_constrained_variable_types(BT, args...)
-        i = get(variable_to_index, C, nothing)
-        if i != nothing
-            MOIU.print_with_acronym(io, "  [$i] constrained variables in `$(C[1])` are not supported\n")
-        end
+function print_node(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
+    S, = b.variable_types[node.index]
+    MOIU.print_with_acronym(io, "[$(node.index)] constrained variables in `$S` are")
+end
+function print_node(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
+    F, S = b.constraint_types[node.index]
+    MOIU.print_with_acronym(io, "($(node.index)) `$F`-in-`$S` constraints are")
+end
+function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
+    F, = b.objective_types[node.index]
+    MOIU.print_with_acronym(io, "|$(node.index)| objective function of type `$F` is")
+end
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
+    if _dist(b.graph, node) != INFINITY
+        return
+    end
+    print(io, "  ")
+    print_node(io, b, node)
+    print(io, " not supported\n")
+end
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, edge::Edge)
+    for node in edge.added_variables
+        print_unsupported(io, b, node)
+    end
+    for node in edge.added_constraints
+        print_unsupported(io, b, node)
     end
 end
-function _print_unsupported_constraint(io::IO, constraint_to_index, C)
-    i = get(constraint_to_index, C, nothing)
-    if i != nothing
-        MOIU.print_with_acronym(io, "  ($i) `$(C[1])`-in-`$(C[2])` constraints are not supported\n")
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, edge::ObjectiveEdge)
+    for node in edge.added_variables
+        print_unsupported(io, b, node)
     end
-end
-function debug_constraint(io::IO, constraint_to_index, BT, args...)
-    for C in added_constraint_types(BT, args...)
-        _print_unsupported_constraint(io, constraint_to_index, C)
+    for node in edge.added_constraints
+        print_unsupported(io, b, node)
     end
+    print_unsupported(io, b, edge.added_objective)
 end
-function debug_objective(io::IO, objective_to_index, BT, args...)
-    F = set_objective_function_type(BT, args...)
-    i = get(objective_to_index, (F,), nothing)
-    if i != nothing
-        MOIU.print_with_acronym(io, "  |$i| objective function of type `$F` is not supported\n")
-    end
-end
-function debug(b::LazyBridgeOptimizer, variable_to_index::OrderedDict,
-               constraint_to_index::OrderedDict, objective_to_index::OrderedDict;
-               io::IO = Base.stdout)
-    for (v, i) in variable_to_index
-        S = v[1]
-        MOIU.print_with_acronym(io, "[$i] constrained variables in `$S` are not supported because")
-        no_bridge = true
-        for BT in b.variable_bridge_types
-            if Variable.supports_constrained_variable(BT, S)
-                if no_bridge
-                    println(io, ":")
-                    no_bridge = false
-                end
-                MOIU.print_with_acronym(io, "  Cannot use `$(Variable.concrete_bridge_type(BT, S))` because:\n")
-                debug_variable(io, variable_to_index, BT, S)
-                debug_constraint(io, constraint_to_index, BT, S)
-            end
-        end
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, edges::Vector, index_to_bridge::Function)
+    no_bridge = true
+    for edge in edges
         if no_bridge
-            println(io, " no added bridge supports bridging it.")
+            println(io, ":")
+            no_bridge = false
         end
-        F = MOIU.variable_function_type(S)
+        MOIU.print_with_acronym(io, "  Cannot use `$(index_to_bridge(edge.bridge_index))` because:\n")
+        print_unsupported(io, b, edge)
+    end
+    if no_bridge
+        println(io, " no added bridge supports bridging it.")
+    end
+end
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, variables, constraints, objectives)
+    for node in variables
+        print_node(io, b, node)
+        print(io, " not supported because")
+        print_unsupported(io, b, b.graph.variable_edges[node.index],
+                          bridge_index -> Variable.concrete_bridge_type(b.variable_bridge_types[bridge_index], b.variable_types[node.index]...))
         println(io, "  Cannot add free variables and then constrain them because:")
-        _print_unsupported_constraint(io, constraint_to_index, (F, S))
+        print_unsupported(io, b, node.constraint_node)
     end
-    for (c, i) in constraint_to_index
-        F, S = c
-        MOIU.print_with_acronym(io, "($i) `$F`-in-`$S` constraints are not supported because")
-        no_bridge = true
-        for BT in b.constraint_bridge_types
-            if MOI.supports_constraint(BT, F, S)
-                if no_bridge
-                    println(io, ":")
-                    no_bridge = false
-                end
-                MOIU.print_with_acronym(io, "  Cannot use `$(Constraint.concrete_bridge_type(BT, F, S))` because:\n")
-                debug_variable(io, variable_to_index, BT, F, S)
-                debug_constraint(io, constraint_to_index, BT, F, S)
-            end
-        end
-        if no_bridge
-            println(io, " no added bridge supports bridging it.")
-        end
+    for node in constraints
+        print_node(io, b, node)
+        print(io, " not supported because")
+        print_unsupported(io, b, b.graph.constraint_edges[node.index],
+                          bridge_index -> Constraint.concrete_bridge_type(b.constraint_bridge_types[bridge_index], b.constraint_types[node.index]...))
     end
-    for (o, i) in objective_to_index
-        F = o[1]
-        MOIU.print_with_acronym(io, "|$i| objective function of type `$F` is not supported because")
-        no_bridge = true
-        for BT in b.objective_bridge_types
-            if Objective.supports_objective_function(BT, F)
-                if no_bridge
-                    println(io, ":")
-                    no_bridge = false
-                end
-                MOIU.print_with_acronym(io, "  Cannot use `$(Objective.concrete_bridge_type(BT, F))` because:\n")
-                debug_variable(io, variable_to_index, BT, F)
-                debug_constraint(io, constraint_to_index, BT, F)
-                debug_objective(io, objective_to_index, BT, F)
-            end
+    for node in objectives
+        print_node(io, b, node)
+        print(io, " not supported because")
+        print_unsupported(io, b, b.graph.objective_edges[node.index],
+                          bridge_index -> Objective.concrete_bridge_type(b.objective_bridge_types[bridge_index], b.objective_types[node.index]...))
+    end
+end
+
+function add_unsupported(graph::Graph, edges::Vector{Edge},
+                         variables, constraints, objectives)
+    for edge in edges
+        for node in edge.added_variables
+            add_unsupported(graph, node, variables, constraints, objectives)
         end
-        if no_bridge
-            println(io, " no added bridge supports bridging it.")
+        for node in edge.added_constraints
+            add_unsupported(graph, node, variables, constraints, objectives)
         end
     end
 end
-function debug(b::LazyBridgeOptimizer, variables::OrderedSet, constraints::OrderedSet, objectives::OrderedSet; kws...)
-    variable_to_index = OrderedDict{Tuple{DataType}, Int}()
-    for (i, key) in enumerate(variables)
-        variable_to_index[key] = i
+function add_unsupported(graph::Graph, edges::Vector{ObjectiveEdge},
+                         variables, constraints, objectives)
+    for edge in edges
+        for node in edge.added_variables
+            add_unsupported(graph, node, variables, constraints, objectives)
+        end
+        for node in edge.added_constraints
+            add_unsupported(graph, node, variables, constraints, objectives)
+        end
+        add_unsupported(graph, edge.added_objective, variables, constraints, objectives)
     end
-    constraint_to_index = OrderedDict{Tuple{DataType, DataType}, Int}()
-    for (i, key) in enumerate(constraints)
-        constraint_to_index[key] = i
+end
+function add_unsupported(graph::Graph, node::VariableNode,
+                         variables, constraints, objectives)
+    if _dist(graph, node) != INFINITY
+        return
     end
-    objective_to_index = OrderedDict{Tuple{DataType}, Int}()
-    for (i, key) in enumerate(objectives)
-        objective_to_index[key] = i
+    push!(variables, node)
+    add_unsupported(graph, graph.variable_edges[node.index], variables, constraints, objectives)
+    add_unsupported(graph, node.constraint_node, variables, constraints, objectives)
+end
+function add_unsupported(graph::Graph, node::ConstraintNode,
+                         variables, constraints, objectives)
+    if _dist(graph, node) != INFINITY
+        return
     end
-    debug(b, variable_to_index, constraint_to_index, objective_to_index; kws...)
+    push!(constraints, node)
+    add_unsupported(graph, graph.constraint_edges[node.index], variables, constraints, objectives)
+end
+function add_unsupported(graph::Graph, node::ObjectiveNode,
+                         variables, constraints, objectives)
+    if _dist(graph, node) != INFINITY
+        return
+    end
+    push!(objectives, node)
+    add_unsupported(graph, graph.objective_edges[node.index], variables, constraints, objectives)
+end
+function _sort(nodes::Set)
+    vector = collect(nodes)
+    sort!(vector, by = node -> node.index)
+    return vector
+end
+function debug_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
+    variables = Set{VariableNode}()
+    constraints = Set{ConstraintNode}()
+    objectives = Set{ObjectiveNode}()
+    add_unsupported(b.graph, node, variables, constraints, objectives)
+    print_unsupported(io, b, _sort(variables), _sort(constraints), _sort(objectives))
 end
 function debug(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
                S::Type{<:MOI.AbstractSet}; io::IO = Base.stdout)
@@ -121,13 +149,11 @@ function debug(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
         if F == MOIU.variable_function_type(S)
             MOIU.print_with_acronym(io, "Constrained variables in `$S`")
             println(io, message)
-            required_tuples = required(b, (S,))
-            fill_required!(required_tuples..., b, F, S)
-            debug(b, required_tuples...; io = io)
+            debug_unsupported(io, b, node(b, S))
         else
             MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints")
             println(io, message)
-            debug(b, required(b, (F, S))...; io = io)
+            debug_unsupported(io, b, node(b, F, S))
         end
     end
 end
@@ -145,6 +171,7 @@ function debug_supports_constraint(
     S::Type{<:MOI.AbstractSet}; kws...)
     debug(b, F, S; kws...)
 end
+
 function debug(b::LazyBridgeOptimizer,
                F::Type{<:MOI.AbstractScalarFunction}; io::IO = Base.stdout)
     MOIU.print_with_acronym(io, "Objective function of type `$F` is")
@@ -154,7 +181,7 @@ function debug(b::LazyBridgeOptimizer,
         MOIU.print_with_acronym(io, " not supported and cannot be bridged" *
             " into a supported objective function by adding only supported" *
             " constrained variables and constraints. See details below:\n")
-        debug(b, required(b, (F,))...; io = io)
+        debug_unsupported(io, b, node(b, F))
     end
 end
 

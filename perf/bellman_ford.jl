@@ -22,24 +22,32 @@ function interval_constraint()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     F = MOI.ScalarAffineFunction{Float64}
     S = MOI.Interval{Float64}
-    MOIB.update!(bridged, (F, S))
-    @benchmark begin
+    MOIB.bridge_index(bridged, F, S)
+    display(@benchmark begin
         MOIB._reset_dist($bridged)
-        MOIB.update!($bridged, ($F, $S))
-    end
+        MOIB.node($bridged, $F, $S)
+    end)
+    display(@benchmark begin
+        MOIB._reset_dist($bridged)
+        MOIB.bridge_index($bridged, $F, $S)
+    end)
 end
 
-display(interval_constraint())
+interval_constraint()
 
 function quadratic_objective()
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     F = MOI.ScalarQuadraticFunction{Float64}
-    MOIB.update!(bridged, (F,))
-    @benchmark begin
+    MOIB.bridge_index(bridged, F)
+    display(@benchmark begin
         MOIB._reset_dist($bridged)
-        MOIB.update!($bridged, ($F,))
-    end
+        MOIB.node($bridged, $F)
+    end)
+    display(@benchmark begin
+        MOIB._reset_dist($bridged)
+        MOIB.bridge_index($bridged, $F)
+    end)
 end
 
 display(quadratic_objective())
