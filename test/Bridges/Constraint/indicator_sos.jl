@@ -166,3 +166,31 @@ end
         ), used_bridges = 1, num_bridged = 1,
     )
 end
+
+@testset "Getting primal attributes" begin
+    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
+    config = MOIT.TestConfig()
+    (z, bin_cons) = MOI.add_constrained_variable(mock, MOI.ZeroOne())
+    x = MOI.add_variable(mock)
+    f = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
+         MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x)),
+        ],
+        [0.0, 0.0]
+    )
+    iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    BT = MOIB.Constraint.concrete_bridge_type(MOIB.Constraint.IndicatorSOS1Bridge{Float64}, typeof(f), typeof(iset))
+    bridge1 = MOIB.Constraint.bridge_constraint(BT, mock, f, iset)
+    # w value should be defaulted to 0
+    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable_index, 0.0)
+    affine_value = 6.0
+    MOI.set(mock, MOI.ConstraintPrimalStart(), bridge1, [1.0, affine_value])
+    @test MOI.get(mock, MOI.VariablePrimalStart(), z) ≈ 1.0
+    @test MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1.linear_constraint_index) ≈ 6.0
+
+    # after setting the w value
+    w_value = 3.0
+    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable_index, w_value)
+    # linear function should not move
+    @test all(MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1) .≈ (1.0, affine_value - w_value))
+end
