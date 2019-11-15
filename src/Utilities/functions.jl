@@ -1356,8 +1356,19 @@ function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
                                           MOI.ScalarAffineFunction{T}}}) where T
     return MOI.ScalarAffineFunction{T}
 end
+function promote_operation(::typeof(*), ::Type{T},
+                           ::Type{<:Union{MOI.SingleVariable,
+                                          MOI.ScalarAffineFunction{T}}},
+                           ::Type{T}) where T
+    return MOI.ScalarAffineFunction{T}
+end
 function promote_operation(::typeof(*), ::Type{T}, ::Type{T},
                            ::Type{MOI.ScalarQuadraticFunction{T}}) where T
+    return MOI.ScalarQuadraticFunction{T}
+end
+function promote_operation(::typeof(*), ::Type{T},
+                           ::Type{MOI.ScalarQuadraticFunction{T}},
+                           ::Type{T}) where T
     return MOI.ScalarQuadraticFunction{T}
 end
 function promote_operation(::typeof(*), ::Type{T},
