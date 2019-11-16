@@ -1,12 +1,11 @@
 const INFINITY = -1
 
 abstract type AbstractNode end
-struct ConstraintNode <: AbstractNode
-    index::Int
-end
 struct VariableNode <: AbstractNode
     index::Int
-    constraint_node::ConstraintNode
+end
+struct ConstraintNode <: AbstractNode
+    index::Int
 end
 struct ObjectiveNode <: AbstractNode
     index::Int
@@ -27,6 +26,7 @@ end
 
 mutable struct Graph
     variable_edges::Vector{Vector{Edge}}
+    variable_constraint_node::Vector{ConstraintNode}
     # variable node index -> Number of bridges that need to be used
     variable_dist::Vector{Int}
     # variable node index -> Index of bridge to be used
@@ -47,10 +47,30 @@ mutable struct Graph
 end
 function Graph()
     return Graph(
-        Vector{Edge}[], Int[], Int[], 0,
+        Vector{Edge}[], ConstraintNode[], Int[], Int[], 0,
         Vector{Edge}[], Int[], Int[], 0,
         Vector{ObjectiveEdge}[], Int[], Int[], 0,
     )
+end
+
+function Base.show(io::IO, graph::Graph)
+    print(io, "Bridge graph with ")
+    print(io, length(graph.variable_best), " variable nodes, ")
+    print(io, length(graph.constraint_best), " variable nodes and ")
+    print(io, length(graph.objective_best), " objective nodes.")
+end
+function variable_nodes(graph::Graph)
+    return MOIU.LazyMap{VariableNode}(
+        i -> VariableNode(i), eachindex(graph.variable_best))
+end
+function constraint_nodes(graph::Graph)
+    return MOIU.LazyMap{ConstraintNode}(
+        i -> ConstraintNode(i), eachindex(graph.constraint_best)
+    )
+end
+function objective_nodes(graph::Graph)
+    return MOIU.LazyMap{ObjectiveNode}(
+        i -> ObjectiveNode(i), eachindex(graph.objective_best))
 end
 
 # After `add_bridge(b, BT)`, some constrained variables `(S,)` in
@@ -65,6 +85,7 @@ end
 # if several bridges are added consecutively.
 function Base.empty!(graph::Graph)
     empty!(graph.variable_edges)
+    empty!(graph.variable_constraint_node)
     empty!(graph.variable_dist)
     empty!(graph.variable_best)
     graph.variable_last_correct = 0
@@ -87,11 +108,18 @@ end
 function add_edge(graph::Graph, node::ObjectiveNode, edge::ObjectiveEdge)
     push!(graph.objective_edges[node.index], edge)
 end
-function add_variable_node(graph::Graph, constraint_node::ConstraintNode)
+function add_variable_node(graph::Graph)
     push!(graph.variable_edges, Edge[])
+    # Use an invalid index so that the code errors instead return something
+    # incorrect in case `set_variable_constraint_node` is not called.
+    push!(graph.variable_constraint_node, ConstraintNode(-1))
     push!(graph.variable_dist, INFINITY)
     push!(graph.variable_best, 0)
-    return VariableNode(length(graph.variable_best), constraint_node)
+    return VariableNode(length(graph.variable_best))
+end
+function set_variable_constraint_node(graph::Graph, variable_node::VariableNode,
+                                      constraint_node::ConstraintNode)
+    graph.variable_constraint_node[variable_node.index] = constraint_node
 end
 function add_constraint_node(graph::Graph)
     push!(graph.constraint_edges, Edge[])
@@ -178,20 +206,23 @@ function bellman_ford!(graph::Graph)
 end
 
 function _dist(graph::Graph, node::VariableNode)
-    dc = _dist(graph, node.constraint_node)
+    if iszero(node.index)
+        return 0
+    end
+    constraint_node = graph.variable_constraint_node[node.index]
+    # If free variables are bridged but the functionize bridge was not added,
+    # constraint_node is `ConstraintNode(-1)`.
+    dc = constraint_node.index == -1 ? INFINITY : _dist(graph, constraint_node)
     if iszero(dc)
         return dc
-    elseif iszero(node.index)
-        return 0
+    end
+    dv = graph.variable_dist[node.index]
+    if dc == INFINITY
+        return dv
+    elseif dv == INFINITY
+        return dc
     else
-        dv = graph.variable_dist[node.index]
-        if dc == INFINITY
-            return dv
-        elseif dv == INFINITY
-            return dc
-        else
-            return min(dv, dc + 1)
-        end
+        return min(dv, dc + 1)
     end
 end
 function _dist(graph::Graph, node::ConstraintNode)

@@ -131,7 +131,7 @@ function concrete_bridge_type(::Type{<:SquareBridge{T}},
     S = MOIU.scalar_type(F)
     G = MOIU.promote_operation(-, T, S, S)
     TT = MOI.triangular_form(ST)
-    SquareBridge{T, F, G, TT, ST}
+    return SquareBridge{T, F, G, TT, ST}
 end
 
 # Attributes, Bridge acting as a model

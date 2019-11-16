@@ -10,6 +10,38 @@ function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
     F, = b.objective_types[node.index]
     MOIU.print_with_acronym(io, "|$(node.index)| objective function of type `$F` is")
 end
+
+function debug(b::LazyBridgeOptimizer, node::AbstractNode; io::IO = Base.stdout)
+    print(io, " ")
+    print_node(io, b, node)
+    d = _dist(b.graph, node)
+    if d == INFINITY
+        print(io, " not supported\n")
+    else
+        index = bridge_index(b.graph, node)
+        if iszero(index)
+            @assert node isa VariableNode
+            println(io, " supported (distance $d) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).")
+        else
+            print(io, " bridged (distance $d) by ")
+            MOIU.print_with_acronym(io, string(_bridge_type(b, node, index)))
+            println(io, ".")
+        end
+    end
+end
+function debug(b::LazyBridgeOptimizer; io::IO = Base.stdout)
+    println(io, b.graph)
+    for node in variable_nodes(b.graph)
+        debug(b, node; io = io)
+    end
+    for node in constraint_nodes(b.graph)
+        debug(b, node; io = io)
+    end
+    for node in objective_nodes(b.graph)
+        debug(b, node; io = io)
+    end
+end
+
 function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
     if _dist(b.graph, node) != INFINITY
         return
@@ -49,26 +81,41 @@ function print_unsupported(io::IO, b::LazyBridgeOptimizer, edges::Vector, index_
         println(io, " no added bridge supports bridging it.")
     end
 end
+function _bridge_type(b::LazyBridgeOptimizer, node::VariableNode, bridge_index::Int)
+    return Variable.concrete_bridge_type(b.variable_bridge_types[bridge_index], b.variable_types[node.index]...)
+end
+function _bridge_type(b::LazyBridgeOptimizer, node::ConstraintNode, bridge_index::Int)
+    return Constraint.concrete_bridge_type(b.constraint_bridge_types[bridge_index], b.constraint_types[node.index]...)
+end
+function _bridge_type(b::LazyBridgeOptimizer, node::ObjectiveNode, bridge_index::Int)
+    return Objective.concrete_bridge_type(b.objective_bridge_types[bridge_index], b.objective_types[node.index]...)
+end
 function print_unsupported(io::IO, b::LazyBridgeOptimizer, variables, constraints, objectives)
     for node in variables
         print_node(io, b, node)
         print(io, " not supported because")
         print_unsupported(io, b, b.graph.variable_edges[node.index],
-                          bridge_index -> Variable.concrete_bridge_type(b.variable_bridge_types[bridge_index], b.variable_types[node.index]...))
-        println(io, "  Cannot add free variables and then constrain them because:")
-        print_unsupported(io, b, node.constraint_node)
+                          bridge_index -> _bridge_type(b, node, bridge_index))
+        print(io, "  Cannot add free variables and then constrain them because")
+        constraint_node = b.graph.variable_constraint_node[node.index]
+        if constraint_node.index == -1
+            println(io, " free variables are bridged but no functionize bridge was added.")
+        else
+            println(io, ":")
+            print_unsupported(io, b, constraint_node)
+        end
     end
     for node in constraints
         print_node(io, b, node)
         print(io, " not supported because")
         print_unsupported(io, b, b.graph.constraint_edges[node.index],
-                          bridge_index -> Constraint.concrete_bridge_type(b.constraint_bridge_types[bridge_index], b.constraint_types[node.index]...))
+                          bridge_index -> _bridge_type(b, node, bridge_index))
     end
     for node in objectives
         print_node(io, b, node)
         print(io, " not supported because")
         print_unsupported(io, b, b.graph.objective_edges[node.index],
-                          bridge_index -> Objective.concrete_bridge_type(b.objective_bridge_types[bridge_index], b.objective_types[node.index]...))
+                          bridge_index -> _bridge_type(b, node, bridge_index))
     end
 end
 
@@ -102,7 +149,10 @@ function add_unsupported(graph::Graph, node::VariableNode,
     end
     push!(variables, node)
     add_unsupported(graph, graph.variable_edges[node.index], variables, constraints, objectives)
-    add_unsupported(graph, node.constraint_node, variables, constraints, objectives)
+    constraint_node = graph.variable_constraint_node[node.index]
+    if constraint_node.index != -1
+        add_unsupported(graph, graph.variable_constraint_node[node.index], variables, constraints, objectives)
+    end
 end
 function add_unsupported(graph::Graph, node::ConstraintNode,
                          variables, constraints, objectives)
