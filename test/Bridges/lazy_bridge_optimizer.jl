@@ -13,20 +13,30 @@ const MOIB = MathOptInterface.Bridges
     for BT in [MOIB.Variable.VectorizeBridge{T},
                MOIB.Constraint.VectorizeBridge{T},
                MOIB.Objective.FunctionizeBridge{T},
-               MOIB.Constraint.ScalarFunctionizeBridge{T}]
+               MOIB.Constraint.ScalarFunctionizeBridge{T},
+               MOIB.Variable.FreeBridge{T}]
         @test !MOIB.has_bridge(bridged, BT)
         MOIB.add_bridge(bridged, BT)
         @test MOIB.has_bridge(bridged, BT)
-        @test length(MOIB._bridge_types(bridged, BT)) == 1
+        if BT != MOIB.Variable.FreeBridge{T}
+            @test length(MOIB._bridge_types(bridged, BT)) == 1
+        end
         MOIB.add_bridge(bridged, BT)
         @test MOIB.has_bridge(bridged, BT)
-        @test length(MOIB._bridge_types(bridged, BT)) == 1
+        if BT != MOIB.Variable.FreeBridge{T}
+            @test length(MOIB._bridge_types(bridged, BT)) == 1
+        end
         MOIB.remove_bridge(bridged, BT)
         @test !MOIB.has_bridge(bridged, BT)
         @test isempty(MOIB._bridge_types(bridged, BT))
         err = ErrorException("Cannot remove bridge `$BT` as it was never added or was already removed.")
         @test_throws err MOIB.remove_bridge(bridged, BT)
     end
+    BT1 = MOIB.Variable.FreeBridge{Float64}
+    MOIB.add_bridge(bridged, BT1)
+    BT2 = MOIB.Variable.FreeBridge{T}
+    err = ErrorException("Bridge $BT2 cannot be added as $BT1 has already been added. Remove it first with `M̀OI.Bridges.remove_bridge`.")
+    @test_throws err MOIB.add_bridge(bridged, BT2)
 end
 
 include("utilities.jl")
@@ -366,15 +376,18 @@ Bridge graph with 1 variable nodes, 3 variable nodes and 0 objective nodes.
     end
     @testset "Objective" begin
         F = MOI.ScalarQuadraticFunction{T}
+        attr = MOI.ObjectiveFunction{F}()
         @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
-        @test !MOI.supports(bridged, MOI.ObjectiveFunction{F}())
+        @test !MOI.supports(bridged, attr)
+        err = MOI.UnsupportedAttribute(attr)
+        @test_throws err MOIB.bridge_type(bridged, F)
         MOIB.add_bridge(bridged, MOIB.Objective.SlackBridge{T})
         @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
-        @test !MOI.supports(bridged, MOI.ObjectiveFunction{F}())
+        @test !MOI.supports(bridged, attr)
         MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
         @test MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
         @test MOIB.bridge_type(bridged, MOI.SingleVariable) == MOIB.Objective.FunctionizeBridge{T}
-        @test MOI.supports(bridged, MOI.ObjectiveFunction{F}())
+        @test MOI.supports(bridged, attr)
         @test MOIB.bridge_type(bridged, F) == MOIB.Objective.SlackBridge{T, F, F}
     end
 end
@@ -598,6 +611,17 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
         @test debug_string(MOIB.debug_supports, attr) == "Objective function of type `MOI.ScalarQuadraticFunction{$T}` is supported.\n"
+        @test sprint(MOIB.print_graph, bridged) == """
+Bridge graph with 1 variable nodes, 5 variable nodes and 2 objective nodes.
+ [1] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2) by MOIB.Variable.RSOCtoPSDBridge{$T}.
+ (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 5) by MOIB.Constraint.QuadtoSOCBridge{$T}.
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4) by MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}.
+ (3) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by MOIB.Constraint.ScalarFunctionizeBridge{$T,MOI.EqualTo{$T}}.
+ (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by MOIB.Constraint.ScalarizeBridge{$T,MOI.ScalarAffineFunction{$T},MOI.EqualTo{$T}}.
+ (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5) by MOIB.Constraint.QuadtoSOCBridge{$T}.
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 12) by MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}.
+ |2| objective function of type `MOI.SingleVariable` is bridged (distance 1) by MOIB.Objective.FunctionizeBridge{$T}.
+"""
     end
 end
 
