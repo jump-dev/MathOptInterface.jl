@@ -193,4 +193,13 @@ end
     MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable_index, w_value)
     # linear function should not move
     @test all(MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1) .≈ (1.0, affine_value - w_value))
+    iseteq = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(8.0))
+    BT = MOIB.Constraint.concrete_bridge_type(MOIB.Constraint.IndicatorSOS1Bridge{Float64}, typeof(f), typeof(iseteq))
+    bridge_eq = MOIB.Constraint.bridge_constraint(BT, mock, f, iseteq)
+    @test MOI.get(bridge_eq, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.EqualTo{Float64}}()) == 0
+    @test MOI.get(bridge_eq, MOI.NumberOfConstraints{MOI.ScalarAffineFunction, MOI.EqualTo{Float64}}()) == 1
+    @test isempty(MOI.get(bridge_eq, MOI.ListOfConstraintIndices{MOI.SingleVariable, BC}()))
+    @test MOI.supports(mock, MOI.ConstraintPrimalStart(), MOIB.Constraint.IndicatorSOS1Bridge{Float64})
+    @test MOI.supports(mock, MOI.ConstraintPrimalStart(), MOIB.Constraint.IndicatorSOS1Bridge)
+    MOI.get(mock, MOI.ConstraintPrimal(1), bridge_eq) ≈ MOI.get(mock, MOI.VariablePrimal(), bridge_eq.z_variable_index)
 end
