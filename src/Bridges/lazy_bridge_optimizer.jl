@@ -126,10 +126,16 @@ function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     if is_bridged(b, MOI.Reals)
         FF = functionized_type(b, F)
         if FF !== nothing
-            set_variable_constraint_node(b.graph, variable_node, node(b, FF, S))
+            # We assume the distance of the variable node `MOI.Reals` is `1`,
+            # i.e. it is bridged by `Variable.FreeBridge` and then
+            # the distance of `MOI.Nonnegatives` is zero.
+            # We also use the functionize bridge which has cost 1.
+            # And we add `+1` as we treat constrained variables as constraints.
+            set_variable_constraint_node(b.graph, variable_node, node(b, FF, S), 3)
         end
     else
-        set_variable_constraint_node(b.graph, variable_node, node(b, F, S))
+        # We add `+1` as we treat constrained variables as constraints.
+        set_variable_constraint_node(b.graph, variable_node, node(b, F, S), 1)
     end
     for (i, BT) in enumerate(b.variable_bridge_types)
         if Variable.supports_constrained_variable(BT, S)

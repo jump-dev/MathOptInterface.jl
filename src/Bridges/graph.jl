@@ -27,6 +27,7 @@ end
 mutable struct Graph
     variable_edges::Vector{Vector{Edge}}
     variable_constraint_node::Vector{ConstraintNode}
+    variable_constraint_cost::Vector{Int}
     # variable node index -> Number of bridges that need to be used
     variable_dist::Vector{Int}
     # variable node index -> Index of bridge to be used
@@ -47,7 +48,7 @@ mutable struct Graph
 end
 function Graph()
     return Graph(
-        Vector{Edge}[], ConstraintNode[], Int[], Int[], 0,
+        Vector{Edge}[], ConstraintNode[], Int[], Int[], Int[], 0,
         Vector{Edge}[], Int[], Int[], 0,
         Vector{ObjectiveEdge}[], Int[], Int[], 0,
     )
@@ -86,6 +87,7 @@ end
 function Base.empty!(graph::Graph)
     empty!(graph.variable_edges)
     empty!(graph.variable_constraint_node)
+    empty!(graph.variable_constraint_cost)
     empty!(graph.variable_dist)
     empty!(graph.variable_best)
     graph.variable_last_correct = 0
@@ -113,13 +115,15 @@ function add_variable_node(graph::Graph)
     # Use an invalid index so that the code errors instead return something
     # incorrect in case `set_variable_constraint_node` is not called.
     push!(graph.variable_constraint_node, ConstraintNode(-1))
+    push!(graph.variable_constraint_cost, 0)
     push!(graph.variable_dist, INFINITY)
     push!(graph.variable_best, 0)
     return VariableNode(length(graph.variable_best))
 end
 function set_variable_constraint_node(graph::Graph, variable_node::VariableNode,
-                                      constraint_node::ConstraintNode)
+                                      constraint_node::ConstraintNode, cost::Int)
     graph.variable_constraint_node[variable_node.index] = constraint_node
+    graph.variable_constraint_cost[variable_node.index] = cost
 end
 function add_constraint_node(graph::Graph)
     push!(graph.constraint_edges, Edge[])
@@ -219,10 +223,13 @@ function _dist(graph::Graph, node::VariableNode)
     dv = graph.variable_dist[node.index]
     if dc == INFINITY
         return dv
-    elseif dv == INFINITY
-        return dc
     else
-        return min(dv, dc + 1)
+        dc += graph.variable_constraint_cost[node.index]
+        if dv == INFINITY
+            return dc
+        else
+            return min(dv, dc)
+        end
     end
 end
 function _dist(graph::Graph, node::ConstraintNode)

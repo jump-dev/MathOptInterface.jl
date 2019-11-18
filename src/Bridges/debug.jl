@@ -10,8 +10,7 @@ function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
     F, = b.objective_types[node.index]
     MOIU.print_with_acronym(io, "|$(node.index)| objective function of type `$F` is")
 end
-
-function debug(b::LazyBridgeOptimizer, node::AbstractNode; io::IO = Base.stdout)
+function print_node_info(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
     print(io, " ")
     print_node(io, b, node)
     d = _dist(b.graph, node)
@@ -29,16 +28,17 @@ function debug(b::LazyBridgeOptimizer, node::AbstractNode; io::IO = Base.stdout)
         end
     end
 end
-function debug(b::LazyBridgeOptimizer; io::IO = Base.stdout)
+print_graph(b::LazyBridgeOptimizer) = print_graph(Base.stdout, b)
+function print_graph(io::IO, b::LazyBridgeOptimizer)
     println(io, b.graph)
     for node in variable_nodes(b.graph)
-        debug(b, node; io = io)
+        print_node_info(io, b, node)
     end
     for node in constraint_nodes(b.graph)
-        debug(b, node; io = io)
+        print_node_info(io, b, node)
     end
     for node in objective_nodes(b.graph)
-        debug(b, node; io = io)
+        print_node_info(io, b, node)
     end
 end
 
