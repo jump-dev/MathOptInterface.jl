@@ -1,4 +1,5 @@
 const INFINITY = -1
+const INVALID_NODE_INDEX = -1
 
 abstract type AbstractNode end
 struct VariableNode <: AbstractNode
@@ -114,7 +115,7 @@ function add_variable_node(graph::Graph)
     push!(graph.variable_edges, Edge[])
     # Use an invalid index so that the code errors instead return something
     # incorrect in case `set_variable_constraint_node` is not called.
-    push!(graph.variable_constraint_node, ConstraintNode(-1))
+    push!(graph.variable_constraint_node, ConstraintNode(INVALID_NODE_INDEX))
     push!(graph.variable_constraint_cost, 0)
     push!(graph.variable_dist, INFINITY)
     push!(graph.variable_best, 0)
@@ -154,7 +155,7 @@ end
 # Update `b.variable_dist`, `b.constraint_dist` `b.variable_best` and
 # `b.constraint_best` for constrained variable types in `variables` and
 # constraint types in `constraints`.
-function updated_dist(graph::Graph, current, edges::Vector{<:AbstractEdge})
+function updated_dist(graph::Graph, current::Int, edges::Vector{<:AbstractEdge})
     bridge_index = 0
     for edge in edges
         if supports_added_no_update(graph, edge)
@@ -215,8 +216,8 @@ function _dist(graph::Graph, node::VariableNode)
     end
     constraint_node = graph.variable_constraint_node[node.index]
     # If free variables are bridged but the functionize bridge was not added,
-    # constraint_node is `ConstraintNode(-1)`.
-    dc = constraint_node.index == -1 ? INFINITY : _dist(graph, constraint_node)
+    # constraint_node is `ConstraintNode(INVALID_NODE_INDEX)`.
+    dc = constraint_node.index == INVALID_NODE_INDEX ? INFINITY : _dist(graph, constraint_node)
     if iszero(dc)
         return dc
     end
