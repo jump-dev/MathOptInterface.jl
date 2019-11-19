@@ -197,9 +197,8 @@ end
     BT = MOIB.Constraint.concrete_bridge_type(MOIB.Constraint.IndicatorSOS1Bridge{Float64}, typeof(f), typeof(iseteq))
     bridge_eq = MOIB.Constraint.bridge_constraint(BT, mock, f, iseteq)
     @test MOI.get(bridge_eq, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.EqualTo{Float64}}()) == 0
-    @test MOI.get(bridge_eq, MOI.NumberOfConstraints{MOI.ScalarAffineFunction, MOI.EqualTo{Float64}}()) == 1
-    @test isempty(MOI.get(bridge_eq, MOI.ListOfConstraintIndices{MOI.SingleVariable, BC}()))
+    @test MOI.get(bridge_eq, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == 1
+    @test isempty(MOI.get(bridge_eq, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.EqualTo{Float64}}()))
     @test MOI.supports(mock, MOI.ConstraintPrimalStart(), MOIB.Constraint.IndicatorSOS1Bridge{Float64})
     @test MOI.supports(mock, MOI.ConstraintPrimalStart(), MOIB.Constraint.IndicatorSOS1Bridge)
-    MOI.get(mock, MOI.ConstraintPrimal(1), bridge_eq) ≈ MOI.get(mock, MOI.VariablePrimal(), bridge_eq.z_variable_index)
 end
