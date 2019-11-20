@@ -165,6 +165,15 @@ end
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
         ), used_bridges = 1, num_bridged = 1,
     )
+
+    model = MOIU.Model{Float64}()
+    sbridged = """
+    variables: x, z
+    bin_cons: z in MathOptInterface.ZeroOne()
+    maxobjective: z
+    """
+    MOIU.loadfromstring!(model, sbridged)
+    MOIU.test_models_equal(bridged_mock , model, ["z", "x"], ["bin_cons"])
 end
 
 @testset "Getting primal attributes" begin
