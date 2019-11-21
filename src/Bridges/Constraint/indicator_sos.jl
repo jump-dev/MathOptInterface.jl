@@ -163,7 +163,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::Indic
         return MOI.get(model, MOI.VariablePrimal(), bridge.z_variable_index)
     end
     wv = MOI.get(model, MOI.VariablePrimal(), bridge.w_variable_index)
-    lin_primal = MOI.get(model, MOI.ConstraintPrimal(), b.linear_constraint_index)
+    lin_primal = MOI.get(model, attr, b.linear_constraint_index)
     return lin_primal - wv
 end
 
