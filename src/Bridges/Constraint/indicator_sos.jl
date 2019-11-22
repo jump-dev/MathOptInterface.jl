@@ -159,12 +159,10 @@ function MOI.supports(
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::IndicatorSOS1Bridge)
-    if attr.N == 1
-        return MOI.get(model, MOI.VariablePrimal(), bridge.z_variable_index)
-    end
+    zval = MOI.get(model, MOI.VariablePrimal(attr.N), bridge.z_variable_index)
     wv = MOI.get(model, MOI.VariablePrimal(attr.N), bridge.w_variable_index)
     lin_primal = MOI.get(model, attr, b.linear_constraint_index)
-    return lin_primal - wv
+    return [zval, lin_primal - wv]
 end
 
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimalStart, bridge::IndicatorSOS1Bridge)
