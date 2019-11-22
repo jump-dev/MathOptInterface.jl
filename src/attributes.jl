@@ -622,7 +622,7 @@ end
 """
     abstract type AbstractCallback <: AbstractModelAttribute end
 
-Abstract type for optimizer attribute representing a callback function. The
+Abstract type for a model attribute representing a callback function. The
 value set to subtypes of `AbstractCallback` is a function that may be called
 during [`optimize!`](@ref). As [`optimize!`](@ref) is in progress, the result
 attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
