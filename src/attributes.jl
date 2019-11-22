@@ -620,7 +620,7 @@ function Base.showerror(io::IO, err::OptimizeInProgress)
 end
 
 """
-    abstract type AbstractCallback <: AbstractOptimizerAttribute end
+    abstract type AbstractCallback <: AbstractModelAttribute end
 
 Abstract type for optimizer attribute representing a callback function. The
 value set to subtypes of `AbstractCallback` is a function that may be called
@@ -638,7 +638,7 @@ commonly called `callback_data`, that can be used for instance in
 [`LazyConstraintCallback`](@ref), [`HeuristicCallback`](@ref) and
 [`UserCutCallback`](@ref).
 """
-abstract type AbstractCallback <: AbstractOptimizerAttribute end
+abstract type AbstractCallback <: AbstractModelAttribute end
 
 """
     LazyConstraintCallback() <: AbstractCallback
