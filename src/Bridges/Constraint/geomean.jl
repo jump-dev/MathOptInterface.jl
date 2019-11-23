@@ -54,7 +54,7 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
     n = d - 1
     l = ilog2(n)
     N = 1 << l
-    xij = MOI.add_variables(model, N-1)
+    xij = MOI.add_variables(model, N - 1)
     f_scalars = MOIU.eachscalar(f)
 
     xl1 = MOI.SingleVariable(xij[1])
@@ -77,8 +77,9 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
     socrc = Vector{CI{G, MOI.RotatedSecondOrderCone}}(undef, N - 1)
     offset = offset_next = 0
     for i in 1:l
-        offset_next = offset + i
-        for j in 1:(1 << (i - 1))
+        num_lvars = 1 << (i - 1)
+        offset_next = offset + num_lvars
+        for j in 1:num_lvars
             if i == l
                 a = _getx(2j - 1)
                 b = _getx(2j)
