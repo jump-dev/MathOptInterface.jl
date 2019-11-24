@@ -94,6 +94,7 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
         end
         offset = offset_next
     end
+    @assert offset == length(socrc)
     return GeoMeanBridge{T, F, G, H}(d, xij, tubc, socrc)
 end
 

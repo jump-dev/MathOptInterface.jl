@@ -1276,8 +1276,75 @@ end
 geomean1vtest(model::MOI.ModelLike, config::TestConfig) = _geomean1test(model, config, true)
 geomean1ftest(model::MOI.ModelLike, config::TestConfig) = _geomean1test(model, config, false)
 
+# addresses bug https://github.com/JuliaOpt/MathOptInterface.jl/pull/962
+function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem GeoMean2
+    # max t
+    # st  (t,x_1,x_2,...,x_9) ∈ GeometricMeanCone(10)
+    #     x_1 == x_2, ..., x_9 == 1
+    # the optimal solution is 1
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    if vecofvars
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.GeometricMeanCone)
+    else
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone)
+    end
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    n = 9
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, n)
+    @test MOI.get(model, MOI.NumberOfVariables()) == n + 1
+
+    vov = MOI.VectorOfVariables([t; x])
+    if vecofvars
+        gmc = MOI.add_constraint(model, vov, MOI.GeometricMeanCone(n + 1))
+    else
+        gmc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.GeometricMeanCone(n + 1))
+    end
+
+    cx = Vector{MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}}(undef, n)
+    for i in 1:n
+        cx[i] = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x[i])], 0.0), MOI.EqualTo(Float64(i)))
+    end
+
+    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}()) == n
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, t)], 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get.(model, MOI.VariablePrimal(), x) ≈ ones(n) atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n + 1) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ ones(n) atol=atol rtol=rtol
+    end
+end
+
+geomean2vtest(model::MOI.ModelLike, config::TestConfig) = _geomean2test(model, config, true)
+geomean2ftest(model::MOI.ModelLike, config::TestConfig) = _geomean2test(model, config, false)
+
 geomeantests = Dict("geomean1v" => geomean1vtest,
-                    "geomean1f" => geomean1ftest)
+                    "geomean1f" => geomean1ftest,
+                    "geomean2f" => geomean2ftest,
+                    "geomean2v" => geomean2vtest)
 
 @moitestset geomean
 
@@ -1686,7 +1753,7 @@ function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     # here taking a = u/0.9 and b = v/0.1, we have
     # u + v >= (u/0.9)^0.9 (v/0.1)^0.1
     # with equality if and only if u/0.9 == v/0.1.
-    # Here the best you can do is u + v == 1 and for that inequality must hold so u = 9v 
+    # Here the best you can do is u + v == 1 and for that inequality must hold so u = 9v
     # hence you get v = 0.1 and u = 0.9.
     # The same works for other values of exponent as key word argument
 

@@ -27,5 +27,11 @@ config = MOIT.TestConfig()
     # Dual is not yet implemented for GeoMean bridge
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
     test_delete_bridge(bridged_mock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
-                                            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64},      1)))
+                                            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1)))
+
+    vals = zeros(15) # TODO how are these used?
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, vcat(ones(10), vals))
+    MOIT.geomean2vtest(bridged_mock, config)
+    MOIT.geomean2ftest(bridged_mock, config)
+
 end
