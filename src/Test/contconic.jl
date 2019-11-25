@@ -1312,7 +1312,7 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
 
     cx = Vector{MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}}}(undef, n)
     for i in 1:n
-        cx[i] = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x[i])], 0.0), MOI.EqualTo(Float64(i)))
+        cx[i] = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x[i])], 0.0), MOI.EqualTo(1.0))
     end
 
     @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()) == 1
