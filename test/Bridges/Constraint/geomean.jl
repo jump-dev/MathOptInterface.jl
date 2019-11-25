@@ -80,7 +80,7 @@ config = MOIT.TestConfig()
     end
 
     @testset "geomean2test" begin
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [ones(10); zeros(15)])
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, vcat(ones(10), 4.0, fill(2 * √2, 2), fill(2, 4), fill(√2, 8)))
         MOIT.geomean2vtest(bridged_mock, config)
         MOIT.geomean2ftest(bridged_mock, config)
 
@@ -94,6 +94,10 @@ config = MOIT.TestConfig()
             lessthan = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
             @test length(lessthan) == 1
             MOI.set(mock, MOI.ConstraintName(), lessthan[1], "lessthan")
+            equalto = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}())
+            @test length(equalto) == 9
+            equalto_names = ["equalto$(i)" for i in 1:9]
+            MOI.set.(mock, MOI.ConstraintName(), equalto, equalto_names)
             rsoc = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}())
             @test length(rsoc) == 15
             rsoc_names = vcat("rsoc41", ["rsoc3$(i)" for i in 1:2], ["rsoc2$(i)" for i in 1:4], ["rsoc1$(i)" for i in 1:8])
@@ -103,6 +107,15 @@ config = MOIT.TestConfig()
             s = """
             variables: $(varnames_str...)
             lessthan: t + -0.25 * x41 in MathOptInterface.LessThan(0.0)
+            equalto1: 1.0x1 in MathOptInterface.EqualTo(1.0)
+            equalto2: 1.0x2 in MathOptInterface.EqualTo(1.0)
+            equalto3: 1.0x3 in MathOptInterface.EqualTo(1.0)
+            equalto4: 1.0x4 in MathOptInterface.EqualTo(1.0)
+            equalto5: 1.0x5 in MathOptInterface.EqualTo(1.0)
+            equalto6: 1.0x6 in MathOptInterface.EqualTo(1.0)
+            equalto7: 1.0x7 in MathOptInterface.EqualTo(1.0)
+            equalto8: 1.0x8 in MathOptInterface.EqualTo(1.0)
+            equalto9: 1.0x9 in MathOptInterface.EqualTo(1.0)
             rsoc41: [1.0x31, x32, x41] in MathOptInterface.RotatedSecondOrderCone(3)
             rsoc31: [1.0x21, x22, x31] in MathOptInterface.RotatedSecondOrderCone(3)
             rsoc32: [1.0x23, x24, x32] in MathOptInterface.RotatedSecondOrderCone(3)
@@ -122,24 +135,37 @@ config = MOIT.TestConfig()
             """
             model = MOIU.Model{Float64}()
             MOIU.loadfromstring!(model, s)
-            MOIU.test_models_equal(mock, model, var_names, vcat("lessthan", rsoc_names))
+            MOIU.test_models_equal(mock, model, var_names, vcat("lessthan", equalto_names, rsoc_names))
         end
 
         @testset "Test bridged model" begin
             var_names = vcat("t", ["x$(i)" for i in 1:9])
             MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+            equalto = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}}())
+            @test length(equalto) == 9
+            equalto_names = ["equalto$(i)" for i in 1:9]
+            MOI.set.(bridged_mock, MOI.ConstraintName(), equalto, equalto_names)
             geomean = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}())
             @test length(geomean) == 1
             MOI.set(bridged_mock, MOI.ConstraintName(), geomean[1], "geomean")
 
             s = """
             variables: t, x1, x2, x3, x4, x5, x6, x7, x8, x9
+            equalto1: 1.0x1 in MathOptInterface.EqualTo(1.0)
+            equalto2: 1.0x2 in MathOptInterface.EqualTo(1.0)
+            equalto3: 1.0x3 in MathOptInterface.EqualTo(1.0)
+            equalto4: 1.0x4 in MathOptInterface.EqualTo(1.0)
+            equalto5: 1.0x5 in MathOptInterface.EqualTo(1.0)
+            equalto6: 1.0x6 in MathOptInterface.EqualTo(1.0)
+            equalto7: 1.0x7 in MathOptInterface.EqualTo(1.0)
+            equalto8: 1.0x8 in MathOptInterface.EqualTo(1.0)
+            equalto9: 1.0x9 in MathOptInterface.EqualTo(1.0)
             geomean: [1.0t, x1, x2, x3, x4, x5, x6, x7, x8, x9] in MathOptInterface.GeometricMeanCone(10)
             maxobjective: t
             """
             model = MOIU.Model{Float64}()
             MOIU.loadfromstring!(model, s)
-            MOIU.test_models_equal(bridged_mock, model, var_names, ["geomean"])
+            MOIU.test_models_equal(bridged_mock, model, var_names, vcat(equalto_names, "geomean"))
         end
 
         # Dual is not yet implemented for GeoMean bridge
