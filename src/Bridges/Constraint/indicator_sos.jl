@@ -158,13 +158,6 @@ function MOI.supports(
     return true
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::IndicatorSOS1Bridge)
-    zval = MOI.get(model, MOI.VariablePrimal(attr.N), bridge.z_variable_index)
-    wv = MOI.get(model, MOI.VariablePrimal(attr.N), bridge.w_variable_index)
-    lin_primal = MOI.get(model, attr, b.linear_constraint_index)
-    return [zval, lin_primal - wv]
-end
-
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimalStart, bridge::IndicatorSOS1Bridge)
     zstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.z_variable_index)
     wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
