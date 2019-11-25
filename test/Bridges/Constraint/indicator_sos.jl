@@ -210,4 +210,13 @@ end
     @test isempty(MOI.get(bridge_eq, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.EqualTo{Float64}}()))
     @test MOI.supports(mock, MOI.ConstraintPrimalStart(), MOIB.Constraint.IndicatorSOS1Bridge{Float64})
     @test MOI.supports(mock, MOI.ConstraintPrimalStart(), MOIB.Constraint.IndicatorSOS1Bridge)
+
+    # VariablePrimal
+    MOI.set(mock, MOI.VariablePrimal(), bridge1.w_variable_index, 33.0)
+    z_value = 1.0
+    MOI.set(mock, MOI.VariablePrimal(), bridge1.z_variable_index, z_value)
+    MOI.set(mock, MOI.VariablePrimal(), x, affine_value)
+
+    # linear function should not move
+    @test all(MOI.get(mock, MOI.ConstraintPrimal(), bridge1) .≈ (1.0, affine_value))
 end
