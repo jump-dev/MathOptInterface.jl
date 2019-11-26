@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-@testset "Indicator" begin
+@testset "Indicator activated on 0" begin
     # linear problem with indicator constraint
     # similar to indicator1_test with reversed z1
     # max  2x1 + 3x2
@@ -41,7 +41,7 @@ include("../utilities.jl")
     BT2 = MOIB.Constraint.concrete_bridge_type(MOIB.Constraint.IndicatorActiveOnFalseBridge, typeof(f1), typeof(iset1))
     bridge = MOIB.Constraint.bridge_constraint(BT, model, f1, iset1)
 
-    @test BT == BT2
+    @test BT === BT2
     @test bridge isa BT
 
     z1comp = bridge.variable_index

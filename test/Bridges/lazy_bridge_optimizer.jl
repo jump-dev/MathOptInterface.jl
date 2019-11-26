@@ -851,6 +851,21 @@ MOIU.@model(ModelNoZeroIndicator,
             (MOI.VectorOfVariables,),
             (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
+MOIU.@model(ModelNoIndicator,
+            (MOI.ZeroOne, MOI.Integer),
+            (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
+             MOI.Semicontinuous, MOI.Semiinteger),
+            (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
+             MOI.NormInfinityCone, MOI.NormOneCone,
+             MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
+             MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
+             MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
+             MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
+             MOI.LogDetConeSquare),
+            (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2),
+            (), (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+            (MOI.VectorOfVariables,),
+            (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
 
 @testset "Bridge adding no constraint" begin
     mock = MOIU.MockOptimizer(NothingModel{Int}())
@@ -982,6 +997,18 @@ end
                                 MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.LessThan{Float64}})
     @test MOI.supports_constraint(full_bridged_mock_indicator, MOI.VectorAffineFunction{Float64},
                                 MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.LessThan{Float64}})
+
+    mock_sos_indicator = MOIU.MockOptimizer(ModelNoIndicator{Float64}())
+    full_bridged_mock_sos_indicator = MOIB.full_bridge_optimizer(mock_sos_indicator, Float64)
+    @test !MOI.supports_constraint(mock_sos_indicator, MOI.VectorAffineFunction{Float64},
+                                MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})
+    @test !MOI.supports_constraint(mock_sos_indicator, MOI.VectorAffineFunction{Float64},
+                                MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.EqualTo{Float64}})
+    @test MOI.supports_constraint(full_bridged_mock_sos_indicator, MOI.VectorAffineFunction{Float64},
+                                MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})
+    @test MOI.supports_constraint(full_bridged_mock_sos_indicator, MOI.VectorAffineFunction{Float64},
+                                MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.EqualTo{Float64}})
+
     @testset "Unslack" begin
         for T in [Float64, Int]
             no_variable_mock = MOIU.MockOptimizer(NoVariableModel{T}())
