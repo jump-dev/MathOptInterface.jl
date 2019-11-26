@@ -7,13 +7,14 @@ function MOI.read_from_file(model::Model, io::IO)
         validate(io)
     end
     object = JSON.parse(io; dicttype=Object)
-    if object["version"] > VERSION
+    file_version = _parse_mof_version(object["version"])
+    if file_version > VERSION
         error("Sorry, the file $(filename) can't be read because this library" *
-              " supports version $(VERSION) of MathOptFormat, but the file " *
-              "you are trying to read is version $(object["version"]).")
+              " supports v$(VERSION) of MathOptFormat, but the file you are " *
+              "trying to read is v$(file_version).")
     end
     name_map = read_variables(model, object)
-    read_objectives(model, object, name_map)
+    read_objective(model, object, name_map)
     read_constraints(model, object, name_map)
     return
 end
@@ -36,20 +37,17 @@ function read_variables(model::Model, object::Object)
     return name_map
 end
 
-function read_objectives(model::Model, object::Object,
-                         name_map::Dict{String, MOI.VariableIndex})
-    if length(object["objectives"]) == 0
-        MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
-    elseif length(object["objectives"]) > 1
-        error("Multi-objective models not supported by MathOptFormat.jl.")
-    else
-        objective = first(object["objectives"])
-        MOI.set(model, MOI.ObjectiveSense(),
-                read_objective_sense(objective["sense"]))
-        objective_type = MOI.get(model, MOI.ObjectiveFunctionType())
-        MOI.set(model, MOI.ObjectiveFunction{objective_type}(),
-                function_to_moi(objective["function"], model, name_map))
+function read_objective(
+    model::Model, object::Object, name_map::Dict{String, MOI.VariableIndex}
+)
+    obj = object["objective"]
+    sense = read_objective_sense(obj["sense"])
+    MOI.set(model, MOI.ObjectiveSense(), sense)
+    if sense == MOI.FEASIBILITY_SENSE
+        return
     end
+    func = function_to_moi(obj["function"], model, name_map)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
     return
 end
 
@@ -70,11 +68,10 @@ function read_objective_sense(sense::String)
         return MOI.MIN_SENSE
     elseif sense == "max"
         return MOI.MAX_SENSE
-    elseif sense == "feasibility"
+    else
+        @assert sense == "feasibility"
         return MOI.FEASIBILITY_SENSE
     end
-    error("Version $(VERSION) of MathOptFormat does not support the objective" *
-          " sense: $(sense).")
 end
 
 

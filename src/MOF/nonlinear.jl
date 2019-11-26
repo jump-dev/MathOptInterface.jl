@@ -73,10 +73,10 @@ function write_nlpblock(object::Object, model::Model,
         objective = MOI.objective_expr(nlp_block.evaluator)
         objective = substitute_variables(objective, variables)
         sense = MOI.get(model, MOI.ObjectiveSense())
-        push!(object["objectives"], Object(
-            "sense"    => moi_to_object(sense),
+        object["objective"] = Object(
+            "sense" => moi_to_object(sense),
             "function" => moi_to_object(Nonlinear(objective), model, name_map)
-        ))
+        )
     end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
         constraint = MOI.constraint_expr(nlp_block.evaluator, row)

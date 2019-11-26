@@ -1,4 +1,7 @@
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
+bench/*
+.vscode/*
 Manifest.toml
+

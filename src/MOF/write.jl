@@ -2,15 +2,18 @@ function MOI.write_to_file(model::Model, io::IO)
     options = get_options(model)
     object = Object(
         "name"        => "MathOptFormat Model",
-        "version"     => VERSION,
+        "version"     => Object(
+            "major" => Int(VERSION.major),
+            "minor" => Int(VERSION.minor)
+        ),
         "variables"   => Object[],
-        "objectives"  => Object[],
+        "objective"  => Object("sense" => "feasibility"),
         "constraints" => Object[]
     )
     MathOptFormat.create_unique_names(model, warn=options.warn)
     name_map = write_variables(object, model)
     write_nlpblock(object, model, name_map)
-    write_objectives(object, model, name_map)
+    write_objective(object, model, name_map)
     write_constraints(object, model, name_map)
     indent = options.print_compact ? nothing : 2
     Base.write(io, JSON.json(object, indent))
@@ -27,20 +30,17 @@ function write_variables(object::Object, model::Model)
     return name_map
 end
 
-function write_objectives(object::Object, model::Model,
-                          name_map::Dict{MOI.VariableIndex, String})
+function write_objective(
+    object::Object, model::Model, name_map::Dict{MOI.VariableIndex, String}
+)
     sense = MOI.get(model, MOI.ObjectiveSense())
-    objective_type = MOI.get(model, MOI.ObjectiveFunctionType())
-    objective_function = MOI.get(model, MOI.ObjectiveFunction{objective_type}())
-    if (objective_type == MOI.ScalarAffineFunction{Float64} &&
-        length(objective_function.terms) == 0 &&
-        objective_function.constant == 0.0)
-            return  # The default objective. Don't include.
+    object["objective"] = Object("sense" => moi_to_object(sense))
+    if sense != MOI.FEASIBILITY_SENSE
+        objective_type = MOI.get(model, MOI.ObjectiveFunctionType())
+        objective_function = MOI.get(model, MOI.ObjectiveFunction{objective_type}())
+        object["objective"]["function"] =
+            moi_to_object(objective_function, model, name_map)
     end
-    push!(object["objectives"], Object(
-        "sense"    => moi_to_object(sense),
-        "function" => moi_to_object(objective_function, model, name_map)
-    ))
     return
 end
 

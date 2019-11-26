@@ -1,4 +1,5 @@
-using MathOptFormat, Test
+using MathOptFormat
+using Test
 
 const MOI = MathOptFormat.MOI
 const MOIU = MOI.Utilities
@@ -28,34 +29,29 @@ const MOIU = MOI.Utilities
     end
 
     @testset "Calling MOF._compressed_open" begin
-        for cs in [MathOptFormat.Bzip2(), MathOptFormat.Gzip()] # MathOptFormat.Xz()
-            @test_throws ArgumentError MathOptFormat._compressed_open((x) -> nothing,
-                                                          "dummy.gz", "a", cs)
-            @test_throws ArgumentError MathOptFormat._compressed_open((x) -> nothing,
-                                                          "dummy.gz", "r+", cs)
-            @test_throws ArgumentError MathOptFormat._compressed_open((x) -> nothing,
-                                                          "dummy.gz", "w+", cs)
-            @test_throws ArgumentError MathOptFormat._compressed_open((x) -> nothing,
-                                                          "dummy.gz", "a+", cs)
+        for cs in [MathOptFormat.Bzip2(), MathOptFormat.Gzip()]
+            for open_type in ["a", "r+", "w+", "a+"]
+                @test_throws ArgumentError MathOptFormat._compressed_open(
+                    (x) -> nothing, "dummy.gz", open_type, cs
+                )
+            end
         end
     end
 
     @testset "Provided compression schemes" begin
-        file_to_read = joinpath(@__DIR__, "MPS", "free_integer.mps")
-        m = MathOptFormat.read_from_file(file_to_read)
+        model = MathOptFormat.read_from_file(
+            joinpath(@__DIR__, "MPS", "free_integer.mps")
+        )
+        filename = joinpath(@__DIR__, "free_integer.mps")
+        MOI.write_to_file(model, filename * ".garbage")
+        for ext in ["", ".bz2", ".gz"]
+            MOI.write_to_file(model, filename * ext)
+            MathOptFormat.read_from_file(filename * ext)
+        end
 
-        @testset "Automatic detection from extension" begin
-            MOI.write_to_file(m, file_to_read * ".garbage")
-            for ext in ["", ".bz2", ".gz"] # ".xz"
-                MOI.write_to_file(m, file_to_read * ext)
-                MathOptFormat.read_from_file(file_to_read * ext)
-            end
-
-            # Clean up
-            sleep(1.0)  # Allow time for unlink to happen.
-            for ext in ["", ".garbage", ".bz2", ".gz"] # ".xz"
-                rm(file_to_read * ext, force = true)
-            end
+        sleep(1.0)  # Allow time for unlink to happen.
+        for ext in ["", ".garbage", ".bz2", ".gz"]
+            rm(filename * ext, force = true)
         end
     end
 end

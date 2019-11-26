@@ -115,8 +115,6 @@ end
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
-        MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
-            MOI.SingleVariable(x))
         MOI.write_to_file(model, TEST_MOF_FILE)
         model_2 = MOF.Model(validate=false)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
@@ -403,4 +401,5 @@ end
     # Clean up
     sleep(1.0)  # allow time for unlink to happen
     rm(TEST_MOF_FILE, force=true)
+    rm(TEST_MOF_FILE * ".gz", force=true)
 end

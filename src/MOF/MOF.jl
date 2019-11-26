@@ -1,21 +1,24 @@
 module MOF
 
 import ..MathOptFormat
-import DataStructures, JSON, JSONSchema, MathOptInterface
-
-# The file /deps/deps.jl contains a constant `SCHEMA_PATH` that points to the
-# latest version of MathOptFormat, which should have been downloaded on `build`.
-include(joinpath(dirname(dirname(@__DIR__)), "deps", "deps.jl"))
-
-# Extract the MathOptFormat version number from the JSON schema.
-const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
-    data["properties"]["version"]["const"]
-end
-
-# we use an ordered dict to make the JSON printing nicer
-const Object = DataStructures.OrderedDict{String, Any}
+import OrderedCollections
+import JSON
+import JSONSchema
+import MathOptInterface
 
 const MOI = MathOptInterface
+const Object = OrderedCollections.OrderedDict{String, Any}
+const SCHEMA_PATH = joinpath(@__DIR__, "v0.4.0.json")
+const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
+    VersionNumber(
+        data["properties"]["version"]["properties"]["major"]["const"],
+        data["properties"]["version"]["properties"]["minor"]["const"]
+    )
+end
+
+function _parse_mof_version(version::Object)
+    return VersionNumber(version["major"], version["minor"])
+end
 
 struct Nonlinear <: MOI.AbstractScalarFunction
     expr::Expr
@@ -90,8 +93,11 @@ Validate that the MOF file `filename` conforms to the MOF JSON schema. Returns
 `nothing` if the file is valid, otherwise throws an error describing why the
 file is not valid.
 """
-function validate(filename::String; compression::MathOptFormat.AbstractCompressionScheme=MathOptFormat.AutomaticCompression())
-    compression = MathOptFormat._automatic_compression(filename, compression)
+function validate(
+    filename::String;
+    compression::MathOptFormat.AbstractCompressionScheme =
+        MathOptFormat.AutomaticCompression()
+)
     MathOptFormat._compressed_open(filename, "r", compression) do io
         validate(io)
     end

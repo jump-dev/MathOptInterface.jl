@@ -1,10 +1,13 @@
 {
   "name": "MathOptFormat Model",
-  "version": 0,
+  "version": {
+    "major": 0,
+    "minor": 4
+  },
   "variables": [{}],
-  "objectives": [{
+  "objective": {
       "sense": "min",
       "function": {"head": "SingleVariable", "variable": "x"}
-  }],
+  },
   "constraints": []
 }

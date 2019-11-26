@@ -1,7 +1,10 @@
 {
   "name": "MathOptFormat Model",
-  "version": 9999,
+  "version": {
+    "major": 999,
+    "minor": 0
+  },
   "variables": [],
-  "objectives": [],
+  "objective": {"sense": "feasibility"},
   "constraints": []
 }

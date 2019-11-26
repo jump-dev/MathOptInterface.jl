@@ -4,7 +4,6 @@ import MathOptInterface
 const MOI = MathOptInterface
 
 import CodecBzip2
-# import CodecXz
 import CodecZlib
 
 include("compression.jl")
@@ -137,13 +136,23 @@ function create_unique_variable_names(
 end
 
 """
-List of accepted export formats. `AUTOMATIC_FILE_FORMAT` corresponds to
-a detection from the file name, only based on the extension (regardless of
-compression format).
-"""
-@enum(FileFormat, FORMAT_CBF, FORMAT_LP, FORMAT_MOF, FORMAT_MPS, AUTOMATIC_FILE_FORMAT)
+    FileFormat
 
-const _file_formats = Dict{FileFormat, Tuple{String, Any}}(
+List of accepted export formats.
+
+`AUTOMATIC_FILE_FORMAT` corresponds to a detection from the file name, only
+based on the extension (regardless of compression format).
+"""
+@enum(
+    FileFormat,
+    FORMAT_CBF,
+    FORMAT_LP,
+    FORMAT_MOF,
+    FORMAT_MPS,
+    AUTOMATIC_FILE_FORMAT,
+)
+
+const _FILE_FORMATS = Dict{FileFormat, Tuple{String, Any}}(
     # ENUMERATED VALUE => extension, model type
     FORMAT_CBF => (".cbf", CBF.Model),
     FORMAT_LP => (".lp", LP.Model),
@@ -151,49 +160,64 @@ const _file_formats = Dict{FileFormat, Tuple{String, Any}}(
     FORMAT_MPS => (".mps", MPS.Model)
 )
 
-function _filename_to_format(filename::String)
-    for compr_ext in ["", ".bz2", ".gz", ".xz"]
-        for (type, format) in _file_formats
-            if endswith(filename, "$(format[1])$(compr_ext)")
-                return type
-            end
-        end
-    end
-
-    error("File type of $(filename) not recognized by MathOptFormat.jl.")
-end
-
-function _filename_to_model(filename::String)
-    return _file_formats[_filename_to_format(filename)][2]()
-end
-
 const MATH_OPT_FORMATS = Union{
     CBF.InnerModel, LP.InnerModel, MOF.Model, MPS.InnerModel
 }
 
-function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String; compression::AbstractCompressionScheme=AutomaticCompression())
-    compression = _automatic_compression(filename, compression)
+function MOI.write_to_file(
+    model::MATH_OPT_FORMATS,
+    filename::String;
+    compression::AbstractCompressionScheme = AutomaticCompression()
+)
     _compressed_open(filename, "w", compression) do io
         MOI.write_to_file(model, io)
     end
 end
 
-function MOI.read_from_file(model::MATH_OPT_FORMATS, filename::String; compression::AbstractCompressionScheme=AutomaticCompression())
-    compression = _automatic_compression(filename, compression)
+function MOI.read_from_file(
+    model::MATH_OPT_FORMATS,
+    filename::String;
+    compression::AbstractCompressionScheme = AutomaticCompression()
+)
     _compressed_open(filename, "r", compression) do io
         MOI.read_from_file(model, io)
     end
 end
 
-"""
-    read_from_file(filename::String)
+function _detect_file_format(filename::String)
+    for (format, (ext, _)) in _FILE_FORMATS
+        if endswith(filename, ext) || occursin("$(ext).", filename)
+            return format
+        end
+    end
+    error(
+        "Unable to detect automatically format of $(filename). Use the " *
+        "`file_format` keyword to specify the file format."
+    )
+end
 
-Create a MOI model by reading `filename`. Type of the returned model depends on
-the extension of `filename`.
 """
-function read_from_file(filename::String; compression::AbstractCompressionScheme=AutomaticCompression())
-    model = _filename_to_model(filename)
-    MOI.read_from_file(model, filename, compression=compression)
+    read_from_file(
+        filename::String;
+        compression::AbstractCompressionScheme = AutomaticCompression(),
+        file_format::FileFormat = AUTOMATIC_FILE_FORMAT,
+    )
+
+Return a new MOI model by reading `filename`.
+
+Default arguments for `file_format` and `compression` will attempt to detect
+model type from `filename`.
+"""
+function read_from_file(
+    filename::String;
+    compression::AbstractCompressionScheme = AutomaticCompression(),
+    file_format::FileFormat = AUTOMATIC_FILE_FORMAT,
+)
+    if file_format == AUTOMATIC_FILE_FORMAT
+        file_format = _detect_file_format(filename)
+    end
+    model = _FILE_FORMATS[file_format][2]()
+    MOI.read_from_file(model, filename; compression = compression)
     return model
 end
 

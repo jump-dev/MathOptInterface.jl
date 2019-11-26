@@ -1,20 +1,23 @@
 name = "MathOptFormat"
 uuid = "f4570300-c277-12e8-125c-4912f86ce65d"
 authors = ["Oscar Dowson <oscar.dowson@northwestern.edu"]
-version = "0.2.2"
+version = "0.3"
 
 [deps]
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
-DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 
 [compat]
-HTTP = "~0.8.2"
+CodecBzip2 = "~0.6"
+CodecZlib = "~0.6"
+JSON = "~0.21"
+JSONSchema = "0.1"
 MathOptInterface = "~0.9.5"
+OrderedCollections = "~1"
 julia = "^1"
 
 [extras]
