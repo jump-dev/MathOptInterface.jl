@@ -692,7 +692,7 @@ end
 #   RHS
 # ==============================================================================
 
-function parse_single_rhs(data, row_name, value)
+function parse_single_rhs(data, row_name, value, items::Vector{String})
     if !haskey(data.rows, row_name)
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
     end
@@ -716,12 +716,12 @@ function parse_rhs_line(data::TempMPSModel, items::Vector{String})
     if length(items) == 3
         # [rhs name] [row name] [value]
         rhs_name, row_name, value = items
-        parse_single_rhs(data, row_name, value)
+        parse_single_rhs(data, row_name, value, items)
     elseif length(items) == 5
         # [rhs name] [row name 1] [value 1] [row name 2] [value 2]
         rhs_name, row_name_1, value_1, row_name_2, value_2 = items
-        parse_single_rhs(data, row_name_1, value_1)
-        parse_single_rhs(data, row_name_2, value_2)
+        parse_single_rhs(data, row_name_1, value_1, items)
+        parse_single_rhs(data, row_name_2, value_2, items)
     else
         error("Malformed RHS line: $(join(items, " "))")
     end
