@@ -166,8 +166,8 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::Indic
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart, bridge::IndicatorSOS1Bridge)
-    zstart = MOI.get(model, MOI.VariablePrimalStart(attr.N), bridge.z_variable_index)
-    wstart = MOI.get(model, MOI.VariablePrimalStart(attr.N), bridge.w_variable_index)
+    zstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.z_variable_index)
+    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
     lin_primal_start = MOI.get(model, attr, bridge.linear_constraint_index)
     return [zstart, lin_primal_start - wstart]
 end
@@ -176,8 +176,8 @@ function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
                  bridge::IndicatorSOS1Bridge{T}, value) where {T}
     zvalue = value[1]
     lin_start = value[2]
-    MOI.set(model, MOI.VariablePrimalStart(attr.N), bridge.z_variable_index, zvalue)
-    wstart = MOI.get(model, MOI.VariablePrimalStart(attr.N), bridge.w_variable_index)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.z_variable_index, zvalue)
+    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
     wstart = wstart === nothing ? zero(T) : wstart
     MOI.set(model, attr, bridge.linear_constraint_index, lin_start + wstart)
 end
