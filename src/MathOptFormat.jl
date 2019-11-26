@@ -14,40 +14,42 @@ include("MPS/MPS.jl")
 
 """
     create_unique_names(
-        model::MOI.ModelLike; warn::Bool = false,
-        replacements::Vector{Pair{Char, Char}} = Pair{Char, Char}[]
+        model::MOI.ModelLike;
+        warn::Bool = false,
+        replacements::Vector{Function} = Function[]
     )
 
 Rename variables in `model` to ensure that all variables and constraints have
-a unique name. In addition, loop through `replacements` pairs `old => new` and
-replace all `old` `Char`s with `new`.
+a unique name. In addition, loop through `replacements` and replace names with
+`f(name)`.
 
 If `warn`, print a warning if a variable or constraint is renamed.
 """
 function create_unique_names(
-    model::MOI.ModelLike; warn::Bool = false,
-    replacements::Vector{Pair{Char, Char}} = Pair{Char, Char}[]
+    model::MOI.ModelLike;
+    warn::Bool = false,
+    replacements::Vector{Function} = Function[]
 )
     create_unique_variable_names(model, warn, replacements)
     create_unique_constraint_names(model, warn, replacements)
     return
 end
 
-function _replace(s::String, replacements::Vector{Pair{Char, Char}})
-    for replacement in replacements
-        s = replace(s, replacement)
+function _replace(s::String, replacements::Vector{Function})
+    for f in replacements
+        s = f(s)
     end
     return s
 end
 
 function create_unique_constraint_names(
-    model::MOI.ModelLike, warn::Bool, replacements::Vector{Pair{Char, Char}}
+    model::MOI.ModelLike, warn::Bool, replacements::Vector{Function}
 )
     original_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
             name = MOI.get(model, MOI.ConstraintName(), index)
-            push!(original_names, name)
+            push!(original_names, _replace(name, replacements))
         end
     end
     added_names = Set{String}()
@@ -59,10 +61,11 @@ function create_unique_constraint_names(
                 replacements
             )
             if new_name in added_names
-                # We found a duplicate name! We could just append a string like "_",
-                # but we're going to be clever and loop through the integers to name
-                # them appropriately. Thus, if we have three constraints named c,
-                # we'll end up with variables named c, c_1, and c_2.
+                # We found a duplicate name! We could just append a string like
+                # "_", but we're going to be clever and loop through the
+                # integers to name them appropriately. Thus, if we have three
+                # constraints named c, we'll end up with variables named c, c_1,
+                # and c_2.
                 i = 1
                 tmp_name = string(new_name, "_", i)
                 while tmp_name in added_names || tmp_name in original_names
@@ -89,14 +92,16 @@ function create_unique_constraint_names(
 end
 
 function create_unique_variable_names(
-    model::MOI.ModelLike, warn::Bool, replacements::Vector{Pair{Char, Char}}
+    model::MOI.ModelLike, warn::Bool, replacements::Vector{Function}
 )
     variables = MOI.get(model, MOI.ListOfVariableIndices())
     # This is a list of all of the names currently in the model. We're going to
     # use this to make sure we don't rename a variable to a name that already
     # exists.
     original_names = Set{String}([
-        MOI.get(model, MOI.VariableName(), index) for index in variables])
+        _replace(MOI.get(model, MOI.VariableName(), index), replacements)
+        for index in variables
+    ])
     # This set of going to store all of the names in the model so that we don't
     # add duplicates.
     added_names = Set{String}()

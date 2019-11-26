@@ -53,7 +53,9 @@ end
 function MOI.write_to_file(model::InnerModel, io::IO)
     options = get_options(model)
     MathOptFormat.create_unique_names(
-        model, warn = options.warn, replacements = [' ' => '_']
+        model;
+        warn = options.warn,
+        replacements = Function[s -> replace(s, ' ' => '_')]
     )
     write_model_name(io, model)
     write_rows(io, model)
