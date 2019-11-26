@@ -4,6 +4,7 @@ authors = ["Oscar Dowson <oscar.dowson@northwestern.edu"]
 version = "0.2.2"
 
 [deps]
+CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"

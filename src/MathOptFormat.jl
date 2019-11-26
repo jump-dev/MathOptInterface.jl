@@ -3,8 +3,11 @@ module MathOptFormat
 import MathOptInterface
 const MOI = MathOptInterface
 
+import CodecBzip2
+# import CodecXz
 import CodecZlib
 
+include("compression.jl")
 include("CBF/CBF.jl")
 include("LP/LP.jl")
 include("MOF/MOF.jl")
@@ -133,36 +136,51 @@ function create_unique_variable_names(
     end
 end
 
-function gzip_open(f::Function, filename::String, mode::String)
-    if endswith(filename, ".gz")
-        if mode == "r"
-            open(CodecZlib.GzipDecompressorStream, filename, mode) do io
-                f(io)
+"""
+List of accepted export formats. `AUTOMATIC_FILE_FORMAT` corresponds to
+a detection from the file name, only based on the extension (regardless of
+compression format).
+"""
+@enum(FileFormat, FORMAT_CBF, FORMAT_LP, FORMAT_MOF, FORMAT_MPS, AUTOMATIC_FILE_FORMAT)
+
+const _file_formats = Dict{FileFormat, Tuple{String, Any}}(
+    # ENUMERATED VALUE => extension, model type
+    FORMAT_CBF => (".cbf", CBF.Model),
+    FORMAT_LP => (".lp", LP.Model),
+    FORMAT_MOF => (".mof.json", MOF.Model),
+    FORMAT_MPS => (".mps", MPS.Model)
+)
+
+function _filename_to_format(filename::String)
+    for compr_ext in ["", ".bz2", ".gz", ".xz"]
+        for (type, format) in _file_formats
+            if endswith(filename, "$(format[1])$(compr_ext)")
+                return type
             end
-        elseif mode == "w"
-            open(CodecZlib.GzipCompressorStream, filename, mode) do io
-                f(io)
-            end
-        else
-            throw(ArgumentError("Mode must be \"r\" or \"w\""))
         end
-    else
-        return open(f, filename, mode)
     end
+
+    error("File type of $(filename) not recognized by MathOptFormat.jl.")
+end
+
+function _filename_to_model(filename::String)
+    return _file_formats[_filename_to_format(filename)][2]()
 end
 
 const MATH_OPT_FORMATS = Union{
     CBF.InnerModel, LP.InnerModel, MOF.Model, MPS.InnerModel
 }
 
-function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)
-    gzip_open(filename, "w") do io
+function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String; compression::AbstractCompressionScheme=AutomaticCompression())
+    compression = _automatic_compression(filename, compression)
+    _compressed_open(filename, "w", compression) do io
         MOI.write_to_file(model, io)
     end
 end
 
-function MOI.read_from_file(model::MATH_OPT_FORMATS, filename::String)
-    gzip_open(filename, "r") do io
+function MOI.read_from_file(model::MATH_OPT_FORMATS, filename::String; compression::AbstractCompressionScheme=AutomaticCompression())
+    compression = _automatic_compression(filename, compression)
+    _compressed_open(filename, "r", compression) do io
         MOI.read_from_file(model, io)
     end
 end
@@ -173,19 +191,9 @@ end
 Create a MOI model by reading `filename`. Type of the returned model depends on
 the extension of `filename`.
 """
-function read_from_file(filename::String)
-    model = if endswith(filename, ".mof.json.gz") || endswith(filename, ".mof.json")
-        MOF.Model()
-    elseif endswith(filename, ".cbf.gz") || endswith(filename, ".cbf")
-        CBF.Model()
-    elseif endswith(filename, ".mps.gz") || endswith(filename, ".mps")
-        MPS.Model()
-    elseif endswith(filename, ".lp.gz") || endswith(filename, ".lp")
-        LP.Model()
-    else
-        error("File-type of $(filename) not supported by MathOptFormat.jl.")
-    end
-    MOI.read_from_file(model, filename)
+function read_from_file(filename::String; compression::AbstractCompressionScheme=AutomaticCompression())
+    model = _filename_to_model(filename)
+    MOI.read_from_file(model, filename, compression=compression)
     return model
 end
 
