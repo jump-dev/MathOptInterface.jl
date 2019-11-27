@@ -101,7 +101,13 @@ end
 end
 @testset "GeoMean" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4))
-    MOIT.geomeantest(mock, config)
+    MOIT.geomean1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4))
+    MOIT.geomean1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10))
+    MOIT.geomean2vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10))
+    MOIT.geomean2ftest(mock, config)
 end
 @testset "Exponential" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1., 2., 2exp(1/2)],

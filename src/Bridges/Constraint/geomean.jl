@@ -54,7 +54,7 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
     n = d - 1
     l = ilog2(n)
     N = 1 << l
-    xij = MOI.add_variables(model, N-1)
+    xij = MOI.add_variables(model, N - 1)
     f_scalars = MOIU.eachscalar(f)
 
     xl1 = MOI.SingleVariable(xij[1])
@@ -77,8 +77,9 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
     socrc = Vector{CI{G, MOI.RotatedSecondOrderCone}}(undef, N - 1)
     offset = offset_next = 0
     for i in 1:l
-        offset_next = offset + i
-        for j in 1:(1 << (i - 1))
+        num_lvars = 1 << (i - 1)
+        offset_next = offset + num_lvars
+        for j in 1:num_lvars
             if i == l
                 a = _getx(2j - 1)
                 b = _getx(2j)
@@ -93,6 +94,7 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
         end
         offset = offset_next
     end
+    @assert offset == length(socrc)
     return GeoMeanBridge{T, F, G, H}(d, xij, tubc, socrc)
 end
 
@@ -157,18 +159,17 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
     d = bridge.d
     n = d - 1
     l = ilog2(n)
-    offset = offset_next = 0
-    for i in 1:l
-        offset_next = offset + i
-        for j in 1:(1 << (i-1))
-            if i == l && 2j <= bridge.d
-                func = MOI.get(model, attr, bridge.socrc[offset + j])
-                func_scalars = MOIU.eachscalar(func)
-                f_scalars[2j] = func_scalars[1]
+    num_lvars = 1 << (l - 1)
+    offset = num_lvars - 1
+    for j in 1:num_lvars
+        if 2j <= bridge.d
+            func = MOI.get(model, attr, bridge.socrc[offset + j])
+            func_scalars = MOIU.eachscalar(func)
+            f_scalars[2j] = func_scalars[1]
+            if 2j + 1 <= bridge.d
                 f_scalars[2j + 1] = func_scalars[2]
             end
         end
-        offset = offset_next
     end
     return MOIU.vectorize(f_scalars)
 end
