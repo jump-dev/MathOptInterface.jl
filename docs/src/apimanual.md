@@ -316,9 +316,9 @@ nonpositive) real numbers.
 
 | Mathematical Constraint       | MOI Function                 | MOI Set        |
 |-------------------------------|------------------------------|----------------|
-| ``a^Tx \le u``                | `ScalarAffineFunction`       | `LessThan`     |
-| ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan`  |
-| ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`      |
+| ``a^Tx \le \beta``            | `ScalarAffineFunction`       | `LessThan`     |
+| ``a^Tx \ge \alpha``           | `ScalarAffineFunction`       | `GreaterThan`  |
+| ``a^Tx = \beta``              | `ScalarAffineFunction`       | `EqualTo`      |
 | ``\alpha \le a^Tx \le \beta`` | `ScalarAffineFunction`       | `Interval`     |
 | ``x_i \le \beta``             | `SingleVariable`             | `LessThan`     |
 | ``x_i \ge \alpha``            | `SingleVariable`             | `GreaterThan`  |
