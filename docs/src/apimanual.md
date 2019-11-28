@@ -320,10 +320,10 @@ nonpositive) real numbers.
 | ``a^Tx \ge l``                | `ScalarAffineFunction`       | `GreaterThan`  |
 | ``a^Tx = b``                  | `ScalarAffineFunction`       | `EqualTo`      |
 | ``\alpha \le a^Tx \le \beta`` | `ScalarAffineFunction`       | `Interval`     |
-| ``x_i \le \beta               | `SingleVariable`             | `LessThan`     |
-| ``x_i \ge \alpha              | `SingleVariable`             | `GreaterThan`  |
-| ``x_i = \beta                 | `SingleVariable`             | `EqualTo`      |
-| ``\alpha \le x_i \le \beta    | `SingleVariable`             | `Interval`     |
+| ``x_i \le \beta``             | `SingleVariable`             | `LessThan`     |
+| ``x_i \ge \alpha``            | `SingleVariable`             | `GreaterThan`  |
+| ``x_i = \beta``               | `SingleVariable`             | `EqualTo`      |
+| ``\alpha \le x_i \le \beta``  | `SingleVariable`             | `Interval`     |
 | ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
