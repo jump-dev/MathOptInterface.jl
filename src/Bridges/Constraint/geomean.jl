@@ -48,13 +48,13 @@ struct GeoMeanBridge{T, F, G, H} <: AbstractBridge
     xij::Vector{MOI.VariableIndex}
     tubc::CI{F, MOI.LessThan{T}}
     socrc::Vector{CI{G, MOI.RotatedSecondOrderCone}}
-    nonneg::Union{Nothing, CI{G, MOI.Nonnegatives}}
+    nonneg::Union{Nothing, CI{H, MOI.Nonnegatives}}
 end
 function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
                            f::MOI.AbstractVectorFunction,
                            s::MOI.GeometricMeanCone) where {T, F, G, H}
     d = s.dimension
-    if d == 1
+    if d <= 1
         # TODO change to a standard error
         error("Dimension of GeometricMeanCone must be greater than 1.")
     end
@@ -70,12 +70,9 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
         # TODO better to use nothing?
         xij = MOI.VariableIndex[]
         tubc = MOIU.normalize_and_add_constraint(
-            model, MOIU.operate!(+, T, t, -1.0 * f_scalars[2]), MOI.LessThan(zero(T)),
+            model, MOIU.operate!(-, T, t, 1.0 * f_scalars[2]), MOI.LessThan(zero(T)),
             allow_modify_function=true)
-        # TODO hacky, what is the correct way to get [x] the correct type?
-        x = convert(SG, f_scalars[2])
-        vec = MOIU.operate(vcat, T, x)
-        nonneg = MOI.add_constraint(model, vec, MOI.Nonnegatives(1))
+        nonneg = MOI.add_constraint(model, f_scalars[2:end], MOI.Nonnegatives(1))
         return GeoMeanBridge{T, F, G, H}(d, xij, tubc, socrc, nonneg)
     end
 
