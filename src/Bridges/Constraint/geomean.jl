@@ -180,13 +180,13 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
     d = bridge.d
     f_scalars = Vector{MOIU.scalar_type(H)}(undef, bridge.d)
     tub = MOI.get(model, attr, bridge.tubc)
+    rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.tubc))
+    tub = MOIU.operate(-, T, tub, rhs)
     if d == 2
         x = MOI.get(model, attr, bridge.nonneg)
         f_scalars[2] = MOIU.eachscalar(x)[1]
         f_scalars[1] = MOIU.operate(+, T, tub, f_scalars[2])
     else
-        rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.tubc))
-        tub = MOIU.operate(-, T, tub, rhs)
         t = MOIU.remove_variable(tub, bridge.xij[1])
         f_scalars[1] = t
         n = d - 1
