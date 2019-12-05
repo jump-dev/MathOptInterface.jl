@@ -802,15 +802,20 @@ has value greater than zero.
 struct ListOfConstraints <: AbstractModelAttribute end
 
 """
-    ObjectiveFunction{F<:AbstractScalarFunction}()
+    ObjectiveFunction{F<:AbstractFunction}()
 
-A model attribute for the objective function which has a type `F<:AbstractScalarFunction`.
-`F` should be guaranteed to be equivalent but not necessarily identical to the function type provided by the user.
+A model attribute for the objective function which has a type
+`F<:AbstractFunction`.
+
+`F` should be guaranteed to be equivalent but not necessarily identical to the
+function type provided by the user.
+
 Throws an `InexactError` if the objective function cannot be converted to `F`,
-e.g. the objective function is quadratic and `F` is `ScalarAffineFunction{Float64}` or
-it has non-integer coefficient and `F` is `ScalarAffineFunction{Int}`.
+e.g. the objective function is quadratic and `F` is
+`ScalarAffineFunction{Float64}` or it has non-integer coefficient and `F` is
+`ScalarAffineFunction{Int}`.
 """
-struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute end
+struct ObjectiveFunction{F<:AbstractFunction} <: AbstractModelAttribute end
 
 """
     ObjectiveFunctionType()

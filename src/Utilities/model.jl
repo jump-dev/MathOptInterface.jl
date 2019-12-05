@@ -383,7 +383,12 @@ function MOI.supports(
     ::MOI.ObjectiveFunction{<:Union{
         MOI.SingleVariable,
         MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T}}}) where T
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T}
+    }}
+) where T
     return true
 end
 function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
@@ -901,7 +906,14 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
             senseset::Bool
             sense::$MOI.OptimizationSense
             objectiveset::Bool
-            objective::Union{$MOI.SingleVariable, $MOI.ScalarAffineFunction{T}, $MOI.ScalarQuadraticFunction{T}}
+            objective::Union{
+                $MOI.SingleVariable,
+                $MOI.ScalarAffineFunction{T},
+                $MOI.ScalarQuadraticFunction{T},
+                $MOI.VectorOfVariables,
+                $MOI.VectorAffineFunction{T},
+                $MOI.VectorQuadraticFunction{T}
+            }
             num_variables_created::Int64
             # If nothing, no variable has been deleted so the indices of the
             # variables are VI.(1:num_variables_created)

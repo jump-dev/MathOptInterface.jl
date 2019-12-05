@@ -283,3 +283,17 @@ end
     @test !haskey(dest.ext, :my_store)
     @test model.ext[:my_store] == 2
 end
+
+@testset "Vector-valued objectives" begin
+    model = MOIU.Model{Float64}()
+    x = MOI.add_variables(model, 3)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.VectorOfVariables}(),
+        MOI.VectorOfVariables(x)
+    )
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.VectorOfVariables
+    @test MOI.get(model, MOI.ObjectiveFunction{MOI.VectorOfVariables}()) ==
+        MOI.VectorOfVariables(x)
+end
