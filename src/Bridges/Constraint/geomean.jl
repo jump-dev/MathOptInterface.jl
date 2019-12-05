@@ -55,7 +55,7 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
                            s::MOI.GeometricMeanCone) where {T, F, G, H}
     d = s.dimension
     if d <= 1
-        # TODO change to a standard error
+        # TODO change to a standard error: https://github.com/JuliaOpt/MathOptInterface.jl/issues/967
         error("Dimension of GeometricMeanCone must be greater than 1.")
     end
     n = d - 1
@@ -67,10 +67,9 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
     SG = MOIU.scalar_type(G)
 
     if d == 2
-        # TODO better to use nothing?
         xij = MOI.VariableIndex[]
         tubc = MOIU.normalize_and_add_constraint(
-            model, MOIU.operate!(-, T, t, 1.0 * f_scalars[2]), MOI.LessThan(zero(T)),
+            model, MOIU.operate!(-, T, t, f_scalars[2]), MOI.LessThan(zero(T)),
             allow_modify_function=true)
         nonneg = MOI.add_constraint(model, f_scalars[2:end], MOI.Nonnegatives(1))
         return GeoMeanBridge{T, F, G, H}(d, xij, tubc, socrc, nonneg)
@@ -157,10 +156,9 @@ function MOI.get(b::GeoMeanBridge{T, F, G},
                  ::MOI.ListOfConstraintIndices{G, MOI.RotatedSecondOrderCone}) where {T, F, G}
     return b.socrc
 end
-# TODO what should be returned if d > 2
-function MOI.get(b::GeoMeanBridge{T, F, G},
-                 ::MOI.ListOfConstraintIndices{G, MOI.Nonnegatives}) where {T, F, G}
-    return [b.nonneg]
+function MOI.get(b::GeoMeanBridge{T, F, G, H},
+                 ::MOI.ListOfConstraintIndices{H, MOI.Nonnegatives}) where {T, F, G, H}
+    return (b.d > 2 ? MOI.ConstraintIndex{H, MOI.Nonnegatives}[] : [b.nonneg])
 end
 
 # References
