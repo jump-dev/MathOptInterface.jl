@@ -1,7 +1,7 @@
 name = "MathOptFormat"
 uuid = "f4570300-c277-12e8-125c-4912f86ce65d"
 authors = ["Oscar Dowson <oscar.dowson@northwestern.edu"]
-version = "0.3"
+version = "0.3.0"
 
 [deps]
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
