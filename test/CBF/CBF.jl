@@ -67,14 +67,7 @@ function test_read(filename::String, model_string::String)
     MOIU.test_models_equal(model1, model2, variable_names, constraint_names)
 end
 
-
 @test sprint(show, CBF.Model()) == "A Conic Benchmark Format (CBF) model"
-
-@testset "MathOptFormat.read_from_file" begin
-    file_to_read = joinpath(@__DIR__, "models", "example_C.cbf")
-    @test !MOI.is_empty(MathOptFormat.read_from_file(file_to_read))
-    @test !MOI.is_empty(MathOptFormat.read_from_file(file_to_read * ".gz"))
-end
 
 @testset "Support errors" begin
     @testset "$set variable bound" for set in [

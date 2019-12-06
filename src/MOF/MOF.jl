@@ -93,12 +93,10 @@ Validate that the MOF file `filename` conforms to the MOF JSON schema. Returns
 `nothing` if the file is valid, otherwise throws an error describing why the
 file is not valid.
 """
-function validate(
-    filename::String;
-    compression::MathOptFormat.AbstractCompressionScheme =
-        MathOptFormat.AutomaticCompression()
-)
-    MathOptFormat._compressed_open(filename, "r", compression) do io
+function validate(filename::String)
+    MathOptFormat.compressed_open(
+        filename, "r", MathOptFormat.AutomaticCompression()
+    ) do io
         validate(io)
     end
     return

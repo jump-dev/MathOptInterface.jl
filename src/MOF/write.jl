@@ -1,4 +1,4 @@
-function MOI.write_to_file(model::Model, io::IO)
+function Base.write(io::IO, model::Model)
     options = get_options(model)
     object = Object(
         "name"        => "MathOptFormat Model",

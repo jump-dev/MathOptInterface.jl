@@ -54,7 +54,7 @@ end
 
 # ==============================================================================
 #
-#   MOI.write_to_file
+#   Base.write
 #
 # ==============================================================================
 
@@ -176,7 +176,7 @@ function write_objective(
     return
 end
 
-function MOI.write_to_file(model::InnerModel, io::IO)
+function Base.write(io::IO, model::InnerModel)
     options = get_options(model)
     MathOptFormat.create_unique_names(
         model,
@@ -238,12 +238,12 @@ end
 
 # ==============================================================================
 #
-#   MOI.read_from_to_file
+#   Base.read!
 #
 # ==============================================================================
 
-function MOI.read_from_file(model::InnerModel, io::IO)
-    error("Read from file is not implemented for LP files.")
+function Base.read!(io::IO, model::InnerModel)
+    error("read! is not implemented for LP files.")
 end
 
 end

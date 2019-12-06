@@ -1,4 +1,4 @@
-function MOI.read_from_file(model::Model, io::IO)
+function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")
     end

@@ -46,11 +46,11 @@ end
 
 # ==============================================================================
 #
-#   MOI.write_to_file
+#   Base.write
 #
 # ==============================================================================
 
-function MOI.write_to_file(model::InnerModel, io::IO)
+function Base.write(io::IO, model::InnerModel)
     options = get_options(model)
     MathOptFormat.create_unique_names(
         model;
@@ -412,7 +412,7 @@ end
 
 # ==============================================================================
 #
-#   MOI.read_from_file
+#   Base.read!
 #
 # Here is a template for an MPS file, reproduced from
 # http://lpsolve.sourceforge.net/5.5/mps-format.htm.
@@ -469,7 +469,7 @@ end
 
 const HEADERS = ("ROWS", "COLUMNS", "RHS", "RANGES", "BOUNDS", "SOS", "ENDATA")
 
-function MOI.read_from_file(model::InnerModel, io::IO)
+function Base.read!(io::IO, model::InnerModel)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end

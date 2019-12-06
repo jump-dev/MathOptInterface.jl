@@ -13,12 +13,6 @@ function test_model_equality(model_string, variables, constraints)
     MOIU.test_models_equal(model, model_2, variables, constraints)
 end
 
-@testset "read_from_file" begin
-    file_to_read = joinpath(@__DIR__, "free_integer.mps")
-    @test !MOI.is_empty(MathOptFormat.read_from_file(file_to_read))
-    @test !MOI.is_empty(MathOptFormat.read_from_file(file_to_read * ".gz"))
-end
-
 @testset "Errors" begin
     failing_models_dir = joinpath(@__DIR__, "failing_models")
 
@@ -314,7 +308,7 @@ end
             MOI.EqualTo(1.0)
         )
         MOI.set(model, MOI.ConstraintName(), c, "c c")
-        @test sprint(io -> MOI.write_to_file(model, io)) == join([
+        @test sprint(write, model) == join([
             "NAME          ",
             "ROWS",
             " N  OBJ",

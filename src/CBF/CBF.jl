@@ -48,11 +48,11 @@ Base.show(io::IO, ::InnerModel) = print(io, "A Conic Benchmark Format (CBF) mode
 
 # ==============================================================================
 #
-#   MOI.write_to_file
+#   Base.write
 #
 # ==============================================================================
 
-function MOI.write_to_file(model::InnerModel, io::IO)
+function Base.write(io::IO, model::InnerModel)
     options = get_options(model)
     # Helper functions for MOI constraints.
     model_cons(con_func, con_set) = MOI.get(model,
@@ -381,7 +381,7 @@ function powcone_to_moi_cone(cone_str::AbstractString,
     end
 end
 
-function MOI.read_from_file(model::InnerModel, io::IO)
+function Base.read!(io::IO, model::InnerModel)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
