@@ -115,7 +115,7 @@ MOI.write_to_file(model, "my_model.mps.gz")
 
 ## JuMP integration
 
-To write a JuMP model to a file, pass `backend(jump_model)` to `MOI.copy_to` 
+To write a JuMP model to a file, pass `backend(jump_model)` to `MOI.copy_to`
 instead of `user_model`:
 ```julia
 using JuMP, MathOptFormat
