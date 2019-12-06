@@ -12,6 +12,7 @@ include("CBF/CBF.jl")
 include("LP/LP.jl")
 include("MOF/MOF.jl")
 include("MPS/MPS.jl")
+include("SDPA/SDPA.jl")
 
 """
     FileFormat
@@ -23,6 +24,7 @@ List of accepted export formats.
 - `FORMAT_LP`: the LP file format
 - `FORMAT_MOF`: the MathOptFormat file format
 - `FORMAT_MPS`: the MPS file format
+- `FORMAT_SDPA`: the SemiDefinite Programming Algorithm format
 """
 @enum(
     FileFormat,
@@ -31,6 +33,7 @@ List of accepted export formats.
     FORMAT_LP,
     FORMAT_MOF,
     FORMAT_MPS,
+    FORMAT_SDPA,
 )
 
 """
@@ -62,6 +65,8 @@ function Model(
         return MOF.Model(; kwargs...)
     elseif format == FORMAT_MPS
         return MPS.Model(; kwargs...)
+    elseif format == FORMAT_SDPA
+        return SDPA.Model(; kwargs...)
     else
         @assert format == FORMAT_AUTOMATIC
         if filename === nothing
@@ -71,7 +76,8 @@ function Model(
             (".cbf", CBF.Model),
             (".lp", LP.Model),
             (".mof.json", MOF.Model),
-            (".mps", MPS.Model)
+            (".mps", MPS.Model),
+            (".sdpa", SDPA.Model)
         ]
             if endswith(filename, ext) || occursin("$(ext).", filename)
                 return model(; kwargs...)
@@ -85,7 +91,8 @@ const MATH_OPT_FORMATS = Union{
     CBF.InnerModel,
     LP.InnerModel,
     MOF.Model,
-    MPS.InnerModel
+    MPS.InnerModel,
+    SDPA.InnerModel
 }
 
 function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)

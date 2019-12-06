@@ -96,6 +96,8 @@ File-formats supported are
     - Use `MathOptFormat.MOF.Model`
  - Mathematical programming system (.mps):
     - Use `MathOptFormat.MPS.Model`
+ - Semidefinite programming format (.sdpa):
+    - Use `MathOptFormat.SDPA.Model`
 
 #### Notes
 
