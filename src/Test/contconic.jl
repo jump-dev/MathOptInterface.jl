@@ -1341,10 +1341,72 @@ end
 geomean2vtest(model::MOI.ModelLike, config::TestConfig) = _geomean2test(model, config, true)
 geomean2ftest(model::MOI.ModelLike, config::TestConfig) = _geomean2test(model, config, false)
 
+# Tests case where the dimension of the geometric mean cone is 2
+function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem GeoMean3
+    # max 2t
+    # st  (t,x) ∈ GeometricMeanCone(2)
+    #     x <= 2
+    # the optimal solution is 4
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    if vecofvars
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.GeometricMeanCone)
+    else
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone)
+    end
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    x = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+
+    vov = MOI.VectorOfVariables([t; x])
+    if vecofvars
+        gmc = MOI.add_constraint(model, vov, MOI.GeometricMeanCone(2))
+    else
+        gmc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.GeometricMeanCone(2))
+    end
+    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0), MOI.LessThan(2.0))
+
+    @test MOI.get(model, MOI.NumberOfConstraints{vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}()) == 1
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, t)], 0.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4.0 atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 2.0 atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ [2.0; 2.0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol=atol rtol=rtol
+    end
+end
+
+geomean3vtest(model::MOI.ModelLike, config::TestConfig) = _geomean3test(model, config, true)
+geomean3ftest(model::MOI.ModelLike, config::TestConfig) = _geomean3test(model, config, false)
+
 geomeantests = Dict("geomean1v" => geomean1vtest,
                     "geomean1f" => geomean1ftest,
                     "geomean2f" => geomean2ftest,
-                    "geomean2v" => geomean2vtest)
+                    "geomean2v" => geomean2vtest,
+                    "geomean3f" => geomean3ftest,
+                    "geomean3v" => geomean3vtest)
 
 @moitestset geomean
 

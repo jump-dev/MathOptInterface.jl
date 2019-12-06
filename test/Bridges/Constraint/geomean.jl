@@ -31,13 +31,11 @@ config = MOIT.TestConfig()
             MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
             lessthan = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
             @test length(lessthan) == 2
-            # TODO is it OK to assume this order?
             MOI.set.(mock, MOI.ConstraintName(), lessthan, ["lessthan1", "lessthan2"])
             rsoc = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}())
             @test length(rsoc) == 3
             MOI.set.(mock, MOI.ConstraintName(), rsoc, ["rsoc21", "rsoc11", "rsoc12"])
 
-            # TODO do we need explicit nonnegativity on x11, x12, x21 ?
             s = """
             variables: t, x, y, z, x11, x12, x21
             lessthan1: t + -0.5 * x21 in MathOptInterface.LessThan(0.0)
@@ -76,7 +74,8 @@ config = MOIT.TestConfig()
         # Dual is not yet implemented for GeoMean bridge
         ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         test_delete_bridge(bridged_mock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
-                                                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1)))
+                                                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
+                                                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
     end
 
     @testset "geomean2test" begin
@@ -171,7 +170,63 @@ config = MOIT.TestConfig()
         # Dual is not yet implemented for GeoMean bridge
         ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         test_delete_bridge(bridged_mock, ci, 10, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
-                                                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0)))
+                                                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
+                                                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
+    end
+
+    @testset "geomean3test" begin
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, 2 * ones(2))
+        MOIT.geomean3vtest(bridged_mock, config)
+        MOIT.geomean3ftest(bridged_mock, config)
+
+        @testset "Test mock model" begin
+            MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), ["t", "x"])
+            lessthan = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
+            @test length(lessthan) == 2
+            MOI.set.(mock, MOI.ConstraintName(), lessthan, ["lessthan1", "lessthan2"])
+            rsoc = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone}())
+            @test isempty(rsoc)
+            nonneg = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}())
+            @test length(nonneg) == 1
+            MOI.set(mock, MOI.ConstraintName(), nonneg[1], "nonneg")
+
+            s = """
+            variables: t, x
+            lessthan1: t + -1.0x in MathOptInterface.LessThan(0.0)
+            lessthan2: 1.0x in MathOptInterface.LessThan(2.0)
+            nonneg: [1.0x] in MathOptInterface.Nonnegatives(1)
+            maxobjective: 2.0 * t
+            """
+            model = MOIU.Model{Float64}()
+            MOIU.loadfromstring!(model, s)
+            MOIU.test_models_equal(mock, model, ["t", "x"], ["lessthan1", "lessthan2", "nonneg"])
+        end
+
+        @testset "Test bridged model" begin
+            MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), ["t", "x"])
+            lessthan = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
+            @test length(lessthan) == 1
+            MOI.set(bridged_mock, MOI.ConstraintName(), lessthan[1], "lessthan")
+            geomean = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}())
+            @test length(geomean) == 1
+            MOI.set(bridged_mock, MOI.ConstraintName(), geomean[1], "geomean")
+
+            s = """
+            variables: t, x
+            lessthan: 1.0x in MathOptInterface.LessThan(2.0)
+            geomean: [1.0t, x] in MathOptInterface.GeometricMeanCone(2)
+            maxobjective: 2.0 * t
+            """
+            model = MOIU.Model{Float64}()
+            MOIU.loadfromstring!(model, s)
+            MOIU.test_models_equal(bridged_mock, model, ["t", "x"], ["lessthan", "geomean"])
+        end
+
+        # Dual is not yet implemented for GeoMean bridge
+        ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
+        test_delete_bridge(bridged_mock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
+                                                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
+                                                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
     end
 
 end
