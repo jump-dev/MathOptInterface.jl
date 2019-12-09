@@ -3,7 +3,7 @@ using Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const CBF = MOI.Formats.CBF
+const CBF = MOI.FileFormats.CBF
 const CBF_TEST_FILE = "test.cbf"
 const MODELS_DIR = joinpath(@__DIR__, "models")
 

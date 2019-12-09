@@ -1,6 +1,6 @@
 module MPS
 
-import ..Formats
+import ..FileFormats
 
 import MathOptInterface
 const MOI = MathOptInterface
@@ -25,7 +25,7 @@ get_options(m::InnerModel) = get(m.ext, :MPS_OPTIONS, Options(false))
 """
     Model(; kwargs...)
 
-Create an empty instance of Formats.MPS.Model.
+Create an empty instance of FileFormats.MPS.Model.
 
 Keyword arguments are:
 
@@ -52,7 +52,7 @@ end
 
 function Base.write(io::IO, model::InnerModel)
     options = get_options(model)
-    Formats.create_unique_names(
+    FileFormats.create_unique_names(
         model;
         warn = options.warn,
         replacements = Function[s -> replace(s, ' ' => '_')]

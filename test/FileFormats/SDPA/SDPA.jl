@@ -3,7 +3,7 @@ using Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const SDPA = MOI.Formats.SDPA
+const SDPA = MOI.FileFormats.SDPA
 const SDPA_TEST_FILE = "test.sdpa"
 const SDPA_MODELS_DIR = joinpath(@__DIR__, "models")
 

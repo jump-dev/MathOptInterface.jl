@@ -2,7 +2,7 @@ module SDPA
 
 # See http://plato.asu.edu/ftp/sdpa_format.txt
 
-import ..Formats
+import ..FileFormats
 import MathOptInterface
 
 const MOI = MathOptInterface
@@ -48,7 +48,7 @@ get_options(m::InnerModel) = get(m.ext, :SDPA_OPTIONS, Options())
 """
     Model(; number_type::Type = Float64)
 
-Create an empty instance of `Formats.SDPA.Model{number_type}`.
+Create an empty instance of `FileFormats.SDPA.Model{number_type}`.
 
 Note that the model is in geometric form. That is, the SDP model is represented
 as a minimization with free variables and affine constraints in either the

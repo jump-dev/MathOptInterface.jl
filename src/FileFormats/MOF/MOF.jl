@@ -1,6 +1,6 @@
 module MOF
 
-import ..Formats
+import ..FileFormats
 import OrderedCollections
 import JSON
 import JSONSchema
@@ -61,7 +61,7 @@ end
 """
     Model(; kwargs...)
 
-Create an empty instance of Formats.MOF.Model.
+Create an empty instance of FileFormats.MOF.Model.
 
 Keyword arguments are:
 
@@ -94,8 +94,8 @@ Validate that the MOF file `filename` conforms to the MOF JSON schema. Returns
 file is not valid.
 """
 function validate(filename::String)
-    Formats.compressed_open(
-        filename, "r", Formats.AutomaticCompression()
+    FileFormats.compressed_open(
+        filename, "r", FileFormats.AutomaticCompression()
     ) do io
         validate(io)
     end

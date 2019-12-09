@@ -3,7 +3,7 @@ using Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const MPS = MOI.Formats.MPS
+const MPS = MOI.FileFormats.MPS
 const MPS_TEST_FILE = "test.mps"
 
 @test sprint(show, MPS.Model()) == "A Mathematical Programming System (MPS) model"

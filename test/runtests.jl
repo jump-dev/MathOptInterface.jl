@@ -25,7 +25,7 @@ end
 @testset "MOI.$(submodule)" for submodule in [
     "Benchmarks",
     "Bridges",
-    "Formats"
+    "FileFormats",
     "Test",
     "Utilities",
 ]

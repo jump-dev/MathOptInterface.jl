@@ -10,7 +10,7 @@ function Base.write(io::IO, model::Model)
         "objective"  => Object("sense" => "feasibility"),
         "constraints" => Object[]
     )
-    Formats.create_unique_names(model, warn=options.warn)
+    FileFormats.create_unique_names(model, warn=options.warn)
     name_map = write_variables(object, model)
     write_nlpblock(object, model, name_map)
     write_objective(object, model, name_map)

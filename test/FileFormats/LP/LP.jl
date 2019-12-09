@@ -3,7 +3,7 @@ using Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-const LP = MOI.Formats.LP
+const LP = MOI.FileFormats.LP
 const LP_TEST_FILE = "test.lp"
 
 @test sprint(show, LP.Model()) == "A .LP-file model"

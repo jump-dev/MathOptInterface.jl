@@ -1,6 +1,6 @@
 module LP
 
-import ..Formats
+import ..FileFormats
 import MathOptInterface
 const MOI = MathOptInterface
 
@@ -28,7 +28,7 @@ end
 """
     Model(; kwargs...)
 
-Create an empty instance of Formats.LP.Model.
+Create an empty instance of FileFormats.LP.Model.
 
 Keyword arguments are:
 
@@ -177,7 +177,7 @@ end
 
 function Base.write(io::IO, model::InnerModel)
     options = get_options(model)
-    Formats.create_unique_names(
+    FileFormats.create_unique_names(
         model,
         warn = options.warn,
         replacements = [
