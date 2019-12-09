@@ -1,0 +1,818 @@
+{
+    "$schema": "https://json-schema.org/schema#",
+    "$id": "https://github.com/odow/MathOptFormat/blob/master/mof.schema.json",
+    "title": "The schema for MathOptFormat",
+    "type": "object",
+    "required": ["version", "variables", "objective", "constraints"],
+    "properties": {
+        "version": {
+            "description": "The version of MathOptFormat that this schema validates against.",
+            "type": "object",
+            "required": ["minor", "major"],
+            "properties": {
+                "minor": {
+                    "const": 4
+                },
+                "major": {
+                    "const": 0
+                }
+            }
+        },
+        "name": {
+            "description": "The name of the model.",
+            "type": "string"
+        },
+        "author": {
+            "description": "The author of the model for citation purposes.",
+            "type": "string"
+        },
+        "description": {
+            "description": "A human-readable description of the model.",
+            "type": "string"
+        },
+        "variables": {
+            "description": "An array of variables in the model. Each must have a unique name.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "primal_start": {
+                        "description": "An initial value that the optimizer may use to warm-start the solution process.",
+                        "type": "number"
+                    }
+                }
+            },
+            "uniqueItems": true
+        },
+        "objective": {
+            "description": "The objective of the model.",
+            "type": "object",
+            "required": ["sense"],
+            "oneOf": [{
+                "properties": {
+                    "sense": {
+                        "enum": ["min", "max"]
+                    },
+                    "function": {
+                        "oneOf": [{
+                            "$ref": "#/definitions/scalar_functions"
+                        }, {
+                            "$ref": "#/definitions/vector_functions"
+                        }]
+                    }
+                }
+            }, {
+                "properties": {
+                    "sense": {
+                        "const": "feasibility"
+                    }
+                }
+            }]
+        },
+        "constraints": {
+            "description": "An array of constraints in the model. Scalar-valued functions can only be paired with scalar-sets, and the same applies for vector-valued functions and sets.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["function", "set"],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "oneOf": [{
+                    "description": "A scalar-valued constraint.",
+                    "properties": {
+                        "function": {
+                            "$ref": "#/definitions/scalar_functions"
+                        },
+                        "set": {
+                            "$ref": "#/definitions/scalar_sets"
+                        }
+                    }
+                }, {
+                    "description": "A vector-valued constraint.",
+                    "properties": {
+                        "function": {
+                            "$ref": "#/definitions/vector_functions"
+                        },
+                        "set": {
+                            "$ref": "#/definitions/vector_sets"
+                        }
+                    }
+                }]
+            },
+            "uniqueItems": true
+        }
+    },
+    "definitions": {
+        "ScalarAffineTerm": {
+            "description": "A helper object that represents `coefficent * variable`.",
+            "type": "object",
+            "required": ["coefficient", "variable"],
+            "properties": {
+                "coefficient": {
+                    "type": "number"
+                },
+                "variable": {
+                    "type": "string"
+                }
+            }
+        },
+        "ScalarQuadraticTerm": {
+            "description": "A helper object that represents `coefficent * variable_1 * variable_2`.",
+            "type": "object",
+            "required": ["coefficient", "variable_1", "variable_2"],
+            "properties": {
+                "coefficient": {
+                    "type": "number"
+                },
+                "variable_1": {
+                    "type": "string"
+                },
+                "variable_2": {
+                    "type": "string"
+                }
+            }
+        },
+        "VectorAffineTerm": {
+            "description": "A helper object that represents a `ScalarAffineTerm` in row `output_index`.",
+            "type": "object",
+            "required": ["output_index", "scalar_term"],
+            "properties": {
+                "output_index": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "scalar_term": {
+                    "$ref": "#/definitions/ScalarAffineTerm"
+                }
+            }
+        },
+        "VectorQuadraticTerm": {
+            "description": "A helper object that represents a `ScalarQuadraticTerm` in row `output_index`.",
+            "type": "object",
+            "required": ["output_index", "scalar_term"],
+            "properties": {
+                "output_index": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "scalar_term": {
+                    "$ref": "#/definitions/ScalarQuadraticTerm"
+                }
+            }
+        },
+        "NonlinearTerm": {
+            "description": "A node in an expresion graph representing a nonlinear function.",
+            "type": "object",
+            "required": ["head"],
+            "oneOf": [{
+                "description": "Unary operators",
+                "required": ["args"],
+                "properties": {
+                    "head": {
+                        "enum": [
+                            "log", "log10", "exp", "sqrt", "floor", "ceil",
+                            "abs", "cos", "sin", "tan", "acos", "asin", "atan",
+                            "cosh", "sinh", "tanh", "acosh", "asinh", "atanh"
+                        ]
+                    },
+                    "args": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
+                        },
+                        "minItems": 1,
+                        "maxItems": 1
+                    }
+                }
+            }, {
+                "description": "Binary operators",
+                "required": ["args"],
+                "properties": {
+                    "head": {
+                        "enum": ["/", "^"]
+                    },
+                    "args": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                    }
+                }
+            }, {
+                "description": "N-ary operators",
+                "required": ["args"],
+                "properties": {
+                    "head": {
+                        "enum": ["+", "-", "*", "min", "max"]
+                    },
+                    "args": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
+                        },
+                        "minItems": 1
+                    }
+                }
+            }, {
+                "description": "A real-valued numeric constant",
+                "examples": ["{\"head\": \"real\", \"value\": 1.0}"],
+                "required": ["value"],
+                "properties": {
+                    "head": {
+                        "const": "real"
+                    },
+                    "value": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "A complex-valued numeric constant",
+                "examples": ["{\"head\": \"complex\", \"real\": 1.0, \"imag\": 2.0}"],
+                "required": ["real", "imag"],
+                "properties": {
+                    "head": {
+                        "const": "complex"
+                    },
+                    "real": {
+                        "type": "number"
+                    },
+                    "imag": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "A reference to an optimization variable",
+                "examples": ["{\"head\": \"variable\", \"name\": \"x\"}"],
+                "required": ["name"],
+                "properties": {
+                    "head": {
+                        "const": "variable"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            }, {
+                "description": "A pointer to a (1-indexed) element in the `node_list` field in a nonlinear function",
+                "examples": ["{\"head\": \"node\", \"index\": 2}"],
+                "required": ["index"],
+                "properties": {
+                    "head": {
+                        "const": "node"
+                    },
+                    "index": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }]
+        },
+        "scalar_functions": {
+            "description": "A schema for the scalar-valued functions defined by MathOptFormat.See http://www.juliaopt.org/MathOptInterface.jl/v0.8/apireference/#Functions-and-function-modifications-1 for a list of the functions and their meanings.",
+            "type": "object",
+            "required": ["head"],
+            "oneOf": [{
+                "description": "The scalar variable `variable`.",
+                "examples": ["{\"head\": \"SingleVariable\", \"variable\": \"x\"}"],
+                "required": ["variable"],
+                "properties": {
+                    "head": {
+                        "const": "SingleVariable"
+                    },
+                    "variable": {
+                        "type": "string"
+                    }
+                }
+            }, {
+                "description": "The function `a'x + b`, where `a` is a sparse vector specified by a list of `ScalarAffineTerm`s in `terms` and `b` is the scalar in `constant`. Duplicate variables in `terms` are accepted, and the corresponding coefficients are summed together.",
+                "examples": ["{\"head\": \"ScalarAffineFunction\", \"constant\": 1.0, \"terms\": [{\"coefficient\": 2.5, \"variable\": \"x\"}]}"],
+                "required": ["constant", "terms"],
+                "properties": {
+                    "head": {
+                        "const": "ScalarAffineFunction"
+                    },
+                    "constant": {
+                        "type": "number"
+                    },
+                    "terms": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/ScalarAffineTerm"
+                        }
+                    }
+                }
+            }, {
+                "description": "The function `0.5x'Qx + a'x + b`, where `a` is a sparse vector of `ScalarAffineTerm`s in `affine_terms`, `b` is the scalar `constant`, and `Q` is a symmetric matrix specified by a list of `ScalarQuadraticTerm`s in `quadratic_terms`. Duplicate indices in `affine_terms` and `quadratic` are accepted, and the corresponding coefficients are summed together. Mirrored indices in `quadratic_terms` (i.e., `(i,j)` and `(j, i)`) are considered duplicates; only one need to be specified.",
+                "examples": ["{\"head\": \"ScalarQuadraticFunction\", \"constant\": 1.0, \"affine_terms\": [{\"coefficient\": 2.5, \"variable\": \"x\"}], \"quadratic_terms\": [{\"coefficient\": 2.0, \"variable_1\": \"x\", \"variable_2\": \"y\"}]}"],
+                "required": ["constant", "affine_terms", "quadratic_terms"],
+                "properties": {
+                    "head": {
+                        "const": "ScalarQuadraticFunction"
+                    },
+                    "constant": {
+                        "type": "number"
+                    },
+                    "affine_terms": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/ScalarAffineTerm"
+                        }
+                    },
+                    "quadratic_terms": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/ScalarQuadraticTerm"
+                        }
+                    }
+                }
+            }, {
+                "description": "An expression graph representing a scalar nonlinear function.",
+                "required": ["root", "node_list"],
+                "properties": {
+                    "head": {
+                        "const": "ScalarNonlinearFunction"
+                    },
+                    "root": {
+                        "$ref": "#/definitions/NonlinearTerm"
+                    },
+                    "node_list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
+                        }
+                    }
+                }
+            }]
+        },
+        "vector_functions": {
+            "description": "A schema for the vector-valued functions defined by MathOptFormat.See http://www.juliaopt.org/MathOptInterface.jl/v0.8/apireference/#Functions-and-function-modifications-1 for a list of the functions and their meanings.",
+            "type": "object",
+            "required": ["head"],
+            "oneOf": [{
+                "description": "An ordered list of variables.",
+                "examples": ["{\"head\": \"VectorOfVariables\", \"variables\": [\"x\", \"y\"]}"],
+                "required": ["variables"],
+                "properties": {
+                    "head": {
+                        "const": "VectorOfVariables"
+                    },
+                    "variables": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }, {
+                "description": "The function `Ax + b`, where `A` is a sparse matrix specified by a list of `VectorAffineTerm`s in `terms` and `b` is a dense vector specified by `constants`.",
+                "examples": ["{\"head\": \"VectorAffineFunction\", \"constants\": [1.0], \"terms\": [{\"output_index\": 1, \"scalar_term\": {\"coefficient\": 2.5, \"variable\": \"x\"}}]}"],
+                "required": ["constants", "terms"],
+                "properties": {
+                    "head": {
+                        "const": "VectorAffineFunction"
+                    },
+                    "constants": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    },
+                    "terms": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/VectorAffineTerm"
+                        }
+                    }
+                }
+            }, {
+                "description": "The vector-valued quadratic function `q(x) + Ax + b`, where `q(x)` is specified by a list of `VectorQuadraticTerm`s in `quadratic_terms`, `A` is a sparse matrix specified by a list of `VectorAffineTerm`s in `affine_terms` and `b` is a dense vector specified by `constants`.",
+                "required": ["constants", "affine_terms", "quadratic_terms"],
+                "properties": {
+                    "head": {
+                        "const": "VectorQuadraticFunction"
+                    },
+                    "constants": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    },
+                    "affine_terms": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/VectorAffineTerm"
+                        }
+                    },
+                    "quadratc_terms": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/VectorQuadraticTerm"
+                        }
+                    }
+                }
+            }]
+        },
+        "scalar_sets": {
+            "description": "A schema for the scalar-valued sets defined by MathOptFormat. See http: //www.juliaopt.org/MathOptInterface.jl/v0.8/apireference/#Sets-1 for a list of the sets and their meanings.",
+            "type": "object",
+            "required": ["head"],
+            "oneOf": [{
+                "description": "(-∞, upper]",
+                "examples": ["{\"head\": \"LessThan\", \"upper\": 2.1}"],
+                "required": ["upper"],
+                "properties": {
+                    "head": {
+                        "const": "LessThan"
+                    },
+                    "upper": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "[lower, ∞)",
+                "examples": ["{\"head\": \"GreaterThan\", \"lower\": 2.1}"],
+                "required": ["lower"],
+                "properties": {
+                    "head": {
+                        "const": "GreaterThan"
+                    },
+                    "lower": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "{value}",
+                "examples": ["{\"head\": \"EqualTo\", \"value\": 2.1}"],
+                "required": ["value"],
+                "properties": {
+                    "head": {
+                        "const": "EqualTo"
+                    },
+                    "value": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "[lower, upper]",
+                "examples": ["{\"head\": \"Interval\", \"lower\": 2.1, \"upper\": 3.4}"],
+                "required": ["lower", "upper"],
+                "properties": {
+                    "head": {
+                        "const": "Interval"
+                    },
+                    "lower": {
+                        "type": "number"
+                    },
+                    "upper": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "{0} ∪ {lower, lower + 1, ..., upper}",
+                "examples": ["{\"head\": \"Semiinteger\", \"lower\": 2, \"upper\": 4}"],
+                "required": ["lower", "upper"],
+                "properties": {
+                    "head": {
+                        "const": "Semiinteger"
+                    },
+                    "lower": {
+                        "type": "number"
+                    },
+                    "upper": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "{0} ∪ [lower, upper]",
+                "examples": ["{\"head\": \"Semicontinuous\", \"lower\": 2.1, \"upper\": 3.4}"],
+                "required": ["lower", "upper"],
+                "properties": {
+                    "head": {
+                        "const": "Semicontinuous"
+                    },
+                    "lower": {
+                        "type": "number"
+                    },
+                    "upper": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "{0, 1}",
+                "examples": ["{\"head\": \"ZeroOne\"}"],
+                "properties": {
+                    "head": {
+                        "const": "ZeroOne"
+                    }
+                }
+            }, {
+                "description": "ℤ",
+                "examples": ["{\"head\": \"Integer\"}"],
+                "properties": {
+                    "head": {
+                        "const": "Integer"
+                    }
+                }
+            }]
+        },
+        "vector_sets": {
+            "description": "A schema for the vector-valued sets defined by MathOptFormat. See http: //www.juliaopt.org/MathOptInterface.jl/v0.8/apireference/#Sets-1 for a list of the sets and their meanings.",
+            "type": "object",
+            "required": ["head"],
+            "oneOf": [{
+                "description": "[x, y, z] ∈ {R³: y * exp(x / y) ≤ z, y ≥ 0}",
+                "examples": ["{\"head\": \"ExponentialCone\"}"],
+                "properties": {
+                    "head": {
+                        "const": "ExponentialCone"
+                    }
+                }
+            }, {
+                "description": "[u, v, w] ∈ {R³: -u * exp(v / u) ≤ exp(1) * w, u < 0}",
+                "examples": ["{\"head\": \"DualExponentialCone\"}"],
+                "properties": {
+                    "head": {
+                        "const": "DualExponentialCone"
+                    }
+                }
+            }, {
+                "description": "A special ordered set of type I.",
+                "examples": ["{\"head\": \"SOS1\", \"weights\": [1, 3, 2]}"],
+                "required": ["weights"],
+                "properties": {
+                    "head": {
+                        "const": "SOS1"
+                    },
+                    "weights": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                }
+            }, {
+                "description": "A special ordered set of type II.",
+                "examples": ["{\"head\": \"SOS2\", \"weights\": [1, 3, 2]}"],
+                "required": ["weights"],
+                "properties": {
+                    "head": {
+                        "const": "SOS2"
+                    },
+                    "weights": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                }
+            }, {
+                "description": "[t, x] ∈ {R^{dimension}: t ≤ (Πxᵢ)^{1 / (dimension-1)}}",
+                "examples": ["{\"head\": \"GeometricMeanCone\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "GeometricMeanCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "[t, x] ∈ {R^{dimension} : t ≥ ||x||₂",
+                "examples": ["{\"head\": \"SecondOrderCone\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "SecondOrderCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "[t, u, x] ∈ {R^{dimension} : 2tu ≥ (||x||₂)²; t, u ≥ 0}",
+                "examples": ["{\"head\": \"RotatedSecondOrderCone\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "RotatedSecondOrderCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "{0}^{dimension}",
+                "examples": ["{\"head\": \"Zeros\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "Zeros"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "R^{dimension}",
+                "examples": ["{\"head\": \"Reals\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "Reals"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "R₋^{dimension}",
+                "examples": ["{\"head\": \"Nonpositives\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "Nonpositives"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "R₊^{dimension}",
+                "examples": ["{\"head\": \"Nonnegatives\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "Nonnegatives"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "{[t, X] ∈ R^{1 + d(d+1)/2} : t ≤ det(X)^{1/d}}, where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`. The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.",
+                "examples": ["{\"head\": \"RootDetConeTriangle\", \"side_dimension\": 2}"],
+                "required": ["side_dimension"],
+                "properties": {
+                    "head": {
+                        "const": "RootDetConeTriangle"
+                    },
+                    "side_dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "{[t, X] ∈ R^{1 + d^2} : t ≤ det(X)^{1/d}, X symmetric}, where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeSquare`. The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.",
+                "examples": ["{\"head\": \"RootDetConeSquare\", \"side_dimension\": 2}"],
+                "required": ["side_dimension"],
+                "properties": {
+                    "head": {
+                        "const": "RootDetConeSquare"
+                    },
+                    "side_dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "{[t, u, X] ∈ R^{2 + d(d+1)/2} : t ≤ u log(det(X/u)), u > 0}, where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`. The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.",
+                "examples": ["{\"head\": \"LogDetConeTriangle\", \"side_dimension\": 2}"],
+                "required": ["side_dimension"],
+                "properties": {
+                    "head": {
+                        "const": "LogDetConeTriangle"
+                    },
+                    "side_dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "{[t, u, X] ∈ R^{2 + d^2} : t ≤ u log(det(X/u)), X symmetric, u > 0}, where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeSquare`. The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.",
+                "examples": ["{\"head\": \"LogDetConeSquare\", \"side_dimension\": 2}"],
+                "required": ["side_dimension"],
+                "properties": {
+                    "head": {
+                        "const": "LogDetConeSquare"
+                    },
+                    "side_dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The (vectorized) cone of symmetric positive semidefinite matrices, with `side_dimension` rows and columns. The entries of the upper-right triangular part of the matrix are given column by column (or equivalently, the entries of the lower-left triangular part are given row by row).",
+                "examples": ["{\"head\": \"PositiveSemidefiniteConeTriangle\", \"side_dimension\": 2}"],
+                "required": ["side_dimension"],
+                "properties": {
+                    "head": {
+                        "const": "PositiveSemidefiniteConeTriangle"
+                    },
+                    "side_dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The cone of symmetric positive semidefinite matrices, with side length `side_dimension`. The entries of the matrix are given column by column (or equivalently, row by row). The matrix is both constrained to be symmetric and to be positive semidefinite. That is, if the functions in entries `(i, j)` and `(j, i)` are different, then a constraint will be added to make sure that the entries are equal.",
+                "examples": ["{\"head\": \"PositiveSemidefiniteConeSquare\", \"side_dimension\": 2}"],
+                "required": ["side_dimension"],
+                "properties": {
+                    "head": {
+                        "const": "PositiveSemidefiniteConeSquare"
+                    },
+                    "side_dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "[x, y, z] ∈ {R³: x^{exponent} y^{1-exponent} ≥ |z|; x, y ≥ 0}",
+                "examples": ["{\"head\": \"PowerCone\", \"exponent\": 2.0}"],
+                "required": ["exponent"],
+                "properties": {
+                    "head": {
+                        "const": "PowerCone"
+                    },
+                    "exponent": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "[u, v, w] ∈ {R³: (u / exponent)^{exponent} (v / (1-exponent))^{1-exponent} ≥ |w|; u, v ≥ 0}",
+                "examples": ["{\"head\": \"DualPowerCone\", \"exponent\": 2.0}"],
+                "required": ["exponent"],
+                "properties": {
+                    "head": {
+                        "const": "DualPowerCone"
+                    },
+                    "exponent": {
+                        "type": "number"
+                    }
+                }
+            }, {
+                "description": "If `activate_on=one`: (y, x) ∈ {0,1}×Rᴺ: y = 0 ⟹ x ∈ S, otherwise when `activate_on=zero`: (y, x) ∈ {0,1}×Rᴺ: y = 1 ⟹ x ∈ S.",
+                "examples": ["{\"head\": \"IndicatorSet\", \"set\": {\"head\": \"LessThan\", \"upper\": 2.0}, \"activate_on\": \"one\"}"],
+                "required": ["set", "activate_on"],
+                "properties": {
+                    "head": {
+                        "const": "IndicatorSet"
+                    },
+                    "set": {
+                        "oneOf": [{
+                            "$ref": "#/definitions/scalar_sets"
+                        }, {
+                            "$ref": "#/definitions/vector_sets"
+                        }]
+                    },
+                    "activate_on": {
+                        "enum": ["one", "zero"]
+                    }
+                }
+            }, {
+                "description": "(t, x) ∈ {R^{dimension}: t ≥ Σᵢ|xᵢ|}",
+                "examples": ["{\"head\": \"NormOneCone\", \"dimension\": 2}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "NormOneCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 2
+                    }
+                }
+            }, {
+                "description": "(t, x) ∈ {R^{dimension}: t ≥ maxᵢ|xᵢ|}",
+                "examples": ["{\"head\": \"NormInfinityCone\", \"dimension\": 2}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "NormInfinityCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 2
+                    }
+                }
+            }]
+        }
+    }
+}

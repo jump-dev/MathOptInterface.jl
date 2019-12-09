@@ -1,7 +1,8 @@
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
+.vscode/*
 docs/build/
 docs/site/
-Manifest.toml
 test/Benchmarks/*.json
+Manifest.toml

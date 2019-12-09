@@ -22,24 +22,16 @@ include("dummy.jl")
 end
 
 # Utilities submodule tests
-@testset "MOI.Utilities" begin
-    include("Utilities/Utilities.jl")
-end
-
-# Test submodule tests
-# It tests that the ConstraintPrimal value requested in the tests is consistent with the VariablePrimal
-@testset "MOI.Test" begin
-    include("Test/Test.jl")
-end
-
-@testset "MOI.Bridges" begin
-    # Bridges submodule tests
-    include("Bridges/Bridges.jl")
-end
-
-@testset "MOI.Benchmarks" begin
-    include("Benchmarks/Benchmarks.jl")
+@testset "MOI.$(submodule)" for submodule in [
+    "Benchmarks",
+    "Bridges",
+    "Formats"
+    "Test",
+    "Utilities",
+]
+    include("$(submodule)/$(submodule).jl")
 end
 
 # Test hygiene of @model macro
 include("hygiene.jl")
+

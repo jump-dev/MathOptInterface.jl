@@ -1,0 +1,56 @@
+# Example C.3 from the CBF documentation version 2
+VER
+2
+
+OBJSENSE
+MIN
+
+PSDVAR
+1
+2
+
+VAR
+2 1
+F 2
+
+PSDCON
+1
+2
+
+CON
+1 1
+L+ 1
+
+OBJFCOORD
+2
+0 0 0 1.0
+0 1 1 1.0
+
+OBJACOORD
+2
+0 1.0
+1 1.0
+
+OBJBCOORD
+1.0
+
+FCOORD
+1
+0 0 1 0 1.0
+
+ACOORD
+2
+0 0 -1.0
+0 1 -1.0
+
+HCOORD
+4
+0 0 1 0 1.0
+0 0 1 1 3.0
+0 1 0 0 3.0
+0 1 1 0 1.0
+
+DCOORD
+2
+0 0 0 -1.0
+0 1 1 -1.0

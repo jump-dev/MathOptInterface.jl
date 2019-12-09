@@ -1,0 +1,20 @@
+VER
+3
+
+POW*CONES
+1 3
+3
+4.0
+1.0
+2.0
+
+OBJSENSE
+MAX
+
+VAR
+4 1
+@0:POW* 4
+
+OBJACOORD
+1
+2 1.0
