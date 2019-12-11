@@ -843,8 +843,14 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.VectorAffineTerm{T}) where T
     MOI.VectorAffineTerm(t.output_index, operate_term(*, α, t.scalar_term))
 end
+function operate_term(::typeof(*), t::MOI.VectorAffineTerm{T}, α::T) where T
+    MOI.VectorAffineTerm(t.output_index, operate_term(*, t.scalar_term, α))
+end
 function operate_term(::typeof(*), α::T, t::MOI.VectorQuadraticTerm{T}) where T
     MOI.VectorQuadraticTerm(t.output_index, operate_term(*, α, t.scalar_term))
+end
+function operate_term(::typeof(*), t::MOI.VectorQuadraticTerm{T}, α::T) where T
+    MOI.VectorQuadraticTerm(t.output_index, operate_term(*, t.scalar_term, α))
 end
 function operate_term(::typeof(*), t1::MOI.VectorAffineTerm,
                       t2::MOI.VectorAffineTerm)
