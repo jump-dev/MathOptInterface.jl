@@ -184,7 +184,7 @@ function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}},
     return
 end
 function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}}, α::T, β::T,
-                           args::Vararg{Union{T, TypedScalarLike{T}}, N}) where {T, N}
+                           args::Vararg{ScalarQuadraticLike, N}) where {T, N}
     _add_affine_terms(terms, α * β, args...)
 end
 
@@ -226,13 +226,17 @@ function _add_quadratic_terms(
 end
 function _add_quadratic_terms(
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
-    args::Vararg{ScalarAffineLike{T}, N}) where {T, N}
+    #args::Vararg{ScalarAffineLike{T}, N}) where {T, N} # Compiler fails in StackOverflowError on Julia v1.1
+    args::ScalarAffineLike{T}) where T
     return
 end
+function _merge_constants(::Type{T}, α::ScalarAffineLike{T}, β::ScalarAffineLike{T},
+                          args::Vararg{Any, N}) where {T, N}
+    return (_constant(T, α) * _constant(T, β), args...)
+end
 function _add_quadratic_terms(
-    terms::Vector{MOI.ScalarQuadraticTerm{T}}, α::ScalarAffineLike{T}, β::ScalarAffineLike{T},
-    args::Vararg{ScalarQuadraticLike{T}, N}) where {T, N}
-    _add_quadratic_terms(terms, _constant(T, α) * _constant(T, β), args...)
+    terms::Vector{MOI.ScalarQuadraticTerm{T}}, args::Vararg{Any, N}) where {T, N}
+    _add_quadratic_terms(terms, _merge_constants(T, args...)...)
 end
 
 _num_function_with_terms(::Type{T}, ::T) where {T} = 0
