@@ -3,6 +3,9 @@ using Test
 @testset "Functions" begin
     include("functions.jl")
 end
+@testset "Mutable Arithmetics" begin
+    include("mutable_arithmetics.jl")
+end
 @testset "Sets" begin
     include("sets.jl")
 end
