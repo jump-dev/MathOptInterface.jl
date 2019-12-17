@@ -8,20 +8,28 @@ const MA = MutableArithmetics
 MA.mutability(::Type{<:TypedLike}) = MA.IsMutable()
 
 function MA.mutable_copy(func::MOI.ScalarAffineFunction)
-    terms = [MOI.ScalarAffineTerm(MA.copy_if_mutable(t.coefficient), t.variable_index) for t in func.terms]
+    terms = [MOI.ScalarAffineTerm(MA.copy_if_mutable(t.coefficient),
+                                  t.variable_index) for t in func.terms]
     return MOI.ScalarAffineFunction(terms, MA.copy_if_mutable(func.constant))
 end
 function MA.mutable_copy(func::MOI.ScalarQuadraticFunction)
-    affine_terms = [MOI.ScalarAffineTerm(MA.copy_if_mutable(t.coefficient), t.variable_index) for t in func.affine_terms]
-    quadratic_terms = [MOI.ScalarQuadraticTerm(MA.copy_if_mutable(t.coefficient), t.variable_index_1, t.variable_index_2) for t in func.quadratic_terms]
-    return MOI.ScalarQuadraticFunction(affine_terms, quadratic_terms, MA.copy_if_mutable(func.constant))
+    affine_terms = [MOI.ScalarAffineTerm(
+        MA.copy_if_mutable(t.coefficient),
+        t.variable_index) for t in func.affine_terms]
+    quadratic_terms = [MOI.ScalarQuadraticTerm(
+        MA.copy_if_mutable(t.coefficient),
+        t.variable_index_1,
+        t.variable_index_2) for t in func.quadratic_terms]
+    return MOI.ScalarQuadraticFunction(affine_terms, quadratic_terms,
+                                       MA.copy_if_mutable(func.constant))
 end
 
 function MA.isequal_canonical(f::F, g::F) where F<:Union{
         MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction,
         MOI.VectorAffineFunction, MOI.VectorQuadraticFunction}
 
-    return MA.isequal_canonical(MOI.constant(f), MOI.constant(g)) && all(MOI.dict_compare.(MOI._dicts(f), MOI._dicts(g), MA.isequal_canonical))
+    return MA.isequal_canonical(MOI.constant(f), MOI.constant(g)) &&
+        all(MOI.dict_compare.(MOI._dicts(f), MOI._dicts(g), MA.isequal_canonical))
 end
 
 function MA.iszero!(f::TypedScalarLike)
@@ -40,19 +48,26 @@ MA.promote_operation(::Union{typeof(zero), typeof(one)}, F::Type{<:TypedScalarLi
 
 # To avoid type piracy, we add at least one `ScalarLike` outside of the `...`.
 const PROMOTE_IMPLEMENTED_OP = Union{typeof(+), typeof(-), typeof(*), typeof(/)}
-function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{<:ScalarLike{T}}, G::Type{<:ScalarLike{T}}) where {T, N}
+function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP,
+                              F::Type{<:ScalarLike{T}},
+                              G::Type{<:ScalarLike{T}}) where {T, N}
     promote_operation(op, T, F, G)
 end
-function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{T}, G::Type{<:TypedLike{T}}) where {T, N}
+function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{T},
+                              G::Type{<:TypedLike{T}}) where {T, N}
     promote_operation(op, T, F, G)
 end
-function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{<:TypedLike{T}}, G::Type{T}) where T
+function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{<:TypedLike{T}},
+                              G::Type{T}) where T
     promote_operation(op, T, F, G)
 end
-function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{<:Number}, G::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}})
+function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{<:Number},
+                              G::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}})
     promote_operation(op, F, F, G)
 end
-function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP, F::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}, G::Type{<:Number})
+function MA.promote_operation(op::PROMOTE_IMPLEMENTED_OP,
+                              F::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}},
+                              G::Type{<:Number})
     promote_operation(op, G, F, G)
 end
 
@@ -226,7 +241,8 @@ function _add_quadratic_terms(
 end
 function _add_quadratic_terms(
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
-    #args::Vararg{ScalarAffineLike{T}, N}) where {T, N} # Compiler fails in StackOverflowError on Julia v1.1
+    # Compiler fails in StackOverflowError on Julia v1.1
+    #args::Vararg{ScalarAffineLike{T}, N}) where {T, N}
     args::ScalarAffineLike{T}) where T
     return
 end
@@ -241,7 +257,10 @@ end
 
 _num_function_with_terms(::Type{T}, ::T) where {T} = 0
 _num_function_with_terms(::Type{T}, ::ScalarLike{T}) where {T} = 1
-_num_function_with_terms(::Type{T}, f::ScalarQuadraticLike{T}, args::Vararg{ScalarQuadraticLike{T}, N}) where {T, N} = _num_function_with_terms(T, f) + _num_function_with_terms(T, args...)
+function _num_function_with_terms(::Type{T}, f::ScalarQuadraticLike{T},
+                                  args::Vararg{ScalarQuadraticLike{T}, N}) where {T, N}
+    return _num_function_with_terms(T, f) + _num_function_with_terms(T, args...)
+end
 function MA.mutable_operate!(::typeof(MA.add_mul), f::MOI.ScalarQuadraticFunction{T},
                              args::Vararg{ScalarQuadraticLike{T}, N}) where {T, N}
     if isone(_num_function_with_terms(T, args...))
