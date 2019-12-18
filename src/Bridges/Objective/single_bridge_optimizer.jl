@@ -32,10 +32,6 @@ function MOIB.supports_bridging_objective_function(
     ::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractScalarFunction}) where BT
     return supports_objective_function(BT, F)
 end
-function is_bridged_with_variable_bridge(::SingleBridgeOptimizer,
-                                         ::Type{<:MOI.AbstractSet})
-    return false
-end
 function MOIB.is_bridged(
     b::SingleBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
     return MOIB.supports_bridging_objective_function(b, F)

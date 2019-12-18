@@ -101,6 +101,7 @@ added instead. The constraint is then bridged by a constraint bridge.
 """
 function is_bridged_with_variable_bridge(
     ::AbstractBridgeOptimizer, ::Type{<:MOI.AbstractSet})
+    return false
 end
 
 """
