@@ -230,9 +230,13 @@ end
 end
 @testset "Scalar" begin
     @testset "Variable" begin
+        f = MOI.SingleVariable(MOI.VariableIndex(0))
+        g = MOI.SingleVariable(MOI.VariableIndex(1))
+        @testset "one" begin
+            @test !isone(f)
+            @test !isone(g)
+        end
         @testset "zero" begin
-            f = MOI.SingleVariable(MOI.VariableIndex(0))
-            g = MOI.SingleVariable(MOI.VariableIndex(1))
             @test !iszero(f)
             @test !iszero(g)
             @test f + 1 ≈ 1 + f
@@ -397,6 +401,22 @@ end
                                               f)
             g = convert(MOI.ScalarQuadraticFunction{Float64}, fx)
             @test convert(MOI.SingleVariable, g) == fx
+        end
+        @testset "Power" begin
+            @testset "Affine" begin
+                aff = 1fx + 2 + fy
+                @test isone(@inferred aff^0)
+                @test convert(typeof(f), aff) ≈ @inferred aff^1
+                @test aff * aff ≈ @inferred aff^2
+                err = ArgumentError("Cannot take $(typeof(aff)) to the power 3.")
+                @test_throws err aff^3
+            end
+            @testset "Quadratic" begin
+                @test isone(@inferred f^0)
+                @test f ≈ @inferred f^1
+                err = ArgumentError("Cannot take $(typeof(f)) to the power 2.")
+                @test_throws err f^2
+            end
         end
         @testset "operate" begin
             @testset "No zero affine term" begin
