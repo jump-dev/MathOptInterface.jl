@@ -22,7 +22,7 @@ Add `n` scalar variables to the model, returning a vector of variable indices.
 A [`AddVariableNotAllowed`](@ref) error is thrown if adding variables cannot be
 done in the current state of the model `model`.
 """
-add_variables(model::ModelLike, n) = throw(AddVariableNotAllowed())
+add_variables(model::ModelLike, n) = VariableIndex[add_variable(model) for _ = 1:n]
 
 """
     add_variable(model::ModelLike)::VariableIndex
