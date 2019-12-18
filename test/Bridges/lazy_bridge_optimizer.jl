@@ -689,6 +689,39 @@ function MOI.supports_constraint(::NoVariableModel{T}, ::Type{MOI.SingleVariable
                                  ::Type{<:MOIU.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return false
 end
+
+@testset "Continuous Conic with NoVariableModel{Float64}" begin
+    model = NoVariableModel{Float64}()
+    bridged = MOIB.full_bridge_optimizer(model, Float64)
+    @show MOIB.bridge_type(bridged, MOI.SecondOrderCone)
+    @show MOIB.bridge_type(bridged, MOI.RotatedSecondOrderCone)
+    MOIT.soctest(bridged, MOIT.TestConfig(solve=false))
+    MOIT.rsoctest(bridged, MOIT.TestConfig(solve=false))
+    @test sprint(MOIB.print_graph, bridged) == """
+Bridge graph with 9 variable nodes, 11 variable nodes and 0 objective nodes.
+ [1] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
+ [2] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (3).
+ [3] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
+ [4] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (6).
+ [5] constrained variables in `MOI.Zeros` are bridged (distance 1) by MOIB.Variable.ZerosBridge{Float64}.
+ [6] constrained variables in `MOI.EqualTo{Float64}` are bridged (distance 2) by MOIB.Variable.VectorizeBridge{Float64,MOI.Zeros}.
+ [7] constrained variables in `MOI.GreaterThan{Float64}` are supported (distance 2) by adding free variables and then constrain them, see (7).
+ [8] constrained variables in `MOI.LessThan{Float64}` are supported (distance 2) by adding free variables and then constrain them, see (10).
+ [9] constrained variables in `MOI.Nonpositives` are supported (distance 2) by adding free variables and then constrain them, see (11).
+ (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.VectorFunctionizeBridge{Float64,MOI.SecondOrderCone}.
+ (2) `MOI.VectorAffineFunction{Float64}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.RSOCBridge{Float64,MOI.VectorAffineFunction{Float64},MOI.VectorAffineFunction{Float64}}.
+ (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.RSOCBridge{Float64,MOI.VectorAffineFunction{Float64},MOI.VectorOfVariables}.
+ (4) `MOI.VectorAffineFunction{Float64}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
+ (5) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
+ (6) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by MOIB.Constraint.NonnegToNonposBridge{Float64,MOI.VectorAffineFunction{Float64},MOI.VectorOfVariables}.
+ (7) `MOI.SingleVariable`-in-`MOI.GreaterThan{Float64}` constraints are bridged (distance 1) by MOIB.Constraint.GreaterToLessBridge{Float64,MOI.ScalarAffineFunction{Float64},MOI.SingleVariable}.
+ (8) `MOI.SingleVariable`-in-`MOI.EqualTo{Float64}` constraints are bridged (distance 1) by MOIB.Constraint.VectorizeBridge{Float64,MOI.VectorAffineFunction{Float64},MOI.Zeros,MOI.SingleVariable}.
+ (9) `MOI.VectorOfVariables`-in-`MOI.Zeros` constraints are bridged (distance 1) by MOIB.Constraint.VectorFunctionizeBridge{Float64,MOI.Zeros}.
+ (10) `MOI.SingleVariable`-in-`MOI.LessThan{Float64}` constraints are bridged (distance 1) by MOIB.Constraint.LessToGreaterBridge{Float64,MOI.ScalarAffineFunction{Float64},MOI.SingleVariable}.
+ (11) `MOI.VectorOfVariables`-in-`MOI.Nonpositives` constraints are bridged (distance 1) by MOIB.Constraint.NonposToNonnegBridge{Float64,MOI.VectorAffineFunction{Float64},MOI.VectorOfVariables}.
+"""
+end
+
 MOIU.@model(OnlyNonnegVAF,
             (), (), (MOI.Nonnegatives,), (),
             (), (), (), (MOI.VectorAffineFunction,))

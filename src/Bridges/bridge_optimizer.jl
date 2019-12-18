@@ -91,6 +91,19 @@ function supports_bridging_constrained_variable(
 end
 
 """
+    is_bridged_with_variable_bridge(
+        b::AbstractBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+
+Return a `Bool` indicating whether `b` bridges constrained variable in
+`S` using a variable bridge, assuming `is_bridged(b, S)`. If it returns `false`,
+it means that free variables and a constraint on these variables should be
+added instead. The constraint is then bridged by a constraint bridge.
+"""
+function is_bridged_with_variable_bridge(
+    ::AbstractBridgeOptimizer, ::Type{<:MOI.AbstractSet})
+end
+
+"""
     supports_bridging_constraint(
         b::AbstractBridgeOptimizer,
         F::Type{<:MOI.AbstractFunction},
@@ -1141,7 +1154,7 @@ function MOI.add_constrained_variables(b::AbstractBridgeOptimizer,
                                        set::MOI.AbstractVectorSet)
     if is_bridged(b, typeof(set)) ||
         is_bridged(b, MOI.VectorOfVariables, typeof(set))
-        if set isa MOI.Reals || supports_bridging_constrained_variable(b, typeof(set))
+        if set isa MOI.Reals || is_bridged_with_variable_bridge(b, typeof(set))
             BridgeType = Variable.concrete_bridge_type(b, typeof(set))
             return Variable.add_keys_for_bridge(Variable.bridges(b),
                 () -> Variable.bridge_constrained_variable(BridgeType, b, set),
@@ -1159,7 +1172,7 @@ function MOI.add_constrained_variable(b::AbstractBridgeOptimizer,
                                       set::MOI.AbstractScalarSet)
     if is_bridged(b, typeof(set)) ||
         is_bridged(b, MOI.SingleVariable, typeof(set))
-        if supports_bridging_constrained_variable(b, typeof(set))
+        if is_bridged_with_variable_bridge(b, typeof(set))
             BridgeType = Variable.concrete_bridge_type(b, typeof(set))
             return Variable.add_key_for_bridge(Variable.bridges(b),
                 () -> Variable.bridge_constrained_variable(BridgeType, b, set),

@@ -308,7 +308,10 @@ function supports_bridging_objective_function(
 )
     return !iszero(bridge_index(b, F))
 end
-
+function is_bridged_with_variable_bridge(b::LazyBridgeOptimizer,
+                                         S::Type{<:MOI.AbstractSet})
+    return is_variable_edge_best(b.graph, node(b, S))
+end
 function bridge_type(b::LazyBridgeOptimizer, ::Type{MOI.Reals})
     if b.variable_free_bridge_type === nothing
         throw(MOI.UnsupportedConstraint{MOI.VectorOfVariables, MOI.Reals}())
