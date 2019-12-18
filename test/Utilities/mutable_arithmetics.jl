@@ -8,8 +8,32 @@ const MOI = MathOptInterface
 
 @testset "promote_operation with $T" for T in [Float64, Float32]
     @test MA.promote_operation(*, MOI.SingleVariable, T) == MOI.ScalarAffineFunction{T}
+    @test MA.promote_operation(*, T, MOI.SingleVariable) == MOI.ScalarAffineFunction{T}
     @test MA.promote_operation(*, MOI.ScalarAffineFunction{T}, T) == MOI.ScalarAffineFunction{T}
+    @test MA.promote_operation(*, T, MOI.ScalarAffineFunction{T}) == MOI.ScalarAffineFunction{T}
     @test MA.promote_operation(*, MOI.ScalarQuadraticFunction{T}, T) == MOI.ScalarQuadraticFunction{T}
+    @test MA.promote_operation(*, T, MOI.ScalarQuadraticFunction{T}) == MOI.ScalarQuadraticFunction{T}
+end
+
+@testset "scaling with $T" for T in [Float64, Float32]
+    x = MOI.VariableIndex(1)
+    fx = MOI.SingleVariable(x)
+    @test T(3) == MA.scaling(T(0)fx + T(3))
+    f = T(2)fx + T(3)
+    err = InexactError(:convert, T, f)
+    @test_throws err MA.scaling(f)
+end
+
+@testset "Unary `-` with $T" for T in [Float64, Float32]
+    x = MOI.VariableIndex(1)
+    fx = MOI.SingleVariable(x)
+    for f in [T(2)fx + T(3), T(4)*fx*fx + T(2)fx + T(3)]
+        g = -f
+        @test g ≈ MA.operate!(-, f)
+        @test g ≈ f
+        @test -g ≈ MA.operate!(-, f)
+        @test -g ≈ f
+    end
 end
 
 function all_tests(T::Type, a, b, c, d, e, f, g)

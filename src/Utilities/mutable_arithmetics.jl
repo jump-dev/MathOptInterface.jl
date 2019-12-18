@@ -39,7 +39,7 @@ end
 function MA.scaling(f::TypedScalarLike{T}) where T
     g = canonical(f)
     if !_is_constant(g)
-        throw(InexactError("Cannot convert `$g` to $T."))
+        throw(InexactError(:convert, T, f))
     end
     return MA.scaling(MOI.constant(g))
 end
