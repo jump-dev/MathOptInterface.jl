@@ -689,6 +689,45 @@ function MOI.supports_constraint(::NoVariableModel{T}, ::Type{MOI.SingleVariable
                                  ::Type{<:MOIU.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
     return false
 end
+
+@testset "Continuous Conic with NoVariableModel{$T}" for T in [Float64, Float32]
+    model = NoVariableModel{T}()
+    bridged = MOIB.full_bridge_optimizer(model, T)
+    # The best variable bridge for SOC and RSOC are respectively `SOCtoRSOC` and `RSOCtoSOC`.
+    # This forms a cycle because using the variable bridges is not in the shortest path.
+    # Therefore they should not be used when calling `add_constrained_variables`.
+    # Moreover, the printing should say that the variable bridge is not used.
+    @test MOI.supports_constraint(bridged, MOI.VectorOfVariables, MOI.SecondOrderCone)
+    @test MOIB.bridge_type(bridged, MOI.SecondOrderCone) == MOIB.Variable.SOCtoRSOCBridge{T}
+    @test !MOIB.is_variable_bridged(bridged, MOI.RotatedSecondOrderCone)
+    @test MOI.supports_constraint(bridged, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+    @test MOIB.bridge_type(bridged, MOI.RotatedSecondOrderCone) == MOIB.Variable.RSOCtoSOCBridge{T}
+    @test !MOIB.is_variable_bridged(bridged, MOI.RotatedSecondOrderCone)
+    x, cx = MOI.add_constrained_variables(bridged, MOI.SecondOrderCone(3))
+    @test !any(v -> MOIB.is_bridged(bridged, v), x)
+    @test !MOIB.is_variable_bridged(bridged, cx)
+    @test MOIB.bridge(bridged, cx) isa MOIB.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}
+    y, cy = MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(4))
+    @test !any(v -> MOIB.is_bridged(bridged, v), y)
+    @test !MOIB.is_variable_bridged(bridged, cy)
+    @test MOIB.bridge(bridged, cy) isa MOIB.Constraint.RSOCBridge{T}
+    @test sprint(MOIB.print_graph, bridged) == """
+Bridge graph with 4 variable nodes, 8 variable nodes and 0 objective nodes.
+ [1] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
+ [2] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (3).
+ [3] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
+ [4] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (6).
+ (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.VectorFunctionizeBridge{$T,MOI.SecondOrderCone}.
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.RSOCBridge{$T,MOI.VectorAffineFunction{$T},MOI.VectorAffineFunction{$T}}.
+ (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.RSOCBridge{$T,MOI.VectorAffineFunction{$T},MOI.VectorOfVariables}.
+ (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
+ (5) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
+ (6) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by MOIB.Constraint.NonnegToNonposBridge{$T,MOI.VectorAffineFunction{$T},MOI.VectorOfVariables}.
+ (7) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by MOIB.Constraint.GreaterToLessBridge{$T,MOI.ScalarAffineFunction{$T},MOI.SingleVariable}.
+ (8) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by MOIB.Constraint.VectorizeBridge{$T,MOI.VectorAffineFunction{$T},MOI.Zeros,MOI.SingleVariable}.
+"""
+end
+
 MOIU.@model(OnlyNonnegVAF,
             (), (), (MOI.Nonnegatives,), (),
             (), (), (), (MOI.VectorAffineFunction,))
