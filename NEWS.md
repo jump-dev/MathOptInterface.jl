@@ -7,6 +7,7 @@ v0.9.8 (December 18, 2019)
 - Implemented MutableArithmetics API (#924).
 - Fixed callbacks with `CachingOptimizer` (#959).
 - Fixed `MOI.dimension` for `MOI.Complements` (#948).
+- Added fallback for `add_variables` (#972).
 - Added `is_diagonal_vectorized_index` utility (#965).
 - Improved linear constraints display in manual (#963, #964).
 - Bridges improvements:
@@ -15,6 +16,8 @@ v0.9.8 (December 18, 2019)
   * Fixed `MOI.add_constraints` with non-bridged variable constraint on bridged
     variable (#951).
   * Fixed corner cases and docstring of geomean bridge (#961, #962, #966).
+  * Fixed choice between variable or constraint bridges for constrained
+    variables (#973).
   * Improve performance of bridge shortest path (#945, #946, #956).
   * Added docstring for `test_delete_bridge` (#954).
   * Added Variable bridge tests (#952).
