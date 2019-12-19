@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.9.8 (December 18, 2019)
+v0.9.8 (December 19, 2019)
 ---------------------
 
 - Implemented MutableArithmetics API (#924).
