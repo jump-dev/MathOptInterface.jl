@@ -1002,6 +1002,12 @@ variable, and returns those bound values:
 Utilities.get_bounds
 ```
 
+The following utilities are useful when working with symmetric matrix cones.
+```@docs
+Utilities.is_diagonal_vectorized_index
+Utilities.side_dimension_for_vectorized_dimension
+```
+
 ## Benchmarks
 
 Functions to help benchmark the performance of solver wrappers. See

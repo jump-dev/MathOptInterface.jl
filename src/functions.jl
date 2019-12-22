@@ -1,11 +1,13 @@
 # Functions
 
+import MutableArithmetics
+
 """
     AbstractFunction
 
 Abstract supertype for function objects.
 """
-abstract type AbstractFunction end
+abstract type AbstractFunction <: MutableArithmetics.AbstractMutable end
 
 """
     output_dimension(f::AbstractFunction)
@@ -24,6 +26,7 @@ abstract type AbstractScalarFunction <: AbstractFunction end
 output_dimension(::AbstractScalarFunction) = 1
 
 Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
+Base.ndims(::Type{<:AbstractScalarFunction}) = 0
 
 """
     AbstractVectorFunction
@@ -280,9 +283,9 @@ Base.:(==)(f::VectorOfVariables, g::VectorOfVariables) = f.variables == g.variab
 
 Base.isapprox(f::Union{SingleVariable, VectorOfVariables}, g::Union{SingleVariable, VectorOfVariables}; kwargs...) = f == g
 
-# For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_isapprox`
-function dict_isapprox(d1::Dict, d2::Dict{<:Any, T}; kwargs...) where T
-    all(kv -> isapprox(kv.second, Base.get(d2, kv.first, zero(T)); kwargs...), d1)
+# For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_compare`
+function dict_compare(d1::Dict, d2::Dict{<:Any, T}, compare::Function) where T
+    return all(kv -> compare(kv.second, Base.get(d2, kv.first, zero(T))), d1)
 end
 
 # Build a dictionary where the duplicate keys are summed
@@ -368,7 +371,7 @@ constant(f::Union{VectorAffineFunction, VectorQuadraticFunction}) = f.constants
 
 function Base.isapprox(f::F, g::G; kwargs...) where {F<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction},
                                                      G<:Union{ScalarAffineFunction, ScalarQuadraticFunction, VectorAffineFunction, VectorQuadraticFunction}}
-    isapprox(constant(f), constant(g); kwargs...) && all(dict_isapprox.(_dicts(f), _dicts(g); kwargs...))
+    isapprox(constant(f), constant(g); kwargs...) && all(dict_compare.(_dicts(f), _dicts(g), (α, β) -> isapprox(α, β; kwargs...)))
 end
 
 constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction}, T::DataType) = constant(f)
@@ -436,6 +439,9 @@ function Base.convert(::Type{SingleVariable},
 end
 
 # Conversion to ScalarAffineFunction
+function Base.convert(::Type{ScalarAffineFunction{T}}, α::T) where T
+    return ScalarAffineFunction{T}(ScalarAffineTerm{T}[], α)
+end
 function Base.convert(::Type{ScalarAffineFunction{T}},
                       f::SingleVariable) where T
     return ScalarAffineFunction{T}(f)
@@ -449,6 +455,9 @@ function Base.convert(::Type{ScalarAffineFunction{T}},
 end
 
 # Conversion to ScalarQuadraticFunction
+function Base.convert(::Type{ScalarQuadraticFunction{T}}, α::T) where T
+    return ScalarQuadraticFunction{T}(ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], α)
+end
 function Base.convert(::Type{ScalarQuadraticFunction{T}},
                       f::SingleVariable) where T
     convert(ScalarQuadraticFunction{T}, convert(ScalarAffineFunction{T}, f))

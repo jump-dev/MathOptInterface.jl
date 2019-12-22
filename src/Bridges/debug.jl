@@ -18,7 +18,7 @@ function print_node_info(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
         print(io, " not supported\n")
     else
         index = bridge_index(b.graph, node)
-        if iszero(index)
+        if iszero(index) || (node isa VariableNode && !is_variable_edge_best(b.graph, node))
             @assert node isa VariableNode
             println(io, " supported (distance $d) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).")
         else

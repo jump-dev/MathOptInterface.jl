@@ -26,6 +26,7 @@ function print_with_acronym(io::IO, s::AbstractString)
 end
 
 include("functions.jl")
+include("mutable_arithmetics.jl")
 include("sets.jl")
 include("constraints.jl")
 include("copy.jl")

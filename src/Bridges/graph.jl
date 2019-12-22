@@ -152,6 +152,17 @@ function bridge_index(graph::Graph, node::ObjectiveNode)
     return graph.objective_best[node.index]
 end
 
+"""
+    is_variable_edge_best(graph::Graph, node::VariableNode)
+
+Return a `Bool` indicating whether the value of `_dist(graph, node)` can be
+achieved with a variable bridge.
+"""
+function is_variable_edge_best(graph::Graph, node::VariableNode)
+    bellman_ford!(graph)
+    return graph.variable_dist[node.index] == _dist(graph, node)
+end
+
 # Update `b.variable_dist`, `b.constraint_dist` `b.variable_best` and
 # `b.constraint_best` for constrained variable types in `variables` and
 # constraint types in `constraints`.
@@ -218,9 +229,6 @@ function _dist(graph::Graph, node::VariableNode)
     # If free variables are bridged but the functionize bridge was not added,
     # constraint_node is `ConstraintNode(INVALID_NODE_INDEX)`.
     dc = constraint_node.index == INVALID_NODE_INDEX ? INFINITY : _dist(graph, constraint_node)
-    if iszero(dc)
-        return dc
-    end
     dv = graph.variable_dist[node.index]
     if dc == INFINITY
         return dv

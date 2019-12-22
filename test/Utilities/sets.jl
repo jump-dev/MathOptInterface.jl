@@ -3,6 +3,21 @@ using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
+@testset "Diagonal element" begin
+    k = 0
+    for j in 1:10
+        for i in 1:j
+            k += 1
+            @test MOIU.is_diagonal_vectorized_index(k) == (i == j)
+        end
+    end
+    for side_dim in 1:10
+        set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
+        vec_dim = MOI.dimension(set)
+        @test MOIU.side_dimension_for_vectorized_dimension(vec_dim) == side_dim
+    end
+end
+
 @testset "Side dimension" begin
     for side_dim in 1:10
         set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
