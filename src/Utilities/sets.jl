@@ -32,6 +32,17 @@ scalar_set_type(::Type{<:MOI.Nonpositives}, T::Type) = MOI.LessThan{T}
 scalar_set_type(::Type{<:MOI.Nonnegatives}, T::Type) = MOI.GreaterThan{T}
 
 """
+    is_diagonal_vectorized_index(index::Base.Integer)
+
+Return whether `index` is the index of a diagonal element in a
+[`MOI.AbstractSymmetricMatrixSetTriangle`](@ref) set.
+"""
+function is_diagonal_vectorized_index(index::Base.Integer)
+    perfect_square = 1 + 8index
+    return isqrt(perfect_square)^2 == perfect_square
+end
+
+"""
     side_dimension_for_vectorized_dimension(n::Integer)
 
 Return the dimension `d` such that
