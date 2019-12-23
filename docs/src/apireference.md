@@ -1012,3 +1012,13 @@ Benchmarks.suite
 Benchmarks.create_baseline
 Benchmarks.compare_against_baseline
 ```
+
+## File Formats
+
+Functions to help read and write MOI models to/from various file formats. See
+[File Formats](@ref) for more details.
+
+```@docs
+FileFormats.Model
+FileFormats.FileFormat
+```

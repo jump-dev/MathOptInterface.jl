@@ -792,6 +792,35 @@ becomes ``A = [3.0, 4.0]^\top`` as follows:
 modify(m, c, MultirowChange(x, [3.0, 4.0]))
 ```
 
+## File formats
+
+The `FileFormats` module provides functionality for reading and writing MOI models using
+[`write_to_file`](@ref) and [`read_from_file`](@ref).
+
+To write a model `src` to a MathOptFormat file, use:
+```julia
+src = # ...
+dest = FileFormats.Model(format = FileFormats.FORMAT_MOF)
+MOI.copy_to(dest, src)
+MOI.write_to_file(dest, "file.mof.json")
+```
+The list of supported formats is given by the [`FileFormats.FileFormat`](@ref) enum.
+
+Instead of the `format` keyword, you can also use the `filename` keyword argument to
+[`FileFormats.Model`](@ref). This will attempt to automatically guess the format from the
+file extension. For example:
+```julia
+src = # ...
+filename = "my_model.cbf.gz"
+dest = FileFormats.Model(filename = filename)
+MOI.copy_to(dest, src)
+MOI.write_to_file(dest, filename)
+
+src_2 = FileFormats.Model(filename = filename)
+MOI.read_from_file(src_2, filename)
+```
+Note how the compression format (GZip) is also automatically detected from the filename.
+
 ## Advanced
 
 ### Duals
