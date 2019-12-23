@@ -4,7 +4,7 @@ import ..FileFormats
 import MathOptInterface
 const MOI = MathOptInterface
 
-MOI.Utilities.@model(InnerModel,
+MOI.Utilities.@model(Model,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
@@ -20,7 +20,7 @@ struct Options
     warn::Bool
 end
 
-function get_options(m::InnerModel)
+function get_options(m::Model)
     default_options = Options(255, false)
     return get(m.ext, :LP_OPTIONS, default_options)
 end
@@ -40,13 +40,13 @@ Keyword arguments are:
 function Model(;
     maximum_length::Int = 255, warn::Bool = false
 )
-    model = InnerModel{Float64}()
+    model = Model{Float64}()
     options = Options(maximum_length, warn)
     model.ext[:LP_OPTIONS] = options
     return model
 end
 
-function Base.show(io::IO, ::InnerModel)
+function Base.show(io::IO, ::Model)
     print(io, "A .LP-file model")
     return
 end
@@ -62,7 +62,7 @@ const NAME_REG = r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])"
 
 function write_function(
     io::IO,
-    model::InnerModel,
+    model::Model,
     func::MOI.SingleVariable,
     variable_names::Dict{MOI.VariableIndex, String}
 )
@@ -72,7 +72,7 @@ end
 
 function write_function(
     io::IO,
-    model::InnerModel,
+    model::Model,
     func::MOI.ScalarAffineFunction{Float64},
     variable_names::Dict{MOI.VariableIndex, String}
 )
@@ -135,7 +135,7 @@ write_constraint_prefix(io::IO, set) = nothing
 
 function write_constraint(
     io::IO,
-    model::InnerModel,
+    model::Model,
     index::MOI.ConstraintIndex,
     variable_names::Dict{MOI.VariableIndex, String};
     write_name::Bool = true
@@ -155,7 +155,7 @@ const SCALAR_SETS = (
     MOI.Interval{Float64}
 )
 
-function write_sense(io::IO, model::InnerModel)
+function write_sense(io::IO, model::Model)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
         println(io, "maximize")
     else
@@ -165,7 +165,7 @@ function write_sense(io::IO, model::InnerModel)
 end
 
 function write_objective(
-    io::IO, model::InnerModel, variable_names::Dict{MOI.VariableIndex, String}
+    io::IO, model::Model, variable_names::Dict{MOI.VariableIndex, String}
 )
     print(io, "obj: ")
     obj_func_type = MOI.get(model, MOI.ObjectiveFunctionType())
@@ -175,7 +175,12 @@ function write_objective(
     return
 end
 
-function Base.write(io::IO, model::InnerModel)
+"""
+    Base.write(io::IO, model::FileFormats.LP.Model)
+
+Write `model` to `io` in the LP file format.
+"""
+function Base.write(io::IO, model::Model)
     options = get_options(model)
     FileFormats.create_unique_names(
         model,
@@ -241,7 +246,7 @@ end
 #
 # ==============================================================================
 
-function Base.read!(io::IO, model::InnerModel)
+function Base.read!(io::IO, model::Model)
     error("read! is not implemented for LP files.")
 end
 

@@ -1,3 +1,8 @@
+"""
+    Base.read!(io::IO, model::FileFormats.MOF.Model)
+
+Read `io` in the MathOptFormat file format and store the result in `model`.
+"""
 function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")

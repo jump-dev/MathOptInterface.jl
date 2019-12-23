@@ -34,4 +34,3 @@ end
 
 # Test hygiene of @model macro
 include("hygiene.jl")
-

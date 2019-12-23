@@ -5,7 +5,7 @@ import MathOptInterface
 
 const MOI = MathOptInterface
 
-MOI.Utilities.@model(InnerModel,
+MOI.Utilities.@model(Model,
     (MOI.Integer,),
     (),
     (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
@@ -19,19 +19,19 @@ MOI.Utilities.@model(InnerModel,
     (MOI.VectorAffineFunction,)
 )
 function MOI.supports_constraint(
-    ::InnerModel{T}, ::Type{MOI.SingleVariable},
+    ::Model{T}, ::Type{MOI.SingleVariable},
     ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
 
     return false
 end
 function MOI.supports_constraint(
-    ::InnerModel, ::Type{MOI.SingleVariable}, ::Type{MOI.Integer})
+    ::Model, ::Type{MOI.SingleVariable}, ::Type{MOI.Integer})
     return true
 end
 
 struct Options end
 
-get_options(m::InnerModel) = get(m.ext, :CBF_OPTIONS, Options())
+get_options(m::Model) = get(m.ext, :CBF_OPTIONS, Options())
 
 """
     Model()
@@ -39,12 +39,12 @@ get_options(m::InnerModel) = get(m.ext, :CBF_OPTIONS, Options())
 Create an empty instance of `FileFormats.CBF.Model`.
 """
 function Model()
-    model = InnerModel{Float64}()
+    model = Model{Float64}()
     model.ext[:CBF_OPTIONS] = Options()
     return model
 end
 
-Base.show(io::IO, ::InnerModel) = print(io, "A Conic Benchmark Format (CBF) model")
+Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 
 # ==============================================================================
 #
@@ -52,7 +52,12 @@ Base.show(io::IO, ::InnerModel) = print(io, "A Conic Benchmark Format (CBF) mode
 #
 # ==============================================================================
 
-function Base.write(io::IO, model::InnerModel)
+"""
+    Base.write(io::IO, model::FileFormats.CBF.Model)
+
+Write `model` to `io` in the Conic Benchmark Format.
+"""
+function Base.write(io::IO, model::Model)
     options = get_options(model)
     # Helper functions for MOI constraints.
     model_cons(con_func, con_set) = MOI.get(model,
@@ -381,7 +386,12 @@ function powcone_to_moi_cone(cone_str::AbstractString,
     end
 end
 
-function Base.read!(io::IO, model::InnerModel)
+"""
+    Base.read!(io::IO, model::FileFormats.CBF.Model)
+
+Read `io` in the Conic Benchmark Format and store the result in `model`.
+"""
+function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end

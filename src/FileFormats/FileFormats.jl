@@ -88,11 +88,11 @@ function Model(
 end
 
 const MATH_OPT_FORMATS = Union{
-    CBF.InnerModel,
-    LP.InnerModel,
+    CBF.Model,
+    LP.Model,
     MOF.Model,
-    MPS.InnerModel,
-    SDPA.InnerModel
+    MPS.Model,
+    SDPA.Model,
 }
 
 function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)

@@ -1,3 +1,8 @@
+"""
+    Base.write(io::IO, model::FileFormats.MOF.Model)
+
+Write `model` to `io` in the MathOptFormat file format.
+"""
 function Base.write(io::IO, model::Model)
     options = get_options(model)
     object = Object(

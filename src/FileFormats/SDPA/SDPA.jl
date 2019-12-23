@@ -7,7 +7,7 @@ import MathOptInterface
 
 const MOI = MathOptInterface
 
-MOI.Utilities.@model(InnerModel,
+MOI.Utilities.@model(Model,
     (),
     (),
     (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
@@ -19,7 +19,7 @@ MOI.Utilities.@model(InnerModel,
 )
 
 function MOI.supports_constraint(
-    ::InnerModel{T},
+    ::Model{T},
     ::Type{MOI.SingleVariable},
     ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
 ) where {T}
@@ -28,14 +28,14 @@ function MOI.supports_constraint(
 end
 
 function MOI.supports(
-    ::InnerModel,
+    ::Model,
     ::MOI.ObjectiveFunction{MOI.SingleVariable}
 )
     return false
 end
 
 function MOI.supports(
-    ::InnerModel{T},
+    ::Model{T},
     ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}
 ) where {T}
     return false
@@ -43,7 +43,7 @@ end
 
 struct Options end
 
-get_options(m::InnerModel) = get(m.ext, :SDPA_OPTIONS, Options())
+get_options(m::Model) = get(m.ext, :SDPA_OPTIONS, Options())
 
 """
     Model(; number_type::Type = Float64)
@@ -59,12 +59,12 @@ variables with equality constraints, use `Dualization.jl` to transform it into
 the geometric form.
 """
 function Model(; number_type::Type = Float64)
-    model = InnerModel{number_type}()
+    model = Model{number_type}()
     model.ext[:SDPA_OPTIONS] = Options()
     return model
 end
 
-function Base.show(io::IO, ::InnerModel)
+function Base.show(io::IO, ::Model)
     print(io, "A SemiDefinite Programming Algorithm Format (SDPA) model")
 end
 
@@ -74,7 +74,12 @@ end
 #
 # ==============================================================================
 
-function Base.write(io::IO, model::InnerModel{T}) where {T}
+"""
+    Base.write(io::IO, model::FileFormats.SDPA.Model)
+
+Write `model` to `io` in the SemiDefinite Programming Application file format.
+"""
+function Base.write(io::IO, model::Model{T}) where {T}
     options = get_options(model)
     # Helper functions for MOI constraints.
     function model_cons(con_func, con_set)
@@ -222,7 +227,12 @@ function mat_to_vec_idx(i::Int, j::Int)
     end
 end
 
-function Base.read!(io::IO, model::InnerModel{T}) where T
+"""
+    Base.read!(io::IO, model::FileFormats.SDPA.Model)
+
+Read `io` in the SDPA file format and store the result in `model`.
+"""
+function Base.read!(io::IO, model::Model{T}) where T
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
