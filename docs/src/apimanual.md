@@ -822,8 +822,8 @@ MOI.read_from_file(src_2, filename)
 Note how the compression format (GZip) is also automatically detected from the filename.
 
 In some cases `src` may contain constraints that are not supported by the file format (e.g.,
-binary variables in the CBF format). If so, you should copy `src` to a bridged model using
-[`Bridges.full_bridge_optimizer`](@ref):
+the CBF format supports integer variables but not binary). If so, you should copy `src` to a
+bridged model using [`Bridges.full_bridge_optimizer`](@ref):
 ```julia
 src = # ... conic model ...
 dest = FileFormats.Model(format = FileFormats.FORMAT_CBF)
@@ -831,6 +831,9 @@ bridged = MOI.Bridges.full_bridge_optimizer(dest, Float64)
 MOI.copy_to(bridged, src)
 MOI.write_to_file(dest, "my_model.cbf")
 ```
+You should also note that even after bridging, it may still not be possible to write the
+model to file because of unsupported constraints (e.g., PSD variables in the LP file
+format).
 
 In addition to [`write_to_file`](@ref) and [`read_from_file`](@ref), you can read and write
 directly from `IO` streams using `Base.write` and `Base.read!`:
