@@ -202,7 +202,7 @@ dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
 """
     NormOneCone(dimension)
 
-The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
+The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
@@ -286,6 +286,32 @@ dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCon
 function Base.:(==)(set1::S, set2::S) where S <: Union{PowerCone, DualPowerCone}
     return set1.exponent == set2.exponent
 end
+
+"""
+    NormSpectralCone{T <: Real}(row_dim, column_dim)
+
+The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times col_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+TODO how to vectorize matrix entries: column or row major?
+"""
+struct NormSpectralCone{T <: Real} <: AbstractVectorSet
+    row_dim::Int
+    column_dim::Int
+end
+
+"""
+    NormNuclearCone{T <: Real}(row_dim, column_dim)
+
+The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times col_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+TODO how to vectorize matrix entries: column or row major?
+"""
+struct NormNuclearCone{T <: Real} <: AbstractVectorSet
+    row_dim::Int
+    column_dim::Int
+end
+
+dual_set(s::NormNuclearCone{T}) where {T <: Real} = NormSpectralCone{T}(s.row_dim, s.column_dim)
+
+dimension(s::Union{NormSpectralCone, NormNuclearCone}) = 1 + s.row_dim * s.column_dim
 
 """
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
