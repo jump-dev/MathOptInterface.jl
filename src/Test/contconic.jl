@@ -1792,7 +1792,6 @@ pow1vtest(model::MOI.ModelLike, config::TestConfig) = _pow1test(model, config, t
 pow1ftest(model::MOI.ModelLike, config::TestConfig) = _pow1test(model, config, false)
 
 
-
 powtests = Dict("pow1v" => pow1vtest,
                 "pow1f" => pow1ftest)
 
@@ -1895,6 +1894,120 @@ dualpowtests = Dict("dualpow1v" => dualpow1vtest,
                     "dualpow1f" => dualpow1ftest)
 
 @moitestset dualpow
+
+
+function normspec1test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormSpec1
+    # min t
+    #  st  t >= sigma_1([1 1 1; 1 1 1]) (i.e (t, ones(2, 3)) is in NormSpectralCone(2, 3))
+    # Optimal solution:
+    # t = sqrt(6)
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    spec = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t)), vcat(0.0, ones(6))), MOI.NormSpectralCone(2, 3))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        rt6 = sqrt(6.0)
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt6 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt6 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt6 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt6, ones(6)) atol=atol rtol=rtol
+
+        # if config.duals
+        #     @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ TODO atol=atol rtol=rtol
+        # end
+    end
+end
+
+normspectests = Dict("normspec1" => normspec1test)
+
+@moitestset normspec
+
+
+function _normnuc1test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormNuc1
+    # min t
+    #  st  t >= sum_i sigma_i([1 1 1; 1 1 1]) (i.e (t, ones(2, 3)) is in NormNuclearCone(2, 3))
+    # Optimal solution:
+    # t = sqrt(6)
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    spec = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t)), vcat(0.0, ones(6))), MOI.NormNuclearCone(2, 3))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        rt6 = sqrt(6.0)
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt6 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt6 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt6 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt6, ones(6)) atol=atol rtol=rtol
+
+        # if config.duals
+        #     @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ TODO atol=atol rtol=rtol
+        # end
+    end
+end
+
+normnuctests = Dict("normnuc1" => normnuc1test)
+
+@moitestset normnuc
 
 
 function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestConfig)
@@ -2360,6 +2473,7 @@ const rootdettests = Dict("rootdett" => rootdetttest,
 
 @moitestset rootdet true
 
+
 const contconictests = Dict("lin" => lintest,
                             "norminf" => norminftest,
                             "normone" => normonetest,
@@ -2370,6 +2484,8 @@ const contconictests = Dict("lin" => lintest,
                             "dualexp" => dualexptest,
                             "pow" => powtest,
                             "dualpow" => dualpowtest,
+                            "normspec" => normspectest,
+                            "normnuc" => normnuctest,
                             "sdp" => sdptest,
                             "logdet" => logdettest,
                             "rootdet" => rootdettest)
