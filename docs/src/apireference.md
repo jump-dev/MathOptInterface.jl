@@ -115,7 +115,6 @@ ListOfVariableAttributesSet
 ListOfConstraintAttributesSet
 ```
 
-
 ## Optimizers
 
 ```@docs
@@ -329,7 +328,6 @@ Semicontinuous
 Semiinteger
 ```
 
-
 ### Vector sets
 
 List of recognized vector sets.
@@ -347,6 +345,8 @@ ExponentialCone
 DualExponentialCone
 PowerCone
 DualPowerCone
+NormSpectralCone
+NormNuclearCone
 SOS1
 SOS2
 IndicatorSet
@@ -601,7 +601,6 @@ MOI.Bridges.unbridged_variable_function(bridged_model, inner_variables[1])
 
 MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm{Float64}(1.0, VariableIndex(-1))], -1.0)
 ```
-
 
 !!! note
     A notable exception is with [`Bridges.Variable.ZerosBridge`](@ref) where no

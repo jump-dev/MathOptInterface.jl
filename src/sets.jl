@@ -290,7 +290,7 @@ end
 """
     NormSpectralCone{T <: Real}(row_dim, column_dim)
 
-The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times col_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
 TODO how to vectorize matrix entries: column or row major?
 """
 struct NormSpectralCone{T <: Real} <: AbstractVectorSet
@@ -298,10 +298,12 @@ struct NormSpectralCone{T <: Real} <: AbstractVectorSet
     column_dim::Int
 end
 
+dual_set(s::NormSpectralCone{T}) where {T <: Real} = NormNuclearCone{T}(s.row_dim, s.column_dim)
+
 """
     NormNuclearCone{T <: Real}(row_dim, column_dim)
 
-The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times col_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
 TODO how to vectorize matrix entries: column or row major?
 """
 struct NormNuclearCone{T <: Real} <: AbstractVectorSet
@@ -759,6 +761,7 @@ function Base.copy(
         EqualTo, Interval, NormInfinityCone, NormOneCone, SecondOrderCone,
         RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone,
         DualExponentialCone, PowerCone, DualPowerCone,
+        NormSpectralCone, NormNuclearCone,
         PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
         LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
         RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,
