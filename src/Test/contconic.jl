@@ -1902,7 +1902,7 @@ function normspec1test(model::MOI.ModelLike, config::TestConfig)
     # Problem NormSpec1
     # min t
     #  st  t >= sigma_1([1 1 1; 1 1 1]) (i.e (t, ones(2, 3)) is in NormSpectralCone(2, 3))
-    # Optimal solution:
+    # Singular values of ones(2, 3) are [sqrt(6), 0], so optimal solution is:
     # t = sqrt(6)
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
@@ -1959,7 +1959,7 @@ function _normnuc1test(model::MOI.ModelLike, config::TestConfig)
     # Problem NormNuc1
     # min t
     #  st  t >= sum_i sigma_i([1 1 1; 1 1 1]) (i.e (t, ones(2, 3)) is in NormNuclearCone(2, 3))
-    # Optimal solution:
+    # Singular values of ones(2, 3) are [sqrt(6), 0], so optimal solution is:
     # t = sqrt(6)
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
