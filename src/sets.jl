@@ -290,8 +290,8 @@ end
 """
     NormSpectralCone{T <: Real}(row_dim, column_dim)
 
-The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
-TODO how to vectorize matrix entries: column or row major?
+The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
 """
 struct NormSpectralCone{T <: Real} <: AbstractVectorSet
     row_dim::Int
@@ -303,8 +303,8 @@ dual_set(s::NormSpectralCone{T}) where {T <: Real} = NormNuclearCone{T}(s.row_di
 """
     NormNuclearCone{T <: Real}(row_dim, column_dim)
 
-The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the general matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
-TODO how to vectorize matrix entries: column or row major?
+The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
 """
 struct NormNuclearCone{T <: Real} <: AbstractVectorSet
     row_dim::Int
