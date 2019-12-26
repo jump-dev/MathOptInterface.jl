@@ -81,7 +81,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ObjectiveBound()) >= 19.4
         # FIXME the following are currently not implemented in MockOptimizer
 #        @test MOI.get(model, MOI.RelativeGap()) >= 0.0
-#        @test MOI.get(model, MOI.SolveTime()) >= 0.0
+#        @test MOI.get(model, MOI.SolveTimeSec()) >= 0.0
 #        @test MOI.get(model, MOI.SimplexIterations()) >= 0
 #        @test MOI.get(model, MOI.BarrierIterations()) >= 0
 #        @test MOI.get(model, MOI.NodeCount()) >= 0
