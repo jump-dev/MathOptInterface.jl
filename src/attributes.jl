@@ -579,6 +579,7 @@ to `nothing`, it deactivates the solver time limit. The default value is
 `nothing`. The time limit is in seconds.
 """ # TODO add a test checking if the solver returns TIME_LIMIT status when the time limit is hit
 struct TimeLimitSec <: AbstractOptimizerAttribute end
+@deprecate(MOI.TimeLimit(), MOI.TimeLimitSec())
 
 """
     RawParameter(name)
