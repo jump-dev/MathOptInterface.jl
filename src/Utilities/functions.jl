@@ -663,6 +663,11 @@ Return a new function `f` with the variable vi removed.
 function remove_variable(f::MOI.AbstractFunction, vi::MOI.VariableIndex)
     return filter_variables(v -> v != vi, f)
 end
+function remove_variable(f::MOI.AbstractFunction, vis::Vector{MOI.VariableIndex})
+    # Create a `Set` to test membership in `vis` in O(1).
+    set = Set(vis)
+    return filter_variables(vi -> !(vi in set), f)
+end
 
 """
     modify_function(f::AbstractFunction, change::AbstractFunctionModification)
