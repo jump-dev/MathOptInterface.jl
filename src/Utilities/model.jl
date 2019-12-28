@@ -222,6 +222,11 @@ function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     model.objective = remove_variable(model.objective, vi)
 end
 function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
+    if isempty(vis)
+        # In `keep`, we assume that `model.variable_indices !== nothing` so
+        # at least one variable need to be deleted.
+        return
+    end
     # Delete `VectorOfVariables(vis)` constraints as otherwise, it will error
     # when removing variables one by one.
     vov_to_remove = broadcastvcat(constrs -> _vector_of_variables_with(constrs, vis), model)
