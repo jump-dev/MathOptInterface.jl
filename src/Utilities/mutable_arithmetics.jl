@@ -171,76 +171,83 @@ _constant(::Type{T}, func::TypedScalarLike{T}) where {T} = MOI.constant(func)
 _affine_terms(f::MOI.ScalarAffineFunction) = f.terms
 _affine_terms(f::MOI.ScalarQuadraticFunction) = f.affine_terms
 
-function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}}, α::T,
-                           f::TypedScalarLike{T}, β::T) where T
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    α::T, f::TypedScalarLike{T}, β::T) where T
     for t in _affine_terms(f)
-        push!(terms, operate_term(*, α, t, β))
+        push!(terms, operate_term(op, operate_term(*, α, t, β)))
     end
 end
-function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}},
-                           f::TypedScalarLike{T}, β::T) where T
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    f::TypedScalarLike{T}, β::T) where T
     for t in _affine_terms(f)
-        push!(terms, operate_term(*, t, β))
+        push!(terms, operate_term(op, operate_term(*, t, β)))
     end
 end
-function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}}, α::T,
-                           f::TypedScalarLike{T}) where T
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    α::T, f::TypedScalarLike{T}) where T
     for t in _affine_terms(f)
-        push!(terms, operate_term(*, α, t))
+        push!(terms, operate_term(op, operate_term(*, α, t)))
     end
 end
-function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}},
-                           f::TypedScalarLike{T}) where T
-    append!(terms, _affine_terms(f))
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    f::TypedScalarLike{T}) where T
+    append!(terms, operate_terms(op, _affine_terms(f)))
     return
 end
-function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}},
-                           args::Vararg{T, N}) where {T, N}
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    args::Vararg{T, N}) where {T, N}
     return
 end
-function _add_affine_terms(terms::Vector{MOI.ScalarAffineTerm{T}}, α::T, β::T,
-                           args::Vararg{ScalarQuadraticLike, N}) where {T, N}
-    _add_affine_terms(terms, α * β, args...)
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    α::T, β::T, args::Vararg{ScalarQuadraticLike, N}) where {T, N}
+    _add_sub_affine_terms(op, terms, α * β, args...)
 end
 
-function MA.mutable_operate!(::typeof(MA.add_mul), f::MOI.ScalarAffineFunction{T},
+function MA.mutable_operate!(op::MA.AddSubMul, f::MOI.ScalarAffineFunction{T},
                              args::Vararg{ScalarAffineLike{T}, N}) where {T, N}
-    f.constant = MA.add_mul(f.constant, _constant.(T, args)...)
-    _add_affine_terms(f.terms, args...)
+    f.constant = op(f.constant, _constant.(T, args)...)
+    _add_sub_affine_terms(MA.add_sub_op(op), f.terms, args...)
     return f
 end
 
 function _add_quadratic_terms(
-    terms::Vector{MOI.ScalarQuadraticTerm{T}}, α::ScalarAffineLike{T},
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarQuadraticTerm{T}},
+    α::ScalarAffineLike{T}, f::MOI.ScalarQuadraticFunction{T},
+    β::ScalarAffineLike{T}) where T
+
+    for t in f.quadratic_terms
+        push!(terms, operate_term(op, operate_term(*, _constant(T, α), t, _constant(T, β))))
+    end
+end
+function _add_quadratic_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarQuadraticTerm{T}},
     f::MOI.ScalarQuadraticFunction{T}, β::ScalarAffineLike{T}) where T
 
     for t in f.quadratic_terms
-        push!(terms, operate_term(*, _constant(T, α), t, _constant(T, β)))
+        push!(terms, operate_term(op, operate_term(*, t, _constant(T, β))))
     end
 end
 function _add_quadratic_terms(
-    terms::Vector{MOI.ScalarQuadraticTerm{T}},
-    f::MOI.ScalarQuadraticFunction{T}, β::ScalarAffineLike{T}) where T
-
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarQuadraticTerm{T}},
+    α::ScalarAffineLike{T}, f::MOI.ScalarQuadraticFunction{T}) where T
     for t in f.quadratic_terms
-        push!(terms, operate_term(*, t, _constant(T, β)))
+        push!(terms, operate_term(op, operate_term(*, _constant(T, α), t)))
     end
 end
 function _add_quadratic_terms(
-    terms::Vector{MOI.ScalarQuadraticTerm{T}}, α::ScalarAffineLike{T},
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarQuadraticTerm{T}},
     f::MOI.ScalarQuadraticFunction{T}) where T
-    for t in f.quadratic_terms
-        push!(terms, operate_term(*, _constant(T, α), t))
-    end
-end
-function _add_quadratic_terms(
-    terms::Vector{MOI.ScalarQuadraticTerm{T}},
-    f::MOI.ScalarQuadraticFunction{T}) where T
-    append!(terms, f.quadratic_terms)
+    append!(terms, operate_terms(op, f.quadratic_terms))
     return
 end
 function _add_quadratic_terms(
-    terms::Vector{MOI.ScalarQuadraticTerm{T}},
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarQuadraticTerm{T}},
     # Compiler fails in StackOverflowError on Julia v1.1
     #args::Vararg{ScalarAffineLike{T}, N}) where {T, N}
     args::ScalarAffineLike{T}) where T
@@ -251,8 +258,9 @@ function _merge_constants(::Type{T}, α::ScalarAffineLike{T}, β::ScalarAffineLi
     return (_constant(T, α) * _constant(T, β), args...)
 end
 function _add_quadratic_terms(
-    terms::Vector{MOI.ScalarQuadraticTerm{T}}, args::Vararg{Any, N}) where {T, N}
-    _add_quadratic_terms(terms, _merge_constants(T, args...)...)
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarQuadraticTerm{T}},
+    args::Vararg{Any, N}) where {T, N}
+    _add_quadratic_terms(op, terms, _merge_constants(T, args...)...)
 end
 
 _num_function_with_terms(::Type{T}, ::T) where {T} = 0
@@ -261,14 +269,14 @@ function _num_function_with_terms(::Type{T}, f::ScalarQuadraticLike{T},
                                   args::Vararg{ScalarQuadraticLike{T}, N}) where {T, N}
     return _num_function_with_terms(T, f) + _num_function_with_terms(T, args...)
 end
-function MA.mutable_operate!(::typeof(MA.add_mul), f::MOI.ScalarQuadraticFunction{T},
+function MA.mutable_operate!(op::MA.AddSubMul, f::MOI.ScalarQuadraticFunction{T},
                              args::Vararg{ScalarQuadraticLike{T}, N}) where {T, N}
     if isone(_num_function_with_terms(T, args...))
-        f.constant = MA.add_mul(f.constant, _constant.(T, args)...)
-        _add_affine_terms(f.affine_terms, args...)
-        _add_quadratic_terms(f.quadratic_terms, args...)
+        f.constant = op(f.constant, _constant.(T, args)...)
+        _add_sub_affine_terms(MA.add_sub_op(op), f.affine_terms, args...)
+        _add_quadratic_terms(MA.add_sub_op(op), f.quadratic_terms, args...)
         return f
     else
-        return MA.mutable_operate!(+, f, *(args...))
+        return MA.mutable_operate!(MA.add_sub_op(op), f, *(args...))
     end
 end

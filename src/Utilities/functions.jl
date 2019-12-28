@@ -793,6 +793,11 @@ function promote_operation end
 
 # Helpers
 
+function operate_term(::typeof(+), term::Union{
+    MOI.ScalarAffineTerm, MOI.ScalarQuadraticTerm,
+    MOI.VectorAffineTerm, MOI.VectorQuadraticTerm})
+    return term
+end
 function operate_term(::typeof(-), term::MOI.ScalarAffineTerm)
     return MOI.ScalarAffineTerm(-term.coefficient, term.variable_index)
 end
