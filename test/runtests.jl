@@ -6,6 +6,9 @@ const MOIB = MathOptInterface.Bridges
 
 using Test
 
+# It needs to be called first to trigger the crash.
+include("issue980.jl")
+
 # Tests for solvers are located in MOI.Test.
 
 include("dummy.jl")
