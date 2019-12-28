@@ -127,12 +127,27 @@ function remove_variable(f::MOI.VectorOfVariables, s, vi::VI)
     end
     return g, t
 end
-function _remove_variable(constrs::Vector, vi::VI)
+function _remove_variable(constrs::Vector{<:ConstraintEntry}, vi::VI)
     for i in eachindex(constrs)
         ci, f, s = constrs[i]
         constrs[i] = (ci, remove_variable(f, s, vi)...)
     end
-    return CI{MOI.SingleVariable}[]
+end
+filter_variables(keep::Function, f, s) = filter_variables(keep, f), s
+function filter_variables(keep::Function, f::MOI.VectorOfVariables, s)
+    g = filter_variables(keep, f)
+    if length(g.variables) != length(f.variables)
+        t = MOI.update_dimension(s, length(g.variables))
+    else
+        t = s
+    end
+    return g, t
+end
+function _filter_variables(keep::Function, constrs::Vector{<:ConstraintEntry})
+    for i in eachindex(constrs)
+        ci, f, s = constrs[i]
+        constrs[i] = (ci, filter_variables(keep, f, s)...)
+    end
 end
 function _vector_of_variables_with(::Vector, ::Union{VI, MOI.Vector{VI}})
     return CI{MOI.VectorOfVariables}[]
@@ -172,9 +187,8 @@ function _vector_of_variables_with(
     end
     return rm
 end
-function MOI.delete(model::AbstractModel{T}, vi::VI) where T
+function _delete_variable(model::AbstractModel{T}, vi::MOI.VariableIndex) where T
     MOI.throw_if_not_valid(model, vi)
-    model.objective = remove_variable(model.objective, vi)
     # If a variable is removed, the `VectorOfVariables` constraints using this
     # variable only need to be removed too. `vov_to_remove` is the list of
     # indices of the `VectorOfVariables` constraints of `vi`.
@@ -182,9 +196,6 @@ function MOI.delete(model::AbstractModel{T}, vi::VI) where T
     for ci in vov_to_remove
         MOI.delete(model, ci)
     end
-    # `VectorOfVariables` constraints with sets not supporting dimension update
-    # were either deleted or an error was thrown. The rest is modified now.
-    broadcastcall(constrs -> _remove_variable(constrs, vi), model)
     model.single_variable_mask[vi.value] = 0x0
     if model.variable_indices === nothing
         model.variable_indices = Set(MOI.get(model,
@@ -203,7 +214,14 @@ function MOI.delete(model::AbstractModel{T}, vi::VI) where T
     delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semicontinuous{T}}(vi.value))
     delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semiinteger{T}}(vi.value))
 end
-function MOI.delete(model::AbstractModel, vis::Vector{VI})
+function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
+    _delete_variable(model, vi)
+    # `VectorOfVariables` constraints with sets not supporting dimension update
+    # were either deleted or an error was thrown. The rest is modified now.
+    broadcastcall(constrs -> _remove_variable(constrs, vi), model)
+    model.objective = remove_variable(model.objective, vi)
+end
+function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     # Delete `VectorOfVariables(vis)` constraints as otherwise, it will error
     # when removing variables one by one.
     vov_to_remove = broadcastvcat(constrs -> _vector_of_variables_with(constrs, vis), model)
@@ -211,8 +229,13 @@ function MOI.delete(model::AbstractModel, vis::Vector{VI})
         MOI.delete(model, ci)
     end
     for vi in vis
-        MOI.delete(model, vi)
+        _delete_variable(model, vi)
     end
+    # `VectorOfVariables` constraints with sets not supporting dimension update
+    # were either deleted or an error was thrown. The rest is modified now.
+    keep(vi::MOI.VariableIndex) = vi in model.variable_indices
+    model.objective = filter_variables(keep, model.objective)
+    broadcastcall(constrs -> _filter_variables(keep, constrs), model)
 end
 
 function MOI.is_valid(model::AbstractModel,
