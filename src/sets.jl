@@ -726,6 +726,36 @@ end
 
 dimension(set::Complements) = 2 * set.dimension
 
+"""
+    IndependentNormalChance{T, S<:AbstractScalarSet}(
+        set::S, with_probability::T, μ::Vector{T} σ::Vector{T})
+
+The set of ``(t, x)`` such that the probability of
+``t + x^\\top \\xi \\in {}```set` is greater or equal than
+`probability` where ``xi`` is a vector of random variables of respective
+means and standard deviation `μ` and `σ`.
+The vectors `μ` and `σ` need to have the same length and `probability` needs
+to be greater than 0.5.
+"""
+struct IndependentNormalChance{T, S<:AbstractScalarSet} <: AbstractVectorSet
+    set::S
+    probability::T
+    μ::Vector{T}
+    σ::Vector{T}
+end
+
+dimension(set::IndependentNormalChance) = 1 + length(set.μ)
+
+function Base.copy(set::IndependentNormalChance)
+    return IndependentNormalChance(copy(set.set), copy(set.probability),
+                                   copy(set.μ), copy(set.σ))
+end
+
+function Base.:(==)(set1::IndependentNormalChance, set2::IndependentNormalChance)
+    return set1.set == set2.set && set1.probability == set2.probability &&
+        set1.μ == set2.μ && set1.σ == set2.σ
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
