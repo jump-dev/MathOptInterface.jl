@@ -833,7 +833,8 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
 end
-function operate_term(::typeof(*), t::MOI.ScalarAffineTerm{T}, β::T) where T
+# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+function operate_term(::typeof(*), t::MOI.ScalarAffineTerm{T}, β::T) where T<:Number
     MOI.ScalarAffineTerm(t.coefficient * β, t.variable_index)
 end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}, β::T) where T
@@ -1443,9 +1444,10 @@ function operate(::typeof(*), ::Type{T},
     return operate(*, T, α, f)
 end
 
+# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
 function operate!(::typeof(*), ::Type{T},
                   f::Union{MOI.ScalarAffineFunction{T},
-                           MOI.ScalarQuadraticFunction{T}}, α::T) where T
+                           MOI.ScalarQuadraticFunction{T}}, α::T) where T<:Number
     map_terms!(term -> operate_term(*, term, α), f)
     f.constant *= α
     return f
