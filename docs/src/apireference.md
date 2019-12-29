@@ -351,6 +351,7 @@ SOS1
 SOS2
 IndicatorSet
 Complements
+IndependentNormalChance
 ```
 
 ### Matrix sets
@@ -759,6 +760,7 @@ Bridges.Constraint.LogDetBridge
 Bridges.Constraint.SOCtoPSDBridge
 Bridges.Constraint.RSOCtoPSDBridge
 Bridges.Constraint.IndicatorActiveOnFalseBridge
+Bridges.Constraint.ChancetoSOCBridge
 ```
 For each bridge defined in this package, a corresponding
 [`Bridges.Constraint.SingleBridgeOptimizer`](@ref) is available with the same

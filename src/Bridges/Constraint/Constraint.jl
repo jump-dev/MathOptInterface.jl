@@ -1,5 +1,10 @@
 module Constraint
 
+import MutableArithmetics
+const MA = MutableArithmetics
+
+import Distributions
+
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
