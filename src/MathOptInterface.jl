@@ -124,5 +124,6 @@ include("Utilities/Utilities.jl") # MOI.Utilities
 include("Test/Test.jl")           # MOI.Test
 include("Bridges/Bridges.jl")     # MOI.Bridges
 include("Benchmarks/Benchmarks.jl")
+include("FileFormats/FileFormats.jl")
 
 end
