@@ -1,6 +1,18 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.9 (December 29, 2019)
+---------------------
+
+- Incorporated MathOptFormat.jl as the FileFormats submodule. FileFormats
+  provides readers and writers for a number of standard file formats and MOF, a
+  file format specialized for MOI (#969).
+- Improved performance of deletion of vector of variables in
+  `MOI.Utilities.Model` (#983).
+- Updated to MutableArithmetics v0.2 (#981).
+- Added `MutableArithmetics.promote_operation` allocation tests (#975).
+- Fixed inference issue on Julia v1.1 (#982).
+
 v0.9.8 (December 19, 2019)
 ---------------------
 
