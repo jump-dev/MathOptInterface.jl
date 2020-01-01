@@ -1953,7 +1953,7 @@ normspectests = Dict("normspec1" => normspec1test)
 @moitestset normspec
 
 
-function _normnuc1test(model::MOI.ModelLike, config::TestConfig)
+function normnuc1test(model::MOI.ModelLike, config::TestConfig)
     atol = config.atol
     rtol = config.rtol
     # Problem NormNuc1
