@@ -1916,7 +1916,7 @@ function normspec1test(model::MOI.ModelLike, config::TestConfig)
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
-    spec = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t)), vcat(0.0, ones(6))), MOI.NormSpectralCone(2, 3))
+    spec = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))], vcat(0.0, ones(6))), MOI.NormSpectralCone(2, 3))
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -1973,7 +1973,7 @@ function normnuc1test(model::MOI.ModelLike, config::TestConfig)
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 
-    spec = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t)), vcat(0.0, ones(6))), MOI.NormNuclearCone(2, 3))
+    nuc = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t)), vcat(0.0, ones(6))), MOI.NormNuclearCone(2, 3))
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -1997,10 +1997,10 @@ function normnuc1test(model::MOI.ModelLike, config::TestConfig)
         end
 
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt6 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt6, ones(6)) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), nuc) ≈ vcat(rt6, ones(6)) atol=atol rtol=rtol
 
         # if config.duals
-        #     @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ TODO atol=atol rtol=rtol
+        #     @test MOI.get(model, MOI.ConstraintDual(), nuc) ≈ TODO atol=atol rtol=rtol
         # end
     end
 end

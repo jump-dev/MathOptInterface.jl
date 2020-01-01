@@ -6,35 +6,33 @@ The `NormSpectralCone` is representable with a PSD constraint, since
 """
 struct NormSpectralBridge{T, F, G} <: AbstractBridge
     psd::CI{F, MOI.PositiveSemidefiniteConeTriangle}
-    # TODO don't save below if not using
     row_dim::Int # row dimension of X
     column_dim::Int # column dimension of X
 end
 function bridge_constraint(::Type{NormSpectralBridge{T, F, G}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormSpectralCone) where {T, F, G}
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]
-    X = f_scalars[2:end]
     row_dim = s.row_dim
     column_dim = s.column_dim
     @assert row_dim <= column_dim # TODO informative error if not
     side_dim = row_dim + column_dim
-    psd_dim = MOIU.side_dimension_for_vectorized_dimension(side_dim)
-    psd_func = MOIU.zero_with_output_dimension(G, psd_dim)
+    psd_set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
+    psd_func = MOIU.zero_with_output_dimension(F, MOI.dimension(psd_set))
     for i in 1:side_dim
-        MOIU.operate_output_index!(+, T, trimap(i, i), psd_func, g)
+        MOIU.operate_output_index!(+, T, trimap(i, i), psd_func, t)
     end
-    X_idx = 1
+    X_idx = 2
     for j in 1:column_dim, i in (column_dim + 1):side_dim
-        MOIU.operate_output_index!(+, T, trimap(i, j), psd_func, X[X_idx])
+        MOIU.operate_output_index!(+, T, trimap(i, j), psd_func, f_scalars[X_idx])
         X_idx += 1
     end
-    psd = MOI.add_constraint(model, psd_func, MOI.PositiveSemidefiniteConeTriangle(side_dim))
+    psd = MOI.add_constraint(model, psd_func, psd_set)
     return NormSpectralBridge{T, F, G}(psd, row_dim, column_dim)
 end
 
 MOI.supports_constraint(::Type{NormSpectralBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormSpectralCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormSpectralBridge}) = Tuple{DataType}[]
-MOIB.added_constraint_types(::Type{NormSpectralBridge{T, F, G}}) where {T, F, G} = [(G, MOI.PositiveSemidefiniteConeTriangle)]
+MOIB.added_constraint_types(::Type{NormSpectralBridge{T, F, G}}) where {T, F, G} = [(F, MOI.PositiveSemidefiniteConeTriangle)]
 function concrete_bridge_type(::Type{<:NormSpectralBridge{T}}, G::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormSpectralCone}) where T
     S = MOIU.scalar_type(G)
     F = MOIU.promote_operation(vcat, T, S, T)
@@ -44,8 +42,8 @@ end
 # Attributes, Bridge acting as a model
 # MOI.get(b::NormSpectralBridge, ::MOI.NumberOfVariables) = 0
 # MOI.get(b::NormSpectralBridge, ::MOI.ListOfVariableIndices) = b.y
-MOI.get(b::NormSpectralBridge{T, F, G}, ::MOI.NumberOfConstraints{G, MOI.PositiveSemidefiniteConeTriangle}) where {T, F, G} = 1
-MOI.get(b::NormSpectralBridge{T, F, G}, ::MOI.ListOfConstraintIndices{G, MOI.PositiveSemidefiniteConeTriangle}) where {T, F, G} = [b.psd]
+MOI.get(b::NormSpectralBridge{T, F, G}, ::MOI.NumberOfConstraints{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F, G} = 1
+MOI.get(b::NormSpectralBridge{T, F, G}, ::MOI.ListOfConstraintIndices{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F, G} = [b.psd]
 
 # References
 MOI.delete(model::MOI.ModelLike, c::NormSpectralBridge) = MOI.delete(model, c.psd)
@@ -58,7 +56,7 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormSpectral
     side_dim = c.row_dim + c.column_dim
     X = psd_func[[trimap(i, j) for j in 1:c.column_dim for i in (c.column_dim + 1):side_dim]]
     # TODO need the convert_approx?
-    return MOIU.convert_approx(F, MOIU.operate(vcat, T, t, X))
+    return MOIU.convert_approx(G, MOIU.operate(vcat, T, t, X))
 end
 MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormSpectralBridge) = MOI.NormSpectralCone(c.row_dim, c.column_dim)
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::NormSpectralBridge)
@@ -75,11 +73,8 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintDual, c::NormSpectralBrid
     side_dim = c.row_dim + c.column_dim
     t = sum(dual[trimap(i, i)] for i in 1:side_dim) / 2
     X = dual[[trimap(i, j) for j in 1:c.column_dim for i in (c.column_dim + 1):side_dim]]
-    return vcat(t, x)
+    return vcat(t, X)
 end
-
-
-
 
 
 
