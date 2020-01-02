@@ -1933,7 +1933,7 @@ function normspec1test(model::MOI.ModelLike, config::TestConfig)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
 
-        rt6 = sqrt(6.0)
+        rt6 = sqrt(6)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt6 atol=atol rtol=rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt6 atol=atol rtol=rtol
@@ -1942,9 +1942,9 @@ function normspec1test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt6 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt6, ones(6)) atol=atol rtol=rtol
 
-        # if config.duals
-        #     @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ TODO atol=atol rtol=rtol
-        # end
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ vcat(1, fill(-inv(rt6), 6)) atol=atol rtol=rtol
+        end
     end
 end
 

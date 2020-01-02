@@ -19,16 +19,19 @@ config = MOIT.TestConfig()
             MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}, MOI.VectorQuadraticFunction{Float64}
         ]])
 
-    # mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.5, 1.0],
-    #     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.0, 1.0, 0.0, 0.0]],
-    #     (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]])
+    d1 = 1 / 6
+    d2 = 0.25
+    x = -inv(2 * sqrt(6))
+    psd_dual = [d1, 0, d1, 0, 0, d1, x, x, x, d2, x, x, x, 0, d2]
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [sqrt(6)],
+        (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [psd_dual])
 
     MOIT.normspec1test(bridged_mock, config)
 
     @testset "Test mock model" begin
         var_names = ["t"]
         MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
-        psd = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}())
+        psd = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle}())
         @test length(psd) == 1
         MOI.set(mock, MOI.ConstraintName(), psd[1], "psd")
 
@@ -42,40 +45,28 @@ config = MOIT.TestConfig()
         MOIU.test_models_equal(mock, model, var_names, ["psd"])
     end
 
-    # @testset "Test bridged model" begin
-    #     var_names = ["x", "y", "z"]
-    #     MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
-    #     norminf = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone}())
-    #     @test length(norminf) == 1
-    #     MOI.set(bridged_mock, MOI.ConstraintName(), norminf[1], "norminf")
-    #     zeros = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Zeros}())
-    #     @test length(zeros) == 2
-    #     MOI.set(bridged_mock, MOI.ConstraintName(), zeros[1], "x_eq")
-    #     MOI.set(bridged_mock, MOI.ConstraintName(), zeros[2], "y_eq")
-    #
-    #     s = """
-    #     variables: x, y, z
-    #     norminf: [1.0x, y, z] in MathOptInterface.NormSpectralCone(3)
-    #     x_eq: [-1.0 + x] in MathOptInterface.Zeros(1)
-    #     y_eq: [-0.5 + y] in MathOptInterface.Zeros(1)
-    #     maxobjective: y + z
-    #     """
-    #     model = MOIU.Model{Float64}()
-    #     MOIU.loadfromstring!(model, s)
-    #     MOIU.test_models_equal(bridged_mock, model, var_names, ["norminf", "x_eq", "y_eq"])
-    # end
-    #
-    # ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone}()))
-    #
-    # @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
-    #     @test MOI.supports(bridged_mock, attr, typeof(ci))
-    #     value = [4.0, 1.0, -2.0]
-    #     MOI.set(bridged_mock, attr, ci, value)
-    #     @test MOI.get(bridged_mock, attr, ci) ≈ value
-    # end
-    #
-    # test_delete_bridge(bridged_mock, ci, 3, ((MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),))
+    @testset "Test bridged model" begin
+        var_names = ["t"]
+        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+        spec = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone}())
+        @test length(spec) == 1
+        MOI.set(bridged_mock, MOI.ConstraintName(), spec[1], "spec")
+
+        s = """
+        variables: t
+        spec: [t, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] in MathOptInterface.NormSpectralCone(2, 3)
+        minobjective: t
+        """
+        model = MOIU.Model{Float64}()
+        MOIU.loadfromstring!(model, s)
+        MOIU.test_models_equal(bridged_mock, model, var_names, ["spec"])
+    end
+
+    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone}()))
+    test_delete_bridge(bridged_mock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
 end
+
+
 
 # @testset "NormOne" begin
 #     bridged_mock = MOIB.Constraint.NormOne{Float64}(mock)

@@ -40,8 +40,6 @@ function concrete_bridge_type(::Type{<:NormSpectralBridge{T}}, G::Type{<:MOI.Abs
 end
 
 # Attributes, Bridge acting as a model
-# MOI.get(b::NormSpectralBridge, ::MOI.NumberOfVariables) = 0
-# MOI.get(b::NormSpectralBridge, ::MOI.ListOfVariableIndices) = b.y
 MOI.get(b::NormSpectralBridge{T, F, G}, ::MOI.NumberOfConstraints{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F, G} = 1
 MOI.get(b::NormSpectralBridge{T, F, G}, ::MOI.ListOfConstraintIndices{F, MOI.PositiveSemidefiniteConeTriangle}) where {T, F, G} = [b.psd]
 
@@ -67,12 +65,12 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::NormSpectralBr
     return vcat(t, X)
 end
 # Given [U X; X' V] is dual on PSD constraint, the dual on NormSpectralCone
-# constraint is (t, X) in NormInfinityCone, where t = (tr(U) + tr(V)) / 2.
+# constraint is (tr(U) + tr(V), 2X) in NormNuclearCone.
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintDual, c::NormSpectralBridge)
-    dual = MOI.get(model, MOI.ConstraintPrimal(), c.psd)
+    dual = MOI.get(model, MOI.ConstraintDual(), c.psd)
     side_dim = c.row_dim + c.column_dim
-    t = sum(dual[trimap(i, i)] for i in 1:side_dim) / 2
-    X = dual[[trimap(i, j) for j in 1:c.column_dim for i in (c.column_dim + 1):side_dim]]
+    t = sum(dual[trimap(i, i)] for i in 1:side_dim)
+    X = 2 * dual[[trimap(i, j) for j in 1:c.column_dim for i in (c.column_dim + 1):side_dim]]
     return vcat(t, X)
 end
 
