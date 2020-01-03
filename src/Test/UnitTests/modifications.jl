@@ -353,4 +353,38 @@ function delete_variable_with_single_variable_obj(model::MOI.ModelLike,
 end
 modificationtests["delete_variable_with_single_variable_obj"] = delete_variable_with_single_variable_obj
 
+
+"""
+    delete_variables_in_a_batch(model::MOI.ModelLike, config::TestConfig)
+
+Test deleting many variables in a batch (i.e. using the delete method which
+takes a vector of variable references). If `config.solve=true` confirm that it
+solves correctly.
+"""
+function delete_variables_in_a_batch(model::MOI.ModelLike,
+                                     config::TestConfig)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x, y, z
+        minobjective: 1.0 * x + 2.0 * y + 3.0 * z
+        c1: x >= 1.0
+        c2: y >= 1.0
+        c3: z >= 1.0
+    """)
+    x, y, z = MOI.get(model, MOI.ListOfVariableIndices())
+    @test MOI.is_valid(model, x) == true
+    @test MOI.is_valid(model, y) == true
+    @test MOI.is_valid(model, z) == true
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) == 6.0
+    MOI.delete(model, [x, z])
+    @test MOI.is_valid(model, x) == false
+    @test MOI.is_valid(model, y) == true
+    @test MOI.is_valid(model, z) == false
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) == 2.0
+end
+modificationtests["delete_variables_in_a_batch"] = delete_variables_in_a_batch
+
 @moitestset modification
