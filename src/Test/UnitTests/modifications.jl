@@ -353,7 +353,6 @@ function delete_variable_with_single_variable_obj(model::MOI.ModelLike,
 end
 modificationtests["delete_variable_with_single_variable_obj"] = delete_variable_with_single_variable_obj
 
-
 """
     delete_variables_in_a_batch(model::MOI.ModelLike, config::TestConfig)
 
@@ -376,14 +375,18 @@ function delete_variables_in_a_batch(model::MOI.ModelLike,
     @test MOI.is_valid(model, x) == true
     @test MOI.is_valid(model, y) == true
     @test MOI.is_valid(model, z) == true
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) == 6.0
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.ObjectiveValue()) == 6.0
+    end
     MOI.delete(model, [x, z])
     @test MOI.is_valid(model, x) == false
     @test MOI.is_valid(model, y) == true
     @test MOI.is_valid(model, z) == false
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) == 2.0
+    if config.solve
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.ObjectiveValue()) == 2.0
+    end
 end
 modificationtests["delete_variables_in_a_batch"] = delete_variables_in_a_batch
 
