@@ -1999,11 +1999,10 @@ function normspec2test(model::MOI.ModelLike, config::TestConfig)
 
         if config.duals
             invrt3 = inv(rt3)
-            @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ Float64[1, 0, invrt3, -invrt3, 0, 0, -invrt3] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ Float64[1, 0, 0, 0, -invrt3, invrt3, -invrt3] atol=atol rtol=rtol
         end
     end
 end
-
 
 normspectests = Dict(
     "normspec1" => normspec1test,
@@ -2120,7 +2119,7 @@ function normnuc2test(model::MOI.ModelLike, config::TestConfig)
         if config.duals
             invrt2 = inv(rt2)
             invrt3 = inv(rt3)
-            @test MOI.get(model, MOI.ConstraintDual(), nuc) ≈ Float64[1, -invrt2, invrt3, -invrt3, 0, -invrt2, -invrt3] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), nuc) ≈ Float64[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3] atol=atol rtol=rtol
         end
     end
 end

@@ -290,7 +290,7 @@ end
 """
     NormSpectralCone(row_dim, column_dim)
 
-The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`, with ``row_dim \\le column_dim`` (without loss of generality, since ``\\sigma_i(X) = \\sigma_i(X^\\top)``).
+The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
 The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
 """
 struct NormSpectralCone <: AbstractVectorSet
@@ -303,7 +303,7 @@ dual_set(s::NormSpectralCone) = NormNuclearCone(s.row_dim, s.column_dim)
 """
     NormNuclearCone(row_dim, column_dim)
 
-The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`, with ``row_dim \\le column_dim`` (without loss of generality, since ``\\sigma_i(X) = \\sigma_i(X^\\top)``).
+The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
 The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
 """
 struct NormNuclearCone <: AbstractVectorSet
