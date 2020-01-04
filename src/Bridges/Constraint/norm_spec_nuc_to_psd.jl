@@ -14,7 +14,6 @@ function bridge_constraint(::Type{NormSpectralBridge{T, F, G}}, model::MOI.Model
     t = f_scalars[1]
     row_dim = s.row_dim
     column_dim = s.column_dim
-    @assert row_dim <= column_dim
     side_dim = row_dim + column_dim
     psd_set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
     psd_func = MOIU.zero_with_output_dimension(F, MOI.dimension(psd_set))
@@ -90,7 +89,6 @@ function bridge_constraint(::Type{NormNuclearBridge{T, F, G, H}}, model::MOI.Mod
     f_scalars = MOIU.eachscalar(f)
     row_dim = s.row_dim
     column_dim = s.column_dim
-    @assert row_dim <= column_dim
     side_dim = row_dim + column_dim
     U_dim = div(column_dim * (column_dim + 1), 2)
     V_dim = div(row_dim * (row_dim + 1), 2)
