@@ -19,11 +19,11 @@ config = MOIT.TestConfig()
             MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}, MOI.VectorQuadraticFunction{Float64}
         ]])
 
-    d1 = 1 / 6
-    d2 = 0.25
-    x = -inv(2 * sqrt(6))
-    psd_dual = [d1, 0, d1, 0, 0, d1, x, x, x, d2, x, x, x, 0, d2]
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [sqrt(6)],
+    inv6 = inv(6)
+    rt3 = sqrt(3)
+    invrt12 = inv(2 * rt3)
+    psd_dual = [inv6, -invrt12, inv6, invrt12, -invrt12, inv6, 0, 0, 0, 0, -invrt12, invrt12, -invrt12, 0, 0.5]
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [rt3],
         (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [psd_dual])
 
     MOIT.normspec1test(bridged_mock, config)
@@ -37,7 +37,7 @@ config = MOIT.TestConfig()
 
         s = """
         variables: t
-        psd: [t, 0.0, t, 0.0, 0.0, t, 1.0, 1.0, 1.0, t, 1.0, 1.0, 1.0, 0.0, t] in MathOptInterface.PositiveSemidefiniteConeTriangle(5)
+        psd: [t, 0.0, t, 0.0, 0.0, t, 1.0, 1.0, 0.0, t, 1.0, -1.0, 1.0, 0.0, t] in MathOptInterface.PositiveSemidefiniteConeTriangle(5)
         minobjective: t
         """
         model = MOIU.Model{Float64}()
@@ -54,7 +54,7 @@ config = MOIT.TestConfig()
 
         s = """
         variables: t
-        spec: [t, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] in MathOptInterface.NormSpectralCone(2, 3)
+        spec: [t, 1.0, 1.0, 1.0, -1.0, 0.0, 1.0] in MathOptInterface.NormSpectralCone(2, 3)
         minobjective: t
         """
         model = MOIU.Model{Float64}()
@@ -74,9 +74,15 @@ end
             MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}, MOI.VectorQuadraticFunction{Float64}
         ]])
 
-    x = -inv(2 * sqrt(6))
-    psd_dual = [0.5, 0, 0.5, 0, 0, 0.5, x, x, x, 0.5, x, x, x, 0, 0.5]
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, vcat(sqrt(6), ones(6), ones(3)),
+    rt2 = sqrt(2)
+    rt3 = sqrt(3)
+    invrt2 = inv(rt2)
+    invrt3 = inv(rt3)
+    var_primal = [rt2 + rt3, invrt2 + invrt3, invrt2 - invrt3, invrt2 + invrt3, invrt3, -invrt3, invrt3, rt2, 0, rt3]
+    invrt8 = inv(sqrt(8))
+    invrt12 = inv(sqrt(12))
+    psd_dual = [0.5, 0, 0.5, 0, 0, 0.5, -invrt8, -invrt8, 0, invrt8, -invrt12, invrt12, -invrt12, 0, 0.5]
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [[1.0]],
         (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [psd_dual])
 
@@ -95,7 +101,7 @@ end
         s = """
         variables: t, U11, U12, U22, U31, U32, U33, V11, V12, V22
         greater: t + -0.5U11 + -0.5U22 + -0.5U33 + -0.5V11 + -0.5V22 >= 0.0
-        psd: [U11, U12, U22, U31, U32, U33, 1.0, 1.0, 1.0, V11, 1.0, 1.0, 1.0, V12, V22] in MathOptInterface.PositiveSemidefiniteConeTriangle(5)
+        psd: [U11, U12, U22, U31, U32, U33, 1.0, 1.0, 0.0, V11, 1.0, -1.0, 1.0, V12, V22] in MathOptInterface.PositiveSemidefiniteConeTriangle(5)
         minobjective: t
         """
         model = MOIU.Model{Float64}()
@@ -112,7 +118,7 @@ end
 
         s = """
         variables: t
-        nuc: [t, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] in MathOptInterface.NormNuclearCone(2, 3)
+        nuc: [t, 1.0, 1.0, 1.0, -1.0, 0.0, 1.0] in MathOptInterface.NormNuclearCone(2, 3)
         minobjective: t
         """
         model = MOIU.Model{Float64}()
