@@ -9,12 +9,12 @@ struct NormSpectralBridge{T, F, G} <: AbstractBridge
     column_dim::Int # column dimension of X
     psd_index::CI{F, MOI.PositiveSemidefiniteConeTriangle}
 end
-function bridge_constraint(::Type{NormSpectralBridge{T, F, G}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormSpectralCone) where {T, F, G}
+function bridge_constraint(::Type{NormSpectralBridge{T, F, G}}, model::MOI.ModelLike, f::G, s::MOI.NormSpectralCone) where {T, F, G}
     f_scalars = MOIU.eachscalar(f)
     t = f_scalars[1]
     row_dim = s.row_dim
     column_dim = s.column_dim
-    @assert row_dim <= column_dim # TODO informative error if not
+    @assert row_dim <= column_dim
     side_dim = row_dim + column_dim
     psd_set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
     psd_func = MOIU.zero_with_output_dimension(F, MOI.dimension(psd_set))
@@ -48,11 +48,9 @@ MOI.delete(model::MOI.ModelLike, c::NormSpectralBridge) = MOI.delete(model, c.ps
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormSpectralBridge{T, F, G}) where {T, F, G}
     psd_func = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.psd_index))
-    # TODO is it OK to just take the t value from first diagonal index?
     t = psd_func[1]
     side_dim = c.row_dim + c.column_dim
     X = psd_func[[trimap(i, j) for j in 1:c.column_dim for i in (c.column_dim + 1):side_dim]]
-    # TODO need the convert_approx?
     return MOIU.convert_approx(G, MOIU.operate(vcat, T, t, X))
 end
 MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormSpectralBridge) = MOI.NormSpectralCone(c.row_dim, c.column_dim)
@@ -88,11 +86,11 @@ struct NormNuclearBridge{T, F, G, H} <: AbstractBridge
     ge_index::CI{F, MOI.GreaterThan{T}}
     psd_index::CI{G, MOI.PositiveSemidefiniteConeTriangle}
 end
-function bridge_constraint(::Type{NormNuclearBridge{T, F, G, H}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormNuclearCone) where {T, F, G, H}
+function bridge_constraint(::Type{NormNuclearBridge{T, F, G, H}}, model::MOI.ModelLike, f::H, s::MOI.NormNuclearCone) where {T, F, G, H}
     f_scalars = MOIU.eachscalar(f)
     row_dim = s.row_dim
     column_dim = s.column_dim
-    @assert row_dim <= column_dim # TODO informative error if not
+    @assert row_dim <= column_dim
     side_dim = row_dim + column_dim
     U_dim = div(column_dim * (column_dim + 1), 2)
     V_dim = div(row_dim * (row_dim + 1), 2)
