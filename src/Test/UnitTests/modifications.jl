@@ -372,17 +372,17 @@ function delete_variables_in_a_batch(model::MOI.ModelLike,
         c3: z >= 1.0
     """)
     x, y, z = MOI.get(model, MOI.ListOfVariableIndices())
-    @test MOI.is_valid(model, x) == true
-    @test MOI.is_valid(model, y) == true
-    @test MOI.is_valid(model, z) == true
+    @test MOI.is_valid(model, x)
+    @test MOI.is_valid(model, y)
+    @test MOI.is_valid(model, z)
     if config.solve
         MOI.optimize!(model)
         @test MOI.get(model, MOI.ObjectiveValue()) == 6.0
     end
     MOI.delete(model, [x, z])
-    @test MOI.is_valid(model, x) == false
-    @test MOI.is_valid(model, y) == true
-    @test MOI.is_valid(model, z) == false
+    @test !MOI.is_valid(model, x)
+    @test MOI.is_valid(model, y)
+    @test !MOI.is_valid(model, z)
     if config.solve
         MOI.optimize!(model)
         @test MOI.get(model, MOI.ObjectiveValue()) == 2.0
