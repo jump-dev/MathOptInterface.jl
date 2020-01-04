@@ -290,7 +290,7 @@ end
 """
     RelativeEntropyCone(dimension)
 
-The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{2n+1} : u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i} \\}, v_i \\ge 0, w_i \\ge 0 \\}`` of dimension `dimension```{}=2n+1``.
+The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}`` of dimension `dimension```{}=2n+1``.
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
