@@ -1943,7 +1943,7 @@ function relentr1test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ConstraintPrimal(), relentr) ≈ [u_opt, 1, 5, 2, 3] atol=atol rtol=rtol
 
         if config.duals
-            @test MOI.get(model, MOI.ConstraintDual(), relentr) ≈ Float64[1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), relentr) ≈ [1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1] atol=atol rtol=rtol
         end
     end
 end

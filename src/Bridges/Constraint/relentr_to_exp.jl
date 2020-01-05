@@ -35,58 +35,92 @@ function concrete_bridge_type(::Type{<:RelativeEntropyBridge{T}}, H::Type{<:MOI.
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::RelativeEntropyBridge, ::MOI.NumberOfVariables) = length(b.y)
-MOI.get(b::RelativeEntropyBridge, ::MOI.ListOfVariableIndices) = b.y
-MOI.get(b::RelativeEntropyBridge{T, F, G, H}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F, G, H} = 1
-MOI.get(b::RelativeEntropyBridge{T, F, G, H}, ::MOI.NumberOfConstraints{G, MOI.ExponentialCone}) where {T, F, G, H} = length(b.y)
-MOI.get(b::RelativeEntropyBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F, G, H} = [b.ge_index]
-MOI.get(b::RelativeEntropyBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{G, MOI.ExponentialCone}) where {T, F, G, H} = b.exp_indices
+MOI.get(bridge::RelativeEntropyBridge, ::MOI.NumberOfVariables) = length(bridge.y)
+MOI.get(bridge::RelativeEntropyBridge, ::MOI.ListOfVariableIndices) = bridge.y
+MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F, G, H} = 1
+MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.NumberOfConstraints{G, MOI.ExponentialCone}) where {T, F, G, H} = length(bridge.y)
+MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F, G, H} = [bridge.ge_index]
+MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{G, MOI.ExponentialCone}) where {T, F, G, H} = bridge.exp_indices
 
 # References
-function MOI.delete(model::MOI.ModelLike, c::RelativeEntropyBridge)
-    for exp_index_i in c.exp_indices
+function MOI.delete(model::MOI.ModelLike, bridge::RelativeEntropyBridge)
+    for exp_index_i in bridge.exp_indices
         MOI.delete(model, exp_index_i)
     end
-    MOI.delete(model, c.ge_index)
-    MOI.delete(model, c.y)
+    MOI.delete(model, bridge.ge_index)
+    MOI.delete(model, bridge.y)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::RelativeEntropyBridge{T, F, G, H}) where {T, F, G, H}
-    func = MOIU.zero_with_output_dimension(G, 1 + 2 * length(c.y))
-    MOIU.operate_output_index!(+, T, 1, func, MOI.get(model, MOI.ConstraintFunction(), c.ge_index))
-    w_start = 1 + length(c.y)
-    for i in eachindex(c.y)
-        exp_func_i = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.exp_indices[i]))
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, bridge::RelativeEntropyBridge{T, F, G, H}) where {T, F, G, H}
+    func = MOIU.zero_with_output_dimension(G, 1 + 2 * length(bridge.y))
+    MOIU.operate_output_index!(+, T, 1, func, MOI.get(model, MOI.ConstraintFunction(), bridge.ge_index))
+    w_start = 1 + length(bridge.y)
+    for i in eachindex(bridge.y)
+        exp_func_i = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), bridge.exp_indices[i]))
         MOIU.operate_output_index!(-, T, 1, func, exp_func_i[1])
         MOIU.operate_output_index!(+, T, 1 + i, func, exp_func_i[3])
         MOIU.operate_output_index!(+, T, w_start + i, func, exp_func_i[2])
     end
-    return MOIU.convert_approx(H, MOIU.remove_variable(func, c.y))
+    return MOIU.convert_approx(H, MOIU.remove_variable(func, bridge.y))
 end
-MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::RelativeEntropyBridge) = MOI.RelativeEntropyCone(1 + 2 * length(c.y))
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::RelativeEntropyBridge{T, F, G, H}) where {T, F, G, H}
-    primal = zeros(T, 1 + 2 * length(c.y))
-    primal[1] = MOI.get(model, MOI.ConstraintPrimal(), c.ge_index)
-    w_start = 1 + length(c.y)
-    for i in eachindex(c.y)
-        exp_primal_i = MOI.get(model, MOI.ConstraintPrimal(), c.exp_indices[i])
+MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, bridge::RelativeEntropyBridge) = MOI.RelativeEntropyCone(1 + 2 * length(bridge.y))
+MOI.supports(::MOI.ModelLike, ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart}, ::Type{<:RelativeEntropyBridge}) = true
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart}, bridge::RelativeEntropyBridge{T}) where T
+    primal = zeros(T, 1 + 2 * length(bridge.y))
+    primal[1] = MOI.get(model, MOI.ConstraintPrimal(), bridge.ge_index)
+    w_start = 1 + length(bridge.y)
+    for i in eachindex(bridge.y)
+        exp_primal_i = MOI.get(model, MOI.ConstraintPrimal(), bridge.exp_indices[i])
         primal[1] -= exp_primal_i[1]
         primal[1 + i] = exp_primal_i[3]
         primal[w_start + i] = exp_primal_i[2]
     end
     return primal
 end
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart, bridge::RelativeEntropyBridge{T}, value) where T
+    v_dim = length(bridge.y)
+    v_value = value[2:(v_dim + 1)]
+    w_value = value[(v_dim + 2):end]
+    y_value = [w_i * log(w_i / v_i) for (v_i, w_i) in zip(v_value, w_value)]
+    MOI.set(model, attr, bridge.ge_index, value[1] - reduce(+, y_value, init=zero(T)))
+    for i in 1:v_dim
+        MOI.set(model, attr, bridge.exp_indices[i], [-y_value[i], w_value[i], v_value[i]])
+        MOI.set(model, MOI.VariablePrimalStart(), bridge.y[i], y_value[i])
+    end
+    return
+end
 # Given a is dual on u - sum(y) >= 0 and (b_i, c_i, d_i) is dual on (-y_i, w_i, v_i)
 # in ExponentialCone, the dual on (u, v, w) in RelativeEntropyCone is (a, d_i, c_i).
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintDual, c::RelativeEntropyBridge{T, F, G, H}) where {T, F, G, H}
-    dual = zeros(T, 1 + 2 * length(c.y))
-    dual[1] = MOI.get(model, MOI.ConstraintDual(), c.ge_index)[1]
-    w_start = 1 + length(c.y)
-    for i in eachindex(c.y)
-        exp_dual_i = MOI.get(model, MOI.ConstraintDual(), c.exp_indices[i])
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::RelativeEntropyBridge{T}) where {T}
+    dual = zeros(T, 1 + 2 * length(bridge.y))
+    dual[1] = MOI.get(model, attr, bridge.ge_index)[1]
+    w_start = 1 + length(bridge.y)
+    for i in eachindex(bridge.y)
+        exp_dual_i = MOI.get(model, attr, bridge.exp_indices[i])
         dual[1 + i] = exp_dual_i[3]
         dual[w_start + i] = exp_dual_i[2]
     end
     return dual
+end
+# Given constraint dual start of (u, v, w), constraint dual on GreaterThan is u
+# and on exponential cone constraint i is (r,s,t) for -r exp (s/r - 1) = t, where
+# s = w_i, t = v_i, and r = exp(W(-s / (-t * e))) * (-t * e), where W is the
+# Lambert W function. The derivation of the r expression follows:
+# -r exp (s/r - 1) = t => s/r - 1 = log(t/-r) => s/r = log (e * t/-r)
+# => -s = r log (r / (-t * e)) => -s / (-t * e) = r / (-t * e) log (r / (-t * e))
+# let x = r / (-t * e) and y = -s / (-t * e), solve y = x log x using Lambert W function:
+# x = exp(W(y)) => r / (-t * e) = exp(W(-s / (-t * e))) => r = exp(W(-s / (-t * e))) * (-t * e).
+import LambertW
+function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::RelativeEntropyBridge, value)
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, value[1])
+    w_start = 1 + length(bridge.y)
+    for i in eachindex(bridge.y)
+        s_value = value[w_start + i]
+        t_value = value[1 + i]
+        r_value = exp(LambertW.lambertw(s_value / (t_value * ℯ))) * -t_value * ℯ
+        @assert -r_value * exp(s_value / r_value - 1) - t_value ≈ 0
+        MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], [r_value, s_value, t_value])
+    end
+    return
 end

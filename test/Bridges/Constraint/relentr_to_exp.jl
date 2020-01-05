@@ -1,5 +1,6 @@
 using Test
 
+import LambertW
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MathOptInterface.Test
@@ -22,39 +23,42 @@ config = MOIT.TestConfig()
     entr1 = 2 * log(2)
     entr2 = 3 * log(3 / 5)
     var_primal = [entr1 + entr2, entr1, entr2]
-    exp_duals = [[-1, log(0.5) - 1, 2], [-1, log(5 / 3) - 1, 0.6]]
+    exps_duals = [[-1, log(0.5) - 1, 2], [-1, log(5 / 3) - 1, 0.6]]
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [[1.0]],
-        (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) => exp_duals)
+        (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) => exps_duals)
 
     MOIT.relentr1test(bridged_mock, config)
 
+    var_names = ["u"]
+    MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+
+    greater = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
+    exps = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone}())
+    (y1, y2) = MOI.get(mock, MOI.ListOfVariableIndices())[2:3]
+
     @testset "Test mock model" begin
-        var_names = ["u", "y1", "y2"]
-        MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
-        greater = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
+        MOI.set(mock, MOI.VariableName(), y1, "y1")
+        MOI.set(mock, MOI.VariableName(), y2, "y2")
         @test length(greater) == 1
         MOI.set(mock, MOI.ConstraintName(), greater[1], "greater")
-        exp = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone}())
-        @test length(exp) == 2
-        MOI.set(mock, MOI.ConstraintName(), exp[1], "exp1")
-        MOI.set(mock, MOI.ConstraintName(), exp[2], "exp2")
+        @test length(exps) == 2
+        MOI.set(mock, MOI.ConstraintName(), exps[1], "exps1")
+        MOI.set(mock, MOI.ConstraintName(), exps[2], "exps2")
 
         s = """
         variables: u, y1, y2
         greater: u + -1.0y1 + -1.0y2 >= 0.0
-        exp1: [-1.0y1, 2.0, 1.0] in MathOptInterface.ExponentialCone()
-        exp2: [-1.0y2, 3.0, 5.0] in MathOptInterface.ExponentialCone()
+        exps1: [-1.0y1, 2.0, 1.0] in MathOptInterface.ExponentialCone()
+        exps2: [-1.0y2, 3.0, 5.0] in MathOptInterface.ExponentialCone()
         minobjective: u
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(mock, model, var_names, ["greater", "exp1", "exp2"])
+        MOIU.test_models_equal(mock, model, vcat(var_names, "y1", "y2"), ["greater", "exps1", "exps2"])
     end
 
     @testset "Test bridged model" begin
-        var_names = ["u"]
-        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
         relentr = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone}())
         @test length(relentr) == 1
         MOI.set(bridged_mock, MOI.ConstraintName(), relentr[1], "relentr")
@@ -70,6 +74,28 @@ config = MOIT.TestConfig()
     end
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        value = (attr isa MOI.ConstraintPrimalStart) ? [entr1 + entr2, 1, 5, 2, 3] : [1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1]
+        MOI.set(bridged_mock, attr, ci, value)
+        @test MOI.get(bridged_mock, attr, ci) ≈ value
+        if attr isa MOI.ConstraintPrimalStart
+            @test MOI.get(mock, MOI.VariablePrimalStart(), y1) == entr1
+            @test MOI.get(mock, MOI.VariablePrimalStart(), y2) == entr2
+            @test MOI.get(mock, attr, greater[1]) == 0
+            @test MOI.get(mock, attr, exps[1]) == [-entr1, 2, 1]
+            @test MOI.get(mock, attr, exps[2]) == [-entr2, 3, 5]
+        else
+            @test MOI.get(mock, attr, greater[1]) == 1
+            for i in 1:2
+                (s_value, t_value) = (value[3 + i], value[1 + i])
+                r_value = exp(LambertW.lambertw(s_value / (t_value * ℯ))) * -t_value * ℯ
+                @test MOI.get(mock, attr, exps[i]) == [r_value, s_value, t_value]
+            end
+        end
+    end
+
     test_delete_bridge(bridged_mock, ci, 1, (
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
         (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone, 0)))
