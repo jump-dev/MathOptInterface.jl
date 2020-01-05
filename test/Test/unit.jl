@@ -398,6 +398,19 @@ end
     # `UniversalFallback` needed for `MOI.Silent`
     mock   = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     config = MOIT.TestConfig()
+    @testset "delete_variables_in_a_batch" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0, 1.0, 1.0]),
+                MOI.FEASIBLE_POINT
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0]),
+                MOI.FEASIBLE_POINT
+            )
+        )
+        MOIT.delete_variables_in_a_batch(mock, config)
+    end
     @testset "solve_set_singlevariable_lessthan" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
