@@ -1949,10 +1949,7 @@ function relentr1test(model::MOI.ModelLike, config::TestConfig)
 end
 
 
-relentrtests = Dict(
-    "relentr1" => relentr1test,
-    # "relentr2" => relentr2test,
-    )
+relentrtests = Dict("relentr1" => relentr1test)
 
 @moitestset relentr
 
