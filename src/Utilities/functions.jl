@@ -618,14 +618,41 @@ function test_models_equal(model1::MOI.ModelLike, model2::MOI.ModelLike, variabl
 end
 
 
-_hasvar(v::VI, vi::Vector{VI}) = v in vi
-_hasvar(v::VI, vi::VI) = v == vi
-_hasvar(t::MOI.ScalarAffineTerm, vi) = _hasvar(t.variable_index, vi)
-_hasvar(t::MOI.ScalarQuadraticTerm, vi) = _hasvar(t.variable_index_1, vi) || _hasvar(t.variable_index_2, vi)
-_hasvar(t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}, vi) = _hasvar(t.scalar_term, vi)
+_keep_all(keep::Function, v::MOI.VariableIndex) = keep(v)
+_keep_all(keep::Function, t::MOI.ScalarAffineTerm) = keep(t.variable_index)
+_keep_all(keep::Function, t::MOI.ScalarQuadraticTerm) = keep(t.variable_index_1) && keep(t.variable_index_2)
+_keep_all(keep::Function, t::Union{MOI.VectorAffineTerm, MOI.VectorQuadraticTerm}) = _keep_all(keep, t.scalar_term)
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
-function _rmvar(vis_or_terms::Vector, vi)
-    return vis_or_terms[.!_hasvar.(vis_or_terms, Ref(vi))]
+function _filter_variables(keep::Function, variables_or_terms::Vector)
+    return filter(el -> _keep_all(keep, el), variables_or_terms)
+end
+
+"""
+    filter_variables(keep::Function, f::AbstractFunction)
+
+Return a new function `f` with the variable `vi` such that `!keep(vi)` removed.
+"""
+function filter_variables end
+function filter_variables(keep::Function, f::MOI.SingleVariable)
+    if !keep(f.variable)
+        error("Cannot remove variable from a `SingleVariable` function of the",
+              " same variable.")
+    end
+    return f
+end
+function filter_variables(keep::Function, f::MOI.VectorOfVariables)
+    return MOI.VectorOfVariables(_filter_variables(keep, f.variables))
+end
+function filter_variables(
+    keep::Function, f::Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction})
+    return typeof(f)(_filter_variables(keep, f.terms), MOI.constant(f))
+end
+function filter_variables(
+    keep, f::Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction})
+    return typeof(f)(
+        _filter_variables(keep, f.affine_terms),
+        _filter_variables(keep, f.quadratic_terms),
+        MOI.constant(f))
 end
 
 """
@@ -633,23 +660,13 @@ end
 
 Return a new function `f` with the variable vi removed.
 """
-function remove_variable end
-function remove_variable(f::MOI.SingleVariable, vi::MOI.VariableIndex)
-    if f.variable == vi
-        error("Cannot remove variable from a `SingleVariable` function of the",
-              " same variable.")
-    end
-    return f
+function remove_variable(f::MOI.AbstractFunction, vi::MOI.VariableIndex)
+    return filter_variables(v -> v != vi, f)
 end
-function remove_variable(f::VVF, vi)
-    VVF(_rmvar(f.variables, vi))
-end
-function remove_variable(f::Union{SAF, VAF}, vi)
-    typeof(f)(_rmvar(f.terms, vi), MOI.constant(f))
-end
-function remove_variable(f::Union{SQF, VQF}, vi)
-    terms = _rmvar.((f.affine_terms, f.quadratic_terms), Ref(vi))
-    typeof(f)(terms..., MOI.constant(f))
+function remove_variable(f::MOI.AbstractFunction, vis::Vector{MOI.VariableIndex})
+    # Create a `Set` to test membership in `vis` in O(1).
+    set = Set(vis)
+    return filter_variables(vi -> !(vi in set), f)
 end
 
 """
@@ -671,7 +688,7 @@ function modify_function(f::VQF, change::MOI.VectorConstantChange)
 end
 function _modifycoefficient(terms::Vector{<:MOI.ScalarAffineTerm}, variable::VI, new_coefficient)
     terms = copy(terms)
-    i = something(findfirst(t -> _hasvar(t, variable), terms), 0)
+    i = something(findfirst(t -> t.variable_index == variable, terms), 0)
     if iszero(i)
         # The variable was not already in the function
         if !iszero(new_coefficient)
@@ -701,7 +718,7 @@ function _modifycoefficients(n, terms::Vector{<:MOI.VectorAffineTerm}, variable:
     rowmap = Dict(c[1]=>i for (i,c) in enumerate(new_coefficients))
     del = Int[]
     for i in 1:length(terms)
-        if _hasvar(terms[i], variable)
+        if terms[i].scalar_term.variable_index == variable
             row = terms[i].output_index
             j = Base.get(rowmap, row, 0)
             if !iszero(j) # If it is zero, it means that the row should not be changed
@@ -793,6 +810,11 @@ function promote_operation end
 
 # Helpers
 
+function operate_term(::typeof(+), term::Union{
+    MOI.ScalarAffineTerm, MOI.ScalarQuadraticTerm,
+    MOI.VectorAffineTerm, MOI.VectorQuadraticTerm})
+    return term
+end
 function operate_term(::typeof(-), term::MOI.ScalarAffineTerm)
     return MOI.ScalarAffineTerm(-term.coefficient, term.variable_index)
 end
@@ -811,7 +833,8 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
 end
-function operate_term(::typeof(*), t::MOI.ScalarAffineTerm{T}, β::T) where T
+# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+function operate_term(::typeof(*), t::MOI.ScalarAffineTerm{T}, β::T) where T<:Number
     MOI.ScalarAffineTerm(t.coefficient * β, t.variable_index)
 end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}, β::T) where T
@@ -1421,9 +1444,10 @@ function operate(::typeof(*), ::Type{T},
     return operate(*, T, α, f)
 end
 
+# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
 function operate!(::typeof(*), ::Type{T},
                   f::Union{MOI.ScalarAffineFunction{T},
-                           MOI.ScalarQuadraticFunction{T}}, α::T) where T
+                           MOI.ScalarQuadraticFunction{T}}, α::T) where T<:Number
     map_terms!(term -> operate_term(*, term, α), f)
     f.constant *= α
     return f

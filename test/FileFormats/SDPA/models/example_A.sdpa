@@ -1,0 +1,16 @@
+"Example from http://plato.asu.edu/ftp/sdpa_format.txt
+"A sample problem.
+2
+2
+2 2
+10.0 20.0
+0 1 1 1 1.0
+0 1 2 2 2.0
+0 2 1 1 3.0
+0 2 2 2 4.0
+1 1 1 1 1.0
+1 1 2 2 1.0
+2 1 2 2 1.0
+2 2 1 1 5.0
+2 2 1 2 2.0
+2 2 2 2 6.0

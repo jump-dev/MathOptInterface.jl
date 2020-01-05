@@ -4,7 +4,7 @@ function bridge_constraint(
     BT::Type{<:SetMapBridge{T, S2, S1, F, G}}, model::MOI.ModelLike,
     func::G, set::S1) where {T, S2, S1, F, G}
     mapped_func = map_function(BT, func)
-    constraint = MOI.add_constraint(model, map_function(BT, func), map_set(BT, set))
+    constraint = MOI.add_constraint(model, mapped_func, map_set(BT, set))
     return BT(constraint)
 end
 

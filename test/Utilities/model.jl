@@ -200,10 +200,15 @@ end
     @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}())
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
 
+    fx = MOI.SingleVariable(x)
+    fy = MOI.SingleVariable(y)
+    obj = 1fx + 2fy
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     message = string("Cannot delete variable as it is constrained with other",
                      " variables in a `MOI.VectorOfVariables`.")
     err = MOI.DeleteNotAllowed(y, message)
     @test_throws err MOI.delete(model, y)
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx + 2fy
 
     @test MOI.is_valid(model, c8)
     MOI.delete(model, c8)
@@ -211,6 +216,7 @@ end
     @test 0 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}())
 
     MOI.delete(model, y)
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx
 
     f = MOI.get(model, MOI.ConstraintFunction(), c2)
     @test f.affine_terms == MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([3, 1], [x, x]))

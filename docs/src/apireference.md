@@ -196,6 +196,7 @@ ConstraintIndex
 is_valid
 throw_if_not_valid
 delete(::ModelLike, ::Index)
+delete(::ModelLike, ::Vector{<:Index})
 ```
 
 ### Variables
@@ -963,6 +964,7 @@ The following utilities are available for functions:
 Utilities.eval_variables
 Utilities.map_indices
 Utilities.substitute_variables
+Utilities.filter_variables
 Utilities.remove_variable
 Utilities.all_coefficients
 Utilities.unsafe_add
@@ -1018,4 +1020,14 @@ Functions to help benchmark the performance of solver wrappers. See
 Benchmarks.suite
 Benchmarks.create_baseline
 Benchmarks.compare_against_baseline
+```
+
+## File Formats
+
+Functions to help read and write MOI models to/from various file formats. See
+[File Formats](@ref) for more details.
+
+```@docs
+FileFormats.Model
+FileFormats.FileFormat
 ```

@@ -6,7 +6,36 @@ const MA = MutableArithmetics
 using MathOptInterface
 const MOI = MathOptInterface
 
-@testset "promote_operation with $T" for T in [Float64, Float32]
+_zero(::Type{MOI.SingleVariable}, T::Type) = zero(MOI.ScalarAffineFunction{T})
+_zero(x, ::Type) = zero(x)
+function promote_operation_test(op::Function, T, x::Type, y::Type)
+    f() = MA.promote_operation(op, x, y)
+    @test typeof(op(_zero(x, T), _zero(y, T))) == f()
+    @test 0 == @allocated f()
+end
+
+@testset "promote_operation allocation with $T" for T in [Int, Float64, Float32]
+    AffType = MOI.ScalarAffineFunction{T}
+    QuadType = MOI.ScalarQuadraticFunction{T}
+    for op in [+, -, *]
+        promote_operation_test(op, T, T, MOI.SingleVariable)
+        promote_operation_test(op, T, MOI.SingleVariable, T)
+        promote_operation_test(op, T, T, AffType)
+        promote_operation_test(op, T, AffType, T)
+        promote_operation_test(op, T, T, QuadType)
+        promote_operation_test(op, T, QuadType, T)
+        promote_operation_test(op, T, MOI.SingleVariable, AffType)
+        promote_operation_test(op, T, AffType, MOI.SingleVariable)
+        if op != *
+            promote_operation_test(op, T, MOI.SingleVariable, QuadType)
+            promote_operation_test(op, T, QuadType, MOI.SingleVariable)
+            promote_operation_test(op, T, AffType, QuadType)
+            promote_operation_test(op, T, QuadType, AffType)
+        end
+    end
+end
+
+@testset "promote_operation with $T" for T in [Int, Float64, Float32]
     @test MA.promote_operation(*, MOI.SingleVariable, T) == MOI.ScalarAffineFunction{T}
     @test MA.promote_operation(*, T, MOI.SingleVariable) == MOI.ScalarAffineFunction{T}
     @test MA.promote_operation(*, MOI.ScalarAffineFunction{T}, T) == MOI.ScalarAffineFunction{T}
