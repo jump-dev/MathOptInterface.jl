@@ -197,6 +197,7 @@ ConstraintIndex
 is_valid
 throw_if_not_valid
 delete(::ModelLike, ::Index)
+delete(::ModelLike, ::Vector{<:Index})
 ```
 
 ### Variables
