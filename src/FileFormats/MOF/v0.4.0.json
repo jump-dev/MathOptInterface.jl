@@ -812,6 +812,19 @@
                         "minimum": 2
                     }
                 }
+            }, {
+                "description": "(u, v, w) ∈ {R^{dimension}: u ≥ sumᵢ wᵢlog(wᵢ/vᵢ), vᵢ ≥ 0, wᵢ ≥ 0}",
+                "examples": ["{\"head\": \"RelativeEntropyCone\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "RelativeEntropyCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 3
+                    }
+                }
             }]
         }
     }
