@@ -100,13 +100,17 @@ end
     MOIT.normone1vtest(bridged_mock, config)
     MOIT.normone1ftest(bridged_mock, config)
 
+    var_names = ["x", "y", "z"]
+    MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+
+    nonneg = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}())
+    greater = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
+    u, v = MOI.get(mock, MOI.ListOfVariableIndices())[4:5]
     @testset "Test mock model" begin
-        var_names = ["x", "y", "z", "u", "v"]
-        MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
-        nonneg = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}())
+        MOI.set(mock, MOI.VariableName(), u, "u")
+        MOI.set(mock, MOI.VariableName(), v, "v")
         @test length(nonneg) == 1
         MOI.set(mock, MOI.ConstraintName(), nonneg[1], "nonneg")
-        greater = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
         @test length(greater) == 1
         MOI.set(mock, MOI.ConstraintName(), greater[1], "greater")
         zeros = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Zeros}())
@@ -124,12 +128,10 @@ end
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(mock, model, var_names, ["nonneg", "greater", "x_eq", "y_eq"])
+        MOIU.test_models_equal(mock, model, [var_names; "u"; "v"], ["nonneg", "greater", "x_eq", "y_eq"])
     end
 
     @testset "Test bridged model" begin
-        var_names = ["x", "y", "z"]
-        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
         normone = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormOneCone}())
         @test length(normone) == 1
         MOI.set(bridged_mock, MOI.ConstraintName(), normone[1], "normone")
@@ -151,6 +153,23 @@ end
     end
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormOneCone}()))
+
+    @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        value = [4.0, 1.0, -2.0]
+        MOI.set(bridged_mock, attr, ci, value)
+        @test MOI.get(bridged_mock, attr, ci) ≈ value
+        if attr isa MOI.ConstraintPrimalStart
+            @test MOI.get(mock, MOI.VariablePrimalStart(), u) == 1
+            @test MOI.get(mock, MOI.VariablePrimalStart(), v) == 2
+            @test MOI.get(mock, attr, nonneg[1]) == [0.0, 4.0, 2.0, 0.0]
+            @test MOI.get(mock, attr, greater[1]) == 1
+        else
+            @test MOI.get(mock, attr, nonneg[1]) == [0.0, 2.0, 1.0, 0.0]
+            @test MOI.get(mock, attr, greater[1]) == 4
+        end
+    end
+
     test_delete_bridge(bridged_mock, ci, 3, (
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
         (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
