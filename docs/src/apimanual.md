@@ -1100,8 +1100,7 @@ appropriate constraint bridges for unsupported constraints.
 
 ### Solver-specific attributes
 
-Solver-specific attributes should either be passed to the optimizer on creation,
-e.g., `MyPackage.Optimizer(PrintLevel = 0)`, or through a sub-type of
+Solver-specific attributes should be specified by creating an
 [`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could
 add the following:
 ```julia
