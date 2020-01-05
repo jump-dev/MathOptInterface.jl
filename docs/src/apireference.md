@@ -347,6 +347,7 @@ ExponentialCone
 DualExponentialCone
 PowerCone
 DualPowerCone
+RelativeEntropyCone
 SOS1
 SOS2
 IndicatorSet
@@ -753,6 +754,7 @@ Bridges.Constraint.QuadtoSOCBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
 Bridges.Constraint.GeoMeanBridge
+Bridges.Constraint.RelativeEntropyBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge
 Bridges.Constraint.LogDetBridge

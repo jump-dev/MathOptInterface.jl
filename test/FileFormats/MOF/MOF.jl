@@ -393,6 +393,14 @@ end
             c2: x >= 0.0
         """, ["x", "y"], ["c1", "c2"])
     end
+    @testset "RelativeEntropyCone" begin
+        test_model_equality("""
+            variables: x, y, z
+            minobjective: x
+            c1: [x, y, z] in RelativeEntropyCone(3)
+            c2: x >= 0.0
+        """, ["x", "y", "z"], ["c1", "c2"])
+    end
     # Clean up
     sleep(1.0)  # allow time for unlink to happen
     rm(TEST_MOF_FILE, force=true)

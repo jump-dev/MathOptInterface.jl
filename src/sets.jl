@@ -741,7 +741,7 @@ function Base.copy(
         Reals, Zeros, Nonnegatives, Nonpositives, GreaterThan, LessThan,
         EqualTo, Interval, NormInfinityCone, NormOneCone, SecondOrderCone,
         RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone,
-        DualExponentialCone, PowerCone, DualPowerCone,
+        DualExponentialCone, PowerCone, DualPowerCone, RelativeEntropyCone,
         PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
         LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
         RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,

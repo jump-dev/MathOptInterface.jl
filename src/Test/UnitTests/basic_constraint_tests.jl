@@ -43,6 +43,7 @@ const BasicConstraintTests = Dict(
     (MOI.VectorOfVariables, MOI.DualExponentialCone)    => ( dummy_vectorofvariables, 3, MOI.DualExponentialCone() ),
     (MOI.VectorOfVariables, MOI.PowerCone{Float64})     => ( dummy_vectorofvariables, 3, MOI.PowerCone(0.5) ),
     (MOI.VectorOfVariables, MOI.DualPowerCone{Float64}) => ( dummy_vectorofvariables, 3, MOI.DualPowerCone(0.5) ),
+    (MOI.VectorOfVariables, MOI.RelativeEntropyCone)    => ( dummy_vectorofvariables, 3, MOI.RelativeEntropyCone(3) ),
 
     (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) => ( dummy_vectorofvariables,  7, MOI.PositiveSemidefiniteConeTriangle(3) ),
     (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeSquare)   => ( dummy_vectorofvariables,  9, MOI.PositiveSemidefiniteConeSquare(3) ),
@@ -70,6 +71,7 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_affine, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_affine, 3, MOI.RotatedSecondOrderCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone)      => ( dummy_vector_affine, 3, MOI.GeometricMeanCone(3) ),
+    (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone)    => ( dummy_vector_affine, 3, MOI.RelativeEntropyCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => ( dummy_vector_affine, 9, MOI.GeometricMeanCone(3) ),
     (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}})    => ( dummy_vector_affine, 2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(3.0))),
     (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.GreaterThan{Float64}}) => ( dummy_vector_affine, 2, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(3.0))),
@@ -82,6 +84,7 @@ const BasicConstraintTests = Dict(
     (MOI.VectorQuadraticFunction{Float64}, MOI.SecondOrderCone)        => ( dummy_vector_quadratic, 3, MOI.SecondOrderCone(3) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.RotatedSecondOrderCone) => ( dummy_vector_quadratic, 3, MOI.RotatedSecondOrderCone(3) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.GeometricMeanCone)      => ( dummy_vector_quadratic, 3, MOI.GeometricMeanCone(3) ),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.RelativeEntropyCone)    => ( dummy_vector_quadratic, 3, MOI.RelativeEntropyCone(3) ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => ( dummy_vector_quadratic, 9, MOI.GeometricMeanCone(3) )
 )
 """
