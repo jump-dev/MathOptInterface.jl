@@ -68,10 +68,10 @@ MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, bridge::RelativeEntropyBridge
 MOI.supports(::MOI.ModelLike, ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart}, ::Type{<:RelativeEntropyBridge}) = true
 function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart}, bridge::RelativeEntropyBridge{T}) where T
     primal = zeros(T, 1 + 2 * length(bridge.y))
-    primal[1] = MOI.get(model, MOI.ConstraintPrimal(), bridge.ge_index)
+    primal[1] = MOI.get(model, attr, bridge.ge_index)
     w_start = 1 + length(bridge.y)
     for i in eachindex(bridge.y)
-        exp_primal_i = MOI.get(model, MOI.ConstraintPrimal(), bridge.exp_indices[i])
+        exp_primal_i = MOI.get(model, attr, bridge.exp_indices[i])
         primal[1] -= exp_primal_i[1]
         primal[1 + i] = exp_primal_i[3]
         primal[w_start + i] = exp_primal_i[2]

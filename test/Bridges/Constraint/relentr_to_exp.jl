@@ -77,17 +77,17 @@ config = MOIT.TestConfig()
 
     @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
-        value = (attr isa MOI.ConstraintPrimalStart) ? [entr1 + entr2, 1, 5, 2, 3] : [1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1]
+        value = (attr isa MOI.ConstraintPrimalStart) ? [entr1 + entr2 + 1, 1, 5, 2, 3] : [2, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1]
         MOI.set(bridged_mock, attr, ci, value)
         @test MOI.get(bridged_mock, attr, ci) ≈ value
         if attr isa MOI.ConstraintPrimalStart
             @test MOI.get(mock, MOI.VariablePrimalStart(), y1) == entr1
             @test MOI.get(mock, MOI.VariablePrimalStart(), y2) == entr2
-            @test MOI.get(mock, attr, greater[1]) == 0
+            @test MOI.get(mock, attr, greater[1]) == 1
             @test MOI.get(mock, attr, exps[1]) == [-entr1, 2, 1]
             @test MOI.get(mock, attr, exps[2]) == [-entr2, 3, 5]
         else
-            @test MOI.get(mock, attr, greater[1]) == 1
+            @test MOI.get(mock, attr, greater[1]) == 2
             for i in 1:2
                 (s_value, t_value) = (value[3 + i], value[1 + i])
                 r_value = exp(LambertW.lambertw(s_value / (t_value * ℯ))) * -t_value * ℯ
