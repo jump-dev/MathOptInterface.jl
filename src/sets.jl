@@ -288,6 +288,17 @@ function Base.:(==)(set1::S, set2::S) where S <: Union{PowerCone, DualPowerCone}
 end
 
 """
+    LinearMatrixInequalityCone{T <: Real}(component::Vector{Symmetric(T, Matrix{T})})
+
+The linear matrix inequality (LMI) cone ``\\{ x \\in \\mathbb{R}^n : sum_i x_i component_i \\succeq 0 \\}`` with `n`-dimensional parameter vector `component` of symmetric matrices of equal dimensions.
+"""
+struct LinearMatrixInequalityCone{T <: Real} <: AbstractVectorSet
+    component::Vector{Symmetric(T, Matrix{T})}
+end
+
+dimension(s::LinearMatrixInequalityCone) = length(component)
+
+"""
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
 Abstract supertype for subsets of the (vectorized) cone of symmetric matrices,
