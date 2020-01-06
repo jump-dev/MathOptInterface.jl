@@ -106,6 +106,8 @@ end
 # Given constraint dual start of (u, v, w), constraint dual on GreaterThan is u
 # and on exponential cone constraint i is (r_i, w_i, v_i), but since y_i is free,
 # its dual is 0, so we have -r_i + value[1] == 0 hence r_i = value[1].
+# Note: alternatively, we could use the Lambert W function to calculate
+# r_i = exp(W(-w_i / (-v_i * e))) * (-v_i * e), but this is more complicated.
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::RelativeEntropyBridge, value)
     MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, value[1])
     w_start = 1 + length(bridge.y)
