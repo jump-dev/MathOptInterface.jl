@@ -48,6 +48,9 @@ include("geomean.jl")
 const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
 include("relentr_to_exp.jl")
 const RelativeEntropy{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RelativeEntropyBridge{T}, OT}
+include("norm_spec_nuc_to_psd.jl")
+const NormSpectral{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormSpectralBridge{T}, OT}
+const NormNuclear{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormNuclearBridge{T}, OT}
 include("square.jl")
 const Square{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquareBridge{T}, OT}
 include("det.jl")
@@ -83,6 +86,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, NormOneBridge{T})
     MOIB.add_bridge(bridged_model, GeoMeanBridge{T})
     MOIB.add_bridge(bridged_model, RelativeEntropyBridge{T})
+    MOIB.add_bridge(bridged_model, NormSpectralBridge{T})
+    MOIB.add_bridge(bridged_model, NormNuclearBridge{T})
     MOIB.add_bridge(bridged_model, SquareBridge{T})
     MOIB.add_bridge(bridged_model, LogDetBridge{T})
     MOIB.add_bridge(bridged_model, RootDetBridge{T})

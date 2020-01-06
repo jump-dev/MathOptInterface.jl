@@ -202,7 +202,7 @@ dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
 """
     NormOneCone(dimension)
 
-The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
+The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
@@ -295,6 +295,34 @@ The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
 end
+
+"""
+    NormSpectralCone(row_dim, column_dim)
+
+The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
+"""
+struct NormSpectralCone <: AbstractVectorSet
+    row_dim::Int
+    column_dim::Int
+end
+
+dual_set(s::NormSpectralCone) = NormNuclearCone(s.row_dim, s.column_dim)
+
+"""
+    NormNuclearCone(row_dim, column_dim)
+
+The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
+"""
+struct NormNuclearCone <: AbstractVectorSet
+    row_dim::Int
+    column_dim::Int
+end
+
+dual_set(s::NormNuclearCone) = NormSpectralCone(s.row_dim, s.column_dim)
+
+dimension(s::Union{NormSpectralCone, NormNuclearCone}) = 1 + s.row_dim * s.column_dim
 
 """
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
@@ -742,6 +770,7 @@ function Base.copy(
         EqualTo, Interval, NormInfinityCone, NormOneCone, SecondOrderCone,
         RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone,
         DualExponentialCone, PowerCone, DualPowerCone, RelativeEntropyCone,
+        NormSpectralCone, NormNuclearCone,
         PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
         LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
         RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,

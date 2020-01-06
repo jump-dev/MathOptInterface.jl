@@ -572,7 +572,7 @@ function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCo
     end
 end
 # Default termination status
-mock_optimize!(mock::MockOptimizer,  primdual...; kws...) = mock_optimize!(mock, MOI.OPTIMAL, primdual...; kws...)
+mock_optimize!(mock::MockOptimizer, primdual...; kws...) = mock_optimize!(mock, MOI.OPTIMAL, primdual...; kws...)
 function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode)
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
     MOI.set(mock, MOI.ResultCount(), 0)

@@ -46,6 +46,8 @@ end
     @test MOI.dimension(MOI.NormOneCone(5)) === 5
     @test MOI.dimension(MOI.DualExponentialCone()) === 3
     @test MOI.dimension(MOI.RelativeEntropyCone(5)) === 5
+    @test MOI.dimension(MOI.NormSpectralCone(2, 3)) === 7
+    @test MOI.dimension(MOI.NormNuclearCone(2, 3)) === 7
     @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(4)) === 10
     @test MOI.dimension(MOI.PositiveSemidefiniteConeSquare(5)) === 25
     @test MOI.dimension(MOI.RootDetConeTriangle(6)) === 22
@@ -88,19 +90,28 @@ end
     @test MOI.dual_set(normone2) == norminf2
     @test MOI.dual_set(norminf2) != normone3
     @test MOI.dual_set(normone2) != norminf3
-    #SOC
+    # SOC
     soc2 = MOI.SecondOrderCone(2)
     soc3 = MOI.SecondOrderCone(3)
     @test MOI.dual_set(soc2) == soc2
     @test MOI.dual_set(soc2) != soc3
     @test MOI.dual_set(soc3) == soc3
-    #RSOC
+    # RSOC
     rsoc2 = MOI.RotatedSecondOrderCone(2)
     rsoc3 = MOI.RotatedSecondOrderCone(3)
     @test MOI.dual_set(rsoc2) == rsoc2
     @test MOI.dual_set(rsoc2) != rsoc3
     @test MOI.dual_set(rsoc3) == rsoc3
-    #PSDtriangle
+    # Norm-spectral and norm-nuclear cones
+    normspec22 = MOI.NormSpectralCone(2, 2)
+    normspec23 = MOI.NormSpectralCone(2, 3)
+    normnuc22 = MOI.NormNuclearCone(2, 2)
+    normnuc23 = MOI.NormNuclearCone(2, 3)
+    @test MOI.dual_set(normspec23) == normnuc23
+    @test MOI.dual_set(normnuc23) == normspec23
+    @test MOI.dual_set(normspec22) != normnuc23
+    @test MOI.dual_set(normnuc22) != normspec23
+    # PSDtriangle
     psd2 = MOI.PositiveSemidefiniteConeTriangle(2)
     psd3 = MOI.PositiveSemidefiniteConeTriangle(3)
     @test MOI.dual_set(psd2) == psd2

@@ -129,7 +129,7 @@ MOIU.@model(NoIntervalModel,
             (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
              MOI.NormInfinityCone, MOI.NormOneCone, MOI.SecondOrderCone,
              MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
-             MOI.RelativeEntropyCone,
+             MOI.RelativeEntropyCone, MOI.NormSpectralCone, MOI.NormNuclearCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
             (MOI.PowerCone, MOI.DualPowerCone),
             (),
@@ -233,5 +233,4 @@ end
     with inner model MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F} where F<:MOI.AbstractScalarFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}
       with 0 constraint bridges
       with inner model MOIU.MockOptimizer{NoIntervalModel{Float64}}"""
-
 end

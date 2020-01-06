@@ -116,10 +116,12 @@ The following modifications also take effect if `Index` is [`VariableIndex`](@re
 delete(model::ModelLike, index::Index) = throw(DeleteNotAllowed(index))
 
 """
-    delete{R}(model::ModelLike, indices::Vector{R<:Index})
+    delete(model::ModelLike, indices::Vector{R<:Index}) where {R}
 
 Delete the referenced objects in the vector `indices` from the model.
-It may be assumed that `R` is a concrete type.
+It may be assumed that `R` is a concrete type. The default fallback sequentially
+deletes the individual items in `indices`, although specialized implementations
+may be more efficient.
 """
 function delete(model::ModelLike, indices::Vector{<:Index})
     for index in indices

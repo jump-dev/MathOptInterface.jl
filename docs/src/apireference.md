@@ -115,7 +115,6 @@ ListOfVariableAttributesSet
 ListOfConstraintAttributesSet
 ```
 
-
 ## Optimizers
 
 ```@docs
@@ -197,6 +196,7 @@ ConstraintIndex
 is_valid
 throw_if_not_valid
 delete(::ModelLike, ::Index)
+delete(::ModelLike, ::Vector{<:Index})
 ```
 
 ### Variables
@@ -329,7 +329,6 @@ Semicontinuous
 Semiinteger
 ```
 
-
 ### Vector sets
 
 List of recognized vector sets.
@@ -348,6 +347,8 @@ DualExponentialCone
 PowerCone
 DualPowerCone
 RelativeEntropyCone
+NormSpectralCone
+NormNuclearCone
 SOS1
 SOS2
 IndicatorSet
@@ -603,7 +604,6 @@ MOI.Bridges.unbridged_variable_function(bridged_model, inner_variables[1])
 MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm{Float64}(1.0, VariableIndex(-1))], -1.0)
 ```
 
-
 !!! note
     A notable exception is with [`Bridges.Variable.ZerosBridge`](@ref) where no
     variable is created in the underlying model as the variables are simply
@@ -755,6 +755,8 @@ Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
 Bridges.Constraint.GeoMeanBridge
 Bridges.Constraint.RelativeEntropyBridge
+Bridges.Constraint.NormSpectralBridge
+Bridges.Constraint.NormNuclearBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge
 Bridges.Constraint.LogDetBridge

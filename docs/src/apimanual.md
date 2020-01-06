@@ -114,9 +114,13 @@ sets recognized by the solver.
   \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
 * **[`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone)**:
   ``\{ (u, v, w) \\in \\mathbb{R}^\mbox{dimension} : u \\ge \\sum_i w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \}``
+* **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+* **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
-  the upper triangle of a PSD matrix }\}``
+  the upper triangle of a PSD matrix} \}``
 * **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix} \}``
 * **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**:
@@ -1106,8 +1110,7 @@ appropriate constraint bridges for unsupported constraints.
 
 ### Solver-specific attributes
 
-Solver-specific attributes should either be passed to the optimizer on creation,
-e.g., `MyPackage.Optimizer(PrintLevel = 0)`, or through a sub-type of
+Solver-specific attributes should be specified by creating an
 [`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could
 add the following:
 ```julia

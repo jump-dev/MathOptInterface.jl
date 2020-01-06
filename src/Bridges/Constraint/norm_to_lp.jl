@@ -127,21 +127,64 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormOneBridge)
     dim = 1 + div(MOI.dimension(MOI.get(model, MOI.ConstraintSet(), c.nn_index)), 2)
     return MOI.NormOneCone(dim)
 end
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintPrimal, c::NormOneBridge)
-    ge_primal = MOI.get(model, MOI.ConstraintPrimal(), c.ge_index)
-    nn_primal = MOI.get(model, MOI.ConstraintPrimal(), c.nn_index)
+
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart},
+    ::Type{<:NormOneBridge})
+
+    return true
+end
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
+                 bridge::NormOneBridge{T}, value) where T
+    x_value = value[1 .+ (1:length(bridge.y))]
+    y_value = abs.(x_value)
+    for i in eachindex(bridge.y)
+        MOI.set(model, MOI.VariablePrimalStart(), bridge.y[i], y_value[i])
+    end
+    MOI.set(model, attr, bridge.nn_index, [y_value - x_value; y_value + x_value])
+    MOI.set(model, attr, bridge.ge_index, value[1] - reduce(+, y_value, init=zero(T)))
+    return
+end
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart},
+                 bridge::NormOneBridge)
+    ge_primal = MOI.get(model, attr, bridge.ge_index)
+    nn_primal = MOI.get(model, attr, bridge.nn_index)
     t = ge_primal + sum(nn_primal) / 2
-    d = length(c.y)
+    d = length(bridge.y)
     x = (nn_primal[(d + 1):end] - nn_primal[1:d]) / 2
     return vcat(t, x)
 end
 # Given a_i is dual on y_i - x_i >= 0 and b_i is dual on y_i + x_i >= 0 and c is dual on t - sum(y) >= 0,
 # the dual on (t, x) in NormOneCone is (u, v) in NormInfinityCone, where
 # v_i = -a_i + b_i and u = c.
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintDual, c::NormOneBridge)
-    t = MOI.get(model, MOI.ConstraintDual(), c.ge_index)
-    nn_dual = MOI.get(model, MOI.ConstraintDual(), c.nn_index)
-    d = div(length(nn_dual), 2)
-    x = (nn_dual[(d + 1):end] - nn_dual[1:d])
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart},
+                 bridge::NormOneBridge)
+    t = MOI.get(model, attr, bridge.ge_index)
+    nn_dual = MOI.get(model, attr, bridge.nn_index)
+    d = length(bridge.y)
+    x = nn_dual[(d + 1):end] - nn_dual[1:d]
     return vcat(t, x)
+end
+# value[1 + i] = nn_dual[d + i] - nn_dual[i]
+# and `nn_dual` is nonnegative. By complementarity slackness, only one of each
+# `nn_dual` can be nonzero (except if `x = 0`) so we can set
+# depending on the sense of `value[1 + i]`.
+function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart,
+                 bridge::NormOneBridge, value)
+    t = MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, value[1])
+    d = length(bridge.y)
+    nn_dual = zeros(eltype(value), 2d)
+    for i in eachindex(bridge.y)
+        v = value[1 + i]
+        if v < 0
+            nn_dual[i] = -v
+        else
+            nn_dual[d + i] = v
+        end
+    end
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, nn_dual)
+    return
 end

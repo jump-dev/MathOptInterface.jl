@@ -1715,7 +1715,6 @@ dualexptests = Dict("dualexp1v" => dualexp1vtest,
 
 @moitestset dualexp
 
-
 function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
@@ -1797,6 +1796,7 @@ powtests = Dict("pow1v" => pow1vtest,
                 "pow1f" => pow1ftest)
 
 @moitestset pow
+
 
 function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool; exponent::Float64 = 0.9)
     atol = config.atol
@@ -1952,6 +1952,243 @@ end
 relentrtests = Dict("relentr1" => relentr1test)
 
 @moitestset relentr
+
+
+function normspec1test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormSpec1
+    # min t
+    #  st  t >= sigma_1([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormSpectralCone(2, 3))
+    # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
+    # t = sqrt(3)
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    data = Float64[1, 1, 1, -1, 0, 1]
+    spec = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))], vcat(0.0, data)), MOI.NormSpectralCone(2, 3))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        rt3 = sqrt(3)
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt3, data) atol=atol rtol=rtol
+
+        if config.duals
+            invrt3 = inv(rt3)
+            @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ Float64[1, 0, -invrt3, 0, invrt3, 0, -invrt3] atol=atol rtol=rtol
+        end
+    end
+end
+
+function normspec2test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormSpec2
+    # min t
+    #  st  t >= sigma_1([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormSpectralCone(3, 2))
+    # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
+    # t = sqrt(3)
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    data = Float64[1, 1, 0, 1, -1, 1]
+    spec = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))], vcat(0.0, data)), MOI.NormSpectralCone(3, 2))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        rt3 = sqrt(3)
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt3, data) atol=atol rtol=rtol
+
+        if config.duals
+            invrt3 = inv(rt3)
+            @test MOI.get(model, MOI.ConstraintDual(), spec) ≈ Float64[1, 0, 0, 0, -invrt3, invrt3, -invrt3] atol=atol rtol=rtol
+        end
+    end
+end
+
+normspectests = Dict(
+    "normspec1" => normspec1test,
+    "normspec2" => normspec2test,
+    )
+
+@moitestset normspec
+
+
+function normnuc1test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormNuc1
+    # min t
+    #  st  t >= sum_i sigma_i([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormNuclearCone(2, 3))
+    # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
+    # t = sqrt(3) + sqrt(2)
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    data = Float64[1, 1, 1, -1, 0, 1]
+    nuc = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))], vcat(0.0, data)), MOI.NormNuclearCone(2, 3))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        rt3 = sqrt(3)
+        rt2 = sqrt(2)
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 + rt2 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 + rt2 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 + rt2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), nuc) ≈ vcat(rt3 + rt2, data) atol=atol rtol=rtol
+
+        if config.duals
+            invrt2 = inv(rt2)
+            invrt3 = inv(rt3)
+            @test MOI.get(model, MOI.ConstraintDual(), nuc) ≈ Float64[1, -invrt2, -invrt3, -invrt2, invrt3, 0, -invrt3] atol=atol rtol=rtol
+        end
+    end
+end
+
+function normnuc2test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormNuc2
+    # min t
+    #  st  t >= sum_i sigma_i([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormNuclearCone(3, 2))
+    # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
+    # t = sqrt(3) + sqrt(2)
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    data = Float64[1, 1, 0, 1, -1, 1]
+    nuc = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))], vcat(0.0, data)), MOI.NormNuclearCone(3, 2))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        rt3 = sqrt(3)
+        rt2 = sqrt(2)
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 + rt2 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 + rt2 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 + rt2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), nuc) ≈ vcat(rt3 + rt2, data) atol=atol rtol=rtol
+
+        if config.duals
+            invrt2 = inv(rt2)
+            invrt3 = inv(rt3)
+            @test MOI.get(model, MOI.ConstraintDual(), nuc) ≈ Float64[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3] atol=atol rtol=rtol
+        end
+    end
+end
+
+
+normnuctests = Dict(
+    "normnuc1" => normnuc1test,
+    "normnuc2" => normnuc2test,
+    )
+
+@moitestset normnuc
 
 
 function _psd0test(model::MOI.ModelLike, vecofvars::Bool, psdcone, config::TestConfig)
@@ -2417,6 +2654,7 @@ const rootdettests = Dict("rootdett" => rootdetttest,
 
 @moitestset rootdet true
 
+
 const contconictests = Dict("lin" => lintest,
                             "norminf" => norminftest,
                             "normone" => normonetest,
@@ -2428,6 +2666,8 @@ const contconictests = Dict("lin" => lintest,
                             "pow" => powtest,
                             "dualpow" => dualpowtest,
                             "relentr" => relentrtest,
+                            "normspec" => normspectest,
+                            "normnuc" => normnuctest,
                             "sdp" => sdptest,
                             "logdet" => logdettest,
                             "rootdet" => rootdettest)
