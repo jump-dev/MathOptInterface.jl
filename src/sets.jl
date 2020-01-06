@@ -214,6 +214,7 @@ dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
     ComplexNormInfinityCone(dimension)
 
 The ``\\ell_\\infty``-norm of complex vectors cone ``\\{ (t,x) \\in \\mathbb{R}\\times\\mathbb{C}^{n} : t \\ge \\lVert x \\rVert_\\infty = \\max_i \\lvert x_i \\rvert \\}`` of real `dimension```{}=1+2n``.
+The cone is represented as a real vector by stacking the real and imaginary parts of each complex element ``x_i`` consecutively, like ``(t, \\Re(x_1), \\Im(x_1), \\Re(x_2), \\Im(x_2), \\ldots, \\Re(x_n), \\Im(x_n)) \\in \\mathbb{R}^{dimension}``.
 """
 struct ComplexNormInfinityCone <: AbstractVectorSet
     dimension::Int
@@ -225,6 +226,7 @@ dual_set(s::ComplexNormInfinityCone) = ComplexNormOneCone(dimension(s))
     ComplexNormOneCone(dimension)
 
 The ``\\ell_1``-norm of complex vectors cone ``\\{ (t,x) \\in \\mathbb{R}\\times\\mathbb{C}^{n} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \\}`` of real `dimension```{}=1+2n``.
+The cone is represented as a real vector by stacking the real and imaginary parts of each complex element ``x_i`` consecutively, like ``(t, \\Re(x_1), \\Im(x_1), \\Re(x_2), \\Im(x_2), \\ldots, \\Re(x_n), \\Im(x_n)) \\in \\mathbb{R}^{dimension}``.
 """
 struct ComplexNormOneCone <: AbstractVectorSet
     dimension::Int
