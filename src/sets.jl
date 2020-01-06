@@ -235,11 +235,22 @@ dual_set(s::RotatedSecondOrderCone) = copy(s)
 """
     GeometricMeanCone(dimension)
 
-The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}`` of dimension `dimension```{}=n+1``.
+The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{1+n} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}`` of dimension `dimension```{}=1+n``.
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
 end
+
+"""
+    GeneralizedGeometricMeanCone{T <: Real}(exponents::Vector{T})
+
+The generalized geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{1+n} : x \\ge 0, t^{sum(exponents)} \\le \\prod_i x_i^{exponents_i} \\}`` of dimension ``1+n`` with parameter vector `exponents```{}\\in \\mathbb{R}_{++}^{n}``.
+"""
+struct GeneralizedGeometricMeanCone{T <: Real} <: AbstractVectorSet
+    exponents::Vector{T}
+end
+
+dimension(s::GeneralizedGeometricMeanCone) = 1 + length(s.exponents)
 
 """
     ExponentialCone()
