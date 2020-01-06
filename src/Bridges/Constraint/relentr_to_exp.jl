@@ -104,23 +104,13 @@ function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.Const
     return dual
 end
 # Given constraint dual start of (u, v, w), constraint dual on GreaterThan is u
-# and on exponential cone constraint i is (r,s,t) for -r exp (s/r - 1) = t, where
-# s = w_i, t = v_i, and r = exp(W(-s / (-t * e))) * (-t * e), where W is the
-# Lambert W function. The derivation of the r expression follows:
-# -r exp (s/r - 1) = t => s/r - 1 = log(t/-r) => s/r = log (e * t/-r)
-# => -s = r log (r / (-t * e)) => -s / (-t * e) = r / (-t * e) log (r / (-t * e))
-# let x = r / (-t * e) and y = -s / (-t * e), solve y = x log x using Lambert W function:
-# x = exp(W(y)) => r / (-t * e) = exp(W(-s / (-t * e))) => r = exp(W(-s / (-t * e))) * (-t * e).
-import LambertW
+# and on exponential cone constraint i is (r_i, w_i, v_i), but since y_i is free,
+# its dual is 0, so we have -r_i + value[1] == 0 hence r_i = value[1].
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::RelativeEntropyBridge, value)
     MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, value[1])
     w_start = 1 + length(bridge.y)
     for i in eachindex(bridge.y)
-        s_value = value[w_start + i]
-        t_value = value[1 + i]
-        r_value = exp(LambertW.lambertw(s_value / (t_value * ℯ))) * -t_value * ℯ
-        @assert -r_value * exp(s_value / r_value - 1) - t_value ≈ 0
-        MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], [r_value, s_value, t_value])
+        MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], [value[1], value[w_start + i], value[1 + i]])
     end
     return
 end

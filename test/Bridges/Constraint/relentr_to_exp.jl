@@ -1,6 +1,5 @@
 using Test
 
-import LambertW
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MathOptInterface.Test
@@ -89,9 +88,7 @@ config = MOIT.TestConfig()
         else
             @test MOI.get(mock, attr, greater[1]) == 2
             for i in 1:2
-                (s_value, t_value) = (value[3 + i], value[1 + i])
-                r_value = exp(LambertW.lambertw(s_value / (t_value * ℯ))) * -t_value * ℯ
-                @test MOI.get(mock, attr, exps[i]) == [r_value, s_value, t_value]
+                @test MOI.get(mock, attr, exps[i]) == [value[1], value[3 + i], value[1 + i]]
             end
         end
     end
