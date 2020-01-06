@@ -211,6 +211,28 @@ end
 dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
 
 """
+    ComplexNormInfinityCone(dimension)
+
+The ``\\ell_\\infty``-norm of complex vectors cone ``\\{ (t,x) \\in \\mathbb{R}\\times\\mathbb{C}^{n} : t \\ge \\lVert x \\rVert_\\infty = \\max_i \\lvert x_i \\rvert \\}`` of real `dimension```{}=1+2n``.
+"""
+struct ComplexNormInfinityCone <: AbstractVectorSet
+    dimension::Int
+end
+
+dual_set(s::ComplexNormInfinityCone) = ComplexNormOneCone(dimension(s))
+
+"""
+    ComplexNormOneCone(dimension)
+
+The ``\\ell_1``-norm of complex vectors cone ``\\{ (t,x) \\in \\mathbb{R}\\times\\mathbb{C}^{n} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \\}`` of real `dimension```{}=1+2n``.
+"""
+struct ComplexNormOneCone <: AbstractVectorSet
+    dimension::Int
+end
+
+dual_set(s::ComplexNormOneCone) = ComplexNormInfinityCone(dimension(s))
+
+"""
     SecondOrderCone(dimension)
 
 The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_2 \\}`` of dimension `dimension`.
