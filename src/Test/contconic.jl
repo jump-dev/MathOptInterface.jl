@@ -1797,6 +1797,7 @@ powtests = Dict("pow1v" => pow1vtest,
 
 @moitestset pow
 
+
 function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool; exponent::Float64 = 0.9)
     atol = config.atol
     rtol = config.rtol
@@ -1806,7 +1807,6 @@ function _dualpow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool
     #      x_2 + v == 0
     #      w == 1
     #     (u, v, w) ∈ DualPowerCone(exponent)
-
 
     # By the Weighted AM–GM inequality, you have
     # 0.9a + 0.1b >= a^0.9 b^0.1
@@ -1894,6 +1894,64 @@ dualpowtests = Dict("dualpow1v" => dualpow1vtest,
                     "dualpow1f" => dualpow1ftest)
 
 @moitestset dualpow
+
+
+function relentr1test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem RelEntr1
+    # min u
+    #  st  u >= 2*log(2/1) + 3*log(3/5)  (i.e. (u, 1, 5, 2, 3) in RelativeEntropyCone(5))
+    # Optimal solution is:
+    # u = 2*log(2/1) + 3*log(3/5) ≈ -0.1461825
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    u = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    relentr = MOI.add_constraint(model, MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, u))], Float64[0, 1, 5, 2, 3]), MOI.RelativeEntropyCone(5))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(u))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        u_opt = 2 * log(2) + 3 * log(3 / 5)
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ u_opt atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ u_opt atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), u) ≈ u_opt atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), relentr) ≈ [u_opt, 1, 5, 2, 3] atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), relentr) ≈ [1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1] atol=atol rtol=rtol
+        end
+    end
+end
+
+
+relentrtests = Dict("relentr1" => relentr1test)
+
+@moitestset relentr
 
 
 function normspec1test(model::MOI.ModelLike, config::TestConfig)
@@ -2607,6 +2665,7 @@ const contconictests = Dict("lin" => lintest,
                             "dualexp" => dualexptest,
                             "pow" => powtest,
                             "dualpow" => dualpowtest,
+                            "relentr" => relentrtest,
                             "normspec" => normspectest,
                             "normnuc" => normnuctest,
                             "sdp" => sdptest,

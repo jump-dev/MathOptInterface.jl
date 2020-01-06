@@ -288,6 +288,15 @@ function Base.:(==)(set1::S, set2::S) where S <: Union{PowerCone, DualPowerCone}
 end
 
 """
+    RelativeEntropyCone(dimension)
+
+The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}`` of dimension `dimension```{}=2n+1``.
+"""
+struct RelativeEntropyCone <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
     NormSpectralCone(row_dim, column_dim)
 
 The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
@@ -760,7 +769,7 @@ function Base.copy(
         Reals, Zeros, Nonnegatives, Nonpositives, GreaterThan, LessThan,
         EqualTo, Interval, NormInfinityCone, NormOneCone, SecondOrderCone,
         RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone,
-        DualExponentialCone, PowerCone, DualPowerCone,
+        DualExponentialCone, PowerCone, DualPowerCone, RelativeEntropyCone,
         NormSpectralCone, NormNuclearCone,
         PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
         LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,

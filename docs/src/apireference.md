@@ -346,6 +346,7 @@ ExponentialCone
 DualExponentialCone
 PowerCone
 DualPowerCone
+RelativeEntropyCone
 NormSpectralCone
 NormNuclearCone
 SOS1
@@ -753,6 +754,7 @@ Bridges.Constraint.QuadtoSOCBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
 Bridges.Constraint.GeoMeanBridge
+Bridges.Constraint.RelativeEntropyBridge
 Bridges.Constraint.NormSpectralBridge
 Bridges.Constraint.NormNuclearBridge
 Bridges.Constraint.SquareBridge

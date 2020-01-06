@@ -45,6 +45,7 @@ end
     @test MOI.dimension(MOI.NormInfinityCone(5)) === 5
     @test MOI.dimension(MOI.NormOneCone(5)) === 5
     @test MOI.dimension(MOI.DualExponentialCone()) === 3
+    @test MOI.dimension(MOI.RelativeEntropyCone(5)) === 5
     @test MOI.dimension(MOI.NormSpectralCone(2, 3)) === 7
     @test MOI.dimension(MOI.NormNuclearCone(2, 3)) === 7
     @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(4)) === 10

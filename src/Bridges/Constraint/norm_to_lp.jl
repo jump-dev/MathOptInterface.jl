@@ -75,7 +75,7 @@ struct NormOneBridge{T, F, G, H} <: AbstractBridge
     ge_index::CI{F, MOI.GreaterThan{T}}
     nn_index::CI{G, MOI.Nonnegatives}
 end
-function bridge_constraint(::Type{NormOneBridge{T, F, G, H}}, model::MOI.ModelLike, f::MOI.AbstractVectorFunction, s::MOI.NormOneCone) where {T, F, G, H}
+function bridge_constraint(::Type{NormOneBridge{T, F, G, H}}, model::MOI.ModelLike, f::H, s::MOI.NormOneCone) where {T, F, G, H}
     f_scalars = MOIU.eachscalar(f)
     d = MOI.dimension(s)
     y = MOI.add_variables(model, d - 1)

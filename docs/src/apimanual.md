@@ -92,6 +92,10 @@ sets recognized by the solver.
   ``\{ x \in \mathbb{R}^\mbox{dimension} : x \ge 0 \}``
 * **[`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives)**:
   ``\{ x \in \mathbb{R}^\mbox{dimension} : x \le 0 \}``
+* **[`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone)**:
+  ``\{ (t,x) \\in \\mathbb{R}^\mbox{dimension} : t \\ge \\lVert x \\rVert_\\infty = \\max_i \\lvert x_i \\rvert \}``
+* **[`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone)**:
+  ``\{ (t,x) \\in \\mathbb{R}^\mbox{dimension} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
 * **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
@@ -108,8 +112,10 @@ sets recognized by the solver.
 * **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**:
   ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent}
   \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
+* **[`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone)**:
+  ``\{ (u, v, w) \\in \\mathbb{R}^\mbox{dimension} : u \\ge \\sum_i w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \}``
 * **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}`` 
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
   ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
