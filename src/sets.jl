@@ -242,15 +242,15 @@ struct GeometricMeanCone <: AbstractVectorSet
 end
 
 """
-    GeneralizedGeometricMeanCone{T <: Real}(exponents::Vector{T})
+    WeightedPowerMeanCone(exponents::Vector{<:Real})
 
-The generalized geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{1+n} : x \\ge 0, t^{sum(exponents)} \\le \\prod_i x_i^{exponents_i} \\}`` of dimension ``1+n`` with parameter vector `exponents```{}\\in \\mathbb{R}_{++}^{n}``.
+The generalized geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{1+n} : x \\ge 0, t^{sum(exponents)} \\le \\prod_i x_i^{exponents_i} \\}`` of dimension ``1+n`` with positive parameter vector `exponents```{}\\in \\mathbb{R}_{>0}^n``.
 """
-struct GeneralizedGeometricMeanCone{T <: Real} <: AbstractVectorSet
-    exponents::Vector{T}
+struct WeightedPowerMeanCone{T <: Real} <: AbstractVectorSet
+    exponents::Vector{<:Real}
 end
 
-dimension(s::GeneralizedGeometricMeanCone) = 1 + length(s.exponents)
+dimension(s::WeightedPowerMeanCone) = 1 + length(s.exponents)
 
 """
     ExponentialCone()
