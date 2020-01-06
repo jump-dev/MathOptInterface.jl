@@ -108,9 +108,13 @@ sets recognized by the solver.
 * **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**:
   ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent}
   \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
+* **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}`` 
+* **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
-  the upper triangle of a PSD matrix }\}``
+  the upper triangle of a PSD matrix} \}``
 * **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix} \}``
 * **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**:
