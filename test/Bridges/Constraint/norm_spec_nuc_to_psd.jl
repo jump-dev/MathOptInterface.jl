@@ -28,10 +28,12 @@ config = MOIT.TestConfig()
 
     MOIT.normspec1test(bridged_mock, config)
 
+    var_names = ["t"]
+    MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+
+    psd = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle}())
+
     @testset "Test mock model" begin
-        var_names = ["t"]
-        MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
-        psd = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle}())
         @test length(psd) == 1
         MOI.set(mock, MOI.ConstraintName(), psd[1], "psd")
 
@@ -46,8 +48,6 @@ config = MOIT.TestConfig()
     end
 
     @testset "Test bridged model" begin
-        var_names = ["t"]
-        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
         spec = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone}())
         @test length(spec) == 1
         MOI.set(bridged_mock, MOI.ConstraintName(), spec[1], "spec")
@@ -63,6 +63,16 @@ config = MOIT.TestConfig()
     end
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone}()))
+
+    attr = MOI.ConstraintPrimalStart()
+    @testset "$attr" begin
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        value = Float64[4, 1, 1, 1, -1, 0, 1]
+        MOI.set(bridged_mock, attr, ci, value)
+        @test MOI.get(bridged_mock, attr, ci) ≈ value
+        @test MOI.get(mock, attr, psd[1]) == Float64[4, 0, 4, 0, 0, 4, 1, 1, 0, 4, 1, -1, 1, 0, 4]
+    end
+
     test_delete_bridge(bridged_mock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0),))
 end
 
@@ -88,13 +98,14 @@ end
 
     MOIT.normnuc1test(bridged_mock, config)
 
+    greater = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
+    psd = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle}())
+
     @testset "Test mock model" begin
         var_names = ["t", "U11", "U12", "U22", "U31", "U32", "U33", "V11", "V12", "V22"]
         MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
-        greater = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}())
         @test length(greater) == 1
         MOI.set(mock, MOI.ConstraintName(), greater[1], "greater")
-        psd = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle}())
         @test length(psd) == 1
         MOI.set(mock, MOI.ConstraintName(), psd[1], "psd")
 
@@ -110,8 +121,7 @@ end
     end
 
     @testset "Test bridged model" begin
-        var_names = ["t"]
-        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), ["t"])
         nuc = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone}())
         @test length(nuc) == 1
         MOI.set(bridged_mock, MOI.ConstraintName(), nuc[1], "nuc")
@@ -123,10 +133,21 @@ end
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(bridged_mock, model, var_names, ["nuc"])
+        MOIU.test_models_equal(bridged_mock, model, ["t"], ["nuc"])
     end
 
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone}()))
+
+    attr = MOI.ConstraintDualStart()
+    @testset "$attr" begin
+        @test MOI.supports(bridged_mock, attr, typeof(ci))
+        value = Float64[4, 1, 1, 1, -1, 0, 1]
+        MOI.set(bridged_mock, attr, ci, value)
+        @test MOI.get(bridged_mock, attr, ci) ≈ value
+        @test MOI.get(mock, attr, greater[1]) == 4
+        @test MOI.get(mock, attr, psd[1]) == Float64[4, 0, 4, 0, 0, 4, 0.5, 0.5, 0, 4, 0.5, -0.5, 0.5, 0, 4]
+    end
+
     test_delete_bridge(bridged_mock, ci, 1, (
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
         (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle, 0)))
