@@ -28,4 +28,6 @@
         @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x],
                                  ones(2))
     end
+    attr = MOI.VariablePrimal()
+    @test_deprecated MOI._result_index_field(attr)
 end

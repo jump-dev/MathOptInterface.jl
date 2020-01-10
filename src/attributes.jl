@@ -949,7 +949,6 @@ struct VariablePrimal <: AbstractVariableAttribute
     result_index::Int
 end
 VariablePrimal() = VariablePrimal(1)
-_result_index_field(attr::VariablePrimal) = attr.result_index
 
 """
     CallbackVariablePrimal(callback_data)
@@ -1041,7 +1040,6 @@ struct ConstraintPrimal <: AbstractConstraintAttribute
     result_index::Int
 end
 ConstraintPrimal() = ConstraintPrimal(1)
-_result_index_field(attr::ConstraintPrimal) = attr.result_index
 
 """
     ConstraintDual(result_index)
@@ -1054,7 +1052,6 @@ struct ConstraintDual <: AbstractConstraintAttribute
     result_index::Int
 end
 ConstraintDual() = ConstraintDual(1)
-_result_index_field(attr::ConstraintDual) = attr.result_index
 
 """
     ConstraintBasisStatus(result_index)
@@ -1279,7 +1276,6 @@ struct PrimalStatus <: AbstractModelAttribute
     result_index::Int
 end
 PrimalStatus() = PrimalStatus(1)
-_result_index_field(attr::PrimalStatus) = attr.result_index
 
 """
     DualStatus(result_index)
@@ -1293,7 +1289,6 @@ struct DualStatus <: AbstractModelAttribute
     result_index::Int
 end
 DualStatus() = DualStatus(1)
-_result_index_field(attr::DualStatus) = attr.result_index
 
 """
     is_set_by_optimize(::AnyAttribute)
