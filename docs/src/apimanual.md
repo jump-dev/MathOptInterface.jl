@@ -1052,7 +1052,7 @@ The `Bridges.Variable.Vectorize` is the bridge optimizer that applies the
 the optimizer
 ```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
 bridged_optimizer = MOI.Bridges.Variable.Vectorize{Float64}(optimizer)
-MOI.supports_constraint(bridged_optimizer, MOI.SingleVariable, MOI.GreaterThan{Float64})
+MOI.supports_constrained_variable(bridged_optimizer, MOI.GreaterThan{Float64})
 
 # output
 
@@ -1143,9 +1143,9 @@ if `model` supports creating free variables. However, if `model` does not
 support creating free variables, then it should only implement
 [`add_constrained_variable`](@ref) and not [`add_variable`](@ref) nor
 [`add_constraint`](@ref) for [`SingleVariable`](@ref)-in-`typeof(set)`.
-In addition, it should implement `supports_constraint(::Optimizer,
-::Type{VectorOfVariables}, ::Type{Reals})` and return `false` so that free
-variables are bridged, see [`supports_constraint`](@ref).
+In addition, it should implement `supports_constrained_variables(::Optimizer,
+::Type{Reals})` and return `false` so that free variables are bridged,
+see [`supports_constrained_variables`](@ref).
 
 ### Handling duplicate coefficients
 

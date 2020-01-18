@@ -35,6 +35,39 @@ done in the current state of the model `model`.
 add_variable(model::ModelLike) = throw(AddVariableNotAllowed())
 
 """
+    supports_constrained_variable(
+        model::ModelLike,
+        S::Type{<:AbstractScalarSet}
+    )::Bool
+
+Return a `Bool` indicating whether `model` supports constraining a variable
+to belong to a set of type `S` either on creation of the variable with
+[`add_constrained_variable`](@ref) or after the variable is created with
+[`add_constraint`](@ref).
+
+By default, this function falls back to
+`supports_constrained_variables(model, Reals) &&
+supports_constraint(model, MOI.SingleVariable, S)` which is the correct
+definition for most models.
+
+## Example
+
+Suppose that a solver supports only two kind of variables: binary variables
+and continuous variables with a lower bound. If the solver decide not to
+support `SingleVariable`-in-`Binary` and `SingleVariable`-in-`GreaterThan`
+constraints, it only has to implement `add_constrained_variable` for these
+two sets which prevents the user to add both a binary constraint and a
+lower bound on the same variable. Moreover, if the user adds a
+`SingleVariable`-in-`GreaterThan` constraint, it will transparently be bridged
+into a supported constraint.
+"""
+function supports_constrained_variable(model::ModelLike,
+                                       S::Type{<:AbstractScalarSet})
+    return supports_constrained_variables(model, Reals) &&
+        supports_constraint(model, SingleVariable, S)
+end
+
+"""
     add_constrained_variable(
         model::ModelLike,
         set::AbstractScalarSet
@@ -54,6 +87,49 @@ function add_constrained_variable(model::ModelLike, set::AbstractScalarSet)
     constraint = add_constraint(model, SingleVariable(variable), set)
     return variable, constraint
 end
+
+"""
+    supports_constrained_variables(
+        model::ModelLike,
+        S::Type{<:AbstractScalarSet}
+    )::Bool
+
+Return a `Bool` indicating whether `model` supports constraining a vector of
+variables to belong to a set of type `S` either on creation of the vector of
+variables with [`add_constrained_variables`](@ref) or after the variable is
+created with [`add_constraint`](@ref).
+
+By default, if `S` is `Reals` then this function returns `true` and otherwise,
+it falls back to `supports_constrained_variables(model, Reals) &&
+supports_constraint(model, MOI.VectorOfVariables, S)` which is the correct
+definition for most models.
+
+## Example
+
+In the standard conic form, the variables are grouped into several cones
+and the constraints are affine equality constraints.
+If `Reals` is not one of the cones supported by the solvers then it needs
+to implement `supports_constrained_variables(::Optimizer, ::Type{Reals}) = false`
+as free variables are not supported.
+The solvers should then implement
+`supports_constrained_variables(::Optimizer, ::Type{<:SupportedCones}) = true`
+where `SupportedCones` is the union of all cone types that are supported
+but it should not implement
+`supports_constraint(::Type{VectorOfVariables}, Type{<:SupportedCones})`
+as it should return `false`.
+This prevents the user to constrain the same variable in two different cones.
+When a `VectorOfVariables`-in-`S` is added, the variables of the vector
+have already been created so they already belong to given cones.
+The constraint will therefore be bridged by adding slack variables in `S`
+and equality constraints ensuring that the slack variables are equal to the
+corresponding variables of the given constraint function.
+"""
+function supports_constrained_variables(model::ModelLike,
+                                        S::Type{<:AbstractVectorSet})
+    return supports_constrained_variables(model, Reals) &&
+        supports_constraint(model, VectorOfVariables, S)
+end
+supports_constrained_variables(::ModelLike, ::Type{Reals}) = true
 
 """
     add_constrained_variables(
