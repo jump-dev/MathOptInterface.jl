@@ -310,6 +310,7 @@ Functions for getting properties of sets.
 ```@docs
 dimension
 dual_set
+dual_set_type
 constant(s::EqualTo)
 supports_dimension_update
 update_dimension

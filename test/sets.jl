@@ -97,4 +97,102 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         @test MOI.dimension(MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(1.0))) == 2
         @test MOI.dimension(MOI.Complements(5)) == 10
     end
+
+    @testset "Dual Set" begin
+        function dual_set_test(set1, set2)
+            @test MOI.dual_set(set1) == set2
+            @test MOI.dual_set_type(typeof(set1)) == typeof(set2)
+            @test MOI.dual_set(set2) == set1
+            @test MOI.dual_set_type(typeof(set2)) == typeof(set1)
+        end
+        function self_dual_set_test(set)
+            @test MOI.dual_set(set) == set
+            @test MOI.dual_set_type(typeof(set)) == typeof(set)
+        end
+        # Nonpositives
+        nonpositives3 = MOI.Nonpositives(3)
+        nonpositives4 = MOI.Nonpositives(4)
+        self_dual_set_test(nonpositives3)
+        @test MOI.dual_set(nonpositives3) != nonpositives4
+        self_dual_set_test(nonpositives4)
+        # Nonnegatives
+        nonnegatives3 = MOI.Nonnegatives(3)
+        nonnegatives4 = MOI.Nonnegatives(4)
+        self_dual_set_test(nonnegatives3)
+        @test MOI.dual_set(nonnegatives3) != nonnegatives4
+        self_dual_set_test(nonnegatives4)
+        # Zeros and Reals
+        zeros3 = MOI.Zeros(3)
+        zeros4 = MOI.Zeros(4)
+        reals3 = MOI.Reals(3)
+        reals4 = MOI.Reals(4)
+        dual_set_test(zeros3, reals3)
+        @test MOI.dual_set(reals3) != zeros4
+        dual_set_test(zeros4, reals4)
+        @test MOI.dual_set(zeros4) != reals3
+        # Norm-1 and norm-∞ cones
+        norminf2 = MOI.NormInfinityCone(2)
+        norminf3 = MOI.NormInfinityCone(3)
+        normone2 = MOI.NormOneCone(2)
+        normone3 = MOI.NormOneCone(3)
+        dual_set_test(norminf2, normone2)
+        dual_set_test(norminf3, normone3)
+        @test MOI.dual_set(norminf2) != normone3
+        @test MOI.dual_set(normone2) != norminf3
+        # SOC
+        soc2 = MOI.SecondOrderCone(2)
+        soc3 = MOI.SecondOrderCone(3)
+        self_dual_set_test(soc2)
+        @test MOI.dual_set(soc2) != soc3
+        self_dual_set_test(soc3)
+        # RSOC
+        rsoc2 = MOI.RotatedSecondOrderCone(2)
+        rsoc3 = MOI.RotatedSecondOrderCone(3)
+        self_dual_set_test(rsoc2)
+        @test MOI.dual_set(rsoc2) != rsoc3
+        self_dual_set_test(rsoc3)
+        # Norm-spectral and norm-nuclear cones
+        normspec22 = MOI.NormSpectralCone(2, 2)
+        normspec23 = MOI.NormSpectralCone(2, 3)
+        normnuc22 = MOI.NormNuclearCone(2, 2)
+        normnuc23 = MOI.NormNuclearCone(2, 3)
+        dual_set_test(normspec23, normnuc23)
+        dual_set_test(normspec22, normnuc22)
+        @test MOI.dual_set(normspec22) != normnuc23
+        @test MOI.dual_set(normnuc22) != normspec23
+        # PSDtriangle
+        psd2 = MOI.PositiveSemidefiniteConeTriangle(2)
+        psd3 = MOI.PositiveSemidefiniteConeTriangle(3)
+        self_dual_set_test(psd2)
+        @test MOI.dual_set(psd2) != psd3
+        self_dual_set_test(psd3)
+        # Exponential
+        exp = MOI.ExponentialCone()
+        dual_exp = MOI.DualExponentialCone()
+        dual_set_test(exp, dual_exp)
+        @test MOI.dual_set(exp) != exp
+        dual_set_test(dual_exp, exp)
+        @test MOI.dual_set(dual_exp) != dual_exp
+        # Power
+        pow03 = MOI.PowerCone(0.3)
+        pow04 = MOI.PowerCone(0.4)
+        dual_pow03 = MOI.DualPowerCone(0.3)
+        dual_set_test(pow03, dual_pow03)
+        @test MOI.dual_set(pow03) != pow03
+        dual_set_test(dual_pow03, pow03)
+        @test MOI.dual_set(dual_pow03) != pow04
+        @test MOI.dual_set(dual_pow03) != dual_pow03
+        # PSDSquare error
+        s = MOI.PositiveSemidefiniteConeSquare(4)
+        err = ErrorException("""Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
+                                For more details see the comments in `src/Bridges/Constraint/square.jl`.""")
+        @test_throws err MOI.dual_set(MOI.PositiveSemidefiniteConeSquare(4))
+        @test_throws err MOI.dual_set_type(MOI.PositiveSemidefiniteConeSquare)
+        # Not implemented
+        s = MOI.LogDetConeTriangle(4)
+        err = ErrorException("Dual of $s is not implemented.")
+        @test_throws err MOI.dual_set(MOI.LogDetConeTriangle(4))
+        err = ErrorException("Dual type of $(typeof(s)) is not implemented.")
+        @test_throws err MOI.dual_set_type(MOI.LogDetConeTriangle)
+    end
 end
