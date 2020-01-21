@@ -58,7 +58,7 @@ end
 function Base.show(io::IO, graph::Graph)
     print(io, "Bridge graph with ")
     print(io, length(graph.variable_best), " variable nodes, ")
-    print(io, length(graph.constraint_best), " variable nodes and ")
+    print(io, length(graph.constraint_best), " constraint nodes and ")
     print(io, length(graph.objective_best), " objective nodes.")
 end
 function variable_nodes(graph::Graph)
