@@ -29,11 +29,11 @@ sum of a nonnegative and a nonpositive variables.
 """ # Implemented as only one method to avoid ambiguity
 function supports_constraint(model::ModelLike, F::Type{<:AbstractFunction},
                              S::Type{<:AbstractSet})
-    # TODO removed this condition, as `supports_constrained_variables(model, Reals)`
+    # TODO removed this condition, as `supports_add_constrained_variables(model, Reals)`
     # should be called instead of
     # `supports_constraint(model, ::VectorOfVariables, ::Reals)
     if F === VectorOfVariables && S === Reals
-        return supports_constrained_variables(model, Reals)
+        return supports_add_constrained_variables(model, Reals)
     else
         return false
     end

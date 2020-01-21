@@ -103,7 +103,7 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
-        @test MOI.supports_constrained_variables(model, MOI.Nonpositives)
+        @test MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
     else
         @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
@@ -258,7 +258,7 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
-    @test MOI.supports_constrained_variables(model, MOI.Nonpositives)
+    @test MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -586,7 +586,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
-        @test MOI.supports_constrained_variables(model, MOI.SecondOrderCone)
+        @test MOI.supports_add_constrained_variables(model, MOI.SecondOrderCone)
     else
         @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)
     end
@@ -875,7 +875,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     @test MOI.supports(model, MOI.ObjectiveSense())
     if abvars
         @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
-        @test MOI.supports_constrained_variables(model, MOI.RotatedSecondOrderCone)
+        @test MOI.supports_add_constrained_variables(model, MOI.RotatedSecondOrderCone)
     else
         @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)
     end
@@ -977,7 +977,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable,MOI.EqualTo{Float64})
     @test MOI.supports_constraint(model, MOI.SingleVariable,MOI.LessThan{Float64})
     @test MOI.supports_constraint(model, MOI.SingleVariable,MOI.GreaterThan{Float64})
-    @test MOI.supports_constrained_variables(model, MOI.RotatedSecondOrderCone)
+    @test MOI.supports_add_constrained_variables(model, MOI.RotatedSecondOrderCone)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -1045,7 +1045,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
-    @test MOI.supports_constrained_variables(model, MOI.Nonnegatives)
+    @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)
@@ -1152,7 +1152,7 @@ function rotatedsoc4test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
-    @test MOI.supports_constrained_variables(model, MOI.RotatedSecondOrderCone)
+    @test MOI.supports_add_constrained_variables(model, MOI.RotatedSecondOrderCone)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)

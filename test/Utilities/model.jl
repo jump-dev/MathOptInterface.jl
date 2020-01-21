@@ -61,18 +61,18 @@ struct DummySet <: MOI.AbstractScalarSet end
     @testset "`SingleVariable`-in-`S`" begin
         @test !MOI.supports_constraint(model, DummyFunction, DummySet)
         @test !MOI.supports_constraint(model, MOI.SingleVariable, DummySet)
-        @test !MOI.supports_constrained_variable(model, DummySet)
+        @test !MOI.supports_add_constrained_variable(model, DummySet)
         for S in [MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
                   MOI.Interval{T}, MOI.Integer, MOI.ZeroOne,
                   MOI.Semicontinuous{T}, MOI.Semiinteger{T}]
             @test MOI.supports_constraint(model, MOI.SingleVariable, S)
-            @test MOI.supports_constrained_variable(model, S)
+            @test MOI.supports_add_constrained_variable(model, S)
         end
         U = Float32
         for S in [MOI.EqualTo{U}, MOI.GreaterThan{U}, MOI.LessThan{U},
                   MOI.Interval{U}, MOI.Semicontinuous{U}, MOI.Semiinteger{U}]
             @test !MOI.supports_constraint(model, MOI.SingleVariable, S)
-            @test !MOI.supports_constrained_variable(model, S)
+            @test !MOI.supports_add_constrained_variable(model, S)
         end
     end
 end
