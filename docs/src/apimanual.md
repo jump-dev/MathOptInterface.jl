@@ -864,7 +864,7 @@ read!(io, src_2)
 ### Duals
 
 Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cones, the model may be called a conic optimization problem.
-For conic-form minimization problems, the primal is:
+For a minimization problem in geometric conic form, the primal is:
 
 ```math
 \begin{align}
@@ -874,7 +874,7 @@ For conic-form minimization problems, the primal is:
 \end{align}
 ```
 
-and the dual is:
+and the dual is a maximization problem in standard conic form:
 
 ```math
 \begin{align}
@@ -888,7 +888,7 @@ and the dual is:
 
 where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i^*`` is its dual cone.
 
-For conic-form maximization problems, the primal is:
+For a maximization problem in geometric conic form, the primal is:
 ```math
 \begin{align}
 & \max_{x \in \mathbb{R}^n} & a_0^T x + b_0
@@ -897,7 +897,7 @@ For conic-form maximization problems, the primal is:
 \end{align}
 ```
 
-and the dual is:
+and the dual is a minimization problem in standard conic form:
 
 ```math
 \begin{align}
@@ -1127,11 +1127,12 @@ MOI.set(model, MyPackage.PrintLevel(), 0)
 
 ### Supported constrained variables and constraints
 
-The solver interface should only implement support for constrained variables
-(see [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref))
-or constraints that directly map to a structure exploited by the solver
-algorithm. There is no need to add support for additional types, this is
-handled by the [Automatic reformulation](@ref). Furthermore, this allows
+The solver interface should only implement support for support for variables
+constrained on creation (see
+[`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref)) or
+constraints that directly map to a structure exploited by the solver algorithm.
+There is no need to add support for additional types, this is handled by the
+[Automatic reformulation](@ref). Furthermore, this allows
 [`supports_constraint`](@ref) to indicate which types are exploited by the
 solver and hence allows layers such as [`Bridges.LazyBridgeOptimizer`](@ref)
 to accurately select the most appropriate transformations.
@@ -1139,13 +1140,14 @@ to accurately select the most appropriate transformations.
 As [`add_constrained_variable`](@ref) (resp. [`add_constrained_variables`](@ref))
 falls back to [`add_variable`](@ref) (resp. [`add_variables`](@ref)) followed by
 [`add_constraint`](@ref), there is no need to implement this function
-if `model` supports creating free variables. However, if `model` does not
-support creating free variables, then it should only implement
-[`add_constrained_variable`](@ref) and not [`add_variable`](@ref) nor
-[`add_constraint`](@ref) for [`SingleVariable`](@ref)-in-`typeof(set)`.
-In addition, it should implement `supports_add_constrained_variables(::Optimizer,
-::Type{Reals})` and return `false` so that free variables are bridged,
-see [`supports_add_constrained_variables`](@ref).
+if `model` does not require that variables be constrained when they are created.
+However, if `model` requires that variables be constrained when they're created,
+then it should only implement [`add_constrained_variable`](@ref) and not
+[`add_variable`](@ref) nor [`add_constraint`](@ref) for
+[`SingleVariable`](@ref)-in-`typeof(set)`. In addition, it should implement
+`supports_add_constrained_variables(::Optimizer, ::Type{Reals})` and return
+`false` so that free variables are bridged, see
+[`supports_add_constrained_variables`](@ref).
 
 ### Handling duplicate coefficients
 

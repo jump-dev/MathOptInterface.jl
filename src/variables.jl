@@ -53,13 +53,14 @@ definition for most models.
 ## Example
 
 Suppose that a solver supports only two kind of variables: binary variables
-and continuous variables with a lower bound. If the solver decide not to
+and continuous variables with a lower bound. If the solver decides not to
 support `SingleVariable`-in-`Binary` and `SingleVariable`-in-`GreaterThan`
 constraints, it only has to implement `add_constrained_variable` for these
 two sets which prevents the user to add both a binary constraint and a
 lower bound on the same variable. Moreover, if the user adds a
-`SingleVariable`-in-`GreaterThan` constraint, it will transparently be bridged
-into a supported constraint.
+`SingleVariable`-in-`GreaterThan` constraint, implementing this interface (i.e.,
+`supports_add_constrained_variables`) enables the constraint to be transparently
+bridged. into a supported constraint.
 """
 function supports_add_constrained_variable(model::ModelLike,
                                        S::Type{<:AbstractScalarSet})
@@ -106,23 +107,23 @@ definition for most models.
 
 ## Example
 
-In the standard conic form, the variables are grouped into several cones
-and the constraints are affine equality constraints.
+In the standard conic form (see [Duals](@ref)), the variables are grouped into
+several cones and the constraints are affine equality constraints.
 If `Reals` is not one of the cones supported by the solvers then it needs
 to implement `supports_add_constrained_variables(::Optimizer, ::Type{Reals}) = false`
 as free variables are not supported.
 The solvers should then implement
 `supports_add_constrained_variables(::Optimizer, ::Type{<:SupportedCones}) = true`
-where `SupportedCones` is the union of all cone types that are supported
-but it should not implement
+where `SupportedCones` is the union of all cone types that are supported;
+but it does not have to implement the method
 `supports_constraint(::Type{VectorOfVariables}, Type{<:SupportedCones})`
-as it should return `false`.
+as it should return `false` and it's the default.
 This prevents the user to constrain the same variable in two different cones.
 When a `VectorOfVariables`-in-`S` is added, the variables of the vector
 have already been created so they already belong to given cones.
-The constraint will therefore be bridged by adding slack variables in `S`
-and equality constraints ensuring that the slack variables are equal to the
-corresponding variables of the given constraint function.
+If bridges are enabled, the constraint will therefore be bridged by adding slack
+variables in `S` and equality constraints ensuring that the slack variables are
+equal to the corresponding variables of the given constraint function.
 
 Note that there may also be sets for which
 `!supports_add_constrained_variables(model, S)` and
@@ -130,9 +131,11 @@ Note that there may also be sets for which
 For instance, suppose a solver supports positive semidefinite variable
 constraints and two types of variables: binary variables and nonnegative
 variables. Then the solver should support adding
-`VectorOfVariables`-in-`PositiveSemidefiniteConeTriangle` constraints but it
+`VectorOfVariables`-in-`PositiveSemidefiniteConeTriangle` constraints, but it
 should not support creating variables constrained to belong to the
-`PositiveSemidefiniteConeTriangle` as free variables are not supported.
+`PositiveSemidefiniteConeTriangle` because the variables in
+`PositiveSemidefiniteConeTriangle` should first be created as either binary or
+non-negative.
 """
 function supports_add_constrained_variables(
     model::ModelLike, S::Type{<:AbstractVectorSet})
