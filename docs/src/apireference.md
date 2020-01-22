@@ -120,6 +120,9 @@ ListOfConstraintAttributesSet
 ```@docs
 AbstractOptimizer
 optimize!
+UninstantiatedOptimizer
+instantiate
+instantiate_with_bridges
 ```
 
 List of optimizers attributes
