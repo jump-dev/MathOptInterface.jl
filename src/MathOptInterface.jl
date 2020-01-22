@@ -126,4 +126,6 @@ include("Bridges/Bridges.jl")     # MOI.Bridges
 include("Benchmarks/Benchmarks.jl")
 include("FileFormats/FileFormats.jl")
 
+include("instantiate.jl")
+
 end
