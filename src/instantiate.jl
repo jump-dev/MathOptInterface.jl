@@ -90,7 +90,8 @@ Create an instance of optimizer represented by [`UninstantiatedOptimizer`](@ref)
 with all the bridges defined in the MathOptInterface.Bridges submodule enabled
 with coefficient type `T`.
 If `!MOI.Utilities.supports_default_copy_to(optimizer, with_names)` then a
-[`CachingOptimizer`](@ref) is added to store a cache of the bridged model.
+[`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
+model.
 """
 function instantiate_with_bridges(uninstantiated, with_names::Bool=false,
                                   T::Type=Float64)
