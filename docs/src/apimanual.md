@@ -1146,7 +1146,7 @@ then it should only implement [`add_constrained_variable`](@ref) and not
 [`add_variable`](@ref) nor [`add_constraint`](@ref) for
 [`SingleVariable`](@ref)-in-`typeof(set)`. In addition, it should implement
 `supports_add_constrained_variables(::Optimizer, ::Type{Reals})` and return
-`false` so that free variables are bridged, see
+`false` so that these variables are bridged, see
 [`supports_add_constrained_variables`](@ref).
 
 ### Handling duplicate coefficients

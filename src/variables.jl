@@ -60,7 +60,7 @@ two sets which prevents the user to add both a binary constraint and a
 lower bound on the same variable. Moreover, if the user adds a
 `SingleVariable`-in-`GreaterThan` constraint, implementing this interface (i.e.,
 `supports_add_constrained_variables`) enables the constraint to be transparently
-bridged. into a supported constraint.
+bridged into a supported constraint.
 """
 function supports_add_constrained_variable(model::ModelLike,
                                        S::Type{<:AbstractScalarSet})
@@ -115,7 +115,7 @@ as free variables are not supported.
 The solvers should then implement
 `supports_add_constrained_variables(::Optimizer, ::Type{<:SupportedCones}) = true`
 where `SupportedCones` is the union of all cone types that are supported;
-but it does not have to implement the method
+it does not have to implement the method
 `supports_constraint(::Type{VectorOfVariables}, Type{<:SupportedCones})`
 as it should return `false` and it's the default.
 This prevents the user to constrain the same variable in two different cones.
