@@ -224,6 +224,8 @@ add_variable
 add_variables
 add_constrained_variable
 add_constrained_variables
+supports_add_constrained_variable
+supports_add_constrained_variables
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
