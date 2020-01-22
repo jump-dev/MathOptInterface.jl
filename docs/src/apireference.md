@@ -816,7 +816,7 @@ Bridges.added_constraint_types
 ```
 Additionally, variable bridges should implement:
 ```@docs
-Bridges.Variable.supports_add_constrained_variable
+Bridges.Variable.supports_constrained_variable
 Bridges.Variable.concrete_bridge_type
 Bridges.Variable.bridge_constrained_variable
 ```
