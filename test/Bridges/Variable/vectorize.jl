@@ -115,7 +115,7 @@ end
 
     @testset "MultirowChange" begin
         change = MOI.MultirowChange(y, [(3, 0.0)])
-        message = "The change MathOptInterface.MultirowChange{Float64}(MathOptInterface.VariableIndex(-1), Tuple{Int64,Float64}[(3, 0.0)])" *
+        message = "The change $change" *
             " contains variables bridged into a function with nonzero constant."
         err = MOI.ModifyConstraintNotAllowed(cis[1], change, message)
         @test_throws err MOI.modify(bridged_mock, cis[1], change)
