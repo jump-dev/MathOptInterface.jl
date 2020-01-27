@@ -22,12 +22,6 @@ _to_param(param::Pair{String}) = RawParameter(param.first) => param.second
 function _to_param(param::Pair)
     error("Expected an optimizer attribute or a string, got `$(param.first)` which is a `$(typeof(param.first))`.")
 end
-function _add_params(params::Vector{Pair{AbstractOptimizerAttribute,Any}}) end
-function _add_params(params::Vector{Pair{AbstractOptimizerAttribute,Any}},
-                     param::Pair, other_params::Vararg{Pair, N}) where N
-    push!(params, _to_param(param))
-    _add_params(params, other_params...)
-end
 
 """
     OptimizerWithAttributes(optimizer_constructor, params::Pair...)
@@ -36,24 +30,13 @@ Create an [`OptimizerWithAttributes`](@ref) with the parameters `params`.
 """
 function OptimizerWithAttributes(optimizer_constructor, args::Vararg{Pair, N}) where N
     if !applicable(optimizer_constructor)
-        error(_instantiate_not_callable_message)
+        error(_INSTANTIATE_NOT_CALLABLE_MESSAGE)
     end
-    params = Pair{AbstractOptimizerAttribute,Any}[]
-    _add_params(params, args...)
+    params = Pair{AbstractOptimizerAttribute,Any}[_to_param(arg) for arg in args]
     return OptimizerWithAttributes(optimizer_constructor, params)
 end
 
-function (optimizer_constructor::OptimizerWithAttributes)(;
-    with_bridges::Bool=false, with_names::Bool=false, T::Type=Float64)
-    if with_bridges
-        return instantiate_with_bridges(optimizer_constructor;
-                                        with_names=with_names, T=T)
-    else
-        return instantiate(optimizer_constructor)
-    end
-end
-
-const _instantiate_not_callable_message =
+const _INSTANTIATE_NOT_CALLABLE_MESSAGE =
     "The provided `optimizer_constructor` is invalid. It must be callable with zero" *
     "arguments. For example, \"Ipopt.Optimizer\" or" *
     "\"() -> ECOS.Optimizer()\". It should not be an instantiated optimizer " *
@@ -61,13 +44,14 @@ const _instantiate_not_callable_message =
     "(Note the difference in parentheses!)"
 
 """
-    instantiate(optimizer_constructor)
+    instantiate_and_check(optimizer_constructor)
 
 Create an instance of optimizer by calling `optimizer_constructor`.
+Then check that the type returned is an empty [`AbstractOptimizer`](@ref).
 """
-function instantiate(optimizer_constructor)
+function instantiate_and_check(optimizer_constructor)
     if !applicable(optimizer_constructor)
-        error(_instantiate_not_callable_message)
+        error(_INSTANTIATE_NOT_CALLABLE_MESSAGE)
     end
     optimizer = optimizer_constructor()
     if !isa(optimizer, AbstractOptimizer)
@@ -82,11 +66,12 @@ function instantiate(optimizer_constructor)
 end
 
 """
-    instantiate(optimizer_constructor::OptimizerWithAttributes)
+    instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
 
 Create an instance of optimizer represented by [`OptimizerWithAttributes`](@ref).
+Then check that the type returned is an empty [`AbstractOptimizer`](@ref).
 """
-function instantiate(optimizer_constructor::OptimizerWithAttributes)
+function instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
     optimizer = instantiate(optimizer_constructor.optimizer)
     for param in optimizer_constructor.params
         set(optimizer, param.first, param.second)
@@ -95,23 +80,29 @@ function instantiate(optimizer_constructor::OptimizerWithAttributes)
 end
 
 """
-    instantiate_with_bridges(optimizer_constructor, with_names::Bool=false, T::Type=Float64)
+    instantiate(optimizer_constructor,
+                with_bridge_type::Union{Nothing, Type}=nothing,
+                with_names::Bool=false)
 
-Create an instance of optimizer represented by [`OptimizerWithAttributes`](@ref)
-with all the bridges defined in the MathOptInterface.Bridges submodule enabled
-with coefficient type `T`.
-If `!MOI.Utilities.supports_default_copy_to(optimizer, with_names)` then a
+If `with_bridge_type` is `nothing`, it is equivalent to
+`instance(optimizer_constructor)`. Otherwise, it creates an instance of
+optimizer represented by [`OptimizerWithAttributes`](@ref) with all the bridges
+defined in the MathOptInterface.Bridges submodule enabled with coefficient type
+`with_bridge_type`. If
+`!MOI.Utilities.supports_default_copy_to(optimizer, with_names)` then a
 [`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
 model.
 """
-function instantiate_with_bridges(
-    optimizer_constructor;
-    with_names::Bool=false, T::Type=Float64)
-
-    optimizer = instantiate(optimizer_constructor)
+function instantiate(
+    optimizer_constructor; with_bridge_type::Union{Nothing, Type}=nothing,
+    with_names::Bool=false)
+    optimizer = instantiate_and_check(optimizer_constructor)
+    if with_bridge_type === nothing
+        return optimizer
+    end
     if !Utilities.supports_default_copy_to(optimizer, with_names)
-        universal_fallback = Utilities.UniversalFallback(Utilities.Model{T}())
+        universal_fallback = Utilities.UniversalFallback(Utilities.Model{with_bridge_type}())
         optimizer = Utilities.CachingOptimizer(universal_fallback, optimizer)
     end
-    return Bridges.full_bridge_optimizer(optimizer, T)
+    return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
 end

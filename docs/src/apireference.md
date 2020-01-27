@@ -122,7 +122,7 @@ AbstractOptimizer
 optimize!
 OptimizerWithAttributes
 instantiate
-instantiate_with_bridges
+instantiate_and_check
 ```
 
 List of optimizers attributes
