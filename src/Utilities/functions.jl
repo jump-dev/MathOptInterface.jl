@@ -1542,6 +1542,16 @@ end
 function Base.:*(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}, g::Number)
     return operate(*, typeof(g), f, g)
 end
+# Used by sparse matrix multiplication after
+# https://github.com/JuliaLang/julia/pull/33205
+function Base.:*(f::TypedLike, g::Bool)
+    if g
+        return MA.copy_if_mutable(f)
+    else
+        return zero(typeof(f))
+    end
+end
+Base.:*(f::Bool, g::TypedLike) = g * f
 
 function Base.:^(func::MOI.ScalarAffineFunction{T}, p::Integer) where T
     if iszero(p)
