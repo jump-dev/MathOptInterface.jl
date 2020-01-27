@@ -1,13 +1,13 @@
 """
-    struct UninstantiatedOptimizer
+    struct OptimizerWithAttributes
         optimizer
         params::Vector{Pair{AbstractOptimizerAttribute,<:Any}}
     end
 
-Object representing an optimizer, created by `optimizer()` parametrized by
-parameters listed in `params`. Instances are created with [`instantiate`](@ref).
+Object grouping an optimizer constructor and a list of optimizer attributes.
+Instances are created with [`instantiate`](@ref).
 """
-struct UninstantiatedOptimizer
+struct OptimizerWithAttributes
     # Function that takes zero arguments and returns a new optimizer.
     # The type of the function could be
     # * `Function`: a function, or
@@ -18,8 +18,10 @@ struct UninstantiatedOptimizer
 end
 
 _to_param(param::Pair{<:AbstractOptimizerAttribute}) = param
-_to_param(param::Pair) = RawParameter(param.first) => param.second
-_to_param(param::Pair{Symbol}) = _to_param(string(param.first) => param.second)
+_to_param(param::Pair{String}) = RawParameter(param.first) => param.second
+function _to_param(param::Pair)
+    error("Expected an optimizer attribute or a string, got `$(param.first)` which is a `$(typeof(param.first))`.")
+end
 function _add_params(params::Vector{Pair{AbstractOptimizerAttribute,Any}}) end
 function _add_params(params::Vector{Pair{AbstractOptimizerAttribute,Any}},
                      param::Pair, other_params::Vararg{Pair, N}) where N
@@ -28,74 +30,85 @@ function _add_params(params::Vector{Pair{AbstractOptimizerAttribute,Any}},
 end
 
 """
-    parametrize(uninstantiated, params::Pair...)
+    OptimizerWithAttributes(optimizer_constructor, params::Pair...)
 
-Create an [`UninstantiatedOptimizer`](@ref) with the parameters `params`.
+Create an [`OptimizerWithAttributes`](@ref) with the parameters `params`.
 """
-function parametrize(uninstantiated, args::Vararg{Pair, N}) where N
-    if !applicable(uninstantiated)
+function OptimizerWithAttributes(optimizer_constructor, args::Vararg{Pair, N}) where N
+    if !applicable(optimizer_constructor)
         error(_instantiate_not_callable_message)
     end
     params = Pair{AbstractOptimizerAttribute,Any}[]
     _add_params(params, args...)
-    return UninstantiatedOptimizer(uninstantiated, params)
+    return OptimizerWithAttributes(optimizer_constructor, params)
+end
+
+function (optimizer_constructor::OptimizerWithAttributes)(;
+    with_bridges::Bool=false, with_names::Bool=false, T::Type=Float64)
+    if with_bridges
+        return instantiate_with_bridges(optimizer_constructor;
+                                        with_names=with_names, T=T)
+    else
+        return instantiate(optimizer_constructor)
+    end
 end
 
 const _instantiate_not_callable_message =
-    "The provided `uninstantiated` is invalid. It must be callable with zero" *
+    "The provided `optimizer_constructor` is invalid. It must be callable with zero" *
     "arguments. For example, \"Ipopt.Optimizer\" or" *
     "\"() -> ECOS.Optimizer()\". It should not be an instantiated optimizer " *
     "like \"Ipopt.Optimizer()\" or \"ECOS.Optimizer()\"." *
     "(Note the difference in parentheses!)"
 
-
 """
-    instantiate(uninstantiated)
+    instantiate(optimizer_constructor)
 
-Create an instance of optimizer by calling `uninstantiated`.
+Create an instance of optimizer by calling `optimizer_constructor`.
 """
-function instantiate(uninstantiated)
-    if !applicable(uninstantiated)
+function instantiate(optimizer_constructor)
+    if !applicable(optimizer_constructor)
         error(_instantiate_not_callable_message)
     end
-    optimizer = uninstantiated()
+    optimizer = optimizer_constructor()
     if !isa(optimizer, AbstractOptimizer)
-        error("The provided `uninstantiated` returned an object of type " *
+        error("The provided `optimizer_constructor` returned an object of type " *
               "$(typeof(optimizer)). Expected a " *
               "MathOptInterface.AbstractOptimizer.")
     end
     if !is_empty(optimizer)
-        error("The provided `uninstantiated` returned a non-empty optimizer.")
+        error("The provided `optimizer_constructor` returned a non-empty optimizer.")
     end
     return optimizer
 end
 
 """
-    instantiate(uninstantiated::UninstantiatedOptimizer)
+    instantiate(optimizer_constructor::OptimizerWithAttributes)
 
-Create an instance of optimizer represented by [`UninstantiatedOptimizer`](@ref).
+Create an instance of optimizer represented by [`OptimizerWithAttributes`](@ref).
 """
-function instantiate(uninstantiated::UninstantiatedOptimizer)
-    optimizer = instantiate(uninstantiated.optimizer)
-    for param in uninstantiated.params
+function instantiate(optimizer_constructor::OptimizerWithAttributes)
+    optimizer = instantiate(optimizer_constructor.optimizer)
+    for param in optimizer_constructor.params
         set(optimizer, param.first, param.second)
     end
     return optimizer
 end
 
 """
-    instantiate_with_bridges(uninstantiated, with_names::Bool=false, T::Type=Float64)
+    instantiate_with_bridges(optimizer_constructor, with_names::Bool=false, T::Type=Float64)
 
-Create an instance of optimizer represented by [`UninstantiatedOptimizer`](@ref)
+Create an instance of optimizer represented by [`OptimizerWithAttributes`](@ref)
 with all the bridges defined in the MathOptInterface.Bridges submodule enabled
 with coefficient type `T`.
 If `!MOI.Utilities.supports_default_copy_to(optimizer, with_names)` then a
 [`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
 model.
 """
-function instantiate_with_bridges(uninstantiated, with_names::Bool=false,
-                                  T::Type=Float64)
-    optimizer = instantiate(uninstantiated)
+function instantiate_with_bridges(
+    optimizer_constructor;
+    with_names::Bool=false, T::Type=Float64)
+
+    optimizer = instantiate(optimizer_constructor)
     if !Utilities.supports_default_copy_to(optimizer, with_names)
         universal_fallback = Utilities.UniversalFallback(Utilities.Model{T}())
         optimizer = Utilities.CachingOptimizer(universal_fallback, optimizer)

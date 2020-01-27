@@ -120,7 +120,7 @@ ListOfConstraintAttributesSet
 ```@docs
 AbstractOptimizer
 optimize!
-UninstantiatedOptimizer
+OptimizerWithAttributes
 instantiate
 instantiate_with_bridges
 ```
