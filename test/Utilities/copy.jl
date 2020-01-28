@@ -22,7 +22,11 @@ end
     map = MOIU.IndexMap(Dict(x => y), Dict(cx => cy))
     @test length(map) == 2
     # `x=>y` in Julia <= 1.1 and `x => y` in Julia >= 1.2
-    x_y = string(Dict(x => y))[6:end-1]
+    if VERSION < v"1.2"
+        x_y = string(x) *  "=>" * string(y)
+    else
+        x_y = string(x => y)
+    end
     compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,Pair{ConstraintIndex,ConstraintIndex}($cx, $cy))")
 end
 
