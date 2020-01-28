@@ -122,7 +122,6 @@ AbstractOptimizer
 optimize!
 OptimizerWithAttributes
 instantiate
-instantiate_and_check
 ```
 
 List of optimizers attributes

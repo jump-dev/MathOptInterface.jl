@@ -44,12 +44,12 @@ const _INSTANTIATE_NOT_CALLABLE_MESSAGE =
     "(Note the difference in parentheses!)"
 
 """
-    instantiate_and_check(optimizer_constructor)
+    _instantiate_and_check(optimizer_constructor)
 
 Create an instance of optimizer by calling `optimizer_constructor`.
 Then check that the type returned is an empty [`AbstractOptimizer`](@ref).
 """
-function instantiate_and_check(optimizer_constructor)
+function _instantiate_and_check(optimizer_constructor)
     if !applicable(optimizer_constructor)
         error(_INSTANTIATE_NOT_CALLABLE_MESSAGE)
     end
@@ -66,13 +66,13 @@ function instantiate_and_check(optimizer_constructor)
 end
 
 """
-    instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
+    _instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
 
 Create an instance of optimizer represented by [`OptimizerWithAttributes`](@ref).
 Then check that the type returned is an empty [`AbstractOptimizer`](@ref).
 """
-function instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
-    optimizer = instantiate(optimizer_constructor.optimizer)
+function _instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
+    optimizer = _instantiate_and_check(optimizer_constructor.optimizer)
     for param in optimizer_constructor.params
         set(optimizer, param.first, param.second)
     end
@@ -84,10 +84,14 @@ end
                 with_bridge_type::Union{Nothing, Type}=nothing,
                 with_names::Bool=false)
 
-If `with_bridge_type` is `nothing`, it is equivalent to
-`instance(optimizer_constructor)`. Otherwise, it creates an instance of
-optimizer represented by [`OptimizerWithAttributes`](@ref) with all the bridges
-defined in the MathOptInterface.Bridges submodule enabled with coefficient type
+Creates an instance of optimizer either by calling
+`optimizer_constructor.optimizer()` and setting the parameters in
+`optimizer_constructor.params` if `optimizer_constructor` is a
+[`OptimizerWithAttributes`](@ref) or by calling `optimizer_constructor()`
+if `optimizer_constructor` is function.
+
+If `with_bridge_type` is not `nothing`, it enables all the bridges defined in
+the MathOptInterface.Bridges submodule with coefficient type
 `with_bridge_type`. If
 `!MOI.Utilities.supports_default_copy_to(optimizer, with_names)` then a
 [`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
@@ -96,7 +100,7 @@ model.
 function instantiate(
     optimizer_constructor; with_bridge_type::Union{Nothing, Type}=nothing,
     with_names::Bool=false)
-    optimizer = instantiate_and_check(optimizer_constructor)
+    optimizer = _instantiate_and_check(optimizer_constructor)
     if with_bridge_type === nothing
         return optimizer
     end
