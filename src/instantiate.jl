@@ -13,7 +13,7 @@ struct OptimizerWithAttributes
     # * `Function`: a function, or
     # * `DataType`: a type, or
     # * `UnionAll`: a type with missing parameters.
-    optimizer
+    optimizer_constructor
     params::Vector{Pair{AbstractOptimizerAttribute,Any}}
 end
 
@@ -72,7 +72,7 @@ Create an instance of optimizer represented by [`OptimizerWithAttributes`](@ref)
 Then check that the type returned is an empty [`AbstractOptimizer`](@ref).
 """
 function _instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
-    optimizer = _instantiate_and_check(optimizer_constructor.optimizer)
+    optimizer = _instantiate_and_check(optimizer_constructor.optimizer_constructor)
     for param in optimizer_constructor.params
         set(optimizer, param.first, param.second)
     end
@@ -85,15 +85,18 @@ end
                 with_names::Bool=false)
 
 Creates an instance of optimizer either by calling
-`optimizer_constructor.optimizer()` and setting the parameters in
+`optimizer_constructor.optimizer_constructor()` and setting the parameters in
 `optimizer_constructor.params` if `optimizer_constructor` is a
 [`OptimizerWithAttributes`](@ref) or by calling `optimizer_constructor()`
 if `optimizer_constructor` is function.
 
 If `with_bridge_type` is not `nothing`, it enables all the bridges defined in
 the MathOptInterface.Bridges submodule with coefficient type
-`with_bridge_type`. If
-`!MOI.Utilities.supports_default_copy_to(optimizer, with_names)` then a
+`with_bridge_type`.
+
+If the optimizer created by `optimizer_constructor` does not support loading the
+problem incrementally or does not support names (see
+[`Utilities.supports_default_copy_to`](@ref)) then a
 [`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
 model.
 """
