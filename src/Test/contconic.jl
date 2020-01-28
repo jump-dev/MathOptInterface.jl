@@ -103,7 +103,7 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonpositives)
+        @test MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
     else
         @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
@@ -258,7 +258,7 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonpositives)
+    @test MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -586,11 +586,11 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+        @test MOI.supports_add_constrained_variables(model, MOI.SecondOrderCone)
     else
-        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.Zeros)
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone)
     end
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables,MOI.SecondOrderCone)
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -875,7 +875,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::TestConfig, abvars::Bool
     @test MOI.supports(model, MOI.ObjectiveSense())
     if abvars
         @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+        @test MOI.supports_add_constrained_variables(model, MOI.RotatedSecondOrderCone)
     else
         @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)
     end
@@ -977,7 +977,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     @test MOI.supports_constraint(model, MOI.SingleVariable,MOI.EqualTo{Float64})
     @test MOI.supports_constraint(model, MOI.SingleVariable,MOI.LessThan{Float64})
     @test MOI.supports_constraint(model, MOI.SingleVariable,MOI.GreaterThan{Float64})
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables,MOI.RotatedSecondOrderCone)
+    @test MOI.supports_add_constrained_variables(model, MOI.RotatedSecondOrderCone)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -1045,7 +1045,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
+    @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{Float64})
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)
@@ -1152,7 +1152,7 @@ function rotatedsoc4test(model::MOI.ModelLike, config::TestConfig; n=2, ub=3.0)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.RotatedSecondOrderCone)
+    @test MOI.supports_add_constrained_variables(model, MOI.RotatedSecondOrderCone)
 
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -2495,12 +2495,73 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+function _psd3test(model::MOI.ModelLike, psdcone, config::TestConfig{T}) where T
+    # min x
+    # s.t. [x 1 1]
+    #      [1 x 1] ⪰ 0
+    #      [1 1 x]
+
+    atol = config.atol
+    rtol = config.rtol
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, psdcone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x = MOI.add_variable(model)
+    fx = MOI.SingleVariable(x)
+
+    if psdcone == MOI.PositiveSemidefiniteConeTriangle
+        func = MOIU.operate(vcat, T, fx, one(T), fx, one(T), one(T), fx)
+    else
+        @assert psdcone == MOI.PositiveSemidefiniteConeSquare
+        func = MOIU.operate(vcat, T, fx, one(T), one(T), one(T), fx, one(T), one(T), one(T), fx)
+    end
+
+    c = MOI.add_constraint(model, func, psdcone(3))
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ one(T) atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ ones(T, MOI.output_dimension(func)) atol=atol rtol=rtol
+        if config.duals
+            if psdcone == MOI.PositiveSemidefiniteConeTriangle
+                @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [T(2), -one(T), T(2), -one(T), -one(T), T(2)] / T(6) atol=atol rtol=rtol
+            else
+                @assert psdcone == MOI.PositiveSemidefiniteConeSquare
+                @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [one(T), zero(T), zero(T), -one(T), one(T), zero(T), -one(T), -one(T), one(T)] / T(3) atol=atol rtol=rtol
+            end
+        end
+    end
+end
+psdt3test(model, config) = _psd3test(model, MOI.PositiveSemidefiniteConeTriangle, config)
+psds3test(model, config) = _psd3test(model, MOI.PositiveSemidefiniteConeSquare, config)
+
 # PSDConeTriangle
 const psdttests = Dict("psdt0v" => psdt0vtest,
                        "psdt0f" => psdt0ftest,
                        "psdt1v" => psdt1vtest,
                        "psdt1f" => psdt1ftest,
-                       "psdt2"  => psdt2test)
+                       "psdt2"  => psdt2test,
+                       "psdt3"  => psdt3test)
 
 @moitestset psdt
 
@@ -2508,7 +2569,8 @@ const psdttests = Dict("psdt0v" => psdt0vtest,
 const psdstests = Dict("psds0v" => psds0vtest,
                        "psds0f" => psds0ftest,
                        "psds1v" => psds1vtest,
-                       "psds1f" => psds1ftest)
+                       "psds1f" => psds1ftest,
+                       "psds3"  => psds3test)
 
 @moitestset psds
 

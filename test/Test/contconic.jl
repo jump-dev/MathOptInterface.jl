@@ -208,6 +208,13 @@ end
                           (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[(1-1/√3)/2, 1/√6, (1+1/√3)/2]],
                           (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})                 => [0])
     MOIT.psdt2test(mock, config)
+    # PSD3
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(1),
+        (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle) => [[2, -1, 2, -1, -1, 2] / 6])
+    MOIT.psdt3test(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(1),
+        (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => [[1, 0, 0, -1, 1, 0, -1, -1, 1] / 3])
+    MOIT.psds3test(mock, config)
 end
 @testset "LogDet and RootDet" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1])

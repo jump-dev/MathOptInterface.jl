@@ -1,40 +1,83 @@
-"""
-    SplitIntervalBridge{T}
+_lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
+_upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
+_lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)
+_upper_set(set::MOI.EqualTo) = MOI.LessThan(set.value)
+_lower_set(set::MOI.Zeros) = MOI.Nonnegatives(set.dimension)
+_upper_set(set::MOI.Zeros) = MOI.Nonpositives(set.dimension)
 
-The `SplitIntervalBridge` splits a constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints ``⟨a, x⟩ + α ≥ l`` and ``⟨a, x⟩ + α ≤ u``.
 """
-struct SplitIntervalBridge{T, F<:MOI.AbstractScalarFunction} <: AbstractBridge
-    lower::CI{F, MOI.GreaterThan{T}}
-    upper::CI{F, MOI.LessThan{T}}
+    SplitIntervalBridge{T, F, S, LS, US}
+
+The `SplitIntervalBridge` splits a `F`-in-`S` constraint into a `F`-in-`LS` and
+a `F`-in-`US` constraint where we have either:
+* `F = MOI.Interval{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`,
+* `F = MOI.EqualTo{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`, or
+* `F = MOI.Zeros`, `LS = MOI.Nonnegatives` and `US = MOI.Nonpositives`.
+
+For instance, if `F` is `MOI.ScalarAffineFunction` and `S` is `MOI.Interval`,
+it transforms the constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints
+``⟨a, x⟩ + α ≥ l`` and ``⟨a, x⟩ + α ≤ u``.
+"""
+struct SplitIntervalBridge{T, F<:MOI.AbstractFunction, S<:MOI.AbstractSet,
+                           LS<:MOI.AbstractSet, US<:MOI.AbstractSet} <: AbstractBridge
+    lower::CI{F, LS}
+    upper::CI{F, US}
 end
-function bridge_constraint(::Type{SplitIntervalBridge{T, F}}, model, f::F,
-                           s::MOI.Interval{T}) where {T, F}
-    lower = MOI.add_constraint(model, f, MOI.GreaterThan(s.lower))
-    upper = MOI.add_constraint(model, f, MOI.LessThan(s.upper))
-    return SplitIntervalBridge{T, F}(lower, upper)
+function bridge_constraint(
+    ::Type{SplitIntervalBridge{T, F, S, LS, US}}, model::MOI.ModelLike, f::F,
+    set::S) where {T, F, S, LS, US}
+    lower = MOI.add_constraint(model, f, _lower_set(set))
+    upper = MOI.add_constraint(model, f, _upper_set(set))
+    return SplitIntervalBridge{T, F, S, LS, US}(lower, upper)
 end
 
-MOI.supports_constraint(::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractScalarFunction}, ::Type{MOI.Interval{T}}) where T = true
+function MOI.supports_constraint(
+    ::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{<:Union{MOI.Interval{T}, MOI.EqualTo{T}}}) where T
+    return true
+end
+function MOI.supports_constraint(
+    ::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{MOI.Zeros}) where T
+    return true
+end
 MOIB.added_constrained_variable_types(::Type{<:SplitIntervalBridge}) = Tuple{DataType}[]
-function MOIB.added_constraint_types(::Type{SplitIntervalBridge{T, F}}) where {T, F}
-    return [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
+function MOIB.added_constraint_types(::Type{SplitIntervalBridge{T, F, S, LS, US}}) where {T, F, S, LS, US}
+    return [(F, LS), (F, US)]
 end
-function concrete_bridge_type(::Type{<:SplitIntervalBridge},
-                              F::Type{<:MOI.AbstractScalarFunction},
-                              ::Type{MOI.Interval{T}}) where T
-    return SplitIntervalBridge{T, F}
+function concrete_bridge_type(
+    ::Type{<:SplitIntervalBridge}, F::Type{<:MOI.AbstractScalarFunction},
+    S::Type{<:Union{MOI.Interval{T}, MOI.EqualTo{T}}}) where T
+    return SplitIntervalBridge{T, F, S, MOI.GreaterThan{T}, MOI.LessThan{T}}
+end
+function concrete_bridge_type(
+    ::Type{<:SplitIntervalBridge{T}}, F::Type{<:MOI.AbstractVectorFunction},
+    ::Type{MOI.Zeros}) where T
+    return SplitIntervalBridge{T, F, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives}
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.LessThan{T}}) where {T, F} = 1
-MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F} = 1
-MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F} = [b.lower]
-MOI.get(b::SplitIntervalBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.LessThan{T}}) where {T, F} = [b.upper]
+function MOI.get(::SplitIntervalBridge{T, F, S, LS},
+                 ::MOI.NumberOfConstraints{F, LS}) where {T, F, S, LS}
+    return 1
+end
+function MOI.get(::SplitIntervalBridge{T, F, S, LS, US},
+                 ::MOI.NumberOfConstraints{F, US}) where {T, F, S, LS, US}
+    return 1
+end
+function MOI.get(bridge::SplitIntervalBridge{T, F, S, LS},
+                 ::MOI.ListOfConstraintIndices{F, LS}) where {T, F, S, LS}
+    return [bridge.lower]
+end
+function MOI.get(bridge::SplitIntervalBridge{T, F, S, LS, US},
+                 ::MOI.ListOfConstraintIndices{F, US}) where {T, F, S, LS, US}
+    return [bridge.upper]
+end
 
 # Indices
-function MOI.delete(model::MOI.ModelLike, c::SplitIntervalBridge)
-    MOI.delete(model, c.lower)
-    MOI.delete(model, c.upper)
+function MOI.delete(model::MOI.ModelLike, bridge::SplitIntervalBridge)
+    MOI.delete(model, bridge.lower)
+    MOI.delete(model, bridge.upper)
 end
 
 # Attributes, Bridge acting as a constraint
@@ -50,33 +93,45 @@ function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintPrimal, MOI.Con
     # lower and upper should give the same value
     return MOI.get(model, attr, bridge.lower)
 end
-function MOI.set(model::MOI.ModelLike, a::MOI.ConstraintPrimalStart,
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
                  bridge::SplitIntervalBridge, value)
-    MOI.set(model, a, bridge.lower, value)
-    MOI.set(model, a, bridge.upper, value)
+    MOI.set(model, attr, bridge.lower, value)
+    MOI.set(model, attr, bridge.upper, value)
 end
+# The map is:
+# x ∈ S <=> [1 1]' * x ∈ LS × US
+# So the adjoint map is
+# [1 1] * y ∈ S* <=> y ∈ (LS × US)*
+# where [1 1] * y = y[1] + y[2]
+# so we can just sum the dual values.
 function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart},
                  bridge::SplitIntervalBridge)
-    # Should be nonnegative
-    lower_dual = MOI.get(model, attr, bridge.lower)
-    # Should be nonpositive
-    upper_dual = MOI.get(model, attr, bridge.upper)
-    return lower_dual > -upper_dual ? lower_dual : upper_dual
+    return MOI.get(model, attr, bridge.lower) + MOI.get(model, attr, bridge.upper)
 end
-function MOI.set(model::MOI.ModelLike, a::MOI.ConstraintDualStart,
-                 bridge::SplitIntervalBridge, value)
+function _split_dual_start(value)
     if value < 0
-        MOI.set(model, a, bridge.lower, 0.0)
-        MOI.set(model, a, bridge.upper, value)
+        return zero(value), value
     else
-        MOI.set(model, a, bridge.lower, value)
-        MOI.set(model, a, bridge.upper, 0.0)
+        return value, zero(value)
     end
 end
+function _split_dual_start(value::Vector)
+    lower = similar(value)
+    upper = similar(value)
+    for i in eachindex(value)
+        lower[i], upper[i] = _split_dual_start(value[i])
+    end
+end
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintDualStart,
+                 bridge::SplitIntervalBridge{T}, value) where T
+    lower, upper = _split_dual_start(value)
+    MOI.set(model, attr, bridge.lower, lower)
+    MOI.set(model, attr, bridge.upper, upper)
+end
 
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, c::SplitIntervalBridge)
-    lower_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.lower)
-    upper_stat = MOI.get(model, MOI.ConstraintBasisStatus(), c.upper)
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, bridge::SplitIntervalBridge)
+    lower_stat = MOI.get(model, MOI.ConstraintBasisStatus(), bridge.lower)
+    upper_stat = MOI.get(model, MOI.ConstraintBasisStatus(), bridge.upper)
     if lower_stat == MOI.NONBASIC_AT_LOWER
         @warn("GreaterThan constraints should not have basis status:" *
             " NONBASIC_AT_LOWER, instead use NONBASIC.")
@@ -99,28 +154,37 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintBasisStatus, c::SplitInte
 end
 
 # Constraints
-function MOI.modify(model::MOI.ModelLike, c::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
-    MOI.modify(model, c.lower, change)
-    MOI.modify(model, c.upper, change)
+function MOI.modify(model::MOI.ModelLike, bridge::SplitIntervalBridge, change::MOI.AbstractFunctionModification)
+    MOI.modify(model, bridge.lower, change)
+    MOI.modify(model, bridge.upper, change)
 end
 
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
-                  c::SplitIntervalBridge{T, F}, func::F) where {T, F}
-    MOI.set(model, MOI.ConstraintFunction(), c.lower, func)
-    MOI.set(model, MOI.ConstraintFunction(), c.upper, func)
+                  bridge::SplitIntervalBridge{T, F}, func::F) where {T, F}
+    MOI.set(model, MOI.ConstraintFunction(), bridge.lower, func)
+    MOI.set(model, MOI.ConstraintFunction(), bridge.upper, func)
 end
 
-function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet, c::SplitIntervalBridge, change::MOI.Interval)
-    MOI.set(model, MOI.ConstraintSet(), c.lower, MOI.GreaterThan(change.lower))
-    MOI.set(model, MOI.ConstraintSet(), c.upper, MOI.LessThan(change.upper))
+function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintSet,
+                 bridge::SplitIntervalBridge{T, F, S}, change::S) where {T, F, S}
+    MOI.set(model, MOI.ConstraintSet(), bridge.lower, _lower_set(change))
+    MOI.set(model, MOI.ConstraintSet(), bridge.upper, _upper_set(change))
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 b::SplitIntervalBridge)
-    return MOI.get(model, attr, b.lower)
+                 bridge::SplitIntervalBridge)
+    return MOI.get(model, attr, bridge.lower)
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
-                 b::SplitIntervalBridge)
-    return MOI.Interval(MOI.get(model, attr, b.lower).lower,
-                        MOI.get(model, attr, b.upper).upper)
+                 bridge::SplitIntervalBridge{T, F, MOI.Interval{T}}) where {T, F}
+    return MOI.Interval(MOI.get(model, attr, bridge.lower).lower,
+                        MOI.get(model, attr, bridge.upper).upper)
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 bridge::SplitIntervalBridge{T, F, MOI.EqualTo{T}}) where {T, F}
+    return MOI.EqualTo(MOI.get(model, attr, bridge.lower).lower)
+end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 bridge::SplitIntervalBridge{T, F, MOI.Zeros}) where {T, F}
+    return MOI.Zeros(MOI.get(model, attr, bridge.lower).dimension)
 end

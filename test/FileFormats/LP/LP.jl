@@ -39,6 +39,7 @@ const LP_TEST_FILE = "test.lp"
             "x >= -1\n" *
             "y = 3\n" *
             "4 <= z <= 5\n" *
+            "a free\n" *
             "General\n" *
             "y\n" *
             "Binary\n" *
@@ -69,6 +70,7 @@ const LP_TEST_FILE = "test.lp"
                     "subject to\n" *
                     "_$(starting_letter)c1: 1 _$(starting_letter)x >= -1\n" *
                     "Bounds\n" *
+                    "_$(starting_letter)x free\n" *
                     "End\n"
             end
         end
@@ -91,6 +93,7 @@ const LP_TEST_FILE = "test.lp"
                     "subject to\n" *
                     "c_d: 1 x_y >= -1\n" *
                     "Bounds\n" *
+                    "x_y free\n" *
                     "End\n"
             end
         end
@@ -112,6 +115,10 @@ const LP_TEST_FILE = "test.lp"
                 "subject to\n" *
                 "c1: 1 a_ + 1 a__1 + 1 a__2 + 1 a__3 >= -1\n" *
                 "Bounds\n" *
+                "a_ free\n" *
+                "a__1 free\n" *
+                "a__2 free\n" *
+                "a__3 free\n" *
                 "End\n"
         end
         @testset "Length sanitisation" begin
@@ -130,6 +137,7 @@ const LP_TEST_FILE = "test.lp"
                 "obj: abc\n" *
                 "subject to\n" *
                 "Bounds\n" *
+                "abc free\n" *
                 "End\n"
         end
         @testset "Too long duplicate names after sanitization" begin
@@ -146,6 +154,8 @@ const LP_TEST_FILE = "test.lp"
                 "subject to\n" *
                 "c1: 1 abc + 1 abc_1 >= -1\n" *
                 "Bounds\n" *
+                "abc free\n" *
+                "abc_1 free\n" *
                 "End\n"
         end
     end
@@ -161,6 +171,29 @@ const LP_TEST_FILE = "test.lp"
             "obj: -1 + 2 x\n" *
             "subject to\n" *
             "Bounds\n" *
+            "x free\n" *
+            "End\n"
+    end
+    @testset "free variables" begin
+        model = LP.Model()
+        MOIU.loadfromstring!(model, """
+        variables: x, y, z
+        maxobjective: x
+        c1: x in ZeroOne()
+        c2: y in Integer()
+        """)
+        MOI.write_to_file(model, LP_TEST_FILE)
+        @test read(LP_TEST_FILE, String) ==
+            "maximize\n" *
+            "obj: x\n" *
+            "subject to\n" *
+            "Bounds\n" *
+            "y free\n" *
+            "z free\n" *
+            "General\n" *
+            "y\n" *
+            "Binary\n" *
+            "x\n" *
             "End\n"
     end
 end

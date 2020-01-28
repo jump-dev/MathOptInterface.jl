@@ -1820,13 +1820,13 @@ Returns the vector of scalar affine functions in the form of a
 `MOI.VectorAffineFunction{T}`.
 """
 function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
-    nterms = sum(func -> number_of_affine_terms(T, func), funcs)
-    out_dim = sum(func -> output_dim(T, func), funcs)
+    nterms = mapreduce(func -> number_of_affine_terms(T, func), +, funcs, init=0)
+    out_dim = mapreduce(func -> output_dim(T, func), +, funcs, init=0)
     terms = Vector{MOI.VectorAffineTerm{T}}(undef, nterms)
     constant = zeros(T, out_dim)
     fill_vector(terms, T, fill_terms, number_of_affine_terms, funcs)
     fill_vector(constant, T, fill_constant, output_dim, funcs)
-    return VAF(terms, constant)
+    return MOI.VectorAffineFunction(terms, constant)
 end
 
 """
@@ -1836,16 +1836,16 @@ Returns the vector of scalar quadratic functions in the form of a
 `MOI.VectorQuadraticFunction{T}`.
 """
 function vectorize(funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}}) where T
-    num_affine_terms = sum(func -> number_of_affine_terms(T, func), funcs)
-    num_quadratic_terms = sum(func -> number_of_quadratic_terms(T, func), funcs)
-    out_dim = sum(func -> output_dim(T, func), funcs)
+    num_affine_terms = mapreduce(func -> number_of_affine_terms(T, func), +, funcs, init=0)
+    num_quadratic_terms = mapreduce(func -> number_of_quadratic_terms(T, func), +, funcs, init=0)
+    out_dim = mapreduce(func -> output_dim(T, func), +, funcs, init=0)
     affine_terms = Vector{MOI.VectorAffineTerm{T}}(undef, num_affine_terms)
     quadratic_terms = Vector{MOI.VectorQuadraticTerm{T}}(undef, num_quadratic_terms)
     constant = zeros(T, out_dim)
     fill_vector(affine_terms, T, fill_terms, number_of_affine_terms, funcs)
     fill_vector(quadratic_terms, T, fill_terms, number_of_quadratic_terms, funcs)
     fill_vector(constant, T, fill_constant, output_dim, funcs)
-    return VQF(affine_terms, quadratic_terms, constant)
+    return MOI.VectorQuadraticFunction(affine_terms, quadratic_terms, constant)
 end
 
 function promote_operation(::typeof(vcat), ::Type{T}, ::Type{T}...) where T

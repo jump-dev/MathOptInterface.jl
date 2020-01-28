@@ -224,6 +224,8 @@ add_variable
 add_variables
 add_constrained_variable
 add_constrained_variables
+supports_add_constrained_variable
+supports_add_constrained_variables
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
@@ -310,6 +312,7 @@ Functions for getting properties of sets.
 ```@docs
 dimension
 dual_set
+dual_set_type
 constant(s::EqualTo)
 supports_dimension_update
 update_dimension
