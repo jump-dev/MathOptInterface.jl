@@ -362,6 +362,8 @@ solves correctly.
 """
 function delete_variables_in_a_batch(model::MOI.ModelLike,
                                      config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
     MOIU.loadfromstring!(model,"""
@@ -377,7 +379,7 @@ function delete_variables_in_a_batch(model::MOI.ModelLike,
     @test MOI.is_valid(model, z)
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.ObjectiveValue()) == 6.0
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 6.0 atol=atol rtol=rtol
     end
     MOI.delete(model, [x, z])
     @test !MOI.is_valid(model, x)
@@ -385,7 +387,7 @@ function delete_variables_in_a_batch(model::MOI.ModelLike,
     @test !MOI.is_valid(model, z)
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.ObjectiveValue()) == 2.0
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
     end
 end
 modificationtests["delete_variables_in_a_batch"] = delete_variables_in_a_batch
