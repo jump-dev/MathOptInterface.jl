@@ -120,6 +120,8 @@ ListOfConstraintAttributesSet
 ```@docs
 AbstractOptimizer
 optimize!
+OptimizerWithAttributes
+instantiate
 ```
 
 List of optimizers attributes

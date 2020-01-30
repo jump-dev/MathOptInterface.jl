@@ -22,6 +22,7 @@ include("dummy.jl")
     include("functions.jl")
     include("sets.jl")
     include("attributes.jl")
+    include("instantiate.jl")
 end
 
 # Utilities submodule tests
