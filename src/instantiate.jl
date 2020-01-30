@@ -1,6 +1,6 @@
 """
     struct OptimizerWithAttributes
-        optimizer
+        optimizer_constructor
         params::Vector{Pair{AbstractOptimizerAttribute,<:Any}}
     end
 
@@ -37,10 +37,10 @@ function OptimizerWithAttributes(optimizer_constructor, args::Vararg{Pair, N}) w
 end
 
 const _INSTANTIATE_NOT_CALLABLE_MESSAGE =
-    "The provided `optimizer_constructor` is invalid. It must be callable with zero" *
-    "arguments. For example, \"Ipopt.Optimizer\" or" *
+    "The provided `optimizer_constructor` is invalid. It must be callable with zero " *
+    "arguments. For example, \"Ipopt.Optimizer\" or " *
     "\"() -> ECOS.Optimizer()\". It should not be an instantiated optimizer " *
-    "like \"Ipopt.Optimizer()\" or \"ECOS.Optimizer()\"." *
+    "like \"Ipopt.Optimizer()\" or \"ECOS.Optimizer()\". " *
     "(Note the difference in parentheses!)"
 
 """
@@ -88,7 +88,7 @@ Creates an instance of optimizer either by calling
 `optimizer_constructor.optimizer_constructor()` and setting the parameters in
 `optimizer_constructor.params` if `optimizer_constructor` is a
 [`OptimizerWithAttributes`](@ref) or by calling `optimizer_constructor()`
-if `optimizer_constructor` is function.
+if `optimizer_constructor` is callable.
 
 If `with_bridge_type` is not `nothing`, it enables all the bridges defined in
 the MathOptInterface.Bridges submodule with coefficient type
