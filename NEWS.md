@@ -1,6 +1,25 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.10 (January 31, 2020)
+---------------------
+
+- Added `OptimizerWithAttributes` grouping an optimizer constructor and a list
+  of optimizer attributes (#1008).
+- Added `RelativeEntropyCone` with corresponding bridge into exponential cone
+  constraints (#993).
+- Added `NormSpectralCone` and `NormNuclearCone` with corresponding bridges
+  into positive semidefinite constraints (#976).
+- Added `supports_constrained_variable(s)` (#1004).
+- Added `dual_set_type` (#1002).
+- Added tests for vector specialized version of `delete` (#989, #1011).
+- Added PSD3 test (#1007).
+- Clarifed dual solution of `Tests.pow1v` and `Tests.pow1f` (#1013).
+- Added support for `EqualTo` and `Zero` in
+  `Bridges.Constraint.SplitIntervalBridge` (#1005).
+- Fixed `Utilities.vectorize` for empty vector (#1003).
+- Fixed free variables in LP writer (#1006).
+
 v0.9.9 (December 29, 2019)
 ---------------------
 
