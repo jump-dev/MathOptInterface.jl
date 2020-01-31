@@ -1723,6 +1723,12 @@ function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     #  st  x^0.9 * y^(0.1) >= |z| (i.e (x, y, z) are in the 3d power cone with a=0.9)
     #      x == 2
     #      y == 1
+    # Dual
+    # min -2α - β
+    #  st (u/0.9)^0.9 (v/0.1)^0.1 >= |w|
+    #     u + α = 0
+    #     v + β = 0
+    #     w = -1
     a = 0.9
     @test MOIU.supports_default_copy_to(model, #=copy_names=#false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1749,8 +1755,8 @@ function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.PowerCone(a))
     end
 
-    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.), MOI.EqualTo(2.))
-    cy = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.), MOI.EqualTo(1.))
+    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.0), MOI.EqualTo(2.0))
+    cy = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.0), MOI.EqualTo(1.0))
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -1767,22 +1773,25 @@ function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
 
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0^0.9 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2^0.9 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0, 2^0.9] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2.0, 1.0, 2^0.9] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2. atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1.0 atol=atol rtol=rtol
 
         if config.duals
+            # Only real solution of u^10 - u^9 / 2^0.1 = -(0.1*0.9^9)/2
+            u_value = 0.839729692
+            v_value = 2^0.9 - 2u_value
             u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test u ≈ 0.839729692 atol=atol rtol=rtol
-            @test v ≈ 0.1866065982 atol=atol rtol=rtol
+            @test u ≈ u_value atol=atol rtol=rtol
+            @test v ≈ v_value atol=atol rtol=rtol
             @test w ≈ -1 atol=atol rtol=rtol
 
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -0.839729692 atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -0.1866065982 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -u_value atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -v_value atol=atol rtol=rtol
         end
     end
 end
