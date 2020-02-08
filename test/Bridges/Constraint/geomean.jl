@@ -8,8 +8,8 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
+mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+config = MOIT.TestConfig(duals = false)
 
 @testset "GeoMean" begin
     bridged_mock = MOIB.Constraint.GeoMean{Float64}(mock)
