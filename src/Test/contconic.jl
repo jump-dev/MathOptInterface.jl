@@ -1343,7 +1343,7 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
 
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ vcat(-1, fill(inv(9), 9)) atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ fill(inv(9), 9) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ fill(-inv(9), 9) atol=atol rtol=rtol
         end
     end
 end
@@ -1408,7 +1408,7 @@ function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
 
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ [-2.0, 2.0] atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ 2.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -2.0 atol=atol rtol=rtol
         end
     end
 end

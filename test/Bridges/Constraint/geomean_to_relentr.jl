@@ -22,7 +22,7 @@ config = MOIT.TestConfig()
     var_primal = [1, 1, 1, 1, 0]
     relentr_dual = [1, 1, 1, 1, -1, -1, -1] / 3
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
-        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [inv(3)],
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-inv(3)],
         (MOI.VectorOfVariables, MOI.Nonnegatives) => [[1.0]],
         (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone) => [relentr_dual])
 
