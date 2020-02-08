@@ -44,6 +44,8 @@ const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}
 include("norm_to_lp.jl")
 const NormInfinity{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormInfinityBridge{T}, OT}
 const NormOne{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T}, OT}
+include("geomean_to_relentr.jl")
+const GeoMeantoRelEntr{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeantoRelEntrBridge{T}, OT}
 include("geomean.jl")
 const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
 include("relentr_to_exp.jl")
@@ -84,6 +86,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, QuadtoSOCBridge{T})
     MOIB.add_bridge(bridged_model, NormInfinityBridge{T})
     MOIB.add_bridge(bridged_model, NormOneBridge{T})
+    MOIB.add_bridge(bridged_model, GeoMeantoRelEntrBridge{T})
     MOIB.add_bridge(bridged_model, GeoMeanBridge{T})
     MOIB.add_bridge(bridged_model, RelativeEntropyBridge{T})
     MOIB.add_bridge(bridged_model, NormSpectralBridge{T})

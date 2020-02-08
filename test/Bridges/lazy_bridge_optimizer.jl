@@ -882,7 +882,7 @@ MOIU.@model(ModelNoZeroIndicator,
             (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
              MOI.NormInfinityCone, MOI.NormOneCone,
              MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
-             MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
+             MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone, MOI.RelativeEntropyCone,
              MOI.NormSpectralCone, MOI.NormNuclearCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
              MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
@@ -899,7 +899,7 @@ MOIU.@model(ModelNoIndicator,
             (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
              MOI.NormInfinityCone, MOI.NormOneCone,
              MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
-             MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
+             MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone, MOI.RelativeEntropyCone,
              MOI.NormSpectralCone, MOI.NormNuclearCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
              MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
@@ -1010,6 +1010,8 @@ end
                                       MOI.PositiveSemidefiniteConeSquare)
         @test MOI.supports_constraint(full_bridged_mock, F,
                                       MOI.GeometricMeanCone)
+        @test MOI.supports_constraint(full_bridged_mock, F,
+                                      MOI.RelativeEntropyCone)
         @test !MOI.supports_constraint(
             greater_nonneg_mock, F, MOI.Nonpositives)
         @test MOI.supports_constraint(

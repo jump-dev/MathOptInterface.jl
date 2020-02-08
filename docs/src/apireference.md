@@ -758,6 +758,7 @@ Bridges.Constraint.SOCRBridge
 Bridges.Constraint.QuadtoSOCBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
+Bridges.Constraint.GeoMeantoRelEntrBridge
 Bridges.Constraint.GeoMeanBridge
 Bridges.Constraint.RelativeEntropyBridge
 Bridges.Constraint.NormSpectralBridge
