@@ -23,7 +23,7 @@ config = MOIT.TestConfig()
     relentr_dual = [1, 1, 1, 1, -1, -1, -1] / 3
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [inv(3)],
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+        (MOI.VectorOfVariables, MOI.Nonnegatives) => [[1.0]],
         (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone) => [relentr_dual])
 
     # MOIT.geomean1vtest(bridged_mock, config)
@@ -32,14 +32,14 @@ config = MOIT.TestConfig()
     var_names = ["t", "x", "y", "z"]
     MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
 
-    greater = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.GreaterThan{Float64}}())
+    nonneg = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.Nonnegatives}())
     relentr = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone}())
     aux = MOI.get(mock, MOI.ListOfVariableIndices())[end]
 
     @testset "Test mock model" begin
         MOI.set(mock, MOI.VariableName(), aux, "aux")
-        @test length(greater) == 1
-        MOI.set(mock, MOI.ConstraintName(), greater[1], "greater")
+        @test length(nonneg) == 1
+        MOI.set(mock, MOI.ConstraintName(), nonneg[1], "nonneg")
         @test length(relentr) == 1
         MOI.set(mock, MOI.ConstraintName(), relentr[1], "relentr")
         less = MOI.get(mock, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}())
@@ -49,13 +49,13 @@ config = MOIT.TestConfig()
         s = """
         variables: t, x, y, z, aux
         less: x + y + z in MathOptInterface.LessThan(3.0)
-        greater: aux >= 0.0
+        nonneg: [aux] in MathOptInterface.Nonnegatives(1)
         relentr: [0.0, x, y, z, t + aux, t + aux, t + aux] in MathOptInterface.RelativeEntropyCone(7)
         maxobjective: t
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(mock, model, vcat(var_names, "aux"), ["less", "greater", "relentr"])
+        MOIU.test_models_equal(mock, model, vcat(var_names, "aux"), ["less", "nonneg", "relentr"])
     end
 
     @testset "Test bridged model" begin
@@ -86,15 +86,16 @@ config = MOIT.TestConfig()
         @test MOI.get(bridged_mock, attr, ci) ≈ value
         if attr isa MOI.ConstraintPrimalStart
             @test MOI.get(mock, MOI.VariablePrimalStart(), aux) == 0
-            @test MOI.get(mock, attr, greater[1]) == 0
+            @test MOI.get(mock, attr, nonneg[1]) == [0]
             @test MOI.get(mock, attr, relentr[1]) == [0, 1, 1, 1, 1, 1, 1]
         else
-            @test MOI.get(mock, attr, greater[1]) == 1
+            @test MOI.get(mock, attr, nonneg[1]) == [1]
             @test MOI.get(mock, attr, relentr[1]) == relentr_dual
         end
     end
 
     test_delete_bridge(bridged_mock, ci, 4, (
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0),
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
+        (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
         (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone, 0)))
 end
