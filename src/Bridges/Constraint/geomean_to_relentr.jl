@@ -73,7 +73,7 @@ function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart, bridge::
     return
 end
 # Given a is dual on y >= 0 and (b, c, d) is dual on RelativeEntropyCone constraint,
-# dual on (u, w) in GeometricMeanCone is (-a, c)
+# dual on (u, w) in GeometricMeanCone is (-a, c).
 function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::GeoMeantoRelEntrBridge)
     u_dual = -MOI.get(model, attr, bridge.nn_index)[1]
     relentr_dual = MOI.get(model, attr, bridge.relentr_index)
