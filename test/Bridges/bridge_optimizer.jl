@@ -107,7 +107,6 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         @testset "Bridged variable" begin
             err = ErrorException("Cannot substitute `$x` as it is bridged into `$(1.0fy + 1.0)`.")
             @test_throws err MOI.submit(bridged, sub, [x], [1.0])
-
         end
     end
 

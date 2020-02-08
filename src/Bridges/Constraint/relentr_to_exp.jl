@@ -37,10 +37,10 @@ end
 # Attributes, Bridge acting as a model
 MOI.get(bridge::RelativeEntropyBridge, ::MOI.NumberOfVariables) = length(bridge.y)
 MOI.get(bridge::RelativeEntropyBridge, ::MOI.ListOfVariableIndices) = bridge.y
-MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F, G, H} = 1
-MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.NumberOfConstraints{G, MOI.ExponentialCone}) where {T, F, G, H} = length(bridge.y)
-MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F, G, H} = [bridge.ge_index]
-MOI.get(bridge::RelativeEntropyBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{G, MOI.ExponentialCone}) where {T, F, G, H} = bridge.exp_indices
+MOI.get(bridge::RelativeEntropyBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F} = 1
+MOI.get(bridge::RelativeEntropyBridge{T, F, G}, ::MOI.NumberOfConstraints{G, MOI.ExponentialCone}) where {T, F, G} = length(bridge.y)
+MOI.get(bridge::RelativeEntropyBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F} = [bridge.ge_index]
+MOI.get(bridge::RelativeEntropyBridge{T, F, G}, ::MOI.ListOfConstraintIndices{G, MOI.ExponentialCone}) where {T, F, G} = bridge.exp_indices
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::RelativeEntropyBridge)
@@ -105,14 +105,15 @@ function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.Const
 end
 # Given constraint dual start of (u, v, w), constraint dual on GreaterThan is u
 # and on exponential cone constraint i is (r_i, w_i, v_i), but since y_i is free,
-# its dual is 0, so we have -r_i + value[1] == 0 hence r_i = value[1].
+# its dual is 0, so we have -r_i + u == 0 hence r_i = u.
 # Note: alternatively, we could use the Lambert W function to calculate
 # r_i = exp(W(-w_i / (-v_i * e))) * (-v_i * e), but this is more complicated.
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::RelativeEntropyBridge, value)
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, value[1])
+    u = value[1]
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, u)
     w_start = 1 + length(bridge.y)
     for i in eachindex(bridge.y)
-        MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], [value[1], value[w_start + i], value[1 + i]])
+        MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], [u, value[w_start + i], value[1 + i]])
     end
     return
 end

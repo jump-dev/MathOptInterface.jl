@@ -8,7 +8,7 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "GeoMean" begin

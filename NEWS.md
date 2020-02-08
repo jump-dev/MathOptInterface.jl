@@ -112,6 +112,7 @@ v0.9.11 (February 21, 2020)
 v0.9.10 (January 31, 2020)
 ---------------------
 
+- Added `GeoMeantoRelEntrBridge` to bridge a geomean constraint to a relative entropy constraint.
 - Added `OptimizerWithAttributes` grouping an optimizer constructor and a list
   of optimizer attributes (#1008).
 - Added `RelativeEntropyCone` with corresponding bridge into exponential cone
@@ -122,7 +123,7 @@ v0.9.10 (January 31, 2020)
 - Added `dual_set_type` (#1002).
 - Added tests for vector specialized version of `delete` (#989, #1011).
 - Added PSD3 test (#1007).
-- Clarifed dual solution of `Tests.pow1v` and `Tests.pow1f` (#1013).
+- Clarified dual solution of `Tests.pow1v` and `Tests.pow1f` (#1013).
 - Added support for `EqualTo` and `Zero` in
   `Bridges.Constraint.SplitIntervalBridge` (#1005).
 - Fixed `Utilities.vectorize` for empty vector (#1003).

@@ -809,6 +809,7 @@ Bridges.Constraint.SOCtoNonConvexQuadBridge
 Bridges.Constraint.RSOCtoNonConvexQuadBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
+Bridges.Constraint.GeoMeantoRelEntrBridge
 Bridges.Constraint.GeoMeanBridge
 Bridges.Constraint.RelativeEntropyBridge
 Bridges.Constraint.NormSpectralBridge
