@@ -26,7 +26,6 @@ config = MOIT.TestConfig()
         (MOI.VectorOfVariables, MOI.Nonnegatives) => [[1.0]],
         (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone) => [relentr_dual])
 
-    # MOIT.geomean1vtest(bridged_mock, config)
     MOIT.geomean1ftest(bridged_mock, config)
 
     var_names = ["t", "x", "y", "z"]

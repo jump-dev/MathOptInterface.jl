@@ -1273,7 +1273,7 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
 
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ vcat(-1.0, fill(inv(n), n)) atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ inv(n) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -inv(n) atol=atol rtol=rtol
         end
     end
 end
@@ -1289,7 +1289,7 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     # max t
     # st  (t,x_1,x_2,...,x_9) ∈ GeometricMeanCone(10)
     #     x_1 == x_2, ..., x_9 == 1
-    # the optimal solution is 1
+    # the optimal solution is 1 with optimal value 1
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1340,6 +1340,11 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
 
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n + 1) atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ ones(n) atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ vcat(-1, fill(inv(9), 9)) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ fill(inv(9), 9) atol=atol rtol=rtol
+        end
     end
 end
 
@@ -1354,7 +1359,7 @@ function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     # max 2t
     # st  (t,x) ∈ GeometricMeanCone(2)
     #     x <= 2
-    # the optimal solution is 4
+    # the optimal solution is (t, x) = (2, 2) with objective value 4
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1400,6 +1405,11 @@ function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
 
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ [2.0; 2.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ [-2.0, 2.0] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ 2.0 atol=atol rtol=rtol
+        end
     end
 end
 
