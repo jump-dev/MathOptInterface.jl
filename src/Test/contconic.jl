@@ -1482,8 +1482,8 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ ones(n) atol=atol rtol=rtol
 
         if config.duals
-            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ vcat(-1, fill(inv(9), 9)) atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ fill(-inv(9), 9) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ vcat(-1, fill(inv(n), n)) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ fill(-inv(n), n) atol=atol rtol=rtol
         end
     end
 end
