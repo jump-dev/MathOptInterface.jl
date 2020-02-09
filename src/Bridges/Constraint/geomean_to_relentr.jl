@@ -83,7 +83,7 @@ function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.Const
 end
 # Given constraint dual start of (u, w), constraint dual on RelativeEntropyCone
 # constraint is (1/d, w, u/d * e) and dual on y >= 0 constraint is -u.
-# TODO try to fix using https://github.com/JuliaOpt/MathOptInterface.jl/pull/1017#discussion_r376708499
+# TODO incorrect. fix, see discussion at https://github.com/JuliaOpt/MathOptInterface.jl/pull/1017#discussion_r376708499
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::GeoMeantoRelEntrBridge, value)
     d = length(value) - 1
     u = value[1]
