@@ -807,6 +807,123 @@ end
 
 dimension(set::Complements) = 2 * set.dimension
 
+"""
+    AllDifferent(dimension::Int)
+
+The set corresponding to an all-different constraint.
+
+All expressions of a vector-valued function are enforced to take distinct
+values in the solution: for all pairs of expressions, their values must
+differ. This constraint is only defined for integer-valued expressions.
+
+This constraint is sometimes called `distinct`.
+"""
+struct AllDifferent <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    Domain{T <: Int}(values::Set{T})
+
+The set corresponding to an enumeration of constant values.
+
+The value of a scalar function is enforced to take a value from this set of
+values.
+
+This constraint is sometimes called `in`.
+"""
+struct Domain{T <: Int} <: AbstractScalarSet
+    values::Set{T}
+end
+
+function Base.copy(set::Domain{T <: Int})
+    return Domain(copy(set.values))
+end
+
+"""
+    Membership(values::Set{AbstractScalarFunction})
+
+The set corresponding to an enumeration of values, given by expressions.
+
+The value of a scalar function is enforced to take a value from this set of
+values. These values are given by expressions potentially depending on other
+variables for the problem.
+
+This constraint is sometimes called `in_set`.
+"""
+struct Membership <: AbstractScalarSet
+    values::Set{AbstractScalarFunction}
+end
+
+function Base.copy(set::Membership)
+    return Domain(copy(set.values))
+end
+
+"""
+    DifferentFrom(value::AbstractScalarFunction)
+
+The set excluding the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
+All other values in the domain of ``x`` are allowed. `value` is a generic scalar function.
+"""
+struct DifferentFrom <: AbstractScalarSet
+    value::AbstractScalarFunction
+end
+
+function Base.copy(set::DifferentFrom)
+    return DifferentFrom(copy(set.value))
+end
+
+"""
+    Count{T <: Real}(values::Set{AbstractScalarFunction}, value::T)
+
+The set including the single point ``x \\in \\mathbb{N}`` where ``x`` is the number of `values`
+equal to `value`: ``|\\{x \\in values | x = value \\}|``.
+"""
+struct Count{T <: Real} <: AbstractScalarSet
+    values::Set{AbstractScalarFunction}
+    value::T
+end
+
+function Base.copy(set::Count)
+    return Count(copy(set.value), value)
+end
+
+"""
+    StrictlyGreaterThan{T <: Real}(lower::T)
+
+The set ``(lower,\\infty) \\subseteq \\mathbb{R}``. It is mostly useful if `lower` is an integer.
+"""
+struct StrictlyGreaterThan{T <: Real} <: AbstractScalarSet
+    lower::T
+end
+
+"""
+    StrictlyLessThan{T <: Real}(upper::T)
+
+The set ``(-\\infty,upper) \\subseteq \\mathbb{R}``. It is mostly useful if `upper` is an integer.
+"""
+struct StrictlyLessThan{T <: Real} <: AbstractScalarSet
+    upper::T
+end
+
+"""
+    ReificationSet{S <: AbstractScalarSet}(set::S)
+
+``\\{y \\in \\{0, 1\\} | y = 1 \\iff x \\in set, y = 0 otherwise\\}``.
+
+`S` has to be a sub-type of `AbstractScalarSet`.
+
+This set serves to find out whether a given constraint is satisfied. The only possible values are
+0 and 1.
+"""
+struct ReificationSet{S <: AbstractScalarSet} <: AbstractScalarSet
+    set::S
+end
+
+function Base.copy(set::ReificationSet{S <: AbstractScalarSet}{S}) where S
+    return ReificationSet(copy(set.set))
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -818,7 +935,8 @@ function Base.copy(
         PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
         LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
         RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,
-        Semiinteger
+        Semiinteger, AllDifferent, DifferentFrom, StrictlyGreaterThan,
+        StrictlyLessThan
     }
 )
     return set
