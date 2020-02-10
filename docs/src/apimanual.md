@@ -113,7 +113,7 @@ sets recognized by the solver.
   ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent}
   \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
 * **[`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone)**:
-  ``\{ (u, v, w) \\in \\mathbb{R}^\mbox{dimension} : u \\ge \\sum_i w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \}``
+  ``\{ (u, v, w) \in \mathbb{R}^\mbox{dimension} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
 * **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
   ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
@@ -161,7 +161,7 @@ Through the rest of the manual, `model` is used as a generic `ModelLike`, and
 `optimizer` is used as a generic `AbstractOptimizer`.
 
 Models are constructed by
-* adding variables using [`add_variables`](@ref) (or [`add_variables`](@ref)),
+* adding variables using [`add_variable`](@ref) (or [`add_variables`](@ref)),
   see [Adding variables](@ref);
 * setting an objective sense and function using [`set`](@ref),
   see [Setting an objective](@ref);
