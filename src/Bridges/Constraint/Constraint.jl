@@ -46,6 +46,8 @@ const NormInfinity{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormInfinityBri
 const NormOne{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T}, OT}
 include("geomean.jl")
 const GeoMean{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T}, OT}
+include("geomean_to_exp.jl")
+const GeoMeantoExp{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeantoExpBridge{T}, OT}
 include("relentr_to_exp.jl")
 const RelativeEntropy{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RelativeEntropyBridge{T}, OT}
 include("norm_spec_nuc_to_psd.jl")
@@ -85,6 +87,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, NormInfinityBridge{T})
     MOIB.add_bridge(bridged_model, NormOneBridge{T})
     MOIB.add_bridge(bridged_model, GeoMeanBridge{T})
+    MOIB.add_bridge(bridged_model, GeoMeantoExpBridge{T})
     MOIB.add_bridge(bridged_model, RelativeEntropyBridge{T})
     MOIB.add_bridge(bridged_model, NormSpectralBridge{T})
     MOIB.add_bridge(bridged_model, NormNuclearBridge{T})
