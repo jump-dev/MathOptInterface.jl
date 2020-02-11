@@ -24,7 +24,7 @@ config = MOIT.TestConfig()
         var_primal = [1, 1, 1, 1, 1, 0, 0, 0]
         exp_dual = [-inv(3), -inv(3), inv(3)]
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [1, -inv(3)],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1, -inv(3)],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [inv(3)],
             (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) => fill(exp_dual, 3))
 
@@ -103,7 +103,7 @@ config = MOIT.TestConfig()
                     @test MOI.get(mock, attr, exps[i]) == [0, 1, 1]
                 end
             else
-                @test MOI.get(mock, attr, less[1]) == 1
+                @test MOI.get(mock, attr, less[1]) == -1
                 @test MOI.get(mock, attr, greater[1]) == inv(3)
                 for i in 1:3
                     @test MOI.get(mock, attr, exps[i]) == exp_dual
@@ -122,7 +122,7 @@ config = MOIT.TestConfig()
         exp_dual = [-inv(9), -inv(9), inv(9)]
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => fill(-inv(9), 9),
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [1],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [inv(9)],
             (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) => fill(exp_dual, 9))
 
@@ -227,7 +227,7 @@ config = MOIT.TestConfig()
                     @test MOI.get(mock, attr, exps[i]) == [0, 1, 1]
                 end
             else
-                @test MOI.get(mock, attr, less[1]) == 1
+                @test MOI.get(mock, attr, less[1]) == -1
                 @test MOI.get(mock, attr, greater[1]) == inv(9)
                 for i in 1:9
                     @test MOI.get(mock, attr, exps[i]) == exp_dual
@@ -246,7 +246,7 @@ config = MOIT.TestConfig()
         var_primal = [2, 2, 2, 0]
         exp_dual = [-2, -2, 2]
         mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [2, -2],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2, -2],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) => [exp_dual])
 
@@ -318,7 +318,7 @@ config = MOIT.TestConfig()
                 @test MOI.get(mock, attr, greater[1]) == 0
                 @test MOI.get(mock, attr, exps[1]) == [0, 2, 2]
             else
-                @test MOI.get(mock, attr, less[1]) == 2
+                @test MOI.get(mock, attr, less[1]) == -2
                 @test MOI.get(mock, attr, greater[1]) == 2
                 @test MOI.get(mock, attr, exps[1]) == exp_dual
             end

@@ -102,7 +102,7 @@ end
 # Given a is dual on u - y <= 0, b is dual on sum(z) >= 0, and (c_i, d_i, e_i) is dual on ExponentialCone constraint i,
 # dual on (u, w) in GeometricMeanCone is (-a, e).
 function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::GeoMeantoExpBridge)
-    u_dual = -MOI.get(model, attr, bridge.le_y_index)
+    u_dual = MOI.get(model, attr, bridge.le_y_index)
     w_dual = [MOI.get(model, attr, exp_index_i)[3] for exp_index_i in bridge.exp_indices]
     return vcat(u_dual, w_dual)
 end
@@ -114,7 +114,7 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::GeoMea
     u_value = value[1]
     n = length(bridge.z)
     b_value = -u_value / n
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.le_y_index, -u_value)
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.le_y_index, u_value)
     MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_z_index, b_value)
     for i in 1:n
         w_i_value = value[1 + i]
