@@ -105,8 +105,8 @@ function Base.in(v::AbstractVector{<:Real}, s::MOI.RelativeEntropyCone)
     all(>=(0), v[2:end]) || return false
     n = (MOI.dimension(s)-1) ÷ 2
     @inbounds u = v[1]
-    v = [2:n+1]
-    w = [n+2:end]
+    v = v[2:(n+1)]
+    w = v[(n+2):end]
     @inbounds s = sum(w[i] * log(w[i]/v[i]) for i in eachindex(w))
     return u ≥ s
 end
