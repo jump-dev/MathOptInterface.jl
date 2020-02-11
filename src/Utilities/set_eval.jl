@@ -1,10 +1,10 @@
 
-function set_distance(v::Real, s)
+function distance_to_set(v::Real, s)
     d = _distance(v, s)
     return d < 0 : zero(d) : d
 end
 
-function set_distance(v::AbstractVector{T}, s) where {T <: Real}
+function distance_to_set(v::AbstractVector{T}, s) where {T <: Real}
     length(v) != MOI.dimension(s) && throw(DimensionMismatch("Mismatch between v and s"))
     d = _distance(v, s)
     return [di < 0 : zero(T) : di for di in d]
@@ -126,27 +126,50 @@ function _distance(v::AbstractVector{<:Real}, s::MOI.NormSpectralCone)
     t = v[1]
     m = reshape(v[2:end], (s.row_dim, s.column_dim))
     s1 = LinearAlgebra.svd(m).S[1]
-    return t ≥ s1
+    return s1 - t
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.NormNuclearCone)
-    _dim_match(v, s) || return false
+function _distance(v::AbstractVector{<:Real}, s::MOI.NormNuclearCone)
     t = v[1]
     m = reshape(v[2:end], (s.row_dim, s.column_dim))
-    s = sum(LinearAlgebra.svd(m).S)
-    return t ≥ s
+    s1 = sum(LinearAlgebra.svd(m).S)
+    return s1 - t
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.SOS1)
-    _dim_match(v, s) || return false
-    found_nonzero = false
-    for x in v
+# return the second largest absolute value (=0 if SOS1 respected)
+function _distance(v::AbstractVector{T}, s::MOI.SOS1) where {T <: Real}
+    first_non_zero = second_non_zero = -1
+    v1 = zero(T)
+    v2 = zero(T)
+    for (i, x) in enumerate(v)
         if !isapprox(x, 0)
-            if found_nonzero
-                return false
+            if first_non_zero < 0
+                first_non_zero = i
+                v1 = x
+            elseif second_non_zero < 0
+                second_non_zero = i
+                v2 = x
+            else # replace one of the two
+                xa = abs(x)
+                if xa > v1
+                    second_non_zero = first_non_zero
+                    v2 = v1
+                    first_non_zero = i
+                    v1 = xa
+                elseif v[second_non_zero] <= x < v[first_non_zero]
+                    second_non_zero = i
+                    v2 = xa
+                end                                    
             end
-            found_nonzero = true
         end
     end
-    return true
+    return v2
+end
+
+function _distance(v::T, ::MOI.ZeroOne) where {T <: Real}
+    return min(abs(v - zero(T)), abs(v - one(T)))
+end
+
+function _distance(v::Real, ::MOI.Integer)
+    return min(abs(v - floor(v)), abs(v - ceil(v)))
 end
