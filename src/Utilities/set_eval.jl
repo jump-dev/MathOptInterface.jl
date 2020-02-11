@@ -1,24 +1,27 @@
 
-function distance_to_set(v::Real, s)
-    d = _distance(v, s)
-    return d < 0 : zero(d) : d
+function _correct_distance_to_set(d::Real)
+    return ifelse(d < 0, zero(d), d)
 end
 
-function distance_to_set(v::AbstractVector{T}, s) where {T <: Real}
+function _correct_distance_to_set(d::AbstractVector{T}) where {T <: Real}
+    return [ifelse(di < 0, zero(T), di) for di in d]
+end
+
+function distance_to_set(v, s)
     length(v) != MOI.dimension(s) && throw(DimensionMismatch("Mismatch between v and s"))
     d = _distance(v, s)
-    return [di < 0 : zero(T) : di for di in d]
+    return _correct_distance_to_set(d)
 end
 
-_distance(v, s::MOI.LessThan) = v - s.upper
-_distance(v, s::MOI.GreaterThan) = s.lower - v
-_distance(v, s::MOI.EqualTo) = abs(v - s.value)
+_distance(v::Real, s::MOI.LessThan) = v - s.upper
+_distance(v::Real, s::MOI.GreaterThan) = s.lower - v
+_distance(v::Real, s::MOI.EqualTo) = abs(v - s.value)
 
-_distance(v, s::MOI.Interval) = max(s.lower - v, v - s.upper)
+_distance(v::Real, s::MOI.Interval) = max(s.lower - v, v - s.upper)
 
 _distance(v::AbstractVector{<:Real}, ::MOI.Reals) = false * v
 
-_distance(v, ::MOI.Zeros) = abs.(v)
+_distance(v::AbstractVector{<:Real}, ::MOI.Zeros) = abs.(v)
 
 _distance(v::AbstractVector{<:Real}, ::MOI.Nonnegatives) = -v
 _distance(v::AbstractVector{<:Real}, ::MOI.Nonpositives) = v
