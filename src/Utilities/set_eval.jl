@@ -10,11 +10,11 @@ function set_distance(v::AbstractVector{T}, s) where {T <: Real}
     return [di < 0 : zero(T) : di for di in d]
 end
 
-_distance(v, s::MOI.LessThan) = s.upper - v
-_distance(v, s::MOI.GreaterThan) = v - s.lower
+_distance(v, s::MOI.LessThan) = v - s.upper
+_distance(v, s::MOI.GreaterThan) = s.lower - v
 _distance(v, s::MOI.EqualTo) = abs(v - s.value)
 
-_distance(v, s::MOI.Interval) = max(v - s.lower, s.upper - v)
+_distance(v, s::MOI.Interval) = max(s.lower - v, v - s.upper)
 
 _distance(v::AbstractVector{<:Real}, ::MOI.Reals) = false * v
 
@@ -40,14 +40,14 @@ end
 function _distance(v::AbstractVector{<:Real}, ::MOI.SecondOrderCone)
     t = v[1]
     xs = v[2:end]
-    return min(-t, dot(xs, xs) - t^2) # avoids sqrt
+    return max(-t, dot(xs, xs) - t^2) # avoids sqrt
 end
 
 function _distance(v::AbstractVector{<:Real}, ::MOI.RotatedSecondOrderCone)
     t = v[1]
     u = v[2]
     xs = v[3:end]
-    return min(
+    return max(
         -t, -u,
         dot(xs, xs) - 2 * t * u
     )
@@ -57,8 +57,8 @@ function _distance(v::AbstractVector{<:Real}, s::MOI.GeometricMeanCone)
     t = v[1]
     xs = v[2:end]
     n = MOI.dimension(s) - 1
-    return min(
-        minimum(xs),
+    return max(
+        -minimum(xs),
         t^n - prod(xs),
     )
 end
@@ -67,7 +67,7 @@ function _distance(v::AbstractVector{<:Real}, ::MOI.ExponentialCone)
     x = v[1]
     y = v[2]
     z = v[3]
-    return min(
+    return max(
         y,
         y * exp(x/y) - z,
     )
@@ -77,7 +77,7 @@ function _distance(v::AbstractVector{<:Real}, ::MOI.DualExponentialCone)
     u = v[1]
     v = v[2]
     w = v[3]
-    return min(
+    return max(
         -u,
         -u*exp(v/u) - ℯ * w
     )
@@ -88,7 +88,7 @@ function _distance(v::AbstractVector{<:Real}, s::MOI.PowerCone)
     y = v[2]
     z = v[3]
     e = s.exponent
-    return min(
+    return max(
         x,
         y,
         abs(z) - x^e * y^(1-e)
@@ -101,26 +101,28 @@ function _distance(v::AbstractVector{<:Real}, s::MOI.DualPowerCone)
     w = v[3]
     e = s.exponent
     ce = 1-e
-    return min(
+    return max(
         u,
         v,
         abs(w) - (u/e)^e * (v/ce)^ce
     )
 end
 
-function _distance(v::AbstractVector{<:Real}, s::MOI.RelativeEntropyCone)
+function _distance(v::AbstractVector{<:Real}, set::MOI.RelativeEntropyCone)
     all(>=(0), v[2:end]) || return false
-    n = (MOI.dimension(s)-1) ÷ 2
+    n = (MOI.dimension(set)-1) ÷ 2
     u = v[1]
     v = v[2:(n+1)]
     w = v[(n+2):end]
     s = sum(w[i] * log(w[i]/v[i]) for i in eachindex(w))
-    return s - u
+    return max(
+        -minimum(v[2:end]),
+        s - u,
+    )
 end
 
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.NormSpectralCone)
-    _dim_match(v, s) || return false
+function _distance(v::AbstractVector{<:Real}, s::MOI.NormSpectralCone)
     t = v[1]
     m = reshape(v[2:end], (s.row_dim, s.column_dim))
     s1 = LinearAlgebra.svd(m).S[1]
