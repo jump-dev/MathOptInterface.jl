@@ -318,7 +318,7 @@ config = MOIT.TestConfig()
                 @test MOI.get(mock, attr, greater[1]) == 0
                 @test MOI.get(mock, attr, exps[1]) == [0, 2, 2]
             else
-                @test MOI.get(mock, attr, less[1]) == -2
+                @test MOI.get(mock, attr, less[1]) == 2
                 @test MOI.get(mock, attr, greater[1]) == 2
                 @test MOI.get(mock, attr, exps[1]) == exp_dual
             end

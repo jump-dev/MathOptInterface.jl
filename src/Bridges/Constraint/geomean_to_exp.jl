@@ -94,11 +94,11 @@ end
 # B = [0, 0, (0, 0, I)]
 # C = [-1, 0, (0, 1, 0)]
 # D = [0, 1, (I, 0, 0)]
-# so given dual z = (a, b, (c, d, e)_i), get
-# -u = A' z = a => a = -u
-# w_i = B' z = e_i => e_i = w_i
-# 0 = C' z = -a + sum(d) => a = sum(d) = -u
-# 0 = D' z = b + c_i => c_i = b
+# so given dual q = (a, b, (c, d, e)_i), we get
+# -u = A' q = a => a = -u
+# w_i = B' q = e_i => e_i = w_i
+# 0 = C' q = -a + sum(d) => a = sum(d) = -u
+# 0 = D' q = b + c_i => c_i = -b
 # Given a is dual on u - y <= 0, b is dual on sum(z) >= 0, and (c_i, d_i, e_i) is dual on ExponentialCone constraint i,
 # dual on (u, w) in GeometricMeanCone is (-a, e).
 function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::GeoMeantoExpBridge)
@@ -108,13 +108,18 @@ function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.Const
 end
 # Given constraint dual start of (u, w), constraint dual on LessThan constraint is a = -u,
 # on GreaterThan constraint is b, and on exponential cone constraint i is (c_i = -b, d_i, e_i = w_i).
-# We must have sum(d) = a = -u. We let b = c_i = 0, hence the dual on exponential cone constraint i is (0, -u / n, w_i), which is feasible for the DualExponentialCone.
+# We must have sum(d) = a = -u. We let b = -c_i = -u/n and d_i = -b (log(w_i/b) + 1).
+# Hence the dual on exponential cone constraint i is (-b, d_i, w_i), which is feasible for the DualExponentialCone.
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::GeoMeantoExpBridge, value)
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.le_y_index, -value[1])
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_z_index, zero(value[1]))
-    b_value = -value[1] / length(bridge.z)
-    for i in eachindex(bridge.z)
-        MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], vcat(0, b_value, value[1 + i]))
+    u_value = value[1]
+    n = length(bridge.z)
+    b_value = -u_value / n
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.le_y_index, -u_value)
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_z_index, b_value)
+    for i in 1:n
+        w_i_value = value[1 + i]
+        d_i_value = -b_value * (log(w_i_value / b_value) + 1)
+        MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], vcat(-b_value, d_i_value, w_i_value))
     end
     return
 end
