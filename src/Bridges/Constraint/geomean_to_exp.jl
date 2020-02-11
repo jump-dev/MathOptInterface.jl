@@ -95,20 +95,20 @@ end
 # C = [-1, 0, (0, 1, 0)]
 # D = [0, 1, (I, 0, 0)]
 # so given dual q = (a, b, (c, d, e)_i), we get
-# -u = A' q = a => a = -u
+# u = A' q = a => a = u
 # w_i = B' q = e_i => e_i = w_i
-# 0 = C' q = -a + sum(d) => a = sum(d) = -u
+# 0 = C' q = -a + sum(d) => a = sum(d) = u
 # 0 = D' q = b + c_i => c_i = -b
 # Given a is dual on u - y <= 0, b is dual on sum(z) >= 0, and (c_i, d_i, e_i) is dual on ExponentialCone constraint i,
-# dual on (u, w) in GeometricMeanCone is (-a, e).
+# dual on (u, w) in GeometricMeanCone is (a, e).
 function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::GeoMeantoExpBridge)
     u_dual = MOI.get(model, attr, bridge.le_y_index)
     w_dual = [MOI.get(model, attr, exp_index_i)[3] for exp_index_i in bridge.exp_indices]
     return vcat(u_dual, w_dual)
 end
-# Given constraint dual start of (u, w), constraint dual on LessThan constraint is a = -u,
+# Given constraint dual start of (u, w), constraint dual on LessThan constraint is a = u,
 # on GreaterThan constraint is b, and on exponential cone constraint i is (c_i = -b, d_i, e_i = w_i).
-# We must have sum(d) = a = -u. We let b = -c_i = -u/n and d_i = -b (log(w_i/b) + 1).
+# We must have sum(d) = a = u. We let b = -c_i = -u/n and d_i = -b (log(w_i/b) + 1).
 # Hence the dual on exponential cone constraint i is (-b, d_i, w_i), which is feasible for the DualExponentialCone.
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::GeoMeantoExpBridge, value)
     u_value = value[1]
