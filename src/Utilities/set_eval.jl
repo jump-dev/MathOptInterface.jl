@@ -1,114 +1,121 @@
 
-Base.in(v, s::MOI.LessThan) = v <= s.upper
-Base.in(v, s::MOI.GreaterThan) = v >= s.lower
-Base.in(v, s::MOI.EqualTo) = v ≈ s.value
+function set_distance(v::Real, s)
+    d = _distance(v, s)
+    return d < 0 : zero(d) : d
+end
 
-Base.in(v, s::MOI.Interval) = s.lower <= v <= s.upper
+function set_distance(v::AbstractVector{T}, s) where {T <: Real}
+    length(v) != MOI.dimension(s) && throw(DimensionMismatch("Mismatch between v and s"))
+    d = _distance(v, s)
+    return [di < 0 : zero(T) : di for di in d]
+end
 
-_dim_match(v::AbstractVector, s::MOI.AbstractVectorSet) = length(v) == MOI.dimension(s)
+_distance(v, s::MOI.LessThan) = s.upper - v
+_distance(v, s::MOI.GreaterThan) = v - s.lower
+_distance(v, s::MOI.EqualTo) = abs(v - s.value)
 
-Base.in(v::AbstractVector{<:Real}, s::MOI.Reals) = _dim_match(v, s)
-Base.in(v, s::MOI.Zeros) = _dim_match(v, s) && all(≈(0), v)
+_distance(v, s::MOI.Interval) = max(v - s.lower, s.upper - v)
 
-Base.in(v::AbstractVector{<:Real}, s::MOI.Nonnegatives) = _dim_match(v, s) && all(≥(0), v)
-Base.in(v::AbstractVector{<:Real}, s::MOI.Nonpositives) = _dim_match(v, s) && all(≤(0), v)
+_distance(v::AbstractVector{<:Real}, ::MOI.Reals) = false * v
+
+_distance(v, ::MOI.Zeros) = abs.(v)
+
+_distance(v::AbstractVector{<:Real}, ::MOI.Nonnegatives) = -v
+_distance(v::AbstractVector{<:Real}, ::MOI.Nonpositives) = v
 
 # Norm cones
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.NormInfinityCone)
-    _dim_match(v, s) || return false
+function _distance(v::AbstractVector{<:Real}, ::MOI.NormInfinityCone)
     t = first(v)
     xs = v[2:end]
-    for x in xs
-        if abs(x) > t
-            return false
-        end
-    end
-    return true
+    return [t - abs(x) for x in xs]
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.NormOneCone)
-    _dim_match(v, s) || return false
+function _distance(v::AbstractVector{<:Real}, ::MOI.NormOneCone)
     t = v[1]
     xs = v[2:end]
-    return t >= sum(abs, xs)
+    return t - sum(abs, xs)
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.SecondOrderCone)
-    _dim_match(v, s) || return false
+function _distance(v::AbstractVector{<:Real}, ::MOI.SecondOrderCone)
     t = v[1]
     xs = v[2:end]
-    return t ≥ 0 && t^2 >= dot(xs, xs) # avoids sqrt
+    return min(-t, dot(xs, xs) - t^2) # avoids sqrt
 end
 
-
-function Base.in(v::AbstractVector{<:Real}, s::MOI.RotatedSecondOrderCone)
-    _dim_match(v, s) || return false
+function _distance(v::AbstractVector{<:Real}, ::MOI.RotatedSecondOrderCone)
     t = v[1]
     u = v[2]
-    t ≥ 0 && u ≥ 0 || return false
     xs = v[3:end]
-    return 2 * t * u >= dot(xs, xs)
+    return min(
+        -t, -u,
+        dot(xs, xs) - 2 * t * u
+    )
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.GeometricMeanCone)
+function _distance(v::AbstractVector{<:Real}, s::MOI.GeometricMeanCone)
     t = v[1]
     xs = v[2:end]
     n = MOI.dimension(s) - 1
-    xs in MOI.Nonnegatives(n) || return false # this also checks dimensions
-    return t^n <= prod(xs)
+    return min(
+        minimum(xs),
+        t^n - prod(xs),
+    )
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.ExponentialCone)
-    length(v) == 3 || return false
-    @inbounds y = v[2]
-    y > 0 || return false
-    @inbounds x = v[1]
-    @inbounds z = v[3]
-    return y * exp(x/y) <= z
+function _distance(v::AbstractVector{<:Real}, ::MOI.ExponentialCone)
+    x = v[1]
+    y = v[2]
+    z = v[3]
+    return min(
+        y,
+        y * exp(x/y) - z,
+    )
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.DualExponentialCone)
-    length(v) == 3 || return false
-    @inbounds u = v[1]
-    u < 0 || return false
-    @inbounds v = v[2]
-    @inbounds w = v[3]
-    return -u*exp(v/u) ≤ ℯ * w
+function _distance(v::AbstractVector{<:Real}, ::MOI.DualExponentialCone)
+    u = v[1]
+    v = v[2]
+    w = v[3]
+    return min(
+        -u,
+        -u*exp(v/u) - ℯ * w
+    )
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.PowerCone)
-    length(v) == 3 || return false
-    @inbounds x = v[1]
-    x ≥ 0 || return false
-    @inbounds y = v[2]
-    y ≥ 0 || return false
-    @inbounds z = v[3]
+function _distance(v::AbstractVector{<:Real}, s::MOI.PowerCone)
+    x = v[1]
+    y = v[2]
+    z = v[3]
     e = s.exponent
-    return x^e * y^(1-e) ≥ abs(z)
+    return min(
+        x,
+        y,
+        abs(z) - x^e * y^(1-e)
+    )
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.DualPowerCone)
-    length(v) == 3 || return false
-    @inbounds u = v[1]
-    u ≥ 0 || return false
-    @inbounds v = v[2]
-    v ≥ 0 || return false
-    @inbounds w = v[3]
+function _distance(v::AbstractVector{<:Real}, s::MOI.DualPowerCone)
+    u = v[1]
+    v = v[2]
+    w = v[3]
     e = s.exponent
     ce = 1-e
-    return (u/e)^e * (v/ce)^ce ≥ abs(w)
+    return min(
+        u,
+        v,
+        abs(w) - (u/e)^e * (v/ce)^ce
+    )
 end
 
-function Base.in(v::AbstractVector{<:Real}, s::MOI.RelativeEntropyCone)
-    _dim_match(v, s) || return false
+function _distance(v::AbstractVector{<:Real}, s::MOI.RelativeEntropyCone)
     all(>=(0), v[2:end]) || return false
     n = (MOI.dimension(s)-1) ÷ 2
-    @inbounds u = v[1]
+    u = v[1]
     v = v[2:(n+1)]
     w = v[(n+2):end]
-    @inbounds s = sum(w[i] * log(w[i]/v[i]) for i in eachindex(w))
-    return u ≥ s
+    s = sum(w[i] * log(w[i]/v[i]) for i in eachindex(w))
+    return s - u
 end
 
 
