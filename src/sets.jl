@@ -817,13 +817,18 @@ values in the solution: for all pairs of expressions, their values must
 differ.
 
 This constraint is sometimes called `distinct`.
+
+## Example
+
+    [x, y, z] in AllDifferent(3)
+    # enforces `x != y` AND `x != z` AND `y != z`.
 """
 struct AllDifferent <: AbstractVectorSet
     dimension::Int
 end
 
 """
-    Domain{T <: Real}(values::Set{T})
+    Domain{T <: Number}(values::Set{T})
 
 The set corresponding to an enumeration of constant values.
 
@@ -831,25 +836,32 @@ The value of a scalar function is enforced to take a value from this set of
 values.
 
 This constraint is sometimes called `in`.
+
+## Example
+
+    x in Domain(Set(1, 2, 3))
+    # enforces `x == 1` OR `x == 2` OR `x == 3`.
 """
-struct Domain{T <: Real} <: AbstractScalarSet
+struct Domain{T <: Number} <: AbstractScalarSet
     values::Set{T}
 end
 
-function Base.copy(set::Domain{T <: Real})
+function Base.copy(set::Domain{T}) where T
     return Domain(copy(set.values))
 end
 
 """
-    Membership(values::Set{AbstractScalarFunction})
+    Membership(dimension)
 
-The set corresponding to an enumeration of values, given by expressions.
-
-The value of a scalar function is enforced to take a value from this set of
-values. These values are given by expressions potentially depending on other
-variables for the problem.
+The first element of a function of dimension `dimension` must equal at least
+one of the following `dimension - 1` elements of the function.
 
 This constraint is sometimes called `in_set`.
+
+## Example
+
+    [x, y, z] in Membership(dimension)
+    # enforces `x == y` OR `x == z`.
 """
 struct Membership <: AbstractScalarSet
     values::Set{AbstractScalarFunction}
@@ -860,17 +872,18 @@ function Base.copy(set::Membership)
 end
 
 """
-    DifferentFrom(value::AbstractScalarFunction)
+    DifferentFrom(dimension)
 
-The set excluding the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
-All other values in the domain of ``x`` are allowed. `value` is a generic scalar function.
+The first element of a function of dimension `dimension` cannot equal any
+of the following `dimension - 1` elements of the function.
+
+## Example
+
+    [x, y, z] in DifferentFrom(dimension)
+    # enforces `x != y` AND `x != z`.
 """
 struct DifferentFrom <: AbstractScalarSet
-    value::AbstractScalarFunction
-end
-
-function Base.copy(set::DifferentFrom)
-    return DifferentFrom(copy(set.value))
+    dimension::Int
 end
 
 """
@@ -904,21 +917,18 @@ end
 dimension(set::CountDistinct) where T = set.dimension + 1
 
 """
-    StrictlyGreaterThan{T <: Real}(lower::T)
+    Strictly{S <: Union{LessThan, GreaterThan}}
 
-The set ``(lower,\\infty) \\subseteq \\mathbb{R}``. It is mostly useful if `lower` is an integer.
+Converts an inequality set to a set with the same inequality made strict. For instance, while LessThan(1)
+corresponds to the inequality `<= 1`, Strictly(LessThan(1)) corresponds to the inequality `< 1`, i.e.
+the value 1 is no more allowed.
 """
-struct StrictlyGreaterThan{T <: Real} <: AbstractScalarSet
-    lower::T
+struct Strictly{S <: Union{LessThan, GreaterThan}} <: AbstractScalarSet
+    set::S
 end
 
-"""
-    StrictlyLessThan{T <: Real}(upper::T)
-
-The set ``(-\\infty,upper) \\subseteq \\mathbb{R}``. It is mostly useful if `upper` is an integer.
-"""
-struct StrictlyLessThan{T <: Real} <: AbstractScalarSet
-    upper::T
+function Base.copy(set::Strictly{S}) where S
+    return Count(copy(set.set))
 end
 
 """
@@ -1023,7 +1033,7 @@ is assigned to, and the last `n_items` ones give the size of each item. The load
 of the sizes of the items put in that bin.
 
 This constraint is equivalent to `BinPacking` with inequality constraints on the loads of the bins. However, there
-are more efficient propagators for the combined constraint (bin packing with maximum load). 
+are more efficient propagators for the combined constraint (bin packing with maximum load).
 
 Also called `bin_packing_capa`.
 
@@ -1075,8 +1085,8 @@ function Base.copy(
         PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
         LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
         RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,
-        Semiinteger, AllDifferent, DifferentFrom, StrictlyGreaterThan,
-        StrictlyLessThan, CountDistinct, Element, BinPacking, CapacitatedBinPacking
+        Semiinteger, AllDifferent, DifferentFrom, CountDistinct, Element,
+        BinPacking, CapacitatedBinPacking, DifferentFrom
     }
 )
     return set
