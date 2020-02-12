@@ -8,21 +8,24 @@ const MOIB = MathOptInterface.Bridges
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "GeoMean" begin
     bridged_mock = MOIB.Constraint.GeoMean{Float64}(mock)
 
-    MOIT.basic_constraint_tests(
-        bridged_mock, config,
-        include = [(F, S)
-                   for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64},
-                             MOI.VectorQuadraticFunction{Float64}]
-                   for S in [MOI.GeometricMeanCone]])
+    MOIT.basic_constraint_tests(bridged_mock, config,
+        include = [(F, MOI.GeometricMeanCone) for F in [
+            MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}, MOI.VectorQuadraticFunction{Float64}
+        ]])
 
     @testset "geomean1test" begin
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [ones(4); 2; √2; √2])
+        var_primal = vcat(ones(4), 2, √2, √2)
+        rsoc_duals = [[√2, √2, -2] / 3, [1, 1, -√2] / 3, [1, 1, -√2] / 3]
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1, -inv(3)],
+            (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => rsoc_duals)
+
         MOIT.geomean1vtest(bridged_mock, config)
         MOIT.geomean1ftest(bridged_mock, config)
 
@@ -37,7 +40,7 @@ config = MOIT.TestConfig()
             MOI.set.(mock, MOI.ConstraintName(), rsoc, ["rsoc21", "rsoc11", "rsoc12"])
 
             s = """
-            variables: t, x, y, z, x11, x12, x21
+            variables: t, x, y, z, x21, x11, x12
             lessthan1: t + -0.5 * x21 in MathOptInterface.LessThan(0.0)
             lessthan2: x + y + z in MathOptInterface.LessThan(3.0)
             rsoc11: [1.0x, y, x11] in MathOptInterface.RotatedSecondOrderCone(3)
@@ -71,7 +74,7 @@ config = MOIT.TestConfig()
             MOIU.test_models_equal(bridged_mock, model, var_names, ["lessthan", "geomean"])
         end
 
-        # Dual is not yet implemented for GeoMean bridge
+        # set primal/dual start is not yet implemented for GeoMean bridge
         ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         test_delete_bridge(bridged_mock, ci, 4, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
@@ -79,7 +82,17 @@ config = MOIT.TestConfig()
     end
 
     @testset "geomean2test" begin
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, vcat(ones(10), 4.0, fill(2 * √2, 2), fill(2, 4), fill(√2, 8)))
+        var_primal = vcat(ones(10), 4.0, fill(2 * √2, 2), fill(2, 4), fill(√2, 8))
+        rsoc_duals = vcat(
+            [[1/√2, 1/√2, -1] * 4/9],
+            fill([1, 1, -√2] * 2/9, 2),
+            fill([1/√2, 1/√2, -1] * 2/9, 4),
+            fill([1, 1, -√2] * 1/9, 8))
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => fill(-inv(9), 9),
+            (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => rsoc_duals)
+
         MOIT.geomean2vtest(bridged_mock, config)
         MOIT.geomean2ftest(bridged_mock, config)
 
@@ -167,7 +180,7 @@ config = MOIT.TestConfig()
             MOIU.test_models_equal(bridged_mock, model, var_names, vcat(equalto_names, "geomean"))
         end
 
-        # Dual is not yet implemented for GeoMean bridge
+        # set primal/dual start is not yet implemented for GeoMean bridge
         ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         test_delete_bridge(bridged_mock, ci, 10, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
@@ -175,7 +188,10 @@ config = MOIT.TestConfig()
     end
 
     @testset "geomean3test" begin
-        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, 2 * ones(2))
+        mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2, 2],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2, -2],
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0]])
+
         MOIT.geomean3vtest(bridged_mock, config)
         MOIT.geomean3ftest(bridged_mock, config)
 
@@ -222,11 +238,10 @@ config = MOIT.TestConfig()
             MOIU.test_models_equal(bridged_mock, model, ["t", "x"], ["lessthan", "geomean"])
         end
 
-        # Dual is not yet implemented for GeoMean bridge
+        # set primal/dual start is not yet implemented for GeoMean bridge
         ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone}()))
         test_delete_bridge(bridged_mock, ci, 2, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),
                                                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
                                                 (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0)))
     end
-
 end
