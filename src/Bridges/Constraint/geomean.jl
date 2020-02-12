@@ -162,12 +162,12 @@ function MOI.get(b::GeoMeanBridge{T, F, G, H},
 end
 
 # References
-function MOI.delete(model::MOI.ModelLike, c::GeoMeanBridge)
-    MOI.delete(model, c.xij)
-    MOI.delete(model, c.tubc)
-    MOI.delete(model, c.socrc)
-    if c.d == 2
-        MOI.delete(model, c.nonneg)
+function MOI.delete(model::MOI.ModelLike, bridge::GeoMeanBridge)
+    MOI.delete(model, bridge.xij)
+    MOI.delete(model, bridge.tubc)
+    MOI.delete(model, bridge.socrc)
+    if bridge.d == 2
+        MOI.delete(model, bridge.nonneg)
     end
 end
 
@@ -206,34 +206,54 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
     end
     return MOIU.vectorize(f_scalars)
 end
-function _getconstrattr(model, a, c::GeoMeanBridge{T}) where T
-    output = Vector{T}(undef, c.d)
-    output[1] = MOI.get(model, a, c.tubc)
-    if c.d == 2
-        output[2] = MOI.get(model, a, c.nonneg)[1]
+function _getconstrattr(model, attr, bridge::GeoMeanBridge{T}) where T
+    output = Vector{T}(undef, bridge.d)
+    output[1] = MOI.get(model, attr, bridge.tubc)
+    if bridge.d == 2
+        output[2] = MOI.get(model, attr, bridge.nonneg)[1]
     else
-        N = length(c.xij) + 1
+        N = length(bridge.xij) + 1
         # div(N, 2) gets layer before original problem variables are involved
         offset = div(N, 2) - 1 # 1 + 2 + ... + n/4
-        for i in 1:(c.d - 1)
+        for i in 1:(bridge.d - 1)
             j = ((i - 1) >> 1) + 1
             k = i - 2(j - 1)
-            output[1+i] = MOI.get(model, a, c.socrc[offset + j])[k]
+            output[1+i] = MOI.get(model, attr, bridge.socrc[offset + j])[k]
         end
     end
     output
 end
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::GeoMeanBridge)
-    output = _getconstrattr(model, a, c)
-    N = length(c.xij) + 1
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::GeoMeanBridge)
+    output = _getconstrattr(model, attr, bridge)
+    N = length(bridge.xij) + 1
     # the constraint is t - x_l1/sqrt(2^l) ≤ 0, we need to add the value of x_l1
-    if c.d == 2
-        output[1] += MOI.get(model, a, c.nonneg)[1]
+    if bridge.d == 2
+        output[1] += MOI.get(model, attr, bridge.nonneg)[1]
     else
-        output[1] += MOI.get(model, MOI.VariablePrimal(), c.xij[1]) / sqrt(N)
+        output[1] += MOI.get(model, MOI.VariablePrimal(), bridge.xij[1]) / sqrt(N)
     end
-    output
+    return output
 end
-#function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintDual, c::GeoMeanBridge)
-#    output = _getconstrattr(model, a, c)
-#end
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual, bridge::GeoMeanBridge)
+    output = _getconstrattr(model, attr, bridge)
+    if bridge.d == 2
+        # The transformation is:
+        # [t]                [1 -1] [t]
+        # [x] in GeoMean <=> [0  1] [x] in R- x R+
+        # Hence the dual transformation is
+        # [ 1 0] [u]                 [u]
+        # [-1 1] [v] in GeoMean* <=> [v] in R- x R+
+        output[2] -= MOI.get(model, attr, bridge.tubc)
+    end
+    # Otherwise, the transformation is:
+    # [t]                                  [t]
+    # [x] in GeoMean <=> exists xij s.t. A [x] + B xij in R- x RSOC^(N-1)
+    # Hence the dual transformation is
+    # A' y in GeoMean* <=>
+    # B' y = 0         <=> y in R- x RSOC^(N-1)
+    # Here A has at most one nonzero entry by line and column and this entry is 1.
+    # Therefore we can A' = inv(A) hence we can use the same `getconstrattr` function
+    # than for getting the `ConstraintPrimal`.
+    # We don't need to use B' y = 0.
+    return output
+end
