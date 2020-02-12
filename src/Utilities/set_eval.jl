@@ -139,6 +139,16 @@ function _distance(v::AbstractVector{<:Real}, s::MOI.NormNuclearCone)
     return s1 - t
 end
 
+## Integer sets
+
+function _distance(v::T, ::MOI.ZeroOne) where {T <: Real}
+    return min(abs(v - zero(T)), abs(v - one(T)))
+end
+
+function _distance(v::Real, ::MOI.Integer)
+    return min(abs(v - floor(v)), abs(v - ceil(v)))
+end
+
 # return the second largest absolute value (=0 if SOS1 respected)
 function _distance(v::AbstractVector{T}, s::MOI.SOS1) where {T <: Real}
     first_non_zero = second_non_zero = -1
@@ -169,10 +179,16 @@ function _distance(v::AbstractVector{T}, s::MOI.SOS1) where {T <: Real}
     return v2
 end
 
-function _distance(v::T, ::MOI.ZeroOne) where {T <: Real}
-    return min(abs(v - zero(T)), abs(v - one(T)))
+# TODO SOS2
+
+# takes in input [z, f(x)]
+function _distance(v::AbstractVector{T}, s::MOI.Indicator{A}) where {T <: Real}
+    z = v[1]
+    # inactive constraint
+    if A == MOI.ACTIVATE_ON_ONE && isapprox(z, 0) || A == MOI.ACTIVATE_ON_ZERO && isapprox(z, 1)
+        return zeros(T, 2)
+    end
+    return [_distance(z, MOI.ZeroOne()), _distance(v, s.set)]
 end
 
-function _distance(v::Real, ::MOI.Integer)
-    return min(abs(v - floor(v)), abs(v - ceil(v)))
-end
+# TODO Complements, requires additional information (bounds for the variables)
