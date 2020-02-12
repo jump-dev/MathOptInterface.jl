@@ -874,7 +874,7 @@ function Base.copy(set::DifferentFrom)
 end
 
 """
-    Count{T <: Real}(values::Set{AbstractScalarFunction}, value::T)
+    Count{T <: Real}(value::T, dimension::Int)
 
 ``\\{(y, x) \\in \\mathbb{N} \\times \\mathbb{R}^n : y = |\\{i | x_i = value\\}|\\}``
 """
