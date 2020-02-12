@@ -814,7 +814,7 @@ The set corresponding to an all-different constraint.
 
 All expressions of a vector-valued function are enforced to take distinct
 values in the solution: for all pairs of expressions, their values must
-differ. This constraint is only defined for integer-valued expressions.
+differ.
 
 This constraint is sometimes called `distinct`.
 """
@@ -823,7 +823,7 @@ struct AllDifferent <: AbstractVectorSet
 end
 
 """
-    Domain{T <: Int}(values::Set{T})
+    Domain{T <: Real}(values::Set{T})
 
 The set corresponding to an enumeration of constant values.
 
@@ -832,11 +832,11 @@ values.
 
 This constraint is sometimes called `in`.
 """
-struct Domain{T <: Int} <: AbstractScalarSet
+struct Domain{T <: Real} <: AbstractScalarSet
     values::Set{T}
 end
 
-function Base.copy(set::Domain{T <: Int})
+function Base.copy(set::Domain{T <: Real})
     return Domain(copy(set.values))
 end
 
@@ -920,7 +920,7 @@ struct ReificationSet{S <: AbstractScalarSet} <: AbstractScalarSet
     set::S
 end
 
-function Base.copy(set::ReificationSet{S <: AbstractScalarSet}{S}) where S
+function Base.copy(set::ReificationSet{S}) where S
     return ReificationSet(copy(set.set))
 end
 
