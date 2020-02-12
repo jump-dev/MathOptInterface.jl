@@ -326,6 +326,12 @@ end
     RelativeEntropyCone(dimension)
 
 The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}`` of dimension `dimension```{}=2n+1``.
+
+### Duality note
+
+The dual of the relative entropy cone is
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, -u \\exp (v_i/u) \\le \\exp(1) w_i, u < 0 \\}`` of dimension `dimension```{}=2n+1``.
+Note that the inequality is rewritten in terms of ``\\log`` as follows: ``v_i \\le u (\\log(w_i/-u) + 1)``.
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
