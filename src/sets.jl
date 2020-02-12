@@ -711,9 +711,9 @@ end
 """
     IndicatorSet{A, S <: AbstractScalarSet}(set::S)
 
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ZERO` and
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ONE`.
 
 `S` has to be a sub-type of `AbstractScalarSet`.
@@ -876,13 +876,14 @@ end
 """
     Count{T <: Real}(values::Set{AbstractScalarFunction}, value::T)
 
-The set including the single point ``x \\in \\mathbb{N}`` where ``x`` is the number of `values`
-equal to `value`: ``|\\{x \\in values | x = value \\}|``.
+``\\{(y, x) \\in \\mathbb{N} \\times \\mathbb{R}^n : y = |\\{i | x_i = value\\}|\\}``
 """
-struct Count{T <: Real} <: AbstractScalarSet
-    values::Set{AbstractScalarFunction}
+struct Count{T <: Real} <: AbstractVectorSet
     value::T
+    dimension::Int
 end
+
+dimension(set::Count{T}) where T = set.dimension + 1
 
 function Base.copy(set::Count)
     return Count(copy(set.value), value)
@@ -909,19 +910,22 @@ end
 """
     ReificationSet{S <: AbstractScalarSet}(set::S)
 
-``\\{y \\in \\{0, 1\\} | y = 1 \\iff x \\in set, y = 0 otherwise\\}``.
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n | y = 1 \\iff x \\in set, y = 0 otherwise\\}``.
 
 `S` has to be a sub-type of `AbstractScalarSet`.
 
 This set serves to find out whether a given constraint is satisfied. The only possible values are
 0 and 1.
 """
-struct ReificationSet{S <: AbstractScalarSet} <: AbstractScalarSet
+struct ReificationSet{S <: AbstractScalarSet} <: AbstractVectorSet
     set::S
+    dimension::Int
 end
 
+dimension(set::ReificationSet{T}) where T = set.dimension + 1
+
 function Base.copy(set::ReificationSet{S}) where S
-    return ReificationSet(copy(set.set))
+    return ReificationSet(copy(set.set), set.dimension)
 end
 
 # isbits types, nothing to copy
