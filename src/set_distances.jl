@@ -182,10 +182,10 @@ end
 # TODO SOS2
 
 # takes in input [z, f(x)]
-function unsigned_distance(v::AbstractVector{T}, s::Indicator{A}) where {T <: Real}
+function unsigned_distance(v::AbstractVector{T}, s::IndicatorSet{A}) where {A, T <: Real}
     z = v[1]
     # inactive constraint
-    if A == ACTIVATE_ON_ONE && isapprox(z, 0) || A == ACTIVATE_ON_ZERO && isapprox(z, 1)
+    if A === ACTIVATE_ON_ONE && isapprox(z, 0) || A === ACTIVATE_ON_ZERO && isapprox(z, 1)
         return zeros(T, 2)
     end
     return [unsigned_distance(z, ZeroOne()), unsigned_distance(v, s.set)]
