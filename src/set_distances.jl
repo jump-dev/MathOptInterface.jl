@@ -4,11 +4,20 @@ function _correct_distance_to_set(d::Real)
 end
 
 function _correct_distance_to_set(d::AbstractVector{T}) where {T <: Real}
-    return [ifelse(di < 0, zero(T), di) for di in d]
+    return [_correct_distance_to_set(di) for di in d]
 end
 
+"""
+    distance_to_set(v, s)
+
+Compute the distance of a value to a set.
+For some vector-valued sets, can return a vector of distances.
+When `v ∈ s`, the distance is zero (or all individual distances are zero).
+
+Each set `S` implements `unsigned_distance(v::T, s::S)` with `T` of appropriate type.
+"""
 function distance_to_set(v, s)
-    length(v) != dimension(s) && throw(DimensionMismatch("Mismatch between v and s"))
+    length(v) != dimension(s) && throw(DimensionMismatch("Mismatch between value and set"))
     d = unsigned_distance(v, s)
     return _correct_distance_to_set(d)
 end
@@ -19,7 +28,7 @@ unsigned_distance(v::Real, s::EqualTo) = abs(v - s.value)
 
 unsigned_distance(v::Real, s::Interval) = max(s.lower - v, v - s.upper)
 
-unsigned_distance(v::AbstractVector{<:Real}, ::Reals) = false * v
+unsigned_distance(v::AbstractVector{<:Real}, ::Reals) = zeros(length(v))
 
 unsigned_distance(v::AbstractVector{<:Real}, ::Zeros) = abs.(v)
 
