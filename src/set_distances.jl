@@ -8,45 +8,45 @@ function _correct_distance_to_set(d::AbstractVector{T}) where {T <: Real}
 end
 
 function distance_to_set(v, s)
-    length(v) != MOI.dimension(s) && throw(DimensionMismatch("Mismatch between v and s"))
-    d = _distance(v, s)
+    length(v) != dimension(s) && throw(DimensionMismatch("Mismatch between v and s"))
+    d = unsigned_distance\(v, s)
     return _correct_distance_to_set(d)
 end
 
-_distance(v::Real, s::MOI.LessThan) = v - s.upper
-_distance(v::Real, s::MOI.GreaterThan) = s.lower - v
-_distance(v::Real, s::MOI.EqualTo) = abs(v - s.value)
+unsigned_distance\(v::Real, s::LessThan) = v - s.upper
+unsigned_distance\(v::Real, s::GreaterThan) = s.lower - v
+unsigned_distance\(v::Real, s::EqualTo) = abs(v - s.value)
 
-_distance(v::Real, s::MOI.Interval) = max(s.lower - v, v - s.upper)
+unsigned_distance\(v::Real, s::Interval) = max(s.lower - v, v - s.upper)
 
-_distance(v::AbstractVector{<:Real}, ::MOI.Reals) = false * v
+unsigned_distance\(v::AbstractVector{<:Real}, ::Reals) = false * v
 
-_distance(v::AbstractVector{<:Real}, ::MOI.Zeros) = abs.(v)
+unsigned_distance\(v::AbstractVector{<:Real}, ::Zeros) = abs.(v)
 
-_distance(v::AbstractVector{<:Real}, ::MOI.Nonnegatives) = -v
-_distance(v::AbstractVector{<:Real}, ::MOI.Nonpositives) = v
+unsigned_distance\(v::AbstractVector{<:Real}, ::Nonnegatives) = -v
+unsigned_distance\(v::AbstractVector{<:Real}, ::Nonpositives) = v
 
 # Norm cones
 
-function _distance(v::AbstractVector{<:Real}, ::MOI.NormInfinityCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, ::NormInfinityCone)
     t = first(v)
     xs = v[2:end]
     return [t - abs(x) for x in xs]
 end
 
-function _distance(v::AbstractVector{<:Real}, ::MOI.NormOneCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, ::NormOneCone)
     t = v[1]
     xs = v[2:end]
     return t - sum(abs, xs)
 end
 
-function _distance(v::AbstractVector{<:Real}, ::MOI.SecondOrderCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, ::SecondOrderCone)
     t = v[1]
     xs = v[2:end]
     return max(-t, dot(xs, xs) - t^2) # avoids sqrt
 end
 
-function _distance(v::AbstractVector{<:Real}, ::MOI.RotatedSecondOrderCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, ::RotatedSecondOrderCone)
     t = v[1]
     u = v[2]
     xs = v[3:end]
@@ -56,17 +56,17 @@ function _distance(v::AbstractVector{<:Real}, ::MOI.RotatedSecondOrderCone)
     )
 end
 
-function _distance(v::AbstractVector{<:Real}, s::MOI.GeometricMeanCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, s::GeometricMeanCone)
     t = v[1]
     xs = v[2:end]
-    n = MOI.dimension(s) - 1
+    n = dimension(s) - 1
     return max(
         -minimum(xs),
         t^n - prod(xs),
     )
 end
 
-function _distance(v::AbstractVector{<:Real}, ::MOI.ExponentialCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, ::ExponentialCone)
     x = v[1]
     y = v[2]
     z = v[3]
@@ -76,7 +76,7 @@ function _distance(v::AbstractVector{<:Real}, ::MOI.ExponentialCone)
     )
 end
 
-function _distance(v::AbstractVector{<:Real}, ::MOI.DualExponentialCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, ::DualExponentialCone)
     u = v[1]
     v = v[2]
     w = v[3]
@@ -86,7 +86,7 @@ function _distance(v::AbstractVector{<:Real}, ::MOI.DualExponentialCone)
     )
 end
 
-function _distance(v::AbstractVector{<:Real}, s::MOI.PowerCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, s::PowerCone)
     x = v[1]
     y = v[2]
     z = v[3]
@@ -98,7 +98,7 @@ function _distance(v::AbstractVector{<:Real}, s::MOI.PowerCone)
     )
 end
 
-function _distance(v::AbstractVector{<:Real}, s::MOI.DualPowerCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, s::DualPowerCone)
     u = v[1]
     v = v[2]
     w = v[3]
@@ -111,9 +111,9 @@ function _distance(v::AbstractVector{<:Real}, s::MOI.DualPowerCone)
     )
 end
 
-function _distance(v::AbstractVector{<:Real}, set::MOI.RelativeEntropyCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, set::RelativeEntropyCone)
     all(>=(0), v[2:end]) || return false
-    n = (MOI.dimension(set)-1) ÷ 2
+    n = (dimension(set)-1) ÷ 2
     u = v[1]
     v = v[2:(n+1)]
     w = v[(n+2):end]
@@ -125,14 +125,14 @@ function _distance(v::AbstractVector{<:Real}, set::MOI.RelativeEntropyCone)
 end
 
 
-function _distance(v::AbstractVector{<:Real}, s::MOI.NormSpectralCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, s::NormSpectralCone)
     t = v[1]
     m = reshape(v[2:end], (s.row_dim, s.column_dim))
     s1 = LinearAlgebra.svd(m).S[1]
     return s1 - t
 end
 
-function _distance(v::AbstractVector{<:Real}, s::MOI.NormNuclearCone)
+function unsigned_distance\(v::AbstractVector{<:Real}, s::NormNuclearCone)
     t = v[1]
     m = reshape(v[2:end], (s.row_dim, s.column_dim))
     s1 = sum(LinearAlgebra.svd(m).S)
@@ -141,16 +141,16 @@ end
 
 ## Integer sets
 
-function _distance(v::T, ::MOI.ZeroOne) where {T <: Real}
+function unsigned_distance\(v::T, ::ZeroOne) where {T <: Real}
     return min(abs(v - zero(T)), abs(v - one(T)))
 end
 
-function _distance(v::Real, ::MOI.Integer)
+function unsigned_distance\(v::Real, ::Integer)
     return min(abs(v - floor(v)), abs(v - ceil(v)))
 end
 
 # return the second largest absolute value (=0 if SOS1 respected)
-function _distance(v::AbstractVector{T}, s::MOI.SOS1) where {T <: Real}
+function unsigned_distance\(v::AbstractVector{T}, s::SOS1) where {T <: Real}
     first_non_zero = second_non_zero = -1
     v1 = zero(T)
     v2 = zero(T)
@@ -182,13 +182,13 @@ end
 # TODO SOS2
 
 # takes in input [z, f(x)]
-function _distance(v::AbstractVector{T}, s::MOI.Indicator{A}) where {T <: Real}
+function unsigned_distance\(v::AbstractVector{T}, s::Indicator{A}) where {T <: Real}
     z = v[1]
     # inactive constraint
-    if A == MOI.ACTIVATE_ON_ONE && isapprox(z, 0) || A == MOI.ACTIVATE_ON_ZERO && isapprox(z, 1)
+    if A == ACTIVATE_ON_ONE && isapprox(z, 0) || A == ACTIVATE_ON_ZERO && isapprox(z, 1)
         return zeros(T, 2)
     end
-    return [_distance(z, MOI.ZeroOne()), _distance(v, s.set)]
+    return [unsigned_distance\(z, ZeroOne()), unsigned_distance\(v, s.set)]
 end
 
 # TODO Complements, requires additional information (bounds for the variables)

@@ -32,7 +32,6 @@ include("constraints.jl")
 include("copy.jl")
 include("results.jl")
 include("variables.jl")
-include("set_eval.jl")
 
 include("model.jl")
 include("parser.jl")
