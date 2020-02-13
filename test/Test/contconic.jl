@@ -97,20 +97,28 @@ end
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})       => [-1.0],
         (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) => [[1.0, 1.0, -1.0, -1.0]])
     MOIT.rotatedsoc4test(mock, config)
-
 end
 @testset "GeoMean" begin
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-inv(3)])
     MOIT.geomean1vtest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-inv(3)],
+        (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) => [vcat(-1.0, fill(inv(3), 3))])
     MOIT.geomean1ftest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10),
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => fill(-inv(9), 9))
     MOIT.geomean2vtest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10),
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => fill(-inv(9), 9),
+        (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) => [vcat(-1.0, fill(inv(9), 9))])
     MOIT.geomean2ftest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, 2 * ones(2))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2.0, 2.0],
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2.0])
     MOIT.geomean3vtest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, 2 * ones(2))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2.0, 2.0],
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2.0],
+        (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) => [[-2.0, 2.0]])
     MOIT.geomean3ftest(mock, config)
 end
 @testset "Exponential" begin
