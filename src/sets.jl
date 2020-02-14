@@ -717,9 +717,9 @@ end
 """
     IndicatorSet{A, S <: AbstractScalarSet}(set::S)
 
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ZERO` and
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ONE`.
 
 `S` has to be a sub-type of `AbstractScalarSet`.
