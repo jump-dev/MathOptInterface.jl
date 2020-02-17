@@ -217,11 +217,12 @@ end
     MOIT.psds3test(mock, config)
 end
 @testset "LogDet" begin
-    # TODO fix: errors with "Fallback getter for variable constraint dual does not support other variable-wise constraints on the variable"
-    # mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1],
-    #     (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
-    #     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]])
-    # MOIT.logdett1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1],
+        (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
+        (MOI.VectorOfVariables, MOI.LogDetConeTriangle) => [[-1, -2, 1, 0, 1]])
+    mock.eval_variable_constraint_dual = false
+    MOIT.logdett1vtest(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1],
         (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
         (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
@@ -230,11 +231,12 @@ end
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [log(5)],
         (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) => [[-1, log(5) - 3, 1, -1, 1.6, 0, -0.2, 0.4]])
     MOIT.logdett2test(mock, config)
-    # TODO fix: errors with "Fallback getter for variable constraint dual does not support other variable-wise constraints on the variable"
-    # mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 0, 1, 1],
-    #     (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
-    #     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]])
-    # MOIT.logdets1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 0, 1, 1],
+        (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
+        (MOI.VectorOfVariables, MOI.LogDetConeSquare) => [[-1, -2, 1, 0, 0, 1]])
+    mock.eval_variable_constraint_dual = false
+    MOIT.logdets1vtest(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 0, 1, 1],
         (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
         (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
@@ -246,7 +248,8 @@ end
 end
 @testset "RootDet" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1],
-        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]])
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
+        (MOI.VectorOfVariables, MOI.RootDetConeTriangle) => [[-1.0, 0.5, 0.0, 0.5]])
     MOIT.rootdett1vtest(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1],
         (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
@@ -256,7 +259,8 @@ end
         (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle) => [vcat(-1, [1, -1, 1.6, 0, -0.2, 0.4] / 3 * (5 ^ inv(3)))])
     MOIT.rootdett2test(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 0, 1],
-        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]])
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
+        (MOI.VectorOfVariables, MOI.RootDetConeSquare) => [[-1.0, 0.5, 0.0, 0.0, 0.5]])
     MOIT.rootdets1vtest(mock, config)
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 0, 1],
         (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
