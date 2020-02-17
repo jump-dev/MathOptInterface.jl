@@ -108,17 +108,22 @@ function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.Const
 end
 # Given constraint dual start of (u, w), constraint dual on LessThan constraint is a = u,
 # on GreaterThan constraint is b, and on exponential cone constraint i is (c_i = -b, d_i, e_i = w_i).
-# We must have sum(d) = a = u. We let b = -c_i = -u/n and d_i = -b (log(w_i/b) + 1).
-# Hence the dual on exponential cone constraint i is (-b, d_i, w_i), which is feasible for the DualExponentialCone.
+# We must have sum(d) = a = u. We let b = -c_i = -u/n and d_i = -b * (log(w_i/geomean(w)) + 1)
+# Note by dual geomean cone inequality, -u <= n * geomean(w) i.e. geomean(w) >= -u/n.
+# Hence the dual on exponential cone constraint i is (-b = u/n, d_i = u/n * (log(w_i/geomean(w)) + 1), w_i),
+# which is feasible for the DualExponentialCone (x,y,z): -x exp(y/x) <= exp(1) z,
+# since we have -u/n * exp(u/n * (log(w_i/geomean(w)) + 1) / (u/n))
+# = -u/n * w_i / geomean(w) * exp(1) <= geomean(w) * w_i / geomean(w) * exp(1) = exp(1) * w_i.
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::GeoMeantoExpBridge, value)
     u_value = value[1]
     n = length(bridge.z)
     b_value = -u_value / n
     MOI.set(model, MOI.ConstraintDualStart(), bridge.le_y_index, u_value)
     MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_z_index, b_value)
+    geom_w = exp(sum(log(value[i]) for i in 2:length(value)) / n)
     for i in 1:n
         w_i_value = value[1 + i]
-        d_i_value = -b_value * (log(w_i_value / b_value) + 1)
+        d_i_value = -b_value * (log(w_i_value / geom_w) + 1)
         MOI.set(model, MOI.ConstraintDualStart(), bridge.exp_indices[i], vcat(-b_value, d_i_value, w_i_value))
     end
     return

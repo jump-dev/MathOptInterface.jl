@@ -106,7 +106,7 @@ config = MOIT.TestConfig()
                 @test MOI.get(mock, attr, less[1]) == -1
                 @test MOI.get(mock, attr, greater[1]) == inv(3)
                 for i in 1:3
-                    @test MOI.get(mock, attr, exps[i]) == exp_dual
+                    @test MOI.get(mock, attr, exps[i]) ≈ exp_dual
                 end
             end
         end
@@ -230,7 +230,7 @@ config = MOIT.TestConfig()
                 @test MOI.get(mock, attr, less[1]) == -1
                 @test MOI.get(mock, attr, greater[1]) == inv(9)
                 for i in 1:9
-                    @test MOI.get(mock, attr, exps[i]) == exp_dual
+                    @test MOI.get(mock, attr, exps[i]) ≈ exp_dual
                 end
             end
         end
@@ -320,7 +320,7 @@ config = MOIT.TestConfig()
             else
                 @test MOI.get(mock, attr, less[1]) == -2
                 @test MOI.get(mock, attr, greater[1]) == 2
-                @test MOI.get(mock, attr, exps[1]) == exp_dual
+                @test MOI.get(mock, attr, exps[1]) ≈ exp_dual
             end
         end
 
