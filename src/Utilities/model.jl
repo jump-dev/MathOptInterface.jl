@@ -82,7 +82,7 @@ function _getlocr(constrs::Vector{<:ConstraintEntry},
 end
 
 # Implementation of MOI for AbstractModel
-abstract type AbstractModel{T} <: MOI.ModelLike end
+abstract type AbstractModel{T} <: MOI.AbstractOptimizer end
 
 getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
