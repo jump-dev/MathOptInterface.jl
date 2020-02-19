@@ -886,7 +886,7 @@ struct LPModelVectorConstraints{T, F <: MOI.AbstractVectorFunction} <: MOIU.Cons
     nonnegatives::Vector{MOIU.ConstraintEntry{F, MOI.Nonnegatives}}
     nonpositives::Vector{MOIU.ConstraintEntry{F, MOI.Nonpositives}}
 end
-mutable struct LPModel{T} <: MOI.AbstractOptimizer
+mutable struct LPModel{T} <: MOIU.AbstractOptimizer{T}
     name::String
     sense::MOI.OptimizationSense
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
