@@ -25,7 +25,7 @@ module TestExternalModel
         (NewFunction,),
         (),
         (),
-        (),
+        ()
     )
     MathOptInterface.Utilities.@model(ExternalOptimizer,
         (MathOptInterface.ZeroOne, NewSet,),
@@ -45,8 +45,10 @@ end
     optimizer = TestExternalModel.ExternalOptimizer{Float64}()
     @test isa(model, MOIU.AbstractModelLike{Float64})
     @test !isa(model, MOIU.AbstractOptimizer{Float64})
+    @test !isa(model, MOI.AbstractOptimizer)
     @test !isa(optimizer, MOIU.AbstractModelLike{Float64})
     @test isa(optimizer, MOIU.AbstractOptimizer{Float64})
+    @test isa(optimizer, MOI.AbstractOptimizer)
 end
 
 @testset "External @model" begin

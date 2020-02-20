@@ -851,8 +851,11 @@ addition to being different between constraints `F`-in-`S` for the same types
 use the the value of the index directly in a dictionary representing a mapping
 between constraint indices and something else.
 
-If `is_optimizer = true`, the resulting stuct is a subtype of
-`MOIU.AbstractOptimizer`, otherwise, it is a subtype of `MOIU.AbstractModelLike`.
+If `is_optimizer = true`, the resulting struct is a subtype of
+of `MOIU.AbstractOptimizer`, which is a subtype of
+[`MathOptInterface.AbstractOptimizer`](@ref), otherwise, it is a subtype of
+`MOIU.AbstractModelLike`, which is a subtype of
+[`MathOptInterface.ModelLike`](@ref).
 
 ### Examples
 
@@ -866,8 +869,8 @@ The model describing an linear program would be:
       (),                                                         # untyped scalar functions
       (MOI.ScalarAffineFunction,),                                #   typed scalar functions
       (MOI.VectorOfVariables,),                                   # untyped vector functions
-      (MOI.VectorAffineFunction,)                                 #   typed vector functions
-      true
+      (MOI.VectorAffineFunction,),                                #   typed vector functions
+      false
     )
 ```
 
@@ -886,7 +889,7 @@ struct LPModelVectorConstraints{T, F <: MOI.AbstractVectorFunction} <: MOIU.Cons
     nonnegatives::Vector{MOIU.ConstraintEntry{F, MOI.Nonnegatives}}
     nonpositives::Vector{MOIU.ConstraintEntry{F, MOI.Nonpositives}}
 end
-mutable struct LPModel{T} <: MOIU.AbstractOptimizer{T}
+mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     name::String
     sense::MOI.OptimizationSense
     objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
