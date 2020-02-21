@@ -267,6 +267,11 @@ dual_set_type(::Type{RotatedSecondOrderCone}) = RotatedSecondOrderCone
     GeometricMeanCone(dimension)
 
 The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}`` of dimension `dimension```{}=n+1``.
+
+### Duality note
+
+The dual of the geometric mean cone is
+``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}`` of dimension `dimension```{}=n+1``.
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
@@ -330,8 +335,8 @@ The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum
 ### Duality note
 
 The dual of the relative entropy cone is
-``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, -u \\exp (v_i/u) \\le \\exp(1) w_i, u < 0 \\}`` of dimension `dimension```{}=2n+1``.
-Note that the inequality is rewritten in terms of ``\\log`` as follows: ``v_i \\le u (\\log(w_i/-u) + 1)``.
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, -u \\exp (w_i/u) \\le \\exp(1) v_i, u < 0 \\}`` of dimension `dimension```{}=2n+1``.
+Note that the inequality is rewritten in terms of ``\\log`` as follows: ``w_i \\le u (\\log(v_i/-u) + 1)``.
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
