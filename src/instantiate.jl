@@ -99,7 +99,7 @@ problem incrementally or does not support names and `with_names` is `true` (see
 [`Utilities.supports_default_copy_to`](@ref)) then a
 [`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
 model.
-Hence set `with_names` to `true` if names might be set. 
+Hence set `with_names` to `true` if names might be set.
 """
 function instantiate(
     optimizer_constructor; with_bridge_type::Union{Nothing, Type}=nothing,
