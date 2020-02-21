@@ -1,10 +1,20 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.9.11 (February 13, 2020)
+v0.9.11 (February 21, 2020)
 ---------------------
 
-- Added more rootdet/logdet conic tests and bridge dual transformations and tests.
+- Add an option for the model created by `Utilities.@model` to be a subtype
+  of `AbstractOptimizer` (#1031).
+- Described dual cone in docstrings of `GeoMeanCone` and `RelativeEntropyCone`
+  (#1018, #1028).
+- Fixed typos in documentation (#1022, #1024).
+- Fixed warning of unsupported attribute (#1027).
+- Added more rootdet/logdet conic tests (#1026).
+- Implemented `ConstraintDual` for `Constraint.GeoMeanBridge`,
+  `Constraint.RootDetBridge` and `Constraint.LogDetBridge`
+  and test duals in tests with `GeoMeanCone` and `RootDetConeTriangle` and
+  `LogDetConeTriangle` cones (#1025, #1026).
 
 v0.9.10 (January 31, 2020)
 ---------------------
