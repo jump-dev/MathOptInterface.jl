@@ -1,6 +1,11 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.11 (February 13, 2020)
+---------------------
+
+- Added more rootdet/logdet conic tests and bridge dual transformations and tests.
+
 v0.9.10 (January 31, 2020)
 ---------------------
 
