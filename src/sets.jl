@@ -271,7 +271,7 @@ The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\
 ### Duality note
 
 The dual of the geometric mean cone is
-``\\{ (u, v) \\in \\mathbb{R}^{n+1} : v \\ge 0, u \\le n \\sqrt[n]{\\prod_i v_i} \\}`` of dimension `dimension```{}=n+1``.
+``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}`` of dimension `dimension```{}=n+1``.
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
