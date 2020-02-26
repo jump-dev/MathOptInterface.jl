@@ -1310,66 +1310,63 @@ const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
 
 import FooBar
-const optimizer = FooBar.Optimizer()
-MOI.set(optimizer, MOI.Silent(), true)
+const OPTIMIZER_CONSTRUCTOR = MOI.OptimizerWithAttributes(FooBar.Optimizer, MOI.Silent() => true)
+const OPTIMIZER = MOI.instantiate(OPTIMIZER_CONSTRUCTOR)
 
 @testset "SolverName" begin
-    @test MOI.get(optimizer, MOI.SolverName()) == "FooBar"
+    @test MOI.get(OPTIMIZER, MOI.SolverName()) == "FooBar"
 end
 
 @testset "supports_default_copy_to" begin
-    @test MOIU.supports_default_copy_to(optimizer, false)
+    @test MOIU.supports_default_copy_to(OPTIMIZER, false)
     # Use `@test !...` if names are not supported
-    @test MOIU.supports_default_copy_to(optimizer, true)
+    @test MOIU.supports_default_copy_to(OPTIMIZER, true)
 end
 
-const bridged = MOIB.full_bridge_optimizer(optimizer, Float64)
-const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
+const BRIDGED = MOI.instantiate(OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float64)
+const CONFIG = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
 
 @testset "Unit" begin
-    MOIT.unittest(bridged, config)
+    MOIT.unittest(BRIDGED, CONFIG)
 end
 
 @testset "Modification" begin
-    MOIT.modificationtest(bridged, config)
+    MOIT.modificationtest(BRIDGED, CONFIG)
 end
 
 @testset "Continuous Linear" begin
-    MOIT.contlineartest(bridged, config)
+    MOIT.contlineartest(BRIDGED, CONFIG)
 end
 
 @testset "Continuous Conic" begin
-    MOIT.contlineartest(bridged, config)
+    MOIT.contlineartest(BRIDGED, CONFIG)
 end
 
 @testset "Integer Conic" begin
-    MOIT.intconictest(bridged, config)
+    MOIT.intconictest(BRIDGED, CONFIG)
 end
 ```
-The optimizer `bridged` constructed with [`Bridges.full_bridge_optimizer`](@ref)
-automatically bridges constraints that are not supported by `optimizer`
+The optimizer `BRIDGED` constructed with [`instantiate`](@ref)
+automatically bridges constraints that are not supported by `OPTIMIZER`
 using the bridges listed in [Bridges](@ref). It is recommended for an
 implementation of MOI to only support constraints that are natively supported
 by the solver and let bridges transform the constraint to the appropriate form.
-For this reason it is expected that tests may not pass if `optimizer` is used
-instead of `bridged`.
+For this reason it is expected that tests may not pass if `OPTIMIZER` is used
+instead of `BRIDGED`.
 
 To test that a specific problem can be solved without bridges, a specific test can
-be run with `optimizer` instead of `bridged`. For instance
+be run with `OPTIMIZER` instead of `BRIDGED`. For instance
 ```julia
 @testset "Interval constraints" begin
-    MOIT.linear10test(optimizer, config)
+    MOIT.linear10test(OPTIMIZER, CONFIG)
 end
 ```
-checks that `optimizer` implements support for
+checks that `OPTIMIZER` implements support for
 [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref).
 
-If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), then `supports_default_copy_to` can be replaced by `supports_allocate_load` if appropriate (see [Implementing copy](@ref)) and the line `const bridged = ...` can be replaced with
-```julia
-const cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
-const cached = MOIU.CachingOptimizer(cache, optimizer)
-const bridged = MOIB.full_bridge_optimizer(cached, Float64)
-```
+If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`),
+then `supports_default_copy_to` can be replaced by `supports_allocate_load` if
+appropriate (see [Implementing copy](@ref)).
 
 ### Benchmarking
 
