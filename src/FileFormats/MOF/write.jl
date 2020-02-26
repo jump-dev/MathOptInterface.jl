@@ -38,6 +38,9 @@ end
 function write_objective(
     object::Object, model::Model, name_map::Dict{MOI.VariableIndex, String}
 )
+    if object["objective"]["sense"] != "feasibility"
+        return  # Objective must have been written from NLPBlock.
+    end
     sense = MOI.get(model, MOI.ObjectiveSense())
     object["objective"] = Object("sense" => moi_to_object(sense))
     if sense != MOI.FEASIBILITY_SENSE

@@ -21,9 +21,60 @@
   "objective": {
     "sense": "min",
     "function": {
-      "head": "ScalarAffineFunction",
-      "terms": [],
-      "constant": 0.0
+      "head": "ScalarNonlinearFunction",
+      "root": {
+        "head": "node",
+        "index": 3
+      },
+      "node_list": [
+        {
+          "head": "+",
+          "args": [
+            {
+              "head": "variable",
+              "name": "var_1"
+            },
+            {
+              "head": "variable",
+              "name": "var_2"
+            },
+            {
+              "head": "variable",
+              "name": "var_3"
+            }
+          ]
+        },
+        {
+          "head": "*",
+          "args": [
+            {
+              "head": "variable",
+              "name": "var_1"
+            },
+            {
+              "head": "variable",
+              "name": "var_4"
+            },
+            {
+              "head": "node",
+              "index": 1
+            }
+          ]
+        },
+        {
+          "head": "+",
+          "args": [
+            {
+              "head": "node",
+              "index": 2
+            },
+            {
+              "head": "variable",
+              "name": "var_3"
+            }
+          ]
+        }
+      ]
     }
   },
   "constraints": [
