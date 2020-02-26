@@ -1,10 +1,9 @@
-function roundtrip_nonlinear_expression(expr, variable_to_string,
-                                        string_to_variable)
+function roundtrip_nonlinear_expression(
+    expr, variable_to_string, string_to_variable
+)
     node_list = MOF.Object[]
-    object = MOF.convert_expr_to_mof(expr, node_list,
-                                               variable_to_string)
-    @test MOF.convert_mof_to_expr(object, node_list,
-                                            string_to_variable) == expr
+    object = MOF.convert_expr_to_mof(expr, node_list, variable_to_string)
+    @test MOF.convert_mof_to_expr(object, node_list, string_to_variable) == expr
 end
 
 # hs071
@@ -21,13 +20,19 @@ MOI.initialize(::ExprEvaluator, features) = nothing
 MOI.objective_expr(evaluator::ExprEvaluator) = evaluator.objective
 MOI.constraint_expr(evaluator::ExprEvaluator, i::Int) = evaluator.constraints[i]
 
-function HS071()
+function HS071(x::Vector{MOI.VariableIndex})
+    x1, x2, x3, x4 = x
     return MOI.NLPBlockData(
         MOI.NLPBoundsPair.([25, 40], [Inf, 40]),
-        ExprEvaluator(:(x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]),
-                      [:(x[1] * x[2] * x[3] * x[4] >= 25),
-                       :(x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2 == 40)]),
-        true)
+        ExprEvaluator(
+            :(x[$x1] * x[$x4] * (x[$x1] + x[$x2] + x[$x3]) + x[$x3]),
+            [
+                :(x[$x1] * x[$x2] * x[$x3] * x[$x4] >= 25),
+                :(x[$x1]^2 + x[$x2]^2 + x[$x3]^2 + x[$x4]^2 == 40)
+            ]
+        ),
+        true
+    )
 end
 
 @testset "Nonlinear functions" begin
@@ -39,7 +44,7 @@ end
         end
         MOI.add_constraints(model, MOI.SingleVariable.(x),
                             Ref(MOI.Interval(1.0, 5.0)))
-        MOI.set(model, MOI.NLPBlock(), HS071())
+        MOI.set(model, MOI.NLPBlock(), HS071(x))
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         MOI.write_to_file(model, TEST_MOF_FILE)
         @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
