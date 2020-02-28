@@ -724,17 +724,11 @@ function semiconttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FEASIBLE_POINT, MOI.NEARLY_FEASIBLE_POINT ]
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0,0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 0.0
     end
 
@@ -746,17 +740,11 @@ function semiconttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0,1.0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 1.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
     end
 
@@ -766,17 +754,11 @@ function semiconttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0,2.0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 2.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
     end
 
@@ -786,17 +768,11 @@ function semiconttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.5 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.5,2.5] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.5, 2.5] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 2.5
     end
 
@@ -806,24 +782,17 @@ function semiconttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0,3.0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0, 3.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
     end
 
     MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(5)))
 
      if config.solve
-
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE ||
@@ -874,17 +843,11 @@ function semiinttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FEASIBLE_POINT, MOI.NEARLY_FEASIBLE_POINT ]
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0,0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 0.0
     end
 
@@ -896,17 +859,11 @@ function semiinttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0,1.0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 1.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
     end
 
@@ -916,17 +873,11 @@ function semiinttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0,2.0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 2.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
     end
 
@@ -936,17 +887,11 @@ function semiinttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0,2.5] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0, 2.5] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.5 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
     end
 
@@ -956,17 +901,11 @@ function semiinttest(model::MOI.ModelLike, config::TestConfig{T}) where T
         MOI.optimize!(model)
 
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
-
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0,3.0] atol=atol rtol=rtol
-
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0, 3.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-
         @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
     end
 

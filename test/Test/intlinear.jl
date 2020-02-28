@@ -44,48 +44,48 @@ MOIU.set_mock_optimize!(mock,
 MOIT.indicator4_test(mock, config)
 MOIU.set_mock_optimize!(mock,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 0.0)
-    MOIU.mock_optimize!(mock, [0.0,0.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 0.0)
+        MOIU.mock_optimize!(mock, [0.0, 0.0])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 2.0)
-    MOIU.mock_optimize!(mock, [2.0,1.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 2.0)
+        MOIU.mock_optimize!(mock, [2.0, 1.0])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 2.0)
-    MOIU.mock_optimize!(mock, [2.0,2.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 2.0)
+        MOIU.mock_optimize!(mock, [2.0, 2.0])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 2.5)
-    MOIU.mock_optimize!(mock, [2.5,2.5])
+        MOI.set(mock, MOI.ObjectiveBound(), 2.5)
+        MOIU.mock_optimize!(mock, [2.5, 2.5])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 3.0)
-    MOIU.mock_optimize!(mock, [3.0,3.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 3.0)
+        MOIU.mock_optimize!(mock, [3.0, 3.0])
     end,
     (mock::MOIU.MockOptimizer) -> MOI.set(mock, MOI.TerminationStatus(), MOI.INFEASIBLE)
 )
 MOIT.semiconttest(mock,config)
 MOIU.set_mock_optimize!(mock,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 0.0)
-    MOIU.mock_optimize!(mock, [0.0,0.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 0.0)
+        MOIU.mock_optimize!(mock, [0.0, 0.0])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 2.0)
-    MOIU.mock_optimize!(mock, [2.0,1.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 2.0)
+        MOIU.mock_optimize!(mock, [2.0, 1.0])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 2.0)
-    MOIU.mock_optimize!(mock, [2.0,2.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 2.0)
+        MOIU.mock_optimize!(mock, [2.0, 2.0])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 3.0)
-    MOIU.mock_optimize!(mock, [3.0,2.5])
+        MOI.set(mock, MOI.ObjectiveBound(), 3.0)
+        MOIU.mock_optimize!(mock, [3.0, 2.5])
     end,
     (mock::MOIU.MockOptimizer) -> begin
-    MOI.set(mock, MOI.ObjectiveBound(), 3.0)
-    MOIU.mock_optimize!(mock, [3.0,3.0])
+        MOI.set(mock, MOI.ObjectiveBound(), 3.0)
+        MOIU.mock_optimize!(mock, [3.0, 3.0])
     end,
     (mock::MOIU.MockOptimizer) -> MOI.set(mock, MOI.TerminationStatus(), MOI.INFEASIBLE)
 )
