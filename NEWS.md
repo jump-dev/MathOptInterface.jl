@@ -1,6 +1,13 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.12 (February 28, 2020)
+---------------------
+
+- Fixed writing `NLPBlock` in MathOptFormat (#1037).
+- Fixed `MockOptimizer` for result attributes with non-one result index (#1039).
+- Updated test template with `instantiate` (#1032).
+
 v0.9.11 (February 21, 2020)
 ---------------------
 
