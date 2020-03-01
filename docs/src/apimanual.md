@@ -1069,7 +1069,7 @@ appropriate bridges for unsupported constrained variables.
 A constraint can often be written in a number of equivalent formulations. For
 example, the constraint ``l \le a^\top x \le u``
 (`ScalarAffineFunction`-in-`Interval`) could be re-formulated as two
-constraints: ``a^\top x ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
+constraints: ``a^\top x \ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
 ``a^\top x \le u`` (`ScalarAffineFunction`-in-`LessThan`). An alternative
 re-formulation is to add a dummy variable `y` with the constraints ``l \le y \le
 u`` (`SingleVariable`-in-`Interval`) and ``a^\top x - y = 0``
@@ -1127,7 +1127,7 @@ MOI.set(model, MyPackage.PrintLevel(), 0)
 
 ### Supported constrained variables and constraints
 
-The solver interface should only implement support for support for variables
+The solver interface should only implement support for variables
 constrained on creation (see
 [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref)) or
 constraints that directly map to a structure exploited by the solver algorithm.
