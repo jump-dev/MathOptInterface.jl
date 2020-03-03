@@ -688,12 +688,24 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Semicontinuous{T})
+    if !int
+        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Semicontinuous{T})
+    else
+        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Semiinteger{T})
+    end
 
     # 2 variables
+    #
+    # If int == false
     # min  x
     # st   x >= y
     #      x ∈ {0.0} U [2.0,3.0]
+    #      y = 0.0
+    #
+    # If int == true
+    # min  x
+    # st   x >= y
+    #      x ∈ {0.0} U {2.0} U {3.0}
     #      y = 0.0
 
     MOI.empty!(model)
@@ -702,9 +714,14 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
     v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
 
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Semicontinuous(T(2), T(3)))
-    @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semicontinuous{T}}()) == 1
-
+    if !int
+        vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Semicontinuous(T(2), T(3)))
+        @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semicontinuous{T}}()) == 1
+    else
+        vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Semiinteger(T(2), T(3)))
+        @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semiinteger{T}}()) == 1
+    end
+    
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.EqualTo(zero(T)))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}()) == 1
 
