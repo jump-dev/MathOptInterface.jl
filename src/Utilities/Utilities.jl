@@ -1,7 +1,7 @@
 module Utilities
 
 using LinearAlgebra # For dot
-
+using NLsolve
 using MathOptInterface
 const MOI = MathOptInterface
 
@@ -42,4 +42,5 @@ include("universalfallback.jl")
 include("CleverDicts.jl")
 include("lazy_iterators.jl")
 
+include("optimality_checker.jl")
 end # module
