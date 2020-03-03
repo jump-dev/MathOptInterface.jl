@@ -696,16 +696,12 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
 
     # 2 variables
     #
-    # If int == false
     # min  x
     # st   x >= y
-    #      x ∈ {0.0} U [2.0,3.0]
-    #      y = 0.0
-    #
-    # If int == true
-    # min  x
-    # st   x >= y
-    #      x ∈ {0.0} U {2.0} U {3.0}
+    #      if !int
+    #           x ∈ {0.0} U [2.0,3.0]
+    #      if int
+    #           x ∈ {0.0} U {2.0} U {3.0}
     #      y = 0.0
 
     MOI.empty!(model)
