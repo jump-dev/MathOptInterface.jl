@@ -3,6 +3,8 @@ module Utilities
 using LinearAlgebra # For dot
 
 using MathOptInterface
+
+import Base: invokelatest, push!
 const MOI = MathOptInterface
 
 const MOIU = MOI.Utilities # used in macro
@@ -41,5 +43,5 @@ include("universalfallback.jl")
 
 include("CleverDicts.jl")
 include("lazy_iterators.jl")
-include("evaluate_variables.jl")
+include("checking_feasibility.jl")
 end # module
