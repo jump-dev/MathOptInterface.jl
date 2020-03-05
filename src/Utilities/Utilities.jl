@@ -41,5 +41,5 @@ include("universalfallback.jl")
 
 include("CleverDicts.jl")
 include("lazy_iterators.jl")
-
+include("evaluate_variables.jl")
 end # module
