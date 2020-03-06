@@ -53,10 +53,10 @@ import LinearAlgebra
         vko_roc = vcat(t_ko_rot, u_ko_rot, x)
         @test MOI.distance_to_set(vko_roc, MOI.RotatedSecondOrderCone(n+2)) ≈ LinearAlgebra.dot(x,x) / 2
         vok_roc = vcat(t_ko_rot * 2, u_ko_rot, x)
-        @test MOI.distance_to_set(vok_roc, MOI.RotatedSecondOrderCone(n+2)) ≈ 0 atol=eps(Float64)
+        @test MOI.distance_to_set(vok_roc, MOI.RotatedSecondOrderCone(n+2)) ≈ 0 atol=5eps(Float64)
     end
 
-    @testset "Other vector cones" for n in 2:5:15
+    @testset "Geometric Mean cone dimension $n" for n in 2:5:15
         x = rand(n)
         t = 0.5 * prod(x)^(inv(n))
         vok = vcat(t, x)
@@ -64,6 +64,24 @@ import LinearAlgebra
         @test MOI.distance_to_set(vcat(t / 2, x), MOI.GeometricMeanCone(n+1)) ≈ 0 atol=eps(Float64)
         # negative x always means positive distance
         @test MOI.distance_to_set(vcat(t / 2, vcat(x, -1)), MOI.GeometricMeanCone(n+2)) > 0
-        @test MOI.distance_to_set(vcat(t / 2, -x), MOI.GeometricMeanCone(n+1)) > 0        
+        @test MOI.distance_to_set(vcat(t / 2, -x), MOI.GeometricMeanCone(n+1)) > 0
+    end
+    @testset "Exponential cones" for _ in 1:30
+        (x, y, z) = rand(3)
+        y += 1 # ensure y > 0
+        if y * exp(x/y) <= z
+            @test MOI.distance_to_set([x, y, z], MOI.ExponentialCone()) ≈ 0 atol=eps(Float64)
+            @test MOI.distance_to_set([x, -1, z], MOI.ExponentialCone()) ≈ 1 atol=eps(Float64)
+        else
+            @test MOI.distance_to_set([x, y, z], MOI.ExponentialCone()) ≈ y * exp(x/y) - z 
+        end
+        (u, v, w) = randn(3)
+        if u != 0.0 # just in case not to blow up
+            if u*exp(v/u) < ℯ * w && u < 0
+                @test MOI.distance_to_set([u, v, w], MOI.DualExponentialCone()) ≈ 0 atol=eps(Float64)
+            elseif u < 0
+                @test MOI.distance_to_set([u, v, w], MOI.DualExponentialCone()) ≈ u*exp(v/u) - ℯ * w
+            end
+        end
     end
 end

@@ -383,7 +383,7 @@ function distance_to_set(v::AbstractVector{<:Real}, s::ExponentialCone)
     z = v[3]
     result = y * exp(x/y) - z
     return LinearAlgebra.norm2(
-        (max(y, zero(result)), max(result, zero(result)))
+        (max(-y, zero(result)), max(result, zero(result)))
     )
 end
 
@@ -397,11 +397,11 @@ struct DualExponentialCone <: AbstractVectorSet end
 dual_set(s::DualExponentialCone) = ExponentialCone()
 dual_set_type(::Type{DualExponentialCone}) = ExponentialCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::DualExponentialCone)
-    _check_dimension(v, s)
-    u = v[1]
-    v = v[2]
-    w = v[3]
+function distance_to_set(vs::AbstractVector{<:Real}, s::DualExponentialCone)
+    _check_dimension(vs, s)
+    u = vs[1]
+    v = vs[2]
+    w = vs[3]
     result = -u*exp(v/u) - ℯ * w
     return LinearAlgebra.norm2(
         (max(-u, zero(result)), max(result, zero(result)))
