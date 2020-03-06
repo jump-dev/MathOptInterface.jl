@@ -404,7 +404,7 @@ function distance_to_set(vs::AbstractVector{<:Real}, s::DualExponentialCone)
     w = vs[3]
     result = -u*exp(v/u) - ℯ * w
     return LinearAlgebra.norm2(
-        (max(-u, zero(result)), max(result, zero(result)))
+        (max(u, zero(result)), max(result, zero(result)))
     )
 end
 
@@ -429,7 +429,7 @@ function distance_to_set(v::AbstractVector{<:Real}, s::PowerCone)
     # early return to avoid complex exponent results
     if x < 0 || y < 0
        return LinearAlgebra.norm2(
-            (max(-x, zero(result)), max(-y, zero(result)))
+            (max(-x, zero(x)), max(-y, zero(x)))
         )
     end
     result = abs(z) - x^e * y^(1-e)
@@ -450,11 +450,11 @@ end
 dual_set(s::DualPowerCone{T}) where T <: Real = PowerCone{T}(s.exponent)
 dual_set_type(::Type{DualPowerCone{T}}) where T <: Real = PowerCone{T}
 
-function distance_to_set(v::AbstractVector{<:Real}, s::DualPowerCone)
-    _check_dimension(v, s)
-    u = v[1]
-    v = v[2]
-    w = v[3]
+function distance_to_set(vs::AbstractVector{<:Real}, s::DualPowerCone)
+    _check_dimension(vs, s)
+    u = vs[1]
+    v = vs[2]
+    w = vs[3]
     e = s.exponent
     ce = 1-e
     result = abs(w) - (u/e)^e * (v/ce)^ce
