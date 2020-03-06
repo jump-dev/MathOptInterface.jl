@@ -4,7 +4,6 @@ using LinearAlgebra # For dot
 
 using MathOptInterface
 
-import Base: invokelatest, push!
 const MOI = MathOptInterface
 
 const MOIU = MOI.Utilities # used in macro
