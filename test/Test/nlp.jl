@@ -3,15 +3,6 @@ using Test
 import MathOptInterface
 const MOI = MathOptInterface
 
-# hs071
-# min x1 * x4 * (x1 + x2 + x3) + x3
-# st  x1 * x2 * x3 * x4 >= 25
-#     x1^2 + x2^2 + x3^2 + x4^2 = 40
-#     1 <= x1, x2, x3, x4 <= 5
-# Start at (1,5,5,1)
-# End at (1.000..., 4.743..., 3.821..., 1.379...)
-
-
 @testset "hs071" begin
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
