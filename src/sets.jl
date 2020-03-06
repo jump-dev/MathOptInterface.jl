@@ -426,9 +426,15 @@ function distance_to_set(v::AbstractVector{<:Real}, s::PowerCone)
     y = v[2]
     z = v[3]
     e = s.exponent
+    # early return to avoid complex exponent results
+    if x < 0 || y < 0
+       return LinearAlgebra.norm2(
+            (max(-x, zero(result)), max(-y, zero(result)))
+        )
+    end
     result = abs(z) - x^e * y^(1-e)
     return LinearAlgebra.norm2(
-        (max(-x, zero(result)), max(-y, zero(result)), max(result, zero(result)))
+        max(result, zero(result))
     )
 end
 

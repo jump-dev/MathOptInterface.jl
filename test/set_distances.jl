@@ -66,7 +66,8 @@ import LinearAlgebra
         @test MOI.distance_to_set(vcat(t / 2, vcat(x, -1)), MOI.GeometricMeanCone(n+2)) > 0
         @test MOI.distance_to_set(vcat(t / 2, -x), MOI.GeometricMeanCone(n+1)) > 0
     end
-    @testset "Exponential cones" for _ in 1:30
+    
+    @testset "Exponential and power cones" for _ in 1:30
         (x, y, z) = rand(3)
         y += 1 # ensure y > 0
         if y * exp(x/y) <= z
@@ -82,6 +83,23 @@ import LinearAlgebra
             elseif u < 0
                 @test MOI.distance_to_set([u, v, w], MOI.DualExponentialCone()) ≈ u*exp(v/u) - ℯ * w
             end
+            
+        end
+        (x, y) = randn(2)
+        if x < 0 || y < 0
+            for e in  (10 * rand(10) .- 5) # e in [-5, 5]
+                @test MOI.distance_to_set([x, y, 0.0], MOI.PowerCone(e)) > 0
+            end
+        else
+            for e in  (10 * rand(10) .- 5) # e in [-5, 5]
+                r = x^e * y^(1-e)
+                for z in -r:-0.5:r
+                    @test MOI.distance_to_set([x, y, z], MOI.PowerCone(e)) ≈ 0 atol=eps(Float64)
+                end
+                @test MOI.distance_to_set([x, y, 3r], MOI.PowerCone(e)) ≈ MOI.distance_to_set([x, y, -3r], MOI.PowerCone(e)) > 0
+            end
         end
     end
+
+    
 end
