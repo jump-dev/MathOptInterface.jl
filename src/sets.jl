@@ -128,9 +128,9 @@ end
 dual_set(s::Reals) = Zeros(dimension(s))
 dual_set_type(::Type{Reals}) = Zeros
 
-function distance_to_set(v::AbstractVector{<:Real}, s::Reals)
+function distance_to_set(v::AbstractVector{T}, s::Reals) where {T <: Real}
     _check_dimension(v, s)
-    return zeros(length(v))
+    return zero(T)
 end
 
 """
@@ -147,7 +147,7 @@ dual_set_type(::Type{Zeros}) = Reals
 
 function distance_to_set(v::AbstractVector{<:Real}, s::Zeros)
     _check_dimension(v, s)
-    return abs.(v)
+    return LinearAlgebra.norm2(v)
 end
 
 """
@@ -164,7 +164,7 @@ dual_set_type(::Type{Nonnegatives}) = Nonnegatives
 
 function distance_to_set(v::AbstractVector{<:Real}, s::Nonnegatives)
     _check_dimension(v, s)
-    return [ifelse(vi < 0, -vi, zero(vi)) for vi in v]
+    return LinearAlgebra.norm2(ifelse(vi < 0, -vi, zero(vi)) for vi in v)
 end
 
 """
@@ -181,7 +181,7 @@ dual_set_type(::Type{Nonpositives}) = Nonpositives
 
 function distance_to_set(v::AbstractVector{<:Real}, s::Nonpositives)
     _check_dimension(v, s)
-    return [ifelse(vi > 0, vi, zero(vi)) for vi in v]
+    return LinearAlgebra.norm2(ifelse(vi > 0, vi, zero(vi)) for vi in v)
 end
 
 """
@@ -348,10 +348,11 @@ function distance_to_set(v::AbstractVector{<:Real}, s::GeometricMeanCone)
     xs = v[2:end]
     n = dimension(s) - 1
     result = t^n - prod(xs)
-    return push!(
+    return
+    LinearAlgebra.norm2(push!(
         max.(xs, zero(result)), # x >= 0
         max(result, zero(result)),
-    )
+    ))
 end
 
 """
@@ -370,7 +371,9 @@ function distance_to_set(v::AbstractVector{<:Real}, s::ExponentialCone)
     y = v[2]
     z = v[3]
     result = y * exp(x/y) - z
-    return [max(y, zero(result)), max(result, zero(result))]
+    return LinearAlgebra.norm2(
+        (max(y, zero(result)), max(result, zero(result)))
+    )
 end
 
 """
@@ -389,7 +392,9 @@ function distance_to_set(v::AbstractVector{<:Real}, s::DualExponentialCone)
     v = v[2]
     w = v[3]
     result = -u*exp(v/u) - ℯ * w
-    return [max(-u, zero(result)), max(result, zero(result))]
+    return LinearAlgebra.norm2(
+        (max(-u, zero(result)), max(result, zero(result)))
+    )
 end
 
 """
@@ -411,7 +416,9 @@ function distance_to_set(v::AbstractVector{<:Real}, s::PowerCone)
     z = v[3]
     e = s.exponent
     result = abs(z) - x^e * y^(1-e)
-    return [max(-x, zero(result)), max(-y, zero(result)), max(result, zero(result))]
+    return LinearAlgebra.norm2(
+        (max(-x, zero(result)), max(-y, zero(result)), max(result, zero(result)))
+    )
 end
 
 """
@@ -434,7 +441,9 @@ function distance_to_set(v::AbstractVector{<:Real}, s::DualPowerCone)
     e = s.exponent
     ce = 1-e
     result = abs(w) - (u/e)^e * (v/ce)^ce
-    return [max(-u, zero(result)), max(-v, zero(result)), max(result, zero(result))]
+    return LinearAlgebra.norm2(
+        (max(-u, zero(result)), max(-v, zero(result)), max(result, zero(result)))
+    )
 end
 
 dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
@@ -460,10 +469,10 @@ function distance_to_set(v::AbstractVector{<:Real}, set::RelativeEntropyCone)
     w = v[(n+2):end]
     s = sum(w[i] * log(w[i]/v[i]) for i in eachindex(w))
     result = s - u
-    return push!(
+    return LinearAlgebra.norm2(push!(
         max.(v[2:end], zero(result)),
         max(result, zero(result)),
-    )
+    ))
 end
 
 """
@@ -930,7 +939,9 @@ function distance_to_set(v::AbstractVector{T}, s::IndicatorSet{A}) where {A, T <
     if A === ACTIVATE_ON_ONE && isapprox(z, 0) || A === ACTIVATE_ON_ZERO && isapprox(z, 1)
         return zeros(T, 2)
     end
-    return [distance_to_set(z, ZeroOne()), distance_to_set(v[2], s.set)]
+    return LinearAlgebra.norm2(
+        (distance_to_set(z, ZeroOne()), distance_to_set(v[2], s.set))
+    )
 end
 
 function Base.copy(set::IndicatorSet{A,S}) where {A,S}
