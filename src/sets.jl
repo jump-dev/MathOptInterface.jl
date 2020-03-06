@@ -1,6 +1,8 @@
 # Sets
 
 # Note: When adding a new set, also add it to Utilities.Model.
+import LinearAlgebra
+using LinearAlgebra: dot
 
 """
     AbstractSet
@@ -269,6 +271,14 @@ end
 dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
 dual_set_type(::Type{NormInfinityCone}) = NormOneCone
 
+function distance_to_set(v::AbstractVector{<:Real}, s::NormInfinityCone)
+    _check_dimension(v, s)
+    t = v[1]
+    xs = v[2:end]
+    result = maximum(abs, xs) - t
+    return max(result, zero(result))
+end
+
 """
     NormOneCone(dimension)
 
@@ -285,7 +295,7 @@ function distance_to_set(v::AbstractVector{<:Real}, s::NormOneCone)
     _check_dimension(v, s)
     t = v[1]
     xs = v[2:end]
-    result = t - sum(abs, xs)
+    result = sum(abs, xs) - t
     return max(result, zero(result))
 end
 
@@ -305,7 +315,7 @@ function distance_to_set(v::AbstractVector{<:Real}, s::SecondOrderCone)
     _check_dimension(v, s)
     t = v[1]
     xs = v[2:end]
-    result = LinearAlgebra.norm(xs) - t
+    result = LinearAlgebra.norm2(xs) - t
     return max(result, zero(result)) # avoids sqrt
 end
 
@@ -326,11 +336,9 @@ function distance_to_set(v::AbstractVector{<:Real}, s::RotatedSecondOrderCone)
     t = v[1]
     u = v[2]
     xs = v[3:end]
-    return [
-        max(-t, zero(t)),
-        max(-u, zero(u)),
-        max(dot(xs,xs) - 2 * t * u),
-    ]
+    return LinearAlgebra.norm2(
+        (max(-t, zero(t)), max(-u, zero(u)), max(dot(xs,xs) - 2 * t * u))
+    )
 end
 
 """
@@ -347,12 +355,15 @@ function distance_to_set(v::AbstractVector{<:Real}, s::GeometricMeanCone)
     t = v[1]
     xs = v[2:end]
     n = dimension(s) - 1
-    result = t^n - prod(xs)
-    return
-    LinearAlgebra.norm2(push!(
-        max.(xs, zero(result)), # x >= 0
-        max(result, zero(result)),
-    ))
+    xresult = LinearAlgebra.norm2(
+        max.(-xs, zero(eltype(xs)))
+    )
+    # early returning if there exists x[i] < 0 to avoid complex sqrt
+    if xresult > 0
+        return xresult
+    end
+    result = t - prod(xs)^(inv(n))
+    return max(result, zero(result))
 end
 
 """

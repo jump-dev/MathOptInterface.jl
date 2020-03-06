@@ -21,6 +21,7 @@ include("dummy.jl")
     include("errors.jl")
     include("functions.jl")
     include("sets.jl")
+    include("set_distances.jl")
     include("attributes.jl")
     include("instantiate.jl")
 end
