@@ -681,6 +681,148 @@ function indicator4_test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where T
+    atol = config.atol
+    rtol = config.rtol
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    if !int
+        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Semicontinuous{T})
+    else
+        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Semiinteger{T})
+    end
+
+    # 2 variables
+    #
+    # min  x
+    # st   x >= y
+    #      if !int
+    #           x ∈ {0.0} U [2.0,3.0]
+    #      if int
+    #           x ∈ {0.0} U {2.0} U {3.0}
+    #      y = 0.0
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    v = MOI.add_variables(model, 2)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+
+    if !int
+        vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Semicontinuous(T(2), T(3)))
+        @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semicontinuous{T}}()) == 1
+    else
+        vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Semiinteger(T(2), T(3)))
+        @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semiinteger{T}}()) == 1
+    end
+    
+    vc2 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.EqualTo(zero(T)))
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}()) == 1
+
+    cf = MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.([one(T), -one(T)], v), zero(T))
+    c = MOI.add_constraint(model, cf, MOI.GreaterThan(zero(T)))
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}()) == 1
+
+    objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.0], v), 0.0)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+        @test MOI.get(model, MOI.PrimalStatus()) in [ MOI.FEASIBLE_POINT, MOI.NEARLY_FEASIBLE_POINT ]
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 0.0
+    end
+
+    # Change y fixed value
+
+    MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(one(T)))
+
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 1.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
+    end
+
+    MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(2)))
+
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 2.0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
+    end
+
+    MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(5//2)))
+
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if !int
+            @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.5 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.5, 2.5] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ObjectiveBound()) <= 2.5
+        else
+            @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0, 2.5] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.5 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
+        end
+    end
+
+    MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(3)))
+
+    if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0, 3.0] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
+    end
+
+    MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(4)))
+
+     if config.solve
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE ||
+            MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE_OR_UNBOUNDED
+    end
+end
+
+semiconttest(model::MOI.ModelLike, config::TestConfig) = _semitest(model, config, false)
+semiinttest(model::MOI.ModelLike, config::TestConfig) = _semitest(model, config, true)
+
 const intlineartests = Dict("knapsack" => knapsacktest,
                             "int1"     => int1test,
                             "int2"     => int2test,
@@ -689,6 +831,8 @@ const intlineartests = Dict("knapsack" => knapsacktest,
                             "indicator2"  => indicator2_test,
                             "indicator3"  => indicator3_test,
                             "indicator4"  => indicator4_test,
+                            "semiconttest" => semiconttest,
+                            "semiinttest" => semiinttest
                            )
 
 @moitestset intlinear
