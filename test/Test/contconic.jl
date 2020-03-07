@@ -36,6 +36,44 @@ config = MOIT.TestConfig()
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE_OR_UNBOUNDED)
     MOIT.lin4test(mock, MOIT.TestConfig(infeas_certificates=false))
 end
+@testset "NormInf" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
+        (MOI.VectorOfVariables, MOI.NormInfinityCone) => [[1, 0, -1]])
+    MOIT.norminf1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) => [[1, 0, -1]])
+    MOIT.norminf1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE, MOI.INFEASIBLE_POINT, MOI.INFEASIBILITY_CERTIFICATE)
+    MOIT.norminf2test(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [2, -1, -1, -1],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) => [vcat(1, fill(-inv(3), 3))],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [fill(inv(3), 3)])
+    MOIT.norminf3test(mock, config)
+end
+@testset "NormOne" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 0.5],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
+        (MOI.VectorOfVariables, MOI.NormOneCone) => [[1, -1, -1]])
+    MOIT.normone1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 0.5],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) => [[1, -1, -1]])
+    MOIT.normone1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE, MOI.INFEASIBLE_POINT, MOI.INFEASIBILITY_CERTIFICATE)
+    MOIT.normone2test(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [4, -1, -1, -1],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) => [vcat(1, fill(-1, 3))],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [ones(3)])
+    MOIT.normone3test(mock, config)
+end
 @testset "SOC" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1/√2, 1/√2],
                           (MOI.VectorAffineFunction{Float64}, MOI.Zeros)           => [[-√2]])
