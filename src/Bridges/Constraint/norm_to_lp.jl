@@ -88,9 +88,9 @@ function bridge_constraint(::Type{NormOneBridge{T, F, G}}, model::MOI.ModelLike,
     return NormOneBridge{T, F, G}(y, nn_index)
 end
 
-MOI.supports_constraint(::Type{NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = true
+MOI.supports_constraint(::Type{<:NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormOneBridge}) = Tuple{DataType}[]
-MOIB.added_constraint_types(::Type{NormOneBridge{T, F}}) where {T, F} = [(F, MOI.Nonnegatives)]
+MOIB.added_constraint_types(::Type{<:NormOneBridge{T, F}}) where {T, F} = [(F, MOI.Nonnegatives)]
 function concrete_bridge_type(::Type{<:NormOneBridge{T}}, G::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T
     S = MOIU.scalar_type(G)
     F = MOIU.promote_operation(vcat, T, MOIU.promote_operation(+, T, S, S), MOIU.promote_operation(-, T, S, S))
@@ -158,7 +158,7 @@ function MOI.get(model::MOI.ModelLike,
     x = nn_dual[(d + 2):end] - nn_dual[2:(d + 1)]
     return vcat(nn_dual[1], x)
 end
-# value[1 + i] = nn_dual[d + i] - nn_dual[i]
+# value[1 + i] = nn_dual[1 + d + i] - nn_dual[1 + i]
 # and `nn_dual` is nonnegative. By complementarity slackness, only one of each
 # `nn_dual` can be nonzero (except if `x = 0`) so we can set
 # depending on the sense of `value[1 + i]`.
@@ -170,9 +170,9 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart,
     for i in eachindex(bridge.y)
         v = value[1 + i]
         if v < 0
-            nn_dual[i] = -v
+            nn_dual[1 + i] = -v
         else
-            nn_dual[d + i] = v
+            nn_dual[1 + d + i] = v
         end
     end
     MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, nn_dual)
