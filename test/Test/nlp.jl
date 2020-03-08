@@ -21,6 +21,16 @@ const MOI = MathOptInterface
     )
     MOI.Test.hs071_test(mock, config)
     MOI.Test.hs071_no_hessian_test(mock, config)
+
+    d = MOI.Test.HS071(false)
+    VI = MOI.VariableIndex
+    @test MOI.objective_expr(d) == :(x[$(VI(1))] * x[$(VI(4))] * (x[$(VI(1))] +
+                                     x[$(VI(2))] + x[$(VI(3))]) + x[$(VI(3))])
+    @test MOI.constraint_expr(d, 1) ==
+        :(x[$(VI(1))] * x[$(VI(2))] * x[$(VI(3))] * x[$(VI(4))] >= 25.0)
+    @test MOI.constraint_expr(d, 2) ==
+        :(x[$(VI(1))]^2 + x[$(VI(2))]^2 + x[$(VI(3))]^2 + x[$(VI(4))]^2 == 40.0)
+    @test_throws ErrorException MOI.constraint_expr(d, 3)
 end
 
 @testset "mixed_complementarity" begin
