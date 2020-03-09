@@ -108,8 +108,8 @@ function bridge_constraint(::Type{RSOCtoNonConvexQuadBridge{T}}, model,
 end
 
 function MOI.supports_constraint(::Type{SOCtoNonConvexQuadBridge{T}},
-    ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.SecondOrderCone}) where T
+                                 ::Type{MOI.VectorOfVariables},
+                                 ::Type{MOI.SecondOrderCone}) where T
     return true
 end
 function MOI.supports_constraint(::Type{RSOCtoNonConvexQuadBridge{T}},

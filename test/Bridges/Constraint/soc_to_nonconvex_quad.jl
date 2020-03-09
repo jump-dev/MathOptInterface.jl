@@ -5,14 +5,26 @@ const MOI = MathOptInterface
 const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
+const MOIBC = MathOptInterface.Bridges.Constraint
 
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig(duals = false)
 
-
 @testset "RSOCtoNonConvexQuad" begin
+
+    @test MOIBC.RSOCtoNonConvexQuadBridge{Float64} == MOIBC.concrete_bridge_type(
+        MOIBC.RSOCtoNonConvexQuadBridge{Float64},
+        MOI.VectorOfVariables,
+        MOI.RotatedSecondOrderCone)
+    @test MOI.supports_constraint(MOIBC.RSOCtoNonConvexQuadBridge{Float64},
+                                  MOI.VectorOfVariables,
+                                  MOI.RotatedSecondOrderCone)
+    @test !MOI.supports_constraint(MOIBC.RSOCtoNonConvexQuadBridge{Float64},
+                                   MOI.ScalarAffineFunction{Float64},
+                                   MOI.RotatedSecondOrderCone)
+
     bridged_mock = MOIB.Constraint.RSOCtoNonConvexQuad{Float64}(mock)
 
     MOIT.basic_constraint_tests(
@@ -35,10 +47,19 @@ config = MOIT.TestConfig(duals = false)
                     ))
 end
 
-
 @testset "SOCtoNonConvexQuad" begin
 
-    println("rolling")
+    @test MOIBC.SOCtoNonConvexQuadBridge{Float64} == MOIBC.concrete_bridge_type(
+        MOIBC.SOCtoNonConvexQuadBridge{Float64},
+        MOI.VectorOfVariables,
+        MOI.SecondOrderCone)
+    @test MOI.supports_constraint(MOIBC.SOCtoNonConvexQuadBridge{Float64},
+                                  MOI.VectorOfVariables,
+                                  MOI.SecondOrderCone)
+    @test !MOI.supports_constraint(MOIBC.SOCtoNonConvexQuadBridge{Float64},
+                                   MOI.ScalarAffineFunction{Float64},
+                                   MOI.SecondOrderCone)
+
     bridged_mock = MOIB.Constraint.SOCtoNonConvexQuad{Float64}(mock)
 
     MOIT.basic_constraint_tests(
