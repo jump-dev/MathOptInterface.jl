@@ -105,7 +105,7 @@ import LinearAlgebra
             e = rand()
             if 0 < e < 1 # avoid exponents of negatives
                 @test MOI.distance_to_set([u, v, 0.0], MOI.DualPowerCone(e)) ≈ 0 atol = 10eps(Float64)
-                @test MOI.distance_to_set([u, v, u^e * v^(1-e) / (e^e * (1-e)^(1-e))], MOI.DualPowerCone(e)) ≈ 0 atol=20eps(Float64)
+                @test MOI.distance_to_set([u, v, u^e * v^(1-e) / (e^e * (1-e)^(1-e))], MOI.DualPowerCone(e)) ≈ 0 atol=100eps(Float64)
                 @test MOI.distance_to_set([u, v, 1 + u^e * v^(1-e) / (e^e * (1-e)^(1-e))], MOI.DualPowerCone(e)) ≈ 1
             end
         end
