@@ -46,7 +46,7 @@ function bridge_constraint(::Type{SOCtoNonConvexQuadBridge{T}}, model,
 
     fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    fp = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T),t)], zero(T))
+    fp = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), t)], zero(T))
     var_pos = MOI.add_constraint(model, fp, MOI.GreaterThan(zero(T)))
 
     return SOCtoNonConvexQuadBridge(quad, [var_pos], vis)
@@ -99,9 +99,9 @@ function bridge_constraint(::Type{RSOCtoNonConvexQuadBridge{T}}, model,
 
     fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    fp1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T),t)], zero(T))
+    fp1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), t)], zero(T))
     var_pos1 = MOI.add_constraint(model, fp1, MOI.GreaterThan(zero(T)))
-    fp2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T),u)], zero(T))
+    fp2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), u)], zero(T))
     var_pos2 = MOI.add_constraint(model, fp2, MOI.GreaterThan(zero(T)))
 
     return RSOCtoNonConvexQuadBridge(quad, [var_pos1, var_pos2], vis)
