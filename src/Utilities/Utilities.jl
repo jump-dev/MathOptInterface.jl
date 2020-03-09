@@ -43,5 +43,5 @@ include("universalfallback.jl")
 
 include("CleverDicts.jl")
 include("lazy_iterators.jl")
-#include("checking_feasibility.jl")
+include("checking_feasibility.jl")
 end # module
