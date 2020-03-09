@@ -3,6 +3,7 @@ module Utilities
 using LinearAlgebra # For dot
 
 using MathOptInterface
+using Dualization
 
 const MOI = MathOptInterface
 
@@ -42,5 +43,5 @@ include("universalfallback.jl")
 
 include("CleverDicts.jl")
 include("lazy_iterators.jl")
-include("checking_feasibility.jl")
+#include("checking_feasibility.jl")
 end # module
