@@ -20,10 +20,10 @@ end
 
 function return_dualprimalgap(model::MOI.ModelLike, x_primal::Dict{MOI.VariableIndex, Float64}, y_dual::Dict{MOI.VariableIndex, Float64}; tol::Float64 = eps(Float64))
 
-    primal_objective = MOI.get(optimizer, MOI.ObjectiveFunction{MathOptInterface.ScalarAffineFunction{Float64}}())
+    primal_objective = MOI.get(optimizer, MOI.ObjectiveFunction{MathOptInterface.AbstractScalarFunction}())
 
     dual_model = dualize(model)
-    dual_objective = MOI.get(dual_model.dual_model, MOI.ObjectiveFunction{MathOptInterface.ScalarAffineFunction{Float64}}())
+    dual_objective = MOI.get(dual_model.dual_model, MOI.ObjectiveFunction{MathOptInterface.AbstractScalarFunction}())
 
     violated_primal_constraints = infeasible_constraints(model, x_primal, tol = tol)
     violated_dual_constraints =  infeasible_cosntraints(dual_model.dual_model, y_dual, tol = tol)
