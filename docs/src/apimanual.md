@@ -1325,11 +1325,18 @@ end
 
 const BRIDGED = MOI.instantiate(OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float64)
 const CONFIG = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
-
+```
+`MOI.Test.unittests` is a dictionary having "test name":test function as a key:value pair and `MOIT.unittest(model, config)` runs all of these tests. You can use `keys(MOI.Test.unittests)` to obtain a list of keys. To exclude any particular tests you can pass vector of there keys to the `exclude` keyword argument of unittest.
+```julia
 @testset "Unit" begin
     MOIT.unittest(BRIDGED, CONFIG)
 end
 
+@testset "Unit" begin
+    MOIT.unittest(BRIDGED, CONFIG, exclude =  ["number_threads", "solve_qcp_edge_cases"])
+end
+```
+```julia
 @testset "Modification" begin
     MOIT.modificationtest(BRIDGED, CONFIG)
 end
