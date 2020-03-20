@@ -1256,7 +1256,7 @@ end
                                 vi::MOI.VariableIndex)
 
 Return a `MOI.AbstractScalarFunction` of variables of `b` that equals `vi`.
-That is, if the variable `vi` is an internal variable of `b.model` created by a
+That is, if the variable `vi` is an internal variable of `b.model` created by a bridge
 but not visible to the user, it returns its expression in terms of the variables
 of bridged variables. Otherwise, it returns `MOI.SingleVariable(vi)`.
 """
