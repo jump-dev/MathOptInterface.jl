@@ -33,6 +33,22 @@ Start the solution procedure.
 function optimize! end
 
 """
+    compute_conflict!(optimizer::AbstractOptimizer)
+
+Compute a minimal subset of the constraints and variables that keep the model
+infeasible.
+
+See also `ConflictStatus` and `ConstraintConflictStatus`.
+
+### Note
+
+If the model is modified after a call to `compute_conflict`, the implementor
+is not obliged to purge the conflict. Any calls to the above attributes may
+return values for the original conflict without a warning.
+"""
+function compute_conflict! end
+
+"""
     write_to_file(model::ModelLike, filename::String)
 
 Writes the current model data to the given file.

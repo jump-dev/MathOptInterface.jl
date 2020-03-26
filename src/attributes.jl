@@ -910,6 +910,19 @@ A model attribute for the number of results available.
 """
 struct ResultCount <: AbstractModelAttribute end
 
+"""
+    ConflictStatus()
+
+A model attribute for the `TerminationStatusCode` explaining why the conflict
+refiner stopped.
+
+If a minimal conflict is found, it will return `OPTIMAL`.
+If the problem is feasible, it will return `INFEASIBLE`.
+If `compute_conflict` has not been called yet, it will return
+`OPTIMIZE_NOT_CALLED`.
+"""
+struct ConflictStatus <: AbstractModelAttribute end
+
 ## Variable attributes
 
 """
@@ -1117,6 +1130,14 @@ function throw_set_error_fallback(::ModelLike, ::ConstraintSet,
     type $(typeof(set)). Use `transform` instead."""))
 end
 
+"""
+    ConstraintConflictStatus()
+
+A Boolean constraint attribute indicating whether the constraint participates
+in the last computed conflict. Some solvers call the conflict IIS.
+"""
+struct ConstraintConflictStatus <: AbstractConstraintAttribute end
+
 ## Termination status
 """
     TerminationStatus()
@@ -1318,6 +1339,8 @@ function is_set_by_optimize(::Union{ObjectiveValue,
                                     NodeCount,
                                     RawSolver,
                                     ResultCount,
+                                    ConflictStatus,
+                                    ConstraintConflictStatus,
                                     TerminationStatus,
                                     RawStatusString,
                                     PrimalStatus,
