@@ -403,6 +403,7 @@ end
     @testset "LessThan variables" begin
         F = MOI.SingleVariable
         S = MOI.LessThan{T}
+        @test debug_string(MOIB.print_supporting_scheme, F, S) == "`$F`-in-`$S` constraints are not supported and cannot be bridged into supported constrained variables and constraints. To see details use debug_supports_constraint.\n"
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
 [1] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
@@ -414,6 +415,7 @@ Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
  (1) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
+        @test debug_string(MOIB.print_supporting_scheme, F, S) == "`$F`-in-`$S` constraints are not supported and cannot be bridged into supported constrained variables and constraints. To see details use debug_supports_constraint.\n"
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
 [1] constrained variables in `MOI.LessThan{$T}` are not supported because:
@@ -423,8 +425,12 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
 [2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
 """
+
         MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
-        @test debug_string(MOIB.debug_supports_constraint, F, S) == "Constrained variables in `MOI.LessThan{$T}` are supported.\n"
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == "Constrained variables in `MOI.LessThan{$T}` are supported. To see bridging strategy use print_supporting_scheme.\n"
+        @test debug_string(MOIB.print_supporting_scheme, F, S) =="""
+[1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives} to
+  [2] constrained variables in `MOI.Nonpositives` are bridged (distance 1) by MOIB.Variable.NonposToNonnegBridge{$T}."""
         @test sprint(MOIB.print_graph, bridged) == """
 Bridge graph with 2 variable nodes, 0 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}.
@@ -462,7 +468,7 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
 (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
-        @test debug_string(MOIB.debug_supports_constraint, F, S) == "Constrained variables in `MOI.LessThan{$T}` are supported.\n"
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == "Constrained variables in `MOI.LessThan{$T}` are supported. To see bridging strategy use print_supporting_scheme.\n"
         @test sprint(MOIB.print_graph, bridged) == """
 Bridge graph with 2 variable nodes, 1 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}.
@@ -531,7 +537,7 @@ Bridge graph with 2 variable nodes, 1 constraint nodes and 0 objective nodes.
   [2] constrained variables in `MOI.LessThan{$T}` are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
-        @test debug_string(MOIB.debug_supports_constraint, F, S) == "`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are supported.\n"
+        @test debug_string(MOIB.debug_supports_constraint, F, S) == "`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are supported. To see bridging strategy use print_supporting_scheme.\n"
     end
     bridged = MOIB.LazyBridgeOptimizer(model)
     @testset "Quadratic objective" begin
@@ -610,7 +616,7 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
   (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
-        @test debug_string(MOIB.debug_supports, attr) == "Objective function of type `MOI.ScalarQuadraticFunction{$T}` is supported.\n"
+        @test debug_string(MOIB.debug_supports, attr) == "Objective function of type `MOI.ScalarQuadraticFunction{$T}` is supported. To see bridging strategy use print_supporting_scheme.\n"
         @test sprint(MOIB.print_graph, bridged) == """
 Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  [1] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2) by MOIB.Variable.RSOCtoPSDBridge{$T}.

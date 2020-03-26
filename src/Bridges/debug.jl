@@ -189,9 +189,9 @@ function debug(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
             # This may be thanks to a variable bridge so `F`-in-`S` constraints
             # are maybe not supported but constrained variables in `S` are
             # definitely supported.
-            MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported.\n")
+            MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported. To see bridging strategy use print_supporting_scheme.\n")
         else
-            MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported.\n")
+            MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported. To see bridging strategy use print_supporting_scheme.\n")
         end
     else
         message = " are not supported and cannot be bridged into supported" *
@@ -226,7 +226,7 @@ function debug(b::LazyBridgeOptimizer,
                F::Type{<:MOI.AbstractScalarFunction}; io::IO = Base.stdout)
     MOIU.print_with_acronym(io, "Objective function of type `$F` is")
     if supports_bridging_objective_function(b, F)
-        MOIU.print_with_acronym(io, " supported.\n")
+        MOIU.print_with_acronym(io, " supported. To see bridging strategy use print_supporting_scheme.\n")
     else
         MOIU.print_with_acronym(io, " not supported and cannot be bridged" *
             " into a supported objective function by adding only supported" *
@@ -244,4 +244,86 @@ same arguments.
 function debug_supports(
     b::LazyBridgeOptimizer, ::MOI.ObjectiveFunction{F}; kws...) where F
     debug(b, F; kws...)
+end
+
+
+function helper(io::IO, b::LazyBridgeOptimizer, edge::AbstractEdge, space::String)
+
+    for node in edge.added_variables
+        if iszero(node.index)
+            print(io, ".")
+        elseif b.graph.variable_dist[node.index] == INFINITY
+            continue
+        else
+            print(io, " to\n", space)
+            print_bridging_strategy(io, b, node, space)
+        end
+    end
+    for node in edge.added_constraints
+        if iszero(node.index)
+            print(".")
+        elseif b.graph.constraint_dist[node.index] == INFINITY
+            continue
+        else
+            print(" to\n", space)
+            print_bridging_strategy(io, b, node, space)
+        end
+    end
+end
+
+
+function find_best_edge(edges::Vector, best_bridge::Int)
+    for edge in edges
+        if edge.bridge_index ==  best_bridge
+            return edge
+        end
+    end
+end
+
+function print_bridging_strategy(io::IO, b::LazyBridgeOptimizer, node::AbstractNode, space::String)
+
+    print_node(io, b, node)
+    d = _dist(b.graph, node)
+    print(io, " bridged (distance $d) by ")
+    index = bridge_index(b.graph, node)
+    MOIU.print_with_acronym(io, string(_bridge_type(b, node, index)))
+    space = space * " "
+
+    if node isa VariableNode
+        edge = find_best_edge(b.graph.variable_edges[node.index], index)
+    elseif node isa ConstraintNode
+        edge = find_best_edge(b.graph.constraint_edges[node.index], index)
+    else
+        edge = find_best_edge(b.graph.objective_edges[node.index], index)
+    end
+    helper(io, b, edge, space)
+end
+
+
+function print_supporting_scheme(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}; io::IO = Base.stdout)
+    if MOI.supports_constraint(b, F, S)
+        if MOI.supports_constraint(b.model, F, S)
+            if F == MOIU.variable_function_type(S)
+                MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported by `$(b.model)` So, no bridges are used\n")
+            else
+                MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported by `$(b.model)`So, no bridges are used.\n")
+            end
+        else
+            node = F == MOIU.variable_function_type(S) ? b.variable_node[(S,)] : b.constraint_node[(F,S)]
+            print_bridging_strategy(io, b, node, " ")
+        end
+    else
+        println(io, "`$F`-in-`$S` constraints are not supported and cannot be bridged into supported" *
+        " constrained variables and constraints. To see details use debug_supports_constraint.")
+    end
+end
+
+function print_supporting_scheme(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+    F = MOIU.variable_function_type(S)
+    print_supporting_scheme(b, F, S)
+end
+
+function print_supporting_scheme(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}; io::IO = Base.stdout)
+    node =  b.objective_node[(F,)]
+    print_supporting_scheme(io, b, node)
 end
