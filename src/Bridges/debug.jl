@@ -250,27 +250,19 @@ end
 function helper(io::IO, b::LazyBridgeOptimizer, edge::AbstractEdge, space::String)
 
     for node in edge.added_variables
-        if iszero(node.index)
-            print(io, ".")
-        elseif b.graph.variable_dist[node.index] == INFINITY
-            continue
-        else
-            print(io, " to\n", space)
+        if !(iszero(node.index) || b.graph.variable_dist[node.index] == INFINITY)
+            print(io, "\n", space)
             print_bridging_strategy(io, b, node, space)
         end
     end
+
     for node in edge.added_constraints
-        if iszero(node.index)
-            print(".")
-        elseif b.graph.constraint_dist[node.index] == INFINITY
-            continue
-        else
-            print(" to\n", space)
+        if !(iszero(node.index) || b.graph.constraint_dist[node.index] == INFINITY)
+            print(io, "\n", space)
             print_bridging_strategy(io, b, node, space)
         end
     end
 end
-
 
 function find_best_edge(edges::Vector, best_bridge::Int)
     for edge in edges
@@ -287,7 +279,12 @@ function print_bridging_strategy(io::IO, b::LazyBridgeOptimizer, node::AbstractN
     print(io, " bridged (distance $d) by ")
     index = bridge_index(b.graph, node)
     MOIU.print_with_acronym(io, string(_bridge_type(b, node, index)))
-    space = space * " "
+    if d == 1
+        print(io, ".")
+        return
+    end
+    print(io, " to")
+    space = space * "  "
 
     if node isa VariableNode
         edge = find_best_edge(b.graph.variable_edges[node.index], index)
@@ -310,7 +307,7 @@ function print_supporting_scheme(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractF
             end
         else
             node = F == MOIU.variable_function_type(S) ? b.variable_node[(S,)] : b.constraint_node[(F,S)]
-            print_bridging_strategy(io, b, node, " ")
+            print_bridging_strategy(io, b, node, "")
         end
     else
         println(io, "`$F`-in-`$S` constraints are not supported and cannot be bridged into supported" *
@@ -324,6 +321,16 @@ function print_supporting_scheme(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractS
 end
 
 function print_supporting_scheme(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}; io::IO = Base.stdout)
-    node =  b.objective_node[(F,)]
-    print_supporting_scheme(io, b, node)
+    if supports_bridging_objective_function(b, F)
+        print_bridging_strategy(io, b, node(b, F), "")
+    else
+        MOIU.print_with_acronym(io, "Objective function of type `$F` is not supported and cannot be bridged into a"
+        * " supported objective function by adding only supported" *
+            " constrained variables and constraints. To see detatils use debug_unsupported.")
+
+    end
+end
+
+function print_supporting_scheme(b::LazyBridgeOptimizer, ::MOI.ObjectiveFunction{F}; io::IO = Base.stdout) where{F}
+    print_supporting_scheme(b, F, io = io)
 end
