@@ -28,6 +28,12 @@ function print_node_info(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
         end
     end
 end
+"""
+print_graph(b::LazyBridgeOptimizer; io::IO = Base.stdout)
+
+Print to `io` a summary of the bridges added to the model, explaining which constraints
+they bridge and in what order.
+"""
 print_graph(b::LazyBridgeOptimizer) = print_graph(Base.stdout, b)
 function print_graph(io::IO, b::LazyBridgeOptimizer)
     println(io, b.graph)
