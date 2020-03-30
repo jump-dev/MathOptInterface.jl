@@ -911,11 +911,11 @@ A model attribute for the number of results available.
 struct ResultCount <: AbstractModelAttribute end
 
 """
-    ConflictStatus(N)
+    ConflictStatus(result_index)
     ConflictStatus()
 
 A model attribute for the `TerminationStatusCode` explaining why the conflict
-refiner stopped when computing the conflict `N`.
+refiner stopped when computing the conflict `result_index`.
 
 If a minimal conflict is found, it will return `OPTIMAL`.
 If the problem is feasible, it will return `INFEASIBLE`.
@@ -923,10 +923,10 @@ If `compute_conflict` has not been called yet, it will return
 `OPTIMIZE_NOT_CALLED`.
 """
 struct ConflictStatus <: AbstractModelAttribute
-    N::Int
+    result_index::Int
 end
 ConflictStatus() = ConflictStatus(1)
-_result_index_field(attr::ConflictStatus) = attr.N
+_result_index_field(attr::ConflictStatus) = attr.result_index
 
 ## Variable attributes
 
@@ -1137,16 +1137,16 @@ end
 
 """
     ConstraintConflictStatus()
-    ConstraintConflictStatus(N)
+    ConstraintConflictStatus(result_index)
 
 A Boolean constraint attribute indicating whether the constraint participates
-in conflict `N`. Some solvers call the conflict IIS.
+in conflict `result_index`. Some solvers call the conflict IIS.
 """
 struct ConstraintConflictStatus <: AbstractConstraintAttribute
-    N::Int
+    result_index::Int
 end
 ConstraintConflictStatus() = ConstraintConflictStatus(1)
-_result_index_field(attr::ConstraintConflictStatus) = attr.N
+_result_index_field(attr::ConstraintConflictStatus) = attr.result_index
 
 ## Termination status
 """
