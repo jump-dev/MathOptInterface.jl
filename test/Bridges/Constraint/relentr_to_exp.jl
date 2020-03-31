@@ -24,7 +24,7 @@ config = MOIT.TestConfig()
     var_primal = [entr1 + entr2, entr1, entr2]
     exps_duals = [[-1, log(0.5) - 1, 2], [-1, log(5 / 3) - 1, 0.6]]
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, var_primal,
-        (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [[1.0]],
+        (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
         (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) => exps_duals)
 
     MOIT.relentr1test(bridged_mock, config)

@@ -1,4 +1,4 @@
-
+const VI = MOI.VariableIndex
 
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
@@ -24,9 +24,23 @@ end
 
 function MOI.features_available(d::HS071)
     if d.enable_hessian
-        return [:Grad, :Jac, :Hess]
+        return [:Grad, :Jac, :Hess, :ExprGraph]
     else
-        return [:Grad, :Jac]
+        return [:Grad, :Jac, :ExprGraph]
+    end
+end
+
+MOI.objective_expr(d::HS071) = :(x[$(VI(1))] * x[$(VI(4))] * (x[$(VI(1))] +
+                                 x[$(VI(2))] + x[$(VI(3))]) + x[$(VI(3))])
+
+function MOI.constraint_expr(d::HS071, i::Int)
+    if i == 1
+        return :(x[$(VI(1))] * x[$(VI(2))] * x[$(VI(3))] * x[$(VI(4))] >= 25.0)
+    elseif i == 2
+        return :(x[$(VI(1))]^2 + x[$(VI(2))]^2 +
+                 x[$(VI(3))]^2 + x[$(VI(4))]^2 == 40.0)
+    else
+        error("Out of bounds constraint.")
     end
 end
 
@@ -178,9 +192,19 @@ end
 
 function MOI.features_available(d::FeasibilitySenseEvaluator)
     if d.enable_hessian
-        return [:Grad, :Jac, :Hess]
+        return [:Grad, :Jac, :Hess, :ExprGraph]
     else
-        return [:Grad, :Jac]
+        return [:Grad, :Jac, :ExprGraph]
+    end
+end
+
+MOI.objective_expr(d::FeasibilitySenseEvaluator) = :()
+
+function MOI.constraint_expr(d::FeasibilitySenseEvaluator, i::Int)
+    if i == 1
+        return :(x[$(VI(1))]^2 == 1)
+    else
+        error("Out of bounds constraint.")
     end
 end
 
@@ -253,7 +277,7 @@ function feasibility_sense_test_template(model::MOI.ModelLike,
 
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol=atol rtol=rtol
+        @test abs(MOI.get(model, MOI.VariablePrimal(), x)) ≈ 1.0 atol=atol rtol=rtol
     end
 end
 

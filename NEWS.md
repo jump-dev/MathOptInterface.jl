@@ -1,6 +1,36 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.13 (March 24, 2020)
+---------------------
+
+- Added tests for `Semicontinuous` and `Semiinteger` variables (#1033).
+- Added tests for using `ExprGraph`s from NLP evaluators (#1043).
+- Update version compatibilities of depedencies (#1034, #1051, #1052).
+- Fixed typos in documentation (#1044).
+
+v0.9.12 (February 28, 2020)
+---------------------
+
+- Fixed writing `NLPBlock` in MathOptFormat (#1037).
+- Fixed `MockOptimizer` for result attributes with non-one result index (#1039).
+- Updated test template with `instantiate` (#1032).
+
+v0.9.11 (February 21, 2020)
+---------------------
+
+- Add an option for the model created by `Utilities.@model` to be a subtype
+  of `AbstractOptimizer` (#1031).
+- Described dual cone in docstrings of `GeoMeanCone` and `RelativeEntropyCone`
+  (#1018, #1028).
+- Fixed typos in documentation (#1022, #1024).
+- Fixed warning of unsupported attribute (#1027).
+- Added more rootdet/logdet conic tests (#1026).
+- Implemented `ConstraintDual` for `Constraint.GeoMeanBridge`,
+  `Constraint.RootDetBridge` and `Constraint.LogDetBridge`
+  and test duals in tests with `GeoMeanCone` and `RootDetConeTriangle` and
+  `LogDetConeTriangle` cones (#1025, #1026).
+
 v0.9.10 (January 31, 2020)
 ---------------------
 

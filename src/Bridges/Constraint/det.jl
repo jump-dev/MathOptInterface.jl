@@ -135,24 +135,51 @@ MOI.get(b::LogDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFuncti
 MOI.get(b::LogDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}}) where T = [b.tlindex]
 
 # References
-function MOI.delete(model::MOI.ModelLike, c::LogDetBridge)
-    MOI.delete(model, c.tlindex)
-    MOI.delete(model, c.lcindex)
-    MOI.delete(model, c.sdindex)
-    MOI.delete(model, c.l)
-    MOI.delete(model, c.Δ)
+function MOI.delete(model::MOI.ModelLike, bridge::LogDetBridge)
+    MOI.delete(model, bridge.tlindex)
+    MOI.delete(model, bridge.lcindex)
+    MOI.delete(model, bridge.sdindex)
+    MOI.delete(model, bridge.l)
+    MOI.delete(model, bridge.Δ)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::LogDetBridge)
-    d = length(c.lcindex)
-    Δ = MOI.get(model, MOI.VariablePrimal(), c.Δ)
-    t = MOI.get(model, MOI.ConstraintPrimal(), c.tlindex) +
-        sum(MOI.get(model, MOI.ConstraintPrimal(), ci)[1] for ci in c.lcindex)
-    u = MOI.get(model, MOI.ConstraintPrimal(), first(c.lcindex))[2]
-    x = MOI.get(model, MOI.ConstraintPrimal(), c.sdindex)[1:length(c.Δ)]
-    return [t; u; x]
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart}, bridge::LogDetBridge)
+    d = length(bridge.lcindex)
+    Δ = MOI.get(model, MOI.VariablePrimal(), bridge.Δ)
+    t = MOI.get(model, attr, bridge.tlindex) +
+        sum(MOI.get(model, attr, ci)[1] for ci in bridge.lcindex)
+    u = MOI.get(model, attr, first(bridge.lcindex))[2]
+    x = MOI.get(model, attr, bridge.sdindex)[1:length(bridge.Δ)]
+    return vcat(t, u, x)
 end
+# [X Δ; Δ' Diag(Δ)] in PSD
+# t - sum(l) >= 0
+# (l_i, u, Δ_ii) in Exp
+# (t, u, x) in LogDet <=> exists Δ, l such that At + Bu + Cx + DΔ + El in (PSD, >=, Exp_i)
+# so LogDet* = [A'; B'; C'] (PSD, >=, Exp_i)*
+# and 0 = [D'; E'] (PSD, >=, Exp_i)*
+# where
+# A = [0, 0, 0, 1, 0, 0, 0]
+# B = [0, 0, 0, 0, 0, 1, 0]
+# C = [I, 0, 0, 0, 0, 0, 0]
+# D = [0, I, I(i=j), 0, 0, 0, I(i=j)]
+# E = [0, 0, 0, 1, I, 0, 0]
+# so given dual q = (a, b, c, d, e, f, g), we get
+# t = A' q = d => t = d
+# u = B' q = f => u = sum(f)
+# x = C' q = a => x = a
+# offdiag(b) = 0
+# 0 = D' q = diag(b) + diag(c) + g => g = -diag(b) - diag(c)
+# let b = 0, so g_i = -c_i
+# 0 = E' q = d + e => d = -e
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::LogDetBridge)
+    t_dual = MOI.get(model, attr, bridge.tlindex)
+    u_dual = sum(MOI.get(model, attr, lcindex_i)[2] for lcindex_i in bridge.lcindex)
+    x_dual = MOI.get(model, attr, bridge.sdindex)[1:length(bridge.Δ)]
+    return vcat(t_dual, u_dual, x_dual)
+end
+
 
 """
     RootDetBridge{T}
@@ -208,15 +235,33 @@ MOI.get(b::RootDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunct
 MOI.get(b::RootDetBridge{T}, ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone}) where T = [b.gmindex]
 
 # References
-function MOI.delete(model::MOI.ModelLike, c::RootDetBridge)
-    MOI.delete(model, c.gmindex)
-    MOI.delete(model, c.sdindex)
-    MOI.delete(model, c.Δ)
+function MOI.delete(model::MOI.ModelLike, bridge::RootDetBridge)
+    MOI.delete(model, bridge.gmindex)
+    MOI.delete(model, bridge.sdindex)
+    MOI.delete(model, bridge.Δ)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, a::MOI.ConstraintPrimal, c::RootDetBridge)
-    t = MOI.get(model, MOI.ConstraintPrimal(), c.gmindex)[1]
-    x = MOI.get(model, MOI.ConstraintPrimal(), c.sdindex)[1:length(c.Δ)]
-    [t; x]
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart}, bridge::RootDetBridge)
+    t = MOI.get(model, attr, bridge.gmindex)[1]
+    x = MOI.get(model, attr, bridge.sdindex)[1:length(bridge.Δ)]
+    return vcat(t, x)
+end
+# (t, x) in RootDet <=> exists Δ such that At + Bx + CΔ in (PSD, GeoMean)
+# so RootDet* = [A'; B'] (PSD, GeoMean)*
+# and 0 = [C'] (PSD, GeoMean)*
+# where
+# A = [0, 0, 0, 1, 0]
+# B = [I, 0, 0, 0, 0]
+# C = [0, I, I(i=j), 0, I(i=j)]
+# so given dual q = (a, b, c, d, e), we get
+# t = A' q = d => t = d
+# x = B' q = a => x = a
+# offdiag(b) = 0
+# 0 = C' q = diag(b) + diag(c) + e => e = -diag(b) - diag(c)
+# let b = 0, so e_i = -c_i
+function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::RootDetBridge)
+    t_dual = MOI.get(model, attr, bridge.gmindex)[1]
+    x_dual = MOI.get(model, attr, bridge.sdindex)[1:length(bridge.Δ)]
+    return vcat(t_dual, x_dual)
 end

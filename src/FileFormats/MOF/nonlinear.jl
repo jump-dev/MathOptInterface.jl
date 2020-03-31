@@ -16,23 +16,18 @@ function function_to_moi(
     return Nonlinear(expr)
 end
 
-function substitute_variables(expr::Expr, variables::Vector{MOI.VariableIndex})
+function lift_variable_indices(expr::Expr)
     if expr.head == :ref && length(expr.args) == 2 && expr.args[1] == :x
-        index = expr.args[2]
-        if !(1 <= index <= length(variables))
-            error("Oops! Your expression refers to x[$(index)] but there are " *
-                  "only $(length(variables)) variables.")
-        end
-        return variables[index]
+        return expr.args[2]
     else
         for (index, arg) in enumerate(expr.args)
-            expr.args[index] = substitute_variables(arg, variables)
+            expr.args[index] = lift_variable_indices(arg)
         end
     end
     return expr
 end
-# Recursion fallback.
-substitute_variables(arg, variables::Vector{MOI.VariableIndex}) = arg
+
+lift_variable_indices(arg) = arg  # Recursion fallback.
 
 function extract_function_and_set(expr::Expr)
     if expr.head == :call  # One-sided constraint or foo-in-set.
@@ -71,7 +66,7 @@ function write_nlpblock(object::Object, model::Model,
     variables = MOI.get(model, MOI.ListOfVariableIndices())
     if nlp_block.has_objective
         objective = MOI.objective_expr(nlp_block.evaluator)
-        objective = substitute_variables(objective, variables)
+        objective = lift_variable_indices(objective)
         sense = MOI.get(model, MOI.ObjectiveSense())
         object["objective"] = Object(
             "sense" => moi_to_object(sense),
@@ -81,7 +76,7 @@ function write_nlpblock(object::Object, model::Model,
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
         constraint = MOI.constraint_expr(nlp_block.evaluator, row)
         (func, set) = extract_function_and_set(constraint)
-        func = substitute_variables(func, variables)
+        func = lift_variable_indices(func)
         push!(object["constraints"],
             Object("function" => moi_to_object(Nonlinear(func), model, name_map),
                    "set"      => moi_to_object(set, model, name_map))
@@ -293,7 +288,7 @@ function convert_mof_to_expr(node::Object, node_list::Vector{Object},
 end
 
 """
-    convert_mof_to_expr(node::Object, node_list::Vector{Object},
+    convert_expr_to_mof(node::Object, node_list::Vector{Object},
                         name_map::Dict{MOI.VariableIndex, String})
 
 Convert a Julia expression into a MathOptFormat representation. Any intermediate
