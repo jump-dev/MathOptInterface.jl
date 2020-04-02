@@ -32,9 +32,9 @@ end
 print_graph(b::LazyBridgeOptimizer; io::IO = Base.stdout)
 
 Print to `io` a summary of the bridges added to the model, explaining which constraints
-they bridge and in what order.
+they bridge.
 """
-print_graph(b::LazyBridgeOptimizer) = print_graph(Base.stdout, b)
+print_graph(b::LazyBridgeOptimizer; io::IO = Base.stdout) = print_graph(io, b)
 function print_graph(io::IO, b::LazyBridgeOptimizer)
     println(io, b.graph)
     for node in variable_nodes(b.graph)
