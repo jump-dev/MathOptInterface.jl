@@ -597,7 +597,7 @@ MOI.Bridges.bridged_variable_function(bridged_model, bridged_variable)
 
 # output
 
-MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm{Float64}(1.0, VariableIndex(1))], 1.0)
+MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[MOI.ScalarAffineTerm{Float64}(1.0, MOI.VariableIndex(1))], 1.0)
 ```
 When getting [`ConstraintFunction`](@ref) or [`ObjectiveFunction`](@ref),
 `inner_variables[1]` is substituted for `bridged_variable` minus 1:
@@ -606,7 +606,7 @@ MOI.Bridges.unbridged_variable_function(bridged_model, inner_variables[1])
 
 # output
 
-MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm{Float64}(1.0, VariableIndex(-1))], -1.0)
+MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[MOI.ScalarAffineTerm{Float64}(1.0, MOI.VariableIndex(-1))], -1.0)
 ```
 
 !!! note
@@ -622,7 +622,7 @@ MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm
 
     # output
 
-    (MOI.VariableIndex[VariableIndex(-1), VariableIndex(-2)], MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Zeros}(-1))
+    (MOI.VariableIndex[MOI.VariableIndex(-1), MOI.VariableIndex(-2)], MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Zeros}(-1))
     ```
     Consider the following functions in the variables of `bridged_model`:
     ```jldoctest cannot_unbridge_zero
@@ -630,7 +630,7 @@ MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm
 
     # output
 
-    MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm{Float64}(1.0, VariableIndex(-1)), ScalarAffineTerm{Float64}(1.0, VariableIndex(-2))], 0.0)
+    MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[MOI.ScalarAffineTerm{Float64}(1.0, MOI.VariableIndex(-1)), MOI.ScalarAffineTerm{Float64}(1.0, MOI.VariableIndex(-2))], 0.0)
     ```
     We can obtain the equivalent function in the variables of `model` as follows:
     ```jldoctest cannot_unbridge_zero
