@@ -608,7 +608,7 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
 """
         MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoPSDBridge{T})
         MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
-        @test debug_string(MOIB.print_supporting_scheme, attr) == String("Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and" 
+        @test debug_string(MOIB.print_supporting_scheme, attr) == String("Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and"
                                                * " cannot be bridged into a supported objective function by adding only supported"
                                                * " constrained variables and constraints. To see detatils use debug_unsupported.")
         @test debug_string(MOIB.debug_supports, attr) =="""
@@ -638,10 +638,7 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
         (3) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by MOIB.Constraint.ScalarFunctionizeBridge{$T,MOI.EqualTo{$T}}.
       (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by MOIB.Constraint.ScalarizeBridge{$T,MOI.ScalarAffineFunction{$T},MOI.EqualTo{$T}}.
   (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5) by MOIB.Constraint.QuadtoSOCBridge{$T} to
-    (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4) by MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone} to
-      [1] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2) by MOIB.Variable.RSOCtoPSDBridge{$T} to
-        (3) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by MOIB.Constraint.ScalarFunctionizeBridge{$T,MOI.EqualTo{$T}}.
-      (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by MOIB.Constraint.ScalarizeBridge{$T,MOI.ScalarAffineFunction{$T},MOI.EqualTo{$T}}."""
+    (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints."""
         @test sprint(MOIB.print_graph, bridged) == """
 Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  [1] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2) by MOIB.Variable.RSOCtoPSDBridge{$T}.

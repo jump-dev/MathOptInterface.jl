@@ -247,19 +247,19 @@ function debug_supports(
 end
 
 
-function helper(io::IO, b::LazyBridgeOptimizer, edge::AbstractEdge, space::String)
+function helper(io::IO, b::LazyBridgeOptimizer, edge::AbstractEdge, printed_variable_node::Array{Bool, 1}, printed_constraint_node::Array{Bool,1}, space::String)
 
     for node in edge.added_variables
         if !(iszero(node.index) || b.graph.variable_dist[node.index] == INFINITY)
             print(io, "\n", space)
-            print_bridging_strategy(io, b, node, space)
+            print_bridging_strategy(io, b, node, printed_variable_node, printed_constraint_node, space)
         end
     end
 
     for node in edge.added_constraints
         if !(iszero(node.index) || b.graph.constraint_dist[node.index] == INFINITY)
             print(io, "\n", space)
-            print_bridging_strategy(io, b, node, space)
+            print_bridging_strategy(io, b, node, printed_variable_node, printed_constraint_node, space)
         end
     end
 end
@@ -272,7 +272,23 @@ function find_best_edge(edges::Vector, best_bridge::Int)
     end
 end
 
-function print_bridging_strategy(io::IO, b::LazyBridgeOptimizer, node::AbstractNode, space::String)
+function print_bridging_strategy(io::IO, b::LazyBridgeOptimizer, node::AbstractNode, printed_variable_node::Array{Bool, 1}, printed_constraint_node::Array{Bool,1}, space::String)
+
+    if !(node isa ObjectiveNode)
+        if (node isa VariableNode && printed_variable_node[node.index] == true)
+            S, = b.variable_types[node.index]
+            MOIU.print_with_acronym(io, "[$(node.index)] constrained variables in `$S`.")
+            return
+        elseif (node isa ConstraintNode && printed_constraint_node[node.index] == true)
+            F, S = b.constraint_types[node.index]
+            MOIU.print_with_acronym(io, "($(node.index)) `$F`-in-`$S` constraints.")
+            return
+        elseif node isa VariableNode
+            printed_variable_node[node.index] = true
+        else
+            printed_constraint_node[node.index] = true
+        end
+    end
 
     print_node(io, b, node)
     d = _dist(b.graph, node)
@@ -293,7 +309,7 @@ function print_bridging_strategy(io::IO, b::LazyBridgeOptimizer, node::AbstractN
     else
         edge = find_best_edge(b.graph.objective_edges[node.index], index)
     end
-    helper(io, b, edge, space)
+    helper(io, b, edge, printed_variable_node, printed_constraint_node, space)
 end
 
 
@@ -307,7 +323,9 @@ function print_supporting_scheme(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractF
             end
         else
             node = F == MOIU.variable_function_type(S) ? b.variable_node[(S,)] : b.constraint_node[(F,S)]
-            print_bridging_strategy(io, b, node, "")
+            printed_variable_node = [false for i in 1:length(b.graph.variable_best)]
+            printed_constraint_node = [false for i in 1:length(b.graph.constraint_best)]
+            print_bridging_strategy(io, b, node, printed_variable_node, printed_constraint_node, "")
         end
     else
         println(io, "`$F`-in-`$S` constraints are not supported and cannot be bridged into supported" *
@@ -322,7 +340,9 @@ end
 
 function print_supporting_scheme(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}; io::IO = Base.stdout)
     if supports_bridging_objective_function(b, F)
-        print_bridging_strategy(io, b, node(b, F), "")
+        printed_variable_node = [false for i in 1:length(b.graph.variable_best)]
+        printed_constraint_node = [false for i in 1:length(b.graph.constraint_best)]
+        print_bridging_strategy(io, b, node(b, F), printed_variable_node, printed_constraint_node, "")
     else
         MOIU.print_with_acronym(io, "Objective function of type `$F` is not supported and cannot be bridged into a"
         * " supported objective function by adding only supported" *
