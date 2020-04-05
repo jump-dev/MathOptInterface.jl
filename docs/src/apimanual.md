@@ -1011,7 +1011,7 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
 
 If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
-between `y_i` and the vector of scalar-valued quadratic functions.
+between ``y_i`` and the vector of scalar-valued quadratic functions.
 
 !!! note
     For quadratic programs with only affine constraints, the optimality condition
