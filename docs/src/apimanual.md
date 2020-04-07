@@ -95,7 +95,7 @@ sets recognized by the solver.
 * **[`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty = \max_i \lvert x_i \rvert \}``
 * **[`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone)**:
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty_1 = \sum_i \lvert x_i \rvert \}``
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_1 = \sum_i \lvert x_i \rvert \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
 * **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
