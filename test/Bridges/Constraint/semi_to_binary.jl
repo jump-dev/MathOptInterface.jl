@@ -5,6 +5,7 @@ const MOI = MathOptInterface
 const MOIT = MathOptInterface.Test
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
+const MOIBC = MathOptInterface.Bridges.Constraint
 
 include("../utilities.jl")
 
@@ -12,7 +13,16 @@ mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 
 @testset "SemiToBinary" begin
-    bridged_mock = MOIB.Constraint.SemiToBinary{Float64}(mock)
+    bridged_mock = MOIBC.SemiToBinary{Float64}(mock)
+
+    bridge_type = MOIBC.SemiToBinaryBridge{Float64, MOI.Semiinteger{Float64}}
+    @test MOI.supports_constraint(bridge_type,
+                                  MOI.SingleVariable, MOI.Semiinteger{Float64})
+    @test MOIBC.concrete_bridge_type(bridge_type,
+                                     MOI.SingleVariable,
+                                     MOI.Semiinteger{Float64}) == bridge_type
+
+    @test MOI.supports(bridged_mock, MOI.ConstraintPrimalStart(), bridge_type)
 
     MOIT.basic_constraint_tests(
         bridged_mock, config,
@@ -87,6 +97,11 @@ config = MOIT.TestConfig()
         bridged_mock,
         MOI.ListOfConstraintIndices{MOI.SingleVariable,
                                     MOI.Semiinteger{Float64}}()))
+
+    @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), ci) == 3
+    new_set = MOI.Semiinteger{Float64}(19.0, 20.0)
+    MOI.set(bridged_mock, MOI.ConstraintSet(), ci, new_set)
+    @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == new_set
 
     @testset "$attr" for attr in [MOI.ConstraintPrimalStart(),]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
