@@ -736,8 +736,8 @@ Example: ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1
 
 ```julia
 f = MOI.VectorAffineFunction(
-    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
-     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x1)),
      MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     ],
     [0.0, 0.0],
