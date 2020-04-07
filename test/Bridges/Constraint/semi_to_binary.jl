@@ -30,7 +30,7 @@ config = MOIT.TestConfig()
                    for F in [MOI.SingleVariable]
                    for S in [MOI.Semiinteger{Float64}, MOI.Semicontinuous{Float64}]])
 
-        MOIU.set_mock_optimize!(mock,
+    MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.ObjectiveBound(), 0.0)
             MOIU.mock_optimize!(mock, [0.0, 0.0, 0.0])
@@ -117,4 +117,19 @@ config = MOIT.TestConfig()
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
         (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 1),
         ))
+
+
+    s = """
+    variables: x, y
+    cy: y == 4.0
+    cx: x in Semiinteger(2.0, 3.0)
+    cxy: x + -1.0y >= 0.0
+    minobjective: x
+    """
+    model = MOIU.Model{Float64}()
+    MOIU.loadfromstring!(model, s)
+    MOI.empty!(bridged_mock)
+    @test MOI.is_empty(bridged_mock)
+    MOIU.loadfromstring!(bridged_mock, s)
+    MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["cy", "cx", "cxy"])
 end

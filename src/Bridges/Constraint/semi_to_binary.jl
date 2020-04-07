@@ -50,37 +50,6 @@ function bridge_constraint(::Type{SemiToBinaryBridge{T,S}}, model::MOI.ModelLike
     return SemiToBinaryBridge{T,S}(Ref(s), f.variable, binary, binary_con, lb_ci, ub_ci, int_ci)
 end
 
-function MOI.supports_constraint(::Type{<:SemiToBinaryBridge},
-                                 ::Type{MOI.SingleVariable},
-                                 ::Type{<:SemiSets})
-    return true
-end
-
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
-                 b::SemiToBinaryBridge)
-    return b.semi_set[]
-end
-
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 b::SemiToBinaryBridge{T}) where {T}
-    return MOI.SingleVariable(b.variable_index)
-end
-
-function MOI.delete(model::MOI.ModelLike, bridge::SemiToBinaryBridge)
-    if bridge.integer_index !== nothing
-        MOI.delete(model, bridge.integer_index)
-    end
-    MOI.delete(model, bridge.upper_bound_index)
-    MOI.delete(model, bridge.lower_bound_index)
-    MOI.delete(model, bridge.binary_constraint_index)
-    MOI.delete(model, bridge.binary_variable_index)
-    return
-end
-
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-    bridge::SemiToBinaryBridge)
-    MOI.get(model, MOI.VariablePrimal(attr.N), bridge.variable_index)
-end
 
 function MOIB.added_constrained_variable_types(::Type{<:SemiToBinaryBridge{T, S}}) where {T, S}
     return [(MOI.ZeroOne,)]
@@ -105,6 +74,71 @@ function concrete_bridge_type(::Type{<:SemiToBinaryBridge{T}},
                               ::Type{MOI.SingleVariable},
                               ::Type{S}) where {T, S<:SemiSets}
     return SemiToBinaryBridge{T, S}
+end
+
+function MOI.supports_constraint(::Type{<:SemiToBinaryBridge},
+                                 ::Type{MOI.SingleVariable},
+                                 ::Type{<:SemiSets})
+    return true
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+                 b::SemiToBinaryBridge)
+    return b.semi_set[]
+end
+
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintSet,
+    bridge::SemiToBinaryBridge{T, S}, set::S) where {T, S}
+    bridge.semi_set[] = set
+    MOI.modify(model, bridge.upper_bound_index,
+        MOI.ScalarCoefficientChange(bridge.binary_variable_index, -set.upper))
+    MOI.modify(model, bridge.lower_bound_index,
+        MOI.ScalarCoefficientChange(bridge.binary_variable_index, -set.lower))
+    return
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
+                 b::SemiToBinaryBridge{T}) where {T}
+    return MOI.SingleVariable(b.variable_index)
+end
+
+function MOI.delete(model::MOI.ModelLike, bridge::SemiToBinaryBridge)
+    if bridge.integer_index !== nothing
+        MOI.delete(model, bridge.integer_index)
+    end
+    MOI.delete(model, bridge.upper_bound_index)
+    MOI.delete(model, bridge.lower_bound_index)
+    MOI.delete(model, bridge.binary_constraint_index)
+    MOI.delete(model, bridge.binary_variable_index)
+    return
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
+    bridge::SemiToBinaryBridge)
+    MOI.get(model, MOI.VariablePrimal(attr.N), bridge.variable_index)
+end
+
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintPrimalStart,
+    ::Type{<:SemiToBinaryBridge})
+    return true
+end
+
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart, bridge::SemiToBinaryBridge)
+    return MOI.get(model, MOI.VariablePrimalStart(), bridge.variable_index)
+end
+
+function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
+                 bridge::SemiToBinaryBridge{T}, value) where {T}
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.variable_index, value)
+    bin_value = ifelse(iszero(value), 0.0, 1.0)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.binary_variable_index, bin_value)
+    MOI.set(model, MOI.ConstraintPrimalStart(),
+        bridge.upper_bound_index, value - bridge.semi_set[].upper * bin_value)
+    MOI.set(model, MOI.ConstraintPrimalStart(),
+        bridge.lower_bound_index, value - bridge.semi_set[].lower * bin_value)
+    return
 end
 
 # Attributes, Bridge acting as a model
@@ -155,37 +189,4 @@ end
 function MOI.get(b::SemiToBinaryBridge{T, S},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}}) where {T, S}
     return [b.lower_bound_index]
-end
-
-function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintPrimalStart,
-    ::Type{<:SemiToBinaryBridge})
-    return true
-end
-
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart, bridge::SemiToBinaryBridge)
-    return MOI.get(model, MOI.VariablePrimalStart(), bridge.variable_index)
-end
-
-function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
-                 bridge::SemiToBinaryBridge{T}, value) where {T}
-    MOI.set(model, MOI.VariablePrimalStart(), bridge.variable_index, value)
-    bin_value = ifelse(value == 0.0, 0.0, 1.0)
-    MOI.set(model, MOI.VariablePrimalStart(), bridge.binary_variable_index, bin_value)
-    MOI.set(model, MOI.ConstraintPrimalStart(),
-        bridge.upper_bound_index, value - bridge.semi_set[].upper * bin_value)
-    MOI.set(model, MOI.ConstraintPrimalStart(),
-        bridge.lower_bound_index, value - bridge.semi_set[].lower * bin_value)
-    return
-end
-
-function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintSet,
-    bridge::SemiToBinaryBridge{T, S}, set::S) where {T, S}
-    bridge.semi_set[] = set
-    MOI.modify(model, bridge.upper_bound_index,
-        MOI.ScalarCoefficientChange(bridge.binary_variable_index, -set.upper))
-    MOI.modify(model, bridge.lower_bound_index,
-        MOI.ScalarCoefficientChange(bridge.binary_variable_index, -set.lower))
-    return
 end
