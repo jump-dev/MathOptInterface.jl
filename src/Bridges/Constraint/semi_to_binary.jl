@@ -18,8 +18,8 @@ is replaced by:
 ``x \\leq z \\cdot u ``,
 ``x \\geq z \\cdot l ``.
 """
-struct SemiToBinaryBridge{T, S <: SemiSets{T}} <: AbstractBridge
-    semi_set::Ref{S}
+mutable struct SemiToBinaryBridge{T, S <: SemiSets{T}} <: AbstractBridge
+    semi_set::S
     variable_index::MOI.VariableIndex
     binary_variable_index::MOI.VariableIndex
     binary_constraint_index::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}
@@ -47,7 +47,7 @@ function bridge_constraint(::Type{SemiToBinaryBridge{T,S}}, model::MOI.ModelLike
         int_ci = nothing
     end
 
-    return SemiToBinaryBridge{T,S}(Ref(s), f.variable, binary, binary_con, lb_ci, ub_ci, int_ci)
+    return SemiToBinaryBridge{T,S}(s, f.variable, binary, binary_con, lb_ci, ub_ci, int_ci)
 end
 
 
@@ -84,12 +84,12 @@ end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
                  b::SemiToBinaryBridge)
-    return b.semi_set[]
+    return b.semi_set
 end
 
 function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintSet,
     bridge::SemiToBinaryBridge{T, S}, set::S) where {T, S}
-    bridge.semi_set[] = set
+    bridge.semi_set = set
     MOI.modify(model, bridge.upper_bound_index,
         MOI.ScalarCoefficientChange(bridge.binary_variable_index, -set.upper))
     MOI.modify(model, bridge.lower_bound_index,
@@ -135,9 +135,9 @@ function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
     bin_value = ifelse(iszero(value), 0.0, 1.0)
     MOI.set(model, MOI.VariablePrimalStart(), bridge.binary_variable_index, bin_value)
     MOI.set(model, MOI.ConstraintPrimalStart(),
-        bridge.upper_bound_index, value - bridge.semi_set[].upper * bin_value)
+        bridge.upper_bound_index, value - bridge.semi_set.upper * bin_value)
     MOI.set(model, MOI.ConstraintPrimalStart(),
-        bridge.lower_bound_index, value - bridge.semi_set[].lower * bin_value)
+        bridge.lower_bound_index, value - bridge.semi_set.lower * bin_value)
     return
 end
 
