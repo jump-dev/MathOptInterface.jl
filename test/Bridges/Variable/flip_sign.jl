@@ -24,6 +24,9 @@ config = MOIT.TestConfig()
         vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
         y = vis[4]
         @test y.value == -1
+        
+        con = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Nonpositives}())[1]
+        @test MOI.get(bridged_mock, MOI.ConstraintSet(), con) == MOI.Nonpositives(1)
 
         @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), MOI.VariableIndex)
         @test MOI.supports(bridged_mock, MOI.VariablePrimalStart(), typeof(MOIB.bridge(bridged_mock, y)))
