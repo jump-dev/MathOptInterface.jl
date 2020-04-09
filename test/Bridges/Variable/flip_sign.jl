@@ -31,59 +31,49 @@ config = MOIT.TestConfig()
         x, y_flipped, z, s = MOI.get(mock, MOI.ListOfVariableIndices())
         @test MOI.get(mock, MOI.VariablePrimalStart(), y_flipped) == -1
         @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), y) == 1
-    end
 
-    @testset "Test Mock model" begin
-        var_names = ["a", "b", "c", "d"]
+        var_names = ["x", "y", "z", "w"]
         MOI.set(mock, MOI.VariableName(), MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
-
-        con_d = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Zeros}())[1]
-        con_bc = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Nonnegatives}())
+        con_w = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Zeros}())[1]
+        con_yz = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Nonnegatives}())
         con_ex = MOI.get(mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Zeros}())[1]
 
-        MOI.set(mock, MOI.ConstraintName(), con_d, "cd")
-        MOI.set(mock, MOI.ConstraintName(), con_bc[1], "cb")
-        MOI.set(mock, MOI.ConstraintName(), con_bc[2], "cc")
+        MOI.set(mock, MOI.ConstraintName(), con_w, "cw")
+        MOI.set(mock, MOI.ConstraintName(), con_yz[1], "cy")
+        MOI.set(mock, MOI.ConstraintName(), con_yz[2], "cz")
         MOI.set(mock, MOI.ConstraintName(), con_ex, "cex")
 
-        s = """
-        variables: a, b, c, d
-        cd: [d] in MathOptInterface.Zeros(1)
-        cb: [b] in MathOptInterface.Nonnegatives(1)
-        cc: [c] in MathOptInterface.Nonnegatives(1)
-        cex: [1*a + -1*d + 4.0, -1*b + 3.0, 1*a + 1*c + -12.0] in MathOptInterface.Zeros(3)
-        minobjective: 3*a + -2*b + -4*c
-        """
-        model = MOIU.Model{Float64}()
-        MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(mock, model, var_names, ["cd", "cb", "cc", "cex"])
-    end
+        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices())[4], "v")
+        con_v = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Nonpositives}())[1]
+        MOI.set(bridged_mock, MOI.ConstraintName(), con_v, "cv")
 
-    @testset "Test Bridged model" begin
-        var_names = ["x", "y", "z", "w"]
-        MOI.set(bridged_mock, MOI.VariableName(), MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
+        @testset "Test Mock model" begin
+            s = """
+            variables: x, y, z, w
+            cw: [w] in MathOptInterface.Zeros(1)
+            cy: [y] in MathOptInterface.Nonnegatives(1)
+            cz: [z] in MathOptInterface.Nonnegatives(1)
+            cex: [1*x + -1*w + 4.0, -1*y + 3.0, 1*x + 1*z + -12.0] in MathOptInterface.Zeros(3)
+            minobjective: 3*x + -2*y + -4*z
+            """
+            model = MOIU.Model{Float64}()
+            MOIU.loadfromstring!(model, s)
+            MOIU.test_models_equal(mock, model, var_names, ["cw", "cy", "cz", "cex"])
+        end
 
-        con_w = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Nonpositives}())[1]
-        con_z = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Zeros}())[1]
-        con_y = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorOfVariables, MathOptInterface.Nonnegatives}())[1]
-        con_ex = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Zeros}())[1]
-
-        MOI.set(bridged_mock, MOI.ConstraintName(), con_w, "cw")
-        MOI.set(bridged_mock, MOI.ConstraintName(), con_z, "cz")
-        MOI.set(bridged_mock, MOI.ConstraintName(), con_y, "cy")
-        MOI.set(bridged_mock, MOI.ConstraintName(), con_ex, "cex")
-
-        s = """
-        variables: x, y, z, w
-        cw: [w] in MathOptInterface.Nonpositives(1)
-        cz: [z] in MathOptInterface.Zeros(1)
-        cy: [y] in MathOptInterface.Nonnegatives(1)
-        cex: [1*x + -1*z + 4.0, 1*w + 3.0, 1*x + 1*y + -12.0] in MathOptInterface.Zeros(3)
-        minobjective: 3*x + 2*w + -4*y
-        """
-        model = MOIU.Model{Float64}()
-        MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(bridged_mock, model, var_names, ["cw", "cz", "cy", "cex"])
+        @testset "Test Bridged model" begin
+            s = """
+            variables: x, z, w, v
+            cv: [v] in MathOptInterface.Nonpositives(1)
+            cw: [w] in MathOptInterface.Zeros(1)
+            cz: [z] in MathOptInterface.Nonnegatives(1)
+            cex: [1*x + -1*w + 4.0, 1*v + 3.0, 1*x + 1*z + -12.0] in MathOptInterface.Zeros(3)
+            minobjective: 3*x + 2*v + -4*z
+            """
+            model = MOIU.Model{Float64}()
+            MOIU.loadfromstring!(model, s)
+            MOIU.test_models_equal(bridged_mock, model, ["x", "z", "w", "v"], ["cv", "cw", "cz", "cex"])
+        end
     end
 
     @testset "lin4" begin
