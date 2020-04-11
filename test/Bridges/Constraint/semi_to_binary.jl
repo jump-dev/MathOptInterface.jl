@@ -123,13 +123,60 @@ config = MOIT.TestConfig()
     variables: x, y
     cy: y == 4.0
     cx: x in Semiinteger(2.0, 3.0)
-    cxy: x + -1.0y >= 0.0
     minobjective: x
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
+    sb = """
+    variables: x, y, z
+    cy: y == 4.0
+    bin: z in ZeroOne()
+    int: x in Integer()
+    clo: x + -2.0z >= 0.0
+    cup: x + -3.0z <= 0.0
+    minobjective: x
+    """
+    modelb = MOIU.Model{Float64}()
+    MOIU.loadfromstring!(modelb, sb)
+
     MOI.empty!(bridged_mock)
     @test MOI.is_empty(bridged_mock)
     MOIU.loadfromstring!(bridged_mock, s)
-    MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["cy", "cx", "cxy"])
+    MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["cy", "cx"])
+
+    # setting names on mock
+    ci = first(MOI.get(mock,MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.ZeroOne}()))
+    MOI.set(mock, MOI.ConstraintName(), ci, "bin")
+    z = MOI.VariableIndex(ci.value)
+    MOI.set(mock, MOI.VariableName(), z, "z")
+    ci = first(MOI.get(mock, MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.Integer}()))
+    MOI.set(mock, MOI.ConstraintName(), ci, "int")
+    x = MOI.VariableIndex(ci.value)
+    MOI.set(mock, MOI.VariableName(), x, "x")
+    ci = first(MOI.get(mock,MOI.ListOfConstraintIndices{
+        MOI.SingleVariable, MOI.EqualTo{Float64}}()))
+    MOI.set(mock, MOI.ConstraintName(), ci, "cy")
+    y = MOI.VariableIndex(ci.value)
+    MOI.set(mock, MOI.VariableName(), y, "y")
+    ci = first(MOI.get(mock,MOI.ListOfConstraintIndices{
+        MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()))
+    MOI.set(mock, MOI.ConstraintName(), ci, "clo")
+    ci = first(MOI.get(mock,MOI.ListOfConstraintIndices{
+        MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}()))
+    MOI.set(mock, MOI.ConstraintName(), ci, "cup")
+
+    MOIU.test_models_equal(mock, modelb, ["x", "y", "z"], ["cy", "bin", "int", "clo", "cup"])
+
+
+    # inds = MOI.get(model, MOI.ListOfVariableIndices())
+    # for i in inds
+    #     if !(i in [x,z])
+    #         y = i
+    #         MOI.set(model, MOI.VariableName(), y, "y")
+    #         break
+    #     end
+    # end
+
 end

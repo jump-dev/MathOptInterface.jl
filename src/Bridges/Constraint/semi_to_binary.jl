@@ -39,7 +39,7 @@ function bridge_constraint(::Type{SemiToBinaryBridge{T,S}}, model::MOI.ModelLike
     # var - UB * bin <= 0
     ub = MOIU.operate(*, T, -s.upper, MOI.SingleVariable(binary))
     ub = MOIU.operate!(+, T, ub, f)
-    ub_ci = MOI.add_constraint(model, lb, MOI.LessThan{T}(zero(T)))
+    ub_ci = MOI.add_constraint(model, ub, MOI.LessThan{T}(zero(T)))
 
     if s isa MOI.Semiinteger{T}
         int_ci = MOI.add_constraint(model, f, MOI.Integer())
