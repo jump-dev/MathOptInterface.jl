@@ -153,13 +153,6 @@ config = MOIT.TestConfig()
     ci = first(MOI.get(mock, MOI.ListOfConstraintIndices{
         MOI.SingleVariable, MOI.Integer}()))
     MOI.set(mock, MOI.ConstraintName(), ci, "int")
-    x = MOI.VariableIndex(ci.value)
-    MOI.set(mock, MOI.VariableName(), x, "x")
-    ci = first(MOI.get(mock,MOI.ListOfConstraintIndices{
-        MOI.SingleVariable, MOI.EqualTo{Float64}}()))
-    MOI.set(mock, MOI.ConstraintName(), ci, "cy")
-    y = MOI.VariableIndex(ci.value)
-    MOI.set(mock, MOI.VariableName(), y, "y")
     ci = first(MOI.get(mock,MOI.ListOfConstraintIndices{
         MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}}()))
     MOI.set(mock, MOI.ConstraintName(), ci, "clo")
@@ -168,15 +161,5 @@ config = MOIT.TestConfig()
     MOI.set(mock, MOI.ConstraintName(), ci, "cup")
 
     MOIU.test_models_equal(mock, modelb, ["x", "y", "z"], ["cy", "bin", "int", "clo", "cup"])
-
-
-    # inds = MOI.get(model, MOI.ListOfVariableIndices())
-    # for i in inds
-    #     if !(i in [x,z])
-    #         y = i
-    #         MOI.set(model, MOI.VariableName(), y, "y")
-    #         break
-    #     end
-    # end
 
 end
