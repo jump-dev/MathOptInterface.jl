@@ -489,7 +489,7 @@ function test_variablenames_equal(model, variablenames)
     end
     for (vname,seen) in seen_name
         if !seen
-            error("Did not find variable with name $vname in intance.")
+            error("Did not find variable with name $vname in instance.")
         end
     end
 end
@@ -509,7 +509,7 @@ function test_constraintnames_equal(model, constraintnames)
     end
     for (cname,seen) in seen_name
         if !seen
-            error("Did not find constraint with name $cname in intance.")
+            error("Did not find constraint with name $cname in instance.")
         end
     end
 end
