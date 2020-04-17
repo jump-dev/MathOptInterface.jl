@@ -190,7 +190,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
         F0 = MOI.constant(func)
         for k in eachindex(F0)
             if !iszero(F0[k])
-                _print_entry(0, block, psd, k, F0[k])
+                _print_entry(0, block, psd, k, -F0[k])
             end
         end
         for term in func.terms
@@ -322,7 +322,7 @@ function Base.read!(io::IO, model::Model{T}) where T
             end
             if iszero(matrix)
                 if !iszero(coef)
-                    funcs[block].constants[k] += coef
+                    funcs[block].constants[k] -= coef
                 end
             else
                 if !iszero(coef)
