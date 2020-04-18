@@ -49,7 +49,7 @@ function test_write_then_read(model_string::String)
 end
 
 function test_read(filename::String, model_string::String)
-    model1 = SDPA.Model()
+    model1 = MOI.FileFormats.Model(filename = filename)
     MOIU.loadfromstring!(model1, model_string)
     (variable_names, constraint_names) = set_var_and_con_names(model1)
 
@@ -108,7 +108,7 @@ end
         MOI.add_variable(model)
         err = ErrorException("Cannot read in file because model is not empty.")
         @test_throws err MOI.read_from_file(model,
-            joinpath(SDPA_MODELS_DIR, "example_A.sdpa"))
+            joinpath(SDPA_MODELS_DIR, "example_A.dat-s"))
     end
 
     @testset "Bad number of blocks" begin
@@ -190,7 +190,7 @@ write_read_models = [
 end
 
 example_models = [
-    ("example_A.sdpa", """
+    ("example_A.dat-s", """
         variables: x, y
         minobjective: 10x + 20y
         c1: [x + -1, 0, x + -2] in PositiveSemidefiniteConeTriangle(2)
