@@ -194,12 +194,12 @@ example_models = [
         variables: x, y
         minobjective: 10x + 20y
         c1: [x + -1, 0, x + -2] in PositiveSemidefiniteConeTriangle(2)
-        c2: [5y + -3, 4y, 6y + -4] in PositiveSemidefiniteConeTriangle(2)
+        c2: [5y + -3, 2y, 6y + -4] in PositiveSemidefiniteConeTriangle(2)
     """),
     ("example_B.sdpa", """
         variables: x
         minobjective: 1x
-        c1: [0, 2x + -2, 0] in PositiveSemidefiniteConeTriangle(2)
+        c1: [0, 1x + -1, 0] in PositiveSemidefiniteConeTriangle(2)
     """),
 ]
 @testset "Read and write/read $model_name" for (model_name, model_string) in example_models

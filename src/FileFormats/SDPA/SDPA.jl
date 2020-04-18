@@ -173,17 +173,11 @@ function Base.write(io::IO, model::Model{T}) where {T}
     function _print_entry(matrix, block, psd, k, value)
         if psd
             row, col = index_map[k]
-            if row == col
-                entry = value
-            else
-                entry = value / 2
-            end
         else
             row = k
             col = k
-            entry = value
         end
-        println(io, matrix, ' ', block, ' ', row, ' ', col, ' ', entry)
+        println(io, matrix, ' ', block, ' ', row, ' ', col, ' ', value)
     end
     function _print_constraint(block, psd, ci::MOI.ConstraintIndex)
         func = MOI.Utilities.canonical(con_function(ci))
@@ -314,12 +308,7 @@ function Base.read!(io::IO, model::Model{T}) where T
                 end
                 k = row
             end
-            entry = parse(T, values[5])
-            if col == row
-                coef = entry
-            else
-                coef = entry * 2
-            end
+            coef = parse(T, values[5])
             if iszero(matrix)
                 if !iszero(coef)
                     funcs[block].constants[k] -= coef
