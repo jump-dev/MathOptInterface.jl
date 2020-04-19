@@ -256,12 +256,16 @@ function Base.read!(io::IO, model::Model{T}) where T
                 continue
             end
             num_variables_read = true
-            MOI.add_variables(model, parse(Int, line))
+            # According to http://plato.asu.edu/ftp/sdpa_format.txt,
+            # additional text after the number of variables should be ignored.
+            MOI.add_variables(model, parse(Int, split(line)[1]))
         elseif num_blocks === nothing
             if isempty(line)
                 continue
             end
-            num_blocks = parse(Int, line)
+            # According to http://plato.asu.edu/ftp/sdpa_format.txt,
+            # additional text after the number of blocks should be ignored.
+            num_blocks = parse(Int, split(line)[1])
         elseif block_sets === nothing
             if isempty(line) && !iszero(num_blocks)
                 continue
