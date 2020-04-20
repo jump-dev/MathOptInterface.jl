@@ -35,8 +35,8 @@ function optimize! end
 """
     compute_conflict!(optimizer::AbstractOptimizer)
 
-Compute a minimal subset of the constraints and variables that keep the model
-infeasible.
+Computes a minimal subset of constraints such that the model with the other
+constraint removed is still infeasible.
 
 See also `ConflictStatus` and `ConstraintConflictStatus`.
 
