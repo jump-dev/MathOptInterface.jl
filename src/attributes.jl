@@ -928,6 +928,13 @@ end
 ConflictStatus() = ConflictStatus(1)
 _result_index_field(attr::ConflictStatus) = attr.result_index
 
+"""
+    ConflictCount()
+
+A model attribute for the number of minimal conflicts available.
+"""
+struct ConflictCount <: AbstractModelAttribute end
+
 ## Variable attributes
 
 """
