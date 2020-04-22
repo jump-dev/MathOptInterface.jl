@@ -911,16 +911,30 @@ A model attribute for the number of results available.
 struct ResultCount <: AbstractModelAttribute end
 
 """
+    ConflictStatusCode
+
+An Enum of possible values for the `ConflictStatus` attribute. This attribute
+is meant to explain the reason why the conflict finder stopped executing in the
+most recent call to [`compute_conflict!`](@ref).
+
+Possible values are:
+* `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
+  not yet been called
+* `FEASIBLE`: there is no conflict because the problem is feasible
+* `FOUND`: at least one conflict could be found
+"""
+@enum(ConflictStatusCode,
+    COMPUTE_CONFLICT_NOT_CALLED,
+	FEASIBLE,
+	FOUND
+)
+
+"""
     ConflictStatus(result_index)
     ConflictStatus()
 
-A model attribute for the `TerminationStatusCode` explaining why the conflict
+A model attribute for the `ConflictStatusCode` explaining why the conflict
 refiner stopped when computing the conflict `result_index`.
-
-If a minimal conflict is found, it will return `OPTIMAL`.
-If the problem is feasible, it will return `INFEASIBLE`.
-If `compute_conflict` has not been called yet, it will return
-`OPTIMIZE_NOT_CALLED`.
 """
 struct ConflictStatus <: AbstractModelAttribute
     result_index::Int
@@ -1143,11 +1157,32 @@ function throw_set_error_fallback(::ModelLike, ::ConstraintSet,
 end
 
 """
+    ConflictParticipationStatusCode
+
+An Enum of possible values for the `ConstraintConflictStatus` attribute.
+This attribute is meant to indicate whether a given constraint participates
+or not in the last computed conflict.
+
+Possible values are:
+* `EXCLUDED`: the constraint does not participate in the conflict
+* `INCLUDED`: the constraint participates in the conflict
+* `POSSIBLY_INCLUDED`: the constraint may participate in the conflict,
+  the solver was not able to prove that the constraint can be excluded from
+  the conflict
+"""
+@enum(ConflictStatusCode,
+    COMPUTE_CONFLICT_NOT_CALLED,
+	FEASIBLE,
+	FOUND
+)
+
+"""
     ConstraintConflictStatus()
     ConstraintConflictStatus(result_index)
 
-A Boolean constraint attribute indicating whether the constraint participates
-in conflict `result_index`. Some solvers call the conflict IIS.
+A constraint attribute indicating whether the constraint participates
+in conflict `result_index`. Its type is `ConflictParticipationStatusCode`.
+Some solvers call the conflict IIS.
 """
 struct ConstraintConflictStatus <: AbstractConstraintAttribute
     result_index::Int
@@ -1356,7 +1391,8 @@ function is_set_by_optimize(::Union{ObjectiveValue,
                                     NodeCount,
                                     RawSolver,
                                     ResultCount,
-                                    ConflictStatus,
+									ConflictStatus,
+                                    ConflictCount,
                                     ConstraintConflictStatus,
                                     TerminationStatus,
                                     RawStatusString,
