@@ -1170,10 +1170,10 @@ Possible values are:
   the solver was not able to prove that the constraint can be excluded from
   the conflict
 """
-@enum(ConflictStatusCode,
-    COMPUTE_CONFLICT_NOT_CALLED,
-	FEASIBLE,
-	FOUND
+@enum(ConflictParticipationStatusCode,
+    EXCLUDED,
+	INCLUDED,
+	POSSIBLY_INCLUDED
 )
 
 """
