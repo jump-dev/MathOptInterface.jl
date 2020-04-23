@@ -918,13 +918,13 @@ is meant to explain the reason why the conflict finder stopped executing in the
 most recent call to [`compute_conflict!`](@ref).
 
 Possible values are:
-* `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
+* `NO_CONFLICT `: the function [`compute_conflict!`](@ref) has
   not yet been called
 * `FEASIBLE`: there is no conflict because the problem is feasible
 * `FOUND`: at least one conflict could be found
 """
 @enum(ConflictStatusCode,
-    COMPUTE_CONFLICT_NOT_CALLED,
+	NO_CONFLICT,
 	FEASIBLE,
 	FOUND
 )
