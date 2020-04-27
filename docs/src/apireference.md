@@ -144,7 +144,6 @@ List of attributes useful for optimizers
 ```@docs
 RawSolver
 ResultCount
-ConflictStatus
 ObjectiveFunction
 ObjectiveFunctionType
 ObjectiveValue
@@ -172,11 +171,14 @@ TerminationStatusCode
 
 ### Conflict Status
 
-The `ConflictStatus` attribute indicates why the optimizer stopped executing.
+The `ConflictStatus` attribute indicates why the conflict finder stopped executing.
 The value of the attribute is of type `ConflictStatusCode`.
 
 ```@docs
+compute_conflict!
+ConflictStatus
 ConflictStatusCode
+ConstraintConflictStatus
 ```
 
 ### Result Status
@@ -274,7 +276,6 @@ ConstraintDual
 ConstraintBasisStatus
 ConstraintFunction
 ConstraintSet
-ConstraintConflictStatus
 ```
 
 Note that setting the [`ConstraintFunction`](@ref) of a [`SingleVariable`]
