@@ -918,36 +918,20 @@ is meant to explain the reason why the conflict finder stopped executing in the
 most recent call to [`compute_conflict!`](@ref).
 
 Possible values are:
-* `NO_CONFLICT `: the function [`compute_conflict!`](@ref) has
+* `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
   not yet been called
-* `FEASIBLE`: there is no conflict because the problem is feasible
+* `NO_CONFLICT_FOUND`: there is no conflict because the problem is feasible
 * `FOUND`: at least one conflict could be found
 """
-@enum(ConflictStatusCode,
-	NO_CONFLICT,
-	FEASIBLE,
-	FOUND
-)
+@enum(ConflictStatusCode, COMPUTE_CONFLICT_NOT_CALLED, NO_CONFLICT_FOUND, CONFLICT_FOUND)
 
 """
-    ConflictStatus(result_index)
     ConflictStatus()
 
 A model attribute for the `ConflictStatusCode` explaining why the conflict
-refiner stopped when computing the conflict `result_index`.
+refiner stopped when computing the conflict.
 """
-struct ConflictStatus <: AbstractModelAttribute
-    result_index::Int
-end
-ConflictStatus() = ConflictStatus(1)
-_result_index_field(attr::ConflictStatus) = attr.result_index
-
-"""
-    ConflictCount()
-
-A model attribute for the number of minimal conflicts available.
-"""
-struct ConflictCount <: AbstractModelAttribute end
+struct ConflictStatus <: AbstractModelAttribute end
 
 ## Variable attributes
 
@@ -1164,31 +1148,22 @@ This attribute is meant to indicate whether a given constraint participates
 or not in the last computed conflict.
 
 Possible values are:
-* `EXCLUDED`: the constraint does not participate in the conflict
-* `INCLUDED`: the constraint participates in the conflict
-* `POSSIBLY_INCLUDED`: the constraint may participate in the conflict,
+* `NOT_IN_CONFLICT`: the constraint does not participate in the conflict
+* `IN_CONFLICT`: the constraint participates in the conflict
+* `MAYBE_IN_CONFLICT`: the constraint may participate in the conflict,
   the solver was not able to prove that the constraint can be excluded from
   the conflict
 """
-@enum(ConflictParticipationStatusCode,
-    EXCLUDED,
-	INCLUDED,
-	POSSIBLY_INCLUDED
-)
+@enum(ConflictParticipationStatusCode, NOT_IN_CONFLICT, IN_CONFLICT, MAYBE_IN_CONFLICT)
 
 """
     ConstraintConflictStatus()
-    ConstraintConflictStatus(result_index)
 
 A constraint attribute indicating whether the constraint participates
-in conflict `result_index`. Its type is `ConflictParticipationStatusCode`.
+in the conflict. Its type is `ConflictParticipationStatusCode`.
 Some solvers call the conflict IIS.
 """
-struct ConstraintConflictStatus <: AbstractConstraintAttribute
-    result_index::Int
-end
-ConstraintConflictStatus() = ConstraintConflictStatus(1)
-_result_index_field(attr::ConstraintConflictStatus) = attr.result_index
+struct ConstraintConflictStatus <: AbstractConstraintAttribute end
 
 ## Termination status
 """
