@@ -38,14 +38,14 @@ function optimize! end
 Computes a minimal subset of constraints such that the model with the other
 constraint removed is still infeasible.
 
-See also [`ConflictStatus`](@ref), [`ConflictCount`](@ref), and
-[`ConstraintConflictStatus`](@ref).
+See also [`ConflictStatus`](@ref) and [`ConstraintConflictStatus`](@ref).
 
 ### Note
 
 If the model is modified after a call to `compute_conflict!`, the implementor
 is not obliged to purge the conflict. Any calls to the above attributes may
-return values for the original conflict without a warning.
+return values for the original conflict without a warning. Similarly, when
+modifying the model, the conflict can be discarded. 
 """
 function compute_conflict! end
 
