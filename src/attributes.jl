@@ -920,15 +920,21 @@ most recent call to [`compute_conflict!`](@ref).
 Possible values are:
 * `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
   not yet been called
-* `NO_CONFLICT_FOUND`: there is no conflict because the problem is feasible
+* `NO_CONFLICT_EXISTS`: there is no conflict because the problem is feasible
+* `NO_CONFLICT_FOUND`: the solver could not find a conflict
 * `CONFLICT_FOUND`: at least one conflict could be found
 """
-@enum(ConflictStatusCode, COMPUTE_CONFLICT_NOT_CALLED, NO_CONFLICT_FOUND, CONFLICT_FOUND)
+@enum ConflictStatusCode begin
+    COMPUTE_CONFLICT_NOT_CALLED
+    NO_CONFLICT_EXISTS
+    NO_CONFLICT_FOUND
+    CONFLICT_FOUND
+end
 
 """
     ConflictStatus()
 
-A model attribute for the `ConflictStatusCode` explaining why the conflict
+A model attribute for the [`ConflictStatusCode`](@ref) explaining why the conflict
 refiner stopped when computing the conflict.
 """
 struct ConflictStatus <: AbstractModelAttribute end
@@ -1143,7 +1149,7 @@ end
 """
     ConflictParticipationStatusCode
 
-An Enum of possible values for the `ConstraintConflictStatus` attribute.
+An Enum of possible values for the [`ConstraintConflictStatus`](@ref) attribute.
 This attribute is meant to indicate whether a given constraint participates
 or not in the last computed conflict.
 
@@ -1160,8 +1166,7 @@ Possible values are:
     ConstraintConflictStatus()
 
 A constraint attribute indicating whether the constraint participates
-in the conflict. Its type is `ConflictParticipationStatusCode`.
-Some solvers call the conflict IIS.
+in the conflict. Its type is [`ConflictParticipationStatusCode`](@ref).
 """
 struct ConstraintConflictStatus <: AbstractConstraintAttribute end
 
