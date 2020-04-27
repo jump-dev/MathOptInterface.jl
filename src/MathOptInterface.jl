@@ -38,6 +38,9 @@ function optimize! end
 Computes a minimal subset of constraints such that the model with the other
 constraint removed is still infeasible.
 
+Some solvers call a set of conflicting constraints an Irreducible Inconsistent 
+Subsystem (IIS).
+
 See also [`ConflictStatus`](@ref) and [`ConstraintConflictStatus`](@ref).
 
 ### Note
