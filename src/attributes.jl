@@ -921,7 +921,7 @@ Possible values are:
 * `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
   not yet been called
 * `NO_CONFLICT_FOUND`: there is no conflict because the problem is feasible
-* `FOUND`: at least one conflict could be found
+* `CONFLICT_FOUND`: at least one conflict could be found
 """
 @enum(ConflictStatusCode, COMPUTE_CONFLICT_NOT_CALLED, NO_CONFLICT_FOUND, CONFLICT_FOUND)
 
