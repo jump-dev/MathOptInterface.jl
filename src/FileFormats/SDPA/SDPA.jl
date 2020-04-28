@@ -8,7 +8,7 @@ import MathOptInterface
 const MOI = MathOptInterface
 
 MOI.Utilities.@model(Model,
-    (MOI.Integer,),
+    (),
     (),
     (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
     (),
@@ -319,7 +319,7 @@ function Base.read!(io::IO, model::Model{T}) where T
             obj = zero(MOI.ScalarAffineFunction{T})
             for i in eachindex(c)
                 if !iszero(c[i])
-                    push!(obj.terms, MOI.ScalarAffineTerm(c[i], MOI.VariableIndex(i)))
+                    push!(obj.terms, MOI.ScalarAffineTerm(c[i], scalar_vars[i]))
                 end
             end
             MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
@@ -351,7 +351,7 @@ function Base.read!(io::IO, model::Model{T}) where T
             else
                 if !iszero(coef)
                     push!(funcs[block].terms, MOI.VectorAffineTerm(k,
-                        MOI.ScalarAffineTerm(coef, MOI.VariableIndex(matrix))))
+                        MOI.ScalarAffineTerm(coef, scalar_vars[matrix])))
                 end
             end
         end
