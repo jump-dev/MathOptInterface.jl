@@ -8,7 +8,7 @@ import MathOptInterface
 const MOI = MathOptInterface
 
 MOI.Utilities.@model(Model,
-    (),
+    (MOI.Integer,),
     (),
     (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
     (),
@@ -25,6 +25,10 @@ function MOI.supports_constraint(
 ) where {T}
 
     return false
+end
+function MOI.supports_constraint(
+    ::Model, ::Type{MOI.SingleVariable}, ::Type{MOI.Integer})
+    return true
 end
 
 function MOI.supports(
@@ -202,6 +206,16 @@ function Base.write(io::IO, model::Model{T}) where {T}
     for i in eachindex(psd)
         _print_constraint(length(nonneg) + i, true, psd[i])
     end
+
+    # Integrality constraints.
+    # Based on the extension: http://www.opt.tu-darmstadt.de/scipsdp/downloads/data_format.txt
+    integer_cons = model_cons(MOI.SingleVariable, MOI.Integer)
+    if length(integer_cons) > 0
+        println(io, "*INTEGER")
+        for con_idx in integer_cons
+            println(io, "*$(con_function(con_idx).variable.value)")
+        end
+    end
     return
 end
 
@@ -242,6 +256,9 @@ function Base.read!(io::IO, model::Model{T}) where T
         end
     end
     objective_read = false
+    integer_read = false
+    scalar_vars = nothing
+    intvar_idx = Int[]
     c = nothing
     funcs = nothing
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -251,6 +268,20 @@ function Base.read!(io::IO, model::Model{T}) where T
         if startswith(line, '"')
             continue
         end
+        # The lines starting with * should also be skipped 
+        # according to http://plato.asu.edu/ftp/sdpa_format.txt.
+        if startswith(line, '*')
+            # Exceptions for integer variables
+            if startswith(line, "*INTEGER")
+                integer_read = true
+            elseif integer_read
+                if !num_variables_read
+                    error("The number of variables should be given before *INTEGER section.")
+                end
+                push!(intvar_idx, parse(Int, strip(line[2:end])))
+            end
+            continue
+        end
         if !num_variables_read
             if isempty(line)
                 continue
@@ -258,7 +289,7 @@ function Base.read!(io::IO, model::Model{T}) where T
             num_variables_read = true
             # According to http://plato.asu.edu/ftp/sdpa_format.txt,
             # additional text after the number of variables should be ignored.
-            MOI.add_variables(model, parse(Int, split(line)[1]))
+            scalar_vars = MOI.add_variables(model, parse(Int, split(line)[1]))
         elseif num_blocks === nothing
             if isempty(line)
                 continue
@@ -327,6 +358,9 @@ function Base.read!(io::IO, model::Model{T}) where T
     end
     for block in 1:num_blocks
         MOI.add_constraint(model, funcs[block], block_sets[block])
+    end
+    for var_idx in intvar_idx
+        MOI.add_constraint(model, MOI.SingleVariable(scalar_vars[var_idx]), MOI.Integer())
     end
     return
 end
