@@ -18,6 +18,7 @@ function set_var_and_con_names(model::MOI.ModelLike)
     idx = 0
     constraint_names = String[]
     for i in Iterators.flatten((
+        MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer}()),
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()),
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle}())))
         idx += 1
@@ -70,7 +71,6 @@ end
             MOI.Interval(1.0, 2.0),
             MOI.Semiinteger(1.0, 2.0),
             MOI.Semicontinuous(1.0, 2.0),
-            MOI.Integer(),
             MOI.ZeroOne()
         ]
         model_string = """
@@ -200,6 +200,16 @@ example_models = [
         variables: x
         minobjective: 1x
         c1: [0, 1x + -1, 0] in PositiveSemidefiniteConeTriangle(2)
+    """),
+    ("example_integer.sdpa", """
+        variables: x, y, z
+        minobjective: 1x + -2y + -1z
+        c1: [1x, 1y, 1z] in PositiveSemidefiniteConeTriangle(2)
+        c2: [1z, 1x, 2.1] in PositiveSemidefiniteConeTriangle(2)
+        c3: [1x + 1y + 1z + -1, -1x + -1y + -1z + 8] in Nonnegatives(2)
+        c4: x in Integer()
+        c5: y in Integer()
+        c6: z in Integer()
     """),
 ]
 @testset "Read and write/read $model_name" for (model_name, model_string) in example_models
