@@ -2,6 +2,7 @@ const VI = MOI.VariableIndex
 
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
+    enable_hessian_vector_product::Bool
 end
 
 # hs071
@@ -16,8 +17,7 @@ function MOI.initialize(d::HS071, requested_features::Vector{Symbol})
     for feat in requested_features
         if !(feat in MOI.features_available(d))
             error("Unsupported feature $feat")
-            # TODO: implement Jac-vec and Hess-vec products
-            # for solvers that need them
+            # TODO: implement Jac-vec products for solvers that need them
         end
     end
 end
@@ -25,6 +25,8 @@ end
 function MOI.features_available(d::HS071)
     if d.enable_hessian
         return [:Grad, :Jac, :Hess, :ExprGraph]
+    elseif d.enable_hessian_vector_product
+        return [:Grad, :Jac, :HessVec, :ExprGraph]
     else
         return [:Grad, :Jac, :ExprGraph]
     end
@@ -136,6 +138,28 @@ function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
     return H[10] += μ[2] * 2
 end
 
+function MOI.eval_hessian_lagrangian_product(d::HS071, h, x, v, σ, μ)
+    @assert d.enable_hessian_vector_product
+    # Objective
+    h[1] = 2.0 * x[4] * v[1] + x[4] * v[2] + x[4] * v[3] + (2.0 * x[1] + x[2] + x[3]) * v[4]
+    h[2] = x[4] * v[1] + x[1] * v[4]
+    h[3] = x[4] * v[1] + x[1] * v[4]
+    h[4] = (2.0 * x[1] + x[2] + x[3]) * v[1] + x[1] * v[2] + x[1] * v[3]
+
+    # First constraint
+    h[1] += μ[1] * (x[3] * x[4] * v[2] + x[2] * x[4] * v[3] + x[2] * x[3] * v[4])
+    h[2] += μ[1] * (x[3] * x[4] * v[1] + x[1] * x[4] * v[3] + x[1] * x[3] * v[4])
+    h[3] += μ[1] * (x[2] * x[4] * v[1] + x[1] * x[4] * v[2] + x[1] * x[2] * v[4])
+    h[4] += μ[1] * (x[2] * x[3] * v[1] + x[1] * x[3] * v[2] + x[1] * x[2] * v[3])
+
+    # Second constraint
+    h[1] += μ[2] * 2.0 * v[1]
+    h[2] += μ[2] * 2.0 * v[2]
+    h[3] += μ[2] * 2.0 * v[3]
+    h[4] += μ[2] * 2.0 * v[4]
+
+end
+
 function hs071test_template(
     model::MOI.ModelLike,
     config::TestConfig,
@@ -216,9 +240,16 @@ function hs071test_template(
     end
 end
 
-hs071_test(model, config) = hs071test_template(model, config, HS071(true))
+function hs071_test(model, config)
+    return hs071test_template(model, config, HS071(true, false))
+end
+
 function hs071_no_hessian_test(model, config)
     return hs071test_template(model, config, HS071(false))
+end
+
+function hs071_hessian_vector_product_test(model, config
+    return hs071test_template(model, config, HS071(false, true))
 end
 
 # Test for FEASIBILITY_SENSE.
