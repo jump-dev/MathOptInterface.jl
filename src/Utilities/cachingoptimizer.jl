@@ -282,23 +282,21 @@ function MOI.add_constrained_variables(m::CachingOptimizer, set::MOI.AbstractVec
                 end
             end
         else
-            vindices_optimizer, cindices_optimizer =
+            vindices_optimizer, cindex_optimizer =
                 MOI.add_constrained_variables(m.optimizer, set)
         end
     end
     vindices = MOI.add_variables(m.model_cache, MOI.dimension(set))
-    cindices = MOI.add_constraint(m.model_cache, MOI.VectorOfVariables(vindices), set)
+    cindex = MOI.add_constraint(m.model_cache, MOI.VectorOfVariables(vindices), set)
     if m.state == ATTACHED_OPTIMIZER
         for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
             m.model_to_optimizer_map[vindex] = vindex_optimizer
             m.optimizer_to_model_map[vindex_optimizer] = vindex
         end
-        for (cindex, cindex_optimizer) in zip(cindices, cindices_optimizer)
-            m.model_to_optimizer_map[cindex] = cindex_optimizer
-            m.optimizer_to_model_map[cindex_optimizer] = cindex
-        end
+        m.model_to_optimizer_map[cindex] = cindex_optimizer
+        m.optimizer_to_model_map[cindex_optimizer] = cindex
     end
-    return vindices, cindices
+    return vindices, cindex
 end
 
 function MOI.supports_constraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
