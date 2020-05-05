@@ -272,7 +272,7 @@ function MOI.add_constrained_variables(m::CachingOptimizer, set::MOI.AbstractVec
     if m.state == ATTACHED_OPTIMIZER
         if m.mode == AUTOMATIC
             try
-                vindices_optimizer, cindices_optimizer =
+                vindices_optimizer, cindex_optimizer =
                     MOI.add_constrained_variables(m.optimizer, set)
             catch err
                 if err isa MOI.NotAllowedError
