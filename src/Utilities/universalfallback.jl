@@ -41,7 +41,7 @@ function Base.show(io::IO, U::UniversalFallback)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
     MOIU.print_with_acronym(io, summary(U))
-    !isnothing(U.objective) && print(io, "\n$(indent)with objective")
+    !(U.objective === nothing) && print(io, "\n$(indent)with objective")
     for (attr, name) in (   (U.constraints, "constraint"),
                             (U.optattr, "optimizer attribute"),
                             (U.modattr, "model attribute"),
@@ -57,7 +57,7 @@ function Base.show(io::IO, U::UniversalFallback)
 end
 
 function MOI.is_empty(uf::UniversalFallback)
-    return MOI.is_empty(uf.model) && isnothing(uf.objective) && isempty(uf.constraints) &&
+    return MOI.is_empty(uf.model) && uf.objective === nothing && isempty(uf.constraints) &&
         isempty(uf.modattr) && isempty(uf.varattr) && isempty(uf.conattr)
 end
 function MOI.empty!(uf::UniversalFallback)
@@ -160,7 +160,7 @@ function MOI.delete(uf::UniversalFallback, vi::VI)
     for d in values(uf.varattr)
         delete!(d, vi)
     end
-    if !isnothing(uf.objective)
+    if !(uf.objective === nothing)
         uf.objective = remove_variable(uf.objective, vi)
     end
     for (_, constraints) in uf.constraints
@@ -174,7 +174,7 @@ function MOI.delete(uf::UniversalFallback, vis::Vector{VI})
             delete!(d, vi)
         end
     end
-    if !isnothing(uf.objective)
+    if !(uf.objective === nothing)
         uf.objective = remove_variable(uf.objective, vis)
     end
     for (_, constraints) in uf.constraints
@@ -258,7 +258,7 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfOptimizerAttributesS
 end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     list = MOI.get(uf.model, listattr)
-    if !isnothing(uf.objective)
+    if !uf.objective === nothing
         push!(list, MOI.ObjectiveFunction{typeof(uf.objective)}())
     end
     for attr in keys(uf.modattr)
@@ -292,7 +292,7 @@ function MOI.set(uf::UniversalFallback, attr::MOI.ObjectiveSense,
 end
 function MOI.get(uf::UniversalFallback,
                  attr::MOI.ObjectiveFunctionType)
-    if isnothing(uf.objective)
+    if uf.objective === nothing
         return MOI.get(uf.model, attr)
     else
         return typeof(uf.objective)
@@ -300,7 +300,7 @@ function MOI.get(uf::UniversalFallback,
 end
 function MOI.get(uf::UniversalFallback,
                  attr::MOI.ObjectiveFunction{F})::F where F
-    if isnothing(uf.objective)
+    if uf.objective === nothing
         return MOI.get(uf.model, attr)
     else
         return uf.objective
@@ -320,7 +320,7 @@ function MOI.set(uf::UniversalFallback,
 end
 
 function MOI.modify(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) where F
-    if isnothing(uf.objective)
+    if uf.objective === nothing
         MOI.modify(uf.model, obj, change)
     else
         uf.objective = modify_function(uf.objective, change)
