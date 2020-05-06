@@ -2,17 +2,18 @@
     UniversalFallback
 
 The `UniversalFallback` can be applied on a [`MathOptInterface.ModelLike`](@ref)
-`model` to create the model `UniversalFallback(model)` supporting *any*
-constraint and attribute. This allows to have a specialized implementation in
-`model` for performance critical constraints and attributes while still
+`model` to create the model `UniversalFallback(model)` supporting *any* objective,
+constraint, and attribute. This allows to have a specialized implementation in
+`model` for performance critical objective/constraints and attributes while still
 supporting other attributes with a small performance penalty. Note that `model`
-is unaware of constraints and attributes stored by `UniversalFallback` so this
+is unaware of objective/constraints and attributes stored by `UniversalFallback` so this
 is not appropriate if `model` is an optimizer (for this reason,
 [`MathOptInterface.optimize!`](@ref) has not been implemented). In that case,
 optimizer bridges should be used instead.
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
+    objective::Union{MOI.AbstractScalarFunction, Nothing}
     constraints::OrderedDict{Tuple{DataType, DataType}, OrderedDict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152 and https://github.com/JuliaOpt/JuMP.jl/issues/2238
     nextconstraintid::Int64
     con_to_name::Dict{CI, String}
@@ -23,6 +24,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
     conattr::Dict{MOI.AbstractConstraintAttribute, Dict{CI, Any}}
     function UniversalFallback{MT}(model::MOI.ModelLike) where {MT}
         new{typeof(model)}(model,
+                           nothing,
                            OrderedDict{Tuple{DataType, DataType}, OrderedDict}(),
                            0,
                            Dict{CI, String}(),
@@ -39,10 +41,11 @@ function Base.show(io::IO, U::UniversalFallback)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
     MOIU.print_with_acronym(io, summary(U))
+    !isnothing(U.objective) && print(io, "\n$(indent)with objective")
     for (attr, name) in (   (U.constraints, "constraint"),
-                            (U.optattr, "optimizer attribute"), 
-                            (U.modattr, "model attribute"), 
-                            (U.varattr, "variable attribute"), 
+                            (U.optattr, "optimizer attribute"),
+                            (U.modattr, "model attribute"),
+                            (U.varattr, "variable attribute"),
                             (U.conattr, "constraint attribute") )
         n = length(attr)
         if n > 0
@@ -54,11 +57,12 @@ function Base.show(io::IO, U::UniversalFallback)
 end
 
 function MOI.is_empty(uf::UniversalFallback)
-    return MOI.is_empty(uf.model) && isempty(uf.constraints) &&
+    return MOI.is_empty(uf.model) && isnothing(uf.objective) && isempty(uf.constraints) &&
         isempty(uf.modattr) && isempty(uf.varattr) && isempty(uf.conattr)
 end
 function MOI.empty!(uf::UniversalFallback)
     MOI.empty!(uf.model)
+    uf.objective = nothing
     empty!(uf.constraints)
     uf.nextconstraintid = 0
     empty!(uf.con_to_name)
@@ -156,6 +160,9 @@ function MOI.delete(uf::UniversalFallback, vi::VI)
     for d in values(uf.varattr)
         delete!(d, vi)
     end
+    if !isnothing(uf.objective)
+        uf.objective = remove_variable(uf.objective, vi)
+    end
     for (_, constraints) in uf.constraints
         _remove_variable(uf, constraints, vi)
     end
@@ -166,6 +173,9 @@ function MOI.delete(uf::UniversalFallback, vis::Vector{VI})
         for vi in vis
             delete!(d, vi)
         end
+    end
+    if !isnothing(uf.objective)
+        uf.objective = remove_variable(uf.objective, vis)
     end
     for (_, constraints) in uf.constraints
         _remove_vector_of_variables(uf, constraints, vis)
@@ -248,6 +258,9 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfOptimizerAttributesS
 end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     list = MOI.get(uf.model, listattr)
+    if !isnothing(uf.objective)
+        push!(list, MOI.ObjectiveFunction{typeof(uf.objective)}())
+    end
     for attr in keys(uf.modattr)
         push!(list, attr)
     end
@@ -266,6 +279,52 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintAttributes
         push!(list, attr)
     end
     return list
+end
+
+# Objective
+MOI.supports(uf::UniversalFallback, ::MOI.ObjectiveSense) = true
+function MOI.set(uf::UniversalFallback, attr::MOI.ObjectiveSense,
+                 sense::MOI.OptimizationSense) where T
+    if sense == MOI.FEASIBILITY_SENSE
+        uf.objective = nothing
+    end
+    MOI.set(uf.model, attr, sense)
+end
+function MOI.get(uf::UniversalFallback,
+                 attr::MOI.ObjectiveFunctionType)
+    if isnothing(uf.objective)
+        return MOI.get(uf.model, attr)
+    else
+        return typeof(uf.objective)
+    end
+end
+function MOI.get(uf::UniversalFallback,
+                 attr::MOI.ObjectiveFunction{F})::F where F
+    if isnothing(uf.objective)
+        return MOI.get(uf.model, attr)
+    else
+        return uf.objective
+    end
+end
+MOI.supports(uf::UniversalFallback, ::MOI.ObjectiveFunction{F}) where F <: MOI.AbstractScalarFunction = true
+function MOI.set(uf::UniversalFallback,
+                 attr::MOI.ObjectiveFunction,
+                 func::MOI.AbstractScalarFunction)
+    if MOI.supports(uf.model, attr)
+        MOI.set(uf.model, attr, func)
+        uf.objective = nothing
+    else
+        uf.objective = copy(func)
+        uf.model.objectiveset = false
+    end
+end
+
+function MOI.modify(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) where F
+    if isnothing(uf.objective)
+        MOI.modify(uf.model, obj, change)
+    else
+        uf.objective = modify_function(uf.objective, change)
+    end
 end
 
 # Name
@@ -429,9 +488,6 @@ function MOI.set(uf::UniversalFallback, ::MOI.ConstraintSet, ci::CI{F,S}, set::S
         uf.constraints[(F, S)][ci] = (f, set)
     end
 end
-
-# Objective
-MOI.modify(uf::UniversalFallback, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification) = MOI.modify(uf.model, obj, change)
 
 # Variables
 MOI.add_variable(uf::UniversalFallback) = MOI.add_variable(uf.model)
