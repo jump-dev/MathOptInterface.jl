@@ -258,7 +258,7 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfOptimizerAttributesS
 end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     list = MOI.get(uf.model, listattr)
-    if !uf.objective === nothing
+    if !(uf.objective === nothing)
         push!(list, MOI.ObjectiveFunction{typeof(uf.objective)}())
     end
     for attr in keys(uf.modattr)
