@@ -2,11 +2,11 @@
     UniversalFallback
 
 The `UniversalFallback` can be applied on a [`MathOptInterface.ModelLike`](@ref)
-`model` to create the model `UniversalFallback(model)` supporting *any* objective,
-constraint, and attribute. This allows to have a specialized implementation in
-`model` for performance critical objective/constraints and attributes while still
+`model` to create the model `UniversalFallback(model)` supporting *any*
+constraint and attribute. This allows to have a specialized implementation in
+`model` for performance critical constraints and attributes while still
 supporting other attributes with a small performance penalty. Note that `model`
-is unaware of objective/constraints and attributes stored by `UniversalFallback` so this
+is unaware of constraints and attributes stored by `UniversalFallback` so this
 is not appropriate if `model` is an optimizer (for this reason,
 [`MathOptInterface.optimize!`](@ref) has not been implemented). In that case,
 optimizer bridges should be used instead.
@@ -160,7 +160,7 @@ function MOI.delete(uf::UniversalFallback, vi::VI)
     for d in values(uf.varattr)
         delete!(d, vi)
     end
-    if !(uf.objective === nothing)
+    if uf.objective !== nothing
         uf.objective = remove_variable(uf.objective, vi)
     end
     for (_, constraints) in uf.constraints
@@ -174,7 +174,7 @@ function MOI.delete(uf::UniversalFallback, vis::Vector{VI})
             delete!(d, vi)
         end
     end
-    if !(uf.objective === nothing)
+    if uf.objective !== nothing
         uf.objective = remove_variable(uf.objective, vis)
     end
     for (_, constraints) in uf.constraints
@@ -258,7 +258,7 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfOptimizerAttributesS
 end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     list = MOI.get(uf.model, listattr)
-    if !(uf.objective === nothing)
+    if uf.objective !== nothing
         push!(list, MOI.ObjectiveFunction{typeof(uf.objective)}())
     end
     for attr in keys(uf.modattr)
@@ -282,7 +282,6 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintAttributes
 end
 
 # Objective
-MOI.supports(uf::UniversalFallback, ::MOI.ObjectiveSense) = true
 function MOI.set(uf::UniversalFallback, attr::MOI.ObjectiveSense,
                  sense::MOI.OptimizationSense) where T
     if sense == MOI.FEASIBILITY_SENSE
@@ -306,16 +305,19 @@ function MOI.get(uf::UniversalFallback,
         return uf.objective
     end
 end
-MOI.supports(uf::UniversalFallback, ::MOI.ObjectiveFunction{F}) where F <: MOI.AbstractScalarFunction = true
 function MOI.set(uf::UniversalFallback,
                  attr::MOI.ObjectiveFunction,
                  func::MOI.AbstractScalarFunction)
     if MOI.supports(uf.model, attr)
         MOI.set(uf.model, attr, func)
+        # Clear any fallback objective
         uf.objective = nothing
     else
         uf.objective = copy(func)
-        uf.model.objectiveset = false
+        # Clear any `model` objective
+        sense = MOI.get(uf.model, MOI.ObjectiveSense())
+        MOI.set(uf.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+        MOI.set(uf.model, MOI.ObjectiveSense(), sense)
     end
 end
 
