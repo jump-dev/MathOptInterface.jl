@@ -179,6 +179,7 @@ compute_conflict!
 ConflictStatus
 ConflictStatusCode
 ConstraintConflictStatus
+ConflictParticipationStatusCode
 ```
 
 ### Result Status
