@@ -1288,10 +1288,7 @@ solver is written in Julia, for example). The guideline for naming the file
 containing the MOI wrapper is `src/MOI_wrapper.jl` and `test/MOI_wrapper.jl` for
 the tests. If the MOI wrapper implementation is spread in several files, they
 should be stored in a `src/MOI_wrapper` folder and included by a
-`src/MOI_wrapper/MOI_wrapper.jl` file. In some cases it may be more appropriate
-to host the MOI wrapper in its own package; in this case it is recommended that
-the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver
-name.
+`src/MOI_wrapper/MOI_wrapper.jl` file.
 
 By convention, optimizers should not be exported and should be named
 `PackageName.Optimizer`. For example, `CPLEX.Optimizer`, `Gurobi.Optimizer`, and
