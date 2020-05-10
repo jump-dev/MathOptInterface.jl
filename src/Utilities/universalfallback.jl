@@ -3,7 +3,7 @@
 
 The `UniversalFallback` can be applied on a [`MathOptInterface.ModelLike`](@ref)
 `model` to create the model `UniversalFallback(model)` supporting *any*
-constaint and attribute. This allows to have a specialized implementation in
+constraint and attribute. This allows to have a specialized implementation in
 `model` for performance critical constraints and attributes while still
 supporting other attributes with a small performance penalty. Note that `model`
 is unaware of constraints and attributes stored by `UniversalFallback` so this
@@ -13,7 +13,7 @@ optimizer bridges should be used instead.
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
-    constraints::Dict{Tuple{DataType, DataType}, Dict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152
+    constraints::OrderedDict{Tuple{DataType, DataType}, Dict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152 and https://github.com/JuliaOpt/JuMP.jl/issues/2238
     nextconstraintid::Int64
     con_to_name::Dict{CI, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
@@ -23,7 +23,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
     conattr::Dict{MOI.AbstractConstraintAttribute, Dict{CI, Any}}
     function UniversalFallback{MT}(model::MOI.ModelLike) where {MT}
         new{typeof(model)}(model,
-                           Dict{Tuple{DataType, DataType}, Dict}(),
+                           OrderedDict{Tuple{DataType, DataType}, Dict}(),
                            0,
                            Dict{CI, String}(),
                            nothing,
