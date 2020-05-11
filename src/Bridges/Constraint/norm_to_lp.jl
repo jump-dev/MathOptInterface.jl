@@ -88,7 +88,7 @@ function bridge_constraint(::Type{NormOneBridge{T, F, G}}, model::MOI.ModelLike,
     return NormOneBridge{T, F, G}(y, nn_index)
 end
 
-MOI.supports_constraint(::Type{<:NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = true
+MOI.supports_constraint(::Type{NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormOneBridge}) = Tuple{DataType}[]
 MOIB.added_constraint_types(::Type{<:NormOneBridge{T, F}}) where {T, F} = [(F, MOI.Nonnegatives)]
 function concrete_bridge_type(::Type{<:NormOneBridge{T}}, G::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T
