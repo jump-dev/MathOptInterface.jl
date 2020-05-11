@@ -169,6 +169,19 @@ The value of the attribute is of type `TerminationStatusCode`.
 TerminationStatusCode
 ```
 
+### Conflict Status
+
+The `ConflictStatus` attribute indicates why the conflict finder stopped executing.
+The value of the attribute is of type `ConflictStatusCode`.
+
+```@docs
+compute_conflict!
+ConflictStatus
+ConflictStatusCode
+ConstraintConflictStatus
+ConflictParticipationStatusCode
+```
+
 ### Result Status
 
 The `PrimalStatus` and `DualStatus` attributes indicate how to interpret the result returned by the solver.
