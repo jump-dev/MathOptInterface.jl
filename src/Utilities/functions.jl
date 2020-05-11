@@ -364,15 +364,27 @@ function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
 end
 
 """
-    is_canonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
-                         VectorAffineFunction, VectorQuadraticTerm})
+    is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function is_canonical(f::Union{SAF, VAF, SQF, VQF})
+function is_canonical(f::Union{SAF, VAF})
     is_strictly_sorted(f.terms, MOI.term_indices,
                        t -> !iszero(MOI.coefficient(t)))
+end
+
+"""
+    is_canonical(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
+
+Returns a Bool indicating whether the function is in canonical form.
+See [`canonical`](@ref).
+"""
+function is_canonical(f::Union{SQF, VQF})
+    v = is_strictly_sorted(f.affine_terms, MOI.term_indices,
+                           t -> !iszero(MOI.coefficient(t)))
+    v &= is_strictly_sorted(f.quadratic_terms, MOI.term_indices,
+                            t -> !iszero(MOI.coefficient(t)))
 end
 
 """
