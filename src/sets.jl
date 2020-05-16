@@ -1053,21 +1053,6 @@ end
 
 dimension(set::Complements) = 2 * set.dimension
 
-# warning, only works for classical Complementarity constraints:
-# 0 <= x_i ⟂ F_i(x) >= 0
-function distance_to_set(d::DefaultDistance, v, s::Complements)
-    _check_dimension(v, s)
-    non_positives_var = [distance_to_set(d, v[i], GreaterThan(0.0)) for i in 1:s.dimension]
-    non_positives_func = [distance_to_set(d, v[s.dimension + i], GreaterThan(0.0)) for i in 1:s.dimension]
-    comp_distance = [
-        min(distance_to_set(d, v[i], EqualTo(0.0)), distance_to_set(d, v[i + s.dimension], EqualTo(0.0)))
-        for i in 1:s.dimension
-    ]
-    return LinearAlgebra.norm2(
-        comp_distance .+ non_positives_func .+ non_positives_var
-    )
-end
-
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{

@@ -109,24 +109,7 @@ import LinearAlgebra
                 @test MOI.distance_to_set(MOI.DefaultDistance(), [u, v, 1 + u^e * v^(1-e) / (e^e * (1-e)^(1-e))], MOI.DualPowerCone(e)) ≈ 1
             end
         end
-    end
-
-    @testset "Complements $n" for n in 2:10
-        xs = rand(n)
-        fs = rand(n)
-        vals_wrong = vcat(xs, fs)
-        @test MOI.distance_to_set(MOI.DefaultDistance(), vals_wrong, MOI.Complements(n)) > 0
-        xs .*= 0
-        vals_trivial_x = vcat(xs, fs)
-        @test MOI.distance_to_set(MOI.DefaultDistance(), vals_trivial_x, MOI.Complements(n)) ≈ 0
-        xs = fs
-        fs .*= 0
-        vals_trivial_f = vcat(xs, fs)
-        @test MOI.distance_to_set(MOI.DefaultDistance(), vals_trivial_f, MOI.Complements(n)) ≈ 0
-        vals_trivial_f[1] = -1
-        @test MOI.distance_to_set(MOI.DefaultDistance(), vals_trivial_f, MOI.Complements(n)) > 0
-    end
-    
+    end    
 end
 
 struct DummyDistance <: MOI.AbstractDistance end
