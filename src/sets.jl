@@ -82,14 +82,30 @@ function dual_set_type end
 
 dual_set_type(S::Type{<:AbstractSet}) = error("Dual type of $S is not implemented.")
 
+
 """
-    distance_to_set(v, s)
+    DistanceFunction
+
+Distance function used to evaluate the distance from a point to a set.
+"""
+abstract type DistanceFunction end
+
+"""
+    DefaultDistance
+
+Default distance function, uses the Euclidean distance.
+"""
+struct DefaultDistance <: DistanceFunction end
+
+"""
+    distance_to_set(distance_definition, v, s)
 
 Compute the distance of a value to a set.
 For some vector-valued sets, can return a vector of distances.
 When `v ∈ s`, the distance is zero (or all individual distances are zero).
 
-Each set `S` implements `distance_to_set(v::T, s::S)` with `T` of appropriate type.
+Each set `S` implements `distance_to_set(d::DistanceFunction, v::T, s::S)`
+with `T` of appropriate type for members of the set.
 """
 function distance_to_set end
 
@@ -130,7 +146,7 @@ end
 dual_set(s::Reals) = Zeros(dimension(s))
 dual_set_type(::Type{Reals}) = Zeros
 
-function distance_to_set(v::AbstractVector{T}, s::Reals) where {T <: Real}
+function distance_to_set(::DefaultDistance, v::AbstractVector{T}, s::Reals) where {T <: Real}
     _check_dimension(v, s)
     return zero(T)
 end
@@ -147,7 +163,7 @@ end
 dual_set(s::Zeros) = Reals(dimension(s))
 dual_set_type(::Type{Zeros}) = Reals
 
-function distance_to_set(v::AbstractVector{<:Real}, s::Zeros)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::Zeros)
     _check_dimension(v, s)
     return LinearAlgebra.norm2(v)
 end
@@ -164,7 +180,7 @@ end
 dual_set(s::Nonnegatives) = copy(s)
 dual_set_type(::Type{Nonnegatives}) = Nonnegatives
 
-function distance_to_set(v::AbstractVector{<:Real}, s::Nonnegatives)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::Nonnegatives)
     _check_dimension(v, s)
     return LinearAlgebra.norm2(ifelse(vi < 0, -vi, zero(vi)) for vi in v)
 end
@@ -181,7 +197,7 @@ end
 dual_set(s::Nonpositives) = copy(s)
 dual_set_type(::Type{Nonpositives}) = Nonpositives
 
-function distance_to_set(v::AbstractVector{<:Real}, s::Nonpositives)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::Nonpositives)
     _check_dimension(v, s)
     return LinearAlgebra.norm2(ifelse(vi > 0, vi, zero(vi)) for vi in v)
 end
@@ -217,9 +233,9 @@ function Base.:(==)(set1::S, set2::S) where S <: Union{GreaterThan, LessThan, Eq
     return constant(set1) == constant(set2)
 end
 
-distance_to_set(v::Real, s::LessThan) = max(v - s.upper, zero(v))
-distance_to_set(v::Real, s::GreaterThan) = max(s.lower - v, zero(v))
-distance_to_set(v::Real, s::EqualTo) = abs(v - s.value)
+distance_to_set(::DefaultDistance, v::Real, s::LessThan) = max(v - s.upper, zero(v))
+distance_to_set(::DefaultDistance, v::Real, s::GreaterThan) = max(s.lower - v, zero(v))
+distance_to_set(::DefaultDistance, v::Real, s::EqualTo) = abs(v - s.value)
 
 """
     Interval{T <: Real}(lower::T,upper::T)
@@ -248,7 +264,7 @@ Interval(s::LessThan{<:AbstractFloat}) = Interval(typemin(s.upper), s.upper)
 Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
 Interval(s::Interval) = s
 
-distance_to_set(v::T, s::Interval) where {T <: Real} = max(s.lower - v, v - s.upper, zero(T))
+distance_to_set(::DefaultDistance, v::T, s::Interval) where {T <: Real} = max(s.lower - v, v - s.upper, zero(T))
 
 """
     constant(s::Union{EqualTo, GreaterThan, LessThan})
@@ -271,7 +287,7 @@ end
 dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
 dual_set_type(::Type{NormInfinityCone}) = NormOneCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::NormInfinityCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::NormInfinityCone)
     _check_dimension(v, s)
     t = v[1]
     xs = v[2:end]
@@ -291,7 +307,7 @@ end
 dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
 dual_set_type(::Type{NormOneCone}) = NormInfinityCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::NormOneCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::NormOneCone)
     _check_dimension(v, s)
     t = v[1]
     xs = v[2:end]
@@ -311,7 +327,7 @@ end
 dual_set(s::SecondOrderCone) = copy(s)
 dual_set_type(::Type{SecondOrderCone}) = SecondOrderCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::SecondOrderCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::SecondOrderCone)
     _check_dimension(v, s)
     t = v[1]
     xs = v[2:end]
@@ -331,7 +347,7 @@ end
 dual_set(s::RotatedSecondOrderCone) = copy(s)
 dual_set_type(::Type{RotatedSecondOrderCone}) = RotatedSecondOrderCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::RotatedSecondOrderCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::RotatedSecondOrderCone)
     _check_dimension(v, s)
     t = v[1]
     u = v[2]
@@ -355,7 +371,7 @@ struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
 end
 
-function distance_to_set(v::AbstractVector{<:Real}, s::GeometricMeanCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::GeometricMeanCone)
     _check_dimension(v, s)
     t = v[1]
     xs = v[2:end]
@@ -381,7 +397,7 @@ struct ExponentialCone <: AbstractVectorSet end
 dual_set(s::ExponentialCone) = DualExponentialCone()
 dual_set_type(::Type{ExponentialCone}) = DualExponentialCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::ExponentialCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::ExponentialCone)
     _check_dimension(v, s)
     x = v[1]
     y = v[2]
@@ -402,7 +418,7 @@ struct DualExponentialCone <: AbstractVectorSet end
 dual_set(s::DualExponentialCone) = ExponentialCone()
 dual_set_type(::Type{DualExponentialCone}) = ExponentialCone
 
-function distance_to_set(vs::AbstractVector{<:Real}, s::DualExponentialCone)
+function distance_to_set(::DefaultDistance, vs::AbstractVector{<:Real}, s::DualExponentialCone)
     _check_dimension(vs, s)
     u = vs[1]
     v = vs[2]
@@ -425,7 +441,7 @@ end
 dual_set(s::PowerCone{T}) where T <: Real = DualPowerCone{T}(s.exponent)
 dual_set_type(::Type{PowerCone{T}}) where T <: Real = DualPowerCone{T}
 
-function distance_to_set(v::AbstractVector{<:Real}, s::PowerCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::PowerCone)
     _check_dimension(v, s)
     x = v[1]
     y = v[2]
@@ -455,7 +471,7 @@ end
 dual_set(s::DualPowerCone{T}) where T <: Real = PowerCone{T}(s.exponent)
 dual_set_type(::Type{DualPowerCone{T}}) where T <: Real = PowerCone{T}
 
-function distance_to_set(vs::AbstractVector{<:Real}, s::DualPowerCone)
+function distance_to_set(::DefaultDistance, vs::AbstractVector{<:Real}, s::DualPowerCone)
     _check_dimension(vs, s)
     u = vs[1]
     v = vs[2]
@@ -489,7 +505,7 @@ struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
 end
 
-function distance_to_set(v::AbstractVector{<:Real}, set::RelativeEntropyCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, set::RelativeEntropyCone)
     _check_dimension(v, s)
     n = (dimension(set)-1) ÷ 2
     u = v[1]
@@ -517,7 +533,7 @@ end
 dual_set(s::NormSpectralCone) = NormNuclearCone(s.row_dim, s.column_dim)
 dual_set_type(::Type{NormSpectralCone}) = NormNuclearCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::NormSpectralCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::NormSpectralCone)
     _check_dimension(v, s)
     t = v[1]
     m = reshape(v[2:end], (s.row_dim, s.column_dim))
@@ -540,7 +556,7 @@ end
 dual_set(s::NormNuclearCone) = NormSpectralCone(s.row_dim, s.column_dim)
 dual_set_type(::Type{NormNuclearCone}) = NormSpectralCone
 
-function distance_to_set(v::AbstractVector{<:Real}, s::NormNuclearCone)
+function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::NormNuclearCone)
     _check_dimension(v, s)
     t = v[1]
     m = reshape(v[2:end], (s.row_dim, s.column_dim))
@@ -832,11 +848,11 @@ The set ``\\{ 0, 1 \\}``.
 """
 struct ZeroOne <: AbstractScalarSet end
 
-function distance_to_set(v::T, ::ZeroOne) where {T <: Real}
+function distance_to_set(::DefaultDistance, v::T, ::ZeroOne) where {T <: Real}
     return min(abs(v - zero(T)), abs(v - one(T)))
 end
 
-function distance_to_set(v::Real, ::Integer)
+function distance_to_set(::DefaultDistance, v::Real, ::Integer)
     return min(abs(v - floor(v)), abs(v - ceil(v)))
 end
 
@@ -878,7 +894,7 @@ struct SOS1{T <: Real} <: AbstractVectorSet
 end
 
 # return the element-wise distance to zero, with the greatest element to 0
-function distance_to_set(v::AbstractVector{T}, ::SOS1) where {T <: Real}
+function distance_to_set(::DefaultDistance, v::AbstractVector{T}, ::SOS1) where {T <: Real}
     _check_dimension(v, s)
     d = distance_to_set(v, Zeros(length(v)))
     m = maximum(d)
@@ -960,7 +976,7 @@ end
 dimension(::IndicatorSet) = 2
 
 # takes in input [z, f(x)]
-function distance_to_set(v::AbstractVector{T}, s::IndicatorSet{A}) where {A, T <: Real}
+function distance_to_set(d::DefaultDistance, v::AbstractVector{T}, s::IndicatorSet{A}) where {A, T <: Real}
     _check_dimension(v, s)
     z = v[1]
     # inactive constraint
@@ -968,7 +984,7 @@ function distance_to_set(v::AbstractVector{T}, s::IndicatorSet{A}) where {A, T <
         return zeros(T, 2)
     end
     return LinearAlgebra.norm2(
-        (distance_to_set(z, ZeroOne()), distance_to_set(v[2], s.set))
+        (distance_to_set(d, z, ZeroOne()), distance_to_set(v[2], s.set))
     )
 end
 
@@ -1069,6 +1085,7 @@ gives the `n-1`-dimensional nonnegative orthant. However
 function supports_dimension_update(::Type{<:AbstractVectorSet})
     return false
 end
+
 function supports_dimension_update(::Type{<:Union{
     Reals, Zeros, Nonnegatives, Nonpositives}})
     return true
