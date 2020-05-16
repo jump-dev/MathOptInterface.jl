@@ -205,6 +205,28 @@ end
     @test_throws Exception MOI.get(uf, MOI.ConstraintIndex, "a name")
 end
 
+@testset "Deterministic constraint ordering" begin
+    F = MOI.ScalarAffineFunction{Float64}
+    _affine(vi) = convert(F, MOI.SingleVariable(vi))
+    set1 = MOI.EqualTo(1.0)
+    set2 = MOI.GreaterThan(1.0)
+    for sets in [[set1, set2], [set2, set1]]
+        model = ModelForUniversalFallback{Float64}()
+        uf = MOIU.UniversalFallback(model)
+        x = MOI.add_variable(uf)
+        y = MOI.add_variable(uf)
+        cx1 = MOI.add_constraint(uf, _affine(x), sets[1])
+        cx2 = MOI.add_constraint(uf, _affine(x), sets[2])
+        cy1 = MOI.add_constraint(uf, _affine(y), sets[1])
+        cy2 = MOI.add_constraint(uf, _affine(y), sets[2])
+        # check that the constraint types are in the order they were added in
+        @test MOI.get(uf, MOI.ListOfConstraints()) == [(F, typeof(sets[1])), (F, typeof(sets[2]))]
+        # check that the constraints given the constraint type are in the order they were added in 
+        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[1])}()) == [MOI.ConstraintIndex{F, typeof(sets[1])}(1), MOI.ConstraintIndex{F, typeof(sets[1])}(3)]
+        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[2])}()) == [MOI.ConstraintIndex{F, typeof(sets[2])}(2), MOI.ConstraintIndex{F, typeof(sets[2])}(4)]
+    end
+end
+
 @testset "Delete" begin
     model = ModelForUniversalFallback{Float64}()
     uf = MOIU.UniversalFallback(model)

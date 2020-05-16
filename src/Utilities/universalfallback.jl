@@ -3,7 +3,7 @@
 
 The `UniversalFallback` can be applied on a [`MathOptInterface.ModelLike`](@ref)
 `model` to create the model `UniversalFallback(model)` supporting *any*
-constaint and attribute. This allows to have a specialized implementation in
+constraint and attribute. This allows to have a specialized implementation in
 `model` for performance critical constraints and attributes while still
 supporting other attributes with a small performance penalty. Note that `model`
 is unaware of constraints and attributes stored by `UniversalFallback` so this
@@ -13,7 +13,7 @@ optimizer bridges should be used instead.
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
-    constraints::Dict{Tuple{DataType, DataType}, Dict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152
+    constraints::OrderedDict{Tuple{DataType, DataType}, OrderedDict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152 and https://github.com/JuliaOpt/JuMP.jl/issues/2238
     nextconstraintid::Int64
     con_to_name::Dict{CI, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
@@ -23,7 +23,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
     conattr::Dict{MOI.AbstractConstraintAttribute, Dict{CI, Any}}
     function UniversalFallback{MT}(model::MOI.ModelLike) where {MT}
         new{typeof(model)}(model,
-                           Dict{Tuple{DataType, DataType}, Dict}(),
+                           OrderedDict{Tuple{DataType, DataType}, OrderedDict}(),
                            0,
                            Dict{CI, String}(),
                            nothing,
@@ -99,7 +99,7 @@ function MOI.delete(uf::UniversalFallback, ci::CI{F, S}) where {F, S}
     end
 end
 function _remove_variable(uf::UniversalFallback,
-                          constraints::Dict{<:CI{MOI.SingleVariable}}, vi::VI)
+                          constraints::OrderedDict{<:CI{MOI.SingleVariable}}, vi::VI)
     to_delete = keytype(constraints)[]
     for (ci, constraint) in constraints
         f::MOI.SingleVariable = constraint[1]
@@ -110,7 +110,7 @@ function _remove_variable(uf::UniversalFallback,
     MOI.delete(uf, to_delete)
 end
 function _remove_variable(uf::UniversalFallback,
-                          constraints::Dict{CI{MOI.VectorOfVariables, S}},
+                          constraints::OrderedDict{CI{MOI.VectorOfVariables, S}},
                           vi::VI) where S
     to_delete = keytype(constraints)[]
     for (ci, constraint) in constraints
@@ -129,14 +129,14 @@ function _remove_variable(uf::UniversalFallback,
     end
     MOI.delete(uf, to_delete)
 end
-function _remove_variable(::UniversalFallback, constraints::Dict{<:CI}, vi::VI)
+function _remove_variable(::UniversalFallback, constraints::OrderedDict{<:CI}, vi::VI)
     for (ci, constraint) in constraints
         f, s = constraint
         constraints[ci] = remove_variable(f, s, vi)
     end
 end
 function _remove_vector_of_variables(
-    uf::UniversalFallback, constraints::Dict{<:CI{MOI.VectorOfVariables}},
+    uf::UniversalFallback, constraints::OrderedDict{<:CI{MOI.VectorOfVariables}},
     vis::Vector{VI}
 )
     to_delete = keytype(constraints)[]
@@ -149,7 +149,7 @@ function _remove_vector_of_variables(
     MOI.delete(uf, to_delete)
 end
 function _remove_vector_of_variables(
-    ::UniversalFallback, ::Dict{<:CI}, ::Vector{VI})
+    ::UniversalFallback, ::OrderedDict{<:CI}, ::Vector{VI})
 end
 function MOI.delete(uf::UniversalFallback, vi::VI)
     MOI.delete(uf.model, vi)
@@ -219,7 +219,7 @@ function MOI.get(uf::UniversalFallback,
     if MOI.supports_constraint(uf.model, F, S)
         return MOI.get(uf.model, attr)
     else
-        return length(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}()))
+        return length(get(uf.constraints, (F, S), OrderedDict{CI{F, S}, Tuple{F, S}}()))
     end
 end
 function MOI.get(uf::UniversalFallback,
@@ -227,7 +227,7 @@ function MOI.get(uf::UniversalFallback,
     if MOI.supports_constraint(uf.model, F, S)
         MOI.get(uf.model, listattr)
     else
-        collect(keys(get(uf.constraints, (F, S), Dict{CI{F, S}, Tuple{F, S}}())))
+        collect(keys(get(uf.constraints, (F, S), OrderedDict{CI{F, S}, Tuple{F, S}}())))
     end
 end
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraints)
@@ -376,8 +376,8 @@ function MOI.add_constraint(uf::UniversalFallback, f::MOI.AbstractFunction, s::M
         return MOI.add_constraint(uf.model, f, s)
     else
         constraints = get!(uf.constraints, (F, S)) do
-            Dict{CI{F, S}, Tuple{F, S}}()
-        end::Dict{CI{F, S}, Tuple{F, S}}
+            OrderedDict{CI{F, S}, Tuple{F, S}}()
+        end::OrderedDict{CI{F, S}, Tuple{F, S}}
         ci = _new_constraint_index(uf, f, s)
         constraints[ci] = (f, s)
         return ci

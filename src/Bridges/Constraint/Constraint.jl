@@ -62,6 +62,8 @@ const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}
 include("indicator_activate_on_zero.jl")
 include("indicator_sos.jl")
 const IndicatortoSOS1{T, BC <: MOI.AbstractScalarSet, MaybeBC} = SingleBridgeOptimizer{IndicatorSOS1Bridge{T, BC, MaybeBC}}
+include("semi_to_binary.jl")
+const SemiToBinary{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SemiToBinaryBridge{T}, OT}
 
 """
     add_all_bridges(bridged_model, ::Type{T})
@@ -98,6 +100,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
     MOIB.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
     MOIB.add_bridge(bridged_model, IndicatorSOS1Bridge{T})
+    MOIB.add_bridge(bridged_model, SemiToBinaryBridge{T})
     return
 end
 
