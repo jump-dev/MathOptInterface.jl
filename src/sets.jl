@@ -2,7 +2,6 @@
 
 # Note: When adding a new set, also add it to Utilities.Model.
 import LinearAlgebra
-using LinearAlgebra: dot
 
 """
     AbstractSet
@@ -103,13 +102,14 @@ struct DefaultDistance <: AbstractDistance end
     distance_to_set(distance_definition, v, s)
 
 Compute the distance of a value to a set.
-For some vector-valued sets, can return a vector of distances.
 When `v ∈ s`, the distance is zero (or all individual distances are zero).
 
 Each set `S` implements at least `distance_to_set(d::DefaultDistance, v::T, s::S)`
 with `T` of appropriate type for members of the set.
 """
 function distance_to_set end
+
+distance_to_set(::AbstractDistance, v, s) = distance_to_set(DefaultDistance(), v, s)
 
 function _check_dimension(v::AbstractVector, s)
     length(v) != dimension(s) && throw(DimensionMismatch("Mismatch between value and set"))
@@ -334,7 +334,7 @@ function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::Second
     t = v[1]
     xs = v[2:end]
     result = LinearAlgebra.norm2(xs) - t
-    return max(result, zero(result)) # avoids sqrt
+    return max(result, zero(result))
 end
 
 """
@@ -355,7 +355,7 @@ function distance_to_set(::DefaultDistance, v::AbstractVector{<:Real}, s::Rotate
     u = v[2]
     xs = v[3:end]
     return LinearAlgebra.norm2(
-        (max(-t, zero(t)), max(-u, zero(u)), max(dot(xs,xs) - 2 * t * u))
+        (max(-t, zero(t)), max(-u, zero(u)), max(LinearAlgebra.dot(xs,xs) - 2 * t * u))
     )
 end
 
@@ -898,18 +898,8 @@ end
 # return the element-wise distance to zero, with the greatest element to 0
 function distance_to_set(::DefaultDistance, v::AbstractVector{T}, ::SOS1) where {T <: Real}
     _check_dimension(v, s)
-    d = distance_to_set(v, Zeros(length(v)))
-    m = maximum(d)
-    if m ≈ zero(T)
-        return d
-    end
-    # removing greatest distance
-    for i in eachindex(d)
-        @inbounds if d[i] == m
-            d[i] = zero(T)
-            return d
-        end
-    end
+    _, i = findmax(abs.(v))
+    return LinearAlgebra.norm2([v[j] for j = eachindex(v) if j != i])
 end
 
 """
