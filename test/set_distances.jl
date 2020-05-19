@@ -53,7 +53,7 @@ import LinearAlgebra
         vko_roc = vcat(t_ko_rot, u_ko_rot, x)
         @test MOI.distance_to_set(MOI.DefaultDistance(), vko_roc, MOI.RotatedSecondOrderCone(n+2)) ≈ LinearAlgebra.dot(x,x) / 2
         vok_roc = vcat(t_ko_rot * 2, u_ko_rot, x)
-        @test MOI.distance_to_set(MOI.DefaultDistance(), vok_roc, MOI.RotatedSecondOrderCone(n+2)) ≈ 0 atol=5eps(Float64)
+        @test MOI.distance_to_set(MOI.DefaultDistance(), vok_roc, MOI.RotatedSecondOrderCone(n+2)) ≈ 0 atol=10eps(Float64)
     end
 
     @testset "Geometric Mean cone dimension $n" for n in 2:5:15
