@@ -923,20 +923,14 @@ Possible values are:
 * `COMPUTE_CONFLICT_FAILED`: the function [`compute_conflict!`](@ref) has been
   called and failed to completely execute. In particular, it could not decide
   whether a conflict exists or not
-* `NO_CONFLICT_EXISTS`: there is no conflict because the problem is feasible
-* `NO_CONFLICT_FOUND`: the solver could not find a conflict, but did not ensure
-  the problem is feasible
+* `NO_CONFLICT_FOUND`: there is no conflict, maybe because the problem is feasible
 * `CONFLICT_FOUND`: at least one conflict could be found
-* `MINIMUM_CONFLICT_FOUND`: at least one conflict could be found and the solver
-  was able to prove this conflict is minimal
 """
 @enum ConflictStatusCode begin
     COMPUTE_CONFLICT_NOT_CALLED
     COMPUTE_CONFLICT_FAILED
-    NO_CONFLICT_EXISTS
     NO_CONFLICT_FOUND
     CONFLICT_FOUND
-    MINIMUM_CONFLICT_FOUND
 end
 
 """
