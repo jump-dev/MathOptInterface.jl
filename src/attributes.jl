@@ -920,15 +920,14 @@ most recent call to [`compute_conflict!`](@ref).
 Possible values are:
 * `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
   not yet been called
-* `COMPUTE_CONFLICT_FAILED`: the function [`compute_conflict!`](@ref) has been
-  called and failed to completely execute. In particular, it could not decide
-  whether a conflict exists or not
-* `NO_CONFLICT_FOUND`: there is no conflict, maybe because the problem is feasible
+* `NO_CONFLICT_FOUND`: there is no conflict available. There may be several
+  reasons for this: the function [`compute_conflict!`](@ref) has finished
+  and decided that the problem is feasible, the function has failed to 
+  completely execute
 * `CONFLICT_FOUND`: at least one conflict could be found
 """
 @enum ConflictStatusCode begin
     COMPUTE_CONFLICT_NOT_CALLED
-    COMPUTE_CONFLICT_FAILED
     NO_CONFLICT_FOUND
     CONFLICT_FOUND
 end
