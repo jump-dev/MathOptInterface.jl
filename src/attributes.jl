@@ -922,10 +922,9 @@ Possible values are:
   not yet been called
 * `NO_CONFLICT_EXISTS`: there is no conflict available, because the solver could 
   prove that the problem is feasible (i.e. there are no conflicts)
-* `NO_CONFLICT_FOUND`: there is no conflict available. There may be several
-  reasons for this: the function [`compute_conflict!`](@ref) has finished
-  and decided that the problem is feasible, the function has failed to 
-  completely execute (e.g., because it met a time limit)
+* `NO_CONFLICT_FOUND`: there is no conflict available, because the function 
+  [`compute_conflict!`](@ref) has failed to completely execute (e.g., because it 
+  met a time limit)
 * `CONFLICT_FOUND`: at least one conflict could be found
 """
 @enum ConflictStatusCode begin
