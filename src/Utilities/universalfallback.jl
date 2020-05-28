@@ -268,6 +268,25 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraintAttributes
     return list
 end
 
+
+# Bridging cost default values
+function MOI.get(uf::UniversalFallback,
+    attr::MOI.VariableBridgingCost{S}) where {S<:MOI.AbstractScalarSet}
+    if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
+        MOI.get(uf.model, attr)
+    else
+        _get(uf, attr)
+    end
+end
+function MOI.get(uf::UniversalFallback,
+    attr::MOI.VariableBridgingCost{S}) where {S<:MOI.AbstractVectorSet}
+    if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
+        MOI.get(uf.model, attr)
+    else
+        _get(uf, attr)
+    end
+end
+
 # Name
 # The names of constraints not supported by `uf.model` need to be handled
 function MOI.set(uf::UniversalFallback, attr::MOI.ConstraintName, ci::CI{F, S}, name::String) where {F, S}

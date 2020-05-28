@@ -240,6 +240,20 @@ function MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
         return xor_indices(MOI.get(mock.inner_model, attr))
     end
 end
+function MOI.get(mock::MockOptimizer, attr::MOI.VariableBridgingCost{S})  where {S<:MOI.AbstractVectorSet}
+    if MOI.is_set_by_optimize(attr)
+        return mock.model_attributes[attr]
+    else
+        return xor_indices(MOI.get(mock.inner_model, attr))
+    end
+end
+function MOI.get(mock::MockOptimizer, attr::MOI.VariableBridgingCost{S})  where {S<:MOI.AbstractScalarSet}
+    if MOI.is_set_by_optimize(attr)
+        return mock.model_attributes[attr]
+    else
+        return xor_indices(MOI.get(mock.inner_model, attr))
+    end
+end
 
 #####
 ##### Names

@@ -63,7 +63,7 @@ lower bound on the same variable. Moreover, if the user adds a
 bridged into a supported constraint.
 """
 function supports_add_constrained_variable(model::ModelLike,
-                                       S::Type{<:AbstractScalarSet})
+                                       S::Type{<:AbstractSet})
     return supports_add_constrained_variables(model, Reals) &&
         supports_constraint(model, SingleVariable, S)
 end

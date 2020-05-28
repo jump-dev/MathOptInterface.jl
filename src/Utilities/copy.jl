@@ -318,14 +318,17 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
             for S in single_variable_types
         ]
     else
-        vector_of_variables_not_added = [
-            copy_vector_of_variables(dest, src, idxmap, S)
-            for S in vector_of_variables_types
-        ]
-        single_variable_not_added = [
-            copy_single_variable(dest, src, idxmap, S)
-            for S in single_variable_types
-        ]
+        sorted_permutation = sortperm(constraint_types; by=((F, S),) -> (MOI.get(dest, MOI.VariableBridgingCost{S}()), F == MOI.SingleVariable))
+        vector_of_variables_not_added = Vector{Array{MOI.ConstraintIndex{MOI.VectorOfVariables, <:MOI.AbstractVectorSet}}}()
+        single_variable_not_added = Vector{Array{MOI.ConstraintIndex{MOI.SingleVariable, <:MOI.AbstractScalarSet}}}()
+        for i in sorted_permutation
+            F, S = constraint_types[i]
+            if F == MOI.VectorOfVariables
+                push!(vector_of_variables_not_added, copy_vector_of_variables(dest, src, idxmap, S))
+            elseif F == MOI.SingleVariable
+                push!(single_variable_not_added, copy_single_variable(dest, src, idxmap, S))
+            end
+        end
     end
 
     copy_free_variables(dest, idxmap, vis_src, MOI.add_variables)
