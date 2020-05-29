@@ -275,7 +275,7 @@ function MOI.get(uf::UniversalFallback,
     if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
         MOI.get(uf.model, attr)
     else
-        _get(uf, attr)
+        MOI.supports_add_constrained_variable(uf, S) ? 0.0 : Inf
     end
 end
 function MOI.get(uf::UniversalFallback,
@@ -283,7 +283,7 @@ function MOI.get(uf::UniversalFallback,
     if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
         MOI.get(uf.model, attr)
     else
-        _get(uf, attr)
+        MOI.supports_add_constrained_variables(uf, S) ? 0.0 : Inf
     end
 end
 
