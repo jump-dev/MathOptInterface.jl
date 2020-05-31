@@ -8,13 +8,13 @@ transformed into a `ScalarQuadraticFunction`-in-`LessThan` and a
 `ScalarAffineFunction`-in-`GreaterThan`. Indeed, the definition of the
 second-order cone
 ```math
-t \\ge || x ||_2 \\  (1)
+t \\ge \\lVert x \\lVert_2 \\  (1)
 ```
 is equivalent to
 ```math
 \\sum x_i^2 \\le t^2  (2)
 ```
-with ``t \\ge 0``.    (3)
+with ``t \\ge 0``.  (3)
 
 *WARNING* This transformation starts from a convex constraint (1) and creates a
 non-convex constraint (2), because the Q matrix associated with the constraint 2
@@ -73,8 +73,8 @@ non-convex constraint (2), because the Q matrix associated with the constraint 2
 has two negative eigenvalues. This might be wrongly interpreted by a solver.
 Some solvers can look at (2) and understand that it is a rotated second order cone, but
 this is not a general rule.
-For these reasons this bridge is not automatically added to the LazyBridgeOptimizer.
-Care is recommended when adding this bridge to a optimizer.
+For these reasons, this bridge is not automatically added to the LazyBridgeOptimizer.
+Care is recommended when adding this bridge to an optimizer.
 """
 struct RSOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
     quad::CI{MOI.ScalarQuadraticFunction{T}, MOI.LessThan{T}}

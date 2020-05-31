@@ -555,6 +555,26 @@ constraints of different types. There are two important concepts to distinguish:
   allow introspection into the bridge selection rationale of
   [`Bridges.LazyBridgeOptimizer`](@ref).
 
+Most bridges are added by default in [`Bridges.full_bridge_optimizer`](@ref).
+However, for technical reasons, some bridges are not added by default, for instance:
+[`Bridges.Constraint.SOCtoPSDBridge`](@ref), [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref)
+and [`Bridges.Constraint.RSOCtoNonConvexQuadBridge`](@ref). See the docs of those bridges
+for more information.
+
+It is possible to add those bridges and also user defined bridges, following these steps. We present an example for: [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref).
+
+First, define a single bridge optimizer:
+
+```julia
+const SOCtoNonConvexQuad{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoNonConvexQuadBridge{T}, OT}
+```
+
+Second, add that bridge to a `bridged_model` optimizer, with coefficient type `T,` using [`Bridges.add_bridge`](@ref):
+
+```julia
+MOIB.add_bridge(bridged_model, SOCtoNonConvexQuad{T})
+```
+
 ```@docs
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
