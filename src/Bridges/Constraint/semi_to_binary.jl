@@ -50,6 +50,15 @@ function bridge_constraint(::Type{SemiToBinaryBridge{T,S}}, model::MOI.ModelLike
     return SemiToBinaryBridge{T,S}(s, f.variable, binary, binary_con, lb_ci, ub_ci, int_ci)
 end
 
+MOIB.watched_variables(bridge::SemiToBinaryBridge) = [bridge.variable_index]
+function MOIB.notify_constraint(
+    bridge::SemiToBinaryBridge{T, S}, model::MOI.ModelLike,
+    func::MOI.SingleVariable, set::MOI.AbstractScalarSet
+) where {T, S}
+    mask = MOIU.single_variable_flag(S)
+    MOIU.throw_if_lower_bound_set(func.variable, typeof(set), mask, T)
+    MOIU.throw_if_upper_bound_set(func.variable, typeof(set), mask, T)
+end
 
 function MOIB.added_constrained_variable_types(::Type{<:SemiToBinaryBridge{T, S}}) where {T, S}
     return [(MOI.ZeroOne,)]

@@ -8,13 +8,15 @@ even if they are supported by one of its bridges.
 """
 mutable struct SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: MOIB.AbstractBridgeOptimizer
     model::OT
+    watchers::Dict{MOI.VariableIndex, Set{MOIB.AbstractBridge}}
     map::Map # index of bridged constraint -> constraint bridge
     con_to_name::Dict{MOI.ConstraintIndex, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
 end
 function SingleBridgeOptimizer{BT}(model::OT) where {BT, OT <: MOI.ModelLike}
     SingleBridgeOptimizer{BT, OT}(
-        model, Map(), Dict{MOI.ConstraintIndex, String}(), nothing)
+        model, Dict{MOI.VariableIndex, Set{MOIB.AbstractBridge}}(),
+        Map(), Dict{MOI.ConstraintIndex, String}(), nothing)
 end
 
 function bridges(bridge::MOI.Bridges.AbstractBridgeOptimizer)

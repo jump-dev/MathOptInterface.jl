@@ -614,16 +614,17 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
     end
 end
 
-function set_lower_bound_twice(model::MOI.ModelLike, T::Type)
+function set_lower_bound_twice(
+    model::MOI.ModelLike, T::Type,
+    sets = [MOI.EqualTo(zero(T)), MOI.Interval(zero(T), zero(T)),
+            MOI.Semicontinuous(zero(T), zero(T)), MOI.Semiinteger(zero(T), zero(T))],
+    set2 = MOI.GreaterThan(zero(T))
+)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     f = MOI.SingleVariable(x)
-    lb = zero(T)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{T})
-    sets = [MOI.EqualTo(lb), MOI.Interval(lb, lb),
-             MOI.Semicontinuous(lb, lb), MOI.Semiinteger(lb, lb)]
-    set2 = MOI.GreaterThan(lb)
     for set1 in sets
         if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
             continue
@@ -639,16 +640,17 @@ function set_lower_bound_twice(model::MOI.ModelLike, T::Type)
     end
 end
 
-function set_upper_bound_twice(model::MOI.ModelLike, T::Type)
+function set_upper_bound_twice(
+    model::MOI.ModelLike, T::Type,
+    sets = [MOI.EqualTo(zero(T)), MOI.Interval(zero(T), zero(T)),
+            MOI.Semicontinuous(zero(T), zero(T)), MOI.Semiinteger(zero(T), zero(T))],
+    set2 = MOI.GreaterThan(zero(T))
+)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     f = MOI.SingleVariable(x)
-    ub = zero(T)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{T})
-    sets = [MOI.EqualTo(ub), MOI.Interval(ub, ub),
-             MOI.Semicontinuous(ub, ub), MOI.Semiinteger(ub, ub)]
-    set2 = MOI.LessThan(ub)
     for set1 in sets
         if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
             continue

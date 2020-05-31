@@ -30,6 +30,11 @@ config = MOIT.TestConfig()
                    for F in [MOI.SingleVariable]
                    for S in [MOI.Semiinteger{Float64}, MOI.Semicontinuous{Float64}]])
 
+    T = Float64
+    MOIT.set_lower_bound_twice(bridged_mock, T, [MOI.Semicontinuous(zero(T), zero(T)), MOI.Semiinteger(zero(T), zero(T))])
+    @show MOI.get(bridged_mock, MOI.ListOfVariableIndices())
+    MOIT.set_upper_bound_twice(bridged_mock, T, [MOI.Semicontinuous(zero(T), zero(T)), MOI.Semiinteger(zero(T), zero(T))])
+
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.ObjectiveBound(), 0.0)

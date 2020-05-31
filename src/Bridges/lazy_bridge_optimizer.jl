@@ -16,6 +16,7 @@ it will choose bridge 1 as it allows to bridge `F`-in-`S` using only one bridge 
 mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     # Internal model
     model::OT
+    watchers::Dict{MOI.VariableIndex, Set{AbstractBridge}}
     # Bridged variables
     variable_map::Variable.Map
     var_to_name::Dict{MOI.VariableIndex, String}
@@ -44,7 +45,7 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 end
 function LazyBridgeOptimizer(model::MOI.ModelLike)
     return LazyBridgeOptimizer{typeof(model)}(
-        model,
+        model, Dict{MOI.VariableIndex, Set{AbstractBridge}}(),
         Variable.Map(), Dict{MOI.VariableIndex, String}(), nothing,
         Constraint.Map(), Dict{MOI.ConstraintIndex, String}(), nothing,
         Objective.Map(),

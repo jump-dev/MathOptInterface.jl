@@ -245,6 +245,7 @@ function MOI.is_empty(b::AbstractBridgeOptimizer)
 end
 function MOI.empty!(b::AbstractBridgeOptimizer)
     MOI.empty!(b.model)
+    empty!(b.watchers)
     if Variable.has_bridges(Variable.bridges(b))
         empty!(b.var_to_name)
         b.name_to_var = nothing
@@ -391,6 +392,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
         else
             delete!(Constraint.bridges(b), ci)
         end
+        remove_watchers(b, br)
         Variable.call_in_context(Variable.bridges(b), ci, () -> MOI.delete(b, br))
         b.name_to_con = nothing
         delete!(b.con_to_name, ci)
@@ -988,6 +990,23 @@ function MOI.get(b::AbstractBridgeOptimizer,
         IdxT, ci_bridged, MOI.get(b.model, IdxT, name), name)
 end
 
+function add_watchers(b::AbstractBridgeOptimizer, bridge::AbstractBridge)
+    for variable in watched_variables(bridge)
+        bridges = get(b.watchers, variable, nothing)
+        if bridges === nothing
+            bridges = Set{AbstractBridge}()
+            b.watchers[variable] = bridges
+        end
+        push!(bridges, bridge)
+    end
+end
+function remove_watchers(b::AbstractBridgeOptimizer, bridge::AbstractBridge)
+    for variable in watched_variables(bridge)
+        bridges = get(b.watchers, variable, nothing)
+        delete!(bridges, bridge)
+    end
+end
+
 # Constraints
 function MOI.supports_constraint(b::AbstractBridgeOptimizer,
                                  F::Type{<:MOI.AbstractFunction},
@@ -1004,12 +1023,21 @@ function MOI.supports_constraint(b::AbstractBridgeOptimizer,
 end
 function add_bridged_constraint(b, BridgeType, f, s)
     bridge = Constraint.bridge_constraint(BridgeType, b, f, s)
+    add_watchers(b, bridge)
     ci = Constraint.add_key_for_bridge(Constraint.bridges(b), bridge, f, s)
     Variable.register_context(Variable.bridges(b), ci)
     return ci
 end
 function MOI.add_constraint(b::AbstractBridgeOptimizer, f::MOI.AbstractFunction,
                             s::MOI.AbstractSet)
+    if f isa MOI.SingleVariable
+        watchers = get(b.watchers, f.variable, nothing)
+        if watchers !== nothing
+            for watcher in watchers
+                notify_constraint(watcher, b, f, s)
+            end
+        end
+    end
     if Variable.has_bridges(Variable.bridges(b))
         if f isa MOI.SingleVariable
             if is_bridged(b, f.variable)
