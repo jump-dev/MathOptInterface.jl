@@ -1,7 +1,7 @@
 "Example from http://plato.asu.edu/ftp/sdpa_format.txt
 "A sample problem.
-2
-2
+2 =mdim
+2 =nblocks
 2 2
 10.0 20.0
 0 1 1 1 1.0

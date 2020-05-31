@@ -1,6 +1,7 @@
 module Utilities
 
 using LinearAlgebra # For dot
+using OrderedCollections # for OrderedDict in UniversalFallback 
 
 using MathOptInterface
 const MOI = MathOptInterface

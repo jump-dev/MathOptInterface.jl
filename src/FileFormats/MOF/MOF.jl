@@ -105,9 +105,12 @@ function validate(io::IO)
     object = JSON.parse(io)
     seekstart(io)
     mof_schema = JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH, use_mmap=false))
-    if !JSONSchema.isvalid(object, mof_schema)
-        error("Unable to read file because it does not conform to the MOF " *
-              "schema: ", JSONSchema.diagnose(object, mof_schema))
+    ret = JSONSchema.validate(object, mof_schema)
+    if ret !== nothing
+        error(
+            "Unable to read file because it does not conform to the MOF " *
+            "schema: ", ret
+        )
     end
     return
 end

@@ -95,7 +95,7 @@ sets recognized by the solver.
 * **[`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty = \max_i \lvert x_i \rvert \}``
 * **[`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone)**:
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty_1 = \sum_i \lvert x_i \rvert \}``
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_1 = \sum_i \lvert x_i \rvert \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
 * **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
@@ -115,9 +115,9 @@ sets recognized by the solver.
 * **[`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone)**:
   ``\{ (u, v, w) \in \mathbb{R}^\mbox{dimension} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
 * **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
   the upper triangle of a PSD matrix} \}``
@@ -1011,7 +1011,7 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
 
 If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
-between `y_i` and the vector of scalar-valued quadratic functions.
+between ``y_i`` and the vector of scalar-valued quadratic functions.
 
 !!! note
     For quadratic programs with only affine constraints, the optimality condition
@@ -1288,10 +1288,7 @@ solver is written in Julia, for example). The guideline for naming the file
 containing the MOI wrapper is `src/MOI_wrapper.jl` and `test/MOI_wrapper.jl` for
 the tests. If the MOI wrapper implementation is spread in several files, they
 should be stored in a `src/MOI_wrapper` folder and included by a
-`src/MOI_wrapper/MOI_wrapper.jl` file. In some cases it may be more appropriate
-to host the MOI wrapper in its own package; in this case it is recommended that
-the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver
-name.
+`src/MOI_wrapper/MOI_wrapper.jl` file.
 
 By convention, optimizers should not be exported and should be named
 `PackageName.Optimizer`. For example, `CPLEX.Optimizer`, `Gurobi.Optimizer`, and

@@ -81,6 +81,12 @@ config = MOIT.TestConfig()
         ((MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
          (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0)))
 
+    # Test setting VectorAffineFunction with nonzero constants
+    MOIU.set_mock_optimize!(mock,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.75]))
+    MOIT.solve_func_vectoraffine_nonneg(bridged_mock, config)
+
     # VectorOfVariables-in-Nonnegatives
     # VectorOfVariables-in-Nonpositives
     # VectorOfVariables-in-Zeros

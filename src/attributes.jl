@@ -910,6 +910,35 @@ A model attribute for the number of results available.
 """
 struct ResultCount <: AbstractModelAttribute end
 
+"""
+    ConflictStatusCode
+
+An Enum of possible values for the `ConflictStatus` attribute. This attribute
+is meant to explain the reason why the conflict finder stopped executing in the
+most recent call to [`compute_conflict!`](@ref).
+
+Possible values are:
+* `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
+  not yet been called
+* `NO_CONFLICT_EXISTS`: there is no conflict because the problem is feasible
+* `NO_CONFLICT_FOUND`: the solver could not find a conflict
+* `CONFLICT_FOUND`: at least one conflict could be found
+"""
+@enum ConflictStatusCode begin
+    COMPUTE_CONFLICT_NOT_CALLED
+    NO_CONFLICT_EXISTS
+    NO_CONFLICT_FOUND
+    CONFLICT_FOUND
+end
+
+"""
+    ConflictStatus()
+
+A model attribute for the [`ConflictStatusCode`](@ref) explaining why the conflict
+refiner stopped when computing the conflict.
+"""
+struct ConflictStatus <: AbstractModelAttribute end
+
 ## Variable attributes
 
 """
@@ -1117,6 +1146,30 @@ function throw_set_error_fallback(::ModelLike, ::ConstraintSet,
     type $(typeof(set)). Use `transform` instead."""))
 end
 
+"""
+    ConflictParticipationStatusCode
+
+An Enum of possible values for the [`ConstraintConflictStatus`](@ref) attribute.
+This attribute is meant to indicate whether a given constraint participates
+or not in the last computed conflict.
+
+Possible values are:
+* `NOT_IN_CONFLICT`: the constraint does not participate in the conflict
+* `IN_CONFLICT`: the constraint participates in the conflict
+* `MAYBE_IN_CONFLICT`: the constraint may participate in the conflict,
+  the solver was not able to prove that the constraint can be excluded from
+  the conflict
+"""
+@enum(ConflictParticipationStatusCode, NOT_IN_CONFLICT, IN_CONFLICT, MAYBE_IN_CONFLICT)
+
+"""
+    ConstraintConflictStatus()
+
+A constraint attribute indicating whether the constraint participates
+in the conflict. Its type is [`ConflictParticipationStatusCode`](@ref).
+"""
+struct ConstraintConflictStatus <: AbstractConstraintAttribute end
+
 ## Termination status
 """
     TerminationStatus()
@@ -1318,6 +1371,8 @@ function is_set_by_optimize(::Union{ObjectiveValue,
                                     NodeCount,
                                     RawSolver,
                                     ResultCount,
+                                    ConflictStatus,
+                                    ConstraintConflictStatus,
                                     TerminationStatus,
                                     RawStatusString,
                                     PrimalStatus,

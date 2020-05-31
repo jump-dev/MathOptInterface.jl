@@ -1,6 +1,14 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.13 (March 24, 2020)
+---------------------
+
+- Added tests for `Semicontinuous` and `Semiinteger` variables (#1033).
+- Added tests for using `ExprGraph`s from NLP evaluators (#1043).
+- Update version compatibilities of depedencies (#1034, #1051, #1052).
+- Fixed typos in documentation (#1044).
+
 v0.9.12 (February 28, 2020)
 ---------------------
 
