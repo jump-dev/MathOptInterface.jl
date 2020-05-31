@@ -253,3 +253,25 @@ MathOptInterface.ScalarAffineFunction{Float64}
 ```
 """
 function set_objective_function_type end
+
+"""
+    watched_variables(::AbstractBridge)::AbstractVector{MOI.VariableIndex}
+
+Return a list of variable indices. For any `S<:MOI.AbstractScalarSet`, whenever
+a `MOI.SingleVariable`-in-`S` constraint is added to the model for one variable
+of this list, the bridge is notified with [`notify_constraint`]`(@ref) just before
+adding the constraint.
+If this method is not implemented, it fallbacks to returning
+`MOI.Utilities.EmptyVector{MOI.VariableIndex}()`.
+"""
+watched_variables(::AbstractBridge) = MOIU.EmptyVector{MOI.VariableIndex}()
+
+"""
+    notify_constraint(bridge::AbstractBridge, model::Model, func::SingleVariable, set::MOI.AbstractScalarSet)::AbstractVector{MOI.VariableIndex}
+
+Notifies `bridge` that the `func`-in-`set` constraint will be might be added to
+`model`. The bridge can throw an error if that should not be allowed or add
+variables or add/modify constraints due to this change.
+See [`watched_variables`](@ref) for being notified when variables are modified.
+"""
+function notify_constraint end

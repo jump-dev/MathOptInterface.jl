@@ -46,6 +46,7 @@ with inner model MOIU.Model{Float64}
 mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
                MOI.Bridges.AbstractBridgeOptimizer
     model::OT
+    watchers::Dict{MOI.VariableIndex,Set{MOIB.AbstractBridge}}
     map::Map # index of bridged constraint -> constraint bridge
     con_to_name::Dict{MOI.ConstraintIndex,String}
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
@@ -54,6 +55,7 @@ end
 function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
     return SingleBridgeOptimizer{BT,OT}(
         model,
+        Dict{MOI.VariableIndex,Set{MOIB.AbstractBridge}}(),
         Map(),
         Dict{MOI.ConstraintIndex,String}(),
         nothing,

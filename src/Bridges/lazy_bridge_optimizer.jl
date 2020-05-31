@@ -41,6 +41,7 @@ true
 mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     # Internal model
     model::OT
+    watchers::Dict{MOI.VariableIndex,Set{AbstractBridge}}
     # Bridged variables
     variable_map::Variable.Map
     var_to_name::Dict{MOI.VariableIndex,String}
@@ -72,6 +73,7 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     function LazyBridgeOptimizer(model::MOI.ModelLike)
         return new{typeof(model)}(
             model,
+            Dict{MOI.VariableIndex,Set{AbstractBridge}}(),
             Variable.Map(),
             Dict{MOI.VariableIndex,String}(),
             nothing,
