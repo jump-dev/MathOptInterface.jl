@@ -8,7 +8,7 @@ transformed into a `ScalarQuadraticFunction`-in-`LessThan` and a
 `ScalarAffineFunction`-in-`GreaterThan`. Indeed, the definition of the
 second-order cone
 ```math
-t \\ge \\lVert x \\lVert_2 \\  (1)
+t \\ge \\lVert x \\rVert_2 \\  (1)
 ```
 is equivalent to
 ```math
