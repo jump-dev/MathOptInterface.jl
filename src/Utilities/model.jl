@@ -624,30 +624,28 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOI.add_constraint(
     model::AbstractModel{T},
     f::MOI.SingleVariable,
-    s::MOI.AbstractScalarSet,
+    s::SUPPORTED_VARIABLE_SCALAR_SETS{T},
 ) where {T}
-    if MOI.supports_constraint(model, MOI.SingleVariable, typeof(s))
-        flag = single_variable_flag(typeof(s))
-        index = f.variable.value
-        mask = model.single_variable_mask[index]
-        throw_if_lower_bound_set(f.variable, typeof(s), mask, T)
-        throw_if_upper_bound_set(f.variable, typeof(s), mask, T)
-        # No error should be thrown now, we can modify `model`.
-        if !iszero(flag & LOWER_BOUND_MASK)
-            model.lower_bound[index] = extract_lower_bound(s)
-        end
-        if !iszero(flag & UPPER_BOUND_MASK)
-            model.upper_bound[index] = extract_upper_bound(s)
-        end
-        model.single_variable_mask[index] = mask | flag
-        return CI{MOI.SingleVariable,typeof(s)}(index)
-    else
-        throw(MOI.UnsupportedConstraint{MOI.SingleVariable,typeof(s)}())
+    flag = single_variable_flag(typeof(s))
+    index = f.variable.value
+    mask = model.single_variable_mask[index]
+    throw_if_lower_bound_set(f.variable, typeof(s), mask, T)
+    throw_if_upper_bound_set(f.variable, typeof(s), mask, T)
+    # No error should be thrown now, we can modify `model`.
+    if !iszero(flag & LOWER_BOUND_MASK)
+        model.lower_bound[index] = extract_lower_bound(s)
     end
+    if !iszero(flag & UPPER_BOUND_MASK)
+        model.upper_bound[index] = extract_upper_bound(s)
+    end
+    model.single_variable_mask[index] = mask | flag
+    return CI{MOI.SingleVariable,typeof(s)}(index)
 end
+
 function MOI.add_constraint(
     model::AbstractModel,
     f::F,
