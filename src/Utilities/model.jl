@@ -498,7 +498,7 @@ function extract_lower_bound(set::Union{MOI.GreaterThan, MOI.Interval,
                                         MOI.Semicontinuous, MOI.Semiinteger})
     return set.lower
 end
-# 0xb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
+# 0xcb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
 const LOWER_BOUND_MASK = 0xcb
 
 # Sets setting upper bound:
@@ -507,7 +507,7 @@ function extract_upper_bound(set::Union{MOI.LessThan, MOI.Interval,
                                         MOI.Semicontinuous, MOI.Semiinteger})
     return set.upper
 end
-# 0xd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
+# 0xcd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
 const UPPER_BOUND_MASK = 0xcd
 
 const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
