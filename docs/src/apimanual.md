@@ -1098,7 +1098,7 @@ MOI.supports_constraint(bridged_optimizer, MOI.ScalarAffineFunction{Float64}, MO
 true
 ```
 will additionally support `ScalarAffineFunction`-in-`Interval`.
-Note that these [`Bridges.Constraint.SingleBridgeOptimizer`s](@ref) are mainly
+Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)s are mainly
 used for testing bridges. It is recommended to rather use
 [`Bridges.full_bridge_optimizer`](@ref) which automatically selects the
 appropriate constraint bridges for unsupported constraints.
