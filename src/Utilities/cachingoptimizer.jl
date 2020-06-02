@@ -642,12 +642,6 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
     return map_indices(model.optimizer_to_model_map,
                          MOI.get(model.optimizer, attr))
 end
-function MOI.get(model::CachingOptimizer, attr::MathOptInterface.VariableBridgingCost{S}) where {S<:MOI.AbstractVectorSet}
-    return MOI.supports_add_constrained_variables(model, S) ? 0.0 : Inf
-end
-function MOI.get(model::CachingOptimizer, attr::MathOptInterface.VariableBridgingCost{S}) where {S<:MOI.AbstractScalarSet}
-    return MOI.supports_add_constrained_variable(model, S) ? 0.0 : Inf
-end
 
 # Force users to specify whether the attribute should be queried from the
 # model_cache or the optimizer. Maybe we could consider a small whitelist of

@@ -1351,10 +1351,10 @@ _result_index_field(attr::DualStatus) = attr.N
 
 
 # Cost of bridging constrained variable in S
-struct VariableBridgingCost{S <: AbstractSet} <: AbstractOptimizerAttribute
+struct VariableBridgingCost{S <: AbstractSet} <: AbstractModelAttribute 
 end
 # Cost of bridging F-in-S constraints
-struct ConstraintBridgingCost{F <: AbstractFunction, S <: AbstractSet} <: AbstractOptimizerAttribute
+struct ConstraintBridgingCost{F <: AbstractFunction, S <: AbstractSet} <: AbstractModelAttribute 
 end
 
 """
