@@ -592,8 +592,6 @@ function MOI.set(b::AbstractBridgeOptimizer,
                  value)
     return MOI.set(b.model, attr, bridged_function(b, value))
 end
-MOI.get(b::MOI.Bridges.AbstractBridgeOptimizer, c::MOI.VariableBridgingCost{S}) where S<:MOI.AbstractScalarSet = unbridged_function(b, MOI.get(b.model, c))
-MOI.get(b::MOI.Bridges.AbstractBridgeOptimizer, c::MOI.VariableBridgingCost{S}) where S<:MOI.AbstractVectorSet = unbridged_function(b, MOI.get(b.model, c))
 
 # Objective
 

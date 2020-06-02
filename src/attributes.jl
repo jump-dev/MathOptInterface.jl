@@ -269,8 +269,9 @@ function get end
 get(model::ModelLike, attr::AnyAttribute, idxs::Vector) = get.(model, attr, idxs)
 
 function get(model::ModelLike, attr::AnyAttribute, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+    get_fallback(model, attr, args...)
 end
+get_fallback(model::ModelLike, attr::AnyAttribute, args...) = throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
 
 """
     get!(output, model::ModelLike, args...)
@@ -1435,6 +1436,8 @@ function is_copyable(::Union{ListOfOptimizerAttributesSet,
                              ListOfConstraintIndices,
                              ListOfConstraints,
                              ConstraintFunction,
-                             ConstraintSet})
+                             ConstraintSet,
+                             VariableBridgingCost,
+                             ConstraintBridgingCost})
     return false
 end
