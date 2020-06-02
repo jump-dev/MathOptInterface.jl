@@ -320,11 +320,13 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
     else
         # Order the copying of the variables by 1) their variable bridging cost 2) by starting with the vectors, as what was done before
         # See issue #987
-        sorted_by_cost = sortperm(constraint_types; by=((F, S),) -> (MOI.get(dest, MOI.VariableBridgingCost{S}()), F == MOI.SingleVariable))
+        single_or_vector_variables_types = [(F, S) for (F, S) in constraint_types
+                                            if F == MOI.SingleVariable || F == MOI.VectorOfVariables]
+        sorted_by_cost = sortperm(single_or_vector_variables_types; by=((F, S),) -> (MOI.get(dest, MOI.VariableBridgingCost{S}()) - MOI.get(dest, MOI.ConstraintBridgingCost{F, S}()), F == MOI.SingleVariable))
         vector_of_variables_not_added = Vector{Array{MOI.ConstraintIndex{MOI.VectorOfVariables, <:MOI.AbstractVectorSet}}}()
         single_variable_not_added = Vector{Array{MOI.ConstraintIndex{MOI.SingleVariable, <:MOI.AbstractScalarSet}}}()
         for i in sorted_by_cost
-            F, S = constraint_types[i]
+            F, S = single_or_vector_variables_types[i]
             if F == MOI.VectorOfVariables
                 push!(vector_of_variables_not_added, copy_vector_of_variables(dest, src, idxmap, S))
             elseif F == MOI.SingleVariable
