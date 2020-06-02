@@ -561,17 +561,16 @@ However, for technical reasons, some bridges are not added by default, for insta
 and [`Bridges.Constraint.RSOCtoNonConvexQuadBridge`](@ref). See the docs of those bridges
 for more information.
 
-It is possible to add those bridges and also user defined bridges, following these steps. We present an example for: [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref).
+It is possible to add those bridges and also user defined bridges,
+following these steps. We present an example for:
+[`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref).
 
-First, define a single bridge optimizer:
+First, define a single bridge optimizer, then add that bridge to a
+`bridged_model` optimizer, with coefficient type `T,` using
+[`Bridges.add_bridge`](@ref):
 
 ```julia
 const SOCtoNonConvexQuad{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoNonConvexQuadBridge{T}, OT}
-```
-
-Second, add that bridge to a `bridged_model` optimizer, with coefficient type `T,` using [`Bridges.add_bridge`](@ref):
-
-```julia
 MOIB.add_bridge(bridged_model, SOCtoNonConvexQuad{T})
 ```
 

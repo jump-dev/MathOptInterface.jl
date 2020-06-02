@@ -21,7 +21,7 @@ non-convex constraint (2), because the Q matrix associated with the constraint 2
 has one negative eigenvalue. This might be wrongly interpreted by a solver.
 Some solvers can look at (2) and understand that it is a second order cone, but
 this is not a general rule.
-For these reasons this bridge is not automatically added to the LazyBridgeOptimizer.
+For these reasons this bridge is not automatically added by full_bridge_optimizer.
 Care is recommended when adding this bridge to a optimizer.
 """
 struct SOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
@@ -46,7 +46,9 @@ function bridge_constraint(::Type{SOCtoNonConvexQuadBridge{T}}, model,
 
     fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    fp = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), t)], zero(T))
+    # ScalarAffineFunction's are added instead of SingleVariable's
+    # because models can only have one SingleVariable per variable
+    fp = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(t))
     var_pos = MOI.add_constraint(model, fp, MOI.GreaterThan(zero(T)))
 
     return SOCtoNonConvexQuadBridge(quad, [var_pos], vis)
@@ -73,7 +75,7 @@ non-convex constraint (2), because the Q matrix associated with the constraint 2
 has two negative eigenvalues. This might be wrongly interpreted by a solver.
 Some solvers can look at (2) and understand that it is a rotated second order cone, but
 this is not a general rule.
-For these reasons, this bridge is not automatically added to the LazyBridgeOptimizer.
+For these reasons, this bridge is not automatically added by full_bridge_optimizer.
 Care is recommended when adding this bridge to an optimizer.
 """
 struct RSOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
@@ -99,9 +101,11 @@ function bridge_constraint(::Type{RSOCtoNonConvexQuadBridge{T}}, model,
 
     fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    fp1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), t)], zero(T))
+    # ScalarAffineFunction's are added instead of SingleVariable's
+    # because models can only have one SingleVariable per variable
+    fp1 = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(t))
     var_pos1 = MOI.add_constraint(model, fp1, MOI.GreaterThan(zero(T)))
-    fp2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), u)], zero(T))
+    fp2 = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(u))
     var_pos2 = MOI.add_constraint(model, fp2, MOI.GreaterThan(zero(T)))
 
     return RSOCtoNonConvexQuadBridge(quad, [var_pos1, var_pos2], vis)
