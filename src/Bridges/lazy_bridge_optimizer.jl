@@ -113,7 +113,9 @@ end
 
 function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     F = MOIU.variable_function_type(S)
-    if MOI.supports_constraint(b.model, F, S) || MOI.supports_add_constrained_variable(b.model, S)
+    if (MOI.supports_constraint(b.model, F, S) 
+        || (S <: MOI.AbstractScalarSet && MOI.supports_add_constrained_variable(b.model, S))
+        || (S <: MOI.AbstractVectorSet && MOI.supports_add_constrained_variables(b.model, S)))
         return VariableNode(0)
     end
     variable_node = get(b.variable_node, (S,), nothing)
