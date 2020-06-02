@@ -714,8 +714,11 @@ function load_constraint(::AbstractModel, ::CI, ::MOI.AbstractFunction,
                          ::MOI.AbstractSet)
 end
 
+# Bridging cost fallback values
 MOI.get_fallback(model::MOI.ModelLike, ::MOI.VariableBridgingCost{S}) where {S<:MOI.AbstractScalarSet} = MOI.supports_add_constrained_variable(model, S) ? 0.0 : Inf
 MOI.get_fallback(model::MOI.ModelLike, ::MOI.VariableBridgingCost{S}) where {S<:MOI.AbstractVectorSet} = MOI.supports_add_constrained_variables(model, S) ? 0.0 : Inf
+MOI.get_fallback(model::MOI.ModelLike, ::MOI.ConstraintBridgingCost{F, S}) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet} = MOI.supports_constraint(model, F, S) ? 0.0 : Inf
+
 
 # Can be used to access constraints of a model
 """
