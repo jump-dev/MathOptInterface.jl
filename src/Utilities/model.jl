@@ -540,7 +540,9 @@ function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
     end
 end
 function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
-    if MOI.supports_constraint(model, F, S)
+    if (MOI.supports_constraint(model, F, S)
+        || (S <: MOI.AbstractScalarSet && MOI.supports_add_constrained_variable(model, S))
+        || (S <: MOI.AbstractVectorSet && MOI.supports_add_constrained_variables(model, S)))
         # We give the index value `nextconstraintid + 1` to the new constraint.
         # As the same counter is used for all pairs of F-in-S constraints,
         # the index value is unique across all constraint types as mentioned in

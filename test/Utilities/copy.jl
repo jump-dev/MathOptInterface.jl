@@ -171,6 +171,7 @@ MOIU.@model(OrderingConstrainedVariablesModel,                          # Name o
             false
         )
         
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = false
 MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonnegatives}) = true
 MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = false
 
