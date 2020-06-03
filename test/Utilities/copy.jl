@@ -157,3 +157,33 @@ end
         @test dest.added_constrained[idxmap[vi].value]
     end
 end
+
+
+@testset "Create variables using supports_add_constrained_variable(s) (#987)" begin
+    MOIU.@model(OrderingConstrainedVariablesModel,                          # Name of model
+                (),                                                         # untyped scalar sets
+                (),                                                         #   typed scalar sets
+                (MOI.Nonnegatives, MOI.Nonpositives),                       # untyped vector sets
+                (),                                                         #   typed vector sets
+                (),                                                         # untyped scalar functions
+                (),                                                         #   typed scalar functions
+                (MOI.VectorOfVariables,),                                   # untyped vector functions
+                (),                                                         #   typed vector functions
+                false
+            )
+            
+    MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonnegatives}) = true
+    MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = false
+
+
+    src = MOIU.Model{Float64}()
+    a, c1 = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
+    c2 = MOI.add_constraint(src, a, MOI.Nonnegatives(3))
+    dest = OrderingConstrainedVariablesModel{Float64}()
+
+    index_map = MOI.copy_to(dest, src)
+
+
+    @test index_map[c1].value == 2
+    @test index_map[c2].value == 1
+end
