@@ -160,31 +160,20 @@ end
 
 
 mutable struct OrderingConstrainedVariablesModel <: MOI.ModelLike
-    lastConstraintIndex     ::Int
-    lastVarIndex            ::Int
-    OrderingConstrainedVariablesModel() = new(0, 0)
+    constraintIndices       ::Array{MOI.ConstraintIndex}
+    inner                   ::MOIU.Model{Float64}
+    OrderingConstrainedVariablesModel() = new(MOI.ConstraintIndex[], MOIU.Model{Float64}())
 end
         
 
 
-function MOI.add_variables(model::OrderingConstrainedVariablesModel, n)
-    m = model.lastVarIndex
-    model.lastVarIndex += n
-    return MOI.VariableIndex.(m .+ (1:n))
-end
-function MOI.add_variable(model::OrderingConstrainedVariablesModel)
-    return MOI.VariableIndex.(model.lastVarIndex += 1)
-end
+MOI.add_variables(model::OrderingConstrainedVariablesModel, n) = MOI.add_variables(model.inner, n)
+MOI.add_variable(model::OrderingConstrainedVariablesModel) = MOI.add_variable(model.inner)
 
-function MOI.add_constraint(model::OrderingConstrainedVariablesModel,
-    func::MOI.VectorOfVariables,
-    set::MOI.AbstractVectorSet)
-    return MOI.ConstraintIndex{typeof(func), typeof(set)}(model.lastConstraintIndex += 1)
-end
-function MOI.add_constraint(model::OrderingConstrainedVariablesModel,
-    func::MOI.SingleVariable,
-    set::MOI.AbstractScalarSet)
-    return MOI.ConstraintIndex{typeof(func), typeof(set)}(model.lastConstraintIndex += 1)
+function MOI.add_constraint(model::OrderingConstrainedVariablesModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    ci = MOI.add_constraint(model.inner, f, s)
+    push!(model.constraintIndices, ci)
+    return ci
 end
 
 function MOI.copy_to(dest::OrderingConstrainedVariablesModel, src::MOI.ModelLike; kws...)
@@ -194,8 +183,8 @@ end
 MOIU.supports_default_copy_to(model::OrderingConstrainedVariablesModel, ::Bool) = true
 
 function MOI.empty!(model::OrderingConstrainedVariablesModel)
-    model.lastConstraintIndex = 0
-    model.lastVarIndex = 0
+    model.constraintIndices = MOI.ConstraintIndex[]
+    MOI.empty!(model.inner)
 end
 
 
@@ -205,11 +194,12 @@ MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Ty
 MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = true
 MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = false
 
-MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan}) = false
-MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.GreaterThan}) = true
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan{Float64}}) = true
+MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.GreaterThan{Float64}}) = false
 
-MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan}) = true
-MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.LessThan}) = false
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{Float64}}) = false
+MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.LessThan{Float64}}) = true
+
 
 @testset "Create variables using supports_add_constrained_variable(s) (#987)" begin
     # With vectors
@@ -220,17 +210,17 @@ MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Typ
 
     index_map = MOI.copy_to(dest, src)
 
-    @test index_map[c1].value == 2
-    @test index_map[c2].value == 1
+    @test typeof(c1) == typeof(dest.constraintIndices[2])
+    @test typeof(c2) == typeof(dest.constraintIndices[1])
 
     # With single variables
     src = MOIU.Model{Float64}()
-    a, c1 = MOI.add_constrained_variable(src, MOI.LessThan(5.0))
-    c2 = MOI.add_constraint(src, a, MOI.GreaterThan(1.0))
+    a, c1 = MOI.add_constrained_variable(src, MOI.GreaterThan{Float64}(5.0))
+    c2 = MOI.add_constraint(src, a, MOI.LessThan{Float64}(1.0))
     dest = OrderingConstrainedVariablesModel()
 
     index_map = MOI.copy_to(dest, src)
 
-    @test index_map[c1].value == 2
-    @test index_map[c2].value == 1
+    @test typeof(c1) == typeof(dest.constraintIndices[2])
+    @test typeof(c2) == typeof(dest.constraintIndices[1])
 end
