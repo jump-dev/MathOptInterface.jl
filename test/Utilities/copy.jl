@@ -194,11 +194,11 @@ MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Ty
 MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = true
 MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = false
 
-MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan{Float64}}) = true
-MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.GreaterThan{Float64}}) = false
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.GreaterThan}) = true
+MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{<:MOI.GreaterThan}) = false
 
-MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{Float64}}) = false
-MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.LessThan{Float64}}) = true
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.LessThan}) = false
+MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{<:MOI.LessThan}) = true
 
 
 @testset "Create variables using supports_add_constrained_variable(s) (#987)" begin
