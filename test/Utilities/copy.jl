@@ -159,30 +159,77 @@ end
 end
 
 
-MOIU.@model(OrderingConstrainedVariablesModel,                          # Name of model
-            (),                                                         # untyped scalar sets
-            (),                                                         #   typed scalar sets
-            (MOI.Nonnegatives, MOI.Nonpositives),                       # untyped vector sets
-            (),                                                         #   typed vector sets
-            (),                                                         # untyped scalar functions
-            (),                                                         #   typed scalar functions
-            (MOI.VectorOfVariables,),                                   # untyped vector functions
-            (),                                                         #   typed vector functions
-            false
-        )
+mutable struct OrderingConstrainedVariablesModel <: MOI.ModelLike
+    lastConstraintIndex     ::Int
+    lastVarIndex            ::Int
+    OrderingConstrainedVariablesModel() = new(0, 0)
+end
         
+
+
+function MOI.add_variables(model::OrderingConstrainedVariablesModel, n)
+    m = model.lastVarIndex
+    model.lastVarIndex += n
+    return MOI.VariableIndex.(m .+ (1:n))
+end
+function MOI.add_variable(model::OrderingConstrainedVariablesModel)
+    return MOI.VariableIndex.(model.lastVarIndex += 1)
+end
+
+function MOI.add_constraint(model::OrderingConstrainedVariablesModel,
+    func::MOI.VectorOfVariables,
+    set::MOI.AbstractVectorSet)
+    return MOI.ConstraintIndex{typeof(func), typeof(set)}(model.lastConstraintIndex += 1)
+end
+function MOI.add_constraint(model::OrderingConstrainedVariablesModel,
+    func::MOI.SingleVariable,
+    set::MOI.AbstractScalarSet)
+    return MOI.ConstraintIndex{typeof(func), typeof(set)}(model.lastConstraintIndex += 1)
+end
+
+function MOI.copy_to(dest::OrderingConstrainedVariablesModel, src::MOI.ModelLike; kws...)
+    MOIU.automatic_copy_to(dest, src; kws...)
+end
+
+MOIU.supports_default_copy_to(model::OrderingConstrainedVariablesModel, ::Bool) = true
+
+function MOI.empty!(model::OrderingConstrainedVariablesModel)
+    model.lastConstraintIndex = 0
+    model.lastVarIndex = 0
+end
+
+
 MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = false
 MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonnegatives}) = true
+
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = true
 MOI.supports_add_constrained_variables(::OrderingConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = false
 
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan}) = false
+MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.GreaterThan}) = true
+
+MOI.supports_constraint(::OrderingConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan}) = true
+MOI.supports_add_constrained_variable(::OrderingConstrainedVariablesModel, ::Type{MOI.LessThan}) = false
+
 @testset "Create variables using supports_add_constrained_variable(s) (#987)" begin
+    # With vectors
     src = MOIU.Model{Float64}()
     a, c1 = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
     c2 = MOI.add_constraint(src, a, MOI.Nonnegatives(3))
-    dest = OrderingConstrainedVariablesModel{Float64}()
+    dest = OrderingConstrainedVariablesModel()
 
     index_map = MOI.copy_to(dest, src)
 
+    @test index_map[c1].value == 2
+    @test index_map[c2].value == 1
+
+    # With single variables
+    src = MOIU.Model{Float64}()
+    a, c1 = MOI.add_constrained_variable(src, MOI.LessThan(5.0))
+    c2 = MOI.add_constraint(src, a, MOI.GreaterThan(1.0))
+    dest = OrderingConstrainedVariablesModel()
+
+    index_map = MOI.copy_to(dest, src)
 
     @test index_map[c1].value == 2
     @test index_map[c2].value == 1
