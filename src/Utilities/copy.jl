@@ -302,13 +302,15 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
-    single_variable_types = [S for (F, S) in constraint_types
-                             if F == MOI.SingleVariable]
-    vector_of_variables_types = [S for (F, S) in constraint_types
-                                 if F == MOI.VectorOfVariables]
+    single_variable_types = Type{<:MOI.AbstractScalarSet}[]
+    vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
 
     # The `NLPBlock` assumes that the order of variables does not change (#849)
     if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
+        single_variable_types = [S for (F, S) in constraint_types
+                                 if F == MOI.SingleVariable]
+        vector_of_variables_types = [S for (F, S) in constraint_types
+                                     if F == MOI.VectorOfVariables]
         vector_of_variables_not_added = [
             MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
             for S in vector_of_variables_types
@@ -329,8 +331,10 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
             F, S = single_or_vector_variables_types[i]
             if F == MOI.VectorOfVariables
                 push!(vector_of_variables_not_added, copy_vector_of_variables(dest, src, idxmap, S))
+                push!(vector_of_variables_types, S)
             elseif F == MOI.SingleVariable
                 push!(single_variable_not_added, copy_single_variable(dest, src, idxmap, S))
+                push!(single_variable_types, S)
             end
         end
     end
