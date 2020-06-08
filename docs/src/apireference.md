@@ -566,8 +566,10 @@ following one of the two methods. We present the examples for:
 [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref).
 
 The first option is to add the specific bridges to a
-`bridged_model` optimizer, with coefficient type `T`, using
-[`Bridges.add_bridge`](@ref):
+`bridged_model` optimizer, with coefficient type `T`. The `bridged_model`
+optimizer itself must have been constructed with a
+[`Bridges.LazyBridgeOptimizer`](@ref). Once such a optimizer is available, we
+can proceed using using [`Bridges.add_bridge`](@ref):
 
 ```julia
 MOIB.add_bridge(bridged_model, SOCtoNonConvexQuadBridge{T})
