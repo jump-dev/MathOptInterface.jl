@@ -21,7 +21,7 @@ non-convex constraint (2), because the Q matrix associated with the constraint 2
 has one negative eigenvalue. This might be wrongly interpreted by a solver.
 Some solvers can look at (2) and understand that it is a second order cone, but
 this is not a general rule.
-For these reasons this bridge is not automatically added by full_bridge_optimizer.
+For these reasons this bridge is not automatically added by [`full_bridge_optimizer`](@ref).
 Care is recommended when adding this bridge to a optimizer.
 """
 struct SOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
@@ -47,7 +47,9 @@ function bridge_constraint(::Type{SOCtoNonConvexQuadBridge{T}}, model,
     fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
     # ScalarAffineFunction's are added instead of SingleVariable's
-    # because models can only have one SingleVariable per variable
+    # because models can only have one SingleVariable per variable.
+    # Hence, adding a SingleVariable constraint here could conflict with
+    # a user defined SingleVariable
     fp = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(t))
     var_pos = MOI.add_constraint(model, fp, MOI.GreaterThan(zero(T)))
 
@@ -75,7 +77,7 @@ non-convex constraint (2), because the Q matrix associated with the constraint 2
 has two negative eigenvalues. This might be wrongly interpreted by a solver.
 Some solvers can look at (2) and understand that it is a rotated second order cone, but
 this is not a general rule.
-For these reasons, this bridge is not automatically added by full_bridge_optimizer.
+For these reasons, this bridge is not automatically added by [`full_bridge_optimizer`](@ref).
 Care is recommended when adding this bridge to an optimizer.
 """
 struct RSOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
@@ -102,7 +104,9 @@ function bridge_constraint(::Type{RSOCtoNonConvexQuadBridge{T}}, model,
     fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
     # ScalarAffineFunction's are added instead of SingleVariable's
-    # because models can only have one SingleVariable per variable
+    # because models can only have one SingleVariable per variable.
+    # Hence, adding a SingleVariable constraint here could conflict with
+    # a user defined SingleVariable
     fp1 = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(t))
     var_pos1 = MOI.add_constraint(model, fp1, MOI.GreaterThan(zero(T)))
     fp2 = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(u))

@@ -562,22 +562,37 @@ and [`Bridges.Constraint.RSOCtoNonConvexQuadBridge`](@ref). See the docs of thos
 for more information.
 
 It is possible to add those bridges and also user defined bridges,
-following these steps. We present an example for:
+following one of the two methods. We present the examples for:
 [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref).
 
-First, define a single bridge optimizer, then add that bridge to a
-`bridged_model` optimizer, with coefficient type `T,` using
+The first option is to add the specific bridges to a
+`bridged_model` optimizer, with coefficient type `T`, using
 [`Bridges.add_bridge`](@ref):
 
 ```julia
-const SOCtoNonConvexQuad{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoNonConvexQuadBridge{T}, OT}
-MOIB.add_bridge(bridged_model, SOCtoNonConvexQuad{T})
+MOIB.add_bridge(bridged_model, SOCtoNonConvexQuadBridge{T})
+```
+
+Alternatively, it is possible to create a [`Bridges.SingleBridgeOptimizer`](@ref)
+and wrap an existing `model` with it:
+
+```julia
+const SOCtoNonConvexQuad{T, OT<:ModelLike} = Bridges.SingleBridgeOptimizer{Bridges.SOCtoNonConvexQuadBridge{T}, OT}
+bridged_model = SOCtoNonConvexQuad{Float64}(model)
+```
+
+Those procedures could be applied to user define bridges. For the
+bridges defined in MathOptInterface, the [`Bridges.SingleBridgeOptimizer`](@ref)'s are already created, therefore, for the case of [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref), one could simply use the existing optimizer:
+
+```julia
+bridged_model = Bridges.Constraint.SOCtoNonConvexQuad{Float64}(model)
 ```
 
 ```@docs
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
 Bridges.LazyBridgeOptimizer
+Bridges.SingleBridgeOptimizer
 Bridges.add_bridge
 Bridges.remove_bridge
 Bridges.has_bridge
