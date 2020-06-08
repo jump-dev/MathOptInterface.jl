@@ -594,7 +594,6 @@ bridged_model = Bridges.Constraint.SOCtoNonConvexQuad{Float64}(model)
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
 Bridges.LazyBridgeOptimizer
-Bridges.SingleBridgeOptimizer
 Bridges.add_bridge
 Bridges.remove_bridge
 Bridges.has_bridge
