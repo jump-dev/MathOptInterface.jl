@@ -21,7 +21,7 @@ non-convex constraint (2), because the Q matrix associated with the constraint 2
 has one negative eigenvalue. This might be wrongly interpreted by a solver.
 Some solvers can look at (2) and understand that it is a second order cone, but
 this is not a general rule.
-For these reasons this bridge is not automatically added by [`Bridges.full_bridge_optimizer`](@ref).
+For these reasons this bridge is not automatically added by [`MOI.Bridges.full_bridge_optimizer`](@ref).
 Care is recommended when adding this bridge to a optimizer.
 """
 struct SOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
