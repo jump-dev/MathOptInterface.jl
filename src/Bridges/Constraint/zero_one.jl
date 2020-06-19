@@ -3,15 +3,15 @@
 
 The `ZeroOneBridge` splits a `MOI.SingleVariable`-in-`MOI.ZeroOne` constraint
 into a `MOI.SingleVariable`-in-`MOI.Integer` constraint
-and a `MOI.SingleVariable`-in-`MOI.Interval(0,1)` constraint.
+and a `MOI.SingleVariable`-in-`MOI.Interval(0, 1)` constraint.
 """
 struct ZeroOneBridge{T} <: AbstractBridge
-    variable_index::MOI.VariableIndex
     interval_index::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}
     integer_index::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}
 end
 
-function bridge_constraint(::Type{ZeroOneBridge{T}}, model::MOI.ModelLike, f::MOI.SingleVariable, ::MOI.ZeroOne) where {T <: Real}
+function bridge_constraint(::Type{ZeroOneBridge{T}}, model::MOI.ModelLike,
+                           f::MOI.SingleVariable, ::MOI.ZeroOne) where {T <: Real}
     interval_index = MOI.add_constraint(model, f, MOI.Interval{T}(zero(T), one(T)))
     integer_index = MOI.add_constraint(model, f, MOI.Integer())
     return ZeroOneBridge{T}(f.variable, interval_index, integer_index)
@@ -43,7 +43,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet, bridge::ZeroOneB
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction, bridge::ZeroOneBridge)
-    return MOI.SingleVariable(bridge.variable_index)
+    return MOI.SingleVariable(bridge.interval_index)
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::ZeroOneBridge)
@@ -51,8 +51,10 @@ function MOI.delete(model::MOI.ModelLike, bridge::ZeroOneBridge)
     MOI.delete(model, bridge.integer_index)
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal, bridge::ZeroOneBridge)
-    MOI.get(model, MOI.VariablePrimal(attr.N), bridge.variable_index)
+function MOI.get(model::MOI.ModelLike,
+                 attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart},
+                 bridge::ZeroOneBridge)
+    MOI.get(model, MOI.ConstraintPrimal(attr.N), bridge.interval_index)
 end
 
 function MOI.supports(
@@ -62,35 +64,34 @@ function MOI.supports(
     return true
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart, bridge::ZeroOneBridge)
-    return MOI.get(model, MOI.VariablePrimalStart(), bridge.variable_index)
-end
-
-function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
+function MOI.set(model::MOI.ModelLike,
+                 attr::MOI.ConstraintPrimalStart,
                  bridge::ZeroOneBridge{T}, value) where {T}
-    MOI.set(model, MOI.VariablePrimalStart(), bridge.variable_index, value)
-    MOI.set(model, MOI.ConstraintPrimalStart(), bridge.interval_index, value)
-    return
+    MOI.set(model, attr, bridge.integer_index, value)
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(bridge::ZeroOneBridge{T},
+function MOI.get(
+    bridge::ZeroOneBridge{T},
     ::MOI.NumberOfConstraints{MOI.SingleVariable, MOI.Interval{T}}) where {T}
     return 1
 end
 
-function MOI.get(bridge::ZeroOneBridge{T},
-    ::MOI.NumberOfConstraints{MOI.SingleVariable, MOI.Integer}) where {T}
+function MOI.get(
+    bridge::ZeroOneBridge,
+    ::MOI.NumberOfConstraints{MOI.SingleVariable, MOI.Integer})
     return 1
 end
 
-function MOI.get(bridge::ZeroOneBridge{T},
+function MOI.get(
+    bridge::ZeroOneBridge,
     ::MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Interval{T}}) where {T}
     return [bridge.interval_index]
 end
 
-function MOI.get(bridge::ZeroOneBridge{T},
-    ::MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer}) where {T}
+function MOI.get(
+    bridge::ZeroOneBridge,
+    ::MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer})
     return [bridge.integer_index]
 end
 
