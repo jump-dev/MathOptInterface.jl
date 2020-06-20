@@ -43,7 +43,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet, bridge::ZeroOneB
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction, bridge::ZeroOneBridge)
-    return MOI.SingleVariable(bridge.interval_index)
+    return MOI.get(model, attr, bridge.interval_index)
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::ZeroOneBridge)
@@ -54,7 +54,7 @@ end
 function MOI.get(model::MOI.ModelLike,
                  attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart},
                  bridge::ZeroOneBridge)
-    MOI.get(model, MOI.ConstraintPrimal(attr.N), bridge.interval_index)
+    MOI.get(model, attr, bridge.interval_index)
 end
 
 function MOI.supports(
@@ -68,6 +68,7 @@ function MOI.set(model::MOI.ModelLike,
                  attr::MOI.ConstraintPrimalStart,
                  bridge::ZeroOneBridge{T}, value) where {T}
     MOI.set(model, attr, bridge.integer_index, value)
+    MOI.set(model, attr, bridge.interval_index, value)
 end
 
 # Attributes, Bridge acting as a model
