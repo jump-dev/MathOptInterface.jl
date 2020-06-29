@@ -504,6 +504,21 @@ end
 #           ENDATA
 # ==============================================================================
 
+@enum(Sense, SENSE_N, SENSE_G, SENSE_L, SENSE_E, SENSE_UNKNOWN)
+function Sense(s::String)
+    if s == "G"
+        return SENSE_G
+    elseif s == "L"
+        return SENSE_L
+    elseif s == "E"
+        return SENSE_E
+    elseif s == "N"
+        return SENSE_N
+    else
+        return SENSE_UNKNOWN
+    end
+end
+
 mutable struct TempMPSModel
     name::String
     obj_name::String
@@ -512,7 +527,7 @@ mutable struct TempMPSModel
     col_upper::Vector{Float64}
     row_lower::Vector{Float64}
     row_upper::Vector{Float64}
-    sense::Vector{String}
+    sense::Vector{Sense}
     A::Vector{Vector{Tuple{Int, Float64}}}
     is_int::Vector{Bool}
     name_to_col::Dict{String, Int}
@@ -531,7 +546,7 @@ function TempMPSModel()
         Float64[],  # col_upper
         Float64[],  # row_lower
         Float64[],  # row_upper
-        String[],   # sense
+        Sense[],   # sense
         Vector{Vector{Tuple{Int, Float64}}}[],  # A
         Bool[],
         Dict{String, Int}(),
@@ -542,7 +557,41 @@ function TempMPSModel()
     )
 end
 
-const HEADERS = ("ROWS", "COLUMNS", "RHS", "RANGES", "BOUNDS", "SOS", "ENDATA")
+@enum(
+    Headers,
+    HEADER_NAME,
+    HEADER_ROWS,
+    HEADER_COLUMNS,
+    HEADER_RHS,
+    HEADER_RANGES,
+    HEADER_BOUNDS,
+    HEADER_SOS,
+    HEADER_ENDATA,
+    HEADER_UNKNOWN,
+)
+
+function Headers(s::String)
+    s = uppercase(s)
+    if s == "ROWS"
+        return HEADER_ROWS
+    elseif s == "COLUMNS"
+        return HEADER_COLUMNS
+    elseif s == "RHS"
+        return HEADER_RHS
+    elseif s == "RANGES"
+        return HEADER_RANGES
+    elseif s == "BOUNDS"
+        return HEADER_BOUNDS
+    elseif s == "SOS"
+        return HEADER_SOS
+    elseif s == "ENDATA"
+        return HEADER_ENDATA
+    elseif s == "NAME"
+        return HEADER_NAME
+    else
+        return HEADER_UNKNOWN
+    end
+end
 
 """
     Base.read!(io::IO, model::FileFormats.MPS.Model)
@@ -554,33 +603,35 @@ function Base.read!(io::IO, model::Model)
         error("Cannot read in file because model is not empty.")
     end
     data = TempMPSModel()
-    header = "NAME"
+    header = HEADER_NAME
     multi_objectives = String[]
     while !eof(io) && header != "ENDATA"
-        line = strip(readline(io))
+        line = string(strip(readline(io)))
         if line == "" || startswith(line, "*")
             # Skip blank lines and comments.
             continue
         end
-        if uppercase(string(line)) in HEADERS
-            header = uppercase(string(line))
+        h = Headers(line)
+        if h != HEADER_UNKNOWN
+            header = h
             continue
         end
         # TODO: split into hard fields based on column indices.
         items = String.(split(line, " ", keepempty = false))
-        if header == "NAME"
-            # A special case. This only happens at the start.
+        if header == HEADER_NAME
             parse_name_line(data, items)
-        elseif header == "ROWS"
+        elseif header == HEADER_ROWS
             multi_obj = parse_rows_line(data, items)
-            multi_obj !== nothing && push!(multi_objectives, multi_obj)
-        elseif header == "COLUMNS"
+            if multi_obj !== nothing
+                push!(multi_objectives, multi_obj)
+            end
+        elseif header == HEADER_COLUMNS
             parse_columns_line(data, items, multi_objectives)
-        elseif header == "RHS"
+        elseif header == HEADER_RHS
             parse_rhs_line(data, items)
-        elseif header == "RANGES"
+        elseif header == HEADER_RANGES
             parse_ranges_line(data, items)
-        elseif header == "BOUNDS"
+        elseif header == HEADER_BOUNDS
             parse_bounds_line(data, items)
         end
     end
@@ -598,7 +649,7 @@ function bounds_to_set(lower, upper)
     elseif lower == upper
         return MOI.EqualTo(upper)
     end
-    return
+    return  # free variable
 end
 
 function copy_to(model::Model, data::TempMPSModel)
@@ -606,25 +657,48 @@ function copy_to(model::Model, data::TempMPSModel)
     variable_map = Dict{String, MOI.VariableIndex}()
     # Add variables.
     for (i, name) in enumerate(data.col_to_name)
-        x = MOI.add_variable(model)
-        variable_map[name] = x
-        MOI.set(model, MOI.VariableName(), x, name)
-        set = bounds_to_set(data.col_lower[i], data.col_upper[i])
-        if set === nothing && data.is_int[i]
+        _add_variable(model, data, variable_map, i, name)
+    end
+    # Set objective.
+    _add_objective(model, data, variable_map)
+    # Add linear constraints.
+    for (j, c_name) in enumerate(data.row_to_name)
+        set = bounds_to_set(data.row_lower[j], data.row_upper[j])
+        if set === nothing
+            error("Expected a non-empty set for $(c_name).")
+        end
+        _add_linear_constraint(model, data, variable_map, j, c_name, set)
+    end
+    return
+end
+
+function _add_variable(model, data, variable_map, i, name)
+    x = MOI.add_variable(model)
+    variable_map[name] = x
+    MOI.set(model, MOI.VariableName(), x, name)
+    set = bounds_to_set(data.col_lower[i], data.col_upper[i])
+    if set === nothing
+        if data.is_int[i]
             # TODO: some solvers may interpret this as binary.
             MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
-        elseif set !== nothing && data.is_int[i]
-            if set == MOI.Interval(0.0, 1.0)
-                MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
-            else
-                MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
-                MOI.add_constraint(model, MOI.SingleVariable(x), set)
-            end
-        elseif set !== nothing
+        else
+            # Free variable
+        end
+    elseif !data.is_int[i]
+        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+    else
+        @assert data.is_int[i]
+        if set == MOI.Interval(0.0, 1.0)
+            MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+        else
+            MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
             MOI.add_constraint(model, MOI.SingleVariable(x), set)
         end
     end
-    # Set objective.
+    return
+end
+
+function _add_objective(model, data, variable_map)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
         model,
@@ -637,26 +711,23 @@ function copy_to(model::Model, data::TempMPSModel)
             0.0,
         )
     )
-    # Add linear constraints.
-    for (j, c_name) in enumerate(data.row_to_name)
-        set = bounds_to_set(data.row_lower[j], data.row_upper[j])
-        if set === nothing
-            error("Expected a non-empty set for $(c_name). Got row=$(row)")
-        end
-        c = MOI.add_constraint(
-            model,
-            MOI.ScalarAffineFunction(
-                [
-                    MOI.ScalarAffineTerm(
-                        coef, variable_map[data.col_to_name[i]]
-                    ) for (i, coef) in data.A[j]
-                ],
-                0.0
-            ),
-            set,
-        )
-        MOI.set(model, MOI.ConstraintName(), c, c_name)
-    end
+    return
+end
+
+function _add_linear_constraint(model, data, variable_map, j, c_name, set)
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(
+            [
+                MOI.ScalarAffineTerm(
+                    coef, variable_map[data.col_to_name[i]]
+                ) for (i, coef) in data.A[j]
+            ],
+            0.0
+        ),
+        set,
+    )
+    MOI.set(model, MOI.ConstraintName(), c, c_name)
     return
 end
 
@@ -684,13 +755,13 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
     if length(items) != 2
         error("Malformed ROWS line: $(join(items, " "))")
     end
-    sense, name = items
+    sense, name = Sense(items[1]), items[2]
     if haskey(data.name_to_row, name)
-        error("Duplicate row encountered: $(line).")
-    elseif sense != "N" && sense != "L" && sense != "G" && sense != "E"
+        error("Duplicate row encountered: $(join(items, " ")).")
+    elseif sense == SENSE_UNKNOWN
         error("Invalid row sense: $(join(items, " "))")
     end
-    if sense == "N"
+    if sense == SENSE_N
         if data.obj_name != ""
             return name  # Detected a duplicate objective. Skip it.
         end
@@ -698,7 +769,7 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
         return
     end
     if name == data.obj_name
-        error("Found row with same name as objective: $(line).")
+        error("Found row with same name as objective: $(join(items, " ")).")
     end
     # Add some default bounds for the constraints.
     push!(data.row_to_name, name)
@@ -706,14 +777,15 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
     data.name_to_row[name] = row
     push!(data.sense, sense)
     push!(data.A, Tuple{Int, Float64}[])
-    if sense == "G"
+    if sense == SENSE_G
         push!(data.row_lower, 0.0)
         push!(data.row_upper, Inf)
         data.row_upper[row] = Inf
-    elseif sense == "L"
+    elseif sense == SENSE_L
         push!(data.row_lower, -Inf)
         push!(data.row_upper, 0.0)
-    elseif sense == "E"
+    else
+        @assert sense == SENSE_E
         push!(data.row_lower, 0.0)
         push!(data.row_upper, 0.0)
     end
@@ -724,16 +796,18 @@ end
 #   COLUMNS
 # ==============================================================================
 
-function parse_single_coefficient(data, row_name::String, column::Int, value)
+function parse_single_coefficient(
+    data, row_name::String, column::Int, value::Float64
+)
     if row_name == data.obj_name
-        data.c[column] += parse(Float64, value)
+        data.c[column] += value
         return
     end
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
     end
-    push!(data.A[row], (column, parse(Float64, value)))
+    push!(data.A[row], (column, value))
     return
 end
 
@@ -777,7 +851,7 @@ function parse_columns_line(
         end
         _add_new_column(data, column_name)
         column = data.name_to_col[column_name]
-        parse_single_coefficient(data, row_name, column, value)
+        parse_single_coefficient(data, row_name, column, parse(Float64, value))
         _set_intorg(data, column, column_name)
     elseif length(items) == 5
         # [column name] [row name] [value] [row name 2] [value 2]
@@ -787,8 +861,12 @@ function parse_columns_line(
         end
         _add_new_column(data, column_name)
         column = data.name_to_col[column_name]
-        parse_single_coefficient(data, row_name_1, column, value_1)
-        parse_single_coefficient(data, row_name_2, column, value_2)
+        parse_single_coefficient(
+            data, row_name_1, column, parse(Float64, value_1)
+        )
+        parse_single_coefficient(
+            data, row_name_2, column, parse(Float64, value_2)
+        )
         _set_intorg(data, column, column_name)
     else
         error("Malformed COLUMNS line: $(join(items, " "))")
@@ -807,15 +885,15 @@ function parse_single_rhs(
     if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
     end
-    if data.sense[row] == "E"
+    if data.sense[row] == SENSE_E
         data.row_upper[row] = value
         data.row_lower[row] = value
-    elseif data.sense[row] == "G"
+    elseif data.sense[row] == SENSE_G
         data.row_lower[row] = value
-    elseif data.sense[row] == "L"
+    elseif data.sense[row] == SENSE_L
         data.row_upper[row] = value
     else
-        @assert data.sense[row] == "N"
+        @assert data.sense[row] == SENSE_N
         error("Cannot have RHS for objective: $(join(items, " "))")
     end
     return
@@ -852,17 +930,16 @@ end
 #         E    |      -      | rhs + range   |     rhs
 # ==============================================================================
 
-function parse_single_range(data, row_name, value)
+function parse_single_range(data, row_name::String, value::Float64)
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
     end
-    value = parse(Float64, value)
-    if data.sense[row] == "G"
+    if data.sense[row] == SENSE_G
         data.row_upper[row] = data.row_lower[row] + abs(value)
-    elseif data.sense[row] == "L"
+    elseif data.sense[row] == SENSE_L
         data.row_lower[row] = data.row_upper[row] - abs(value)
-    elseif data.sense[row] == "E"
+    elseif data.sense[row] == SENSE_E
         if value > 0.0
             data.row_upper[row] = data.row_lower[row] + value
         else
@@ -876,13 +953,13 @@ end
 function parse_ranges_line(data::TempMPSModel, items::Vector{String})
     if length(items) == 3
         # [rhs name] [row name] [value]
-        rhs_name, row_name, value = items
-        parse_single_range(data, row_name, value)
+        _, row_name, value = items
+        parse_single_range(data, row_name, parse(Float64, value))
     elseif length(items) == 5
         # [rhs name] [row name] [value] [row name 2] [value 2]
-        rhs_name, row_name, value, row_name_2, value_2 = items
-        parse_single_range(data, row_name, value)
-        parse_single_range(data, row_name_2, value_2)
+        _, row_name_1, value_1, row_name_2, value_2 = items
+        parse_single_range(data, row_name_1, parse(Float64, value_1))
+        parse_single_range(data, row_name_2, parse(Float64, value_2))
     else
         error("Malformed RANGES line: $(join(items, " "))")
     end
@@ -893,7 +970,7 @@ end
 #   BOUNDS
 # ==============================================================================
 
-function _parse_single_bound(data, column_name, bound_type)
+function _parse_single_bound(data, column_name::String, bound_type::String)
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
         error("Column name $(column_name) not found.")
@@ -910,11 +987,13 @@ function _parse_single_bound(data, column_name, bound_type)
         data.col_upper[col] = 1.0
         data.is_int[col] = true
     else
-        error("Invalid bound type $(bound_type): $(join(items, " "))")
+        error("Invalid bound type $(bound_type): $(column_name)")
     end
 end
 
-function _parse_single_bound(data, column_name, bound_type, value::Float64)
+function _parse_single_bound(
+    data, column_name::String, bound_type::String, value::Float64
+)
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
         error("Column name $(column_name) not found.")
@@ -946,7 +1025,7 @@ function _parse_single_bound(data, column_name, bound_type, value::Float64)
         data.col_upper[col] = 1.0
         data.is_int[col] = true
     else
-        error("Invalid bound type $(bound_type): $(join(items, " "))")
+        error("Invalid bound type $(bound_type): $(column_name)")
     end
 end
 
