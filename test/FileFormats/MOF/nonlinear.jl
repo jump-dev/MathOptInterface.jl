@@ -1,7 +1,7 @@
 function roundtrip_nonlinear_expression(
     expr, variable_to_string, string_to_variable
 )
-    node_list = MOF.Object[]
+    node_list = MOF.OrderedObject[]
     object = MOF.convert_expr_to_mof(expr, node_list, variable_to_string)
     @test MOF.convert_mof_to_expr(object, node_list, string_to_variable) == expr
 end
@@ -60,7 +60,7 @@ end
             :(not_supported_function(x)), node_list, variable_to_string)
         # Test unsupported function for MOF -> Expr.
         @test_throws Exception MOF.convert_mof_to_expr(
-            MOF.Object("head"=>"not_supported_function", "value"=>1),
+            MOF.OrderedObject("head"=>"not_supported_function", "value"=>1),
             node_list, string_to_variable)
         # Test n-ary function with no arguments.
         @test_throws Exception MOF.convert_expr_to_mof(

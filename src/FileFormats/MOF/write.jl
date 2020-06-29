@@ -5,14 +5,14 @@ Write `model` to `io` in the MathOptFormat file format.
 """
 function Base.write(io::IO, model::Model)
     options = get_options(model)
-    object = Object(
+    object = OrderedObject(
         "name"        => "MathOptFormat Model",
-        "version"     => Object(
+        "version"     => OrderedObject(
             "major" => Int(VERSION.major),
             "minor" => Int(VERSION.minor)
         ),
         "variables"   => Object[],
-        "objective"  => Object("sense" => "feasibility"),
+        "objective"  => OrderedObject("sense" => "feasibility"),
         "constraints" => Object[]
     )
     FileFormats.create_unique_names(model, warn=options.warn)
@@ -25,7 +25,7 @@ function Base.write(io::IO, model::Model)
     return
 end
 
-function write_variables(object::Object, model::Model)
+function write_variables(object, model::Model)
     name_map = Dict{MOI.VariableIndex, String}()
     for index in MOI.get(model, MOI.ListOfVariableIndices())
         variable = moi_to_object(index, model)
@@ -36,13 +36,13 @@ function write_variables(object::Object, model::Model)
 end
 
 function write_objective(
-    object::Object, model::Model, name_map::Dict{MOI.VariableIndex, String}
-)
+    object::T, model::Model, name_map::Dict{MOI.VariableIndex, String}
+) where {T <: Object}
     if object["objective"]["sense"] != "feasibility"
         return  # Objective must have been written from NLPBlock.
     end
     sense = MOI.get(model, MOI.ObjectiveSense())
-    object["objective"] = Object("sense" => moi_to_object(sense))
+    object["objective"] = T("sense" => moi_to_object(sense))
     if sense != MOI.FEASIBILITY_SENSE
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
@@ -53,8 +53,9 @@ function write_objective(
     return
 end
 
-function write_constraints(object::Object, model::Model,
-                           name_map::Dict{MOI.VariableIndex, String})
+function write_constraints(
+    object, model::Model, name_map::Dict{MOI.VariableIndex, String}
+)
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             push!(object["constraints"], moi_to_object(index, model, name_map))
@@ -74,7 +75,7 @@ function moi_to_object(index::MOI.VariableIndex, model::Model)
     if name == ""
         error("Variable name for $(index) cannot be blank in an MOF file.")
     end
-    return Object("name" => name)
+    return OrderedObject("name" => name)
 end
 
 function moi_to_object(
@@ -85,7 +86,7 @@ function moi_to_object(
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     name = MOI.get(model, MOI.ConstraintName(), index)
-    object = Object()
+    object = OrderedObject()
     if name != ""
         object["name"] = name
     end
@@ -110,7 +111,7 @@ end
 function moi_to_object(
     foo::MOI.SingleVariable, name_map::Dict{MOI.VariableIndex, String}
 )
-    return Object(
+    return OrderedObject(
         "head" => "SingleVariable",
         "variable" => name_map[foo.variable]
     )
@@ -122,7 +123,7 @@ function moi_to_object(
     foo::MOI.ScalarAffineTerm{Float64},
     name_map::Dict{MOI.VariableIndex, String},
 )
-    return Object(
+    return OrderedObject(
         "coefficient" => foo.coefficient,
         "variable" => name_map[foo.variable_index]
     )
@@ -132,7 +133,7 @@ function moi_to_object(
     foo::MOI.ScalarAffineFunction{Float64},
     name_map::Dict{MOI.VariableIndex, String},
 )
-    return Object(
+    return OrderedObject(
         "head" => "ScalarAffineFunction",
         "terms" => moi_to_object.(foo.terms, Ref(name_map)),
         "constant" => foo.constant,
@@ -143,7 +144,7 @@ function moi_to_object(
     foo::MOI.ScalarQuadraticTerm{Float64},
     name_map::Dict{MOI.VariableIndex, String},
 )
-    return Object(
+    return OrderedObject(
         "coefficient" => foo.coefficient,
         "variable_1" => name_map[foo.variable_index_1],
         "variable_2" => name_map[foo.variable_index_2]
@@ -154,7 +155,7 @@ function moi_to_object(
     foo::MOI.ScalarQuadraticFunction{Float64},
     name_map::Dict{MOI.VariableIndex, String},
 )
-    return Object(
+    return OrderedObject(
         "head" => "ScalarQuadraticFunction",
         "affine_terms" => moi_to_object.(foo.affine_terms, Ref(name_map)),
         "quadratic_terms" => moi_to_object.(foo.quadratic_terms, Ref(name_map)),
@@ -167,7 +168,7 @@ end
 function moi_to_object(
     foo::MOI.VectorOfVariables, name_map::Dict{MOI.VariableIndex, String}
 )
-    return Object(
+    return OrderedObject(
         "head" => "VectorOfVariables",
         "variables" => [name_map[variable] for variable in foo.variables],
     )
@@ -178,7 +179,7 @@ end
 function moi_to_object(
     foo::MOI.VectorAffineTerm, name_map::Dict{MOI.VariableIndex, String}
 )
-    return Object(
+    return OrderedObject(
         "output_index" => foo.output_index,
         "scalar_term" => moi_to_object(foo.scalar_term, name_map),
     )
@@ -187,7 +188,7 @@ end
 function moi_to_object(
     foo::MOI.VectorAffineFunction, name_map::Dict{MOI.VariableIndex, String}
 )
-    return Object(
+    return OrderedObject(
         "head" => "VectorAffineFunction",
         "terms" => moi_to_object.(foo.terms, Ref(name_map)),
         "constants" => foo.constants,
@@ -197,7 +198,7 @@ end
 function moi_to_object(
     foo::MOI.VectorQuadraticTerm, name_map::Dict{MOI.VariableIndex, String}
 )
-    return Object(
+    return OrderedObject(
         "output_index" => foo.output_index,
         "scalar_term" => moi_to_object(foo.scalar_term, name_map),
     )
@@ -206,7 +207,7 @@ end
 function moi_to_object(
     foo::MOI.VectorQuadraticFunction, name_map::Dict{MOI.VariableIndex, String}
 )
-    return Object(
+    return OrderedObject(
         "head" => "VectorQuadraticFunction",
         "affine_terms" => moi_to_object.(foo.affine_terms, Ref(name_map)),
         "quadratic_terms" => moi_to_object.(foo.quadratic_terms, Ref(name_map)),
@@ -229,7 +230,7 @@ function head_name end
 function moi_to_object(
     set::SetType, ::Dict{MOI.VariableIndex, String}
 ) where {SetType}
-    object = Object("head" => head_name(SetType))
+    object = OrderedObject("head" => head_name(SetType))
     for key in fieldnames(SetType)
         object[string(key)] = getfield(set, key)
     end
@@ -284,7 +285,7 @@ function moi_to_object(
     set::MOI.IndicatorSet{I, S}, name_map::Dict{MOI.VariableIndex, String}
 ) where {I, S}
     @assert I == MOI.ACTIVATE_ON_ONE || I == MOI.ACTIVATE_ON_ZERO
-    return Object(
+    return OrderedObject(
         "head" => "IndicatorSet",
         "set" => moi_to_object(set.set, name_map),
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero"

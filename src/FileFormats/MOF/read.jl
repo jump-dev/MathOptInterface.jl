@@ -11,7 +11,7 @@ function Base.read!(io::IO, model::Model)
     if options.validate
         validate(io)
     end
-    object = JSON.parse(io; dicttype=Object)
+    object = JSON.parse(io; dicttype = UnorderedObject)
     file_version = _parse_mof_version(object["version"])
     if file_version > VERSION
         error(
@@ -26,7 +26,7 @@ function Base.read!(io::IO, model::Model)
     return
 end
 
-function read_variables(model::Model, object::Object)
+function read_variables(model::Model, object)
     indices = MOI.add_variables(model, length(object["variables"]))
     name_map = Dict{String, MOI.VariableIndex}()
     for (index, variable) in zip(indices, object["variables"])
@@ -45,7 +45,9 @@ function read_variables(model::Model, object::Object)
 end
 
 function read_objective(
-    model::Model, object::Object, name_map::Dict{String, MOI.VariableIndex}
+    model::Model,
+    object,
+    name_map::Dict{String, MOI.VariableIndex}
 )
     obj = object["objective"]
     sense = read_objective_sense(obj["sense"])
@@ -59,7 +61,9 @@ function read_objective(
 end
 
 function _add_constraint(
-    model::Model, constraint::Object, name_map::Dict{String, MOI.VariableIndex}
+    model::Model,
+    constraint,
+    name_map::Dict{String, MOI.VariableIndex}
 )
     index = MOI.add_constraint(
         model,
@@ -73,7 +77,9 @@ function _add_constraint(
 end
 
 function read_constraints(
-    model::Model, object::Object, name_map::Dict{String, MOI.VariableIndex}
+    model::Model,
+    object,
+    name_map::Dict{String, MOI.VariableIndex}
 )
     for constraint in object["constraints"]
         _add_constraint(model, constraint, name_map)
@@ -93,12 +99,16 @@ end
 
 
 """
-    function_to_moi(x::Object, name_map::Dict{String, MOI.VariableIndex})
+    function_to_moi(
+        x::Object, name_map::Dict{String, MOI.VariableIndex}
+    )
 
-Convert `x` from an OrderedDict representation into a MOI representation.
+Convert `x` from an MOF representation into a MOI representation.
 """
-function function_to_moi(x::Object, name_map)
-    return function_to_moi(Val{Symbol(x["head"])}(), x, name_map)
+function function_to_moi(
+    x::Object, name_map::Dict{String, MOI.VariableIndex}
+)
+    return function_to_moi(Val(Symbol(x["head"])), x, name_map)
 end
 
 function function_to_moi(
@@ -226,31 +236,28 @@ end
 
 # ========== Default fallback ==========
 """
-    set_to_moi(x::OrderedDict)
+    set_to_moi(x::Object)
 
 Convert `x` from an OrderedDict representation into a MOI representation.
 """
-set_to_moi(x::Object) = set_to_moi(Val{Symbol(x["head"])}(), x)
+set_to_moi(x::Object) = set_to_moi(Val(Symbol(x["head"])), x)
 
 """
-    set_info(::Type{Val{HeadName}}) where HeadName
+    set_info(::Val{HeadName}) where HeadName
 
 Return a tuple of the corresponding MOI set and an ordered list of fieldnames.
 
 `HeadName` is a symbol of the string returned by `head_name(set)`.
 
     HeadName = Symbol(head_name(set))
-    typeof(set_info(Val{HeadName})[1]) == typeof(set)
+    typeof(set_info(Val{HeadName}())[1]) == typeof(set)
 """
-function set_info(::Type{Val{SetSymbol}}) where {SetSymbol}
-    error(
-        "Version $(VERSION) of MathOptFormat does not support the set: " *
-        "$(SetSymbol)."
-    )
+function set_info(::Val{S}) where {S}
+    error("Version $(VERSION) of MathOptFormat does not support the set: $S.")
 end
 
-function set_to_moi(::Val{SetSymbol}, object::Object) where {SetSymbol}
-    args = set_info(Val{SetSymbol})
+function set_to_moi(val::Val{S}, object::Object) where {S}
+    args = set_info(val)
     SetType = args[1]
     if length(args) > 1
         return SetType([object[key] for key in args[2:end]]...)
@@ -279,53 +286,53 @@ function set_to_moi(::Val{:IndicatorSet}, object::Object)
 end
 
 # ========== Non-typed scalar sets ==========
-set_info(::Type{Val{:ZeroOne}}) = (MOI.ZeroOne,)
-set_info(::Type{Val{:Integer}}) = (MOI.Integer,)
+set_info(::Val{:ZeroOne}) = (MOI.ZeroOne,)
+set_info(::Val{:Integer}) = (MOI.Integer,)
 
 # ========== Typed scalar sets ==========
-set_info(::Type{Val{:LessThan}}) = (MOI.LessThan, "upper")
-set_info(::Type{Val{:GreaterThan}}) = (MOI.GreaterThan, "lower")
-set_info(::Type{Val{:EqualTo}}) = (MOI.EqualTo, "value")
-set_info(::Type{Val{:Interval}}) = (MOI.Interval, "lower", "upper")
-set_info(::Type{Val{:Semiinteger}}) = (MOI.Semiinteger, "lower", "upper")
-set_info(::Type{Val{:Semicontinuous}}) = (MOI.Semicontinuous, "lower", "upper")
+set_info(::Val{:LessThan}) = (MOI.LessThan, "upper")
+set_info(::Val{:GreaterThan}) = (MOI.GreaterThan, "lower")
+set_info(::Val{:EqualTo}) = (MOI.EqualTo, "value")
+set_info(::Val{:Interval}) = (MOI.Interval, "lower", "upper")
+set_info(::Val{:Semiinteger}) = (MOI.Semiinteger, "lower", "upper")
+set_info(::Val{:Semicontinuous}) = (MOI.Semicontinuous, "lower", "upper")
 
 # ========== Non-typed vector sets ==========
-set_info(::Type{Val{:Zeros}}) = (MOI.Zeros, "dimension")
-set_info(::Type{Val{:Reals}}) = (MOI.Reals, "dimension")
-set_info(::Type{Val{:Nonnegatives}}) = (MOI.Nonnegatives, "dimension")
-set_info(::Type{Val{:Nonpositives}}) = (MOI.Nonpositives, "dimension")
-set_info(::Type{Val{:SecondOrderCone}}) = (MOI.SecondOrderCone, "dimension")
-function set_info(::Type{Val{:RotatedSecondOrderCone}})
+set_info(::Val{:Zeros}) = (MOI.Zeros, "dimension")
+set_info(::Val{:Reals}) = (MOI.Reals, "dimension")
+set_info(::Val{:Nonnegatives}) = (MOI.Nonnegatives, "dimension")
+set_info(::Val{:Nonpositives}) = (MOI.Nonpositives, "dimension")
+set_info(::Val{:SecondOrderCone}) = (MOI.SecondOrderCone, "dimension")
+function set_info(::Val{:RotatedSecondOrderCone})
     return MOI.RotatedSecondOrderCone, "dimension"
 end
-set_info(::Type{Val{:GeometricMeanCone}}) = (MOI.GeometricMeanCone, "dimension")
-set_info(::Type{Val{:NormOneCone}}) = (MOI.NormOneCone, "dimension")
-set_info(::Type{Val{:NormInfinityCone}}) = (MOI.NormInfinityCone, "dimension")
-set_info(::Type{Val{:RelativeEntropyCone}}) = (MOI.RelativeEntropyCone, "dimension")
-set_info(::Type{Val{:NormSpectralCone}}) = (MOI.NormSpectralCone, "row_dim", "column_dim")
-set_info(::Type{Val{:NormNuclearCone}}) = (MOI.NormNuclearCone, "row_dim", "column_dim")
-function set_info(::Type{Val{:RootDetConeTriangle}})
+set_info(::Val{:GeometricMeanCone}) = (MOI.GeometricMeanCone, "dimension")
+set_info(::Val{:NormOneCone}) = (MOI.NormOneCone, "dimension")
+set_info(::Val{:NormInfinityCone}) = (MOI.NormInfinityCone, "dimension")
+set_info(::Val{:RelativeEntropyCone}) = (MOI.RelativeEntropyCone, "dimension")
+set_info(::Val{:NormSpectralCone}) = (MOI.NormSpectralCone, "row_dim", "column_dim")
+set_info(::Val{:NormNuclearCone}) = (MOI.NormNuclearCone, "row_dim", "column_dim")
+function set_info(::Val{:RootDetConeTriangle})
     return MOI.RootDetConeTriangle, "side_dimension"
 end
-function set_info(::Type{Val{:RootDetConeSquare}})
+function set_info(::Val{:RootDetConeSquare})
     return MOI.RootDetConeSquare, "side_dimension"
 end
-function set_info(::Type{Val{:LogDetConeTriangle}})
+function set_info(::Val{:LogDetConeTriangle})
     return MOI.LogDetConeTriangle, "side_dimension"
 end
-function set_info(::Type{Val{:LogDetConeSquare}})
+function set_info(::Val{:LogDetConeSquare})
     return MOI.LogDetConeSquare, "side_dimension"
 end
-function set_info(::Type{Val{:PositiveSemidefiniteConeTriangle}})
+function set_info(::Val{:PositiveSemidefiniteConeTriangle})
     return MOI.PositiveSemidefiniteConeTriangle, "side_dimension"
 end
-function set_info(::Type{Val{:PositiveSemidefiniteConeSquare}})
+function set_info(::Val{:PositiveSemidefiniteConeSquare})
     return MOI.PositiveSemidefiniteConeSquare, "side_dimension"
 end
-set_info(::Type{Val{:ExponentialCone}}) = (MOI.ExponentialCone, )
-set_info(::Type{Val{:DualExponentialCone}}) = (MOI.DualExponentialCone, )
+set_info(::Val{:ExponentialCone}) = (MOI.ExponentialCone, )
+set_info(::Val{:DualExponentialCone}) = (MOI.DualExponentialCone, )
 
 # ========== Typed vector sets ==========
-set_info(::Type{Val{:PowerCone}}) = (MOI.PowerCone, "exponent")
-set_info(::Type{Val{:DualPowerCone}}) = (MOI.DualPowerCone, "exponent")
+set_info(::Val{:PowerCone}) = (MOI.PowerCone, "exponent")
+set_info(::Val{:DualPowerCone}) = (MOI.DualPowerCone, "exponent")

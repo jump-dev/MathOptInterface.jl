@@ -58,7 +58,7 @@ end
         @test_throws Exception MOF.moi_to_object(variable_index, model)
         MOI.FileFormats.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(variable_index, model) ==
-            MOF.Object("name" => "x1")
+            MOF.OrderedObject("name" => "x1")
     end
     @testset "Duplicate variable name" begin
         model = MOF.Model()
@@ -66,11 +66,11 @@ end
         MOI.set(model, MOI.VariableName(), x, "x")
         y = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), y, "x")
-        @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
-        @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x")
+        @test MOF.moi_to_object(x, model) == MOF.OrderedObject("name" => "x")
+        @test MOF.moi_to_object(y, model) == MOF.OrderedObject("name" => "x")
         MOI.FileFormats.create_unique_names(model, warn=true)
-        @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
-        @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x_1")
+        @test MOF.moi_to_object(x, model) == MOF.OrderedObject("name" => "x")
+        @test MOF.moi_to_object(y, model) == MOF.OrderedObject("name" => "x_1")
     end
     @testset "Blank constraint name" begin
         model = MOF.Model()

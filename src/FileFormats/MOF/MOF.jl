@@ -7,7 +7,6 @@ import JSONSchema
 import MathOptInterface
 
 const MOI = MathOptInterface
-const Object = OrderedCollections.OrderedDict{String, Any}
 const SCHEMA_PATH = joinpath(@__DIR__, "v0.4.0.json")
 const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
     VersionNumber(
@@ -16,7 +15,11 @@ const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
     )
 end
 
-function _parse_mof_version(version::Object)
+const OrderedObject = OrderedCollections.OrderedDict{String, Any}
+const UnorderedObject = Dict{String, Any}
+const Object = Union{OrderedObject, UnorderedObject}
+
+function _parse_mof_version(version)
     return VersionNumber(version["major"], version["minor"])
 end
 
