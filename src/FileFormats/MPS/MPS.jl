@@ -16,6 +16,8 @@ MOI.Utilities.@model(Model,
     ()
 )
 
+MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
+
 struct Options
     warn::Bool
 end
@@ -32,7 +34,7 @@ Keyword arguments are:
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
 """
 function Model(;
-    warn::Bool = false
+    warn::Bool = false,
 )
     model = Model{Float64}()
     model.ext[:MPS_OPTIONS] = Options(warn)
@@ -64,7 +66,6 @@ function Base.write(io::IO, model::Model)
         warn = options.warn,
         replacements = Function[s -> replace(s, ' ' => '_')]
     )
-
     ordered_names = String[]
     names = Dict{MOI.VariableIndex, String}()
     for x in MOI.get(model, MOI.ListOfVariableIndices())
@@ -72,7 +73,6 @@ function Base.write(io::IO, model::Model)
         push!(ordered_names, n)
         names[x] = n
     end
-
     write_model_name(io, model)
     write_rows(io, model)
     discovered_columns = write_columns(io, model, ordered_names, names)
@@ -105,12 +105,10 @@ const SET_TYPES = (
     (MOI.Interval{Float64}, 'L'),  # See the note in the RANGES section.
 )
 
-function _write_rows(io, model, set_type, sense_char)
+function _write_rows(io, model, S, sense_char)
     for index in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{
-            MOI.ScalarAffineFunction{Float64}, set_type
-        }()
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}()
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         if row_name == ""
@@ -152,7 +150,6 @@ function list_of_integer_variables(model::Model, names)
 end
 
 function extract_terms(
-    model::Model,
     v_names::Dict{MOI.VariableIndex, String},
     coefficients::Dict{String, Vector{Tuple{String, Float64}}},
     row_name::String,
@@ -171,21 +168,6 @@ function extract_terms(
     return
 end
 
-function extract_terms(
-    model::Model,
-    v_names::Dict{MOI.VariableIndex, String},
-    coefficients::Dict{String, Vector{Tuple{String, Float64}}},
-    row_name::String,
-    func::MOI.SingleVariable,
-    discovered_columns::Set{String},
-    multiplier::Float64 = 1.0,
-)
-    variable_name = v_names[func.variable]
-    push!(coefficients[variable_name], (row_name, multiplier))
-    push!(discovered_columns, variable_name)
-    return
-end
-
 function _collect_coefficients(
     model,
     S,
@@ -200,7 +182,7 @@ function _collect_coefficients(
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         extract_terms(
-            model, v_names, coefficients, row_name, func, discovered_columns
+            v_names, coefficients, row_name, func, discovered_columns
         )
     end
     return
@@ -229,9 +211,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
     obj_func = MOI.get(
         model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
     )
-    extract_terms(
-        model, names, coefficients, "OBJ", obj_func, discovered_columns, s
-    )
+    extract_terms(names, coefficients, "OBJ", obj_func, discovered_columns, s)
     integer_variables = list_of_integer_variables(model, names)
     println(io, "COLUMNS")
     int_open = false
@@ -262,12 +242,10 @@ value(set::MOI.GreaterThan) = set.lower
 value(set::MOI.EqualTo) = set.value
 value(set::MOI.Interval) = set.upper  # See the note in the RANGES section.
 
-function _write_rhs(io, model, set_type, sense_char)
+function _write_rhs(io, model, S, sense_char)
     for index in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{
-            MOI.ScalarAffineFunction{Float64}, set_type
-        }()
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}()
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         print(io, "    rhs       ", rpad(row_name, 8), "  ")
@@ -378,10 +356,6 @@ end
 
 function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.EqualTo)
     return (set.value, set.value, x[3])
-end
-
-function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.Integer)
-    return (x[1], x[2], VTYPE_INTEGER)
 end
 
 function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.ZeroOne)
@@ -601,7 +575,7 @@ function Base.read!(io::IO, model::Model)
     data = TempMPSModel()
     header = HEADER_NAME
     multi_objectives = String[]
-    while !eof(io) && header != "ENDATA"
+    while !eof(io)
         line = string(strip(readline(io)))
         if isempty(line) || startswith(line, "*")
             continue  # Skip blank lines and comments.
@@ -610,6 +584,8 @@ function Base.read!(io::IO, model::Model)
         if h != HEADER_UNKNOWN
             header = h
             continue
+        else
+            # Carry on with the previous header
         end
         # TODO: split into hard fields based on column indices.
         items = String.(split(line, " ", keepempty = false))
@@ -628,6 +604,11 @@ function Base.read!(io::IO, model::Model)
             parse_ranges_line(data, items)
         elseif header == HEADER_BOUNDS
             parse_bounds_line(data, items)
+        elseif header == HEADER_SOS
+            error("TODO(odow): implement parsing of SOS constraints.")
+        else
+            @assert header == HEADER_ENDATA
+            break
         end
     end
     copy_to(model, data)
