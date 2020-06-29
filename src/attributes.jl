@@ -269,8 +269,9 @@ function get end
 get(model::ModelLike, attr::AnyAttribute, idxs::Vector) = get.(model, attr, idxs)
 
 function get(model::ModelLike, attr::AnyAttribute, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+    get_fallback(model, attr, args...)
 end
+get_fallback(model::ModelLike, attr::AnyAttribute, args...) = throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
 
 """
     get!(output, model::ModelLike, args...)
@@ -1348,6 +1349,19 @@ end
 DualStatus() = DualStatus(1)
 _result_index_field(attr::DualStatus) = attr.N
 
+
+# Cost of bridging constrained variable in S
+struct VariableBridgingCost{S <: AbstractSet} <: AbstractModelAttribute 
+end
+get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractScalarSet} = supports_add_constrained_variable(model, S) ? 0.0 : Inf
+get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractVectorSet} = supports_add_constrained_variables(model, S) ? 0.0 : Inf
+
+# Cost of bridging F-in-S constraints
+struct ConstraintBridgingCost{F <: AbstractFunction, S <: AbstractSet} <: AbstractModelAttribute 
+end
+get_fallback(model::ModelLike, ::ConstraintBridgingCost{F, S}) where {F<:AbstractFunction, S<:AbstractSet} = supports_constraint(model, F, S) ? 0.0 : Inf
+
+
 """
     is_set_by_optimize(::AnyAttribute)
 
@@ -1427,6 +1441,8 @@ function is_copyable(::Union{ListOfOptimizerAttributesSet,
                              ListOfConstraintIndices,
                              ListOfConstraints,
                              ConstraintFunction,
-                             ConstraintSet})
+                             ConstraintSet,
+                             VariableBridgingCost,
+                             ConstraintBridgingCost})
     return false
 end
