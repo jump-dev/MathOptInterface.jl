@@ -1,16 +1,22 @@
 # Overload for writing.
-function moi_to_object(foo::Nonlinear, model::Model,
-                       name_map::Dict{MOI.VariableIndex, String})
+function moi_to_object(
+    foo::Nonlinear, name_map::Dict{MOI.VariableIndex, String}
+)
     node_list = Object[]
     foo_object = convert_expr_to_mof(foo.expr, node_list, name_map)
-    return Object("head" => "ScalarNonlinearFunction", "root" => foo_object,
-                  "node_list" => node_list)
+    return Object(
+        "head" => "ScalarNonlinearFunction",
+        "root" => foo_object,
+        "node_list" => node_list,
+    )
 end
 
 # Overload for reading.
 function function_to_moi(
-    ::Val{:ScalarNonlinearFunction}, object::Object, model::Model,
-    name_map::Dict{String, MOI.VariableIndex})
+    ::Val{:ScalarNonlinearFunction},
+    object::Object,
+    name_map::Dict{String, MOI.VariableIndex}
+)
     node_list = Object.(object["node_list"])
     expr = convert_mof_to_expr(object["root"], node_list, name_map)
     return Nonlinear(expr)
@@ -53,8 +59,9 @@ function extract_function_and_set(expr::Expr)
     error("Oops. The constraint $(expr) wasn't recognised.")
 end
 
-function write_nlpblock(object::Object, model::Model,
-                        name_map::Dict{MOI.VariableIndex, String})
+function write_nlpblock(
+    object::Object, model::Model, name_map::Dict{MOI.VariableIndex, String}
+)
     # TODO(odow): is there a better way of checking if the NLPBlock is set?
     nlp_block = try
         MOI.get(model, MOI.NLPBlock())
@@ -70,16 +77,19 @@ function write_nlpblock(object::Object, model::Model,
         sense = MOI.get(model, MOI.ObjectiveSense())
         object["objective"] = Object(
             "sense" => moi_to_object(sense),
-            "function" => moi_to_object(Nonlinear(objective), model, name_map)
+            "function" => moi_to_object(Nonlinear(objective), name_map)
         )
     end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
         constraint = MOI.constraint_expr(nlp_block.evaluator, row)
         (func, set) = extract_function_and_set(constraint)
         func = lift_variable_indices(func)
-        push!(object["constraints"],
-            Object("function" => moi_to_object(Nonlinear(func), model, name_map),
-                   "set"      => moi_to_object(set, model, name_map))
+        push!(
+            object["constraints"],
+            Object(
+                "function" => moi_to_object(Nonlinear(func), name_map),
+                "set"      => moi_to_object(set, name_map)
+            )
         )
     end
 end
@@ -262,8 +272,11 @@ Convert a MathOptFormat node `node` into a Julia expression given a list of
 MathOptFormat nodes in `node_list`. Variable names are mapped through `name_map`
 to their variable index.
 """
-function convert_mof_to_expr(node::Object, node_list::Vector{Object},
-                             name_map::Dict{String, MOI.VariableIndex})
+function convert_mof_to_expr(
+    node::Object,
+    node_list::Vector{Object},
+    name_map::Dict{String, MOI.VariableIndex},
+)
     head = node["head"]
     if head == "real"
         return node["value"]
@@ -288,15 +301,21 @@ function convert_mof_to_expr(node::Object, node_list::Vector{Object},
 end
 
 """
-    convert_expr_to_mof(node::Object, node_list::Vector{Object},
-                        name_map::Dict{MOI.VariableIndex, String})
+    convert_expr_to_mof(
+        node::Object,
+        node_list::Vector{Object},
+        name_map::Dict{MOI.VariableIndex, String}
+    )
 
 Convert a Julia expression into a MathOptFormat representation. Any intermediate
 nodes that are required are appended to `node_list`. Variable indices are mapped
 through `name_map` to their string name.
 """
-function convert_expr_to_mof(expr::Expr, node_list::Vector{Object},
-                             name_map::Dict{MOI.VariableIndex, String})
+function convert_expr_to_mof(
+    expr::Expr,
+    node_list::Vector{Object},
+    name_map::Dict{MOI.VariableIndex, String},
+)
     if expr.head != :call
         error("Expected an expression that was a function. Got $(expr).")
     end
@@ -315,27 +334,33 @@ function convert_expr_to_mof(expr::Expr, node_list::Vector{Object},
 end
 
 # Recursion end for variables.
-function convert_expr_to_mof(variable::MOI.VariableIndex,
-                             node_list::Vector{Object},
-                             name_map::Dict{MOI.VariableIndex, String})
+function convert_expr_to_mof(
+    variable::MOI.VariableIndex,
+    ::Vector{Object},
+    name_map::Dict{MOI.VariableIndex, String},
+)
     return Object("head" => "variable", "name" => name_map[variable])
 end
 
 # Recursion end for real constants.
-function convert_expr_to_mof(value::Real, node_list::Vector{Object},
-                             name_map::Dict{MOI.VariableIndex, String})
+function convert_expr_to_mof(
+    value::Real, ::Vector{Object}, name_map::Dict{MOI.VariableIndex, String}
+)
     return Object("head" => "real", "value" => value)
 end
 
 # Recursion end for complex numbers.
-function convert_expr_to_mof(value::Complex, node_list::Vector{Object},
-                             name_map::Dict{MOI.VariableIndex, String})
-    return Object("head" => "complex", "real" => real(value),
-                  "imag" => imag(value))
+function convert_expr_to_mof(
+    value::Complex, ::Vector{Object}, ::Dict{MOI.VariableIndex, String}
+)
+    return Object(
+        "head" => "complex", "real" => real(value), "imag" => imag(value)
+    )
 end
 
 # Recursion fallback.
-function convert_expr_to_mof(fallback, node_list::Vector{Object},
-                             name_map::Dict{MOI.VariableIndex, String})
+function convert_expr_to_mof(
+    fallback, ::Vector{Object}, ::Dict{MOI.VariableIndex, String}
+)
     error("Unexpected $(typeof(fallback)) encountered: $(fallback).")
 end

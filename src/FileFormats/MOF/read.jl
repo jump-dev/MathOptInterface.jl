@@ -14,9 +14,11 @@ function Base.read!(io::IO, model::Model)
     object = JSON.parse(io; dicttype=Object)
     file_version = _parse_mof_version(object["version"])
     if file_version > VERSION
-        error("Sorry, the file $(filename) can't be read because this library" *
-              " supports v$(VERSION) of MathOptFormat, but the file you are " *
-              "trying to read is v$(file_version).")
+        error(
+            "Sorry, the file can't be read because this library supports " *
+            "v$(VERSION) of MathOptFormat, but the file you are trying to " *
+            "read is v$(file_version)."
+        )
     end
     name_map = read_variables(model, object)
     read_objective(model, object, name_map)
@@ -51,20 +53,30 @@ function read_objective(
     if sense == MOI.FEASIBILITY_SENSE
         return
     end
-    func = function_to_moi(obj["function"], model, name_map)
+    func = function_to_moi(obj["function"], name_map)
     MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
     return
 end
 
-function read_constraints(model::Model, object::Object,
-                          name_map::Dict{String, MOI.VariableIndex})
+function _add_constraint(
+    model::Model, constraint::Object, name_map::Dict{String, MOI.VariableIndex}
+)
+    index = MOI.add_constraint(
+        model,
+        function_to_moi(constraint["function"], name_map),
+        set_to_moi(constraint["set"]),
+    )
+    if haskey(constraint, "name")
+        MOI.set(model, MOI.ConstraintName(), index, constraint["name"])
+    end
+    return
+end
+
+function read_constraints(
+    model::Model, object::Object, name_map::Dict{String, MOI.VariableIndex}
+)
     for constraint in object["constraints"]
-        foo = function_to_moi(constraint["function"], model, name_map)
-        set = set_to_moi(constraint["set"], model, name_map)
-        index = MOI.add_constraint(model, foo, set)
-        if haskey(constraint, "name")
-            MOI.set(model, MOI.ConstraintName(), index, constraint["name"])
-        end
+        _add_constraint(model, constraint, name_map)
     end
 end
 
@@ -81,25 +93,32 @@ end
 
 
 """
-    function_to_moi(x::OrderedDict, model::Model)
+    function_to_moi(x::Object, name_map::Dict{String, MOI.VariableIndex})
 
 Convert `x` from an OrderedDict representation into a MOI representation.
 """
-function function_to_moi(x::Object, args...)
-    val_type = Val{Symbol(x["head"])}()
-    return function_to_moi(val_type, x, args...)
+function function_to_moi(x::Object, name_map)
+    return function_to_moi(Val{Symbol(x["head"])}(), x, name_map)
 end
 
-function function_to_moi(::Val{FunctionSymbol}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex}) where FunctionSymbol
-    error("Version $(VERSION) of MathOptFormat does not support the function:" *
-          " $(FunctionSymbol).")
+function function_to_moi(
+    ::Val{FunctionSymbol},
+    ::Object,
+    ::Dict{String, MOI.VariableIndex},
+) where {FunctionSymbol}
+    error(
+        "Version $(VERSION) of MathOptFormat does not support the function: " *
+        "$(FunctionSymbol)."
+    )
 end
 
 # ========== Non-typed scalar functions ==========
 
-function function_to_moi(::Val{:SingleVariable}, object::Object, model::Model,
-                         name_map::Dict{String, MOI.VariableIndex})
+function function_to_moi(
+    ::Val{:SingleVariable},
+    object::Object,
+    name_map::Dict{String, MOI.VariableIndex},
+)
     return MOI.SingleVariable(name_map[object["variable"]])
 end
 
@@ -110,61 +129,53 @@ end
 # (because it is unnecessary at the JSON level).
 
 function parse_scalar_affine_term(
-        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    object::Object, name_map::Dict{String, MOI.VariableIndex}
+)
     return MOI.ScalarAffineTerm(
-        object["coefficient"],
-        name_map[object["variable"]]
+        object["coefficient"], name_map[object["variable"]]
     )
 end
 
-function parse_scalar_affine_terms(
-        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
-    out_terms = MOI.ScalarAffineTerm{Float64}[]
-    for term in terms
-        push!(out_terms, parse_scalar_affine_term(term, model, name_map))
-    end
-    return out_terms
-end
-
-function function_to_moi(::Val{:ScalarAffineFunction}, object::Object,
-                         model::Model, name_map::Dict{String, MOI.VariableIndex})
-    return MOI.ScalarAffineFunction(
-        parse_scalar_affine_terms(object["terms"], model, name_map),
-        object["constant"]
+function function_to_moi(
+    ::Val{:ScalarAffineFunction},
+    object::Object,
+    name_map::Dict{String, MOI.VariableIndex},
+)
+    return MOI.ScalarAffineFunction{Float64}(
+        parse_scalar_affine_term.(object["terms"], Ref(name_map)),
+        object["constant"],
     )
 end
 
 function parse_scalar_quadratic_term(
-        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    object::Object, name_map::Dict{String, MOI.VariableIndex}
+)
     return MOI.ScalarQuadraticTerm(
         object["coefficient"],
         name_map[object["variable_1"]],
-        name_map[object["variable_2"]]
+        name_map[object["variable_2"]],
     )
 end
 
-function parse_scalar_quadratic_terms(
-        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
-    out_terms = MOI.ScalarQuadraticTerm{Float64}[]
-    for term in terms
-        push!(out_terms, parse_scalar_quadratic_term(term, model, name_map))
-    end
-    return out_terms
-end
-
-function function_to_moi(::Val{:ScalarQuadraticFunction}, object::Object,
-                         model::Model, name_map::Dict{String, MOI.VariableIndex})
-    return MOI.ScalarQuadraticFunction(
-        parse_scalar_affine_terms(object["affine_terms"], model, name_map),
-        parse_scalar_quadratic_terms(object["quadratic_terms"], model, name_map),
-        object["constant"]
+function function_to_moi(
+    ::Val{:ScalarQuadraticFunction},
+    object::Object,
+    name_map::Dict{String, MOI.VariableIndex},
+)
+    return MOI.ScalarQuadraticFunction{Float64}(
+        parse_scalar_affine_term.(object["affine_terms"], Ref(name_map)),
+        parse_scalar_quadratic_term.(object["quadratic_terms"], Ref(name_map)),
+        object["constant"],
     )
 end
 
 # ========== Non-typed vector functions ==========
 
-function function_to_moi(::Val{:VectorOfVariables}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+function function_to_moi(
+    ::Val{:VectorOfVariables},
+    object::Object,
+    name_map::Dict{String, MOI.VariableIndex},
+)
     return MOI.VectorOfVariables(
         [name_map[variable] for variable in object["variables"]]
     )
@@ -173,66 +184,53 @@ end
 # ========== Typed vector functions ==========
 
 function parse_vector_affine_term(
-        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    object::Object, name_map::Dict{String, MOI.VariableIndex}
+)
     return MOI.VectorAffineTerm(
         object["output_index"],
-        parse_scalar_affine_term(object["scalar_term"], model, name_map)
+        parse_scalar_affine_term(object["scalar_term"], name_map),
     )
 end
 
-function parse_vector_affine_terms(
-        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
-    out_terms = MOI.VectorAffineTerm{Float64}[]
-    for term in terms
-        push!(out_terms, parse_vector_affine_term(term, model, name_map))
-    end
-    return out_terms
-end
-
-function function_to_moi(::Val{:VectorAffineFunction}, object::Object, model::Model,
-                         name_map::Dict{String, MOI.VariableIndex})
-    return MOI.VectorAffineFunction(
-        parse_vector_affine_terms(object["terms"], model, name_map),
-        Float64.(object["constants"])
+function function_to_moi(
+    ::Val{:VectorAffineFunction},
+    object::Object,
+    name_map::Dict{String, MOI.VariableIndex},
+)
+    return MOI.VectorAffineFunction{Float64}(
+        parse_vector_affine_term.(object["terms"], Ref(name_map)),
+        Float64.(object["constants"]),
     )
 end
 
 function parse_vector_quadratic_term(
-        object::Object, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    object::Object, name_map::Dict{String, MOI.VariableIndex}
+)
     return MOI.VectorQuadraticTerm(
         object["output_index"],
-        parse_scalar_quadratic_term(object["scalar_term"], model, name_map)
+        parse_scalar_quadratic_term(object["scalar_term"], name_map),
     )
 end
 
-function parse_vector_quadratic_terms(
-        terms, model::Model, name_map::Dict{String, MOI.VariableIndex})
-    out_terms = MOI.VectorQuadraticTerm{Float64}[]
-    for term in terms
-        push!(out_terms, parse_vector_quadratic_term(term, model, name_map))
-    end
-    return out_terms
-end
-
-function function_to_moi(::Val{:VectorQuadraticFunction}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
-    return MOI.VectorQuadraticFunction(
-        parse_vector_affine_terms(object["affine_terms"], model, name_map),
-        parse_vector_quadratic_terms(object["quadratic_terms"], model, name_map),
-        Float64.(object["constants"])
+function function_to_moi(
+    ::Val{:VectorQuadraticFunction},
+    object::Object,
+    name_map::Dict{String, MOI.VariableIndex},
+)
+    return MOI.VectorQuadraticFunction{Float64}(
+        parse_vector_affine_term.(object["affine_terms"], Ref(name_map)),
+        parse_vector_quadratic_term.(object["quadratic_terms"], Ref(name_map)),
+        Float64.(object["constants"]),
     )
 end
 
 # ========== Default fallback ==========
 """
-    set_to_moi(x::OrderedDict, model::Model, name_map::Dict{String, MOI.VariableIndex})
+    set_to_moi(x::OrderedDict)
 
 Convert `x` from an OrderedDict representation into a MOI representation.
 """
-function set_to_moi(x::Object, args...)
-    val_type = Val{Symbol(x["head"])}()
-    return set_to_moi(val_type, x, args...)
-end
+set_to_moi(x::Object) = set_to_moi(Val{Symbol(x["head"])}(), x)
 
 """
     set_info(::Type{Val{HeadName}}) where HeadName
@@ -244,13 +242,14 @@ Return a tuple of the corresponding MOI set and an ordered list of fieldnames.
     HeadName = Symbol(head_name(set))
     typeof(set_info(Val{HeadName})[1]) == typeof(set)
 """
-function set_info(::Type{Val{SetSymbol}}) where SetSymbol
-    error("Version $(VERSION) of MathOptFormat does not support the set: " *
-          "$(SetSymbol).")
+function set_info(::Type{Val{SetSymbol}}) where {SetSymbol}
+    error(
+        "Version $(VERSION) of MathOptFormat does not support the set: " *
+        "$(SetSymbol)."
+    )
 end
 
-function set_to_moi(::Val{SetSymbol}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex}) where SetSymbol
+function set_to_moi(::Val{SetSymbol}, object::Object) where {SetSymbol}
     args = set_info(Val{SetSymbol})
     SetType = args[1]
     if length(args) > 1
@@ -260,20 +259,16 @@ function set_to_moi(::Val{SetSymbol}, object::Object, model::Model,
     end
 end
 
-function set_to_moi(::Val{:SOS1}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+function set_to_moi(::Val{:SOS1}, object::Object)
     return MOI.SOS1(Float64.(object["weights"]))
 end
-function set_to_moi(::Val{:SOS2}, object::Object, model::Model,
-                       name_map::Dict{String, MOI.VariableIndex})
+
+function set_to_moi(::Val{:SOS2}, object::Object)
     return MOI.SOS2(Float64.(object["weights"]))
 end
 
-function set_to_moi(
-    ::Val{:IndicatorSet}, object::Object, model::Model,
-    name_map::Dict{String, MOI.VariableIndex}
-)
-    set = set_to_moi(object["set"], model, name_map)
+function set_to_moi(::Val{:IndicatorSet}, object::Object)
+    set = set_to_moi(object["set"])
     indicator = if object["activate_on"] == "one"
         MOI.ACTIVATE_ON_ONE
     else

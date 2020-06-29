@@ -54,7 +54,7 @@ struct Options
 end
 
 function get_options(m::Model)
-    return get(m.model.ext, :MOF_OPTIONS, Options(false, true, false))
+    return get(m.model.ext, :MOF_OPTIONS, Options(false, false, false))
 end
 
 """
@@ -67,13 +67,14 @@ Keyword arguments are:
  - `print_compact::Bool=false`: print the JSON file in a compact format without
    spaces or newlines.
 
- - `validate::Bool=true`: validate each file prior to reading against the MOF
-   schema
+ - `validate::Bool=false`: validate each file prior to reading against the MOF
+   schema. Defaults to `false` because this can take a long time for large
+   models.
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed
 """
 function Model(;
-    print_compact::Bool = false, validate::Bool = true, warn::Bool = false
+    print_compact::Bool = false, validate::Bool = false, warn::Bool = false
 )
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
     model.model.ext[:MOF_OPTIONS] = Options(print_compact, validate, warn)
