@@ -540,27 +540,39 @@ end
     HEADER_UNKNOWN,
 )
 
-function Headers(s::String)
-    s = uppercase(s)
-    if s == "ROWS"
-        return HEADER_ROWS
-    elseif s == "COLUMNS"
-        return HEADER_COLUMNS
-    elseif s == "RHS"
-        return HEADER_RHS
-    elseif s == "RANGES"
-        return HEADER_RANGES
-    elseif s == "BOUNDS"
-        return HEADER_BOUNDS
-    elseif s == "SOS"
-        return HEADER_SOS
-    elseif s == "ENDATA"
-        return HEADER_ENDATA
-    elseif s == "NAME"
-        return HEADER_NAME
-    else
-        return HEADER_UNKNOWN
+# Headers(s) gets called _alot_ (on every line), so we try very hard to be
+# efficient.]
+function Headers(s::AbstractString)
+    if length(s) == 3
+        x = first(s)
+        if (x == 'R' || x == 'r') && uppercase(s) == "RHS"
+            return HEADER_RHS
+        elseif (x == 'S' || x == 's') && uppercase(s) == "SOS"
+            return HEADER_SOS
+        end
+    elseif length(s) == 4
+        x = first(s)
+        if (x == 'R' || x == 'r') && uppercase(s) == "ROWS"
+            return HEADER_ROWS
+        # elseif (x == 'N' || x == 'n') && uppercase(s) == "NAME"
+        #     return HEADER_NAME
+        end
+    elseif length(s) == 6
+        x = first(s)
+        if (x == 'R' || x == 'r') && uppercase(s) == "RANGES"
+            return HEADER_RANGES
+        elseif (x == 'B' || x == 'b') && uppercase(s) == "BOUNDS"
+            return HEADER_BOUNDS
+        elseif (x == 'E' || x == 'e') && uppercase(s) == "ENDATA"
+            return HEADER_ENDATA
+        end
+    elseif length(s) == 7
+        x = first(s)
+        if (x == 'C' || x == 'c') && (uppercase(s) == "COLUMNS")
+            return HEADER_COLUMNS
+        end
     end
+    return HEADER_UNKNOWN
 end
 
 """
@@ -577,7 +589,7 @@ function Base.read!(io::IO, model::Model)
     multi_objectives = String[]
     while !eof(io)
         line = string(strip(readline(io)))
-        if isempty(line) || startswith(line, "*")
+        if isempty(line) || first(line) == '*'
             continue  # Skip blank lines and comments.
         end
         h = Headers(line)
@@ -588,7 +600,7 @@ function Base.read!(io::IO, model::Model)
             # Carry on with the previous header
         end
         # TODO: split into hard fields based on column indices.
-        items = String.(split(line, " ", keepempty = false))
+        items = String.(split(line, " "; keepempty = false))
         if header == HEADER_NAME
             parse_name_line(data, items)
         elseif header == HEADER_ROWS
@@ -798,12 +810,14 @@ function parse_columns_line(
     if length(items) == 3
         # [column name] [row name] [value]
         column_name, row_name, value = items
-        if uppercase(row_name) == "'MARKER'" && uppercase(value) == "'INTORG'"
-            data.intorg_flag = true
-            return
-        elseif uppercase(row_name) == "'MARKER'" && uppercase(value) == "'INTEND'"
-            data.intorg_flag = false
-            return
+        if row_name == "'MARKER'"
+            if value == "'INTORG'"
+                data.intorg_flag = true
+                return
+            elseif value == "'INTEND'"
+                data.intorg_flag = false
+                return
+            end
         elseif row_name in multi_objectives
             return
         end
