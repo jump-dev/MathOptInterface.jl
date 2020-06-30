@@ -95,6 +95,41 @@ function read_objective_sense(sense::String)
     end
 end
 
+macro head_to_val(f, arg1, args...)
+    head = gensym()
+    body = Expr(
+        :if,
+        Expr(:call, :(==), head, string(arg1)),
+        Expr(:return, Val(arg1))
+    )
+    leaf = body
+    for arg in args
+        new_expr = Expr(
+            :elseif,
+            Expr(:call, :(==), head, string(arg)),
+            Expr(:return, Val(arg))
+        )
+        push!(leaf.args, new_expr)
+        leaf = new_expr
+    end
+    push!(leaf.args, Expr(:return, Val(head)))
+    quote
+        function $(esc(f))($head::String)
+            $body
+        end
+    end
+end
+
+@head_to_val(
+    head_to_function,
+    SingleVariable,
+    VectorOfVariables,
+    ScalarAffineFunction,
+    ScalarQuadraticFunction,
+    VectorAffineFunction,
+    VectorQuadraticFunction,
+    ScalarNonlinearFunction,
+)
 
 """
     function_to_moi(
@@ -106,7 +141,8 @@ Convert `x` from an MOF representation into a MOI representation.
 function function_to_moi(
     x::Object, name_map::Dict{String, MOI.VariableIndex}
 )
-    return function_to_moi(Val(Symbol(x["head"]::String)), x, name_map)
+    val = head_to_function(x["head"]::String)
+    return function_to_moi(val, x, name_map)
 end
 
 function function_to_moi(
@@ -233,12 +269,50 @@ function function_to_moi(
 end
 
 # ========== Default fallback ==========
+
+@head_to_val(
+    head_to_set,
+    SOS1,
+    SOS2,
+    IndicatorSet,
+    ZeroOne,
+    Integer,
+    LessThan,
+    GreaterThan,
+    EqualTo,
+    Interval,
+    Semiinteger,
+    Semicontinuous,
+    Zeros,
+    Reals,
+    Nonnegatives,
+    Nonpositives,
+    SecondOrderCone,
+    RotatedSecondOrderCone,
+    GeometricMeanCone,
+    NormOneCone,
+    NormInfinityCone,
+    RelativeEntropyCone,
+    NormSpectralCone,
+    NormNuclearCone,
+    RootDetConeTriangle,
+    RootDetConeSquare,
+    LogDetConeTriangle,
+    LogDetConeSquare,
+    PositiveSemidefiniteConeTriangle,
+    PositiveSemidefiniteConeSquare,
+    ExponentialCone,
+    DualExponentialCone,
+    PowerCone,
+    DualPowerCone,
+)
+
 """
     set_to_moi(x::Object)
 
 Convert `x` from an OrderedDict representation into a MOI representation.
 """
-set_to_moi(x::Object) = set_to_moi(Val(Symbol(x["head"]::String)), x)
+set_to_moi(x::Object) = set_to_moi(head_to_set(x["head"]::String), x)
 
 """
     set_info(::Val{HeadName}) where HeadName
