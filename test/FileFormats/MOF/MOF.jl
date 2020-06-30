@@ -15,7 +15,7 @@ struct UnsupportedSet <: MOI.AbstractSet end
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
 function test_model_equality(model_string, variables, constraints; suffix="")
-    model = MOF.Model()
+    model = MOF.Model(validate = true)
     MOIU.loadfromstring!(model, model_string)
     MOI.write_to_file(model, TEST_MOF_FILE * suffix)
     model_2 = MOF.Model()
@@ -99,24 +99,24 @@ end
 end
 @testset "round trips" begin
     @testset "Empty model" begin
-        model = MOF.Model()
+        model = MOF.Model(validate = true)
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model()
+        model_2 = MOF.Model(validate = true)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, String[], String[])
     end
     @testset "FEASIBILITY_SENSE" begin
-        model = MOF.Model(validate=false)
+        model = MOF.Model(validate = true)
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model(validate=false)
+        model_2 = MOF.Model(validate = true)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, ["x"], String[])
     end
     @testset "Empty function term" begin
-        model = MOF.Model()
+        model = MOF.Model(validate = true)
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         c = MOI.add_constraint(model,
@@ -125,7 +125,7 @@ end
         )
         MOI.set(model, MOI.ConstraintName(), c, "c")
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model()
+        model_2 = MOF.Model(validate = true)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, ["x"], ["c"])
     end
