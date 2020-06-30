@@ -272,9 +272,6 @@ end
 
 @head_to_val(
     head_to_set,
-    SOS1,
-    SOS2,
-    IndicatorSet,
     ZeroOne,
     Integer,
     LessThan,
@@ -305,6 +302,9 @@ end
     DualExponentialCone,
     PowerCone,
     DualPowerCone,
+    SOS1,
+    SOS2,
+    IndicatorSet,
 )
 
 """
@@ -314,28 +314,136 @@ Convert `x` from an OrderedDict representation into a MOI representation.
 """
 set_to_moi(x::Object) = set_to_moi(head_to_set(x["head"]::String), x)
 
-"""
-    set_info(::Val{HeadName}) where HeadName
+# ========== Non-typed scalar sets ==========
 
-Return a tuple of the corresponding MOI set and an ordered list of fieldnames.
-
-`HeadName` is a symbol of the string returned by `head_name(set)`.
-
-    HeadName = Symbol(head_name(set))
-    typeof(set_info(Val{HeadName}())[1]) == typeof(set)
-"""
-function set_info(::Val{S}) where {S}
-    error("Version $(VERSION) of MathOptFormat does not support the set: $S.")
+function set_to_moi(::Val{:ZeroOne}, ::Object)
+    return MOI.ZeroOne()
 end
 
-function set_to_moi(val::Val{S}, object::Object) where {S}
-    args = set_info(val)
-    SetType = args[1]
-    if length(args) > 1
-        return SetType([object[key] for key in args[2:end]]...)
-    else
-        return SetType()
-    end
+function set_to_moi(::Val{:Integer}, ::Object)
+    return MOI.Integer()
+end
+
+# ========== Typed scalar sets ==========
+
+function set_to_moi(::Val{:LessThan}, object::Object)
+    return MOI.LessThan(object["upper"])
+end
+
+function set_to_moi(::Val{:GreaterThan}, object::Object)
+    return MOI.GreaterThan(object["lower"])
+end
+
+function set_to_moi(::Val{:EqualTo}, object::Object)
+    return MOI.EqualTo(object["value"])
+end
+
+function set_to_moi(::Val{:Interval}, object::Object)
+    return MOI.Interval(object["lower"], object["upper"])
+end
+
+function set_to_moi(::Val{:Semiinteger}, object::Object)
+    return MOI.Semiinteger(object["lower"], object["upper"])
+end
+
+function set_to_moi(::Val{:Semicontinuous}, object::Object)
+    return MOI.Semicontinuous(object["lower"], object["upper"])
+end
+
+# ========== Non-typed vector sets ==========
+
+function set_to_moi(::Val{:Zeros}, object::Object)
+    return MOI.Zeros(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:Reals}, object::Object)
+    return MOI.Reals(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:Nonnegatives}, object::Object)
+    return MOI.Nonnegatives(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:Nonpositives}, object::Object)
+    return MOI.Nonpositives(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:SecondOrderCone}, object::Object)
+    return MOI.SecondOrderCone(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:RotatedSecondOrderCone}, object::Object)
+    return MOI.RotatedSecondOrderCone(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:GeometricMeanCone}, object::Object)
+    return MOI.GeometricMeanCone(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:NormOneCone}, object::Object)
+    return MOI.NormOneCone(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:NormInfinityCone}, object::Object)
+    return MOI.NormInfinityCone(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:RelativeEntropyCone}, object::Object)
+    return MOI.RelativeEntropyCone(object["dimension"]::Int)
+end
+
+function set_to_moi(::Val{:NormSpectralCone}, object::Object)
+    return MOI.NormSpectralCone(
+        object["row_dim"]::Int, object["column_dim"]::Int
+    )
+end
+
+function set_to_moi(::Val{:NormNuclearCone}, object::Object)
+    return MOI.NormNuclearCone(
+        object["row_dim"]::Int, object["column_dim"]::Int
+    )
+end
+
+function set_to_moi(::Val{:RootDetConeTriangle}, object::Object)
+    return MOI.RootDetConeTriangle(object["side_dimension"]::Int)
+end
+
+function set_to_moi(::Val{:RootDetConeSquare}, object::Object)
+    return MOI.RootDetConeSquare(object["side_dimension"]::Int)
+end
+
+function set_to_moi(::Val{:LogDetConeTriangle}, object::Object)
+    return MOI.LogDetConeTriangle(object["side_dimension"]::Int)
+end
+
+function set_to_moi(::Val{:LogDetConeSquare}, object::Object)
+    return MOI.LogDetConeSquare(object["side_dimension"]::Int)
+end
+
+function set_to_moi(::Val{:PositiveSemidefiniteConeTriangle}, object::Object)
+    return MOI.PositiveSemidefiniteConeTriangle(object["side_dimension"]::Int)
+end
+
+function set_to_moi(::Val{:PositiveSemidefiniteConeSquare}, object::Object)
+    return MOI.PositiveSemidefiniteConeSquare(object["side_dimension"]::Int)
+end
+
+function set_to_moi(::Val{:ExponentialCone}, ::Object)
+    return MOI.ExponentialCone()
+end
+
+function set_to_moi(::Val{:DualExponentialCone}, ::Object)
+    return MOI.DualExponentialCone()
+end
+
+# ========== Typed vector sets ==========
+
+function set_to_moi(::Val{:PowerCone}, object::Object)
+    return MOI.PowerCone(object["exponent"]::Float64)
+end
+
+function set_to_moi(::Val{:DualPowerCone}, object::Object)
+    return MOI.DualPowerCone(object["exponent"]::Float64)
 end
 
 function set_to_moi(::Val{:SOS1}, object::Object)
@@ -356,55 +464,3 @@ function set_to_moi(::Val{:IndicatorSet}, object::Object)
     end
     return MOI.IndicatorSet{indicator}(set)
 end
-
-# ========== Non-typed scalar sets ==========
-set_info(::Val{:ZeroOne}) = (MOI.ZeroOne,)
-set_info(::Val{:Integer}) = (MOI.Integer,)
-
-# ========== Typed scalar sets ==========
-set_info(::Val{:LessThan}) = (MOI.LessThan, "upper")
-set_info(::Val{:GreaterThan}) = (MOI.GreaterThan, "lower")
-set_info(::Val{:EqualTo}) = (MOI.EqualTo, "value")
-set_info(::Val{:Interval}) = (MOI.Interval, "lower", "upper")
-set_info(::Val{:Semiinteger}) = (MOI.Semiinteger, "lower", "upper")
-set_info(::Val{:Semicontinuous}) = (MOI.Semicontinuous, "lower", "upper")
-
-# ========== Non-typed vector sets ==========
-set_info(::Val{:Zeros}) = (MOI.Zeros, "dimension")
-set_info(::Val{:Reals}) = (MOI.Reals, "dimension")
-set_info(::Val{:Nonnegatives}) = (MOI.Nonnegatives, "dimension")
-set_info(::Val{:Nonpositives}) = (MOI.Nonpositives, "dimension")
-set_info(::Val{:SecondOrderCone}) = (MOI.SecondOrderCone, "dimension")
-function set_info(::Val{:RotatedSecondOrderCone})
-    return MOI.RotatedSecondOrderCone, "dimension"
-end
-set_info(::Val{:GeometricMeanCone}) = (MOI.GeometricMeanCone, "dimension")
-set_info(::Val{:NormOneCone}) = (MOI.NormOneCone, "dimension")
-set_info(::Val{:NormInfinityCone}) = (MOI.NormInfinityCone, "dimension")
-set_info(::Val{:RelativeEntropyCone}) = (MOI.RelativeEntropyCone, "dimension")
-set_info(::Val{:NormSpectralCone}) = (MOI.NormSpectralCone, "row_dim", "column_dim")
-set_info(::Val{:NormNuclearCone}) = (MOI.NormNuclearCone, "row_dim", "column_dim")
-function set_info(::Val{:RootDetConeTriangle})
-    return MOI.RootDetConeTriangle, "side_dimension"
-end
-function set_info(::Val{:RootDetConeSquare})
-    return MOI.RootDetConeSquare, "side_dimension"
-end
-function set_info(::Val{:LogDetConeTriangle})
-    return MOI.LogDetConeTriangle, "side_dimension"
-end
-function set_info(::Val{:LogDetConeSquare})
-    return MOI.LogDetConeSquare, "side_dimension"
-end
-function set_info(::Val{:PositiveSemidefiniteConeTriangle})
-    return MOI.PositiveSemidefiniteConeTriangle, "side_dimension"
-end
-function set_info(::Val{:PositiveSemidefiniteConeSquare})
-    return MOI.PositiveSemidefiniteConeSquare, "side_dimension"
-end
-set_info(::Val{:ExponentialCone}) = (MOI.ExponentialCone, )
-set_info(::Val{:DualExponentialCone}) = (MOI.DualExponentialCone, )
-
-# ========== Typed vector sets ==========
-set_info(::Val{:PowerCone}) = (MOI.PowerCone, "exponent")
-set_info(::Val{:DualPowerCone}) = (MOI.DualPowerCone, "exponent")
