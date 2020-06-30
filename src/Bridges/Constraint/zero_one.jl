@@ -14,7 +14,7 @@ function bridge_constraint(::Type{ZeroOneBridge{T}}, model::MOI.ModelLike,
                            f::MOI.SingleVariable, ::MOI.ZeroOne) where {T <: Real}
     interval_index = MOI.add_constraint(model, f, MOI.Interval{T}(zero(T), one(T)))
     integer_index = MOI.add_constraint(model, f, MOI.Integer())
-    return ZeroOneBridge{T}(f.variable, interval_index, integer_index)
+    return ZeroOneBridge{T}(interval_index, integer_index)
 end
 
 function MOIB.added_constraint_types(::Type{<:ZeroOneBridge{T}}) where {T}
