@@ -631,19 +631,16 @@ end
 function copy_to(model::Model, data::TempMPSModel)
     MOI.set(model, MOI.Name(), data.name)
     variable_map = Dict{String, MOI.VariableIndex}()
-    # Add variables.
     for (i, name) in enumerate(data.col_to_name)
         _add_variable(model, data, variable_map, i, name)
     end
-    # Set objective.
     _add_objective(model, data, variable_map)
-    # Add linear constraints.
     for (j, c_name) in enumerate(data.row_to_name)
         set = bounds_to_set(data.row_lower[j], data.row_upper[j])
-        if set === nothing
-            error("Expected a non-empty set for $(c_name).")
+        if set !== nothing
+            _add_linear_constraint(model, data, variable_map, j, c_name, set)
         end
-        _add_linear_constraint(model, data, variable_map, j, c_name, set)
+        # `else` is a free constraint. Don't add it.
     end
     return
 end
@@ -758,9 +755,7 @@ end
 function parse_single_coefficient(
     data, row_name::String, column::Int, value::Float64
 )
-    if iszero(value)
-        return
-    elseif row_name == data.obj_name
+    if row_name == data.obj_name
         data.c[column] += value
         return
     end
