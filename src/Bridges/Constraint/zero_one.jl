@@ -24,6 +24,8 @@ function MOIB.added_constraint_types(::Type{<:ZeroOneBridge{T}}) where {T}
             ]
 end
 
+MOIB.added_constrained_variable_types(::Type{<:ZeroOneBridge}) = Tuple{DataType}[]
+
 function concrete_bridge_type(::Type{<:ZeroOneBridge{T}},
                               ::Type{MOI.SingleVariable},
                               ::Type{MOI.ZeroOne}) where {T}
