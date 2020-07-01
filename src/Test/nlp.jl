@@ -3,6 +3,10 @@ const VI = MOI.VariableIndex
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
     enable_hessian_vector_product::Bool
+    function HS071(enable_hessian::Bool,
+                   enable_hessian_vector_product::Bool=false)
+        return new(enable_hessian, enable_hessian_vector_product)
+    end
 end
 
 # hs071
@@ -241,7 +245,7 @@ function hs071test_template(
 end
 
 function hs071_test(model, config)
-    return hs071test_template(model, config, HS071(true, false))
+    return hs071test_template(model, config, HS071(true))
 end
 
 function hs071_no_hessian_test(model, config)
