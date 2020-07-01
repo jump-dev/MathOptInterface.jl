@@ -182,29 +182,44 @@ function debug_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
     add_unsupported(b.graph, node, variables, constraints, objectives)
     print_unsupported(io, b, _sort(variables), _sort(constraints), _sort(objectives))
 end
+
+const UNSUPPORTED_MESSAGE = " are not supported and cannot be bridged into supported" *
+    " constrained variables and constraints. See details below:"
+
+function debug(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet}; io::IO = Base.stdout)
+    if (S <: MOI.AbstractScalarSet && MOI.supports_add_constrained_variable(b, S)) ||
+        (S <: MOI.AbstractVectorSet && MOI.supports_add_constrained_variables(b, S))
+        MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported.\n")
+    else
+        MOIU.print_with_acronym(io, "Constrained variables in `$S`")
+        println(io, UNSUPPORTED_MESSAGE)
+        debug_unsupported(io, b, node(b, S))
+    end
+end
+
+"""
+    debug_supports_add_constrained_variable(
+        b::LazyBridgeOptimizer,
+        S::Type{<:MOI.AbstractSet};
+        io::IO = Base.stdout
+    )
+
+Prints to `io` explanations for the value of
+[`MOI.supports_add_constrained_variable`](@ref) with the same arguments.
+"""
+function debug_supports_add_constrained_variable(
+    b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet}; kws...)
+    debug(b, S; kws...)
+end
+
 function debug(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
                S::Type{<:MOI.AbstractSet}; io::IO = Base.stdout)
     if MOI.supports_constraint(b, F, S)
-        if F == MOIU.variable_function_type(S)
-            # This may be thanks to a variable bridge so `F`-in-`S` constraints
-            # are maybe not supported but constrained variables in `S` are
-            # definitely supported.
-            MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported.\n")
-        else
-            MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported.\n")
-        end
+        MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported.\n")
     else
-        message = " are not supported and cannot be bridged into supported" *
-            " constrained variables and constraints. See details below:"
-        if F == MOIU.variable_function_type(S)
-            MOIU.print_with_acronym(io, "Constrained variables in `$S`")
-            println(io, message)
-            debug_unsupported(io, b, node(b, S))
-        else
-            MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints")
-            println(io, message)
-            debug_unsupported(io, b, node(b, F, S))
-        end
+        MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints")
+        println(io, UNSUPPORTED_MESSAGE)
+        debug_unsupported(io, b, node(b, F, S))
     end
 end
 

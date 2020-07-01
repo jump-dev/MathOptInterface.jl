@@ -181,7 +181,7 @@ end
 MOI.add_variables(model::AbstractConstrainedVariablesModel, n) = MOI.add_variables(model.inner, n)
 MOI.add_variable(model::AbstractConstrainedVariablesModel) = MOI.add_variable(model.inner)
 
-function MOI.add_constraint(model::AbstractConstrainedVariablesModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+function MOI.add_constraint(model::AbstractConstrainedVariablesModel, f::MOI.AbstractFunction, s::MOI.AbstractSet)
     ci = MOI.add_constraint(model.inner, f, s)
     push!(model.constraintIndices, ci)
     return ci
@@ -209,6 +209,8 @@ MOI.supports_add_constrained_variables(::ReverseOrderConstrainedVariablesModel, 
 MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = false
 MOI.supports_add_constrained_variables(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = true
 
+MOI.supports_constraint(::OrderConstrainedVariablesModel, ::Type{MOI.VectorAffineFunction{Float64}}, ::Type{MOI.Nonnegatives}) = true
+MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.VectorAffineFunction{Float64}}, ::Type{MOI.Nonpositives}) = true
 
 MOI.supports_constraint(::OrderConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.GreaterThan}) = true
 MOI.supports_add_constrained_variable(::OrderConstrainedVariablesModel, ::Type{<:MOI.GreaterThan}) = false
@@ -219,7 +221,6 @@ MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.Sing
 MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, ::Type{<:MOI.GreaterThan}) = true
 MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.LessThan}) = true
 MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, ::Type{<:MOI.LessThan}) = false
-
 
 @testset "Create variables using supports_add_constrained_variable(s) (#987)" begin
     # With vectors
@@ -238,7 +239,55 @@ MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, :
     @test typeof(c1) == typeof(dest.constraintIndices[1])
     @test typeof(c2) == typeof(dest.constraintIndices[2])
 
+    b, cb = MOI.add_constrained_variables(src, MOI.Nonnegatives(2))
+    c3 = MOI.add_constraint(src, b, MOI.Zeros(2))
 
+    d, cd = MOI.add_constrained_variables(src, MOI.Zeros(2))
+    c4 = MOI.add_constraint(src, d, MOI.Nonpositives(2))
+
+    dest = OrderConstrainedVariablesModel()
+    bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
+    @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
+        (MOI.VectorOfVariables, MOI.Zeros),
+        (MOI.VectorOfVariables, MOI.Nonnegatives),
+        (MOI.VectorOfVariables, MOI.Nonpositives)
+    ]
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) == 0.0
+    @test MOI.supports_constraint(bridged_dest, MOI.VectorOfVariables, MOI.Nonnegatives)
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables, MOI.Nonnegatives}()) == 0.0
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonpositives)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    @test MOI.supports_constraint(bridged_dest, MOI.VectorOfVariables, MOI.Nonpositives)
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables, MOI.Nonpositives}()) == 1.0
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Zeros)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Zeros}()) == 1.0
+    @test MOI.supports_constraint(bridged_dest, MOI.VectorOfVariables, MOI.Zeros)
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables, MOI.Zeros}()) == 2.0
+    index_map = MOI.copy_to(bridged_dest, src)
+    @test length(dest.constraintIndices) == 4
+
+    dest = ReverseOrderConstrainedVariablesModel()
+    bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
+    @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
+        (MOI.VectorOfVariables, MOI.Zeros),
+        (MOI.VectorOfVariables, MOI.Nonpositives),
+        (MOI.VectorOfVariables, MOI.Nonnegatives)
+    ]
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) == 2.0
+    @test MOI.supports_constraint(bridged_dest, MOI.VectorOfVariables, MOI.Nonnegatives)
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables, MOI.Nonnegatives}()) == 1.0
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonpositives)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 0.0
+    @test MOI.supports_constraint(bridged_dest, MOI.VectorOfVariables, MOI.Nonpositives)
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables, MOI.Nonpositives}()) == 1.0
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Zeros)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Zeros}()) == 1.0
+    @test MOI.supports_constraint(bridged_dest, MOI.VectorOfVariables, MOI.Zeros)
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables, MOI.Zeros}()) == 3.0
+    index_map = MOI.copy_to(bridged_dest, src)
+    @test length(dest.constraintIndices) == 4
 
     # With single variables
     src = MOIU.Model{Float64}()
@@ -253,6 +302,26 @@ MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, :
 
     dest = ReverseOrderConstrainedVariablesModel()
     index_map = MOI.copy_to(dest, src)
+    @test typeof(c1) == typeof(dest.constraintIndices[1])
+    @test typeof(c2) == typeof(dest.constraintIndices[2])
+
+    dest = OrderConstrainedVariablesModel()
+    bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.LessThan{Float64}}()) == 0.0
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.SingleVariable, MOI.LessThan{Float64}}()) == 2.0
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.GreaterThan{Float64}}()) == 1.0
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == 0.0
+    index_map = MOI.copy_to(bridged_dest, src)
+    @test typeof(c1) == typeof(dest.constraintIndices[2])
+    @test typeof(c2) == typeof(dest.constraintIndices[1])
+
+    dest = ReverseOrderConstrainedVariablesModel()
+    bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.LessThan{Float64}}()) == 1.0
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.SingleVariable, MOI.LessThan{Float64}}()) == 0.0
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.GreaterThan{Float64}}()) == 0.0
+    @test MOI.get(bridged_dest, MOI.ConstraintBridgingCost{MOI.SingleVariable, MOI.GreaterThan{Float64}}()) == 2.0
+    index_map = MOI.copy_to(bridged_dest, src)
     @test typeof(c1) == typeof(dest.constraintIndices[1])
     @test typeof(c2) == typeof(dest.constraintIndices[2])
 end
