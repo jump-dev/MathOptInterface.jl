@@ -1324,7 +1324,13 @@ const BRIDGED = MOI.instantiate(OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float6
 const CONFIG = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
 
 @testset "Unit" begin
-    MOIT.unittest(BRIDGED, CONFIG)
+    # Test all the functions included in dictionary `MOI.Test.unittests`,
+    # except functions "number_threads" and "solve_qcp_edge_cases."
+    MOIT.unittest(
+        BRIDGED, 
+        CONFIG, 
+        ["number_threads", "solve_qcp_edge_cases"]
+    ) 
 end
 
 @testset "Modification" begin
@@ -1343,6 +1349,17 @@ end
     MOIT.intconictest(BRIDGED, CONFIG)
 end
 ```
+
+Test functions like `MOI.Test.unittest` and `MOI.Test.modificationtest` are 
+wrappers around corresponding dictionaries `MOI.Test.unittests` and 
+`MOI.Test.modificationtests`. The keys of each dictionary (strings describing 
+the test) map to functions that take two arguments: an optimizer and a 
+`MOI.Test.TestConfig` object. Exclude tests by passing a vector of strings 
+corresponding to the test keys you want to exclude as the third positional 
+argument to the test function (e.g., `MOI.Test.unittest`). 
+    
+Print a list of all keys using `println.(keys(MOI.Test.unittests))`
+
 The optimizer `BRIDGED` constructed with [`instantiate`](@ref)
 automatically bridges constraints that are not supported by `OPTIMIZER`
 using the bridges listed in [Bridges](@ref). It is recommended for an
