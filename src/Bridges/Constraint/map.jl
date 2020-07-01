@@ -9,16 +9,19 @@ struct Map <: AbstractDict{MOI.ConstraintIndex, AbstractBridge}
     bridges::Vector{Union{Nothing, AbstractBridge}}
     # Constraint Index of bridged constraint -> Constraint type.
     constraint_types::Vector{Tuple{DataType, DataType}}
+    # The order of the keys is used in `keys_of_type` which is used by
+    # `ListOfConstraintIndices`. Therefore they need to be in the order
+    # of creation so we need `OrderedDict` and not `Dict`.
     # For `SingleVariable` constraints: (variable, set type) -> bridge
-    single_variable_constraints::Dict{Tuple{Int64, DataType}, AbstractBridge}
+    single_variable_constraints::OrderedDict{Tuple{Int64, DataType}, AbstractBridge}
     # For `VectorVariable` constraints: (variable, set type) -> bridge
-    vector_of_variables_constraints::Dict{Tuple{Int64, DataType}, AbstractBridge}
+    vector_of_variables_constraints::OrderedDict{Tuple{Int64, DataType}, AbstractBridge}
 end
 function Map()
     return Map(Union{Nothing, AbstractBridge}[],
                Tuple{DataType, DataType}[],
-               Dict{Tuple{Int64, DataType}, AbstractBridge}(),
-               Dict{Tuple{Int64, DataType}, AbstractBridge}())
+               OrderedDict{Tuple{Int64, DataType}, AbstractBridge}(),
+               OrderedDict{Tuple{Int64, DataType}, AbstractBridge}())
 end
 
 # Implementation of `AbstractDict` interface.
@@ -141,7 +144,8 @@ function number_of_type end
 """
     keys_of_type(map::Map, C::Type{<:MOI.ConstraintIndex})
 
-Return a list of all the keys of type `C` in `map`.
+Return a list of all the keys of type `C` in `map` in order order in which they
+were created with `add_key_for_bridge`.
 """
 function keys_of_type end
 
