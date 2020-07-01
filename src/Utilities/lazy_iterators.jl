@@ -22,6 +22,7 @@ function LazyMap{T}(f::Function, data) where {T}
     return LazyMap{T, typeof(data)}(f, data)
 end
 Base.size(it::LazyMap) = size(it.data)
+Base.length(it::LazyMap) = length(it.data)
 function Base.iterate(it::LazyMap, args...)
     elem_state = iterate(it.data, args...)
     if elem_state === nothing
