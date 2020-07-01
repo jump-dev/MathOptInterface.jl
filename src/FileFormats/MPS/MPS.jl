@@ -225,7 +225,11 @@ function write_columns(io::IO, model::Model, ordered_names, names)
             int_open = false
         end
         for (constraint, coefficient) in coefficients[variable]
-            print(io, "     ", rpad(variable, 8), " ", rpad(constraint, 8), " ")
+            print(io, "     ")
+            print(io, rpad(variable, 8))
+            print(io, " ")
+            print(io, rpad(constraint, 8))
+            print(io, " ")
             Base.Grisu.print_shortest(io, coefficient)
             println(io)
         end
@@ -543,21 +547,24 @@ end
 # Headers(s) gets called _alot_ (on every line), so we try very hard to be
 # efficient.]
 function Headers(s::AbstractString)
-    if length(s) == 3
+    N = length(s)
+    if N > 7 || N < 3
+        return HEADER_UNKNOWN
+    elseif N == 3
         x = first(s)
         if (x == 'R' || x == 'r') && uppercase(s) == "RHS"
             return HEADER_RHS
         elseif (x == 'S' || x == 's') && uppercase(s) == "SOS"
             return HEADER_SOS
         end
-    elseif length(s) == 4
+    elseif N == 4
         x = first(s)
         if (x == 'R' || x == 'r') && uppercase(s) == "ROWS"
             return HEADER_ROWS
-        # elseif (x == 'N' || x == 'n') && uppercase(s) == "NAME"
-        #     return HEADER_NAME
         end
-    elseif length(s) == 6
+    elseif N == 5
+        return HEADER_UNKNOWN
+    elseif N == 6
         x = first(s)
         if (x == 'R' || x == 'r') && uppercase(s) == "RANGES"
             return HEADER_RANGES
@@ -566,13 +573,18 @@ function Headers(s::AbstractString)
         elseif (x == 'E' || x == 'e') && uppercase(s) == "ENDATA"
             return HEADER_ENDATA
         end
-    elseif length(s) == 7
+    elseif N == 7
         x = first(s)
         if (x == 'C' || x == 'c') && (uppercase(s) == "COLUMNS")
             return HEADER_COLUMNS
         end
     end
     return HEADER_UNKNOWN
+end
+
+function line_to_items(line)
+    items = split(line, " "; keepempty = false)
+    return String.(items)
 end
 
 """
@@ -600,7 +612,7 @@ function Base.read!(io::IO, model::Model)
             # Carry on with the previous header
         end
         # TODO: split into hard fields based on column indices.
-        items = String.(split(line, " "; keepempty = false))
+        items = line_to_items(line)
         if header == HEADER_NAME
             parse_name_line(data, items)
         elseif header == HEADER_ROWS
@@ -690,7 +702,7 @@ function _add_objective(model, data, variable_map)
 end
 
 function _add_linear_constraint(model, data, variable_map, j, c_name, set)
-    terms = [
+    terms = MOI.ScalarAffineTerm{Float64}[
         MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]])
         for (i, coef) in data.A[j]
     ]
