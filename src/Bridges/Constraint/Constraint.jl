@@ -1,5 +1,7 @@
 module Constraint
 
+using OrderedCollections # for OrderedDict in Map
+
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
