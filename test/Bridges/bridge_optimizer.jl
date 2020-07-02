@@ -220,7 +220,7 @@ end
         c = MOI.add_constraint(model, f, MOI.Interval(i, 2i))
         push!(scon_indices, c)
 
-        @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int})]
+        @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int})])
         test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
         test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
         test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, i)
