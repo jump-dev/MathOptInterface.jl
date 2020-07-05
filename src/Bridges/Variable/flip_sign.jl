@@ -48,6 +48,9 @@ function MOI.delete(model::MOI.ModelLike, bridge::FlipSignBridge, i::IndexInVect
 end
 
 # Attributes, Bridge acting as a constraint
+function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet, bridge::FlipSignBridge{T, S1}) where {T, S1<:MOI.AbstractVectorSet}
+    return S1(length(bridge.flipped_variables))
+end
 
 function MOI.get(model::MOI.ModelLike,
                  attr::Union{MOI.ConstraintPrimal, MOI.ConstraintDual},

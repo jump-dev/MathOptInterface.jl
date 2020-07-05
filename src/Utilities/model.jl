@@ -82,7 +82,9 @@ function _getlocr(constrs::Vector{<:ConstraintEntry},
 end
 
 # Implementation of MOI for AbstractModel
-abstract type AbstractModel{T} <: MOI.ModelLike end
+abstract type AbstractModelLike{T} <: MOI.ModelLike end
+abstract type AbstractOptimizer{T} <: MOI.AbstractOptimizer end
+const AbstractModel{T} = Union{AbstractModelLike{T}, AbstractOptimizer{T}}
 
 getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
@@ -496,7 +498,7 @@ function extract_lower_bound(set::Union{MOI.GreaterThan, MOI.Interval,
                                         MOI.Semicontinuous, MOI.Semiinteger})
     return set.lower
 end
-# 0xb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
+# 0xcb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
 const LOWER_BOUND_MASK = 0xcb
 
 # Sets setting upper bound:
@@ -505,7 +507,7 @@ function extract_upper_bound(set::Union{MOI.LessThan, MOI.Interval,
                                         MOI.Semicontinuous, MOI.Semiinteger})
     return set.upper
 end
-# 0xd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
+# 0xcd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
 const UPPER_BOUND_MASK = 0xcd
 
 const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
@@ -806,7 +808,18 @@ _broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
 # This macro is for expert/internal use only. Prefer the concrete Model type
 # instantiated below.
 """
-    macro model(model_name, scalar_sets, typed_scalar_sets, vector_sets, typed_vector_sets, scalar_functions, typed_scalar_functions, vector_functions, typed_vector_functions)
+    macro model(
+        model_name,
+        scalar_sets,
+        typed_scalar_sets,
+        vector_sets,
+        typed_vector_sets,
+        scalar_functions,
+        typed_scalar_functions,
+        vector_functions,
+        typed_vector_functions,
+        is_optimizer = false
+    )
 
 Creates a type `model_name` implementing the MOI model interface and containing
 `scalar_sets` scalar sets `typed_scalar_sets` typed scalar sets, `vector_sets`
@@ -838,6 +851,12 @@ addition to being different between constraints `F`-in-`S` for the same types
 use the the value of the index directly in a dictionary representing a mapping
 between constraint indices and something else.
 
+If `is_optimizer = true`, the resulting struct is a subtype of
+of `MOIU.AbstractOptimizer`, which is a subtype of
+[`MathOptInterface.AbstractOptimizer`](@ref), otherwise, it is a subtype of
+`MOIU.AbstractModelLike`, which is a subtype of
+[`MathOptInterface.ModelLike`](@ref).
+
 ### Examples
 
 The model describing an linear program would be:
@@ -850,7 +869,9 @@ The model describing an linear program would be:
       (),                                                         # untyped scalar functions
       (MOI.ScalarAffineFunction,),                                #   typed scalar functions
       (MOI.VectorOfVariables,),                                   # untyped vector functions
-      (MOI.VectorAffineFunction,))                                #   typed vector functions
+      (MOI.VectorAffineFunction,),                                #   typed vector functions
+      false
+    )
 ```
 
 Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities` and
@@ -900,13 +921,19 @@ end
 The type `LPModel` implements the MathOptInterface API except methods specific
 to solver models like `optimize!` or `getattribute` with `VariablePrimal`.
 """
-macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
+macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft, is_optimizer = false)
     scalar_sets = [SymbolSet.(ss.args, false); SymbolSet.(sst.args, true)]
     vector_sets = [SymbolSet.(vs.args, false); SymbolSet.(vst.args, true)]
 
     scname = esc(Symbol(string(model_name) * "ScalarConstraints"))
     vcname = esc(Symbol(string(model_name) * "VectorConstraints"))
+
     esc_model_name = esc(model_name)
+    header = if is_optimizer
+        :($(esc(model_name)){T} <: AbstractOptimizer{T})
+    else
+        :($(esc(model_name)){T} <: AbstractModelLike{T})
+    end
 
     scalar_funs = [SymbolFun.(sf.args, false, Ref(scname));
                   SymbolFun.(sft.args, true, Ref(scname))]
@@ -924,7 +951,7 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft)
     end
 
     modeldef = quote
-        mutable struct $esc_model_name{T} <: AbstractModel{T}
+        mutable struct $header
             name::String
             senseset::Bool
             sense::$MOI.OptimizationSense
@@ -1064,6 +1091,7 @@ const LessThanIndicatorSetZero{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.L
         MOI.Complements, MOI.NormInfinityCone, MOI.NormOneCone,
         MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
+        MOI.RelativeEntropyCone, MOI.NormSpectralCone, MOI.NormNuclearCone,
         MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
         MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
         MOI.LogDetConeSquare),

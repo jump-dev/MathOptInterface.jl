@@ -58,6 +58,29 @@ function dual_set end
 dual_set(s::AbstractSet) = error("Dual of $s is not implemented.")
 
 """
+    dual_set_type(S::Type{<:AbstractSet})
+
+Return the type of dual set of sets of type `S`, as returned by
+[`dual_set`](@ref). If the dual cone is not defined it returns an error.
+
+### Examples
+
+```jldocstest
+julia> dual_set_type(Reals)
+Zeros
+
+julia> dual_set_type(SecondOrderCone)
+SecondOrderCone
+
+julia> dual_set_type(ExponentialCone)
+DualExponentialCone
+```
+"""
+function dual_set_type end
+
+dual_set_type(S::Type{<:AbstractSet}) = error("Dual type of $S is not implemented.")
+
+"""
     AbstractScalarSet
 
 Abstract supertype for subsets of ``\\mathbb{R}``.
@@ -87,6 +110,7 @@ struct Reals <: AbstractVectorSet
 end
 
 dual_set(s::Reals) = Zeros(dimension(s))
+dual_set_type(::Type{Reals}) = Zeros
 
 """
     Zeros(dimension)
@@ -98,6 +122,7 @@ struct Zeros <: AbstractVectorSet
 end
 
 dual_set(s::Zeros) = Reals(dimension(s))
+dual_set_type(::Type{Zeros}) = Reals
 
 """
     Nonnegatives(dimension)
@@ -109,6 +134,7 @@ struct Nonnegatives <: AbstractVectorSet
 end
 
 dual_set(s::Nonnegatives) = copy(s)
+dual_set_type(::Type{Nonnegatives}) = Nonnegatives
 
 """
     Nonpositives(dimension)
@@ -120,6 +146,7 @@ struct Nonpositives <: AbstractVectorSet
 end
 
 dual_set(s::Nonpositives) = copy(s)
+dual_set_type(::Type{Nonpositives}) = Nonpositives
 
 """
     GreaterThan{T <: Real}(lower::T)
@@ -198,17 +225,19 @@ struct NormInfinityCone <: AbstractVectorSet
 end
 
 dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
+dual_set_type(::Type{NormInfinityCone}) = NormOneCone
 
 """
     NormOneCone(dimension)
 
-The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
+The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
 end
 
 dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
+dual_set_type(::Type{NormOneCone}) = NormInfinityCone
 
 """
     SecondOrderCone(dimension)
@@ -220,6 +249,7 @@ struct SecondOrderCone <: AbstractVectorSet
 end
 
 dual_set(s::SecondOrderCone) = copy(s)
+dual_set_type(::Type{SecondOrderCone}) = SecondOrderCone
 
 """
     RotatedSecondOrderCone(dimension)
@@ -231,11 +261,17 @@ struct RotatedSecondOrderCone <: AbstractVectorSet
 end
 
 dual_set(s::RotatedSecondOrderCone) = copy(s)
+dual_set_type(::Type{RotatedSecondOrderCone}) = RotatedSecondOrderCone
 
 """
     GeometricMeanCone(dimension)
 
 The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}`` of dimension `dimension```{}=n+1``.
+
+### Duality note
+
+The dual of the geometric mean cone is
+``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}`` of dimension `dimension```{}=n+1``.
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
@@ -249,6 +285,7 @@ The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x
 struct ExponentialCone <: AbstractVectorSet end
 
 dual_set(s::ExponentialCone) = DualExponentialCone()
+dual_set_type(::Type{ExponentialCone}) = DualExponentialCone
 
 """
     DualExponentialCone()
@@ -258,6 +295,7 @@ The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\
 struct DualExponentialCone <: AbstractVectorSet end
 
 dual_set(s::DualExponentialCone) = ExponentialCone()
+dual_set_type(::Type{DualExponentialCone}) = ExponentialCone
 
 """
     PowerCone{T <: Real}(exponent::T)
@@ -269,6 +307,7 @@ struct PowerCone{T <: Real} <: AbstractVectorSet
 end
 
 dual_set(s::PowerCone{T}) where T <: Real = DualPowerCone{T}(s.exponent)
+dual_set_type(::Type{PowerCone{T}}) where T <: Real = DualPowerCone{T}
 
 """
     DualPowerCone{T <: Real}(exponent::T)
@@ -280,12 +319,58 @@ struct DualPowerCone{T <: Real} <: AbstractVectorSet
 end
 
 dual_set(s::DualPowerCone{T}) where T <: Real = PowerCone{T}(s.exponent)
+dual_set_type(::Type{DualPowerCone{T}}) where T <: Real = PowerCone{T}
 
 dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
 
 function Base.:(==)(set1::S, set2::S) where S <: Union{PowerCone, DualPowerCone}
     return set1.exponent == set2.exponent
 end
+
+"""
+    RelativeEntropyCone(dimension)
+
+The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}`` of dimension `dimension```{}=2n+1``.
+
+### Duality note
+
+The dual of the relative entropy cone is
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, -u \\exp (w_i/u) \\le \\exp(1) v_i, u < 0 \\}`` of dimension `dimension```{}=2n+1``.
+Note that the inequality is rewritten in terms of ``\\log`` as follows: ``w_i \\le u (\\log(v_i/-u) + 1)``.
+"""
+struct RelativeEntropyCone <: AbstractVectorSet
+    dimension::Int
+end
+
+"""
+    NormSpectralCone(row_dim, column_dim)
+
+The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
+"""
+struct NormSpectralCone <: AbstractVectorSet
+    row_dim::Int
+    column_dim::Int
+end
+
+dual_set(s::NormSpectralCone) = NormNuclearCone(s.row_dim, s.column_dim)
+dual_set_type(::Type{NormSpectralCone}) = NormNuclearCone
+
+"""
+    NormNuclearCone(row_dim, column_dim)
+
+The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
+The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
+"""
+struct NormNuclearCone <: AbstractVectorSet
+    row_dim::Int
+    column_dim::Int
+end
+
+dual_set(s::NormNuclearCone) = NormSpectralCone(s.row_dim, s.column_dim)
+dual_set_type(::Type{NormNuclearCone}) = NormSpectralCone
+
+dimension(s::Union{NormSpectralCone, NormNuclearCone}) = 1 + s.row_dim * s.column_dim
 
 """
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
@@ -461,6 +546,7 @@ struct PositiveSemidefiniteConeTriangle <: AbstractSymmetricMatrixSetTriangle
 end
 
 dual_set(s::PositiveSemidefiniteConeTriangle) = copy(s)
+dual_set_type(::Type{PositiveSemidefiniteConeTriangle}) = PositiveSemidefiniteConeTriangle
 
 """
     PositiveSemidefiniteConeSquare(side_dimension) <: AbstractSymmetricMatrixSetSquare
@@ -490,9 +576,15 @@ struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
     side_dimension::Int
 end
 
-function dual_set(s::PositiveSemidefiniteConeSquare)
-    return error("""Dual of $s is not defined in MathOptInterface.
-                    For more details see the comments in src/Bridges/Constraint/square.jl""")
+function _dual_set_square_error()
+    error("""Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
+             For more details see the comments in `src/Bridges/Constraint/square.jl`.""")
+end
+function dual_set(::PositiveSemidefiniteConeSquare)
+    _dual_set_square_error()
+end
+function dual_set_type(::Type{PositiveSemidefiniteConeSquare})
+    _dual_set_square_error()
 end
 
 triangular_form(::Type{PositiveSemidefiniteConeSquare}) = PositiveSemidefiniteConeTriangle
@@ -630,9 +722,9 @@ end
 """
     IndicatorSet{A, S <: AbstractScalarSet}(set::S)
 
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ZERO` and
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ONE`.
 
 `S` has to be a sub-type of `AbstractScalarSet`.
@@ -644,8 +736,8 @@ Example: ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1
 
 ```julia
 f = MOI.VectorAffineFunction(
-    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
-     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x1)),
      MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     ],
     [0.0, 0.0],
@@ -732,7 +824,8 @@ function Base.copy(
         Reals, Zeros, Nonnegatives, Nonpositives, GreaterThan, LessThan,
         EqualTo, Interval, NormInfinityCone, NormOneCone, SecondOrderCone,
         RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone,
-        DualExponentialCone, PowerCone, DualPowerCone,
+        DualExponentialCone, PowerCone, DualPowerCone, RelativeEntropyCone,
+        NormSpectralCone, NormNuclearCone,
         PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
         LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
         RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,

@@ -115,12 +115,13 @@ ListOfVariableAttributesSet
 ListOfConstraintAttributesSet
 ```
 
-
 ## Optimizers
 
 ```@docs
 AbstractOptimizer
 optimize!
+OptimizerWithAttributes
+instantiate
 ```
 
 List of optimizers attributes
@@ -168,6 +169,19 @@ The value of the attribute is of type `TerminationStatusCode`.
 TerminationStatusCode
 ```
 
+### Conflict Status
+
+The `ConflictStatus` attribute indicates why the conflict finder stopped executing.
+The value of the attribute is of type `ConflictStatusCode`.
+
+```@docs
+compute_conflict!
+ConflictStatus
+ConflictStatusCode
+ConstraintConflictStatus
+ConflictParticipationStatusCode
+```
+
 ### Result Status
 
 The `PrimalStatus` and `DualStatus` attributes indicate how to interpret the result returned by the solver.
@@ -197,6 +211,7 @@ ConstraintIndex
 is_valid
 throw_if_not_valid
 delete(::ModelLike, ::Index)
+delete(::ModelLike, ::Vector{<:Index})
 ```
 
 ### Variables
@@ -224,6 +239,8 @@ add_variable
 add_variables
 add_constrained_variable
 add_constrained_variables
+supports_add_constrained_variable
+supports_add_constrained_variables
 ```
 
 List of attributes associated with variables. [category AbstractVariableAttribute]
@@ -310,6 +327,7 @@ Functions for getting properties of sets.
 ```@docs
 dimension
 dual_set
+dual_set_type
 constant(s::EqualTo)
 supports_dimension_update
 update_dimension
@@ -329,7 +347,6 @@ Semicontinuous
 Semiinteger
 ```
 
-
 ### Vector sets
 
 List of recognized vector sets.
@@ -347,6 +364,9 @@ ExponentialCone
 DualExponentialCone
 PowerCone
 DualPowerCone
+RelativeEntropyCone
+NormSpectralCone
+NormNuclearCone
 SOS1
 SOS2
 IndicatorSet
@@ -535,6 +555,41 @@ constraints of different types. There are two important concepts to distinguish:
   allow introspection into the bridge selection rationale of
   [`Bridges.LazyBridgeOptimizer`](@ref).
 
+Most bridges are added by default in [`Bridges.full_bridge_optimizer`](@ref).
+However, for technical reasons, some bridges are not added by default, for instance:
+[`Bridges.Constraint.SOCtoPSDBridge`](@ref), [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref)
+and [`Bridges.Constraint.RSOCtoNonConvexQuadBridge`](@ref). See the docs of those bridges
+for more information.
+
+It is possible to add those bridges and also user defined bridges,
+following one of the two methods. We present the examples for:
+[`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref).
+
+The first option is to add the specific bridges to a
+`bridged_model` optimizer, with coefficient type `T`. The `bridged_model`
+optimizer itself must have been constructed with a
+[`Bridges.LazyBridgeOptimizer`](@ref). Once such a optimizer is available, we
+can proceed using using [`Bridges.add_bridge`](@ref):
+
+```julia
+MOIB.add_bridge(bridged_model, SOCtoNonConvexQuadBridge{T})
+```
+
+Alternatively, it is possible to create a [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)
+and wrap an existing `model` with it:
+
+```julia
+const SOCtoNonConvexQuad{T, OT<:ModelLike} = Bridges.Constraint.SingleBridgeOptimizer{Bridges.Constraint.SOCtoNonConvexQuadBridge{T}, OT}
+bridged_model = SOCtoNonConvexQuad{Float64}(model)
+```
+
+Those procedures could be applied to user define bridges. For the
+bridges defined in MathOptInterface, the [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)'s are already created, therefore, for the case of [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref), one could simply use the existing optimizer:
+
+```julia
+bridged_model = Bridges.Constraint.SOCtoNonConvexQuad{Float64}(model)
+```
+
 ```@docs
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
@@ -601,7 +656,6 @@ MOI.Bridges.unbridged_variable_function(bridged_model, inner_variables[1])
 
 MOI.ScalarAffineFunction{Float64}(MOI.ScalarAffineTerm{Float64}[ScalarAffineTerm{Float64}(1.0, VariableIndex(-1))], -1.0)
 ```
-
 
 !!! note
     A notable exception is with [`Bridges.Variable.ZerosBridge`](@ref) where no
@@ -750,9 +804,14 @@ Bridges.Constraint.SplitIntervalBridge
 Bridges.Constraint.RSOCBridge
 Bridges.Constraint.SOCRBridge
 Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.SOCtoNonConvexQuadBridge
+Bridges.Constraint.RSOCtoNonConvexQuadBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
 Bridges.Constraint.GeoMeanBridge
+Bridges.Constraint.RelativeEntropyBridge
+Bridges.Constraint.NormSpectralBridge
+Bridges.Constraint.NormNuclearBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge
 Bridges.Constraint.LogDetBridge

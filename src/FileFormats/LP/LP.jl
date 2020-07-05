@@ -209,15 +209,25 @@ function Base.write(io::IO, model::Model)
         end
     end
     println(io, "Bounds")
+    free_variables = Set(keys(variable_names))
     for S in SCALAR_SETS
         for index in MOI.get(
             model,
             MOI.ListOfConstraintIndices{MOI.SingleVariable, S}()
         )
+            delete!(free_variables, MOI.VariableIndex(index.value))
             write_constraint(
                 io, model, index, variable_names; write_name = false
             )
         end
+    end
+    for index in MOI.get(
+        model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.ZeroOne}()
+    )
+        delete!(free_variables, MOI.VariableIndex(index.value))
+    end
+    for variable in sort(collect(free_variables), by = x -> x.value)
+        println(io, variable_names[variable], " free")
     end
     for (S, str_S) in [(MOI.Integer, "General"), (MOI.ZeroOne, "Binary")]
         indices = MOI.get(

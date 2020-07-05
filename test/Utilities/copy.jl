@@ -22,7 +22,11 @@ end
     map = MOIU.IndexMap(Dict(x => y), Dict(cx => cy))
     @test length(map) == 2
     # `x=>y` in Julia <= 1.1 and `x => y` in Julia >= 1.2
-    x_y = string(Dict(x => y))[6:end-1]
+    if VERSION < v"1.2"
+        x_y = string(x) *  "=>" * string(y)
+    else
+        x_y = string(x => y)
+    end
     compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,Pair{ConstraintIndex,ConstraintIndex}($cx, $cy))")
 end
 
@@ -152,4 +156,98 @@ end
     for vi in y
         @test dest.added_constrained[idxmap[vi].value]
     end
+end
+
+
+abstract type AbstractConstrainedVariablesModel <: MOI.ModelLike end
+mutable struct OrderConstrainedVariablesModel <: AbstractConstrainedVariablesModel
+    constraintIndices       ::Array{MOI.ConstraintIndex}
+    inner                   ::MOIU.Model{Float64}
+    OrderConstrainedVariablesModel() = new(MOI.ConstraintIndex[], MOIU.Model{Float64}())
+end
+mutable struct ReverseOrderConstrainedVariablesModel <: AbstractConstrainedVariablesModel
+    constraintIndices       ::Array{MOI.ConstraintIndex}
+    inner                   ::MOIU.Model{Float64}
+    ReverseOrderConstrainedVariablesModel() = new(MOI.ConstraintIndex[], MOIU.Model{Float64}())
+end
+        
+
+
+MOI.add_variables(model::AbstractConstrainedVariablesModel, n) = MOI.add_variables(model.inner, n)
+MOI.add_variable(model::AbstractConstrainedVariablesModel) = MOI.add_variable(model.inner)
+
+function MOI.add_constraint(model::AbstractConstrainedVariablesModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    ci = MOI.add_constraint(model.inner, f, s)
+    push!(model.constraintIndices, ci)
+    return ci
+end
+
+function MOI.copy_to(dest::AbstractConstrainedVariablesModel, src::MOI.ModelLike; kws...)
+    MOIU.automatic_copy_to(dest, src; kws...)
+end
+
+MOIU.supports_default_copy_to(model::AbstractConstrainedVariablesModel, ::Bool) = true
+
+function MOI.empty!(model::AbstractConstrainedVariablesModel)
+    model.constraintIndices = MOI.ConstraintIndex[]
+    MOI.empty!(model.inner)
+end
+
+
+MOI.supports_constraint(::OrderConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = false
+MOI.supports_add_constrained_variables(::OrderConstrainedVariablesModel, ::Type{MOI.Nonnegatives}) = true
+MOI.supports_constraint(::OrderConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = true
+MOI.supports_add_constrained_variables(::OrderConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = false
+
+MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = true
+MOI.supports_add_constrained_variables(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.Nonnegatives}) = false
+MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Nonnegatives}) = false
+MOI.supports_add_constrained_variables(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.Nonpositives}) = true
+
+
+MOI.supports_constraint(::OrderConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.GreaterThan}) = true
+MOI.supports_add_constrained_variable(::OrderConstrainedVariablesModel, ::Type{<:MOI.GreaterThan}) = false
+MOI.supports_constraint(::OrderConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.LessThan}) = false
+MOI.supports_add_constrained_variable(::OrderConstrainedVariablesModel, ::Type{<:MOI.LessThan}) = true
+
+MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.GreaterThan}) = false
+MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, ::Type{<:MOI.GreaterThan}) = true
+MOI.supports_constraint(::ReverseOrderConstrainedVariablesModel, ::Type{MOI.SingleVariable}, ::Type{<:MOI.LessThan}) = true
+MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, ::Type{<:MOI.LessThan}) = false
+
+
+@testset "Create variables using supports_add_constrained_variable(s) (#987)" begin
+    # With vectors
+    src = MOIU.Model{Float64}()
+    a, c1 = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
+    c2 = MOI.add_constraint(src, a, MOI.Nonnegatives(3))
+
+
+    dest = OrderConstrainedVariablesModel()
+    index_map = MOI.copy_to(dest, src)
+    @test typeof(c1) == typeof(dest.constraintIndices[2])
+    @test typeof(c2) == typeof(dest.constraintIndices[1])
+
+    dest = ReverseOrderConstrainedVariablesModel()
+    index_map = MOI.copy_to(dest, src)
+    @test typeof(c1) == typeof(dest.constraintIndices[1])
+    @test typeof(c2) == typeof(dest.constraintIndices[2])
+
+
+
+    # With single variables
+    src = MOIU.Model{Float64}()
+    a, c1 = MOI.add_constrained_variable(src, MOI.GreaterThan{Float64}(5.0))
+    c2 = MOI.add_constraint(src, a, MOI.LessThan{Float64}(1.0))
+
+
+    dest = OrderConstrainedVariablesModel()
+    index_map = MOI.copy_to(dest, src)
+    @test typeof(c1) == typeof(dest.constraintIndices[2])
+    @test typeof(c2) == typeof(dest.constraintIndices[1])
+
+    dest = ReverseOrderConstrainedVariablesModel()
+    index_map = MOI.copy_to(dest, src)
+    @test typeof(c1) == typeof(dest.constraintIndices[1])
+    @test typeof(c2) == typeof(dest.constraintIndices[2])
 end

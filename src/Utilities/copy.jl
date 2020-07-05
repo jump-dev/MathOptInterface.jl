@@ -137,8 +137,8 @@ function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
             # As starting values are simply *hints* for the optimization, not
             # supporting them gives a warning, not an error
             if !MOI.supports(dest, attr, supports_args...)
-                @warn("$attr is not supported by $(typeof(dest)). This ",
-                             "information will be discarded.")
+                @warn("$attr is not supported by $(typeof(dest)). This " *
+                      "information will be discarded.")
                 continue
             end
         end
@@ -302,13 +302,15 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
-    single_variable_types = [S for (F, S) in constraint_types
-                             if F == MOI.SingleVariable]
-    vector_of_variables_types = [S for (F, S) in constraint_types
-                                 if F == MOI.VectorOfVariables]
+    single_variable_types = Type{<:MOI.AbstractScalarSet}[]
+    vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
 
     # The `NLPBlock` assumes that the order of variables does not change (#849)
     if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
+        single_variable_types = [S for (F, S) in constraint_types
+                                 if F == MOI.SingleVariable]
+        vector_of_variables_types = [S for (F, S) in constraint_types
+                                     if F == MOI.VectorOfVariables]
         vector_of_variables_not_added = [
             MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
             for S in vector_of_variables_types
@@ -318,14 +320,23 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
             for S in single_variable_types
         ]
     else
-        vector_of_variables_not_added = [
-            copy_vector_of_variables(dest, src, idxmap, S)
-            for S in vector_of_variables_types
-        ]
-        single_variable_not_added = [
-            copy_single_variable(dest, src, idxmap, S)
-            for S in single_variable_types
-        ]
+        # Order the copying of the variables by 1) their variable bridging cost 2) by starting with the vectors, as what was done before
+        # See issue #987
+        single_or_vector_variables_types = [(F, S) for (F, S) in constraint_types
+                                            if F == MOI.SingleVariable || F == MOI.VectorOfVariables]
+        sorted_by_cost = sortperm(single_or_vector_variables_types; by=((F, S),) -> (MOI.get(dest, MOI.VariableBridgingCost{S}()) - MOI.get(dest, MOI.ConstraintBridgingCost{F, S}()), F == MOI.SingleVariable))
+        vector_of_variables_not_added = Vector{Array{MOI.ConstraintIndex{MOI.VectorOfVariables, <:MOI.AbstractVectorSet}}}()
+        single_variable_not_added = Vector{Array{MOI.ConstraintIndex{MOI.SingleVariable, <:MOI.AbstractScalarSet}}}()
+        for i in sorted_by_cost
+            F, S = single_or_vector_variables_types[i]
+            if F == MOI.VectorOfVariables
+                push!(vector_of_variables_not_added, copy_vector_of_variables(dest, src, idxmap, S))
+                push!(vector_of_variables_types, S)
+            elseif F == MOI.SingleVariable
+                push!(single_variable_not_added, copy_single_variable(dest, src, idxmap, S))
+                push!(single_variable_types, S)
+            end
+        end
     end
 
     copy_free_variables(dest, idxmap, vis_src, MOI.add_variables)

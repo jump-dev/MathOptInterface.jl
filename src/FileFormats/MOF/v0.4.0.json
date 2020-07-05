@@ -812,6 +812,53 @@
                         "minimum": 2
                     }
                 }
+            }, {
+                "description": "(u, v, w) ∈ {R^{dimension}: u ≥ sumᵢ wᵢlog(wᵢ/vᵢ), vᵢ ≥ 0, wᵢ ≥ 0}",
+                "examples": ["{\"head\": \"RelativeEntropyCone\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "head": {
+                        "const": "RelativeEntropyCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 3
+                    }
+                }
+            }, {
+                "description": "(t, X) ∈ {R^{1+row_dim×column_dim}: t ≥ σ₁(X)}",
+                "examples": ["{\"head\": \"NormSpectralCone\", \"row_dim\": 1, \"column_dim\": 2}"],
+                "required": ["row_dim", "column_dim"],
+                "properties": {
+                    "head": {
+                        "const": "NormSpectralCone"
+                    },
+                    "row_dim": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "column_dim": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "(t, X) ∈ {R^{1+row_dim×column_dim}: t ≥ σ₁(X)}",
+                "examples": ["{\"head\": \"NormNuclearCone\", \"row_dim\": 1, \"column_dim\": 2}"],
+                "required": ["row_dim", "column_dim"],
+                "properties": {
+                    "head": {
+                        "const": "NormNuclearCone"
+                    },
+                    "row_dim": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "column_dim": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
             }]
         }
     }

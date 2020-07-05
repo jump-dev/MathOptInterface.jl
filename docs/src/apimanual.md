@@ -92,6 +92,10 @@ sets recognized by the solver.
   ``\{ x \in \mathbb{R}^\mbox{dimension} : x \ge 0 \}``
 * **[`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives)**:
   ``\{ x \in \mathbb{R}^\mbox{dimension} : x \le 0 \}``
+* **[`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone)**:
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty = \max_i \lvert x_i \rvert \}``
+* **[`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone)**:
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_1 = \sum_i \lvert x_i \rvert \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
 * **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
@@ -108,9 +112,15 @@ sets recognized by the solver.
 * **[`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone)**:
   ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent}
   \frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
+* **[`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone)**:
+  ``\{ (u, v, w) \in \mathbb{R}^\mbox{dimension} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
+* **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+* **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
-  the upper triangle of a PSD matrix }\}``
+  the upper triangle of a PSD matrix} \}``
 * **[`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{is a PSD matrix} \}``
 * **[`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle)**:
@@ -151,7 +161,7 @@ Through the rest of the manual, `model` is used as a generic `ModelLike`, and
 `optimizer` is used as a generic `AbstractOptimizer`.
 
 Models are constructed by
-* adding variables using [`add_variables`](@ref) (or [`add_variables`](@ref)),
+* adding variables using [`add_variable`](@ref) (or [`add_variables`](@ref)),
   see [Adding variables](@ref);
 * setting an objective sense and function using [`set`](@ref),
   see [Setting an objective](@ref);
@@ -854,7 +864,7 @@ read!(io, src_2)
 ### Duals
 
 Conic duality is the starting point for MOI's duality conventions. When all functions are affine (or coordinate projections), and all constraint sets are closed convex cones, the model may be called a conic optimization problem.
-For conic-form minimization problems, the primal is:
+For a minimization problem in geometric conic form, the primal is:
 
 ```math
 \begin{align}
@@ -864,7 +874,7 @@ For conic-form minimization problems, the primal is:
 \end{align}
 ```
 
-and the dual is:
+and the dual is a maximization problem in standard conic form:
 
 ```math
 \begin{align}
@@ -878,7 +888,7 @@ and the dual is:
 
 where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i^*`` is its dual cone.
 
-For conic-form maximization problems, the primal is:
+For a maximization problem in geometric conic form, the primal is:
 ```math
 \begin{align}
 & \max_{x \in \mathbb{R}^n} & a_0^T x + b_0
@@ -887,7 +897,7 @@ For conic-form maximization problems, the primal is:
 \end{align}
 ```
 
-and the dual is:
+and the dual is a minimization problem in standard conic form:
 
 ```math
 \begin{align}
@@ -1001,7 +1011,7 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
 
 If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
-between `y_i` and the vector of scalar-valued quadratic functions.
+between ``y_i`` and the vector of scalar-valued quadratic functions.
 
 !!! note
     For quadratic programs with only affine constraints, the optimality condition
@@ -1042,7 +1052,7 @@ The `Bridges.Variable.Vectorize` is the bridge optimizer that applies the
 the optimizer
 ```jldoctest; setup=:(optimizer = MOI.Utilities.Model{Float64}())
 bridged_optimizer = MOI.Bridges.Variable.Vectorize{Float64}(optimizer)
-MOI.supports_constraint(bridged_optimizer, MOI.SingleVariable, MOI.GreaterThan{Float64})
+MOI.supports_add_constrained_variable(bridged_optimizer, MOI.GreaterThan{Float64})
 
 # output
 
@@ -1059,7 +1069,7 @@ appropriate bridges for unsupported constrained variables.
 A constraint can often be written in a number of equivalent formulations. For
 example, the constraint ``l \le a^\top x \le u``
 (`ScalarAffineFunction`-in-`Interval`) could be re-formulated as two
-constraints: ``a^\top x ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
+constraints: ``a^\top x \ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
 ``a^\top x \le u`` (`ScalarAffineFunction`-in-`LessThan`). An alternative
 re-formulation is to add a dummy variable `y` with the constraints ``l \le y \le
 u`` (`SingleVariable`-in-`Interval`) and ``a^\top x - y = 0``
@@ -1100,8 +1110,7 @@ appropriate constraint bridges for unsupported constraints.
 
 ### Solver-specific attributes
 
-Solver-specific attributes should either be passed to the optimizer on creation,
-e.g., `MyPackage.Optimizer(PrintLevel = 0)`, or through a sub-type of
+Solver-specific attributes should be specified by creating an
 [`AbstractOptimizerAttribute`](@ref). For example, inside `MyPackage`, we could
 add the following:
 ```julia
@@ -1118,11 +1127,12 @@ MOI.set(model, MyPackage.PrintLevel(), 0)
 
 ### Supported constrained variables and constraints
 
-The solver interface should only implement support for constrained variables
-(see [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref))
-or constraints that directly map to a structure exploited by the solver
-algorithm. There is no need to add support for additional types, this is
-handled by the [Automatic reformulation](@ref). Furthermore, this allows
+The solver interface should only implement support for variables
+constrained on creation (see
+[`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref)) or
+constraints that directly map to a structure exploited by the solver algorithm.
+There is no need to add support for additional types, this is handled by the
+[Automatic reformulation](@ref). Furthermore, this allows
 [`supports_constraint`](@ref) to indicate which types are exploited by the
 solver and hence allows layers such as [`Bridges.LazyBridgeOptimizer`](@ref)
 to accurately select the most appropriate transformations.
@@ -1130,13 +1140,14 @@ to accurately select the most appropriate transformations.
 As [`add_constrained_variable`](@ref) (resp. [`add_constrained_variables`](@ref))
 falls back to [`add_variable`](@ref) (resp. [`add_variables`](@ref)) followed by
 [`add_constraint`](@ref), there is no need to implement this function
-if `model` supports creating free variables. However, if `model` does not
-support creating free variables, then it should only implement
-[`add_constrained_variable`](@ref) and not [`add_variable`](@ref) nor
-[`add_constraint`](@ref) for [`SingleVariable`](@ref)-in-`typeof(set)`.
-In addition, it should implement `supports_constraint(::Optimizer,
-::Type{VectorOfVariables}, ::Type{Reals})` and return `false` so that free
-variables are bridged, see [`supports_constraint`](@ref).
+if `model` does not require that variables be constrained when they are created.
+However, if `model` requires that variables be constrained when they're created,
+then it should only implement [`add_constrained_variable`](@ref) and not
+[`add_variable`](@ref) nor [`add_constraint`](@ref) for
+[`SingleVariable`](@ref)-in-`typeof(set)`. In addition, it should implement
+`supports_add_constrained_variables(::Optimizer, ::Type{Reals})` and return
+`false` so that these variables are bridged, see
+[`supports_add_constrained_variables`](@ref).
 
 ### Handling duplicate coefficients
 
@@ -1277,10 +1288,7 @@ solver is written in Julia, for example). The guideline for naming the file
 containing the MOI wrapper is `src/MOI_wrapper.jl` and `test/MOI_wrapper.jl` for
 the tests. If the MOI wrapper implementation is spread in several files, they
 should be stored in a `src/MOI_wrapper` folder and included by a
-`src/MOI_wrapper/MOI_wrapper.jl` file. In some cases it may be more appropriate
-to host the MOI wrapper in its own package; in this case it is recommended that
-the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver
-name.
+`src/MOI_wrapper/MOI_wrapper.jl` file.
 
 By convention, optimizers should not be exported and should be named
 `PackageName.Optimizer`. For example, `CPLEX.Optimizer`, `Gurobi.Optimizer`, and
@@ -1299,66 +1307,80 @@ const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
 
 import FooBar
-const optimizer = FooBar.Optimizer()
-MOI.set(optimizer, MOI.Silent(), true)
+const OPTIMIZER_CONSTRUCTOR = MOI.OptimizerWithAttributes(FooBar.Optimizer, MOI.Silent() => true)
+const OPTIMIZER = MOI.instantiate(OPTIMIZER_CONSTRUCTOR)
 
 @testset "SolverName" begin
-    @test MOI.get(optimizer, MOI.SolverName()) == "FooBar"
+    @test MOI.get(OPTIMIZER, MOI.SolverName()) == "FooBar"
 end
 
 @testset "supports_default_copy_to" begin
-    @test MOIU.supports_default_copy_to(optimizer, false)
+    @test MOIU.supports_default_copy_to(OPTIMIZER, false)
     # Use `@test !...` if names are not supported
-    @test MOIU.supports_default_copy_to(optimizer, true)
+    @test MOIU.supports_default_copy_to(OPTIMIZER, true)
 end
 
-const bridged = MOIB.full_bridge_optimizer(optimizer, Float64)
-const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
+const BRIDGED = MOI.instantiate(OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float64)
+const CONFIG = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
 
 @testset "Unit" begin
-    MOIT.unittest(bridged, config)
+    # Test all the functions included in dictionary `MOI.Test.unittests`,
+    # except functions "number_threads" and "solve_qcp_edge_cases."
+    MOIT.unittest(
+        BRIDGED, 
+        CONFIG, 
+        ["number_threads", "solve_qcp_edge_cases"]
+    ) 
 end
 
 @testset "Modification" begin
-    MOIT.modificationtest(bridged, config)
+    MOIT.modificationtest(BRIDGED, CONFIG)
 end
 
 @testset "Continuous Linear" begin
-    MOIT.contlineartest(bridged, config)
+    MOIT.contlineartest(BRIDGED, CONFIG)
 end
 
 @testset "Continuous Conic" begin
-    MOIT.contlineartest(bridged, config)
+    MOIT.contlineartest(BRIDGED, CONFIG)
 end
 
 @testset "Integer Conic" begin
-    MOIT.intconictest(bridged, config)
+    MOIT.intconictest(BRIDGED, CONFIG)
 end
 ```
-The optimizer `bridged` constructed with [`Bridges.full_bridge_optimizer`](@ref)
-automatically bridges constraints that are not supported by `optimizer`
+
+Test functions like `MOI.Test.unittest` and `MOI.Test.modificationtest` are 
+wrappers around corresponding dictionaries `MOI.Test.unittests` and 
+`MOI.Test.modificationtests`. The keys of each dictionary (strings describing 
+the test) map to functions that take two arguments: an optimizer and a 
+`MOI.Test.TestConfig` object. Exclude tests by passing a vector of strings 
+corresponding to the test keys you want to exclude as the third positional 
+argument to the test function (e.g., `MOI.Test.unittest`). 
+    
+Print a list of all keys using `println.(keys(MOI.Test.unittests))`
+
+The optimizer `BRIDGED` constructed with [`instantiate`](@ref)
+automatically bridges constraints that are not supported by `OPTIMIZER`
 using the bridges listed in [Bridges](@ref). It is recommended for an
 implementation of MOI to only support constraints that are natively supported
 by the solver and let bridges transform the constraint to the appropriate form.
-For this reason it is expected that tests may not pass if `optimizer` is used
-instead of `bridged`.
+For this reason it is expected that tests may not pass if `OPTIMIZER` is used
+instead of `BRIDGED`.
 
 To test that a specific problem can be solved without bridges, a specific test can
-be run with `optimizer` instead of `bridged`. For instance
+be run with `OPTIMIZER` instead of `BRIDGED`. For instance
 ```julia
 @testset "Interval constraints" begin
-    MOIT.linear10test(optimizer, config)
+    MOIT.linear10test(OPTIMIZER, CONFIG)
 end
 ```
-checks that `optimizer` implements support for
+checks that `OPTIMIZER` implements support for
 [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref).
 
-If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), then `supports_default_copy_to` can be replaced by `supports_allocate_load` if appropriate (see [Implementing copy](@ref)) and the line `const bridged = ...` can be replaced with
-```julia
-const cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
-const cached = MOIU.CachingOptimizer(cache, optimizer)
-const bridged = MOIB.full_bridge_optimizer(cached, Float64)
-```
+If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`),
+then `supports_default_copy_to` can be replaced by `supports_allocate_load` if
+appropriate (see [Implementing copy](@ref)).
 
 ### Benchmarking
 

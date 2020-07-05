@@ -129,6 +129,7 @@ MOIU.@model(NoIntervalModel,
             (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
              MOI.NormInfinityCone, MOI.NormOneCone, MOI.SecondOrderCone,
              MOI.RotatedSecondOrderCone, MOI.GeometricMeanCone,
+             MOI.RelativeEntropyCone, MOI.NormSpectralCone, MOI.NormNuclearCone,
              MOI.PositiveSemidefiniteConeTriangle, MOI.ExponentialCone),
             (MOI.PowerCone, MOI.DualPowerCone),
             (),
@@ -142,7 +143,7 @@ bridged_mock = MOIB.Constraint.LessToGreater{Float64}(MOIB.Constraint.SplitInter
 @testset "Unsupported constraint attribute" begin
     attr = MOIT.UnknownConstraintAttribute()
     err = ArgumentError(
-        "Bridge of type `MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable}` " *
+        "Bridge of type `$MOI.Bridges.Constraint.SplitIntervalBridge{Float64,$MOI.SingleVariable,$MOI.Interval{Float64},$MOI.GreaterThan{Float64},$MOI.LessThan{Float64}}` " *
         "does not support accessing the attribute `$attr`.")
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),
@@ -211,13 +212,54 @@ end
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
 
+    n = 4
+    z = MOI.add_variables(model, n)
+    scon_indices = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{Int}}[]
+    for (i, v) in enumerate([x; y; z])
+        f = MOI.SingleVariable(v)
+        c = MOI.add_constraint(model, f, MOI.Interval(i, 2i))
+        push!(scon_indices, c)
+
+        @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int})])
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+        test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, i)
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
+        # The indices should be returned in order of creation
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}())) == scon_indices
+    end
+
+    vcon_indices = MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.Nonnegatives}[]
+    for (i, v) in enumerate(z)
+        f = MOI.VectorOfVariables([v])
+        c = MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+        push!(vcon_indices, c)
+
+        @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int}), (MOI.VectorOfVariables, MOI.Nonnegatives)])
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+        test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
+        test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, i)
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
+        # The indices should be returned in order of creation
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}())) == scon_indices
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}())) == vcon_indices
+    end
+
     @test MOI.is_valid(model, c2)
     MOI.delete(model, c2)
 
-    @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([(MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int}), (MOI.VectorOfVariables, MOI.Nonnegatives)])
     test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
     test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+    test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
+    test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, n)
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+    # The indices should be returned in order of creation
+    @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}())) == scon_indices
+    @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}())) == vcon_indices
 end
 
 @testset "Continuous Linear" begin
@@ -227,10 +269,9 @@ end
 
 @testset "Show" begin
     @test sprint(show, bridged_mock) == raw"""
-    MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.LessToGreaterBridge{Float64,F,G} where G<:MOI.AbstractScalarFunction where F<:MOI.AbstractScalarFunction,MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F} where F<:MOI.AbstractScalarFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}}
+    MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.LessToGreaterBridge{Float64,F,G} where G<:MOI.AbstractScalarFunction where F<:MOI.AbstractScalarFunction,MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}}
     with 1 constraint bridge
-    with inner model MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F} where F<:MOI.AbstractScalarFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}
+    with inner model MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOIU.MockOptimizer{NoIntervalModel{Float64}}}
       with 0 constraint bridges
       with inner model MOIU.MockOptimizer{NoIntervalModel{Float64}}"""
-
 end

@@ -280,3 +280,8 @@ function MA.mutable_operate!(op::MA.AddSubMul, f::MOI.ScalarQuadraticFunction{T}
         return MA.mutable_operate!(MA.add_sub_op(op), f, *(args...))
     end
 end
+# `args` could be `(x', a)` where `a` is a vector of constants and `x` a vector
+# of affine functions for instance.
+function MA.mutable_operate!(op::MA.AddSubMul, f::TypedScalarLike, args::Vararg{Any, N}) where N
+    return MA.mutable_operate!(MA.add_sub_op(op), f, *(args...))
+end

@@ -52,8 +52,10 @@ end
 @testset "SOS" begin
     model = MPS.Model()
     x = MOI.add_variables(model, 3)
+    names = Dict{MOI.VariableIndex, String}()
     for i in 1:3
         MOI.set(model, MOI.VariableName(), x[i], "x$(i)")
+        names[x[i]] = "x$(i)"
     end
     MOI.add_constraint(model,
         MOI.VectorOfVariables(x),
@@ -63,7 +65,7 @@ end
         MOI.VectorOfVariables(x),
         MOI.SOS2([1.25, 2.25, 3.25])
     )
-    @test sprint(MPS.write_sos, model) ==
+    @test sprint(MPS.write_sos, model, names) ==
         "SOS\n" *
         " S1 SOS1\n" *
         "    x1        1.5\n" *
@@ -82,7 +84,7 @@ end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x))
-    @test sprint(MPS.write_columns, model) ==
+    @test sprint(MPS.write_columns, model, ["x"], Dict(x => "x")) ==
         "COLUMNS\n     x        OBJ      -1\n"
 end
 
