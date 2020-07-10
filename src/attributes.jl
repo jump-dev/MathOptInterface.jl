@@ -1351,13 +1351,13 @@ _result_index_field(attr::DualStatus) = attr.N
 
 
 # Cost of bridging constrained variable in S
-struct VariableBridgingCost{S <: AbstractSet} <: AbstractModelAttribute 
+struct VariableBridgingCost{S <: AbstractSet} <: AbstractModelAttribute
 end
 get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractScalarSet} = supports_add_constrained_variable(model, S) ? 0.0 : Inf
 get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractVectorSet} = supports_add_constrained_variables(model, S) ? 0.0 : Inf
 
 # Cost of bridging F-in-S constraints
-struct ConstraintBridgingCost{F <: AbstractFunction, S <: AbstractSet} <: AbstractModelAttribute 
+struct ConstraintBridgingCost{F <: AbstractFunction, S <: AbstractSet} <: AbstractModelAttribute
 end
 get_fallback(model::ModelLike, ::ConstraintBridgingCost{F, S}) where {F<:AbstractFunction, S<:AbstractSet} = supports_constraint(model, F, S) ? 0.0 : Inf
 
