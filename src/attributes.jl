@@ -1103,6 +1103,23 @@ end
 ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
 """
+    CanonicalConstraintFunction()
+
+A constraint attribute for a canonical representation of the `AbstractFunction` object used to define the constraint.
+It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
+
+By default, `MOI.get(model, MOI.CanonicalConstraintFunction(), ci)` fallbacks to
+`MOI.Utilities.canonical(MOI.get(model, MOI.ConstraintFunction(), ci))`.
+However, if `model` knows that the constraint function is canonical then it can
+implement a specialized method that directly return the function without calling
+[`Utilities.canonical`](@ref). Therefore, the value returned **cannot** be
+assumed to be a copy of the function stored in `model`.
+Moreover, [`Utilities.Model`](@ref) calls [`Utilities.canonicalize!`](@ref)
+to the function stored internally and returns this function without copy.
+"""
+struct CanonicalConstraintFunction <: AbstractConstraintAttribute end
+
+"""
     ConstraintFunction()
 
 A constraint attribute for the `AbstractFunction` object used to define the constraint.

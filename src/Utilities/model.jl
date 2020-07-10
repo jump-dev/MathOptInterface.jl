@@ -647,6 +647,10 @@ function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)
     _getfunction(model, ci, getconstrloc(model, ci))
 end
 
+function MOI.get(model::AbstractModel, ::MOI.CanonicalConstraintFunction, ci::MOI.ConstraintIndex)
+    return MOI.Utilities.canonicalize!(MOI.get(model, MOI.ConstraintFunction(), ci))
+end
+
 function _get_single_variable_set(model::AbstractModel, S::Type{<:MOI.EqualTo},
                                   index)
     return MOI.EqualTo(model.lower_bound[index])
