@@ -63,12 +63,31 @@ error in case `copy_to` is called with `copy_names` equal to `true`.
 """
 supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
 
+const DenseVariableDict{V} = DenseDict{MOI.VariableIndex, V, typeof(MOI.index_value), typeof(MOI.VariableIndex)}
+function dense_variable_dict(::Type{V}, n) where V
+    return DenseDict{MOI.VariableIndex, V}(MOI.index_value, MOI.VariableIndex, n)
+end
+
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
-    varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
+    varmap::Union{DenseVariableDict{MOI.VariableIndex},
+                  Dict{MOI.VariableIndex, MOI.VariableIndex}}
     conmap::Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}
 end
 IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(),
                       Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}())
+function IndexMap(n)
+    IndexMap(dense_variable_dict(MOI.VariableIndex, n),
+             Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}())
+end
+
+function index_map_for_variable_indices(variables)
+    n = length(variables)
+    if all(i -> variables[i] == MOI.VariableIndex(i), 1:n)
+        return IndexMap(n)
+    else
+        return IndexMap()
+    end
+end
 
 Base.getindex(idxmap::IndexMap, vi::MOI.VariableIndex) = idxmap.varmap[vi]
 function Base.getindex(idxmap::IndexMap, ci::MOI.ConstraintIndex{F, S}) where {F, S}
@@ -298,9 +317,8 @@ the copying a model incrementally.
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
     MOI.empty!(dest)
 
-    idxmap = IndexMap()
-
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
+    idxmap = index_map_for_variable_indices(vis_src)
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
     single_variable_types = Type{<:MOI.AbstractScalarSet}[]
     vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
@@ -659,9 +677,8 @@ the Allocate-Load API.
 function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
     MOI.empty!(dest)
 
-    idxmap = IndexMap()
-
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
+    idxmap = index_map_for_variable_indices(vis_src)
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
     single_variable_types = [S for (F, S) in constraint_types
                              if F == MOI.SingleVariable]
