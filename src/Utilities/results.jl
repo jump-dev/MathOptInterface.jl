@@ -444,16 +444,16 @@ Return the scalar product between a number `x` of the set `set` and a number
 set_dot(x, y, set::MOI.AbstractScalarSet) = dot(x, y)
 
 function triangle_dot(x::AbstractVector{S}, y::AbstractVector{T}, dim::Int, offset::Int) where {S, T}
-    U = typeof(zero(S) * zero(T) + 2 * zero(S) * zero(T))
+    U = MA.promote_operation(MA.add_mul, S, T)
     result = zero(U)
     k = offset
     for i in 1:dim
         for j in 1:i
             k += 1
             if i == j
-                result += x[k] * y[k]
+                result = MA.add_mul!(result, x[k], y[k])
             else
-                result += 2 * x[k] * y[k]
+                result = MA.add_mul!(result, 2, x[k], y[k])
             end
         end
     end
