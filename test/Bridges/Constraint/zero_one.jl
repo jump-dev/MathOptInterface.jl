@@ -34,6 +34,11 @@ config = MOIT.TestConfig()
 
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), ci) == 1
 
+    test_delete_bridge(bridged_mock, ci, 5,
+                       ((MOI.SingleVariable, MOI.Integer, 0),
+                        (MOI.SingleVariable, MOI.Interval{Float64}, 0),),
+                       num_bridged = 5)
+
     MOIU.set_mock_optimize!(mock,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.ObjectiveBound(), 20.0)
