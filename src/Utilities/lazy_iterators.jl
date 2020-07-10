@@ -14,12 +14,12 @@ Iterator over the elements of `data` mapped by `f`. This is similar to
 `Base.Generator(f, data)` except that the `eltype` of a `LazyMap` is given at
 construction while the `eltype` of `Base.Generator(f, data)` is `Any`.
 """
-struct LazyMap{T, VT}
-    f::Function
+struct LazyMap{T, VT, F}
+    f::F
     data::VT
 end
-function LazyMap{T}(f::Function, data) where {T}
-    return LazyMap{T, typeof(data)}(f, data)
+function LazyMap{T}(f, data) where {T}
+    return LazyMap{T, typeof(data), typeof(f)}(f, data)
 end
 Base.size(it::LazyMap) = size(it.data)
 Base.length(it::LazyMap) = length(it.data)
