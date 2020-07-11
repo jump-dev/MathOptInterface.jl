@@ -416,7 +416,10 @@ function MOI.supports(
         MOI.ScalarQuadraticFunction{T}}}) where T
     return true
 end
-function MOI.set(model::AbstractModel, ::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
+function MOI.set(model::AbstractModel, attr::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
+    if !MOI.supports(model, attr)
+        throw(MOI.UnsupportedAttribute(attr))
+    end
     model.objectiveset = true
     # f needs to be copied, see #2
     model.objective = copy(f)
