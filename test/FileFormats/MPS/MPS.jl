@@ -20,6 +20,17 @@ end
 @testset "Errors" begin
     failing_models_dir = joinpath(@__DIR__, "failing_models")
 
+    @testset "Quadratic Objective" begin
+        model = MPS.Model()
+        @test_throws(
+            MOI.UnsupportedAttribute,
+            MOIU.loadfromstring!(model, """
+               variables: x
+               minobjective: 1.0*x*x
+               """)
+        )
+    end
+
     @testset "Non-empty model" begin
         model = MPS.Model()
         @test MOI.is_empty(model)

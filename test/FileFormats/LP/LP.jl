@@ -196,6 +196,16 @@ const LP_TEST_FILE = "test.lp"
             "x\n" *
             "End\n"
     end
+    @testset "Quadratic Objective" begin
+        model = LP.Model()
+        @test_throws(
+            MOI.UnsupportedAttribute,
+            MOIU.loadfromstring!(model, """
+               variables: x
+               minobjective: 1.0*x*x
+               """)
+        )
+    end
 end
 
 @testset "read_from_file" begin

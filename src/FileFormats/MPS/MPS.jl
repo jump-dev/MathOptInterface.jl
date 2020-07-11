@@ -16,7 +16,12 @@ MOI.Utilities.@model(Model,
     ()
 )
 
-MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
+function MOI.supports(
+    ::Model{T},
+    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}
+) where {T}
+    return false
+end
 
 struct Options
     warn::Bool
