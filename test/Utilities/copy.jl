@@ -21,7 +21,7 @@ end
     y = MOI.VariableIndex(2)
     cx = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(1)
     cy = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(2)
-    map = MOIU.IndexMap(Dict(x => y), DoubleDicts.DoubleDict())
+    map = MOIU.IndexMap(Dict(x => y), DoubleDicts.IndexDoubleDict())
     map.conmap[cx] = cy
     @test length(map) == 2
     # `x=>y` in Julia <= 1.1 and `x => y` in Julia >= 1.2
