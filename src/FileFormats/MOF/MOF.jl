@@ -24,6 +24,7 @@ struct Nonlinear <: MOI.AbstractScalarFunction
     expr::Expr
 end
 Base.copy(nonlinear::Nonlinear) = Nonlinear(copy(nonlinear.expr))
+MOI.Utilities.canonicalize!(nonlinear::Nonlinear) = nonlinear
 
 MOI.Utilities.@model(InnerModel,
     (MOI.ZeroOne, MOI.Integer),

@@ -421,12 +421,16 @@ Returns the function in a canonical form, i.e.
 * The terms appear in increasing order of variable where there the order of the variables is the order of their value.
 * For a `AbstractVectorFunction`, the terms are sorted in ascending order of output index.
 
+The output of `canonical` can be assumed to be a copy of `f`, even for `VectorOfVariables`.
+
 ### Examples
 If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-canonical(f::Union{SAF, VAF, SQF, VQF}) = canonicalize!(copy(f))
+canonical(f::MOI.AbstractFunction) = canonicalize!(copy(f))
+
+canonicalize!(f::Union{MOI.VectorOfVariables, MOI.SingleVariable}) = f
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})

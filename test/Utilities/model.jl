@@ -15,6 +15,7 @@ module TestExternalModel
     using MathOptInterface
     struct NewSet <: MathOptInterface.AbstractScalarSet end
     struct NewFunction <: MathOptInterface.AbstractScalarFunction end
+    MathOptInterface.Utilities.canonicalize!(f::NewFunction) = f
     Base.copy(::NewFunction) = NewFunction()
     Base.copy(::NewSet) = NewSet()
     MathOptInterface.Utilities.@model(ExternalModel,
