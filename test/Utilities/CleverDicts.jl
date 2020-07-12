@@ -20,10 +20,12 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
         key = CleverDicts.add_item(d, "first")
         @test key == MathOptInterface.VariableIndex(1)
+        sizehint!(d, 1)
         @test d[key] == "first"
         @test haskey(d, key) == true
         @test_throws KeyError d[MathOptInterface.VariableIndex(2)]
         delete!(d, key)
+        sizehint!(d, 2)
         @test_throws KeyError d[key]
         @test_throws KeyError d[key] = "key"
         @test haskey(d, key) == false

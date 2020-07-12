@@ -65,10 +65,10 @@ supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
 
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
     varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
-    conmap::Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}
+    conmap::DoubleDicts.MainDoubleDict
 end
-IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(),
-                      Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}())
+IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(), 
+                        DoubleDicts.DoubleDict())
 
 Base.getindex(idxmap::IndexMap, vi::MOI.VariableIndex) = idxmap.varmap[vi]
 function Base.getindex(idxmap::IndexMap, ci::MOI.ConstraintIndex{F, S}) where {F, S}

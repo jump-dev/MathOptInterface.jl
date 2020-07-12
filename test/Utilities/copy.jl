@@ -4,6 +4,8 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
+const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
+
 include("../dummy.jl")
 
 remove_moi(x::String) = replace(x, "MathOptInterface." => "")
@@ -19,7 +21,8 @@ end
     y = MOI.VariableIndex(2)
     cx = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(1)
     cy = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(2)
-    map = MOIU.IndexMap(Dict(x => y), Dict(cx => cy))
+    map = MOIU.IndexMap(Dict(x => y), DoubleDicts.DoubleDict())
+    map.conmap[cx] = cy
     @test length(map) == 2
     # `x=>y` in Julia <= 1.1 and `x => y` in Julia >= 1.2
     if VERSION < v"1.2"
@@ -27,7 +30,7 @@ end
     else
         x_y = string(x => y)
     end
-    compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,Pair{ConstraintIndex,ConstraintIndex}($cx, $cy))")
+    compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,$cx => $cy)")
 end
 
 @testset "AUTOMATIC" begin

@@ -13,8 +13,11 @@ performance loss from the type instability due different constraint types.
 """
 struct DoubleDict{D<:AbstractDict{Int, Int}, D2<:AbstractDict{Tuple{DataType, DataType}, D}}
     dict::D2
-    DoubleDict() = new{Dict{Int, Int}, Dict{Tuple{DataType, DataType}, Dict{Int, Int}}}(Dict{Tuple{DataType, DataType}, Dict{Int, Int}}())
+    DoubleDict() = new{Dict{Int, Int}, Dict{Tuple{DataType, DataType}, Dict{Int, Int}}}(
+        Dict{Tuple{DataType, DataType}, Dict{Int, Int}}())
 end
+
+MainDoubleDict = DoubleDict{Dict{Int, Int}, Dict{Tuple{DataType, DataType}, Dict{Int, Int}}}
 
 function Base.sizehint!(::DoubleDict, ::Integer)
     error("sizehint!(::DoubleDict, ::Integer) has no proper meaning for "*
