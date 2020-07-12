@@ -63,12 +63,31 @@ error in case `copy_to` is called with `copy_names` equal to `true`.
 """
 supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
 
+const DenseVariableDict{V} = DenseDict{MOI.VariableIndex, V, typeof(MOI.index_value), typeof(MOI.VariableIndex)}
+function dense_variable_dict(::Type{V}, n) where V
+    return DenseDict{MOI.VariableIndex, V}(MOI.index_value, MOI.VariableIndex, n)
+end
+
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
-    varmap::Dict{MOI.VariableIndex, MOI.VariableIndex}
+    varmap::Union{DenseVariableDict{MOI.VariableIndex},
+                  Dict{MOI.VariableIndex, MOI.VariableIndex}}
     conmap::DoubleDicts.MainIndexDoubleDict
 end
-IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(), 
-                        DoubleDicts.IndexDoubleDict())
+IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(),
+                      DoubleDicts.IndexDoubleDict())
+function IndexMap(n)
+    IndexMap(dense_variable_dict(MOI.VariableIndex, n),
+             DoubleDicts.IndexDoubleDict())
+end
+
+function index_map_for_variable_indices(variables)
+    n = length(variables)
+    if all(i -> variables[i] == MOI.VariableIndex(i), 1:n)
+        return IndexMap(n)
+    else
+        return IndexMap()
+    end
+end
 
 Base.getindex(idxmap::IndexMap, vi::MOI.VariableIndex) = idxmap.varmap[vi]
 function Base.getindex(idxmap::IndexMap, ci::MOI.ConstraintIndex{F, S}) where {F, S}
@@ -109,30 +128,40 @@ function pass_attributes end
 function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
     # Copy model attributes
     attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, tuple(), tuple(), tuple(), pass_attr)
+    if !copy_names
+        attrs = filter(attr -> !(attr isa MOI.Name), attrs)
+    end
+    _pass_attributes(dest, src, idxmap, attrs, tuple(), tuple(), tuple(), pass_attr)
 end
 function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, vis_src::Vector{VI}, pass_attr::Function=MOI.set)
     # Copy variable attributes
     attrs = MOI.get(src, MOI.ListOfVariableAttributesSet())
-    vis_dest = map(vi -> idxmap[vi], vis_src)
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), pass_attr)
+    if !copy_names
+        attrs = filter(attr -> !(attr isa MOI.VariableName), attrs)
+    end
+    if !isempty(attrs) # If `attrs` is empty, we can spare the computation of `vis_dest`
+        vis_dest = map(vi -> idxmap[vi], vis_src)
+        _pass_attributes(dest, src, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), pass_attr)
+    end
 end
 function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, cis_src::Vector{CI{F, S}}, pass_attr::Function=MOI.set) where {F, S}
     # Copy constraint attributes
     attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F, S}())
-    cis_dest = map(ci -> idxmap[ci], cis_src)
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), pass_attr)
+    if !copy_names
+        attrs = filter(attr -> !(attr isa MOI.ConstraintName), attrs)
+    end
+    if !isempty(attrs) # If `attrs` is empty, we can spare the computation of `cis_dest`
+        cis_dest = map(ci -> idxmap[ci], cis_src)
+        _pass_attributes(dest, src, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), pass_attr)
+    end
 end
 
 function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
-                          copy_names::Bool, idxmap::IndexMap, attrs,
+                          idxmap::IndexMap, attrs,
                           supports_args, get_args, set_args,
                           pass_attr!::Function=MOI.set)
     for attr in attrs
         @assert MOI.is_copyable(attr)
-        if !copy_names && (attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName)
-            continue
-        end
         if attr isa MOI.VariablePrimalStart || attr isa MOI.ConstraintPrimalStart || attr isa MOI.ConstraintDualStart
             # As starting values are simply *hints* for the optimization, not
             # supporting them gives a warning, not an error
@@ -298,9 +327,8 @@ the copying a model incrementally.
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
     MOI.empty!(dest)
 
-    idxmap = IndexMap()
-
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
+    idxmap = index_map_for_variable_indices(vis_src)
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
     single_variable_types = Type{<:MOI.AbstractScalarSet}[]
     vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
@@ -659,9 +687,8 @@ the Allocate-Load API.
 function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
     MOI.empty!(dest)
 
-    idxmap = IndexMap()
-
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
+    idxmap = index_map_for_variable_indices(vis_src)
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
     single_variable_types = [S for (F, S) in constraint_types
                              if F == MOI.SingleVariable]

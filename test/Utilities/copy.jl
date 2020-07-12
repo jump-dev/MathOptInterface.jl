@@ -173,7 +173,7 @@ mutable struct ReverseOrderConstrainedVariablesModel <: AbstractConstrainedVaria
     inner                   ::MOIU.Model{Float64}
     ReverseOrderConstrainedVariablesModel() = new(MOI.ConstraintIndex[], MOIU.Model{Float64}())
 end
-        
+
 
 
 MOI.add_variables(model::AbstractConstrainedVariablesModel, n) = MOI.add_variables(model.inner, n)
