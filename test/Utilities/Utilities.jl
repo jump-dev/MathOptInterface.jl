@@ -30,6 +30,9 @@ end
 @testset "Caching Optimizer" begin
     include("cachingoptimizer.jl")
 end
+@testset "DenseDict" begin
+    include("dense_dict.jl")
+end
 @testset "Copy" begin
     include("copy.jl")
 end

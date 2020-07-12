@@ -4,6 +4,7 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
+
 include("../dummy.jl")
 
 remove_moi(x::String) = replace(x, "MathOptInterface." => "")
@@ -170,7 +171,7 @@ mutable struct ReverseOrderConstrainedVariablesModel <: AbstractConstrainedVaria
     inner                   ::MOIU.Model{Float64}
     ReverseOrderConstrainedVariablesModel() = new(MOI.ConstraintIndex[], MOIU.Model{Float64}())
 end
-        
+
 
 
 MOI.add_variables(model::AbstractConstrainedVariablesModel, n) = MOI.add_variables(model.inner, n)
