@@ -2,6 +2,7 @@
     struct DenseDict{K, V, F, I} <: AbstractDict{K, V}
         hash::F
         inverse_hash::I
+        set::BitSet
         map::Vector{V}
     end
 
