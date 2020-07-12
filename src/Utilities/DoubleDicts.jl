@@ -11,9 +11,9 @@ const CI{F,S} = MOI.ConstraintIndex{F,S}
 Special dictionary to map ConstraintIndex to ConstraintIndex with minimal
 performance loss from the type instability due different constraint types.
 """
-mutable struct DoubleDict{D, D2}
-    dict::D2{Tuple{DataType, DataType}, D{Int, Int}}
-    DoubleDict() = new{}(Dict{Tuple{DataType, DataType}, Dict{Int, Int}}())
+struct DoubleDict{D<:AbstractDict{Int, Int}, D2<:AbstractDict{Tuple{DataType, DataType}, D}}
+    dict::D2
+    DoubleDict() = new{Dict{Int, Int}, Dict{Tuple{DataType, DataType}, Dict{Int, Int}}}(Dict{Tuple{DataType, DataType}, Dict{Int, Int}}())
 end
 
 function Base.sizehint!(::DoubleDict, ::Integer)
@@ -28,7 +28,7 @@ end
 
 function Base.length(d::DoubleDict)
     len = 0
-    for inner in d.dict
+    for inner in values(d.dict)
         len += length(inner)
     end
     return len
@@ -194,10 +194,10 @@ end
 
 Used to specialize methods and iterators for a given contraint type CI{F,S}.
 """
-struct WithType{F, S, D, D2}
+struct WithType{F, S, D, D2} <: AbstractDict{CI{F,S}, CI{F,S}}
     dict::D
     inner::Union{D2, Nothing}
-    function WithType{F, S}(d::D{D2}) where {D<:DoubleDict}
+    function WithType{F, S}(d::D) where {D2, D<:DoubleDict{D2}, F, S}
         # inner = get(d.dict, (F, S), D2())
         inner = get(d.dict, (F, S), nothing)
         new{F, S, D, D2}(d, inner)

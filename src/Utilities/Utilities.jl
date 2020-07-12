@@ -41,6 +41,7 @@ include("cachingoptimizer.jl")
 include("universalfallback.jl")
 
 include("CleverDicts.jl")
+include("DoubleDicts.jl")
 include("lazy_iterators.jl")
 
 end # module
