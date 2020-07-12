@@ -109,30 +109,40 @@ function pass_attributes end
 function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
     # Copy model attributes
     attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, tuple(), tuple(), tuple(), pass_attr)
+    if !copy_names
+        attrs = filter(attr -> !(attr isa MOI.Name), attrs)
+    end
+    _pass_attributes(dest, src, idxmap, attrs, tuple(), tuple(), tuple(), pass_attr)
 end
 function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, vis_src::Vector{VI}, pass_attr::Function=MOI.set)
     # Copy variable attributes
     attrs = MOI.get(src, MOI.ListOfVariableAttributesSet())
-    vis_dest = map(vi -> idxmap[vi], vis_src)
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), pass_attr)
+    if !copy_names
+        attrs = filter(attr -> !(attr isa MOI.VariableName), attrs)
+    end
+    if !isempty(attrs) # If `attrs` is empty, we can spare the computation of `vis_dest`
+        vis_dest = map(vi -> idxmap[vi], vis_src)
+        _pass_attributes(dest, src, idxmap, attrs, (VI,), (vis_src,), (vis_dest,), pass_attr)
+    end
 end
 function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, cis_src::Vector{CI{F, S}}, pass_attr::Function=MOI.set) where {F, S}
     # Copy constraint attributes
     attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F, S}())
-    cis_dest = map(ci -> idxmap[ci], cis_src)
-    _pass_attributes(dest, src, copy_names, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), pass_attr)
+    if !copy_names
+        attrs = filter(attr -> !(attr isa MOI.ConstraintName), attrs)
+    end
+    if !isempty(attrs) # If `attrs` is empty, we can spare the computation of `cis_dest`
+        cis_dest = map(ci -> idxmap[ci], cis_src)
+        _pass_attributes(dest, src, idxmap, attrs, (CI{F, S},), (cis_src,), (cis_dest,), pass_attr)
+    end
 end
 
 function _pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike,
-                          copy_names::Bool, idxmap::IndexMap, attrs,
+                          idxmap::IndexMap, attrs,
                           supports_args, get_args, set_args,
                           pass_attr!::Function=MOI.set)
     for attr in attrs
         @assert MOI.is_copyable(attr)
-        if !copy_names && (attr isa MOI.Name || attr isa MOI.VariableName || attr isa MOI.ConstraintName)
-            continue
-        end
         if attr isa MOI.VariablePrimalStart || attr isa MOI.ConstraintPrimalStart || attr isa MOI.ConstraintDualStart
             # As starting values are simply *hints* for the optimization, not
             # supporting them gives a warning, not an error
