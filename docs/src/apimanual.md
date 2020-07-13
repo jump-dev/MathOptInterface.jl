@@ -288,7 +288,7 @@ add_constraint(model, SingleVariable(x[1]), GreaterThan(0.0))
 add_constraint(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
-Besides scalar-valued functions in scalar-valued sets it possible to use vector-valued functions and sets.
+Besides scalar-valued functions in scalar-valued sets, it's also possible to use vector-valued functions and sets.
 
 The code example below encodes the convex optimization problem:
 ```math
@@ -1098,7 +1098,7 @@ MOI.supports_constraint(bridged_optimizer, MOI.ScalarAffineFunction{Float64}, MO
 true
 ```
 will additionally support `ScalarAffineFunction`-in-`Interval`.
-Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref) are mainly
+Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)s are mainly
 used for testing bridges. It is recommended to rather use
 [`Bridges.full_bridge_optimizer`](@ref) which automatically selects the
 appropriate constraint bridges for unsupported constraints.

@@ -104,7 +104,7 @@ end
 The `ScalarSlackBridge` converts a constraint `G`-in-`S` where `G` is a function different
 from `SingleVariable` into the constraints `F`-in-`EqualTo{T}` and `SingleVariable`-in-`S`.
 `F` is the result of subtracting a `SingleVariable` from `G`.
-Tipically `G` is the same as `F`, but that is not mandatory.
+Typically `G` is the same as `F`, but that is not mandatory.
 """
 struct ScalarSlackBridge{T, F, S} <: AbstractSlackBridge{T, MOI.SingleVariable, MOI.EqualTo{T}, F, S}
     slack::MOI.VariableIndex
