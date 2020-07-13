@@ -27,10 +27,12 @@ end
     # `x=>y` in Julia <= 1.1 and `x => y` in Julia >= 1.2
     if VERSION < v"1.2"
         x_y = string(x) *  "=>" * string(y)
+        c_x_y = string(cx) *  "=>" * string(cy)
     else
         x_y = string(x => y)
+        c_x_y = string(cx => cy)
     end
-    compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,$cx => $cy)")
+    compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,$c_x_y)")
 end
 
 @testset "AUTOMATIC" begin
