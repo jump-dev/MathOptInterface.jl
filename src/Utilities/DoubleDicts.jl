@@ -182,7 +182,7 @@ abstract type AbstractWithType{F, S, V, D, D2} <: AbstractDict{CI{F,S}, V} end
 
 Used to specialize methods and iterators for a given contraint type CI{F,S}.
 """
-struct WithType{F, S, V, D, D2} <: AbstractWithType{F, S, V, D, D2}
+mutable struct WithType{F, S, V, D, D2} <: AbstractWithType{F, S, V, D, D2}
     dict::D2
     inner::Union{D, Nothing}
     function WithType{F, S}(d::D3) where
@@ -193,7 +193,7 @@ struct WithType{F, S, V, D, D2} <: AbstractWithType{F, S, V, D, D2}
         new{F, S, V, D, D3}(d, inner)
     end
 end
-struct IndexWithType{F, S, V, D, D2} <: AbstractWithType{F, S, CI{F,S}, D, D2}
+mutable struct IndexWithType{F, S, V, D, D2} <: AbstractWithType{F, S, CI{F,S}, D, D2}
     dict::D2
     inner::Union{D, Nothing}
     function IndexWithType{F, S}(d::D3) where
@@ -209,6 +209,13 @@ function with_type(d::DoubleDict, ::Type{F}, ::Type{S}) where {F,S}
     return WithType{F, S}(d)
 end
 function with_type(d::IndexDoubleDict, ::Type{F}, ::Type{S}) where {F,S}
+    return IndexWithType{F, S}(d)
+end
+
+function Base.getindex(d::DoubleDict, ::Type{F}, ::Type{S}) where {F,S}
+    return WithType{F, S}(d)
+end
+function Base.getindex(d::IndexDoubleDict, ::Type{F}, ::Type{S}) where {F,S}
     return IndexWithType{F, S}(d)
 end
 

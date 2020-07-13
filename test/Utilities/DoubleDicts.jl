@@ -48,6 +48,8 @@ function basic_functionality(dict, k_values, v_values)
     dict[k_values[1]] = v_values[1]
     idict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.Integer)
     bdict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.ZeroOne)
+    idict_ = dict[MOI.SingleVariable, MOI.Integer]
+    @test idict.dict === idict_.dict
     sizehint!(idict, 2)
     @test length(idict) == 1
     @test length(bdict) == 0
@@ -82,6 +84,9 @@ function basic_functionality(dict, k_values, v_values)
     empty!(bdict)
     @test isempty(idict)
     @test isempty(bdict)
+
+    bdict[k_values[3]] = v_values[3]
+    length(bdict) == 1
 end
 
 @testset "IndexDoubleDict" begin
