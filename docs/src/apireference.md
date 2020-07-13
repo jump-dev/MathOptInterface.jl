@@ -276,6 +276,7 @@ ConstraintPrimal
 ConstraintDual
 ConstraintBasisStatus
 ConstraintFunction
+CanonicalConstraintFunction
 ConstraintSet
 ```
 

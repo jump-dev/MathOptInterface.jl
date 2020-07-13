@@ -651,6 +651,17 @@ end
 function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)
     _getfunction(model, ci, getconstrloc(model, ci))
 end
+function MOI.get(model::AbstractModel, ::MOI.CanonicalConstraintFunction, ci::CI)
+    func = MOI.get(model, MOI.ConstraintFunction(), ci)
+    # The function is canonicalized in `add_constraint` so it might already
+    # be canonical. `is_canonical` is quite cheap compared to `canonical` which
+    # requires a copy and sorting the terms so it's worth checking.
+    if is_canonical(func)
+        return func
+    else
+        return canonical(func)
+    end
+end
 
 function _get_single_variable_set(model::AbstractModel, S::Type{<:MOI.EqualTo},
                                   index)
