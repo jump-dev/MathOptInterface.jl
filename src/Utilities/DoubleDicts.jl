@@ -21,7 +21,7 @@ fully type stable dictionary with values of type `V` and keys of type
 
     ``inner = dict[MOI.SingleVariable, MOI.Integers]``
 """
-struct DoubleDict{V, D<:AbstractDict{Int64, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} <: AbstractDoubleDict{V, D, D2}
+struct DoubleDict{V, D, D2} <: AbstractDoubleDict{V, D, D2}
     dict::D2
     DoubleDict{V}() where V = new{V, Dict{Int64, V}, Dict{Tuple{DataType, DataType}, Dict{Int64, V}}}(
         Dict{Tuple{DataType, DataType}, Dict{Int64, V}}())
@@ -45,13 +45,13 @@ fully type stable dictionary with values of type
 
     ``inner = dict[MOI.SingleVariable, MOI.Integers]``
 """
-struct IndexDoubleDict{V<:Int64, D<:AbstractDict{Int64, Int64}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} <: AbstractDoubleDict{V, D, D2}
+struct IndexDoubleDict{D, D2} <: AbstractDoubleDict{Int64, D, D2}
     dict::D2
-    IndexDoubleDict() = new{Int64, Dict{Int64, Int64}, Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}}(
+    IndexDoubleDict() = new{Dict{Int64, Int64}, Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}}(
         Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}())
 end
 
-MainIndexDoubleDict = IndexDoubleDict{Int, Dict{Int, Int}, Dict{Tuple{DataType, DataType}, Dict{Int, Int}}}
+MainIndexDoubleDict = IndexDoubleDict{Dict{Int64, Int64}, Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}}
 
 @inline function typed_value(::DoubleDict{V}, v::V, ::Type{F}, ::Type{S})::V where {V, F, S}
     v
@@ -223,8 +223,8 @@ mutable struct IndexWithType{F, S, V, D, D2} <: AbstractWithType{F, S, CI{F,S}, 
     dict::D2
     inner::Union{D, Nothing}
     function IndexWithType{F, S}(d::D3) where
-        {V<:Int64, D<:AbstractDict{Int64, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D},
-         D3<:IndexDoubleDict{V, D, D2}, F, S}
+        {D<:AbstractDict{Int64, Int64}, D2<:AbstractDict{Tuple{DataType, DataType}, D},
+         D3<:IndexDoubleDict{D, D2}, F, S}
         inner = get(d.dict, (F, S), nothing)::Union{D, Nothing}
         new{F, S, CI{F,S}, D, D3}(d, inner)
     end
