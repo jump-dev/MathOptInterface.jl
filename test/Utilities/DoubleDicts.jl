@@ -10,11 +10,30 @@ const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
 const CI_I = CI{MOI.SingleVariable, MOI.Integer}
 const CI_B = CI{MOI.SingleVariable, MOI.ZeroOne}
 
+function test_iterator(dict)
+    kk, vv = [], []
+    for (k,v) in dict
+        push!(kk, k)
+        push!(vv, v)
+    end
+    @test length(kk) == length(keys(dict))
+    @test isempty(setdiff(kk, keys(dict)))
+    @test length(vv) == length(values(dict))
+    @test isempty(setdiff(vv, values(dict)))
+end
+
 function basic_functionality(dict, k_values, v_values)
     @test_throws ErrorException sizehint!(dict, 1)
 
     @test isempty(dict)
     @test length(dict) == 0
+
+    dict[k_values[1]] = v_values[1]
+    delete!(dict, k_values[1])
+    test_iterator(dict)
+
+    dict[k_values[3]] = v_values[3]
+    test_iterator(dict)
 
     empty!(dict)
     @test isempty(dict)
@@ -26,15 +45,7 @@ function basic_functionality(dict, k_values, v_values)
     @test keys(dict) == [k_values[1]]
     @test dict[k_values[1]] == v_values[1]
 
-    kk, vv = [], []
-    for (k,v) in dict
-        push!(kk, k)
-        push!(vv, v)
-    end
-    @test length(kk) == length(keys(dict))
-    @test isempty(setdiff(kk, keys(dict)))
-    @test length(vv) == length(values(dict))
-    @test isempty(setdiff(vv, values(dict)))
+    test_iterator(dict)
 
     delete!(dict, k_values[1])
     @test !haskey(dict, k_values[1])
@@ -47,15 +58,7 @@ function basic_functionality(dict, k_values, v_values)
         dict[k] = v
     end
 
-    kk, vv = [], []
-    for (k,v) in dict
-        push!(kk, k)
-        push!(vv, v)
-    end
-    @test length(kk) == length(keys(dict))
-    @test isempty(setdiff(kk, keys(dict)))
-    @test length(vv) == length(values(dict))
-    @test isempty(setdiff(vv, values(dict)))
+    test_iterator(dict)
 
     empty!(dict)
     @test isempty(dict)
@@ -82,18 +85,11 @@ function basic_functionality(dict, k_values, v_values)
 
     idict[k_values[2]] = v_values[2]
     @test haskey(idict, k_values[2])
+    test_iterator(idict)
+
     delete!(idict, k_values[2])
     @test !haskey(idict, k_values[2])
-
-    kk, vv = [], []
-    for (k,v) in idict
-        push!(kk, k)
-        push!(vv, v)
-    end
-    @test length(kk) == length(keys(idict))
-    @test isempty(setdiff(kk, keys(idict)))
-    @test length(vv) == length(values(idict))
-    @test isempty(setdiff(vv, values(idict)))
+    test_iterator(idict)
 
     @test !isempty(idict)
     @test isempty(bdict)
@@ -107,11 +103,13 @@ function basic_functionality(dict, k_values, v_values)
 
     edict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.EqualTo{Bool})
     ek = CI{MOI.SingleVariable, MOI.EqualTo{Bool}}(1)
+    delete!(edict, ek)
     @test_throws KeyError edict[ek]
     sizehint!(edict, 0)
     @test length(edict) == 0
     @test_throws KeyError edict[ek]
     delete!(edict, ek)
+    test_iterator(edict)
 end
 
 @testset "IndexDoubleDict" begin

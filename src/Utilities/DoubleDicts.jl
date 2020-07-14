@@ -62,7 +62,7 @@ end
 
 function Base.sizehint!(::AbstractDoubleDict, ::Integer)
     throw(ErrorException("sizehint!(d::DoubleDict, ::Integer) has no proper" *
-    " meaning for DoubleDict, use sizehint!(WithType{F,S}(d), n::Integer) " *
+    " meaning for DoubleDict, use sizehint!(d[F,S], n::Integer) " *
     "instead."))
 end
 
