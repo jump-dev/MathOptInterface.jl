@@ -5,24 +5,50 @@ import MathOptInterface
 const MOI = MathOptInterface
 const CI{F,S} = MOI.ConstraintIndex{F,S}
 
-abstract type AbstractDoubleDict{V, D<:AbstractDict{Int, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} end
+abstract type AbstractDoubleDict{V, D<:AbstractDict{Int64, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} end
 
 """
-    DoubleDict
+    DoubleDict{V}
 
-Special dictionary to map ConstraintIndex to ConstraintIndex with minimal
-performance loss from the type instability due different constraint types.
+Optimized dictionary to map `ConstraintIndex` (`CI`) to values of type `V`.
+Works as a `AbstractDict{CI, V}` with minimal differences.
+Note that `CI` is not a concrete type, opposed to `CI{MOI.SingleVariable, MOI.Integers}`,
+which is a concrete type.
+
+When optimal performance or type stability is required its possible to obtain a
+fully type stable dictionary with values of type `V` and keys of type
+`CI{MOI.SingleVariable, MOI.Integers}` from the dictionary `dict`, for instance:
+
+    ``inner = dict[MOI.SingleVariable, MOI.Integers]``
 """
-struct DoubleDict{V, D<:AbstractDict{Int, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} <: AbstractDoubleDict{V, D, D2}
+struct DoubleDict{V, D<:AbstractDict{Int64, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} <: AbstractDoubleDict{V, D, D2}
     dict::D2
-    DoubleDict{V}() where V = new{V, Dict{Int, V}, Dict{Tuple{DataType, DataType}, Dict{Int, V}}}(
-        Dict{Tuple{DataType, DataType}, Dict{Int, V}}())
+    DoubleDict{V}() where V = new{V, Dict{Int64, V}, Dict{Tuple{DataType, DataType}, Dict{Int64, V}}}(
+        Dict{Tuple{DataType, DataType}, Dict{Int64, V}}())
 end
 
-struct IndexDoubleDict{V<:Int, D<:AbstractDict{Int, Int}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} <: AbstractDoubleDict{V, D, D2}
+"""
+    IndexDoubleDict
+
+Specialized version of `DoubleDict` in which keys and values are of type
+`ConstraintIndex` (`CI`).
+
+This is an optimized dictionary to map `ConstraintIndex` (`CI`) to values of type `CI`.
+Works as a `AbstractDict{CI, V}` with minimal differences.
+Note that `CI` is not a concrete type, opposed to `CI{MOI.SingleVariable, MOI.Integers}`,
+which is a concrete type.
+
+When optimal performance or type stability is required its possible to obtain a
+fully type stable dictionary with values of type
+`CI{MOI.SingleVariable, MOI.Integers}` and keys of type
+`CI{MOI.SingleVariable, MOI.Integers}` from the dictionary `dict`, for instance:
+
+    ``inner = dict[MOI.SingleVariable, MOI.Integers]``
+"""
+struct IndexDoubleDict{V<:Int64, D<:AbstractDict{Int64, Int64}, D2<:AbstractDict{Tuple{DataType, DataType}, D}} <: AbstractDoubleDict{V, D, D2}
     dict::D2
-    IndexDoubleDict() = new{Int, Dict{Int, Int}, Dict{Tuple{DataType, DataType}, Dict{Int, Int}}}(
-        Dict{Tuple{DataType, DataType}, Dict{Int, Int}}())
+    IndexDoubleDict() = new{Int64, Dict{Int64, Int64}, Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}}(
+        Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}())
 end
 
 MainIndexDoubleDict = IndexDoubleDict{Int, Dict{Int, Int}, Dict{Tuple{DataType, DataType}, Dict{Int, Int}}}
@@ -30,13 +56,14 @@ MainIndexDoubleDict = IndexDoubleDict{Int, Dict{Int, Int}, Dict{Tuple{DataType, 
 @inline function typed_value(::DoubleDict{V}, v::V, ::Type{F}, ::Type{S})::V where {V, F, S}
     v
 end
-@inline function typed_value(::IndexDoubleDict, v::Int, ::Type{F}, ::Type{S})::CI{F,S} where {F, S}
+@inline function typed_value(::IndexDoubleDict, v::Int64, ::Type{F}, ::Type{S})::CI{F,S} where {F, S}
     CI{F,S}(v)
 end
 
-function Base.sizehint!(::DoubleDict, ::Integer)
-    error("sizehint!(d::DoubleDict, ::Integer) has no proper meaning for "*
-        "DoubleDict, use sizehint!(WithType{F,S}(d), n::Integer) instead.")
+function Base.sizehint!(::AbstractDoubleDict, ::Integer)
+    throw(ErrorException("sizehint!(d::DoubleDict, ::Integer) has no proper" *
+    " meaning for DoubleDict, use sizehint!(WithType{F,S}(d), n::Integer) " *
+    "instead."))
 end
 
 function Base.length(d::AbstractDoubleDict)
@@ -59,7 +86,7 @@ end
 
 function Base.getindex(dict::AbstractDoubleDict, key::CI{F,S}) where {F,S}
     inner = dict.dict[(F,S)]
-    k_value = key.value::Int
+    k_value = key.value::Int64
     return typed_value(dict, inner[k_value], F, S)
 end
 
@@ -71,24 +98,24 @@ description
 function lazy_get(dict::AbstractDoubleDict{V}, ::Type{F}, ::Type{S}) where {V,F,S}
     inner = get(dict.dict, (F,S), nothing)
     if inner === nothing
-        return dict.dict[(F,S)] = Dict{Int,V}()
+        return dict.dict[(F,S)] = Dict{Int64,V}()
     end
     return inner
 end
 
 function Base.setindex!(dict::AbstractDoubleDict{V}, value::V, key::CI{F,S}) where {V,F,S}
     v_value = value
-    k_value = key.value::Int
-    inner = lazy_get(dict, F, S)::Dict{Int,V}
+    k_value = key.value::Int64
+    inner = lazy_get(dict, F, S)::Dict{Int64,V}
     inner[k_value] = v_value
-    return dict
+    return value
 end
 function Base.setindex!(dict::IndexDoubleDict, value::CI{F,S}, key::CI{F,S}) where {F,S}
-    v_value = value.value::Int
-    k_value = key.value::Int
-    inner = lazy_get(dict, F, S)::Dict{Int,Int}
+    v_value = value.value::Int64
+    k_value = key.value::Int64
+    inner = lazy_get(dict, F, S)::Dict{Int64,Int64}
     inner[k_value] = v_value
-    return dict
+    return value
 end
 
 function Base.empty!(d::AbstractDoubleDict)::Nothing
@@ -97,7 +124,7 @@ function Base.empty!(d::AbstractDoubleDict)::Nothing
 end
 
 function Base.delete!(d::AbstractDoubleDict{V}, key::CI{F,S}) where {V,F,S}
-    k_value = key.value::Int
+    k_value = key.value::Int64
     inner = lazy_get(d, F, S)
     delete!(inner, k_value)
     return d
@@ -186,9 +213,8 @@ mutable struct WithType{F, S, V, D, D2} <: AbstractWithType{F, S, V, D, D2}
     dict::D2
     inner::Union{D, Nothing}
     function WithType{F, S}(d::D3) where
-        {V, D<:AbstractDict{Int, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D},
+        {V, D<:AbstractDict{Int64, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D},
          D3<:DoubleDict{V, D, D2}, F, S}
-        # inner = get(d.dict, (F, S), D2())
         inner = get(d.dict, (F, S), nothing)
         new{F, S, V, D, D3}(d, inner)
     end
@@ -197,19 +223,18 @@ mutable struct IndexWithType{F, S, V, D, D2} <: AbstractWithType{F, S, CI{F,S}, 
     dict::D2
     inner::Union{D, Nothing}
     function IndexWithType{F, S}(d::D3) where
-        {V<:Int, D<:AbstractDict{Int, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D},
+        {V<:Int64, D<:AbstractDict{Int64, V}, D2<:AbstractDict{Tuple{DataType, DataType}, D},
          D3<:IndexDoubleDict{V, D, D2}, F, S}
-        # inner = get(d.dict, (F, S), D2())
-        inner = get(d.dict, (F, S), nothing)
+        inner = get(d.dict, (F, S), nothing)::Union{D, Nothing}
         new{F, S, CI{F,S}, D, D3}(d, inner)
     end
 end
 
-function with_type(d::DoubleDict, ::Type{F}, ::Type{S}) where {F,S}
-    return WithType{F, S}(d)
+function with_type(d::DoubleDict, ::Type{F}, ::Type{S})::WithType{F, S} where {F,S}
+    return WithType{F, S}(d)::WithType{F, S}
 end
-function with_type(d::IndexDoubleDict, ::Type{F}, ::Type{S}) where {F,S}
-    return IndexWithType{F, S}(d)
+function with_type(d::IndexDoubleDict, ::Type{F}, ::Type{S})::IndexWithType{F, S} where {F,S}
+    return IndexWithType{F, S}(d)::IndexWithType{F, S}
 end
 
 function Base.getindex(d::DoubleDict, ::Type{F}, ::Type{S}) where {F,S}
@@ -230,103 +255,107 @@ function initialize_inner!(d::AbstractWithType{F, S, V, D}) where {F, S, V, D}
     d.inner = D()
 end
 
+inner_is_empty(d::AbstractWithType)::Bool = d.inner === nothing
+function inner(d::AbstractWithType{F, S, V, D})::D where {F, S, V, D}
+    d.inner::D
+end
+
 function Base.sizehint!(d::AbstractWithType{F, S}, n::Integer) where {F, S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         initialize_inner!(d)
     end
-    sizehint!(d.inner, n)
+    sizehint!(inner(d), n)
 end
 
 function Base.length(d::AbstractWithType{F, S}) where {F, S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return 0
     end
-    return length(d.inner)
+    return length(inner(d))
 end
 
 function Base.haskey(d::AbstractWithType{F, S}, key::CI{F,S}) where {F,S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return false
     end
-    return haskey(d.inner, key.value)
+    return haskey(inner(d), key.value)
 end
 
 function Base.getindex(d::AbstractWithType{F, S},
     key::CI{F,S}) where {F, S}
-    if d.inner === nothing
-        error("No key")
+    if inner_is_empty(d)
+        throw(KeyError(key))
     end
-    inner = d.inner
-    k_value = key.value::Int
-    return typed_value(d, inner[k_value])
+    k_value = key.value::Int64
+    return typed_value(d, inner(d)[k_value])
 end
 
 function Base.setindex!(d::WithType{F, S, V}, value::V,
-    key::CI{F,S}) where {F, S, V}
-    if d.inner === nothing
+    key::CI{F,S})::V where {F, S, V}
+    if inner_is_empty(d)
         initialize_inner!(d)
     end
-    v_value = value#.value::Int
-    k_value = key.value::Int
-    d.inner[k_value] = v_value
-    return d
+    v_value = value
+    k_value = key.value::Int64
+    inner(d)[k_value] = v_value
+    return value
 end
-function Base.setindex!(d::IndexWithType{F, S}, value::CI{F,S},
-    key::CI{F,S}) where {F, S}
-    if d.inner === nothing
+function Base.setindex!(d::IndexWithType{F, S, V, D, D2}, value::CI{F,S},
+    key::CI{F,S})::CI{F,S} where {F, S, V, D, D2}
+    if inner_is_empty(d)
         initialize_inner!(d)
     end
-    v_value = value.value::Int
-    k_value = key.value::Int
-    d.inner[k_value] = v_value
-    return d
+    _inner = inner(d)::Dict{Int64, Int64}
+    v_value = value.value::Int64
+    k_value = key.value::Int64
+    _inner[k_value] = v_value
+    return value
 end
 
 function Base.empty!(d::AbstractWithType{F, S}) where {F,S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return d
     end
-    return empty!(d.inner)
+    return empty!(inner(d))
 end
 
 function Base.delete!(d::AbstractWithType{F, S}, key::CI{F,S}) where {F,S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return d
     end
     k_value = key.value::Int
-    delete!(d.inner, k_value)
+    delete!(inner(d), k_value)
     return d
 end
 
 function Base.isempty(d::AbstractWithType{F, S}) where {F,S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return true
     end
-    return isempty(d.inner)
+    return isempty(inner(d))
 end
 
 function Base.values(d::WithType{F, S, V})::Vector{V} where {F, S, V}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return V[]
     end
-    return V.(values(d.inner))
+    return V.(values(inner(d)))
 end
 function Base.values(d::IndexWithType{F, S})::Vector{CI{F,S}} where {F,S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return CI{F,S}[]
     end
-    return CI{F,S}.(values(d.inner))
+    return CI{F,S}.(values(inner(d)))
 end
 
 function Base.keys(d::AbstractWithType{F, S}) where {F,S}
-    if d.inner === nothing
+    if inner_is_empty(d)
         return CI{F,S}[]
     end
-    return CI{F,S}.(keys(d.inner))
+    return CI{F,S}.(keys(inner(d)))
 end
 
 function Base.iterate(d::AbstractWithType{F, S}) where {F, S}
-    # inner = get(d.dict, (F,S), nothing)
     inner = d.inner
     if inner === nothing
         return nothing

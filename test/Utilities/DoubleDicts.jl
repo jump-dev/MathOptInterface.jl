@@ -11,6 +11,8 @@ const CI_I = CI{MOI.SingleVariable, MOI.Integer}
 const CI_B = CI{MOI.SingleVariable, MOI.ZeroOne}
 
 function basic_functionality(dict, k_values, v_values)
+    @test_throws ErrorException sizehint!(dict, 1)
+
     @test isempty(dict)
     @test length(dict) == 0
 
@@ -24,8 +26,7 @@ function basic_functionality(dict, k_values, v_values)
     @test keys(dict) == [k_values[1]]
     @test dict[k_values[1]] == v_values[1]
 
-    kk = []
-    vv = []
+    kk, vv = [], []
     for (k,v) in dict
         push!(kk, k)
         push!(vv, v)
@@ -41,6 +42,21 @@ function basic_functionality(dict, k_values, v_values)
 
     dict[k_values[1]] = v_values[1]
     @test length(dict) == 1
+
+    for (k,v) in zip(k_values, v_values)
+        dict[k] = v
+    end
+
+    kk, vv = [], []
+    for (k,v) in dict
+        push!(kk, k)
+        push!(vv, v)
+    end
+    @test length(kk) == length(keys(dict))
+    @test isempty(setdiff(kk, keys(dict)))
+    @test length(vv) == length(values(dict))
+    @test isempty(setdiff(vv, values(dict)))
+
     empty!(dict)
     @test isempty(dict)
     @test length(dict) == 0
@@ -53,6 +69,8 @@ function basic_functionality(dict, k_values, v_values)
     sizehint!(idict, 2)
     @test length(idict) == 1
     @test length(bdict) == 0
+    @test values(bdict) == typeof(v_values[3])[]
+    @test keys(bdict) == typeof(k_values[3])[]
 
     @test haskey(idict, k_values[1])
     @test !haskey(idict, k_values[2])
@@ -67,16 +85,15 @@ function basic_functionality(dict, k_values, v_values)
     delete!(idict, k_values[2])
     @test !haskey(idict, k_values[2])
 
-    kk = []
-    vv = []
-    for (k,v) in dict
+    kk, vv = [], []
+    for (k,v) in idict
         push!(kk, k)
         push!(vv, v)
     end
-    @test length(kk) == length(keys(dict))
-    @test isempty(setdiff(kk, keys(dict)))
-    @test length(vv) == length(values(dict))
-    @test isempty(setdiff(vv, values(dict)))
+    @test length(kk) == length(keys(idict))
+    @test isempty(setdiff(kk, keys(idict)))
+    @test length(vv) == length(values(idict))
+    @test isempty(setdiff(vv, values(idict)))
 
     @test !isempty(idict)
     @test isempty(bdict)
@@ -87,6 +104,14 @@ function basic_functionality(dict, k_values, v_values)
 
     bdict[k_values[3]] = v_values[3]
     length(bdict) == 1
+
+    edict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.EqualTo{Bool})
+    ek = CI{MOI.SingleVariable, MOI.EqualTo{Bool}}(1)
+    @test_throws KeyError edict[ek]
+    sizehint!(edict, 0)
+    @test length(edict) == 0
+    @test_throws KeyError edict[ek]
+    delete!(edict, ek)
 end
 
 @testset "IndexDoubleDict" begin
