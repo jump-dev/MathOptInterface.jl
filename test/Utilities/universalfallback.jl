@@ -177,6 +177,8 @@ end
 
         MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
         @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
+        @test MOI.get(uf, MOI.CanonicalConstraintFunction(), cx) ≈ _affine(y)
+        @test MOIU.is_canonical(MOI.get(uf, MOI.CanonicalConstraintFunction(), cx))
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
@@ -200,6 +202,8 @@ end
 
         MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
         @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
+        @test MOI.get(uf, MOI.CanonicalConstraintFunction(), cx) ≈ _affine(y)
+        @test MOIU.is_canonical(MOI.get(uf, MOI.CanonicalConstraintFunction(), cx))
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")

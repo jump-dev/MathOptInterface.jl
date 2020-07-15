@@ -363,6 +363,8 @@ function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
     return VT(t1.output_index, scalar_term)
 end
 
+is_canonical(::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = true
+
 """
     is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
