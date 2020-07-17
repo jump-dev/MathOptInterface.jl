@@ -1123,6 +1123,20 @@ then it returns the function stored internally instead of a copy.
 struct CanonicalConstraintFunction <: AbstractConstraintAttribute end
 
 function get_fallback(model::ModelLike, ::CanonicalConstraintFunction, ci::ConstraintIndex)
+    func = get(model, ConstraintFunction(), ci)
+    # In `Utilities.AbstractModel` and `Utilities.UniversalFallback`,
+    # the function is canonicalized in `add_constraint` so it might already
+    # be canonical. In other models, the constraint might have been copied from
+    # from one of these two model so there is in fact a good chance of the
+    # function being canonical in any model type.
+    # As `is_canonical` is quite cheap compared to `canonical` which
+    # requires a copy and sorting the terms, it is worth checking.
+    if Utilities.is_canonical(func)
+        return func
+    else
+        return Utilities.canonical(func)
+    end
+
     return Utilities.canonical(get(model, ConstraintFunction(), ci))
 end
 

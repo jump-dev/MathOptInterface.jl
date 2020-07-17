@@ -207,6 +207,7 @@ function _get(uf, attr::MOI.AbstractConstraintAttribute, ci::CI)
     return get(attribute_dict, ci, nothing)
 end
 function _get(uf, attr::MOI.CanonicalConstraintFunction, ci::MOI.ConstraintIndex)
+    return MOI.get_fallback(uf, attr, ci)
     func = MOI.get(uf, MOI.ConstraintFunction(), ci)
     if is_canonical(func)
         return func
