@@ -112,17 +112,6 @@ function basic_functionality(dict, k_values, v_values)
     test_iterator(edict)
 end
 
-@testset "IndexDoubleDict" begin
-    dict = DoubleDicts.IndexDoubleDict()
-    keys = [
-        CI_I(1),
-        CI_I(2),
-        CI_B(1),
-    ]
-    vals = keys
-    basic_functionality(dict, keys, vals)
-end
-
 @testset "DoubleDict" begin
     dict = DoubleDicts.DoubleDict{Float64}()
     keys = [
@@ -134,6 +123,32 @@ end
         1.0,
         2.0,
         1.0,
+    ]
+    basic_functionality(dict, keys, vals)
+end
+
+@testset "IndexDoubleDict" begin
+    dict = DoubleDicts.IndexDoubleDict()
+    keys = [
+        CI_I(1),
+        CI_I(2),
+        CI_B(1),
+    ]
+    vals = keys
+    basic_functionality(dict, keys, vals)
+end
+
+@testset "FunctionSetDoubleDict" begin
+    dict = DoubleDicts.FunctionSetDoubleDict()
+    keys = [
+        CI_I(1),
+        CI_I(2),
+        CI_B(1),
+    ]
+    vals = [
+        (MOI.SingleVariable(MOI.VariableIndex(1)), MOI.Integer()),
+        (MOI.SingleVariable(MOI.VariableIndex(2)), MOI.Integer()),
+        (MOI.SingleVariable(MOI.VariableIndex(1)), MOI.ZeroOne()),
     ]
     basic_functionality(dict, keys, vals)
 end
