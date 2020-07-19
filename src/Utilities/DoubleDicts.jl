@@ -8,7 +8,7 @@ const AD = AbstractDict
 
 DataTypePair = Tuple{DataType, DataType}
 
-abstract type AbstractDoubleDict{K, V, IK, DI<:AD{IK}, DO<:AD{K, DI}} <: AD{K, V} end
+abstract type AbstractDoubleDict{K, V, IK, DI<:AD{IK}, DO<:AD{K, DI}} <: AD{CI, V} end
 
 """
     DoubleDict{V}
@@ -17,7 +17,6 @@ Optimized dictionary to map `ConstraintIndex` (`CI`) to values of type `V`.
 Works as a `AbstractDict{CI, V}` with minimal differences.
 Note that `CI` is not a concrete type, opposed to `CI{MOI.SingleVariable, MOI.Integers}`,
 which is a concrete type.
-Therefore this type is actually a subtype of `AbstractDict{Tuple{DataType, DataType}, V}`.
 
 When optimal performance or type stability is required its possible to obtain a
 fully type stable dictionary with values of type `V` and keys of type
@@ -49,7 +48,7 @@ fully type stable dictionary with values of type
 
     ``inner = dict[MOI.SingleVariable, MOI.Integers]``
 """
-struct IndexDoubleDict{DI, DO} <: AbstractDoubleDict{DataTypePair, Int64, Int64, DI, DO}
+struct IndexDoubleDict{DI, DO} <: AbstractDoubleDict{DataTypePair, CI, Int64, DI, DO}
     dict::DO
     IndexDoubleDict() = new{Dict{Int64, Int64}, Dict{DataTypePair, Dict{Int64, Int64}}}(
         Dict{DataTypePair, Dict{Int64, Int64}}())
@@ -257,7 +256,7 @@ mutable struct IndexWithType{F, S, V, DI, DD} <: AbstractWithType{F, S, CI{F,S},
         new{F, S, CI{F,S}, DI, DD}(d, inner)
     end
 end
-mutable struct FunctionSetWithType{F, S, V, DI, DD} <: AbstractWithType{F, S, CI{F,S}, DI, DD}
+mutable struct FunctionSetWithType{F, S, V, DI, DD} <: AbstractWithType{F, S, Tuple{F,S}, DI, DD}
     dict::DD
     inner::Union{DI, Nothing}
     function FunctionSetWithType{F, S}(d::DD) where
