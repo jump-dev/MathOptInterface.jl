@@ -71,13 +71,13 @@ end
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
     varmap::Union{DenseVariableDict{MOI.VariableIndex},
                   Dict{MOI.VariableIndex, MOI.VariableIndex}}
-    conmap::Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}
+    conmap::DoubleDicts.MainIndexDoubleDict
 end
 IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(),
-                      Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}())
+                      DoubleDicts.IndexDoubleDict())
 function IndexMap(n)
     IndexMap(dense_variable_dict(MOI.VariableIndex, n),
-             Dict{MOI.ConstraintIndex, MOI.ConstraintIndex}())
+             DoubleDicts.IndexDoubleDict())
 end
 
 function index_map_for_variable_indices(variables)
