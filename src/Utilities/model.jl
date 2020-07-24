@@ -550,7 +550,12 @@ function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.Abst
         # `@model`'s doc.
         ci = CI{F, S}(model.nextconstraintid += 1)
         # f needs to be copied, see #2
-        push!(model.constrmap, _add_constraint(model, ci, copy(f), copy(s)))
+        # We canonicalize the constraint so that solvers can avoid having to canonicalize
+        # it most of the time (they can check if they need to with `is_canonical`.
+        # Note that the canonicalization is not guaranteed if for instance
+        # `modify` is called and adds a new term.
+        # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
+        push!(model.constrmap, _add_constraint(model, ci, canonical(f), copy(s)))
         return ci
     else
         throw(MOI.UnsupportedConstraint{F, S}())

@@ -136,3 +136,14 @@ end
     mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
     MOIT.delete_test(mock)
 end
+
+@testset "CanonicalConstraintFunction" begin
+    mock = MOIU.MockOptimizer(MOIU.Model{Int}())
+    fx, fy = MOI.SingleVariable.(MOI.add_variables(mock, 2))
+    cx = MOI.add_constraint(mock, fx, MOI.LessThan(0))
+    c = MOI.add_constraint(mock, 1fx + fy, MOI.LessThan(1))
+    @test MOIU.is_canonical(MOI.get(mock, MOI.ConstraintFunction(), cx))
+    @test MOIU.is_canonical(MOI.get(mock, MOI.CanonicalConstraintFunction(), cx))
+    @test !MOIU.is_canonical(MOI.get(mock, MOI.ConstraintFunction(), c))
+    @test MOIU.is_canonical(MOI.get(mock, MOI.CanonicalConstraintFunction(), c))
+end

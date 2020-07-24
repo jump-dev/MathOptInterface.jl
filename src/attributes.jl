@@ -1103,6 +1103,44 @@ end
 ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
 """
+    CanonicalConstraintFunction()
+
+A constraint attribute for a canonical representation of the
+[`AbstractFunction`](@ref) object used to define the constraint.
+Getting this attribute is guaranteed to return a function that is equivalent but
+not necessarily identical to the function provided by the user.
+
+By default, `MOI.get(model, MOI.CanonicalConstraintFunction(), ci)` fallbacks to
+`MOI.Utilities.canonical(MOI.get(model, MOI.ConstraintFunction(), ci))`.
+However, if `model` knows that the constraint function is canonical then it can
+implement a specialized method that directly return the function without calling
+[`Utilities.canonical`](@ref). Therefore, the value returned **cannot** be
+assumed to be a copy of the function stored in `model`.
+Moreover, [`Utilities.Model`](@ref) checks with [`Utilities.is_canonical`](@ref)
+whether the function stored internally is already canonical and if it's the case,
+then it returns the function stored internally instead of a copy.
+"""
+struct CanonicalConstraintFunction <: AbstractConstraintAttribute end
+
+function get_fallback(model::ModelLike, ::CanonicalConstraintFunction, ci::ConstraintIndex)
+    func = get(model, ConstraintFunction(), ci)
+    # In `Utilities.AbstractModel` and `Utilities.UniversalFallback`,
+    # the function is canonicalized in `add_constraint` so it might already
+    # be canonical. In other models, the constraint might have been copied from
+    # from one of these two model so there is in fact a good chance of the
+    # function being canonical in any model type.
+    # As `is_canonical` is quite cheap compared to `canonical` which
+    # requires a copy and sorting the terms, it is worth checking.
+    if Utilities.is_canonical(func)
+        return func
+    else
+        return Utilities.canonical(func)
+    end
+
+    return Utilities.canonical(get(model, ConstraintFunction(), ci))
+end
+
+"""
     ConstraintFunction()
 
 A constraint attribute for the `AbstractFunction` object used to define the constraint.
@@ -1421,8 +1459,9 @@ method should be defined for attributes which are copied indirectly during
 * [`ObjectiveFunctionType`](@ref): this attribute is set indirectly when setting
   the [`ObjectiveFunction`](@ref) attribute.
 * [`NumberOfConstraints`](@ref), [`ListOfConstraintIndices`](@ref),
-  [`ListOfConstraints`](@ref), [`ConstraintFunction`](@ref) and
-  [`ConstraintSet`](@ref): these attributes are set indirectly by
+  [`ListOfConstraints`](@ref), [`CanonicalConstraintFunction`](@ref),
+  [`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref):
+  these attributes are set indirectly by
   [`add_constraint`](@ref) and [`add_constraints`](@ref).
 """
 function is_copyable(attr::AnyAttribute)
@@ -1440,6 +1479,7 @@ function is_copyable(::Union{ListOfOptimizerAttributesSet,
                              ObjectiveFunctionType,
                              ListOfConstraintIndices,
                              ListOfConstraints,
+                             CanonicalConstraintFunction,
                              ConstraintFunction,
                              ConstraintSet,
                              VariableBridgingCost,
