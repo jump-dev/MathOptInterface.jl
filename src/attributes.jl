@@ -665,7 +665,7 @@ MOI.set(optimizer, MOI.LazyConstraintCallback(), callback_data -> begin
         set = # computes set
         MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
     end
-end
+end)
 ```
 """
 struct LazyConstraintCallback <: AbstractCallback end
