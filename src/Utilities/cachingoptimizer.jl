@@ -151,12 +151,12 @@ function attach_optimizer(model::CachingOptimizer)
     model.state = ATTACHED_OPTIMIZER
     # MOI does not define the type of index_map, so we have to convert it
     # into an actual IndexMap. Also load the reverse IndexMap.
-    model.model_to_optimizer_map = convert(IndexMap, indexmap)
-    model.optimizer_to_model_map = reverse_index_map(indexmap)
+    model.model_to_optimizer_map = _standardize(indexmap)
+    model.optimizer_to_model_map = _reverse_index_map(indexmap)
     return nothing
 end
 
-function reverse_index_map(src::IndexMap)
+function _reverse_index_map(src::IndexMap)
     dest = IndexMap()
     sizehint!(dest.varmap, length(src.varmap))
     _reverse_dict(dest.varmap, src.varmap)
@@ -176,14 +176,14 @@ function _reverse_dict(dest::AbstractDict, src::AbstractDict)
     end
 end
 
-function Base.convert(::Type{IndexMap}, d::AbstractDict{MOI.Index, MOI.Index})
+function _standardize(d::AbstractDict{MOI.Index, MOI.Index})
     map = IndexMap()
     for (k,v) in d
         map[k] = v
     end
     return map
 end
-function Base.convert(::Type{IndexMap}, d::IndexMap)
+function _standardize(d::IndexMap)
     # return d
     # if we return d as is, its not possible to add variables
     # if there was a dense dict inside
