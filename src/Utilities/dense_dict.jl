@@ -22,15 +22,21 @@ end
 
 # Implementation of the `AbstractDict` API.
 # Base.empty(::DenseDict, ::Type{K}, ::Type{V}) not implemented
-function Base.iterate(d::DenseDict, args...)
+function Base.iterate(d::DenseDict{K,V}, args...) where {K,V}
     itr = iterate(d.set, args...)
     if itr === nothing
         return nothing
     else
         el, i = itr
-        return d.inverse_hash(el) => d.map[el], i
+        return inverse_hash(d, el)::K => d.map[el]::V, i
     end
 end
+
+function inverse_hash(d::DenseDict{K, V, F, I}, el)::K where {K,V,F,I}
+    f = d.inverse_hash::I
+    return f(el)::K
+end
+
 Base.length(d::DenseDict) = length(d.set)
 Base.haskey(dict::DenseDict, key) = dict.hash(key) in dict.set
 Base.getindex(dict::DenseDict, key) = dict.map[dict.hash(key)]
