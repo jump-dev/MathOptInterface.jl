@@ -145,25 +145,32 @@ errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)
     @assert model.state == EMPTY_OPTIMIZER
-    # We do not need to copy names because name-related operations are handled by `m.model_cache`
+    # We do not need to copy names because name-related operations are handled
+    # by `m.model_cache`
     indexmap = MOI.copy_to(model.optimizer, model.model_cache, copy_names=false)
     model.state = ATTACHED_OPTIMIZER
-    # MOI does not define the type of index_map, so we might have to copy it
-    # into a concrete container. Also load the reverse map.
-    model.model_to_optimizer_map = convert(IndexMap, indexmap)#IndexMap()
-    model.optimizer_to_model_map = reverse_index_map(indexmap)#IndexMap()
-    nothing
+    # MOI does not define the type of index_map, so we have to convert it
+    # into an actual IndexMap. Also load the reverse IndexMap.
+    model.model_to_optimizer_map = convert(IndexMap, indexmap)
+    model.optimizer_to_model_map = reverse_index_map(indexmap)
+    return nothing
 end
 
 function reverse_index_map(src::IndexMap)
     dest = IndexMap()
     sizehint!(dest.varmap, length(src.varmap))
-    # sizehint!(dest.conmap, length(src.conmap))
-    reverse_dict(dest.varmap, src.varmap)
-    reverse_dict(dest.conmap, src.conmap)
+    _reverse_dict(dest.varmap, src.varmap)
+    _reverse_dict(dest.conmap, src.conmap)
     return dest
 end
-function reverse_dict(dest::AbstractDict, src::AbstractDict)
+
+"""
+    _reverse_dict(dest::AbstractDict, src::AbstractDict)
+
+Reverse dictionary so that values of `src` are key of `dest` and vice-versa.
+`dest` must be empty. Also the values of `src` are assumed to be unique.
+"""
+function _reverse_dict(dest::AbstractDict, src::AbstractDict)
     for (k,v) in src
         dest[v] = k
     end
@@ -182,15 +189,18 @@ function Base.convert(::Type{IndexMap}, d::IndexMap)
     # if there was a dense dict inside
     # the solution would be to allow automatically swtiching
     # a ClevelDenseDict...
-    return IndexMap(standard_dict(d.varmap), d.conmap)
+    return IndexMap(_standard_dict(d.varmap), d.conmap)
 end
-function standard_dict(d::D)::D where
-    {D<:AbstractDict{MOI.VariableIndex, MOI.VariableIndex}}
+function _standard_dict(
+    d::D
+)::D where {D<:Dict{MOI.VariableIndex, MOI.VariableIndex}}
     return d
 end
-function standard_dict(d::D
-    )::Dict{MOI.VariableIndex, MOI.VariableIndex} where
-    {D<:AbstractDict{MOI.VariableIndex, MOI.VariableIndex}}
+function _standard_dict(
+    d::D
+)::Dict{MOI.VariableIndex, MOI.VariableIndex} where {
+    D<:AbstractDict{MOI.VariableIndex, MOI.VariableIndex}
+}
     ret = Dict{MOI.VariableIndex, MOI.VariableIndex}()
     sizehint!(ret, length(d))
     for (k,v) in d
