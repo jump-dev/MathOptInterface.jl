@@ -14,6 +14,14 @@ MOI.Utilities.@model(Model,
     (),
     ()
 )
+function MOI.supports(
+    ::Model{T},
+    ::MOI.ObjectiveFunction{
+        <:MOI.ScalarQuadraticFunction{T}
+    }
+) where {T}
+    return false
+end
 
 struct Options
     maximum_length::Int

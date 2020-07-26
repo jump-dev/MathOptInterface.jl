@@ -63,6 +63,9 @@ end
         MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},
                                     MOI.SecondOrderCone}()))
 
+    @test !MOI.Utilities.is_canonical(MOI.get(bridged_mock, MOI.ConstraintFunction(), ci))
+    @test MOI.Utilities.is_canonical(MOI.get(bridged_mock, MOI.CanonicalConstraintFunction(), ci))
+
     @testset "$attr" for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
         value = [√2, 1/√2, -1.0, -1.0]

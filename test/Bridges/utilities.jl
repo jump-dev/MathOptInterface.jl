@@ -53,7 +53,7 @@ function test_delete_bridge(
     @test !MOI.is_valid(m, ci)
     @test num_bridges() == start_num_bridges - used_bridges
     test_num_constraints(m, F, S, num_bridged - 1)
-    # As the bridge has been removed, if the constraints it has created where not removed, it wouldn't be there to decrease this counter anymore
+    # As the bridge has been removed, if the constraints it has created were not removed, it wouldn't be there to decrease this counter anymore
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     @test length(MOI.get(m, MOI.ListOfVariableIndices())) == nvars
     for num_constraints in list_num_constraints

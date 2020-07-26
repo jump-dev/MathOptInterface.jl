@@ -30,12 +30,18 @@ end
 @testset "Caching Optimizer" begin
     include("cachingoptimizer.jl")
 end
+@testset "DenseDict" begin
+    include("dense_dict.jl")
+end
 @testset "Copy" begin
     include("copy.jl")
 end
 
 @testset "CleverDicts" begin
     include("CleverDicts.jl")
+end
+@testset "DoubleDicts" begin
+    include("DoubleDicts.jl")
 end
 @testset "Lazy iterators" begin
     include("lazy_iterators.jl")

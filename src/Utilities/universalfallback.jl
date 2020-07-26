@@ -206,6 +206,15 @@ function _get(uf, attr::MOI.AbstractConstraintAttribute, ci::CI)
     end
     return get(attribute_dict, ci, nothing)
 end
+function _get(uf, attr::MOI.CanonicalConstraintFunction, ci::MOI.ConstraintIndex)
+    return MOI.get_fallback(uf, attr, ci)
+    func = MOI.get(uf, MOI.ConstraintFunction(), ci)
+    if is_canonical(func)
+        return func
+    else
+        return canonical(func)
+    end
+end
 function MOI.get(uf::UniversalFallback,
                  attr::Union{MOI.AbstractOptimizerAttribute,
                              MOI.AbstractModelAttribute})
@@ -216,9 +225,18 @@ function MOI.get(uf::UniversalFallback,
     end
 end
 function MOI.get(uf::UniversalFallback,
-                 attr::Union{MOI.AbstractVariableAttribute,
-                             MOI.AbstractConstraintAttribute}, idx::MOI.Index)
-    if MOI.supports(uf.model, attr, typeof(idx))
+                 attr::MOI.AbstractConstraintAttribute,
+                 idx::MOI.ConstraintIndex{F, S}) where {F, S}
+    if MOI.supports_constraint(uf.model, F, S) &&
+        (!MOI.is_copyable(attr) || MOI.supports(uf.model, attr, typeof(idx)))
+        MOI.get(uf.model, attr, idx)
+    else
+        _get(uf, attr, idx)
+    end
+end
+function MOI.get(uf::UniversalFallback,
+                 attr::MOI.AbstractVariableAttribute, idx::MOI.VariableIndex)
+    if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr, typeof(idx))
         MOI.get(uf.model, attr, idx)
     else
         _get(uf, attr, idx)
@@ -439,7 +457,7 @@ function MOI.add_constraint(uf::UniversalFallback, f::MOI.AbstractFunction, s::M
         constraints = get!(uf.constraints, (F, S)) do
             OrderedDict{CI{F, S}, Tuple{F, S}}()
         end::OrderedDict{CI{F, S}, Tuple{F, S}}
-        ci = _new_constraint_index(uf, f, s)
+        ci = _new_constraint_index(uf, canonical(f), copy(s))
         constraints[ci] = (f, s)
         return ci
     end

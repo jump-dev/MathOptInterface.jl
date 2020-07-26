@@ -4,6 +4,8 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
+const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
+
 include("../dummy.jl")
 
 remove_moi(x::String) = replace(x, "MathOptInterface." => "")
@@ -19,15 +21,18 @@ end
     y = MOI.VariableIndex(2)
     cx = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(1)
     cy = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(2)
-    map = MOIU.IndexMap(Dict(x => y), Dict(cx => cy))
+    map = MOIU.IndexMap(Dict(x => y), DoubleDicts.IndexDoubleDict())
+    map.conmap[cx] = cy
     @test length(map) == 2
     # `x=>y` in Julia <= 1.1 and `x => y` in Julia >= 1.2
     if VERSION < v"1.2"
         x_y = string(x) *  "=>" * string(y)
+        c_x_y = string(cx) *  "=>" * string(cy)
     else
         x_y = string(x => y)
+        c_x_y = string(cx => cy)
     end
-    compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,Pair{ConstraintIndex,ConstraintIndex}($cx, $cy))")
+    compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,$c_x_y)")
 end
 
 @testset "AUTOMATIC" begin
@@ -170,7 +175,7 @@ mutable struct ReverseOrderConstrainedVariablesModel <: AbstractConstrainedVaria
     inner                   ::MOIU.Model{Float64}
     ReverseOrderConstrainedVariablesModel() = new(MOI.ConstraintIndex[], MOIU.Model{Float64}())
 end
-        
+
 
 
 MOI.add_variables(model::AbstractConstrainedVariablesModel, n) = MOI.add_variables(model.inner, n)
