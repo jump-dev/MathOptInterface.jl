@@ -28,13 +28,8 @@ function Base.iterate(d::DenseDict{K,V}, args...) where {K,V}
         return nothing
     else
         el, i = itr
-        return inverse_hash(d, el)::K => d.map[el]::V, i
+        return d.inverse_hash(el)::K => d.map[el]::V, i
     end
-end
-
-function inverse_hash(d::DenseDict{K, V, F, I}, el)::K where {K,V,F,I}
-    f = d.inverse_hash::I
-    return f(el)::K
 end
 
 Base.length(d::DenseDict) = length(d.set)
