@@ -16,6 +16,13 @@ MOI.Utilities.@model(Model,
     ()
 )
 
+function MOI.supports(
+    ::Model{T},
+    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}
+) where {T}
+    return false
+end
+
 struct Options
     warn::Bool
 end
@@ -32,7 +39,7 @@ Keyword arguments are:
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
 """
 function Model(;
-        warn::Bool = false
+    warn::Bool = false,
 )
     model = Model{Float64}()
     model.ext[:MPS_OPTIONS] = Options(warn)
@@ -43,6 +50,8 @@ function Base.show(io::IO, ::Model)
     print(io, "A Mathematical Programming System (MPS) model")
     return
 end
+
+@enum(VType, VTYPE_CONTINUOUS, VTYPE_INTEGER, VTYPE_BINARY)
 
 # ==============================================================================
 #
@@ -62,13 +71,20 @@ function Base.write(io::IO, model::Model)
         warn = options.warn,
         replacements = Function[s -> replace(s, ' ' => '_')]
     )
+    ordered_names = String[]
+    names = Dict{MOI.VariableIndex, String}()
+    for x in MOI.get(model, MOI.ListOfVariableIndices())
+        n = MOI.get(model, MOI.VariableName(), x)
+        push!(ordered_names, n)
+        names[x] = n
+    end
     write_model_name(io, model)
     write_rows(io, model)
-    discovered_columns = write_columns(io, model)
+    discovered_columns = write_columns(io, model, ordered_names, names)
     write_rhs(io, model)
     write_ranges(io, model)
-    write_bounds(io, model, discovered_columns)
-    write_sos(io, model)
+    write_bounds(io, model, discovered_columns, ordered_names, names)
+    write_sos(io, model, names)
     println(io, "ENDATA")
     return
 end
@@ -87,25 +103,31 @@ end
 #   ROWS
 # ==============================================================================
 
-const LINEAR_CONSTRAINTS = (
+const SET_TYPES = (
     (MOI.LessThan{Float64}, 'L'),
     (MOI.GreaterThan{Float64}, 'G'),
     (MOI.EqualTo{Float64}, 'E'),
-    (MOI.Interval{Float64}, 'L')  # See the note in the RANGES section.
+    (MOI.Interval{Float64}, 'L'),  # See the note in the RANGES section.
 )
+
+function _write_rows(io, model, S, sense_char)
+    for index in MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}()
+    )
+        row_name = MOI.get(model, MOI.ConstraintName(), index)
+        if row_name == ""
+            error("Row name is empty: $(index).")
+        end
+        println(io, " ", sense_char, "  ", row_name)
+    end
+    return
+end
 
 function write_rows(io::IO, model::Model)
     println(io, "ROWS\n N  OBJ")
-    for (set_type, sense_char) in LINEAR_CONSTRAINTS
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{
-                                        MOI.ScalarAffineFunction{Float64},
-                                        set_type}())
-            row_name = MOI.get(model, MOI.ConstraintName(), index)
-            if row_name == ""
-                error("Row name is empty: $(index).")
-            end
-            println(io, " ", sense_char, "  ", row_name)
-        end
+    for (set_type, sense_char) in SET_TYPES
+        _write_rows(io, model, set_type, sense_char)
     end
     return
 end
@@ -114,49 +136,67 @@ end
 #   COLUMNS
 # ==============================================================================
 
-function list_of_integer_variables(model::Model)
-    integer_variables = Set{String}()
-    for set_type in (MOI.ZeroOne, MOI.Integer)
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{
-                MOI.SingleVariable, set_type}())
-            v_index = MOI.get(model, MOI.ConstraintFunction(), index)
-            v_name = MOI.get(model, MOI.VariableName(), v_index.variable)
-            push!(integer_variables, v_name)
-        end
-    end
-    return integer_variables
-end
-
-function add_coefficient(coefficients, variable_name, row_name, coefficient)
-    if haskey(coefficients, variable_name)
-        push!(coefficients[variable_name], (row_name, coefficient))
-    else
-        coefficients[variable_name] = [(row_name, coefficient)]
+function _list_of_integer_variables(model, names, integer_variables, S)
+    for index in MOI.get(
+        model, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}()
+    )
+        v_index = MOI.get(model, MOI.ConstraintFunction(), index)
+        push!(integer_variables, names[v_index.variable])
     end
     return
 end
 
+function list_of_integer_variables(model::Model, names)
+    integer_variables = Set{String}()
+    for S in (MOI.ZeroOne, MOI.Integer)
+        _list_of_integer_variables(model, names, integer_variables, S)
+    end
+    return integer_variables
+end
+
 function extract_terms(
-        model::Model, coefficients, row_name::String,
-        func::MOI.ScalarAffineFunction, discovered_columns::Set{String})
+    v_names::Dict{MOI.VariableIndex, String},
+    coefficients::Dict{String, Vector{Tuple{String, Float64}}},
+    row_name::String,
+    func::MOI.ScalarAffineFunction,
+    discovered_columns::Set{String},
+    multiplier::Float64 = 1.0,
+)
     for term in func.terms
-        variable_name = MOI.get(model, MOI.VariableName(), term.variable_index)
-        add_coefficient(coefficients, variable_name, row_name, term.coefficient)
+        variable_name = v_names[term.variable_index]
+        push!(
+            coefficients[variable_name],
+            (row_name, multiplier * term.coefficient)
+        )
         push!(discovered_columns, variable_name)
     end
     return
 end
 
-function extract_terms(
-        model::Model, coefficients, row_name::String, func::MOI.SingleVariable,
-        discovered_columns::Set{String})
-    variable_name = MOI.get(model, MOI.VariableName(), func.variable)
-    add_coefficient(coefficients, variable_name, row_name, 1.0)
-    push!(discovered_columns, variable_name)
+function _collect_coefficients(
+    model,
+    S,
+    v_names::Dict{MOI.VariableIndex, String},
+    coefficients::Dict{String, Vector{Tuple{String, Float64}}},
+    discovered_columns::Set{String},
+)
+    for index in MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}(),
+    )
+        row_name = MOI.get(model, MOI.ConstraintName(), index)
+        func = MOI.get(model, MOI.ConstraintFunction(), index)
+        extract_terms(
+            v_names, coefficients, row_name, func, discovered_columns
+        )
+    end
     return
 end
 
-function write_columns(io::IO, model::Model)
+function write_columns(io::IO, model::Model, ordered_names, names)
+    coefficients = Dict{String, Vector{Tuple{String, Float64}}}(
+        n => Tuple{String, Float64}[] for n in ordered_names
+    )
     # Many MPS readers (e.g., CPLEX and GAMS) will error if a variable (column)
     # appears in the BOUNDS section but did not appear in the COLUMNS section.
     # This is likely because such variables are meaningless - they don't appear
@@ -165,44 +205,38 @@ function write_columns(io::IO, model::Model)
     # names of all variables seen in COLUMNS into `discovered_columns`, and then
     # pass this set to `write_bounds` so that it can act appropriately.
     discovered_columns = Set{String}()
+    # Build constraint coefficients
+    for (S, _) in SET_TYPES
+        _collect_coefficients(model, S, names, coefficients, discovered_columns)
+    end
+    # Build objective
+    # MPS doesn't support maximization so we flip the sign on the objective
+    # coefficients.
+    s = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE ? -1.0 : 1.0
+    obj_func = MOI.get(
+        model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    )
+    extract_terms(names, coefficients, "OBJ", obj_func, discovered_columns, s)
+    integer_variables = list_of_integer_variables(model, names)
     println(io, "COLUMNS")
-    coefficients = Dict{String, Vector{Tuple{String, Float64}}}()
-    for (set_type, sense_char) in LINEAR_CONSTRAINTS
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{
-                                        MOI.ScalarAffineFunction{Float64},
-                                        set_type}())
-            row_name = MOI.get(model, MOI.ConstraintName(), index)
-            func = MOI.get(model, MOI.ConstraintFunction(), index)
-            extract_terms(
-                model, coefficients, row_name, func, discovered_columns)
-        end
-    end
-    obj_func_type = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_func_type}())
-    extract_terms(model, coefficients, "OBJ", obj_func, discovered_columns)
-    if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
-        # MPS doesn't support maximization so we flip the sign on the objective
-        # coefficients.
-        for (v_name, terms) in coefficients
-            for (idx, (row_name, coef)) in enumerate(terms)
-                if row_name == "OBJ"
-                    terms[idx] = (row_name, -coef)
-                end
-            end
-        end
-    end
-    integer_variables = list_of_integer_variables(model)
-    for (variable, terms) in coefficients
-        if variable in integer_variables
+    int_open = false
+    for variable in ordered_names
+        is_int = variable in integer_variables
+        if is_int && !int_open
             println(io, "    MARKER    'MARKER'                 'INTORG'")
+            int_open = true
+        elseif !is_int && int_open
+            println(io, "    MARKER    'MARKER'                 'INTEND'")
+            int_open = false
         end
-        for (constraint, coefficient) in terms
-            print(io, "     ", rpad(variable, 8), " ", rpad(constraint, 8), " ")
+        for (constraint, coefficient) in coefficients[variable]
+            print(io, "     ")
+            print(io, rpad(variable, 8))
+            print(io, " ")
+            print(io, rpad(constraint, 8))
+            print(io, " ")
             Base.Grisu.print_shortest(io, coefficient)
             println(io)
-        end
-        if variable in integer_variables
-            println(io, "    MARKER    'MARKER'                 'INTEND'")
         end
     end
     return discovered_columns
@@ -217,18 +251,23 @@ value(set::MOI.GreaterThan) = set.lower
 value(set::MOI.EqualTo) = set.value
 value(set::MOI.Interval) = set.upper  # See the note in the RANGES section.
 
+function _write_rhs(io, model, S, sense_char)
+    for index in MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}()
+    )
+        row_name = MOI.get(model, MOI.ConstraintName(), index)
+        print(io, "    rhs       ", rpad(row_name, 8), "  ")
+        set = MOI.get(model, MOI.ConstraintSet(), index)
+        Base.Grisu.print_shortest(io, value(set))
+        println(io)
+    end
+end
+
 function write_rhs(io::IO, model::Model)
     println(io, "RHS")
-    for (set_type, sense_char) in LINEAR_CONSTRAINTS
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{
-                                        MOI.ScalarAffineFunction{Float64},
-                                        set_type}())
-            row_name = MOI.get(model, MOI.ConstraintName(), index)
-            print(io, "    rhs       ", rpad(row_name, 8), "  ")
-            set = MOI.get(model, MOI.ConstraintSet(), index)
-            Base.Grisu.print_shortest(io, value(set))
-            println(io)
-        end
+    for (set_type, sense_char) in SET_TYPES
+        _write_rhs(io, model, set_type, sense_char)
     end
     return
 end
@@ -252,9 +291,12 @@ end
 
 function write_ranges(io::IO, model::Model)
     println(io, "RANGES")
-    for index in MOI.get(model, MOI.ListOfConstraintIndices{
-                                    MOI.ScalarAffineFunction{Float64},
-                                    MOI.Interval{Float64}}())
+    for index in MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{
+            MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}
+        }()
+    )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         print(io, "    rhs       ", rpad(row_name, 8), "  ")
         set = MOI.get(model, MOI.ConstraintSet(), index)::MOI.Interval{Float64}
@@ -289,7 +331,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
         Base.Grisu.print_shortest(io, lower)
         println(io)
     elseif lower == -Inf && upper == Inf
-        # Skip this for now, we deal with it at the end of write_bounds.
+        println(io, " FR bounds    ", var_name)
     else
         if lower == -Inf
             println(io, " MI bounds    ", name)
@@ -309,74 +351,66 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
     return
 end
 
-function update_bounds(current::Tuple{Float64, Float64}, set::MOI.GreaterThan)
-    return (max(current[1], set.lower), current[2])
+function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.GreaterThan)
+    return (max(x[1], set.lower), x[2], x[3])
 end
 
-function update_bounds(current::Tuple{Float64, Float64}, set::MOI.LessThan)
-    return (current[1], min(current[2], set.upper))
+function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.LessThan)
+    return (x[1], min(x[2], set.upper), x[3])
 end
 
-function update_bounds(::Tuple{Float64, Float64}, set::MOI.Interval)
-    return (set.lower, set.upper)
+function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.Interval)
+    return (set.lower, set.upper, x[3])
 end
 
-function update_bounds(::Tuple{Float64, Float64}, set::MOI.EqualTo)
-    return (set.value, set.value)
+function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.EqualTo)
+    return (set.value, set.value, x[3])
 end
 
-function write_bounds(io::IO, model::Model, discovered_columns::Set{String})
-    println(io, "BOUNDS")
-    free_variables = Set(MOI.get(model, MOI.ListOfVariableIndices()))
-    bounds = Dict{MOI.VariableIndex, Tuple{Float64, Float64}}()
-    for (set_type, sense_char) in LINEAR_CONSTRAINTS
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{
-                MOI.SingleVariable, set_type}())
-            func = MOI.get(model, MOI.ConstraintFunction(), index)
-            variable_index = func.variable::MOI.VariableIndex
-            if !haskey(bounds, variable_index)
-                bounds[variable_index] = (-Inf, Inf)
-            end
-            set = MOI.get(model, MOI.ConstraintSet(), index)::set_type
-            bounds[variable_index] = update_bounds(bounds[variable_index], set)
-        end
-    end
-    for (index, (lower, upper)) in bounds
-        var_name = MOI.get(model, MOI.VariableName(), index)
-        if var_name in discovered_columns
-            write_single_bound(io, var_name, lower, upper)
-        else
-            @warn("Variable $var_name is mentioned in BOUNDS, but is not " *
-                  "mentioned in the COLUMNS section. We are ignoring it.")
-        end
-        pop!(free_variables, index)
-    end
-    for index in MOI.get(model, MOI.ListOfConstraintIndices{
-            MOI.SingleVariable, MOI.ZeroOne}())
+function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.ZeroOne)
+    return (x[1], x[2], VTYPE_BINARY)
+end
+
+function _collect_bounds(bounds, model, S, names)
+    for index in MOI.get(
+        model, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}()
+    )
         func = MOI.get(model, MOI.ConstraintFunction(), index)
-        variable_index = func.variable::MOI.VariableIndex
-        var_name = MOI.get(model, MOI.VariableName(), variable_index)
-        if var_name in discovered_columns
-            println(io, " BV bounds    ", var_name)
-        else
-            @warn("Variable $var_name is mentioned in BOUNDS, but is not " *
-                  "mentioned in the COLUMNS section. We are ignoring it.")
-        end
-        if variable_index in free_variables
-            # We can remove the variable because it has a bound, but first check
-            # that it is still there because some variables might have two
-            # bounds and so might have already been removed.
-            pop!(free_variables, variable_index)
-        end
+        set = MOI.get(model, MOI.ConstraintSet(), index)::S
+        name = names[func.variable]
+        bounds[name] = update_bounds(bounds[name], set)
     end
-    for variable_index in free_variables
-        var_name = MOI.get(model, MOI.VariableName(), variable_index)
-        if var_name in discovered_columns
-            println(io, " FR bounds    ", var_name)
-        else
-            @warn("Variable $var_name is mentioned in BOUNDS, but is not " *
-                  "mentioned in the COLUMNS section. We are ignoring it.")
+    return
+end
+
+function write_bounds(
+    io::IO, model::Model, discovered_columns::Set{String}, ordered_names, names
+)
+    println(io, "BOUNDS")
+    bounds = Dict{String, Tuple{Float64, Float64, VType}}(
+        n => (-Inf, Inf, VTYPE_CONTINUOUS) for n in ordered_names
+    )
+    for S in (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+        MOI.ZeroOne,
+    )
+        _collect_bounds(bounds, model, S, names)
+    end
+    for var_name in ordered_names
+        lower, upper, vtype = bounds[var_name]
+        if !(var_name in discovered_columns)
+            @warn(
+                "Variable $var_name is mentioned in BOUNDS, but is not " *
+                "mentioned in the COLUMNS section. We are ignoring it."
+            )
+            continue
+        elseif vtype == VTYPE_BINARY
+            println(io, " BV bounds    ", var_name)
         end
+        write_single_bound(io, var_name, lower, upper)
     end
     return
 end
@@ -385,29 +419,32 @@ end
 #   SOS
 # ==============================================================================
 
-function write_sos_constraint(io::IO, model::Model, index)
+function write_sos_constraint(io::IO, model::Model, index, names)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     for (variable, weight) in zip(func.variables, set.weights)
-        var_name = MOI.get(model, MOI.VariableName(), variable)
-        print(io, "    ", rpad(var_name, 8), "  ")
+        print(io, "    ", rpad(names[variable], 8), "  ")
         Base.Grisu.print_shortest(io, weight)
         println(io)
     end
 end
 
-function write_sos(io::IO, model::Model)
-    sos1_indices = MOI.get(model, MOI.ListOfConstraintIndices{
-        MOI.VectorOfVariables, MOI.SOS1{Float64}}())
-    sos2_indices = MOI.get(model, MOI.ListOfConstraintIndices{
-        MOI.VectorOfVariables, MOI.SOS2{Float64}}())
+function write_sos(io::IO, model::Model, names)
+    sos1_indices = MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.SOS1{Float64}}(),
+    )
+    sos2_indices = MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.SOS2{Float64}}(),
+    )
     if length(sos1_indices) + length(sos2_indices) > 0
         println(io, "SOS")
         idx = 1
         for (sos_type, indices) in enumerate([sos1_indices, sos2_indices])
             for index in indices
                 println(io, " S", sos_type, " SOS", idx)
-                write_sos_constraint(io, model, index)
+                write_sos_constraint(io, model, index, names)
                 idx += 1
             end
         end
@@ -447,35 +484,116 @@ end
 #           ENDATA
 # ==============================================================================
 
-mutable struct TempColumn
-    lower::Float64
-    upper::Float64
-    is_int::Bool
-    TempColumn() = new(0.0, Inf, false)
+@enum(Sense, SENSE_N, SENSE_G, SENSE_L, SENSE_E, SENSE_UNKNOWN)
+function Sense(s::String)
+    if s == "G"
+        return SENSE_G
+    elseif s == "L"
+        return SENSE_L
+    elseif s == "E"
+        return SENSE_E
+    elseif s == "N"
+        return SENSE_N
+    else
+        return SENSE_UNKNOWN
+    end
 end
-
-mutable struct TempRow
-    lower::Float64
-    upper::Float64
-    sense::String
-    terms::Dict{String, Float64}
-    TempRow() = new(-Inf, Inf, "E", Dict{String, Float64}())
-end
-
 mutable struct TempMPSModel
     name::String
     obj_name::String
-    columns::Dict{String, TempColumn}
-    rows::Dict{String, TempRow}
+    c::Vector{Float64}
+    col_lower::Vector{Float64}
+    col_upper::Vector{Float64}
+    row_lower::Vector{Float64}
+    row_upper::Vector{Float64}
+    sense::Vector{Sense}
+    A::Vector{Vector{Tuple{Int, Float64}}}
+    vtype::Vector{VType}
+    name_to_col::Dict{String, Int}
+    col_to_name::Vector{String}
+    name_to_row::Dict{String, Int}
+    row_to_name::Vector{String}
     intorg_flag::Bool  # A flag used to parse COLUMNS section.
-    TempMPSModel() = new("", "", Dict{String, TempColumn}(),
-        Dict{String, TempRow}(), false)
 end
 
-const HEADERS = ("ROWS", "COLUMNS", "RHS", "RANGES", "BOUNDS", "SOS", "ENDATA")
+function TempMPSModel()
+    return TempMPSModel(
+        "",
+        "",
+        Float64[],  # c
+        Float64[],  # col_lower
+        Float64[],  # col_upper
+        Float64[],  # row_lower
+        Float64[],  # row_upper
+        Sense[],   # sense
+        Vector{Vector{Tuple{Int, Float64}}}[],  # A
+        Bool[],
+        Dict{String, Int}(),
+        String[],
+        Dict{String, Int}(),
+        String[],
+        false,
+    )
+end
+
+@enum(
+    Headers,
+    HEADER_NAME,
+    HEADER_ROWS,
+    HEADER_COLUMNS,
+    HEADER_RHS,
+    HEADER_RANGES,
+    HEADER_BOUNDS,
+    HEADER_SOS,
+    HEADER_ENDATA,
+    HEADER_UNKNOWN,
+)
+
+# Headers(s) gets called _alot_ (on every line), so we try very hard to be
+# efficient.]
+function Headers(s::AbstractString)
+    N = length(s)
+    if N > 7 || N < 3
+        return HEADER_UNKNOWN
+    elseif N == 3
+        x = first(s)
+        if (x == 'R' || x == 'r') && uppercase(s) == "RHS"
+            return HEADER_RHS
+        elseif (x == 'S' || x == 's') && uppercase(s) == "SOS"
+            return HEADER_SOS
+        end
+    elseif N == 4
+        x = first(s)
+        if (x == 'R' || x == 'r') && uppercase(s) == "ROWS"
+            return HEADER_ROWS
+        end
+    elseif N == 5
+        return HEADER_UNKNOWN
+    elseif N == 6
+        x = first(s)
+        if (x == 'R' || x == 'r') && uppercase(s) == "RANGES"
+            return HEADER_RANGES
+        elseif (x == 'B' || x == 'b') && uppercase(s) == "BOUNDS"
+            return HEADER_BOUNDS
+        elseif (x == 'E' || x == 'e') && uppercase(s) == "ENDATA"
+            return HEADER_ENDATA
+        end
+    elseif N == 7
+        x = first(s)
+        if (x == 'C' || x == 'c') && (uppercase(s) == "COLUMNS")
+            return HEADER_COLUMNS
+        end
+    end
+    return HEADER_UNKNOWN
+end
+
+function line_to_items(line)
+    items = split(line, " "; keepempty = false)
+    return String.(items)
+end
 
 """
-    Base.read!(io::IO, model::FileFormats.CBF.Model)
+    Base.read!(io::IO, model::FileFormats.MPS.Model)
 
 Read `io` in the MPS file format and store the result in `model`.
 """
@@ -484,34 +602,42 @@ function Base.read!(io::IO, model::Model)
         error("Cannot read in file because model is not empty.")
     end
     data = TempMPSModel()
-    header = "NAME"
+    header = HEADER_NAME
     multi_objectives = String[]
-    while !eof(io) && header != "ENDATA"
-        line = strip(readline(io))
-        if line == "" || startswith(line, "*")
-            # Skip blank lines and comments.
-            continue
+    while !eof(io)
+        line = string(strip(readline(io)))
+        if isempty(line) || first(line) == '*'
+            continue  # Skip blank lines and comments.
         end
-        if uppercase(string(line)) in HEADERS
-            header = uppercase(string(line))
+        h = Headers(line)
+        if h != HEADER_UNKNOWN
+            header = h
             continue
+        else
+            # Carry on with the previous header
         end
         # TODO: split into hard fields based on column indices.
-        items = String.(split(line, " ", keepempty = false))
-        if header == "NAME"
-            # A special case. This only happens at the start.
+        items = line_to_items(line)
+        if header == HEADER_NAME
             parse_name_line(data, items)
-        elseif header == "ROWS"
+        elseif header == HEADER_ROWS
             multi_obj = parse_rows_line(data, items)
-            multi_obj !== nothing && push!(multi_objectives, multi_obj)
-        elseif header == "COLUMNS"
+            if multi_obj !== nothing
+                push!(multi_objectives, multi_obj)
+            end
+        elseif header == HEADER_COLUMNS
             parse_columns_line(data, items, multi_objectives)
-        elseif header == "RHS"
+        elseif header == HEADER_RHS
             parse_rhs_line(data, items)
-        elseif header == "RANGES"
+        elseif header == HEADER_RANGES
             parse_ranges_line(data, items)
-        elseif header == "BOUNDS"
+        elseif header == HEADER_BOUNDS
             parse_bounds_line(data, items)
+        elseif header == HEADER_SOS
+            error("TODO(odow): implement parsing of SOS constraints.")
+        else
+            @assert header == HEADER_ENDATA
+            break
         end
     end
     copy_to(model, data)
@@ -528,61 +654,65 @@ function bounds_to_set(lower, upper)
     elseif lower == upper
         return MOI.EqualTo(upper)
     end
-    return nothing
+    return  # free variable
 end
 
-function copy_to(model::Model, temp::TempMPSModel)
-    MOI.set(model, MOI.Name(), temp.name)
+function copy_to(model::Model, data::TempMPSModel)
+    MOI.set(model, MOI.Name(), data.name)
     variable_map = Dict{String, MOI.VariableIndex}()
-    # Add variables.
-    for (name, column) in temp.columns
-        x = MOI.add_variable(model)
-        variable_map[name] = x
-        MOI.set(model, MOI.VariableName(), x, name)
-        set = bounds_to_set(column.lower, column.upper)
-        if set === nothing && column.is_int
-            # TODO: some solvers may interpret this as binary.
-            MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
-        elseif set !== nothing && column.is_int
-            if set == MOI.Interval(0.0, 1.0)
-                MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
-            else
-                MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
-                MOI.add_constraint(model, MOI.SingleVariable(x), set)
-            end
-        elseif set !== nothing
-            MOI.add_constraint(model, MOI.SingleVariable(x), set)
-        end
+    for (i, name) in enumerate(data.col_to_name)
+        _add_variable(model, data, variable_map, i, name)
     end
-    # Add linear constraints.
-    for (c_name, row) in temp.rows
-        if c_name == temp.obj_name
-            # Set objective.
-            MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-            obj_func = if length(row.terms) == 1 &&
-                    first(row.terms).second == 1.0
-                MOI.SingleVariable(variable_map[first(row.terms).first])
-            else
-                MOI.ScalarAffineFunction([
-                    MOI.ScalarAffineTerm(coef, variable_map[v_name])
-                        for (v_name, coef) in row.terms],
-                0.0)
-            end
-            MOI.set(model, MOI.ObjectiveFunction{typeof(obj_func)}(), obj_func)
-        else
-            constraint_function = MOI.ScalarAffineFunction([
-                MOI.ScalarAffineTerm(coef, variable_map[v_name])
-                    for (v_name, coef) in row.terms],
-                0.0)
-            set = bounds_to_set(row.lower, row.upper)
-            if set !== nothing
-                c = MOI.add_constraint(model, constraint_function, set)
-                MOI.set(model, MOI.ConstraintName(), c, c_name)
-            else
-                error("Expected a non-empty set for $(c_name). Got row=$(row)")
-            end
+    _add_objective(model, data, variable_map)
+    for (j, c_name) in enumerate(data.row_to_name)
+        set = bounds_to_set(data.row_lower[j], data.row_upper[j])
+        if set !== nothing
+            _add_linear_constraint(model, data, variable_map, j, c_name, set)
         end
+        # `else` is a free constraint. Don't add it.
     end
+    return
+end
+
+function _add_variable(model, data, variable_map, i, name)
+    x = MOI.add_variable(model)
+    variable_map[name] = x
+    MOI.set(model, MOI.VariableName(), x, name)
+    set = bounds_to_set(data.col_lower[i], data.col_upper[i])
+    if set !== nothing
+        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+    end
+    if data.vtype[i] == VTYPE_INTEGER
+        MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
+    elseif data.vtype[i] == VTYPE_BINARY
+        MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+    end
+    return
+end
+
+function _add_objective(model, data, variable_map)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(
+            [
+                MOI.ScalarAffineTerm(data.c[i], variable_map[v])
+                for (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
+            ],
+            0.0,
+        )
+    )
+    return
+end
+
+function _add_linear_constraint(model, data, variable_map, j, c_name, set)
+    terms = MOI.ScalarAffineTerm{Float64}[
+        MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]])
+        for (i, coef) in data.A[j]
+    ]
+    c = MOI.add_constraint(model, MOI.ScalarAffineFunction(terms, 0.0), set)
+    MOI.set(model, MOI.ConstraintName(), c, c_name)
     return
 end
 
@@ -610,31 +740,40 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
     if length(items) != 2
         error("Malformed ROWS line: $(join(items, " "))")
     end
-    sense, name = items
-    if haskey(data.rows, name)
-        error("Duplicate row encountered: $(line).")
-    elseif sense != "N" && sense != "L" && sense != "G" && sense != "E"
+    sense, name = Sense(items[1]), items[2]
+    if haskey(data.name_to_row, name)
+        error("Duplicate row encountered: $(join(items, " ")).")
+    elseif sense == SENSE_UNKNOWN
         error("Invalid row sense: $(join(items, " "))")
     end
-    row = TempRow()
-    row.sense = sense
-    if sense == "N"
+    if sense == SENSE_N
         if data.obj_name != ""
-            # Detected a duplicate objective. Skip it.
-            return name
+            return name  # Detected a duplicate objective. Skip it.
         end
         data.obj_name = name
+        return
+    end
+    if name == data.obj_name
+        error("Found row with same name as objective: $(join(items, " ")).")
     end
     # Add some default bounds for the constraints.
-    if sense == "G"
-        row.lower = 0.0
-    elseif sense == "L"
-        row.upper = 0.0
-    elseif sense == "E"
-        row.lower = 0.0
-        row.upper = 0.0
+    push!(data.row_to_name, name)
+    row = length(data.row_to_name)
+    data.name_to_row[name] = row
+    push!(data.sense, sense)
+    push!(data.A, Tuple{Int, Float64}[])
+    if sense == SENSE_G
+        push!(data.row_lower, 0.0)
+        push!(data.row_upper, Inf)
+        data.row_upper[row] = Inf
+    elseif sense == SENSE_L
+        push!(data.row_lower, -Inf)
+        push!(data.row_upper, 0.0)
+    else
+        @assert sense == SENSE_E
+        push!(data.row_lower, 0.0)
+        push!(data.row_upper, 0.0)
     end
-    data.rows[name] = row
     return
 end
 
@@ -642,58 +781,82 @@ end
 #   COLUMNS
 # ==============================================================================
 
-function parse_single_coefficient(data, row_name, column_name, value)
-    row = get(data.rows, row_name, nothing)
+function parse_single_coefficient(
+    data, row_name::String, column::Int, value::Float64
+)
+    if row_name == data.obj_name
+        data.c[column] += value
+        return
+    end
+    row = get(data.name_to_row, row_name, nothing)
     if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
     end
-    if haskey(row.terms, column_name)
-        row.terms[column_name] += parse(Float64, value)
-    else
-        row.terms[column_name] = parse(Float64, value)
+    push!(data.A[row], (column, value))
+    return
+end
+
+function _add_new_column(data, column_name)
+    if haskey(data.name_to_col, column_name)
+        return
+    end
+    push!(data.col_to_name, column_name)
+    data.name_to_col[column_name] = length(data.col_to_name)
+    push!(data.c, 0.0)
+    push!(data.col_lower, 0.0)
+    push!(data.col_upper, Inf)
+    push!(data.vtype, VTYPE_CONTINUOUS)
+    return
+end
+
+function _set_intorg(data, column, column_name)
+     if data.intorg_flag
+        data.vtype[column] = VTYPE_INTEGER
+    elseif data.vtype[column] != VTYPE_CONTINUOUS
+        error(
+            "Variable $(column_name) appeared in COLUMNS outside an " *
+            "`INT` marker after already being declared as integer."
+        )
     end
     return
 end
 
-function parse_columns_line(data::TempMPSModel, items::Vector{String}, multi_objectives::Vector{String})
+function parse_columns_line(
+    data::TempMPSModel, items::Vector{String}, multi_objectives::Vector{String}
+)
     if length(items) == 3
         # [column name] [row name] [value]
         column_name, row_name, value = items
-        if uppercase(row_name) == "'MARKER'" && uppercase(value) == "'INTORG'"
-            data.intorg_flag = true
-            return
-        elseif uppercase(row_name) == "'MARKER'" &&
-                uppercase(value) == "'INTEND'"
-            data.intorg_flag = false
-            return
+        if row_name == "'MARKER'"
+            if value == "'INTORG'"
+                data.intorg_flag = true
+                return
+            elseif value == "'INTEND'"
+                data.intorg_flag = false
+                return
+            end
         elseif row_name in multi_objectives
             return
         end
-        if !haskey(data.columns, column_name)
-            data.columns[column_name] = TempColumn()
-        end
-        parse_single_coefficient(data, row_name, column_name, value)
-        if data.columns[column_name].is_int && !data.intorg_flag
-            error("Variable $(column_name) appeared in COLUMNS outside an" *
-                  " `INT` marker after already being declared as integer.")
-        end
-        data.columns[column_name].is_int = data.intorg_flag
+        _add_new_column(data, column_name)
+        column = data.name_to_col[column_name]
+        parse_single_coefficient(data, row_name, column, parse(Float64, value))
+        _set_intorg(data, column, column_name)
     elseif length(items) == 5
         # [column name] [row name] [value] [row name 2] [value 2]
         column_name, row_name_1, value_1, row_name_2, value_2 = items
-        if !haskey(data.columns, column_name)
-            data.columns[column_name] = TempColumn()
-        end
         if row_name_1 in multi_objectives || row_name_2 in multi_objectives
             return
         end
-        parse_single_coefficient(data, row_name_1, column_name, value_1)
-        parse_single_coefficient(data, row_name_2, column_name, value_2)
-        if data.columns[column_name].is_int && !data.intorg_flag
-            error("Variable $(column_name) appeared in COLUMNS outside an" *
-                  " `INT` marker after already being declared as integer.")
-        end
-        data.columns[column_name].is_int = data.intorg_flag
+        _add_new_column(data, column_name)
+        column = data.name_to_col[column_name]
+        parse_single_coefficient(
+            data, row_name_1, column, parse(Float64, value_1)
+        )
+        parse_single_coefficient(
+            data, row_name_2, column, parse(Float64, value_2)
+        )
+        _set_intorg(data, column, column_name)
     else
         error("Malformed COLUMNS line: $(join(items, " "))")
     end
@@ -704,20 +867,22 @@ end
 #   RHS
 # ==============================================================================
 
-function parse_single_rhs(data, row_name, value, items::Vector{String})
-    if !haskey(data.rows, row_name)
+function parse_single_rhs(
+    data, row_name::String, value::Float64, items::Vector{String}
+)
+    row = get(data.name_to_row, row_name, nothing)
+    if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
     end
-    value = parse(Float64, value)
-    sense = data.rows[row_name].sense
-    if sense == "E"
-        data.rows[row_name].upper = value
-        data.rows[row_name].lower = value
-    elseif sense == "G"
-        data.rows[row_name].lower = value
-    elseif sense == "L"
-        data.rows[row_name].upper = value
-    elseif sense == "N"
+    if data.sense[row] == SENSE_E
+        data.row_upper[row] = value
+        data.row_lower[row] = value
+    elseif data.sense[row] == SENSE_G
+        data.row_lower[row] = value
+    elseif data.sense[row] == SENSE_L
+        data.row_upper[row] = value
+    else
+        @assert data.sense[row] == SENSE_N
         error("Cannot have RHS for objective: $(join(items, " "))")
     end
     return
@@ -728,12 +893,12 @@ function parse_rhs_line(data::TempMPSModel, items::Vector{String})
     if length(items) == 3
         # [rhs name] [row name] [value]
         rhs_name, row_name, value = items
-        parse_single_rhs(data, row_name, value, items)
+        parse_single_rhs(data, row_name, parse(Float64, value), items)
     elseif length(items) == 5
         # [rhs name] [row name 1] [value 1] [row name 2] [value 2]
         rhs_name, row_name_1, value_1, row_name_2, value_2 = items
-        parse_single_rhs(data, row_name_1, value_1, items)
-        parse_single_rhs(data, row_name_2, value_2, items)
+        parse_single_rhs(data, row_name_1, parse(Float64, value_1), items)
+        parse_single_rhs(data, row_name_2, parse(Float64, value_2), items)
     else
         error("Malformed RHS line: $(join(items, " "))")
     end
@@ -754,21 +919,20 @@ end
 #         E    |      -      | rhs + range   |     rhs
 # ==============================================================================
 
-function parse_single_range(data, row_name, value)
-    if !haskey(data.rows, row_name)
+function parse_single_range(data, row_name::String, value::Float64)
+    row = get(data.name_to_row, row_name, nothing)
+    if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
     end
-    value = parse(Float64, value)
-    row = data.rows[row_name]
-    if row.sense == "G"
-        row.upper = row.lower + abs(value)
-    elseif row.sense == "L"
-        row.lower = row.upper - abs(value)
-    elseif row.sense == "E"
+    if data.sense[row] == SENSE_G
+        data.row_upper[row] = data.row_lower[row] + abs(value)
+    elseif data.sense[row] == SENSE_L
+        data.row_lower[row] = data.row_upper[row] - abs(value)
+    elseif data.sense[row] == SENSE_E
         if value > 0.0
-            row.upper = row.upper + value
+            data.row_upper[row] = data.row_lower[row] + value
         else
-            row.lower = row.lower + value
+            data.row_lower[row] = data.row_upper[row] + value
         end
     end
     return
@@ -778,13 +942,13 @@ end
 function parse_ranges_line(data::TempMPSModel, items::Vector{String})
     if length(items) == 3
         # [rhs name] [row name] [value]
-        rhs_name, row_name, value = items
-        parse_single_range(data, row_name, value)
+        _, row_name, value = items
+        parse_single_range(data, row_name, parse(Float64, value))
     elseif length(items) == 5
         # [rhs name] [row name] [value] [row name 2] [value 2]
-        rhs_name, row_name, value, row_name_2, value_2 = items
-        parse_single_range(data, row_name, value)
-        parse_single_range(data, row_name_2, value_2)
+        _, row_name_1, value_1, row_name_2, value_2 = items
+        parse_single_range(data, row_name_1, parse(Float64, value_1))
+        parse_single_range(data, row_name_2, parse(Float64, value_2))
     else
         error("Malformed RANGES line: $(join(items, " "))")
     end
@@ -795,62 +959,72 @@ end
 #   BOUNDS
 # ==============================================================================
 
+function _parse_single_bound(data, column_name::String, bound_type::String)
+    col = get(data.name_to_col, column_name, nothing)
+    if col === nothing
+        error("Column name $(column_name) not found.")
+    end
+    if bound_type == "PL"
+        data.col_upper[col] = Inf
+    elseif bound_type == "MI"
+        data.col_lower[col] = -Inf
+    elseif bound_type == "FR"
+        data.col_lower[col] = -Inf
+        data.col_upper[col] = Inf
+    elseif bound_type == "BV"
+        data.col_lower[col] = -Inf
+        data.col_upper[col] = Inf
+        data.vtype[col] = VTYPE_BINARY
+    else
+        error("Invalid bound type $(bound_type): $(column_name)")
+    end
+end
+
+function _parse_single_bound(
+    data, column_name::String, bound_type::String, value::Float64
+)
+    col = get(data.name_to_col, column_name, nothing)
+    if col === nothing
+        error("Column name $(column_name) not found.")
+    end
+    if bound_type == "FX"
+        data.col_lower[col] = value
+        data.col_upper[col] = value
+    elseif bound_type == "UP"
+        data.col_upper[col] = value
+    elseif bound_type == "LO"
+        data.col_lower[col] = value
+    elseif bound_type == "LI"
+        data.col_lower[col] = value
+        data.vtype[col] = VTYPE_INTEGER
+    elseif bound_type == "UI"
+        data.col_upper[col] = value
+        data.vtype[col] = VTYPE_INTEGER
+    elseif bound_type == "FR"
+        # So even though FR bounds should be of the form:
+        #  FR BOUND1    VARNAME
+        # there are cases in MIPLIB2017 (e.g., leo1 and leo2) like so:
+        #  FR BOUND1    C0000001       .000000
+        # In these situations, just ignore the value.
+        data.col_lower[col] = -Inf
+        data.col_upper[col] = Inf
+    elseif bound_type == "BV"
+        # A similar situation happens with BV bounds in leo1 and leo2.
+        data.col_lower[col] = -Inf
+        data.col_upper[col] = Inf
+        data.vtype[col] = VTYPE_BINARY
+    else
+        error("Invalid bound type $(bound_type): $(column_name)")
+    end
+end
+
 function parse_bounds_line(data::TempMPSModel, items::Vector{String})
     if length(items) == 3
-        bound_type, bound_name, column_name = items
-        if !haskey(data.columns, column_name)
-            error("Column name $(column_name) not found.")
-        end
-        column = data.columns[column_name]
-        if bound_type == "PL"
-            column.upper = Inf
-        elseif bound_type == "MI"
-            column.lower = -Inf
-        elseif bound_type == "FR"
-            column.lower = -Inf
-            column.upper = Inf
-        elseif bound_type == "BV"
-            column.lower = 0.0
-            column.upper = 1.0
-            column.is_int = true
-        else
-            error("Invalid bound type $(bound_type): $(join(items, " "))")
-        end
+        bound_type, _, column_name = items
+        _parse_single_bound(data, column_name, bound_type)
     elseif length(items) == 4
-        bound_type, bound_name, column_name, value = items
-        if !haskey(data.columns, column_name)
-            error("Column name $(column_name) not found.")
-        end
-        column = data.columns[column_name]
-        value = parse(Float64, value)
-        if bound_type == "FX"
-            column.lower = column.upper = value
-        elseif bound_type == "UP"
-            column.upper = value
-        elseif bound_type == "LO"
-            column.lower = value
-        elseif bound_type == "LI"
-            column.lower = value
-            column.is_int = true
-        elseif bound_type == "UI"
-            column.upper = value
-            column.is_int = true
-        elseif bound_type == "FR"
-            # So even though FR bounds should be of the form:
-            #  FR BOUND1    VARNAME
-            # there are cases in MIPLIB2017 (e.g., leo1 and leo2) like so:
-            #  FR BOUND1    C0000001       .000000
-            # In these situations, just ignore the value.
-            column.lower = -Inf
-            column.upper = Inf
-        elseif bound_type == "BV"
-            # A similar situation happens with BV bounds in leo1 and leo2.
-            column.lower = 0.0
-            column.upper = 1.0
-            column.is_int = true
-        else
-            error("Invalid bound type $(bound_type): $(join(items, " "))")
-        end
+        bound_type, _, column_name, value = items
+        _parse_single_bound(data, column_name, bound_type, parse(Float64, value))
     else
         error("Malformed BOUNDS line: $(join(items, " "))")
     end

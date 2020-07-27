@@ -108,7 +108,7 @@ end
 # Attributes, Bridge acting as a constraint
 
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet,
-                 bridge::RSOCtoPSDBridge{T}) where T
+                 bridge::RSOCtoPSDBridge)
     if bridge.psd isa MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.Nonnegatives}
         dim = length(bridge.variables)
     else
@@ -142,7 +142,7 @@ function _variable(bridge::RSOCtoPSDBridge, i::IndexInVector)
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-                 bridge::RSOCtoPSDBridge{T}) where T
+                 bridge::RSOCtoPSDBridge)
     values = MOI.get(model, attr, bridge.psd)
     n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
     mapped = [values[_variable_map(bridge, IndexInVector(i))] for i in 1:n]
@@ -152,7 +152,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
     return mapped
 end
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                 bridge::RSOCtoPSDBridge{T}) where T
+                 bridge::RSOCtoPSDBridge)
     dual = MOI.get(model, attr, bridge.psd)
     n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
     mapped = [dual[_variable_map(bridge, IndexInVector(i))] for i in 1:n]
@@ -169,7 +169,7 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
 end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.VariablePrimal,
-                 bridge::RSOCtoPSDBridge{T}, i::IndexInVector) where T
+                 bridge::RSOCtoPSDBridge, i::IndexInVector)
     value = MOI.get(model, attr, _variable(bridge, i))
     if i.value == 2
         return value / 2

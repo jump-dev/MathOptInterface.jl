@@ -15,6 +15,7 @@ module TestExternalModel
     using MathOptInterface
     struct NewSet <: MathOptInterface.AbstractScalarSet end
     struct NewFunction <: MathOptInterface.AbstractScalarFunction end
+    MathOptInterface.Utilities.canonicalize!(f::NewFunction) = f
     Base.copy(::NewFunction) = NewFunction()
     Base.copy(::NewSet) = NewSet()
     MathOptInterface.Utilities.@model(ExternalModel,
@@ -174,12 +175,28 @@ end
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
     @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
 
-    f3 = MOIU.modify_function(f1, MOI.ScalarConstantChange(9))
-    f3 = MOIU.modify_function(f3, MOI.ScalarCoefficientChange(y, 2))
+    c3 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
+
+    change_1 = MOI.ScalarConstantChange(9)
+    f3 = MOIU.modify_function(f1, change_1)
+    change_2 = MOI.ScalarCoefficientChange(y, 2)
+    f3 = MOIU.modify_function(f3, change_2)
 
     @test !(MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3)
+    @test !(MOI.get(model, MOI.ConstraintFunction(), c3) ≈ f3)
     MOI.set(model, MOI.ConstraintFunction(), c1, f3)
-    @test MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3
+    MOI.modify(model, c3, change_1)
+    MOI.modify(model, c3, change_2)
+    F1 = MOI.get(model, MOI.CanonicalConstraintFunction(), c1)
+    @test F1 ≈ f3
+    @test F1 !== MOI.get(model, MOI.ConstraintFunction(), c1)
+    @test MOI.Utilities.is_canonical(F1)
+    F3 = MOI.get(model, MOI.CanonicalConstraintFunction(), c3)
+    @test F3 ≈ f3
+    @test F3 === MOI.get(model, MOI.ConstraintFunction(), c3)
+    @test MOI.Utilities.is_canonical(F3)
+    @test MOI.get(model, MOI.CanonicalConstraintFunction(), c1) ≈ f3
+    @test MOI.Utilities.is_canonical(MOI.get(model, MOI.CanonicalConstraintFunction(), c1))
 
     f4 = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y])), [5, 7])
     c4 = MOI.add_constraint(model, f4, MOI.SecondOrderCone(2))

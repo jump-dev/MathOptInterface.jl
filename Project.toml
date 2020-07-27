@@ -1,6 +1,6 @@
 name = "MathOptInterface"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "0.9.13"
+version = "0.9.14"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -20,7 +20,7 @@ BenchmarkTools = "0.4, 0.5"
 CodecBzip2 = "~0.6, 0.7"
 CodecZlib = "~0.6, 0.7"
 JSON = "~0.21"
-JSONSchema = "0.2"
+JSONSchema = "0.3"
 MutableArithmetics = "0.2"
 OrderedCollections = "1"
 julia = "1"

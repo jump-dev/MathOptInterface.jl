@@ -1,6 +1,37 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.14 (May 30, 2020)
+---------------------
+
+- Add a solver-independent interface for accessing the set of conflicting
+  constraints an Irreducible Inconsistent Subsystem (#1056).
+- Bump JSONSchema dependency from v0.2 to v0.3 (#1090).
+- Documentation improvements:
+  * Fix typos (#1054, #1060, #1061, #1064, #1069, #1070).
+  * Remove the outdated recommendation for a package implementing MOI for a
+    solver `XXX` to be called `MathOptInterfaceXXX` (#1087).
+- Utilities improvements:
+  * Fix `is_canonical` for quadratic functions (#1081, #1089).
+  * Implement `add_constrained_variable[s]` for `CachingOptimizer`
+    so that it is added as constrained variables to the underlying optimizer (#1084).
+  * Add support for custom objective functions for
+    `UniversalFallback` (#1086).
+  * Deterministic ordering of constraints in `UniversalFallback` (#1088).
+- Testing improvements:
+  * Add `NormOneCone`/`NormInfinityCone` tests (#1045).
+- Bridges improvements:
+  * Add bridges from `Semiinteger` and `Semicontinuous` (#1059).
+  * Implement getting `ConstraintSet` for `Variable.FlipSignBridge` (#1066).
+  * Fix setting `ConstraintFunction` for `Constraint.ScalarizeBridge` (#1093).
+  * Fix `NormOne`/`NormInf` bridges with nonzero constants (#1045).
+  * Fix StackOverflow in `debug` (#1063).
+- FileFormats improvements:
+  * [SDPA] Implement the extension for integer variables (#1079).
+  * [SDPA] Ignore comments aftere `m` and `nblocks` and detect `dat-s` extension (#1077).
+  * [SDPA] No scaling of off-diagonal coefficient (#1076).
+  * [SDPA] Add missing negation of constant (#1075).
+
 v0.9.13 (March 24, 2020)
 ---------------------
 

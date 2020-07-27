@@ -144,7 +144,7 @@ function add_unsupported(graph::Graph, edges::Vector{ObjectiveEdge},
 end
 function add_unsupported(graph::Graph, node::VariableNode,
                          variables, constraints, objectives)
-    if _dist(graph, node) != INFINITY
+    if _dist(graph, node) != INFINITY || node in variables
         return
     end
     push!(variables, node)
@@ -156,7 +156,7 @@ function add_unsupported(graph::Graph, node::VariableNode,
 end
 function add_unsupported(graph::Graph, node::ConstraintNode,
                          variables, constraints, objectives)
-    if _dist(graph, node) != INFINITY
+    if _dist(graph, node) != INFINITY || node in constraints
         return
     end
     push!(constraints, node)
@@ -164,7 +164,7 @@ function add_unsupported(graph::Graph, node::ConstraintNode,
 end
 function add_unsupported(graph::Graph, node::ObjectiveNode,
                          variables, constraints, objectives)
-    if _dist(graph, node) != INFINITY
+    if _dist(graph, node) != INFINITY || node in objectives
         return
     end
     push!(objectives, node)

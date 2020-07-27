@@ -239,6 +239,77 @@ function MOI.add_variables(m::CachingOptimizer, n)
     return vindices
 end
 
+function MOI.supports_add_constrained_variable(m::CachingOptimizer, S::Type{<:MOI.AbstractScalarSet})
+    return MOI.supports_add_constrained_variable(m.model_cache, S) && (m.state == NO_OPTIMIZER || MOI.supports_add_constrained_variable(m.optimizer, S))
+end
+function MOI.add_constrained_variable(m::CachingOptimizer, set::MOI.AbstractScalarSet)
+    if m.state == MOIU.ATTACHED_OPTIMIZER
+        if m.mode == MOIU.AUTOMATIC
+            try
+                vindex_optimizer, cindex_optimizer =
+                    MOI.add_constrained_variable(m.optimizer, set)
+            catch err
+                if err isa MOI.NotAllowedError
+                    reset_optimizer(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindex_optimizer, cindex_optimizer =
+                MOI.add_constrained_variable(m.optimizer, set)
+        end
+    end
+    vindex, cindex = MOI.add_constrained_variable(m.model_cache, set)
+    if m.state == MOIU.ATTACHED_OPTIMIZER
+        m.model_to_optimizer_map[vindex] = vindex_optimizer
+        m.optimizer_to_model_map[vindex_optimizer] = vindex
+        m.model_to_optimizer_map[cindex] = cindex_optimizer
+        m.optimizer_to_model_map[cindex_optimizer] = cindex
+    end
+    return vindex, cindex
+end
+
+function _supports_add_constrained_variables(m::CachingOptimizer, S::Type{<:MOI.AbstractVectorSet})
+    return MOI.supports_add_constrained_variables(m.model_cache, S) && (m.state == NO_OPTIMIZER || MOI.supports_add_constrained_variables(m.optimizer, S))
+end
+# Split in two to solve ambiguity
+function MOI.supports_add_constrained_variables(m::CachingOptimizer, ::Type{MOI.Reals})
+    return _supports_add_constrained_variables(m, MOI.Reals)
+end
+function MOI.supports_add_constrained_variables(m::CachingOptimizer, S::Type{<:MOI.AbstractVectorSet})
+    return _supports_add_constrained_variables(m, S)
+end
+function MOI.add_constrained_variables(m::CachingOptimizer, set::MOI.AbstractVectorSet)
+    if m.state == ATTACHED_OPTIMIZER
+        if m.mode == AUTOMATIC
+            try
+                vindices_optimizer, cindex_optimizer =
+                    MOI.add_constrained_variables(m.optimizer, set)
+            catch err
+                if err isa MOI.NotAllowedError
+                    reset_optimizer(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindices_optimizer, cindex_optimizer =
+                MOI.add_constrained_variables(m.optimizer, set)
+        end
+    end
+    vindices, cindex = MOI.add_constrained_variables(m.model_cache, set)
+    if m.state == ATTACHED_OPTIMIZER
+        for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
+            m.model_to_optimizer_map[vindex] = vindex_optimizer
+            m.optimizer_to_model_map[vindex_optimizer] = vindex
+        end
+        m.model_to_optimizer_map[cindex] = cindex_optimizer
+        m.optimizer_to_model_map[cindex_optimizer] = cindex
+    end
+    return vindices, cindex
+end
+
 function MOI.supports_constraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     MOI.supports_constraint(m.model_cache, F, S) && (m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S))
 end

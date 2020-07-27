@@ -479,3 +479,58 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
         end
     end
 end
+
+mutable struct NoFreeVariables <: MOI.AbstractOptimizer
+    inner::MOIU.Model{Float64}
+    function NoFreeVariables()
+        return new(MOIU.Model{Float64}())
+    end
+end
+MOI.is_empty(model::NoFreeVariables) = MOI.is_empty(model.inner)
+MOI.empty!(model::NoFreeVariables) = MOI.empty!(model.inner)
+MOI.get(model::NoFreeVariables, attr::MOI.AnyAttribute, idx::Vector) = MOI.get(model.inner, attr, idx)
+MOI.get(model::NoFreeVariables, attr::MOI.AnyAttribute, args...) = MOI.get(model.inner, attr, args...)
+MOI.supports_add_constrained_variables(::NoFreeVariables, ::Type{MOI.Reals}) = false
+MOI.supports_add_constrained_variable(::NoFreeVariables, ::Type{<:MOI.AbstractScalarSet}) = true
+function MOI.add_constrained_variable(model::NoFreeVariables, set::MOI.AbstractScalarSet)
+    return MOI.add_constrained_variable(model.inner, set)
+end
+MOI.supports_add_constrained_variables(::NoFreeVariables, ::Type{<:MOI.AbstractVectorSet}) = true
+function MOI.add_constrained_variables(model::NoFreeVariables, set::MOI.AbstractVectorSet)
+    return MOI.add_constrained_variables(model.inner, set)
+end
+
+MOI.Utilities.supports_default_copy_to(::NoFreeVariables, names::Bool) = !names
+function MOI.copy_to(dest::NoFreeVariables, src::MOI.ModelLike; kwargs...)
+    return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
+end
+
+function constrained_variables_test(model)
+    @test !MOI.supports_add_constrained_variables(model, MOI.Reals)
+    @test MOI.supports_add_constrained_variable(model, MOI.ZeroOne)
+    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
+    @test !MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Nonnegatives)
+    scalar_set = MOI.ZeroOne()
+    x, cx = MOI.add_constrained_variable(model, scalar_set)
+    vector_set = MOI.Nonnegatives(2)
+    y, cy = MOI.add_constrained_variables(model, vector_set)
+    constraint_types = Set([(MOI.SingleVariable, MOI.ZeroOne), (MOI.VectorOfVariables, MOI.Nonnegatives)])
+    @test Set(MOI.get(model.model_cache, MOI.ListOfConstraints())) == constraint_types
+    if MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
+        MOIU.attach_optimizer(model)
+    end
+    @test Set(MOI.get(model.optimizer, MOI.ListOfConstraints())) == constraint_types
+end
+
+@testset "Constrained Variables" begin
+    cache = NoFreeVariables()
+    optimizer = NoFreeVariables()
+    model = MOIU.CachingOptimizer(cache, optimizer)
+    constrained_variables_test(model)
+    MOI.empty!(cache)
+    MOI.empty!(optimizer)
+    model = MOIU.CachingOptimizer(cache, MOIU.AUTOMATIC)
+    MOIU.reset_optimizer(model, optimizer)
+    constrained_variables_test(model)
+end

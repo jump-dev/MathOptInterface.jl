@@ -623,6 +623,41 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  |2| objective function of type `MOI.SingleVariable` is bridged (distance 1) by MOIB.Objective.FunctionizeBridge{$T}.
 """
     end
+    bridged = MOIB.LazyBridgeOptimizer(model)
+    @testset "Exponential constraint" begin
+        F = MOI.VectorAffineFunction{T}
+        S = MOI.ExponentialCone
+        @test debug_string(MOIB.debug_supports_constraint, F, S) ==
+"""
+`MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+(1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorSlackBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) ==
+"""
+`MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+[1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+(1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
+  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.ExponentialCone}` because:
+  [1] constrained variables in `MOI.ExponentialCone` are not supported
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+"""
+        MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
+        @test debug_string(MOIB.debug_supports_constraint, F, S) ==
+"""
+`MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+[1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
+  Cannot add free variables and then constrain them because:
+  (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported
+(1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
+  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.ExponentialCone}` because:
+  [1] constrained variables in `MOI.ExponentialCone` are not supported
+  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+"""
+    end
 end
 
 @testset "Continuous Linear with SDPAModel{$T}" for T in [Float64, Rational{Int}]

@@ -15,7 +15,7 @@ struct UnsupportedSet <: MOI.AbstractSet end
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
 function test_model_equality(model_string, variables, constraints; suffix="")
-    model = MOF.Model()
+    model = MOF.Model(validate = true)
     MOIU.loadfromstring!(model, model_string)
     MOI.write_to_file(model, TEST_MOF_FILE * suffix)
     model_2 = MOF.Model()
@@ -58,7 +58,7 @@ end
         @test_throws Exception MOF.moi_to_object(variable_index, model)
         MOI.FileFormats.create_unique_names(model, warn=true)
         @test MOF.moi_to_object(variable_index, model) ==
-            MOF.Object("name" => "x1")
+            MOF.OrderedObject("name" => "x1")
     end
     @testset "Duplicate variable name" begin
         model = MOF.Model()
@@ -66,11 +66,11 @@ end
         MOI.set(model, MOI.VariableName(), x, "x")
         y = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), y, "x")
-        @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
-        @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x")
+        @test MOF.moi_to_object(x, model) == MOF.OrderedObject("name" => "x")
+        @test MOF.moi_to_object(y, model) == MOF.OrderedObject("name" => "x")
         MOI.FileFormats.create_unique_names(model, warn=true)
-        @test MOF.moi_to_object(x, model) == MOF.Object("name" => "x")
-        @test MOF.moi_to_object(y, model) == MOF.Object("name" => "x_1")
+        @test MOF.moi_to_object(x, model) == MOF.OrderedObject("name" => "x")
+        @test MOF.moi_to_object(y, model) == MOF.OrderedObject("name" => "x_1")
     end
     @testset "Blank constraint name" begin
         model = MOF.Model()
@@ -99,24 +99,24 @@ end
 end
 @testset "round trips" begin
     @testset "Empty model" begin
-        model = MOF.Model()
+        model = MOF.Model(validate = true)
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model()
+        model_2 = MOF.Model(validate = true)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, String[], String[])
     end
     @testset "FEASIBILITY_SENSE" begin
-        model = MOF.Model(validate=false)
+        model = MOF.Model(validate = true)
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model(validate=false)
+        model_2 = MOF.Model(validate = true)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, ["x"], String[])
     end
     @testset "Empty function term" begin
-        model = MOF.Model()
+        model = MOF.Model(validate = true)
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         c = MOI.add_constraint(model,
@@ -125,7 +125,7 @@ end
         )
         MOI.set(model, MOI.ConstraintName(), c, "c")
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model()
+        model_2 = MOF.Model(validate = true)
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, ["x"], ["c"])
     end

@@ -70,69 +70,61 @@ The `NormOneCone` is representable with LP constraints, since
 ``t \\ge \\sum_i \\lvert x_i \\rvert`` if and only if there exists a vector y such that
 ``t \\ge \\sum_i y_i`` and ``y_i \\ge x_i``, ``y_i \\ge -x_i`` for all ``i``.
 """
-struct NormOneBridge{T, F, G, H} <: AbstractBridge
+struct NormOneBridge{T, F, G} <: AbstractBridge
     y::Vector{MOI.VariableIndex}
-    ge_index::CI{F, MOI.GreaterThan{T}}
-    nn_index::CI{G, MOI.Nonnegatives}
+    nn_index::CI{F, MOI.Nonnegatives}
 end
-function bridge_constraint(::Type{NormOneBridge{T, F, G, H}}, model::MOI.ModelLike, f::H, s::MOI.NormOneCone) where {T, F, G, H}
+function bridge_constraint(::Type{NormOneBridge{T, F, G}}, model::MOI.ModelLike, f::G, s::MOI.NormOneCone) where {T, F, G}
     f_scalars = MOIU.eachscalar(f)
     d = MOI.dimension(s)
     y = MOI.add_variables(model, d - 1)
-    ge_index = MOIU.normalize_and_add_constraint(model, MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y)), MOI.GreaterThan(zero(T)), allow_modify_function=true)
+    ge = MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y))
     lb = f_scalars[2:d]
     ub = MOIU.operate(-, T, lb)
     lb = MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
     ub = MOIU.operate!(+, T, ub, MOI.VectorOfVariables(y))
-    f_new = MOIU.operate(vcat, T, ub, lb)
-    nn_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(2d - 2))
-    return NormOneBridge{T, F, G, H}(y, ge_index, nn_index)
+    f_new = MOIU.operate(vcat, T, ge, ub, lb)
+    nn_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(2d - 1))
+    return NormOneBridge{T, F, G}(y, nn_index)
 end
 
 MOI.supports_constraint(::Type{NormOneBridge{T}}, ::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T = true
 MOIB.added_constrained_variable_types(::Type{<:NormOneBridge}) = Tuple{DataType}[]
-MOIB.added_constraint_types(::Type{NormOneBridge{T, F, G, H}}) where {T, F, G, H} = [(F, MOI.GreaterThan{T}), (G, MOI.Nonnegatives)]
-function concrete_bridge_type(::Type{<:NormOneBridge{T}}, H::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T
-    S = MOIU.scalar_type(H)
-    F = MOIU.promote_operation(+, T, S, S)
-    G = MOIU.promote_operation(+, T, H, H)
-    return NormOneBridge{T, F, G, H}
+MOIB.added_constraint_types(::Type{<:NormOneBridge{T, F}}) where {T, F} = [(F, MOI.Nonnegatives)]
+function concrete_bridge_type(::Type{<:NormOneBridge{T}}, G::Type{<:MOI.AbstractVectorFunction}, ::Type{MOI.NormOneCone}) where T
+    S = MOIU.scalar_type(G)
+    F = MOIU.promote_operation(vcat, T, MOIU.promote_operation(+, T, S, S), MOIU.promote_operation(-, T, S, S))
+    return NormOneBridge{T, F, G}
 end
 
 # Attributes, Bridge acting as a model
 MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables) = length(b.y)
 MOI.get(b::NormOneBridge, ::MOI.ListOfVariableIndices) = b.y
-MOI.get(b::NormOneBridge{T, F, G, H}, ::MOI.NumberOfConstraints{F, MOI.GreaterThan{T}}) where {T, F, G, H} = 1
-MOI.get(b::NormOneBridge{T, F, G, H}, ::MOI.NumberOfConstraints{G, MOI.Nonnegatives}) where {T, F, G, H} = 1
-MOI.get(b::NormOneBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{F, MOI.GreaterThan{T}}) where {T, F, G, H} = [b.ge_index]
-MOI.get(b::NormOneBridge{T, F, G, H}, ::MOI.ListOfConstraintIndices{G, MOI.Nonnegatives}) where {T, F, G, H} = [b.nn_index]
+MOI.get(b::NormOneBridge{T, F}, ::MOI.NumberOfConstraints{F, MOI.Nonnegatives}) where {T, F} = 1
+MOI.get(b::NormOneBridge{T, F}, ::MOI.ListOfConstraintIndices{F, MOI.Nonnegatives}) where {T, F} = [b.nn_index]
 
 # References
 function MOI.delete(model::MOI.ModelLike, c::NormOneBridge)
     MOI.delete(model, c.nn_index)
-    MOI.delete(model, c.ge_index)
     MOI.delete(model, c.y)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormOneBridge{T, F, G, H}) where {T, F, G, H}
-    ge_func = MOI.get(model, MOI.ConstraintFunction(), c.ge_index)
+function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintFunction, c::NormOneBridge{T, F, G}) where {T, F, G}
     nn_func = MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.nn_index))
-    t = MOIU.operate!(+, T, ge_func, MOIU.operate!(/, T, sum(nn_func), T(2)))
-    d = div(length(nn_func), 2)
-    x = MOIU.operate!(/, T, MOIU.operate!(-, T, nn_func[(d + 1):end], nn_func[1:d]), T(2))
-    return MOIU.convert_approx(H, MOIU.remove_variable(MOIU.operate(vcat, T, t, x), c.y))
+    t = MOIU.operate!(/, T, nn_func[1] + sum(nn_func), T(2))
+    d = div(length(nn_func) - 1, 2)
+    x = MOIU.operate!(/, T, MOIU.operate!(-, T, nn_func[(d + 2):end], nn_func[2:(d + 1)]), T(2))
+    return MOIU.convert_approx(G, MOIU.remove_variable(MOIU.operate(vcat, T, t, x), c.y))
 end
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormOneBridge)
-    dim = 1 + div(MOI.dimension(MOI.get(model, MOI.ConstraintSet(), c.nn_index)), 2)
+    dim = div(MOI.dimension(MOI.get(model, MOI.ConstraintSet(), c.nn_index)) + 1, 2)
     return MOI.NormOneCone(dim)
 end
-
 function MOI.supports(
     ::MOI.ModelLike,
     ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart},
     ::Type{<:NormOneBridge})
-
     return true
 end
 function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
@@ -142,18 +134,17 @@ function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart,
     for i in eachindex(bridge.y)
         MOI.set(model, MOI.VariablePrimalStart(), bridge.y[i], y_value[i])
     end
-    MOI.set(model, attr, bridge.nn_index, [y_value - x_value; y_value + x_value])
-    MOI.set(model, attr, bridge.ge_index, value[1] - reduce(+, y_value, init=zero(T)))
+    nn_value = vcat(value[1] - reduce(+, y_value, init=zero(T)), y_value - x_value, y_value + x_value)
+    MOI.set(model, attr, bridge.nn_index, nn_value)
     return
 end
 function MOI.get(model::MOI.ModelLike,
                  attr::Union{MOI.ConstraintPrimal, MOI.ConstraintPrimalStart},
                  bridge::NormOneBridge)
-    ge_primal = MOI.get(model, attr, bridge.ge_index)
     nn_primal = MOI.get(model, attr, bridge.nn_index)
-    t = ge_primal + sum(nn_primal) / 2
+    t = (nn_primal[1] + sum(nn_primal)) / 2
     d = length(bridge.y)
-    x = (nn_primal[(d + 1):end] - nn_primal[1:d]) / 2
+    x = (nn_primal[(d + 2):end] - nn_primal[2:(d + 1)]) / 2
     return vcat(t, x)
 end
 # Given a_i is dual on y_i - x_i >= 0 and b_i is dual on y_i + x_i >= 0 and c is dual on t - sum(y) >= 0,
@@ -162,27 +153,26 @@ end
 function MOI.get(model::MOI.ModelLike,
                  attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart},
                  bridge::NormOneBridge)
-    t = MOI.get(model, attr, bridge.ge_index)
     nn_dual = MOI.get(model, attr, bridge.nn_index)
     d = length(bridge.y)
-    x = nn_dual[(d + 1):end] - nn_dual[1:d]
-    return vcat(t, x)
+    x = nn_dual[(d + 2):end] - nn_dual[2:(d + 1)]
+    return vcat(nn_dual[1], x)
 end
-# value[1 + i] = nn_dual[d + i] - nn_dual[i]
+# value[1 + i] = nn_dual[1 + d + i] - nn_dual[1 + i]
 # and `nn_dual` is nonnegative. By complementarity slackness, only one of each
 # `nn_dual` can be nonzero (except if `x = 0`) so we can set
 # depending on the sense of `value[1 + i]`.
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart,
                  bridge::NormOneBridge, value)
-    t = MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, value[1])
     d = length(bridge.y)
-    nn_dual = zeros(eltype(value), 2d)
+    nn_dual = zeros(eltype(value), 2d + 1)
+    nn_dual[1] = value[1]
     for i in eachindex(bridge.y)
         v = value[1 + i]
         if v < 0
-            nn_dual[i] = -v
+            nn_dual[1 + i] = -v
         else
-            nn_dual[d + i] = v
+            nn_dual[1 + d + i] = v
         end
     end
     MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, nn_dual)

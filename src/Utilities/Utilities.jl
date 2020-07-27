@@ -1,6 +1,7 @@
 module Utilities
 
 using LinearAlgebra # For dot
+using OrderedCollections # for OrderedDict in UniversalFallback 
 
 using MathOptInterface
 const MOI = MathOptInterface
@@ -25,10 +26,14 @@ function print_with_acronym(io::IO, s::AbstractString)
     print(io, s)
 end
 
+include("CleverDicts.jl")
+include("DoubleDicts.jl")
+
 include("functions.jl")
 include("mutable_arithmetics.jl")
 include("sets.jl")
 include("constraints.jl")
+include("dense_dict.jl")
 include("copy.jl")
 include("results.jl")
 include("variables.jl")
@@ -39,7 +44,6 @@ include("mockoptimizer.jl")
 include("cachingoptimizer.jl")
 include("universalfallback.jl")
 
-include("CleverDicts.jl")
 include("lazy_iterators.jl")
 
 end # module

@@ -95,7 +95,7 @@ sets recognized by the solver.
 * **[`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty = \max_i \lvert x_i \rvert \}``
 * **[`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone)**:
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty_1 = \sum_i \lvert x_i \rvert \}``
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_1 = \sum_i \lvert x_i \rvert \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_2 \}``
 * **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
@@ -115,9 +115,9 @@ sets recognized by the solver.
 * **[`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone)**:
   ``\{ (u, v, w) \in \mathbb{R}^\mbox{dimension} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
 * **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
   the upper triangle of a PSD matrix} \}``
@@ -288,7 +288,7 @@ add_constraint(model, SingleVariable(x[1]), GreaterThan(0.0))
 add_constraint(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
-Besides scalar-valued functions in scalar-valued sets it possible to use vector-valued functions and sets.
+Besides scalar-valued functions in scalar-valued sets, it's also possible to use vector-valued functions and sets.
 
 The code example below encodes the convex optimization problem:
 ```math
@@ -1011,7 +1011,7 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
 
 If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
-between `y_i` and the vector of scalar-valued quadratic functions.
+between ``y_i`` and the vector of scalar-valued quadratic functions.
 
 !!! note
     For quadratic programs with only affine constraints, the optimality condition
@@ -1098,7 +1098,7 @@ MOI.supports_constraint(bridged_optimizer, MOI.ScalarAffineFunction{Float64}, MO
 true
 ```
 will additionally support `ScalarAffineFunction`-in-`Interval`.
-Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref) are mainly
+Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)s are mainly
 used for testing bridges. It is recommended to rather use
 [`Bridges.full_bridge_optimizer`](@ref) which automatically selects the
 appropriate constraint bridges for unsupported constraints.
@@ -1288,10 +1288,7 @@ solver is written in Julia, for example). The guideline for naming the file
 containing the MOI wrapper is `src/MOI_wrapper.jl` and `test/MOI_wrapper.jl` for
 the tests. If the MOI wrapper implementation is spread in several files, they
 should be stored in a `src/MOI_wrapper` folder and included by a
-`src/MOI_wrapper/MOI_wrapper.jl` file. In some cases it may be more appropriate
-to host the MOI wrapper in its own package; in this case it is recommended that
-the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver
-name.
+`src/MOI_wrapper/MOI_wrapper.jl` file.
 
 By convention, optimizers should not be exported and should be named
 `PackageName.Optimizer`. For example, `CPLEX.Optimizer`, `Gurobi.Optimizer`, and
@@ -1327,7 +1324,13 @@ const BRIDGED = MOI.instantiate(OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float6
 const CONFIG = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
 
 @testset "Unit" begin
-    MOIT.unittest(BRIDGED, CONFIG)
+    # Test all the functions included in dictionary `MOI.Test.unittests`,
+    # except functions "number_threads" and "solve_qcp_edge_cases."
+    MOIT.unittest(
+        BRIDGED, 
+        CONFIG, 
+        ["number_threads", "solve_qcp_edge_cases"]
+    ) 
 end
 
 @testset "Modification" begin
@@ -1346,6 +1349,17 @@ end
     MOIT.intconictest(BRIDGED, CONFIG)
 end
 ```
+
+Test functions like `MOI.Test.unittest` and `MOI.Test.modificationtest` are 
+wrappers around corresponding dictionaries `MOI.Test.unittests` and 
+`MOI.Test.modificationtests`. The keys of each dictionary (strings describing 
+the test) map to functions that take two arguments: an optimizer and a 
+`MOI.Test.TestConfig` object. Exclude tests by passing a vector of strings 
+corresponding to the test keys you want to exclude as the third positional 
+argument to the test function (e.g., `MOI.Test.unittest`). 
+    
+Print a list of all keys using `println.(keys(MOI.Test.unittests))`
+
 The optimizer `BRIDGED` constructed with [`instantiate`](@ref)
 automatically bridges constraints that are not supported by `OPTIMIZER`
 using the bridges listed in [Bridges](@ref). It is recommended for an

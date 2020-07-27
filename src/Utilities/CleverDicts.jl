@@ -46,7 +46,7 @@ index_to_key(::Type{MyKey}, i::Int) = MyKey(i)
 key_to_index(key::MyKey) = key.x
 ```
 """
-mutable struct CleverDict{K, V}
+mutable struct CleverDict{K, V} <: AbstractDict{K, V}
     last_index::Int
     vector::Union{Nothing, Vector{V}}
     dict::Union{Nothing, OrderedCollections.OrderedDict{K, V}}
@@ -153,6 +153,7 @@ end
 function Base.delete!(c::CleverDict{K, V}, key::K)::Nothing where {K, V}
     if c.dict === nothing
         c.dict = OrderedCollections.OrderedDict{K, Union{Nothing, V}}()
+        sizehint!(c.dict, length(c.vector))
         for (i, info) in enumerate(c.vector)
             c.dict[index_to_key(K, i)] = info
         end
@@ -226,6 +227,10 @@ end
 
 function Base.keys(c::CleverDict{K, V}) where {K, V}
     return c.dict === nothing ? index_to_key.(K, 1:length(c)) : keys(c.dict)
+end
+
+function Base.sizehint!(c::CleverDict{K, V}, n) where {K, V}
+    return c.dict === nothing ? sizehint!(c.vector, n) : sizehint!(c.dict, n)
 end
 
 end

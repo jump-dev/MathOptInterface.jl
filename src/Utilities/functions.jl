@@ -363,16 +363,30 @@ function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
     return VT(t1.output_index, scalar_term)
 end
 
+is_canonical(::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = true
+
 """
-    is_canonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
-                         VectorAffineFunction, VectorQuadraticTerm})
+    is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function is_canonical(f::Union{SAF, VAF, SQF, VQF})
+function is_canonical(f::Union{SAF, VAF})
     is_strictly_sorted(f.terms, MOI.term_indices,
                        t -> !iszero(MOI.coefficient(t)))
+end
+
+"""
+    is_canonical(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
+
+Returns a Bool indicating whether the function is in canonical form.
+See [`canonical`](@ref).
+"""
+function is_canonical(f::Union{SQF, VQF})
+    v = is_strictly_sorted(f.affine_terms, MOI.term_indices,
+                           t -> !iszero(MOI.coefficient(t)))
+    v &= is_strictly_sorted(f.quadratic_terms, MOI.term_indices,
+                            t -> !iszero(MOI.coefficient(t)))
 end
 
 """
@@ -409,12 +423,16 @@ Returns the function in a canonical form, i.e.
 * The terms appear in increasing order of variable where there the order of the variables is the order of their value.
 * For a `AbstractVectorFunction`, the terms are sorted in ascending order of output index.
 
+The output of `canonical` can be assumed to be a copy of `f`, even for `VectorOfVariables`.
+
 ### Examples
 If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-canonical(f::Union{SAF, VAF, SQF, VQF}) = canonicalize!(copy(f))
+canonical(f::MOI.AbstractFunction) = canonicalize!(copy(f))
+
+canonicalize!(f::Union{MOI.VectorOfVariables, MOI.SingleVariable}) = f
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
@@ -489,7 +507,7 @@ function test_variablenames_equal(model, variablenames)
     end
     for (vname,seen) in seen_name
         if !seen
-            error("Did not find variable with name $vname in intance.")
+            error("Did not find variable with name $vname in instance.")
         end
     end
 end
@@ -509,7 +527,7 @@ function test_constraintnames_equal(model, constraintnames)
     end
     for (cname,seen) in seen_name
         if !seen
-            error("Did not find constraint with name $cname in intance.")
+            error("Did not find constraint with name $cname in instance.")
         end
     end
 end

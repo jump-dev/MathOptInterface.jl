@@ -10,9 +10,9 @@ _upper_set(set::MOI.Zeros) = MOI.Nonpositives(set.dimension)
 
 The `SplitIntervalBridge` splits a `F`-in-`S` constraint into a `F`-in-`LS` and
 a `F`-in-`US` constraint where we have either:
-* `F = MOI.Interval{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`,
-* `F = MOI.EqualTo{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`, or
-* `F = MOI.Zeros`, `LS = MOI.Nonnegatives` and `US = MOI.Nonpositives`.
+* `S = MOI.Interval{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`,
+* `S = MOI.EqualTo{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`, or
+* `S = MOI.Zeros`, `LS = MOI.Nonnegatives` and `US = MOI.Nonpositives`.
 
 For instance, if `F` is `MOI.ScalarAffineFunction` and `S` is `MOI.Interval`,
 it transforms the constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints
