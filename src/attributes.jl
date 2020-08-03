@@ -69,7 +69,7 @@ An error indicating that the attribute `attr` is supported (see
 """
 struct SetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
     attr::AttrType
-	message::String # Human-friendly explanation why the attribute cannot be set
+    message::String # Human-friendly explanation why the attribute cannot be set
 end
 SetAttributeNotAllowed(attr::AnyAttribute) = SetAttributeNotAllowed(attr, "")
 
@@ -965,6 +965,8 @@ struct VariableName <: AbstractVariableAttribute end
     VariablePrimalStart()
 
 A variable attribute for the initial assignment to some primal variable's value that the optimizer may use to warm-start the solve.
+
+The value `nothing` means the solver is free to decide which value to use. This attribute can be set back to `nothing` after being set to a numerical value.
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
