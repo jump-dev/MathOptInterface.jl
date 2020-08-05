@@ -26,6 +26,9 @@ function print_with_acronym(io::IO, s::AbstractString)
     print(io, s)
 end
 
+
+function _reverse_dict end
+
 include("CleverDicts.jl")
 include("DoubleDicts.jl")
 

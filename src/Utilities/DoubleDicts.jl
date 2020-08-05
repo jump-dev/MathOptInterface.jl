@@ -3,6 +3,7 @@ module DoubleDicts
 import MathOptInterface
 
 const MOI = MathOptInterface
+const MOIU = MOI.Utilities
 const CI = MOI.ConstraintIndex
 const AD = AbstractDict
 
@@ -71,6 +72,25 @@ end
 @inline function typed_value(::FunctionSetDoubleDict, v::Tuple{F,S}, ::Type{F}, ::Type{S})::Tuple{F,S} where {F, S}
     v
 end
+
+function MOIU._reverse_dict(dest::IndexDoubleDict, src::IndexDoubleDict)
+    for (k, v) in src.dict
+        dest.dict[k] = MOIU._reverse_dict(v)
+    end
+    # error("skeurghrgtseuihrglkjsehjkserhglih")
+end
+function MOIU._reverse_dict(src::D) where {D<:AbstractDict}
+    # dest = D()
+    # sizehint!(dest, length(src))
+    # MOIU._reverse_dict(dest, src)
+    D(values(src) .=> keys(src))
+    # Dict(v => k for (k,v) in src)::D
+end
+# function MOIU._reverse_dict(dest::Dict{Int64,Inf64}, src::Dict{Int64,Inf64})
+#     for (k,v) in src
+#         dest[v] = k
+#     end
+# end
 
 function Base.sizehint!(::AbstractDoubleDict, ::Integer)
     throw(ErrorException("sizehint!(d::DoubleDict, ::Integer) has no proper" *

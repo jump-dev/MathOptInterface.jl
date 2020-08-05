@@ -7,6 +7,7 @@
     end
 
 Same as `Dict{K, V}` but `hash(key)` is assumed to belong to `eachindex(map)`.
+`inverse_hash` maps `Int`s to `V`
 """
 struct DenseDict{K, V, F, I} <: AbstractDict{K, V}
     hash::F
@@ -16,7 +17,8 @@ struct DenseDict{K, V, F, I} <: AbstractDict{K, V}
     function DenseDict{K, V}(hash, inverse_hash, n) where {K, V}
         set = BitSet()
         sizehint!(set, n)
-        return new{K, V, typeof(hash), typeof(inverse_hash)}(hash, inverse_hash, set, Vector{K}(undef, n))
+        return new{K, V, typeof(hash), typeof(inverse_hash)}(
+            hash, inverse_hash, set, Vector{K}(undef, n))
     end
 end
 

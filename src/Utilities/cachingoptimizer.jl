@@ -176,7 +176,7 @@ function _reverse_dict(dest::AbstractDict, src::AbstractDict)
     end
 end
 
-function _standardize(d::AbstractDict{MOI.Index, MOI.Index})
+function _standardize(d::AbstractDict)
     map = IndexMap()
     for (k,v) in d
         map[k] = v
@@ -189,6 +189,7 @@ function _standardize(d::IndexMap)
     # if there was a dense dict inside
     # the solution would be to allow automatically swtiching
     # a ClevelDenseDict...
+    # return IndexMap(d.varmap, d.conmap)
     return IndexMap(_standard_dict(d.varmap), d.conmap)
 end
 function _standard_dict(
@@ -201,12 +202,8 @@ function _standard_dict(
 )::Dict{MOI.VariableIndex, MOI.VariableIndex} where {
     D<:AbstractDict{MOI.VariableIndex, MOI.VariableIndex}
 }
-    ret = Dict{MOI.VariableIndex, MOI.VariableIndex}()
-    sizehint!(ret, length(d))
-    for (k,v) in d
-        ret[k] = v
-    end
-    return d
+    ret = Dict{MOI.VariableIndex, MOI.VariableIndex}(keys(d) .=> values(d))
+    return ret
 end
 
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
