@@ -136,6 +136,16 @@ end
     ]
     vals = keys
     basic_functionality(dict, keys, vals)
+
+    src = DoubleDicts.IndexDoubleDict()
+    for (k,v) in zip(keys, vals)
+        dict[k] = v
+    end
+    dest = DoubleDicts.IndexDoubleDict()
+    MOIU._reverse_dict(dest, src)
+    for (k, v) in src
+        @test dest[v] == k
+    end
 end
 
 @testset "FunctionSetDoubleDict" begin

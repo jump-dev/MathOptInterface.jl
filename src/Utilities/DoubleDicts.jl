@@ -73,24 +73,17 @@ end
     v
 end
 
-function MOIU._reverse_dict(dest::IndexDoubleDict, src::IndexDoubleDict)
+# reversing IndexDoubleDict is ok because they map CI to CI
+function MOIU._reverse_dict(
+    dest::IndexDoubleDict{DI}, src::IndexDoubleDict{DI}
+) where DI
     for (k, v) in src.dict
-        dest.dict[k] = MOIU._reverse_dict(v)
+        dest.dict[k] = DI(values(v) .=> keys(v))
     end
-    # error("skeurghrgtseuihrglkjsehjkserhglih")
 end
-function MOIU._reverse_dict(src::D) where {D<:AbstractDict}
-    # dest = D()
-    # sizehint!(dest, length(src))
-    # MOIU._reverse_dict(dest, src)
-    D(values(src) .=> keys(src))
-    # Dict(v => k for (k,v) in src)::D
-end
-# function MOIU._reverse_dict(dest::Dict{Int64,Inf64}, src::Dict{Int64,Inf64})
-#     for (k,v) in src
-#         dest[v] = k
-#     end
-# end
+# reversing other double dict types is not ok because the map CI fo K
+# so it wont be a double dict anymore, double dict keys are always CIs.
+# We keep the default fallback
 
 function Base.sizehint!(::AbstractDoubleDict, ::Integer)
     throw(ErrorException("sizehint!(d::DoubleDict, ::Integer) has no proper" *

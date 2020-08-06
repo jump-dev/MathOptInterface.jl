@@ -184,12 +184,10 @@ function _standardize(d::AbstractDict)
     return map
 end
 function _standardize(d::IndexMap)
-    # return d
     # if we return d as is, its not possible to add variables
     # if there was a dense dict inside
     # the solution would be to allow automatically swtiching
     # a ClevelDenseDict...
-    # return IndexMap(d.varmap, d.conmap)
     return IndexMap(_standard_dict(d.varmap), d.conmap)
 end
 function _standard_dict(
@@ -202,8 +200,7 @@ function _standard_dict(
 )::Dict{MOI.VariableIndex, MOI.VariableIndex} where {
     D<:AbstractDict{MOI.VariableIndex, MOI.VariableIndex}
 }
-    ret = Dict{MOI.VariableIndex, MOI.VariableIndex}(keys(d) .=> values(d))
-    return ret
+    return Dict{MOI.VariableIndex, MOI.VariableIndex}(keys(d) .=> values(d))
 end
 
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
