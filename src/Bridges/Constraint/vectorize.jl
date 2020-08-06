@@ -6,8 +6,8 @@ Transforms a constraint `G`-in-`scalar_set_type(S, T)` where
 
 ## Examples
 
-The constraint `SingleVariable -in- LessThan{Float64}` becomes
-`VectorAffineFunction{Float64} -in- Nonpositives`, where `T = Float64`,
+The constraint `SingleVariable`-in-`LessThan{Float64}` becomes
+`VectorAffineFunction{Float64}`-in-`Nonpositives`, where `T = Float64`,
 `F = VectorAffineFunction{Float64}`, `S = Nonpositives`, and
 `G = SingleVariable`.
 """
@@ -19,84 +19,22 @@ end
 function bridge_constraint(
     ::Type{VectorizeBridge{T, F, S, G}},
     model::MOI.ModelLike,
-    g::G,
+    scalar_f::G,
     set::MOIU.ScalarLinearSet{T}
 ) where {T, F, S, G}
-    g_const = MOI.constant(g, T)
-    if !iszero(g_const)
+    scalar_const = MOI.constant(scalar_f, T)
+    if !iszero(scalar_const)
         throw(
             MOI.ScalarFunctionConstantNotZero{
-                typeof(g_const), G, typeof(set)
-            }(g_const)
+                typeof(scalar_const), G, typeof(set)
+            }(scalar_const)
         )
     end
-    vaf = _vectorized_convert(F, g)
+    vector_f = convert(F, scalar_f)
     set_const = MOI.constant(set)
-    MOIU.operate_output_index!(-, T, 1, vaf, set_const)
-    vector_constraint = MOI.add_constraint(model, vaf, S(1))
+    MOIU.operate_output_index!(-, T, 1, vector_f, set_const)
+    vector_constraint = MOI.add_constraint(model, vector_f, S(1))
     return VectorizeBridge{T, F, S, G}(vector_constraint, set_const)
-end
-
-function _vectorized_convert(
-    ::Type{MOI.VectorOfVariables}, g::MOI.SingleVariable
-)
-    return MOI.VectorOfVariables([g.variable])
-end
-
-function _vectorized_convert(
-    ::Type{MOI.VectorAffineFunction{T}}, g::MOI.SingleVariable
-) where {T}
-    return MOI.VectorAffineFunction{T}(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, g.variable))],
-        [zero(T)]
-    )
-end
-
-function _vectorized_convert(
-    ::Type{MOI.VectorQuadraticFunction{T}}, g::MOI.SingleVariable
-) where {T}
-    return MOI.VectorQuadraticFunction{T}(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, g.variable))],
-        MOI.VectorQuadraticTerm{T}[],
-        [zero(T)]
-    )
-end
-
-function _vectorized_convert(
-    ::Type{MOI.VectorAffineFunction{T}}, g::MOI.ScalarAffineFunction
-) where {T}
-    return MOI.VectorAffineFunction{T}(
-        MOI.VectorAffineTerm{T}[
-            MOI.VectorAffineTerm(1, term) for term in g.terms
-        ],
-        [g.constant]
-    )
-end
-
-function _vectorized_convert(
-    ::Type{MOI.VectorQuadraticFunction{T}}, g::MOI.ScalarAffineFunction
-) where {T}
-    return MOI.VectorQuadraticFunction{T}(
-        MOI.VectorAffineTerm{T}[
-            MOI.VectorAffineTerm(1, term) for term in g.terms
-        ],
-        MOI.VectorQuadraticTerm{T}[],
-        [g.constant]
-    )
-end
-
-function _vectorized_convert(
-    ::Type{MOI.VectorQuadraticFunction{T}}, g::MOI.ScalarQuadraticFunction
-) where {T}
-    return MOI.VectorQuadraticFunction{T}(
-        MOI.VectorAffineTerm{T}[
-            MOI.VectorAffineTerm(1, term) for term in g.affine_terms
-        ],
-        MOI.VectorQuadraticTerm{T}[
-            MOI.VectorQuadraticTerm(1, term) for term in g.quadratic_terms
-        ],
-        [g.constant]
-    )
 end
 
 function MOI.supports_constraint(
