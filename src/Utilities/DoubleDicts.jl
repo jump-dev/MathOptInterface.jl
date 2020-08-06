@@ -78,7 +78,7 @@ function MOIU._reverse_dict(
     dest::IndexDoubleDict{DI}, src::IndexDoubleDict{DI}
 ) where DI
     for (k, v) in src.dict
-        dest.dict[k] = DI(values(v) .=> keys(v))
+        dest.dict[k] = MOIU._reverse_dict(v)
     end
 end
 # reversing other double dict types is not ok because the map CI fo K

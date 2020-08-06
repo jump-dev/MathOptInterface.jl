@@ -175,6 +175,9 @@ function _reverse_dict(dest::AbstractDict, src::AbstractDict)
         dest[v] = k
     end
 end
+function _reverse_dict(src::D) where {D<:Dict}
+    return D(values(src) .=> keys(src))
+end
 
 function _standardize(d::AbstractDict)
     map = IndexMap()
