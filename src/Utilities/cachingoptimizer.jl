@@ -145,17 +145,68 @@ errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)
     @assert model.state == EMPTY_OPTIMIZER
-    # We do not need to copy names because name-related operations are handled by `m.model_cache`
+    # We do not need to copy names because name-related operations are handled
+    # by `m.model_cache`
     indexmap = MOI.copy_to(model.optimizer, model.model_cache, copy_names=false)
     model.state = ATTACHED_OPTIMIZER
-    # MOI does not define the type of index_map, so we have to copy it into a
-    # concrete container. Also load the reverse map.
-    model.model_to_optimizer_map = IndexMap()
-    model.optimizer_to_model_map = IndexMap()
-    for k in keys(indexmap)
-        model.model_to_optimizer_map[k] = indexmap[k]
-        model.optimizer_to_model_map[indexmap[k]] = k
+    # MOI does not define the type of index_map, so we have to convert it
+    # into an actual IndexMap. Also load the reverse IndexMap.
+    model.model_to_optimizer_map = _standardize(indexmap)
+    model.optimizer_to_model_map = _reverse_index_map(indexmap)
+    return nothing
+end
+
+function _reverse_index_map(src::IndexMap)
+    dest = IndexMap()
+    sizehint!(dest.varmap, length(src.varmap))
+    _reverse_dict(dest.varmap, src.varmap)
+    _reverse_dict(dest.conmap, src.conmap)
+    return dest
+end
+
+"""
+    _reverse_dict(dest::AbstractDict, src::AbstractDict)
+
+Reverse dictionary so that values of `src` are key of `dest` and vice-versa.
+`dest` must be empty. Also the values of `src` are assumed to be unique.
+"""
+function _reverse_dict(dest::AbstractDict, src::AbstractDict)
+    for (k,v) in src
+        dest[v] = k
     end
+end
+
+function _standardize(d::AbstractDict{MOI.Index, MOI.Index})
+    map = IndexMap()
+    for (k,v) in d
+        map[k] = v
+    end
+    return map
+end
+function _standardize(d::IndexMap)
+    # return d
+    # if we return d as is, its not possible to add variables
+    # if there was a dense dict inside
+    # the solution would be to allow automatically swtiching
+    # a ClevelDenseDict...
+    return IndexMap(_standard_dict(d.varmap), d.conmap)
+end
+function _standard_dict(
+    d::D
+)::D where {D<:Dict{MOI.VariableIndex, MOI.VariableIndex}}
+    return d
+end
+function _standard_dict(
+    d::D
+)::Dict{MOI.VariableIndex, MOI.VariableIndex} where {
+    D<:AbstractDict{MOI.VariableIndex, MOI.VariableIndex}
+}
+    ret = Dict{MOI.VariableIndex, MOI.VariableIndex}()
+    sizehint!(ret, length(d))
+    for (k,v) in d
+        ret[k] = v
+    end
+    return d
 end
 
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)

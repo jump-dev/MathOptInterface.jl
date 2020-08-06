@@ -63,9 +63,18 @@ error in case `copy_to` is called with `copy_names` equal to `true`.
 """
 supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
 
-const DenseVariableDict{V} = DenseDict{MOI.VariableIndex, V, typeof(MOI.index_value), typeof(MOI.VariableIndex)}
+"""
+    _index_to_variable(i::Int)
+
+Simply returns `MOI.VariableIndex(i)`. This is necessary to pass a function that
+creates the `VariableIndex` from an integer. If we pass `MOI.VariableIndex`
+julia understands is as a `DataType` and not a function, this leads to type
+instability issues.
+"""
+_index_to_variable(i) = MOI.VariableIndex(i)
+const DenseVariableDict{V} = DenseDict{MOI.VariableIndex, V, typeof(MOI.index_value), typeof(_index_to_variable)}
 function dense_variable_dict(::Type{V}, n) where V
-    return DenseDict{MOI.VariableIndex, V}(MOI.index_value, MOI.VariableIndex, n)
+    return DenseDict{MOI.VariableIndex, V}(MOI.index_value, _index_to_variable, n)
 end
 
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
