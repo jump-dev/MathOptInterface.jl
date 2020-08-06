@@ -42,7 +42,7 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     objective_node::OrderedDict{Tuple{DataType}, ObjectiveNode}
     objective_types::Vector{Tuple{DataType}}
     # Cache for (F, S) -> BridgeType. Avoids having to look up
-    # `concrete_bridge_type`, which is slow.
+    # `concrete_bridge_type` at runtime, which is slow.
     cached_bridge_type::Dict{Any, DataType}
 end
 function LazyBridgeOptimizer(model::MOI.ModelLike)
