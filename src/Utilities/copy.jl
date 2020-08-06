@@ -78,14 +78,12 @@ function dense_variable_dict(::Type{V}, n) where V
 end
 
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
-    # cannot remove the standard dict without breaking
     varmap::Union{DenseVariableDict{MOI.VariableIndex},
-        Dict{MOI.VariableIndex, MOI.VariableIndex}}
+                  Dict{MOI.VariableIndex, MOI.VariableIndex}}
     conmap::DoubleDicts.MainIndexDoubleDict
 end
-IndexMap() = IndexMap(
-    Dict{MOI.VariableIndex, MOI.VariableIndex}(),
-    DoubleDicts.IndexDoubleDict())
+IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(),
+                      DoubleDicts.IndexDoubleDict())
 function IndexMap(n)
     IndexMap(dense_variable_dict(MOI.VariableIndex, n),
              DoubleDicts.IndexDoubleDict())
