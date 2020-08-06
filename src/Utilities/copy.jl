@@ -734,7 +734,7 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
                      allocate_constraints, allocate)
 
     # Load variables
-    vars = load_variables(dest, length(vis_src))
+    load_variables(dest, length(vis_src))
     for cis_src in vector_of_variables_allocated
         load_vector_of_variables(dest, src, idxmap, cis_src)
     end
