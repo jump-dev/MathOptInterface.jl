@@ -164,12 +164,6 @@ function _reverse_index_map(src::IndexMap)
     return dest
 end
 
-"""
-    _reverse_dict(dest::AbstractDict, src::AbstractDict)
-
-Reverse dictionary so that values of `src` are key of `dest` and vice-versa.
-`dest` must be empty. Also the values of `src` are assumed to be unique.
-"""
 function _reverse_dict(dest::AbstractDict, src::AbstractDict)
     for (k,v) in src
         dest[v] = k
