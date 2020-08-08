@@ -3,6 +3,7 @@ module DoubleDicts
 import MathOptInterface
 
 const MOI = MathOptInterface
+const MOIU = MOI.Utilities
 const CI = MOI.ConstraintIndex
 const AD = AbstractDict
 
@@ -71,6 +72,18 @@ end
 @inline function typed_value(::FunctionSetDoubleDict, v::Tuple{F,S}, ::Type{F}, ::Type{S})::Tuple{F,S} where {F, S}
     v
 end
+
+# reversing IndexDoubleDict is ok because they map CI to CI
+function MOIU._reverse_dict(
+    dest::IndexDoubleDict{DI}, src::IndexDoubleDict{DI}
+) where DI
+    for (k, v) in src.dict
+        dest.dict[k] = MOIU._reverse_dict(v)
+    end
+end
+# reversing other double dict types is not ok because the map CI fo K
+# so it wont be a double dict anymore, double dict keys are always CIs.
+# We keep the default fallback
 
 function Base.sizehint!(::AbstractDoubleDict, ::Integer)
     throw(ErrorException("sizehint!(d::DoubleDict, ::Integer) has no proper" *
