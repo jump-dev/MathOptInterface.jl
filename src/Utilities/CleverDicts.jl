@@ -39,9 +39,9 @@ key corresponding to the stored item.
 
 It is possible to initialize the CleverDict as `CleverDict{K, V}(n)` so that
 `n` elements are pre-allocated and can be efficiently added even out of order
-as long as theirkey hashes are between ´1´ and `n`.
+as long as their key hashes are between 1 and `n`.
 
-Overload the functions `index_to_key` and `key_to_index` to enable vectorpings
+Overload the functions `index_to_key` and `key_to_index` to enable mappings
 between the integer index of the vector and the dictionary key.
 
 ## Example
@@ -54,8 +54,8 @@ index_to_key(::Type{MyKey}, i::Int) = MyKey(i)
 key_to_index(key::MyKey) = key.x
 ```
 """
-mutable struct CleverDict{K, V, F, I} <: AbstractDict{K, V}
-    last_index::Int
+mutable struct CleverDict{K, V, F<:Function, I<:Function} <: AbstractDict{K, V}
+    last_index::Int64
     hash::F
     inverse_hash::I
     is_dense::Bool
@@ -88,7 +88,7 @@ function index_to_key end
 """
     key_to_index(key::K)
 
-vector `key` to an integer valued index, assuming that there have been no
+Map `key` to an integer valued index, assuming that there have been no
 deletions.
 """
 function key_to_index end
@@ -132,7 +132,7 @@ function Base.length(c::CleverDict)
 end
 function Base.haskey(c::CleverDict{K}, key::K) where K
     if _is_dense(c)
-        return c.hash(key)::Int in c.set
+        return c.hash(key)::Int64 in c.set
     else
         return Base.haskey(c.dict, key)
     end
@@ -142,13 +142,13 @@ function Base.getindex(c::CleverDict, key)
         if !haskey(c, key)
             throw(KeyError(key))
         end
-        return c.vector[c.hash(key)::Int]
+        return c.vector[c.hash(key)::Int64]
     else
         return c.dict[key]
     end
 end
 function Base.setindex!(c::CleverDict{K, V}, value, key)::V where {K, V}
-    h = c.hash(key)::Int
+    h = c.hash(key)::Int64
     if h > c.last_index
         c.last_index = ifelse(h == c.last_index + 1, h, -1)
     elseif h <= 0
@@ -199,7 +199,7 @@ function Base.delete!(c::CleverDict{K}, k::K) where K
 end
 
 struct LinearIndex
-    i::Int
+    i::Int64
 end
 function Base.getindex(c::CleverDict{K, V}, index::LinearIndex)::V where {K, V}
     if !(1 <= index.i <= length(c))
@@ -254,7 +254,11 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+            @static if VERSION >= v"1.4.0"
+                return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+            else
+                return c.inverse_hash(el)::K => c.vector[el]::V, State(i)
+            end
         end
     else
         itr = iterate(c.dict)
@@ -271,12 +275,20 @@ function Base.iterate(
     c::CleverDict{K, V}, s::State
 )::Union{Nothing, Tuple{Pair{K, V}, State}} where {K, V}
     if _is_dense(c)
-        itr = iterate(c.set, (s.uint, s.int))
+        @static if VERSION >= v"1.4.0"
+            itr = iterate(c.set, (s.uint, s.int))
+        else
+            itr = iterate(c.set, s.int)
+        end
         if itr === nothing
             return nothing
         else
             el, i = itr
-            return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+            @static if VERSION >= v"1.4.0"
+                return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+            else
+                return c.inverse_hash(el)::K => c.vector[el]::V, State(i)
+            end
         end
     else
         itr = iterate(c.dict, s.int)
@@ -290,7 +302,7 @@ function Base.iterate(
 end
 
 # we do not have to implement values and keys functions because they can rely
-# os `Base`s fallback that uses the iterator protocol
+# on `Base`s fallback that uses the iterator protocol
 
 function Base.sizehint!(c::CleverDict{K, V}, n) where {K, V}
     if _is_dense(c)
