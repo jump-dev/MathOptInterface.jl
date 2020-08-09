@@ -27,13 +27,12 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         delete!(d, key)
         sizehint!(d, 2)
         @test_throws KeyError d[key]
-        @test_throws KeyError d[key] = "key"
+        # set index is valid now
+        # @test_throws KeyError d[key] = "key"
         @test haskey(d, key) == false
         key2 = CleverDicts.add_item(d, "second")
         @test key2 == MathOptInterface.VariableIndex(2)
         @test d[key2] == "second"
-        @test d.vector === nothing
-        @test d.dict !== nothing
         d[key2] = "third"
         @test d[key2] == "third"
 
@@ -48,13 +47,12 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         @test_throws KeyError d[MathOptInterface.VariableIndex(2)]
         delete!(d, key)
         @test_throws KeyError d[key]
-        @test_throws KeyError d[key] = "key"
+        # set index is valid now
+        # @test_throws KeyError d[key] = "key"
         @test haskey(d, key) == false
         key2 = CleverDicts.add_item(d, "second")
         @test key2 == MathOptInterface.VariableIndex(2)
         @test d[key2] == "second"
-        @test d.vector === nothing
-        @test d.dict !== nothing
     end
 
     @testset "LinearIndex" begin
@@ -65,11 +63,9 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         @test d[CleverDicts.LinearIndex(2)] == "second"
         @test length(d) == 2
         delete!(d, key)
-        @test d.vector === nothing
         @test d[CleverDicts.LinearIndex(1)] == "second"
         @test_throws KeyError d[CleverDicts.LinearIndex(2)]
         @test length(d) == 1
-        @test d.vector !== nothing
     end
 
     @testset "keys/values" begin
