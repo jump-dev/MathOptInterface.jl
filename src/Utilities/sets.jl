@@ -38,6 +38,7 @@ Return whether `index` is the index of a diagonal element in a
 [`MOI.AbstractSymmetricMatrixSetTriangle`](@ref) set.
 """
 function is_diagonal_vectorized_index(index::Base.Integer)
+    # See https://en.wikipedia.org/wiki/Triangular_number#Triangular_roots_and_tests_for_triangular_numbers
     perfect_square = 1 + 8index
     return isqrt(perfect_square)^2 == perfect_square
 end
