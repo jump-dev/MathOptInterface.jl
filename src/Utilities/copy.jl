@@ -278,24 +278,28 @@ function pass_constraints(
     dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap,
     single_variable_types, single_variable_indices,
     vector_of_variables_types, vector_of_variables_indices,
-    pass_cons=copy_constraints, pass_attr=MOI.set,
+    pass_cons=copy_constraints, pass_attr=MOI.set;
     filter_constraints::Function=((x) -> true)
 )
     for (S, cis_src) in zip(single_variable_types,
                             single_variable_indices)
+        filter!(filter_constraints, cis_src)
         # do the rest in `pass_cons` which is type stable
         pass_cons(dest, src, idxmap, cis_src)
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{
             MOI.SingleVariable, S}())
+        filter!(filter_constraints, cis_src)
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 
     for (S, cis_src) in zip(vector_of_variables_types,
                             vector_of_variables_indices)
+        filter!(filter_constraints, cis_src)
         # do the rest in `pass_cons` which is type stable
         pass_cons(dest, src, idxmap, cis_src)
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{
             MOI.VectorOfVariables, S}())
+        filter!(filter_constraints, cis_src)
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 
@@ -305,8 +309,9 @@ function pass_constraints(
     ]
     for (F, S) in nonvariable_constraint_types
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
+        filter!(filter_constraints, cis_src)
         # do the rest in `pass_cons` which is type stable
-        pass_cons(dest, src, idxmap, cis_src, filter_constraints=filter_constraints)
+        pass_cons(dest, src, idxmap, cis_src)#, filter_constraints=filter_constraints)
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 end

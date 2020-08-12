@@ -256,3 +256,23 @@ MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, :
     @test typeof(c1) == typeof(dest.constraintIndices[1])
     @test typeof(c2) == typeof(dest.constraintIndices[2])
 end
+
+@testset "Filtering copy" begin
+    # Create a basic model. 
+    src = MOIU.Model{Float64}()
+    x = MOI.add_variable(src)
+    c1 = MOI.add_constraint(src, x, MOI.LessThan{Float64}(1.0))
+    c2 = MOI.add_constraint(src, x, MOI.GreaterThan{Float64}(0.0))
+
+    # Filtering function: the default case where this function always returns
+    # true is already well-tested by the above cases.
+    # Only keep the constraint c1.
+    f = (cidx) -> cidx == c1
+    
+    # Perform the copy.
+    dst = OrderConstrainedVariablesModel()
+    index_map = MOI.copy_to(dst, src, filter_constraints=f)
+
+    @test typeof(c1) == typeof(dst.constraintIndices[1])
+    @test length(dst.constraintIndices) == 1
+end
