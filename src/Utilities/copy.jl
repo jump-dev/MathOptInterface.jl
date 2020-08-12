@@ -2,7 +2,8 @@
 
 """
     automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
-                      copy_names::Bool=true)
+                      copy_names::Bool=true, 
+                      filter_constraints::Function=(() -> true))
 
 Use [`Utilities.supports_default_copy_to`](@ref) and
 [`Utilities.supports_allocate_load`](@ref) to automatically choose between
@@ -10,12 +11,12 @@ Use [`Utilities.supports_default_copy_to`](@ref) and
 apply the copy operation.
 """
 function automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
-                           copy_names::Bool=true, only_conflict::Bool=false)
+                           copy_names::Bool=true, 
+                           filter_constraints::Function=((x) -> true))
     if supports_default_copy_to(dest, copy_names)
-        default_copy_to(dest, src, copy_names, only_conflict)
+        default_copy_to(dest, src, copy_names, filter_constraints)
     elseif supports_allocate_load(dest, copy_names)
-        @assert !only_conflict # TODO: implement this.
-        allocate_load(dest, src, copy_names, only_conflict)
+        allocate_load(dest, src, copy_names, filter_constraints)
     else
         error("Model $(typeof(dest)) does not support copy",
               copy_names ? " with names" : "", ".")
@@ -109,7 +110,7 @@ Base.haskey(idxmap::IndexMap, vi::MOI.VariableIndex) = haskey(idxmap.varmap, vi)
 Base.keys(idxmap::IndexMap) = Iterators.flatten((keys(idxmap.varmap), keys(idxmap.conmap)))
 
 Base.length(idxmap::IndexMap) = length(idxmap.varmap) + length(idxmap.conmap)
-Base.iterate(idxmap::MOIU.IndexMap, args...) = iterate(Base.Iterators.flatten((idxmap.varmap, idxmap.conmap)), args...)
+Base.iterate(idxmap::IndexMap, args...) = iterate(Base.Iterators.flatten((idxmap.varmap, idxmap.conmap)), args...)
 
 """
     pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
@@ -244,26 +245,25 @@ end
     copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
                      idxmap::IndexMap,
                      cis_src::Vector{<:MOI.ConstraintIndex},
-                     only_conflict::Bool=false)
+                     filter_constraints::Function=(() -> true))
 
 Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
 `idxmap` accordingly. Note that the attributes are not copied; call
 [`pass_attributes`] to copy the constraint attributes.
+
+If the `filter_constraints` arguments is given, only the constraints for which
+this function returns `true` will be copied. This function is given a 
+constraint index as argument. 
 """
 function copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
                           idxmap::IndexMap,
                           cis_src::Vector{<:MOI.ConstraintIndex},
-                          only_conflict::Bool=false)
+                          filter_constraints::Function=((x) -> true))
     # Retrieve the constraints to copy.
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
 
-    # If need be, filter this set of constraints.
-    if only_conflict
-        filter!(cis_src) do cidx
-            status = MOI.get(src, MOI.ConstraintConflictStatus(), cidx)
-            status != MOI.NOT_IN_CONFLICT
-        end
-    end
+    # Filter this set of constraints.
+    filter!(filter_constraints, cis_src)
 
     # Copy the constraints into the new model and build the map.
     f_dest = map_indices.(Ref(idxmap), f_src)
@@ -279,7 +279,7 @@ function pass_constraints(
     single_variable_types, single_variable_indices,
     vector_of_variables_types, vector_of_variables_indices,
     pass_cons=copy_constraints, pass_attr=MOI.set,
-    only_conflict::Bool=false
+    filter_constraints::Function=((x) -> true)
 )
     for (S, cis_src) in zip(single_variable_types,
                             single_variable_indices)
@@ -306,7 +306,7 @@ function pass_constraints(
     for (F, S) in nonvariable_constraint_types
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
         # do the rest in `pass_cons` which is type stable
-        pass_cons(dest, src, idxmap, cis_src)
+        pass_cons(dest, src, idxmap, cis_src, filter_constraints=filter_constraints)
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 end
@@ -333,7 +333,7 @@ end
 
 """
     default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool,
-                    only_conflict::Bool)
+                    filter_constraints::Function=((x) -> true))
 
 Implements `MOI.copy_to(dest, src)` by adding the variables and then the
 constraints and attributes incrementally. The function
@@ -341,7 +341,8 @@ constraints and attributes incrementally. The function
 the copying a model incrementally.
 """
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike,
-                         copy_names::Bool, only_conflict::Bool=false)
+                         copy_names::Bool, 
+                         filter_constraints::Function=((x) -> true))
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
@@ -352,11 +353,6 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike,
 
     # The `NLPBlock` assumes that the order of variables does not change (#849)
     if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
-        if only_conflict
-            error("Copying only the constraints participating in a conflict ",
-                  "is not possible for NLP models.")
-        end
-
         single_variable_types = [S for (F, S) in constraint_types
                                  if F == MOI.SingleVariable]
         vector_of_variables_types = [S for (F, S) in constraint_types
@@ -401,7 +397,7 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike,
     pass_constraints(dest, src, copy_names, idxmap,
                      single_variable_types, single_variable_not_added,
                      vector_of_variables_types, vector_of_variables_not_added,
-                     only_conflict=only_conflict)
+                     filter_constraints=filter_constraints)
 
     return idxmap
 end
@@ -701,14 +697,16 @@ function load_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
 end
 
 """
-    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike)
+    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, 
+                  filter_constraints::Function=((x) -> true)
+                  )
 
 Implements `MOI.copy_to(dest, src)` using the Allocate-Load API. The function
 [`supports_allocate_load`](@ref) can be used to check whether `dest` supports
 the Allocate-Load API.
 """
 function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool,
-                       only_conflict::Bool=false)
+                       filter_constraints::Function=((x) -> true))
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
@@ -746,7 +744,8 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
     pass_constraints(dest, src, copy_names, idxmap,
                      single_variable_types, single_variable_not_allocated,
                      vector_of_variables_types, vector_of_variables_not_allocated,
-                     allocate_constraints, allocate, only_conflict=only_conflict)
+                     allocate_constraints, allocate, 
+                     filter_constraints=filter_constraints)
 
     # Load variables
     load_variables(dest, length(vis_src))
@@ -767,7 +766,7 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
     pass_constraints(dest, src, copy_names, idxmap,
                      single_variable_types, single_variable_not_allocated,
                      vector_of_variables_types, vector_of_variables_not_allocated,
-                     load_constraints, load, only_conflict=only_conflict)
+                     load_constraints, load, filter_constraints=filter_constraints)
 
     return idxmap
 end
