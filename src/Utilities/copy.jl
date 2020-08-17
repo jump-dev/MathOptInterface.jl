@@ -72,19 +72,17 @@ julia understands is as a `DataType` and not a function, this leads to type
 instability issues.
 """
 _index_to_variable(i) = MOI.VariableIndex(i)
-const DenseVariableDict{V} = DenseDict{MOI.VariableIndex, V, typeof(MOI.index_value), typeof(_index_to_variable)}
+const DenseVariableDict{V} = CleverDicts.CleverDict{MOI.VariableIndex, V, typeof(MOI.index_value), typeof(_index_to_variable)}
 function dense_variable_dict(::Type{V}, n) where V
-    return DenseDict{MOI.VariableIndex, V}(MOI.index_value, _index_to_variable, n)
+    return CleverDicts.CleverDict{MOI.VariableIndex, V}(MOI.index_value, _index_to_variable, n)
 end
 
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
-    varmap::Union{DenseVariableDict{MOI.VariableIndex},
-                  Dict{MOI.VariableIndex, MOI.VariableIndex}}
+    varmap::DenseVariableDict{MOI.VariableIndex}
     conmap::DoubleDicts.MainIndexDoubleDict
 end
-IndexMap() = IndexMap(Dict{MOI.VariableIndex, MOI.VariableIndex}(),
-                      DoubleDicts.IndexDoubleDict())
-function IndexMap(n)
+
+function IndexMap(n = 0)
     IndexMap(dense_variable_dict(MOI.VariableIndex, n),
              DoubleDicts.IndexDoubleDict())
 end

@@ -63,7 +63,7 @@ mutable struct CleverDict{K, V, F<:Function, I<:Function} <: AbstractDict{K, V}
     vector::Vector{V}
     dict::OrderedCollections.OrderedDict{K, V}
     function CleverDict{K, V}(
-        n = 0
+        n::Integer = 0
     ) where {K, V}
         set = BitSet()
         sizehint!(set, n)
@@ -71,6 +71,18 @@ mutable struct CleverDict{K, V, F<:Function, I<:Function} <: AbstractDict{K, V}
         inverse_hash = x -> index_to_key(K, x)
         hash = key_to_index
         new{K, V, typeof(hash), typeof(inverse_hash)}(
+            0, hash, inverse_hash, true,
+            set,
+            vec,
+            OrderedCollections.OrderedDict{K, V}())
+    end
+    function CleverDict{K, V}(hash::F, inverse_hash::I,
+        n::Integer = 0
+    ) where {K, V, F, I}
+        set = BitSet()
+        sizehint!(set, n)
+        vec = Vector{K}(undef, n)
+        new{K, V, F, I}(
             0, hash, inverse_hash, true,
             set,
             vec,
