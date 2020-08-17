@@ -78,7 +78,10 @@ function dense_variable_dict(::Type{V}, n) where V
 end
 
 struct IndexMap <: AbstractDict{MOI.Index, MOI.Index}
-    varmap::DenseVariableDict{MOI.VariableIndex}
+    # just keeping the union to make it more backward compatible
+    # we should remove as soon as possible.
+    varmap::Union{DenseVariableDict{MOI.VariableIndex},
+                  Dict{MOI.VariableIndex, MOI.VariableIndex}}
     conmap::DoubleDicts.MainIndexDoubleDict
 end
 
