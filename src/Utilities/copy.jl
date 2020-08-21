@@ -287,6 +287,9 @@ function pass_constraints(
     pass_cons=copy_constraints, pass_attr=MOI.set;
     filter_constraints::Union{Nothing, Function}=nothing
 )
+    # copy_constraints can also take a filter_constraints argument; however, filtering
+    # is performed within this function (because it also calls MOI.set on the constraints). 
+    # Don't pass this argument to copy_constraints/pass_cons to avoid a double filtering.
     for (S, cis_src) in zip(single_variable_types,
                             single_variable_indices)
         if filter_constraints !== nothing
