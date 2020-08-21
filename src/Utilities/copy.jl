@@ -249,7 +249,7 @@ end
     copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
                      idxmap::IndexMap,
                      cis_src::Vector{<:MOI.ConstraintIndex},
-                     filter_constraints::Function=(() -> true))
+                     filter_constraints::Union{Nothing, Function}=nothing)
 
 Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
 `idxmap` accordingly. Note that the attributes are not copied; call
