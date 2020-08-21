@@ -276,3 +276,40 @@ end
     @test typeof(c1) == typeof(dst.constraintIndices[1])
     @test length(dst.constraintIndices) == 1
 end
+
+mutable struct BoundModel <: MOI.ModelLike
+    # Type of model that only supports ≤ bound constraints. In particular, it does not support integrality constraints.
+    inner::MOIU.Model{Float64}
+    BoundModel() = new(MOIU.Model{Float64}())
+end
+
+MOI.add_variables(model::BoundModel, n) = MOI.add_variables(model.inner, n)
+MOI.add_variable(model::BoundModel) = MOI.add_variable(model.inner)
+MOI.add_constraint(model::BoundModel, f::F, s::S) where {F<:MathOptInterface.AbstractFunction, S<:MathOptInterface.AbstractSet} = 
+    MOI.add_constraint(model.inner, f, s)
+MOI.supports_constraint(::BoundModel, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{Float64}}) = true
+MOI.supports_constraint(::BoundModel, ::Type{MOI.SingleVariable}, ::Type{MOI.Integer}) = false
+
+MOIU.supports_default_copy_to(::BoundModel, ::Bool) = true
+MOI.copy_to(dest::BoundModel, src::MOI.ModelLike; kws...) = MOIU.automatic_copy_to(dest, src; kws...)
+MOI.empty!(model::BoundModel) = MOI.empty!(model.inner)
+
+MOI.supports(::BoundModel, ::Type{MOI.NumberOfConstraints}) = true
+MOI.get(model::BoundModel, attr::MOI.NumberOfConstraints) = MOI.get(model.inner, attr)
+
+@testset "Filtering copy" begin
+    # Create a basic model. 
+    src = MOIU.Model{Float64}()
+    x = MOI.add_variable(src)
+    c1 = MOI.add_constraint(src, x, MOI.LessThan{Float64}(10.0))
+    c2 = MOI.add_constraint(src, x, MOI.Integer())
+
+    # Filtering function: get rid of integrality constraint.
+    f = (cidx) -> MOI.get(src, MOI.ConstraintSet(), cidx) != MOI.Integer()
+    
+    # Perform the copy. This should not throw an error. 
+    dst = BoundModel()
+    MOI.copy_to(dst, src, filter_constraints=f)
+    @test MOI.get(dst, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.LessThan{Float64}}()) == 1
+    @test MOI.get(dst, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.Integer}()) == 0
+end
