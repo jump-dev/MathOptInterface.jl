@@ -266,7 +266,7 @@ function copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
     # Retrieve the constraints to copy.
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
 
-    # Filter this set of constraints if need before.
+    # Filter this set of constraints if needed before.
     if filter_constraints !== nothing
         filter!(filter_constraints, cis_src)
     end
