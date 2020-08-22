@@ -289,7 +289,7 @@ function nametest(model::MOI.ModelLike)
     end
 end
 
-# Taken from https://github.com/JuliaOpt/MathOptInterfaceUtilities.jl/issues/41
+# Taken from https://github.com/jump-dev/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
     MOI.empty!(model)
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)

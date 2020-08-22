@@ -14,7 +14,7 @@ optimizer bridges should be used instead.
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
     objective::Union{MOI.AbstractScalarFunction, Nothing}
-    constraints::OrderedDict{Tuple{DataType, DataType}, OrderedDict} # See https://github.com/JuliaOpt/JuMP.jl/issues/1152 and https://github.com/JuliaOpt/JuMP.jl/issues/2238
+    constraints::OrderedDict{Tuple{DataType, DataType}, OrderedDict} # See https://github.com/jump-dev/JuMP.jl/issues/1152 and https://github.com/jump-dev/JuMP.jl/issues/2238
     nextconstraintid::Int64
     con_to_name::Dict{CI, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}

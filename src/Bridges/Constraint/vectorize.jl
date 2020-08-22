@@ -112,7 +112,7 @@ function MOI.get(
     @assert length(x) == 1
     if MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.N)))
        # If it is an infeasibility certificate, it is a ray and satisfies the
-       # homogenized problem, see https://github.com/JuliaOpt/MathOptInterface.jl/issues/433
+       # homogenized problem, see https://github.com/jump-dev/MathOptInterface.jl/issues/433
        return x[1]
     else
        # Otherwise, we need to add the set constant since the ConstraintPrimal

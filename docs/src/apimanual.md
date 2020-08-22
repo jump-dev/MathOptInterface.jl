@@ -14,9 +14,9 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 Each mathematical optimization solver API has its own concepts and data structures for representing optimization models and obtaining results.
 However, it is often desirable to represent an instance of an optimization problem at a higher level so that it is easy to try using different solvers.
 MathOptInterface (MOI) is an abstraction layer designed to provide a unified interface to mathematical optimization solvers so that users do not need to understand multiple solver-specific APIs.
-MOI can be used directly, or through a higher-level modeling interface like [JuMP](https://github.com/JuliaOpt/JuMP.jl).
+MOI can be used directly, or through a higher-level modeling interface like [JuMP](https://github.com/jump-dev/JuMP.jl).
 
-MOI has been designed to replace [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl), which has been used by modeling packages such as [JuMP](https://github.com/JuliaOpt/JuMP.jl) and [Convex.jl](https://github.com/JuliaOpt/Convex.jl).
+MOI has been designed to replace [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl), which has been used by modeling packages such as [JuMP](https://github.com/jump-dev/JuMP.jl) and [Convex.jl](https://github.com/jump-dev/Convex.jl).
 This second-generation abstraction layer addresses a number of limitations of MathProgBase.
 MOI is designed to:
 - Be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions)
@@ -1223,7 +1223,7 @@ wrapper type is called `Optimizer`):
   model from a cache, the [Allocate-Load API](@ref) allows MOI layers to be
   added between the cache and the solver which allows transformations to be
   applied without the need for additional caching. For instance, with the
-  proposed [Light bridges](https://github.com/JuliaOpt/MathOptInterface.jl/issues/523),
+  proposed [Light bridges](https://github.com/jump-dev/MathOptInterface.jl/issues/523),
   no cache will be needed to store the bridged model when bridges are used by
   JuMP so implementing the [Allocate-Load API](@ref) will allow JuMP to use only
   one cache instead of two.
