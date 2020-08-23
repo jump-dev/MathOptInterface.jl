@@ -1274,8 +1274,8 @@ The optimizer stopped because of some user-defined limit.
   solutions. This is often used in MIPs to get the solver to return the first
   feasible solution it encounters.
 * `MEMORY_LIMIT`: The algorithm stopped because it ran out of memory.
-* `OBJECTIVE_LIMIT`: The algorthm stopped because it found a solution better than
-  a minimum limit set by the user.
+* `OBJECTIVE_LIMIT`: The algorithm stopped because it found a solution better
+  than a minimum limit set by the user.
 * `NORM_LIMIT`: The algorithm stopped because the norm of an iterate became too
   large.
 * `OTHER_LIMIT`: The algorithm stopped due to a limit not covered by one of the
