@@ -1412,7 +1412,7 @@ end
 geomean1vtest(model::MOI.ModelLike, config::TestConfig) = _geomean1test(model, config, true)
 geomean1ftest(model::MOI.ModelLike, config::TestConfig) = _geomean1test(model, config, false)
 
-# addresses bug https://github.com/JuliaOpt/MathOptInterface.jl/pull/962
+# addresses bug https://github.com/jump-dev/MathOptInterface.jl/pull/962
 function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     atol = config.atol
     rtol = config.rtol

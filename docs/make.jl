@@ -7,7 +7,7 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true",
         mathengine = Documenter.MathJax()
     ),
-    # See https://github.com/JuliaOpt/JuMP.jl/issues/1576
+    # See https://github.com/jump-dev/JuMP.jl/issues/1576
     strict = true,
     pages = [
         "Introduction" => "index.md",
@@ -17,5 +17,5 @@ makedocs(
 )
 
 deploydocs(
-    repo   = "github.com/JuliaOpt/MathOptInterface.jl.git",
+    repo   = "github.com/jump-dev/MathOptInterface.jl.git",
 )

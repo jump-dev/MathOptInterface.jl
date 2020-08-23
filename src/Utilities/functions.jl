@@ -851,7 +851,7 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
 end
-# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+# `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
 function operate_term(::typeof(*), t::MOI.ScalarAffineTerm{T}, β::T) where T<:Number
     MOI.ScalarAffineTerm(t.coefficient * β, t.variable_index)
 end
@@ -1462,7 +1462,7 @@ function operate(::typeof(*), ::Type{T},
     return operate(*, T, α, f)
 end
 
-# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+# `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
 function operate!(::typeof(*), ::Type{T},
                   f::Union{MOI.ScalarAffineFunction{T},
                            MOI.ScalarQuadraticFunction{T}}, α::T) where T<:Number
@@ -1915,7 +1915,7 @@ end
 
 
 # Similar to `eachscalar` but faster, see
-# https://github.com/JuliaOpt/MathOptInterface.jl/issues/418
+# https://github.com/jump-dev/MathOptInterface.jl/issues/418
 function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
     MOI.SingleVariable.(f.variables)
 end

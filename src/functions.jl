@@ -74,7 +74,7 @@ end
 # Note: ScalarAffineFunction is mutable because its `constant` field is likely of an immutable
 # type, while its `terms` field is of a mutable type, meaning that creating a `ScalarAffineFunction`
 # allocates, and it is desirable to provide a zero-allocation option for working with
-# ScalarAffineFunctions. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
+# ScalarAffineFunctions. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 """
     ScalarAffineFunction{T}(terms, constant)
 
@@ -147,7 +147,7 @@ end
 # Note: ScalarQuadraticFunction is mutable because its `constant` field is likely of an immutable
 # type, while its other fields are of mutable types, meaning that creating a `ScalarQuadraticFunction`
 # allocates, and it is desirable to provide a zero-allocation option for working with
-# ScalarQuadraticFunctions. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
+# ScalarQuadraticFunctions. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 """
     ScalarQuadraticFunction{T}(affine_terms, quadratic_terms, constant)
 
@@ -260,7 +260,7 @@ end
 # Note: MultiRowChange is mutable because its `variable` field of an immutable
 # type, while `new_coefficients` is of a mutable type, meaning that creating a `MultiRowChange`
 # allocates, and it is desirable to provide a zero-allocation option for working with
-# MultiRowChanges. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
+# MultiRowChanges. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 """
     MultirowChange{T}(variable::VariableIndex, new_coefficients::Vector{Tuple{Int64, T}})
 
