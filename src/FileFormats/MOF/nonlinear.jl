@@ -5,7 +5,7 @@ function moi_to_object(
     node_list = OrderedObject[]
     foo_object = convert_expr_to_mof(foo.expr, node_list, name_map)
     return OrderedObject(
-        "head" => "ScalarNonlinearFunction",
+        "type" => "ScalarNonlinearFunction",
         "root" => foo_object,
         "node_list" => node_list,
     )
@@ -111,34 +111,34 @@ Tree form:
 MOF format:
 
     {
-        "head": "nonlinear",
-        "root": {"head": "node", "index": 4},
+        "type": "nonlinear",
+        "root": {"type": "node", "index": 4},
         "node_list": [
             {
-                "head": "*", "args": [
-                    {"head": "real", "value": 2},
-                    {"head": "variable", "name": "x"}
+                "type": "*", "args": [
+                    {"type": "real", "value": 2},
+                    {"type": "variable", "name": "x"}
                 ]
             },
             {
-                "head": "sin",
+                "type": "sin",
                 "args": [
-                    {"head": "variable", "name", "x"}
+                    {"type": "variable", "name", "x"}
                 ]
             }
             {
-                "head": "^",
+                "type": "^",
                 "args": [
-                    {"head": "node", "index": 2},
-                    {"head": "real", "value": 2}
+                    {"type": "node", "index": 2},
+                    {"type": "real", "value": 2}
                 ]
             },
             {
-                "head": "+",
+                "type": "+",
                 "args": [
-                    {"head": "node", "index": 1},
-                    {"head": "node", "index": 3},
-                    {"head": "variable", "name": "y"}
+                    {"type": "node", "index": 1},
+                    {"type": "node", "index": 3},
+                    {"type": "variable", "name": "y"}
                 ]
             }
         ]
@@ -172,7 +172,7 @@ end
     SUPPORTED_FUNCTIONS
 
 A vector of string-symbol pairs that map the MathOptFormat string representation
-(i.e, the value of the `"head"` field) to the name of a Julia function (in
+(i.e, the value of the `"type"` field) to the name of a Julia function (in
 Symbol form).
 """
 const SUPPORTED_FUNCTIONS = Pair{String, Tuple{Symbol, ARITY}}[
@@ -276,7 +276,7 @@ to their variable index.
 function convert_mof_to_expr(
     node::T, node_list::Vector{T}, name_map::Dict{String, MOI.VariableIndex}
 ) where {T <: Object}
-    head = node["head"]
+    head = node["type"]
     if head == "real"
         return node["value"]
     elseif head == "complex"
@@ -324,12 +324,12 @@ function convert_expr_to_mof(
     end
     (mathoptformat_string, arity) = FUNCTION_TO_STRING[function_name]
     validate_arguments(function_name, arity, length(expr.args) - 1)
-    node = T("head" => mathoptformat_string, "args" => T[])
+    node = T("type" => mathoptformat_string, "args" => T[])
     for arg in @view(expr.args[2:end])
         push!(node["args"], convert_expr_to_mof(arg, node_list, name_map))
     end
     push!(node_list, node)
-    return T("head" => "node", "index" => length(node_list))
+    return T("type" => "node", "index" => length(node_list))
 end
 
 # Recursion end for variables.
@@ -338,21 +338,21 @@ function convert_expr_to_mof(
     ::Vector{T},
     name_map::Dict{MOI.VariableIndex, String},
 ) where {T <: Object}
-    return T("head" => "variable", "name" => name_map[variable])
+    return T("type" => "variable", "name" => name_map[variable])
 end
 
 # Recursion end for real constants.
 function convert_expr_to_mof(
     value::Real, ::Vector{T}, name_map::Dict{MOI.VariableIndex, String}
 ) where {T <: Object}
-    return T("head" => "real", "value" => value)
+    return T("type" => "real", "value" => value)
 end
 
 # Recursion end for complex numbers.
 function convert_expr_to_mof(
     value::Complex, ::Vector{T}, ::Dict{MOI.VariableIndex, String}
 ) where {T <: Object}
-    return T("head" => "complex", "real" => real(value), "imag" => imag(value))
+    return T("type" => "complex", "real" => real(value), "imag" => imag(value))
 end
 
 # Recursion fallback.

@@ -112,7 +112,7 @@ function moi_to_object(
     foo::MOI.SingleVariable, name_map::Dict{MOI.VariableIndex, String}
 )
     return OrderedObject(
-        "head" => "SingleVariable",
+        "type" => "SingleVariable",
         "variable" => name_map[foo.variable]
     )
 end
@@ -134,7 +134,7 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex, String},
 )
     return OrderedObject(
-        "head" => "ScalarAffineFunction",
+        "type" => "ScalarAffineFunction",
         "terms" => moi_to_object.(foo.terms, Ref(name_map)),
         "constant" => foo.constant,
     )
@@ -156,7 +156,7 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex, String},
 )
     return OrderedObject(
-        "head" => "ScalarQuadraticFunction",
+        "type" => "ScalarQuadraticFunction",
         "affine_terms" => moi_to_object.(foo.affine_terms, Ref(name_map)),
         "quadratic_terms" => moi_to_object.(foo.quadratic_terms, Ref(name_map)),
         "constant" => foo.constant,
@@ -169,7 +169,7 @@ function moi_to_object(
     foo::MOI.VectorOfVariables, name_map::Dict{MOI.VariableIndex, String}
 )
     return OrderedObject(
-        "head" => "VectorOfVariables",
+        "type" => "VectorOfVariables",
         "variables" => [name_map[variable] for variable in foo.variables],
     )
 end
@@ -189,7 +189,7 @@ function moi_to_object(
     foo::MOI.VectorAffineFunction, name_map::Dict{MOI.VariableIndex, String}
 )
     return OrderedObject(
-        "head" => "VectorAffineFunction",
+        "type" => "VectorAffineFunction",
         "terms" => moi_to_object.(foo.terms, Ref(name_map)),
         "constants" => foo.constants,
     )
@@ -208,7 +208,7 @@ function moi_to_object(
     foo::MOI.VectorQuadraticFunction, name_map::Dict{MOI.VariableIndex, String}
 )
     return OrderedObject(
-        "head" => "VectorQuadraticFunction",
+        "type" => "VectorQuadraticFunction",
         "affine_terms" => moi_to_object.(foo.affine_terms, Ref(name_map)),
         "quadratic_terms" => moi_to_object.(foo.quadratic_terms, Ref(name_map)),
         "constants" => foo.constants,
@@ -219,7 +219,7 @@ end
 """
     head_name(::Type{SetType}) where SetType <: MOI.AbstractSet
 
-Return the string that is stored in the `"head"` field of the MOF object for a
+Return the string that is stored in the `"type"` field of the MOF object for a
 set of type `SetType`.
 """
 function head_name end
@@ -230,7 +230,7 @@ function head_name end
 function moi_to_object(
     set::SetType, ::Dict{MOI.VariableIndex, String}
 ) where {SetType}
-    object = OrderedObject("head" => head_name(SetType))
+    object = OrderedObject("type" => head_name(SetType))
     for key in fieldnames(SetType)
         object[string(key)] = getfield(set, key)
     end
@@ -286,7 +286,7 @@ function moi_to_object(
 ) where {I, S}
     @assert I == MOI.ACTIVATE_ON_ONE || I == MOI.ACTIVATE_ON_ZERO
     return OrderedObject(
-        "head" => "IndicatorSet",
+        "type" => "IndicatorSet",
         "set" => moi_to_object(set.set, name_map),
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero"
     )

@@ -2,15 +2,15 @@
   "name": "MathOptFormat Model",
   "version": {
     "major": 0,
-    "minor": 4
+    "minor": 5
   },
   "variables": [{"name": "x"}],
   "objective": {
     "sense": "min",
-    "function": {"head": "SingleVariable", "variable": "x"}
+    "function": {"type": "SingleVariable", "variable": "x"}
   },
   "constraints": [{
-    "function": {"head": "SingleVariable", "variable": "x"},
-    "set": {"head": "UnsupportedConstraintSet"}
+    "function": {"type": "SingleVariable", "variable": "x"},
+    "set": {"type": "UnsupportedConstraintSet"}
   }]
 }
