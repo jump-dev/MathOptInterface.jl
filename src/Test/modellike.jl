@@ -386,13 +386,88 @@ function failcopytestca(dest::MOI.ModelLike)
     @test_throws MOI.UnsupportedAttribute MOI.copy_to(dest, BadConstraintAttributeModel())
 end
 
-function start_values_test(
-    dest::MOI.ModelLike, src::MOI.ModelLike;
-    skip_variable_primal = false,
-    skip_vp_unsetting = false,
-    skip_constraint_primal = false,
-    skip_constraint_dual = false
-)
+function start_values_unset_test(model::MOI.ModelLike, config)
+    MOI.empty!(model)
+    x, y, z = MOI.add_variables(model, 3)
+    fz = MOI.SingleVariable(z)
+    a = MOI.add_constraint(model, x, MOI.EqualTo(1.0))
+    b = MOI.add_constraint(model, y, MOI.EqualTo(2.0))
+    F1 = MOI.SingleVariable
+    S1 = MOI.EqualTo{Float64}
+    c = MOI.add_constraint(model, MOIU.operate(vcat, Float64, 2.0fz + 1.0), MOI.Nonnegatives(1))
+    F2 = MOI.VectorAffineFunction{Float64}
+    S2 = MOI.Nonnegatives
+
+    vpattr = MOI.VariablePrimalStart()
+    cpattr = MOI.ConstraintPrimalStart()
+    cdattr = MOI.ConstraintDualStart()
+
+    @testset "Newly created variables have start values set to nothing" begin
+        @test !(vpattr in MOI.get(model, MOI.ListOfVariableAttributesSet()))
+        @test MOI.get(model, vpattr, x) === nothing
+        @test MOI.get(model, vpattr, y) === nothing
+        @test MOI.get(model, vpattr, z) === nothing
+
+        @test !(cpattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}()))
+        @test MOI.get(model, cpattr, a) === nothing
+        @test MOI.get(model, cpattr, b) === nothing
+        @test !(cpattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}()))
+        @test MOI.get(model, cpattr, c) === nothing
+
+        @test !(cdattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}()))
+        @test MOI.get(model, cdattr, a) === nothing
+        @test MOI.get(model, cdattr, b) === nothing
+        @test !(cdattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}()))
+        @test MOI.get(model, cdattr, c) === nothing
+    end
+
+    @testset "Allows unsetting by nothing" begin
+        # First set the attributes to some values.
+        MOI.set.((model,), (vpattr,), (x, y, z), (0.0, 1.0, 2.0))
+        MOI.set.((model,), (cpattr,), (a, b), (0.0, 1.0))
+        MOI.set.((model,), (cdattr,), (a, b), (0.0, 1.0))
+        MOI.set(model, cpattr, c, [2.0])
+        MOI.set(model, cdattr, c, [2.0])
+
+        @test vpattr ∈ MOI.get(model, MOI.ListOfVariableAttributesSet())
+        @test cpattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test cpattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        @test cdattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test cdattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+
+        @test all(MOI.get.((model,), (vpattr,), (x, y, z)) .== (0.0, 1.0, 2.0))
+        @test all(MOI.get.((model,), (cpattr,), (a, b)) .== (0.0, 1.0))
+        @test all(MOI.get.((model,), (cdattr,), (a, b)) .== (0.0, 1.0))
+        @test MOI.get(model, cpattr, c) == [2.0]
+        @test MOI.get(model, cdattr, c) == [2.0]
+
+        MOI.set(model, vpattr, y, nothing)
+        MOI.set(model, cpattr, a, nothing)
+        MOI.set(model, cdattr, a, nothing)
+        MOI.set(model, cpattr, c, [nothing])
+        MOI.set(model, cdattr, c, [nothing])
+
+        #@test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        #@test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+
+        @test all(MOI.get.((model,), (vpattr,), (x, y, z)) .== (0.0, nothing, 2.0))
+        @test all(MOI.get.((model,), (cpattr,), (a, b)) .== (nothing, 1.0))
+        @test all(MOI.get.((model,), (cdattr,), (a, b)) .== (nothing, 1.0))
+        @test MOI.get(model, cpattr, c) == [nothing]
+        @test MOI.get(model, cdattr, c) == [nothing]
+
+        MOI.set(model, vpattr, x, nothing)
+        MOI.set(model, vpattr, z, nothing)
+        MOI.set(model, cpattr, b, nothing)
+        MOI.set(model, cdattr, b, nothing)
+
+        #@test vpattr ∉ MOI.get(model, MOI.ListOfVariableAttributesSet())
+        #@test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        #@test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+    end
+end
+
+function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.empty!(dest)
     @test MOIU.supports_default_copy_to(src, #=copy_names=# false)
     x, y, z = MOI.add_variables(src, 3)
@@ -409,92 +484,56 @@ function start_values_test(
     cpattr = MOI.ConstraintPrimalStart()
     cdattr = MOI.ConstraintDualStart()
 
-    # shorten names
-    test_vp = !skip_variable_primal
-    test_cp = !skip_constraint_primal
-    test_cd = !skip_constraint_dual
-
     @testset "Supports" begin
-        test_vp && @test MOI.supports(dest, vpattr, MOI.VariableIndex)
-        if test_cp
-            @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F1, S1})
-            @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F2, S2})
-        end
-        if test_cd
-            @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F1, S1})
-            @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F2, S2})
-        end
-    end
-
-    if skip_vp_unsetting
-        @testset "Allows unsetting by nothing" begin
-            MOI.set(model, vpattr, x, 1.0)
-            MOI.set(model, vpattr, y, 0.0)
-            MOI.set(model, vpattr, z, 2.0)
-            @test MOI.get.(model, vpattr, (x, y, z)) == (1.0, 0.0, 2.0)
-            MOI.set(model, vpattr, y, nothing)
-            @test MOI.get.(model, vpattr, (x, y, z)) == (1.0, nothing, 2.0)
-            MOI.set.(model, vpattr, (x, z), (nothing, nothing))
-            @test MOI.get.(model, vpattr, (x, y, z)) ==
-                (nothing, nothing, nothing)
-        end
+        @test MOI.supports(dest, vpattr, MOI.VariableIndex)
+        @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F1, S1})
+        @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F2, S2})
+        @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F1, S1})
+        @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F2, S2})
     end
 
     @testset "Attribute set to no indices" begin
         dict = MOI.copy_to(dest, src, copy_names=false)
 
-        if test_vp
-            @test !(vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet()))
-            @test MOI.get(dest, vpattr, dict[x]) === nothing
-            @test MOI.get(dest, vpattr, dict[y]) === nothing
-            @test MOI.get(dest, vpattr, dict[z]) === nothing
-        end
-
-        if test_cp
-            @test !(cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}()))
-            @test MOI.get(dest, cpattr, dict[a]) === nothing
-            @test MOI.get(dest, cpattr, dict[b]) === nothing
-            @test !(cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}()))
-            @test MOI.get(dest, cpattr, dict[c]) === nothing
-        end
-        if test_cd
-            @test !(cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}()))
-            @test MOI.get(dest, cdattr, dict[a]) === nothing
-            @test MOI.get(dest, cdattr, dict[b]) === nothing
-            @test !(cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}()))
-            @test MOI.get(dest, cdattr, dict[c]) === nothing
-        end
+        @test !(vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet()))
+        @test MOI.get(dest, vpattr, dict[x]) === nothing
+        @test MOI.get(dest, vpattr, dict[y]) === nothing
+        @test MOI.get(dest, vpattr, dict[z]) === nothing
+        @test !(cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}()))
+        @test MOI.get(dest, cpattr, dict[a]) === nothing
+        @test MOI.get(dest, cpattr, dict[b]) === nothing
+        @test !(cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}()))
+        @test MOI.get(dest, cpattr, dict[c]) === nothing
+        @test !(cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}()))
+        @test MOI.get(dest, cdattr, dict[a]) === nothing
+        @test MOI.get(dest, cdattr, dict[b]) === nothing
+        @test !(cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}()))
+        @test MOI.get(dest, cdattr, dict[c]) === nothing
     end
 
     @testset "Attribute set to some indices" begin
-        test_vp && MOI.set(src, vpattr, x, 1.0)
-        test_vp && MOI.set(src, vpattr, z, 3.0)
-        test_cp && MOI.set(src, cpattr, a, 1.0)
-        test_cp && MOI.set(src, cpattr, b, 2.0)
-        test_cd && MOI.set(src, cdattr, b, 2.0)
-        test_cd && MOI.set(src, cdattr, c, [3.0])
+        MOI.set(src, vpattr, x, 1.0)
+        MOI.set(src, vpattr, z, 3.0)
+        MOI.set(src, cpattr, a, 1.0)
+        MOI.set(src, cpattr, b, 2.0)
+        MOI.set(src, cdattr, b, 2.0)
+        MOI.set(src, cdattr, c, [3.0])
 
         dict = MOI.copy_to(dest, src, copy_names=false)
 
-        if test_vp
-            @test vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet())
-            @test MOI.get(dest, vpattr, dict[x]) == 1.0
-            @test MOI.get(dest, vpattr, dict[y]) === nothing
-            @test MOI.get(dest, vpattr, dict[z]) == 3.0
-        end
-        if test_cp
-            @test cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}())
-            @test MOI.get(dest, cpattr, dict[a]) == 1.0
-            @test MOI.get(dest, cpattr, dict[b]) == 2.0
-            @test MOI.get(dest, cpattr, dict[c]) === nothing
-        end
-        if test_cd
-            @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}())
-            @test MOI.get(dest, cdattr, dict[a]) === nothing
-            @test MOI.get(dest, cdattr, dict[b]) == 2.0
-            @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}())
-            @test MOI.get(dest, cdattr, dict[c]) == [3.0]
-        end
+        @test vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet())
+        @test MOI.get(dest, vpattr, dict[x]) == 1.0
+        @test MOI.get(dest, vpattr, dict[y]) === nothing
+        @test MOI.get(dest, vpattr, dict[z]) == 3.0
+        @test cpattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test MOI.get(dest, cpattr, dict[a]) == 1.0
+        @test MOI.get(dest, cpattr, dict[b]) == 2.0
+        @test MOI.get(dest, cpattr, dict[c]) === nothing
+        @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test MOI.get(dest, cdattr, dict[a]) === nothing
+        @test MOI.get(dest, cdattr, dict[b]) == 2.0
+        @test cdattr in MOI.get(dest, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        @test MOI.get(dest, cdattr, dict[c]) == [3.0]
     end
 end
 
