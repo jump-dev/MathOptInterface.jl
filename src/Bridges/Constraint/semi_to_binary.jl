@@ -14,7 +14,7 @@ The `SemiToBinaryBridge` replaces an Semiinteger constraint:
 ``x \\in Semiinteger(l, u)``
 is replaced by:
 ``z \\in \\{0, 1\\}``,
-``x \\in \\Integer``,
+``x \\in \\mathbb{Z}``,
 ``x \\leq z \\cdot u ``,
 ``x \\geq z \\cdot l ``.
 """
