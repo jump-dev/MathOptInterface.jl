@@ -27,13 +27,12 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         delete!(d, key)
         sizehint!(d, 2)
         @test_throws KeyError d[key]
-        @test_throws KeyError d[key] = "key"
+        # set index is valid now
+        # @test_throws KeyError d[key] = "key"
         @test haskey(d, key) == false
         key2 = CleverDicts.add_item(d, "second")
         @test key2 == MathOptInterface.VariableIndex(2)
         @test d[key2] == "second"
-        @test d.vector === nothing
-        @test d.dict !== nothing
         d[key2] = "third"
         @test d[key2] == "third"
 
@@ -48,13 +47,12 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         @test_throws KeyError d[MathOptInterface.VariableIndex(2)]
         delete!(d, key)
         @test_throws KeyError d[key]
-        @test_throws KeyError d[key] = "key"
+        # set index is valid now
+        # @test_throws KeyError d[key] = "key"
         @test haskey(d, key) == false
         key2 = CleverDicts.add_item(d, "second")
         @test key2 == MathOptInterface.VariableIndex(2)
         @test d[key2] == "second"
-        @test d.vector === nothing
-        @test d.dict !== nothing
     end
 
     @testset "LinearIndex" begin
@@ -65,11 +63,9 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         @test d[CleverDicts.LinearIndex(2)] == "second"
         @test length(d) == 2
         delete!(d, key)
-        @test d.vector === nothing
         @test d[CleverDicts.LinearIndex(1)] == "second"
         @test_throws KeyError d[CleverDicts.LinearIndex(2)]
         @test length(d) == 1
-        @test d.vector !== nothing
     end
 
     @testset "keys/values" begin
@@ -178,5 +174,38 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         @test d[k3] == "c"
         @test d[CleverDicts.LinearIndex(1)] == "b"
         @test d[CleverDicts.LinearIndex(2)] == "c"
+    end
+
+    @testset "Dense Operations" begin
+        mul2(x) = x * 2
+        div2(x) = div(x, 2)
+        d = CleverDicts.CleverDict{Int, Float64}(div2, mul2, 3)
+
+        d[4] = 0.25
+        @test !haskey(d, 2)
+        @test haskey(d, 4)
+        @test !haskey(d, 6)
+        @test length(d) == 1
+        @test collect(d) == [4 => 0.25]
+        @test d[4] == 0.25
+
+        d[2] = 1.5
+        @test haskey(d, 2)
+        @test haskey(d, 4)
+        @test !haskey(d, 6)
+        @test length(d) == 2
+        @test collect(d) == [2 => 1.5, 4 => 0.25]
+        @test d[2] == 1.5
+        @test d[4] == 0.25
+
+        d[6] = 0.75
+        @test haskey(d, 2)
+        @test haskey(d, 4)
+        @test haskey(d, 6)
+        @test length(d) == 3
+        @test collect(d) == [2 => 1.5, 4 => 0.25, 6 => 0.75]
+        @test d[2] == 1.5
+        @test d[4] == 0.25
+        @test d[6] == 0.75
     end
 end
