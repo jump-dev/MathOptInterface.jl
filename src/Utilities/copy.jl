@@ -2,19 +2,25 @@
 
 """
     automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
-                      copy_names::Bool=true)
+                      copy_names::Bool=true, 
+                      filter_constraints::Union{Nothing, Function}=nothing)
 
 Use [`Utilities.supports_default_copy_to`](@ref) and
 [`Utilities.supports_allocate_load`](@ref) to automatically choose between
 [`Utilities.default_copy_to`](@ref) or [`Utilities.allocate_load`](@ref) to
 apply the copy operation.
+
+If the `filter_constraints` arguments is given, only the constraints for which
+this function returns `true` will be copied. This function is given a 
+constraint index as argument. 
 """
 function automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
-                           copy_names::Bool=true)
+                           copy_names::Bool=true, 
+                           filter_constraints::Union{Nothing, Function}=nothing)
     if supports_default_copy_to(dest, copy_names)
-        default_copy_to(dest, src, copy_names)
+        default_copy_to(dest, src, copy_names, filter_constraints)
     elseif supports_allocate_load(dest, copy_names)
-        allocate_load(dest, src, copy_names)
+        allocate_load(dest, src, copy_names, filter_constraints)
     else
         error("Model $(typeof(dest)) does not support copy",
               copy_names ? " with names" : "", ".")
@@ -117,7 +123,7 @@ Base.haskey(idxmap::IndexMap, vi::MOI.VariableIndex) = haskey(idxmap.varmap, vi)
 Base.keys(idxmap::IndexMap) = Iterators.flatten((keys(idxmap.varmap), keys(idxmap.conmap)))
 
 Base.length(idxmap::IndexMap) = length(idxmap.varmap) + length(idxmap.conmap)
-Base.iterate(idxmap::MOIU.IndexMap, args...) = iterate(Base.Iterators.flatten((idxmap.varmap, idxmap.conmap)), args...)
+Base.iterate(idxmap::IndexMap, args...) = iterate(Base.Iterators.flatten((idxmap.varmap, idxmap.conmap)), args...)
 
 """
     pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap, pass_attr::Function=MOI.set)
@@ -251,16 +257,30 @@ end
 """
     copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
                      idxmap::IndexMap,
-                     cis_src::Vector{<:MOI.ConstraintIndex})
+                     cis_src::Vector{<:MOI.ConstraintIndex},
+                     filter_constraints::Union{Nothing, Function}=nothing)
 
 Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
 `idxmap` accordingly. Note that the attributes are not copied; call
 [`pass_attributes`] to copy the constraint attributes.
+
+If the `filter_constraints` arguments is given, only the constraints for which
+this function returns `true` will be copied. This function is given a 
+constraint index as argument. 
 """
 function copy_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
                           idxmap::IndexMap,
-                          cis_src::Vector{<:MOI.ConstraintIndex})
+                          cis_src::Vector{<:MOI.ConstraintIndex},
+                          filter_constraints::Union{Nothing, Function}=nothing)
+    # Retrieve the constraints to copy.
     f_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)
+
+    # Filter this set of constraints if needed before.
+    if filter_constraints !== nothing
+        filter!(filter_constraints, cis_src)
+    end
+
+    # Copy the constraints into the new model and build the map.
     f_dest = map_indices.(Ref(idxmap), f_src)
     s = MOI.get(src, MOI.ConstraintSet(), cis_src)
     cis_dest = MOI.add_constraints(dest, f_dest, s)
@@ -273,23 +293,41 @@ function pass_constraints(
     dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool, idxmap::IndexMap,
     single_variable_types, single_variable_indices,
     vector_of_variables_types, vector_of_variables_indices,
-    pass_cons=copy_constraints, pass_attr=MOI.set
+    pass_cons=copy_constraints, pass_attr=MOI.set;
+    filter_constraints::Union{Nothing, Function}=nothing
 )
+    # copy_constraints can also take a filter_constraints argument; however, filtering
+    # is performed within this function (because it also calls MOI.set on the constraints). 
+    # Don't pass this argument to copy_constraints/pass_cons to avoid a double filtering.
     for (S, cis_src) in zip(single_variable_types,
                             single_variable_indices)
+        if filter_constraints !== nothing
+            filter!(filter_constraints, cis_src)
+        end
         # do the rest in `pass_cons` which is type stable
         pass_cons(dest, src, idxmap, cis_src)
+
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{
             MOI.SingleVariable, S}())
+        if filter_constraints !== nothing
+            filter!(filter_constraints, cis_src)
+        end
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 
     for (S, cis_src) in zip(vector_of_variables_types,
                             vector_of_variables_indices)
+        if filter_constraints !== nothing
+            filter!(filter_constraints, cis_src)
+        end
         # do the rest in `pass_cons` which is type stable
         pass_cons(dest, src, idxmap, cis_src)
+
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{
             MOI.VectorOfVariables, S}())
+        if filter_constraints !== nothing
+            filter!(filter_constraints, cis_src)
+        end
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 
@@ -299,6 +337,9 @@ function pass_constraints(
     ]
     for (F, S) in nonvariable_constraint_types
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F, S}())
+        if filter_constraints !== nothing
+            filter!(filter_constraints, cis_src)
+        end
         # do the rest in `pass_cons` which is type stable
         pass_cons(dest, src, idxmap, cis_src)
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
@@ -326,14 +367,21 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
 end
 
 """
-    default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
+    default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool,
+                    filter_constraints::Union{Nothing, Function}=nothing)
 
 Implements `MOI.copy_to(dest, src)` by adding the variables and then the
 constraints and attributes incrementally. The function
 [`supports_default_copy_to`](@ref) can be used to check whether `dest` supports
 the copying a model incrementally.
+
+If the `filter_constraints` arguments is given, only the constraints for which
+this function returns `true` will be copied. This function is given a 
+constraint index as argument. 
 """
-function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
+function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike,
+                         copy_names::Bool, 
+                         filter_constraints::Union{Nothing, Function}=nothing)
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
@@ -387,7 +435,8 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bo
     # Copy constraints
     pass_constraints(dest, src, copy_names, idxmap,
                      single_variable_types, single_variable_not_added,
-                     vector_of_variables_types, vector_of_variables_not_added)
+                     vector_of_variables_types, vector_of_variables_not_added,
+                     filter_constraints=filter_constraints)
 
     return idxmap
 end
@@ -687,13 +736,20 @@ function load_constraints(dest::MOI.ModelLike, src::MOI.ModelLike,
 end
 
 """
-    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike)
+    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, 
+                  filter_constraints::Union{Nothing, Function}=nothing
+                  )
 
 Implements `MOI.copy_to(dest, src)` using the Allocate-Load API. The function
 [`supports_allocate_load`](@ref) can be used to check whether `dest` supports
 the Allocate-Load API.
+
+If the `filter_constraints` arguments is given, only the constraints for which
+this function returns `true` will be copied. This function is given a 
+constraint index as argument. 
 """
-function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool)
+function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool,
+                       filter_constraints::Union{Nothing, Function}=nothing)
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
@@ -731,7 +787,8 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
     pass_constraints(dest, src, copy_names, idxmap,
                      single_variable_types, single_variable_not_allocated,
                      vector_of_variables_types, vector_of_variables_not_allocated,
-                     allocate_constraints, allocate)
+                     allocate_constraints, allocate, 
+                     filter_constraints=filter_constraints)
 
     # Load variables
     load_variables(dest, length(vis_src))
@@ -752,7 +809,7 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
     pass_constraints(dest, src, copy_names, idxmap,
                      single_variable_types, single_variable_not_allocated,
                      vector_of_variables_types, vector_of_variables_not_allocated,
-                     load_constraints, load)
+                     load_constraints, load, filter_constraints=filter_constraints)
 
     return idxmap
 end
