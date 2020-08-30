@@ -276,7 +276,8 @@ to their variable index.
 function convert_mof_to_expr(
     node::T, node_list::Vector{T}, name_map::Dict{String, MOI.VariableIndex}
 ) where {T <: Object}
-    head = node["type"]
+    # TODO(odow): remove when v0.4 no longer supported.
+    head = haskey(node, "type") ? node["type"] : node["head"]
     if head == "real"
         return node["value"]
     elseif head == "complex"

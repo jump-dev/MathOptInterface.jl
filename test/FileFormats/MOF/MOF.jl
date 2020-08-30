@@ -96,6 +96,14 @@ end
         @test MOF.moi_to_object(c1, model, name_map)["name"] == "c_1"
         @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
     end
+    @testset "v0.4" begin
+        filename = joinpath(@__DIR__, "v0.4.mof.json")
+        model = MOF.Model(validate = true)
+        @test_throws ErrorException MOI.read_from_file(model, filename)
+        model = MOF.Model(validate = false)
+        MOI.read_from_file(model, filename)
+        @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    end
 end
 @testset "round trips" begin
     @testset "Empty model" begin
