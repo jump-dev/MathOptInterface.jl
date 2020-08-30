@@ -33,7 +33,7 @@ b2 = ConstraintDummyBridge(2)
 vov = MOI.VectorOfVariables([x, y])
 c2 = MOIB.Constraint.add_key_for_bridge(map, b2, vov, MOI.SecondOrderCone(2))
 @testset "VectorOfVariables" begin
-    @test c2.value == x.value
+    @test c2.value == -1
     @test haskey(map, c2)
     @test map[c2] == b2
     @test MOIB.Constraint.number_of_type(map, typeof(c2)) == 1

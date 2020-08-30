@@ -148,6 +148,8 @@ bridged_mock = MOIB.Constraint.LessToGreater{Float64}(MOIB.Constraint.SplitInter
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),
                             MOI.Interval(0.0, 1.0))
+    @test !MOI.Bridges.is_bridged(bridged_mock, ci)
+    @test MOI.Bridges.is_bridged(bridged_mock.model, ci)
     @test !MOI.supports(bridged_mock, attr, typeof(ci))
     @test_throws err MOI.get(bridged_mock, attr, ci)
 end

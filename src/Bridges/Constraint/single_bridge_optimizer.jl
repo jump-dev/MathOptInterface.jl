@@ -25,8 +25,16 @@ function bridges(bridge::SingleBridgeOptimizer)
 end
 
 MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = true
-function MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{<:MOI.AbstractSet})
-    return false
+# If `BT` bridges `MOI.Reals` (such as `Constraint.FunctionizeBridge` bridge,
+# without this method, it creates a `StackOverflow` with
+# `is_bridged`, `supports_bridging_constrained_variable`
+# and `supports_add_constrained_variables`.
+MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{MOI.Reals}) = false
+function MOIB.is_bridged(b::SingleBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+    return MOIB.supports_bridging_constrained_variable(b, S)
+end
+function MOIB.supports_bridging_constrained_variable(b::SingleBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+    return MOIB.supports_bridging_constraint(b, MOIU.variable_function_type(S), S) && MOI.supports_add_constrained_variables(b, MOI.Reals)
 end
 function MOIB.supports_bridging_constraint(
     ::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction},
@@ -45,3 +53,4 @@ function MOIB.bridge_type(::SingleBridgeOptimizer{BT},
                           ::Type{<:MOI.AbstractSet}) where BT
     return BT
 end
+MOIB.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0

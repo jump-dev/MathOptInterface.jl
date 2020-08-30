@@ -203,27 +203,31 @@ end
 Copy the constraints of type `MOI.VectorOfVariables`-in-`S` from the model `src`
 to the model `dest` and fill `idxmap` accordingly. The copy is only done when
 the variables to be copied are not already keys of `idxmap`. It returns a list
-of the constraints not copied.
+of the constraints copied and not copied.
 """
-function copy_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
-                                  idxmap::IndexMap,
-                                  S::Type{<:MOI.AbstractSet})
+function copy_vector_of_variables(
+    dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
+    S::Type{<:MOI.AbstractSet},
+    copy_constrained_variables::Function=MOI.add_constrained_variables
+)
+    added = MOI.ConstraintIndex{MOI.VectorOfVariables, S}[]
     not_added = MOI.ConstraintIndex{MOI.VectorOfVariables, S}[]
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
     fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.VectorOfVariables}
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if all(vi -> !haskey(idxmap, vi), f_src.variables) && allunique(f_src.variables)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vis_dest, ci_dest = MOI.add_constrained_variables(dest, set)
+            vis_dest, ci_dest = copy_constrained_variables(dest, set)
             idxmap[ci_src] = ci_dest
             for (vi_src, vi_dest) in zip(f_src.variables, vis_dest)
                 idxmap[vi_src] = vi_dest
             end
+            push!(added, ci_src)
         else
             push!(not_added, ci_src)
         end
     end
-    return not_added
+    return added, not_added
 end
 
 """
@@ -236,23 +240,27 @@ the model `dest` and fill `idxmap` accordingly. The copy is only done when the
 variables to be copied are not already keys of `idxmap`. It returns a list of
 the constraints not copied.
 """
-function copy_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
-                               idxmap::IndexMap,
-                               S::Type{<:MOI.AbstractSet})
+function copy_single_variable(
+    dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
+    S::Type{<:MOI.AbstractSet},
+    copy_constrained_variable::Function=MOI.add_constrained_variable
+)
+    added = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
     not_added = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}())
     fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.SingleVariable}
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if !haskey(idxmap, f_src.variable)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
+            vi_dest, ci_dest = copy_constrained_variable(dest, set)
             idxmap[ci_src] = ci_dest
             idxmap[f_src.variable] = vi_dest
+            push!(added, ci_src)
         else
             push!(not_added, ci_src)
         end
     end
-    return not_added
+    return added, not_added
 end
 
 """
@@ -367,6 +375,50 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     default_copy_to(dest, src, true)
 end
 
+function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
+    constraint_types = MOI.get(src, MOI.ListOfConstraints())
+    single_or_vector_variables_types = [
+        (F, S) for (F, S) in constraint_types
+        if F === MOI.SingleVariable || F === MOI.VectorOfVariables
+    ]
+    sort!(single_or_vector_variables_types; by=((F, S),) ->
+          # We give priority for sets such that there is a big cost reduction
+          # constraining the variable on creation.
+          (MOI.get(dest, MOI.VariableBridgingCost{S}()) - MOI.get(dest, MOI.ConstraintBridgingCost{F, S}()),
+          # In case of ties, we give priority to vector sets.
+          # See issue #987
+           F === MOI.SingleVariable)
+    )
+    return single_or_vector_variables_types
+end
+
+function try_constrain_variables_on_creation(
+    dest::MOI.ModelLike, src::MOI.ModelLike, idxmap,
+    copy_constrained_variables::Function, copy_constrained_variable::Function
+)
+    single_or_vector_variables_types = sorted_variable_sets_by_cost(dest, src)
+    vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
+    vector_of_variables_added = Vector{<:MOI.ConstraintIndex{MOI.VectorOfVariables}}[]
+    vector_of_variables_not_added = Vector{<:MOI.ConstraintIndex{MOI.VectorOfVariables}}[]
+    single_variable_types = Type{<:MOI.AbstractScalarSet}[]
+    single_variable_added = Vector{<:MOI.ConstraintIndex{MOI.SingleVariable}}[]
+    single_variable_not_added = Vector{<:MOI.ConstraintIndex{MOI.SingleVariable}}[]
+    for (F, S) in single_or_vector_variables_types
+        if F === MOI.VectorOfVariables
+            added, not_added = copy_vector_of_variables(dest, src, idxmap, S, copy_constrained_variables)
+            push!(vector_of_variables_added, added)
+            push!(vector_of_variables_not_added, not_added)
+            push!(vector_of_variables_types, S)
+        elseif F === MOI.SingleVariable
+            added, not_added = copy_single_variable(dest, src, idxmap, S, copy_constrained_variable)
+            push!(single_variable_added, added)
+            push!(single_variable_not_added, not_added)
+            push!(single_variable_types, S)
+        end
+    end
+    return vector_of_variables_types, vector_of_variables_added, vector_of_variables_not_added, single_variable_types, single_variable_added, single_variable_not_added
+end
+
 """
     default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool,
                     filter_constraints::Union{Nothing, Function}=nothing)
@@ -387,12 +439,10 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike,
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
     idxmap = index_map_for_variable_indices(vis_src)
-    constraint_types = MOI.get(src, MOI.ListOfConstraints())
-    single_variable_types = Type{<:MOI.AbstractScalarSet}[]
-    vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
 
     # The `NLPBlock` assumes that the order of variables does not change (#849)
     if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
+        constraint_types = MOI.get(src, MOI.ListOfConstraints())
         single_variable_types = [S for (F, S) in constraint_types
                                  if F == MOI.SingleVariable]
         vector_of_variables_types = [S for (F, S) in constraint_types
@@ -406,23 +456,10 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike,
             for S in single_variable_types
         ]
     else
-        # Order the copying of the variables by 1) their variable bridging cost 2) by starting with the vectors, as what was done before
-        # See issue #987
-        single_or_vector_variables_types = [(F, S) for (F, S) in constraint_types
-                                            if F == MOI.SingleVariable || F == MOI.VectorOfVariables]
-        sorted_by_cost = sortperm(single_or_vector_variables_types; by=((F, S),) -> (MOI.get(dest, MOI.VariableBridgingCost{S}()) - MOI.get(dest, MOI.ConstraintBridgingCost{F, S}()), F == MOI.SingleVariable))
-        vector_of_variables_not_added = Vector{Array{MOI.ConstraintIndex{MOI.VectorOfVariables, <:MOI.AbstractVectorSet}}}()
-        single_variable_not_added = Vector{Array{MOI.ConstraintIndex{MOI.SingleVariable, <:MOI.AbstractScalarSet}}}()
-        for i in sorted_by_cost
-            F, S = single_or_vector_variables_types[i]
-            if F == MOI.VectorOfVariables
-                push!(vector_of_variables_not_added, copy_vector_of_variables(dest, src, idxmap, S))
-                push!(vector_of_variables_types, S)
-            elseif F == MOI.SingleVariable
-                push!(single_variable_not_added, copy_single_variable(dest, src, idxmap, S))
-                push!(single_variable_types, S)
-            end
-        end
+        vector_of_variables_types, _, vector_of_variables_not_added,
+        single_variable_types, _, single_variable_not_added = try_constrain_variables_on_creation(
+            dest, src, idxmap, MOI.add_constrained_variables, MOI.add_constrained_variable
+        )
     end
 
     copy_free_variables(dest, idxmap, vis_src, MOI.add_variables)
@@ -603,67 +640,6 @@ function load(model::MOI.ModelLike, attr::Union{MOI.AbstractVariableAttribute, M
 end
 
 """
-    allocate_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
-                             idxmap::IndexMap, S::Type{<:MOI.AbstractSet})
-
-Allocate the constraints of type `MOI.SingleVariable`-in-`S` from the model
-`src` to the model `dest` and fill `idxmap` accordingly. The copy is only done
-when the variables to be copied are not already keys of `idxmap`. It returns a
-list of the constraints allocated and those not allocated.
-"""
-function allocate_single_variable(dest::MOI.ModelLike, src::MOI.ModelLike,
-                                  idxmap::IndexMap, S::Type{<:MOI.AbstractSet})
-    allocated = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
-    not_allocated = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
-    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}())
-    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.SingleVariable}
-    for (ci_src, f_src) in zip(cis_src, fs_src)
-        if !haskey(idxmap, f_src.variable)
-            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vi_dest, ci_dest = allocate_constrained_variable(dest, set)
-            idxmap[ci_src] = ci_dest
-            idxmap[f_src.variable] = vi_dest
-            push!(allocated, ci_src)
-        else
-            push!(not_allocated, ci_src)
-        end
-    end
-    return allocated, not_allocated
-end
-
-"""
-    allocate_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
-                                 idxmap::IndexMap, S::Type{<:MOI.AbstractSet})
-
-Allocate the constraints of type `MOI.VectorOfVariables`-in-`S` from the model
-`src` to the model `dest` and fill `idxmap` accordingly. The copy is only done
-when the variables to be copied are not already keys of `idxmap`. It returns a
-list of the constraints allocated and a list of those not allocated.
-"""
-function allocate_vector_of_variables(dest::MOI.ModelLike, src::MOI.ModelLike,
-                                      idxmap::IndexMap,
-                                      S::Type{<:MOI.AbstractSet})
-    allocated = MOI.ConstraintIndex{MOI.VectorOfVariables, S}[]
-    not_allocated = MOI.ConstraintIndex{MOI.VectorOfVariables, S}[]
-    cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, S}())
-    fs_src = MOI.get(src, MOI.ConstraintFunction(), cis_src)::Vector{MOI.VectorOfVariables}
-    for (ci_src, f_src) in zip(cis_src, fs_src)
-        if all(vi -> !haskey(idxmap, vi), f_src.variables) && allunique(f_src.variables)
-            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vis_dest, ci_dest = allocate_constrained_variables(dest, set)
-            idxmap[ci_src] = ci_dest
-            for (vi_src, vi_dest) in zip(f_src.variables, vis_dest)
-                idxmap[vi_src] = vi_dest
-            end
-            push!(allocated, ci_src)
-        else
-            push!(not_allocated, ci_src)
-        end
-    end
-    return allocated, not_allocated
-end
-
-"""
     load_single_variable(
         dest::MOI.ModelLike, src::MOI.ModelLike, idxmap::IndexMap,
         cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable, S}}) where S
@@ -757,24 +733,14 @@ function allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, copy_names::Bool
     idxmap = index_map_for_variable_indices(vis_src)
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
     single_variable_types = [S for (F, S) in constraint_types
-                             if F == MOI.SingleVariable]
+                             if F === MOI.SingleVariable]
     vector_of_variables_types = [S for (F, S) in constraint_types
-                                 if F == MOI.VectorOfVariables]
+                                 if F === MOI.VectorOfVariables]
 
     # Allocate variables
-    vector_of_variables_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.VectorOfVariables}}}(undef, length(vector_of_variables_types))
-    vector_of_variables_not_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.VectorOfVariables}}}(undef, length(vector_of_variables_types))
-    for (i, S) in enumerate(vector_of_variables_types)
-        vector_of_variables_allocated[i], vector_of_variables_not_allocated[i] =
-            allocate_vector_of_variables(dest, src, idxmap, S)
-    end
-
-    single_variable_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.SingleVariable}}}(undef, length(single_variable_types))
-    single_variable_not_allocated = Vector{Vector{<:MOI.ConstraintIndex{MOI.SingleVariable}}}(undef, length(single_variable_types))
-    for (i, S) in enumerate(single_variable_types)
-        single_variable_allocated[i], single_variable_not_allocated[i] =
-            allocate_single_variable(dest, src, idxmap, S)
-    end
+    vector_of_variables_types, vector_of_variables_allocated, vector_of_variables_not_allocated, single_variable_type, single_variable_allocated, single_variable_not_allocated = try_constrain_variables_on_creation(
+        dest, src, idxmap, allocate_constrained_variables, allocate_constrained_variable
+    )
 
     copy_free_variables(dest, idxmap, vis_src, allocate_variables)
 
