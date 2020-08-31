@@ -13,7 +13,7 @@ function Base.read!(io::IO, model::Model)
     end
     object = JSON.parse(io; dicttype = UnorderedObject)
     file_version = _parse_mof_version(object["version"]::UnorderedObject)
-    if file_version > VERSION
+    if file_version.major != VERSION.major || file_version.minor > VERSION.minor
         error(
             "Sorry, the file can't be read because this library supports " *
             "v$(VERSION) of MathOptFormat, but the file you are trying to " *
@@ -141,7 +141,12 @@ Convert `x` from an MOF representation into a MOI representation.
 function function_to_moi(
     x::Object, name_map::Dict{String, MOI.VariableIndex}
 )
-    val = head_to_function(x["head"]::String)
+    val = if haskey(x, "type")
+        head_to_function(x["type"]::String)
+    else
+        # TODO(odow): remove when v0.4 no longer supported.
+        head_to_function(x["head"]::String)
+    end
     return function_to_moi(val, x, name_map)
 end
 
@@ -169,7 +174,7 @@ end
 # ========== Typed scalar functions ==========
 
 # Here, we deal with a special case: ScalarAffineTerm, ScalarQuadraticTerm,
-# VectorAffineTerm, and VectorQuadraticTerm do not contain a "head" field
+# VectorAffineTerm, and VectorQuadraticTerm do not contain a "type" field
 # (because it is unnecessary at the JSON level).
 
 function parse_scalar_affine_term(
@@ -312,7 +317,14 @@ end
 
 Convert `x` from an OrderedDict representation into a MOI representation.
 """
-set_to_moi(x::Object) = set_to_moi(head_to_set(x["head"]::String), x)
+function set_to_moi(x::Object)
+    if haskey(x, "type")
+        return set_to_moi(head_to_set(x["type"]::String), x)
+    else
+        # TODO(odow): remove when v0.4 no longer supported.
+        return set_to_moi(head_to_set(x["head"]::String), x)
+    end
+end
 
 # ========== Non-typed scalar sets ==========
 

@@ -2,7 +2,7 @@
   "name": "MathOptFormat Model",
   "version": {
     "major": 0,
-    "minor": 4
+    "minor": 5
   },
   "variables": [],
   "objective": {"sense": "feasibility"},
