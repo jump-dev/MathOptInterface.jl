@@ -308,16 +308,18 @@ end
             @test f.terms == MOI.ScalarAffineTerm.([2, 4], [x, y])
             @test f.constant == 5
         end
-        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4], [x, y]),
-                                     5)
+        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.5], [x, y]), 0.5)
         @testset "convert" begin
             @test_throws InexactError convert(MOI.SingleVariable, f)
+            @test_throws InexactError MOIU.convert_approx(MOI.SingleVariable, f)
+            @test MOIU.convert_approx(MOI.SingleVariable, f, tol = 0.5) == MOI.SingleVariable(x)
             quad_f = MOI.ScalarQuadraticFunction(f.terms,
-                                                 MOI.ScalarQuadraticTerm{Int}[],
+                                                 MOI.ScalarQuadraticTerm{Float64}[],
                                                  f.constant)
-            @test convert(MOI.ScalarQuadraticFunction{Int}, f) ≈ quad_f
+            @test convert(MOI.ScalarQuadraticFunction{Float64}, f) ≈ quad_f
             g = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
             @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+            @test MOIU.convert_approx(MOI.SingleVariable, g) == MOI.SingleVariable(x)
         end
         @testset "operate with Float64 coefficient type" begin
             f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 4.0],
