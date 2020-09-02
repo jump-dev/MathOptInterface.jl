@@ -97,9 +97,9 @@ sets recognized by the solver.
 * **[`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_1 = \sum_i \lvert x_i \rvert \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_2 \}``
 * **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
-  ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge ||x||_2^2, t,u \ge 0 \}``
+  ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge \lVert x \rVert_2^2, t,u \ge 0 \}``
 * **[`GeometricMeanCone(dimension)`](@ref MathOptInterface.GeometricMeanCone)**:
   ``\{ (t,x) \in \mathbb{R}^{n+1} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}``
   where ``n`` is ``dimension - 1``
@@ -297,7 +297,7 @@ The code example below encodes the convex optimization problem:
 \\
 & \;\;\text{s.t.} & 3x &= 2
 \\
-&& x & \ge ||(y,z)||_2
+&& x & \ge \lVert (y,z) \rVert_2
 \end{align}
 ```
 

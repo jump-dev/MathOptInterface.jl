@@ -4,11 +4,11 @@
 The `RotatedSecondOrderCone` is `SecondOrderCone` representable; see [1, p. 104].
 Indeed, we have ``2tu = (t/√2 + u/√2)^2 - (t/√2 - u/√2)^2`` hence
 ```math
-2tu \\ge || x ||_2^2
+2tu \\ge \\lVert x \\rVert_2^2
 ```
 is equivalent to
 ```math
-(t/√2 + u/√2)^2 \\ge || x ||_2^2 + (t/√2 - u/√2)^2.
+(t/√2 + u/√2)^2 \\ge \\lVert x \\rVert_2^2 + (t/√2 - u/√2)^2.
 ```
 We can therefore use the transformation ``(t, u, x) \\mapsto (t/√2+u/√2, t/√2-u/√2, x)``.
 Note that the linear transformation is a symmetric involution (i.e. it is its own transpose and its own inverse).
