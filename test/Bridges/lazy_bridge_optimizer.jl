@@ -416,8 +416,8 @@ end
         S = MOI.LessThan{T}
         @test debug_string(MOIB.debug_supports_add_constrained_variable, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ [1] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
 """
         @test sprint(MOIB.print_graph, bridged) == """
 Bridge graph with 1 variable nodes, 0 constraint nodes and 0 objective nodes.
@@ -426,12 +426,12 @@ Bridge graph with 1 variable nodes, 0 constraint nodes and 0 objective nodes.
         MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
         @test debug_string(MOIB.debug_supports_add_constrained_variable, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.LessThan{$T}` are not supported because:
-  Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
-  [2] constrained variables in `MOI.Nonpositives` are not supported
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-[2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ [1] constrained variables in `MOI.LessThan{$T}` are not supported because:
+   Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
+   [2] constrained variables in `MOI.Nonpositives` are not supported
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ [2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
 """
         MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
         @test debug_string(MOIB.debug_supports_add_constrained_variable, S) == "Constrained variables in `MOI.LessThan{$T}` are supported.\n"
@@ -447,10 +447,10 @@ Bridge graph with 2 variable nodes, 0 constraint nodes and 0 objective nodes.
         S = MOI.LessThan{T}
         @test debug_string(MOIB.debug_supports_add_constrained_variable, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because:
-  (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
-(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+ [1] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because:
+   (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+ (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
 """
         @test sprint(MOIB.print_graph, bridged) == """
 Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
@@ -460,14 +460,14 @@ Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
         MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
         @test debug_string(MOIB.debug_supports_add_constrained_variable, S) == """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.LessThan{$T}` are not supported because:
-  Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
-  [2] constrained variables in `MOI.Nonpositives` are not supported
-  Cannot add free variables and then constrain them because:
-  (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
-[2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+ [1] constrained variables in `MOI.LessThan{$T}` are not supported because:
+   Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
+   [2] constrained variables in `MOI.Nonpositives` are not supported
+   Cannot add free variables and then constrain them because:
+   (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+ [2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
         @test debug_string(MOIB.debug_supports_add_constrained_variable, S) == "Constrained variables in `MOI.LessThan{$T}` are supported.\n"
@@ -484,59 +484,59 @@ Bridge graph with 2 variable nodes, 1 constraint nodes and 0 objective nodes.
         S = MOI.Interval{T}
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because no added bridge supports bridging it.
+ (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.SplitIntervalBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T},MOI.GreaterThan{$T},MOI.LessThan{$T}}` because:
-  (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
-  (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
-(2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
-(3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+ (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T},MOI.GreaterThan{$T},MOI.LessThan{$T}}` because:
+   (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+   (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+ (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
+ (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.GreaterThan{$T}` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-[2] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-[3] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T},MOI.GreaterThan{$T},MOI.LessThan{$T}}` because:
-  (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
-  (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
-  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T}}` because:
-  [3] constrained variables in `MOI.Interval{$T}` are not supported
-(2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.GreaterThan{$T}}` because:
-  [1] constrained variables in `MOI.GreaterThan{$T}` are not supported
-(3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.LessThan{$T}}` because:
-  [2] constrained variables in `MOI.LessThan{$T}` are not supported
+ [1] constrained variables in `MOI.GreaterThan{$T}` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ [2] constrained variables in `MOI.LessThan{$T}` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ [3] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T},MOI.GreaterThan{$T},MOI.LessThan{$T}}` because:
+   (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+   (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+   Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T}}` because:
+   [3] constrained variables in `MOI.Interval{$T}` are not supported
+ (2) `MOI.ScalarAffineFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.GreaterThan{$T}}` because:
+   [1] constrained variables in `MOI.GreaterThan{$T}` are not supported
+ (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.LessThan{$T}}` because:
+   [2] constrained variables in `MOI.LessThan{$T}` are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Variable.VectorizeBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == """
 `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[2] constrained variables in `MOI.LessThan{$T}` are not supported because:
-  Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
-  [3] constrained variables in `MOI.Nonpositives` are not supported
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-[3] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-[4] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-(1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T},MOI.GreaterThan{$T},MOI.LessThan{$T}}` because:
-  (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
-  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T}}` because:
-  [4] constrained variables in `MOI.Interval{$T}` are not supported
-(3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.LessThan{$T}}` because:
-  [2] constrained variables in `MOI.LessThan{$T}` are not supported
+ [2] constrained variables in `MOI.LessThan{$T}` are not supported because:
+   Cannot use `MOIB.Variable.VectorizeBridge{$T,MOI.Nonpositives}` because:
+   [3] constrained variables in `MOI.Nonpositives` are not supported
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ [3] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ [4] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T},MOI.GreaterThan{$T},MOI.LessThan{$T}}` because:
+   (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+   Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T}}` because:
+   [4] constrained variables in `MOI.Interval{$T}` are not supported
+ (3) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.ScalarSlackBridge{$T,MOI.ScalarAffineFunction{$T},MOI.LessThan{$T}}` because:
+   [2] constrained variables in `MOI.LessThan{$T}` are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == "`MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are supported.\n"
@@ -547,75 +547,75 @@ Bridge graph with 2 variable nodes, 1 constraint nodes and 0 objective nodes.
         attr = MOI.ObjectiveFunction{F}()
         @test debug_string(MOIB.debug_supports, attr) == """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
-|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because no added bridge supports bridging it.
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Objective.SlackBridge{T})
         @test debug_string(MOIB.debug_supports, attr) == """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
-(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
-(2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
-|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
-  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
-  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
-  (2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
-  |2| objective function of type `MOI.SingleVariable` is not supported
-|2| objective function of type `MOI.SingleVariable` is not supported because no added bridge supports bridging it.
+ (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
+ (2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+   Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+   (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+   (2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+   |2| objective function of type `MOI.SingleVariable` is not supported
+ |2| objective function of type `MOI.SingleVariable` is not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Objective.FunctionizeBridge{T})
         MOIB.add_bridge(bridged, MOIB.Constraint.QuadtoSOCBridge{T})
         @test debug_string(MOIB.debug_supports, attr) == """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
-(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
-(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because no added bridge supports bridging it.
-(3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
-|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
-  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
-  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
-  (3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+ (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because no added bridge supports bridging it.
+ (3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+   Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+   (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+   (3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.VectorSlackBridge{T})
         @test debug_string(MOIB.debug_supports, attr) == """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
-(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
-  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
-  [1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported
-  (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
-(3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
-(4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
-|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
-  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
-  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
-  (4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+ [1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
+   Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
+   [1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported
+   (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+ (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+ (4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+   Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+   (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+   (4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Variable.RSOCtoPSDBridge{T})
         MOIB.add_bridge(bridged, MOIB.Constraint.ScalarFunctionizeBridge{T})
         @test debug_string(MOIB.debug_supports, attr) == """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
-(1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
-(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
-  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
-  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
-(4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
-(5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
-  Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
-|1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
-  Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
-  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
-  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
+ (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
+   Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.RotatedSecondOrderCone}` because:
+   (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+ (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+ (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
+   Cannot use `MOIB.Constraint.QuadtoSOCBridge{$T}` because:
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
+   Cannot use `MOIB.Objective.SlackBridge{$T,MOI.ScalarQuadraticFunction{$T},MOI.ScalarQuadraticFunction{$T}}` because:
+   (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
+   (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.ScalarizeBridge{T})
         @test debug_string(MOIB.debug_supports, attr) == "Objective function of type `MOI.ScalarQuadraticFunction{$T}` is supported.\n"
@@ -638,32 +638,32 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
         @test debug_string(MOIB.debug_supports_constraint, F, S) ==
 """
 `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-(1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because no added bridge supports bridging it.
+ (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.VectorSlackBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) ==
 """
 `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
-(1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
-  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.ExponentialCone}` because:
-  [1] constrained variables in `MOI.ExponentialCone` are not supported
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
-(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+ [1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
+ (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
+   Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.ExponentialCone}` because:
+   [1] constrained variables in `MOI.ExponentialCone` are not supported
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) ==
 """
 `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
-[1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
-  Cannot add free variables and then constrain them because:
-  (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported
-(1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
-  Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.ExponentialCone}` because:
-  [1] constrained variables in `MOI.ExponentialCone` are not supported
-  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
-(2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+ [1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
+   Cannot add free variables and then constrain them because:
+   (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported
+ (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
+   Cannot use `MOIB.Constraint.VectorSlackBridge{$T,MOI.VectorAffineFunction{$T},MOI.ExponentialCone}` because:
+   [1] constrained variables in `MOI.ExponentialCone` are not supported
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
 """
     end
 end
