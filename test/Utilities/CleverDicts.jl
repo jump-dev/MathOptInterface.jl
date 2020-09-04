@@ -20,6 +20,10 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
         key = CleverDicts.add_item(d, "first")
         @test key == MathOptInterface.VariableIndex(1)
+        @test get(d, key, nothing) == "first"
+        @test get(d, MathOptInterface.VariableIndex(2), nothing) === nothing
+        @test Dict(key => "first") == d
+        @test Dict(key => "second") != d
         sizehint!(d, 1)
         @test d[key] == "first"
         @test haskey(d, key) == true
@@ -35,6 +39,10 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         @test d[key2] == "second"
         d[key2] = "third"
         @test d[key2] == "third"
+        @test get(d, key, nothing) === nothing
+        @test get(d, key2, nothing) === "third"
+        @test Dict(key2 => "second") != d
+        @test Dict(key2 => "third") == d
 
         empty!(d)
 

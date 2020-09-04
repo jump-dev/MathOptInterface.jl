@@ -26,7 +26,7 @@ Provided no keys are deleted, the backing storage is a `Vector{V}`. Once a key
 has been deleted, the backing storage switches to an `OrderedDict{K, V}`.
 
 Use the `add_item` to enforce adding item in sequence. Once an object is added
-out of order `add_item` does not work anymore and the storage is switched to 
+out of order `add_item` does not work anymore and the storage is switched to
 `OrderedDict{K, V}` if it is not one already.
 
 The i'th ordered element can be obtained with `c[LinearIndex(i)]`.
@@ -147,6 +147,16 @@ function Base.haskey(c::CleverDict{K}, key::K) where K
         return c.hash(key)::Int64 in c.set
     else
         return Base.haskey(c.dict, key)
+    end
+end
+function Base.get(c::CleverDict, key, default)
+    if _is_dense(c)
+        if !haskey(c, key)
+            return default
+        end
+        return c.vector[c.hash(key)::Int64]
+    else
+        return get(c.dict, key, default)
     end
 end
 function Base.getindex(c::CleverDict, key)
