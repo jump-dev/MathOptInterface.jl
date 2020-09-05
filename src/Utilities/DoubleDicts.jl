@@ -100,13 +100,20 @@ function Base.length(d::AbstractDoubleDict)
 end
 
 function Base.haskey(dict::AbstractDoubleDict, key::CI{F,S}) where {F,S}
-    inner = get(dict.dict, (F,S), nothing)
+    inner = get(dict.dict, (F, S), nothing)
     if inner !== nothing
-        inner = dict.dict[(F,S)]
         return haskey(inner, key.value)
     else
         return false
     end
+end
+
+function Base.get(dict::AbstractDoubleDict, key::CI{F,S}, default) where {F,S}
+    inner = get(dict.dict, (F, S), nothing)
+    if inner !== nothing && haskey(inner, key.value)
+        return typed_value(dict, inner[key.value], F, S)
+    end
+    return default
 end
 
 function Base.getindex(dict::AbstractDoubleDict, key::CI{F,S}) where {F,S}
