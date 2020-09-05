@@ -20,6 +20,7 @@ function test_iterator(dict)
     @test isempty(setdiff(kk, keys(dict)))
     @test length(vv) == length(values(dict))
     @test isempty(setdiff(vv, values(dict)))
+    @test dict == Dict(kk .=> vv)
 end
 
 function basic_functionality(dict, k_values, v_values)
@@ -44,11 +45,25 @@ function basic_functionality(dict, k_values, v_values)
     @test values(dict) == [v_values[1]]
     @test keys(dict) == [k_values[1]]
     @test dict[k_values[1]] == v_values[1]
+    @test get(dict, k_values[1], nothing) == v_values[1]
+    @test get(dict, k_values[1], v_values[2]) == v_values[1]
+    for i in eachindex(k_values)
+        if i != 1
+            @test get(dict, k_values[i], nothing) === nothing
+            # Test that the implementation does not only work with `nothing`
+            @test get(dict, k_values[i], v_values[i]) == v_values[i]
+        end
+    end
 
     test_iterator(dict)
 
     delete!(dict, k_values[1])
     @test !haskey(dict, k_values[1])
+    for i in eachindex(k_values)
+        @test get(dict, k_values[i], nothing) === nothing
+        # Test that the implementation does not only work with `nothing`
+        @test get(dict, k_values[i], v_values[i]) == v_values[i]
+    end
     @test isempty(dict)
 
     dict[k_values[1]] = v_values[1]
@@ -142,7 +157,7 @@ end
         dict[k] = v
     end
     dest = DoubleDicts.IndexDoubleDict()
-    MOIU._reverse_dict(dest, src)
+    MOI.Utilities._reverse_dict(dest, src)
     for (k, v) in src
         @test dest[v] == k
     end
