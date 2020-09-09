@@ -1,6 +1,30 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.15 (September 9, 2020)
+---------------------------
+
+- General maintenance (#1120, #1123, #1149, #1130)
+- Bridges improvements:
+  - (R)SOCtoNonConvexQuad bridge (#1046)
+  - ZeroOne bridge (#1099)
+  - Add `supports_add_constrained_variable` (#1101)
+  - Implement costs on arcs when briding (#1125)
+  - Refactor bridge debugging (#1151)
+- Performance improvements:
+  Lots of work here across all submodules: #1109, #1111, #1113, #1118, #1119, #1121, #1122, #1126, #1129, #1131, #1134,  #1139, #1142, #1153, #1154
+- Documentation improvements:
+  #1050, #1100, #1103, #1128, #1132, #1143, #1147, #1148
+- FileFormats improvements:
+  - Update MathOptFormat to v0.5 (#1146)
+  - Fix supported objectives in `FileFormats` (#1124)
+- Testing improvements:
+  - Add name option for `basic_constraint_test` (#1133)
+- Bug fixes and missing methods
+  - Add `length` for iterators (#1110)
+  - Fix bug with duplicate terms (#1152)
+  - Fix order of `LinearOfConstraintIndices` (#1114)
+
 v0.9.14 (May 30, 2020)
 ---------------------
 
