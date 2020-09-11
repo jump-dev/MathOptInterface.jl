@@ -13,7 +13,8 @@ A summary of changes are as follows:
   - (R)SOCtoNonConvexQuad bridge
   - ZeroOne bridge
   - Add `supports_add_constrained_variable`
-  - Implement costs on arcs when bridging
+  - Exposed `VariableBridgeCost` and `ConstraintBridgeCost` attributes
+  - Prioritize constraining variables on creation according to these costs
   - Refactor bridge debugging
 - Large performance improvements across all submodules
 - Lots of documentation improvements
