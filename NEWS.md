@@ -1,6 +1,33 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.15 (September 14, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.15).
+
+A summary of changes are as follows:
+
+- Bridges improvements:
+  - (R)SOCtoNonConvexQuad bridge
+  - ZeroOne bridge
+  - Use `supports_add_constrained_variable` in `LazyBridgeOptimizer`
+  - Exposed `VariableBridgeCost` and `ConstraintBridgeCost` attributes
+  - Prioritize constraining variables on creation according to these costs
+  - Refactor bridge debugging
+- Large performance improvements across all submodules
+- Lots of documentation improvements
+- FileFormats improvements:
+  - Update MathOptFormat to v0.5
+  - Fix supported objectives in `FileFormats`
+- Testing improvements:
+  - Add name option for `basic_constraint_test`
+- Bug fixes and missing methods
+  - Add `length` for iterators
+  - Fix bug with duplicate terms
+  - Fix order of `LinearOfConstraintIndices`
+
 v0.9.14 (May 30, 2020)
 ---------------------
 
