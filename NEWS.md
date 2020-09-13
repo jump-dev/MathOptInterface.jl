@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.9.15 (September 10, 2020)
+v0.9.15 (September 14, 2020)
 ---------------------------
 
 For a detailed list of the closed issues and pull requests from this release,
@@ -12,7 +12,7 @@ A summary of changes are as follows:
 - Bridges improvements:
   - (R)SOCtoNonConvexQuad bridge
   - ZeroOne bridge
-  - Add `supports_add_constrained_variable`
+  - Use `supports_add_constrained_variable` in `LazyBridgeOptimizer`
   - Exposed `VariableBridgeCost` and `ConstraintBridgeCost` attributes
   - Prioritize constraining variables on creation according to these costs
   - Refactor bridge debugging
