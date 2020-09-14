@@ -16,6 +16,24 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
         @test d[MyKey{1}()] == "first"
     end
 
+    @testset "Abstract Value" begin
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, Any}()
+        key = CleverDicts.add_item(d, :a)
+        @test key == MathOptInterface.VariableIndex(1)
+        @test d[MathOptInterface.VariableIndex(1)] == :a
+        key = CleverDicts.add_item(d, "b")
+        @test key == MathOptInterface.VariableIndex(2)
+        @test d[MathOptInterface.VariableIndex(2)] == "b"
+        for (k, v) in d
+            if k.value == 1
+                @test v == :a
+            else
+                @test k.value == 2
+                @test v == "b"
+            end
+        end
+    end
+
     @testset "get/set" begin
         d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
         key = CleverDicts.add_item(d, "first")
