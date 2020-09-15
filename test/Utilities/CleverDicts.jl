@@ -187,9 +187,11 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "Dense Operations" begin
-        mul2(x) = x * 2
-        div2(x) = div(x, 2)
-        d = CleverDicts.CleverDict{Int, Float64}(div2, mul2, 3)
+        # inverse_hash :: Int64 -> Int
+        inverse_hash(x::Int64) = Int(x * 2)
+        # hash :: Int -> Int64
+        hash(x::Int) = Int64(div(x, 2))
+        d = CleverDicts.CleverDict{Int, Float64}(hash, inverse_hash, 3)
 
         d[4] = 0.25
         @test !haskey(d, 2)

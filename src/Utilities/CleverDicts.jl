@@ -165,7 +165,7 @@ function Base.getindex(c::CleverDict, key)
     end
 end
 
-function Base.setindex!(c::CleverDict{K, V}, value, key)::V where {K, V}
+function Base.setindex!(c::CleverDict{K, V}, value::V, key::K)::V where {K, V}
     h = c.hash(key)::Int64
     if h > c.last_index
         c.last_index = ifelse(h == c.last_index + 1, h, -1)
