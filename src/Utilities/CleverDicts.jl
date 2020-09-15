@@ -257,8 +257,9 @@ Base.haskey(::CleverDict, key) = false
 # Here, we implement the iterate functions for our `CleverDict`. For either
 # backend (`OrderedDict` or `Vector`+`BitSet`) we return the same State type
 # so that `iterate` returns the same
-# type regardless of the backing datastructure. To help inference, we annotate
-# the return type.
+# type regardless of the backing datastructure. To help inference, we convert
+# the return type. Don't use a type-assertion because this doesn't support `V`
+# being an abstract type.
 
 struct State
     int::Int64
@@ -288,7 +289,7 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            return el::Pair{K, V}, State(i)
+            return convert(Pair{K, V}, el), State(i)
         end
     end
 end
@@ -318,7 +319,7 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            return el::Pair{K, V}, State(i)
+            return convert(Pair{K, V}, el), State(i)
         end
     end
 end
