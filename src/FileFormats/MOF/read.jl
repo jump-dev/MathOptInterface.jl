@@ -365,79 +365,75 @@ end
 # ========== Non-typed vector sets ==========
 
 function set_to_moi(::Val{:Zeros}, object::Object)
-    return MOI.Zeros(object["dimension"]::Int)
+    return MOI.Zeros(object["dimension"])
 end
 
 function set_to_moi(::Val{:Reals}, object::Object)
-    return MOI.Reals(object["dimension"]::Int)
+    return MOI.Reals(object["dimension"])
 end
 
 function set_to_moi(::Val{:Nonnegatives}, object::Object)
-    return MOI.Nonnegatives(object["dimension"]::Int)
+    return MOI.Nonnegatives(object["dimension"])
 end
 
 function set_to_moi(::Val{:Nonpositives}, object::Object)
-    return MOI.Nonpositives(object["dimension"]::Int)
+    return MOI.Nonpositives(object["dimension"])
 end
 
 function set_to_moi(::Val{:SecondOrderCone}, object::Object)
-    return MOI.SecondOrderCone(object["dimension"]::Int)
+    return MOI.SecondOrderCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:RotatedSecondOrderCone}, object::Object)
-    return MOI.RotatedSecondOrderCone(object["dimension"]::Int)
+    return MOI.RotatedSecondOrderCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:GeometricMeanCone}, object::Object)
-    return MOI.GeometricMeanCone(object["dimension"]::Int)
+    return MOI.GeometricMeanCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:NormOneCone}, object::Object)
-    return MOI.NormOneCone(object["dimension"]::Int)
+    return MOI.NormOneCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:NormInfinityCone}, object::Object)
-    return MOI.NormInfinityCone(object["dimension"]::Int)
+    return MOI.NormInfinityCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:RelativeEntropyCone}, object::Object)
-    return MOI.RelativeEntropyCone(object["dimension"]::Int)
+    return MOI.RelativeEntropyCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:NormSpectralCone}, object::Object)
-    return MOI.NormSpectralCone(
-        object["row_dim"]::Int, object["column_dim"]::Int
-    )
+    return MOI.NormSpectralCone(object["row_dim"], object["column_dim"])
 end
 
 function set_to_moi(::Val{:NormNuclearCone}, object::Object)
-    return MOI.NormNuclearCone(
-        object["row_dim"]::Int, object["column_dim"]::Int
-    )
+    return MOI.NormNuclearCone(object["row_dim"], object["column_dim"])
 end
 
 function set_to_moi(::Val{:RootDetConeTriangle}, object::Object)
-    return MOI.RootDetConeTriangle(object["side_dimension"]::Int)
+    return MOI.RootDetConeTriangle(object["side_dimension"])
 end
 
 function set_to_moi(::Val{:RootDetConeSquare}, object::Object)
-    return MOI.RootDetConeSquare(object["side_dimension"]::Int)
+    return MOI.RootDetConeSquare(object["side_dimension"])
 end
 
 function set_to_moi(::Val{:LogDetConeTriangle}, object::Object)
-    return MOI.LogDetConeTriangle(object["side_dimension"]::Int)
+    return MOI.LogDetConeTriangle(object["side_dimension"])
 end
 
 function set_to_moi(::Val{:LogDetConeSquare}, object::Object)
-    return MOI.LogDetConeSquare(object["side_dimension"]::Int)
+    return MOI.LogDetConeSquare(object["side_dimension"])
 end
 
 function set_to_moi(::Val{:PositiveSemidefiniteConeTriangle}, object::Object)
-    return MOI.PositiveSemidefiniteConeTriangle(object["side_dimension"]::Int)
+    return MOI.PositiveSemidefiniteConeTriangle(object["side_dimension"])
 end
 
 function set_to_moi(::Val{:PositiveSemidefiniteConeSquare}, object::Object)
-    return MOI.PositiveSemidefiniteConeSquare(object["side_dimension"]::Int)
+    return MOI.PositiveSemidefiniteConeSquare(object["side_dimension"])
 end
 
 function set_to_moi(::Val{:ExponentialCone}, ::Object)
