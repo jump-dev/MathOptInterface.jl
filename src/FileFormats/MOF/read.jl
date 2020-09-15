@@ -236,7 +236,7 @@ function parse_vector_affine_term(
     object::Object, name_map::Dict{String, MOI.VariableIndex}
 )
     return MOI.VectorAffineTerm(
-        object["output_index"]::Int,
+        object["output_index"],
         parse_scalar_affine_term(object["scalar_term"]::typeof(object), name_map),
     )
 end
@@ -256,7 +256,7 @@ function parse_vector_quadratic_term(
     object::Object, name_map::Dict{String, MOI.VariableIndex}
 )
     return MOI.VectorQuadraticTerm(
-        object["output_index"]::Int,
+        object["output_index"],
         parse_scalar_quadratic_term(object["scalar_term"], name_map),
     )
 end
