@@ -263,8 +263,9 @@ Base.haskey(::CleverDict, key) = false
 struct State
     int::Int64
     uint::UInt64
-    State(i::Int64) = new(i, 0)
-    State(i::Int64, j::UInt64) = new(i , j)
+    # ::Integer is needed for 32-bit machines.
+    State(i::Integer) = new(Int64(i), 0)
+    State(i::Integer, j::UInt64) = new(Int64(i) , j)
 end
 
 function Base.iterate(
