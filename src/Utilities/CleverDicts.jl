@@ -297,11 +297,13 @@ end
 function Base.iterate(
     c::CleverDict{K, V}, s::State
 )::Union{Nothing, Tuple{Pair{K, V}, State}} where {K, V}
+    # Note that BitSet is defined by machine Int, so we need to cast any `.int`
+    # fields to `Int` for 32-bit machines.
     if _is_dense(c)
         @static if VERSION >= v"1.4.0"
-            itr = iterate(c.set, (s.uint, s.int))
+            itr = iterate(c.set, (s.uint, Int(s.int)))
         else
-            itr = iterate(c.set, s.int)
+            itr = iterate(c.set, Int(s.int))
         end
         if itr === nothing
             return nothing
@@ -314,7 +316,7 @@ function Base.iterate(
             end
         end
     else
-        itr = iterate(c.dict, s.int)
+        itr = iterate(c.dict, Int(s.int))
         if itr === nothing
             return nothing
         else
@@ -334,6 +336,7 @@ function Base.sizehint!(c::CleverDict{K, V}, n) where {K, V}
     else
         sizehint!(c.dict, n)
     end
+    return
 end
 
 function Base.resize!(c::CleverDict{K, V}, n) where {K, V}
@@ -346,6 +349,7 @@ function Base.resize!(c::CleverDict{K, V}, n) where {K, V}
     else
         sizehint!(c.dict, n)
     end
+    return
 end
 
 end
