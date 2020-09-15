@@ -117,7 +117,7 @@ function add_item(c::CleverDict{K, V}, val::V)::K where {K, V}
         error("Keys were added out of order. `add_item` requires that keys are always added in order.")
     end
     # adding a key in order
-    key = c.inverse_hash(c.last_index + 1)::K
+    key = c.inverse_hash(Int64(c.last_index + 1))::K
     c[key] = val
     return key
 end
@@ -196,7 +196,7 @@ function _rehash(c::CleverDict{K}) where K
     sizehint!(c.dict, length(c.vector))
     @assert _is_dense(c)
     # Since c is currently dense, iterator protocol from CleverDict is used.
-    for (k,v) in c
+    for (k, v) in c
         c.dict[k] = v
     end
     empty!(c.vector)
@@ -274,10 +274,11 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
+            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+                return new_el, State(i[2], i[1])
             else
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i)
+                return new_el, State(i)
             end
         end
     else
@@ -306,10 +307,11 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
+            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+                return new_el, State(i[2], i[1])
             else
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i)
+                return new_el, State(i)
             end
         end
     else
