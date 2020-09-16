@@ -1,6 +1,17 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.16 (September 17, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.16).
+
+- Various fixes:
+  * 32-bit support
+  * `CleverDict` with abstract value type
+  * Checks in test suite
+
 v0.9.15 (September 14, 2020)
 ---------------------------
 
