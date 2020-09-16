@@ -6,7 +6,7 @@ module CleverDicts
 
 import MathOptInterface
 
-function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int)
+function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int64)
     return MathOptInterface.VariableIndex(index)
 end
 
@@ -20,7 +20,7 @@ import OrderedCollections
     CleverDict{K, V}
 
 A smart storage type for managing sequential objects with non-decreasing integer
-indices.
+indices. Note that the integers are `Int64`s.
 
 Provided no keys are deleted, the backing storage is a `Vector{V}`. Once a key
 has been deleted, the backing storage switches to an `OrderedDict{K, V}`.
@@ -48,9 +48,9 @@ between the integer index of the vector and the dictionary key.
 
 ```julia
 struct MyKey
-    x::Int
+    x::Int64
 end
-index_to_key(::Type{MyKey}, i::Int) = MyKey(i)
+index_to_key(::Type{MyKey}, i::Int64) = MyKey(i)
 key_to_index(key::MyKey) = key.x
 ```
 """
@@ -117,7 +117,7 @@ function add_item(c::CleverDict{K, V}, val::V)::K where {K, V}
         error("Keys were added out of order. `add_item` requires that keys are always added in order.")
     end
     # adding a key in order
-    key = c.inverse_hash(c.last_index + 1)::K
+    key = c.inverse_hash(Int64(c.last_index + 1))::K
     c[key] = val
     return key
 end
@@ -131,24 +131,18 @@ function Base.empty!(c::CleverDict, init_in_dense_mode = true)
     end
     c.last_index = 0
     c.is_dense = init_in_dense_mode
-    return nothing
+    return
 end
 
 function Base.length(c::CleverDict)
-    if _is_dense(c)
-        # c.vector can be larger due to initial allocation
-        return length(c.set)
-    else
-        return length(c.dict)
-    end
+    # Use c.set instead of c.vector due to initial allocation of .vector.
+    return _is_dense(c) ? length(c.set) : length(c.dict)
 end
+
 function Base.haskey(c::CleverDict{K}, key::K) where K
-    if _is_dense(c)
-        return c.hash(key)::Int64 in c.set
-    else
-        return Base.haskey(c.dict, key)
-    end
+    return _is_dense(c) ? c.hash(key)::Int64 in c.set : haskey(c.dict, key)
 end
+
 function Base.get(c::CleverDict, key, default)
     if _is_dense(c)
         if !haskey(c, key)
@@ -159,6 +153,7 @@ function Base.get(c::CleverDict, key, default)
         return get(c.dict, key, default)
     end
 end
+
 function Base.getindex(c::CleverDict, key)
     if _is_dense(c)
         if !haskey(c, key)
@@ -169,7 +164,8 @@ function Base.getindex(c::CleverDict, key)
         return c.dict[key]
     end
 end
-function Base.setindex!(c::CleverDict{K, V}, value, key)::V where {K, V}
+
+function Base.setindex!(c::CleverDict{K, V}, value::V, key::K)::V where {K, V}
     h = c.hash(key)::Int64
     if h > c.last_index
         c.last_index = ifelse(h == c.last_index + 1, h, -1)
@@ -187,7 +183,7 @@ function Base.setindex!(c::CleverDict{K, V}, value, key)::V where {K, V}
             _rehash(c)
         end
         c.dict[key] = value
-        # If there is a vector (e.g., because it has been rebuild for
+        # If there is a vector (e.g., because it has been rebuilt for
         # `LinearIndex`), clear it.
         if !isempty(c.vector)
             empty!(c.vector)
@@ -199,14 +195,14 @@ end
 function _rehash(c::CleverDict{K}) where K
     sizehint!(c.dict, length(c.vector))
     @assert _is_dense(c)
-    # since dict is currently dense
-    # iterator protocol from CleverDict is used
-    for (k,v) in c
+    # Since c is currently dense, iterator protocol from CleverDict is used.
+    for (k, v) in c
         c.dict[k] = v
     end
     empty!(c.vector)
     empty!(c.set)
     c.is_dense = false
+    return
 end
 
 function Base.delete!(c::CleverDict{K}, k::K) where K
@@ -217,12 +213,13 @@ function Base.delete!(c::CleverDict{K}, k::K) where K
     if !isempty(c.vector)
         empty!(c.vector)
     end
-    return nothing
+    return
 end
 
 struct LinearIndex
     i::Int64
 end
+
 function Base.getindex(c::CleverDict{K, V}, index::LinearIndex)::V where {K, V}
     if !(1 <= index.i <= length(c))
         throw(KeyError(index))
@@ -264,8 +261,9 @@ Base.haskey(::CleverDict, key) = false
 struct State
     int::Int64
     uint::UInt64
-    State(i::Int64) = new(i, 0)
-    State(i::Int64, j::UInt64) = new(i , j)
+    # ::Integer is needed for 32-bit machines.
+    State(i::Integer) = new(Int64(i), UInt64(0))
+    State(i::Integer, j::UInt64) = new(Int64(i) , j)
 end
 
 function Base.iterate(
@@ -277,10 +275,11 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
+            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+                return new_el, State(i[2], i[1])
             else
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i)
+                return new_el, State(i)
             end
         end
     else
@@ -297,24 +296,27 @@ end
 function Base.iterate(
     c::CleverDict{K, V}, s::State
 )::Union{Nothing, Tuple{Pair{K, V}, State}} where {K, V}
+    # Note that BitSet is defined by machine Int, so we need to cast any `.int`
+    # fields to `Int` for 32-bit machines.
     if _is_dense(c)
         @static if VERSION >= v"1.4.0"
-            itr = iterate(c.set, (s.uint, s.int))
+            itr = iterate(c.set, (s.uint, Int(s.int)))
         else
-            itr = iterate(c.set, s.int)
+            itr = iterate(c.set, Int(s.int))
         end
         if itr === nothing
             return nothing
         else
             el, i = itr
+            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i[2], i[1])
+                return new_el, State(i[2], i[1])
             else
-                return c.inverse_hash(el)::K => c.vector[el]::V, State(i)
+                return new_el, State(i)
             end
         end
     else
-        itr = iterate(c.dict, s.int)
+        itr = iterate(c.dict, Int(s.int))
         if itr === nothing
             return nothing
         else
@@ -334,6 +336,7 @@ function Base.sizehint!(c::CleverDict{K, V}, n) where {K, V}
     else
         sizehint!(c.dict, n)
     end
+    return
 end
 
 function Base.resize!(c::CleverDict{K, V}, n) where {K, V}
@@ -346,6 +349,7 @@ function Base.resize!(c::CleverDict{K, V}, n) where {K, V}
     else
         sizehint!(c.dict, n)
     end
+    return
 end
 
 end

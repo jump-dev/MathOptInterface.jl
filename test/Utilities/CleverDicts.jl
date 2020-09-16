@@ -4,16 +4,18 @@ const CleverDicts = MathOptInterface.Utilities.CleverDicts
 
 # Note: `MyKey` is just for testing. You wouldn't want to use it in practice
 # because the key type of the dictionary isn't a concrete type.
-struct MyKey{X} end
+struct MyKey{X}
+    MyKey(x) = new{Int64(x)}()
+end
 CleverDicts.key_to_index(::MyKey{X}) where {X} = X
-CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
+CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
 
 @testset "CleverDict" begin
     @testset "MyKey type" begin
         d = CleverDicts.CleverDict{MyKey, String}()
         key = CleverDicts.add_item(d, "first")
-        @test key == MyKey{1}()
-        @test d[MyKey{1}()] == "first"
+        @test key == MyKey(1)
+        @test d[MyKey(1)] == "first"
     end
 
     @testset "Abstract Value" begin
@@ -203,9 +205,11 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int) = MyKey{index}()
     end
 
     @testset "Dense Operations" begin
-        mul2(x) = x * 2
-        div2(x) = div(x, 2)
-        d = CleverDicts.CleverDict{Int, Float64}(div2, mul2, 3)
+        # inverse_hash :: Int64 -> Int
+        inverse_hash(x::Int64) = Int(x * 2)
+        # hash :: Int -> Int64
+        hash(x::Int) = Int64(div(x, 2))
+        d = CleverDicts.CleverDict{Int, Float64}(hash, inverse_hash, 3)
 
         d[4] = 0.25
         @test !haskey(d, 2)

@@ -7,7 +7,7 @@ const MOIU = MOI.Utilities
 const CI = MOI.ConstraintIndex
 const AD = AbstractDict
 
-DataTypePair = Tuple{DataType, DataType}
+const DataTypePair = Tuple{DataType, DataType}
 
 abstract type AbstractDoubleDict{K, V, IK, DI<:AD{IK}, DO<:AD{K, DI}} <: AD{CI, V} end
 
@@ -27,8 +27,11 @@ fully type stable dictionary with values of type `V` and keys of type
 """
 struct DoubleDict{V, DI, DO} <: AbstractDoubleDict{DataTypePair, V, Int64, DI, DO}
     dict::DO
-    DoubleDict{V}() where V = new{V, Dict{Int64, V}, Dict{DataTypePair, Dict{Int64, V}}}(
-        Dict{DataTypePair, Dict{Int64, V}}())
+    function DoubleDict{V}() where {V}
+        return new{V, Dict{Int64, V}, Dict{DataTypePair, Dict{Int64, V}}}(
+            Dict{DataTypePair, Dict{Int64, V}}()
+        )
+    end
 end
 
 """
@@ -51,26 +54,34 @@ fully type stable dictionary with values of type
 """
 struct IndexDoubleDict{DI, DO} <: AbstractDoubleDict{DataTypePair, CI, Int64, DI, DO}
     dict::DO
-    IndexDoubleDict() = new{Dict{Int64, Int64}, Dict{DataTypePair, Dict{Int64, Int64}}}(
-        Dict{DataTypePair, Dict{Int64, Int64}}())
+    function IndexDoubleDict()
+        return new{Dict{Int64, Int64}, Dict{DataTypePair, Dict{Int64, Int64}}}(
+            Dict{DataTypePair, Dict{Int64, Int64}}()
+        )
+    end
 end
 
 struct FunctionSetDoubleDict{DI, DO} <: AbstractDoubleDict{DataTypePair, Tuple, Int64, DI, DO}
     dict::DO
-    FunctionSetDoubleDict() = new{Dict{Int64}, Dict{DataTypePair, Dict{Int64}}}(
-        Dict{DataTypePair, Dict{Int64}}())
+    function FunctionSetDoubleDict()
+        return new{Dict{Int64}, Dict{DataTypePair, Dict{Int64}}}(
+         Dict{DataTypePair, Dict{Int64}}()
+        )
+    end
 end
 
-MainIndexDoubleDict = IndexDoubleDict{Dict{Int64, Int64}, Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}}
+const MainIndexDoubleDict = IndexDoubleDict{
+    Dict{Int64, Int64}, Dict{Tuple{DataType, DataType}, Dict{Int64, Int64}}
+}
 
 @inline function typed_value(::DoubleDict{V}, v::V, ::Type{F}, ::Type{S})::V where {V, F, S}
-    v
+    return v
 end
 @inline function typed_value(::IndexDoubleDict, v::Int64, ::Type{F}, ::Type{S})::CI{F,S} where {F, S}
-    CI{F,S}(v)
+    return CI{F,S}(v)
 end
 @inline function typed_value(::FunctionSetDoubleDict, v::Tuple{F,S}, ::Type{F}, ::Type{S})::Tuple{F,S} where {F, S}
-    v
+    return v
 end
 
 # reversing IndexDoubleDict is ok because they map CI to CI
@@ -101,11 +112,7 @@ end
 
 function Base.haskey(dict::AbstractDoubleDict, key::CI{F,S}) where {F,S}
     inner = get(dict.dict, (F, S), nothing)
-    if inner !== nothing
-        return haskey(inner, key.value)
-    else
-        return false
-    end
+    return inner !== nothing ? haskey(inner, key.value) : false
 end
 
 function Base.get(dict::AbstractDoubleDict, key::CI{F,S}, default) where {F,S}
@@ -309,7 +316,7 @@ end
 @inline function typed_value(::WithType{F, S, V}, v::V)::V where {V, F, S}
     v
 end
-@inline function typed_value(::IndexWithType{F, S}, v::Int)::CI{F,S} where {F, S}
+@inline function typed_value(::IndexWithType{F, S}, v::Int64)::CI{F,S} where {F, S}
     CI{F,S}(v)
 end
 @inline function typed_value(::FunctionSetWithType{F, S, V}, v::Tuple{F,S})::Tuple{F,S} where {V, F, S}
@@ -399,7 +406,7 @@ function Base.delete!(d::AbstractWithType{F, S}, key::CI{F,S}) where {F,S}
     if inner_is_empty(d)
         return d
     end
-    k_value = key.value::Int
+    k_value = key.value::Int64
     delete!(inner(d), k_value)
     return d
 end
