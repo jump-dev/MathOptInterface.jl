@@ -493,8 +493,10 @@ function norminf3test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.ConstraintPrimal(), nonneg) ≈ zeros(3) atol=atol rtol=rtol
 
         if config.duals
-            @test MOI.get(model, MOI.ConstraintDual(), norminf) ≈ vcat(1, fill(-inv(3), 3)) atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), nonneg) ≈ fill(inv(3), 3) atol=atol rtol=rtol
+            dual_nonneg = MOI.get(model, MOI.ConstraintDual(), nonneg)
+            @test minimum(dual_nonneg) >= -atol
+            @test sum(dual_nonneg) ≈ 1.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), norminf) ≈ vcat(1, -dual_nonneg) atol=atol rtol=rtol
         end
     end
 end
