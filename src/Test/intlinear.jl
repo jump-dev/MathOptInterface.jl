@@ -78,7 +78,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 15 atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ObjectiveBound()) >= 19.4
+        @test MOI.get(model, MOI.ObjectiveBound()) >= 19.4 - atol
         # FIXME the following are currently not implemented in MockOptimizer
 #        @test MOI.get(model, MOI.RelativeGap()) >= 0.0
 #        @test MOI.get(model, MOI.SolveTime()) >= 0.0
@@ -717,7 +717,7 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
         vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.Semiinteger(T(2), T(3)))
         @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semiinteger{T}}()) == 1
     end
-    
+
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.EqualTo(zero(T)))
     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}()) == 1
 
@@ -742,7 +742,7 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ObjectiveBound()) <= 0.0
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 0.0 + atol
     end
 
     # Change y fixed value
@@ -758,7 +758,7 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 1.0 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0 + atol
     end
 
     MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(2)))
@@ -772,7 +772,7 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 2.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0 + atol
     end
 
     MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(5//2)))
@@ -787,12 +787,12 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.5 atol=atol rtol=rtol
             @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.5, 2.5] atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ObjectiveBound()) <= 2.5
+            @test MOI.get(model, MOI.ObjectiveBound()) <= 2.5 + atol
         else
             @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
             @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0, 2.5] atol=atol rtol=rtol
             @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.5 atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
+            @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0 + atol
         end
     end
 
@@ -807,7 +807,7 @@ function _semitest(model::MOI.ModelLike, config::TestConfig{T}, int::Bool) where
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3.0 atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [3.0, 3.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 0.0 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
+        @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0 + atol
     end
 
     MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(4)))
