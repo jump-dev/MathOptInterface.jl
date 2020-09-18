@@ -535,6 +535,11 @@ end
 # TODO: transform
 
 MOI.supports_constraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.supports_constraint(mock.inner_model, F, S)
+MOI.supports_add_constrained_variable(mock::MockOptimizer, S::Type{<:MOI.AbstractScalarSet}) = MOI.supports_add_constrained_variable(mock.inner_model, S)
+MOI.supports_add_constrained_variables(mock::MockOptimizer, S::Type{<:MOI.AbstractVectorSet}) = MOI.supports_add_constrained_variables(mock.inner_model, S)
+# Add this method to avoid ambiguity
+MOI.supports_add_constrained_variables(mock::MockOptimizer, ::Type{MOI.Reals}) = MOI.supports_add_constrained_variables(mock.inner_model, MOI.Reals)
+
 function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; kws...)
     automatic_copy_to(mock, src; kws...)
 end
