@@ -1,19 +1,6 @@
 ## Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
 codecov: true
-matrix:
-  include:
-    - os: linux
-      arch: x64
-      julia: 1
-    - os: linux
-      arch: x64
-      julia: 1.0
-    - os: linux
-      arch: x86  # Test 32-bit on LTS
-      julia: 1.0
-notifications:
-  email: false
 git:
   depth: 99999999
 branches:
@@ -24,6 +11,7 @@ branches:
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 # Integration with JuMP-dev gitter channel
 notifications:
+  email: false
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/cb052648b833828852b4
@@ -32,6 +20,15 @@ notifications:
     on_start: never     # options: [always|never|change] default: always
 jobs:
   include:
+    - os: linux
+      arch: x64
+      julia: 1
+    - os: linux
+      arch: x64
+      julia: 1.0
+    - os: linux
+      arch: x86  # Test 32-bit on LTS
+      julia: 1.0
     - stage: "Documentation"
       julia: 1.0
       os: linux
