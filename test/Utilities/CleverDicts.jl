@@ -238,4 +238,15 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
         @test d[4] == 0.25
         @test d[6] == 0.75
     end
+
+    @testset "Negative index" begin
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d[MathOptInterface.VariableIndex(-3)] = "a"
+        @test d[MathOptInterface.VariableIndex(-3)] == "a"
+        @test_throws ErrorException CleverDicts.add_item(d, "b")
+        d[MathOptInterface.VariableIndex(0)] = "b"
+        @test d[MathOptInterface.VariableIndex(-3)] == "a"
+        @test d[MathOptInterface.VariableIndex(0)] == "b"
+        @test_throws ErrorException CleverDicts.add_item(d, "c")
+    end
 end
