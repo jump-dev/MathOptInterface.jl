@@ -169,8 +169,6 @@ function Base.setindex!(c::CleverDict{K, V}, value::V, key::K)::V where {K, V}
     h = c.hash(key)::Int64
     if h > c.last_index
         c.last_index = ifelse(h == c.last_index + 1, h, -1)
-    elseif h <= 0
-        error("Invalid key, its hash must be > 0")
     end
     if 1 <= h <= length(c.vector) && _is_dense(c)
         c.vector[h] = value

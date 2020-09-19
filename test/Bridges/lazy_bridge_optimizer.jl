@@ -682,6 +682,21 @@ end
     MOIT.contlineartest(bridged, MOIT.TestConfig{T}(solve=false), exclude)
 end
 
+@testset "SDPAModel with bridges and caching" begin
+    # This tests that the computation of the reverse dict in the
+    # caching optimizer works with negative indices
+    cached = MOIU.CachingOptimizer(MOIU.Model{Float64}(), MOIU.MANUAL)
+    vi_cache = MOI.add_variable(cached)
+    model = SDPAModel{Float64}()
+    bridged = MOIB.full_bridge_optimizer(model, Float64)
+    MOIU.reset_optimizer(cached, bridged)
+    MOIU.attach_optimizer(cached)
+    vi_bridged = first(MOI.get(bridged, MOI.ListOfVariableIndices()))
+    @test vi_bridged == MOI.VariableIndex(-1)
+    @test cached.model_to_optimizer_map[vi_cache] == vi_bridged
+    @test cached.optimizer_to_model_map[vi_bridged] == vi_cache
+end
+
 @testset "Continuous Conic with SDPAModel{Float64}" begin
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
