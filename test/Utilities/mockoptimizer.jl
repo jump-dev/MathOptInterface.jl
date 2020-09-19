@@ -19,6 +19,22 @@ end
     MOIT.nametest(MOIU.MockOptimizer(MOIU.Model{Float64}()))
 end
 
+struct NoFreeModel <: MOI.ModelLike end
+MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.Reals}) = false
+
+@testset "supports_add_constrained_variable" begin
+    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
+    @test MOI.supports_add_constrained_variable(optimizer, MOI.GreaterThan{Float64})
+    @test !MOI.supports_add_constrained_variable(optimizer, MOIT.UnknownScalarSet{Float64})
+    @test MOI.supports_add_constrained_variables(optimizer, MOI.Nonnegatives)
+    @test !MOI.supports_add_constrained_variables(optimizer, MOIT.UnknownVectorSet)
+
+    nofree_optimizer = MOIU.MockOptimizer(NoFreeModel())
+    @test !MOI.supports_add_constrained_variable(nofree_optimizer, MOI.GreaterThan{Float64})
+    @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.Nonnegatives)
+    @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.Reals)
+end
+
 @testset "Optimizer attributes" begin
     optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
     @test MOI.supports(optimizer, MOIU.MockModelAttribute())
