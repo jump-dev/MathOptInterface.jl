@@ -451,7 +451,7 @@ function start_values_unset_test(model::MOI.ModelLike, config)
         # determined behaviour, there are two possibilities about the behaviour
         # of ListOfConstraintAttributesSet and ListOfVariableAttributesSet:
         #
-        # 1) They list all attributes ever set, even after unsetted.
+        # 1) They list all attributes ever set, even after attributes are unset.
         # 2) They list only the attributes that, at the moment, are set.
         #
         # The current behavior is (1), but we are not sure if this will not
