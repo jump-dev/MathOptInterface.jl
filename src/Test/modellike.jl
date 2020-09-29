@@ -408,16 +408,16 @@ function start_values_unset_test(model::MOI.ModelLike, config)
         @test MOI.get(model, vpattr, y) === nothing
         @test MOI.get(model, vpattr, z) === nothing
 
-        @test !(cpattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}()))
+        @test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
         @test MOI.get(model, cpattr, a) === nothing
         @test MOI.get(model, cpattr, b) === nothing
-        @test !(cpattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}()))
+        @test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
         @test MOI.get(model, cpattr, c) === nothing
 
-        @test !(cdattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}()))
+        @test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
         @test MOI.get(model, cdattr, a) === nothing
         @test MOI.get(model, cdattr, b) === nothing
-        @test !(cdattr in MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}()))
+        @test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
         @test MOI.get(model, cdattr, c) === nothing
     end
 
@@ -444,23 +444,36 @@ function start_values_unset_test(model::MOI.ModelLike, config)
         MOI.set(model, vpattr, y, nothing)
         MOI.set(model, cpattr, a, nothing)
         MOI.set(model, cdattr, a, nothing)
-        MOI.set(model, cpattr, c, [nothing])
-        MOI.set(model, cdattr, c, [nothing])
+        MOI.set(model, cpattr, c, nothing)
+        MOI.set(model, cdattr, c, nothing)
 
+        # The tests below are commented because it was decided to not pin a
+        # determined behaviour, there are two possibilities about the behaviour
+        # of ListOfConstraintAttributesSet and ListOfVariableAttributesSet:
+        #
+        # 1) They list all attributes ever set, even after unsetted.
+        # 2) They list only the attributes that, at the moment, are set.
+        #
+        # The current behavior is (1), but we are not sure if this will not
+        # be changed in the future, so we do not include any tests for it.
+        # The commented tests assume (2) and if uncommented will fail.
+        # Ref.: https://github.com/jump-dev/MathOptInterface.jl/pull/1136#discussion_r496466058
         #@test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
         #@test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
 
-        @test all(MOI.get.((model,), (vpattr,), (x, y, z)) .== (0.0, nothing, 2.0))
-        @test all(MOI.get.((model,), (cpattr,), (a, b)) .== (nothing, 1.0))
-        @test all(MOI.get.((model,), (cdattr,), (a, b)) .== (nothing, 1.0))
-        @test MOI.get(model, cpattr, c) == [nothing]
-        @test MOI.get(model, cdattr, c) == [nothing]
+        @test all(MOI.get.((model,), (vpattr,), (x, y, z)) .=== (0.0, nothing, 2.0))
+        @test all(MOI.get.((model,), (cpattr,), (a, b)) .=== (nothing, 1.0))
+        @test all(MOI.get.((model,), (cdattr,), (a, b)) .=== (nothing, 1.0))
+        @test MOI.get(model, cpattr, c) === nothing
+        @test MOI.get(model, cdattr, c) === nothing
 
         MOI.set(model, vpattr, x, nothing)
         MOI.set(model, vpattr, z, nothing)
         MOI.set(model, cpattr, b, nothing)
         MOI.set(model, cdattr, b, nothing)
 
+        # The three tests below are commented for the same reason the two
+        # commented tests above.
         #@test vpattr ∉ MOI.get(model, MOI.ListOfVariableAttributesSet())
         #@test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
         #@test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
