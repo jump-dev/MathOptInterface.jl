@@ -424,7 +424,7 @@ function norminf2test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
-        if config.duals
+        if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
 
@@ -630,7 +630,7 @@ function normone2test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
-        if config.duals
+        if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
 
@@ -911,7 +911,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
-        if config.infeas_certificates
+        if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
 
@@ -1144,7 +1144,9 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) in [MOI.INFEASIBLE, MOI.INFEASIBLE_OR_UNBOUNDED]
 
         if config.duals
-            @test MOI.get(model, MOI.DualStatus()) in [MOI.INFEASIBILITY_CERTIFICATE, MOI.NEARLY_INFEASIBILITY_CERTIFICATE]
+            if config.infeas_certificates
+                @test MOI.get(model, MOI.DualStatus()) in [MOI.INFEASIBILITY_CERTIFICATE, MOI.NEARLY_INFEASIBILITY_CERTIFICATE]
+            end
 
             y1 = MOI.get(model, MOI.ConstraintDual(), vc1)
             @test y1 < -atol # Should be strictly negative
