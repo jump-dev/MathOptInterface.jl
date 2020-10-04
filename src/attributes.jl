@@ -649,7 +649,7 @@ solution by submitting a [`LazyConstraint`](@ref). For instance, it may be
 called at an incumbent of a mixed-integer problem. Note that there is no
 guarantee that the callback is called at *every* feasible primal solution.
 
-The feasible primal solution is accessed through
+The current primal solution is accessed through
 [`CallbackVariablePrimal`](@ref). Trying to access other result
 attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 [`AbstractCallback`](@ref).
