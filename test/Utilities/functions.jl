@@ -165,6 +165,13 @@ end
     @test gvq.affine_terms == MOI.VectorAffineTerm.([2, 1], sats)
     @test gvq.quadratic_terms == MOI.VectorQuadraticTerm.([1, 2, 2], sqts)
     @test MOIU.constant_vector(gvq) == [-3., -2.]
+
+    @testset "Constants" begin
+        @test MOIU.map_indices(index_map, :s) == :s
+        @test MOIU.map_indices(index_map, [:a, :b]) == [:a, :b]
+        @test MOIU.map_indices(index_map, "s") == "s"
+        @test MOIU.map_indices(index_map, ["a", "b"]) == ["a", "b"]
+    end
 end
 @testset "Conversion VectorOfVariables -> VectorAffineFunction" begin
     f = MOI.VectorAffineFunction{Int}(MOI.VectorOfVariables([z, x, y]))
