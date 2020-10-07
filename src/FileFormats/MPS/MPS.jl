@@ -53,6 +53,85 @@ end
 
 @enum(VType, VTYPE_CONTINUOUS, VTYPE_INTEGER, VTYPE_BINARY)
 
+# The card logic is as follows: where possible, try to fit within the strict MPS
+# field limits. That means fields start at columns 2, 5, 15, 25, 40, and 50.
+# However, since most readers default to loose MPS, make sure each field is
+# separated by at least one space.
+
+function pad_field(field, n)
+    return length(field) < n ? field : field * " "
+end
+
+struct Card
+    f1::String
+    f2::String
+    f3::String
+    f4::String
+    f5::String
+    f6::String
+    num_fields::Int
+
+    function Card(;
+        f1::String = "",
+        f2::String = "",
+        f3::String = "",
+        f4::String = "",
+        f5::String = "",
+        f6::String = "",
+    )
+        num_fields = isempty(f1) ? 0          : 1
+        num_fields = isempty(f2) ? num_fields : 2
+        num_fields = isempty(f3) ? num_fields : 3
+        num_fields = isempty(f4) ? num_fields : 4
+        num_fields = isempty(f5) ? num_fields : 5
+        num_fields = isempty(f6) ? num_fields : 6
+        return new(
+            pad_field(f1, 3),
+            pad_field(f2, 10),
+            pad_field(f3, 10),
+            pad_field(f4, 15),
+            pad_field(f5, 10),
+            pad_field(f6, Inf),
+            num_fields,
+        )
+    end
+end
+
+function Base.println(io::IO, card::Card)
+    if card.num_fields == 0
+        println(io)
+        return
+    elseif card.num_fields == 1
+        println(io, " ", card.f1)
+        return
+    end
+    print(io, " ", rpad(card.f1, 3))
+    if card.num_fields == 2
+        println(io, card.f2)
+        return
+    end
+    print(io, rpad(card.f2, 10))
+    if card.num_fields == 3
+        println(io, card.f3)
+        return
+    end
+    print(io, rpad(card.f3, 10))
+    if card.num_fields == 4
+        println(io, card.f4)
+        return
+    end
+    print(io, rpad(card.f4, 15))
+    if card.num_fields == 5
+        println(io, card.f5)
+        return
+    end
+    print(io, rpad(card.f5, 10))
+    if card.num_fields == 6
+        print(io, card.f6)
+    end
+    return
+end
+
 # ==============================================================================
 #
 #   Base.write
@@ -95,7 +174,7 @@ end
 
 function write_model_name(io::IO, model::Model)
     model_name = MOI.get(model, MOI.Name())
-    println(io, "NAME          ", model_name)
+    println(io, rpad("NAME", 14), model_name)
     return
 end
 
@@ -104,10 +183,10 @@ end
 # ==============================================================================
 
 const SET_TYPES = (
-    (MOI.LessThan{Float64}, 'L'),
-    (MOI.GreaterThan{Float64}, 'G'),
-    (MOI.EqualTo{Float64}, 'E'),
-    (MOI.Interval{Float64}, 'L'),  # See the note in the RANGES section.
+    (MOI.LessThan{Float64}, "L"),
+    (MOI.GreaterThan{Float64}, "G"),
+    (MOI.EqualTo{Float64}, "E"),
+    (MOI.Interval{Float64}, "L"),  # See the note in the RANGES section.
 )
 
 function _write_rows(io, model, S, sense_char)
@@ -119,13 +198,14 @@ function _write_rows(io, model, S, sense_char)
         if row_name == ""
             error("Row name is empty: $(index).")
         end
-        println(io, " ", sense_char, "  ", row_name)
+        println(io, Card(f1 = sense_char, f2 = row_name))
     end
     return
 end
 
 function write_rows(io::IO, model::Model)
-    println(io, "ROWS\n N  OBJ")
+    println(io, "ROWS")
+    println(io, Card(f1 = "N", f2 = "OBJ"))
     for (set_type, sense_char) in SET_TYPES
         _write_rows(io, model, set_type, sense_char)
     end
@@ -223,20 +303,21 @@ function write_columns(io::IO, model::Model, ordered_names, names)
     for variable in ordered_names
         is_int = variable in integer_variables
         if is_int && !int_open
-            println(io, "    MARKER    'MARKER'                 'INTORG'")
+            println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTORG'"))
             int_open = true
         elseif !is_int && int_open
-            println(io, "    MARKER    'MARKER'                 'INTEND'")
+            println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTEND'"))
             int_open = false
         end
         for (constraint, coefficient) in coefficients[variable]
-            print(io, "     ")
-            print(io, rpad(variable, 8))
-            print(io, " ")
-            print(io, rpad(constraint, 8))
-            print(io, " ")
-            Base.Grisu.print_shortest(io, coefficient)
-            println(io)
+            println(
+                io,
+                Card(
+                    f2 = variable,
+                    f3 = constraint,
+                    f4 = sprint(Base.Grisu.print_shortest, coefficient),
+                )
+            )
         end
     end
     return discovered_columns
@@ -257,10 +338,15 @@ function _write_rhs(io, model, S, sense_char)
         MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}()
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
-        print(io, "    rhs       ", rpad(row_name, 8), "  ")
         set = MOI.get(model, MOI.ConstraintSet(), index)
-        Base.Grisu.print_shortest(io, value(set))
-        println(io)
+        println(
+            io,
+            Card(
+                f2 = "rhs",
+                f3 = row_name,
+                f4 = sprint(Base.Grisu.print_shortest, value(set)),
+            )
+        )
     end
 end
 
@@ -298,10 +384,15 @@ function write_ranges(io::IO, model::Model)
         }()
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
-        print(io, "    rhs       ", rpad(row_name, 8), "  ")
         set = MOI.get(model, MOI.ConstraintSet(), index)::MOI.Interval{Float64}
-        Base.Grisu.print_shortest(io, set.upper - set.lower)
-        println(io)
+        println(
+            io,
+            Card(
+                f2 = "rhs",
+                f3 = row_name,
+                f4 = sprint(Base.Grisu.print_shortest, set.upper - set.lower),
+            )
+        )
     end
     return
 end
@@ -325,27 +416,65 @@ end
 # ==============================================================================
 
 function write_single_bound(io::IO, var_name::String, lower, upper)
-    name = rpad(var_name, 8)
     if lower == upper
-        print(io, " FX bounds    ", name, " ")
-        Base.Grisu.print_shortest(io, lower)
-        println(io)
+        println(
+            io,
+            Card(
+                f1 = "FX",
+                f2 = "bounds",
+                f3 = var_name,
+                f4 = sprint(Base.Grisu.print_shortest, lower),
+            )
+        )
     elseif lower == -Inf && upper == Inf
-        println(io, " FR bounds    ", var_name)
+        println(
+            io,
+            Card(
+                f1 = "FR",
+                f2 = "bounds",
+                f3 = var_name,
+            )
+        )
     else
         if lower == -Inf
-            println(io, " MI bounds    ", name)
+            println(
+                io,
+                Card(
+                    f1 = "MI",
+                    f2 = "bounds",
+                    f3 = var_name,
+                )
+            )
         else
-            print(io, " LO bounds    ", name, " ")
-            Base.Grisu.print_shortest(io, lower)
-            println(io)
+            println(
+                io,
+                Card(
+                    f1 = "LO",
+                    f2 = "bounds",
+                    f3 = var_name,
+                    f4 = sprint(Base.Grisu.print_shortest, lower),
+                )
+            )
         end
         if upper == Inf
-            println(io, " PL bounds    ", name)
+            println(
+                io,
+                Card(
+                    f1 = "PL",
+                    f2 = "bounds",
+                    f3 = var_name,
+                )
+            )
         else
-            print(io, " UP bounds    ", name, " ")
-            Base.Grisu.print_shortest(io, upper)
-            println(io)
+            println(
+                io,
+                Card(
+                    f1 = "UP",
+                    f2 = "bounds",
+                    f3 = var_name,
+                    f4 = sprint(Base.Grisu.print_shortest, upper),
+                )
+            )
         end
     end
     return
@@ -408,9 +537,22 @@ function write_bounds(
             )
             continue
         elseif vtype == VTYPE_BINARY
-            println(io, " BV bounds    ", var_name)
+            println(
+                io,
+                Card(
+                    f1 = "BV",
+                    f2 = "bounds",
+                    f3 = var_name,
+                )
+            )
+            # Only add bounds if they are tighter than the implicit bounds of a
+            # binary variable.
+            if lower > 0 || upper < 1
+                write_single_bound(io, var_name, lower, upper)
+            end
+        else
+            write_single_bound(io, var_name, lower, upper)
         end
-        write_single_bound(io, var_name, lower, upper)
     end
     return
 end
@@ -423,9 +565,13 @@ function write_sos_constraint(io::IO, model::Model, index, names)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     for (variable, weight) in zip(func.variables, set.weights)
-        print(io, "    ", rpad(names[variable], 8), "  ")
-        Base.Grisu.print_shortest(io, weight)
-        println(io)
+        println(
+            io,
+            Card(
+                f2 = names[variable],
+                f3 = sprint(Base.Grisu.print_shortest, weight),
+            )
+        )
     end
 end
 
@@ -443,7 +589,13 @@ function write_sos(io::IO, model::Model, names)
         idx = 1
         for (sos_type, indices) in enumerate([sos1_indices, sos2_indices])
             for index in indices
-                println(io, " S", sos_type, " SOS", idx)
+                println(
+                    io,
+                    Card(
+                        f1 = "S$(sos_type)",
+                        f2 = "SOS$(idx)",
+                    )
+                )
                 write_sos_constraint(io, model, index, names)
                 idx += 1
             end

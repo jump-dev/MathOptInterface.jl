@@ -96,7 +96,7 @@ end
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x))
     @test sprint(MPS.write_columns, model, ["x"], Dict(x => "x")) ==
-        "COLUMNS\n     x        OBJ      -1\n"
+        "COLUMNS\n    x         OBJ       -1\n"
 end
 
 @testset "stacked_data" begin
@@ -288,7 +288,7 @@ end
             "ROWS\n" *
             " N  OBJ\n" *
             "COLUMNS\n" *
-            "     a_really_long_name OBJ      1\n" *
+            "    a_really_long_name OBJ       1\n" *
             "RHS\n" *
             "RANGES\n" *
             "BOUNDS\n" *
@@ -325,21 +325,19 @@ end
             MOI.EqualTo(1.0)
         )
         MOI.set(model, MOI.ConstraintName(), c, "c c")
-        @test sprint(write, model) == join([
-            "NAME          ",
-            "ROWS",
-            " N  OBJ",
-            " E  c_c",
-            "COLUMNS",
-            "     x[1,_2]  c_c      1",
-            "RHS",
-            "    rhs       c_c       1",
-            "RANGES",
-            "BOUNDS",
-            " FR bounds    x[1,_2]",
-            "ENDATA",
-            ""
-        ], '\n')
+        @test sprint(write, model) ==
+            "NAME          \n" *
+            "ROWS\n" *
+            " N  OBJ\n" *
+            " E  c_c\n" *
+            "COLUMNS\n" *
+            "    x[1,_2]   c_c       1\n" *
+            "RHS\n" *
+            "    rhs       c_c       1\n" *
+            "RANGES\n" *
+            "BOUNDS\n" *
+            " FR bounds    x[1,_2]\n" *
+            "ENDATA\n"
     end
 end
 
