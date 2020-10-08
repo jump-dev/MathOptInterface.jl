@@ -2,6 +2,8 @@ using Test
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
+import MutableArithmetics
+const MA = MutableArithmetics
 
 w = MOI.VariableIndex(0)
 fw = MOI.SingleVariable(w)
@@ -11,6 +13,25 @@ y = MOI.VariableIndex(2)
 fy = MOI.SingleVariable(y)
 z = MOI.VariableIndex(3)
 fz = MOI.SingleVariable(z)
+
+# Number-like but not subtype of `Number`
+struct NonNumber
+    value::Int
+end
+Base.:*(a::NonNumber, b::NonNumber) = NonNumber(a.value * b.value)
+Base.:+(a::NonNumber, b::NonNumber) = NonNumber(a.value + b.value)
+Base.zero(::Type{NonNumber}) = NonNumber(0)
+Base.isapprox(a::NonNumber, b::NonNumber; kws...) = isapprox(a.value, b.value; kws...)
+@testset "NonNumber" begin
+    two = NonNumber(2)
+    three = NonNumber(3)
+    six = NonNumber(6)
+    three_x = MOIU.operate(*, NonNumber, three, fx)
+    six_x = MOIU.operate(*, NonNumber, six, fx)
+    @test six_x ≈ two * three_x
+    @test six_x ≈ three_x * two
+end
+
 @testset "Vectorization" begin
     g = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([3, 1],
                                                        MOI.ScalarAffineTerm.([5, 2],
@@ -261,12 +282,37 @@ end
             @test (1.0 + f) - 1.0 ≈ (f * 2.0) / 2.0
             @test 1.0 - (1.0 - f) ≈ (f / 2.0) * 2.0
         end
+        @testset "complex operations" begin
+            @test real(f) === f
+            @test MA.promote_operation(real, typeof(f)) == typeof(f)
+            @testset "imag with $T" for T in [Int, Int32, Float64]
+                z = MOIU.operate(imag, T, f)
+                @test z isa MOI.ScalarAffineFunction{T}
+                @test iszero(z)
+                @test MOIU.promote_operation(imag, T, typeof(f)) == typeof(z)
+            end
+            @test conj(f) === f
+            @test MA.promote_operation(conj, typeof(f)) == typeof(f)
+        end
     end
     @testset "Affine" begin
         @testset "zero" begin
             f = @inferred MOIU.zero(MOI.ScalarAffineFunction{Float64})
             @test iszero(f)
             @test MOIU.isapprox_zero(f, 1e-16)
+        end
+        @testset "complex operations" begin
+            fx = MOI.SingleVariable(MOI.VariableIndex(1))
+            fy = MOI.SingleVariable(MOI.VariableIndex(2))
+            r = 3fx + 4fy
+            c = 2fx + 5fy
+            f = (1 + 0im) * r + c * im
+            @test real(f) ≈ r
+            @test imag(f) ≈ c
+            @test conj(f) ≈ (1 + 0im) * r - c * im
+            @test MA.promote_operation(real, typeof(f)) == typeof(r)
+            @test MA.promote_operation(imag, typeof(f)) == typeof(c)
+            @test MA.promote_operation(conj, typeof(f)) == typeof(f)
         end
         @testset "promote_operation" begin
             @test MOIU.promote_operation(
@@ -523,6 +569,23 @@ end
     end
 end
 @testset "Vector" begin
+    @testset "Variable" begin
+        f = MOI.VectorOfVariables([MOI.VariableIndex(1), MOI.VariableIndex(2)])
+        @testset "complex operations" begin
+            @test real(f) === f
+            @test MA.promote_operation(real, typeof(f)) == typeof(f)
+            @testset "imag with $T" for T in [Int, Int32, Float64]
+                z = MOIU.operate(imag, T, f)
+                @test z isa MOI.VectorAffineFunction{T}
+                @test isempty(z.terms)
+                @test all(iszero, z.constants)
+                @test MOI.output_dimension(z) == MOI.output_dimension(f)
+                @test MOIU.promote_operation(imag, T, typeof(f)) == typeof(z)
+            end
+            @test conj(f) === f
+            @test MA.promote_operation(conj, typeof(f)) == typeof(f)
+        end
+    end
     @testset "Affine" begin
         f = MOIU.canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1, 2,  1,  1,  2, 2,  2, 2, 1, 1,  2, 1,  2],
                                                                           MOI.ScalarAffineTerm.([3, 2, 3, -3, -1, -2, 3, -2, 1, 3, 5, -2, 0, -1],

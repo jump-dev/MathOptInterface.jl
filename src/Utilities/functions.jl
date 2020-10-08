@@ -1548,14 +1548,8 @@ Base.:*(f::MOI.AbstractFunction) = f
 function Base.:*(f::ScalarLike{T}, g::ScalarLike{T}, args::ScalarLike{T}...) where T
     return operate(*, T, f, g, args...)
 end
-function Base.:*(f::T, g::TypedLike{T}) where T
-    return operate(*, T, f, g)
-end
 function Base.:*(f::Number, g::Union{MOI.SingleVariable, MOI.VectorOfVariables})
     return operate(*, typeof(f), f, g)
-end
-function Base.:*(f::TypedLike{T}, g::T) where T
-    return operate(*, T, g, f)
 end
 function Base.:*(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}, g::Number)
     return operate(*, typeof(g), f, g)
@@ -1994,3 +1988,86 @@ function Base.one(F::Type{<:TypedScalarLike{T}}) where T
 end
 
 Base.promote_rule(::Type{F}, ::Type{T}) where {T, F<:TypedScalarLike{T}} = F
+
+function operate_coefficient(f, term::MOI.ScalarAffineTerm)
+    MOI.ScalarAffineTerm(f(term.coefficient), term.variable_index)
+end
+function operate_coefficient(f, term::MOI.ScalarQuadraticTerm)
+    MOI.ScalarQuadraticTerm(f(term.coefficient), term.variable_index_1, term.variable_index_2)
+end
+function operate_coefficient(f, term::MOI.VectorAffineTerm)
+    return MOI.VectorAffineTerm(term.output_index, operate_coefficient(f, term.scalar_term))
+end
+function operate_coefficient(f, term::MOI.VectorQuadraticTerm)
+    return MOI.VectorQuadraticTerm(term.output_index, operate_coefficient(f, term.scalar_term))
+end
+
+function operate_coefficients(f, func::MOI.ScalarAffineFunction)
+    return MOI.ScalarAffineFunction(
+        [operate_coefficient(f, term) for term in func.terms],
+        f(func.constant)
+    )
+end
+function operate_coefficients(f, func::MOI.ScalarQuadraticFunction)
+    return MOI.ScalarQuadraticFunction(
+        [operate_coefficient(f, term) for term in func.affine_terms],
+        [operate_coefficient(f, term) for term in func.quadratic_terms],
+        f(func.constant)
+    )
+end
+function operate_coefficients(f, func::MOI.VectorAffineFunction)
+    return MOI.VectorAffineFunction(
+        [operate_coefficient(f, term) for term in func.terms],
+        map(f, func.constants)
+    )
+end
+function operate_coefficients(f, func::MOI.VectorQuadraticFunction)
+    return MOI.VectorQuadraticFunction(
+        [operate_coefficient(f, term) for term in func.affine_terms],
+        [operate_coefficient(f, term) for term in func.quadratic_terms],
+        map(f, func.constants)
+    )
+end
+
+function Base.:*(α::T, g::TypedLike{T}) where T
+    return operate_coefficients(β -> α * β, g)
+end
+function Base.:*(α::Number, g::TypedLike)
+    return operate_coefficients(β -> α * β, g)
+end
+# Breaks ambiguity
+function Base.:*(α::T, g::TypedLike{T}) where T<:Number
+    return operate_coefficients(β -> α * β, g)
+end
+
+function Base.:*(g::TypedLike{T}, β::T) where T
+    return operate_coefficients(α -> α * β, g)
+end
+function Base.:*(g::TypedLike, β::Number)
+    return operate_coefficients(α -> α * β, g)
+end
+# Breaks ambiguity
+function Base.:*(g::TypedLike{T}, β::T) where T<:Number
+    return operate_coefficients(α -> α * β, g)
+end
+
+# We assume MOI variables are real numbers.
+Base.real(f::TypedLike) = operate_coefficients(real, f)
+MA.promote_operation(::typeof(real), T::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}) = T
+Base.real(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = f
+function promote_operation(::typeof(imag), ::Type{T}, ::Type{MOI.SingleVariable}) where T
+    return MOI.ScalarAffineFunction{T}
+end
+function operate(::typeof(imag), ::Type{T}, f::MOI.SingleVariable) where {T}
+    return zero(MOI.ScalarAffineFunction{T})
+end
+function promote_operation(::typeof(imag), ::Type{T}, ::Type{MOI.VectorOfVariables}) where T
+    return MOI.VectorAffineFunction{T}
+end
+function operate(::typeof(imag), ::Type{T}, f::MOI.VectorOfVariables) where {T}
+    return zero_with_output_dimension(MOI.VectorAffineFunction{T}, MOI.output_dimension(f))
+end
+Base.imag(f::TypedLike) = operate_coefficients(imag, f)
+Base.conj(f::TypedLike) = operate_coefficients(conj, f)
+MA.promote_operation(::typeof(conj), T::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}) = T
+Base.conj(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = f
