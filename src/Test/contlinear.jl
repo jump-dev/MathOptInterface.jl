@@ -1177,9 +1177,9 @@ function linear9test(model::MOI.ModelLike, config::TestConfig{T}) where T
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 79e4/11 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 650/11 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 400/11 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 790_000/T(11) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 650/T(11) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 400/T(11) atol=atol rtol=rtol
 
         if config.basis
             @test MOI.get(model, MOI.ConstraintBasisStatus(), vc12[1]) == MOI.BASIC
@@ -1324,7 +1324,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig{T}) where T
         if config.basis
             # There are multiple optimal bases. Either x or y can be in the optimal basis.
             @test (MOI.get(model, MOI.ConstraintBasisStatus(), vc[1]) == MOI.BASIC ||
-                   MOI.get(model, MOI.ConstraintBasisStatus(), vc[2])== MOI.BASIC)
+                   MOI.get(model, MOI.ConstraintBasisStatus(), vc[2]) == MOI.BASIC)
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC_AT_UPPER
         end
     end
@@ -1621,12 +1621,12 @@ function linear14test(model::MOI.ModelLike, config::TestConfig{T}) where T
         end
 
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 0 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1/T(2) atol=atol rtol=rtol
         @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1 atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), clbx) ≈ 0 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1/2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ 1/T(2) atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), clbz) ≈ 1 atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cubz) ≈ 1 atol=atol rtol=rtol
 
