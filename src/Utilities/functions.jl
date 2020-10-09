@@ -2051,10 +2051,25 @@ function Base.:*(g::TypedLike{T}, β::T) where T<:Number
     return operate_coefficients(α -> α * β, g)
 end
 
+similar_type(::Type{<:MOI.ScalarAffineFunction}, ::Type{T}) where T = MOI.ScalarAffineFunction{T}
+similar_type(::Type{<:MOI.ScalarQuadraticFunction}, ::Type{T}) where T = MOI.ScalarQuadraticFunction{T}
+similar_type(::Type{<:MOI.VectorAffineFunction}, ::Type{T}) where T = MOI.VectorAffineFunction{T}
+similar_type(::Type{<:MOI.VectorQuadraticFunction}, ::Type{T}) where T = MOI.VectorQuadraticFunction{T}
+
+## Complex operations
 # We assume MOI variables are real numbers.
+
+function MA.promote_operation(
+    op::Union{typeof(real), typeof(imag), typeof(conj)},
+    F::Type{<:TypedLike{T}}
+) where T
+    return similar_type(F, MA.promote_operation(op, T))
+end
+
 Base.real(f::TypedLike) = operate_coefficients(real, f)
 MA.promote_operation(::typeof(real), T::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}) = T
 Base.real(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = f
+
 function promote_operation(::typeof(imag), ::Type{T}, ::Type{MOI.SingleVariable}) where T
     return MOI.ScalarAffineFunction{T}
 end
@@ -2068,6 +2083,8 @@ function operate(::typeof(imag), ::Type{T}, f::MOI.VectorOfVariables) where {T}
     return zero_with_output_dimension(MOI.VectorAffineFunction{T}, MOI.output_dimension(f))
 end
 Base.imag(f::TypedLike) = operate_coefficients(imag, f)
+operate(::typeof(imag), ::Type, f::TypedLike) = imag(f)
+
 Base.conj(f::TypedLike) = operate_coefficients(conj, f)
 MA.promote_operation(::typeof(conj), T::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}) = T
 Base.conj(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = f

@@ -308,6 +308,7 @@ end
             c = 2fx + 5fy
             f = (1 + 0im) * r + c * im
             @test real(f) ≈ r
+            @test MOIU.operate(imag, Int, f) ≈ c
             @test imag(f) ≈ c
             @test conj(f) ≈ (1 + 0im) * r - c * im
             @test MA.promote_operation(real, typeof(f)) == typeof(r)
@@ -587,6 +588,21 @@ end
         end
     end
     @testset "Affine" begin
+        @testset "complex operations" begin
+            fx = MOI.VectorOfVariables([MOI.VariableIndex(1)])
+            fy = MOI.VectorOfVariables([MOI.VariableIndex(2)])
+            r = 3fx + 4fy
+            c = 2fx + 5fy
+            f = (1 + 0im) * r + c * im
+            @test real(f) ≈ r
+            @test MOIU.operate(imag, Int, f) ≈ c
+            @test imag(f) ≈ c
+            @test conj(f) ≈ (1 + 0im) * r - c * im
+            @test MA.promote_operation(real, typeof(f)) == typeof(r)
+            @test MA.promote_operation(imag, typeof(f)) == typeof(c)
+            @test MA.promote_operation(conj, typeof(f)) == typeof(f)
+        end
+
         f = MOIU.canonical(MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 1, 2,  1,  1,  2, 2,  2, 2, 1, 1,  2, 1,  2],
                                                                           MOI.ScalarAffineTerm.([3, 2, 3, -3, -1, -2, 3, -2, 1, 3, 5, -2, 0, -1],
                                                                                                 [x, x, z,  y,  y,  x, y,  z, x, y, y,  x, x,  z])), [5, 7]))
