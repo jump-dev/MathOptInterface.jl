@@ -69,7 +69,7 @@ An error indicating that the attribute `attr` is supported (see
 """
 struct SetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
     attr::AttrType
-	message::String # Human-friendly explanation why the attribute cannot be set
+    message::String # Human-friendly explanation why the attribute cannot be set
 end
 SetAttributeNotAllowed(attr::AnyAttribute) = SetAttributeNotAllowed(attr, "")
 
@@ -964,7 +964,7 @@ struct VariableName <: AbstractVariableAttribute end
 """
     VariablePrimalStart()
 
-A variable attribute for the initial assignment to some primal variable's value that the optimizer may use to warm-start the solve.
+A variable attribute for the initial assignment to some primal variable's value that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
@@ -1043,14 +1043,14 @@ struct ConstraintName <: AbstractConstraintAttribute end
 """
     ConstraintPrimalStart()
 
-A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve.
+A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 
 """
     ConstraintDualStart()
 
-A constraint attribute for the initial assignment to some constraint's dual value(s) that the optimizer may use to warm-start the solve.
+A constraint attribute for the initial assignment to some constraint's dual value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 

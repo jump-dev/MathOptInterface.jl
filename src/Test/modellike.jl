@@ -386,6 +386,100 @@ function failcopytestca(dest::MOI.ModelLike)
     @test_throws MOI.UnsupportedAttribute MOI.copy_to(dest, BadConstraintAttributeModel())
 end
 
+function start_values_unset_test(model::MOI.ModelLike, config)
+    MOI.empty!(model)
+    x, y, z = MOI.add_variables(model, 3)
+    fz = MOI.SingleVariable(z)
+    a = MOI.add_constraint(model, x, MOI.EqualTo(1.0))
+    b = MOI.add_constraint(model, y, MOI.EqualTo(2.0))
+    F1 = MOI.SingleVariable
+    S1 = MOI.EqualTo{Float64}
+    c = MOI.add_constraint(model, MOIU.operate(vcat, Float64, 2.0fz + 1.0), MOI.Nonnegatives(1))
+    F2 = MOI.VectorAffineFunction{Float64}
+    S2 = MOI.Nonnegatives
+
+    vpattr = MOI.VariablePrimalStart()
+    cpattr = MOI.ConstraintPrimalStart()
+    cdattr = MOI.ConstraintDualStart()
+
+    @testset "Newly created variables have start values set to nothing" begin
+        @test !(vpattr in MOI.get(model, MOI.ListOfVariableAttributesSet()))
+        @test MOI.get(model, vpattr, x) === nothing
+        @test MOI.get(model, vpattr, y) === nothing
+        @test MOI.get(model, vpattr, z) === nothing
+
+        @test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test MOI.get(model, cpattr, a) === nothing
+        @test MOI.get(model, cpattr, b) === nothing
+        @test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        @test MOI.get(model, cpattr, c) === nothing
+
+        @test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test MOI.get(model, cdattr, a) === nothing
+        @test MOI.get(model, cdattr, b) === nothing
+        @test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        @test MOI.get(model, cdattr, c) === nothing
+    end
+
+    @testset "Allows unsetting by nothing" begin
+        # First set the attributes to some values.
+        MOI.set.((model,), (vpattr,), (x, y, z), (0.0, 1.0, 2.0))
+        MOI.set.((model,), (cpattr,), (a, b), (0.0, 1.0))
+        MOI.set.((model,), (cdattr,), (a, b), (0.0, 1.0))
+        MOI.set(model, cpattr, c, [2.0])
+        MOI.set(model, cdattr, c, [2.0])
+
+        @test vpattr ∈ MOI.get(model, MOI.ListOfVariableAttributesSet())
+        @test cpattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test cpattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        @test cdattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        @test cdattr ∈ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+
+        @test all(MOI.get.((model,), (vpattr,), (x, y, z)) .== (0.0, 1.0, 2.0))
+        @test all(MOI.get.((model,), (cpattr,), (a, b)) .== (0.0, 1.0))
+        @test all(MOI.get.((model,), (cdattr,), (a, b)) .== (0.0, 1.0))
+        @test MOI.get(model, cpattr, c) == [2.0]
+        @test MOI.get(model, cdattr, c) == [2.0]
+
+        MOI.set(model, vpattr, y, nothing)
+        MOI.set(model, cpattr, a, nothing)
+        MOI.set(model, cdattr, a, nothing)
+        MOI.set(model, cpattr, c, nothing)
+        MOI.set(model, cdattr, c, nothing)
+
+        # The tests below are commented because it was decided to not pin a
+        # determined behaviour, there are two possibilities about the behaviour
+        # of ListOfConstraintAttributesSet and ListOfVariableAttributesSet:
+        #
+        # 1) They list all attributes ever set, even after attributes are unset.
+        # 2) They list only the attributes that, at the moment, are set.
+        #
+        # The current behavior is (1), but we are not sure if this will not
+        # be changed in the future, so we do not include any tests for it.
+        # The commented tests assume (2) and if uncommented will fail.
+        # Ref.: https://github.com/jump-dev/MathOptInterface.jl/pull/1136#discussion_r496466058
+        #@test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+        #@test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
+
+        @test all(MOI.get.((model,), (vpattr,), (x, y, z)) .=== (0.0, nothing, 2.0))
+        @test all(MOI.get.((model,), (cpattr,), (a, b)) .=== (nothing, 1.0))
+        @test all(MOI.get.((model,), (cdattr,), (a, b)) .=== (nothing, 1.0))
+        @test MOI.get(model, cpattr, c) === nothing
+        @test MOI.get(model, cdattr, c) === nothing
+
+        MOI.set(model, vpattr, x, nothing)
+        MOI.set(model, vpattr, z, nothing)
+        MOI.set(model, cpattr, b, nothing)
+        MOI.set(model, cdattr, b, nothing)
+
+        # The three tests below are commented for the same reason the two
+        # commented tests above.
+        #@test vpattr ∉ MOI.get(model, MOI.ListOfVariableAttributesSet())
+        #@test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+        #@test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F1, S1}())
+    end
+end
+
 function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.empty!(dest)
     @test MOIU.supports_default_copy_to(src, #=copy_names=# false)
