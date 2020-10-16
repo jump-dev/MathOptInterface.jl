@@ -2,7 +2,6 @@ MathOptInterface (MOI) release notes
 ====================================
 
 - Added `GeoMeantoExpBridge` to bridge a geomean constraint to exponential cone constraints.
-
 v0.9.17 (September 21, 2020)
 ---------------------------
 
