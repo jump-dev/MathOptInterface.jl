@@ -1,6 +1,6 @@
-# See https://github.com/JuliaOpt/MathOptInterface.jl/issues/321,
-#     https://github.com/JuliaOpt/MathOptInterface.jl/pull/323 and
-#     https://github.com/JuliaOpt/MathOptInterface.jl/pull/390
+# See https://github.com/jump-dev/MathOptInterface.jl/issues/321,
+#     https://github.com/jump-dev/MathOptInterface.jl/pull/323 and
+#     https://github.com/jump-dev/MathOptInterface.jl/pull/390
 
 using BenchmarkTools
 using MathOptInterface

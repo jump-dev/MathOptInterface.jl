@@ -55,7 +55,7 @@ function bridge_constraint(::Type{GeoMeanBridge{T, F, G, H}}, model,
                            s::MOI.GeometricMeanCone) where {T, F, G, H}
     d = s.dimension
     if d <= 1
-        # TODO change to a standard error: https://github.com/JuliaOpt/MathOptInterface.jl/issues/967
+        # TODO change to a standard error: https://github.com/jump-dev/MathOptInterface.jl/issues/967
         error("Dimension of GeometricMeanCone must be greater than 1.")
     end
     n = d - 1

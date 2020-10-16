@@ -18,6 +18,7 @@ function set_var_and_con_names(model::MOI.ModelLike)
     idx = 0
     constraint_names = String[]
     for i in Iterators.flatten((
+        MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable, MOI.Integer}()),
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()),
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeTriangle}())))
         idx += 1
@@ -49,7 +50,7 @@ function test_write_then_read(model_string::String)
 end
 
 function test_read(filename::String, model_string::String)
-    model1 = SDPA.Model()
+    model1 = MOI.FileFormats.Model(filename = filename)
     MOIU.loadfromstring!(model1, model_string)
     (variable_names, constraint_names) = set_var_and_con_names(model1)
 
@@ -70,7 +71,6 @@ end
             MOI.Interval(1.0, 2.0),
             MOI.Semiinteger(1.0, 2.0),
             MOI.Semicontinuous(1.0, 2.0),
-            MOI.Integer(),
             MOI.ZeroOne()
         ]
         model_string = """
@@ -108,7 +108,7 @@ end
         MOI.add_variable(model)
         err = ErrorException("Cannot read in file because model is not empty.")
         @test_throws err MOI.read_from_file(model,
-            joinpath(SDPA_MODELS_DIR, "example_A.sdpa"))
+            joinpath(SDPA_MODELS_DIR, "example_A.dat-s"))
     end
 
     @testset "Bad number of blocks" begin
@@ -190,16 +190,26 @@ write_read_models = [
 end
 
 example_models = [
-    ("example_A.sdpa", """
+    ("example_A.dat-s", """
         variables: x, y
         minobjective: 10x + 20y
-        c1: [x + 1, 0, x + 2] in PositiveSemidefiniteConeTriangle(2)
-        c2: [5y + 3, 4y, 6y + 4] in PositiveSemidefiniteConeTriangle(2)
+        c1: [x + -1, 0, x + -2] in PositiveSemidefiniteConeTriangle(2)
+        c2: [5y + -3, 2y, 6y + -4] in PositiveSemidefiniteConeTriangle(2)
     """),
     ("example_B.sdpa", """
         variables: x
         minobjective: 1x
-        c1: [0, 2x + 2, 0] in PositiveSemidefiniteConeTriangle(2)
+        c1: [0, 1x + -1, 0] in PositiveSemidefiniteConeTriangle(2)
+    """),
+    ("example_integer.sdpa", """
+        variables: x, y, z
+        minobjective: 1x + -2y + -1z
+        c1: [1x, 1y, 1z] in PositiveSemidefiniteConeTriangle(2)
+        c2: [1z, 1x, 2.1] in PositiveSemidefiniteConeTriangle(2)
+        c3: [1x + 1y + 1z + -1, -1x + -1y + -1z + 8] in Nonnegatives(2)
+        c4: x in Integer()
+        c5: y in Integer()
+        c6: z in Integer()
     """),
 ]
 @testset "Read and write/read $model_name" for (model_name, model_string) in example_models

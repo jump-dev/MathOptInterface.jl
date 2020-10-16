@@ -14,9 +14,9 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 Each mathematical optimization solver API has its own concepts and data structures for representing optimization models and obtaining results.
 However, it is often desirable to represent an instance of an optimization problem at a higher level so that it is easy to try using different solvers.
 MathOptInterface (MOI) is an abstraction layer designed to provide a unified interface to mathematical optimization solvers so that users do not need to understand multiple solver-specific APIs.
-MOI can be used directly, or through a higher-level modeling interface like [JuMP](https://github.com/JuliaOpt/JuMP.jl).
+MOI can be used directly, or through a higher-level modeling interface like [JuMP](https://github.com/jump-dev/JuMP.jl).
 
-MOI has been designed to replace [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl), which has been used by modeling packages such as [JuMP](https://github.com/JuliaOpt/JuMP.jl) and [Convex.jl](https://github.com/JuliaOpt/Convex.jl).
+MOI has been designed to replace [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl), which has been used by modeling packages such as [JuMP](https://github.com/jump-dev/JuMP.jl) and [Convex.jl](https://github.com/jump-dev/Convex.jl).
 This second-generation abstraction layer addresses a number of limitations of MathProgBase.
 MOI is designed to:
 - Be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions)
@@ -95,11 +95,11 @@ sets recognized by the solver.
 * **[`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone)**:
   ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty = \max_i \lvert x_i \rvert \}``
 * **[`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone)**:
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty_1 = \sum_i \lvert x_i \rvert \}``
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_1 = \sum_i \lvert x_i \rvert \}``
 * **[`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone)**:
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge ||x||_2 \}``
+  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_2 \}``
 * **[`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone)**:
-  ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge ||x||_2^2, t,u \ge 0 \}``
+  ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge \lVert x \rVert_2^2, t,u \ge 0 \}``
 * **[`GeometricMeanCone(dimension)`](@ref MathOptInterface.GeometricMeanCone)**:
   ``\{ (t,x) \in \mathbb{R}^{n+1} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}``
   where ``n`` is ``dimension - 1``
@@ -115,9 +115,9 @@ sets recognized by the solver.
 * **[`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone)**:
   ``\{ (u, v, w) \in \mathbb{R}^\mbox{dimension} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
 * **[`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone)**:
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sigma_1(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone)**:
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sum_i \sigma_i(X), X \mbox{is a matrix with row_dim rows and column_dim columns} \}``
 * **[`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle)**:
   ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{is
   the upper triangle of a PSD matrix} \}``
@@ -288,7 +288,7 @@ add_constraint(model, SingleVariable(x[1]), GreaterThan(0.0))
 add_constraint(model, SingleVariable(x[2]), GreaterThan(-1.0))
 ```
 
-Besides scalar-valued functions in scalar-valued sets it possible to use vector-valued functions and sets.
+Besides scalar-valued functions in scalar-valued sets, it's also possible to use vector-valued functions and sets.
 
 The code example below encodes the convex optimization problem:
 ```math
@@ -297,7 +297,7 @@ The code example below encodes the convex optimization problem:
 \\
 & \;\;\text{s.t.} & 3x &= 2
 \\
-&& x & \ge ||(y,z)||_2
+&& x & \ge \lVert (y,z) \rVert_2
 \end{align}
 ```
 
@@ -1011,7 +1011,7 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
 
 If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
-between `y_i` and the vector of scalar-valued quadratic functions.
+between ``y_i`` and the vector of scalar-valued quadratic functions.
 
 !!! note
     For quadratic programs with only affine constraints, the optimality condition
@@ -1069,7 +1069,7 @@ appropriate bridges for unsupported constrained variables.
 A constraint can often be written in a number of equivalent formulations. For
 example, the constraint ``l \le a^\top x \le u``
 (`ScalarAffineFunction`-in-`Interval`) could be re-formulated as two
-constraints: ``a^\top x ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
+constraints: ``a^\top x \ge l`` (`ScalarAffineFunction`-in-`GreaterThan`) and
 ``a^\top x \le u`` (`ScalarAffineFunction`-in-`LessThan`). An alternative
 re-formulation is to add a dummy variable `y` with the constraints ``l \le y \le
 u`` (`SingleVariable`-in-`Interval`) and ``a^\top x - y = 0``
@@ -1098,7 +1098,7 @@ MOI.supports_constraint(bridged_optimizer, MOI.ScalarAffineFunction{Float64}, MO
 true
 ```
 will additionally support `ScalarAffineFunction`-in-`Interval`.
-Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref) are mainly
+Note that these [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)s are mainly
 used for testing bridges. It is recommended to rather use
 [`Bridges.full_bridge_optimizer`](@ref) which automatically selects the
 appropriate constraint bridges for unsupported constraints.
@@ -1127,7 +1127,7 @@ MOI.set(model, MyPackage.PrintLevel(), 0)
 
 ### Supported constrained variables and constraints
 
-The solver interface should only implement support for support for variables
+The solver interface should only implement support for variables
 constrained on creation (see
 [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref)) or
 constraints that directly map to a structure exploited by the solver algorithm.
@@ -1223,7 +1223,7 @@ wrapper type is called `Optimizer`):
   model from a cache, the [Allocate-Load API](@ref) allows MOI layers to be
   added between the cache and the solver which allows transformations to be
   applied without the need for additional caching. For instance, with the
-  proposed [Light bridges](https://github.com/JuliaOpt/MathOptInterface.jl/issues/523),
+  proposed [Light bridges](https://github.com/jump-dev/MathOptInterface.jl/issues/523),
   no cache will be needed to store the bridged model when bridges are used by
   JuMP so implementing the [Allocate-Load API](@ref) will allow JuMP to use only
   one cache instead of two.
@@ -1288,10 +1288,7 @@ solver is written in Julia, for example). The guideline for naming the file
 containing the MOI wrapper is `src/MOI_wrapper.jl` and `test/MOI_wrapper.jl` for
 the tests. If the MOI wrapper implementation is spread in several files, they
 should be stored in a `src/MOI_wrapper` folder and included by a
-`src/MOI_wrapper/MOI_wrapper.jl` file. In some cases it may be more appropriate
-to host the MOI wrapper in its own package; in this case it is recommended that
-the MOI wrapper package be named `MathOptInterfaceXXX` where `XXX` is the solver
-name.
+`src/MOI_wrapper/MOI_wrapper.jl` file.
 
 By convention, optimizers should not be exported and should be named
 `PackageName.Optimizer`. For example, `CPLEX.Optimizer`, `Gurobi.Optimizer`, and
@@ -1310,66 +1307,80 @@ const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
 
 import FooBar
-const optimizer = FooBar.Optimizer()
-MOI.set(optimizer, MOI.Silent(), true)
+const OPTIMIZER_CONSTRUCTOR = MOI.OptimizerWithAttributes(FooBar.Optimizer, MOI.Silent() => true)
+const OPTIMIZER = MOI.instantiate(OPTIMIZER_CONSTRUCTOR)
 
 @testset "SolverName" begin
-    @test MOI.get(optimizer, MOI.SolverName()) == "FooBar"
+    @test MOI.get(OPTIMIZER, MOI.SolverName()) == "FooBar"
 end
 
 @testset "supports_default_copy_to" begin
-    @test MOIU.supports_default_copy_to(optimizer, false)
+    @test MOIU.supports_default_copy_to(OPTIMIZER, false)
     # Use `@test !...` if names are not supported
-    @test MOIU.supports_default_copy_to(optimizer, true)
+    @test MOIU.supports_default_copy_to(OPTIMIZER, true)
 end
 
-const bridged = MOIB.full_bridge_optimizer(optimizer, Float64)
-const config = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
+const BRIDGED = MOI.instantiate(OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float64)
+const CONFIG = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
 
 @testset "Unit" begin
-    MOIT.unittest(bridged, config)
+    # Test all the functions included in dictionary `MOI.Test.unittests`,
+    # except functions "number_threads" and "solve_qcp_edge_cases."
+    MOIT.unittest(
+        BRIDGED, 
+        CONFIG, 
+        ["number_threads", "solve_qcp_edge_cases"]
+    ) 
 end
 
 @testset "Modification" begin
-    MOIT.modificationtest(bridged, config)
+    MOIT.modificationtest(BRIDGED, CONFIG)
 end
 
 @testset "Continuous Linear" begin
-    MOIT.contlineartest(bridged, config)
+    MOIT.contlineartest(BRIDGED, CONFIG)
 end
 
 @testset "Continuous Conic" begin
-    MOIT.contlineartest(bridged, config)
+    MOIT.contlineartest(BRIDGED, CONFIG)
 end
 
 @testset "Integer Conic" begin
-    MOIT.intconictest(bridged, config)
+    MOIT.intconictest(BRIDGED, CONFIG)
 end
 ```
-The optimizer `bridged` constructed with [`Bridges.full_bridge_optimizer`](@ref)
-automatically bridges constraints that are not supported by `optimizer`
+
+Test functions like `MOI.Test.unittest` and `MOI.Test.modificationtest` are 
+wrappers around corresponding dictionaries `MOI.Test.unittests` and 
+`MOI.Test.modificationtests`. The keys of each dictionary (strings describing 
+the test) map to functions that take two arguments: an optimizer and a 
+`MOI.Test.TestConfig` object. Exclude tests by passing a vector of strings 
+corresponding to the test keys you want to exclude as the third positional 
+argument to the test function (e.g., `MOI.Test.unittest`). 
+    
+Print a list of all keys using `println.(keys(MOI.Test.unittests))`
+
+The optimizer `BRIDGED` constructed with [`instantiate`](@ref)
+automatically bridges constraints that are not supported by `OPTIMIZER`
 using the bridges listed in [Bridges](@ref). It is recommended for an
 implementation of MOI to only support constraints that are natively supported
 by the solver and let bridges transform the constraint to the appropriate form.
-For this reason it is expected that tests may not pass if `optimizer` is used
-instead of `bridged`.
+For this reason it is expected that tests may not pass if `OPTIMIZER` is used
+instead of `BRIDGED`.
 
 To test that a specific problem can be solved without bridges, a specific test can
-be run with `optimizer` instead of `bridged`. For instance
+be run with `OPTIMIZER` instead of `BRIDGED`. For instance
 ```julia
 @testset "Interval constraints" begin
-    MOIT.linear10test(optimizer, config)
+    MOIT.linear10test(OPTIMIZER, CONFIG)
 end
 ```
-checks that `optimizer` implements support for
+checks that `OPTIMIZER` implements support for
 [`ScalarAffineFunction`](@ref)-in-[`Interval`](@ref).
 
-If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`), then `supports_default_copy_to` can be replaced by `supports_allocate_load` if appropriate (see [Implementing copy](@ref)) and the line `const bridged = ...` can be replaced with
-```julia
-const cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
-const cached = MOIU.CachingOptimizer(cache, optimizer)
-const bridged = MOIB.full_bridge_optimizer(cached, Float64)
-```
+If the wrapper does not support building the model incrementally (i.e. with `add_variable` and `add_constraint`),
+then `supports_default_copy_to` can be replaced by `supports_allocate_load` if
+appropriate (see [Implementing copy](@ref)).
 
 ### Benchmarking
 

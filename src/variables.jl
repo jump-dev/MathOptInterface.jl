@@ -92,7 +92,7 @@ end
 """
     supports_add_constrained_variables(
         model::ModelLike,
-        S::Type{<:AbstractScalarSet}
+        S::Type{<:AbstractVectorSet}
     )::Bool
 
 Return a `Bool` indicating whether `model` supports constraining a vector of
@@ -147,7 +147,7 @@ supports_add_constrained_variables(::ModelLike, ::Type{Reals}) = true
 """
     add_constrained_variables(
         model::ModelLike,
-        sets:AbstractVector{<:AbstractScalarSet}
+        sets::AbstractVector{<:AbstractScalarSet}
     )::Tuple{Vector{MOI.VariableIndex},
              Vector{MOI.ConstraintIndex{MOI.SingleVariable, eltype(sets)}}}
 

@@ -10,12 +10,21 @@ function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
     F, = b.objective_types[node.index]
     MOIU.print_with_acronym(io, "|$(node.index)| objective function of type `$F` is")
 end
-function print_node_info(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
+function print_node_info(
+    io::IO, b::LazyBridgeOptimizer, node::AbstractNode;
+    debug_unsupported = false
+)
     print(io, " ")
     print_node(io, b, node)
     d = _dist(b.graph, node)
     if d == INFINITY
-        print(io, " not supported\n")
+        print(io, " not supported")
+        if debug_unsupported
+            print(io, " because")
+            print_unsupported(io, b, node)
+        else
+            println(io)
+        end
     else
         index = bridge_index(b.graph, node)
         if iszero(index) || (node isa VariableNode && !is_variable_edge_best(b.graph, node))
@@ -28,44 +37,47 @@ function print_node_info(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
         end
     end
 end
-print_graph(b::LazyBridgeOptimizer) = print_graph(Base.stdout, b)
-function print_graph(io::IO, b::LazyBridgeOptimizer)
+print_graph(b::LazyBridgeOptimizer; kws...) = print_graph(Base.stdout, b; kws...)
+function print_graph(io::IO, b::LazyBridgeOptimizer; kws...)
     println(io, b.graph)
-    for node in variable_nodes(b.graph)
-        print_node_info(io, b, node)
+    print_nodes(io, b, variable_nodes(b.graph), constraint_nodes(b.graph), objective_nodes(b.graph); kws...)
+end
+function print_nodes(io::IO, b::LazyBridgeOptimizer, variable_nodes, constraint_nodes, objective_nodes; kws...)
+    for node in variable_nodes
+        print_node_info(io, b, node; kws...)
     end
-    for node in constraint_nodes(b.graph)
-        print_node_info(io, b, node)
+    for node in constraint_nodes
+        print_node_info(io, b, node; kws...)
     end
-    for node in objective_nodes(b.graph)
-        print_node_info(io, b, node)
+    for node in objective_nodes
+        print_node_info(io, b, node; kws...)
     end
 end
 
-function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
+function print_if_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
     if _dist(b.graph, node) != INFINITY
         return
     end
-    print(io, "  ")
+    print(io, "   ")
     print_node(io, b, node)
     print(io, " not supported\n")
 end
 function print_unsupported(io::IO, b::LazyBridgeOptimizer, edge::Edge)
     for node in edge.added_variables
-        print_unsupported(io, b, node)
+        print_if_unsupported(io, b, node)
     end
     for node in edge.added_constraints
-        print_unsupported(io, b, node)
+        print_if_unsupported(io, b, node)
     end
 end
 function print_unsupported(io::IO, b::LazyBridgeOptimizer, edge::ObjectiveEdge)
     for node in edge.added_variables
-        print_unsupported(io, b, node)
+        print_if_unsupported(io, b, node)
     end
     for node in edge.added_constraints
-        print_unsupported(io, b, node)
+        print_if_unsupported(io, b, node)
     end
-    print_unsupported(io, b, edge.added_objective)
+    print_if_unsupported(io, b, edge.added_objective)
 end
 function print_unsupported(io::IO, b::LazyBridgeOptimizer, edges::Vector, index_to_bridge::Function)
     no_bridge = true
@@ -74,7 +86,7 @@ function print_unsupported(io::IO, b::LazyBridgeOptimizer, edges::Vector, index_
             println(io, ":")
             no_bridge = false
         end
-        MOIU.print_with_acronym(io, "  Cannot use `$(index_to_bridge(edge.bridge_index))` because:\n")
+        MOIU.print_with_acronym(io, "   Cannot use `$(index_to_bridge(edge.bridge_index))` because:\n")
         print_unsupported(io, b, edge)
     end
     if no_bridge
@@ -90,33 +102,25 @@ end
 function _bridge_type(b::LazyBridgeOptimizer, node::ObjectiveNode, bridge_index::Int)
     return Objective.concrete_bridge_type(b.objective_bridge_types[bridge_index], b.objective_types[node.index]...)
 end
-function print_unsupported(io::IO, b::LazyBridgeOptimizer, variables, constraints, objectives)
-    for node in variables
-        print_node(io, b, node)
-        print(io, " not supported because")
-        print_unsupported(io, b, b.graph.variable_edges[node.index],
-                          bridge_index -> _bridge_type(b, node, bridge_index))
-        print(io, "  Cannot add free variables and then constrain them because")
-        constraint_node = b.graph.variable_constraint_node[node.index]
-        if constraint_node.index == -1
-            println(io, " free variables are bridged but no functionize bridge was added.")
-        else
-            println(io, ":")
-            print_unsupported(io, b, constraint_node)
-        end
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
+    print_unsupported(io, b, b.graph.variable_edges[node.index],
+                      bridge_index -> _bridge_type(b, node, bridge_index))
+    print(io, "   Cannot add free variables and then constrain them because")
+    constraint_node = b.graph.variable_constraint_node[node.index]
+    if constraint_node.index == -1
+        println(io, " free variables are bridged but no functionize bridge was added.")
+    else
+        println(io, ":")
+        print_if_unsupported(io, b, constraint_node)
     end
-    for node in constraints
-        print_node(io, b, node)
-        print(io, " not supported because")
-        print_unsupported(io, b, b.graph.constraint_edges[node.index],
-                          bridge_index -> _bridge_type(b, node, bridge_index))
-    end
-    for node in objectives
-        print_node(io, b, node)
-        print(io, " not supported because")
-        print_unsupported(io, b, b.graph.objective_edges[node.index],
-                          bridge_index -> _bridge_type(b, node, bridge_index))
-    end
+end
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
+    print_unsupported(io, b, b.graph.constraint_edges[node.index],
+                      bridge_index -> _bridge_type(b, node, bridge_index))
+end
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
+    print_unsupported(io, b, b.graph.objective_edges[node.index],
+                      bridge_index -> _bridge_type(b, node, bridge_index))
 end
 
 function add_unsupported(graph::Graph, edges::Vector{Edge},
@@ -144,7 +148,7 @@ function add_unsupported(graph::Graph, edges::Vector{ObjectiveEdge},
 end
 function add_unsupported(graph::Graph, node::VariableNode,
                          variables, constraints, objectives)
-    if _dist(graph, node) != INFINITY
+    if _dist(graph, node) != INFINITY || node in variables
         return
     end
     push!(variables, node)
@@ -156,7 +160,7 @@ function add_unsupported(graph::Graph, node::VariableNode,
 end
 function add_unsupported(graph::Graph, node::ConstraintNode,
                          variables, constraints, objectives)
-    if _dist(graph, node) != INFINITY
+    if _dist(graph, node) != INFINITY || node in constraints
         return
     end
     push!(constraints, node)
@@ -164,7 +168,7 @@ function add_unsupported(graph::Graph, node::ConstraintNode,
 end
 function add_unsupported(graph::Graph, node::ObjectiveNode,
                          variables, constraints, objectives)
-    if _dist(graph, node) != INFINITY
+    if _dist(graph, node) != INFINITY || node in objectives
         return
     end
     push!(objectives, node)
@@ -180,31 +184,47 @@ function debug_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
     constraints = Set{ConstraintNode}()
     objectives = Set{ObjectiveNode}()
     add_unsupported(b.graph, node, variables, constraints, objectives)
-    print_unsupported(io, b, _sort(variables), _sort(constraints), _sort(objectives))
+    print_nodes(io, b, _sort(variables), _sort(constraints), _sort(objectives),
+                debug_unsupported = true)
 end
+
+const UNSUPPORTED_MESSAGE = " are not supported and cannot be bridged into supported" *
+    " constrained variables and constraints. See details below:"
+
+function debug(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet}; io::IO = Base.stdout)
+    if (S <: MOI.AbstractScalarSet && MOI.supports_add_constrained_variable(b, S)) ||
+        (S <: MOI.AbstractVectorSet && MOI.supports_add_constrained_variables(b, S))
+        MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported.\n")
+    else
+        MOIU.print_with_acronym(io, "Constrained variables in `$S`")
+        println(io, UNSUPPORTED_MESSAGE)
+        debug_unsupported(io, b, node(b, S))
+    end
+end
+
+"""
+    debug_supports_add_constrained_variable(
+        b::LazyBridgeOptimizer,
+        S::Type{<:MOI.AbstractSet};
+        io::IO = Base.stdout
+    )
+
+Prints to `io` explanations for the value of
+[`MOI.supports_add_constrained_variable`](@ref) with the same arguments.
+"""
+function debug_supports_add_constrained_variable(
+    b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet}; kws...)
+    debug(b, S; kws...)
+end
+
 function debug(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
                S::Type{<:MOI.AbstractSet}; io::IO = Base.stdout)
     if MOI.supports_constraint(b, F, S)
-        if F == MOIU.variable_function_type(S)
-            # This may be thanks to a variable bridge so `F`-in-`S` constraints
-            # are maybe not supported but constrained variables in `S` are
-            # definitely supported.
-            MOIU.print_with_acronym(io, "Constrained variables in `$S` are supported.\n")
-        else
-            MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported.\n")
-        end
+        MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported.\n")
     else
-        message = " are not supported and cannot be bridged into supported" *
-            " constrained variables and constraints. See details below:"
-        if F == MOIU.variable_function_type(S)
-            MOIU.print_with_acronym(io, "Constrained variables in `$S`")
-            println(io, message)
-            debug_unsupported(io, b, node(b, S))
-        else
-            MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints")
-            println(io, message)
-            debug_unsupported(io, b, node(b, F, S))
-        end
+        MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints")
+        println(io, UNSUPPORTED_MESSAGE)
+        debug_unsupported(io, b, node(b, F, S))
     end
 end
 

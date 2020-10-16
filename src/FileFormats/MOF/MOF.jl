@@ -7,8 +7,7 @@ import JSONSchema
 import MathOptInterface
 
 const MOI = MathOptInterface
-const Object = OrderedCollections.OrderedDict{String, Any}
-const SCHEMA_PATH = joinpath(@__DIR__, "v0.4.0.json")
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.0.5.schema.json")
 const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
     VersionNumber(
         data["properties"]["version"]["properties"]["major"]["const"],
@@ -16,7 +15,11 @@ const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap=false)
     )
 end
 
-function _parse_mof_version(version::Object)
+const OrderedObject = OrderedCollections.OrderedDict{String, Any}
+const UnorderedObject = Dict{String, Any}
+const Object = Union{OrderedObject, UnorderedObject}
+
+function _parse_mof_version(version)
     return VersionNumber(version["major"], version["minor"])
 end
 
@@ -24,6 +27,7 @@ struct Nonlinear <: MOI.AbstractScalarFunction
     expr::Expr
 end
 Base.copy(nonlinear::Nonlinear) = Nonlinear(copy(nonlinear.expr))
+MOI.Utilities.canonicalize!(nonlinear::Nonlinear) = nonlinear
 
 MOI.Utilities.@model(InnerModel,
     (MOI.ZeroOne, MOI.Integer),
@@ -54,7 +58,7 @@ struct Options
 end
 
 function get_options(m::Model)
-    return get(m.model.ext, :MOF_OPTIONS, Options(false, true, false))
+    return get(m.model.ext, :MOF_OPTIONS, Options(false, false, false))
 end
 
 """
@@ -67,13 +71,14 @@ Keyword arguments are:
  - `print_compact::Bool=false`: print the JSON file in a compact format without
    spaces or newlines.
 
- - `validate::Bool=true`: validate each file prior to reading against the MOF
-   schema
+ - `validate::Bool=false`: validate each file prior to reading against the MOF
+   schema. Defaults to `false` because this can take a long time for large
+   models.
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed
 """
 function Model(;
-    print_compact::Bool = false, validate::Bool = true, warn::Bool = false
+    print_compact::Bool = false, validate::Bool = false, warn::Bool = false
 )
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
     model.model.ext[:MOF_OPTIONS] = Options(print_compact, validate, warn)
@@ -105,9 +110,12 @@ function validate(io::IO)
     object = JSON.parse(io)
     seekstart(io)
     mof_schema = JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH, use_mmap=false))
-    if !JSONSchema.isvalid(object, mof_schema)
-        error("Unable to read file because it does not conform to the MOF " *
-              "schema: ", JSONSchema.diagnose(object, mof_schema))
+    ret = JSONSchema.validate(object, mof_schema)
+    if ret !== nothing
+        error(
+            "Unable to read file because it does not conform to the MOF " *
+            "schema: ", ret
+        )
     end
     return
 end

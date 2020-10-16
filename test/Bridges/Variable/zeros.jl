@@ -64,19 +64,6 @@ err = ErrorException(
 @test_throws err MOI.delete(bridged_mock, cyz)
 
 err = ErrorException(
-    "Cannot add two `VectorOfVariables`-in-`MathOptInterface.Zeros` on the" *
-    " same first variable MathOptInterface.VariableIndex(-1)."
-)
-@test_throws err MOI.add_constraint(bridged_mock, MOI.VectorOfVariables(yz), MOI.Zeros(2))
-
-err = ErrorException(
-    "Cannot `VectorOfVariables`-in-`MathOptInterface.Zeros` for" *
-    " which some variables are bridged but not the first one" *
-    " `MathOptInterface.VariableIndex(12345679)`."
-)
-@test_throws err MOI.add_constraint(bridged_mock, MOI.VectorOfVariables([x, y]), MOI.Zeros(2))
-
-err = ErrorException(
     "Cannot unbridge function because some variables are bridged by" *
     " variable bridges that do not support reverse mapping, e.g.," *
     " `ZerosBridge`."

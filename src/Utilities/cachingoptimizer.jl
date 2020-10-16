@@ -145,17 +145,43 @@ errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)
     @assert model.state == EMPTY_OPTIMIZER
-    # We do not need to copy names because name-related operations are handled by `m.model_cache`
+    # We do not need to copy names because name-related operations are handled
+    # by `m.model_cache`
     indexmap = MOI.copy_to(model.optimizer, model.model_cache, copy_names=false)
     model.state = ATTACHED_OPTIMIZER
-    # MOI does not define the type of index_map, so we have to copy it into a
-    # concrete container. Also load the reverse map.
-    model.model_to_optimizer_map = IndexMap()
-    model.optimizer_to_model_map = IndexMap()
-    for k in keys(indexmap)
-        model.model_to_optimizer_map[k] = indexmap[k]
-        model.optimizer_to_model_map[indexmap[k]] = k
+    # MOI does not define the type of index_map, so we have to convert it
+    # into an actual IndexMap. Also load the reverse IndexMap.
+    model.model_to_optimizer_map = _standardize(indexmap)
+    model.optimizer_to_model_map = _reverse_index_map(indexmap)
+    return nothing
+end
+
+function _reverse_index_map(src::IndexMap)
+    dest = IndexMap()
+    sizehint!(dest.varmap, length(src.varmap))
+    _reverse_dict(dest.varmap, src.varmap)
+    _reverse_dict(dest.conmap, src.conmap)
+    return dest
+end
+
+function _reverse_dict(dest::AbstractDict, src::AbstractDict)
+    for (k,v) in src
+        dest[v] = k
     end
+end
+function _reverse_dict(src::D) where {D<:Dict}
+    return D(values(src) .=> keys(src))
+end
+
+function _standardize(d::AbstractDict)
+    map = IndexMap()
+    for (k,v) in d
+        map[k] = v
+    end
+    return map
+end
+function _standardize(d::IndexMap)
+    return d
 end
 
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
@@ -237,6 +263,77 @@ function MOI.add_variables(m::CachingOptimizer, n)
         end
     end
     return vindices
+end
+
+function MOI.supports_add_constrained_variable(m::CachingOptimizer, S::Type{<:MOI.AbstractScalarSet})
+    return MOI.supports_add_constrained_variable(m.model_cache, S) && (m.state == NO_OPTIMIZER || MOI.supports_add_constrained_variable(m.optimizer, S))
+end
+function MOI.add_constrained_variable(m::CachingOptimizer, set::MOI.AbstractScalarSet)
+    if m.state == MOIU.ATTACHED_OPTIMIZER
+        if m.mode == MOIU.AUTOMATIC
+            try
+                vindex_optimizer, cindex_optimizer =
+                    MOI.add_constrained_variable(m.optimizer, set)
+            catch err
+                if err isa MOI.NotAllowedError
+                    reset_optimizer(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindex_optimizer, cindex_optimizer =
+                MOI.add_constrained_variable(m.optimizer, set)
+        end
+    end
+    vindex, cindex = MOI.add_constrained_variable(m.model_cache, set)
+    if m.state == MOIU.ATTACHED_OPTIMIZER
+        m.model_to_optimizer_map[vindex] = vindex_optimizer
+        m.optimizer_to_model_map[vindex_optimizer] = vindex
+        m.model_to_optimizer_map[cindex] = cindex_optimizer
+        m.optimizer_to_model_map[cindex_optimizer] = cindex
+    end
+    return vindex, cindex
+end
+
+function _supports_add_constrained_variables(m::CachingOptimizer, S::Type{<:MOI.AbstractVectorSet})
+    return MOI.supports_add_constrained_variables(m.model_cache, S) && (m.state == NO_OPTIMIZER || MOI.supports_add_constrained_variables(m.optimizer, S))
+end
+# Split in two to solve ambiguity
+function MOI.supports_add_constrained_variables(m::CachingOptimizer, ::Type{MOI.Reals})
+    return _supports_add_constrained_variables(m, MOI.Reals)
+end
+function MOI.supports_add_constrained_variables(m::CachingOptimizer, S::Type{<:MOI.AbstractVectorSet})
+    return _supports_add_constrained_variables(m, S)
+end
+function MOI.add_constrained_variables(m::CachingOptimizer, set::MOI.AbstractVectorSet)
+    if m.state == ATTACHED_OPTIMIZER
+        if m.mode == AUTOMATIC
+            try
+                vindices_optimizer, cindex_optimizer =
+                    MOI.add_constrained_variables(m.optimizer, set)
+            catch err
+                if err isa MOI.NotAllowedError
+                    reset_optimizer(m)
+                else
+                    rethrow(err)
+                end
+            end
+        else
+            vindices_optimizer, cindex_optimizer =
+                MOI.add_constrained_variables(m.optimizer, set)
+        end
+    end
+    vindices, cindex = MOI.add_constrained_variables(m.model_cache, set)
+    if m.state == ATTACHED_OPTIMIZER
+        for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
+            m.model_to_optimizer_map[vindex] = vindex_optimizer
+            m.optimizer_to_model_map[vindex_optimizer] = vindex
+        end
+        m.model_to_optimizer_map[cindex] = cindex_optimizer
+        m.optimizer_to_model_map[cindex_optimizer] = cindex
+    end
+    return vindices, cindex
 end
 
 function MOI.supports_constraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})

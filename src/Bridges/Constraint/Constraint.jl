@@ -1,5 +1,7 @@
 module Constraint
 
+using OrderedCollections # for OrderedDict in Map
+
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
@@ -41,6 +43,9 @@ include("interval.jl")
 const SplitInterval{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SplitIntervalBridge{T}, OT}
 include("quad_to_soc.jl")
 const QuadtoSOC{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{QuadtoSOCBridge{T}, OT}
+include("soc_to_nonconvex_quad.jl") # do not add these bridges by default
+const SOCtoNonConvexQuad{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoNonConvexQuadBridge{T}, OT}
+const RSOCtoNonConvexQuad{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoNonConvexQuadBridge{T}, OT}
 include("norm_to_lp.jl")
 const NormInfinity{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormInfinityBridge{T}, OT}
 const NormOne{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T}, OT}
@@ -64,6 +69,10 @@ const RSOCtoPSD{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoPSDBridge{T}
 include("indicator_activate_on_zero.jl")
 include("indicator_sos.jl")
 const IndicatortoSOS1{T, BC <: MOI.AbstractScalarSet, MaybeBC} = SingleBridgeOptimizer{IndicatorSOS1Bridge{T, BC, MaybeBC}}
+include("semi_to_binary.jl")
+const SemiToBinary{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SemiToBinaryBridge{T}, OT}
+include("zero_one.jl")
+const ZeroOne{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZeroOneBridge{T}, OT}
 
 """
     add_all_bridges(bridged_model, ::Type{T})
@@ -84,6 +93,9 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, VectorFunctionizeBridge{T})
     MOIB.add_bridge(bridged_model, SplitIntervalBridge{T})
     MOIB.add_bridge(bridged_model, QuadtoSOCBridge{T})
+    # We do not add `(R)SOCtoNonConvexQuad` because it starts with a convex
+    # conic constraint and generate a non-convex constraint (in the QCP
+    # interpretation).
     MOIB.add_bridge(bridged_model, NormInfinityBridge{T})
     MOIB.add_bridge(bridged_model, NormOneBridge{T})
     MOIB.add_bridge(bridged_model, GeoMeanBridge{T})
@@ -101,6 +113,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
     MOIB.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
     MOIB.add_bridge(bridged_model, IndicatorSOS1Bridge{T})
+    MOIB.add_bridge(bridged_model, SemiToBinaryBridge{T})
+    MOIB.add_bridge(bridged_model, ZeroOneBridge{T})
     return
 end
 

@@ -29,7 +29,6 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     # Bellman-Ford graph
     graph::Graph
     # List of types of available bridges
-    variable_free_bridge_type::Union{Nothing, DataType}
     variable_bridge_types::Vector{Any}
     variable_node::OrderedDict{Tuple{DataType}, VariableNode}
     variable_types::Vector{Tuple{DataType}}
@@ -41,6 +40,9 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     objective_bridge_types::Vector{Any}
     objective_node::OrderedDict{Tuple{DataType}, ObjectiveNode}
     objective_types::Vector{Tuple{DataType}}
+    # Cache for (F, S) -> BridgeType. Avoids having to look up
+    # `concrete_bridge_type` at runtime, which is slow.
+    cached_bridge_type::Dict{Any, DataType}
 end
 function LazyBridgeOptimizer(model::MOI.ModelLike)
     return LazyBridgeOptimizer{typeof(model)}(
@@ -49,9 +51,11 @@ function LazyBridgeOptimizer(model::MOI.ModelLike)
         Constraint.Map(), Dict{MOI.ConstraintIndex, String}(), nothing,
         Objective.Map(),
         Graph(),
-        nothing, Any[], OrderedDict{Tuple{DataType}, VariableNode}(), Tuple{DataType}[],
+        Any[], OrderedDict{Tuple{DataType}, VariableNode}(), Tuple{DataType}[],
         Any[], OrderedDict{Tuple{DataType, DataType}, ConstraintNode}(), Tuple{DataType, DataType}[],
-        Any[], OrderedDict{Tuple{DataType}, ObjectiveNode}(), Tuple{DataType}[],)
+        Any[], OrderedDict{Tuple{DataType}, ObjectiveNode}(), Tuple{DataType}[],
+        Dict{Any, DataType}(),
+    )
 end
 
 function Variable.bridges(bridge::LazyBridgeOptimizer)
@@ -70,10 +74,10 @@ end
 # with less bridges than `b.variable_dist[(S,)]`,
 # `b.constraint_dist[(F, S)]` or `b.objective_dist[(F,)]` using `BT`.
 # We could either recompute the distance from every node or clear the
-# dictionary so that the distance is computed lazily at the next `supports_constraint`
-# call. We prefer clearing the dictionaries so as this is called for each
-# bridge added and recomputing the distance for each bridge would be a wase
-# if several bridges are added consecutively.
+# dictionary so that the distance is computed lazily at the next
+# `supports_constraint` call. We prefer clearing the dictionaries so as this is
+# called for each bridge added and recomputing the distance for each bridge
+# would be a waste if several bridges are added consecutively.
 function _reset_dist(b::LazyBridgeOptimizer)
     empty!(b.variable_node)
     empty!(b.variable_types)
@@ -82,6 +86,7 @@ function _reset_dist(b::LazyBridgeOptimizer)
     empty!(b.objective_node)
     empty!(b.objective_types)
     empty!(b.graph)
+    empty!(b.cached_bridge_type)
 end
 
 
@@ -113,7 +118,8 @@ end
 
 function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     F = MOIU.variable_function_type(S)
-    if MOI.supports_constraint(b.model, F, S)
+    if (S <: MOI.AbstractScalarSet && MOI.supports_add_constrained_variable(b.model, S)) ||
+       (S <: MOI.AbstractVectorSet && MOI.supports_add_constrained_variables(b.model, S))
         return VariableNode(0)
     end
     variable_node = get(b.variable_node, (S,), nothing)
@@ -212,13 +218,6 @@ end
 function _add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     push!(_bridge_types(b, BT), BT)
 end
-function _add_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.FreeBridge})
-    if b.variable_free_bridge_type !== nothing
-        error("Bridge $BT cannot be added as $(b.variable_free_bridge_type) has already been added. Remove it first with `M̀OI.Bridges.remove_bridge`.")
-    else
-        b.variable_free_bridge_type = BT
-    end
-end
 
 """
     remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
@@ -241,14 +240,6 @@ function _remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     deleteat!(bridge_types, i)
     return true
 end
-function _remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.FreeBridge})
-    if b.variable_free_bridge_type === nothing || b.variable_free_bridge_type != BT
-        return false
-    end
-    b.variable_free_bridge_type = nothing
-    return true
-end
-
 
 """
     has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
@@ -258,13 +249,13 @@ Return a `Bool` indicating whether the bridges of type `BT` are used by `b`.
 function has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     return findfirst(isequal(BT), _bridge_types(b, BT)) !== nothing
 end
-function has_bridge(b::LazyBridgeOptimizer, BT::Type{<:Variable.FreeBridge})
-    return b.variable_free_bridge_type == BT
-end
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
-function is_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
-    return !MOI.supports_constraint(b.model, MOIU.variable_function_type(S), S)
+function is_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractScalarSet})
+    return !MOI.supports_add_constrained_variable(b.model, S)
+end
+function is_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractVectorSet})
+    return !MOI.supports_add_constrained_variables(b.model, S)
 end
 function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
     return !MOI.supports_constraint(b.model, F, S)
@@ -288,14 +279,13 @@ end
 
 supports_constraint_bridges(::LazyBridgeOptimizer) = true
 function supports_bridging_constrained_variable(
-    b::LazyBridgeOptimizer, ::Type{MOI.Reals}
-)
-    return b.variable_free_bridge_type !== nothing
-end
-function supports_bridging_constrained_variable(
     b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet}
 )
-    return !iszero(bridge_index(b, S))
+    variable_node = node(b, S)
+    constraint_node = b.graph.variable_constraint_node[variable_node.index]
+    return !iszero(bridge_index(b.graph, variable_node)) ||
+        (constraint_node.index != INVALID_NODE_INDEX &&
+         !iszero(bridge_index(b.graph, constraint_node)))
 end
 function supports_bridging_constraint(
     b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
@@ -309,34 +299,57 @@ function supports_bridging_objective_function(
     return !iszero(bridge_index(b, F))
 end
 function is_variable_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
-    return is_variable_edge_best(b.graph, node(b, S))
+    return is_bridged(b, S) && is_variable_edge_best(b.graph, node(b, S))
 end
-function bridge_type(b::LazyBridgeOptimizer, ::Type{MOI.Reals})
-    if b.variable_free_bridge_type === nothing
-        throw(MOI.UnsupportedConstraint{MOI.VectorOfVariables, MOI.Reals}())
-    end
-    return b.variable_free_bridge_type
-end
+
 function bridge_type(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+    bt = get(b.cached_bridge_type, (S,), nothing)
+    if bt !== nothing
+        return bt::DataType
+    end
     index = bridge_index(b, S)
     if iszero(index)
         throw(MOI.UnsupportedConstraint{MOIU.variable_function_type(S), S}())
     end
-    return Variable.concrete_bridge_type(b.variable_bridge_types[index], S)
+    new_bt = Variable.concrete_bridge_type(b.variable_bridge_types[index], S)
+    b.cached_bridge_type[(S,)] = new_bt
+    return new_bt::DataType
 end
-function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
+
+function bridge_type(
+    b::LazyBridgeOptimizer,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    bt = get(b.cached_bridge_type, (F, S), nothing)
+    if bt !== nothing
+        return bt::DataType
+    end
     index = bridge_index(b, F, S)
     if iszero(index)
         throw(MOI.UnsupportedConstraint{F, S}())
     end
-    return Constraint.concrete_bridge_type(b.constraint_bridge_types[index], F, S)
+    new_bt = Constraint.concrete_bridge_type(
+        b.constraint_bridge_types[index], F, S
+    )
+    b.cached_bridge_type[(F, S)] = new_bt
+    return new_bt::DataType
 end
-function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
+
+function bridge_type(
+    b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction}
+)
+    bt = get(b.cached_bridge_type, (F,), nothing)
+    if bt !== nothing
+        return bt::DataType
+    end
     index = bridge_index(b, F)
     if iszero(index)
         throw(MOI.UnsupportedAttribute(MOI.ObjectiveFunction{F}()))
     end
-    return Objective.concrete_bridge_type(b.objective_bridge_types[index], F)
+    new_bt = Objective.concrete_bridge_type(b.objective_bridge_types[index], F)
+    b.cached_bridge_type[(F,)] = new_bt
+    return new_bt::DataType
 end
 
 _func_name(::Type{Constraint.ScalarFunctionizeBridge}) = "SingleVariable", "constraint"
@@ -370,3 +383,5 @@ end
 function objective_functionize_bridge(b::LazyBridgeOptimizer)
     return _functionize_bridge(b.objective_bridge_types, Objective.FunctionizeBridge)
 end
+
+bridging_cost(b::LazyBridgeOptimizer, args...) = bridging_cost(b.graph, node(b, args...))

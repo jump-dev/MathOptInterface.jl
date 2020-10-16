@@ -77,6 +77,7 @@ function Model(
             (".lp", LP.Model),
             (".mof.json", MOF.Model),
             (".mps", MPS.Model),
+            (".dat-s", SDPA.Model),
             (".sdpa", SDPA.Model)
         ]
             if endswith(filename, ext) || occursin("$(ext).", filename)

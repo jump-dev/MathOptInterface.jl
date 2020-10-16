@@ -165,6 +165,13 @@ end
     @test gvq.affine_terms == MOI.VectorAffineTerm.([2, 1], sats)
     @test gvq.quadratic_terms == MOI.VectorQuadraticTerm.([1, 2, 2], sqts)
     @test MOIU.constant_vector(gvq) == [-3., -2.]
+
+    @testset "Constants" begin
+        @test MOIU.map_indices(index_map, :s) == :s
+        @test MOIU.map_indices(index_map, [:a, :b]) == [:a, :b]
+        @test MOIU.map_indices(index_map, "s") == "s"
+        @test MOIU.map_indices(index_map, ["a", "b"]) == ["a", "b"]
+    end
 end
 @testset "Conversion VectorOfVariables -> VectorAffineFunction" begin
     f = MOI.VectorAffineFunction{Int}(MOI.VectorOfVariables([z, x, y]))
@@ -308,16 +315,18 @@ end
             @test f.terms == MOI.ScalarAffineTerm.([2, 4], [x, y])
             @test f.constant == 5
         end
-        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4], [x, y]),
-                                     5)
+        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.5], [x, y]), 0.5)
         @testset "convert" begin
             @test_throws InexactError convert(MOI.SingleVariable, f)
+            @test_throws InexactError MOIU.convert_approx(MOI.SingleVariable, f)
+            @test MOIU.convert_approx(MOI.SingleVariable, f, tol = 0.5) == MOI.SingleVariable(x)
             quad_f = MOI.ScalarQuadraticFunction(f.terms,
-                                                 MOI.ScalarQuadraticTerm{Int}[],
+                                                 MOI.ScalarQuadraticTerm{Float64}[],
                                                  f.constant)
-            @test convert(MOI.ScalarQuadraticFunction{Int}, f) ≈ quad_f
+            @test convert(MOI.ScalarQuadraticFunction{Float64}, f) ≈ quad_f
             g = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
             @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+            @test MOIU.convert_approx(MOI.SingleVariable, g) == MOI.SingleVariable(x)
         end
         @testset "operate with Float64 coefficient type" begin
             f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 4.0],
@@ -551,7 +560,14 @@ end
          (MOI.constant(f1) ≈ MOI.constant(f2)) &&
          (MOI.coefficient.(f1.terms) ≈ MOI.coefficient.(f2.terms)))
     end
-    function test_canonicalization(f::T, expected::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction}}
+    function isapprox_ordered(f1::T, f2::T) where {T <: Union{MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction}}
+        ((MOI.term_indices.(f1.affine_terms) == MOI.term_indices.(f2.affine_terms)) &&
+         (MOI.term_indices.(f1.quadratic_terms) == MOI.term_indices.(f2.quadratic_terms)) &&
+         (MOI.constant(f1) ≈ MOI.constant(f2)) &&
+         (MOI.coefficient.(f1.affine_terms) ≈ MOI.coefficient.(f2.affine_terms)) &&
+         (MOI.coefficient.(f1.quadratic_terms) ≈ MOI.coefficient.(f2.quadratic_terms)))
+    end
+    function test_canonicalization(f::T, expected::T) where {T <: Union{MOI.ScalarAffineFunction, MOI.VectorAffineFunction, MOI.ScalarQuadraticFunction, MOI.VectorQuadraticFunction}}
         @test MOIU.is_canonical(expected)
         g = @inferred(MOIU.canonical(f))
         @test isapprox_ordered(g, expected)
@@ -664,6 +680,56 @@ end
             MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2, 3, 3, 3], MOI.ScalarAffineTerm.([1.0, 3.0, -1.0, -2.0], MOI.VariableIndex.([1, 1, 1, 1]))), [4.0, 5.0, 6.0]),
             MOI.VectorAffineFunction(MOI.VectorAffineTerm.([2], MOI.ScalarAffineTerm.([1.0], MOI.VariableIndex.([1]))), [4.0, 5.0, 6.0]),
             )
+    end
+    @testset "ScalarQuadratic" begin
+        x = MOI.SingleVariable(MOI.VariableIndex(1))
+        y = MOI.SingleVariable(MOI.VariableIndex(2))
+        @test MOIU.is_canonical(convert(MOI.ScalarQuadraticFunction{Float64}, 1.0))
+        @test !MOIU.is_canonical(1.0x*y + 2.0x*x + 2.0)
+        @test !MOIU.is_canonical(1.0x*x + 0.0x*y + 2.0)
+
+        test_canonicalization(
+            convert(MOI.ScalarQuadraticFunction{Float64}, 1.5),
+            convert(MOI.ScalarQuadraticFunction{Float64}, 1.5)
+        )
+        test_canonicalization(
+            0.0x*y - 2.0,
+            convert(MOI.ScalarQuadraticFunction{Float64}, -2.0)
+        )
+        test_canonicalization(
+            3.0x*y + 4.0x*x + 0.0,
+            4.0x*x + 3.0x*y + 0.0
+        )
+        test_canonicalization(
+            1.0x*y + 0.1x*y + 5.0,
+            1.1x*y + 5.0
+        )
+    end
+    @testset "VectorQuadratic" begin
+        x = MOI.SingleVariable(MOI.VariableIndex(1))
+        y = MOI.SingleVariable(MOI.VariableIndex(2))
+        @test MOIU.is_canonical(MOIU.operate(vcat, Float64, convert(MOI.ScalarQuadraticFunction{Float64}, 1.0)))
+        @test !MOIU.is_canonical(MOIU.operate(vcat, Float64, 1.0x*y + 2.0x*x + 2.0))
+        @test !MOIU.is_canonical(MOIU.operate(vcat, Float64, 1.0x*x + 0.0x*y + 2.0))
+
+        test_canonicalization(
+            MOIU.operate(
+                vcat,
+                Float64,
+                1.5,
+                0.0x*y - 2.0,
+                3.0x*y + 4.0x*x + 0.0,
+                1.0x*y + 0.1x*y + 5.0
+            ),
+            MOIU.operate(
+                vcat,
+                Float64,
+                1.5,
+                -2.0,
+                4.0x*x + 3.0x*y + 0.0,
+                1.1x*y + 5.0
+            )
+        )
     end
 end
 

@@ -148,6 +148,8 @@ bridged_mock = MOIB.Constraint.LessToGreater{Float64}(MOIB.Constraint.SplitInter
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),
                             MOI.Interval(0.0, 1.0))
+    @test !MOI.Bridges.is_bridged(bridged_mock, ci)
+    @test MOI.Bridges.is_bridged(bridged_mock.model, ci)
     @test !MOI.supports(bridged_mock, attr, typeof(ci))
     @test_throws err MOI.get(bridged_mock, attr, ci)
 end
@@ -212,13 +214,54 @@ end
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
 
+    n = 4
+    z = MOI.add_variables(model, n)
+    scon_indices = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{Int}}[]
+    for (i, v) in enumerate([x; y; z])
+        f = MOI.SingleVariable(v)
+        c = MOI.add_constraint(model, f, MOI.Interval(i, 2i))
+        push!(scon_indices, c)
+
+        @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int})])
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+        test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, i)
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
+        # The indices should be returned in order of creation
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}())) == scon_indices
+    end
+
+    vcon_indices = MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.Nonnegatives}[]
+    for (i, v) in enumerate(z)
+        f = MOI.VectorOfVariables([v])
+        c = MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+        push!(vcon_indices, c)
+
+        @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([(MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}), (MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int}), (MOI.VectorOfVariables, MOI.Nonnegatives)])
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 1)
+        test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+        test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
+        test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, i)
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.GreaterThan{Int}}())) == [c2]
+        # The indices should be returned in order of creation
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}())) == scon_indices
+        @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}())) == vcon_indices
+    end
+
     @test MOI.is_valid(model, c2)
     MOI.delete(model, c2)
 
-    @test MOI.get(model, MOI.ListOfConstraints()) == [(MOI.ScalarAffineFunction{Int},MOI.Interval{Int})]
+    @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([(MOI.ScalarAffineFunction{Int},MOI.Interval{Int}), (MOI.SingleVariable, MOI.Interval{Int}), (MOI.VectorOfVariables, MOI.Nonnegatives)])
     test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}, 0)
     test_num_constraints(model, MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}, 1)
+    test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
+    test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, n)
     @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Int},MOI.Interval{Int}}())) == [c1]
+    # The indices should be returned in order of creation
+    @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}())) == scon_indices
+    @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}())) == vcon_indices
 end
 
 @testset "Continuous Linear" begin

@@ -73,7 +73,7 @@ function map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
     return map_indices(vi -> variable_map[vi], x)
 end
 
-const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet, Function, MOI.ModelLike}
+const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet, Function, MOI.ModelLike, Symbol}
 const ObjectOrTupleWithoutIndex = Union{ObjectWithoutIndex, Tuple{Vararg{ObjectWithoutIndex}}}
 const ObjectOrTupleOrArrayWithoutIndex = Union{ObjectOrTupleWithoutIndex, AbstractArray{<:ObjectOrTupleWithoutIndex}, AbstractArray{<:AbstractArray{<:ObjectOrTupleWithoutIndex}}}
 
@@ -363,16 +363,30 @@ function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
     return VT(t1.output_index, scalar_term)
 end
 
+is_canonical(::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = true
+
 """
-    is_canonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
-                         VectorAffineFunction, VectorQuadraticTerm})
+    is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function is_canonical(f::Union{SAF, VAF, SQF, VQF})
+function is_canonical(f::Union{SAF, VAF})
     is_strictly_sorted(f.terms, MOI.term_indices,
                        t -> !iszero(MOI.coefficient(t)))
+end
+
+"""
+    is_canonical(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
+
+Returns a Bool indicating whether the function is in canonical form.
+See [`canonical`](@ref).
+"""
+function is_canonical(f::Union{SQF, VQF})
+    v = is_strictly_sorted(f.affine_terms, MOI.term_indices,
+                           t -> !iszero(MOI.coefficient(t)))
+    v &= is_strictly_sorted(f.quadratic_terms, MOI.term_indices,
+                            t -> !iszero(MOI.coefficient(t)))
 end
 
 """
@@ -409,12 +423,16 @@ Returns the function in a canonical form, i.e.
 * The terms appear in increasing order of variable where there the order of the variables is the order of their value.
 * For a `AbstractVectorFunction`, the terms are sorted in ascending order of output index.
 
+The output of `canonical` can be assumed to be a copy of `f`, even for `VectorOfVariables`.
+
 ### Examples
 If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-canonical(f::Union{SAF, VAF, SQF, VQF}) = canonicalize!(copy(f))
+canonical(f::MOI.AbstractFunction) = canonicalize!(copy(f))
+
+canonicalize!(f::Union{MOI.VectorOfVariables, MOI.SingleVariable}) = f
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
@@ -489,7 +507,7 @@ function test_variablenames_equal(model, variablenames)
     end
     for (vname,seen) in seen_name
         if !seen
-            error("Did not find variable with name $vname in intance.")
+            error("Did not find variable with name $vname in instance.")
         end
     end
 end
@@ -509,7 +527,7 @@ function test_constraintnames_equal(model, constraintnames)
     end
     for (cname,seen) in seen_name
         if !seen
-            error("Did not find constraint with name $cname in intance.")
+            error("Did not find constraint with name $cname in instance.")
         end
     end
 end
@@ -833,7 +851,7 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
 end
-# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+# `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
 function operate_term(::typeof(*), t::MOI.ScalarAffineTerm{T}, β::T) where T<:Number
     MOI.ScalarAffineTerm(t.coefficient * β, t.variable_index)
 end
@@ -1444,7 +1462,7 @@ function operate(::typeof(*), ::Type{T},
     return operate(*, T, α, f)
 end
 
-# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+# `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
 function operate!(::typeof(*), ::Type{T},
                   f::Union{MOI.ScalarAffineFunction{T},
                            MOI.ScalarQuadraticFunction{T}}, α::T) where T<:Number
@@ -1897,7 +1915,7 @@ end
 
 
 # Similar to `eachscalar` but faster, see
-# https://github.com/JuliaOpt/MathOptInterface.jl/issues/418
+# https://github.com/jump-dev/MathOptInterface.jl/issues/418
 function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
     MOI.SingleVariable.(f.variables)
 end
@@ -1957,7 +1975,7 @@ function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFuncti
     f = canonical(func)
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol=tol), f.terms)
     if abs(f.constant) > tol || i === nothing ||
-        any(j -> j != i && abs(f.terms[i]) > tol, eachindex(f.terms))
+        any(j -> j != i && abs(f.terms[j].coefficient) > tol, eachindex(f.terms))
         throw(InexactError(:convert_approx, MOI.SingleVariable, func))
     end
     return MOI.SingleVariable(f.terms[i].variable_index)

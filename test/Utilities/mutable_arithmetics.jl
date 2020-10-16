@@ -129,6 +129,20 @@ y = MOI.VariableIndex(2)
 fx = MOI.SingleVariable(x)
 fy = MOI.SingleVariable(y)
 
+@testset "SingleVariable in $T" for T in [Int]
+    a = 2fx
+    MA.Test.@test_rewrite(a + fx)
+    MA.Test.@test_rewrite(a + 3 * fx)
+    MA.Test.@test_rewrite(a + fx * 4)
+    MA.Test.@test_rewrite(a + 3 * fx * 4)
+    MA.Test.@test_rewrite(fx + a)
+    MA.Test.@test_rewrite(a - fx)
+    MA.Test.@test_rewrite(a - 3 * fx)
+    MA.Test.@test_rewrite(a - fx * 4)
+    MA.Test.@test_rewrite(a - 3 * fx * 4)
+    MA.Test.@test_rewrite(fx - a)
+end
+
 @testset "Affine in $T" for T in [Int]
     @testset "Int" begin
         MA.Test.int_test(MOI.ScalarAffineFunction{T}, exclude = ["int_mul", "int_add_mul"])
@@ -143,7 +157,7 @@ fy = MOI.SingleVariable(y)
     all_tests(T, a, b, c, d, e, f, g)
 end
 
-@testset "MutableArithmetics with polynomials in $T" for T in [Int]
+@testset "Quadratic in $T" for T in [Int]
     @testset "Int" begin
         MA.Test.int_test(MOI.ScalarQuadraticFunction{T}, exclude = ["int_mul", "int_add_mul"])
     end
