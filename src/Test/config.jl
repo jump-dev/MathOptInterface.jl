@@ -12,8 +12,7 @@ struct TestConfig{T <: Real}
     optimal_status::MOI.TerminationStatusCode
     basis::Bool # can get variable and constraint basis status
     function TestConfig{T}(;
-        atol::Real = Base.rtoldefault(one(T), one(T), 0), 
-        rtol::Real = Base.rtoldefault(one(T), one(T), 0), 
+        atol::Real = Base.rtoldefault(T), rtol::Real = Base.rtoldefault(T), 
         solve::Bool = true, query::Bool = true, modify_lhs::Bool = true, duals::Bool = true,
         dual_objective_value::Bool = duals, infeas_certificates::Bool = true,
         optimal_status = MOI.OPTIMAL, basis::Bool = false) where {T <: Real}
