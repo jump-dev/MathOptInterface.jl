@@ -2,9 +2,6 @@
 #      We first need to make sure that it is copied with `MA.copy_if_mutable` when it
 #      is passed from one function to a mutable one.
 
-import MutableArithmetics
-const MA = MutableArithmetics
-
 MA.mutability(::Type{<:TypedLike}) = MA.IsMutable()
 
 function MA.mutable_copy(func::MOI.ScalarAffineFunction)

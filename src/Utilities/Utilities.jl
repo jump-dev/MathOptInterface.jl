@@ -3,6 +3,9 @@ module Utilities
 using LinearAlgebra # For dot
 using OrderedCollections # for OrderedDict in UniversalFallback 
 
+import MutableArithmetics
+const MA = MutableArithmetics
+
 using MathOptInterface
 const MOI = MathOptInterface
 
