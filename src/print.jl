@@ -291,7 +291,7 @@ function function_string(mode, func::ScalarAffineFunction, variable_name = defau
         ret = join(term_str[1 : 2 * (elm - 1)])
         if !_is_zero_for_printing(constant(func)) && show_constant
             ret = string(ret, "+",
-                         _string_round(constant(constant)))
+                         _string_round(constant(func)))
         end
         return ret
     end

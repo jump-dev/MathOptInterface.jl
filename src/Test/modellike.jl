@@ -77,8 +77,8 @@ Subject to
         io_test(MOI.REPLMode, model, """
 Feasibility
 Subject to
- c2 : x[1] ≥ 0.0
- c1 : x[1] ≤ 1.0
+ c2 : x[$(x.value)] ≥ 0.0
+ c1 : x[$(x.value)] ≤ 1.0
 """, MOI.name_or_default_name, repl=:print)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
@@ -106,8 +106,8 @@ Subject to
         io_test(MOI.REPLMode, model, """
 Feasibility
 Subject to
- c2 : x[1] ≥ 0.0
- c1 : x[1] ≤ 1.0
+ c2 : x[$(x.value)] ≥ 0.0
+ c1 : x[$(x.value)] ≤ 1.0
 """, MOI.name_or_default_name, repl=:print)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
