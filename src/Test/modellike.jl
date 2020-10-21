@@ -25,6 +25,16 @@ function default_status_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
 end
 
+# Helper function to test IO methods work correctly
+function io_test(mode, obj, exp_str, args...; repl=:both)
+    if mode == MOI.REPLMode
+        repl != :show  && @test sprint(print, obj, args...) == exp_str
+        repl != :print && @test sprint(show,  obj, args...) == exp_str
+    else
+        @test sprint(show, "text/latex", obj, args...) == string("\$\$ ", exp_str, " \$\$")
+    end
+end
+
 function nametest(model::MOI.ModelLike)
     @testset "Variables" begin
         MOI.empty!(model)
@@ -52,6 +62,24 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintIndex, "c2") == c1
         MOI.set(model, MOI.ConstraintName(), c2, "c1")
         @test MOI.get(model, MOI.ConstraintIndex, "c1") == c2
+        io_test(MOI.IJuliaMode, model, """
+\\begin{alignat*}{1}\\text{feasibility}\\\\
+\\text{Subject to} \\quad & noname \\geq 0.0\\\\
+ & noname \\leq 1.0\\\\
+\\end{alignat*}
+""")
+        io_test(MOI.REPLMode, model, """
+Feasibility
+Subject to
+ c2 : noname ≥ 0.0
+ c1 : noname ≤ 1.0
+""", repl=:print)
+        io_test(MOI.REPLMode, model, """
+Feasibility
+Subject to
+ c2 : x[1] ≥ 0.0
+ c1 : x[1] ≤ 1.0
+""", MOI.name_or_default_name, repl=:print)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
     end
@@ -69,6 +97,18 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintIndex, "c2") == c1
         MOI.set(model, MOI.ConstraintName(), c2, "c1")
         @test MOI.get(model, MOI.ConstraintIndex, "c1") == c2
+        io_test(MOI.REPLMode, model, """
+Feasibility
+Subject to
+ c2 : noname ≥ 0.0
+ c1 : noname ≤ 1.0
+""", repl=:print)
+        io_test(MOI.REPLMode, model, """
+Feasibility
+Subject to
+ c2 : x[1] ≥ 0.0
+ c1 : x[1] ≤ 1.0
+""", MOI.name_or_default_name, repl=:print)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
     end

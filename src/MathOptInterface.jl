@@ -12,9 +12,6 @@ abstract type ModelLike end
 # embed it in a `Ref`
 Base.broadcastable(model::ModelLike) = Ref(model)
 
-Base.show(io::IO, model::ModelLike) = Utilities.print_with_acronym(io, summary(model))
-
-
 """
     AbstractOptimizer
 
@@ -138,6 +135,7 @@ include("constraints.jl")
 include("modifications.jl")
 include("variables.jl")
 include("nlp.jl")
+include("print.jl")
 
 # submodules
 include("Utilities/Utilities.jl") # MOI.Utilities
