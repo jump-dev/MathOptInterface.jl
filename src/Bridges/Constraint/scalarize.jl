@@ -23,9 +23,12 @@ function bridge_constraint(::Type{ScalarizeBridge{T, F, S}},
 end
 
 function MOI.supports_constraint(::Type{ScalarizeBridge{T}},
-                                 ::Type{<:MOI.AbstractVectorFunction},
+                                 F::Type{<:MOI.AbstractVectorFunction},
                                  ::Type{<:MOIU.VectorLinearSet}) where T
-    return true
+    # If `F` is `MOI.VectorAffineFunction{Complex{Float64}}`, `S` is `MOI.Zeros` and `T` is `Float64`,
+    # it would create a set `MOI.EqualTo{Float64}` which is incorrect hence we say
+    # we only support it if the coefficient type of `F` is `T`.
+    return MOIU.is_coefficient_type(F, T)
 end
 MOIB.added_constrained_variable_types(::Type{<:ScalarizeBridge}) = Tuple{DataType}[]
 function MOIB.added_constraint_types(::Type{ScalarizeBridge{T, F, S}}) where {T, F, S}

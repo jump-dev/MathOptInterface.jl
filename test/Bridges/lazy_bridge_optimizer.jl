@@ -1127,3 +1127,24 @@ end
         end
     end
 end
+
+struct CustomVectorSet <: MOI.AbstractVectorSet
+    dimension::Int
+end
+struct CustomScalarSet <: MOI.AbstractScalarSet end
+@testset "Wrong coefficient type $S $T" for (S, T) in [(Complex{Float64}, Float64), (Float64, Int)]
+    model = MOI.Utilities.Model{T}()
+    bridged = MOI.Bridges.full_bridge_optimizer(model, T)
+    x = MOI.add_variable(bridged)
+    fx = MOI.SingleVariable(x)
+    f_scalar = one(S) * fx
+    f_vector = MOIU.vectorize([f_scalar])
+    function _test(func, set)
+        @test_throws MOI.UnsupportedConstraint{typeof(func), typeof(set)} MOI.add_constraint(bridged, func, set)
+        @test !MOI.supports_constraint(bridged, typeof(func), typeof(set))
+    end
+    _test(f_scalar, MOI.EqualTo(one(S)))
+    _test(f_vector, MOI.Zeros(1))
+    _test(f_scalar, CustomScalarSet())
+    _test(f_vector, CustomVectorSet(1))
+end
