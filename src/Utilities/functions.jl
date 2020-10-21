@@ -2051,6 +2051,10 @@ function Base.:*(g::TypedLike{T}, β::T) where T<:Number
     return operate_coefficients(α -> α * β, g)
 end
 
+is_coefficient_type(::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}, ::Type) = true
+is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where T = true
+is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
+
 similar_type(::Type{<:MOI.ScalarAffineFunction}, ::Type{T}) where T = MOI.ScalarAffineFunction{T}
 similar_type(::Type{<:MOI.ScalarQuadraticFunction}, ::Type{T}) where T = MOI.ScalarQuadraticFunction{T}
 similar_type(::Type{<:MOI.VectorAffineFunction}, ::Type{T}) where T = MOI.VectorAffineFunction{T}

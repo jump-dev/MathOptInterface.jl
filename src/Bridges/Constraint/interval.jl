@@ -37,9 +37,9 @@ function MOI.supports_constraint(
     return true
 end
 function MOI.supports_constraint(
-    ::Type{SplitIntervalBridge{T}}, ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{SplitIntervalBridge{T}}, F::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.Zeros}) where T
-    return true
+    return MOIU.is_coefficient_type(F, T)
 end
 MOIB.added_constrained_variable_types(::Type{<:SplitIntervalBridge}) = Tuple{DataType}[]
 function MOIB.added_constraint_types(::Type{SplitIntervalBridge{T, F, S, LS, US}}) where {T, F, S, LS, US}
