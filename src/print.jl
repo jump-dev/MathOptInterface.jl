@@ -104,12 +104,18 @@ Base.show(io::IO, model::ModelLike) = Utilities.print_with_acronym(io, summary(m
 # Helper function that rounds carefully for the purposes of printing
 # e.g.   5.3  =>  5.3
 #        1.0  =>  1
-function _string_round(f::Float64)
+function _string_round(print_mode, f::AbstractFloat)
     iszero(f) && return "0" # strip sign off zero
     str = string(f)
-    length(str) >= 2 && str[end-1:end] == ".0" ? str[1:end-2] : str
+    if print_mode === IJuliaMode
+        exp_idx = findfirst(isequal('e'), str)
+        if exp_idx !== nothing
+            str = string(str[1:(exp_idx - 1)], " \\times 10^{", str[(exp_idx + 1):end], "}")
+        end
+    end
+    return length(str) >= 2 && str[end-1:end] == ".0" ? str[1:end-2] : str
 end
-_string_round(f) = string(f)
+_string_round(print_mode, f) = string(f)
 
 _wrap_in_math_mode(str) = "\$\$ $str \$\$"
 _wrap_in_inline_math_mode(str) = "\$ $str \$"
@@ -263,43 +269,87 @@ _is_zero_for_printing(coef) = abs(coef) < 1e-10 * abs(oneunit(coef))
 # Whether something is one or not for the purposes of printing it.
 _is_one_for_printing(coef) = _is_zero_for_printing(abs(coef) - oneunit(coef))
 _is_one_for_printing(coef::Complex) = _is_one_for_printing(real(coef)) && _is_zero_for_printing(imag(coef))
-_sign_string(coef) = coef < zero(coef) ? " - " : " + "
-function function_string(mode, func::ScalarAffineFunction, variable_name = default_name; show_constant=true)
+_unary_sign_string(coef) = coef < zero(coef) ? "-" : ""
+_binary_sign_string(coef) = coef < zero(coef) ? " - " : " + "
+_complex_number(::Type{IJuliaMode}) = "i"
+_complex_number(::Type{REPLMode}) = "im"
+
+function _coef_string(print_mode, coef)
+    if _is_one_for_printing(coef)
+        return ""
+    else
+        return _string_round(print_mode, coef)
+    end
+end
+_is_negative(coef) = false
+_is_negative(coef::Real) = coef < zero(coef)
+function _sign_and_string(print_mode, coef)
+    if _is_negative(coef)
+        return -1, _coef_string(print_mode, -coef)
+    else
+        return 1, _coef_string(print_mode, coef)
+    end
+end
+function _sign_and_string(print_mode, coef::Complex)
+    if iszero(real(coef))
+        if iszero(imag(coef))
+            return _sign_and_string(print_mode, 0)
+        else
+            sign, str = _sign_and_string(print_mode, imag(coef))
+            return sign, string(str, _complex_number(print_mode), " ")
+        end
+    elseif iszero(imag(coef))
+        return _sign_and_string(print_mode, real(coef))
+    else
+        real_sign, real_string = _sign_and_string(print_mode, real(coef))
+        imag_sign, imag_string = _sign_and_string(print_mode, imag(coef))
+        return 1, string("(", _unary_sign_string(real_sign), real_string,
+                         _binary_sign_string(imag_sign), imag_string,
+                         _complex_number(print_mode), ")")
+    end
+end
+
+function function_string(print_mode, func::ScalarAffineFunction, variable_name = default_name; show_constant=true)
     # If the expression is empty, return the constant (or 0)
     if isempty(func.terms)
-        return show_constant ? _string_round(constant(func)) : "0"
+        return show_constant ? _string_round(print_mode, constant(func)) : "0"
     end
 
     term_str = Vector{String}(undef, 2length(func.terms))
     elm = 1
 
     for term in func.terms
-    pre = _is_one_for_printing(term.coefficient) ? "" : _string_round(term.coefficient) * " "
-
-        term_str[2 * elm - 1] = "+"
-        term_str[2 * elm] = string(pre, function_string(mode, term.variable_index, variable_name))
+        sign, coef_str = _sign_and_string(print_mode, term.coefficient)
+        term_str[2 * elm - 1] = elm == 1 ? _unary_sign_string(sign) : _binary_sign_string(sign)
+        term_str[2 * elm] = string(coef_str, function_string(print_mode, term.variable_index, variable_name))
         elm += 1
     end
 
     if elm == 1
         # Will happen with cancellation of all terms
         # We should just return the constant, if its desired
-        return show_constant ? _string_round(a.constant) : "0"
+        return show_constant ? _string_round(print_mode, a.constant) : "0"
     else
-        # Correction for very first term - don't want a " + "/" - "
-        term_str[1] = (term_str[1] == " - ") ? "-" : ""
         ret = join(term_str[1 : 2 * (elm - 1)])
         if !_is_zero_for_printing(constant(func)) && show_constant
-            ret = string(ret, "+",
-                         _string_round(constant(func)))
+            sign, coef_str = _sign_and_string(print_mode, constant(func))
+            if coef_str[end] == ' '
+                coef_str = coef_str[1:end-1]
+            end
+            ret = string(ret, _binary_sign_string(sign), coef_str)
         end
         return ret
     end
 end
-function Base.show(io::IO, f::AbstractScalarFunction, variable_name = default_name)
+
+function function_string(print_mode, func::AbstractVectorFunction, variable_name = default_name; kws...)
+    return "[" * join(function_string.(print_mode, Utilities.scalarize(func), variable_name; kws...), ", ") * "]"
+end
+
+function Base.show(io::IO, f::AbstractFunction, variable_name = default_name)
     print(io, function_string(REPLMode, f, variable_name))
 end
-function Base.show(io::IO, ::MIME"text/latex", f::AbstractScalarFunction, variable_name = default_name)
+function Base.show(io::IO, ::MIME"text/latex", f::AbstractFunction, variable_name = default_name)
     print(io, _wrap_in_math_mode(function_string(IJuliaMode, f, variable_name)))
 end
 

@@ -238,6 +238,24 @@ Subject to
             end
         end
 
+        io_test(MOI.IJuliaMode, model, """
+\\begin{alignat*}{1}\\text{feasibility}\\\\
+\\text{Subject to} \\quad & -VarX + Var2 = 0.0\\\\
+ & VarX + Var2 \\leq 1.0\\\\
+ & [Vary1, Vary2, Vary3, Vary4] \\in MathOptInterface.Nonpositives(4)\\\\
+ & Varx \\geq 0.0\\\\
+\\end{alignat*}
+""")
+
+        io_test(MOI.REPLMode, model, """
+Feasibility
+Subject to
+ Con2 : -VarX + Var2 = 0.0
+ Con1 : VarX + Var2 ≤ 1.0
+ Con4 : [Vary1, Vary2, Vary3, Vary4] ∈ MathOptInterface.Nonpositives(4)
+ Con3 : Varx ≥ 0.0
+""", repl=:print)
+
         MOI.delete(model, v[2])
         @test MOI.get(model, MOI.VariableIndex, "Var2") === nothing
 
