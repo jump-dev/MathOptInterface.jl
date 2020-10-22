@@ -274,8 +274,8 @@ _binary_sign_string(coef) = coef < zero(coef) ? " - " : " + "
 _complex_number(::Type{IJuliaMode}) = "i"
 _complex_number(::Type{REPLMode}) = "im"
 
-function _coef_string(print_mode, coef)
-    if _is_one_for_printing(coef)
+function _coef_string(print_mode, coef, coefficient)
+    if coefficient && _is_one_for_printing(coef)
         return ""
     else
         return _string_round(print_mode, coef)
@@ -283,26 +283,26 @@ function _coef_string(print_mode, coef)
 end
 _is_negative(coef) = false
 _is_negative(coef::Real) = coef < zero(coef)
-function _sign_and_string(print_mode, coef)
+function _sign_and_string(print_mode, coef, coefficient)
     if _is_negative(coef)
-        return -1, _coef_string(print_mode, -coef)
+        return -1, _coef_string(print_mode, -coef, coefficient)
     else
-        return 1, _coef_string(print_mode, coef)
+        return 1, _coef_string(print_mode, coef, coefficient)
     end
 end
-function _sign_and_string(print_mode, coef::Complex)
+function _sign_and_string(print_mode, coef::Complex, coefficient::Bool)
     if iszero(real(coef))
         if iszero(imag(coef))
-            return _sign_and_string(print_mode, 0)
+            return _sign_and_string(print_mode, 0, coefficient)
         else
-            sign, str = _sign_and_string(print_mode, imag(coef))
-            return sign, string(str, _complex_number(print_mode), " ")
+            sign, str = _sign_and_string(print_mode, imag(coef), coefficient)
+            return sign, string(str, _complex_number(print_mode), coefficient ? " " : "")
         end
     elseif iszero(imag(coef))
-        return _sign_and_string(print_mode, real(coef))
+        return _sign_and_string(print_mode, real(coef), coefficient)
     else
-        real_sign, real_string = _sign_and_string(print_mode, real(coef))
-        imag_sign, imag_string = _sign_and_string(print_mode, imag(coef))
+        real_sign, real_string = _sign_and_string(print_mode, real(coef), coefficient)
+        imag_sign, imag_string = _sign_and_string(print_mode, imag(coef), coefficient)
         return 1, string("(", _unary_sign_string(real_sign), real_string,
                          _binary_sign_string(imag_sign), imag_string,
                          _complex_number(print_mode), ")")
@@ -319,7 +319,7 @@ function function_string(print_mode, func::ScalarAffineFunction, variable_name =
     elm = 1
 
     for term in func.terms
-        sign, coef_str = _sign_and_string(print_mode, term.coefficient)
+        sign, coef_str = _sign_and_string(print_mode, term.coefficient, true)
         term_str[2 * elm - 1] = elm == 1 ? _unary_sign_string(sign) : _binary_sign_string(sign)
         term_str[2 * elm] = string(coef_str, function_string(print_mode, term.variable_index, variable_name))
         elm += 1
@@ -332,7 +332,7 @@ function function_string(print_mode, func::ScalarAffineFunction, variable_name =
     else
         ret = join(term_str[1 : 2 * (elm - 1)])
         if !_is_zero_for_printing(constant(func)) && show_constant
-            sign, coef_str = _sign_and_string(print_mode, constant(func))
+            sign, coef_str = _sign_and_string(print_mode, constant(func), false)
             if coef_str[end] == ' '
                 coef_str = coef_str[1:end-1]
             end
