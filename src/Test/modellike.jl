@@ -26,12 +26,12 @@ function default_status_test(model::MOI.ModelLike)
 end
 
 # Helper function to test IO methods work correctly
-function io_test(mode, obj, exp_str, args...; repl=:both)
+function io_test(mode, obj, exp_str, args...; repl=:both, kws...)
     if mode == MOI.REPLMode
-        repl != :show  && @test sprint(print, obj, args...) == exp_str
-        repl != :print && @test sprint(show,  obj, args...) == exp_str
+        repl != :show  && @test sprint(print, obj, args...; kws...) == exp_str
+        repl != :print && @test sprint(show,  obj, args...; kws...) == exp_str
     else
-        @test sprint(show, "text/latex", obj, args...) == string("\$\$ ", exp_str, " \$\$")
+        @test sprint(show, "text/latex", obj, args...; kws...) == string("\$\$ ", exp_str, " \$\$")
     end
 end
 
@@ -79,7 +79,7 @@ Feasibility
 Subject to
  c2 : x[$(x.value)] ≥ 0.0
  c1 : x[$(x.value)] ≤ 1.0
-""", MOI.name_or_default_name, repl=:print)
+""", repl=:print, context = :variable_name => MOI.name_or_default_name)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
     end
@@ -108,7 +108,7 @@ Feasibility
 Subject to
  c2 : x[$(x.value)] ≥ 0.0
  c1 : x[$(x.value)] ≤ 1.0
-""", MOI.name_or_default_name, repl=:print)
+""", repl=:print, context = :variable_name => MOI.name_or_default_name)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
     end

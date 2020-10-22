@@ -120,10 +120,10 @@ _string_round(print_mode, f) = string(f)
 _wrap_in_math_mode(str) = "\$\$ $str \$\$"
 _wrap_in_inline_math_mode(str) = "\$ $str \$"
 
-function Base.print(io::IO, model::ModelLike, variable_name = name_or_noname)
+function Base.print(io::IO, model::ModelLike; variable_name = Base.get(io, :variable_name, name_or_noname))
     print(io, model_string(REPLMode, model, variable_name))
 end
-function Base.show(io::IO, ::MIME"text/latex", model::ModelLike, variable_name = name_or_noname)
+function Base.show(io::IO, ::MIME"text/latex", model::ModelLike; variable_name = Base.get(io, :variable_name, name_or_noname))
     print(io, _wrap_in_math_mode(model_string(IJuliaMode, model, variable_name)))
 end
 
@@ -346,10 +346,10 @@ function function_string(print_mode, func::AbstractVectorFunction, variable_name
     return "[" * join(function_string.(print_mode, Utilities.scalarize(func), variable_name; kws...), ", ") * "]"
 end
 
-function Base.show(io::IO, f::AbstractFunction, variable_name = default_name)
+function Base.show(io::IO, f::AbstractFunction; variable_name = Base.get(io, :variable_name, default_name))
     print(io, function_string(REPLMode, f, variable_name))
 end
-function Base.show(io::IO, ::MIME"text/latex", f::AbstractFunction, variable_name = default_name)
+function Base.show(io::IO, ::MIME"text/latex", f::AbstractFunction; variable_name = Base.get(io, :variable_name, default_name))
     print(io, _wrap_in_math_mode(function_string(IJuliaMode, f, variable_name)))
 end
 
