@@ -169,6 +169,13 @@ end
     @test MOIU.eval_variables(vi -> subs_vals[vi], fvq) == MOIU.eval_variables(vi -> vals[vi], subs_vq)
     @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
     @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
+
+    complex_func = 2.0im * fy
+    # Test that variables can be substituted for `MOI.ScalarAffineFunction{S}`
+    # in a `MOI.ScalarAffineFunction{T}` where `S != T`.
+    @test MOIU.substitute_variables(vi -> 1.5fx, complex_func) ≈ 3.0im * fx
+    float_func = 2.0 * fy
+    @test MOIU.substitute_variables(vi -> 3fx, float_func) ≈ 6.0 * fx
 end
 @testset "map_indices" begin
     fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),

@@ -175,8 +175,10 @@ function substitute_variables(variable_map::Function,
 end
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarAffineTerm{T}) where T
-    return operate(*, T, term.coefficient,
-                       variable_map(term.variable_index))::MOI.ScalarAffineFunction{T}
+    # We could have `T = Complex{Float64}` and `variable_map(term.variable_index)`
+    # be a `MOI.ScalarAffineFunction{Float64}` with the Hermitian to PSD bridge.
+    func = convert(MOI.ScalarAffineFunction{T}, variable_map(term.variable_index))
+    return operate(*, T, term.coefficient, func)::MOI.ScalarAffineFunction{T}
 end
 function substitute_variables(
     variable_map::Function,
