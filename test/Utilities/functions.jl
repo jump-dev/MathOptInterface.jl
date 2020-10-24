@@ -367,13 +367,17 @@ end
             @test_throws InexactError convert(MOI.SingleVariable, f)
             @test_throws InexactError MOIU.convert_approx(MOI.SingleVariable, f)
             @test MOIU.convert_approx(MOI.SingleVariable, f, tol = 0.5) == MOI.SingleVariable(x)
+            @test convert(typeof(f), f) === f
             quad_f = MOI.ScalarQuadraticFunction(f.terms,
                                                  MOI.ScalarQuadraticTerm{Float64}[],
                                                  f.constant)
             @test convert(MOI.ScalarQuadraticFunction{Float64}, f) ≈ quad_f
-            g = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
-            @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
-            @test MOIU.convert_approx(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+            for g in [convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x)),
+                      convert(MOI.ScalarAffineFunction{Float64}, 1MOI.SingleVariable(x))]
+                @test g isa MOI.ScalarAffineFunction{Float64}
+                @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+                @test MOIU.convert_approx(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+            end
         end
         @testset "operate with Float64 coefficient type" begin
             f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 4.0],
