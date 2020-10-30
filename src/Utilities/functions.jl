@@ -161,8 +161,11 @@ end
 
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T
-    f1 = variable_map(term.variable_index_1)
-    f2 = variable_map(term.variable_index_2)
+    # We could have `T = Complex{Float64}` and `variable_map(term.variable_index)`
+    # be a `MOI.ScalarAffineFunction{Float64}` with the Hermitian to PSD bridge.
+    # We convert to `MOI.ScalarAffineFunction{T}` to avoid any issue.
+    f1::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index_1)
+    f2::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index_2)
     f12 = operate(*, T, f1, f2)::MOI.ScalarQuadraticFunction{T}
     coef = term.coefficient
     # The quadratic terms are evaluated as x'Qx/2 so a diagonal term should
@@ -175,8 +178,9 @@ function substitute_variables(variable_map::Function,
 end
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarAffineTerm{T}) where T
-    return operate(*, T, term.coefficient,
-                       variable_map(term.variable_index))::MOI.ScalarAffineFunction{T}
+    # See comment for `term::MOI.ScalarQuadraticTerm` for the conversion.
+    func::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index)
+    return operate(*, T, term.coefficient, func)::MOI.ScalarAffineFunction{T}
 end
 function substitute_variables(
     variable_map::Function,
