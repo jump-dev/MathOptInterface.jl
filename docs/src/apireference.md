@@ -3,6 +3,14 @@ CurrentModule = MathOptInterface
 DocTestSetup = quote
     using MathOptInterface
     const MOI = MathOptInterface
+
+    # For compatibility with both Julia 1.0.5 and 1.5.2
+    # Upon the Julia LTS version becoming 1.6, these imports could be dropped,
+    # and all ScalarAffineTerm and VariableIndex instances in doctests below
+    # could be replaced with MOI.ScalarAffineTerm and MOI.VariableIndex
+    # Check discussion at PR 1184: https://github.com/jump-dev/MathOptInterface.jl/pull/1184#discussion_r515300914
+    import MathOptInterface.ScalarAffineTerm
+    import MathOptInterface.VariableIndex
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -625,7 +633,7 @@ bridged_variable, bridged_constraint = MOI.add_constrained_variable(bridged_mode
 
 # output
 
-(MOI.VariableIndex(-1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(-1))
+(VariableIndex(-1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(-1))
 ```
 The constrained variable in `MOI.GreaterThan(1.0)` returned is a bridged
 variable as its index in negative. In `model`, a constrained variable in
@@ -635,8 +643,8 @@ inner_variables = MOI.get(model, MOI.ListOfVariableIndices())
 
 # output
 
-1-element Array{MOI.VariableIndex,1}:
- MOI.VariableIndex(1)
+1-element Array{VariableIndex,1}:
+ VariableIndex(1)
 ```
 In the functions used for adding constraints or setting the objective to
 `bridged_model`, `bridged_variable` is substituted for `inner_variables[1]` plus
