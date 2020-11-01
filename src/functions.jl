@@ -456,6 +456,30 @@ function Base.convert(
 end
 
 function Base.convert(
+    ::Type{ScalarAffineTerm{T}}, t::ScalarAffineTerm{T}
+) where T
+    return t
+end
+
+function Base.convert(
+    ::Type{ScalarAffineTerm{T}}, t::ScalarAffineTerm
+) where T
+    return ScalarAffineTerm{T}(t.coefficient, t.variable_index)
+end
+
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}}, f::ScalarAffineFunction{T}
+) where T
+    return f
+end
+
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}}, f::ScalarAffineFunction
+) where T
+    return ScalarAffineFunction{T}(f.terms, f.constant)
+end
+
+function Base.convert(
     ::Type{ScalarAffineFunction{T}}, f::ScalarQuadraticFunction{T}
 ) where {T}
     if !Base.isempty(f.quadratic_terms)

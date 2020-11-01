@@ -169,6 +169,17 @@ end
     @test MOIU.eval_variables(vi -> subs_vals[vi], fvq) == MOIU.eval_variables(vi -> vals[vi], subs_vq)
     @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
     @test MOIU.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
+
+    complex_aff = 2.0im * fy
+    # Test that variables can be substituted for `MOI.ScalarAffineFunction{S}`
+    # in a `MOI.ScalarAffineFunction{T}` where `S != T`.
+    @test MOIU.substitute_variables(vi -> 1.5fx, complex_aff) ≈ 3.0im * fx
+    float_aff = 2.0 * fy
+    @test MOIU.substitute_variables(vi -> 3fx, float_aff) ≈ 6.0 * fx
+    complex_quad = 1.5im * fy * fy
+    @test MOIU.substitute_variables(vi -> 2fx, complex_quad) ≈ 6.0im * fx * fx
+    int_quad = 3 * fy * fx
+    @test MOIU.substitute_variables(vi -> true * fy, int_quad) ≈ 3 * fy * fy
 end
 @testset "map_indices" begin
     fsq = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.(1.0, [x, y]),
@@ -367,13 +378,17 @@ end
             @test_throws InexactError convert(MOI.SingleVariable, f)
             @test_throws InexactError MOIU.convert_approx(MOI.SingleVariable, f)
             @test MOIU.convert_approx(MOI.SingleVariable, f, tol = 0.5) == MOI.SingleVariable(x)
+            @test convert(typeof(f), f) === f
             quad_f = MOI.ScalarQuadraticFunction(f.terms,
                                                  MOI.ScalarQuadraticTerm{Float64}[],
                                                  f.constant)
             @test convert(MOI.ScalarQuadraticFunction{Float64}, f) ≈ quad_f
-            g = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
-            @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
-            @test MOIU.convert_approx(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+            for g in [convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x)),
+                      convert(MOI.ScalarAffineFunction{Float64}, 1MOI.SingleVariable(x))]
+                @test g isa MOI.ScalarAffineFunction{Float64}
+                @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+                @test MOIU.convert_approx(MOI.SingleVariable, g) == MOI.SingleVariable(x)
+            end
         end
         @testset "operate with Float64 coefficient type" begin
             f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 4.0],
