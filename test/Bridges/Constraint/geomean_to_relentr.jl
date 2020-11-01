@@ -90,7 +90,7 @@ config = MOIT.TestConfig()
                 @test MOI.get(mock, attr, relentr[1]) == [0, 1, 1, 1, 1, 1, 1]
             else
                 @test MOI.get(mock, attr, nonneg[1]) == [1]
-                @test MOI.get(mock, attr, relentr[1]) == relentr_dual
+                @test MOI.get(mock, attr, relentr[1]) ≈ relentr_dual
             end
         end
 
@@ -189,7 +189,7 @@ config = MOIT.TestConfig()
                 @test MOI.get(mock, attr, relentr[1]) == vcat(0, ones(18))
             else
                 @test MOI.get(mock, attr, nonneg[1]) == [1]
-                @test MOI.get(mock, attr, relentr[1]) == relentr_dual
+                @test MOI.get(mock, attr, relentr[1]) ≈ relentr_dual
             end
         end
 
@@ -270,7 +270,7 @@ config = MOIT.TestConfig()
                 @test MOI.get(mock, attr, relentr[1]) == [0, 2, 2]
             else
                 @test MOI.get(mock, attr, nonneg[1]) == [2]
-                @test MOI.get(mock, attr, relentr[1]) == relentr_dual
+                @test MOI.get(mock, attr, relentr[1]) ≈ relentr_dual
             end
         end
 

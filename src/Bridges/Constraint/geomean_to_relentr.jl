@@ -81,14 +81,15 @@ function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.Const
     w_dual = relentr_dual[2:(d + 1)]
     return vcat(u_dual, w_dual)
 end
-# Given constraint dual start of (u, w), constraint dual on RelativeEntropyCone
-# constraint is (1/d, w, u/d * e) and dual on y >= 0 constraint is -u.
-# TODO incorrect. fix, see discussion at https://github.com/JuliaOpt/MathOptInterface.jl/pull/1017#discussion_r376708499
+# Given GeometricMeanCone constraint dual start of (u, w), constraint dual on y >= 0 is -u
+# and on RelativeEntropyCone constraint is (-u/n, w, u/n * (log.(w/geomean(w)) .+ 1)).
+# Note log.(w/geomean(w)) = log.(w) .- sum(log, w) / n.
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintDualStart, bridge::GeoMeantoRelEntrBridge, value)
     d = length(value) - 1
     u = value[1]
+    w = value[2:end]
     MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, [-u])
-    relentr_dual = vcat(one(u) / d, value[2:end], fill(u / d, d))
+    relentr_dual = vcat(-u / d, value[2:end], u / d * (log.(w) .+ (1 - sum(log, w) / d)))
     MOI.set(model, MOI.ConstraintDualStart(), bridge.relentr_index, relentr_dual)
     return
 end
