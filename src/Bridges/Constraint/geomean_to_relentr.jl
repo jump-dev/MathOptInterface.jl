@@ -1,9 +1,13 @@
 """
     GeoMeantoRelEntrBridge{T}
 
-The `geometric mean cone` is representable with a relative entropy constraint and a nonnegative auxiliary variable,
-since ``u \\le \\prod_{i=1}^n w_i^{1/n}`` if and only if there exists a ``y \\ge 0`` such that
-``0 \\ge \\sum_{i=1}^n (u + y) \\log (\\frac{u + y}{w_i})``, or equivalently
+The `geometric mean cone` is representable with a relative entropy constraint and a
+nonnegative auxiliary variable, since ``u \\le \\prod_{i=1}^n w_i^{1/n}`` is equivalent
+to ``y \\ge 0`` and ``0 \\le u + y \\le \\prod_{i=1}^n w_i^{1/n}``, and the latter
+inequality is equivalent to ``1 \\le \\prod_{i=1}^n (\\frac{w_i}{u + y})^{1/n}``, which
+is equivalent to ``0 \\le \\sum_{i=1}^n \\log (\\frac{w_i}{u + y})^{1/n}``, which is
+equivalent to ``0 \\ge \\sum_{i=1}^n (u + y) \\log (\\frac{u + y}{w_i})``. Thus
+``(u, w) \\in GeometricMeanCone(1 + n)`` is representable as ``y \\ge 0``,
 ``(0, w, (u + y) e) \\in RelativeEntropyCone(1 + 2n)``, where ``e`` is a vector of ones.
 """
 struct GeoMeantoRelEntrBridge{T, F, G, H} <: AbstractBridge
@@ -73,7 +77,8 @@ function MOI.set(model::MOI.ModelLike, attr::MOI.ConstraintPrimalStart, bridge::
     return
 end
 # Given a is dual on y >= 0 and (b, c, d) is dual on RelativeEntropyCone constraint,
-# dual on (u, w) in GeometricMeanCone is (-a, c).
+# dual on (u, w) in GeometricMeanCone is (-a, c). Note that sum(d) = -a, so we could
+# instead use (sum(d), c).
 function MOI.get(model::MOI.ModelLike, attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart}, bridge::GeoMeantoRelEntrBridge)
     u_dual = -MOI.get(model, attr, bridge.nn_index)[1]
     relentr_dual = MOI.get(model, attr, bridge.relentr_index)
