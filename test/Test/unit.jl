@@ -49,6 +49,7 @@ end
             "solve_single_variable_dual_min",
             "solve_single_variable_dual_max",
             "solve_result_index",
+            "solve_twice",
             ])
         MOI.empty!(model)
     end
@@ -391,6 +392,22 @@ end
             )
         )
         MOIT.solve_result_index(mock, config)
+    end
+
+    @testset "solve_twice" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0]),
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0]),
+            )
+        )
+        MOIT.solve_twice(mock, config)
     end
 end
 
