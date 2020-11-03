@@ -1,7 +1,14 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-- Added `GeoMeantoRelEntrBridge` to bridge a geomean constraint to a relative entropy constraint.
+v0.9.18 (November 3, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.18).
+
+- Various improvements for working with complex numbers
+- Added `GeoMeantoRelEntrBridge` to bridge a geomean constraint to a relative entropy constraint
 
 v0.9.17 (September 21, 2020)
 ---------------------------
