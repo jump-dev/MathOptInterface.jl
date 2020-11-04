@@ -11,8 +11,8 @@ An abstraction layer for mathematical optimization solvers. Replaces [MathProgBa
 [docs-stable-url]: http://jump.dev/MathOptInterface.jl/stable
 [docs-dev-url]: http://jump.dev/MathOptInterface.jl/dev
 
-[build-img]: https://travis-ci.org/JuMP-dev/MathOptInterface.jl.svg?branch=master
-[build-url]: https://travis-ci.org/JuMP-dev/MathOptInterface.jl
+[build-img]: https://travis-ci.com/JuMP-dev/MathOptInterface.jl.svg?branch=master
+[build-url]: https://travis-ci.com/JuMP-dev/MathOptInterface.jl
 [codecov-img]: http://codecov.io/github/JuMP-dev/MathOptInterface.jl/coverage.svg?branch=master
 [codecov-url]: http://codecov.io/github/JuMP-dev/MathOptInterface.jl?branch=master
 
