@@ -45,6 +45,7 @@ end
             "solve_zero_one_with_bounds_1",
             "solve_zero_one_with_bounds_2",
             "solve_zero_one_with_bounds_3",
+            "add_constraint_checks",
             "solve_unbounded_model",
             "solve_single_variable_dual_min",
             "solve_single_variable_dual_max",
@@ -335,6 +336,10 @@ end
         MOIT.solve_zero_one_with_bounds_1(mock, config)
         MOIT.solve_zero_one_with_bounds_2(mock, config)
         MOIT.solve_zero_one_with_bounds_3(mock, config)
+    end
+
+    @testset "add_constraint_checks" begin
+        MOIT.add_constraint_checks(mock, config)
     end
 
     @testset "solve_unbounded_model" begin

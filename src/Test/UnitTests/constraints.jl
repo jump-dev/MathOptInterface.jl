@@ -361,3 +361,33 @@ function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_zero_one_with_bounds_3"] = solve_zero_one_with_bounds_3
+
+# Taken from https://github.com/jump-dev/Ipopt.jl/pull/230/files#
+"""
+    add_constraint_nan(model::MOI.ModelLike, config::TestConfig)
+
+Add a NaN constraint. This should throw a proper error message.
+"""
+function add_constraint_checks(model::MOI.ModelLike, config::TestConfig)
+    @testset "first isnan check" begin
+      MOI.empty!(model)
+      x = MOI.add_variable(model)
+      @test_throws ErrorException MOI.add_constraint(model, x, MOI.EqualTo(NaN))
+    end
+
+    @testset "first has_lower_bound check" begin
+      MOI.empty!(model)
+      x = MOI.add_variable(model)
+      MOI.add_constraint(model, x, MOI.GreaterThan(5.0))
+      @test_throws MOI.LowerBoundAlreadySet MOI.add_constraint(model, x, MOI.EqualTo(5.0))
+    end
+
+    @testset "first has_upper_bound check" begin
+      MOI.empty!(model)
+      x = MOI.add_variable(model)
+      MOI.add_constraint(model, x, MOI.LessThan(5.0))
+      @test_throws MOI.UpperBoundAlreadySet MOI.add_constraint(model, x, MOI.EqualTo(5.0))
+    end
+end
+unittests["add_constraint_checks"] = add_constraint_checks
+
