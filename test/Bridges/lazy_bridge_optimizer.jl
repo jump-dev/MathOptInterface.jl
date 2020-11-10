@@ -770,11 +770,12 @@ end
     @test !MOIB.is_variable_bridged(bridged, cy)
     @test MOIB.bridge(bridged, cy) isa MOIB.Constraint.RSOCBridge{T}
     @test sprint(MOIB.print_graph, bridged) == """
-Bridge graph with 4 variable nodes, 9 constraint nodes and 0 objective nodes.
+Bridge graph with 5 variable nodes, 11 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (3).
  [2] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
  [3] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
  [4] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (6).
+ [5] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (8).
  (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.VectorFunctionizeBridge{$T,MOI.SecondOrderCone}.
  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.RSOCBridge{$T,MOI.VectorAffineFunction{$T},MOI.VectorAffineFunction{$T}}.
  (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by MOIB.Constraint.RSOCBridge{$T,MOI.VectorAffineFunction{$T},MOI.VectorOfVariables}.
@@ -782,8 +783,10 @@ Bridge graph with 4 variable nodes, 9 constraint nodes and 0 objective nodes.
  (5) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (6) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by MOIB.Constraint.NonnegToNonposBridge{$T,MOI.VectorAffineFunction{$T},MOI.VectorOfVariables}.
  (7) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by MOIB.Constraint.GreaterToLessBridge{$T,MOI.ScalarAffineFunction{$T},MOI.SingleVariable}.
- (8) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by MOIB.Constraint.VectorizeBridge{$T,MOI.VectorAffineFunction{$T},MOI.Zeros,MOI.SingleVariable}.
- (9) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by MOIB.Constraint.LessToGreaterBridge{$T,MOI.ScalarAffineFunction{$T},MOI.SingleVariable}.
+ (8) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by MOIB.Constraint.ScalarFunctionizeBridge{$T,MOI.Interval{$T}}.
+ (9) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are bridged (distance 1) by MOIB.Constraint.SplitIntervalBridge{$T,MOI.ScalarAffineFunction{$T},MOI.Interval{$T},MOI.GreaterThan{$T},MOI.LessThan{$T}}.
+ (10) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by MOIB.Constraint.LessToGreaterBridge{$T,MOI.ScalarAffineFunction{$T},MOI.SingleVariable}.
+ (11) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by MOIB.Constraint.VectorizeBridge{$T,MOI.VectorAffineFunction{$T},MOI.Zeros,MOI.SingleVariable}.
 """
 end
 

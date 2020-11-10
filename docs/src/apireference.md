@@ -799,6 +799,8 @@ Bridges.Constraint.AbstractBridge
 
 Below is the list of constraint bridges implemented in this package.
 ```@docs
+Bridges.Constraint.GreaterToIntervalBridge
+Bridges.Constraint.LessToIntervalBridge
 Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToGreaterBridge
 Bridges.Constraint.NonnegToNonposBridge

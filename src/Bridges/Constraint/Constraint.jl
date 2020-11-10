@@ -81,6 +81,11 @@ Add all bridges defined in the `Bridges.Constraint` submodule to
 `bridged_model`. The coefficient type used is `T`.
 """
 function add_all_bridges(bridged_model, ::Type{T}) where {T}
+    if T <: AbstractFloat
+      MOIB.add_bridge(bridged_model, GreaterToIntervalBridge{T})
+      MOIB.add_bridge(bridged_model, LessToIntervalBridge{T})
+    end
+
     MOIB.add_bridge(bridged_model, GreaterToLessBridge{T})
     MOIB.add_bridge(bridged_model, LessToGreaterBridge{T})
     MOIB.add_bridge(bridged_model, NonnegToNonposBridge{T})
