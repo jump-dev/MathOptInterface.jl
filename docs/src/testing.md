@@ -72,8 +72,8 @@ end
 
 In the above `mock` is a `MOI.Utilities.MockOptimizer` that is defined earlier in the file.
 In this test, `MOIU.set_mock_optimize!` loads `mock` with two results. Each says
-that the [`MOI.TerminationStatus`](@ref) is `MOI.OPTIMAL`, that the
-[`MOI.PrimalStatus`](@ref) is `MOI.FEASIBLE_POINT`, and that there is one
+that the `MOI.[TerminationStatus](@ref)` is `MOI.OPTIMAL`, that the
+`MOI.[PrimalStatus](@ref)` is `MOI.FEASIBLE_POINT`, and that there is one
 variable with a `MOI.VariableValue` or `1.0`.
 
 3. Run the tests:
