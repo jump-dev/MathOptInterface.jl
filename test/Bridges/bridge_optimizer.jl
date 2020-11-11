@@ -142,7 +142,7 @@ bridged_mock = MOIB.Constraint.LessToGreater{Float64}(MOIB.Constraint.SplitInter
 @testset "Unsupported constraint attribute" begin
     attr = MOIT.UnknownConstraintAttribute()
     err = ArgumentError(
-        "Bridge of type `$MOI.Bridges.Constraint.SplitIntervalBridge{Float64,$MOI.SingleVariable,$MOI.Interval{Float64},$MOI.GreaterThan{Float64},$MOI.LessThan{Float64}}` " *
+        "Bridge of type `$(MOI.Bridges.Constraint.SplitIntervalBridge{Float64,MOI.SingleVariable,MOI.Interval{Float64},MOI.GreaterThan{Float64},MOI.LessThan{Float64}})` " *
         "does not support accessing the attribute `$attr`.")
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, MOI.SingleVariable(x),

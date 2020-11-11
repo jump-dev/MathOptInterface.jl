@@ -4,6 +4,12 @@ import ..FileFormats
 import MathOptInterface
 const MOI = MathOptInterface
 
+if isdefined(Base, :Grisu)
+    import Base.Grisu
+else
+    import Grisu
+end
+
 MOI.Utilities.@model(Model,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
@@ -86,17 +92,17 @@ function write_function(
 )
     is_first_item = true
     if !(func.constant ≈ 0.0)
-        Base.Grisu.print_shortest(io, func.constant)
+        Grisu.print_shortest(io, func.constant)
         is_first_item = false
     end
     for term in func.terms
         if !(term.coefficient ≈ 0.0)
             if is_first_item
-                Base.Grisu.print_shortest(io, term.coefficient)
+                Grisu.print_shortest(io, term.coefficient)
                 is_first_item = false
             else
                 print(io, term.coefficient < 0 ? " - " : " + ")
-                Base.Grisu.print_shortest(io, abs(term.coefficient))
+                Grisu.print_shortest(io, abs(term.coefficient))
             end
 
             print(io, " ", variable_names[term.variable_index])
@@ -107,34 +113,34 @@ end
 
 function write_constraint_suffix(io::IO, set::MOI.LessThan)
     print(io, " <= ", )
-    Base.Grisu.print_shortest(io, set.upper)
+    Grisu.print_shortest(io, set.upper)
     println(io)
     return
 end
 
 function write_constraint_suffix(io::IO, set::MOI.GreaterThan)
     print(io, " >= ", )
-    Base.Grisu.print_shortest(io, set.lower)
+    Grisu.print_shortest(io, set.lower)
     println(io)
     return
 end
 
 function write_constraint_suffix(io::IO, set::MOI.EqualTo)
     print(io, " = ", )
-    Base.Grisu.print_shortest(io, set.value)
+    Grisu.print_shortest(io, set.value)
     println(io)
     return
 end
 
 function write_constraint_suffix(io::IO, set::MOI.Interval)
     print(io, " <= ", )
-    Base.Grisu.print_shortest(io, set.upper)
+    Grisu.print_shortest(io, set.upper)
     println(io)
     return
 end
 
 function write_constraint_prefix(io::IO, set::MOI.Interval)
-    Base.Grisu.print_shortest(io, set.lower)
+    Grisu.print_shortest(io, set.lower)
     print(io, " <= ")
     return
 end

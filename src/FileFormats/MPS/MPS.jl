@@ -5,6 +5,12 @@ import ..FileFormats
 import MathOptInterface
 const MOI = MathOptInterface
 
+if isdefined(Base, :Grisu)
+    import Base.Grisu
+else
+    import Grisu
+end
+
 MOI.Utilities.@model(Model,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
@@ -315,7 +321,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
                 Card(
                     f2 = variable,
                     f3 = constraint,
-                    f4 = sprint(Base.Grisu.print_shortest, coefficient),
+                    f4 = sprint(Grisu.print_shortest, coefficient),
                 )
             )
         end
@@ -344,7 +350,7 @@ function _write_rhs(io, model, S, sense_char)
             Card(
                 f2 = "rhs",
                 f3 = row_name,
-                f4 = sprint(Base.Grisu.print_shortest, value(set)),
+                f4 = sprint(Grisu.print_shortest, value(set)),
             )
         )
     end
@@ -390,7 +396,7 @@ function write_ranges(io::IO, model::Model)
             Card(
                 f2 = "rhs",
                 f3 = row_name,
-                f4 = sprint(Base.Grisu.print_shortest, set.upper - set.lower),
+                f4 = sprint(Grisu.print_shortest, set.upper - set.lower),
             )
         )
     end
@@ -423,7 +429,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                 f1 = "FX",
                 f2 = "bounds",
                 f3 = var_name,
-                f4 = sprint(Base.Grisu.print_shortest, lower),
+                f4 = sprint(Grisu.print_shortest, lower),
             )
         )
     elseif lower == -Inf && upper == Inf
@@ -452,7 +458,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                     f1 = "LO",
                     f2 = "bounds",
                     f3 = var_name,
-                    f4 = sprint(Base.Grisu.print_shortest, lower),
+                    f4 = sprint(Grisu.print_shortest, lower),
                 )
             )
         end
@@ -472,7 +478,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                     f1 = "UP",
                     f2 = "bounds",
                     f3 = var_name,
-                    f4 = sprint(Base.Grisu.print_shortest, upper),
+                    f4 = sprint(Grisu.print_shortest, upper),
                 )
             )
         end
@@ -569,7 +575,7 @@ function write_sos_constraint(io::IO, model::Model, index, names)
             io,
             Card(
                 f2 = names[variable],
-                f3 = sprint(Base.Grisu.print_shortest, weight),
+                f3 = sprint(Grisu.print_shortest, weight),
             )
         )
     end
