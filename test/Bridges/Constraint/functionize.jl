@@ -65,9 +65,9 @@ config_with_basis = MOIT.TestConfig(basis = true)
         end
 
         attr = MOIT.UnknownConstraintAttribute()
-        err = ArgumentError("Bridge of type `MathOptInterface.Bridges.Constraint.ScalarFunctionizeBridge{Float64,MathOptInterface.GreaterThan{Float64}}` does not support setting the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.")
+        err = ArgumentError("Bridge of type `$(MathOptInterface.Bridges.Constraint.ScalarFunctionizeBridge{Float64,MathOptInterface.GreaterThan{Float64}})` does not support setting the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.")
         @test_throws err MOI.set(bridged_mock, attr, ci, 1.0)
-        err = ArgumentError("Bridge of type `MathOptInterface.Bridges.Constraint.ScalarFunctionizeBridge{Float64,MathOptInterface.GreaterThan{Float64}}` does not support accessing the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.")
+        err = ArgumentError("Bridge of type `$(MathOptInterface.Bridges.Constraint.ScalarFunctionizeBridge{Float64,MathOptInterface.GreaterThan{Float64}})` does not support accessing the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.")
         @test_throws err MOI.get(bridged_mock, attr, ci)
 
         @testset "delete" begin

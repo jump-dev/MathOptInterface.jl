@@ -1,7 +1,7 @@
 module Utilities
 
 using LinearAlgebra # For dot
-using OrderedCollections # for OrderedDict in UniversalFallback 
+using OrderedCollections # for OrderedDict in UniversalFallback
 
 import MutableArithmetics
 const MA = MutableArithmetics
@@ -22,12 +22,17 @@ const VI = MOI.VariableIndex
 const CI{F,S} = MOI.ConstraintIndex{F,S}
 
 function print_with_acronym(io::IO, s::AbstractString)
+    print(io, replace_acronym(s))
+end
+
+function replace_acronym(s::AbstractString)
     s = replace(s, "MathOptInterface.Utilities" => "MOIU")
     s = replace(s, "MathOptInterface.Bridges" => "MOIB")
     s = replace(s, "MathOptInterface.Test" => "MOIT")
     s = replace(s, "MathOptInterface" => "MOI")
-    print(io, s)
+    return s
 end
+
 
 """
     _reverse_dict(src::AbstractDict)

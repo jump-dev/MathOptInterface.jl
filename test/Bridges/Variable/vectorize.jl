@@ -99,7 +99,7 @@ end
 
     @testset "get `UnknownVariableAttribute``" begin
         err = ArgumentError(
-            "Variable bridge of type `MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonpositives}`" *
+            "Variable bridge of type `$(MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonpositives})`" *
             " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`."
         )
         @test_throws err MOI.get(bridged_mock, MOIT.UnknownVariableAttribute(), y)
