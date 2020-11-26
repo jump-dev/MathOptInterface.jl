@@ -57,6 +57,7 @@ end
             "solve_farkas_interval_upper",
             "solve_farkas_variable_lessthan",
             "solve_farkas_variable_lessthan_max",
+            "solve_twice",
             ])
         MOI.empty!(model)
     end
@@ -511,6 +512,22 @@ end
             )
         )
         MOIT.solve_farkas_variable_lessthan_max(mock, config)
+    end
+    
+    @testset "solve_twice" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0]),
+            ),
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0]),
+            )
+        )
+        MOIT.solve_twice(mock, config)
     end
 end
 

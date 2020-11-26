@@ -378,3 +378,18 @@ function solve_farkas_variable_lessthan_max(model::MOI.ModelLike, config::TestCo
     end
 end
 unittests["solve_farkas_variable_lessthan_max"] = solve_farkas_variable_lessthan_max
+
+function solve_twice(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    if config.solve
+        MOI.optimize!(model)
+        MOI.optimize!(model)
+        MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        MOI.get(model, MOI.VariablePrimal(), x) == 1.0
+    end
+end
+unittests["solve_twice"] = solve_twice
