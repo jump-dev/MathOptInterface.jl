@@ -1084,7 +1084,7 @@ Utilities.side_dimension_for_vectorized_dimension
 ## Benchmarks
 
 Functions to help benchmark the performance of solver wrappers. See
-[Benchmarking](@ref) for more details.
+[The Benchmarks submodule](@ref) for more details.
 
 ```@docs
 Benchmarks.suite
@@ -1095,7 +1095,7 @@ Benchmarks.compare_against_baseline
 ## File Formats
 
 Functions to help read and write MOI models to/from various file formats. See
-[File Formats](@ref) for more details.
+[The FileFormats submodule](@ref) for more details.
 
 ```@docs
 FileFormats.Model

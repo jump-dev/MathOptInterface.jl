@@ -1,4 +1,13 @@
-# Testing
+```@meta
+CurrentModule = MathOptInterface
+DocTestSetup = quote
+    using MathOptInterface
+    const MOI = MathOptInterface
+end
+DocTestFilters = [r"MathOptInterface|MOI"]
+```
+
+# The `Test` submodule
 
 All solvers use the tests in this repository as extra correctness tests for themselves.
 If we find a bug in one solver, instead of adding a test to that particular repository, we add it here so that all solvers can benefit.
