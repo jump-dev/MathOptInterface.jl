@@ -107,7 +107,7 @@ definition for most models.
 
 ## Example
 
-In the standard conic form (see [Duals](@ref)), the variables are grouped into
+In the standard conic form (see [Duality](@ref)), the variables are grouped into
 several cones and the constraints are affine equality constraints.
 If `Reals` is not one of the cones supported by the solvers then it needs
 to implement `supports_add_constrained_variables(::Optimizer, ::Type{Reals}) = false`

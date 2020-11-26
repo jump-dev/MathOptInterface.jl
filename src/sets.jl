@@ -36,8 +36,11 @@ function dimension end
     dual_set(s::AbstractSet)
 
 Return the dual set of `s`, that is the dual cone of the set. This follows the
-definition of duality discussed in [Duals](@ref).
-See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more information.
+definition of duality discussed in [Duality](@ref).
+
+See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more
+information.
+
 If the dual cone is not defined it returns an error.
 
 ### Examples

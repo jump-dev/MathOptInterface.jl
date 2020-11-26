@@ -52,3 +52,23 @@ on MOI from the perspective of a user of the interface. At the end of the manual
 we have a section on [Implementing a solver interface](@ref).
 
 The [API Reference](@ref) page lists the complete API.
+
+## Further reading
+
+A [paper describing the design and features of MathOptInterface](https://arxiv.org/abs/2002.03447)
+is available on [arXiv](https://arxiv.org).
+
+If you find MathOptInterface useful in your work, we kindly request that you
+cite the following paper:
+```
+@misc{
+    legat2020mathoptinterface,
+    title = {MathOptInterface: a data structure for mathematical optimization problems},
+    author = {Benoit Legat and Oscar Dowson and Joaquim Dias Garcia and Miles Lubin},
+    year = {2020},
+    eprint = {2002.03447},
+    archivePrefix = {arXiv},
+    primaryClass = {math.OC},
+    url = {https://arxiv.org/abs/2002.03447},
+}
+```
