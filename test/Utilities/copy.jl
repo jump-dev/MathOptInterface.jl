@@ -24,15 +24,6 @@ end
     map = MOIU.IndexMap(Dict(x => y), DoubleDicts.IndexDoubleDict())
     map.conmap[cx] = cy
     @test length(map) == 2
-    # `x=>y` in Julia <= 1.1 and `x => y` in Julia >= 1.2
-    if VERSION < v"1.2"
-        x_y = string(x) *  "=>" * string(y)
-        c_x_y = string(cx) *  "=>" * string(cy)
-    else
-        x_y = string(x => y)
-        c_x_y = string(cx => cy)
-    end
-    compare_without_moi(sprint(show, map), "Utilities.IndexMap($x_y,$c_x_y)")
 end
 
 @testset "AUTOMATIC" begin
@@ -327,7 +318,7 @@ MOI.supports_add_constrained_variable(::ReverseOrderConstrainedVariablesModel, :
 end
 
 @testset "Filtering copy: check based on index" begin
-    # Create a basic model. 
+    # Create a basic model.
     src = MOIU.Model{Float64}()
     x = MOI.add_variable(src)
     c1 = MOI.add_constraint(src, x, MOI.LessThan{Float64}(1.0))
@@ -337,7 +328,7 @@ end
     # true is already well-tested by the above cases.
     # Only keep the constraint c1.
     f = (cidx) -> cidx == c1
-    
+
     # Perform the copy.
     dst = OrderConstrainedVariablesModel()
     index_map = MOI.copy_to(dst, src, filter_constraints=f)
@@ -364,7 +355,7 @@ MOI.supports(::BoundModel, ::Type{MOI.NumberOfConstraints}) = true
 MOI.get(model::BoundModel, attr::MOI.NumberOfConstraints) = MOI.get(model.inner, attr)
 
 @testset "Filtering copy: check based on constraint type" begin
-    # Create a basic model. 
+    # Create a basic model.
     src = MOIU.Model{Float64}()
     x = MOI.add_variable(src)
     c1 = MOI.add_constraint(src, x, MOI.LessThan{Float64}(10.0))
@@ -372,13 +363,13 @@ MOI.get(model::BoundModel, attr::MOI.NumberOfConstraints) = MOI.get(model.inner,
 
     # Filtering function: get rid of integrality constraint.
     f = (cidx) -> MOI.get(src, MOI.ConstraintSet(), cidx) != MOI.Integer()
-    
+
     # Perform the unfiltered copy. This should throw an error (i.e. the implementation of BoundModel
-    # should be correct). 
+    # should be correct).
     dst = BoundModel()
     @test_throws MOI.UnsupportedConstraint{MOI.SingleVariable, MOI.Integer} MOI.copy_to(dst, src)
-    
-    # Perform the filtered copy. This should not throw an error. 
+
+    # Perform the filtered copy. This should not throw an error.
     dst = BoundModel()
     MOI.copy_to(dst, src, filter_constraints=f)
     @test MOI.get(dst, MOI.NumberOfConstraints{MOI.SingleVariable, MOI.LessThan{Float64}}()) == 1

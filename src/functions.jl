@@ -27,6 +27,7 @@ output_dimension(::AbstractScalarFunction) = 1
 
 Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
 Base.ndims(::Type{<:AbstractScalarFunction}) = 0
+Base.ndims(::AbstractScalarFunction) = 0
 
 """
     AbstractVectorFunction
