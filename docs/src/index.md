@@ -46,10 +46,20 @@ MathProgBase. MOI is designed to:
 
 There are two main sections to this documentation.
 
-This manual introduces the concepts needed to understand MOI and give a
-high-level picture of how all of the pieces fit together. The primary focus is
-on MOI from the perspective of a user of the interface. At the end of the manual
-we have a section on [Implementing a solver interface](@ref).
+The manual introduces the concepts needed to understand MOI and gives a
+high-level picture of how all of the pieces fit together. The primary focus of
+[Basic usage](@ref) is on MOI from the perspective of a user of the interface.
+The section [Advanced usage](@ref) provides more detail on advanced topics
+such as [Duality](@ref). The manual also has a section on [Implementing a solver interface](@ref).
+
+In addition to the basic API, MathOptInterface.jl contains a number of
+submodules to help users interact with a model in MathOptInterface form. These
+include:
+ - [The `Benchmarks` submodule](@ref)
+ - [The `Bridges` submodule](@ref)
+ - [The `FileFormats` submodule](@ref)
+ - [The `Utilities` submodule](@ref)
+ - [The `Test` submodule](@ref)
 
 The [API Reference](@ref) page lists the complete API.
 
@@ -64,7 +74,7 @@ cite the following paper:
 @misc{
     legat2020mathoptinterface,
     title = {MathOptInterface: a data structure for mathematical optimization problems},
-    author = {Benoit Legat and Oscar Dowson and Joaquim Dias Garcia and Miles Lubin},
+    author = {Beno{\^i}t Legat and Oscar Dowson and Joaquim Dias Garcia and Miles Lubin},
     year = {2020},
     eprint = {2002.03447},
     archivePrefix = {arXiv},

@@ -7,7 +7,7 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# The Bridges submodule
+# The `Bridges` submodule
 
 A constraint can often be written in a number of equivalent formulations. For
 example, the constraint ``l \le a^\top x \le u``

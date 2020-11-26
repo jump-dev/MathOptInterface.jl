@@ -7,7 +7,7 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# The FileFormats submodule
+# The `FileFormats` submodule
 
 The `FileFormats` module provides functionality for reading and writing MOI
 models using [`write_to_file`](@ref) and [`read_from_file`](@ref).

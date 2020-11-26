@@ -7,6 +7,6 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# The Utilities submodule
+# The `Utilities` submodule
 
 TODO: document the utilities submodule
