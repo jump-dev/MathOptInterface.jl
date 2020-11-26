@@ -534,6 +534,41 @@ function Base.showerror(io::IO, err::InvalidCallbackUsage)
     print(io, "InvalidCallbackUsage: Cannot submit $(err.submittable) inside a $(err.callback).")
 end
 
+"""
+    CallbackNodeStatusCode
+
+An Enum of possible return values from calling [`get`](@ref) with
+[`CallbackNodeStatus`](@ref).
+
+Possible values are:
+
+* CALLBACK_NODE_STATUS_INTEGER: the primal solution available from
+  [`CallbackVariablePrimal`](@ref) is integer feasible.
+* CALLBACK_NODE_STATUS_FRACTIONAL: the primal solution available from
+  [`CallbackVariablePrimal`](@ref) is integer infeasible.
+* CALLBACK_NODE_STATUS_UNKNOWN: the primal solution available from
+  [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.
+"""
+@enum(
+    CallbackNodeStatusCode,
+    CALLBACK_NODE_STATUS_INTEGER,
+    CALLBACK_NODE_STATUS_FRACTIONAL,
+    CALLBACK_NODE_STATUS_UNKNOWN,
+)
+
+"""
+    CallbackNodeStatus(callback_data)
+
+An optimizer attribute describing the (in)feasibility of the primal solution
+available from [`CallbackVariablePrimal`](@ref) during a callback identified by
+`callback_data`.
+
+Returns a [`CallbackNodeStatusCode`](@ref) Enum.
+"""
+struct CallbackNodeStatus{CallbackDataType} <: AbstractOptimizerAttribute
+    callback_data::CallbackDataType
+end
+is_set_by_optimize(::CallbackNodeStatus) = true
 
 ## Optimizer attributes
 
