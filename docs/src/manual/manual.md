@@ -9,36 +9,15 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Manual
 
-## Purpose
-
-Each mathematical optimization solver API has its own concepts and data structures for representing optimization models and obtaining results.
-However, it is often desirable to represent an instance of an optimization problem at a higher level so that it is easy to try using different solvers.
-MathOptInterface (MOI) is an abstraction layer designed to provide a unified interface to mathematical optimization solvers so that users do not need to understand multiple solver-specific APIs.
-MOI can be used directly, or through a higher-level modeling interface like [JuMP](https://github.com/jump-dev/JuMP.jl).
-
-MOI has been designed to replace [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl), which has been used by modeling packages such as [JuMP](https://github.com/jump-dev/JuMP.jl) and [Convex.jl](https://github.com/jump-dev/Convex.jl).
-This second-generation abstraction layer addresses a number of limitations of MathProgBase.
-MOI is designed to:
-- Be simple and extensible, unifying linear, quadratic, and conic optimization, and seamlessly facilitate extensions to essentially arbitrary constraints and functions (e.g., indicator constraints, complementarity constraints, and piecewise linear functions)
-- Be fast by allowing access to a solver's in-memory representation of a problem without writing intermediate files (when possible) and by using multiple dispatch and avoiding requiring containers of nonconcrete types
-- Allow a solver to return multiple results (e.g., a pool of solutions)
-- Allow a solver to return extra arbitrary information via attributes (e.g., variable- and constraint-wise membership in an irreducible inconsistent subset for infeasibility analysis)
-- Provide a greatly expanded set of status codes explaining what happened during the optimization procedure
-- Enable a solver to more precisely specify which problem classes it supports
-- Enable both primal and dual warm starts
-- Enable adding and removing both variables and constraints by indices that are not required to be consecutive
-- Enable any modification that the solver supports to an existing model
-- Avoid requiring the solver wrapper to store an additional copy of the problem data
-
-This manual introduces the concepts needed to understand MOI and give a high-level picture of how all of the pieces fit together. The primary focus is on MOI from the perspective of a user of the interface. At the end of the manual we have a section on [Implementing a solver interface](@ref).
-The [API Reference](@ref) page lists the complete API.
-
-MOI does not export functions, but for brevity we often omit qualifying names with the MOI module. Best practice is to have
+MOI does not export functions, but for brevity we often omit qualifying names
+with the MOI module. Best practice is to have
 ```julia
 using MathOptInterface
 const MOI = MathOptInterface
 ```
-and prefix all MOI methods with `MOI.` in user code. If a name is also available in base Julia, we always explicitly use the module prefix, for example, with `MOI.get`.
+and prefix all MOI methods with `MOI.` in user code. If a name is also available
+in base Julia, we always explicitly use the module prefix, for example, with
+`MOI.get`.
 
 ## Standard form problem
 
@@ -802,63 +781,6 @@ becomes ``A = [3.0, 4.0]^\top`` as follows:
 modify(m, c, MultirowChange(x, [3.0, 4.0]))
 ```
 
-## File formats
-
-The `FileFormats` module provides functionality for reading and writing MOI models using
-[`write_to_file`](@ref) and [`read_from_file`](@ref).
-
-To write a model `src` to a MathOptFormat file, use:
-```julia
-src = # ...
-dest = FileFormats.Model(format = FileFormats.FORMAT_MOF)
-MOI.copy_to(dest, src)
-MOI.write_to_file(dest, "file.mof.json")
-```
-The list of supported formats is given by the [`FileFormats.FileFormat`](@ref) enum.
-
-Instead of the `format` keyword, you can also use the `filename` keyword argument to
-[`FileFormats.Model`](@ref). This will attempt to automatically guess the format from the
-file extension. For example:
-```julia
-src = # ...
-filename = "my_model.cbf.gz"
-dest = FileFormats.Model(filename = filename)
-MOI.copy_to(dest, src)
-MOI.write_to_file(dest, filename)
-
-src_2 = FileFormats.Model(filename = filename)
-MOI.read_from_file(src_2, filename)
-```
-Note how the compression format (GZip) is also automatically detected from the filename.
-
-In some cases `src` may contain constraints that are not supported by the file format (e.g.,
-the CBF format supports integer variables but not binary). If so, you should copy `src` to a
-bridged model using [`Bridges.full_bridge_optimizer`](@ref):
-```julia
-src = # ... conic model ...
-dest = FileFormats.Model(format = FileFormats.FORMAT_CBF)
-bridged = MOI.Bridges.full_bridge_optimizer(dest, Float64)
-MOI.copy_to(bridged, src)
-MOI.write_to_file(dest, "my_model.cbf")
-```
-You should also note that even after bridging, it may still not be possible to write the
-model to file because of unsupported constraints (e.g., PSD variables in the LP file
-format).
-
-In addition to [`write_to_file`](@ref) and [`read_from_file`](@ref), you can read and write
-directly from `IO` streams using `Base.write` and `Base.read!`:
-```julia
-src = # ...
-io = IOBuffer()
-dest = FileFormats.Model(format = FileFormats.FORMAT_MPS)
-MOI.copy_to(dest, src)
-write(io, dest)
-
-seekstart(io)
-src_2 = FileFormats.Model(format = FileFormats.FORMAT_MPS)
-read!(io, src_2)
-```
-
 ## Advanced
 
 ### Duals
@@ -1327,10 +1249,10 @@ const CONFIG = MOIT.TestConfig(atol=1e-6, rtol=1e-6)
     # Test all the functions included in dictionary `MOI.Test.unittests`,
     # except functions "number_threads" and "solve_qcp_edge_cases."
     MOIT.unittest(
-        BRIDGED, 
-        CONFIG, 
+        BRIDGED,
+        CONFIG,
         ["number_threads", "solve_qcp_edge_cases"]
-    ) 
+    )
 end
 
 @testset "Modification" begin
@@ -1350,14 +1272,14 @@ end
 end
 ```
 
-Test functions like `MOI.Test.unittest` and `MOI.Test.modificationtest` are 
-wrappers around corresponding dictionaries `MOI.Test.unittests` and 
-`MOI.Test.modificationtests`. The keys of each dictionary (strings describing 
-the test) map to functions that take two arguments: an optimizer and a 
-`MOI.Test.TestConfig` object. Exclude tests by passing a vector of strings 
-corresponding to the test keys you want to exclude as the third positional 
-argument to the test function (e.g., `MOI.Test.unittest`). 
-    
+Test functions like `MOI.Test.unittest` and `MOI.Test.modificationtest` are
+wrappers around corresponding dictionaries `MOI.Test.unittests` and
+`MOI.Test.modificationtests`. The keys of each dictionary (strings describing
+the test) map to functions that take two arguments: an optimizer and a
+`MOI.Test.TestConfig` object. Exclude tests by passing a vector of strings
+corresponding to the test keys you want to exclude as the third positional
+argument to the test function (e.g., `MOI.Test.unittest`).
+
 Print a list of all keys using `println.(keys(MOI.Test.unittests))`
 
 The optimizer `BRIDGED` constructed with [`instantiate`](@ref)
@@ -1382,45 +1304,3 @@ If the wrapper does not support building the model incrementally (i.e. with `add
 then `supports_default_copy_to` can be replaced by `supports_allocate_load` if
 appropriate (see [Implementing copy](@ref)).
 
-### Benchmarking
-
-To aid the development of efficient solver wrappers, MathOptInterface provides
-benchmarking functionality. Benchmarking a wrapper follows a two-step process.
-
-First, prior to making changes, run and save the benchmark results on a given
-benchmark suite as follows:
-
-```julia
-using SolverPackage, MathOptInterface
-
-const MOI = MathOptInterface
-
-suite = MOI.Benchmarks.suite() do
-    SolverPackage.Optimizer()
-end
-
-MOI.Benchmarks.create_baseline(
-    suite, "current"; directory = "/tmp", verbose = true
-)
-```
-Use the `exclude` argument to [`Benchmarks.suite`](@ref) to
-exclude benchmarks that the solver doesn't support.
-
-Second, after making changes to the package, re-run the benchmark suite and
-compare to the prior saved results:
-
-```julia
-using SolverPackage, MathOptInterface
-
-const MOI = MathOptInterface
-
-suite = MOI.Benchmarks.suite() do
-    SolverPackage.Optimizer()
-end
-
-MOI.Benchmarks.compare_against_baseline(
-    suite, "current"; directory = "/tmp", verbose = true
-)
-```
-
-This comparison will create a report detailing improvements and regressions.
