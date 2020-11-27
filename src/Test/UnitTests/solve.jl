@@ -173,6 +173,212 @@ function solve_result_index(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_result_index"] = solve_result_index
 
+function solve_farkas_equalto_upper(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
+        MOI.EqualTo(-1.0),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] > config.atol
+        @test clb_dual[2] > config.atol
+        @test c_dual[1] < -config.atol
+        @test clb_dual ≈ [2, 1] .* -c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_equalto_upper"] = solve_farkas_equalto_upper
+
+function solve_farkas_equalto_lower(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
+        MOI.EqualTo(1.0),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] > config.atol
+        @test clb_dual[2] > config.atol
+        @test c_dual[1] > config.atol
+        @test clb_dual ≈ [2, 1] .* c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_equalto_lower"] = solve_farkas_equalto_lower
+
+function solve_farkas_lessthan(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
+        MOI.LessThan(-1.0),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] > config.atol
+        @test clb_dual[2] > config.atol
+        @test c_dual[1] < -config.atol
+        @test clb_dual ≈ [2, 1] .* -c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_lessthan"] = solve_farkas_lessthan
+
+function solve_farkas_greaterthan(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
+        MOI.GreaterThan(1.0),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] > config.atol
+        @test clb_dual[2] > config.atol
+        @test c_dual[1] > config.atol
+        @test clb_dual ≈ [2, 1] .* c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_greaterthan"] = solve_farkas_greaterthan
+
+function solve_farkas_interval_upper(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
+        MOI.Interval(-2.0, -1.0),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] > config.atol
+        @test clb_dual[2] > config.atol
+        @test c_dual[1] < -config.atol
+        @test clb_dual ≈ [2, 1] .* -c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_interval_upper"] = solve_farkas_interval_upper
+
+function solve_farkas_interval_lower(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
+        MOI.Interval(1.0, 2.0),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] > config.atol
+        @test clb_dual[2] > config.atol
+        @test c_dual[1] > config.atol
+        @test clb_dual ≈ [2, 1] .* c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_interval_lower"] = solve_farkas_interval_lower
+
+function solve_farkas_variable_lessthan(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.LessThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
+        MOI.GreaterThan(1.0),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] < -config.atol
+        @test clb_dual[2] < -config.atol
+        @test c_dual[1] > config.atol
+        @test clb_dual ≈ [2, 1] .* -c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_variable_lessthan"] = solve_farkas_variable_lessthan
+
+function solve_farkas_variable_lessthan_max(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    clb = MOI.add_constraint.(
+        model, MOI.SingleVariable.(x), MOI.LessThan(0.0)
+    )
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
+        MOI.GreaterThan(1.0),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.SingleVariable(x[1]),
+    )
+    if config.solve && config.infeas_certificates
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
+        c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+        @test clb_dual[1] < -config.atol
+        @test clb_dual[2] < -config.atol
+        @test c_dual[1] > config.atol
+        @test clb_dual ≈ [2, 1] .* -c_dual atol=config.atol rtol=config.rtol
+    end
+end
+unittests["solve_farkas_variable_lessthan_max"] = solve_farkas_variable_lessthan_max
+
 function solve_twice(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variable(model)

@@ -49,6 +49,14 @@ end
             "solve_single_variable_dual_min",
             "solve_single_variable_dual_max",
             "solve_result_index",
+            "solve_farkas_equalto_lower",
+            "solve_farkas_equalto_upper",
+            "solve_farkas_lessthan",
+            "solve_farkas_greaterthan",
+            "solve_farkas_interval_lower",
+            "solve_farkas_interval_upper",
+            "solve_farkas_variable_lessthan",
+            "solve_farkas_variable_lessthan_max",
             "solve_twice",
             ])
         MOI.empty!(model)
@@ -394,6 +402,118 @@ end
         MOIT.solve_result_index(mock, config)
     end
 
+    @testset "solve_farkas_equalto_upper" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [-1.0],
+            )
+        )
+        MOIT.solve_farkas_equalto_upper(mock, config)
+    end
+
+    @testset "solve_farkas_equalto_lower" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [1.0],
+            )
+        )
+        MOIT.solve_farkas_equalto_lower(mock, config)
+    end
+
+    @testset "solve_farkas_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
+            )
+        )
+        MOIT.solve_farkas_lessthan(mock, config)
+    end
+
+    @testset "solve_farkas_greaterthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
+            )
+        )
+        MOIT.solve_farkas_greaterthan(mock, config)
+    end
+
+    @testset "solve_farkas_interval_upper" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.0],
+            )
+        )
+        MOIT.solve_farkas_interval_upper(mock, config)
+    end
+
+    @testset "solve_farkas_interval_lower" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [1.0],
+            )
+        )
+        MOIT.solve_farkas_interval_lower(mock, config)
+    end
+
+    @testset "solve_farkas_variable_lessthan" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
+            )
+        )
+        MOIT.solve_farkas_variable_lessthan(mock, config)
+    end
+
+    @testset "solve_farkas_variable_lessthan_max" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                (MOI.NO_SOLUTION, [NaN, NaN]),
+                MOI.INFEASIBILITY_CERTIFICATE,
+                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
+                (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
+            )
+        )
+        MOIT.solve_farkas_variable_lessthan_max(mock, config)
+    end
+    
     @testset "solve_twice" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
