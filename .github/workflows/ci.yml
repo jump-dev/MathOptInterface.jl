@@ -14,6 +14,9 @@ jobs:
         # Since MOI doesn't have binary dependencies, only test on a subset of
         # possible platforms.
         include:
+          - version: 'nightly'
+            os: ubuntu-latest
+            arch: x64
           - version: '1'
             os: ubuntu-latest
             arch: x64

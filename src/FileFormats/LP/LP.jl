@@ -4,6 +4,21 @@ import ..FileFormats
 import MathOptInterface
 const MOI = MathOptInterface
 
+# Julia 1.6 removes Grisu from Base. Previously, we went
+#   print_shortest(io, x) = Base.Grisu.print_shortest(io, x)
+# To avoid adding Grisu as a dependency, use the following printing heuristic.
+# TODO(odow): consider printing 1.0 as 1.0 instead of 1, i.e., without the
+# rounding branch.
+function print_shortest(io::IO, x::Real)
+    x_int = round(Int, x)
+    if isapprox(x, x_int)
+        print(io, x_int)
+    else
+        print(io, x)
+    end
+    return
+end
+
 MOI.Utilities.@model(Model,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
@@ -86,17 +101,17 @@ function write_function(
 )
     is_first_item = true
     if !(func.constant ≈ 0.0)
-        Base.Grisu.print_shortest(io, func.constant)
+        print_shortest(io, func.constant)
         is_first_item = false
     end
     for term in func.terms
         if !(term.coefficient ≈ 0.0)
             if is_first_item
-                Base.Grisu.print_shortest(io, term.coefficient)
+                print_shortest(io, term.coefficient)
                 is_first_item = false
             else
                 print(io, term.coefficient < 0 ? " - " : " + ")
-                Base.Grisu.print_shortest(io, abs(term.coefficient))
+                print_shortest(io, abs(term.coefficient))
             end
 
             print(io, " ", variable_names[term.variable_index])
@@ -107,34 +122,34 @@ end
 
 function write_constraint_suffix(io::IO, set::MOI.LessThan)
     print(io, " <= ", )
-    Base.Grisu.print_shortest(io, set.upper)
+    print_shortest(io, set.upper)
     println(io)
     return
 end
 
 function write_constraint_suffix(io::IO, set::MOI.GreaterThan)
     print(io, " >= ", )
-    Base.Grisu.print_shortest(io, set.lower)
+    print_shortest(io, set.lower)
     println(io)
     return
 end
 
 function write_constraint_suffix(io::IO, set::MOI.EqualTo)
     print(io, " = ", )
-    Base.Grisu.print_shortest(io, set.value)
+    print_shortest(io, set.value)
     println(io)
     return
 end
 
 function write_constraint_suffix(io::IO, set::MOI.Interval)
     print(io, " <= ", )
-    Base.Grisu.print_shortest(io, set.upper)
+    print_shortest(io, set.upper)
     println(io)
     return
 end
 
 function write_constraint_prefix(io::IO, set::MOI.Interval)
-    Base.Grisu.print_shortest(io, set.lower)
+    print_shortest(io, set.lower)
     print(io, " <= ")
     return
 end
