@@ -126,6 +126,8 @@ function MOI.optimize!(mock::MockOptimizer)
     mock.hasdual = true
     mock.optimize!(mock)
 end
+function MOI.compute_conflict!(::MockOptimizer)
+end
 
 function throw_mock_unsupported_names(attr)
     throw(MOI.UnsupportedAttribute(
@@ -169,9 +171,6 @@ end
 function MOI.set(mock::MockOptimizer, attr::MOI.DualStatus, value::MOI.ResultStatusCode)
     mock.dual_status[attr.N] = value
 end
-# function MOI.supports(mock::MockOptimizer, attr::MOI.ConflictStatus)
-#     return true
-# end
 MOI.set(mock::MockOptimizer, ::MOI.ConflictStatus, value::MOI.ConflictStatusCode) = (mock.conflictstatus = value)
 MOI.get(mock::MockOptimizer, ::MOI.ConflictStatus) = mock.conflictstatus
 MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
