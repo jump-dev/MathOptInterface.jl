@@ -140,10 +140,6 @@ Silent
 TimeLimitSec
 RawParameter
 NumberOfThreads
-AbstractCallback
-LazyConstraintCallback
-HeuristicCallback
-UserCutCallback
 ```
 
 List of attributes useful for optimizers
@@ -168,6 +164,17 @@ PrimalStatus
 DualStatus
 ```
 
+Attributes relating to solver callbacks:
+
+```@docs
+AbstractCallback
+LazyConstraintCallback
+HeuristicCallback
+UserCutCallback
+CallbackNodeStatus
+CallbackNodeStatusCode
+CallbackVariablePrimal
+```
 ### Termination Status
 
 The `TerminationStatus` attribute indicates why the optimizer stopped executing.
@@ -258,7 +265,6 @@ Calls to `get` and `set` should include as an argument a single `VariableIndex` 
 VariableName
 VariablePrimalStart
 VariablePrimal
-CallbackVariablePrimal
 ```
 
 ### Constraints
