@@ -1,6 +1,18 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.19 (December 1, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.19).
+
+- Added `CallbackNodeStatus` attribute
+- Added bridge from `GreaterThan` or `LessThan` to `Interval`
+- Added tests for infeasibility certificates and double optimize
+- Fixed support for Julia v1.6
+- Re-organized MOI docs and added documentation for adding a test
+
 v0.9.18 (November 3, 2020)
 ---------------------------
 
