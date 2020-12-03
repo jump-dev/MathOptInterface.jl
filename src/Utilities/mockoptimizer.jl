@@ -160,10 +160,10 @@ function MOI.set(mock::MockOptimizer, attr::MOI.DualObjectiveValue, value::Real)
     mock.dual_objective_value[attr.result_index] = value
 end
 function MOI.set(mock::MockOptimizer, attr::MOI.PrimalStatus, value::MOI.ResultStatusCode)
-    mock.primal_status[attr.N] = value
+    mock.primal_status[attr.result_index] = value
 end
 function MOI.set(mock::MockOptimizer, attr::MOI.DualStatus, value::MOI.ResultStatusCode)
-    mock.dual_status[attr.N] = value
+    mock.dual_status[attr.result_index] = value
 end
 MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
 function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)

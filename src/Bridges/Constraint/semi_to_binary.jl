@@ -115,7 +115,7 @@ end
 
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
     bridge::SemiToBinaryBridge)
-    MOI.get(model, MOI.VariablePrimal(attr.N), bridge.variable_index)
+    MOI.get(model, MOI.VariablePrimal(attr.result_index), bridge.variable_index)
 end
 
 function MOI.supports(

@@ -180,7 +180,7 @@ end
 # Attributes, Bridge acting as a constraint
 function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                  bridge::AbstractSOCtoNonConvexQuadBridge)
-    vals = MOI.get.(model, MOI.VariablePrimal(attr.N), bridge.vars)
+    vals = MOI.get.(model, MOI.VariablePrimal(attr.result_index), bridge.vars)
     return vals
 end
 

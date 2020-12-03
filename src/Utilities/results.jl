@@ -149,7 +149,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                       idx::MOI.ConstraintIndex)
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
     # TODO do not include constant if primal solution is a ray
-    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(attr.N), vi), f)
+    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi), f)
 end
 
 ################ Constraint Dual for Variable-wise constraints #################
