@@ -1004,11 +1004,11 @@ A variable attribute for the initial assignment to some primal variable's value 
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
 """
-    VariablePrimal(N)
+    VariablePrimal(result_index)
     VariablePrimal()
 
-A variable attribute for the assignment to some primal variable's value in result `N`.
-If `N` is omitted, it is 1 by default.
+A variable attribute for the assignment to some primal variable's value in result `result_index`.
+If `result_index` is omitted, it is 1 by default.
 """
 struct VariablePrimal <: AbstractVariableAttribute
     result_index::Int

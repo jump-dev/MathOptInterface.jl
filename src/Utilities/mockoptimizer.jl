@@ -318,14 +318,14 @@ function MOI.get(mock::MockOptimizer, attr::MOI.PrimalStatus)
     if attr.result_index > mock.result_count
         return MOI.NO_SOLUTION
     else
-        return get(mock.primal_status, attr.N, MOI.NO_SOLUTION)
+        return get(mock.primal_status, attr.result_index, MOI.NO_SOLUTION)
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.DualStatus)
     if attr.result_index > mock.result_count
         return MOI.NO_SOLUTION
     else
-        return get(mock.dual_status, attr.N, MOI.NO_SOLUTION)
+        return get(mock.dual_status, attr.result_index, MOI.NO_SOLUTION)
     end
 end
 MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
@@ -402,7 +402,7 @@ function _safe_set_result(dict::Dict{K,V}, attr::MOI.AnyAttribute, index::K,
     if !haskey(dict, xored)
         dict[xored] = V()
     end
-    dict[xored][MOI._result_index_field(attr)] = value
+    dict[xored][attr.result_index] = value
 end
 function _safe_get_result(dict::Dict, attr::MOI.AnyAttribute, index::MOI.Index,
                           name::String)
@@ -411,9 +411,9 @@ function _safe_get_result(dict::Dict, attr::MOI.AnyAttribute, index::MOI.Index,
     if result_to_value === nothing
         error("No mock $name is set for ", index_name, " `", index, "`.")
     end
-    value = get(result_to_value, MOI._result_index_field(attr), nothing)
+    value = get(result_to_value, attr.result_index, nothing)
     if value === nothing
-        error("No mock $name is set for ", index_name, " `", index, "` at result index `", MOI._result_index_field(attr), "`.")
+        error("No mock $name is set for ", index_name, " `", index, "` at result index `", attr.result_index, "`.")
     end
     return value
 end
