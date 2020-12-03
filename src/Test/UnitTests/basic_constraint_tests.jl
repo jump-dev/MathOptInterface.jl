@@ -101,6 +101,7 @@ const BasicConstraintTests = Dict(
         delete                  = true,
         get_constraint_function = true,
         get_constraint_set      = true,
+        name::Bool              = true,
         include                 = Any[],
         exclude                 = Any[]
         )
@@ -113,6 +114,7 @@ See also `basic_constraint_test_helper`.
 If `delete = true`, it will test the deletion of constraints.
 If `get_constraint_function = true`, it will test the getting of `ConstraintFunction`.
 If `get_constraint_set = true`, it will test the getting of `ConstraintSet`.
+If `name = true`, it will test the getting and setting of `ConstraintName`.
 
 `include` and `exclude` can be used to run a subset of the tests, although only
 one can be used in each call.
@@ -134,6 +136,7 @@ function basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
     delete                  = true,
     get_constraint_function = true,
     get_constraint_set      = true,
+    name::Bool              = true,
     include                 = Any[],
     exclude                 = Any[]
     )
@@ -148,7 +151,8 @@ function basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
                 basic_constraint_test_helper(model, config, cf, set, N;
                     delete                  = delete,
                     get_constraint_function = get_constraint_function,
-                    get_constraint_set      = get_constraint_set
+                    get_constraint_set      = get_constraint_set,
+                    name                    = name
                 )
             end
         end
@@ -174,7 +178,8 @@ end
     basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int;
         delete::Bool                  = true,
         get_constraint_function::Bool = true,
-        get_constraint_set::Bool      = true
+        get_constraint_set::Bool      = true,
+        name::Bool                    = true
     )
 
 A helper function for `basic_constraint_tests`.
@@ -186,6 +191,7 @@ variables and returns a `MOI.AbstractFunction` of type `F`.
 If `delete = true`, it will test the deletion of constraints.
 If `get_constraint_function = true`, it will test the getting of `ConstraintFunction`.
 If `get_constraint_set = true`, it will test the getting of `ConstraintSet`.
+If `name = true`, it will test the getting and setting of `ConstraintName`.
 
 ### Example
 
@@ -200,7 +206,8 @@ If `get_constraint_set = true`, it will test the getting of `ConstraintSet`.
 function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int=1;
     delete::Bool                  = true,
     get_constraint_function::Bool = true,
-    get_constraint_set::Bool      = true
+    get_constraint_set::Bool      = true,
+    name::Bool                    = true
     )
     MOI.empty!(model)
     x = MOI.add_variables(model, N)
@@ -214,11 +221,13 @@ function basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, 
         c = MOI.add_constraint(model, constraint_function, set)
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
 
-        @testset "ConstraintName" begin
-            @test MOI.get(model, MOI.ConstraintName(), c) == ""
-            @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
-            MOI.set(model, MOI.ConstraintName(), c, "c")
-            @test MOI.get(model, MOI.ConstraintName(), c) == "c"
+        if name
+            @testset "ConstraintName" begin
+                @test MOI.get(model, MOI.ConstraintName(), c) == ""
+                @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
+                MOI.set(model, MOI.ConstraintName(), c, "c")
+                @test MOI.get(model, MOI.ConstraintName(), c) == "c"
+            end
         end
 
         if get_constraint_function

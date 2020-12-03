@@ -4,9 +4,9 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
-function atest(model::MOI.ModelLike, config::MOIT.TestConfig)
-    @test config.atol == 1e-8
-    @test config.rtol == 1e-8
+function atest(model::MOI.ModelLike, config::MOIT.TestConfig{T}) where {T <: Real}
+    @test config.atol == Base.rtoldefault(T)
+    @test config.rtol == Base.rtoldefault(T)
     @test config.solve
     @test config.query
     @test config.duals

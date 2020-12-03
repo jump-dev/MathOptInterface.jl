@@ -2,7 +2,7 @@
   "name": "MathOptFormat Model",
   "version": {
     "major": 0,
-    "minor": 4
+    "minor": 5
   },
   "variables": [
     {
@@ -21,37 +21,88 @@
   "objective": {
     "sense": "min",
     "function": {
-      "head": "ScalarAffineFunction",
-      "terms": [],
-      "constant": 0.0
+      "type": "ScalarNonlinearFunction",
+      "root": {
+        "type": "node",
+        "index": 3
+      },
+      "node_list": [
+        {
+          "type": "+",
+          "args": [
+            {
+              "type": "variable",
+              "name": "var_1"
+            },
+            {
+              "type": "variable",
+              "name": "var_2"
+            },
+            {
+              "type": "variable",
+              "name": "var_3"
+            }
+          ]
+        },
+        {
+          "type": "*",
+          "args": [
+            {
+              "type": "variable",
+              "name": "var_1"
+            },
+            {
+              "type": "variable",
+              "name": "var_4"
+            },
+            {
+              "type": "node",
+              "index": 1
+            }
+          ]
+        },
+        {
+          "type": "+",
+          "args": [
+            {
+              "type": "node",
+              "index": 2
+            },
+            {
+              "type": "variable",
+              "name": "var_3"
+            }
+          ]
+        }
+      ]
     }
   },
   "constraints": [
     {
       "function": {
-        "head": "ScalarNonlinearFunction",
+        "type": "ScalarNonlinearFunction",
         "root": {
-          "head": "node",
+          "type": "node",
           "index": 1
         },
         "node_list": [
           {
-            "head": "*",
+            "type": "*",
             "args": [
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_1"
               },
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_2"
               },
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_3"
               },
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_4"
               }
             ]
@@ -59,87 +110,87 @@
         ]
       },
       "set": {
-        "head": "GreaterThan",
+        "type": "GreaterThan",
         "lower": 25
       }
     },
     {
       "function": {
-        "head": "ScalarNonlinearFunction",
+        "type": "ScalarNonlinearFunction",
         "root": {
-          "head": "node",
+          "type": "node",
           "index": 5
         },
         "node_list": [
           {
-            "head": "^",
+            "type": "^",
             "args": [
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_1"
               },
               {
-                "head": "real",
+                "type": "real",
                 "value": 2
               }
             ]
           },
           {
-            "head": "^",
+            "type": "^",
             "args": [
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_2"
               },
               {
-                "head": "real",
+                "type": "real",
                 "value": 2
               }
             ]
           },
           {
-            "head": "^",
+            "type": "^",
             "args": [
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_3"
               },
               {
-                "head": "real",
+                "type": "real",
                 "value": 2
               }
             ]
           },
           {
-            "head": "^",
+            "type": "^",
             "args": [
               {
-                "head": "variable",
+                "type": "variable",
                 "name": "var_4"
               },
               {
-                "head": "real",
+                "type": "real",
                 "value": 2
               }
             ]
           },
           {
-            "head": "+",
+            "type": "+",
             "args": [
               {
-                "head": "node",
+                "type": "node",
                 "index": 1
               },
               {
-                "head": "node",
+                "type": "node",
                 "index": 2
               },
               {
-                "head": "node",
+                "type": "node",
                 "index": 3
               },
               {
-                "head": "node",
+                "type": "node",
                 "index": 4
               }
             ]
@@ -147,18 +198,18 @@
         ]
       },
       "set": {
-        "head": "EqualTo",
+        "type": "EqualTo",
         "value": 40
       }
     },
     {
       "name": "c1",
       "function": {
-        "head": "SingleVariable",
+        "type": "SingleVariable",
         "variable": "var_1"
       },
       "set": {
-        "head": "Interval",
+        "type": "Interval",
         "lower": 1.0,
         "upper": 5.0
       }
@@ -166,11 +217,11 @@
     {
       "name": "c2",
       "function": {
-        "head": "SingleVariable",
+        "type": "SingleVariable",
         "variable": "var_2"
       },
       "set": {
-        "head": "Interval",
+        "type": "Interval",
         "lower": 1.0,
         "upper": 5.0
       }
@@ -178,11 +229,11 @@
     {
       "name": "c3",
       "function": {
-        "head": "SingleVariable",
+        "type": "SingleVariable",
         "variable": "var_3"
       },
       "set": {
-        "head": "Interval",
+        "type": "Interval",
         "lower": 1.0,
         "upper": 5.0
       }
@@ -190,11 +241,11 @@
     {
       "name": "c4",
       "function": {
-        "head": "SingleVariable",
+        "type": "SingleVariable",
         "variable": "var_4"
       },
       "set": {
-        "head": "Interval",
+        "type": "Interval",
         "lower": 1.0,
         "upper": 5.0
       }

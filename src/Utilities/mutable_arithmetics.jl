@@ -2,9 +2,6 @@
 #      We first need to make sure that it is copied with `MA.copy_if_mutable` when it
 #      is passed from one function to a mutable one.
 
-import MutableArithmetics
-const MA = MutableArithmetics
-
 MA.mutability(::Type{<:TypedLike}) = MA.IsMutable()
 
 function MA.mutable_copy(func::MOI.ScalarAffineFunction)
@@ -166,10 +163,36 @@ function MA.mutable_operate!(op::Union{typeof(+), typeof(-)},
 end
 
 _constant(::Type{T}, α::T) where {T} = α
+_constant(::Type{T}, ::MOI.SingleVariable) where {T} = zero(T)
 _constant(::Type{T}, func::TypedScalarLike{T}) where {T} = MOI.constant(func)
 
 _affine_terms(f::MOI.ScalarAffineFunction) = f.terms
 _affine_terms(f::MOI.ScalarQuadraticFunction) = f.affine_terms
+
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    α::T, f::MOI.SingleVariable, β::T) where T
+    push!(terms, MOI.ScalarAffineTerm(op(α * β), f.variable))
+    return
+end
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    f::MOI.SingleVariable, β::T) where T
+    push!(terms, MOI.ScalarAffineTerm(op(β), f.variable))
+    return
+end
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    α::T, f::MOI.SingleVariable) where T
+    push!(terms, MOI.ScalarAffineTerm(op(α), f.variable))
+    return
+end
+function _add_sub_affine_terms(
+    op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
+    f::MOI.SingleVariable) where T
+    push!(terms, MOI.ScalarAffineTerm(op(one(T)), f.variable))
+    return
+end
 
 function _add_sub_affine_terms(
     op::Union{typeof(+), typeof(-)}, terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -279,4 +302,9 @@ function MA.mutable_operate!(op::MA.AddSubMul, f::MOI.ScalarQuadraticFunction{T}
     else
         return MA.mutable_operate!(MA.add_sub_op(op), f, *(args...))
     end
+end
+# `args` could be `(x', a)` where `a` is a vector of constants and `x` a vector
+# of affine functions for instance.
+function MA.mutable_operate!(op::MA.AddSubMul, f::TypedScalarLike, args::Vararg{Any, N}) where N
+    return MA.mutable_operate!(MA.add_sub_op(op), f, *(args...))
 end

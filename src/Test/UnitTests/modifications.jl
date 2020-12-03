@@ -197,6 +197,51 @@ end
 modificationtests["solve_func_scalaraffine_lessthan"] = solve_func_scalaraffine_lessthan
 
 """
+    solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::TestConfig)
+
+Test setting the function in a VectorAffineFunction-in-Nonnegatives
+constraint. If `config.solve=true` confirm that it solves correctly, and if
+`config.duals=true`, check that the duals are computed correctly.
+"""
+function solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::TestConfig)
+    MOI.empty!(model)
+    MOIU.loadfromstring!(model,"""
+        variables: x, y
+        minobjective: 1.0x + 2.0y
+        c: [1.0x, 2.0y] in Nonnegatives(2)
+    """)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    y = MOI.get(model, MOI.VariableIndex, "y")
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    test_model_solution(model, config;
+        objective_value   = 0.0,
+        variable_primal   = [(x, 0.0), (y, 0.0)],
+        constraint_primal = [(c, [0.0, 0.0])]
+    )
+    MOI.set(model, MOI.ConstraintFunction(), c,
+            MOI.VectorAffineFunction([
+                  MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
+                  MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, y))
+                ],
+                [-1.0, -1.5]
+            )
+    )
+    foo = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test foo ≈ MOI.VectorAffineFunction([
+                  MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
+                  MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, y))
+                ],
+                [-1.0, -1.5]
+            )
+    test_model_solution(model, config;
+        objective_value   = 2.5,
+        variable_primal   = [(x, 1.0), (y, 0.75)],
+        constraint_primal = [(c, [0.0, 0.0])]
+    )
+end
+modificationtests["solve_func_vectoraffine_nonneg"] = solve_func_vectoraffine_nonneg
+
+"""
     solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfig)
 
 Test modifying the constant term in a VectorAffineFunction-in-Nonpositives
@@ -362,6 +407,8 @@ solves correctly.
 """
 function delete_variables_in_a_batch(model::MOI.ModelLike,
                                      config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
     MOIU.loadfromstring!(model,"""
@@ -377,7 +424,7 @@ function delete_variables_in_a_batch(model::MOI.ModelLike,
     @test MOI.is_valid(model, z)
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.ObjectiveValue()) == 6.0
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 6.0 atol=atol rtol=rtol
     end
     MOI.delete(model, [x, z])
     @test !MOI.is_valid(model, x)
@@ -385,7 +432,7 @@ function delete_variables_in_a_batch(model::MOI.ModelLike,
     @test !MOI.is_valid(model, z)
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.ObjectiveValue()) == 2.0
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol=atol rtol=rtol
     end
 end
 modificationtests["delete_variables_in_a_batch"] = delete_variables_in_a_batch

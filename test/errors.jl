@@ -41,7 +41,7 @@ include("dummy.jl")
         try
             f(model, func, MOI.EqualTo(0))
         catch err
-            @test sprint(showerror, err) == "$MOI.UnsupportedConstraint{$MOI.SingleVariable,$MOI.EqualTo{$Int}}:" *
+            @test sprint(showerror, err) == "$(MOI.UnsupportedConstraint{MOI.SingleVariable,MOI.EqualTo{Int}}):" *
             " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
             " not supported by the model."
         end
@@ -65,7 +65,7 @@ include("dummy.jl")
         try
             MOI.add_constraint(model, func, MOI.EqualTo(0.0))
         catch err
-            @test sprint(showerror, err) == "$MOI.AddConstraintNotAllowed{$MOI.SingleVariable,$MOI.EqualTo{Float64}}:" *
+            @test sprint(showerror, err) == "$(MOI.AddConstraintNotAllowed{MOI.SingleVariable,MOI.EqualTo{Float64}}):" *
             " Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}`" *
             " constraints cannot be performed. You may want to use a" *
             " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
@@ -124,8 +124,8 @@ include("dummy.jl")
         try
             MOI.delete(model, ci)
         catch err
-            @test sprint(showerror, err) == "MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}:" *
-            " Deleting the index MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1)" *
+            @test sprint(showerror, err) == "$(MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}):" *
+            " Deleting the index $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
             " cannot be performed. You may want to use a `CachingOptimizer`" *
             " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
             " before doing this operation if the `CachingOptimizer` is in" *
@@ -194,8 +194,8 @@ include("dummy.jl")
         @testset "Constraint" begin
             err = MOI.ModifyConstraintNotAllowed(ci, change)
             @test_throws err MOI.modify(model, ci, change)
-            @test sprint(showerror, err) == "MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}:" *
-            " Modifying the constraints MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1)" *
+            @test sprint(showerror, err) == "$(MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}):" *
+            " Modifying the constraints $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
             " with MathOptInterface.ScalarConstantChange{Float64}(1.0) cannot" *
             " be performed. You may want to use a `CachingOptimizer` in" *
             " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
@@ -206,8 +206,8 @@ include("dummy.jl")
             attr = MOI.ObjectiveFunction{MOI.SingleVariable}()
             err = MOI.ModifyObjectiveNotAllowed(change)
             @test_throws err MOI.modify(model, attr, change)
-            @test sprint(showerror, err) == "MathOptInterface.ModifyObjectiveNotAllowed{MathOptInterface.ScalarConstantChange{Float64}}:" *
-            " Modifying the objective function with MathOptInterface.ScalarConstantChange{Float64}(1.0)" *
+            @test sprint(showerror, err) == "$(MathOptInterface.ModifyObjectiveNotAllowed{MathOptInterface.ScalarConstantChange{Float64}}):" *
+            " Modifying the objective function with $(MathOptInterface.ScalarConstantChange{Float64}(1.0))" *
             " cannot be performed. You may want to use a `CachingOptimizer`" *
             " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
             " before doing this operation if the `CachingOptimizer` is in" *

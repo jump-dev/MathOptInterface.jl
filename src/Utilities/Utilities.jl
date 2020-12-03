@@ -1,6 +1,10 @@
 module Utilities
 
 using LinearAlgebra # For dot
+using OrderedCollections # for OrderedDict in UniversalFallback
+
+import MutableArithmetics
+const MA = MutableArithmetics
 
 using MathOptInterface
 const MOI = MathOptInterface
@@ -18,12 +22,33 @@ const VI = MOI.VariableIndex
 const CI{F,S} = MOI.ConstraintIndex{F,S}
 
 function print_with_acronym(io::IO, s::AbstractString)
+    print(io, replace_acronym(s))
+end
+
+function replace_acronym(s::AbstractString)
     s = replace(s, "MathOptInterface.Utilities" => "MOIU")
     s = replace(s, "MathOptInterface.Bridges" => "MOIB")
     s = replace(s, "MathOptInterface.Test" => "MOIT")
     s = replace(s, "MathOptInterface" => "MOI")
-    print(io, s)
+    return s
 end
+
+
+"""
+    _reverse_dict(src::AbstractDict)
+
+Reverse dictionary `src` so that values of the new dictionary are keys of `src`
+and vice-versa. Also the values of `src` are assumed to be unique.
+
+    _reverse_dict(dest::AbstractDict, src::AbstractDict)
+
+Reverse dictionary so that values of `src` are key of `dest` and vice-versa.
+`dest` must be empty. Also the values of `src` are assumed to be unique.
+"""
+function _reverse_dict end
+
+include("CleverDicts.jl")
+include("DoubleDicts.jl")
 
 include("functions.jl")
 include("mutable_arithmetics.jl")
@@ -39,7 +64,6 @@ include("mockoptimizer.jl")
 include("cachingoptimizer.jl")
 include("universalfallback.jl")
 
-include("CleverDicts.jl")
 include("lazy_iterators.jl")
 
 end # module

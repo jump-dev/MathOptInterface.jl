@@ -36,8 +36,11 @@ function dimension end
     dual_set(s::AbstractSet)
 
 Return the dual set of `s`, that is the dual cone of the set. This follows the
-definition of duality discussed in [Duals](@ref).
-See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more information.
+definition of duality discussed in [Duality](@ref).
+
+See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more
+information.
+
 If the dual cone is not defined it returns an error.
 
 ### Examples
@@ -267,6 +270,11 @@ dual_set_type(::Type{RotatedSecondOrderCone}) = RotatedSecondOrderCone
     GeometricMeanCone(dimension)
 
 The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}`` of dimension `dimension```{}=n+1``.
+
+### Duality note
+
+The dual of the geometric mean cone is
+``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}`` of dimension `dimension```{}=n+1``.
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
@@ -326,6 +334,11 @@ end
     RelativeEntropyCone(dimension)
 
 The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}`` of dimension `dimension```{}=2n+1``.
+
+### Duality note
+
+The dual of the relative entropy cone is
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, w_i \\ge u (\\log (\\frac{u}{v_i}) - 1), v_i \\ge 0, u > 0 \\}`` of dimension `dimension```{}=2n+1``.
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
@@ -711,9 +724,9 @@ end
 """
     IndicatorSet{A, S <: AbstractScalarSet}(set::S)
 
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ZERO` and
-``\\{((y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
 when `A` is `ACTIVATE_ON_ONE`.
 
 `S` has to be a sub-type of `AbstractScalarSet`.
@@ -725,8 +738,8 @@ Example: ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1
 
 ```julia
 f = MOI.VectorAffineFunction(
-    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z)),
-     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.2, x1)),
+    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
+     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x1)),
      MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     ],
     [0.0, 0.0],

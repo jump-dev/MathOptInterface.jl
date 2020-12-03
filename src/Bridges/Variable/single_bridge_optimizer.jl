@@ -55,3 +55,4 @@ function MOIB.bridge_type(::SingleBridgeOptimizer{BT},
                           ::Type{<:MOI.AbstractSet}) where BT
     return BT
 end
+MOIB.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0

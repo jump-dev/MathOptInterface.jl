@@ -69,7 +69,7 @@ An error indicating that the attribute `attr` is supported (see
 """
 struct SetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
     attr::AttrType
-	message::String # Human-friendly explanation why the attribute cannot be set
+    message::String # Human-friendly explanation why the attribute cannot be set
 end
 SetAttributeNotAllowed(attr::AnyAttribute) = SetAttributeNotAllowed(attr, "")
 
@@ -269,8 +269,9 @@ function get end
 get(model::ModelLike, attr::AnyAttribute, idxs::Vector) = get.(model, attr, idxs)
 
 function get(model::ModelLike, attr::AnyAttribute, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+    get_fallback(model, attr, args...)
 end
+get_fallback(model::ModelLike, attr::AnyAttribute, args...) = throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
 
 """
     get!(output, model::ModelLike, args...)
@@ -533,6 +534,41 @@ function Base.showerror(io::IO, err::InvalidCallbackUsage)
     print(io, "InvalidCallbackUsage: Cannot submit $(err.submittable) inside a $(err.callback).")
 end
 
+"""
+    CallbackNodeStatusCode
+
+An Enum of possible return values from calling [`get`](@ref) with
+[`CallbackNodeStatus`](@ref).
+
+Possible values are:
+
+* CALLBACK_NODE_STATUS_INTEGER: the primal solution available from
+  [`CallbackVariablePrimal`](@ref) is integer feasible.
+* CALLBACK_NODE_STATUS_FRACTIONAL: the primal solution available from
+  [`CallbackVariablePrimal`](@ref) is integer infeasible.
+* CALLBACK_NODE_STATUS_UNKNOWN: the primal solution available from
+  [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.
+"""
+@enum(
+    CallbackNodeStatusCode,
+    CALLBACK_NODE_STATUS_INTEGER,
+    CALLBACK_NODE_STATUS_FRACTIONAL,
+    CALLBACK_NODE_STATUS_UNKNOWN,
+)
+
+"""
+    CallbackNodeStatus(callback_data)
+
+An optimizer attribute describing the (in)feasibility of the primal solution
+available from [`CallbackVariablePrimal`](@ref) during a callback identified by
+`callback_data`.
+
+Returns a [`CallbackNodeStatusCode`](@ref) Enum.
+"""
+struct CallbackNodeStatus{CallbackDataType} <: AbstractOptimizerAttribute
+    callback_data::CallbackDataType
+end
+is_set_by_optimize(::CallbackNodeStatus) = true
 
 ## Optimizer attributes
 
@@ -648,7 +684,7 @@ solution by submitting a [`LazyConstraint`](@ref). For instance, it may be
 called at an incumbent of a mixed-integer problem. Note that there is no
 guarantee that the callback is called at *every* feasible primal solution.
 
-The feasible primal solution is accessed through
+The current primal solution is accessed through
 [`CallbackVariablePrimal`](@ref). Trying to access other result
 attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 [`AbstractCallback`](@ref).
@@ -664,7 +700,7 @@ MOI.set(optimizer, MOI.LazyConstraintCallback(), callback_data -> begin
         set = # computes set
         MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
     end
-end
+end)
 ```
 """
 struct LazyConstraintCallback <: AbstractCallback end
@@ -910,6 +946,35 @@ A model attribute for the number of results available.
 """
 struct ResultCount <: AbstractModelAttribute end
 
+"""
+    ConflictStatusCode
+
+An Enum of possible values for the `ConflictStatus` attribute. This attribute
+is meant to explain the reason why the conflict finder stopped executing in the
+most recent call to [`compute_conflict!`](@ref).
+
+Possible values are:
+* `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
+  not yet been called
+* `NO_CONFLICT_EXISTS`: there is no conflict because the problem is feasible
+* `NO_CONFLICT_FOUND`: the solver could not find a conflict
+* `CONFLICT_FOUND`: at least one conflict could be found
+"""
+@enum ConflictStatusCode begin
+    COMPUTE_CONFLICT_NOT_CALLED
+    NO_CONFLICT_EXISTS
+    NO_CONFLICT_FOUND
+    CONFLICT_FOUND
+end
+
+"""
+    ConflictStatus()
+
+A model attribute for the [`ConflictStatusCode`](@ref) explaining why the conflict
+refiner stopped when computing the conflict.
+"""
+struct ConflictStatus <: AbstractModelAttribute end
+
 ## Variable attributes
 
 """
@@ -934,7 +999,7 @@ struct VariableName <: AbstractVariableAttribute end
 """
     VariablePrimalStart()
 
-A variable attribute for the initial assignment to some primal variable's value that the optimizer may use to warm-start the solve.
+A variable attribute for the initial assignment to some primal variable's value that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
@@ -1012,14 +1077,14 @@ struct ConstraintName <: AbstractConstraintAttribute end
 """
     ConstraintPrimalStart()
 
-A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve.
+A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 
 """
     ConstraintDualStart()
 
-A constraint attribute for the initial assignment to some constraint's dual value(s) that the optimizer may use to warm-start the solve.
+A constraint attribute for the initial assignment to some constraint's dual value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
@@ -1070,6 +1135,44 @@ end
 ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
 """
+    CanonicalConstraintFunction()
+
+A constraint attribute for a canonical representation of the
+[`AbstractFunction`](@ref) object used to define the constraint.
+Getting this attribute is guaranteed to return a function that is equivalent but
+not necessarily identical to the function provided by the user.
+
+By default, `MOI.get(model, MOI.CanonicalConstraintFunction(), ci)` fallbacks to
+`MOI.Utilities.canonical(MOI.get(model, MOI.ConstraintFunction(), ci))`.
+However, if `model` knows that the constraint function is canonical then it can
+implement a specialized method that directly return the function without calling
+[`Utilities.canonical`](@ref). Therefore, the value returned **cannot** be
+assumed to be a copy of the function stored in `model`.
+Moreover, [`Utilities.Model`](@ref) checks with [`Utilities.is_canonical`](@ref)
+whether the function stored internally is already canonical and if it's the case,
+then it returns the function stored internally instead of a copy.
+"""
+struct CanonicalConstraintFunction <: AbstractConstraintAttribute end
+
+function get_fallback(model::ModelLike, ::CanonicalConstraintFunction, ci::ConstraintIndex)
+    func = get(model, ConstraintFunction(), ci)
+    # In `Utilities.AbstractModel` and `Utilities.UniversalFallback`,
+    # the function is canonicalized in `add_constraint` so it might already
+    # be canonical. In other models, the constraint might have been copied from
+    # from one of these two model so there is in fact a good chance of the
+    # function being canonical in any model type.
+    # As `is_canonical` is quite cheap compared to `canonical` which
+    # requires a copy and sorting the terms, it is worth checking.
+    if Utilities.is_canonical(func)
+        return func
+    else
+        return Utilities.canonical(func)
+    end
+
+    return Utilities.canonical(get(model, ConstraintFunction(), ci))
+end
+
+"""
     ConstraintFunction()
 
 A constraint attribute for the `AbstractFunction` object used to define the constraint.
@@ -1113,6 +1216,30 @@ function throw_set_error_fallback(::ModelLike, ::ConstraintSet,
     type is $(set_type(constraint_index)) while the replacement set is of
     type $(typeof(set)). Use `transform` instead."""))
 end
+
+"""
+    ConflictParticipationStatusCode
+
+An Enum of possible values for the [`ConstraintConflictStatus`](@ref) attribute.
+This attribute is meant to indicate whether a given constraint participates
+or not in the last computed conflict.
+
+Possible values are:
+* `NOT_IN_CONFLICT`: the constraint does not participate in the conflict
+* `IN_CONFLICT`: the constraint participates in the conflict
+* `MAYBE_IN_CONFLICT`: the constraint may participate in the conflict,
+  the solver was not able to prove that the constraint can be excluded from
+  the conflict
+"""
+@enum(ConflictParticipationStatusCode, NOT_IN_CONFLICT, IN_CONFLICT, MAYBE_IN_CONFLICT)
+
+"""
+    ConstraintConflictStatus()
+
+A constraint attribute indicating whether the constraint participates
+in the conflict. Its type is [`ConflictParticipationStatusCode`](@ref).
+"""
+struct ConstraintConflictStatus <: AbstractConstraintAttribute end
 
 ## Termination status
 """
@@ -1179,8 +1306,8 @@ The optimizer stopped because of some user-defined limit.
   solutions. This is often used in MIPs to get the solver to return the first
   feasible solution it encounters.
 * `MEMORY_LIMIT`: The algorithm stopped because it ran out of memory.
-* `OBJECTIVE_LIMIT`: The algorthm stopped because it found a solution better than
-  a minimum limit set by the user.
+* `OBJECTIVE_LIMIT`: The algorithm stopped because it found a solution better
+  than a minimum limit set by the user.
 * `NORM_LIMIT`: The algorithm stopped because the norm of an iterate became too
   large.
 * `OTHER_LIMIT`: The algorithm stopped due to a limit not covered by one of the
@@ -1290,6 +1417,19 @@ struct DualStatus <: AbstractModelAttribute
 end
 DualStatus() = DualStatus(1)
 
+
+# Cost of bridging constrained variable in S
+struct VariableBridgingCost{S <: AbstractSet} <: AbstractModelAttribute
+end
+get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractScalarSet} = supports_add_constrained_variable(model, S) ? 0.0 : Inf
+get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractVectorSet} = supports_add_constrained_variables(model, S) ? 0.0 : Inf
+
+# Cost of bridging F-in-S constraints
+struct ConstraintBridgingCost{F <: AbstractFunction, S <: AbstractSet} <: AbstractModelAttribute
+end
+get_fallback(model::ModelLike, ::ConstraintBridgingCost{F, S}) where {F<:AbstractFunction, S<:AbstractSet} = supports_constraint(model, F, S) ? 0.0 : Inf
+
+
 """
     is_set_by_optimize(::AnyAttribute)
 
@@ -1313,6 +1453,8 @@ function is_set_by_optimize(::Union{ObjectiveValue,
                                     NodeCount,
                                     RawSolver,
                                     ResultCount,
+                                    ConflictStatus,
+                                    ConstraintConflictStatus,
                                     TerminationStatus,
                                     RawStatusString,
                                     PrimalStatus,
@@ -1347,8 +1489,9 @@ method should be defined for attributes which are copied indirectly during
 * [`ObjectiveFunctionType`](@ref): this attribute is set indirectly when setting
   the [`ObjectiveFunction`](@ref) attribute.
 * [`NumberOfConstraints`](@ref), [`ListOfConstraintIndices`](@ref),
-  [`ListOfConstraints`](@ref), [`ConstraintFunction`](@ref) and
-  [`ConstraintSet`](@ref): these attributes are set indirectly by
+  [`ListOfConstraints`](@ref), [`CanonicalConstraintFunction`](@ref),
+  [`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref):
+  these attributes are set indirectly by
   [`add_constraint`](@ref) and [`add_constraints`](@ref).
 """
 function is_copyable(attr::AnyAttribute)
@@ -1366,7 +1509,10 @@ function is_copyable(::Union{ListOfOptimizerAttributesSet,
                              ObjectiveFunctionType,
                              ListOfConstraintIndices,
                              ListOfConstraints,
+                             CanonicalConstraintFunction,
                              ConstraintFunction,
-                             ConstraintSet})
+                             ConstraintSet,
+                             VariableBridgingCost,
+                             ConstraintBridgingCost})
     return false
 end

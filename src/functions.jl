@@ -27,6 +27,7 @@ output_dimension(::AbstractScalarFunction) = 1
 
 Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
 Base.ndims(::Type{<:AbstractScalarFunction}) = 0
+Base.ndims(::AbstractScalarFunction) = 0
 
 """
     AbstractVectorFunction
@@ -74,7 +75,7 @@ end
 # Note: ScalarAffineFunction is mutable because its `constant` field is likely of an immutable
 # type, while its `terms` field is of a mutable type, meaning that creating a `ScalarAffineFunction`
 # allocates, and it is desirable to provide a zero-allocation option for working with
-# ScalarAffineFunctions. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
+# ScalarAffineFunctions. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 """
     ScalarAffineFunction{T}(terms, constant)
 
@@ -147,7 +148,7 @@ end
 # Note: ScalarQuadraticFunction is mutable because its `constant` field is likely of an immutable
 # type, while its other fields are of mutable types, meaning that creating a `ScalarQuadraticFunction`
 # allocates, and it is desirable to provide a zero-allocation option for working with
-# ScalarQuadraticFunctions. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
+# ScalarQuadraticFunctions. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 """
     ScalarQuadraticFunction{T}(affine_terms, quadratic_terms, constant)
 
@@ -260,7 +261,7 @@ end
 # Note: MultiRowChange is mutable because its `variable` field of an immutable
 # type, while `new_coefficients` is of a mutable type, meaning that creating a `MultiRowChange`
 # allocates, and it is desirable to provide a zero-allocation option for working with
-# MultiRowChanges. See https://github.com/JuliaOpt/MathOptInterface.jl/pull/343.
+# MultiRowChanges. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 """
     MultirowChange{T}(variable::VariableIndex, new_coefficients::Vector{Tuple{Int64, T}})
 
@@ -428,26 +429,60 @@ end
 # Conversion between scalar functions
 # Conversion to SingleVariable
 function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
-    if !iszero(f.constant) || !isone(length(f.terms)) || !isone(f.terms[1].coefficient)
+    if (
+        !iszero(f.constant) ||
+        !isone(length(f.terms)) ||
+        !isone(f.terms[1].coefficient)
+    )
         throw(InexactError(:convert, SingleVariable, f))
     end
     return SingleVariable(f.terms[1].variable_index)
 end
-function Base.convert(::Type{SingleVariable},
-                      f::ScalarQuadraticFunction{T}) where T
+
+function Base.convert(
+    ::Type{SingleVariable}, f::ScalarQuadraticFunction{T}
+) where {T}
     return convert(SingleVariable, convert(ScalarAffineFunction{T}, f))
 end
 
 # Conversion to ScalarAffineFunction
-function Base.convert(::Type{ScalarAffineFunction{T}}, α::T) where T
+function Base.convert(::Type{ScalarAffineFunction{T}}, α::T) where {T}
     return ScalarAffineFunction{T}(ScalarAffineTerm{T}[], α)
 end
-function Base.convert(::Type{ScalarAffineFunction{T}},
-                      f::SingleVariable) where T
+
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}}, f::SingleVariable
+) where {T}
     return ScalarAffineFunction{T}(f)
 end
-function Base.convert(::Type{ScalarAffineFunction{T}},
-                      f::ScalarQuadraticFunction{T}) where T
+
+function Base.convert(
+    ::Type{ScalarAffineTerm{T}}, t::ScalarAffineTerm{T}
+) where T
+    return t
+end
+
+function Base.convert(
+    ::Type{ScalarAffineTerm{T}}, t::ScalarAffineTerm
+) where T
+    return ScalarAffineTerm{T}(t.coefficient, t.variable_index)
+end
+
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}}, f::ScalarAffineFunction{T}
+) where T
+    return f
+end
+
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}}, f::ScalarAffineFunction
+) where T
+    return ScalarAffineFunction{T}(f.terms, f.constant)
+end
+
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}}, f::ScalarQuadraticFunction{T}
+) where {T}
     if !Base.isempty(f.quadratic_terms)
         throw(InexactError(:convert, ScalarAffineFunction{T}, f))
     end
@@ -455,15 +490,86 @@ function Base.convert(::Type{ScalarAffineFunction{T}},
 end
 
 # Conversion to ScalarQuadraticFunction
-function Base.convert(::Type{ScalarQuadraticFunction{T}}, α::T) where T
-    return ScalarQuadraticFunction{T}(ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], α)
+function Base.convert(
+    ::Type{ScalarQuadraticFunction{T}}, α::T
+) where {T}
+    return ScalarQuadraticFunction{T}(
+        ScalarAffineTerm{T}[], ScalarQuadraticTerm{T}[], α
+    )
 end
-function Base.convert(::Type{ScalarQuadraticFunction{T}},
-                      f::SingleVariable) where T
-    convert(ScalarQuadraticFunction{T}, convert(ScalarAffineFunction{T}, f))
+
+function Base.convert(
+    ::Type{ScalarQuadraticFunction{T}}, f::SingleVariable
+) where {T}
+    return convert(
+        ScalarQuadraticFunction{T}, convert(ScalarAffineFunction{T}, f)
+    )
 end
-function Base.convert(::Type{ScalarQuadraticFunction{T}},
-                      f::ScalarAffineFunction{T}) where T
-    return ScalarQuadraticFunction{T}(f.terms, ScalarQuadraticTerm{T}[],
-                                      f.constant)
+
+function Base.convert(
+    ::Type{ScalarQuadraticFunction{T}}, f::ScalarAffineFunction{T}
+) where {T}
+    return ScalarQuadraticFunction{T}(
+        f.terms, ScalarQuadraticTerm{T}[], f.constant
+    )
+end
+
+function Base.convert(::Type{VectorOfVariables}, g::SingleVariable)
+    return VectorOfVariables([g.variable])
+end
+
+function Base.convert(
+    ::Type{VectorAffineFunction{T}}, g::SingleVariable
+) where {T}
+    return VectorAffineFunction{T}(
+        [VectorAffineTerm(1, ScalarAffineTerm(one(T), g.variable))],
+        [zero(T)],
+    )
+end
+
+function Base.convert(
+    ::Type{VectorQuadraticFunction{T}}, g::SingleVariable
+) where {T}
+    return VectorQuadraticFunction{T}(
+        [VectorAffineTerm(1, ScalarAffineTerm(one(T), g.variable))],
+        VectorQuadraticTerm{T}[],
+        [zero(T)],
+    )
+end
+
+function Base.convert(
+    ::Type{VectorAffineFunction{T}}, g::ScalarAffineFunction
+) where {T}
+    return VectorAffineFunction{T}(
+        VectorAffineTerm{T}[
+            VectorAffineTerm(1, term) for term in g.terms
+        ],
+        [g.constant],
+    )
+end
+
+function Base.convert(
+    ::Type{VectorQuadraticFunction{T}}, g::ScalarAffineFunction
+) where {T}
+    return VectorQuadraticFunction{T}(
+        VectorAffineTerm{T}[
+            VectorAffineTerm(1, term) for term in g.terms
+        ],
+        VectorQuadraticTerm{T}[],
+        [g.constant],
+    )
+end
+
+function Base.convert(
+    ::Type{VectorQuadraticFunction{T}}, g::ScalarQuadraticFunction
+) where {T}
+    return VectorQuadraticFunction{T}(
+        VectorAffineTerm{T}[
+            VectorAffineTerm(1, term) for term in g.affine_terms
+        ],
+        VectorQuadraticTerm{T}[
+            VectorQuadraticTerm(1, term) for term in g.quadratic_terms
+        ],
+        [g.constant],
+    )
 end

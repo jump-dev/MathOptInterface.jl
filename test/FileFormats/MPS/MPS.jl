@@ -20,6 +20,17 @@ end
 @testset "Errors" begin
     failing_models_dir = joinpath(@__DIR__, "failing_models")
 
+    @testset "Quadratic Objective" begin
+        model = MPS.Model()
+        @test_throws(
+            MOI.UnsupportedAttribute,
+            MOIU.loadfromstring!(model, """
+               variables: x
+               minobjective: 1.0*x*x
+               """)
+        )
+    end
+
     @testset "Non-empty model" begin
         model = MPS.Model()
         @test MOI.is_empty(model)
@@ -52,8 +63,10 @@ end
 @testset "SOS" begin
     model = MPS.Model()
     x = MOI.add_variables(model, 3)
+    names = Dict{MOI.VariableIndex, String}()
     for i in 1:3
         MOI.set(model, MOI.VariableName(), x[i], "x$(i)")
+        names[x[i]] = "x$(i)"
     end
     MOI.add_constraint(model,
         MOI.VectorOfVariables(x),
@@ -63,7 +76,7 @@ end
         MOI.VectorOfVariables(x),
         MOI.SOS2([1.25, 2.25, 3.25])
     )
-    @test sprint(MPS.write_sos, model) ==
+    @test sprint(MPS.write_sos, model, names) ==
         "SOS\n" *
         " S1 SOS1\n" *
         "    x1        1.5\n" *
@@ -82,8 +95,8 @@ end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x))
-    @test sprint(MPS.write_columns, model) ==
-        "COLUMNS\n     x        OBJ      -1\n"
+    @test sprint(MPS.write_columns, model, ["x"], Dict(x => "x")) ==
+        "COLUMNS\n    x         OBJ       -1\n"
 end
 
 @testset "stacked_data" begin
@@ -275,7 +288,7 @@ end
             "ROWS\n" *
             " N  OBJ\n" *
             "COLUMNS\n" *
-            "     a_really_long_name OBJ      1\n" *
+            "    a_really_long_name OBJ       1\n" *
             "RHS\n" *
             "RANGES\n" *
             "BOUNDS\n" *
@@ -312,21 +325,19 @@ end
             MOI.EqualTo(1.0)
         )
         MOI.set(model, MOI.ConstraintName(), c, "c c")
-        @test sprint(write, model) == join([
-            "NAME          ",
-            "ROWS",
-            " N  OBJ",
-            " E  c_c",
-            "COLUMNS",
-            "     x[1,_2]  c_c      1",
-            "RHS",
-            "    rhs       c_c       1",
-            "RANGES",
-            "BOUNDS",
-            " FR bounds    x[1,_2]",
-            "ENDATA",
-            ""
-        ], '\n')
+        @test sprint(write, model) ==
+            "NAME          \n" *
+            "ROWS\n" *
+            " N  OBJ\n" *
+            " E  c_c\n" *
+            "COLUMNS\n" *
+            "    x[1,_2]   c_c       1\n" *
+            "RHS\n" *
+            "    rhs       c_c       1\n" *
+            "RANGES\n" *
+            "BOUNDS\n" *
+            " FR bounds    x[1,_2]\n" *
+            "ENDATA\n"
     end
 end
 

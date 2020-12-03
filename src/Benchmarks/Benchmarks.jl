@@ -232,4 +232,25 @@ end
     return model
 end
 
+@add_benchmark function copy_model(new_model)
+    model = new_model()
+    index = MOI.add_variables(model, 1_000)
+    cons = Vector{
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}}
+    }(undef, 1_000)
+    for (i, x) in enumerate(index)
+        cons[i] = MOI.add_constraint(
+            model,
+            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+            MOI.LessThan(1.0 * i)
+        )
+    end
+    
+    model2 = new_model()
+    MOI.copy_to(model2, model)
+    # MOI.copy_to(model2, model, filter_constraints=(x) -> x in cons[1:500])
+
+    return model2
+end
+
 end

@@ -61,6 +61,11 @@ function MOI.get(::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
     throw(ArgumentError("Bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`."))
 end
 
+function MOI.get(model::MOI.ModelLike, ::MOI.CanonicalConstraintFunction,
+                 bridge::AbstractBridge)
+    return MOI.Utilities.canonical(MOI.get(model, MOI.ConstraintFunction(), bridge))
+end
+
 """
     function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
                      bridge::AbstractBridge, value)

@@ -16,11 +16,11 @@
 Compute the objective function value using the `VariablePrimal` results and
 the `ObjectiveFunction` value.
 """
-function get_fallback(model::MOI.ModelLike, ::MOI.ObjectiveValue)
+function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
     # TODO do not include constant if primal solution is a ray
-    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(), vi), f)
+    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi), f)
 end
 
 function constraint_constant(model::MOI.ModelLike,
@@ -145,11 +145,11 @@ end
 Compute the value of the function of the constraint of index `constraint_index`
 using the `VariablePrimal` results and the `ConstraintFunction` values.
 """
-function get_fallback(model::MOI.ModelLike, ::MOI.ConstraintPrimal,
+function get_fallback(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
                       idx::MOI.ConstraintIndex)
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
     # TODO do not include constant if primal solution is a ray
-    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(), vi), f)
+    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(attr.N), vi), f)
 end
 
 ################ Constraint Dual for Variable-wise constraints #################
@@ -444,16 +444,16 @@ Return the scalar product between a number `x` of the set `set` and a number
 set_dot(x, y, set::MOI.AbstractScalarSet) = dot(x, y)
 
 function triangle_dot(x::AbstractVector{S}, y::AbstractVector{T}, dim::Int, offset::Int) where {S, T}
-    U = typeof(zero(S) * zero(T) + 2 * zero(S) * zero(T))
+    U = MA.promote_operation(MA.add_mul, S, T)
     result = zero(U)
     k = offset
     for i in 1:dim
         for j in 1:i
             k += 1
             if i == j
-                result += x[k] * y[k]
+                result = MA.add_mul!(result, x[k], y[k])
             else
-                result += 2 * x[k] * y[k]
+                result = MA.add_mul!(result, 2, x[k], y[k])
             end
         end
     end

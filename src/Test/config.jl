@@ -1,6 +1,6 @@
-struct TestConfig{T <: Number}
-    atol::Float64 # absolute tolerance for ...
-    rtol::Float64 # relative tolerance for ...
+struct TestConfig{T <: Real}
+    atol::T # absolute tolerance for ...
+    rtol::T # relative tolerance for ...
     solve::Bool # optimize and test result
     query::Bool # can get objective function, and constraint functions, and constraint sets
     modify_lhs::Bool # can modify function of a constraint
@@ -12,10 +12,10 @@ struct TestConfig{T <: Number}
     optimal_status::MOI.TerminationStatusCode
     basis::Bool # can get variable and constraint basis status
     function TestConfig{T}(;
-        atol::Float64 = 1e-8, rtol::Float64 = 1e-8, solve::Bool = true,
-        query::Bool = true, modify_lhs::Bool = true, duals::Bool = true,
+        atol::Real = Base.rtoldefault(T), rtol::Real = Base.rtoldefault(T), 
+        solve::Bool = true, query::Bool = true, modify_lhs::Bool = true, duals::Bool = true,
         dual_objective_value::Bool = duals, infeas_certificates::Bool = true,
-        optimal_status = MOI.OPTIMAL, basis::Bool = false) where {T <: Number}
+        optimal_status = MOI.OPTIMAL, basis::Bool = false) where {T <: Real}
         new(atol, rtol, solve, query, modify_lhs, duals, dual_objective_value,
             infeas_certificates, optimal_status, basis)
     end

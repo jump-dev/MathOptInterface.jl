@@ -52,7 +52,7 @@ end
 
 struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 
-# A few constraint types are supported to test both the fallback and the
+# A few objective/constraint types are supported to test both the fallback and the
 # delegation to the internal model
 @MOIU.model(ModelForUniversalFallback,
             (),
@@ -63,6 +63,11 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
             (MOI.ScalarAffineFunction,),
             (),
             ())
+function MOI.supports(
+    ::ModelForUniversalFallback{T},
+    ::Type{MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}}) where T
+    return false
+end
 function MOI.supports_constraint(
     ::ModelForUniversalFallback{T}, ::Type{MOI.SingleVariable},
     ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.Interval{T},
@@ -123,6 +128,37 @@ y, z = MOI.add_variables(uf, 2)
     listattr = MOI.ListOfVariableAttributesSet()
     test_varconattrs(uf, model, attr, listattr, VI, MOI.add_variable, x, y, z)
 end
+@testset "Objective Attribute" begin
+    global x, y, z
+    _single(vi) = MOI.SingleVariable(vi)
+    _affine(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
+    function _add_single_objective(vi)
+        return MOI.set(uf, MOI.ObjectiveFunction{MOI.SingleVariable}(), _single(vi))
+    end
+    function _add_affine_objective(vi)
+        return MOI.set(uf, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), _affine(vi))
+    end
+    @testset "Supported objective" begin
+        F = MOI.SingleVariable
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}())
+        _add_single_objective(x)
+        @test MOI.get(uf, MOI.ObjectiveFunction{F}()) ≈ _single(x)
+        MOI.set(uf, MOI.ObjectiveFunction{F}(), _single(y))
+        @test MOI.get(uf, MOI.ObjectiveFunction{F}()) ≈ _single(y)
+    end
+    @testset "Unsupported objective" begin
+        F = MOI.ScalarAffineFunction{Float64}
+        @test !MOI.supports(model, MOI.ObjectiveFunction{F})
+        @test MOI.supports(uf, MOI.ObjectiveFunction{F}())
+        _add_affine_objective(x)
+        @test MOI.get(uf, MOI.ObjectiveFunction{F}()) ≈ _affine(x)
+        MOI.modify(uf, MOI.ObjectiveFunction{F}(), MOI.ScalarCoefficientChange(y, 1.))
+        fx = MOI.SingleVariable(x)
+        fy = MOI.SingleVariable(y)
+        obj = 1fx + 1fy
+        @test MOI.get(uf, MOI.ObjectiveFunction{F}()) ≈ obj
+    end
+end
 @testset "Constraint Attribute" begin
     global x, y, z
     _affine(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
@@ -141,6 +177,8 @@ end
 
         MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
         @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
+        @test MOI.get(uf, MOI.CanonicalConstraintFunction(), cx) ≈ _affine(y)
+        @test MOIU.is_canonical(MOI.get(uf, MOI.CanonicalConstraintFunction(), cx))
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
@@ -164,6 +202,8 @@ end
 
         MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
         @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
+        @test MOI.get(uf, MOI.CanonicalConstraintFunction(), cx) ≈ _affine(y)
+        @test MOIU.is_canonical(MOI.get(uf, MOI.CanonicalConstraintFunction(), cx))
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")
@@ -203,6 +243,28 @@ end
                                                        MOI.EqualTo{Float64}},
                                    "a name")
     @test_throws Exception MOI.get(uf, MOI.ConstraintIndex, "a name")
+end
+
+@testset "Deterministic constraint ordering" begin
+    F = MOI.ScalarAffineFunction{Float64}
+    _affine(vi) = convert(F, MOI.SingleVariable(vi))
+    set1 = MOI.EqualTo(1.0)
+    set2 = MOI.GreaterThan(1.0)
+    for sets in [[set1, set2], [set2, set1]]
+        model = ModelForUniversalFallback{Float64}()
+        uf = MOIU.UniversalFallback(model)
+        x = MOI.add_variable(uf)
+        y = MOI.add_variable(uf)
+        cx1 = MOI.add_constraint(uf, _affine(x), sets[1])
+        cx2 = MOI.add_constraint(uf, _affine(x), sets[2])
+        cy1 = MOI.add_constraint(uf, _affine(y), sets[1])
+        cy2 = MOI.add_constraint(uf, _affine(y), sets[2])
+        # check that the constraint types are in the order they were added in
+        @test MOI.get(uf, MOI.ListOfConstraints()) == [(F, typeof(sets[1])), (F, typeof(sets[2]))]
+        # check that the constraints given the constraint type are in the order they were added in
+        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[1])}()) == [MOI.ConstraintIndex{F, typeof(sets[1])}(1), MOI.ConstraintIndex{F, typeof(sets[1])}(3)]
+        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[2])}()) == [MOI.ConstraintIndex{F, typeof(sets[2])}(2), MOI.ConstraintIndex{F, typeof(sets[2])}(4)]
+    end
 end
 
 @testset "Delete" begin

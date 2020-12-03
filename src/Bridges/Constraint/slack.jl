@@ -104,7 +104,7 @@ end
 The `ScalarSlackBridge` converts a constraint `G`-in-`S` where `G` is a function different
 from `SingleVariable` into the constraints `F`-in-`EqualTo{T}` and `SingleVariable`-in-`S`.
 `F` is the result of subtracting a `SingleVariable` from `G`.
-Tipically `G` is the same as `F`, but that is not mandatory.
+Typically `G` is the same as `F`, but that is not mandatory.
 """
 struct ScalarSlackBridge{T, F, S} <: AbstractSlackBridge{T, MOI.SingleVariable, MOI.EqualTo{T}, F, S}
     slack::MOI.VariableIndex
@@ -120,9 +120,12 @@ function bridge_constraint(::Type{ScalarSlackBridge{T, F, S}}, model,
 end
 
 # start allowing everything (scalar)
-MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
-                        ::Type{<:MOI.AbstractScalarFunction},
-                        ::Type{<:MOI.AbstractScalarSet}) where {T} = true
+function MOI.supports_constraint(
+    ::Type{ScalarSlackBridge{T}},
+    F::Type{<:MOI.AbstractScalarFunction},
+    ::Type{<:MOI.AbstractScalarSet}) where {T}
+    return MOIU.is_coefficient_type(F, T)
+end
 # then restrict (careful with ambiguity)
 MOI.supports_constraint(::Type{ScalarSlackBridge{T}},
                         ::Type{<:MOI.SingleVariable},
@@ -179,9 +182,12 @@ function bridge_constraint(::Type{VectorSlackBridge{T, F, S}}, model,
     return VectorSlackBridge{T, F, S}(slack, slack_in_set, equality)
 end
 
-MOI.supports_constraint(::Type{VectorSlackBridge{T}},
-                        ::Type{<:MOI.AbstractVectorFunction},
-                        ::Type{<:MOI.AbstractVectorSet}) where {T} = true
+function MOI.supports_constraint(
+    ::Type{VectorSlackBridge{T}},
+    F::Type{<:MOI.AbstractVectorFunction},
+    ::Type{<:MOI.AbstractVectorSet}) where {T}
+    return MOIU.is_coefficient_type(F, T)
+end
 MOI.supports_constraint(::Type{VectorSlackBridge{T}},
                         ::Type{<:MOI.VectorOfVariables},
                         ::Type{<:MOI.Zeros}) where {T} = false

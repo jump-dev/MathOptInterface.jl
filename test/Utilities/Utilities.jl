@@ -37,6 +37,9 @@ end
 @testset "CleverDicts" begin
     include("CleverDicts.jl")
 end
+@testset "DoubleDicts" begin
+    include("DoubleDicts.jl")
+end
 @testset "Lazy iterators" begin
     include("lazy_iterators.jl")
 end

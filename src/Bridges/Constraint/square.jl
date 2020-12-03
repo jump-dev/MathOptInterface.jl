@@ -93,7 +93,7 @@ function bridge_constraint(::Type{SquareBridge{T, F, G, TT, ST}},
             lower = f_scalars[j + (i - 1) * dim]
             diff = MOIU.operate!(-, T, upper, lower)
             MOIU.canonicalize!(diff)
-            # The value 1e-10 was decided in https://github.com/JuliaOpt/JuMP.jl/pull/976
+            # The value 1e-10 was decided in https://github.com/jump-dev/JuMP.jl/pull/976
             # This avoid generating symmetrization constraints when the
             # functions at entries (i, j) and (j, i) are almost identical
             if !MOIU.isapprox_zero(diff, 1e-10)

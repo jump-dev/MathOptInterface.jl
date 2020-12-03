@@ -3,6 +3,7 @@
         @test MOI.is_set_by_optimize(MOI.TerminationStatus())
         @test !MOI.is_set_by_optimize(MOI.ConstraintSet())
         @test !MOI.is_set_by_optimize(MOI.ObjectiveSense())
+        @test MOI.is_set_by_optimize(MOI.CallbackNodeStatus(1))
     end
     @testset "is_copyable" begin
         @test !MOI.is_copyable(MOI.TerminationStatus())

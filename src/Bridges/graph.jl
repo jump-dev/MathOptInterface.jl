@@ -139,6 +139,12 @@ function add_objective_node(graph::Graph)
     return ObjectiveNode(length(graph.objective_best))
 end
 
+function bridging_cost(graph::Graph, node::AbstractNode)
+    bellman_ford!(graph)
+    dist = _dist(graph, node)
+    return dist == INFINITY ? Inf : float(dist)
+end
+
 function bridge_index(graph::Graph, node::VariableNode)
     bellman_ford!(graph)
     return graph.variable_best[node.index]

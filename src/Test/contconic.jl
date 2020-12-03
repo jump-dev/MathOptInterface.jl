@@ -424,7 +424,7 @@ function norminf2test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
-        if config.duals
+        if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
 
@@ -432,9 +432,79 @@ function norminf2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+function norminf3test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormInf3
+    # min x
+    #  st  (-1 + x, 2 .+ y) in NormInf(1 + n)
+    #      (1 .+ y) in Nonnegatives(n)
+    # let n = 3. optimal solution: y .= -1, x = 2
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x = MOI.add_variable(model)
+    y = MOI.add_variables(model, 3)
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    norminf_vaf = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1:4,
+        MOI.ScalarAffineTerm.(1.0, vcat(x, y))), [-1.0, 2, 2, 2])
+    norminf = MOI.add_constraint(model, norminf_vaf, MOI.NormInfinityCone(4))
+    nonneg_vaf = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1:3,
+        MOI.ScalarAffineTerm.(1.0, y)), ones(3))
+    nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
+
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()) == 1
+    loc = MOI.get(model, MOI.ListOfConstraints())
+    @test length(loc) == 2
+    @test (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 2 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ fill(-1.0, 3) atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), norminf) ≈ ones(4) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), nonneg) ≈ zeros(3) atol=atol rtol=rtol
+
+        if config.duals
+            dual_nonneg = MOI.get(model, MOI.ConstraintDual(), nonneg)
+            @test minimum(dual_nonneg) >= -atol
+            @test sum(dual_nonneg) ≈ 1.0 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), norminf) ≈ vcat(1, -dual_nonneg) atol=atol rtol=rtol
+        end
+    end
+end
+
 const norminftests = Dict("norminf1v" => norminf1vtest,
                           "norminf1f" => norminf1ftest,
-                          "norminf2"  => norminf2test)
+                          "norminf2"  => norminf2test,
+                          "norminf3"  => norminf3test)
 
 @moitestset norminf
 
@@ -560,7 +630,7 @@ function normone2test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
-        if config.duals
+        if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
 
@@ -568,9 +638,77 @@ function normone2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
+function normone3test(model::MOI.ModelLike, config::TestConfig)
+    atol = config.atol
+    rtol = config.rtol
+    # Problem NormOne3
+    # min x
+    #  st  (-1 + x, 2 .+ y) in NormOne(1 + n)
+    #      (1 .+ y) in Nonnegatives(n)
+    # let n = 3. optimal solution: y .= -1, x = 4
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, MOI.NormOneCone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    x = MOI.add_variable(model)
+    y = MOI.add_variables(model, 3)
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(x))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    norminf_vaf = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1:4,
+        MOI.ScalarAffineTerm.(1.0, vcat(x, y))), [-1.0, 2, 2, 2])
+    norminf = MOI.add_constraint(model, norminf_vaf, MOI.NormOneCone(4))
+    nonneg_vaf = MOI.VectorAffineFunction(MOI.VectorAffineTerm.(1:3,
+        MOI.ScalarAffineTerm.(1.0, y)), ones(3))
+    nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
+
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.NormOneCone}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives}()) == 1
+    loc = MOI.get(model, MOI.ListOfConstraints())
+    @test length(loc) == 2
+    @test (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if config.duals
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4 atol=atol rtol=rtol
+        if config.dual_objective_value
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 4 atol=atol rtol=rtol
+        end
+
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 4 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ fill(-1.0, 3) atol=atol rtol=rtol
+
+        @test MOI.get(model, MOI.ConstraintPrimal(), norminf) ≈ vcat(3, ones(3)) atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), nonneg) ≈ zeros(3) atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), norminf) ≈ vcat(1, fill(-1, 3)) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), nonneg) ≈ ones(3) atol=atol rtol=rtol
+        end
+    end
+end
+
 const normonetests = Dict("normone1v" => normone1vtest,
                           "normone1f" => normone1ftest,
-                          "normone2"  => normone2test)
+                          "normone2"  => normone2test,
+                          "normone3"  => normone3test)
 
 @moitestset normone
 
@@ -773,7 +911,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
 
         @test MOI.get(model, MOI.PrimalStatus()) in (MOI.NO_SOLUTION,
                                                      MOI.INFEASIBLE_POINT)
-        if config.infeas_certificates
+        if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         end
 
@@ -1006,7 +1144,9 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
         @test MOI.get(model, MOI.TerminationStatus()) in [MOI.INFEASIBLE, MOI.INFEASIBLE_OR_UNBOUNDED]
 
         if config.duals
-            @test MOI.get(model, MOI.DualStatus()) in [MOI.INFEASIBILITY_CERTIFICATE, MOI.NEARLY_INFEASIBILITY_CERTIFICATE]
+            if config.infeas_certificates
+                @test MOI.get(model, MOI.DualStatus()) in [MOI.INFEASIBILITY_CERTIFICATE, MOI.NEARLY_INFEASIBILITY_CERTIFICATE]
+            end
 
             y1 = MOI.get(model, MOI.ConstraintDual(), vc1)
             @test y1 < -atol # Should be strictly negative
@@ -1270,13 +1410,18 @@ function _geomean1test(model::MOI.ModelLike, config::TestConfig, vecofvars, n=3)
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n+1) atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ n atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ vcat(-1.0, fill(inv(n), n)) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -inv(n) atol=atol rtol=rtol
+        end
     end
 end
 
 geomean1vtest(model::MOI.ModelLike, config::TestConfig) = _geomean1test(model, config, true)
 geomean1ftest(model::MOI.ModelLike, config::TestConfig) = _geomean1test(model, config, false)
 
-# addresses bug https://github.com/JuliaOpt/MathOptInterface.jl/pull/962
+# addresses bug https://github.com/jump-dev/MathOptInterface.jl/pull/962
 function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     atol = config.atol
     rtol = config.rtol
@@ -1284,7 +1429,7 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     # max t
     # st  (t,x_1,x_2,...,x_9) ∈ GeometricMeanCone(10)
     #     x_1 == x_2, ..., x_9 == 1
-    # the optimal solution is 1
+    # the optimal solution is 1 with optimal value 1
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1335,6 +1480,11 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
 
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n + 1) atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ ones(n) atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ vcat(-1, fill(inv(n), n)) atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ fill(-inv(n), n) atol=atol rtol=rtol
+        end
     end
 end
 
@@ -1349,7 +1499,7 @@ function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     # max 2t
     # st  (t,x) ∈ GeometricMeanCone(2)
     #     x <= 2
-    # the optimal solution is 4
+    # the optimal solution is (t, x) = (2, 2) with objective value 4
 
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1395,6 +1545,11 @@ function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
 
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ [2.0; 2.0] atol=atol rtol=rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol=atol rtol=rtol
+
+        if config.duals
+            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ [-2.0, 2.0] atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -2.0 atol=atol rtol=rtol
+        end
     end
 end
 
@@ -1723,6 +1878,12 @@ function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     #  st  x^0.9 * y^(0.1) >= |z| (i.e (x, y, z) are in the 3d power cone with a=0.9)
     #      x == 2
     #      y == 1
+    # Dual
+    # min -2α - β
+    #  st (u/0.9)^0.9 (v/0.1)^0.1 >= |w|
+    #     u + α = 0
+    #     v + β = 0
+    #     w = -1
     a = 0.9
     @test MOIU.supports_default_copy_to(model, #=copy_names=#false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
@@ -1749,8 +1910,8 @@ function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         vc = MOI.add_constraint(model, MOI.VectorAffineFunction{Float64}(vov), MOI.PowerCone(a))
     end
 
-    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.), MOI.EqualTo(2.))
-    cy = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.), MOI.EqualTo(1.))
+    cx = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.0), MOI.EqualTo(2.0))
+    cy = MOI.add_constraint(model, MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.0), MOI.EqualTo(1.0))
 
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -1767,22 +1928,25 @@ function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
 
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0^0.9 atol=atol rtol=rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2^0.9 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0, 2^0.9] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2., 1., 2^0.9] atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2.0, 1.0, 2^0.9] atol=atol rtol=rtol
 
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2. atol=atol rtol=rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1. atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1.0 atol=atol rtol=rtol
 
         if config.duals
+            # Only real solution of u^10 - u^9 / 2^0.1 = -(0.1*0.9^9)/2
+            u_value = 0.839729692
+            v_value = 2^0.9 - 2u_value
             u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test u ≈ 0.839729692 atol=atol rtol=rtol
-            @test v ≈ 0.1866065982 atol=atol rtol=rtol
+            @test u ≈ u_value atol=atol rtol=rtol
+            @test v ≈ v_value atol=atol rtol=rtol
             @test w ≈ -1 atol=atol rtol=rtol
 
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -0.839729692 atol=atol rtol=rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -0.1866065982 atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -u_value atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -v_value atol=atol rtol=rtol
         end
     end
 end
@@ -2583,7 +2747,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     atol = config.atol
     rtol = config.rtol
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
-    logdet = detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
+    use_logdet = detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
     # We look for an ellipsoid x^T P x ≤ 1 contained in the square.
     # Let Q = inv(P) (x^T Q x ≤ 1 is its polar ellipsoid), we have
     # max t
@@ -2600,7 +2764,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.supports(model, MOI.ObjectiveSense())
-    if logdet
+    if use_logdet
         @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Float64})
     end
     if vecofvars
@@ -2618,7 +2782,7 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
     Q = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
 
-    if logdet
+    if use_logdet
         u = MOI.add_variable(model)
         vc = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.EqualTo(1.0))
         @test vc.value == u.value
@@ -2648,12 +2812,12 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
 
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
-        expectedobjval = logdet ? 0. : 1.
+        expectedobjval = use_logdet ? 0. : 1.
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ expectedobjval atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expectedobjval atol=atol rtol=rtol
 
-        if logdet
+        if use_logdet
             @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1.0 atol=atol rtol=rtol
         end
 
@@ -2667,11 +2831,23 @@ function _det1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool, de
 
         tQv = MOI.get(model, MOI.ConstraintPrimal(), cX)
         @test tQv[1] ≈ expectedobjval atol=atol rtol=rtol
-        @test tQv[(logdet ? 3 : 2):end] ≈ Qv atol=atol rtol=rtol
+        @test tQv[(use_logdet ? 3 : 2):end] ≈ Qv atol=atol rtol=rtol
 
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ [0., 0.] atol=atol rtol=rtol
-        if logdet
+        if use_logdet
             @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ 1.0 atol=atol rtol=rtol
+        end
+
+        if config.duals
+            if use_logdet
+                @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [1, 1] atol=atol rtol=rtol
+                @test MOI.get(model, MOI.ConstraintDual(), vc) ≈ 2 atol=atol rtol=rtol
+                dual = square ? [-1, -2, 1, 0, 0, 1] : [-1, -2, 1, 0, 1]
+            else
+                @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [0.5, 0.5] atol=atol rtol=rtol
+                dual = square ? [-1.0, 0.5, 0.0, 0.0, 0.5] : [-1.0, 0.5, 0.0, 0.5]
+            end
+            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ dual atol=atol rtol=rtol
         end
     end
 end
@@ -2681,13 +2857,85 @@ logdett1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, confi
 logdets1vtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.LogDetConeSquare)
 logdets1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.LogDetConeSquare)
 
+function _det2test(model::MOI.ModelLike, config::TestConfig, detcone)
+    atol = config.atol
+    rtol = config.rtol
+    square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
+    use_logdet = detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
+    # We find logdet or rootdet of a symmetric PSD matrix:
+    # mat = |3  2  1|
+    #       |2  2  1|
+    #       |1  1  3|
+    # det(mat) = 5, so:
+    # rootdet(mat) ≈ 1.709976
+    # logdet(mat)  ≈ 1.609438
+
+    mat = Float64[3 2 1; 2 2 1; 1 1 3]
+    matL = Float64[3, 2, 2, 1, 1, 3]
+
+    @test MOIU.supports_default_copy_to(model, #=copy_names=# false)
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Float64}, detcone)
+
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+
+    t = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+
+    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(t))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+    constant_mat = square ? vec(mat) : matL
+    constant_vec = use_logdet ? vcat(0, 1, constant_mat) : vcat(0, constant_mat)
+    vaf = MOI.VectorAffineFunction([MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))], constant_vec)
+    det_constraint = MOI.add_constraint(model, vaf, detcone(3))
+    @test MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64}, detcone}()) == 1
+
+    if config.solve
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+
+        MOI.optimize!(model)
+
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+        expected_objval = use_logdet ? log(5) : (5 ^ inv(3))
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ expected_objval atol=atol rtol=rtol
+        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expected_objval atol=atol rtol=rtol
+
+        det_value = MOI.get(model, MOI.ConstraintPrimal(), det_constraint)
+        @test det_value[1] ≈ expected_objval atol=atol rtol=rtol
+        if use_logdet
+            @test det_value[2] ≈ 1.0 atol=atol rtol=rtol
+        end
+        @test det_value[(use_logdet ? 3 : 2):end] ≈ (square ? vec(mat) : matL) atol=atol rtol=rtol
+
+        if config.duals
+            psd_dual = square ? [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] : [1, -1, 1.6, 0, -0.2, 0.4]
+            dual = use_logdet ? vcat(-1, log(5) - 3, psd_dual) : vcat(-1, psd_dual / 3 * expected_objval)
+            @test MOI.get(model, MOI.ConstraintDual(), det_constraint) ≈ dual atol=atol rtol=rtol
+        end
+    end
+end
+
+logdett2test(model::MOI.ModelLike, config::TestConfig) = _det2test(model, config, MOI.LogDetConeTriangle)
+logdets2test(model::MOI.ModelLike, config::TestConfig) = _det2test(model, config, MOI.LogDetConeSquare)
+
+
 const logdetttests = Dict("logdett1v" => logdett1vtest,
-                          "logdett1f" => logdett1ftest)
+                          "logdett1f" => logdett1ftest,
+                          "logdett2" => logdett2test,
+                          )
 
 @moitestset logdett
 
 const logdetstests = Dict("logdets1v" => logdets1vtest,
-                          "logdets1f" => logdets1ftest)
+                          "logdets1f" => logdets1ftest,
+                          "logdets2" => logdets2test,
+                          )
 
 @moitestset logdets
 
@@ -2700,14 +2948,18 @@ rootdett1vtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, conf
 rootdett1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.RootDetConeTriangle)
 rootdets1vtest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, true, MOI.RootDetConeSquare)
 rootdets1ftest(model::MOI.ModelLike, config::TestConfig) = _det1test(model, config, false, MOI.RootDetConeSquare)
+rootdett2test(model::MOI.ModelLike, config::TestConfig) = _det2test(model, config, MOI.RootDetConeTriangle)
+rootdets2test(model::MOI.ModelLike, config::TestConfig) = _det2test(model, config, MOI.RootDetConeSquare)
 
 const rootdetttests = Dict("rootdett1v" => rootdett1vtest,
-                           "rootdett1f" => rootdett1ftest)
+                           "rootdett1f" => rootdett1ftest,
+                           "rootdett2" => rootdett2test)
 
 @moitestset rootdett
 
 const rootdetstests = Dict("rootdets1v" => rootdets1vtest,
-                           "rootdets1f" => rootdets1ftest)
+                           "rootdets1f" => rootdets1ftest,
+                           "rootdets2" => rootdets2test)
 
 @moitestset rootdets
 

@@ -1,6 +1,154 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.19 (December 1, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.19).
+
+- Added `CallbackNodeStatus` attribute
+- Added bridge from `GreaterThan` or `LessThan` to `Interval`
+- Added tests for infeasibility certificates and double optimize
+- Fixed support for Julia v1.6
+- Re-organized MOI docs and added documentation for adding a test
+
+v0.9.18 (November 3, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.18).
+
+- Various improvements for working with complex numbers
+- Added `GeoMeantoRelEntrBridge` to bridge a geomean constraint to a relative entropy constraint
+
+v0.9.17 (September 21, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.17).
+
+- Fixed `CleverDict` with variable of negative index value
+- Implement `supports_add_constrained_variable` for `MockOptimizer`
+
+v0.9.16 (September 17, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.16).
+
+- Various fixes:
+  * 32-bit support
+  * `CleverDict` with abstract value type
+  * Checks in test suite
+
+v0.9.15 (September 14, 2020)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.15).
+
+A summary of changes are as follows:
+
+- Bridges improvements:
+  - (R)SOCtoNonConvexQuad bridge
+  - ZeroOne bridge
+  - Use `supports_add_constrained_variable` in `LazyBridgeOptimizer`
+  - Exposed `VariableBridgeCost` and `ConstraintBridgeCost` attributes
+  - Prioritize constraining variables on creation according to these costs
+  - Refactor bridge debugging
+- Large performance improvements across all submodules
+- Lots of documentation improvements
+- FileFormats improvements:
+  - Update MathOptFormat to v0.5
+  - Fix supported objectives in `FileFormats`
+- Testing improvements:
+  - Add name option for `basic_constraint_test`
+- Bug fixes and missing methods
+  - Add `length` for iterators
+  - Fix bug with duplicate terms
+  - Fix order of `LinearOfConstraintIndices`
+
+v0.9.14 (May 30, 2020)
+---------------------
+
+- Add a solver-independent interface for accessing the set of conflicting
+  constraints an Irreducible Inconsistent Subsystem (#1056).
+- Bump JSONSchema dependency from v0.2 to v0.3 (#1090).
+- Documentation improvements:
+  * Fix typos (#1054, #1060, #1061, #1064, #1069, #1070).
+  * Remove the outdated recommendation for a package implementing MOI for a
+    solver `XXX` to be called `MathOptInterfaceXXX` (#1087).
+- Utilities improvements:
+  * Fix `is_canonical` for quadratic functions (#1081, #1089).
+  * Implement `add_constrained_variable[s]` for `CachingOptimizer`
+    so that it is added as constrained variables to the underlying optimizer (#1084).
+  * Add support for custom objective functions for
+    `UniversalFallback` (#1086).
+  * Deterministic ordering of constraints in `UniversalFallback` (#1088).
+- Testing improvements:
+  * Add `NormOneCone`/`NormInfinityCone` tests (#1045).
+- Bridges improvements:
+  * Add bridges from `Semiinteger` and `Semicontinuous` (#1059).
+  * Implement getting `ConstraintSet` for `Variable.FlipSignBridge` (#1066).
+  * Fix setting `ConstraintFunction` for `Constraint.ScalarizeBridge` (#1093).
+  * Fix `NormOne`/`NormInf` bridges with nonzero constants (#1045).
+  * Fix StackOverflow in `debug` (#1063).
+- FileFormats improvements:
+  * [SDPA] Implement the extension for integer variables (#1079).
+  * [SDPA] Ignore comments aftere `m` and `nblocks` and detect `dat-s` extension (#1077).
+  * [SDPA] No scaling of off-diagonal coefficient (#1076).
+  * [SDPA] Add missing negation of constant (#1075).
+
+v0.9.13 (March 24, 2020)
+---------------------
+
+- Added tests for `Semicontinuous` and `Semiinteger` variables (#1033).
+- Added tests for using `ExprGraph`s from NLP evaluators (#1043).
+- Update version compatibilities of depedencies (#1034, #1051, #1052).
+- Fixed typos in documentation (#1044).
+
+v0.9.12 (February 28, 2020)
+---------------------
+
+- Fixed writing `NLPBlock` in MathOptFormat (#1037).
+- Fixed `MockOptimizer` for result attributes with non-one result index (#1039).
+- Updated test template with `instantiate` (#1032).
+
+v0.9.11 (February 21, 2020)
+---------------------
+
+- Add an option for the model created by `Utilities.@model` to be a subtype
+  of `AbstractOptimizer` (#1031).
+- Described dual cone in docstrings of `GeoMeanCone` and `RelativeEntropyCone`
+  (#1018, #1028).
+- Fixed typos in documentation (#1022, #1024).
+- Fixed warning of unsupported attribute (#1027).
+- Added more rootdet/logdet conic tests (#1026).
+- Implemented `ConstraintDual` for `Constraint.GeoMeanBridge`,
+  `Constraint.RootDetBridge` and `Constraint.LogDetBridge`
+  and test duals in tests with `GeoMeanCone` and `RootDetConeTriangle` and
+  `LogDetConeTriangle` cones (#1025, #1026).
+
+v0.9.10 (January 31, 2020)
+---------------------
+
+- Added `OptimizerWithAttributes` grouping an optimizer constructor and a list
+  of optimizer attributes (#1008).
+- Added `RelativeEntropyCone` with corresponding bridge into exponential cone
+  constraints (#993).
+- Added `NormSpectralCone` and `NormNuclearCone` with corresponding bridges
+  into positive semidefinite constraints (#976).
+- Added `supports_constrained_variable(s)` (#1004).
+- Added `dual_set_type` (#1002).
+- Added tests for vector specialized version of `delete` (#989, #1011).
+- Added PSD3 test (#1007).
+- Clarified dual solution of `Tests.pow1v` and `Tests.pow1f` (#1013).
+- Added support for `EqualTo` and `Zero` in
+  `Bridges.Constraint.SplitIntervalBridge` (#1005).
+- Fixed `Utilities.vectorize` for empty vector (#1003).
+- Fixed free variables in LP writer (#1006).
+
 v0.9.9 (December 29, 2019)
 ---------------------
 

@@ -73,7 +73,7 @@ function map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
     return map_indices(vi -> variable_map[vi], x)
 end
 
-const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet, Function, MOI.ModelLike}
+const ObjectWithoutIndex = Union{Nothing, DataType, Number, Enum, AbstractString, MOI.AnyAttribute, MOI.AbstractSet, Function, MOI.ModelLike, Symbol}
 const ObjectOrTupleWithoutIndex = Union{ObjectWithoutIndex, Tuple{Vararg{ObjectWithoutIndex}}}
 const ObjectOrTupleOrArrayWithoutIndex = Union{ObjectOrTupleWithoutIndex, AbstractArray{<:ObjectOrTupleWithoutIndex}, AbstractArray{<:AbstractArray{<:ObjectOrTupleWithoutIndex}}}
 
@@ -161,8 +161,11 @@ end
 
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarQuadraticTerm{T}) where T
-    f1 = variable_map(term.variable_index_1)
-    f2 = variable_map(term.variable_index_2)
+    # We could have `T = Complex{Float64}` and `variable_map(term.variable_index)`
+    # be a `MOI.ScalarAffineFunction{Float64}` with the Hermitian to PSD bridge.
+    # We convert to `MOI.ScalarAffineFunction{T}` to avoid any issue.
+    f1::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index_1)
+    f2::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index_2)
     f12 = operate(*, T, f1, f2)::MOI.ScalarQuadraticFunction{T}
     coef = term.coefficient
     # The quadratic terms are evaluated as x'Qx/2 so a diagonal term should
@@ -175,8 +178,9 @@ function substitute_variables(variable_map::Function,
 end
 function substitute_variables(variable_map::Function,
                               term::MOI.ScalarAffineTerm{T}) where T
-    return operate(*, T, term.coefficient,
-                       variable_map(term.variable_index))::MOI.ScalarAffineFunction{T}
+    # See comment for `term::MOI.ScalarQuadraticTerm` for the conversion.
+    func::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index)
+    return operate(*, T, term.coefficient, func)::MOI.ScalarAffineFunction{T}
 end
 function substitute_variables(
     variable_map::Function,
@@ -363,16 +367,30 @@ function unsafe_add(t1::VT, t2::VT) where VT <: Union{MOI.VectorAffineTerm,
     return VT(t1.output_index, scalar_term)
 end
 
+is_canonical(::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = true
+
 """
-    is_canonical(f::Union{ScalarAffineFunction, ScalarQuadraticFunction
-                         VectorAffineFunction, VectorQuadraticTerm})
+    is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
 Returns a Bool indicating whether the function is in canonical form.
 See [`canonical`](@ref).
 """
-function is_canonical(f::Union{SAF, VAF, SQF, VQF})
+function is_canonical(f::Union{SAF, VAF})
     is_strictly_sorted(f.terms, MOI.term_indices,
                        t -> !iszero(MOI.coefficient(t)))
+end
+
+"""
+    is_canonical(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
+
+Returns a Bool indicating whether the function is in canonical form.
+See [`canonical`](@ref).
+"""
+function is_canonical(f::Union{SQF, VQF})
+    v = is_strictly_sorted(f.affine_terms, MOI.term_indices,
+                           t -> !iszero(MOI.coefficient(t)))
+    v &= is_strictly_sorted(f.quadratic_terms, MOI.term_indices,
+                            t -> !iszero(MOI.coefficient(t)))
 end
 
 """
@@ -409,12 +427,16 @@ Returns the function in a canonical form, i.e.
 * The terms appear in increasing order of variable where there the order of the variables is the order of their value.
 * For a `AbstractVectorFunction`, the terms are sorted in ascending order of output index.
 
+The output of `canonical` can be assumed to be a copy of `f`, even for `VectorOfVariables`.
+
 ### Examples
 If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3).
 The canonical representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)` is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 
 """
-canonical(f::Union{SAF, VAF, SQF, VQF}) = canonicalize!(copy(f))
+canonical(f::MOI.AbstractFunction) = canonicalize!(copy(f))
+
+canonicalize!(f::Union{MOI.VectorOfVariables, MOI.SingleVariable}) = f
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
@@ -489,7 +511,7 @@ function test_variablenames_equal(model, variablenames)
     end
     for (vname,seen) in seen_name
         if !seen
-            error("Did not find variable with name $vname in intance.")
+            error("Did not find variable with name $vname in instance.")
         end
     end
 end
@@ -509,7 +531,7 @@ function test_constraintnames_equal(model, constraintnames)
     end
     for (cname,seen) in seen_name
         if !seen
-            error("Did not find constraint with name $cname in intance.")
+            error("Did not find constraint with name $cname in instance.")
         end
     end
 end
@@ -833,7 +855,7 @@ end
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where T
     MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
 end
-# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+# `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
 function operate_term(::typeof(*), t::MOI.ScalarAffineTerm{T}, β::T) where T<:Number
     MOI.ScalarAffineTerm(t.coefficient * β, t.variable_index)
 end
@@ -1444,7 +1466,7 @@ function operate(::typeof(*), ::Type{T},
     return operate(*, T, α, f)
 end
 
-# `<:Number` is a workaround for https://github.com/JuliaOpt/MathOptInterface.jl/issues/980
+# `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
 function operate!(::typeof(*), ::Type{T},
                   f::Union{MOI.ScalarAffineFunction{T},
                            MOI.ScalarQuadraticFunction{T}}, α::T) where T<:Number
@@ -1530,18 +1552,22 @@ Base.:*(f::MOI.AbstractFunction) = f
 function Base.:*(f::ScalarLike{T}, g::ScalarLike{T}, args::ScalarLike{T}...) where T
     return operate(*, T, f, g, args...)
 end
-function Base.:*(f::T, g::TypedLike{T}) where T
-    return operate(*, T, f, g)
-end
 function Base.:*(f::Number, g::Union{MOI.SingleVariable, MOI.VectorOfVariables})
     return operate(*, typeof(f), f, g)
-end
-function Base.:*(f::TypedLike{T}, g::T) where T
-    return operate(*, T, g, f)
 end
 function Base.:*(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}, g::Number)
     return operate(*, typeof(g), f, g)
 end
+# Used by sparse matrix multiplication after
+# https://github.com/JuliaLang/julia/pull/33205
+function Base.:*(f::TypedLike, g::Bool)
+    if g
+        return MA.copy_if_mutable(f)
+    else
+        return zero(typeof(f))
+    end
+end
+Base.:*(f::Bool, g::TypedLike) = g * f
 
 function Base.:^(func::MOI.ScalarAffineFunction{T}, p::Integer) where T
     if iszero(p)
@@ -1887,7 +1913,7 @@ end
 
 
 # Similar to `eachscalar` but faster, see
-# https://github.com/JuliaOpt/MathOptInterface.jl/issues/418
+# https://github.com/jump-dev/MathOptInterface.jl/issues/418
 function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
     MOI.SingleVariable.(f.variables)
 end
@@ -1947,7 +1973,7 @@ function convert_approx(::Type{MOI.SingleVariable}, func::MOI.ScalarAffineFuncti
     f = canonical(func)
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol=tol), f.terms)
     if abs(f.constant) > tol || i === nothing ||
-        any(j -> j != i && abs(f.terms[i]) > tol, eachindex(f.terms))
+        any(j -> j != i && abs(f.terms[j].coefficient) > tol, eachindex(f.terms))
         throw(InexactError(:convert_approx, MOI.SingleVariable, func))
     end
     return MOI.SingleVariable(f.terms[i].variable_index)
@@ -1966,3 +1992,107 @@ function Base.one(F::Type{<:TypedScalarLike{T}}) where T
 end
 
 Base.promote_rule(::Type{F}, ::Type{T}) where {T, F<:TypedScalarLike{T}} = F
+
+function operate_coefficient(f, term::MOI.ScalarAffineTerm)
+    MOI.ScalarAffineTerm(f(term.coefficient), term.variable_index)
+end
+function operate_coefficient(f, term::MOI.ScalarQuadraticTerm)
+    MOI.ScalarQuadraticTerm(f(term.coefficient), term.variable_index_1, term.variable_index_2)
+end
+function operate_coefficient(f, term::MOI.VectorAffineTerm)
+    return MOI.VectorAffineTerm(term.output_index, operate_coefficient(f, term.scalar_term))
+end
+function operate_coefficient(f, term::MOI.VectorQuadraticTerm)
+    return MOI.VectorQuadraticTerm(term.output_index, operate_coefficient(f, term.scalar_term))
+end
+
+function operate_coefficients(f, func::MOI.ScalarAffineFunction)
+    return MOI.ScalarAffineFunction(
+        [operate_coefficient(f, term) for term in func.terms],
+        f(func.constant)
+    )
+end
+function operate_coefficients(f, func::MOI.ScalarQuadraticFunction)
+    return MOI.ScalarQuadraticFunction(
+        [operate_coefficient(f, term) for term in func.affine_terms],
+        [operate_coefficient(f, term) for term in func.quadratic_terms],
+        f(func.constant)
+    )
+end
+function operate_coefficients(f, func::MOI.VectorAffineFunction)
+    return MOI.VectorAffineFunction(
+        [operate_coefficient(f, term) for term in func.terms],
+        map(f, func.constants)
+    )
+end
+function operate_coefficients(f, func::MOI.VectorQuadraticFunction)
+    return MOI.VectorQuadraticFunction(
+        [operate_coefficient(f, term) for term in func.affine_terms],
+        [operate_coefficient(f, term) for term in func.quadratic_terms],
+        map(f, func.constants)
+    )
+end
+
+function Base.:*(α::T, g::TypedLike{T}) where T
+    return operate_coefficients(β -> α * β, g)
+end
+function Base.:*(α::Number, g::TypedLike)
+    return operate_coefficients(β -> α * β, g)
+end
+# Breaks ambiguity
+function Base.:*(α::T, g::TypedLike{T}) where T<:Number
+    return operate_coefficients(β -> α * β, g)
+end
+
+function Base.:*(g::TypedLike{T}, β::T) where T
+    return operate_coefficients(α -> α * β, g)
+end
+function Base.:*(g::TypedLike, β::Number)
+    return operate_coefficients(α -> α * β, g)
+end
+# Breaks ambiguity
+function Base.:*(g::TypedLike{T}, β::T) where T<:Number
+    return operate_coefficients(α -> α * β, g)
+end
+
+is_coefficient_type(::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}, ::Type) = true
+is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where T = true
+is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
+
+similar_type(::Type{<:MOI.ScalarAffineFunction}, ::Type{T}) where T = MOI.ScalarAffineFunction{T}
+similar_type(::Type{<:MOI.ScalarQuadraticFunction}, ::Type{T}) where T = MOI.ScalarQuadraticFunction{T}
+similar_type(::Type{<:MOI.VectorAffineFunction}, ::Type{T}) where T = MOI.VectorAffineFunction{T}
+similar_type(::Type{<:MOI.VectorQuadraticFunction}, ::Type{T}) where T = MOI.VectorQuadraticFunction{T}
+
+## Complex operations
+# We assume MOI variables are real numbers.
+
+function MA.promote_operation(
+    op::Union{typeof(real), typeof(imag), typeof(conj)},
+    F::Type{<:TypedLike{T}}
+) where T
+    return similar_type(F, MA.promote_operation(op, T))
+end
+
+Base.real(f::TypedLike) = operate_coefficients(real, f)
+MA.promote_operation(::typeof(real), T::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}) = T
+Base.real(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = f
+
+function promote_operation(::typeof(imag), ::Type{T}, ::Type{MOI.SingleVariable}) where T
+    return MOI.ScalarAffineFunction{T}
+end
+function operate(::typeof(imag), ::Type{T}, f::MOI.SingleVariable) where {T}
+    return zero(MOI.ScalarAffineFunction{T})
+end
+function promote_operation(::typeof(imag), ::Type{T}, ::Type{MOI.VectorOfVariables}) where T
+    return MOI.VectorAffineFunction{T}
+end
+function operate(::typeof(imag), ::Type{T}, f::MOI.VectorOfVariables) where {T}
+    return zero_with_output_dimension(MOI.VectorAffineFunction{T}, MOI.output_dimension(f))
+end
+Base.imag(f::TypedLike) = operate_coefficients(imag, f)
+operate(::typeof(imag), ::Type, f::TypedLike) = imag(f)
+
+Base.conj(f::TypedLike) = operate_coefficients(conj, f)
+MA.promote_operation(::typeof(conj), T::Type{<:Union{MOI.SingleVariable, MOI.VectorOfVariables}}) = T
+Base.conj(f::Union{MOI.SingleVariable, MOI.VectorOfVariables}) = f

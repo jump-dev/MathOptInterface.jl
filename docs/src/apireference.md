@@ -3,6 +3,14 @@ CurrentModule = MathOptInterface
 DocTestSetup = quote
     using MathOptInterface
     const MOI = MathOptInterface
+
+    # For compatibility with both Julia 1.0.5 and 1.5.2
+    # Upon the Julia LTS version becoming 1.6, these imports could be dropped,
+    # and all ScalarAffineTerm and VariableIndex instances in doctests below
+    # could be replaced with MOI.ScalarAffineTerm and MOI.VariableIndex
+    # Check discussion at PR 1184: https://github.com/jump-dev/MathOptInterface.jl/pull/1184#discussion_r515300914
+    import MathOptInterface.ScalarAffineTerm
+    import MathOptInterface.VariableIndex
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -120,6 +128,8 @@ ListOfConstraintAttributesSet
 ```@docs
 AbstractOptimizer
 optimize!
+OptimizerWithAttributes
+instantiate
 ```
 
 List of optimizers attributes
@@ -130,10 +140,6 @@ Silent
 TimeLimitSec
 RawParameter
 NumberOfThreads
-AbstractCallback
-LazyConstraintCallback
-HeuristicCallback
-UserCutCallback
 ```
 
 List of attributes useful for optimizers
@@ -158,6 +164,17 @@ PrimalStatus
 DualStatus
 ```
 
+Attributes relating to solver callbacks:
+
+```@docs
+AbstractCallback
+LazyConstraintCallback
+HeuristicCallback
+UserCutCallback
+CallbackNodeStatus
+CallbackNodeStatusCode
+CallbackVariablePrimal
+```
 ### Termination Status
 
 The `TerminationStatus` attribute indicates why the optimizer stopped executing.
@@ -165,6 +182,19 @@ The value of the attribute is of type `TerminationStatusCode`.
 
 ```@docs
 TerminationStatusCode
+```
+
+### Conflict Status
+
+The `ConflictStatus` attribute indicates why the conflict finder stopped executing.
+The value of the attribute is of type `ConflictStatusCode`.
+
+```@docs
+compute_conflict!
+ConflictStatus
+ConflictStatusCode
+ConstraintConflictStatus
+ConflictParticipationStatusCode
 ```
 
 ### Result Status
@@ -235,7 +265,6 @@ Calls to `get` and `set` should include as an argument a single `VariableIndex` 
 VariableName
 VariablePrimalStart
 VariablePrimal
-CallbackVariablePrimal
 ```
 
 ### Constraints
@@ -261,6 +290,7 @@ ConstraintPrimal
 ConstraintDual
 ConstraintBasisStatus
 ConstraintFunction
+CanonicalConstraintFunction
 ConstraintSet
 ```
 
@@ -540,6 +570,41 @@ constraints of different types. There are two important concepts to distinguish:
   allow introspection into the bridge selection rationale of
   [`Bridges.LazyBridgeOptimizer`](@ref).
 
+Most bridges are added by default in [`Bridges.full_bridge_optimizer`](@ref).
+However, for technical reasons, some bridges are not added by default, for instance:
+[`Bridges.Constraint.SOCtoPSDBridge`](@ref), [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref)
+and [`Bridges.Constraint.RSOCtoNonConvexQuadBridge`](@ref). See the docs of those bridges
+for more information.
+
+It is possible to add those bridges and also user defined bridges,
+following one of the two methods. We present the examples for:
+[`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref).
+
+The first option is to add the specific bridges to a
+`bridged_model` optimizer, with coefficient type `T`. The `bridged_model`
+optimizer itself must have been constructed with a
+[`Bridges.LazyBridgeOptimizer`](@ref). Once such a optimizer is available, we
+can proceed using using [`Bridges.add_bridge`](@ref):
+
+```julia
+MOIB.add_bridge(bridged_model, SOCtoNonConvexQuadBridge{T})
+```
+
+Alternatively, it is possible to create a [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)
+and wrap an existing `model` with it:
+
+```julia
+const SOCtoNonConvexQuad{T, OT<:ModelLike} = Bridges.Constraint.SingleBridgeOptimizer{Bridges.Constraint.SOCtoNonConvexQuadBridge{T}, OT}
+bridged_model = SOCtoNonConvexQuad{Float64}(model)
+```
+
+Those procedures could be applied to user define bridges. For the
+bridges defined in MathOptInterface, the [`Bridges.Constraint.SingleBridgeOptimizer`](@ref)'s are already created, therefore, for the case of [`Bridges.Constraint.SOCtoNonConvexQuadBridge`](@ref), one could simply use the existing optimizer:
+
+```julia
+bridged_model = Bridges.Constraint.SOCtoNonConvexQuad{Float64}(model)
+```
+
 ```@docs
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
@@ -574,7 +639,7 @@ bridged_variable, bridged_constraint = MOI.add_constrained_variable(bridged_mode
 
 # output
 
-(MOI.VariableIndex(-1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(-1))
+(VariableIndex(-1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(-1))
 ```
 The constrained variable in `MOI.GreaterThan(1.0)` returned is a bridged
 variable as its index in negative. In `model`, a constrained variable in
@@ -584,8 +649,8 @@ inner_variables = MOI.get(model, MOI.ListOfVariableIndices())
 
 # output
 
-1-element Array{MOI.VariableIndex,1}:
- MOI.VariableIndex(1)
+1-element Array{VariableIndex,1}:
+ VariableIndex(1)
 ```
 In the functions used for adding constraints or setting the objective to
 `bridged_model`, `bridged_variable` is substituted for `inner_variables[1]` plus
@@ -740,6 +805,8 @@ Bridges.Constraint.AbstractBridge
 
 Below is the list of constraint bridges implemented in this package.
 ```@docs
+Bridges.Constraint.GreaterToIntervalBridge
+Bridges.Constraint.LessToIntervalBridge
 Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToGreaterBridge
 Bridges.Constraint.NonnegToNonposBridge
@@ -754,8 +821,11 @@ Bridges.Constraint.SplitIntervalBridge
 Bridges.Constraint.RSOCBridge
 Bridges.Constraint.SOCRBridge
 Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.SOCtoNonConvexQuadBridge
+Bridges.Constraint.RSOCtoNonConvexQuadBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
+Bridges.Constraint.GeoMeantoRelEntrBridge
 Bridges.Constraint.GeoMeanBridge
 Bridges.Constraint.RelativeEntropyBridge
 Bridges.Constraint.NormSpectralBridge
@@ -766,6 +836,9 @@ Bridges.Constraint.LogDetBridge
 Bridges.Constraint.SOCtoPSDBridge
 Bridges.Constraint.RSOCtoPSDBridge
 Bridges.Constraint.IndicatorActiveOnFalseBridge
+Bridges.Constraint.IndicatorSOS1Bridge
+Bridges.Constraint.SemiToBinaryBridge
+Bridges.Constraint.ZeroOneBridge
 ```
 For each bridge defined in this package, a corresponding
 [`Bridges.Constraint.SingleBridgeOptimizer`](@ref) is available with the same
@@ -1019,7 +1092,7 @@ Utilities.side_dimension_for_vectorized_dimension
 ## Benchmarks
 
 Functions to help benchmark the performance of solver wrappers. See
-[Benchmarking](@ref) for more details.
+[The Benchmarks submodule](@ref) for more details.
 
 ```@docs
 Benchmarks.suite
@@ -1030,7 +1103,7 @@ Benchmarks.compare_against_baseline
 ## File Formats
 
 Functions to help read and write MOI models to/from various file formats. See
-[File Formats](@ref) for more details.
+[The FileFormats submodule](@ref) for more details.
 
 ```@docs
 FileFormats.Model

@@ -173,7 +173,7 @@ in the vector `y`.
 function eval_constraint_jacobian_transpose_product end
 
 """
-    eval_hessian_lagrangian_prod(d::AbstractNLPEvaluator, h, x, v, σ, μ)
+    eval_hessian_lagrangian_product(d::AbstractNLPEvaluator, h, x, v, σ, μ)
 
 Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the Hessian-of-the-Lagrangian-vector product

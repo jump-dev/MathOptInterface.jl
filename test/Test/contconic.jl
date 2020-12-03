@@ -36,6 +36,44 @@ config = MOIT.TestConfig()
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE_OR_UNBOUNDED)
     MOIT.lin4test(mock, MOIT.TestConfig(infeas_certificates=false))
 end
+@testset "NormInf" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
+        (MOI.VectorOfVariables, MOI.NormInfinityCone) => [[1, 0, -1]])
+    MOIT.norminf1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) => [[1, 0, -1]])
+    MOIT.norminf1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE, MOI.INFEASIBLE_POINT, MOI.INFEASIBILITY_CERTIFICATE)
+    MOIT.norminf2test(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [2, -1, -1, -1],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) => [vcat(1, fill(-inv(3), 3))],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [fill(inv(3), 3)])
+    MOIT.norminf3test(mock, config)
+end
+@testset "NormOne" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 0.5],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
+        (MOI.VectorOfVariables, MOI.NormOneCone) => [[1, -1, -1]])
+    MOIT.normone1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [1, 0.5, 0.5],
+        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) => [[1, -1, -1]])
+    MOIT.normone1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE, MOI.INFEASIBLE_POINT, MOI.INFEASIBILITY_CERTIFICATE)
+    MOIT.normone2test(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        [4, -1, -1, -1],
+        (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) => [vcat(1, fill(-1, 3))],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [ones(3)])
+    MOIT.normone3test(mock, config)
+end
 @testset "SOC" begin
     mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1/√2, 1/√2],
                           (MOI.VectorAffineFunction{Float64}, MOI.Zeros)           => [[-√2]])
@@ -97,20 +135,28 @@ end
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64})       => [-1.0],
         (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) => [[1.0, 1.0, -1.0, -1.0]])
     MOIT.rotatedsoc4test(mock, config)
-
 end
 @testset "GeoMean" begin
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-inv(3)])
     MOIT.geomean1vtest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(4),
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-inv(3)],
+        (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) => [vcat(-1.0, fill(inv(3), 3))])
     MOIT.geomean1ftest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10),
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => fill(-inv(9), 9))
     MOIT.geomean2vtest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, ones(10),
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => fill(-inv(9), 9),
+        (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) => [vcat(-1.0, fill(inv(9), 9))])
     MOIT.geomean2ftest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, 2 * ones(2))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2.0, 2.0],
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2.0])
     MOIT.geomean3vtest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, 2 * ones(2))
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2.0, 2.0],
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2.0],
+        (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) => [[-2.0, 2.0]])
     MOIT.geomean3ftest(mock, config)
 end
 @testset "Exponential" begin
@@ -216,14 +262,57 @@ end
         (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => [[1, 0, 0, -1, 1, 0, -1, -1, 1] / 3])
     MOIT.psds3test(mock, config)
 end
-@testset "LogDet and RootDet" begin
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1])
-    MOIT.logdetttest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 0, 1, 1])
-    MOIT.logdetstest(mock, config)
-
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1])
-    MOIT.rootdetttest(mock, config)
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 0, 1])
-    MOIT.rootdetstest(mock, config)
+@testset "LogDet" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1],
+        (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
+        (MOI.VectorOfVariables, MOI.LogDetConeTriangle) => [[-1, -2, 1, 0, 1]])
+    mock.eval_variable_constraint_dual = false
+    MOIT.logdett1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 1, 1],
+        (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
+        (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) => [[-1, -2, 1, 0, 1]])
+    MOIT.logdett1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [log(5)],
+        (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) => [[-1, log(5) - 3, 1, -1, 1.6, 0, -0.2, 0.4]])
+    MOIT.logdett2test(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 0, 1, 1],
+        (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
+        (MOI.VectorOfVariables, MOI.LogDetConeSquare) => [[-1, -2, 1, 0, 0, 1]])
+    mock.eval_variable_constraint_dual = false
+    MOIT.logdets1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 0, 0, 1, 1],
+        (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[1, 1]],
+        (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeSquare) => [[-1, -2, 1, 0, 0, 1]])
+    MOIT.logdets1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [log(5)],
+        (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeSquare) => [[-1, log(5) - 3, 1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4]])
+    MOIT.logdets2test(mock, config)
+end
+@testset "RootDet" begin
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
+        (MOI.VectorOfVariables, MOI.RootDetConeTriangle) => [[-1.0, 0.5, 0.0, 0.5]])
+    MOIT.rootdett1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
+        (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle) => [[-1.0, 0.5, 0.0, 0.5]])
+    MOIT.rootdett1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [5 ^ inv(3)],
+        (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle) => [vcat(-1, [1, -1, 1.6, 0, -0.2, 0.4] / 3 * (5 ^ inv(3)))])
+    MOIT.rootdett2test(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 0, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
+        (MOI.VectorOfVariables, MOI.RootDetConeSquare) => [[-1.0, 0.5, 0.0, 0.0, 0.5]])
+    MOIT.rootdets1vtest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 0, 0, 1],
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0.5, 0.5]],
+        (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeSquare) => [[-1.0, 0.5, 0.0, 0.0, 0.5]])
+    MOIT.rootdets1ftest(mock, config)
+    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [5 ^ inv(3)],
+        (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeSquare) => [vcat(-1, [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] / 3 * (5 ^ inv(3)))])
+    MOIT.rootdets2test(mock, config)
 end

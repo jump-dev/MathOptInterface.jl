@@ -8,13 +8,13 @@ An abstraction layer for mathematical optimization solvers. Replaces [MathProgBa
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-stable-url]: http://www.juliaopt.org/MathOptInterface.jl/stable
-[docs-dev-url]: http://www.juliaopt.org/MathOptInterface.jl/dev
+[docs-stable-url]: http://jump.dev/MathOptInterface.jl/stable
+[docs-dev-url]: http://jump.dev/MathOptInterface.jl/dev
 
-[build-img]: https://travis-ci.org/JuliaOpt/MathOptInterface.jl.svg?branch=master
-[build-url]: https://travis-ci.org/JuliaOpt/MathOptInterface.jl
-[codecov-img]: http://codecov.io/github/JuliaOpt/MathOptInterface.jl/coverage.svg?branch=master
-[codecov-url]: http://codecov.io/github/JuliaOpt/MathOptInterface.jl?branch=master
+[build-img]: https://github.com/JuMP-dev/MathOptInterface.jl/workflows/CI/badge.svg?branch=master
+[build-url]: https://github.com/JuMP-dev/MathOptInterface.jl/actions?query=workflow%3ACI
+[codecov-img]: http://codecov.io/github/JuMP-dev/MathOptInterface.jl/coverage.svg?branch=master
+[codecov-url]: http://codecov.io/github/JuMP-dev/MathOptInterface.jl?branch=master
 
 [gitter-url]: https://gitter.im/JuliaOpt/JuMP-dev?utm_source=share-link&utm_medium=link&utm_campaign=share-link
 [gitter-img]: https://badges.gitter.im/JuliaOpt/JuMP-dev.svg

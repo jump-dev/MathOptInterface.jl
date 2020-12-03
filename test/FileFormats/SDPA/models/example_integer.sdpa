@@ -1,0 +1,25 @@
+* Example from http://www.opt.tu-darmstadt.de/scipsdp/downloads/data_format.txt
+3
+3
+2 2 -2
+* the next line gives the objective values in the order of the variables
+1 -2 -1
+* the remaining lines give the nonzeroes of the constraints with variable (0 meaning the constant part) block row column value
+1 1 1 1 1
+2 1 1 2 1
+3 1 2 2 1
+1 2 1 2 1
+3 2 1 1 1
+0 2 2 2 -2.1
+1 3 1 1 1
+2 3 1 1 1
+3 3 1 1 1
+0 3 1 1 1
+1 3 2 2 -1
+2 3 2 2 -1
+3 3 2 2 -1
+0 3 2 2 -8
+*INTEGER
+*1
+*2
+*3

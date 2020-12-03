@@ -23,9 +23,12 @@ function bridge_constraint(::Type{ScalarizeBridge{T, F, S}},
 end
 
 function MOI.supports_constraint(::Type{ScalarizeBridge{T}},
-                                 ::Type{<:MOI.AbstractVectorFunction},
+                                 F::Type{<:MOI.AbstractVectorFunction},
                                  ::Type{<:MOIU.VectorLinearSet}) where T
-    return true
+    # If `F` is `MOI.VectorAffineFunction{Complex{Float64}}`, `S` is `MOI.Zeros` and `T` is `Float64`,
+    # it would create a set `MOI.EqualTo{Float64}` which is incorrect hence we say
+    # we only support it if the coefficient type of `F` is `T`.
+    return MOIU.is_coefficient_type(F, T)
 end
 MOIB.added_constrained_variable_types(::Type{<:ScalarizeBridge}) = Tuple{DataType}[]
 function MOIB.added_constraint_types(::Type{ScalarizeBridge{T, F, S}}) where {T, F, S}
@@ -122,7 +125,7 @@ function MOI.modify(model::MOI.ModelLike, bridge::ScalarizeBridge,
     nothing
 end
 function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
-    bridge::ScalarizeBridge{T}, func) where T
+    bridge::ScalarizeBridge{T,F,S}, func) where {T,F,S}
     old_constants = bridge.constants
     bridge.constants = MOI.constant(func, T)
     new_func = MOIU.scalarize(func, true)
@@ -130,7 +133,7 @@ function MOI.set(model::MOI.ModelLike, ::MOI.ConstraintFunction,
              new_func)
     for i in eachindex(bridge.constants)
         if bridge.constants[i] != old_constants[i]
-            MOI.set(model, MOI.ConstraintSet(), bridge.scalar_constraints,
+            MOI.set(model, MOI.ConstraintSet(), bridge.scalar_constraints[i],
                      S(-bridge.constants[i]))
         end
     end
