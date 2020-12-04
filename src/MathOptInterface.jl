@@ -139,6 +139,8 @@ include("modifications.jl")
 include("variables.jl")
 include("nlp.jl")
 
+include("deprecate.jl")
+
 # submodules
 include("Utilities/Utilities.jl") # MOI.Utilities
 include("Test/Test.jl")           # MOI.Test

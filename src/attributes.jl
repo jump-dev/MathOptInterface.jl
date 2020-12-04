@@ -124,9 +124,6 @@ struct ResultIndexBoundsError{AttrType} <: Exception
     result_count::Int
 end
 
-# deprecate _result_index_field, no export
-@deprecate _result_index_field(attr) attr.result_index false
-
 function check_result_index_bounds(model::ModelLike, attr)
     result_count = get(model, ResultCount())
     if !(1 <= attr.result_index <= result_count)
