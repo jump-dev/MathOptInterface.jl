@@ -1,7 +1,5 @@
 # Overload for writing.
-function moi_to_object(
-    foo::Nonlinear, name_map::Dict{MOI.VariableIndex, String}
-)
+function moi_to_object(foo::Nonlinear, name_map::Dict{MOI.VariableIndex,String})
     node_list = OrderedObject[]
     foo_object = convert_expr_to_mof(foo.expr, node_list, name_map)
     return OrderedObject(
@@ -15,8 +13,8 @@ end
 function function_to_moi(
     ::Val{:ScalarNonlinearFunction},
     object::T,
-    name_map::Dict{String, MOI.VariableIndex}
-) where {T <: Object}
+    name_map::Dict{String,MOI.VariableIndex},
+) where {T<:Object}
     node_list = T.(object["node_list"])
     expr = convert_mof_to_expr(object["root"], node_list, name_map)
     return Nonlinear(expr)
@@ -56,12 +54,14 @@ function extract_function_and_set(expr::Expr)
             return expr.args[3], MOI.Interval(expr.args[5], expr.args[1])
         end
     end
-    error("Oops. The constraint $(expr) wasn't recognised.")
+    return error("Oops. The constraint $(expr) wasn't recognised.")
 end
 
 function write_nlpblock(
-    object::T, model::Model, name_map::Dict{MOI.VariableIndex, String}
-) where {T <: Object}
+    object::T,
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
     # TODO(odow): is there a better way of checking if the NLPBlock is set?
     nlp_block = try
         MOI.get(model, MOI.NLPBlock())
@@ -77,7 +77,7 @@ function write_nlpblock(
         sense = MOI.get(model, MOI.ObjectiveSense())
         object["objective"] = T(
             "sense" => moi_to_object(sense),
-            "function" => moi_to_object(Nonlinear(objective), name_map)
+            "function" => moi_to_object(Nonlinear(objective), name_map),
         )
     end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
@@ -88,8 +88,8 @@ function write_nlpblock(
             object["constraints"],
             T(
                 "function" => moi_to_object(Nonlinear(func), name_map),
-                "set"      => moi_to_object(set, name_map)
-            )
+                "set" => moi_to_object(set, name_map),
+            ),
         )
     end
 end
@@ -159,12 +159,16 @@ The arity of a nonlinear function. One of:
 # A nice error message telling the user they supplied the wrong number of
 # arguments to a nonlinear function.
 function validate_arguments(function_name, arity::ARITY, num_arguments::Int)
-    if ((arity == Nary && num_arguments < 1) ||
+    if (
+        (arity == Nary && num_arguments < 1) ||
         (arity == Unary && num_arguments != 1) ||
         (arity == Binary && num_arguments != 2) ||
-        (arity == Ternary && num_arguments != 3))
-        error("The function $(function_name) is a $(arity) function, but you " *
-              "have passed $(num_arguments) arguments.")
+        (arity == Ternary && num_arguments != 3)
+    )
+        error(
+            "The function $(function_name) is a $(arity) function, but you " *
+            "have passed $(num_arguments) arguments.",
+        )
     end
 end
 
@@ -175,46 +179,46 @@ A vector of string-symbol pairs that map the MathOptFormat string representation
 (i.e, the value of the `"type"` field) to the name of a Julia function (in
 Symbol form).
 """
-const SUPPORTED_FUNCTIONS = Pair{String, Tuple{Symbol, ARITY}}[
+const SUPPORTED_FUNCTIONS = Pair{String,Tuple{Symbol,ARITY}}[
     # ==========================================================================
     # The standard arithmetic functions.
     # The addition operator: +(a, b, c, ...) = a + b + c + ...
     # In the unary case, +(a) = a.
-    "+"     => (:+, Nary),
+    "+"=>(:+, Nary),
     # The subtraction operator: -(a, b, c, ...) = a - b - c - ...
     # In the unary case, -(a) = -a.
-    "-"     => (:-, Nary),
+    "-"=>(:-, Nary),
     # The multiplication operator: *(a, b, c, ...) = a * b * c * ...
     # In the unary case, *(a) = a.
-    "*"     => (:*, Nary),
+    "*"=>(:*, Nary),
     # The division operator. This must have exactly two arguments. The first
     # argument is the numerator, the second argument is the denominator:
     # /(a, b) = a / b.
-    "/"     => (:/, Binary),
+    "/"=>(:/, Binary),
     # ==========================================================================
     # N-ary minimum and maximum functions.
-    "min"   => (:min, Nary),
-    "max"   => (:max, Nary),
+    "min"=>(:min, Nary),
+    "max"=>(:max, Nary),
     # ==========================================================================
     # floor(x) = ⌊x⌋
-    "floor"   => (:floor, Unary),
+    "floor"=>(:floor, Unary),
     # ceil(x) = ⌈x⌉
-    "ceil"   => (:ceil, Unary),
+    "ceil"=>(:ceil, Unary),
     # ==========================================================================
     # The absolute value function: abs(x) = (x >= 0 ? x : -x).
-    "abs"   => (:abs, Unary),
+    "abs"=>(:abs, Unary),
     # ==========================================================================
     # Log- and power-related functions.
     # A binary function for exponentiation: ^(a, b) = a ^ b.
-    "^"     => (:^, Binary),
+    "^"=>(:^, Binary),
     # The natural exponential function: exp(x) = e^x.
-    "exp"   => (:exp, Unary),
+    "exp"=>(:exp, Unary),
     # The base-e log function: y = log(x) => e^y = x.
-    "log"   => (:log, Unary),
+    "log"=>(:log, Unary),
     # The base-10 log function: y = log10(x) => 10^y = x.
-    "log10" => (:log10, Unary),
+    "log10"=>(:log10, Unary),
     # The square root function: sqrt(x) = √x = x^(0.5).
-    "sqrt"  => (:sqrt, Unary),
+    "sqrt"=>(:sqrt, Unary),
     # ==========================================================================
     # Boolean operators
     # A && B = A and B
@@ -223,39 +227,39 @@ const SUPPORTED_FUNCTIONS = Pair{String, Tuple{Symbol, ARITY}}[
     # "||" => (:||, Binary),
     # ==========================================================================
     # Comparison operators
-    "<" => (:<, Binary),
-    "<=" => (:<=, Binary),
-    ">" => (:>, Binary),
-    ">=" => (:>=, Binary),
-    "==" => (:(==), Binary),
-    "!=" => (:!=, Binary),
+    "<"=>(:<, Binary),
+    "<="=>(:<=, Binary),
+    ">"=>(:>, Binary),
+    ">="=>(:>=, Binary),
+    "=="=>(:(==), Binary),
+    "!="=>(:!=, Binary),
     # ==========================================================================
-    "ifelse" => (:ifelse, Ternary),
+    "ifelse"=>(:ifelse, Ternary),
     # "not" => (:!, Unary),
     # ==========================================================================
     # The unary trigonometric functions. These must have exactly one argument.
-    "cos"   => (:cos, Unary),
-    "cosh"  => (:cosh, Unary),
-    "acos"  => (:acos, Unary),
-    "acosh" => (:acosh, Unary),
-    "sin"   => (:sin, Unary),
-    "sinh"  => (:sinh, Unary),
-    "asin"  => (:asin, Unary),
-    "asinh" => (:asinh, Unary),
-    "tan"   => (:tan, Unary),
-    "tanh"  => (:tanh, Unary),
-    "atan"  => (:atan, Unary),
+    "cos"=>(:cos, Unary),
+    "cosh"=>(:cosh, Unary),
+    "acos"=>(:acos, Unary),
+    "acosh"=>(:acosh, Unary),
+    "sin"=>(:sin, Unary),
+    "sinh"=>(:sinh, Unary),
+    "asin"=>(:asin, Unary),
+    "asinh"=>(:asinh, Unary),
+    "tan"=>(:tan, Unary),
+    "tanh"=>(:tanh, Unary),
+    "atan"=>(:atan, Unary),
     # "atan2" => (:atan, Binary),
-    "atanh" => (:atanh, Unary)
+    "atanh"=>(:atanh, Unary),
 ]
 
 # An internal helper dictionary that maps function names in Symbol form to their
 # MathOptFormat string representation.
-const FUNCTION_TO_STRING = Dict{Symbol, Tuple{String, ARITY}}()
+const FUNCTION_TO_STRING = Dict{Symbol,Tuple{String,ARITY}}()
 
 # An internal helper dictionary that maps function names in their MathOptFormat
 # string representation to the symbol representing the Julia function.
-const STRING_TO_FUNCTION = Dict{String, Tuple{Symbol, ARITY}}()
+const STRING_TO_FUNCTION = Dict{String,Tuple{Symbol,ARITY}}()
 
 # Programatically add the list of supported functions to the helper dictionaries
 # for easy of look-up later.
@@ -274,8 +278,10 @@ MathOptFormat nodes in `node_list`. Variable names are mapped through `name_map`
 to their variable index.
 """
 function convert_mof_to_expr(
-    node::T, node_list::Vector{T}, name_map::Dict{String, MOI.VariableIndex}
-) where {T <: Object}
+    node::T,
+    node_list::Vector{T},
+    name_map::Dict{String,MOI.VariableIndex},
+) where {T<:Object}
     # TODO(odow): remove when v0.4 no longer supported.
     head = haskey(node, "type") ? node["type"] : node["head"]
     if head == "real"
@@ -285,7 +291,11 @@ function convert_mof_to_expr(
     elseif head == "variable"
         return name_map[node["name"]]
     elseif head == "node"
-        return convert_mof_to_expr(node_list[node["index"]], node_list, name_map)
+        return convert_mof_to_expr(
+            node_list[node["index"]],
+            node_list,
+            name_map,
+        )
     else
         if !haskey(STRING_TO_FUNCTION, head)
             error("Cannot convert MOF to Expr. Unknown function: $(head).")
@@ -314,8 +324,8 @@ through `name_map` to their string name.
 function convert_expr_to_mof(
     expr::Expr,
     node_list::Vector{T},
-    name_map::Dict{MOI.VariableIndex, String},
-) where {T <: Object}
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
     if expr.head != :call
         error("Expected an expression that was a function. Got $(expr).")
     end
@@ -337,28 +347,34 @@ end
 function convert_expr_to_mof(
     variable::MOI.VariableIndex,
     ::Vector{T},
-    name_map::Dict{MOI.VariableIndex, String},
-) where {T <: Object}
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
     return T("type" => "variable", "name" => name_map[variable])
 end
 
 # Recursion end for real constants.
 function convert_expr_to_mof(
-    value::Real, ::Vector{T}, name_map::Dict{MOI.VariableIndex, String}
-) where {T <: Object}
+    value::Real,
+    ::Vector{T},
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
     return T("type" => "real", "value" => value)
 end
 
 # Recursion end for complex numbers.
 function convert_expr_to_mof(
-    value::Complex, ::Vector{T}, ::Dict{MOI.VariableIndex, String}
-) where {T <: Object}
+    value::Complex,
+    ::Vector{T},
+    ::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
     return T("type" => "complex", "real" => real(value), "imag" => imag(value))
 end
 
 # Recursion fallback.
 function convert_expr_to_mof(
-    fallback, ::Vector{<:Object}, ::Dict{MOI.VariableIndex, String}
+    fallback,
+    ::Vector{<:Object},
+    ::Dict{MOI.VariableIndex,String},
 )
-    error("Unexpected $(typeof(fallback)) encountered: $(fallback).")
+    return error("Unexpected $(typeof(fallback)) encountered: $(fallback).")
 end

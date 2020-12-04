@@ -51,11 +51,10 @@ The `filename` argument is only needed if `format == FORMAT_AUTOMATIC`.
 
 `kwargs` are passed to the underlying model constructor.
 """
-function Model(
-    ;
+function Model(;
     format::FileFormat = FORMAT_AUTOMATIC,
-    filename::Union{Nothing, String} = nothing,
-    kwargs...
+    filename::Union{Nothing,String} = nothing,
+    kwargs...,
 )
     if format == FORMAT_CBF
         return CBF.Model(; kwargs...)
@@ -78,7 +77,7 @@ function Model(
             (".mof.json", MOF.Model),
             (".mps", MPS.Model),
             (".dat-s", SDPA.Model),
-            (".sdpa", SDPA.Model)
+            (".sdpa", SDPA.Model),
         ]
             if endswith(filename, ext) || occursin("$(ext).", filename)
                 return model(; kwargs...)
@@ -88,23 +87,18 @@ function Model(
     end
 end
 
-const MATH_OPT_FORMATS = Union{
-    CBF.Model,
-    LP.Model,
-    MOF.Model,
-    MPS.Model,
-    SDPA.Model,
-}
+const MATH_OPT_FORMATS =
+    Union{CBF.Model,LP.Model,MOF.Model,MPS.Model,SDPA.Model}
 
 function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)
     compressed_open(filename, "w", AutomaticCompression()) do io
-        write(io, model)
+        return write(io, model)
     end
 end
 
 function MOI.read_from_file(model::MATH_OPT_FORMATS, filename::String)
     compressed_open(filename, "r", AutomaticCompression()) do io
-        read!(io, model)
+        return read!(io, model)
     end
 end
 
