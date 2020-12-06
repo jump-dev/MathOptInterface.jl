@@ -7,7 +7,8 @@ import MathOptInterface
 
 const MOI = MathOptInterface
 
-MOI.Utilities.@model(Model,
+MOI.Utilities.@model(
+    Model,
     (),
     (),
     (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
@@ -21,26 +22,25 @@ MOI.Utilities.@model(Model,
 function MOI.supports_constraint(
     ::Model{T},
     ::Type{MOI.SingleVariable},
-    ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
+    ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}},
 ) where {T}
-
     return false
 end
 function MOI.supports_constraint(
-    ::Model, ::Type{MOI.SingleVariable}, ::Type{MOI.Integer})
+    ::Model,
+    ::Type{MOI.SingleVariable},
+    ::Type{MOI.Integer},
+)
     return true
 end
 
-function MOI.supports(
-    ::Model,
-    ::MOI.ObjectiveFunction{MOI.SingleVariable}
-)
+function MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.SingleVariable})
     return false
 end
 
 function MOI.supports(
     ::Model{T},
-    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}
+    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
 ) where {T}
     return false
 end
@@ -69,7 +69,7 @@ function Model(; number_type::Type = Float64)
 end
 
 function Base.show(io::IO, ::Model)
-    print(io, "A SemiDefinite Programming Algorithm Format (SDPA) model")
+    return print(io, "A SemiDefinite Programming Algorithm Format (SDPA) model")
 end
 
 # ==============================================================================
@@ -87,7 +87,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
     options = get_options(model)
     # Helper functions for MOI constraints.
     function model_cons(con_func, con_set)
-        MOI.get(model, MOI.ListOfConstraintIndices{con_func, con_set}())
+        return MOI.get(model, MOI.ListOfConstraintIndices{con_func,con_set}())
     end
     con_function(con_idx) = MOI.get(model, MOI.ConstraintFunction(), con_idx)
     con_set(con_idx) = MOI.get(model, MOI.ConstraintSet(), con_idx)
@@ -105,7 +105,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
         if vi.value > num_vars
             error(
                 "Non-contiguous variable indices not supported. This might " *
-                "be due to deleted variables."
+                "be due to deleted variables.",
             )
         end
     end
@@ -113,7 +113,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
     nonneg = model_cons(MOI.VectorAffineFunction{T}, MOI.Nonnegatives)
     psd = model_cons(
         MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle
+        MOI.PositiveSemidefiniteConeTriangle,
     )
     println(io, length(nonneg) + length(psd))
 
@@ -137,12 +137,13 @@ function Base.write(io::IO, model::Model{T}) where {T}
     c = zeros(T, num_vars)
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense != MOI.FEASIBILITY_SENSE
-        obj = MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
+        obj =
+            MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
         if !iszero(MOI.constant(obj))
             error(
                 "Nonzero constant in objective function not supported. Note " *
                 "that the constant may be added by the substitution of a " *
-                "bridged variable."
+                "bridged variable.",
             )
         end
         for term in obj.terms
@@ -163,11 +164,12 @@ function Base.write(io::IO, model::Model{T}) where {T}
     end
     println(io)
 
-    index_map = Vector{Tuple{Int, Int}}(
-        undef, MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(max_dim))
+    index_map = Vector{Tuple{Int,Int}}(
+        undef,
+        MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(max_dim)),
     )
     k = 0
-    for col = 1:max_dim
+    for col in 1:max_dim
         for row in 1:col
             k += 1
             index_map[k] = (row, col)
@@ -181,7 +183,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
             row = k
             col = k
         end
-        println(io, matrix, ' ', block, ' ', row, ' ', col, ' ', value)
+        return println(io, matrix, ' ', block, ' ', row, ' ', col, ' ', value)
     end
     function _print_constraint(block, psd, ci::MOI.ConstraintIndex)
         func = MOI.Utilities.canonical(con_function(ci))
@@ -240,7 +242,7 @@ end
 
 Read `io` in the SDPA file format and store the result in `model`.
 """
-function Base.read!(io::IO, model::Model{T}) where T
+function Base.read!(io::IO, model::Model{T}) where {T}
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
@@ -305,7 +307,12 @@ function Base.read!(io::IO, model::Model{T}) where T
             if length(block_sets) != num_blocks
                 error("The number of blocks ($num_blocks) does not match the length of the list of blocks dimensions ($(length(block_sets))).")
             end
-            funcs = [MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], zeros(T, MOI.dimension(block_sets[i]))) for i in 1:num_blocks]
+            funcs = [
+                MOI.VectorAffineFunction(
+                    MOI.VectorAffineTerm{T}[],
+                    zeros(T, MOI.dimension(block_sets[i])),
+                ) for i in 1:num_blocks
+            ]
         elseif !objective_read
             num_vars = MOI.get(model, MOI.NumberOfVariables())
             if isempty(line) && !iszero(num_vars)
@@ -350,8 +357,13 @@ function Base.read!(io::IO, model::Model{T}) where T
                 end
             else
                 if !iszero(coef)
-                    push!(funcs[block].terms, MOI.VectorAffineTerm(k,
-                        MOI.ScalarAffineTerm(coef, scalar_vars[matrix])))
+                    push!(
+                        funcs[block].terms,
+                        MOI.VectorAffineTerm(
+                            k,
+                            MOI.ScalarAffineTerm(coef, scalar_vars[matrix]),
+                        ),
+                    )
                 end
             end
         end
@@ -360,7 +372,11 @@ function Base.read!(io::IO, model::Model{T}) where T
         MOI.add_constraint(model, funcs[block], block_sets[block])
     end
     for var_idx in intvar_idx
-        MOI.add_constraint(model, MOI.SingleVariable(scalar_vars[var_idx]), MOI.Integer())
+        MOI.add_constraint(
+            model,
+            MOI.SingleVariable(scalar_vars[var_idx]),
+            MOI.Integer(),
+        )
     end
     return
 end

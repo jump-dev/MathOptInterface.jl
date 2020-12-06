@@ -20,7 +20,8 @@ function print_shortest(io::IO, x::Real)
     return
 end
 
-MOI.Utilities.@model(Model,
+MOI.Utilities.@model(
+    Model,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
@@ -33,7 +34,7 @@ MOI.Utilities.@model(Model,
 
 function MOI.supports(
     ::Model{T},
-    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}
+    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
 ) where {T}
     return false
 end
@@ -53,9 +54,7 @@ Keyword arguments are:
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
 """
-function Model(;
-    warn::Bool = false,
-)
+function Model(; warn::Bool = false)
     model = Model{Float64}()
     model.ext[:MPS_OPTIONS] = Options(warn)
     return model
@@ -94,7 +93,7 @@ struct Card
         f5::String = "",
         f6::String = "",
     )
-        num_fields = isempty(f1) ? 0          : 1
+        num_fields = isempty(f1) ? 0 : 1
         num_fields = isempty(f2) ? num_fields : 2
         num_fields = isempty(f3) ? num_fields : 3
         num_fields = isempty(f4) ? num_fields : 4
@@ -163,10 +162,10 @@ function Base.write(io::IO, model::Model)
     FileFormats.create_unique_names(
         model;
         warn = options.warn,
-        replacements = Function[s -> replace(s, ' ' => '_')]
+        replacements = Function[s->replace(s, ' ' => '_')],
     )
     ordered_names = String[]
-    names = Dict{MOI.VariableIndex, String}()
+    names = Dict{MOI.VariableIndex,String}()
     for x in MOI.get(model, MOI.ListOfVariableIndices())
         n = MOI.get(model, MOI.VariableName(), x)
         push!(ordered_names, n)
@@ -207,7 +206,7 @@ const SET_TYPES = (
 function _write_rows(io, model, S, sense_char)
     for index in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}()
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         if row_name == ""
@@ -232,9 +231,8 @@ end
 # ==============================================================================
 
 function _list_of_integer_variables(model, names, integer_variables, S)
-    for index in MOI.get(
-        model, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}()
-    )
+    for index in
+        MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
         v_index = MOI.get(model, MOI.ConstraintFunction(), index)
         push!(integer_variables, names[v_index.variable])
     end
@@ -250,8 +248,8 @@ function list_of_integer_variables(model::Model, names)
 end
 
 function extract_terms(
-    v_names::Dict{MOI.VariableIndex, String},
-    coefficients::Dict{String, Vector{Tuple{String, Float64}}},
+    v_names::Dict{MOI.VariableIndex,String},
+    coefficients::Dict{String,Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
     discovered_columns::Set{String},
@@ -261,7 +259,7 @@ function extract_terms(
         variable_name = v_names[term.variable_index]
         push!(
             coefficients[variable_name],
-            (row_name, multiplier * term.coefficient)
+            (row_name, multiplier * term.coefficient),
         )
         push!(discovered_columns, variable_name)
     end
@@ -271,26 +269,24 @@ end
 function _collect_coefficients(
     model,
     S,
-    v_names::Dict{MOI.VariableIndex, String},
-    coefficients::Dict{String, Vector{Tuple{String, Float64}}},
+    v_names::Dict{MOI.VariableIndex,String},
+    coefficients::Dict{String,Vector{Tuple{String,Float64}}},
     discovered_columns::Set{String},
 )
     for index in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}(),
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
-        extract_terms(
-            v_names, coefficients, row_name, func, discovered_columns
-        )
+        extract_terms(v_names, coefficients, row_name, func, discovered_columns)
     end
     return
 end
 
 function write_columns(io::IO, model::Model, ordered_names, names)
-    coefficients = Dict{String, Vector{Tuple{String, Float64}}}(
-        n => Tuple{String, Float64}[] for n in ordered_names
+    coefficients = Dict{String,Vector{Tuple{String,Float64}}}(
+        n => Tuple{String,Float64}[] for n in ordered_names
     )
     # Many MPS readers (e.g., CPLEX and GAMS) will error if a variable (column)
     # appears in the BOUNDS section but did not appear in the COLUMNS section.
@@ -309,7 +305,8 @@ function write_columns(io::IO, model::Model, ordered_names, names)
     # coefficients.
     s = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE ? -1.0 : 1.0
     obj_func = MOI.get(
-        model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     extract_terms(names, coefficients, "OBJ", obj_func, discovered_columns, s)
     integer_variables = list_of_integer_variables(model, names)
@@ -331,7 +328,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
                     f2 = variable,
                     f3 = constraint,
                     f4 = sprint(print_shortest, coefficient),
-                )
+                ),
             )
         end
     end
@@ -350,7 +347,7 @@ value(set::MOI.Interval) = set.upper  # See the note in the RANGES section.
 function _write_rhs(io, model, S, sense_char)
     for index in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64}, S}()
+        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)
@@ -360,7 +357,7 @@ function _write_rhs(io, model, S, sense_char)
                 f2 = "rhs",
                 f3 = row_name,
                 f4 = sprint(print_shortest, value(set)),
-            )
+            ),
         )
     end
 end
@@ -395,8 +392,9 @@ function write_ranges(io::IO, model::Model)
     for index in MOI.get(
         model,
         MOI.ListOfConstraintIndices{
-            MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}
-        }()
+            MOI.ScalarAffineFunction{Float64},
+            MOI.Interval{Float64},
+        }(),
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)::MOI.Interval{Float64}
@@ -406,7 +404,7 @@ function write_ranges(io::IO, model::Model)
                 f2 = "rhs",
                 f3 = row_name,
                 f4 = sprint(print_shortest, set.upper - set.lower),
-            )
+            ),
         )
     end
     return
@@ -439,27 +437,13 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                 f2 = "bounds",
                 f3 = var_name,
                 f4 = sprint(print_shortest, lower),
-            )
+            ),
         )
     elseif lower == -Inf && upper == Inf
-        println(
-            io,
-            Card(
-                f1 = "FR",
-                f2 = "bounds",
-                f3 = var_name,
-            )
-        )
+        println(io, Card(f1 = "FR", f2 = "bounds", f3 = var_name))
     else
         if lower == -Inf
-            println(
-                io,
-                Card(
-                    f1 = "MI",
-                    f2 = "bounds",
-                    f3 = var_name,
-                )
-            )
+            println(io, Card(f1 = "MI", f2 = "bounds", f3 = var_name))
         else
             println(
                 io,
@@ -468,18 +452,11 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                     f2 = "bounds",
                     f3 = var_name,
                     f4 = sprint(print_shortest, lower),
-                )
+                ),
             )
         end
         if upper == Inf
-            println(
-                io,
-                Card(
-                    f1 = "PL",
-                    f2 = "bounds",
-                    f3 = var_name,
-                )
-            )
+            println(io, Card(f1 = "PL", f2 = "bounds", f3 = var_name))
         else
             println(
                 io,
@@ -488,37 +465,36 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                     f2 = "bounds",
                     f3 = var_name,
                     f4 = sprint(print_shortest, upper),
-                )
+                ),
             )
         end
     end
     return
 end
 
-function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.GreaterThan)
+function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.GreaterThan)
     return (max(x[1], set.lower), x[2], x[3])
 end
 
-function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.LessThan)
+function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.LessThan)
     return (x[1], min(x[2], set.upper), x[3])
 end
 
-function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.Interval)
+function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.Interval)
     return (set.lower, set.upper, x[3])
 end
 
-function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.EqualTo)
+function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.EqualTo)
     return (set.value, set.value, x[3])
 end
 
-function update_bounds(x::Tuple{Float64, Float64, VType}, set::MOI.ZeroOne)
+function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.ZeroOne)
     return (x[1], x[2], VTYPE_BINARY)
 end
 
 function _collect_bounds(bounds, model, S, names)
-    for index in MOI.get(
-        model, MOI.ListOfConstraintIndices{MOI.SingleVariable, S}()
-    )
+    for index in
+        MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)::S
         name = names[func.variable]
@@ -528,10 +504,14 @@ function _collect_bounds(bounds, model, S, names)
 end
 
 function write_bounds(
-    io::IO, model::Model, discovered_columns::Set{String}, ordered_names, names
+    io::IO,
+    model::Model,
+    discovered_columns::Set{String},
+    ordered_names,
+    names,
 )
     println(io, "BOUNDS")
-    bounds = Dict{String, Tuple{Float64, Float64, VType}}(
+    bounds = Dict{String,Tuple{Float64,Float64,VType}}(
         n => (-Inf, Inf, VTYPE_CONTINUOUS) for n in ordered_names
     )
     for S in (
@@ -552,14 +532,7 @@ function write_bounds(
             )
             continue
         elseif vtype == VTYPE_BINARY
-            println(
-                io,
-                Card(
-                    f1 = "BV",
-                    f2 = "bounds",
-                    f3 = var_name,
-                )
-            )
+            println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
             # Only add bounds if they are tighter than the implicit bounds of a
             # binary variable.
             if lower > 0 || upper < 1
@@ -582,10 +555,7 @@ function write_sos_constraint(io::IO, model::Model, index, names)
     for (variable, weight) in zip(func.variables, set.weights)
         println(
             io,
-            Card(
-                f2 = names[variable],
-                f3 = sprint(print_shortest, weight),
-            )
+            Card(f2 = names[variable], f3 = sprint(print_shortest, weight)),
         )
     end
 end
@@ -593,24 +563,18 @@ end
 function write_sos(io::IO, model::Model, names)
     sos1_indices = MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.SOS1{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS1{Float64}}(),
     )
     sos2_indices = MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.SOS2{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS2{Float64}}(),
     )
     if length(sos1_indices) + length(sos2_indices) > 0
         println(io, "SOS")
         idx = 1
         for (sos_type, indices) in enumerate([sos1_indices, sos2_indices])
             for index in indices
-                println(
-                    io,
-                    Card(
-                        f1 = "S$(sos_type)",
-                        f2 = "SOS$(idx)",
-                    )
-                )
+                println(io, Card(f1 = "S$(sos_type)", f2 = "SOS$(idx)"))
                 write_sos_constraint(io, model, index, names)
                 idx += 1
             end
@@ -674,11 +638,11 @@ mutable struct TempMPSModel
     row_lower::Vector{Float64}
     row_upper::Vector{Float64}
     sense::Vector{Sense}
-    A::Vector{Vector{Tuple{Int, Float64}}}
+    A::Vector{Vector{Tuple{Int,Float64}}}
     vtype::Vector{VType}
-    name_to_col::Dict{String, Int}
+    name_to_col::Dict{String,Int}
     col_to_name::Vector{String}
-    name_to_row::Dict{String, Int}
+    name_to_row::Dict{String,Int}
     row_to_name::Vector{String}
     intorg_flag::Bool  # A flag used to parse COLUMNS section.
 end
@@ -693,11 +657,11 @@ function TempMPSModel()
         Float64[],  # row_lower
         Float64[],  # row_upper
         Sense[],   # sense
-        Vector{Vector{Tuple{Int, Float64}}}[],  # A
+        Vector{Vector{Tuple{Int,Float64}}}[],  # A
         Bool[],
-        Dict{String, Int}(),
+        Dict{String,Int}(),
         String[],
-        Dict{String, Int}(),
+        Dict{String,Int}(),
         String[],
         false,
     )
@@ -826,7 +790,7 @@ end
 
 function copy_to(model::Model, data::TempMPSModel)
     MOI.set(model, MOI.Name(), data.name)
-    variable_map = Dict{String, MOI.VariableIndex}()
+    variable_map = Dict{String,MOI.VariableIndex}()
     for (i, name) in enumerate(data.col_to_name)
         _add_variable(model, data, variable_map, i, name)
     end
@@ -868,7 +832,7 @@ function _add_objective(model, data, variable_map)
                 for (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
             ],
             0.0,
-        )
+        ),
     )
     return
 end
@@ -928,7 +892,7 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
     row = length(data.row_to_name)
     data.name_to_row[name] = row
     push!(data.sense, sense)
-    push!(data.A, Tuple{Int, Float64}[])
+    push!(data.A, Tuple{Int,Float64}[])
     if sense == SENSE_G
         push!(data.row_lower, 0.0)
         push!(data.row_upper, Inf)
@@ -949,7 +913,10 @@ end
 # ==============================================================================
 
 function parse_single_coefficient(
-    data, row_name::String, column::Int, value::Float64
+    data,
+    row_name::String,
+    column::Int,
+    value::Float64,
 )
     if row_name == data.obj_name
         data.c[column] += value
@@ -977,19 +944,21 @@ function _add_new_column(data, column_name)
 end
 
 function _set_intorg(data, column, column_name)
-     if data.intorg_flag
+    if data.intorg_flag
         data.vtype[column] = VTYPE_INTEGER
     elseif data.vtype[column] != VTYPE_CONTINUOUS
         error(
             "Variable $(column_name) appeared in COLUMNS outside an " *
-            "`INT` marker after already being declared as integer."
+            "`INT` marker after already being declared as integer.",
         )
     end
     return
 end
 
 function parse_columns_line(
-    data::TempMPSModel, items::Vector{String}, multi_objectives::Vector{String}
+    data::TempMPSModel,
+    items::Vector{String},
+    multi_objectives::Vector{String},
 )
     if length(items) == 3
         # [column name] [row name] [value]
@@ -1018,10 +987,16 @@ function parse_columns_line(
         _add_new_column(data, column_name)
         column = data.name_to_col[column_name]
         parse_single_coefficient(
-            data, row_name_1, column, parse(Float64, value_1)
+            data,
+            row_name_1,
+            column,
+            parse(Float64, value_1),
         )
         parse_single_coefficient(
-            data, row_name_2, column, parse(Float64, value_2)
+            data,
+            row_name_2,
+            column,
+            parse(Float64, value_2),
         )
         _set_intorg(data, column, column_name)
     else
@@ -1035,7 +1010,10 @@ end
 # ==============================================================================
 
 function parse_single_rhs(
-    data, row_name::String, value::Float64, items::Vector{String}
+    data,
+    row_name::String,
+    value::Float64,
+    items::Vector{String},
 )
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
@@ -1148,7 +1126,10 @@ function _parse_single_bound(data, column_name::String, bound_type::String)
 end
 
 function _parse_single_bound(
-    data, column_name::String, bound_type::String, value::Float64
+    data,
+    column_name::String,
+    bound_type::String,
+    value::Float64,
 )
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
@@ -1191,7 +1172,12 @@ function parse_bounds_line(data::TempMPSModel, items::Vector{String})
         _parse_single_bound(data, column_name, bound_type)
     elseif length(items) == 4
         bound_type, _, column_name, value = items
-        _parse_single_bound(data, column_name, bound_type, parse(Float64, value))
+        _parse_single_bound(
+            data,
+            column_name,
+            bound_type,
+            parse(Float64, value),
+        )
     else
         error("Malformed BOUNDS line: $(join(items, " "))")
     end

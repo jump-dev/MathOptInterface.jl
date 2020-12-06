@@ -18,7 +18,7 @@ If `warn`, print a warning if a variable or constraint is renamed.
 function create_unique_names(
     model::MOI.ModelLike;
     warn::Bool = false,
-    replacements::Vector{Function} = Function[]
+    replacements::Vector{Function} = Function[],
 )
     create_unique_variable_names(model, warn, replacements)
     create_unique_constraint_names(model, warn, replacements)
@@ -33,22 +33,24 @@ function _replace(s::String, replacements::Vector{Function})
 end
 
 function create_unique_constraint_names(
-    model::MOI.ModelLike, warn::Bool, replacements::Vector{Function}
+    model::MOI.ModelLike,
+    warn::Bool,
+    replacements::Vector{Function},
 )
     original_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
+        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             name = MOI.get(model, MOI.ConstraintName(), index)
             push!(original_names, _replace(name, replacements))
         end
     end
     added_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
+        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             original_name = MOI.get(model, MOI.ConstraintName(), index)
             new_name = _replace(
                 original_name != "" ? original_name : "c$(index.value)",
-                replacements
+                replacements,
             )
             if new_name in added_names
                 # We found a duplicate name! We could just append a string like
@@ -68,11 +70,15 @@ function create_unique_constraint_names(
             if new_name != original_name
                 if warn
                     if original_name == ""
-                        @warn("Blank name detected for constraint $(index). " *
-                              "Renamed to $(new_name).")
+                        @warn(
+                            "Blank name detected for constraint $(index). " *
+                            "Renamed to $(new_name)."
+                        )
                     else
-                        @warn("Duplicate name $(original_name) detected for " *
-                              "constraint $(index). Renamed to $(new_name).")
+                        @warn(
+                            "Duplicate name $(original_name) detected for " *
+                            "constraint $(index). Renamed to $(new_name)."
+                        )
                     end
                 end
                 MOI.set(model, MOI.ConstraintName(), index, new_name)
@@ -82,7 +88,9 @@ function create_unique_constraint_names(
 end
 
 function create_unique_variable_names(
-    model::MOI.ModelLike, warn::Bool, replacements::Vector{Function}
+    model::MOI.ModelLike,
+    warn::Bool,
+    replacements::Vector{Function},
 )
     variables = MOI.get(model, MOI.ListOfVariableIndices())
     # This is a list of all of the names currently in the model. We're going to
@@ -99,7 +107,7 @@ function create_unique_variable_names(
         original_name = MOI.get(model, MOI.VariableName(), index)
         new_name = _replace(
             original_name != "" ? original_name : "x$(index.value)",
-            replacements
+            replacements,
         )
         if new_name in added_names
             # We found a duplicate name! We could just append a string like "_",
@@ -118,11 +126,15 @@ function create_unique_variable_names(
         if new_name != original_name
             if warn
                 if original_name == ""
-                    @warn("Blank name detected for variable $(index). Renamed to " *
-                          "$(new_name).")
+                    @warn(
+                        "Blank name detected for variable $(index). Renamed to " *
+                        "$(new_name)."
+                    )
                 else
-                    @warn("Duplicate name $(original_name) detected for variable " *
-                          "$(index). Renamed to $(new_name).")
+                    @warn(
+                        "Duplicate name $(original_name) detected for variable " *
+                        "$(index). Renamed to $(new_name)."
+                    )
                 end
             end
             MOI.set(model, MOI.VariableName(), index, new_name)
@@ -135,7 +147,7 @@ end
 ###
 
 function error_mode(mode::String)
-    throw(ArgumentError("Compressed mode must be \"r\" or \"w\". Got: $mode."))
+    return throw(ArgumentError("Compressed mode must be \"r\" or \"w\". Got: $mode."))
 end
 
 """
@@ -156,7 +168,10 @@ struct NoCompression <: AbstractCompressionScheme end
 extension(::Val) = NoCompression()
 
 function compressed_open(
-    f::Function, filename::String, mode::String, ::NoCompression
+    f::Function,
+    filename::String,
+    mode::String,
+    ::NoCompression,
 )
     return Base.open(f, filename, mode)
 end
@@ -165,36 +180,35 @@ struct Gzip <: AbstractCompressionScheme end
 
 extension(::Val{:gz}) = Gzip()
 
-function compressed_open(
-    f::Function, filename::String, mode::String, ::Gzip
-)
+function compressed_open(f::Function, filename::String, mode::String, ::Gzip)
     if mode == "w"
         return Base.open(f, CodecZlib.GzipCompressorStream, filename, mode)
     elseif mode == "r"
         return Base.open(f, CodecZlib.GzipDecompressorStream, filename, mode)
     end
-    error_mode(mode)
+    return error_mode(mode)
 end
 
 struct Bzip2 <: AbstractCompressionScheme end
 
 extension(::Val{:bz2}) = Bzip2()
 
-function compressed_open(
-    f::Function, filename::String, mode::String, ::Bzip2
-)
+function compressed_open(f::Function, filename::String, mode::String, ::Bzip2)
     if mode == "w"
         return Base.open(f, CodecBzip2.Bzip2CompressorStream, filename, mode)
     elseif mode == "r"
         return Base.open(f, CodecBzip2.Bzip2DecompressorStream, filename, mode)
     end
-    error_mode(mode)
+    return error_mode(mode)
 end
 
 struct AutomaticCompression <: AbstractCompressionScheme end
 
 function compressed_open(
-    f::Function, filename::String, mode::String, ::AutomaticCompression
+    f::Function,
+    filename::String,
+    mode::String,
+    ::AutomaticCompression,
 )
     ext = Symbol(split(filename, ".")[end])
     return compressed_open(f, filename, mode, extension(Val{ext}()))
