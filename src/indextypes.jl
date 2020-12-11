@@ -16,7 +16,7 @@ have
 index.value == MOI.get(model, MOI.ConstraintFunction(), index).variable.value
 ```
 """
-struct ConstraintIndex{F, S}
+struct ConstraintIndex{F,S}
     value::Int64
 end
 index_value(ci::ConstraintIndex) = ci.value
@@ -54,7 +54,7 @@ struct InvalidIndex{IndexType<:Index} <: Exception
 end
 
 function Base.showerror(io::IO, err::InvalidIndex)
-    print("The index $(err.index) is invalid. Note that an index becomes invalid after it has been deleted.")
+    return print("The index $(err.index) is invalid. Note that an index becomes invalid after it has been deleted.")
 end
 
 """
@@ -84,7 +84,7 @@ end
 
 An error indicating that the index `index` cannot be deleted.
 """
-struct DeleteNotAllowed{IndexType <: Index} <: NotAllowedError
+struct DeleteNotAllowed{IndexType<:Index} <: NotAllowedError
     index::IndexType
     message::String
 end

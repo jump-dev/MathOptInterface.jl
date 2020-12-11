@@ -13,8 +13,13 @@ Return the name of the element that is not supported.
 function element_name end
 
 function Base.showerror(io::IO, err::UnsupportedError)
-    print(io, typeof(err), ": ", element_name(err),
-          " is not supported by the model")
+    print(
+        io,
+        typeof(err),
+        ": ",
+        element_name(err),
+        " is not supported by the model",
+    )
     m = message(err)
     if Base.isempty(m)
         print(io, ".")
@@ -40,17 +45,19 @@ form).
 function operation_name end
 
 function Base.showerror(io::IO, err::NotAllowedError)
-    print(io, typeof(err), ": ", operation_name(err),
-          " cannot be performed")
+    print(io, typeof(err), ": ", operation_name(err), " cannot be performed")
     m = message(err)
     if Base.isempty(m)
         print(io, ".")
     else
         print(io, ": ", m)
     end
-    print(io, " You may want to use a `CachingOptimizer` in `AUTOMATIC` mode",
-          " or you may need to call `reset_optimizer` before doing this",
-          " operation if the `CachingOptimizer` is in `MANUAL` mode.")
+    return print(
+        io,
+        " You may want to use a `CachingOptimizer` in `AUTOMATIC` mode",
+        " or you may need to call `reset_optimizer` before doing this",
+        " operation if the `CachingOptimizer` is in `MANUAL` mode.",
+    )
 end
 
 """
@@ -61,4 +68,4 @@ is not supported/cannot be performed. It is printed in the error message if it
 is not empty. By convention, it should be stored in the `message` field; if
 this is the case, the `message` method does not have to be implemented.
 """
-message(err::Union{UnsupportedError, NotAllowedError}) = err.message
+message(err::Union{UnsupportedError,NotAllowedError}) = err.message

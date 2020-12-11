@@ -36,7 +36,12 @@ abstract type AbstractConstraintAttribute end
 
 # Attributes should not contain any `VariableIndex` or `ConstraintIndex` as the
 # set is passed unmodifed during `copy_to`.
-const AnyAttribute = Union{AbstractOptimizerAttribute, AbstractModelAttribute, AbstractVariableAttribute, AbstractConstraintAttribute}
+const AnyAttribute = Union{
+    AbstractOptimizerAttribute,
+    AbstractModelAttribute,
+    AbstractVariableAttribute,
+    AbstractConstraintAttribute,
+}
 
 # This allows to use attributes in broadcast calls without the need to
 # embed it in a `Ref`
@@ -96,7 +101,8 @@ Base.broadcastable(sub::AbstractSubmittable) = Ref(sub)
 An error indicating that the submittable `sub` is not supported by the model,
 i.e. that [`supports`](@ref) returns `false`.
 """
-struct UnsupportedSubmittable{SubmitType<:AbstractSubmittable} <: UnsupportedError
+struct UnsupportedSubmittable{SubmitType<:AbstractSubmittable} <:
+       UnsupportedError
     sub::SubmitType
     message::String
 end
@@ -134,11 +140,12 @@ function check_result_index_bounds(model::ModelLike, attr)
     end
 end
 function Base.showerror(io::IO, err::ResultIndexBoundsError)
-    print(io,
+    return print(
+        io,
         "Result index of attribute $(err.attr) out of bounds. There are " *
-        "currently $(err.result_count) solution(s) in the model.")
+        "currently $(err.result_count) solution(s) in the model.",
+    )
 end
-
 
 """
     supports(model::ModelLike, sub::AbstractSubmittable)::Bool
@@ -181,22 +188,30 @@ list of attributes set obtained by `ListOf...AttributesSet`.
 """
 function supports end
 supports(::ModelLike, ::AbstractSubmittable) = false
-function supports(::ModelLike, attr::Union{AbstractModelAttribute,
-                                           AbstractOptimizerAttribute})
+function supports(
+    ::ModelLike,
+    attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
+)
     if !is_copyable(attr)
-        throw(ArgumentError("`supports` is not defined for $attr, it is only" *
-                            " defined for attributes such that `is_copyable`" *
-                            " returns `true`."))
+        throw(ArgumentError(
+            "`supports` is not defined for $attr, it is only" *
+            " defined for attributes such that `is_copyable`" *
+            " returns `true`.",
+        ))
     end
     return false
 end
-function supports(::ModelLike, attr::Union{AbstractVariableAttribute,
-                                           AbstractConstraintAttribute},
-                  ::Type{<:Index})
+function supports(
+    ::ModelLike,
+    attr::Union{AbstractVariableAttribute,AbstractConstraintAttribute},
+    ::Type{<:Index},
+)
     if !is_copyable(attr)
-        throw(ArgumentError("`supports` is not defined for $attr, it is only" *
-                            " defined for attributes such that `is_copyable`" *
-                            " returns `true`."))
+        throw(ArgumentError(
+            "`supports` is not defined for $attr, it is only" *
+            " defined for attributes such that `is_copyable`" *
+            " returns `true`.",
+        ))
     end
     return false
 end
@@ -266,12 +281,16 @@ function get end
 # We want to avoid being too specific in the type arguments to avoid method ambiguity.
 # For model, get(::ModelLike, ::AbstractVariableAttribute, ::Vector{VariableIndex}) would not allow
 # to define get(::SomeModel, ::AnyAttribute, ::Vector)
-get(model::ModelLike, attr::AnyAttribute, idxs::Vector) = get.(model, attr, idxs)
+function get(model::ModelLike, attr::AnyAttribute, idxs::Vector)
+    return get.(model, attr, idxs)
+end
 
 function get(model::ModelLike, attr::AnyAttribute, args...)
-    get_fallback(model, attr, args...)
+    return get_fallback(model, attr, args...)
 end
-get_fallback(model::ModelLike, attr::AnyAttribute, args...) = throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+function get_fallback(model::ModelLike, attr::AnyAttribute, args...)
+    return throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+end
 
 """
     get!(output, model::ModelLike, args...)
@@ -281,7 +300,7 @@ The signature matches that of `get` except that the the result is placed in the 
 """
 function get! end
 function get!(output, model::ModelLike, attr::AnyAttribute, args...)
-    throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+    return throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
 end
 
 """
@@ -357,41 +376,48 @@ set(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
 """
 function set end
 # See note with get
-function set(model::ModelLike,
-             attr::Union{AbstractVariableAttribute,
-                         AbstractConstraintAttribute},
-             idxs::Vector, vector_of_values::Vector)
+function set(
+    model::ModelLike,
+    attr::Union{AbstractVariableAttribute,AbstractConstraintAttribute},
+    idxs::Vector,
+    vector_of_values::Vector,
+)
     if length(idxs) != length(vector_of_values)
-        throw(DimensionMismatch("Number of indices ($(length(idxs))) does " *
-                                "not match the number of values " *
-                                "($(length(vector_of_values))) set to `$attr`."))
+        throw(DimensionMismatch(
+            "Number of indices ($(length(idxs))) does " *
+            "not match the number of values " *
+            "($(length(vector_of_values))) set to `$attr`.",
+        ))
     end
     return set.(model, attr, idxs, vector_of_values)
 end
 
 function set(model::ModelLike, attr::AnyAttribute, args...)
-    throw_set_error_fallback(model, attr, args...)
+    return throw_set_error_fallback(model, attr, args...)
 end
 # throw_set_error_fallback is included so that we can return type-specific error
 # messages without needing to overload set and cause ambiguity errors. For
 # examples, see ConstraintSet and ConstraintFunction. throw_set_error_fallback should
 # not be overloaded by users of MOI.
-function throw_set_error_fallback(model::ModelLike,
-                                  attr::Union{AbstractModelAttribute,
-                                              AbstractOptimizerAttribute},
-                                  value;
-                                  error_if_supported = SetAttributeNotAllowed(attr))
+function throw_set_error_fallback(
+    model::ModelLike,
+    attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
+    value;
+    error_if_supported = SetAttributeNotAllowed(attr),
+)
     if supports(model, attr)
         throw(error_if_supported)
     else
         throw(UnsupportedAttribute(attr))
     end
 end
-function throw_set_error_fallback(model::ModelLike,
-                                  attr::Union{AbstractVariableAttribute,
-                                              AbstractConstraintAttribute},
-                                  index::Index, value;
-                                  error_if_supported = SetAttributeNotAllowed(attr))
+function throw_set_error_fallback(
+    model::ModelLike,
+    attr::Union{AbstractVariableAttribute,AbstractConstraintAttribute},
+    index::Index,
+    value;
+    error_if_supported = SetAttributeNotAllowed(attr),
+)
     if supports(model, attr, typeof(index))
         throw(error_if_supported)
     else
@@ -420,8 +446,7 @@ error is thrown if it supports the submittable `sub` but it cannot be submitted.
 function submit end
 function submit(model::ModelLike, sub::AbstractSubmittable, args...)
     if supports(model, sub)
-        throw(ArgumentError(
-            "Submitting $(typeof.(args)) for `$(typeof(sub))` is not valid."))
+        throw(ArgumentError("Submitting $(typeof.(args)) for `$(typeof(sub))` is not valid."))
     else
         throw(UnsupportedSubmittable(sub))
     end
@@ -467,10 +492,12 @@ Possible values are:
 * `HEURISTIC_SOLUTION_REJECTED`: The heuristic solution was rejected.
 * `HEURISTIC_SOLUTION_UNKNOWN`: No information available on the acceptance.
 """
-@enum(HeuristicSolutionStatus,
-      HEURISTIC_SOLUTION_ACCEPTED,
-      HEURISTIC_SOLUTION_REJECTED,
-      HEURISTIC_SOLUTION_UNKNOWN)
+@enum(
+    HeuristicSolutionStatus,
+    HEURISTIC_SOLUTION_ACCEPTED,
+    HEURISTIC_SOLUTION_REJECTED,
+    HEURISTIC_SOLUTION_UNKNOWN
+)
 
 """
     HeuristicSolution(callback_data)
@@ -525,13 +552,16 @@ An error indicating that `submittable` cannot be submitted inside `callback`.
 For example, [`UserCut`](@ref) cannot be submitted inside
 [`LazyConstraintCallback`](@ref).
 """
-struct InvalidCallbackUsage{C, S} <: Exception
+struct InvalidCallbackUsage{C,S} <: Exception
     callback::C
     submittable::S
 end
 
 function Base.showerror(io::IO, err::InvalidCallbackUsage)
-    print(io, "InvalidCallbackUsage: Cannot submit $(err.submittable) inside a $(err.callback).")
+    return print(
+        io,
+        "InvalidCallbackUsage: Cannot submit $(err.submittable) inside a $(err.callback).",
+    )
 end
 
 """
@@ -651,8 +681,12 @@ struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
 end
 
 function Base.showerror(io::IO, err::OptimizeInProgress)
-    print(io, typeof(err), ": Cannot get result as the `MOI.optimize!` has not",
-          " finished.")
+    return print(
+        io,
+        typeof(err),
+        ": Cannot get result as the `MOI.optimize!` has not",
+        " finished.",
+    )
 end
 
 """
@@ -875,7 +909,7 @@ A model attribute for the objective value of the `result_index`th primal result.
 """
 struct ObjectiveValue <: AbstractModelAttribute
     result_index::Int
-    (::Type{ObjectiveValue})(result_index=1) = new(result_index)
+    (::Type{ObjectiveValue})(result_index = 1) = new(result_index)
 end
 
 """
@@ -886,7 +920,7 @@ for the `result_index`th dual result.
 """
 struct DualObjectiveValue <: AbstractModelAttribute
     result_index::Int
-    (::Type{DualObjectiveValue})(result_index=1) = new(result_index)
+    (::Type{DualObjectiveValue})(result_index = 1) = new(result_index)
 end
 
 """
@@ -901,7 +935,7 @@ struct ObjectiveBound <: AbstractModelAttribute end
 
 A model attribute for the final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
 """
-struct RelativeGap <: AbstractModelAttribute  end
+struct RelativeGap <: AbstractModelAttribute end
 
 """
     SolveTime()
@@ -1046,8 +1080,14 @@ distinguish which side of the constraint. One-sided constraints (e.g.,
 `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
 `NONBASIC_AT_*` values.
 """
-@enum(BasisStatusCode, BASIC, NONBASIC, NONBASIC_AT_LOWER, NONBASIC_AT_UPPER,
-      SUPER_BASIC)
+@enum(
+    BasisStatusCode,
+    BASIC,
+    NONBASIC,
+    NONBASIC_AT_LOWER,
+    NONBASIC_AT_UPPER,
+    SUPER_BASIC
+)
 
 ## Constraint attributes
 
@@ -1157,7 +1197,11 @@ then it returns the function stored internally instead of a copy.
 """
 struct CanonicalConstraintFunction <: AbstractConstraintAttribute end
 
-function get_fallback(model::ModelLike, ::CanonicalConstraintFunction, ci::ConstraintIndex)
+function get_fallback(
+    model::ModelLike,
+    ::CanonicalConstraintFunction,
+    ci::ConstraintIndex,
+)
     func = get(model, ConstraintFunction(), ci)
     # In `Utilities.AbstractModel` and `Utilities.UniversalFallback`,
     # the function is canonicalized in `add_constraint` so it might already
@@ -1183,19 +1227,26 @@ It is guaranteed to be equivalent but not necessarily identical to the function 
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
-function throw_set_error_fallback(::ModelLike, attr::ConstraintFunction,
-                                  ::ConstraintIndex{F, S}, ::F;
-                                  error_if_supported = SetAttributeNotAllowed(attr)) where {F <: AbstractFunction, S}
-    throw(error_if_supported)
+function throw_set_error_fallback(
+    ::ModelLike,
+    attr::ConstraintFunction,
+    ::ConstraintIndex{F,S},
+    ::F;
+    error_if_supported = SetAttributeNotAllowed(attr),
+) where {F<:AbstractFunction,S}
+    return throw(error_if_supported)
 end
-func_type(c::ConstraintIndex{F, S}) where {F, S} = F
-function throw_set_error_fallback(::ModelLike, ::ConstraintFunction,
-                                  constraint_index::ConstraintIndex,
-                                  func::AbstractFunction;
-                                  kwargs...)
-    throw(ArgumentError("""Cannot modify functions of different types.
-    Constraint type is $(func_type(constraint_index)) while the replacement
-    function is of type $(typeof(func))."""))
+func_type(c::ConstraintIndex{F,S}) where {F,S} = F
+function throw_set_error_fallback(
+    ::ModelLike,
+    ::ConstraintFunction,
+    constraint_index::ConstraintIndex,
+    func::AbstractFunction;
+    kwargs...,
+)
+    return throw(ArgumentError("""Cannot modify functions of different types.
+           Constraint type is $(func_type(constraint_index)) while the replacement
+           function is of type $(typeof(func))."""))
 end
 
 """
@@ -1205,19 +1256,26 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
-function throw_set_error_fallback(::ModelLike, attr::ConstraintSet,
-                                  ::ConstraintIndex{F, S}, ::S;
-                                  error_if_supported = SetAttributeNotAllowed(attr)) where {F, S <: AbstractSet}
-    throw(error_if_supported)
+function throw_set_error_fallback(
+    ::ModelLike,
+    attr::ConstraintSet,
+    ::ConstraintIndex{F,S},
+    ::S;
+    error_if_supported = SetAttributeNotAllowed(attr),
+) where {F,S<:AbstractSet}
+    return throw(error_if_supported)
 end
-set_type(::ConstraintIndex{F, S}) where {F, S} = S
-function throw_set_error_fallback(::ModelLike, ::ConstraintSet,
-                                  constraint_index::ConstraintIndex,
-                                  set::AbstractSet;
-                                  kwargs...)
-    throw(ArgumentError("""Cannot modify sets of different types. Constraint
-    type is $(set_type(constraint_index)) while the replacement set is of
-    type $(typeof(set)). Use `transform` instead."""))
+set_type(::ConstraintIndex{F,S}) where {F,S} = S
+function throw_set_error_fallback(
+    ::ModelLike,
+    ::ConstraintSet,
+    constraint_index::ConstraintIndex,
+    set::AbstractSet;
+    kwargs...,
+)
+    return throw(ArgumentError("""Cannot modify sets of different types. Constraint
+           type is $(set_type(constraint_index)) while the replacement set is of
+           type $(typeof(set)). Use `transform` instead."""))
 end
 
 """
@@ -1234,7 +1292,12 @@ Possible values are:
   the solver was not able to prove that the constraint can be excluded from
   the conflict
 """
-@enum(ConflictParticipationStatusCode, NOT_IN_CONFLICT, IN_CONFLICT, MAYBE_IN_CONFLICT)
+@enum(
+    ConflictParticipationStatusCode,
+    NOT_IN_CONFLICT,
+    IN_CONFLICT,
+    MAYBE_IN_CONFLICT
+)
 
 """
     ConstraintConflictStatus()
@@ -1331,19 +1394,36 @@ This group of statuses means that something unexpected or problematic happened.
 * `OTHER_ERROR`: The algorithm stopped because of an error not covered by one of
   the statuses defined above.
 """
-@enum(TerminationStatusCode,
+@enum(
+    TerminationStatusCode,
     OPTIMIZE_NOT_CALLED,
     # OK
-    OPTIMAL, INFEASIBLE, DUAL_INFEASIBLE, LOCALLY_SOLVED, LOCALLY_INFEASIBLE,
+    OPTIMAL,
+    INFEASIBLE,
+    DUAL_INFEASIBLE,
+    LOCALLY_SOLVED,
+    LOCALLY_INFEASIBLE,
     INFEASIBLE_OR_UNBOUNDED,
     # Solved to relaxed tolerances
-    ALMOST_OPTIMAL, ALMOST_INFEASIBLE, ALMOST_DUAL_INFEASIBLE,
+    ALMOST_OPTIMAL,
+    ALMOST_INFEASIBLE,
+    ALMOST_DUAL_INFEASIBLE,
     ALMOST_LOCALLY_SOLVED,
     # Limits
-    ITERATION_LIMIT, TIME_LIMIT,  NODE_LIMIT, SOLUTION_LIMIT, MEMORY_LIMIT,
-    OBJECTIVE_LIMIT, NORM_LIMIT, OTHER_LIMIT,
+    ITERATION_LIMIT,
+    TIME_LIMIT,
+    NODE_LIMIT,
+    SOLUTION_LIMIT,
+    MEMORY_LIMIT,
+    OBJECTIVE_LIMIT,
+    NORM_LIMIT,
+    OTHER_LIMIT,
     # Problematic
-    SLOW_PROGRESS, NUMERICAL_ERROR, INVALID_MODEL, INVALID_OPTION, INTERRUPTED,
+    SLOW_PROGRESS,
+    NUMERICAL_ERROR,
+    INVALID_MODEL,
+    INVALID_OPTION,
+    INTERRUPTED,
     OTHER_ERROR
 )
 
@@ -1388,11 +1468,19 @@ The values indicate how to interpret the result vector.
 * `OTHER_RESULT_STATUS`: the result vector contains a solution with an
   interpretation not covered by one of the statuses defined above.
 """
-@enum(ResultStatusCode, NO_SOLUTION,
-      FEASIBLE_POINT, NEARLY_FEASIBLE_POINT, INFEASIBLE_POINT,
-      INFEASIBILITY_CERTIFICATE, NEARLY_INFEASIBILITY_CERTIFICATE,
-      REDUCTION_CERTIFICATE, NEARLY_REDUCTION_CERTIFICATE,
-      UNKNOWN_RESULT_STATUS, OTHER_RESULT_STATUS)
+@enum(
+    ResultStatusCode,
+    NO_SOLUTION,
+    FEASIBLE_POINT,
+    NEARLY_FEASIBLE_POINT,
+    INFEASIBLE_POINT,
+    INFEASIBILITY_CERTIFICATE,
+    NEARLY_INFEASIBILITY_CERTIFICATE,
+    REDUCTION_CERTIFICATE,
+    NEARLY_REDUCTION_CERTIFICATE,
+    UNKNOWN_RESULT_STATUS,
+    OTHER_RESULT_STATUS
+)
 
 """
     PrimalStatus(N)
@@ -1422,18 +1510,30 @@ end
 DualStatus() = DualStatus(1)
 _result_index_field(attr::DualStatus) = attr.N
 
-
 # Cost of bridging constrained variable in S
-struct VariableBridgingCost{S <: AbstractSet} <: AbstractModelAttribute
+struct VariableBridgingCost{S<:AbstractSet} <: AbstractModelAttribute end
+function get_fallback(
+    model::ModelLike,
+    ::VariableBridgingCost{S},
+) where {S<:AbstractScalarSet}
+    return supports_add_constrained_variable(model, S) ? 0.0 : Inf
 end
-get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractScalarSet} = supports_add_constrained_variable(model, S) ? 0.0 : Inf
-get_fallback(model::ModelLike, ::VariableBridgingCost{S}) where {S<:AbstractVectorSet} = supports_add_constrained_variables(model, S) ? 0.0 : Inf
+function get_fallback(
+    model::ModelLike,
+    ::VariableBridgingCost{S},
+) where {S<:AbstractVectorSet}
+    return supports_add_constrained_variables(model, S) ? 0.0 : Inf
+end
 
 # Cost of bridging F-in-S constraints
-struct ConstraintBridgingCost{F <: AbstractFunction, S <: AbstractSet} <: AbstractModelAttribute
+struct ConstraintBridgingCost{F<:AbstractFunction,S<:AbstractSet} <:
+       AbstractModelAttribute end
+function get_fallback(
+    model::ModelLike,
+    ::ConstraintBridgingCost{F,S},
+) where {F<:AbstractFunction,S<:AbstractSet}
+    return supports_constraint(model, F, S) ? 0.0 : Inf
 end
-get_fallback(model::ModelLike, ::ConstraintBridgingCost{F, S}) where {F<:AbstractFunction, S<:AbstractSet} = supports_constraint(model, F, S) ? 0.0 : Inf
-
 
 """
     is_set_by_optimize(::AnyAttribute)
@@ -1448,26 +1548,30 @@ This function returns `false` by default so it should be implemented for
 attributes that are modified by [`optimize!`](@ref).
 """
 is_set_by_optimize(::AnyAttribute) = false
-function is_set_by_optimize(::Union{ObjectiveValue,
-                                    DualObjectiveValue,
-                                    ObjectiveBound,
-                                    RelativeGap,
-                                    SolveTime,
-                                    SimplexIterations,
-                                    BarrierIterations,
-                                    NodeCount,
-                                    RawSolver,
-                                    ResultCount,
-                                    ConflictStatus,
-                                    ConstraintConflictStatus,
-                                    TerminationStatus,
-                                    RawStatusString,
-                                    PrimalStatus,
-                                    DualStatus,
-                                    VariablePrimal,
-                                    ConstraintPrimal,
-                                    ConstraintDual,
-                                    ConstraintBasisStatus})
+function is_set_by_optimize(
+    ::Union{
+        ObjectiveValue,
+        DualObjectiveValue,
+        ObjectiveBound,
+        RelativeGap,
+        SolveTime,
+        SimplexIterations,
+        BarrierIterations,
+        NodeCount,
+        RawSolver,
+        ResultCount,
+        ConflictStatus,
+        ConstraintConflictStatus,
+        TerminationStatus,
+        RawStatusString,
+        PrimalStatus,
+        DualStatus,
+        VariablePrimal,
+        ConstraintPrimal,
+        ConstraintDual,
+        ConstraintBasisStatus,
+    },
+)
     return true
 end
 
@@ -1502,22 +1606,26 @@ method should be defined for attributes which are copied indirectly during
 function is_copyable(attr::AnyAttribute)
     return !is_set_by_optimize(attr)
 end
-function is_copyable(::Union{ListOfOptimizerAttributesSet,
-                             ListOfModelAttributesSet,
-                             ListOfConstraintAttributesSet,
-                             ListOfVariableAttributesSet,
-                             SolverName,
-                             RawSolver,
-                             NumberOfVariables,
-                             ListOfVariableIndices,
-                             NumberOfConstraints,
-                             ObjectiveFunctionType,
-                             ListOfConstraintIndices,
-                             ListOfConstraints,
-                             CanonicalConstraintFunction,
-                             ConstraintFunction,
-                             ConstraintSet,
-                             VariableBridgingCost,
-                             ConstraintBridgingCost})
+function is_copyable(
+    ::Union{
+        ListOfOptimizerAttributesSet,
+        ListOfModelAttributesSet,
+        ListOfConstraintAttributesSet,
+        ListOfVariableAttributesSet,
+        SolverName,
+        RawSolver,
+        NumberOfVariables,
+        ListOfVariableIndices,
+        NumberOfConstraints,
+        ObjectiveFunctionType,
+        ListOfConstraintIndices,
+        ListOfConstraints,
+        CanonicalConstraintFunction,
+        ConstraintFunction,
+        ConstraintSet,
+        VariableBridgingCost,
+        ConstraintBridgingCost,
+    },
+)
     return false
 end

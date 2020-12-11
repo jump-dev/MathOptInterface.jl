@@ -55,7 +55,6 @@ struct NLPBoundsPair
     upper::Float64
 end
 
-
 """
     struct NLPBlockData
         constraint_bounds::Vector{NLPBoundsPair}

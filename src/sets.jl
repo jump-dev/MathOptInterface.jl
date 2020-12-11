@@ -81,7 +81,9 @@ DualExponentialCone
 """
 function dual_set_type end
 
-dual_set_type(S::Type{<:AbstractSet}) = error("Dual type of $S is not implemented.")
+function dual_set_type(S::Type{<:AbstractSet})
+    return error("Dual type of $S is not implemented.")
+end
 
 """
     AbstractScalarSet
@@ -156,7 +158,7 @@ dual_set_type(::Type{Nonpositives}) = Nonpositives
 
 The set ``[lower,\\infty) \\subseteq \\mathbb{R}``.
 """
-struct GreaterThan{T <: Real} <: AbstractScalarSet
+struct GreaterThan{T<:Real} <: AbstractScalarSet
     lower::T
 end
 
@@ -165,7 +167,7 @@ end
 
 The set ``(-\\infty,upper] \\subseteq \\mathbb{R}``.
 """
-struct LessThan{T <: Real} <: AbstractScalarSet
+struct LessThan{T<:Real} <: AbstractScalarSet
     upper::T
 end
 
@@ -174,11 +176,14 @@ end
 
 The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
 """
-struct EqualTo{T <: Number} <: AbstractScalarSet
+struct EqualTo{T<:Number} <: AbstractScalarSet
     value::T
 end
 
-function Base.:(==)(set1::S, set2::S) where S <: Union{GreaterThan, LessThan, EqualTo}
+function Base.:(==)(
+    set1::S,
+    set2::S,
+) where {S<:Union{GreaterThan,LessThan,EqualTo}}
     return constant(set1) == constant(set2)
 end
 
@@ -200,7 +205,7 @@ Construct a (left-unbounded) `Interval` equivalent to the given [`LessThan`](@re
 
 Construct a (degenerate) `Interval` equivalent to the given [`EqualTo`](@ref) set.
 """
-struct Interval{T <: Real} <: AbstractScalarSet
+struct Interval{T<:Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
@@ -305,28 +310,32 @@ dual_set_type(::Type{DualExponentialCone}) = ExponentialCone
 
 The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{exponent} y^{1-exponent} \\ge |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `exponent`.
 """
-struct PowerCone{T <: Real} <: AbstractVectorSet
+struct PowerCone{T<:Real} <: AbstractVectorSet
     exponent::T
 end
 
-dual_set(s::PowerCone{T}) where T <: Real = DualPowerCone{T}(s.exponent)
-dual_set_type(::Type{PowerCone{T}}) where T <: Real = DualPowerCone{T}
+dual_set(s::PowerCone{T}) where {T<:Real} = DualPowerCone{T}(s.exponent)
+dual_set_type(::Type{PowerCone{T}}) where {T<:Real} = DualPowerCone{T}
 
 """
     DualPowerCone{T <: Real}(exponent::T)
 
 The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{exponent})^{exponent} (\\frac{v}{1-exponent})^{1-exponent} \\ge |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `exponent`.
 """
-struct DualPowerCone{T <: Real} <: AbstractVectorSet
+struct DualPowerCone{T<:Real} <: AbstractVectorSet
     exponent::T
 end
 
-dual_set(s::DualPowerCone{T}) where T <: Real = PowerCone{T}(s.exponent)
-dual_set_type(::Type{DualPowerCone{T}}) where T <: Real = PowerCone{T}
+dual_set(s::DualPowerCone{T}) where {T<:Real} = PowerCone{T}(s.exponent)
+dual_set_type(::Type{DualPowerCone{T}}) where {T<:Real} = PowerCone{T}
 
-dimension(s::Union{ExponentialCone, DualExponentialCone, PowerCone, DualPowerCone}) = 3
+function dimension(
+    s::Union{ExponentialCone,DualExponentialCone,PowerCone,DualPowerCone},
+)
+    return 3
+end
 
-function Base.:(==)(set1::S, set2::S) where S <: Union{PowerCone, DualPowerCone}
+function Base.:(==)(set1::S, set2::S) where {S<:Union{PowerCone,DualPowerCone}}
     return set1.exponent == set2.exponent
 end
 
@@ -372,7 +381,9 @@ end
 dual_set(s::NormNuclearCone) = NormSpectralCone(s.row_dim, s.column_dim)
 dual_set_type(::Type{NormNuclearCone}) = NormSpectralCone
 
-dimension(s::Union{NormSpectralCone, NormNuclearCone}) = 1 + s.row_dim * s.column_dim
+function dimension(s::Union{NormSpectralCone,NormNuclearCone})
+    return 1 + s.row_dim * s.column_dim
+end
 
 """
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
@@ -517,8 +528,12 @@ the `side_dimension` field but if it is not the case for a subtype of
 [`AbstractSymmetricMatrixSetTriangle`](@ref), the method should be implemented
 for this subtype.
 """
-function side_dimension(set::Union{AbstractSymmetricMatrixSetTriangle,
-                                   AbstractSymmetricMatrixSetSquare})
+function side_dimension(
+    set::Union{
+        AbstractSymmetricMatrixSetTriangle,
+        AbstractSymmetricMatrixSetSquare,
+    },
+)
     return set.side_dimension
 end
 
@@ -548,7 +563,9 @@ struct PositiveSemidefiniteConeTriangle <: AbstractSymmetricMatrixSetTriangle
 end
 
 dual_set(s::PositiveSemidefiniteConeTriangle) = copy(s)
-dual_set_type(::Type{PositiveSemidefiniteConeTriangle}) = PositiveSemidefiniteConeTriangle
+function dual_set_type(::Type{PositiveSemidefiniteConeTriangle})
+    return PositiveSemidefiniteConeTriangle
+end
 
 """
     PositiveSemidefiniteConeSquare(side_dimension) <: AbstractSymmetricMatrixSetSquare
@@ -579,17 +596,19 @@ struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
 end
 
 function _dual_set_square_error()
-    error("""Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
-             For more details see the comments in `src/Bridges/Constraint/square.jl`.""")
+    return error("""Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
+                    For more details see the comments in `src/Bridges/Constraint/square.jl`.""")
 end
 function dual_set(::PositiveSemidefiniteConeSquare)
-    _dual_set_square_error()
+    return _dual_set_square_error()
 end
 function dual_set_type(::Type{PositiveSemidefiniteConeSquare})
-    _dual_set_square_error()
+    return _dual_set_square_error()
 end
 
-triangular_form(::Type{PositiveSemidefiniteConeSquare}) = PositiveSemidefiniteConeTriangle
+function triangular_form(::Type{PositiveSemidefiniteConeSquare})
+    return PositiveSemidefiniteConeTriangle
+end
 
 """
     LogDetConeTriangle(side_dimension)
@@ -601,7 +620,9 @@ struct LogDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
 
-dimension(s::LogDetConeTriangle) = 2 + div(s.side_dimension * (s.side_dimension + 1), 2)
+function dimension(s::LogDetConeTriangle)
+    return 2 + div(s.side_dimension * (s.side_dimension + 1), 2)
+end
 
 """
     LogDetConeSquare(side_dimension)
@@ -626,7 +647,9 @@ struct RootDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
 
-dimension(s::RootDetConeTriangle) = 1 + div(s.side_dimension * (s.side_dimension + 1), 2)
+function dimension(s::RootDetConeTriangle)
+    return 1 + div(s.side_dimension * (s.side_dimension + 1), 2)
+end
 
 """
     RootDetConeSquare(side_dimension)
@@ -660,7 +683,7 @@ struct ZeroOne <: AbstractScalarSet end
 
 The set ``\\{0\\} \\cup [lower,upper]``.
 """
-struct Semicontinuous{T <: Real} <: AbstractScalarSet
+struct Semicontinuous{T<:Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
@@ -670,12 +693,15 @@ end
 
 The set ``\\{0\\} \\cup \\{lower,lower+1,\\ldots,upper-1,upper\\}``.
 """
-struct Semiinteger{T <: Real} <: AbstractScalarSet
+struct Semiinteger{T<:Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
 
-function Base.:(==)(set1::S, set2::S) where S <: Union{Interval, Semicontinuous, Semiinteger}
+function Base.:(==)(
+    set1::S,
+    set2::S,
+) where {S<:Union{Interval,Semicontinuous,Semiinteger}}
     return set1.lower == set2.lower && set1.upper == set2.upper
 end
 
@@ -688,7 +714,7 @@ The `weights` induce an ordering of the variables; as such, they should be uniqu
 The *k*th element in the set corresponds to the *k*th weight in `weights`.
 See [here](http://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
 """
-struct SOS1{T <: Real} <: AbstractVectorSet
+struct SOS1{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
@@ -701,14 +727,16 @@ The `weights` induce an ordering of the variables; as such, they should be uniqu
 The *k*th element in the set corresponds to the *k*th weight in `weights`.
 See [here](http://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
 """
-struct SOS2{T <: Real} <: AbstractVectorSet
+struct SOS2{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
-Base.:(==)(a::T, b::T) where {T <: Union{SOS1, SOS2}} = a.weights == b.weights
-Base.isapprox(a::T, b::T; kwargs...) where {T <: Union{SOS1, SOS2}} = isapprox(a.weights, b.weights; kwargs...)
+Base.:(==)(a::T, b::T) where {T<:Union{SOS1,SOS2}} = a.weights == b.weights
+function Base.isapprox(a::T, b::T; kwargs...) where {T<:Union{SOS1,SOS2}}
+    return isapprox(a.weights, b.weights; kwargs...)
+end
 
-dimension(s::Union{SOS1, SOS2}) = length(s.weights)
+dimension(s::Union{SOS1,SOS2}) = length(s.weights)
 
 """
 	ActivationCondition
@@ -750,9 +778,9 @@ indicator_set = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
 MOI.add_constraint(model, f, indicator_set)
 ```
 """
-struct IndicatorSet{A, S <: AbstractScalarSet} <: AbstractVectorSet
+struct IndicatorSet{A,S<:AbstractScalarSet} <: AbstractVectorSet
     set::S
-    IndicatorSet{A}(set::S) where {A, S <: AbstractScalarSet} = new{A,S}(set)
+    IndicatorSet{A}(set::S) where {A,S<:AbstractScalarSet} = new{A,S}(set)
 end
 
 dimension(::IndicatorSet) = 2
@@ -761,7 +789,12 @@ function Base.copy(set::IndicatorSet{A,S}) where {A,S}
     return IndicatorSet{A}(copy(set.set))
 end
 
-Base.:(==)(set1::IndicatorSet{A, S}, set2::IndicatorSet{A, S}) where {A, S} = set1.set == set2.set
+function Base.:(==)(
+    set1::IndicatorSet{A,S},
+    set2::IndicatorSet{A,S},
+) where {A,S}
+    return set1.set == set2.set
+end
 
 """
     Complements(dimension::Int)
@@ -823,20 +856,42 @@ dimension(set::Complements) = 2 * set.dimension
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
-        Reals, Zeros, Nonnegatives, Nonpositives, GreaterThan, LessThan,
-        EqualTo, Interval, NormInfinityCone, NormOneCone, SecondOrderCone,
-        RotatedSecondOrderCone, GeometricMeanCone, ExponentialCone,
-        DualExponentialCone, PowerCone, DualPowerCone, RelativeEntropyCone,
-        NormSpectralCone, NormNuclearCone,
-        PositiveSemidefiniteConeTriangle, PositiveSemidefiniteConeSquare,
-        LogDetConeTriangle, LogDetConeSquare, RootDetConeTriangle,
-        RootDetConeSquare, Complements, Integer, ZeroOne, Semicontinuous,
-        Semiinteger
-    }
+        Reals,
+        Zeros,
+        Nonnegatives,
+        Nonpositives,
+        GreaterThan,
+        LessThan,
+        EqualTo,
+        Interval,
+        NormInfinityCone,
+        NormOneCone,
+        SecondOrderCone,
+        RotatedSecondOrderCone,
+        GeometricMeanCone,
+        ExponentialCone,
+        DualExponentialCone,
+        PowerCone,
+        DualPowerCone,
+        RelativeEntropyCone,
+        NormSpectralCone,
+        NormNuclearCone,
+        PositiveSemidefiniteConeTriangle,
+        PositiveSemidefiniteConeSquare,
+        LogDetConeTriangle,
+        LogDetConeSquare,
+        RootDetConeTriangle,
+        RootDetConeSquare,
+        Complements,
+        Integer,
+        ZeroOne,
+        Semicontinuous,
+        Semiinteger,
+    },
 )
     return set
 end
-Base.copy(set::S) where {S <: Union{SOS1, SOS2}} = S(copy(set.weights))
+Base.copy(set::S) where {S<:Union{SOS1,SOS2}} = S(copy(set.weights))
 
 """
     supports_dimension_update(S::Type{<:MOI.AbstractVectorSet})
@@ -854,8 +909,9 @@ gives the `n-1`-dimensional nonnegative orthant. However
 function supports_dimension_update(::Type{<:AbstractVectorSet})
     return false
 end
-function supports_dimension_update(::Type{<:Union{
-    Reals, Zeros, Nonnegatives, Nonpositives}})
+function supports_dimension_update(
+    ::Type{<:Union{Reals,Zeros,Nonnegatives,Nonpositives}},
+)
     return true
 end
 
@@ -865,7 +921,9 @@ end
 Returns a set with the dimension modified to `new_dim`.
 """
 function update_dimension end
-function update_dimension(set::Union{
-    Reals, Zeros, Nonnegatives, Nonpositives}, new_dim)
+function update_dimension(
+    set::Union{Reals,Zeros,Nonnegatives,Nonpositives},
+    new_dim,
+)
     return typeof(set)(new_dim)
 end

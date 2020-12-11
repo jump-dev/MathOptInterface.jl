@@ -13,14 +13,14 @@ struct OptimizerWithAttributes
     # * `Function`: a function, or
     # * `DataType`: a type, or
     # * `UnionAll`: a type with missing parameters.
-    optimizer_constructor
+    optimizer_constructor::Any
     params::Vector{Pair{AbstractOptimizerAttribute,Any}}
 end
 
 _to_param(param::Pair{<:AbstractOptimizerAttribute}) = param
 _to_param(param::Pair{String}) = RawParameter(param.first) => param.second
 function _to_param(param::Pair)
-    error("Expected an optimizer attribute or a string, got `$(param.first)` which is a `$(typeof(param.first))`.")
+    return error("Expected an optimizer attribute or a string, got `$(param.first)` which is a `$(typeof(param.first))`.")
 end
 
 """
@@ -28,11 +28,15 @@ end
 
 Create an [`OptimizerWithAttributes`](@ref) with the parameters `params`.
 """
-function OptimizerWithAttributes(optimizer_constructor, args::Vararg{Pair, N}) where N
+function OptimizerWithAttributes(
+    optimizer_constructor,
+    args::Vararg{Pair,N},
+) where {N}
     if !applicable(optimizer_constructor)
         error(_INSTANTIATE_NOT_CALLABLE_MESSAGE)
     end
-    params = Pair{AbstractOptimizerAttribute,Any}[_to_param(arg) for arg in args]
+    params =
+        Pair{AbstractOptimizerAttribute,Any}[_to_param(arg) for arg in args]
     return OptimizerWithAttributes(optimizer_constructor, params)
 end
 
@@ -55,9 +59,11 @@ function _instantiate_and_check(optimizer_constructor)
     end
     optimizer = optimizer_constructor()
     if !isa(optimizer, AbstractOptimizer)
-        error("The provided `optimizer_constructor` returned an object of type " *
-              "$(typeof(optimizer)). Expected a " *
-              "MathOptInterface.AbstractOptimizer.")
+        error(
+            "The provided `optimizer_constructor` returned an object of type " *
+            "$(typeof(optimizer)). Expected a " *
+            "MathOptInterface.AbstractOptimizer.",
+        )
     end
     if !is_empty(optimizer)
         error("The provided `optimizer_constructor` returned a non-empty optimizer.")
@@ -72,7 +78,8 @@ Create an instance of optimizer represented by [`OptimizerWithAttributes`](@ref)
 Then check that the type returned is an empty [`AbstractOptimizer`](@ref).
 """
 function _instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
-    optimizer = _instantiate_and_check(optimizer_constructor.optimizer_constructor)
+    optimizer =
+        _instantiate_and_check(optimizer_constructor.optimizer_constructor)
     for param in optimizer_constructor.params
         set(optimizer, param.first, param.second)
     end
@@ -102,14 +109,17 @@ model.
 Hence set `with_names` to `true` if names might be set.
 """
 function instantiate(
-    optimizer_constructor; with_bridge_type::Union{Nothing, Type}=nothing,
-    with_names::Bool=false)
+    optimizer_constructor;
+    with_bridge_type::Union{Nothing,Type} = nothing,
+    with_names::Bool = false,
+)
     optimizer = _instantiate_and_check(optimizer_constructor)
     if with_bridge_type === nothing
         return optimizer
     end
     if !Utilities.supports_default_copy_to(optimizer, with_names)
-        universal_fallback = Utilities.UniversalFallback(Utilities.Model{with_bridge_type}())
+        universal_fallback =
+            Utilities.UniversalFallback(Utilities.Model{with_bridge_type}())
         optimizer = Utilities.CachingOptimizer(universal_fallback, optimizer)
     end
     return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
