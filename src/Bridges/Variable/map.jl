@@ -3,7 +3,7 @@
 
 Mapping between bridged variables and the bridge that bridged the variable.
 """
-mutable struct Map <: AbstractDict{MOI.VariableIndex, AbstractBridge}
+mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # Bridged constrained variables
     # `i` ->  `0`: `VariableIndex(-i)` was added with `add_constrained_variable`.
     # `i` -> `-j`: `VariableIndex(-i)` was the first variable of
@@ -17,22 +17,31 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex, AbstractBridge}
     #               vector of variables, taking deletion into account.
     index_in_vector::Vector{Int64}
     # `i` -> `bridge`: `VariableIndex(-i)` was bridged by `bridge`.
-    bridges::Vector{Union{Nothing, AbstractBridge}}
-    sets::Vector{Union{Nothing, DataType}}
+    bridges::Vector{Union{Nothing,AbstractBridge}}
+    sets::Vector{Union{Nothing,DataType}}
     # If `nothing`, it cannot be computed because some bridges does not support it
-    unbridged_function::Union{Nothing, Dict{MOI.VariableIndex, Tuple{Int64, MOI.AbstractScalarFunction}}}
+    unbridged_function::Union{
+        Nothing,
+        Dict{MOI.VariableIndex,Tuple{Int64,MOI.AbstractScalarFunction}},
+    }
     # Bridge that created this bridge, 0 if it is no bridge.
     parent_index::Vector{Int64}
     # Current bridge, 0 otherwise.
     current_context::Int64
     # Context of constraint bridged by constraint bridges
-    constraint_context::Dict{MOI.ConstraintIndex, Int64}
+    constraint_context::Dict{MOI.ConstraintIndex,Int64}
 end
 function Map()
-    return Map(Int64[], Int64[], Union{Nothing, AbstractBridge}[],
-               Union{Nothing, DataType}[],
-               Dict{MOI.VariableIndex, MOI.AbstractScalarFunction}(),
-               Int64[], 0, Dict{MOI.ConstraintIndex, Int64}())
+    return Map(
+        Int64[],
+        Int64[],
+        Union{Nothing,AbstractBridge}[],
+        Union{Nothing,DataType}[],
+        Dict{MOI.VariableIndex,MOI.AbstractScalarFunction}(),
+        Int64[],
+        0,
+        Dict{MOI.ConstraintIndex,Int64}(),
+    )
 end
 
 # Implementation of `AbstractDict` interface.
@@ -44,7 +53,8 @@ function Base.empty!(map::Map)
     empty!(map.bridges)
     empty!(map.sets)
     if map.unbridged_function === nothing
-        map.unbridged_function = Dict{MOI.VariableIndex, Tuple{Int64, MOI.AbstractScalarFunction}}()
+        map.unbridged_function =
+            Dict{MOI.VariableIndex,Tuple{Int64,MOI.AbstractScalarFunction}}()
     else
         empty!(map.unbridged_function)
     end
@@ -63,8 +73,8 @@ function bridge_index(map::Map, vi::MOI.VariableIndex)
 end
 function Base.haskey(map::Map, vi::MOI.VariableIndex)
     return -length(map.bridges) ≤ vi.value ≤ -1 &&
-        map.bridges[bridge_index(map, vi)] !== nothing &&
-        map.index_in_vector[-vi.value] != -1
+           map.bridges[bridge_index(map, vi)] !== nothing &&
+           map.index_in_vector[-vi.value] != -1
 end
 function Base.getindex(map::Map, vi::MOI.VariableIndex)
     return map.bridges[bridge_index(map, vi)]
@@ -83,7 +93,8 @@ function Base.delete!(map::Map, vi::MOI.VariableIndex)
         for i in (-vi.value):length(map.index_in_vector)
             if map.index_in_vector[i] == -1
                 continue
-            elseif bridge_index(map, vi) != bridge_index(map, MOI.VariableIndex(-i))
+            elseif bridge_index(map, vi) !=
+                   bridge_index(map, MOI.VariableIndex(-i))
                 break
             end
             map.index_in_vector[i] -= 1
@@ -109,7 +120,9 @@ function Base.keys(map::Map)
         vi -> haskey(map, vi),
         MOIU.LazyMap{MOI.VariableIndex}(
             i -> MOI.VariableIndex(-i),
-            eachindex(map.bridges)))
+            eachindex(map.bridges),
+        ),
+    )
 end
 Base.length(map::Map) = count(bridge -> bridge !== nothing, map.bridges)
 function number_of_variables(map::Map)
@@ -131,7 +144,7 @@ function Base.values(map::Map)
     # is not necessary if the caller just wants to iterater over `values`.
     return Base.Iterators.Filter(bridge -> bridge !== nothing, map.bridges)
 end
-function Base.iterate(map::Map, state=1)
+function Base.iterate(map::Map, state = 1)
     while state ≤ length(map.bridges) && map.bridges[state] === nothing
         state += 1
     end
@@ -142,7 +155,6 @@ function Base.iterate(map::Map, state=1)
     end
 end
 
-
 # Custom interface for information needed by `AbstractBridgeOptimizer`s that is
 # not part of the `AbstractDict` interface.
 
@@ -152,7 +164,9 @@ end
 Return the set type in which the bridged variable `vi` was added when it was
 bridged.
 """
-constrained_set(map::Map, vi::MOI.VariableIndex) = map.sets[bridge_index(map, vi)]
+function constrained_set(map::Map, vi::MOI.VariableIndex)
+    return map.sets[bridge_index(map, vi)]
+end
 
 """
     number_with_set(map::Map, S::Type{<:MOI.AbstractSet})
@@ -167,7 +181,7 @@ end
 function constraint(map::Map, vi::MOI.VariableIndex)
     S = constrained_set(map, vi)
     F = MOIU.variable_function_type(S)
-    return MOI.ConstraintIndex{F, S}(-bridge_index(map, vi))
+    return MOI.ConstraintIndex{F,S}(-bridge_index(map, vi))
 end
 
 """
@@ -177,7 +191,10 @@ Return the list of constraints corresponding to bridged variables in `S`.
 """
 function constraints_with_set(map::Map, S::Type{<:MOI.AbstractSet})
     F = MOIU.variable_function_type(S)
-    return [MOI.ConstraintIndex{F, S}(-i) for i in eachindex(map.sets) if map.sets[i] == S]
+    return [
+        MOI.ConstraintIndex{F,S}(-i)
+        for i in eachindex(map.sets) if map.sets[i] == S
+    ]
 end
 
 """
@@ -187,7 +204,7 @@ Return a list of all the different types `(F, S)` of `F`-in-`S` constraints in
 `map`.
 """
 function list_of_constraint_types(map::Map)
-    list = Set{Tuple{DataType, DataType}}()
+    list = Set{Tuple{DataType,DataType}}()
     for i in eachindex(map.bridges)
         if map.bridges[i] !== nothing
             S = map.sets[i]
@@ -209,9 +226,12 @@ Return a `Bool` indicating whether `vis` was returned by
 function has_keys(map::Map, vis::Vector{MOI.VariableIndex})
     return isempty(vis) || (
         length_of_vector_of_variables(map, first(vis)) == length(vis) &&
-        all(vi -> bridge_index(map, vi) == bridge_index(map, first(vis)), vis) &&
+        all(
+            vi -> bridge_index(map, vi) == bridge_index(map, first(vis)),
+            vis,
+        ) &&
         all(vi -> haskey(map, vi), vis) &&
-        all(i -> vis[i].value < vis[i - 1].value, 2:length(vis))
+        all(i -> vis[i].value < vis[i-1].value, 2:length(vis))
     )
 end
 
@@ -254,8 +274,11 @@ associate `vi` to `typeof(set)`. It returns a tuple with `vi` and the
 constraint index
 `MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(vi.value)`.
 """
-function add_key_for_bridge(map::Map, bridge_fun::Function,
-                            set::MOI.AbstractScalarSet)
+function add_key_for_bridge(
+    map::Map,
+    bridge_fun::Function,
+    set::MOI.AbstractScalarSet,
+)
     push!(map.parent_index, map.current_context)
     bridge_index = Int64(length(map.parent_index))
     push!(map.info, 0)
@@ -271,11 +294,14 @@ function add_key_for_bridge(map::Map, bridge_fun::Function,
             map.unbridged_function = nothing
         else
             for mapping in mappings
-                push!(map.unbridged_function, mapping.first => (bridge_index, mapping.second))
+                push!(
+                    map.unbridged_function,
+                    mapping.first => (bridge_index, mapping.second),
+                )
             end
         end
     end
-    return variable, MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(index)
+    return variable, MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(index)
 end
 
 """
@@ -287,10 +313,14 @@ Create vector of variable indices `variables`, stores the mapping
 `typeof(set)`. It returns a tuple with `variables` and the constraint index
 `MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}(first(variables).value)`.
 """
-function add_keys_for_bridge(map::Map, bridge_fun::Function,
-                             set::MOI.AbstractVectorSet)
+function add_keys_for_bridge(
+    map::Map,
+    bridge_fun::Function,
+    set::MOI.AbstractVectorSet,
+)
     if iszero(MOI.dimension(set))
-        return MOI.VariableIndex[], MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}(0)
+        return MOI.VariableIndex[],
+        MOI.ConstraintIndex{MOI.VectorOfVariables,typeof(set)}(0)
     else
         push!(map.parent_index, map.current_context)
         bridge_index = Int64(length(map.parent_index))
@@ -305,21 +335,28 @@ function add_keys_for_bridge(map::Map, bridge_fun::Function,
             push!(map.bridges, nothing)
             push!(map.sets, nothing)
         end
-        map.bridges[bridge_index] = call_in_context(map, bridge_index, bridge_fun)
-        variables = MOI.VariableIndex[MOI.VariableIndex(-(bridge_index - 1 + i))
-                                      for i in 1:MOI.dimension(set)]
+        map.bridges[bridge_index] =
+            call_in_context(map, bridge_index, bridge_fun)
+        variables = MOI.VariableIndex[
+            MOI.VariableIndex(-(bridge_index - 1 + i))
+            for i in 1:MOI.dimension(set)
+        ]
         if map.unbridged_function !== nothing
             mappings = unbridged_map(map.bridges[bridge_index], variables)
             if mappings === nothing
                 map.unbridged_function = nothing
             else
                 for mapping in mappings
-                    push!(map.unbridged_function, mapping.first => (bridge_index, mapping.second))
+                    push!(
+                        map.unbridged_function,
+                        mapping.first => (bridge_index, mapping.second),
+                    )
                 end
             end
         end
         index = first(variables).value
-        return variables, MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}(index)
+        return variables,
+        MOI.ConstraintIndex{MOI.VectorOfVariables,typeof(set)}(index)
     end
 end
 
@@ -361,9 +398,11 @@ Throw an error if some bridged variables do not have any reverse mapping.
 """
 function throw_if_cannot_unbridge(map::Map)
     if map.unbridged_function === nothing
-        error("Cannot unbridge function because some variables are bridged by",
-              " variable bridges that do not support reverse mapping, e.g.,",
-              " `ZerosBridge`.")
+        error(
+            "Cannot unbridge function because some variables are bridged by",
+            " variable bridges that do not support reverse mapping, e.g.,",
+            " `ZerosBridge`.",
+        )
     end
 end
 
@@ -459,7 +498,7 @@ Empty version of [`Map`](@ref). It is used by
 [`MathOptInterface.Bridges.Constraint.SingleBridgeOptimizer`](@ref) as it does
 not bridge any variable.
 """
-struct EmptyMap <: AbstractDict{MOI.VariableIndex, AbstractBridge} end
+struct EmptyMap <: AbstractDict{MOI.VariableIndex,AbstractBridge} end
 Base.isempty(::EmptyMap) = true
 function Base.empty!(::EmptyMap) end
 Base.length(::EmptyMap) = 0
@@ -468,6 +507,8 @@ Base.values(::EmptyMap) = MOIU.EmptyVector{AbstractBridge}()
 has_bridges(::EmptyMap) = false
 number_of_variables(::EmptyMap) = 0
 number_with_set(::EmptyMap, ::Type{<:MOI.AbstractSet}) = 0
-constraints_with_set(::EmptyMap, S::Type{<:MOI.AbstractSet}) = MOI.ConstraintIndex{MOIU.variable_function_type(S), S}[]
+function constraints_with_set(::EmptyMap, S::Type{<:MOI.AbstractSet})
+    return MOI.ConstraintIndex{MOIU.variable_function_type(S),S}[]
+end
 register_context(::EmptyMap, ::MOI.ConstraintIndex) = nothing
 call_in_context(::EmptyMap, ::MOI.ConstraintIndex, f::Function) = f()

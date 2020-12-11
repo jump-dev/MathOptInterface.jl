@@ -33,9 +33,11 @@ A `Vector{ConstraintIndex{F,S}}` with indices of all constraints of
 type `F`-in`S` created by the bride `b` in the model (i.e., of length equal to
 the value of `NumberOfConstraints{F,S}()`).
 """
-function MOI.get(::AbstractBridge,
-                 ::MOI.ListOfConstraintIndices{F, S}) where {F, S}
-    return MOI.ConstraintIndex{F, S}[]
+function MOI.get(
+    ::AbstractBridge,
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
+    return MOI.ConstraintIndex{F,S}[]
 end
 
 """
@@ -44,8 +46,11 @@ end
 
 Return a `Bool` indicating whether `BT` supports setting `attr` to `model`.
 """
-function MOI.supports(::MOI.ModelLike, ::MOI.AbstractConstraintAttribute,
-                      ::Type{<:AbstractBridge})
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.AbstractConstraintAttribute,
+    ::Type{<:AbstractBridge},
+)
     return false
 end
 
@@ -56,14 +61,24 @@ end
 Return the value of the attribute `attr` of the model `model` for the
 constraint bridged by `bridge`.
 """
-function MOI.get(::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
-                 bridge::AbstractBridge)
-    throw(ArgumentError("Bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`."))
+function MOI.get(
+    ::MOI.ModelLike,
+    attr::MOI.AbstractConstraintAttribute,
+    bridge::AbstractBridge,
+)
+    return throw(ArgumentError("Bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`."))
 end
 
-function MOI.get(model::MOI.ModelLike, ::MOI.CanonicalConstraintFunction,
-                 bridge::AbstractBridge)
-    return MOI.Utilities.canonical(MOI.get(model, MOI.ConstraintFunction(), bridge))
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.CanonicalConstraintFunction,
+    bridge::AbstractBridge,
+)
+    return MOI.Utilities.canonical(MOI.get(
+        model,
+        MOI.ConstraintFunction(),
+        bridge,
+    ))
 end
 
 """
@@ -73,8 +88,12 @@ end
 Set the value of the attribute `attr` of the model `model` for the
 constraint bridged by `bridge`.
 """
-function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
-                 bridge::AbstractBridge, value)
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.AbstractConstraintAttribute,
+    bridge::AbstractBridge,
+    value,
+)
     if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
         throw(MOI.UnsupportedAttribute(attr))
     else

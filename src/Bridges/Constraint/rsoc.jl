@@ -16,8 +16,9 @@ That means in particular that the norm is of constraint primal and duals are pre
 
 [1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
 """
-struct RSOCBridge{T, F, G} <: SetMapBridge{T, MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, F, G}
-    constraint::CI{F, MOI.SecondOrderCone}
+struct RSOCBridge{T,F,G} <:
+       SetMapBridge{T,MOI.SecondOrderCone,MOI.RotatedSecondOrderCone,F,G}
+    constraint::CI{F,MOI.SecondOrderCone}
 end
 
 function rotate_function_type(G::Type{<:MOI.AbstractVectorFunction}, T::Type)
@@ -27,10 +28,12 @@ function rotate_function_type(G::Type{<:MOI.AbstractVectorFunction}, T::Type)
     return MOIU.promote_operation(vcat, T, Z, Y, G)
 end
 
-function concrete_bridge_type(::Type{<:RSOCBridge{T}},
-                              G::Type{<:MOI.AbstractVectorFunction},
-                              ::Type{MOI.RotatedSecondOrderCone}) where T
-    return RSOCBridge{T, rotate_function_type(G, T), G}
+function concrete_bridge_type(
+    ::Type{<:RSOCBridge{T}},
+    G::Type{<:MOI.AbstractVectorFunction},
+    ::Type{MOI.RotatedSecondOrderCone},
+) where {T}
+    return RSOCBridge{T,rotate_function_type(G, T),G}
 end
 
 function map_set(::Type{<:RSOCBridge}, set::MOI.RotatedSecondOrderCone)
@@ -46,14 +49,17 @@ end
 We simply do the inverse transformation of [`RSOCBridge`](@ref). In fact, as the
 transformation is an involution, we do the same transformation.
 """
-struct SOCRBridge{T, F, G} <: SetMapBridge{T, MOI.RotatedSecondOrderCone, MOI.SecondOrderCone, F, G}
-    constraint::CI{F, MOI.RotatedSecondOrderCone}
+struct SOCRBridge{T,F,G} <:
+       SetMapBridge{T,MOI.RotatedSecondOrderCone,MOI.SecondOrderCone,F,G}
+    constraint::CI{F,MOI.RotatedSecondOrderCone}
 end
 
-function concrete_bridge_type(::Type{<:SOCRBridge{T}},
-                              G::Type{<:MOI.AbstractVectorFunction},
-                              ::Type{MOI.SecondOrderCone}) where T
-    return SOCRBridge{T, rotate_function_type(G, T), G}
+function concrete_bridge_type(
+    ::Type{<:SOCRBridge{T}},
+    G::Type{<:MOI.AbstractVectorFunction},
+    ::Type{MOI.SecondOrderCone},
+) where {T}
+    return SOCRBridge{T,rotate_function_type(G, T),G}
 end
 
 function map_set(::Type{<:SOCRBridge}, set::MOI.SecondOrderCone)
@@ -63,7 +69,10 @@ function inverse_map_set(::Type{<:SOCRBridge}, set::MOI.RotatedSecondOrderCone)
     return MOI.SecondOrderCone(MOI.dimension(set))
 end
 
-function map_function(::Type{<:Union{RSOCBridge{T}, SOCRBridge{T}}}, func) where T
+function map_function(
+    ::Type{<:Union{RSOCBridge{T},SOCRBridge{T}}},
+    func,
+) where {T}
     scalars = MOIU.eachscalar(func)
     t = scalars[1]
     u = scalars[2]
@@ -73,13 +82,22 @@ function map_function(::Type{<:Union{RSOCBridge{T}, SOCRBridge{T}}}, func) where
     us = MOIU.operate!(/, T, u, s2)
     # Cannot use `operate!` here since `ts` and `us` are needed for the next
     # line
-    y  = ts - us
-    z  = MOIU.operate!(+, T, ts, us)
+    y = ts - us
+    z = MOIU.operate!(+, T, ts, us)
     return MOIU.operate(vcat, T, z, y, x)
 end
 # The map is an involution
-inverse_map_function(BT::Type{<:Union{RSOCBridge, SOCRBridge}}, func) = map_function(BT, func)
+function inverse_map_function(BT::Type{<:Union{RSOCBridge,SOCRBridge}}, func)
+    return map_function(BT, func)
+end
 # The map is symmetric
-adjoint_map_function(BT::Type{<:Union{RSOCBridge, SOCRBridge}}, func) = map_function(BT, func)
+function adjoint_map_function(BT::Type{<:Union{RSOCBridge,SOCRBridge}}, func)
+    return map_function(BT, func)
+end
 # The map is a symmetric involution
-inverse_adjoint_map_function(BT::Type{<:Union{RSOCBridge, SOCRBridge}}, func) = map_function(BT, func)
+function inverse_adjoint_map_function(
+    BT::Type{<:Union{RSOCBridge,SOCRBridge}},
+    func,
+)
+    return map_function(BT, func)
+end

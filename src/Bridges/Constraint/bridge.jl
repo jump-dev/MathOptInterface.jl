@@ -47,7 +47,13 @@ MOI.get(::AbstractBridge, ::MOI.ListOfVariableIndices) = MOI.VariableIndex[]
 
 Return a `Bool` indicating whether the bridges of type `BT` support bridging `F`-in-`S` constraints.
 """
-MOI.supports_constraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet}) = false
+function MOI.supports_constraint(
+    ::Type{<:AbstractBridge},
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractSet},
+)
+    return false
+end
 
 """
     added_constrained_variable_types(BT::Type{<:MOI.Bridges.Constraint.AbstractBridge},
@@ -59,10 +65,12 @@ add for bridging `F`-in-`S` constraints. This falls back to
 `added_constrained_variable_types(concrete_bridge_type(BT, F, S))`
 so bridges should not implement this method.
 """
-function MOIB.added_constrained_variable_types(BT::Type{<:AbstractBridge},
-                                               F::Type{<:MOI.AbstractFunction},
-                                               S::Type{<:MOI.AbstractSet})
-    MOIB.added_constrained_variable_types(concrete_bridge_type(BT, F, S))
+function MOIB.added_constrained_variable_types(
+    BT::Type{<:AbstractBridge},
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOIB.added_constrained_variable_types(concrete_bridge_type(BT, F, S))
 end
 
 """
@@ -75,10 +83,12 @@ bridging `F`-in-`S` constraints. This falls back to
 `added_constraint_types(concrete_bridge_type(BT, F, S))`
 so bridges should not implement this method.
 """
-function MOIB.added_constraint_types(BT::Type{<:AbstractBridge},
-                                     F::Type{<:MOI.AbstractFunction},
-                                     S::Type{<:MOI.AbstractSet})
-    MOIB.added_constraint_types(concrete_bridge_type(BT, F, S))
+function MOIB.added_constraint_types(
+    BT::Type{<:AbstractBridge},
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOIB.added_constraint_types(concrete_bridge_type(BT, F, S))
 end
 
 """
@@ -108,14 +118,18 @@ MOI.Bridges.Constraint.concrete_bridge_type(BT, F, S)
 MOI.Bridges.Constraint.SplitIntervalBridge{Float64,MOI.SingleVariable}
 ```
 """
-function concrete_bridge_type(bridge_type::DataType,
-                              ::Type{<:MOI.AbstractFunction},
-                              ::Type{<:MOI.AbstractSet})
+function concrete_bridge_type(
+    bridge_type::DataType,
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractSet},
+)
     return bridge_type
 end
 
-function concrete_bridge_type(b::MOIB.AbstractBridgeOptimizer,
-                              F::Type{<:MOI.AbstractFunction},
-                              S::Type{<:MOI.AbstractSet})
+function concrete_bridge_type(
+    b::MOIB.AbstractBridgeOptimizer,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
     return concrete_bridge_type(MOIB.bridge_type(b, F, S), F, S)
 end

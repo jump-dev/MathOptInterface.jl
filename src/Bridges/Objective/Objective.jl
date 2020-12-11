@@ -16,9 +16,10 @@ include("single_bridge_optimizer.jl")
 
 # Objective bridges
 include("functionize.jl")
-const Functionize{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{FunctionizeBridge{T}, OT}
+const Functionize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{FunctionizeBridge{T},OT}
 include("slack.jl")
-const Slack{T, OT<:MOI.ModelLike} = SingleBridgeOptimizer{SlackBridge{T}, OT}
+const Slack{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SlackBridge{T},OT}
 
 """
     add_all_bridges(bridged_model, T::Type)
