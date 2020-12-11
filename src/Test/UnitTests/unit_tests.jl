@@ -3,7 +3,7 @@
     to the full end-to-end tests in contlinear.jl etc
 =#
 
-const unittests = Dict{String, Function}()
+const unittests = Dict{String,Function}()
 
 """
     test_model_solution(model::MOI.ModelLike, config::TestConfig;
@@ -50,36 +50,42 @@ check that the attribute  `DualStatus` is `MOI.FEASIBLE_POINT`. Then for each
     )
 
 """
-function test_model_solution(model, config;
-        objective_value   = nothing,
-        variable_primal   = nothing,
-        constraint_primal = nothing,
-        constraint_dual   = nothing
-    )
+function test_model_solution(
+    model,
+    config;
+    objective_value = nothing,
+    variable_primal = nothing,
+    constraint_primal = nothing,
+    constraint_dual = nothing,
+)
     config.solve || return
     atol, rtol = config.atol, config.rtol
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     if objective_value != nothing
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ objective_value atol=atol rtol=rtol
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ objective_value atol = atol rtol =
+            rtol
     end
     if variable_primal != nothing
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in variable_primal
-            @test MOI.get(model, MOI.VariablePrimal(), index) ≈ solution_value atol=atol rtol=rtol
+            @test MOI.get(model, MOI.VariablePrimal(), index) ≈ solution_value atol =
+                atol rtol = rtol
         end
     end
     if constraint_primal != nothing
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in constraint_primal
-            @test MOI.get(model, MOI.ConstraintPrimal(), index) ≈ solution_value atol=atol rtol=rtol
+            @test MOI.get(model, MOI.ConstraintPrimal(), index) ≈ solution_value atol =
+                atol rtol = rtol
         end
     end
     if config.duals
         if constraint_dual != nothing
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             for (index, solution_value) in constraint_dual
-                @test MOI.get(model, MOI.ConstraintDual(), index) ≈ solution_value atol=atol rtol=rtol
+                @test MOI.get(model, MOI.ConstraintDual(), index) ≈
+                      solution_value atol = atol rtol = rtol
             end
         end
     end

@@ -28,7 +28,7 @@ function add_variable(model::MOI.ModelLike, config::TestConfig)
     v = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
 end
-unittests["add_variable"]     = add_variable
+unittests["add_variable"] = add_variable
 
 """
     add_variables(model::MOI.ModelLike, config::TestConfig)
@@ -121,7 +121,10 @@ unittests["delete_nonnegative_variables"] = delete_nonnegative_variables
 
 Test adding, and then deleting one by one, nonnegative variables.
 """
-function update_dimension_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+function update_dimension_nonnegative_variables(
+    model::MOI.ModelLike,
+    config::TestConfig,
+)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -132,7 +135,8 @@ function update_dimension_nonnegative_variables(model::MOI.ModelLike, config::Te
     @test_throws MOI.InvalidIndex(v[1]) MOI.delete(model, v[1])
     @test MOI.is_valid(model, cv)
     @test MOI.is_valid(model, v[2])
-    @test MOI.get(model, MOI.ConstraintFunction(), cv) == MOI.VectorOfVariables([v[2]])
+    @test MOI.get(model, MOI.ConstraintFunction(), cv) ==
+          MOI.VectorOfVariables([v[2]])
     @test MOI.get(model, MOI.ConstraintSet(), cv) == MOI.Nonnegatives(1)
     MOI.delete(model, v[2])
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -142,7 +146,8 @@ function update_dimension_nonnegative_variables(model::MOI.ModelLike, config::Te
     @test_throws MOI.InvalidIndex(v[2]) MOI.delete(model, v[2])
     @test !MOI.is_valid(model, cv)
 end
-unittests["update_dimension_nonnegative_variables"] = update_dimension_nonnegative_variables
+unittests["update_dimension_nonnegative_variables"] =
+    update_dimension_nonnegative_variables
 
 """
     delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
@@ -175,12 +180,15 @@ Test getting variables by name.
 """
 function getvariable(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
-    MOIU.loadfromstring!(model,"""
-        variables: x
-        minobjective: 2.0x
-        c1: x >= 1.0
-        c2: x <= 2.0
-    """)
+    MOIU.loadfromstring!(
+        model,
+        """
+    variables: x
+    minobjective: 2.0x
+    c1: x >= 1.0
+    c2: x <= 2.0
+""",
+    )
     @test MOI.get(model, MOI.VariableIndex, "y") === nothing
     x = MOI.get(model, MOI.VariableIndex, "x")
     @test MOI.is_valid(model, x)
@@ -217,24 +225,37 @@ function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
-    MOIU.loadfromstring!(model,"""
-        variables: x
-        maxobjective: 2.0x
-        c1: x <= 1.0
-        c2: x >= 0.0
-    """)
-    x  = MOI.get(model, MOI.VariableIndex, "x")
-    c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c1")
+    MOIU.loadfromstring!(
+        model,
+        """
+    variables: x
+    maxobjective: 2.0x
+    c1: x <= 1.0
+    c2: x >= 0.0
+""",
+    )
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c1 = MOI.get(
+        model,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
+        "c1",
+    )
     # We test this after the creation of every `SingleVariable` constraint
     # to ensure a good coverage of corner cases.
     @test c1.value == x.value
-    c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c2")
+    c2 = MOI.get(
+        model,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
+        "c2",
+    )
     @test c2.value == x.value
-    test_model_solution(model, config;
-        objective_value   = 2.0,
-        variable_primal   = [(x, 1.0)],
+    return test_model_solution(
+        model,
+        config;
+        objective_value = 2.0,
+        variable_primal = [(x, 1.0)],
         constraint_primal = [(c1, 1.0), (c2, 1.0)],
-        constraint_dual   = [(c1, -2.0), (c2, 0.0)]
+        constraint_dual = [(c1, -2.0), (c2, 0.0)],
     )
 end
 unittests["solve_with_upperbound"] = solve_with_upperbound
@@ -249,22 +270,35 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
-    MOIU.loadfromstring!(model,"""
-        variables: x
-        minobjective: 2.0x
-        c1: x >= 1.0
-        c2: x <= 2.0
-    """)
+    MOIU.loadfromstring!(
+        model,
+        """
+    variables: x
+    minobjective: 2.0x
+    c1: x >= 1.0
+    c2: x <= 2.0
+""",
+    )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c1 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}, "c1")
+    c1 = MOI.get(
+        model,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
+        "c1",
+    )
     @test c1.value == x.value
-    c2 = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}, "c2")
+    c2 = MOI.get(
+        model,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
+        "c2",
+    )
     @test c2.value == x.value
-    test_model_solution(model, config;
-        objective_value   = 2.0,
-        variable_primal   = [(x, 1.0)],
+    return test_model_solution(
+        model,
+        config;
+        objective_value = 2.0,
+        variable_primal = [(x, 1.0)],
         constraint_primal = [(c1, 1.0), (c2, 1.0)],
-        constraint_dual   = [(c1, 2.0), (c2, 0.0)]
+        constraint_dual = [(c1, 2.0), (c2, 0.0)],
     )
 end
 unittests["solve_with_lowerbound"] = solve_with_lowerbound
@@ -278,63 +312,83 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
     @testset "integer with lower bound" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
-        MOIU.loadfromstring!(model,"""
-            variables: x
-            minobjective: 2.0x
-            c1: x >= 1.5
-            c2: x in Integer()
-        """)
+        MOIU.loadfromstring!(
+            model,
+            """
+    variables: x
+    minobjective: 2.0x
+    c1: x >= 1.5
+    c2: x in Integer()
+""",
+        )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(model, config;
-            objective_value   = 4.0,
-            variable_primal   = [(x, 2.0)]
+        test_model_solution(
+            model,
+            config;
+            objective_value = 4.0,
+            variable_primal = [(x, 2.0)],
         )
     end
     @testset "integer with upper bound" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
-        MOIU.loadfromstring!(model,"""
-            variables: x
-            minobjective: -2.0x
-            c1: x <= 1.5
-            c2: x in Integer()
-        """)
+        MOIU.loadfromstring!(
+            model,
+            """
+    variables: x
+    minobjective: -2.0x
+    c1: x <= 1.5
+    c2: x in Integer()
+""",
+        )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(model, config;
-            objective_value   = -2.0,
-            variable_primal   = [(x, 1.0)]
+        test_model_solution(
+            model,
+            config;
+            objective_value = -2.0,
+            variable_primal = [(x, 1.0)],
         )
     end
 
     @testset "binary with upper" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
-        MOIU.loadfromstring!(model,"""
-            variables: x
-            minobjective: -2.0x
-            c1: x <= 2.0
-            c2: x in ZeroOne()
-        """)
+        MOIU.loadfromstring!(
+            model,
+            """
+    variables: x
+    minobjective: -2.0x
+    c1: x <= 2.0
+    c2: x in ZeroOne()
+""",
+        )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(model, config;
-            objective_value   = -2.0,
-            variable_primal   = [(x, 1.0)]
+        test_model_solution(
+            model,
+            config;
+            objective_value = -2.0,
+            variable_primal = [(x, 1.0)],
         )
     end
 
     @testset "binary with 0 upper" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
-        MOIU.loadfromstring!(model,"""
-            variables: x
-            minobjective: 1.0x
-            c1: x <= 0.0
-            c2: x in ZeroOne()
-        """)
+        MOIU.loadfromstring!(
+            model,
+            """
+    variables: x
+    minobjective: 1.0x
+    c1: x <= 0.0
+    c2: x in ZeroOne()
+""",
+        )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(model, config;
-            objective_value   = 0.0,
-            variable_primal   = [(x, 0.0)]
+        test_model_solution(
+            model,
+            config;
+            objective_value = 0.0,
+            variable_primal = [(x, 0.0)],
         )
     end
 end
