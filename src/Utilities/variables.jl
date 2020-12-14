@@ -5,14 +5,17 @@ Return a tuple `(lb, ub)` of type `Tuple{T, T}`, where `lb` and `ub` are lower
  and upper bounds, respectively, imposed on `x` in `model`.
 """
 function get_bounds(
-    model::MOI.ModelLike, ::Type{T}, x::MOI.VariableIndex) where {T}
+    model::MOI.ModelLike,
+    ::Type{T},
+    x::MOI.VariableIndex,
+) where {T}
     xval = x.value
-    c_lt = MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}(xval)
-    c_gt = MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}(xval)
-    c_int = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}(xval)
-    c_eq = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}(xval)
-    c_sc = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semicontinuous{T}}(xval)
-    c_si = MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semiinteger{T}}(xval)
+    c_lt = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{T}}(xval)
+    c_gt = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{T}}(xval)
+    c_int = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Interval{T}}(xval)
+    c_eq = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{T}}(xval)
+    c_sc = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semicontinuous{T}}(xval)
+    c_si = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(xval)
     if MOI.is_valid(model, c_int)
         # It is assumed that none of the other ConstraintIndexs are valid
         int::MOI.Interval{T} = MOI.get(model, MOI.ConstraintSet(), c_int)

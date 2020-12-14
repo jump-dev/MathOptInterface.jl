@@ -20,19 +20,30 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
     # TODO do not include constant if primal solution is a ray
-    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi), f)
+    return eval_variables(
+        vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi),
+        f,
+    )
 end
 
-function constraint_constant(model::MOI.ModelLike,
-                             ci::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction,
-                                                     <:MOI.AbstractVectorSet},
-                             T::Type)
+function constraint_constant(
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{
+        <:MOI.AbstractVectorFunction,
+        <:MOI.AbstractVectorSet,
+    },
+    T::Type,
+)
     return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci))
 end
-function constraint_constant(model::MOI.ModelLike,
-                             ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
-                                                     <:MOI.AbstractScalarSet},
-                             T::Type)
+function constraint_constant(
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{
+        <:MOI.AbstractScalarFunction,
+        <:MOI.AbstractScalarSet,
+    },
+    T::Type,
+)
     return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T) -
            MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
 end
@@ -47,20 +58,25 @@ end
 Return the part of `DualObjectiveValue` due to the constraint of index `ci` using
 scalar type `T`.
 """
-function dual_objective_value(model::MOI.ModelLike,
-                              ci::MOI.ConstraintIndex,
-                              T::Type,
-                              result_index::Integer)
-    return set_dot(constraint_constant(model, ci, T),
-                   MOI.get(model, MOI.ConstraintDual(result_index), ci),
-                   MOI.get(model, MOI.ConstraintSet(), ci))
+function dual_objective_value(
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex,
+    T::Type,
+    result_index::Integer,
+)
+    return set_dot(
+        constraint_constant(model, ci, T),
+        MOI.get(model, MOI.ConstraintDual(result_index), ci),
+        MOI.get(model, MOI.ConstraintSet(), ci),
+    )
 end
 
-function dual_objective_value(model::MOI.ModelLike,
-                              ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,
-                                                      <:MOI.Interval},
-                              T::Type,
-                              result_index::Integer)
+function dual_objective_value(
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,<:MOI.Interval},
+    T::Type,
+    result_index::Integer,
+)
     constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
@@ -75,8 +91,6 @@ function dual_objective_value(model::MOI.ModelLike,
     return set_dot(constant, dual, set)
 end
 
-
-
 """
     dual_objective_value(model::MOI.ModelLike,
                     F::Type{<:MOI.AbstractFunction},
@@ -87,23 +101,27 @@ end
 Return the part of `DualObjectiveValue` due to `F`-in-`S` constraints using scalar
 type `T`.
 """
-function dual_objective_value(model::MOI.ModelLike,
-                         F::Type{<:MOI.AbstractFunction},
-                         S::Type{<:MOI.AbstractSet},
-                         T::Type,
-                         result_index::Integer)
+function dual_objective_value(
+    model::MOI.ModelLike,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+    T::Type,
+    result_index::Integer,
+)
     value = zero(T) # sum won't work if there are no constraints.
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         value += dual_objective_value(model, ci, T, result_index)
     end
     return value
 end
 
-function dual_objective_value(model::MOI.ModelLike,
-                              F::Type{MOI.VectorOfVariables},
-                              S::Type{<:MOI.AbstractVectorSet},
-                              T::Type,
-                              result_index::Integer)
+function dual_objective_value(
+    model::MOI.ModelLike,
+    F::Type{MOI.VectorOfVariables},
+    S::Type{<:MOI.AbstractVectorSet},
+    T::Type,
+    result_index::Integer,
+)
     # No constant in the function nor set so no contribution to the dual
     # objective value.
     return zero(T)
@@ -121,7 +139,11 @@ Compute the dual objective value of type `T` using the `ConstraintDual` results
 and the `ConstraintFunction` and `ConstraintSet` values. Note that the nonlinear
 part of the model is ignored.
 """
-function get_fallback(model::MOI.ModelLike, attr::MOI.DualObjectiveValue, T::Type)
+function get_fallback(
+    model::MOI.ModelLike,
+    attr::MOI.DualObjectiveValue,
+    T::Type,
+)
     value = zero(T) # sum will not work if there are zero constraints
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
         value += dual_objective_value(model, F, S, T, attr.result_index)::T
@@ -145,11 +167,17 @@ end
 Compute the value of the function of the constraint of index `constraint_index`
 using the `VariablePrimal` results and the `ConstraintFunction` values.
 """
-function get_fallback(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-                      idx::MOI.ConstraintIndex)
+function get_fallback(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimal,
+    idx::MOI.ConstraintIndex,
+)
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
     # TODO do not include constant if primal solution is a ray
-    return eval_variables(vi -> MOI.get(model, MOI.VariablePrimal(attr.N), vi), f)
+    return eval_variables(
+        vi -> MOI.get(model, MOI.VariablePrimal(attr.N), vi),
+        f,
+    )
 end
 
 ################ Constraint Dual for Variable-wise constraints #################
@@ -179,8 +207,10 @@ end
 # `set_dot`.
 # Once A_j* y_j is obtained, we invert A_j* with `dot_coefficients`.
 
-function variable_coefficient(func::MOI.ScalarAffineFunction{T},
-                              vi::MOI.VariableIndex) where T
+function variable_coefficient(
+    func::MOI.ScalarAffineFunction{T},
+    vi::MOI.VariableIndex,
+) where {T}
     coef = zero(T)
     for term in func.terms
         if term.variable_index == vi
@@ -189,8 +219,10 @@ function variable_coefficient(func::MOI.ScalarAffineFunction{T},
     end
     return coef
 end
-function variable_coefficient(func::MOI.VectorAffineFunction{T},
-                              vi::MOI.VariableIndex) where T
+function variable_coefficient(
+    func::MOI.VectorAffineFunction{T},
+    vi::MOI.VariableIndex,
+) where {T}
     coef = zeros(T, MOI.output_dimension(func))
     for vector_term in func.terms
         term = vector_term.scalar_term
@@ -200,8 +232,11 @@ function variable_coefficient(func::MOI.VectorAffineFunction{T},
     end
     return coef
 end
-function variable_coefficient(func::MOI.ScalarQuadraticFunction{T},
-                              vi::MOI.VariableIndex, value::Function) where T
+function variable_coefficient(
+    func::MOI.ScalarQuadraticFunction{T},
+    vi::MOI.VariableIndex,
+    value::Function,
+) where {T}
     coef = zero(T)
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for term in func.affine_terms
@@ -218,8 +253,11 @@ function variable_coefficient(func::MOI.ScalarQuadraticFunction{T},
     end
     return coef
 end
-function variable_coefficient(func::MOI.VectorQuadraticFunction{T},
-                              vi::MOI.VariableIndex, value::Function) where T
+function variable_coefficient(
+    func::MOI.VectorQuadraticFunction{T},
+    vi::MOI.VariableIndex,
+    value::Function,
+) where {T}
     coef = zeros(T, MOI.output_dimension(func))
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for vector_term in func.affine_terms
@@ -240,7 +278,6 @@ function variable_coefficient(func::MOI.VectorQuadraticFunction{T},
     return coef
 end
 
-
 """
     variable_dual(model::MOI.ModelLike,
                   attr::MOI.ConstraintDual,
@@ -251,20 +288,24 @@ end
 Return dual of the constraint of index `ci` multiplied by the coefficient of
 `vi` in the `MOI.ConstraintFunction`.
 """
-function variable_dual(model::MOI.ModelLike,
-                       attr::MOI.ConstraintDual,
-                       vi::MOI.VariableIndex,
-                       ci::MOI.ConstraintIndex{<:MOI.VectorAffineFunction})
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    vi::MOI.VariableIndex,
+    ci::MOI.ConstraintIndex{<:MOI.VectorAffineFunction},
+)
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     coef = variable_coefficient(func, vi)
     dual = MOI.get(model, attr, ci)
     return set_dot(coef, dual, set)
 end
-function variable_dual(model::MOI.ModelLike,
-                       attr::MOI.ConstraintDual,
-                       vi::MOI.VariableIndex,
-                       ci::MOI.ConstraintIndex{<:MOI.VectorQuadraticFunction})
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    vi::MOI.VariableIndex,
+    ci::MOI.ConstraintIndex{<:MOI.VectorQuadraticFunction},
+)
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     primal_attr = MOI.VariablePrimal(attr.N)
@@ -272,19 +313,23 @@ function variable_dual(model::MOI.ModelLike,
     dual = MOI.get(model, attr, ci)
     return set_dot(coef, dual, set)
 end
-function variable_dual(model::MOI.ModelLike,
-                       attr::MOI.ConstraintDual,
-                       vi::MOI.VariableIndex,
-                       ci::MOI.ConstraintIndex{<:MOI.ScalarAffineFunction})
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    vi::MOI.VariableIndex,
+    ci::MOI.ConstraintIndex{<:MOI.ScalarAffineFunction},
+)
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     coef = variable_coefficient(func, vi)
     dual = MOI.get(model, attr, ci)
     return coef * dual
 end
-function variable_dual(model::MOI.ModelLike,
-                       attr::MOI.ConstraintDual,
-                       vi::MOI.VariableIndex,
-                       ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction})
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    vi::MOI.VariableIndex,
+    ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction},
+)
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     primal_attr = MOI.VariablePrimal(attr.N)
     coef = variable_coefficient(func, vi, vi -> MOI.get(model, primal_attr, vi))
@@ -304,33 +349,38 @@ Return sum of the the dual of the `F`-in-`S` constraints except `ci` multiplied
 by the coefficient of `vi` in the `MOI.ConstraintFunction`. It errors if another
 variable-wise constraint different than `ci` uses `vi`.
 """
-function variable_dual(model::MOI.ModelLike,
-                       attr::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex,
-                       vi::MOI.VariableIndex,
-                       F::Type{<:MOI.AbstractFunction},
-                       S::Type{<:MOI.AbstractSet})
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    ci::MOI.ConstraintIndex,
+    vi::MOI.VariableIndex,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
     dual = 0.0
-    for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
+    for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         dual += variable_dual(model, attr, vi, constraint_index)
     end
     return dual
 end
-function variable_dual(model::MOI.ModelLike,
-                       ::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex,
-                       vi::MOI.VariableIndex,
-                       F::Type{<:Union{MOI.SingleVariable,
-                                       MOI.VectorOfVariables}},
-                       S::Type{<:MOI.AbstractSet})
-    for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F, S}())
+function variable_dual(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintDual,
+    ci::MOI.ConstraintIndex,
+    vi::MOI.VariableIndex,
+    F::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    S::Type{<:MOI.AbstractSet},
+)
+    for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         if constraint_index != ci
             func = MOI.get(model, MOI.ConstraintFunction(), constraint_index)
             if (F == MOI.SingleVariable && func.variable == vi) ||
                (F == MOI.VectorOfVariables && vi in func.variables)
-               error("Fallback getter for variable constraint dual does not",
-                     " support other variable-wise constraints on the variable.",
-                     " Please report this issue to the solver wrapper package.")
+                error(
+                    "Fallback getter for variable constraint dual does not",
+                    " support other variable-wise constraints on the variable.",
+                    " Please report this issue to the solver wrapper package.",
+                )
             end
         end
     end
@@ -347,10 +397,12 @@ Return the dual of the variable `vi` by using the duals of constraints
 of index different than `ci`. It errors if another variable-wise constraint
 different than `ci` uses `vi`.
 """
-function variable_dual(model::MOI.ModelLike,
-                       attr::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex,
-                       vi::MOI.VariableIndex)
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    ci::MOI.ConstraintIndex,
+    vi::MOI.VariableIndex,
+)
     ray = is_ray(MOI.get(model, MOI.DualStatus()))
     dual = 0.0
     if !ray
@@ -370,11 +422,18 @@ function variable_dual(model::MOI.ModelLike,
         elseif F <: MOI.ScalarQuadraticFunction
             f = MOI.get(model, obj_attr)
             primal_attr = MOI.VariablePrimal(attr.N)
-            dual += sign * variable_coefficient(f, vi, vi -> MOI.get(model, primal_attr, vi))
+            dual +=
+                sign * variable_coefficient(
+                    f,
+                    vi,
+                    vi -> MOI.get(model, primal_attr, vi),
+                )
         else
-            error("Fallback getter for variable constraint dual does not",
-                  " support objective function of type $F.",
-                  " Please report this issue to the solver wrapper package.")
+            error(
+                "Fallback getter for variable constraint dual does not",
+                " support objective function of type $F.",
+                " Please report this issue to the solver wrapper package.",
+            )
         end
     end
     for FS in MOI.get(model, MOI.ListOfConstraints())
@@ -392,14 +451,20 @@ end
 Return the dual of the constraint of index `ci` for which the value of the
 `MOI.ConstraintFunction` attribute is `func`.
 """
-function variable_dual(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex{MOI.SingleVariable},
-                       func::MOI.SingleVariable)
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    ci::MOI.ConstraintIndex{MOI.SingleVariable},
+    func::MOI.SingleVariable,
+)
     return variable_dual(model, attr, ci, func.variable)
 end
-function variable_dual(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                       ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
-                       func::MOI.VectorOfVariables)
+function variable_dual(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
+    func::MOI.VectorOfVariables,
+)
     dual = map(vi -> variable_dual(model, attr, ci, vi), func.variables)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     return dot_coefficients(dual, set)
@@ -416,9 +481,11 @@ constraints are quadratic or if there is one another `MOI.SingleVariable`-in-`S`
 or `MOI.VectorOfVariables`-in-`S` constraint with one of the variables in the
 function of the constraint `ci`.
 """
-function get_fallback(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                      ci::MOI.ConstraintIndex{<:Union{MOI.SingleVariable,
-                                                      MOI.VectorOfVariables}})
+function get_fallback(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    ci::MOI.ConstraintIndex{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+)
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     return variable_dual(model, attr, ci, func)
 end
@@ -433,7 +500,13 @@ end
 Return the scalar product between a vector `x` of the set `set` and a vector
 `y` of the dual of the set `s`.
 """
-set_dot(x::AbstractVector, y::AbstractVector, set::MOI.AbstractVectorSet) = dot(x, y)
+function set_dot(
+    x::AbstractVector,
+    y::AbstractVector,
+    set::MOI.AbstractVectorSet,
+)
+    return dot(x, y)
+end
 
 """
     set_dot(x, y, set::AbstractScalarSet)
@@ -443,7 +516,12 @@ Return the scalar product between a number `x` of the set `set` and a number
 """
 set_dot(x, y, set::MOI.AbstractScalarSet) = dot(x, y)
 
-function triangle_dot(x::AbstractVector{S}, y::AbstractVector{T}, dim::Int, offset::Int) where {S, T}
+function triangle_dot(
+    x::AbstractVector{S},
+    y::AbstractVector{T},
+    dim::Int,
+    offset::Int,
+) where {S,T}
     U = MA.promote_operation(MA.add_mul, S, T)
     result = zero(U)
     k = offset
@@ -460,16 +538,27 @@ function triangle_dot(x::AbstractVector{S}, y::AbstractVector{T}, dim::Int, offs
     return result
 end
 
-function set_dot(x::AbstractVector, y::AbstractVector,
-                 set::MOI.AbstractSymmetricMatrixSetTriangle)
+function set_dot(
+    x::AbstractVector,
+    y::AbstractVector,
+    set::MOI.AbstractSymmetricMatrixSetTriangle,
+)
     return triangle_dot(x, y, MOI.side_dimension(set), 0)
 end
 
-function set_dot(x::AbstractVector, y::AbstractVector, set::MOI.RootDetConeTriangle)
+function set_dot(
+    x::AbstractVector,
+    y::AbstractVector,
+    set::MOI.RootDetConeTriangle,
+)
     return x[1] * y[1] + triangle_dot(x, y, set.side_dimension, 1)
 end
 
-function set_dot(x::AbstractVector, y::AbstractVector, set::MOI.LogDetConeTriangle)
+function set_dot(
+    x::AbstractVector,
+    y::AbstractVector,
+    set::MOI.LogDetConeTriangle,
+)
     return x[1] * y[1] + x[2] * y[2] + triangle_dot(x, y, set.side_dimension, 2)
 end
 
@@ -483,7 +572,11 @@ function dot_coefficients(a::AbstractVector, set::MOI.AbstractVectorSet)
     return a
 end
 
-function triangle_coefficients!(b::AbstractVector{T}, dim::Int, offset::Int) where T
+function triangle_coefficients!(
+    b::AbstractVector{T},
+    dim::Int,
+    offset::Int,
+) where {T}
     k = offset
     for i in 1:dim
         for j in 1:i
@@ -495,7 +588,10 @@ function triangle_coefficients!(b::AbstractVector{T}, dim::Int, offset::Int) whe
     end
 end
 
-function dot_coefficients(a::AbstractVector, set::MOI.AbstractSymmetricMatrixSetTriangle)
+function dot_coefficients(
+    a::AbstractVector,
+    set::MOI.AbstractSymmetricMatrixSetTriangle,
+)
     b = copy(a)
     triangle_coefficients!(b, MOI.side_dimension(set), 0)
     return b
