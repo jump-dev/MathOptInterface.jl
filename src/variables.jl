@@ -22,7 +22,9 @@ Add `n` scalar variables to the model, returning a vector of variable indices.
 A [`AddVariableNotAllowed`](@ref) error is thrown if adding variables cannot be
 done in the current state of the model `model`.
 """
-add_variables(model::ModelLike, n) = VariableIndex[add_variable(model) for _ = 1:n]
+function add_variables(model::ModelLike, n)
+    return VariableIndex[add_variable(model) for _ in 1:n]
+end
 
 """
     add_variable(model::ModelLike)::VariableIndex
@@ -62,10 +64,12 @@ lower bound on the same variable. Moreover, if the user adds a
 `supports_add_constrained_variables`) enables the constraint to be transparently
 bridged into a supported constraint.
 """
-function supports_add_constrained_variable(model::ModelLike,
-                                       S::Type{<:AbstractScalarSet})
+function supports_add_constrained_variable(
+    model::ModelLike,
+    S::Type{<:AbstractScalarSet},
+)
     return supports_add_constrained_variables(model, Reals) &&
-        supports_constraint(model, SingleVariable, S)
+           supports_constraint(model, SingleVariable, S)
 end
 
 """
@@ -138,9 +142,11 @@ should not support creating variables constrained to belong to the
 non-negative.
 """
 function supports_add_constrained_variables(
-    model::ModelLike, S::Type{<:AbstractVectorSet})
+    model::ModelLike,
+    S::Type{<:AbstractVectorSet},
+)
     return supports_add_constrained_variables(model, Reals) &&
-        supports_constraint(model, VectorOfVariables, S)
+           supports_constraint(model, VectorOfVariables, S)
 end
 supports_add_constrained_variables(::ModelLike, ::Type{Reals}) = true
 
@@ -160,9 +166,15 @@ and `constraints`, `constraints[i]` is the index of the constraint constraining
 By default, this function falls back to calling
 [`add_constrained_variable`](@ref) on each set.
 """
-function add_constrained_variables(model::ModelLike, sets::AbstractVector{<:AbstractScalarSet})
+function add_constrained_variables(
+    model::ModelLike,
+    sets::AbstractVector{<:AbstractScalarSet},
+)
     variables = Vector{VariableIndex}(undef, length(sets))
-    constraints = Vector{ConstraintIndex{SingleVariable, eltype(sets)}}(undef, length(sets))
+    constraints = Vector{ConstraintIndex{SingleVariable,eltype(sets)}}(
+        undef,
+        length(sets),
+    )
     for (i, set) in enumerate(sets)
         variables[i], constraints[i] = add_constrained_variable(model, set)
     end
