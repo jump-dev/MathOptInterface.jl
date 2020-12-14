@@ -64,9 +64,12 @@ end
 
     # Load fake solution
     MOI.set(optimizer, MOI.TerminationStatus(), MOI.INFEASIBLE)
-
     MOI.optimize!(optimizer)
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.INFEASIBLE
+
+    MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+    MOI.compute_conflict!(optimizer)
+    @test MOI.get(optimizer, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
 end
 
 @testset "Optimizer solve with result" begin
@@ -162,4 +165,17 @@ end
     @test MOIU.is_canonical(MOI.get(mock, MOI.CanonicalConstraintFunction(), cx))
     @test !MOIU.is_canonical(MOI.get(mock, MOI.ConstraintFunction(), c))
     @test MOIU.is_canonical(MOI.get(mock, MOI.CanonicalConstraintFunction(), c))
+end
+
+@testset "Conflict access" begin
+    mock = MOIU.MockOptimizer(MOIU.Model{Int}())
+    fx, fy = MOI.SingleVariable.(MOI.add_variables(mock, 2))
+    cx = MOI.add_constraint(mock, fx, MOI.LessThan(0))
+    c = MOI.add_constraint(mock, 1fx + fy, MOI.LessThan(1))
+    MOI.set(mock, MOI.ConstraintConflictStatus(), cx, MOI.NOT_IN_CONFLICT)
+    MOI.set(mock, MOI.ConstraintConflictStatus(), c, MOI.IN_CONFLICT)
+    MOI.compute_conflict!(mock)
+
+    @test MOI.get(mock, MOI.ConstraintConflictStatus(), cx) == MOI.NOT_IN_CONFLICT
+    @test MOI.get(mock, MOI.ConstraintConflictStatus(), c) == MOI.IN_CONFLICT
 end

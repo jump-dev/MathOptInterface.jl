@@ -28,6 +28,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     hasdual::Bool
     result_count::Int
     terminationstatus::MOI.TerminationStatusCode
+    conflictstatus::MOI.ConflictStatusCode
     # Computes `ObjectiveValue` by evaluating the `ObjectiveFunction` with
     # `VariablePrimal`. See `get_fallback`.
     eval_objective_value::Bool
@@ -37,6 +38,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     dual_objective_value::Dict{Int,Float64} # set this using MOI.set(model, MOI.DualObjectiveValue(), value)
     primal_status::Dict{Int,MOI.ResultStatusCode}
     dual_status::Dict{Int,MOI.ResultStatusCode}
+    constraint_conflict_status::Dict{MOI.ConstraintIndex,MOI.ConflictParticipationStatusCode}
     varprimal::Dict{MOI.VariableIndex,Dict{Int,Float64}}
     callback_variable_primal::Dict{MOI.VariableIndex, Float64}
     # Computes `ConstraintDual` of constraints with `SingleVariable` or
@@ -82,12 +84,14 @@ function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
                          false,
                          1,
                          MOI.OPTIMIZE_NOT_CALLED,
+                         MOI.COMPUTE_CONFLICT_NOT_CALLED,
                          eval_objective_value,
                          Dict{Int,Float64}(),
                          eval_dual_objective_value,
                          Dict{Int,Float64}(),
                          Dict{Int,MOI.ResultStatusCode}(),
                          Dict{Int,MOI.ResultStatusCode}(),
+                         Dict{MOI.ConstraintIndex,MOI.ConflictParticipationStatusCode}(),
                          Dict{MOI.VariableIndex,Dict{Int,Float64}}(),
                          Dict{MOI.VariableIndex,Float64}(),
                          eval_variable_constraint_dual,
@@ -121,6 +125,8 @@ function MOI.optimize!(mock::MockOptimizer)
     mock.hasprimal = true
     mock.hasdual = true
     mock.optimize!(mock)
+end
+function MOI.compute_conflict!(::MockOptimizer)
 end
 
 function throw_mock_unsupported_names(attr)
@@ -165,6 +171,8 @@ end
 function MOI.set(mock::MockOptimizer, attr::MOI.DualStatus, value::MOI.ResultStatusCode)
     mock.dual_status[attr.N] = value
 end
+MOI.set(mock::MockOptimizer, ::MOI.ConflictStatus, value::MOI.ConflictStatusCode) = (mock.conflictstatus = value)
+MOI.get(mock::MockOptimizer, ::MOI.ConflictStatus) = mock.conflictstatus
 MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
 function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
     # `supports` is not defined if `is_set_by_optimize(attr)` so we pass it to
@@ -223,6 +231,10 @@ end
 function MOI.set(mock::MockOptimizer, attr::MOI.ConstraintBasisStatus,
                  idx::MOI.ConstraintIndex, value)
     _safe_set_result(mock.con_basis, attr, idx, value)
+end
+function MOI.set(mock::MockOptimizer, ::MOI.ConstraintConflictStatus,
+                 idx::MOI.ConstraintIndex, value)
+    mock.constraint_conflict_status[idx] = value
 end
 
 MOI.get(mock::MockOptimizer, ::MOI.RawSolver) = mock
@@ -394,6 +406,10 @@ function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintBasisStatus, idx::MOI.
     MOI.check_result_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
     return _safe_get_result(mock.con_basis, attr, idx, "basis status")
+end
+function MOI.get(mock::MockOptimizer, ::MOI.ConstraintConflictStatus, idx::MOI.ConstraintIndex)
+    MOI.throw_if_not_valid(mock, idx)
+    return mock.constraint_conflict_status[idx]
 end
 
 function _safe_set_result(dict::Dict{K,V}, attr::MOI.AnyAttribute, index::K,
