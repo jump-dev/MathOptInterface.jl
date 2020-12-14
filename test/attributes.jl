@@ -66,3 +66,36 @@ end
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.NOT_IN_CONFLICT
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
 end
+
+MOI.Utilities.@model(
+    OnlyScalarConstraints,
+    (),
+    (MOI.GreaterThan, MOI.LessThan),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+)
+
+@testset "test_integration_compute_conflict" begin
+    optimizer = MOI.Utilities.MockOptimizer(OnlyScalarConstraints{Float64}())
+    model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.Interval(0.0, 1.0),
+    )
+    MOI.optimize!(model)
+    @test MOI.get(optimizer, MOI.ConflictStatus()) == MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    err = ErrorException(
+        "Unable to query `ConstraintConflictStatus` of $(c) because the " *
+        "constraint is bridged."
+    )
+    @test_throws err MOI.get(model, MOI.ConstraintConflictStatus(), c)
+end
