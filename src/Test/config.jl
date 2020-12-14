@@ -1,4 +1,4 @@
-struct TestConfig{T <: Real}
+struct TestConfig{T<:Real}
     atol::T # absolute tolerance for ...
     rtol::T # relative tolerance for ...
     solve::Bool # optimize and test result
@@ -12,14 +12,31 @@ struct TestConfig{T <: Real}
     optimal_status::MOI.TerminationStatusCode
     basis::Bool # can get variable and constraint basis status
     function TestConfig{T}(;
-        atol::Real = Base.rtoldefault(T), rtol::Real = Base.rtoldefault(T), 
-        solve::Bool = true, query::Bool = true, modify_lhs::Bool = true, duals::Bool = true,
-        dual_objective_value::Bool = duals, infeas_certificates::Bool = true,
-        optimal_status = MOI.OPTIMAL, basis::Bool = false) where {T <: Real}
-        new(atol, rtol, solve, query, modify_lhs, duals, dual_objective_value,
-            infeas_certificates, optimal_status, basis)
+        atol::Real = Base.rtoldefault(T),
+        rtol::Real = Base.rtoldefault(T),
+        solve::Bool = true,
+        query::Bool = true,
+        modify_lhs::Bool = true,
+        duals::Bool = true,
+        dual_objective_value::Bool = duals,
+        infeas_certificates::Bool = true,
+        optimal_status = MOI.OPTIMAL,
+        basis::Bool = false,
+    ) where {T<:Real}
+        return new(
+            atol,
+            rtol,
+            solve,
+            query,
+            modify_lhs,
+            duals,
+            dual_objective_value,
+            infeas_certificates,
+            optimal_status,
+            basis,
+        )
     end
-    TestConfig(;kwargs...) = TestConfig{Float64}(; kwargs...)
+    TestConfig(; kwargs...) = TestConfig{Float64}(; kwargs...)
 end
 
 """
@@ -30,24 +47,30 @@ with the model `model` and config `config` except the tests whose dictionary key
 If `subsets` is `true` then each test runs in fact multiple tests hence the `exclude` argument is passed
 as it can also contains test to be excluded from these subsets of tests.
 """
-macro moitestset(setname, subsets=false)
+macro moitestset(setname, subsets = false)
     testname = Symbol(string(setname) * "test")
     testdict = Symbol(string(testname) * "s")
     if subsets
-        runtest = :( f(model, config, exclude) )
+        runtest = :(f(model, config, exclude))
     else
-        runtest = :( f(model, config) )
+        runtest = :(f(model, config))
     end
-    esc(:(
-        function $testname(model::$MOI.ModelLike, config::$MOI.Test.TestConfig, exclude::Vector{String} = String[])
-            for (name,f) in $testdict
-                if name in exclude
-                    continue
-                end
-                @testset "$name" begin
-                    $runtest
+    return esc(
+        :(
+            function $testname(
+                model::$MOI.ModelLike,
+                config::$MOI.Test.TestConfig,
+                exclude::Vector{String} = String[],
+            )
+                for (name, f) in $testdict
+                    if name in exclude
+                        continue
+                    end
+                    @testset "$name" begin
+                        $runtest
+                    end
                 end
             end
-        end
-    ))
+        ),
+    )
 end

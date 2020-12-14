@@ -83,10 +83,17 @@ function raw_status_string(model::MOI.ModelLike, config::TestConfig)
     x = MOI.add_variable(model)
     MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
-            MOI.SingleVariable(x))
-    test_model_solution(model, config, objective_value = 0.0,
-                        variable_primal = [(x, 0.0)])
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.SingleVariable(x),
+    )
+    test_model_solution(
+        model,
+        config,
+        objective_value = 0.0,
+        variable_primal = [(x, 0.0)],
+    )
     if config.solve
         @test MOI.get(model, MOI.RawStatusString()) isa AbstractString
     end
@@ -104,10 +111,17 @@ function solve_time(model::MOI.ModelLike, config::TestConfig)
     x = MOI.add_variable(model)
     MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
-            MOI.SingleVariable(x))
-    test_model_solution(model, config, objective_value = 0.0,
-                        variable_primal = [(x, 0.0)])
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.SingleVariable(x),
+    )
+    test_model_solution(
+        model,
+        config,
+        objective_value = 0.0,
+        variable_primal = [(x, 0.0)],
+    )
     if config.solve
         time = MOI.get(model, MOI.SolveTime())
         @test time ≥ 0.0
