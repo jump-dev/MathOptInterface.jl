@@ -486,3 +486,7 @@ end
 function bridging_cost(b::LazyBridgeOptimizer, args...)
     return bridging_cost(b.graph, node(b, args...))
 end
+
+function MOI.compute_conflict!(model::LazyBridgeOptimizer)
+    return MOI.compute_conflict!(model.model)
+end

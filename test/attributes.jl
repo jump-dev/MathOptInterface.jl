@@ -30,3 +30,39 @@
                                  ones(2))
     end
 end
+
+@testset "test_integration_compute_conflict" begin
+    optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        MOI.Bridges.full_bridge_optimizer(optimizer, Float64),
+    )
+    x = MOI.add_variable(model)
+    c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
+    c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    MOI.optimize!(model)
+    @test MOI.get(optimizer, MOI.ConflictStatus()) == MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+    MOI.set(
+        optimizer,
+        MOI.ConstraintConflictStatus(),
+        MOI.get(
+            optimizer,
+            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        )[1],
+        MOI.NOT_IN_CONFLICT,
+    )
+    MOI.set(
+        optimizer,
+        MOI.ConstraintConflictStatus(),
+        MOI.get(
+            optimizer,
+            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+        )[1],
+        MOI.IN_CONFLICT,
+    )
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.NOT_IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
+end

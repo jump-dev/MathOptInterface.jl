@@ -1009,3 +1009,7 @@ function MOI.submit(
 end
 
 # TODO: get and set methods to look up/set name strings
+
+function MOI.compute_conflict!(model::CachingOptimizer)
+    return MOI.compute_conflict!(model.optimizer)
+end
