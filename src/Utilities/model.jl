@@ -14,15 +14,19 @@
 # after must be decreased by one. As the constraint index is stored in the
 # vector, it readily gives the entries of `model.constrmap` that need to be
 # updated.
-const ConstraintEntry{F, S} = Tuple{CI{F, S}, F, S}
+const ConstraintEntry{F,S} = Tuple{CI{F,S},F,S}
 
 const EMPTYSTRING = ""
 
 # Implementation of MOI for vector of constraint
-function _add_constraint(constrs::Vector{ConstraintEntry{F, S}}, ci::CI, f::F,
-                         s::S) where {F, S}
+function _add_constraint(
+    constrs::Vector{ConstraintEntry{F,S}},
+    ci::CI,
+    f::F,
+    s::S,
+) where {F,S}
     push!(constrs, (ci, f, s))
-    length(constrs)
+    return length(constrs)
 end
 
 function _delete(constrs::Vector, ci::CI, i::Int)
@@ -32,7 +36,7 @@ end
 
 _getindex(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = ci
 function _getindex(constrs::Vector, ci::CI, i::Int)
-    _getindex(constrs[i]...)
+    return _getindex(constrs[i]...)
 end
 
 _getfun(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = f
@@ -41,7 +45,7 @@ function _getfunction(constrs::Vector, ci::CI, i::Int)
         throw(MOI.InvalidIndex(ci))
     end
     @assert ci.value == constrs[i][1].value
-    _getfun(constrs[i]...)
+    return _getfun(constrs[i]...)
 end
 
 _gets(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = s
@@ -50,41 +54,60 @@ function _getset(constrs::Vector, ci::CI, i::Int)
         throw(MOI.InvalidIndex(ci))
     end
     @assert ci.value == constrs[i][1].value
-    _gets(constrs[i]...)
+    return _gets(constrs[i]...)
 end
 
-_modifyconstr(ci::CI{F, S}, f::F, s::S, change::F) where {F, S} = (ci, change, s)
-_modifyconstr(ci::CI{F, S}, f::F, s::S, change::S) where {F, S} = (ci, f, change)
-_modifyconstr(ci::CI{F, S}, f::F, s::S, change::MOI.AbstractFunctionModification) where {F, S} = (ci, modify_function(f, change), s)
-function _modify(constrs::Vector{ConstraintEntry{F, S}}, ci::CI{F}, i::Int,
-                 change) where {F, S}
-    constrs[i] = _modifyconstr(constrs[i]..., change)
+_modifyconstr(ci::CI{F,S}, f::F, s::S, change::F) where {F,S} = (ci, change, s)
+_modifyconstr(ci::CI{F,S}, f::F, s::S, change::S) where {F,S} = (ci, f, change)
+function _modifyconstr(
+    ci::CI{F,S},
+    f::F,
+    s::S,
+    change::MOI.AbstractFunctionModification,
+) where {F,S}
+    return (ci, modify_function(f, change), s)
+end
+function _modify(
+    constrs::Vector{ConstraintEntry{F,S}},
+    ci::CI{F},
+    i::Int,
+    change,
+) where {F,S}
+    return constrs[i] = _modifyconstr(constrs[i]..., change)
 end
 
-function _getnoc(constrs::Vector{ConstraintEntry{F, S}},
-                 ::MOI.NumberOfConstraints{F, S}) where {F, S}
+function _getnoc(
+    constrs::Vector{ConstraintEntry{F,S}},
+    ::MOI.NumberOfConstraints{F,S},
+) where {F,S}
     return length(constrs)
 end
 # Might be called when calling NumberOfConstraint with different coefficient type than the one supported
 _getnoc(::Vector, ::MOI.NumberOfConstraints) = 0
 
-function _getloc(constrs::Vector{ConstraintEntry{F, S}})::Vector{Tuple{DataType, DataType}} where {F, S}
-    isempty(constrs) ? [] : [(F, S)]
+function _getloc(
+    constrs::Vector{ConstraintEntry{F,S}},
+)::Vector{Tuple{DataType,DataType}} where {F,S}
+    return isempty(constrs) ? [] : [(F, S)]
 end
 
-function _getlocr(constrs::Vector{ConstraintEntry{F, S}},
-                  ::MOI.ListOfConstraintIndices{F, S}) where {F, S}
+function _getlocr(
+    constrs::Vector{ConstraintEntry{F,S}},
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
     return map(constr -> constr[1], constrs)
 end
-function _getlocr(constrs::Vector{<:ConstraintEntry},
-                  ::MOI.ListOfConstraintIndices{F, S}) where {F, S}
-    return CI{F, S}[]
+function _getlocr(
+    constrs::Vector{<:ConstraintEntry},
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
+    return CI{F,S}[]
 end
 
 # Implementation of MOI for AbstractModel
 abstract type AbstractModelLike{T} <: MOI.ModelLike end
 abstract type AbstractOptimizer{T} <: MOI.AbstractOptimizer end
-const AbstractModel{T} = Union{AbstractModelLike{T}, AbstractOptimizer{T}}
+const AbstractModel{T} = Union{AbstractModelLike{T},AbstractOptimizer{T}}
 
 getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
@@ -96,7 +119,7 @@ function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
         length(model.variable_indices)
     end
 end
-function MOI.add_variable(model::AbstractModel{T}) where T
+function MOI.add_variable(model::AbstractModel{T}) where {T}
     vi = VI(model.num_variables_created += 1)
     push!(model.single_variable_mask, 0x0)
     push!(model.lower_bound, zero(T))
@@ -151,16 +174,20 @@ function _filter_variables(keep::Function, constrs::Vector{<:ConstraintEntry})
         constrs[i] = (ci, filter_variables(keep, f, s)...)
     end
 end
-function _vector_of_variables_with(::Vector, ::Union{VI, MOI.Vector{VI}})
+function _vector_of_variables_with(::Vector, ::Union{VI,MOI.Vector{VI}})
     return CI{MOI.VectorOfVariables}[]
 end
 function throw_delete_variable_in_vov(vi::VI)
-    message = string("Cannot delete variable as it is constrained with other",
-                     " variables in a `MOI.VectorOfVariables`.")
-    throw(MOI.DeleteNotAllowed(vi, message))
+    message = string(
+        "Cannot delete variable as it is constrained with other",
+        " variables in a `MOI.VectorOfVariables`.",
+    )
+    return throw(MOI.DeleteNotAllowed(vi, message))
 end
 function _vector_of_variables_with(
-    constrs::Vector{<:ConstraintEntry{MOI.VectorOfVariables}}, vi::VI)
+    constrs::Vector{<:ConstraintEntry{MOI.VectorOfVariables}},
+    vi::VI,
+)
     rm = CI{MOI.VectorOfVariables}[]
     for (ci, f, s) in constrs
         if vi in f.variables
@@ -179,7 +206,7 @@ function _vector_of_variables_with(
 end
 function _vector_of_variables_with(
     constrs::Vector{<:ConstraintEntry{MOI.VectorOfVariables}},
-    vis::Vector{VI}
+    vis::Vector{VI},
 )
     rm = CI{MOI.VectorOfVariables}[]
     for (ci, f, s) in constrs
@@ -189,39 +216,67 @@ function _vector_of_variables_with(
     end
     return rm
 end
-function _delete_variable(model::AbstractModel{T}, vi::MOI.VariableIndex) where T
+function _delete_variable(
+    model::AbstractModel{T},
+    vi::MOI.VariableIndex,
+) where {T}
     MOI.throw_if_not_valid(model, vi)
     # If a variable is removed, the `VectorOfVariables` constraints using this
     # variable only need to be removed too. `vov_to_remove` is the list of
     # indices of the `VectorOfVariables` constraints of `vi`.
-    vov_to_remove = broadcastvcat(constrs -> _vector_of_variables_with(constrs, vi), model)
+    vov_to_remove =
+        broadcastvcat(constrs -> _vector_of_variables_with(constrs, vi), model)
     for ci in vov_to_remove
         MOI.delete(model, ci)
     end
     model.single_variable_mask[vi.value] = 0x0
     if model.variable_indices === nothing
-        model.variable_indices = Set(MOI.get(model,
-                                             MOI.ListOfVariableIndices()))
+        model.variable_indices =
+            Set(MOI.get(model, MOI.ListOfVariableIndices()))
     end
     delete!(model.variable_indices, vi)
     model.name_to_var = nothing
     delete!(model.var_to_name, vi)
     model.name_to_con = nothing
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}(vi.value))
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}(vi.value))
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}(vi.value))
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}(vi.value))
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}(vi.value))
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}(vi.value))
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semicontinuous{T}}(vi.value))
-    delete!(model.con_to_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semiinteger{T}}(vi.value))
+    delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{T}}(vi.value),
+    )
+    delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{T}}(vi.value),
+    )
+    delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{T}}(vi.value),
+    )
+    delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Interval{T}}(vi.value),
+    )
+    delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(vi.value),
+    )
+    delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(vi.value),
+    )
+    delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semicontinuous{T}}(vi.value),
+    )
+    return delete!(
+        model.con_to_name,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(vi.value),
+    )
 end
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     _delete_variable(model, vi)
     # `VectorOfVariables` constraints with sets not supporting dimension update
     # were either deleted or an error was thrown. The rest is modified now.
     broadcastcall(constrs -> _remove_variable(constrs, vi), model)
-    model.objective = remove_variable(model.objective, vi)
+    return model.objective = remove_variable(model.objective, vi)
 end
 function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     if isempty(vis)
@@ -231,7 +286,8 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     end
     # Delete `VectorOfVariables(vis)` constraints as otherwise, it will error
     # when removing variables one by one.
-    vov_to_remove = broadcastvcat(constrs -> _vector_of_variables_with(constrs, vis), model)
+    vov_to_remove =
+        broadcastvcat(constrs -> _vector_of_variables_with(constrs, vis), model)
     for ci in vov_to_remove
         MOI.delete(model, ci)
     end
@@ -242,22 +298,26 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     # were either deleted or an error was thrown. The rest is modified now.
     keep(vi::MOI.VariableIndex) = vi in model.variable_indices
     model.objective = filter_variables(keep, model.objective)
-    broadcastcall(constrs -> _filter_variables(keep, constrs), model)
+    return broadcastcall(constrs -> _filter_variables(keep, constrs), model)
 end
 
-function MOI.is_valid(model::AbstractModel,
-                      ci::CI{MOI.SingleVariable, S}) where {S}
+function MOI.is_valid(
+    model::AbstractModel,
+    ci::CI{MOI.SingleVariable,S},
+) where {S}
     return 1 ≤ ci.value ≤ length(model.single_variable_mask) &&
-           !iszero(model.single_variable_mask[ci.value] & single_variable_flag(S))
+           !iszero(
+        model.single_variable_mask[ci.value] & single_variable_flag(S),
+    )
 end
-function MOI.is_valid(model::AbstractModel, ci::CI{F, S}) where {F, S}
+function MOI.is_valid(model::AbstractModel, ci::CI{F,S}) where {F,S}
     if ci.value > length(model.constrmap)
         false
     else
         loc = getconstrloc(model, ci)
         if iszero(loc) # This means that it has been deleted
             false
-        elseif loc > MOI.get(model, MOI.NumberOfConstraints{F, S}())
+        elseif loc > MOI.get(model, MOI.NumberOfConstraints{F,S}())
             false
         else
             ci == _getindex(model, ci, getconstrloc(model, ci))
@@ -277,7 +337,7 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
         return VI.(1:model.num_variables_created)
     else
         vis = collect(model.variable_indices)
-        sort!(vis, by=vi->vi.value) # It needs to be sorted by order of creation
+        sort!(vis, by = vi -> vi.value) # It needs to be sorted by order of creation
         return vis
     end
 end
@@ -285,16 +345,18 @@ end
 # Names
 MOI.supports(::AbstractModel, ::MOI.Name) = true
 function MOI.set(model::AbstractModel, ::MOI.Name, name::String)
-    model.name = name
+    return model.name = name
 end
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
 MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
     model.var_to_name[vi] = name
-    model.name_to_var = nothing # Invalidate the name map.
+    return model.name_to_var = nothing # Invalidate the name map.
 end
-MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI) = get(model.var_to_name, vi, EMPTYSTRING)
+function MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI)
+    return get(model.var_to_name, vi, EMPTYSTRING)
+end
 
 """
     build_name_to_var_map(con_to_name::Dict{MOI.VariableIndex, String})
@@ -303,8 +365,8 @@ Create and return a reverse map from name to variable index, given a map from
 variable index to name. The special value `MOI.VariableIndex(0)` is used to
 indicate that multiple variables have the same name.
 """
-function build_name_to_var_map(var_to_name::Dict{VI, String})
-    name_to_var = Dict{String, VI}()
+function build_name_to_var_map(var_to_name::Dict{VI,String})
+    name_to_var = Dict{String,VI}()
     for (var, var_name) in var_to_name
         if haskey(name_to_var, var_name)
             # 0 is a special value that means this string does not map to
@@ -318,10 +380,10 @@ function build_name_to_var_map(var_to_name::Dict{VI, String})
 end
 
 function throw_multiple_name_error(::Type{MOI.VariableIndex}, name::String)
-    error("Multiple variables have the name $name.")
+    return error("Multiple variables have the name $name.")
 end
 function throw_multiple_name_error(::Type{<:MOI.ConstraintIndex}, name::String)
-    error("Multiple constraints have the name $name.")
+    return error("Multiple constraints have the name $name.")
 end
 function throw_if_multiple_with_name(::Nothing, ::String) end
 function throw_if_multiple_with_name(index::MOI.Index, name::String)
@@ -340,16 +402,26 @@ function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
     return result
 end
 
-function MOI.get(model::AbstractModel, ::MOI.ListOfVariableAttributesSet)::Vector{MOI.AbstractVariableAttribute}
-    isempty(model.var_to_name) ? [] : [MOI.VariableName()]
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.ListOfVariableAttributesSet,
+)::Vector{MOI.AbstractVariableAttribute}
+    return isempty(model.var_to_name) ? [] : [MOI.VariableName()]
 end
 
 MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
-function MOI.set(model::AbstractModel, ::MOI.ConstraintName, ci::CI, name::String)
+function MOI.set(
+    model::AbstractModel,
+    ::MOI.ConstraintName,
+    ci::CI,
+    name::String,
+)
     model.con_to_name[ci] = name
-    model.name_to_con = nothing # Invalidate the name map.
+    return model.name_to_con = nothing # Invalidate the name map.
 end
-MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI) = get(model.con_to_name, ci, EMPTYSTRING)
+function MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI)
+    return get(model.con_to_name, ci, EMPTYSTRING)
+end
 
 """
     build_name_to_con_map(con_to_name::Dict{MOI.ConstraintIndex, String})
@@ -359,18 +431,17 @@ constraint index to name. The special value
 `MOI.ConstraintIndex{Nothing, Nothing}(0)` is used to indicate that multiple
 constraints have the same name.
 """
-function build_name_to_con_map(con_to_name::Dict{CI, String})
-    name_to_con = Dict{String, CI}()
+function build_name_to_con_map(con_to_name::Dict{CI,String})
+    name_to_con = Dict{String,CI}()
     for (con, con_name) in con_to_name
         if haskey(name_to_con, con_name)
-            name_to_con[con_name] = CI{Nothing, Nothing}(0)
+            name_to_con[con_name] = CI{Nothing,Nothing}(0)
         else
             name_to_con[con_name] = con
         end
     end
     return name_to_con
 end
-
 
 function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     if model.name_to_con === nothing
@@ -386,26 +457,32 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     end
 end
 
-function MOI.get(model::AbstractModel, ::MOI.ListOfConstraintAttributesSet)::Vector{MOI.AbstractConstraintAttribute}
-    isempty(model.con_to_name) ? [] : [MOI.ConstraintName()]
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.ListOfConstraintAttributesSet,
+)::Vector{MOI.AbstractConstraintAttribute}
+    return isempty(model.con_to_name) ? [] : [MOI.ConstraintName()]
 end
 
 # Objective
 MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
 MOI.supports(model::AbstractModel, ::MOI.ObjectiveSense) = true
-function MOI.set(model::AbstractModel{T}, ::MOI.ObjectiveSense,
-                 sense::MOI.OptimizationSense) where T
+function MOI.set(
+    model::AbstractModel{T},
+    ::MOI.ObjectiveSense,
+    sense::MOI.OptimizationSense,
+) where {T}
     if sense == MOI.FEASIBILITY_SENSE
         model.objectiveset = false
         model.objective = zero(MOI.ScalarAffineFunction{T})
     end
     model.senseset = true
-    model.sense = sense
+    return model.sense = sense
 end
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunctionType)
     return MOI.typeof(model.objective)
 end
-function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where T
+function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where {T}
     return model.objective
 end
 function MOI.supports(
@@ -413,24 +490,39 @@ function MOI.supports(
     ::MOI.ObjectiveFunction{<:Union{
         MOI.SingleVariable,
         MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T}}}) where T
+        MOI.ScalarQuadraticFunction{T},
+    }},
+) where {T}
     return true
 end
-function MOI.set(model::AbstractModel, attr::MOI.ObjectiveFunction, f::MOI.AbstractFunction)
+function MOI.set(
+    model::AbstractModel,
+    attr::MOI.ObjectiveFunction,
+    f::MOI.AbstractFunction,
+)
     if !MOI.supports(model, attr)
         throw(MOI.UnsupportedAttribute(attr))
     end
     model.objectiveset = true
     # f needs to be copied, see #2
-    model.objective = copy(f)
+    return model.objective = copy(f)
 end
 
-function MOI.modify(model::AbstractModel, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
-    model.objective = modify_function(model.objective, change)
+function MOI.modify(
+    model::AbstractModel,
+    obj::MOI.ObjectiveFunction,
+    change::MOI.AbstractFunctionModification,
+)
+    return model.objective = modify_function(model.objective, change)
 end
 
-MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet) = MOI.AbstractOptimizerAttribute[]
-function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{MOI.AbstractModelAttribute}
+function MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet)
+    return MOI.AbstractOptimizerAttribute[]
+end
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.ListOfModelAttributesSet,
+)::Vector{MOI.AbstractModelAttribute}
     listattr = MOI.AbstractModelAttribute[]
     if model.senseset
         push!(listattr, MOI.ObjectiveSense())
@@ -441,7 +533,7 @@ function MOI.get(model::AbstractModel, ::MOI.ListOfModelAttributesSet)::Vector{M
     if !isempty(model.name)
         push!(listattr, MOI.Name())
     end
-    listattr
+    return listattr
 end
 
 # Constraints
@@ -482,23 +574,24 @@ end
 function throw_if_lower_bound_set(variable, S2, mask, T)
     flag = single_variable_flag(S2)
     if !iszero(flag & LOWER_BOUND_MASK) && !iszero(mask & LOWER_BOUND_MASK)
-       S1 = flag_to_set_type(mask & LOWER_BOUND_MASK, T)
-       throw(MOI.LowerBoundAlreadySet{S1, S2}(variable))
+        S1 = flag_to_set_type(mask & LOWER_BOUND_MASK, T)
+        throw(MOI.LowerBoundAlreadySet{S1,S2}(variable))
     end
 end
 
 function throw_if_upper_bound_set(variable, S2, mask, T)
     flag = single_variable_flag(S2)
     if !iszero(flag & UPPER_BOUND_MASK) && !iszero(mask & UPPER_BOUND_MASK)
-       S1 = flag_to_set_type(mask & UPPER_BOUND_MASK, T)
-       throw(MOI.UpperBoundAlreadySet{S1, S2}(variable))
+        S1 = flag_to_set_type(mask & UPPER_BOUND_MASK, T)
+        throw(MOI.UpperBoundAlreadySet{S1,S2}(variable))
     end
 end
 
 # Sets setting lower bound:
 extract_lower_bound(set::MOI.EqualTo) = set.value
-function extract_lower_bound(set::Union{MOI.GreaterThan, MOI.Interval,
-                                        MOI.Semicontinuous, MOI.Semiinteger})
+function extract_lower_bound(
+    set::Union{MOI.GreaterThan,MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger},
+)
     return set.lower
 end
 # 0xcb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
@@ -506,23 +599,36 @@ const LOWER_BOUND_MASK = 0xcb
 
 # Sets setting upper bound:
 extract_upper_bound(set::MOI.EqualTo) = set.value
-function extract_upper_bound(set::Union{MOI.LessThan, MOI.Interval,
-                                        MOI.Semicontinuous, MOI.Semiinteger})
+function extract_upper_bound(
+    set::Union{MOI.LessThan,MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger},
+)
     return set.upper
 end
 # 0xcd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
 const UPPER_BOUND_MASK = 0xcd
 
 const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
-    MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.Interval{T},
-    MOI.Integer, MOI.ZeroOne, MOI.Semicontinuous{T}, MOI.Semiinteger{T}}
+    MOI.EqualTo{T},
+    MOI.GreaterThan{T},
+    MOI.LessThan{T},
+    MOI.Interval{T},
+    MOI.Integer,
+    MOI.ZeroOne,
+    MOI.Semicontinuous{T},
+    MOI.Semiinteger{T},
+}
 function MOI.supports_constraint(
-    ::AbstractModel{T}, ::Type{MOI.SingleVariable},
-    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}) where T
+    ::AbstractModel{T},
+    ::Type{MOI.SingleVariable},
+    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}},
+) where {T}
     return true
 end
-function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
-                            s::MOI.AbstractScalarSet) where T
+function MOI.add_constraint(
+    model::AbstractModel{T},
+    f::MOI.SingleVariable,
+    s::MOI.AbstractScalarSet,
+) where {T}
     if MOI.supports_constraint(model, MOI.SingleVariable, typeof(s))
         flag = single_variable_flag(typeof(s))
         index = f.variable.value
@@ -537,61 +643,87 @@ function MOI.add_constraint(model::AbstractModel{T}, f::MOI.SingleVariable,
             model.upper_bound[index] = extract_upper_bound(s)
         end
         model.single_variable_mask[index] = mask | flag
-        return CI{MOI.SingleVariable, typeof(s)}(index)
+        return CI{MOI.SingleVariable,typeof(s)}(index)
     else
-        throw(MOI.UnsupportedConstraint{MOI.SingleVariable, typeof(s)}())
+        throw(MOI.UnsupportedConstraint{MOI.SingleVariable,typeof(s)}())
     end
 end
-function MOI.add_constraint(model::AbstractModel, f::F, s::S) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+function MOI.add_constraint(
+    model::AbstractModel,
+    f::F,
+    s::S,
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     if MOI.supports_constraint(model, F, S)
         # We give the index value `nextconstraintid + 1` to the new constraint.
         # As the same counter is used for all pairs of F-in-S constraints,
         # the index value is unique across all constraint types as mentioned in
         # `@model`'s doc.
-        ci = CI{F, S}(model.nextconstraintid += 1)
+        ci = CI{F,S}(model.nextconstraintid += 1)
         # f needs to be copied, see #2
         # We canonicalize the constraint so that solvers can avoid having to canonicalize
         # it most of the time (they can check if they need to with `is_canonical`.
         # Note that the canonicalization is not guaranteed if for instance
         # `modify` is called and adds a new term.
         # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
-        push!(model.constrmap, _add_constraint(model, ci, canonical(f), copy(s)))
+        push!(
+            model.constrmap,
+            _add_constraint(model, ci, canonical(f), copy(s)),
+        )
         return ci
     else
-        throw(MOI.UnsupportedConstraint{F, S}())
+        throw(MOI.UnsupportedConstraint{F,S}())
     end
 end
 
-function _delete_constraint(model::AbstractModel,
-                            ci::CI{MOI.SingleVariable, S}) where S
-    model.single_variable_mask[ci.value] &= ~single_variable_flag(S)
+function _delete_constraint(
+    model::AbstractModel,
+    ci::CI{MOI.SingleVariable,S},
+) where {S}
+    return model.single_variable_mask[ci.value] &= ~single_variable_flag(S)
 end
 function _delete_constraint(model::AbstractModel, ci::CI)
     for (ci_next, _, _) in _delete(model, ci, getconstrloc(model, ci))
         model.constrmap[ci_next.value] -= 1
     end
-    model.constrmap[ci.value] = 0
+    return model.constrmap[ci.value] = 0
 end
 function MOI.delete(model::AbstractModel, ci::CI)
     MOI.throw_if_not_valid(model, ci)
     _delete_constraint(model, ci)
     model.name_to_con = nothing
-    delete!(model.con_to_name, ci)
+    return delete!(model.con_to_name, ci)
 end
 
-function MOI.modify(model::AbstractModel, ci::CI, change::MOI.AbstractFunctionModification)
-    _modify(model, ci, getconstrloc(model, ci), change)
+function MOI.modify(
+    model::AbstractModel,
+    ci::CI,
+    change::MOI.AbstractFunctionModification,
+)
+    return _modify(model, ci, getconstrloc(model, ci), change)
 end
 
-function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI{MOI.SingleVariable},
-                 change::MOI.AbstractFunction)
-    throw(MOI.SettingSingleVariableFunctionNotAllowed())
+function MOI.set(
+    model::AbstractModel,
+    ::MOI.ConstraintFunction,
+    ci::CI{MOI.SingleVariable},
+    change::MOI.AbstractFunction,
+)
+    return throw(MOI.SettingSingleVariableFunctionNotAllowed())
 end
-function MOI.set(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI, change::MOI.AbstractFunction)
-    _modify(model, ci, getconstrloc(model, ci), change)
+function MOI.set(
+    model::AbstractModel,
+    ::MOI.ConstraintFunction,
+    ci::CI,
+    change::MOI.AbstractFunction,
+)
+    return _modify(model, ci, getconstrloc(model, ci), change)
 end
-function MOI.set(model::AbstractModel, ::MOI.ConstraintSet,
-                 ci::CI{MOI.SingleVariable}, change::MOI.AbstractSet)
+function MOI.set(
+    model::AbstractModel,
+    ::MOI.ConstraintSet,
+    ci::CI{MOI.SingleVariable},
+    change::MOI.AbstractSet,
+)
     MOI.throw_if_not_valid(model, ci)
     flag = single_variable_flag(typeof(change))
     if !iszero(flag & LOWER_BOUND_MASK)
@@ -601,100 +733,139 @@ function MOI.set(model::AbstractModel, ::MOI.ConstraintSet,
         model.upper_bound[ci.value] = extract_upper_bound(change)
     end
 end
-function MOI.set(model::AbstractModel, ::MOI.ConstraintSet, ci::CI, change::MOI.AbstractSet)
-    _modify(model, ci, getconstrloc(model, ci), change)
+function MOI.set(
+    model::AbstractModel,
+    ::MOI.ConstraintSet,
+    ci::CI,
+    change::MOI.AbstractSet,
+)
+    return _modify(model, ci, getconstrloc(model, ci), change)
 end
 
-function MOI.get(model::AbstractModel,
-                 ::MOI.NumberOfConstraints{MOI.SingleVariable, S}) where S
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.NumberOfConstraints{MOI.SingleVariable,S},
+) where {S}
     flag = single_variable_flag(S)
     return count(mask -> !iszero(flag & mask), model.single_variable_mask)
 end
-MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints) = _getnoc(model, noc)
+function MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints)
+    return _getnoc(model, noc)
+end
 
-function _add_contraint_type(list, model::AbstractModel,
-                             S::Type{<:MOI.AbstractScalarSet})
+function _add_contraint_type(
+    list,
+    model::AbstractModel,
+    S::Type{<:MOI.AbstractScalarSet},
+)
     flag = single_variable_flag(S)
     if any(mask -> !iszero(flag & mask), model.single_variable_mask)
         push!(list, (MOI.SingleVariable, S))
     end
     return
 end
-function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where T
+function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where {T}
     list = broadcastvcat(_getloc, model)
     for S in (
-        MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.Interval{T},
-        MOI.Semicontinuous{T}, MOI.Semiinteger{T}, MOI.Integer, MOI.ZeroOne
+        MOI.EqualTo{T},
+        MOI.GreaterThan{T},
+        MOI.LessThan{T},
+        MOI.Interval{T},
+        MOI.Semicontinuous{T},
+        MOI.Semiinteger{T},
+        MOI.Integer,
+        MOI.ZeroOne,
     )
         _add_contraint_type(list, model, S)
     end
     return list
 end
 
-function MOI.get(model::AbstractModel,
-                 ::MOI.ListOfConstraintIndices{MOI.SingleVariable, S}) where S
-    list = CI{MOI.SingleVariable, S}[]
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.ListOfConstraintIndices{MOI.SingleVariable,S},
+) where {S}
+    list = CI{MOI.SingleVariable,S}[]
     flag = single_variable_flag(S)
     for (index, mask) in enumerate(model.single_variable_mask)
         if !iszero(mask & flag)
-            push!(list, CI{MOI.SingleVariable, S}(index))
+            push!(list, CI{MOI.SingleVariable,S}(index))
         end
     end
     return list
 end
 function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices)
-    broadcastvcat(constrs -> _getlocr(constrs, loc), model)
+    return broadcastvcat(constrs -> _getlocr(constrs, loc), model)
 end
 
-function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction,
-                 ci::CI{MOI.SingleVariable})
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.ConstraintFunction,
+    ci::CI{MOI.SingleVariable},
+)
     MOI.throw_if_not_valid(model, ci)
     return MOI.SingleVariable(MOI.VariableIndex(ci.value))
 end
 function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)
-    _getfunction(model, ci, getconstrloc(model, ci))
+    return _getfunction(model, ci, getconstrloc(model, ci))
 end
 
-function _get_single_variable_set(model::AbstractModel, S::Type{<:MOI.EqualTo},
-                                  index)
+function _get_single_variable_set(
+    model::AbstractModel,
+    S::Type{<:MOI.EqualTo},
+    index,
+)
     return MOI.EqualTo(model.lower_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel,
-                                  S::Type{<:Union{MOI.GreaterThan,
-                                                  MOI.EqualTo}},
-                                  index)
+function _get_single_variable_set(
+    model::AbstractModel,
+    S::Type{<:Union{MOI.GreaterThan,MOI.EqualTo}},
+    index,
+)
     # Lower and upper bounds are equal for `EqualTo`, we can take either of them.
     return S(model.lower_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel, S::Type{<:MOI.LessThan},
-                                  index)
+function _get_single_variable_set(
+    model::AbstractModel,
+    S::Type{<:MOI.LessThan},
+    index,
+)
     return S(model.upper_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel,
-                                  S::Type{<:Union{MOI.Interval,
-                                                  MOI.Semicontinuous,
-                                                  MOI.Semiinteger}},
-                                  index)
+function _get_single_variable_set(
+    model::AbstractModel,
+    S::Type{<:Union{MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger}},
+    index,
+)
     return S(model.lower_bound[index], model.upper_bound[index])
 end
-function _get_single_variable_set(model::AbstractModel,
-                                  S::Type{<:Union{MOI.Integer, MOI.ZeroOne}},
-                                  index)
+function _get_single_variable_set(
+    model::AbstractModel,
+    S::Type{<:Union{MOI.Integer,MOI.ZeroOne}},
+    index,
+)
     return S()
 end
-function MOI.get(model::AbstractModel, ::MOI.ConstraintSet,
-                 ci::CI{MOI.SingleVariable, S}) where S
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.ConstraintSet,
+    ci::CI{MOI.SingleVariable,S},
+) where {S}
     MOI.throw_if_not_valid(model, ci)
     return _get_single_variable_set(model, S, ci.value)
 end
 function MOI.get(model::AbstractModel, ::MOI.ConstraintSet, ci::CI)
-    _getset(model, ci, getconstrloc(model, ci))
+    return _getset(model, ci, getconstrloc(model, ci))
 end
 
 function MOI.is_empty(model::AbstractModel)
-    isempty(model.name) && !model.senseset && !model.objectiveset &&
-    isempty(model.objective.terms) && iszero(model.objective.constant) &&
-    iszero(model.num_variables_created) && iszero(model.nextconstraintid)
+    return isempty(model.name) &&
+               !model.senseset &&
+               !model.objectiveset &&
+               isempty(model.objective.terms) &&
+               iszero(model.objective.constant) &&
+               iszero(model.num_variables_created) &&
+               iszero(model.nextconstraintid)
 end
 
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
@@ -711,16 +882,22 @@ function allocate_variables(model::AbstractModel, nvars)
     return MOI.add_variables(model, nvars)
 end
 allocate(model::AbstractModel, attr...) = MOI.set(model, attr...)
-function allocate_constraint(model::AbstractModel, f::MOI.AbstractFunction,
-                             s::MOI.AbstractSet)
+function allocate_constraint(
+    model::AbstractModel,
+    f::MOI.AbstractFunction,
+    s::MOI.AbstractSet,
+)
     return MOI.add_constraint(model, f, s)
 end
 
 function load_variables(::AbstractModel, nvars) end
 function load(::AbstractModel, attr...) end
-function load_constraint(::AbstractModel, ::CI, ::MOI.AbstractFunction,
-                         ::MOI.AbstractSet)
-end
+function load_constraint(
+    ::AbstractModel,
+    ::CI,
+    ::MOI.AbstractFunction,
+    ::MOI.AbstractSet,
+) end
 
 # Can be used to access constraints of a model
 """
@@ -765,12 +942,12 @@ abstract type Constraints{F} end
 
 abstract type SymbolFS end
 struct SymbolFun <: SymbolFS
-    s::Union{Symbol, Expr}
+    s::Union{Symbol,Expr}
     typed::Bool
     cname::Expr # `esc(scname)` or `esc(vcname)`
 end
 struct SymbolSet <: SymbolFS
-    s::Union{Symbol, Expr}
+    s::Union{Symbol,Expr}
     typed::Bool
 end
 
@@ -804,11 +981,11 @@ using Unicode
 
 _field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
-_getC(s::SymbolSet) = :(ConstraintEntry{F, $(_typedset(s))})
+_getC(s::SymbolSet) = :(ConstraintEntry{F,$(_typedset(s))})
 _getC(s::SymbolFun) = _typedfun(s)
 
 _getCV(s::SymbolSet) = :($(_getC(s))[])
-_getCV(s::SymbolFun) = :($(s.cname){T, $(_getC(s))}())
+_getCV(s::SymbolFun) = :($(s.cname){T,$(_getC(s))}())
 
 _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
 _broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
@@ -929,7 +1106,18 @@ end
 The type `LPModel` implements the MathOptInterface API except methods specific
 to solver models like `optimize!` or `getattribute` with `VariablePrimal`.
 """
-macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft, is_optimizer = false)
+macro model(
+    model_name,
+    ss,
+    sst,
+    vs,
+    vst,
+    sf,
+    sft,
+    vf,
+    vft,
+    is_optimizer = false,
+)
     scalar_sets = [SymbolSet.(ss.args, false); SymbolSet.(sst.args, true)]
     vector_sets = [SymbolSet.(vs.args, false); SymbolSet.(vst.args, true)]
 
@@ -943,15 +1131,24 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft, is_optimizer = false
         :($(esc(model_name)){T} <: AbstractModelLike{T})
     end
 
-    scalar_funs = [SymbolFun.(sf.args, false, Ref(scname));
-                  SymbolFun.(sft.args, true, Ref(scname))]
-    vector_funs = [SymbolFun.(vf.args, false, Ref(vcname));
-                  SymbolFun.(vft.args, true, Ref(vcname))]
+    scalar_funs = [
+        SymbolFun.(sf.args, false, Ref(scname))
+        SymbolFun.(sft.args, true, Ref(scname))
+    ]
+    vector_funs = [
+        SymbolFun.(vf.args, false, Ref(vcname))
+        SymbolFun.(vft.args, true, Ref(vcname))
+    ]
     funs = [scalar_funs; vector_funs]
 
-    scalarconstraints = :(struct $scname{T, F<:$MOI.AbstractScalarFunction} <: Constraints{F}; end)
-    vectorconstraints = :(struct $vcname{T, F<:$MOI.AbstractVectorFunction} <: Constraints{F}; end)
-    for (c, sets) in ((scalarconstraints, scalar_sets), (vectorconstraints, vector_sets))
+    scalarconstraints = :(
+        struct $scname{T,F<:$MOI.AbstractScalarFunction} <: Constraints{F} end
+    )
+    vectorconstraints = :(
+        struct $vcname{T,F<:$MOI.AbstractVectorFunction} <: Constraints{F} end
+    )
+    for (c, sets) in
+        ((scalarconstraints, scalar_sets), (vectorconstraints, vector_sets))
         for s in sets
             field = _field(s)
             push!(c.args[3].args, :($field::Vector{$(_getC(s))}))
@@ -964,11 +1161,15 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft, is_optimizer = false
             senseset::Bool
             sense::$MOI.OptimizationSense
             objectiveset::Bool
-            objective::Union{$MOI.SingleVariable, $MOI.ScalarAffineFunction{T}, $MOI.ScalarQuadraticFunction{T}}
+            objective::Union{
+                $MOI.SingleVariable,
+                $MOI.ScalarAffineFunction{T},
+                $MOI.ScalarQuadraticFunction{T},
+            }
             num_variables_created::Int64
             # If nothing, no variable has been deleted so the indices of the
             # variables are VI.(1:num_variables_created)
-            variable_indices::Union{Nothing, Set{$VI}}
+            variable_indices::Union{Nothing,Set{$VI}}
             # Union of flags of `S` such that a `SingleVariable`-in-`S`
             # constraint was added to the model and not deleted yet.
             single_variable_mask::Vector{UInt8}
@@ -978,32 +1179,32 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft, is_optimizer = false
             # Lower bound set by `SingleVariable`-in-`S` where `S`is
             # `LessThan{T}`, `EqualTo{T}` or `Interval{T}`.
             upper_bound::Vector{T}
-            var_to_name::Dict{$VI, String}
+            var_to_name::Dict{$VI,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
-            name_to_var::Union{Dict{String, $VI}, Nothing}
+            name_to_var::Union{Dict{String,$VI},Nothing}
             nextconstraintid::Int64
-            con_to_name::Dict{$CI, String}
-            name_to_con::Union{Dict{String, $CI}, Nothing}
+            con_to_name::Dict{$CI,String}
+            name_to_con::Union{Dict{String,$CI},Nothing}
             constrmap::Vector{Int} # Constraint Reference value ci -> index in array in Constraints
             # A useful dictionary for extensions to store things. These are
             # _not_ copied between models!
-            ext::Dict{Symbol, Any}
+            ext::Dict{Symbol,Any}
         end
     end
     for f in funs
         cname = f.cname
         field = _field(f)
-        push!(modeldef.args[2].args[3].args, :($field::$cname{T, $(_getC(f))}))
+        push!(modeldef.args[2].args[3].args, :($field::$cname{T,$(_getC(f))}))
     end
 
     code = quote
         function $MOIU.broadcastcall(f::Function, model::$esc_model_name)
-            $(Expr(:block, _broadcastfield.(Ref(:(broadcastcall)), funs)...))
+            return $(Expr(:block, _broadcastfield.(Ref(:(broadcastcall)), funs)...))
         end
         function $MOIU.broadcastvcat(f::Function, model::$esc_model_name)
-            vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
+            return vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
         end
-        function $MOI.empty!(model::$esc_model_name{T}) where T
+        function $MOI.empty!(model::$esc_model_name{T}) where {T}
             model.name = ""
             model.senseset = false
             model.sense = $MOI.FEASIBILITY_SENSE
@@ -1020,32 +1221,46 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft, is_optimizer = false
             empty!(model.con_to_name)
             model.name_to_con = nothing
             empty!(model.constrmap)
-            $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
+            return $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
         end
     end
     for (cname, sets) in ((scname, scalar_sets), (vcname, vector_sets))
         code = quote
             $code
             function $MOIU.broadcastcall(f::Function, model::$cname)
-                $(Expr(:block, _callfield.(:f, sets)...))
+                return $(Expr(:block, _callfield.(:f, sets)...))
             end
             function $MOIU.broadcastvcat(f::Function, model::$cname)
-                vcat($(_callfield.(:f, sets)...))
+                return vcat($(_callfield.(:f, sets)...))
             end
             function $MOI.empty!(model::$cname)
-                $(Expr(:block, _callfield.(Ref(:(Base.empty!)), sets)...))
+                return $(Expr(:block, _callfield.(Ref(:(Base.empty!)), sets)...))
             end
         end
     end
 
-    for (funct, T) in ((:_add_constraint, CI), (:_modify, CI), (:_delete, CI), (:_getindex, CI), (:_getfunction, CI), (:_getset, CI), (:_getnoc, MOI.NumberOfConstraints))
+    for (funct, T) in (
+        (:_add_constraint, CI),
+        (:_modify, CI),
+        (:_delete, CI),
+        (:_getindex, CI),
+        (:_getfunction, CI),
+        (:_getset, CI),
+        (:_getnoc, MOI.NumberOfConstraints),
+    )
         for (c, sets) in ((scname, scalar_sets), (vcname, vector_sets))
             for s in sets
                 set = _set(s)
                 field = _field(s)
                 code = quote
                     $code
-                    $MOIU.$funct(model::$c, ci::$T{F, <:$set}, args...) where F = $funct(model.$field, ci, args...)
+                    function $MOIU.$funct(
+                        model::$c,
+                        ci::$T{F,<:$set},
+                        args...,
+                    ) where {F}
+                        return $funct(model.$field, ci, args...)
+                    end
                 end
             end
         end
@@ -1055,60 +1270,124 @@ macro model(model_name, ss, sst, vs, vst, sf, sft, vf, vft, is_optimizer = false
             field = _field(f)
             code = quote
                 $code
-                $MOIU.$funct(model::$esc_model_name, ci::$T{<:$fun}, args...) = $funct(model.$field, ci, args...)
+                function $MOIU.$funct(
+                    model::$esc_model_name,
+                    ci::$T{<:$fun},
+                    args...,
+                )
+                    return $funct(model.$field, ci, args...)
+                end
             end
         end
     end
 
     code = quote
         $scalarconstraints
-        function $scname{T, F}() where {T, F}
-            $scname{T, F}($(_getCV.(scalar_sets)...))
+        function $scname{T,F}() where {T,F}
+            return $scname{T,F}($(_getCV.(scalar_sets)...))
         end
 
         $vectorconstraints
-        function $vcname{T, F}() where {T, F}
-            $vcname{T, F}($(_getCV.(vector_sets)...))
+        function $vcname{T,F}() where {T,F}
+            return $vcname{T,F}($(_getCV.(vector_sets)...))
         end
 
         $modeldef
-        function $esc_model_name{T}() where T
-            $esc_model_name{T}("", false, $MOI.FEASIBILITY_SENSE, false,
-                              $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)), 0,
-                              nothing, UInt8[], T[], T[], Dict{$VI, String}(),
-                              nothing, 0, Dict{$CI, String}(), nothing, Int[],
-                              Dict{Symbol, Any}(), $(_getCV.(funs)...))
+        function $esc_model_name{T}() where {T}
+            return $esc_model_name{T}(
+                "",
+                false,
+                $MOI.FEASIBILITY_SENSE,
+                false,
+                $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)),
+                0,
+                nothing,
+                UInt8[],
+                T[],
+                T[],
+                Dict{$VI,String}(),
+                nothing,
+                0,
+                Dict{$CI,String}(),
+                nothing,
+                Int[],
+                Dict{Symbol,Any}(),
+                $(_getCV.(funs)...),
+            )
         end
 
-        $MOI.supports_constraint(model::$esc_model_name{T}, ::Type{<:Union{$(_typedfun.(scalar_funs)...)}}, ::Type{<:Union{$(_typedset.(scalar_sets)...)}}) where T = true
-        $MOI.supports_constraint(model::$esc_model_name{T}, ::Type{<:Union{$(_typedfun.(vector_funs)...)}}, ::Type{<:Union{$(_typedset.(vector_sets)...)}}) where T = true
+        function $MOI.supports_constraint(
+            model::$esc_model_name{T},
+            ::Type{<:Union{$(_typedfun.(scalar_funs)...)}},
+            ::Type{<:Union{$(_typedset.(scalar_sets)...)}},
+        ) where {T}
+            return true
+        end
+        function $MOI.supports_constraint(
+            model::$esc_model_name{T},
+            ::Type{<:Union{$(_typedfun.(vector_funs)...)}},
+            ::Type{<:Union{$(_typedset.(vector_sets)...)}},
+        ) where {T}
+            return true
+        end
 
         $code
     end
     return code
 end
 
-const LessThanIndicatorSetOne{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{T}}
-const LessThanIndicatorSetZero{T} = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO, MOI.LessThan{T}}
+const LessThanIndicatorSetOne{T} =
+    MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
+const LessThanIndicatorSetZero{T} =
+    MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
 
-@model(Model,
-       (MOI.ZeroOne, MOI.Integer),
-       (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval,
-        MOI.Semicontinuous, MOI.Semiinteger),
-       (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives,
-        MOI.Complements, MOI.NormInfinityCone, MOI.NormOneCone,
-        MOI.SecondOrderCone, MOI.RotatedSecondOrderCone,
-        MOI.GeometricMeanCone, MOI.ExponentialCone, MOI.DualExponentialCone,
-        MOI.RelativeEntropyCone, MOI.NormSpectralCone, MOI.NormNuclearCone,
-        MOI.PositiveSemidefiniteConeTriangle, MOI.PositiveSemidefiniteConeSquare,
-        MOI.RootDetConeTriangle, MOI.RootDetConeSquare, MOI.LogDetConeTriangle,
-        MOI.LogDetConeSquare),
-       (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2,
-        LessThanIndicatorSetOne, LessThanIndicatorSetZero),
-       (),
-       (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
-       (MOI.VectorOfVariables,),
-       (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction))
+@model(
+    Model,
+    (MOI.ZeroOne, MOI.Integer),
+    (
+        MOI.EqualTo,
+        MOI.GreaterThan,
+        MOI.LessThan,
+        MOI.Interval,
+        MOI.Semicontinuous,
+        MOI.Semiinteger,
+    ),
+    (
+        MOI.Reals,
+        MOI.Zeros,
+        MOI.Nonnegatives,
+        MOI.Nonpositives,
+        MOI.Complements,
+        MOI.NormInfinityCone,
+        MOI.NormOneCone,
+        MOI.SecondOrderCone,
+        MOI.RotatedSecondOrderCone,
+        MOI.GeometricMeanCone,
+        MOI.ExponentialCone,
+        MOI.DualExponentialCone,
+        MOI.RelativeEntropyCone,
+        MOI.NormSpectralCone,
+        MOI.NormNuclearCone,
+        MOI.PositiveSemidefiniteConeTriangle,
+        MOI.PositiveSemidefiniteConeSquare,
+        MOI.RootDetConeTriangle,
+        MOI.RootDetConeSquare,
+        MOI.LogDetConeTriangle,
+        MOI.LogDetConeSquare,
+    ),
+    (
+        MOI.PowerCone,
+        MOI.DualPowerCone,
+        MOI.SOS1,
+        MOI.SOS2,
+        LessThanIndicatorSetOne,
+        LessThanIndicatorSetZero,
+    ),
+    (),
+    (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
+)
 
 @doc raw"""
 

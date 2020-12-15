@@ -1,14 +1,11 @@
 # An Int-valued attribute
-struct MockModelAttribute <: MOI.AbstractModelAttribute
-end
+struct MockModelAttribute <: MOI.AbstractModelAttribute end
 
 # An Int-valued attribute
-struct MockVariableAttribute <: MOI.AbstractVariableAttribute
-end
+struct MockVariableAttribute <: MOI.AbstractVariableAttribute end
 
 # An Int-valued attribute
-struct MockConstraintAttribute <: MOI.AbstractConstraintAttribute
-end
+struct MockConstraintAttribute <: MOI.AbstractConstraintAttribute end
 
 # A mock optimizer used for testing.
 mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
@@ -38,9 +35,12 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     dual_objective_value::Dict{Int,Float64} # set this using MOI.set(model, MOI.DualObjectiveValue(), value)
     primal_status::Dict{Int,MOI.ResultStatusCode}
     dual_status::Dict{Int,MOI.ResultStatusCode}
-    constraint_conflict_status::Dict{MOI.ConstraintIndex,MOI.ConflictParticipationStatusCode}
+    constraint_conflict_status::Dict{
+        MOI.ConstraintIndex,
+        MOI.ConflictParticipationStatusCode,
+    }
     varprimal::Dict{MOI.VariableIndex,Dict{Int,Float64}}
-    callback_variable_primal::Dict{MOI.VariableIndex, Float64}
+    callback_variable_primal::Dict{MOI.VariableIndex,Float64}
     # Computes `ConstraintDual` of constraints with `SingleVariable` or
     # `VectorOfVariables` functions by evaluating the `ConstraintDual` of
     # constraints having the variable in the function. See `get_fallback`.
@@ -49,9 +49,9 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     con_basis::Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}
     # The attributes set by `MOI.optimize!` cannot be set to `model`.
     # We detect them with `is_set_by_optimize` and store them in the following:
-    optimizer_attributes::Dict{MOI.AbstractOptimizerAttribute, Any}
-    model_attributes::Dict{MOI.AbstractModelAttribute, Any}
-    submitted::Dict{MOI.AbstractSubmittable, Vector{Tuple}}
+    optimizer_attributes::Dict{MOI.AbstractOptimizerAttribute,Any}
+    model_attributes::Dict{MOI.AbstractModelAttribute,Any}
+    submitted::Dict{MOI.AbstractSubmittable,Vector{Tuple}}
 end
 
 # All user-facing indices are xor'd with this mask to produce unusual indices.
@@ -61,45 +61,50 @@ xor_index(vi::VI) = VI(xor(vi.value, internal_xor_mask))
 xor_index(ci::CI{F,S}) where {F,S} = CI{F,S}(xor(ci.value, internal_xor_mask))
 xor_indices(x) = map_indices(xor_index, x)
 
-function MockOptimizer(inner_model::MOI.ModelLike; supports_names=true,
-                       needs_allocate_load=false,
-                       add_var_allowed=!needs_allocate_load,
-                       add_con_allowed=!needs_allocate_load,
-                       eval_objective_value=true,
-                       eval_dual_objective_value=true,
-                       eval_variable_constraint_dual=true)
-    return MockOptimizer(inner_model,
-                         0,
-                         Dict{MOI.VariableIndex,Int}(),
-                         Dict{MOI.ConstraintIndex,Int}(),
-                         supports_names,
-                         needs_allocate_load,
-                         add_var_allowed,
-                         add_con_allowed,
-                         true,
-                         true,
-                         (::MockOptimizer) -> begin end,
-                         false,
-                         false,
-                         false,
-                         1,
-                         MOI.OPTIMIZE_NOT_CALLED,
-                         MOI.COMPUTE_CONFLICT_NOT_CALLED,
-                         eval_objective_value,
-                         Dict{Int,Float64}(),
-                         eval_dual_objective_value,
-                         Dict{Int,Float64}(),
-                         Dict{Int,MOI.ResultStatusCode}(),
-                         Dict{Int,MOI.ResultStatusCode}(),
-                         Dict{MOI.ConstraintIndex,MOI.ConflictParticipationStatusCode}(),
-                         Dict{MOI.VariableIndex,Dict{Int,Float64}}(),
-                         Dict{MOI.VariableIndex,Float64}(),
-                         eval_variable_constraint_dual,
-                         Dict{MOI.ConstraintIndex,Dict{Int,Any}}(),
-                         Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}(),
-                         Dict{MOI.AbstractOptimizerAttribute, Any}(),
-                         Dict{MOI.AbstractModelAttribute, Any}(),
-                         Dict{MOI.AbstractSubmittable, Vector{Tuple}}())
+function MockOptimizer(
+    inner_model::MOI.ModelLike;
+    supports_names = true,
+    needs_allocate_load = false,
+    add_var_allowed = !needs_allocate_load,
+    add_con_allowed = !needs_allocate_load,
+    eval_objective_value = true,
+    eval_dual_objective_value = true,
+    eval_variable_constraint_dual = true,
+)
+    return MockOptimizer(
+        inner_model,
+        0,
+        Dict{MOI.VariableIndex,Int}(),
+        Dict{MOI.ConstraintIndex,Int}(),
+        supports_names,
+        needs_allocate_load,
+        add_var_allowed,
+        add_con_allowed,
+        true,
+        true,
+        (::MockOptimizer) -> begin end,
+        false,
+        false,
+        false,
+        1,
+        MOI.OPTIMIZE_NOT_CALLED,
+        MOI.COMPUTE_CONFLICT_NOT_CALLED,
+        eval_objective_value,
+        Dict{Int,Float64}(),
+        eval_dual_objective_value,
+        Dict{Int,Float64}(),
+        Dict{Int,MOI.ResultStatusCode}(),
+        Dict{Int,MOI.ResultStatusCode}(),
+        Dict{MOI.ConstraintIndex,MOI.ConflictParticipationStatusCode}(),
+        Dict{MOI.VariableIndex,Dict{Int,Float64}}(),
+        Dict{MOI.VariableIndex,Float64}(),
+        eval_variable_constraint_dual,
+        Dict{MOI.ConstraintIndex,Dict{Int,Any}}(),
+        Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}(),
+        Dict{MOI.AbstractOptimizerAttribute,Any}(),
+        Dict{MOI.AbstractModelAttribute,Any}(),
+        Dict{MOI.AbstractSubmittable,Vector{Tuple}}(),
+    )
 end
 
 function MOI.add_variable(mock::MockOptimizer)
@@ -110,77 +115,113 @@ function MOI.add_variable(mock::MockOptimizer)
     end
 end
 
-function MOI.add_constraint(mock::MockOptimizer,
-                            func::MOI.AbstractFunction,
-                            set::MOI.AbstractSet)
+function MOI.add_constraint(
+    mock::MockOptimizer,
+    func::MOI.AbstractFunction,
+    set::MOI.AbstractSet,
+)
     if mock.add_con_allowed
         ci = MOI.add_constraint(mock.inner_model, xor_indices(func), set)
         return xor_index(ci)
     else
-        throw(MOI.AddConstraintNotAllowed{typeof(func), typeof(set)}())
+        throw(MOI.AddConstraintNotAllowed{typeof(func),typeof(set)}())
     end
 end
 function MOI.optimize!(mock::MockOptimizer)
     mock.solved = true
     mock.hasprimal = true
     mock.hasdual = true
-    mock.optimize!(mock)
+    return mock.optimize!(mock)
 end
-function MOI.compute_conflict!(::MockOptimizer)
-end
+function MOI.compute_conflict!(::MockOptimizer) end
 
 function throw_mock_unsupported_names(attr)
-    throw(MOI.UnsupportedAttribute(
-        attr, "The MockOptimizer was configured not to support names for " *
+    return throw(MOI.UnsupportedAttribute(
+        attr,
+        "The MockOptimizer was configured not to support names for " *
         "testing purpose using the `support_names=false` constructor keyword " *
-        "argument."))
+        "argument.",
+    ))
 end
 
-function MOI.supports(mock::MockOptimizer,
-                      ::Union{MOI.VariablePrimal, MockVariableAttribute},
-                      ::Type{MOI.VariableIndex})
+function MOI.supports(
+    mock::MockOptimizer,
+    ::Union{MOI.VariablePrimal,MockVariableAttribute},
+    ::Type{MOI.VariableIndex},
+)
     return true
 end
-function MOI.supports(mock::MockOptimizer,
-                      attr::MOI.AbstractVariableAttribute,
-                      IdxT::Type{MOI.VariableIndex})
+function MOI.supports(
+    mock::MockOptimizer,
+    attr::MOI.AbstractVariableAttribute,
+    IdxT::Type{MOI.VariableIndex},
+)
     return MOI.supports(mock.inner_model, attr, IdxT)
 end
-function MOI.supports(mock::MockOptimizer,
-                      ::Union{MOI.ConstraintDual, MockConstraintAttribute},
-                      ::Type{<:MOI.ConstraintIndex})
+function MOI.supports(
+    mock::MockOptimizer,
+    ::Union{MOI.ConstraintDual,MockConstraintAttribute},
+    ::Type{<:MOI.ConstraintIndex},
+)
     return true
 end
-function MOI.supports(mock::MockOptimizer,
-                      attr::MOI.AbstractConstraintAttribute,
-                      IdxT::Type{<:MOI.ConstraintIndex})
+function MOI.supports(
+    mock::MockOptimizer,
+    attr::MOI.AbstractConstraintAttribute,
+    IdxT::Type{<:MOI.ConstraintIndex},
+)
     return MOI.supports(mock.inner_model, attr, IdxT)
 end
 
 MOI.supports(mock::MockOptimizer, ::MockModelAttribute) = true
-MOI.set(mock::MockOptimizer, ::MOI.TerminationStatus, value::MOI.TerminationStatusCode) = (mock.terminationstatus = value)
+function MOI.set(
+    mock::MockOptimizer,
+    ::MOI.TerminationStatus,
+    value::MOI.TerminationStatusCode,
+)
+    return (mock.terminationstatus = value)
+end
 function MOI.set(mock::MockOptimizer, attr::MOI.ObjectiveValue, value::Real)
-    mock.objective_value[attr.result_index] = value
+    return mock.objective_value[attr.result_index] = value
 end
 function MOI.set(mock::MockOptimizer, attr::MOI.DualObjectiveValue, value::Real)
-    mock.dual_objective_value[attr.result_index] = value
+    return mock.dual_objective_value[attr.result_index] = value
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.PrimalStatus, value::MOI.ResultStatusCode)
-    mock.primal_status[attr.N] = value
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.PrimalStatus,
+    value::MOI.ResultStatusCode,
+)
+    return mock.primal_status[attr.N] = value
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.DualStatus, value::MOI.ResultStatusCode)
-    mock.dual_status[attr.N] = value
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.DualStatus,
+    value::MOI.ResultStatusCode,
+)
+    return mock.dual_status[attr.N] = value
 end
-MOI.set(mock::MockOptimizer, ::MOI.ConflictStatus, value::MOI.ConflictStatusCode) = (mock.conflictstatus = value)
+function MOI.set(
+    mock::MockOptimizer,
+    ::MOI.ConflictStatus,
+    value::MOI.ConflictStatusCode,
+)
+    return (mock.conflictstatus = value)
+end
 MOI.get(mock::MockOptimizer, ::MOI.ConflictStatus) = mock.conflictstatus
-MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer) = (mock.attribute = value)
+function MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer)
+    return (mock.attribute = value)
+end
 function MOI.supports(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
     # `supports` is not defined if `is_set_by_optimize(attr)` so we pass it to
     # `mock.inner_model`.
     return MOI.supports(mock.inner_model, attr)
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute,
-                 value)
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.AbstractOptimizerAttribute,
+    value,
+)
     if MOI.is_set_by_optimize(attr)
         mock.optimizer_attributes[attr] = value
     else
@@ -200,41 +241,77 @@ function MOI.set(mock::MockOptimizer, attr::MOI.AbstractModelAttribute, value)
     end
 end
 
-function MOI.set(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute,
-                 idx::MOI.VariableIndex, value)
-    MOI.set(mock.inner_model, attr, xor_index(idx), xor_indices(value))
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.AbstractVariableAttribute,
+    idx::MOI.VariableIndex,
+    value,
+)
+    return MOI.set(mock.inner_model, attr, xor_index(idx), xor_indices(value))
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.VariablePrimal,
-                 idx::MOI.VariableIndex, value)
-    _safe_set_result(mock.varprimal, attr, idx, value)
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.VariablePrimal,
+    idx::MOI.VariableIndex,
+    value,
+)
+    return _safe_set_result(mock.varprimal, attr, idx, value)
 end
-function MOI.set(mock::MockOptimizer, ::MOI.CallbackVariablePrimal,
-                 idx::MOI.VariableIndex, value)
-    mock.callback_variable_primal[xor_index(idx)] = value
+function MOI.set(
+    mock::MockOptimizer,
+    ::MOI.CallbackVariablePrimal,
+    idx::MOI.VariableIndex,
+    value,
+)
+    return mock.callback_variable_primal[xor_index(idx)] = value
 end
-function MOI.set(mock::MockOptimizer, ::MockVariableAttribute,
-                 idx::MOI.VariableIndex, value)
-    mock.varattribute[xor_index(idx)] = value
+function MOI.set(
+    mock::MockOptimizer,
+    ::MockVariableAttribute,
+    idx::MOI.VariableIndex,
+    value,
+)
+    return mock.varattribute[xor_index(idx)] = value
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute,
-                 idx::MOI.ConstraintIndex, value)
-    MOI.set(mock.inner_model, attr, xor_index(idx), value)
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.AbstractConstraintAttribute,
+    idx::MOI.ConstraintIndex,
+    value,
+)
+    return MOI.set(mock.inner_model, attr, xor_index(idx), value)
 end
-function MOI.set(mock::MockOptimizer, ::MockConstraintAttribute,
-                 idx::MOI.ConstraintIndex, value)
-    mock.conattribute[xor_index(idx)] = value
+function MOI.set(
+    mock::MockOptimizer,
+    ::MockConstraintAttribute,
+    idx::MOI.ConstraintIndex,
+    value,
+)
+    return mock.conattribute[xor_index(idx)] = value
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.ConstraintDual,
-                 idx::MOI.ConstraintIndex, value)
-    _safe_set_result(mock.condual, attr, idx, value)
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.ConstraintDual,
+    idx::MOI.ConstraintIndex,
+    value,
+)
+    return _safe_set_result(mock.condual, attr, idx, value)
 end
-function MOI.set(mock::MockOptimizer, attr::MOI.ConstraintBasisStatus,
-                 idx::MOI.ConstraintIndex, value)
-    _safe_set_result(mock.con_basis, attr, idx, value)
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.ConstraintBasisStatus,
+    idx::MOI.ConstraintIndex,
+    value,
+)
+    return _safe_set_result(mock.con_basis, attr, idx, value)
 end
-function MOI.set(mock::MockOptimizer, ::MOI.ConstraintConflictStatus,
-                 idx::MOI.ConstraintIndex, value)
-    mock.constraint_conflict_status[idx] = value
+function MOI.set(
+    mock::MockOptimizer,
+    ::MOI.ConstraintConflictStatus,
+    idx::MOI.ConstraintIndex,
+    value,
+)
+    return mock.constraint_conflict_status[idx] = value
 end
 
 MOI.get(mock::MockOptimizer, ::MOI.RawSolver) = mock
@@ -267,26 +344,38 @@ function MOI.set(mock::MockOptimizer, attr::MOI.Name, value)
         throw_mock_unsupported_names(attr)
     end
 end
-function MOI.supports(mock::MockOptimizer, attr::MOI.VariableName,
-                      IdxT::Type{MOI.VariableIndex})
+function MOI.supports(
+    mock::MockOptimizer,
+    attr::MOI.VariableName,
+    IdxT::Type{MOI.VariableIndex},
+)
     return mock.supports_names && MOI.supports(mock.inner_model, attr, IdxT)
 end
-function MOI.set(mock::MockOptimizer,
-                 attr::MOI.VariableName,
-                 index::MOI.VariableIndex, value)
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.VariableName,
+    index::MOI.VariableIndex,
+    value,
+)
     if mock.supports_names
         MOI.set(mock.inner_model, attr, xor_index(index), value)
     else
         throw_mock_unsupported_names(attr)
     end
 end
-function MOI.supports(mock::MockOptimizer, attr::MOI.ConstraintName,
-                      IdxT::Type{<:MOI.ConstraintIndex})
+function MOI.supports(
+    mock::MockOptimizer,
+    attr::MOI.ConstraintName,
+    IdxT::Type{<:MOI.ConstraintIndex},
+)
     return mock.supports_names && MOI.supports(mock.inner_model, attr, IdxT)
 end
-function MOI.set(mock::MockOptimizer,
-                 attr::MOI.ConstraintName,
-                 index::MOI.ConstraintIndex, value)
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.ConstraintName,
+    index::MOI.ConstraintIndex,
+    value,
+)
     if mock.supports_names
         MOI.set(mock.inner_model, attr, xor_index(index), value)
     else
@@ -342,14 +431,25 @@ function MOI.get(mock::MockOptimizer, attr::MOI.DualStatus)
 end
 MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
 
-function MOI.get(mock::MockOptimizer, attr::MOI.AbstractVariableAttribute,
-                 idx::MOI.VariableIndex)
+function MOI.get(
+    mock::MockOptimizer,
+    attr::MOI.AbstractVariableAttribute,
+    idx::MOI.VariableIndex,
+)
     return xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx)))
 end
-MOI.get(mock::MockOptimizer, ::MockVariableAttribute, idx::MOI.VariableIndex) = mock.varattribute[xor_index(idx)]
+function MOI.get(
+    mock::MockOptimizer,
+    ::MockVariableAttribute,
+    idx::MOI.VariableIndex,
+)
+    return mock.varattribute[xor_index(idx)]
+end
 
 function MOI.get(
-    mock::MockOptimizer, attr::MOI.VariablePrimal, idx::MOI.VariableIndex
+    mock::MockOptimizer,
+    attr::MOI.VariablePrimal,
+    idx::MOI.VariableIndex,
 )
     MOI.check_result_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
@@ -357,7 +457,9 @@ function MOI.get(
 end
 
 function MOI.get(
-    mock::MockOptimizer, attr::MOI.CallbackVariablePrimal, idx::MOI.VariableIndex
+    mock::MockOptimizer,
+    attr::MOI.CallbackVariablePrimal,
+    idx::MOI.VariableIndex,
 )
     primal = get(mock.callback_variable_primal, xor_index(idx), nothing)
     if primal !== nothing
@@ -370,58 +472,90 @@ function MOI.get(
 end
 
 function MOI.get(
-    mock::MockOptimizer, attr::MOI.ConstraintPrimal, idx::MOI.ConstraintIndex
+    mock::MockOptimizer,
+    attr::MOI.ConstraintPrimal,
+    idx::MOI.ConstraintIndex,
 )
     MOI.check_result_index_bounds(mock, attr)
     return get_fallback(mock, attr, idx)
 end
 
-function MOI.get(mock::MockOptimizer, attr::MOI.AbstractConstraintAttribute,
-                 idx::MOI.ConstraintIndex)
+function MOI.get(
+    mock::MockOptimizer,
+    attr::MOI.AbstractConstraintAttribute,
+    idx::MOI.ConstraintIndex,
+)
     # If it is thrown by `mock.inner_model`, the index will be xor'ed.
     MOI.throw_if_not_valid(mock, idx)
     return MOI.get(mock.inner_model, attr, xor_index(idx))
 end
-function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintFunction,
-                 idx::MOI.ConstraintIndex)
+function MOI.get(
+    mock::MockOptimizer,
+    attr::MOI.ConstraintFunction,
+    idx::MOI.ConstraintIndex,
+)
     # If it is thrown by `mock.inner_model`, the index will be xor'ed.
     MOI.throw_if_not_valid(mock, idx)
     return xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx)))
 end
 
 function MOI.get(
-    mock::MockOptimizer, attr::MOI.ConstraintDual, idx::MOI.ConstraintIndex{F}
+    mock::MockOptimizer,
+    attr::MOI.ConstraintDual,
+    idx::MOI.ConstraintIndex{F},
 ) where {F}
     MOI.check_result_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
     if mock.eval_variable_constraint_dual &&
-        (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
+       (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
         return get_fallback(mock, attr, idx)
     else
         return _safe_get_result(mock.condual, attr, idx, "dual")
     end
 end
-MOI.get(mock::MockOptimizer, ::MockConstraintAttribute, idx::MOI.ConstraintIndex) = mock.conattribute[xor_index(idx)]
-function MOI.get(mock::MockOptimizer, attr::MOI.ConstraintBasisStatus, idx::MOI.ConstraintIndex)
+function MOI.get(
+    mock::MockOptimizer,
+    ::MockConstraintAttribute,
+    idx::MOI.ConstraintIndex,
+)
+    return mock.conattribute[xor_index(idx)]
+end
+function MOI.get(
+    mock::MockOptimizer,
+    attr::MOI.ConstraintBasisStatus,
+    idx::MOI.ConstraintIndex,
+)
     MOI.check_result_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
     return _safe_get_result(mock.con_basis, attr, idx, "basis status")
 end
-function MOI.get(mock::MockOptimizer, ::MOI.ConstraintConflictStatus, idx::MOI.ConstraintIndex)
+function MOI.get(
+    mock::MockOptimizer,
+    ::MOI.ConstraintConflictStatus,
+    idx::MOI.ConstraintIndex,
+)
     MOI.throw_if_not_valid(mock, idx)
     return mock.constraint_conflict_status[idx]
 end
 
-function _safe_set_result(dict::Dict{K,V}, attr::MOI.AnyAttribute, index::K,
-                          value) where {K, V}
+function _safe_set_result(
+    dict::Dict{K,V},
+    attr::MOI.AnyAttribute,
+    index::K,
+    value,
+) where {K,V}
     xored = xor_index(index)
     if !haskey(dict, xored)
         dict[xored] = V()
     end
-    dict[xored][MOI._result_index_field(attr)] = value
+    return dict[xored][MOI._result_index_field(attr)] = value
 end
-function _safe_get_result(dict::Dict, attr::MOI.AnyAttribute, index::MOI.Index,
-                          name::String)
+function _safe_get_result(
+    dict::Dict,
+    attr::MOI.AnyAttribute,
+    index::MOI.Index,
+    name::String,
+)
     index_name = index isa MOI.VariableIndex ? "variable" : "constraint"
     result_to_value = get(dict, xor_index(index), nothing)
     if result_to_value === nothing
@@ -429,7 +563,15 @@ function _safe_get_result(dict::Dict, attr::MOI.AnyAttribute, index::MOI.Index,
     end
     value = get(result_to_value, MOI._result_index_field(attr), nothing)
     if value === nothing
-        error("No mock $name is set for ", index_name, " `", index, "` at result index `", MOI._result_index_field(attr), "`.")
+        error(
+            "No mock $name is set for ",
+            index_name,
+            " `",
+            index,
+            "` at result index `",
+            MOI._result_index_field(attr),
+            "`.",
+        )
     end
     return value
 end
@@ -463,18 +605,25 @@ function MOI.is_empty(mock::MockOptimizer)
     # Assumes that variable and constraint attributes can't be set if
     # mock.inner_model is empty.
     # TODO: Default values are currently copied in three places, not good.
-    return MOI.is_empty(mock.inner_model) && mock.attribute == 0 &&
-        !mock.solved && !mock.hasprimal && !mock.hasdual &&
-        mock.terminationstatus == MOI.OPTIMIZE_NOT_CALLED &&
-        isempty(mock.objective_value) &&
-        isempty(mock.dual_objective_value) &&
-        isempty(mock.primal_status) &&
-        isempty(mock.dual_status) &&
-        isempty(mock.con_basis) && isempty(mock.optimizer_attributes) &&
-        isempty(mock.model_attributes) && isempty(mock.submitted)
+    return MOI.is_empty(mock.inner_model) &&
+           mock.attribute == 0 &&
+           !mock.solved &&
+           !mock.hasprimal &&
+           !mock.hasdual &&
+           mock.terminationstatus == MOI.OPTIMIZE_NOT_CALLED &&
+           isempty(mock.objective_value) &&
+           isempty(mock.dual_objective_value) &&
+           isempty(mock.primal_status) &&
+           isempty(mock.dual_status) &&
+           isempty(mock.con_basis) &&
+           isempty(mock.optimizer_attributes) &&
+           isempty(mock.model_attributes) &&
+           isempty(mock.submitted)
 end
 
-MOI.is_valid(mock::MockOptimizer, idx::MOI.Index) = MOI.is_valid(mock.inner_model, xor_index(idx))
+function MOI.is_valid(mock::MockOptimizer, idx::MOI.Index)
+    return MOI.is_valid(mock.inner_model, xor_index(idx))
+end
 
 function MOI.delete(mock::MockOptimizer, index::MOI.VariableIndex)
     if !mock.delete_allowed
@@ -486,7 +635,7 @@ function MOI.delete(mock::MockOptimizer, index::MOI.VariableIndex)
     end
     MOI.delete(mock.inner_model, xor_index(index))
     delete!(mock.varprimal, index)
-    delete!(mock.callback_variable_primal, index)
+    return delete!(mock.callback_variable_primal, index)
 end
 function MOI.delete(mock::MockOptimizer, indices::Vector{MOI.VariableIndex})
     if !mock.delete_allowed && !isempty(indices)
@@ -512,32 +661,51 @@ function MOI.delete(mock::MockOptimizer, index::MOI.ConstraintIndex)
     end
     MOI.delete(mock.inner_model, xor_index(index))
     delete!(mock.condual, index)
-    delete!(mock.con_basis, index)
+    return delete!(mock.con_basis, index)
 end
 
-function MOI.modify(mock::MockOptimizer, c::CI, change::MOI.AbstractFunctionModification)
+function MOI.modify(
+    mock::MockOptimizer,
+    c::CI,
+    change::MOI.AbstractFunctionModification,
+)
     if !mock.modify_allowed
         throw(MOI.ModifyConstraintNotAllowed(c, change))
     end
-    MOI.modify(mock.inner_model, xor_index(c), xor_indices(change))
+    return MOI.modify(mock.inner_model, xor_index(c), xor_indices(change))
 end
 
-function MOI.set(mock::MockOptimizer, ::MOI.ConstraintSet,
-                 c::CI{<:MOI.AbstractFunction, S},
-                 set::S) where S<:MOI.AbstractSet
-    MOI.set(mock.inner_model, MOI.ConstraintSet(), xor_index(c), set)
+function MOI.set(
+    mock::MockOptimizer,
+    ::MOI.ConstraintSet,
+    c::CI{<:MOI.AbstractFunction,S},
+    set::S,
+) where {S<:MOI.AbstractSet}
+    return MOI.set(mock.inner_model, MOI.ConstraintSet(), xor_index(c), set)
 end
-function MOI.set(mock::MockOptimizer, ::MOI.ConstraintFunction, c::CI{F},
-                 func::F) where F<:MOI.AbstractFunction
-    MOI.set(mock.inner_model, MOI.ConstraintFunction(), xor_index(c),
-            xor_indices(func))
+function MOI.set(
+    mock::MockOptimizer,
+    ::MOI.ConstraintFunction,
+    c::CI{F},
+    func::F,
+) where {F<:MOI.AbstractFunction}
+    return MOI.set(
+        mock.inner_model,
+        MOI.ConstraintFunction(),
+        xor_index(c),
+        xor_indices(func),
+    )
 end
 
-function MOI.modify(mock::MockOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
+function MOI.modify(
+    mock::MockOptimizer,
+    obj::MOI.ObjectiveFunction,
+    change::MOI.AbstractFunctionModification,
+)
     if !mock.modify_allowed
         throw(MOI.ModifyObjectiveNotAllowed(change))
     end
-    MOI.modify(mock.inner_model, obj, xor_indices(change))
+    return MOI.modify(mock.inner_model, obj, xor_indices(change))
 end
 
 MOI.supports(::MockOptimizer, ::MOI.AbstractSubmittable) = true
@@ -545,22 +713,44 @@ function MOI.submit(mock::MockOptimizer, sub::MOI.AbstractSubmittable, args...)
     if !haskey(mock.submitted, sub)
         mock.submitted[sub] = Tuple[]
     end
-    push!(mock.submitted[sub], args)
+    return push!(mock.submitted[sub], args)
 end
 
 # TODO: transform
 
-MOI.supports_constraint(mock::MockOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet}) = MOI.supports_constraint(mock.inner_model, F, S)
-MOI.supports_add_constrained_variable(mock::MockOptimizer, S::Type{<:MOI.AbstractScalarSet}) = MOI.supports_add_constrained_variable(mock.inner_model, S)
-MOI.supports_add_constrained_variables(mock::MockOptimizer, S::Type{<:MOI.AbstractVectorSet}) = MOI.supports_add_constrained_variables(mock.inner_model, S)
+function MOI.supports_constraint(
+    mock::MockOptimizer,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOI.supports_constraint(mock.inner_model, F, S)
+end
+function MOI.supports_add_constrained_variable(
+    mock::MockOptimizer,
+    S::Type{<:MOI.AbstractScalarSet},
+)
+    return MOI.supports_add_constrained_variable(mock.inner_model, S)
+end
+function MOI.supports_add_constrained_variables(
+    mock::MockOptimizer,
+    S::Type{<:MOI.AbstractVectorSet},
+)
+    return MOI.supports_add_constrained_variables(mock.inner_model, S)
+end
 # Add this method to avoid ambiguity
-MOI.supports_add_constrained_variables(mock::MockOptimizer, ::Type{MOI.Reals}) = MOI.supports_add_constrained_variables(mock.inner_model, MOI.Reals)
+function MOI.supports_add_constrained_variables(
+    mock::MockOptimizer,
+    ::Type{MOI.Reals},
+)
+    return MOI.supports_add_constrained_variables(mock.inner_model, MOI.Reals)
+end
 
 function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; kws...)
-    automatic_copy_to(mock, src; kws...)
+    return automatic_copy_to(mock, src; kws...)
 end
 function supports_default_copy_to(mock::MockOptimizer, copy_names::Bool)
-    return !mock.needs_allocate_load && supports_default_copy_to(mock.inner_model, copy_names)
+    return !mock.needs_allocate_load &&
+           supports_default_copy_to(mock.inner_model, copy_names)
 end
 
 # Allocate-Load Interface
@@ -571,14 +761,47 @@ end
 function allocate_variables(mock::MockOptimizer, nvars)
     return xor_index.(allocate_variables(mock.inner_model, nvars))
 end
-allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = allocate(mock.inner_model, attr, xor_indices(value))
-allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, idx::MOI.Index, value) = allocate(mock.inner_model, attr, xor_index(idx), xor_indices(value))
-allocate_constraint(mock::MockOptimizer, f::MOI.AbstractFunction, s::MOI.AbstractSet) = xor_index(allocate_constraint(mock.inner_model, xor_indices(f), s))
+function allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, value)
+    return allocate(mock.inner_model, attr, xor_indices(value))
+end
+function allocate(
+    mock::MockOptimizer,
+    attr::MOI.AnyAttribute,
+    idx::MOI.Index,
+    value,
+)
+    return allocate(mock.inner_model, attr, xor_index(idx), xor_indices(value))
+end
+function allocate_constraint(
+    mock::MockOptimizer,
+    f::MOI.AbstractFunction,
+    s::MOI.AbstractSet,
+)
+    return xor_index(allocate_constraint(mock.inner_model, xor_indices(f), s))
+end
 
-load_variables(mock::MockOptimizer, nvars) = load_variables(mock.inner_model, nvars)
-load(mock::MockOptimizer, attr::MOI.AnyAttribute, value) = load(mock.inner_model, attr, xor_indices(value))
-load(mock::MockOptimizer, attr::MOI.AnyAttribute, idx::MOI.Index, value) = load(mock.inner_model, attr, xor_index(idx), xor_indices(value))
-load_constraint(mock::MockOptimizer, ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = load_constraint(mock.inner_model, xor_index(ci), xor_indices(f), s)
+function load_variables(mock::MockOptimizer, nvars)
+    return load_variables(mock.inner_model, nvars)
+end
+function load(mock::MockOptimizer, attr::MOI.AnyAttribute, value)
+    return load(mock.inner_model, attr, xor_indices(value))
+end
+function load(
+    mock::MockOptimizer,
+    attr::MOI.AnyAttribute,
+    idx::MOI.Index,
+    value,
+)
+    return load(mock.inner_model, attr, xor_index(idx), xor_indices(value))
+end
+function load_constraint(
+    mock::MockOptimizer,
+    ci::CI,
+    f::MOI.AbstractFunction,
+    s::MOI.AbstractSet,
+)
+    return load_constraint(mock.inner_model, xor_index(ci), xor_indices(f), s)
+end
 
 """
     set_mock_optimize!(mock::MockOptimizer, opt::Function...)
@@ -586,10 +809,15 @@ load_constraint(mock::MockOptimizer, ci::CI, f::MOI.AbstractFunction, s::MOI.Abs
 Sets multiple optimize! function. The first is to be used the first time `MOI.optimize!(mock)` is called, the second function is to be used the second time, ...
 """
 function set_mock_optimize!(mock::MockOptimizer, opts::Function...)
-    mock.optimize! = rec_mock_optimize(mock, opts...)
+    return mock.optimize! = rec_mock_optimize(mock, opts...)
 end
-function rec_mock_optimize(mock::MockOptimizer, opt::Function, opts::Function...)
-    (mock::MockOptimizer) -> (opt(mock); mock.optimize! = rec_mock_optimize(mock, opts...))
+function rec_mock_optimize(
+    mock::MockOptimizer,
+    opt::Function,
+    opts::Function...,
+)
+    return (mock::MockOptimizer) ->
+        (opt(mock); mock.optimize! = rec_mock_optimize(mock, opts...))
 end
 rec_mock_optimize(mock::MockOptimizer, opt::Function) = opt
 
@@ -604,7 +832,13 @@ If `dual_status` is missing, it is assumed to be `MOI.FEASIBLE_POINT` if there i
 The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
 The bases status are set to the status specified by `con_basis`. A vector of pairs, each of the form `(F,S)=>[...]`, where `[...]` is the the vector of basis status for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
 """
-function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode, primal, dual...; con_basis = [])
+function mock_optimize!(
+    mock::MockOptimizer,
+    termstatus::MOI.TerminationStatusCode,
+    primal,
+    dual...;
+    con_basis = [],
+)
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
     MOI.set(mock, MOI.ResultCount(), 1)
     mock_primal!(mock, primal)
@@ -614,44 +848,67 @@ function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCo
     end
 end
 # Default termination status
-mock_optimize!(mock::MockOptimizer, primdual...; kws...) = mock_optimize!(mock, MOI.OPTIMAL, primdual...; kws...)
-function mock_optimize!(mock::MockOptimizer, termstatus::MOI.TerminationStatusCode)
+function mock_optimize!(mock::MockOptimizer, primdual...; kws...)
+    return mock_optimize!(mock, MOI.OPTIMAL, primdual...; kws...)
+end
+function mock_optimize!(
+    mock::MockOptimizer,
+    termstatus::MOI.TerminationStatusCode,
+)
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
-    MOI.set(mock, MOI.ResultCount(), 0)
+    return MOI.set(mock, MOI.ResultCount(), 0)
 end
 
 # Primal
 mock_primal!(mock, primal::Tuple) = mock_primal!(mock, primal...)
-function mock_primal!(mock::MockOptimizer, primstatus::MOI.ResultStatusCode, varprim::Vector...)
+function mock_primal!(
+    mock::MockOptimizer,
+    primstatus::MOI.ResultStatusCode,
+    varprim::Vector...,
+)
     MOI.set(mock, MOI.PrimalStatus(), primstatus)
-    mock_varprimal!(mock, varprim...)
+    return mock_varprimal!(mock, varprim...)
 end
 # Default primal status
-mock_primal!(mock::MockOptimizer, varprim::Vector) = mock_primal!(mock, MOI.FEASIBLE_POINT, varprim)
+function mock_primal!(mock::MockOptimizer, varprim::Vector)
+    return mock_primal!(mock, MOI.FEASIBLE_POINT, varprim)
+end
 function mock_primal!(mock::MockOptimizer)
     # No primal solution
-    mock.hasprimal = false
+    return mock.hasprimal = false
 end
 
 # Sets variable primal to varprim
 function mock_varprimal!(mock::MockOptimizer) end
 function mock_varprimal!(mock::MockOptimizer, varprim::Vector)
-    MOI.set(mock, MOI.VariablePrimal(), MOI.get(mock, MOI.ListOfVariableIndices()), varprim)
+    return MOI.set(
+        mock,
+        MOI.VariablePrimal(),
+        MOI.get(mock, MOI.ListOfVariableIndices()),
+        varprim,
+    )
 end
 
 # Dual
-function mock_dual!(mock::MockOptimizer, dual_status::MOI.ResultStatusCode, conduals::Pair...)
+function mock_dual!(
+    mock::MockOptimizer,
+    dual_status::MOI.ResultStatusCode,
+    conduals::Pair...,
+)
     MOI.set(mock, MOI.DualStatus(), dual_status)
-    mock_condual!(mock, conduals...)
+    return mock_condual!(mock, conduals...)
 end
 # Default dual status
 function mock_dual!(mock::MockOptimizer, conduals::Pair...)
-    status = !mock.hasprimal || MOI.get(mock, MOI.PrimalStatus()) == MOI.INFEASIBLE_POINT ? MOI.INFEASIBILITY_CERTIFICATE : MOI.FEASIBLE_POINT
-    mock_dual!(mock, status, conduals...)
+    status =
+        !mock.hasprimal ||
+        MOI.get(mock, MOI.PrimalStatus()) == MOI.INFEASIBLE_POINT ?
+        MOI.INFEASIBILITY_CERTIFICATE : MOI.FEASIBLE_POINT
+    return mock_dual!(mock, status, conduals...)
 end
 function mock_dual!(mock::MockOptimizer)
     # No dual solution
-    mock.hasdual = false
+    return mock.hasdual = false
 end
 
 # Sets constraint dual to conduals
@@ -659,16 +916,16 @@ function mock_condual!(mock::MockOptimizer) end
 function mock_condual!(mock::MockOptimizer, condual::Pair, conduals...)
     F, S = condual.first
     duals = condual.second
-    for (i, ci) in enumerate(MOI.get(mock, MOI.ListOfConstraintIndices{F, S}()))
+    for (i, ci) in enumerate(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
         MOI.set(mock, MOI.ConstraintDual(), ci, duals[i])
     end
-    mock_condual!(mock, conduals...)
+    return mock_condual!(mock, conduals...)
 end
 # Set the basis status of the provided constraints.
 function mock_basis_status!(mock::MockOptimizer, con_basis::Pair)
     F, S = con_basis.first
     bases = con_basis.second
-    for (i, ci) in enumerate(MOI.get(mock, MOI.ListOfConstraintIndices{F, S}()))
+    for (i, ci) in enumerate(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
         MOI.set(mock, MOI.ConstraintBasisStatus(), ci, bases[i])
     end
 end

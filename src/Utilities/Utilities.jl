@@ -22,7 +22,7 @@ const VI = MOI.VariableIndex
 const CI{F,S} = MOI.ConstraintIndex{F,S}
 
 function print_with_acronym(io::IO, s::AbstractString)
-    print(io, replace_acronym(s))
+    return print(io, replace_acronym(s))
 end
 
 function replace_acronym(s::AbstractString)
@@ -32,7 +32,6 @@ function replace_acronym(s::AbstractString)
     s = replace(s, "MathOptInterface" => "MOI")
     return s
 end
-
 
 """
     _reverse_dict(src::AbstractDict)
