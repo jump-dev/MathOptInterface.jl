@@ -90,8 +90,10 @@ function supports_constrained_variable(::Type{<:AbstractBridge},
 end
 
 """
-    added_constrained_variable_types(BT::Type{<:MOI.Bridges.Variable.AbstractBridge},
-                                     S::Type{<:MOI.AbstractSet})
+    added_constrained_variable_types(
+        BT::Type{<:MOI.Bridges.Variable.AbstractBridge},
+        S::Type{<:MOI.AbstractSet},
+    )
 
 Return a list of the types of constrained variables that bridges of type `BT`
 add for bridging constrained variabled in `S`. This falls back to
@@ -103,14 +105,17 @@ so bridges should not implement this.
 As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
 variables in [`MathOptInterface.Nonnegatives`](@ref) by the
 [`VectorizeBridge`](@ref):
-```jldoctest
-BT = MOI.Bridges.Variable.VectorizeBridge{Float64}
-S = MOI.GreaterThan{Float64}
-MOI.Bridges.added_constrained_variable_types(BT, S)
+
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+MOI.Bridges.added_constrained_variable_types(
+    MOI.Bridges.Variable.VectorizeBridge{Float64},
+    MOI.GreaterThan{Float64},
+)
 
 # output
 
-[(MOI.Nonnegatives,)]
+1-element Array{Tuple{DataType},1}:
+ (MathOptInterface.Nonnegatives,)
 ```
 """
 function MOIB.added_constrained_variable_types(
@@ -119,8 +124,10 @@ function MOIB.added_constrained_variable_types(
 end
 
 """
-    added_constraint_types(BT::Type{<:MOI.Bridges.Variable.AbstractBridge},
-                           S::Type{<:MOI.AbstractSet})
+    added_constraint_types(
+        BT::Type{<:MOI.Bridges.Variable.AbstractBridge},
+        S::Type{<:MOI.AbstractSet},
+    )
 
 Return a list of the types of constraints that bridges of type `BT` add for
 for bridging constrained variabled in `S`. This falls back to
@@ -135,14 +142,18 @@ In addition to creating variables in
 [`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.EqualTo`](@ref) and
 [`MathOptInterface.ScalarAffineFunction`](@ref)-in-[`MathOptInterface.EqualTo`](@ref)
 constraints:
-```jldoctest
-BT = MOI.Bridges.Variable.RSOCtoPSDBridge{Float64}
-S = MOI.RotatedSecondOrderCone{
-MOI.Bridges.added_constraint_types(BT, S)
+
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+MOI.Bridges.added_constraint_types(
+    MOI.Bridges.Variable.RSOCtoPSDBridge{Float64},
+    MOI.RotatedSecondOrderCone,
+)
 
 # output
 
-[(MOI.SingleVariable, MOI.EqualTo{Float64}), (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})]
+2-element Array{Tuple{DataType,DataType},1}:
+ (MathOptInterface.SingleVariable, MathOptInterface.EqualTo{Float64})
+ (MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64})
 ```
 """
 function MOIB.added_constraint_types(
@@ -151,8 +162,10 @@ function MOIB.added_constraint_types(
 end
 
 """
-    concrete_bridge_type(BT::Type{<:AbstractBridge},
-                         S::Type{<:MOI.AbstractSet})::DataType
+    concrete_bridge_type(
+        BT::Type{<:AbstractBridge},
+        S::Type{<:MOI.AbstractSet},
+    )::DataType
 
 Return the concrete type of the bridge supporting variables in `S` constraints.
 This function can only be called if `MOI.supports_constrained_variable(BT, S)`
@@ -162,15 +175,17 @@ is `true`.
 
 As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
 variables in [`MathOptInterface.Nonnegatives`](@ref) by the
-[`VectorizeBridge`](@ref),
-```jldoctest
-BT = MOI.Bridges.Variable.VectorizeBridge{Float64}
-S = MOI.GreaterThan{Float64}
-MOI.Bridges.Variable.concrete_bridge_type(BT, S)
+[`VectorizeBridge`](@ref):
+
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+MOI.Bridges.Variable.concrete_bridge_type(
+    MOI.Bridges.Variable.VectorizeBridge{Float64},
+    MOI.GreaterThan{Float64},
+)
 
 # output
 
-MOI.Bridges.Variable.VectorizeBridge{Float64,MOI.Nonnegatives}
+MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonnegatives}
 ```
 """
 function concrete_bridge_type(bridge_type::DataType,

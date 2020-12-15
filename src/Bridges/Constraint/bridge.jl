@@ -82,9 +82,11 @@ function MOIB.added_constraint_types(BT::Type{<:AbstractBridge},
 end
 
 """
-    concrete_bridge_type(BT::Type{<:AbstractBridge},
-                         F::Type{<:MOI.AbstractFunction},
-                         S::Type{<:MOI.AbstractSet})::DataType
+    concrete_bridge_type(
+        BT::Type{<:AbstractBridge},
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet}
+    )::DataType
 
 Return the concrete type of the bridge supporting `F`-in-`S` constraints. This
 function can only be called if `MOI.supports_constraint(BT, F, S)` is `true`.
@@ -96,21 +98,25 @@ constraint is bridged into a
 [`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.GreaterThan`](@ref)
 and a
 [`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.LessThan`](@ref)
-by the [`SplitIntervalBridge`](@ref),
-```jldoctest
-BT = MOI.Bridges.Constraint.SplitIntervalBridge{Float64}
-F = MOI.SingleVariable
-S = MOI.Interval{Float64}
-MOI.Bridges.Constraint.concrete_bridge_type(BT, F, S)
+by the [`SplitIntervalBridge`](@ref):
+
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+MOI.Bridges.Constraint.concrete_bridge_type(
+    MOI.Bridges.Constraint.SplitIntervalBridge{Float64},
+    MOI.SingleVariable,
+    MOI.Interval{Float64},
+)
 
 # output
 
-MOI.Bridges.Constraint.SplitIntervalBridge{Float64,MOI.SingleVariable}
+MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable,MathOptInterface.Interval{Float64},MathOptInterface.GreaterThan{Float64},MathOptInterface.LessThan{Float64}}
 ```
 """
-function concrete_bridge_type(bridge_type::DataType,
-                              ::Type{<:MOI.AbstractFunction},
-                              ::Type{<:MOI.AbstractSet})
+function concrete_bridge_type(
+    bridge_type::DataType,
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractSet},
+)
     return bridge_type
 end
 

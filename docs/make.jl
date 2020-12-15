@@ -1,5 +1,10 @@
 using Documenter, MathOptInterface
 
+"""
+Pass `julia docs/make.jl --fix` to rebuild the doctests.
+"""
+const _FIX = findfirst(isequal("--fix"), ARGS) !== nothing
+
 makedocs(
     sitename = "MathOptInterface",
     format = Documenter.HTML(
@@ -8,8 +13,10 @@ makedocs(
         mathengine = Documenter.MathJax2(),
         collapselevel = 1,
     ),
-    # See https://github.com/jump-dev/JuMP.jl/issues/1576
     strict = true,
+    modules = [MathOptInterface],
+    checkdocs = :exports,
+    doctest = _FIX ? :fix : true,
     pages = [
         "Introduction" => "index.md",
         "Manual" => [
