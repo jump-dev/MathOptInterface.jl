@@ -10,13 +10,20 @@ the set in `model`. If `allow_modify_function` is `true` then the function
 """
 function normalize_and_add_constraint end
 
-function normalize_and_add_constraint(model::MOI.ModelLike,
-                                      func::MOI.AbstractScalarFunction,
-                                      set::MOI.AbstractScalarSet;
-                                      allow_modify_function::Bool=false) where T
+function normalize_and_add_constraint(
+    model::MOI.ModelLike,
+    func::MOI.AbstractScalarFunction,
+    set::MOI.AbstractScalarSet;
+    allow_modify_function::Bool = false,
+) where {T}
     return MOI.add_constraint(
-        model, normalize_constant(
-            func, set; allow_modify_function=allow_modify_function)...)
+        model,
+        normalize_constant(
+            func,
+            set;
+            allow_modify_function = allow_modify_function,
+        )...,
+    )
 end
 
 """
@@ -30,13 +37,18 @@ Return the `func`-in-`set` constraint in normalized form. That is, if `func` is
 constant is moved to the set. If `allow_modify_function` is `true` then the
 function `func` can be modified.
 """
-function normalize_constant(func::MOI.AbstractFunction, set::MOI.AbstractSet;
-                            allow_modify_function::Bool=false)
+function normalize_constant(
+    func::MOI.AbstractFunction,
+    set::MOI.AbstractSet;
+    allow_modify_function::Bool = false,
+)
     return func, set
 end
 function normalize_constant(
-    func::Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}},
-    set::MOI.AbstractScalarSet; allow_modify_function::Bool=false) where T
+    func::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
+    set::MOI.AbstractScalarSet;
+    allow_modify_function::Bool = false,
+) where {T}
     set = shift_constant(set, -func.constant)
     if !allow_modify_function
         func = copy(func)

@@ -54,39 +54,47 @@ index_to_key(::Type{MyKey}, i::Int64) = MyKey(i)
 key_to_index(key::MyKey) = key.x
 ```
 """
-mutable struct CleverDict{K, V, F<:Function, I<:Function} <: AbstractDict{K, V}
+mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     last_index::Int64
     hash::F
     inverse_hash::I
     is_dense::Bool
     set::BitSet
     vector::Vector{V}
-    dict::OrderedCollections.OrderedDict{K, V}
-    function CleverDict{K, V}(
-        n::Integer = 0
-    ) where {K, V}
+    dict::OrderedCollections.OrderedDict{K,V}
+    function CleverDict{K,V}(n::Integer = 0) where {K,V}
         set = BitSet()
         sizehint!(set, n)
         vec = Vector{K}(undef, n)
         inverse_hash = x -> index_to_key(K, x)
         hash = key_to_index
-        new{K, V, typeof(hash), typeof(inverse_hash)}(
-            0, hash, inverse_hash, true,
+        return new{K,V,typeof(hash),typeof(inverse_hash)}(
+            0,
+            hash,
+            inverse_hash,
+            true,
             set,
             vec,
-            OrderedCollections.OrderedDict{K, V}())
+            OrderedCollections.OrderedDict{K,V}(),
+        )
     end
-    function CleverDict{K, V}(hash::F, inverse_hash::I,
-        n::Integer = 0
-    ) where {K, V, F, I}
+    function CleverDict{K,V}(
+        hash::F,
+        inverse_hash::I,
+        n::Integer = 0,
+    ) where {K,V,F,I}
         set = BitSet()
         sizehint!(set, n)
         vec = Vector{K}(undef, n)
-        new{K, V, F, I}(
-            0, hash, inverse_hash, true,
+        return new{K,V,F,I}(
+            0,
+            hash,
+            inverse_hash,
+            true,
             set,
             vec,
-            OrderedCollections.OrderedDict{K, V}())
+            OrderedCollections.OrderedDict{K,V}(),
+        )
     end
 end
 
@@ -112,7 +120,7 @@ _is_dense(c::CleverDict) = c.is_dense
 
 Set `val` in the next available key, and return that key.
 """
-function add_item(c::CleverDict{K, V}, val::V)::K where {K, V}
+function add_item(c::CleverDict{K,V}, val::V)::K where {K,V}
     if c.last_index == -1
         error("Keys were added out of order. `add_item` requires that keys are always added in order.")
     end
@@ -139,7 +147,7 @@ function Base.length(c::CleverDict)
     return _is_dense(c) ? length(c.set) : length(c.dict)
 end
 
-function Base.haskey(c::CleverDict{K}, key::K) where K
+function Base.haskey(c::CleverDict{K}, key::K) where {K}
     return _is_dense(c) ? c.hash(key)::Int64 in c.set : haskey(c.dict, key)
 end
 
@@ -165,7 +173,7 @@ function Base.getindex(c::CleverDict, key)
     end
 end
 
-function Base.setindex!(c::CleverDict{K, V}, value::V, key::K)::V where {K, V}
+function Base.setindex!(c::CleverDict{K,V}, value::V, key::K)::V where {K,V}
     h = c.hash(key)::Int64
     if c.last_index != -1
         if h == c.last_index + 1
@@ -194,7 +202,7 @@ function Base.setindex!(c::CleverDict{K, V}, value::V, key::K)::V where {K, V}
     return value
 end
 
-function _rehash(c::CleverDict{K}) where K
+function _rehash(c::CleverDict{K}) where {K}
     sizehint!(c.dict, length(c.vector))
     @assert _is_dense(c)
     # Since c is currently dense, iterator protocol from CleverDict is used.
@@ -207,7 +215,7 @@ function _rehash(c::CleverDict{K}) where K
     return
 end
 
-function Base.delete!(c::CleverDict{K}, k::K) where K
+function Base.delete!(c::CleverDict{K}, k::K) where {K}
     if _is_dense(c)
         _rehash(c)
     end
@@ -222,7 +230,7 @@ struct LinearIndex
     i::Int64
 end
 
-function Base.getindex(c::CleverDict{K, V}, index::LinearIndex)::V where {K, V}
+function Base.getindex(c::CleverDict{K,V}, index::LinearIndex)::V where {K,V}
     if !(1 <= index.i <= length(c))
         throw(KeyError(index))
     end
@@ -265,12 +273,12 @@ struct State
     uint::UInt64
     # ::Integer is needed for 32-bit machines.
     State(i::Integer) = new(Int64(i), UInt64(0))
-    State(i::Integer, j::UInt64) = new(Int64(i) , j)
+    State(i::Integer, j::UInt64) = new(Int64(i), j)
 end
 
 function Base.iterate(
-    c::CleverDict{K, V}
-)::Union{Nothing, Tuple{Pair{K, V}, State}} where {K, V}
+    c::CleverDict{K,V},
+)::Union{Nothing,Tuple{Pair{K,V},State}} where {K,V}
     if _is_dense(c)
         itr = iterate(c.set)
         if itr === nothing
@@ -290,14 +298,15 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            return convert(Pair{K, V}, el), State(i)
+            return convert(Pair{K,V}, el), State(i)
         end
     end
 end
 
 function Base.iterate(
-    c::CleverDict{K, V}, s::State
-)::Union{Nothing, Tuple{Pair{K, V}, State}} where {K, V}
+    c::CleverDict{K,V},
+    s::State,
+)::Union{Nothing,Tuple{Pair{K,V},State}} where {K,V}
     # Note that BitSet is defined by machine Int, so we need to cast any `.int`
     # fields to `Int` for 32-bit machines.
     if _is_dense(c)
@@ -323,7 +332,7 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            return convert(Pair{K, V}, el), State(i)
+            return convert(Pair{K,V}, el), State(i)
         end
     end
 end
@@ -331,7 +340,7 @@ end
 # we do not have to implement values and keys functions because they can rely
 # on `Base`s fallback that uses the iterator protocol
 
-function Base.sizehint!(c::CleverDict{K, V}, n) where {K, V}
+function Base.sizehint!(c::CleverDict{K,V}, n) where {K,V}
     if _is_dense(c)
         sizehint!(c.vector, n)
         sizehint!(c.set, n)
@@ -341,7 +350,7 @@ function Base.sizehint!(c::CleverDict{K, V}, n) where {K, V}
     return
 end
 
-function Base.resize!(c::CleverDict{K, V}, n) where {K, V}
+function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
     if _is_dense(c)
         if n < length(c.vector)
             error("CleverDict cannot be resized to a size smaller than the current")

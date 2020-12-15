@@ -78,24 +78,43 @@ function parsefunction(ex)
             affine_terms = ParsedVectorAffineTerm[]
             quadratic_terms = ParsedVectorQuadraticTerm[]
             constant = Float64[]
-            for (outindex,f) in enumerate(singlefunctions)
+            for (outindex, f) in enumerate(singlefunctions)
                 if isa(f, ParsedSingleVariable)
-                    push!(affine_terms, ParsedVectorAffineTerm(outindex, ParsedScalarAffineTerm(1.0, f.variable)))
+                    push!(
+                        affine_terms,
+                        ParsedVectorAffineTerm(
+                            outindex,
+                            ParsedScalarAffineTerm(1.0, f.variable),
+                        ),
+                    )
                     push!(constant, 0.0)
                 elseif isa(f, ParsedScalarAffineFunction)
-                    append!(affine_terms, ParsedVectorAffineTerm.(outindex, f.terms))
+                    append!(
+                        affine_terms,
+                        ParsedVectorAffineTerm.(outindex, f.terms),
+                    )
                     push!(constant, f.constant)
                 else
                     @assert isa(f, ParsedScalarQuadraticFunction)
-                    append!(affine_terms, ParsedVectorAffineTerm.(outindex, f.affine_terms))
-                    append!(quadratic_terms, ParsedVectorQuadraticTerm.(outindex, f.quadratic_terms))
+                    append!(
+                        affine_terms,
+                        ParsedVectorAffineTerm.(outindex, f.affine_terms),
+                    )
+                    append!(
+                        quadratic_terms,
+                        ParsedVectorQuadraticTerm.(outindex, f.quadratic_terms),
+                    )
                     push!(constant, f.constant)
                 end
             end
             if length(quadratic_terms) == 0
                 return ParsedVectorAffineFunction(affine_terms, constant)
             else
-                return ParsedVectorQuadraticFunction(affine_terms, quadratic_terms, constant)
+                return ParsedVectorQuadraticFunction(
+                    affine_terms,
+                    quadratic_terms,
+                    constant,
+                )
             end
         end
     else
@@ -103,10 +122,10 @@ function parsefunction(ex)
         # TODO: generalize. x - y + z would be useful
         if isexpr(ex, :call) && ex.args[1] == :*
             # handle 2x as (+)(2x)
-            ex = Expr(:call,:+,ex)
+            ex = Expr(:call, :+, ex)
         end
         if ex isa Number
-            ex = Expr(:call,:+,ex)
+            ex = Expr(:call, :+, ex)
         end
         @assert isexpr(ex, :call)
         if ex.args[1] != :+
@@ -121,7 +140,10 @@ function parsefunction(ex)
                     # constant * variable
                     @assert isa(subex.args[2], Number)
                     @assert isa(subex.args[3], Symbol)
-                    push!(affine_terms, ParsedScalarAffineTerm(subex.args[2], subex.args[3]))
+                    push!(
+                        affine_terms,
+                        ParsedScalarAffineTerm(subex.args[2], subex.args[3]),
+                    )
                 else
                     # constant * variable * variable for quadratic
                     @assert length(subex.args) == 4 "Multiplication with more than three terms not supported"
@@ -129,11 +151,18 @@ function parsefunction(ex)
                     @assert isa(subex.args[3], Symbol)
                     @assert isa(subex.args[4], Symbol)
                     if subex.args[3] == subex.args[4]
-                        coefficient = 2*subex.args[2]
+                        coefficient = 2 * subex.args[2]
                     else
                         coefficient = subex.args[2]
                     end
-                    push!(quadratic_terms, ParsedScalarQuadraticTerm(coefficient, subex.args[3], subex.args[4]))
+                    push!(
+                        quadratic_terms,
+                        ParsedScalarQuadraticTerm(
+                            coefficient,
+                            subex.args[3],
+                            subex.args[4],
+                        ),
+                    )
                 end
             elseif isa(subex, Symbol)
                 push!(affine_terms, ParsedScalarAffineTerm(1.0, subex))
@@ -145,7 +174,11 @@ function parsefunction(ex)
         if length(quadratic_terms) == 0
             return ParsedScalarAffineFunction(affine_terms, constant)
         else
-            return ParsedScalarQuadraticFunction(affine_terms, quadratic_terms, constant)
+            return ParsedScalarQuadraticFunction(
+                affine_terms,
+                quadratic_terms,
+                constant,
+            )
         end
     end
 end
@@ -183,20 +216,39 @@ end
 # Vector{ParsedScalarQuadraticTerm} and Vector{ParsedVectorQuadraticTerm}
 parsedtoMOI(model, s::Vector) = parsedtoMOI.(model, s)
 
-parsedtoMOI(model, s::Union{Float64, Int64}) = s
+parsedtoMOI(model, s::Union{Float64,Int64}) = s
 
-
-for typename in [:ParsedScalarAffineTerm,:ParsedScalarAffineFunction,:ParsedVectorAffineTerm,:ParsedVectorAffineFunction,
-                 :ParsedScalarQuadraticTerm,:ParsedScalarQuadraticFunction,:ParsedVectorQuadraticTerm,:ParsedVectorQuadraticFunction,
-                 :ParsedSingleVariable,:ParsedVectorOfVariables]
+for typename in [
+    :ParsedScalarAffineTerm,
+    :ParsedScalarAffineFunction,
+    :ParsedVectorAffineTerm,
+    :ParsedVectorAffineFunction,
+    :ParsedScalarQuadraticTerm,
+    :ParsedScalarQuadraticFunction,
+    :ParsedVectorQuadraticTerm,
+    :ParsedVectorQuadraticFunction,
+    :ParsedSingleVariable,
+    :ParsedVectorOfVariables,
+]
     moiname = Meta.parse(replace(string(typename), "Parsed" => "MOI."))
     fields = fieldnames(eval(typename))
-    constructor = Expr(:call, moiname, [Expr(:call,:parsedtoMOI,:model,Expr(:.,:f,Base.Meta.quot(field))) for field in fields]...)
+    constructor = Expr(
+        :call,
+        moiname,
+        [
+            Expr(
+                :call,
+                :parsedtoMOI,
+                :model,
+                Expr(:., :f, Base.Meta.quot(field)),
+            ) for field in fields
+        ]...,
+    )
     @eval parsedtoMOI(model, f::$typename) = $constructor
 end
 
 function loadfromstring!(model, s)
-    parsedlines = filter(ex -> ex != nothing, Meta.parse.(split(s,"\n")))
+    parsedlines = filter(ex -> ex != nothing, Meta.parse.(split(s, "\n")))
 
     for line in parsedlines
         label, ex = separatelabel(line)

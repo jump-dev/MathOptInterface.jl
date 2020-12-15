@@ -29,8 +29,9 @@ A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
   perform a modification not supported by the optimizer results in a drop to
   `EMPTY_OPTIMIZER` mode.
 """
-mutable struct CachingOptimizer{OptimizerType, ModelType<:MOI.ModelLike} <: MOI.AbstractOptimizer
-    optimizer::Union{Nothing, OptimizerType}
+mutable struct CachingOptimizer{OptimizerType,ModelType<:MOI.ModelLike} <:
+               MOI.AbstractOptimizer
+    optimizer::Union{Nothing,OptimizerType}
     model_cache::ModelType
     state::CachingOptimizerState
     mode::CachingOptimizerMode
@@ -41,8 +42,18 @@ mutable struct CachingOptimizer{OptimizerType, ModelType<:MOI.ModelLike} <: MOI.
     # optimizer indices.
 end
 
-function CachingOptimizer(model_cache::MOI.ModelLike, mode::CachingOptimizerMode)
-    CachingOptimizer{MOI.AbstractOptimizer, typeof(model_cache)}(nothing, model_cache, NO_OPTIMIZER, mode, IndexMap(), IndexMap())
+function CachingOptimizer(
+    model_cache::MOI.ModelLike,
+    mode::CachingOptimizerMode,
+)
+    return CachingOptimizer{MOI.AbstractOptimizer,typeof(model_cache)}(
+        nothing,
+        model_cache,
+        NO_OPTIMIZER,
+        mode,
+        IndexMap(),
+        IndexMap(),
+    )
 end
 
 function Base.show(io::IO, C::CachingOptimizer)
@@ -51,9 +62,9 @@ function Base.show(io::IO, C::CachingOptimizer)
     print(io, "\n$(indent)in state $(C.state)")
     print(io, "\n$(indent)in mode $(C.mode)")
     print(io, "\n$(indent)with model cache ")
-    show(IOContext(io, :indent => get(io, :indent, 0)+2), C.model_cache)
+    show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.model_cache)
     print(io, "\n$(indent)with optimizer ")
-    show(IOContext(io, :indent => get(io, :indent, 0)+2), C.optimizer)
+    return show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.optimizer)
 end
 
 """
@@ -67,10 +78,20 @@ typeof(model_cache)}` so it does not support the function
 `reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
 `new_optimizer` is different from the type of `optimizer`.
 """
-function CachingOptimizer(model_cache::MOI.ModelLike, optimizer::MOI.AbstractOptimizer)
+function CachingOptimizer(
+    model_cache::MOI.ModelLike,
+    optimizer::MOI.AbstractOptimizer,
+)
     @assert MOI.is_empty(model_cache)
     @assert MOI.is_empty(optimizer)
-    CachingOptimizer{typeof(optimizer), typeof(model_cache)}(optimizer, model_cache, ATTACHED_OPTIMIZER, AUTOMATIC, IndexMap(), IndexMap())
+    return CachingOptimizer{typeof(optimizer),typeof(model_cache)}(
+        optimizer,
+        model_cache,
+        ATTACHED_OPTIMIZER,
+        AUTOMATIC,
+        IndexMap(),
+        IndexMap(),
+    )
 end
 
 ## Methods for managing the state of CachingOptimizer.
@@ -147,7 +168,8 @@ function attach_optimizer(model::CachingOptimizer)
     @assert model.state == EMPTY_OPTIMIZER
     # We do not need to copy names because name-related operations are handled
     # by `m.model_cache`
-    indexmap = MOI.copy_to(model.optimizer, model.model_cache, copy_names=false)
+    indexmap =
+        MOI.copy_to(model.optimizer, model.model_cache, copy_names = false)
     model.state = ATTACHED_OPTIMIZER
     # MOI does not define the type of index_map, so we have to convert it
     # into an actual IndexMap. Also load the reverse IndexMap.
@@ -165,7 +187,7 @@ function _reverse_index_map(src::IndexMap)
 end
 
 function _reverse_dict(dest::AbstractDict, src::AbstractDict)
-    for (k,v) in src
+    for (k, v) in src
         dest[v] = k
     end
 end
@@ -175,7 +197,7 @@ end
 
 function _standardize(d::AbstractDict)
     map = IndexMap()
-    for (k,v) in d
+    for (k, v) in d
         map[k] = v
     end
     return map
@@ -200,7 +222,7 @@ function MOI.empty!(m::CachingOptimizer)
         m.state = ATTACHED_OPTIMIZER
     end
     m.model_to_optimizer_map = IndexMap()
-    m.optimizer_to_model_map = IndexMap()
+    return m.optimizer_to_model_map = IndexMap()
 end
 MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
@@ -212,7 +234,7 @@ function MOI.optimize!(m::CachingOptimizer)
     end
     # TODO: better error message if no optimizer is set
     @assert m.state == ATTACHED_OPTIMIZER
-    MOI.optimize!(m.optimizer)
+    return MOI.optimize!(m.optimizer)
 end
 
 function MOI.add_variable(m::CachingOptimizer)
@@ -265,10 +287,19 @@ function MOI.add_variables(m::CachingOptimizer, n)
     return vindices
 end
 
-function MOI.supports_add_constrained_variable(m::CachingOptimizer, S::Type{<:MOI.AbstractScalarSet})
-    return MOI.supports_add_constrained_variable(m.model_cache, S) && (m.state == NO_OPTIMIZER || MOI.supports_add_constrained_variable(m.optimizer, S))
+function MOI.supports_add_constrained_variable(
+    m::CachingOptimizer,
+    S::Type{<:MOI.AbstractScalarSet},
+)
+    return MOI.supports_add_constrained_variable(m.model_cache, S) && (
+        m.state == NO_OPTIMIZER ||
+        MOI.supports_add_constrained_variable(m.optimizer, S)
+    )
 end
-function MOI.add_constrained_variable(m::CachingOptimizer, set::MOI.AbstractScalarSet)
+function MOI.add_constrained_variable(
+    m::CachingOptimizer,
+    set::MOI.AbstractScalarSet,
+)
     if m.state == MOIU.ATTACHED_OPTIMIZER
         if m.mode == MOIU.AUTOMATIC
             try
@@ -296,17 +327,32 @@ function MOI.add_constrained_variable(m::CachingOptimizer, set::MOI.AbstractScal
     return vindex, cindex
 end
 
-function _supports_add_constrained_variables(m::CachingOptimizer, S::Type{<:MOI.AbstractVectorSet})
-    return MOI.supports_add_constrained_variables(m.model_cache, S) && (m.state == NO_OPTIMIZER || MOI.supports_add_constrained_variables(m.optimizer, S))
+function _supports_add_constrained_variables(
+    m::CachingOptimizer,
+    S::Type{<:MOI.AbstractVectorSet},
+)
+    return MOI.supports_add_constrained_variables(m.model_cache, S) && (
+        m.state == NO_OPTIMIZER ||
+        MOI.supports_add_constrained_variables(m.optimizer, S)
+    )
 end
 # Split in two to solve ambiguity
-function MOI.supports_add_constrained_variables(m::CachingOptimizer, ::Type{MOI.Reals})
+function MOI.supports_add_constrained_variables(
+    m::CachingOptimizer,
+    ::Type{MOI.Reals},
+)
     return _supports_add_constrained_variables(m, MOI.Reals)
 end
-function MOI.supports_add_constrained_variables(m::CachingOptimizer, S::Type{<:MOI.AbstractVectorSet})
+function MOI.supports_add_constrained_variables(
+    m::CachingOptimizer,
+    S::Type{<:MOI.AbstractVectorSet},
+)
     return _supports_add_constrained_variables(m, S)
 end
-function MOI.add_constrained_variables(m::CachingOptimizer, set::MOI.AbstractVectorSet)
+function MOI.add_constrained_variables(
+    m::CachingOptimizer,
+    set::MOI.AbstractVectorSet,
+)
     if m.state == ATTACHED_OPTIMIZER
         if m.mode == AUTOMATIC
             try
@@ -336,15 +382,28 @@ function MOI.add_constrained_variables(m::CachingOptimizer, set::MOI.AbstractVec
     return vindices, cindex
 end
 
-function MOI.supports_constraint(m::CachingOptimizer, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})
-    MOI.supports_constraint(m.model_cache, F, S) && (m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S))
+function MOI.supports_constraint(
+    m::CachingOptimizer,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOI.supports_constraint(m.model_cache, F, S) &&
+        (m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S))
 end
 
-function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set::MOI.AbstractSet)
+function MOI.add_constraint(
+    m::CachingOptimizer,
+    func::MOI.AbstractFunction,
+    set::MOI.AbstractSet,
+)
     if m.state == ATTACHED_OPTIMIZER
         if m.mode == AUTOMATIC
             try
-                cindex_optimizer = MOI.add_constraint(m.optimizer, map_indices(m.model_to_optimizer_map, func), set)
+                cindex_optimizer = MOI.add_constraint(
+                    m.optimizer,
+                    map_indices(m.model_to_optimizer_map, func),
+                    set,
+                )
             catch err
                 if err isa MOI.NotAllowedError
                     # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
@@ -356,7 +415,11 @@ function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set
                 end
             end
         else
-            cindex_optimizer = MOI.add_constraint(m.optimizer, map_indices(m.model_to_optimizer_map, func), set)
+            cindex_optimizer = MOI.add_constraint(
+                m.optimizer,
+                map_indices(m.model_to_optimizer_map, func),
+                set,
+            )
         end
     end
     cindex = MOI.add_constraint(m.model_cache, func, set)
@@ -367,7 +430,11 @@ function MOI.add_constraint(m::CachingOptimizer, func::MOI.AbstractFunction, set
     return cindex
 end
 
-function MOI.modify(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFunctionModification)
+function MOI.modify(
+    m::CachingOptimizer,
+    cindex::CI,
+    change::MOI.AbstractFunctionModification,
+)
     if m.state == ATTACHED_OPTIMIZER
         cindex_optimizer = m.model_to_optimizer_map[cindex]
         change_optimizer = map_indices(m.model_to_optimizer_map, change)
@@ -385,19 +452,29 @@ function MOI.modify(m::CachingOptimizer, cindex::CI, change::MOI.AbstractFunctio
             MOI.modify(m.optimizer, cindex_optimizer, change_optimizer)
         end
     end
-    MOI.modify(m.model_cache, cindex, change)
+    return MOI.modify(m.model_cache, cindex, change)
 end
 
 # This function avoids duplicating code in the MOI.set methods for
 # ConstraintSet and ConstraintFunction methods, but allows us to strongly type
 # the third and fourth arguments of the set methods so that we only support
 # setting the same type of set or function.
-function replace_constraint_function_or_set(m::CachingOptimizer, attr, cindex, replacement)
+function replace_constraint_function_or_set(
+    m::CachingOptimizer,
+    attr,
+    cindex,
+    replacement,
+)
     replacement_optimizer = map_indices(m.model_to_optimizer_map, replacement)
     if m.state == ATTACHED_OPTIMIZER
         if m.mode == AUTOMATIC
             try
-                MOI.set(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement_optimizer)
+                MOI.set(
+                    m.optimizer,
+                    attr,
+                    m.model_to_optimizer_map[cindex],
+                    replacement_optimizer,
+                )
             catch err
                 if err isa MOI.NotAllowedError
                     reset_optimizer(m)
@@ -406,21 +483,50 @@ function replace_constraint_function_or_set(m::CachingOptimizer, attr, cindex, r
                 end
             end
         else
-            MOI.set(m.optimizer, attr, m.model_to_optimizer_map[cindex], replacement_optimizer)
+            MOI.set(
+                m.optimizer,
+                attr,
+                m.model_to_optimizer_map[cindex],
+                replacement_optimizer,
+            )
         end
     end
-    MOI.set(m.model_cache, attr, cindex, replacement)
+    return MOI.set(m.model_cache, attr, cindex, replacement)
 end
 
-function MOI.set(m::CachingOptimizer, ::MOI.ConstraintSet, cindex::CI{F,S}, set::S) where {F,S}
-    replace_constraint_function_or_set(m, MOI.ConstraintSet(), cindex, set)
+function MOI.set(
+    m::CachingOptimizer,
+    ::MOI.ConstraintSet,
+    cindex::CI{F,S},
+    set::S,
+) where {F,S}
+    return replace_constraint_function_or_set(
+        m,
+        MOI.ConstraintSet(),
+        cindex,
+        set,
+    )
 end
 
-function MOI.set(m::CachingOptimizer, ::MOI.ConstraintFunction, cindex::CI{F}, func::F) where F
-    replace_constraint_function_or_set(m, MOI.ConstraintFunction(), cindex, func)
+function MOI.set(
+    m::CachingOptimizer,
+    ::MOI.ConstraintFunction,
+    cindex::CI{F},
+    func::F,
+) where {F}
+    return replace_constraint_function_or_set(
+        m,
+        MOI.ConstraintFunction(),
+        cindex,
+        func,
+    )
 end
 
-function MOI.modify(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MOI.AbstractFunctionModification)
+function MOI.modify(
+    m::CachingOptimizer,
+    obj::MOI.ObjectiveFunction,
+    change::MOI.AbstractFunctionModification,
+)
     if m.state == ATTACHED_OPTIMIZER
         change_optimizer = map_indices(m.model_to_optimizer_map, change)
         if m.mode == AUTOMATIC
@@ -437,10 +543,12 @@ function MOI.modify(m::CachingOptimizer, obj::MOI.ObjectiveFunction, change::MOI
             MOI.modify(m.optimizer, obj, change_optimizer)
         end
     end
-    MOI.modify(m.model_cache, obj, change)
+    return MOI.modify(m.model_cache, obj, change)
 end
 
-MOI.is_valid(m::CachingOptimizer, index::MOI.Index) = MOI.is_valid(m.model_cache, index)
+function MOI.is_valid(m::CachingOptimizer, index::MOI.Index)
+    return MOI.is_valid(m.model_cache, index)
+end
 
 function MOI.delete(m::CachingOptimizer, index::MOI.Index)
     if m.state == ATTACHED_OPTIMIZER
@@ -469,7 +577,7 @@ function MOI.delete(m::CachingOptimizer, index::MOI.Index)
         delete!(m.optimizer_to_model_map, m.model_to_optimizer_map[index])
         delete!(m.model_to_optimizer_map, index)
     end
-    MOI.delete(m.model_cache, index)
+    return MOI.delete(m.model_cache, index)
 end
 
 function MOI.delete(m::CachingOptimizer, indices::Vector{<:MOI.Index})
@@ -480,7 +588,8 @@ function MOI.delete(m::CachingOptimizer, indices::Vector{<:MOI.Index})
                 throw(MOI.InvalidIndex(index))
             end
         end
-        indices_optimizer = [m.model_to_optimizer_map[index] for index in indices]
+        indices_optimizer =
+            [m.model_to_optimizer_map[index] for index in indices]
         if m.mode == AUTOMATIC
             try
                 MOI.delete(m.optimizer, indices_optimizer)
@@ -503,7 +612,7 @@ function MOI.delete(m::CachingOptimizer, indices::Vector{<:MOI.Index})
             delete!(m.model_to_optimizer_map, index)
         end
     end
-    MOI.delete(m.model_cache, indices)
+    return MOI.delete(m.model_cache, indices)
 end
 
 # TODO: add_constraints, transform
@@ -531,13 +640,15 @@ function MOI.set(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
             MOI.set(m.optimizer, attr, optimizer_value)
         end
     end
-    MOI.set(m.model_cache, attr, value)
+    return MOI.set(m.model_cache, attr, value)
 end
 
-function MOI.set(m::CachingOptimizer,
-                 attr::Union{MOI.AbstractVariableAttribute,
-                             MOI.AbstractConstraintAttribute},
-                 index::MOI.Index, value)
+function MOI.set(
+    m::CachingOptimizer,
+    attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+    index::MOI.Index,
+    value,
+)
     if m.state == ATTACHED_OPTIMIZER
         optimizer_index = m.model_to_optimizer_map[index]
         optimizer_value = map_indices(m.model_to_optimizer_map, value)
@@ -555,22 +666,25 @@ function MOI.set(m::CachingOptimizer,
             MOI.set(m.optimizer, attr, optimizer_index, optimizer_value)
         end
     end
-    MOI.set(m.model_cache, attr, index, value)
+    return MOI.set(m.model_cache, attr, index, value)
 end
 
-function MOI.supports(m::CachingOptimizer,
-                      attr::Union{MOI.AbstractVariableAttribute,
-                                  MOI.AbstractConstraintAttribute},
-                      IndexType::Type{<:MOI.Index})
-    return MOI.supports(m.model_cache, attr, IndexType) &&
-        (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr, IndexType))
+function MOI.supports(
+    m::CachingOptimizer,
+    attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+    IndexType::Type{<:MOI.Index},
+)
+    return MOI.supports(m.model_cache, attr, IndexType) && (
+        m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr, IndexType)
+    )
 end
 
-function MOI.supports(m::CachingOptimizer,
-                      attr::Union{MOI.AbstractModelAttribute,
-                                  MOI.AbstractOptimizerAttribute})
+function MOI.supports(
+    m::CachingOptimizer,
+    attr::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
+)
     return MOI.supports(m.model_cache, attr) &&
-        (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr))
+           (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr))
 end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
@@ -583,48 +697,63 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
             elseif attr == MOI.DualStatus()
                 return MOI.NO_SOLUTION
             else
-                error("Cannot query $(attr) from caching optimizer because no" *
-                      " optimizer is attached.")
+                error(
+                    "Cannot query $(attr) from caching optimizer because no" *
+                    " optimizer is attached.",
+                )
             end
         end
-        return map_indices(model.optimizer_to_model_map,
-                             MOI.get(model.optimizer, attr))
+        return map_indices(
+            model.optimizer_to_model_map,
+            MOI.get(model.optimizer, attr),
+        )
     else
         return MOI.get(model.model_cache, attr)
     end
 end
-function MOI.get(model::CachingOptimizer,
-                 attr::Union{MOI.AbstractVariableAttribute,
-                             MOI.AbstractConstraintAttribute},
-                 index::MOI.Index)
+function MOI.get(
+    model::CachingOptimizer,
+    attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+    index::MOI.Index,
+)
     if MOI.is_set_by_optimize(attr)
         if state(model) == NO_OPTIMIZER
-            error("Cannot query $(attr) from caching optimizer because no " *
-                  "optimizer is attached.")
+            error(
+                "Cannot query $(attr) from caching optimizer because no " *
+                "optimizer is attached.",
+            )
         end
-        return map_indices(model.optimizer_to_model_map,
-                             MOI.get(model.optimizer, attr,
-                                     model.model_to_optimizer_map[index]))
+        return map_indices(
+            model.optimizer_to_model_map,
+            MOI.get(model.optimizer, attr, model.model_to_optimizer_map[index]),
+        )
     else
         return MOI.get(model.model_cache, attr, index)
     end
 end
-function MOI.get(model::CachingOptimizer,
-                 attr::Union{MOI.AbstractVariableAttribute,
-                             MOI.AbstractConstraintAttribute},
-                 indices::Vector{<:MOI.Index})
+function MOI.get(
+    model::CachingOptimizer,
+    attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+    indices::Vector{<:MOI.Index},
+)
     if MOI.is_set_by_optimize(attr)
         if state(model) == NO_OPTIMIZER
-            error("Cannot query $(attr) from caching optimizer because no " *
-                  "optimizer is attached.")
+            error(
+                "Cannot query $(attr) from caching optimizer because no " *
+                "optimizer is attached.",
+            )
         end
-        return map_indices(model.optimizer_to_model_map,
-                             MOI.get(model.optimizer, attr,
-                                     map(index -> model.model_to_optimizer_map[index],
-                                         indices)))
-  else
-      return MOI.get(model.model_cache, attr, indices)
-  end
+        return map_indices(
+            model.optimizer_to_model_map,
+            MOI.get(
+                model.optimizer,
+                attr,
+                map(index -> model.model_to_optimizer_map[index], indices),
+            ),
+        )
+    else
+        return MOI.get(model.model_cache, attr, indices)
+    end
 end
 
 #####
@@ -634,37 +763,43 @@ end
 # Names are not copied, i.e. we use the option `copy_names=false` in
 # `attachoptimizer`, so the caching optimizer can support names even if the
 # optimizer does not.
-function MOI.supports(model::CachingOptimizer,
-                      attr::Union{MOI.VariableName,
-                                  MOI.ConstraintName},
-                      IndexType::Type{<:MOI.Index})
+function MOI.supports(
+    model::CachingOptimizer,
+    attr::Union{MOI.VariableName,MOI.ConstraintName},
+    IndexType::Type{<:MOI.Index},
+)
     return MOI.supports(model.model_cache, attr, IndexType)
 end
-function MOI.set(model::CachingOptimizer,
-                 attr::Union{MOI.VariableName, MOI.ConstraintName},
-                 index::MOI.Index, value)
-    MOI.set(model.model_cache, attr, index, value)
+function MOI.set(
+    model::CachingOptimizer,
+    attr::Union{MOI.VariableName,MOI.ConstraintName},
+    index::MOI.Index,
+    value,
+)
+    return MOI.set(model.model_cache, attr, index, value)
 end
 
-function MOI.supports(m::CachingOptimizer,
-                      attr::MOI.Name)
+function MOI.supports(m::CachingOptimizer, attr::MOI.Name)
     return MOI.supports(m.model_cache, attr)
 end
 function MOI.set(model::CachingOptimizer, attr::MOI.Name, value)
-    MOI.set(model.model_cache, attr, value)
+    return MOI.set(model.model_cache, attr, value)
 end
 
 function MOI.get(m::CachingOptimizer, IdxT::Type{<:MOI.Index}, name::String)
     return MOI.get(m.model_cache, IdxT, name)
 end
 
-function MOI.set(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute,
-                 value)
+function MOI.set(
+    model::CachingOptimizer,
+    attr::MOI.AbstractOptimizerAttribute,
+    value,
+)
     optimizer_value = map_indices(model.model_to_optimizer_map, value)
     if model.optimizer !== nothing
         MOI.set(model.optimizer, attr, optimizer_value)
     end
-    MOI.set(model.model_cache, attr, value)
+    return MOI.set(model.model_cache, attr, value)
 end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
@@ -673,11 +808,15 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
         # `NumberOfThreads`) should also be stored in the cache so we could
         # return the value stored in the cache instead. However, for
         # non-copyable attributes( e.g. `SolverName`) the error is appropriate.
-        error("Cannot query $(attr) from caching optimizer because no " *
-              "optimizer is attached.")
+        error(
+            "Cannot query $(attr) from caching optimizer because no " *
+            "optimizer is attached.",
+        )
     end
-    return map_indices(model.optimizer_to_model_map,
-                         MOI.get(model.optimizer, attr))
+    return map_indices(
+        model.optimizer_to_model_map,
+        MOI.get(model.optimizer, attr),
+    )
 end
 
 # Force users to specify whether the attribute should be queried from the
@@ -687,82 +826,186 @@ end
 # These are expert methods to get or set attributes directly in the model_cache
 # or optimizer.
 
-struct AttributeFromModelCache{T <: MOI.AnyAttribute}
+struct AttributeFromModelCache{T<:MOI.AnyAttribute}
     attr::T
 end
 
-struct AttributeFromOptimizer{T <: MOI.AnyAttribute}
+struct AttributeFromOptimizer{T<:MOI.AnyAttribute}
     attr::T
 end
 
-function MOI.get(m::CachingOptimizer, attr::AttributeFromModelCache{T}) where {T <: MOI.AbstractModelAttribute}
+function MOI.get(
+    m::CachingOptimizer,
+    attr::AttributeFromModelCache{T},
+) where {T<:MOI.AbstractModelAttribute}
     return MOI.get(m.model_cache, attr.attr)
 end
 
-function MOI.get(m::CachingOptimizer, attr::AttributeFromModelCache{T}, idx) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function MOI.get(
+    m::CachingOptimizer,
+    attr::AttributeFromModelCache{T},
+    idx,
+) where {
+    T<:Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+}
     return MOI.get(m.model_cache, attr.attr, idx)
 end
 
-function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}) where {T <: MOI.AbstractModelAttribute}
+function MOI.get(
+    m::CachingOptimizer,
+    attr::AttributeFromOptimizer{T},
+) where {T<:MOI.AbstractModelAttribute}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr))
+    return map_indices(
+        m.optimizer_to_model_map,
+        MOI.get(m.optimizer, attr.attr),
+    )
 end
 
-function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx::MOI.Index) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function MOI.get(
+    m::CachingOptimizer,
+    attr::AttributeFromOptimizer{T},
+    idx::MOI.Index,
+) where {
+    T<:Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr, m.model_to_optimizer_map[idx]))
+    return map_indices(
+        m.optimizer_to_model_map,
+        MOI.get(m.optimizer, attr.attr, m.model_to_optimizer_map[idx]),
+    )
 end
 
-function MOI.get(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx::Vector{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function MOI.get(
+    m::CachingOptimizer,
+    attr::AttributeFromOptimizer{T},
+    idx::Vector{<:MOI.Index},
+) where {
+    T<:Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+}
     @assert m.state == ATTACHED_OPTIMIZER
-    return map_indices(m.optimizer_to_model_map, MOI.get(m.optimizer, attr.attr, getindex.(m.model_to_optimizer_map,idx)))
+    return map_indices(
+        m.optimizer_to_model_map,
+        MOI.get(
+            m.optimizer,
+            attr.attr,
+            getindex.(m.model_to_optimizer_map, idx),
+        ),
+    )
 end
 
-function MOI.set(m::CachingOptimizer, attr::AttributeFromModelCache{T}, v) where {T <: MOI.AbstractModelAttribute}
+function MOI.set(
+    m::CachingOptimizer,
+    attr::AttributeFromModelCache{T},
+    v,
+) where {T<:MOI.AbstractModelAttribute}
     return MOI.set(m.model_cache, attr.attr, v)
 end
 
-function MOI.set(m::CachingOptimizer, attr::AttributeFromModelCache{T}, idx, v) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function MOI.set(
+    m::CachingOptimizer,
+    attr::AttributeFromModelCache{T},
+    idx,
+    v,
+) where {
+    T<:Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+}
     return MOI.set(m.model_cache, attr.attr, idx, v)
 end
 
-function MOI.set(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, v) where {T <: MOI.AbstractModelAttribute}
+function MOI.set(
+    m::CachingOptimizer,
+    attr::AttributeFromOptimizer{T},
+    v,
+) where {T<:MOI.AbstractModelAttribute}
     @assert m.state == ATTACHED_OPTIMIZER
-    return MOI.set(m.optimizer, attr.attr, map_indices(m.model_to_optimizer_map, v))
+    return MOI.set(
+        m.optimizer,
+        attr.attr,
+        map_indices(m.model_to_optimizer_map, v),
+    )
 end
 
 # Map vector of indices into vector of indices or one index into one index
-map_indices_to_optimizer(m::CachingOptimizer, idx::MOI.Index) = m.model_to_optimizer_map[idx]
-map_indices_to_optimizer(m::CachingOptimizer, indices::Vector{<:MOI.Index}) = getindex.(Ref(m.model_to_optimizer_map), indices)
-function MOI.set(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idx, v) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function map_indices_to_optimizer(m::CachingOptimizer, idx::MOI.Index)
+    return m.model_to_optimizer_map[idx]
+end
+function map_indices_to_optimizer(
+    m::CachingOptimizer,
+    indices::Vector{<:MOI.Index},
+)
+    return getindex.(Ref(m.model_to_optimizer_map), indices)
+end
+function MOI.set(
+    m::CachingOptimizer,
+    attr::AttributeFromOptimizer{T},
+    idx,
+    v,
+) where {
+    T<:Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+}
     @assert m.state == ATTACHED_OPTIMIZER
-    return MOI.set(m.optimizer, attr.attr, map_indices_to_optimizer(m, idx), map_indices(m.model_to_optimizer_map, v))
+    return MOI.set(
+        m.optimizer,
+        attr.attr,
+        map_indices_to_optimizer(m, idx),
+        map_indices(m.model_to_optimizer_map, v),
+    )
 end
 
-function MOI.supports(m::CachingOptimizer, attr::AttributeFromModelCache{T}) where {T <: MOI.AbstractModelAttribute}
+function MOI.supports(
+    m::CachingOptimizer,
+    attr::AttributeFromModelCache{T},
+) where {T<:MOI.AbstractModelAttribute}
     return MOI.supports(m.model_cache, attr.attr)
 end
 
-function MOI.supports(m::CachingOptimizer, attr::AttributeFromModelCache{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function MOI.supports(
+    m::CachingOptimizer,
+    attr::AttributeFromModelCache{T},
+    idxtype::Type{<:MOI.Index},
+) where {
+    T<:Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+}
     return MOI.supports(m.model_cache, attr.attr, idxtype)
 end
 
-function MOI.supports(m::CachingOptimizer, attr::AttributeFromOptimizer{T}) where {T <: MOI.AbstractModelAttribute}
+function MOI.supports(
+    m::CachingOptimizer,
+    attr::AttributeFromOptimizer{T},
+) where {T<:MOI.AbstractModelAttribute}
     @assert m.state == ATTACHED_OPTIMIZER
     return MOI.supports(m.optimizer, attr.attr)
 end
 
-function MOI.supports(m::CachingOptimizer, attr::AttributeFromOptimizer{T}, idxtype::Type{<:MOI.Index}) where {T <: Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute}}
+function MOI.supports(
+    m::CachingOptimizer,
+    attr::AttributeFromOptimizer{T},
+    idxtype::Type{<:MOI.Index},
+) where {
+    T<:Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+}
     @assert m.state == ATTACHED_OPTIMIZER
     return MOI.supports(m.optimizer, attr.attr, idxtype)
 end
 
-function MOI.supports(caching_opt::CachingOptimizer, sub::MOI.AbstractSubmittable)
-    return caching_opt.optimizer !== nothing && MOI.supports(caching_opt.optimizer, sub)
+function MOI.supports(
+    caching_opt::CachingOptimizer,
+    sub::MOI.AbstractSubmittable,
+)
+    return caching_opt.optimizer !== nothing &&
+           MOI.supports(caching_opt.optimizer, sub)
 end
-function MOI.submit(caching_opt::CachingOptimizer, sub::MOI.AbstractSubmittable, args...)
-    MOI.submit(caching_opt.optimizer, sub,
-               map_indices.(Ref(caching_opt.model_to_optimizer_map), args)...)
+function MOI.submit(
+    caching_opt::CachingOptimizer,
+    sub::MOI.AbstractSubmittable,
+    args...,
+)
+    return MOI.submit(
+        caching_opt.optimizer,
+        sub,
+        map_indices.(Ref(caching_opt.model_to_optimizer_map), args)...,
+    )
 end
 
 # TODO: get and set methods to look up/set name strings
