@@ -956,3 +956,41 @@ end
         end
     end
 end
+
+@testset "modifycoefficient_duplicates" begin
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarAffineFunction(
+        [MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(1.0, x)],
+        0.0,
+    )
+    new_f = MOI.Utilities.modify_function(
+        f, MOI.ScalarCoefficientChange(x, 3.0)
+    )
+    @test new_f ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3.0, x)], 0.0)
+end
+
+@testset "modifycoefficients_duplicates" begin
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.VectorAffineFunction(
+        [
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x)),
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(1.0, x)),
+        ],
+        [0.0, 0.0, 0.0],
+    )
+    new_f = MOI.Utilities.modify_function(
+        f, MOI.MultirowChange(x, [(1, 3.0), (2, 0.5)]),
+    )
+    @test new_f ≈ MOI.VectorAffineFunction(
+        [
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(3.0, x)),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.5, x)),
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(1.0, x)),
+        ],
+        [0.0, 0.0, 0.0],
+    )
+end

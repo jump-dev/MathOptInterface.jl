@@ -859,93 +859,114 @@ end
 function modify_function(f::VQF, change::MOI.VectorConstantChange)
     return VQF(f.affine_terms, f.quadratic_terms, change.new_constant)
 end
+
 function _modifycoefficient(
-    terms::Vector{<:MOI.ScalarAffineTerm},
-    variable::VI,
-    new_coefficient,
-)
+    terms::Vector{MOI.ScalarAffineTerm{T}},
+    variable::MOI.VariableIndex,
+    new_coefficient::T,
+) where {T}
     terms = copy(terms)
     i = something(findfirst(t -> t.variable_index == variable, terms), 0)
-    if iszero(i)
-        # The variable was not already in the function
+    if iszero(i)  # The variable was not already in the function
         if !iszero(new_coefficient)
             push!(terms, MOI.ScalarAffineTerm(new_coefficient, variable))
         end
-    else
-        # The variable was already in the function
+    else  # The variable was already in the function
         if iszero(new_coefficient)
             deleteat!(terms, i)
         else
             terms[i] = MOI.ScalarAffineTerm(new_coefficient, variable)
         end
+        # To account for duplicates, we need to delete any other instances of
+        # `variable` in `terms`.
+        for j = length(terms):-1:(i + 1)
+            if terms[j].variable_index == variable
+                deleteat!(terms, j)
+            end
+        end
     end
     return terms
 end
-function modify_function(f::SAF, change::MOI.ScalarCoefficientChange)
-    lin = _modifycoefficient(f.terms, change.variable, change.new_coefficient)
-    return SAF(lin, f.constant)
+
+function modify_function(
+    f::MOI.ScalarAffineFunction{T},
+    change::MOI.ScalarCoefficientChange{T},
+) where {T}
+    terms = _modifycoefficient(f.terms, change.variable, change.new_coefficient)
+    return MOI.ScalarAffineFunction(terms, f.constant)
 end
-function modify_function(f::SQF, change::MOI.ScalarCoefficientChange)
-    lin = _modifycoefficient(
+
+function modify_function(
+    f::MOI.ScalarQuadraticFunction{T},
+    change::MOI.ScalarCoefficientChange{T},
+) where {T}
+    terms = _modifycoefficient(
         f.affine_terms,
         change.variable,
         change.new_coefficient,
     )
-    return SQF(lin, f.quadratic_terms, f.constant)
+    return MOI.ScalarQuadraticFunction(terms, f.quadratic_terms, f.constant)
 end
+
 function _modifycoefficients(
-    n,
-    terms::Vector{<:MOI.VectorAffineTerm},
-    variable::VI,
-    new_coefficients,
-)
+    terms::Vector{MOI.VectorAffineTerm{T}},
+    variable::MOI.VariableIndex,
+    new_coefficients::Vector{Tuple{Int64,T}},
+) where {T}
     terms = copy(terms)
-    # Maps between rows in the `MOI.VectorAffineTerm`s and indices in new_coefficients
-    rowmap = Dict(c[1] => i for (i, c) in enumerate(new_coefficients))
-    del = Int[]
-    for i in 1:length(terms)
-        if terms[i].scalar_term.variable_index == variable
-            row = terms[i].output_index
-            j = Base.get(rowmap, row, 0)
-            if !iszero(j) # If it is zero, it means that the row should not be changed
-                if iszero(new_coefficients[j][2])
-                    push!(del, i)
-                else
-                    terms[i] = MOI.VectorAffineTerm(
-                        row,
-                        MOI.ScalarAffineTerm(new_coefficients[j][2], variable),
-                    )
-                end
-                rowmap[row] = 0 # We only change the first term of a row
-            end
+    coef_dict = Dict(k => v for (k, v) in new_coefficients)
+    elements_to_delete = Int[]
+    for (i, term) in enumerate(terms)
+        if term.scalar_term.variable_index != variable
+            continue
+        end
+        new_coef = Base.get(coef_dict, term.output_index, nothing)
+        if new_coef === nothing
+            continue
+        elseif iszero(new_coef)
+            push!(elements_to_delete, i)
+        else
+            terms[i] = MOI.VectorAffineTerm(
+                term.output_index,
+                MOI.ScalarAffineTerm(new_coef, variable),
+            )
+            # Set the coefficient to 0.0 so we don't add duplicates.
+            coef_dict[term.output_index] = zero(T)
         end
     end
-    deleteat!(terms, del)
-    for (row, j) in rowmap
-        if !iszero(j)
-            push!(
-                terms,
-                MOI.VectorAffineTerm(
-                    row,
-                    MOI.ScalarAffineTerm(new_coefficients[j][2], variable),
-                ),
-            )
+    deleteat!(terms, elements_to_delete)
+    # Add elements that were not previously in `terms`.
+    for (k, v) in coef_dict
+        if iszero(v)
+            continue
         end
+        push!(terms, MOI.VectorAffineTerm(k, MOI.ScalarAffineTerm(v, variable)))
     end
     return terms
 end
-function modify_function(f::VAF, change::MOI.MultirowChange)
-    dim = MOI.output_dimension(f)
-    coefficients = change.new_coefficients
-    lin = _modifycoefficients(dim, f.terms, change.variable, coefficients)
-    return VAF(lin, f.constants)
+
+function modify_function(
+    f::MOI.VectorAffineFunction{T},
+    change::MOI.MultirowChange{T},
+) where {T}
+    terms = _modifycoefficients(
+        f.terms,
+        change.variable,
+        change.new_coefficients,
+    )
+    return MOI.VectorAffineFunction(terms, f.constants)
 end
-function modify_function(f::VQF, change::MOI.MultirowChange)
-    dim = MOI.output_dimension(f)
-    coefficients = change.new_coefficients
-    lin =
-        _modifycoefficients(dim, f.affine_terms, change.variable, coefficients)
-    return VQF(lin, f.quadratic_terms, f.constants)
+
+function modify_function(
+    f::MOI.VectorQuadraticFunction{T},
+    change::MOI.MultirowChange{T},
+) where {T}
+    terms = _modifycoefficients(
+        f.affine_terms,
+        change.variable,
+        change.new_coefficients,
+    )
+    return MOI.VectorQuadraticFunction(terms, f.quadratic_terms, f.constants)
 end
 
 # Arithmetic
