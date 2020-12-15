@@ -1079,12 +1079,12 @@ Possible values are:
 Notes
 
 * `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
-  constraints with the `Interval`. In this case cases they are necessary to
+  constraints with the `Interval` set. In this case, they are necessary to
   distinguish which side of the constraint is active. One-sided constraints
   (e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
   `NONBASIC_AT_*` values.
 
-* In general, `SUPER_BASIC` usually occur when the problem is nonlinear. For
+* In general, `SUPER_BASIC` usually occurs when the problem is nonlinear. For
   linear programs, `SUPER_BASIC` variables only occur if the solver returns a
   solution that is not at a vertex of the feasible region.
 """
