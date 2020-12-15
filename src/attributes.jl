@@ -1064,9 +1064,11 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
 """
     BasisStatusCode
 
-An Enum of possible values for the `ConstraintBasisStatus` attribute.
-This explains the status of a given element with respect to an optimal solution basis.
+An Enum of possible values for the `ConstraintBasisStatus` attribute, explaining
+the status of a given element with respect to an optimal solution basis.
+
 Possible values are:
+
 * `BASIC`: element is in the basis
 * `NONBASIC`: element is not in the basis
 * `NONBASIC_AT_LOWER`: element is not in the basis and is at its lower bound
@@ -1074,11 +1076,17 @@ Possible values are:
 * `SUPER_BASIC`: element is not in the basis but is also not at one of its
   bounds
 
-Note: `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
-constraints with the `Interval`. In this case cases they are necessary to
-distinguish which side of the constraint. One-sided constraints (e.g.,
-`LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
-`NONBASIC_AT_*` values.
+Notes
+
+* `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
+  constraints with the `Interval`. In this case cases they are necessary to
+  distinguish which side of the constraint is active. One-sided constraints
+  (e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
+  `NONBASIC_AT_*` values.
+
+* In general, `SUPER_BASIC` usually occur when the problem is nonlinear. For
+  linear programs, `SUPER_BASIC` variables only occur if the solver returns a
+  solution that is not at a vertex of the feasible region.
 """
 @enum(
     BasisStatusCode,
