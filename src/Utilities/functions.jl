@@ -911,7 +911,7 @@ end
 function _modifycoefficients(
     terms::Vector{MOI.VectorAffineTerm{T}},
     variable::MOI.VariableIndex,
-    new_coefficients::Vector{Tuple{Int,T}},
+    new_coefficients::Vector{Tuple{Int64,T}},
 ) where {T}
     terms = copy(terms)
     coef_dict = Dict(k => v for (k, v) in new_coefficients)
