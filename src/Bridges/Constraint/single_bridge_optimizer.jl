@@ -6,15 +6,20 @@ This is in contrast with the [`MathOptInterface.Bridges.LazyBridgeOptimizer`](@r
 which only bridges the constraints that are unsupported by the internal model,
 even if they are supported by one of its bridges.
 """
-mutable struct SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <: MOIB.AbstractBridgeOptimizer
+mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
+               MOIB.AbstractBridgeOptimizer
     model::OT
     map::Map # index of bridged constraint -> constraint bridge
-    con_to_name::Dict{MOI.ConstraintIndex, String}
-    name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
+    con_to_name::Dict{MOI.ConstraintIndex,String}
+    name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
 end
-function SingleBridgeOptimizer{BT}(model::OT) where {BT, OT <: MOI.ModelLike}
-    SingleBridgeOptimizer{BT, OT}(
-        model, Map(), Dict{MOI.ConstraintIndex, String}(), nothing)
+function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
+    return SingleBridgeOptimizer{BT,OT}(
+        model,
+        Map(),
+        Dict{MOI.ConstraintIndex,String}(),
+        nothing,
+    )
 end
 
 function bridges(bridge::MOI.Bridges.AbstractBridgeOptimizer)
@@ -33,24 +38,41 @@ MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{MOI.Reals}) = false
 function MOIB.is_bridged(b::SingleBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     return MOIB.supports_bridging_constrained_variable(b, S)
 end
-function MOIB.supports_bridging_constrained_variable(b::SingleBridgeOptimizer, S::Type{<:MOI.AbstractSet})
-    return MOIB.supports_bridging_constraint(b, MOIU.variable_function_type(S), S) && MOI.supports_add_constrained_variables(b, MOI.Reals)
+function MOIB.supports_bridging_constrained_variable(
+    b::SingleBridgeOptimizer,
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOIB.supports_bridging_constraint(
+        b,
+        MOIU.variable_function_type(S),
+        S,
+    ) && MOI.supports_add_constrained_variables(b, MOI.Reals)
 end
 function MOIB.supports_bridging_constraint(
-    ::SingleBridgeOptimizer{BT}, F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet}) where BT
+    ::SingleBridgeOptimizer{BT},
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+) where {BT}
     return MOI.supports_constraint(BT, F, S)
 end
-function MOIB.is_bridged(b::SingleBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
-                    S::Type{<:MOI.AbstractSet})
+function MOIB.is_bridged(
+    b::SingleBridgeOptimizer,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
     return MOIB.supports_bridging_constraint(b, F, S)
 end
-function MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{<:MOI.AbstractScalarFunction})
+function MOIB.is_bridged(
+    ::SingleBridgeOptimizer,
+    ::Type{<:MOI.AbstractScalarFunction},
+)
     return false
 end
-function MOIB.bridge_type(::SingleBridgeOptimizer{BT},
-                          ::Type{<:MOI.AbstractFunction},
-                          ::Type{<:MOI.AbstractSet}) where BT
+function MOIB.bridge_type(
+    ::SingleBridgeOptimizer{BT},
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractSet},
+) where {BT}
     return BT
 end
 MOIB.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0

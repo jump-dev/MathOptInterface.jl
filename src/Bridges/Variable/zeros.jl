@@ -16,21 +16,22 @@ as functions cannot be unbridged).
 struct ZerosBridge{T} <: AbstractBridge
     n::Int # Number of variables
 end
-function bridge_constrained_variable(::Type{ZerosBridge{T}},
-                                     model::MOI.ModelLike,
-                                     set::MOI.Zeros) where T
+function bridge_constrained_variable(
+    ::Type{ZerosBridge{T}},
+    model::MOI.ModelLike,
+    set::MOI.Zeros,
+) where {T}
     return ZerosBridge{T}(MOI.dimension(set))
 end
 
-function supports_constrained_variable(
-    ::Type{<:ZerosBridge}, ::Type{MOI.Zeros})
+function supports_constrained_variable(::Type{<:ZerosBridge}, ::Type{MOI.Zeros})
     return true
 end
 function MOIB.added_constrained_variable_types(::Type{<:ZerosBridge})
     return Tuple{DataType}[]
 end
 function MOIB.added_constraint_types(::Type{<:ZerosBridge})
-    return Tuple{DataType, DataType}[]
+    return Tuple{DataType,DataType}[]
 end
 
 # Attributes, Bridge acting as a model
@@ -44,25 +45,30 @@ function MOI.delete(::MOI.ModelLike, ::ZerosBridge) end
 
 # Attributes, Bridge acting as a constraint
 
-function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet,
-                 bridge::ZerosBridge)
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::ZerosBridge)
     return MOI.Zeros(bridge.n)
 end
 
-function MOI.get(::MOI.ModelLike, ::MOI.ConstraintPrimal,
-                 bridge::ZerosBridge{T}) where T
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintPrimal,
+    bridge::ZerosBridge{T},
+) where {T}
     return zeros(T, bridge.n)
 end
 
-function MOI.get(::MOI.ModelLike, ::MOI.VariablePrimal,
-                 ::ZerosBridge{T}, ::IndexInVector) where T
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.VariablePrimal,
+    ::ZerosBridge{T},
+    ::IndexInVector,
+) where {T}
     return zero(T)
 end
 
-function MOIB.bridged_function(::ZerosBridge{T}, ::IndexInVector) where T
+function MOIB.bridged_function(::ZerosBridge{T}, ::IndexInVector) where {T}
     return zero(MOI.ScalarAffineFunction{T})
 end
-function unbridged_map(::ZerosBridge, ::MOI.VariableIndex,
-                       ::IndexInVector)
+function unbridged_map(::ZerosBridge, ::MOI.VariableIndex, ::IndexInVector)
     return nothing
 end

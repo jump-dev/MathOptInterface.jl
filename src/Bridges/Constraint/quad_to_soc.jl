@@ -55,15 +55,17 @@ into `≥ 0`) then the bridge is no longer valid. For this reason the homogeneou
 version of the bridge is not implemented yet.
 """
 struct QuadtoSOCBridge{T} <: AbstractBridge
-    soc::CI{MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone}
+    soc::CI{MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}
     dimension::Int  # dimension of the SOC constraint
     less_than::Bool # whether the constraint was ≤ or ≥
     set_constant::T # the constant that was on the set
 end
-function bridge_constraint(::Type{QuadtoSOCBridge{T}}, model,
-                           func::MOI.ScalarQuadraticFunction{T},
-                           set::Union{MOI.LessThan{T},
-                                      MOI.GreaterThan{T}}) where T
+function bridge_constraint(
+    ::Type{QuadtoSOCBridge{T}},
+    model,
+    func::MOI.ScalarQuadraticFunction{T},
+    set::Union{MOI.LessThan{T},MOI.GreaterThan{T}},
+) where {T}
     set_constant = MOI.constant(set)
     less_than = set isa MOI.LessThan
     Q, index_to_variable_map = matrix_from_quadratic_terms(func.quadratic_terms)
@@ -76,34 +78,40 @@ function bridge_constraint(::Type{QuadtoSOCBridge{T}}, model,
         sparse(F.L), F.p
     catch err
         if err isa PosDefException
-            error("The optimizer supports second-order cone constraints and",
-                  " not quadratic constraints but you entered a quadratic",
-                  " constraint of type: `$(typeof(func))`-in-`$(typeof(set))`.",
-                  " A bridge attempted to transform the quadratic constraint",
-                  " to a second order cone constraint but the constraint is",
-                  " not strongly convex, i.e., the symmetric matrix of",
-                  " quadratic coefficients is not positive definite. Convex",
-                  " constraints that are not strongly convex, i.e. the matrix is",
-                  " positive semidefinite but not positive definite, are not",
-                  " supported yet.")
+            error(
+                "The optimizer supports second-order cone constraints and",
+                " not quadratic constraints but you entered a quadratic",
+                " constraint of type: `$(typeof(func))`-in-`$(typeof(set))`.",
+                " A bridge attempted to transform the quadratic constraint",
+                " to a second order cone constraint but the constraint is",
+                " not strongly convex, i.e., the symmetric matrix of",
+                " quadratic coefficients is not positive definite. Convex",
+                " constraints that are not strongly convex, i.e. the matrix is",
+                " positive semidefinite but not positive definite, are not",
+                " supported yet.",
+            )
         else
             rethrow(err)
         end
     end
     Ux_terms = matrix_to_vector_affine_terms(L, p, index_to_variable_map)
     Ux = MOI.VectorAffineFunction(Ux_terms, zeros(T, size(L, 2)))
-    t = MOI.ScalarAffineFunction(less_than ? MOIU.operate_terms(-, func.affine_terms) : func.affine_terms,
-                                 less_than ? set_constant - func.constant : func.constant - set_constant)
+    t = MOI.ScalarAffineFunction(
+        less_than ? MOIU.operate_terms(-, func.affine_terms) :
+        func.affine_terms,
+        less_than ? set_constant - func.constant : func.constant - set_constant,
+    )
     f = MOIU.operate(vcat, T, one(T), t, Ux)
     dimension = MOI.output_dimension(f)
-    soc = MOI.add_constraint(model, f,
-                             MOI.RotatedSecondOrderCone(dimension))
+    soc = MOI.add_constraint(model, f, MOI.RotatedSecondOrderCone(dimension))
     return QuadtoSOCBridge(soc, dimension, less_than, set_constant)
 end
 
-function matrix_from_quadratic_terms(terms::Vector{MOI.ScalarQuadraticTerm{T}}) where T
-    variable_to_index_map = Dict{MOI.VariableIndex, Int}()
-    index_to_variable_map = Dict{Int, MOI.VariableIndex}()
+function matrix_from_quadratic_terms(
+    terms::Vector{MOI.ScalarQuadraticTerm{T}},
+) where {T}
+    variable_to_index_map = Dict{MOI.VariableIndex,Int}()
+    index_to_variable_map = Dict{Int,MOI.VariableIndex}()
     n = 0
     for term in terms
         for variable in (term.variable_index_1, term.variable_index_2)
@@ -134,9 +142,11 @@ function matrix_from_quadratic_terms(terms::Vector{MOI.ScalarQuadraticTerm{T}}) 
     return Q, index_to_variable_map
 end
 
-function matrix_to_vector_affine_terms(L::SparseMatrixCSC{T},
-                                       p::Vector,
-                                       index_to_variable_map::Dict{Int, MOI.VariableIndex}) where T
+function matrix_to_vector_affine_terms(
+    L::SparseMatrixCSC{T},
+    p::Vector,
+    index_to_variable_map::Dict{Int,MOI.VariableIndex},
+) where {T}
     # We know that L × L' ≈ Q[p, p] hence (L × L')[i, :] ≈ Q[p[i], p]
     # We precompute the map to avoid having to do a dictionary lookup for every
     # term
@@ -147,43 +157,58 @@ function matrix_to_vector_affine_terms(L::SparseMatrixCSC{T},
     return map(ijv -> term(ijv...), zip(findnz(L)...))
 end
 
-function MOI.supports_constraint(::Type{QuadtoSOCBridge{T}},
-                                 ::Type{MOI.ScalarQuadraticFunction{T}},
-                                 ::Type{<:Union{MOI.LessThan{T},
-                                                MOI.GreaterThan{T}}}) where T
+function MOI.supports_constraint(
+    ::Type{QuadtoSOCBridge{T}},
+    ::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{<:Union{MOI.LessThan{T},MOI.GreaterThan{T}}},
+) where {T}
     return true
 end
-MOIB.added_constrained_variable_types(::Type{<:QuadtoSOCBridge}) = Tuple{DataType}[]
-function MOIB.added_constraint_types(::Type{QuadtoSOCBridge{T}}) where T
+function MOIB.added_constrained_variable_types(::Type{<:QuadtoSOCBridge})
+    return Tuple{DataType}[]
+end
+function MOIB.added_constraint_types(::Type{QuadtoSOCBridge{T}}) where {T}
     return [(MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
 end
-function concrete_bridge_type(::Type{<:QuadtoSOCBridge{T}},
-                              ::Type{MOI.ScalarQuadraticFunction{T}},
-                              ::Type{<:Union{MOI.LessThan{T},
-                                               MOI.GreaterThan{T}}}) where T
+function concrete_bridge_type(
+    ::Type{<:QuadtoSOCBridge{T}},
+    ::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{<:Union{MOI.LessThan{T},MOI.GreaterThan{T}}},
+) where {T}
     return QuadtoSOCBridge{T}
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(::QuadtoSOCBridge{T},
-                 ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},
-                                           MOI.RotatedSecondOrderCone}) where T
+function MOI.get(
+    ::QuadtoSOCBridge{T},
+    ::MOI.NumberOfConstraints{
+        MOI.VectorAffineFunction{T},
+        MOI.RotatedSecondOrderCone,
+    },
+) where {T}
     return 1
 end
-function MOI.get(bridge::QuadtoSOCBridge{T},
-                 ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T},
-                                               MOI.RotatedSecondOrderCone}) where T
+function MOI.get(
+    bridge::QuadtoSOCBridge{T},
+    ::MOI.ListOfConstraintIndices{
+        MOI.VectorAffineFunction{T},
+        MOI.RotatedSecondOrderCone,
+    },
+) where {T}
     return [bridge.soc]
 end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::QuadtoSOCBridge)
-    MOI.delete(model, bridge.soc)
+    return MOI.delete(model, bridge.soc)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-                 bridge::QuadtoSOCBridge)
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimal,
+    bridge::QuadtoSOCBridge,
+)
     soc = MOI.get(model, attr, bridge.soc)
     output = sum(soc[i]^2 for i in 3:bridge.dimension)
     output /= 2
@@ -228,22 +253,31 @@ end
 # So the dual of the quadratic constraint is `-u`, so that the contribution
 # to the lagrangian function of both the quadratic and RotatedSOC formulation
 # is exactly the same. Q.E.D.
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                 bridge::QuadtoSOCBridge)
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    bridge::QuadtoSOCBridge,
+)
     λ = MOI.get(model, attr, bridge.soc)[2]
     return bridge.less_than ? -λ : λ
 end
 
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintSet,
-                 b::QuadtoSOCBridge{T}) where T
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintSet,
+    b::QuadtoSOCBridge{T},
+) where {T}
     if b.less_than
         return MOI.LessThan(b.set_constant)
     else
         return MOI.GreaterThan(b.set_constant)
     end
 end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 b::QuadtoSOCBridge{T}) where T
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    b::QuadtoSOCBridge{T},
+) where {T}
     f = MOI.get(model, attr, b.soc)
     fs = MOIU.eachscalar(f)
     q = zero(MOI.ScalarQuadraticFunction{T})

@@ -66,19 +66,25 @@ and the equality constraint between the off-diagonal entries (2, 3) and (3, 2)
 the off-diagonal entries (1, 2) and (2, 1) or between (1, 3) and (3, 1) since
 the expressions are the same.
 """
-struct SquareBridge{T, F<:MOI.AbstractVectorFunction,
-                    G<:MOI.AbstractScalarFunction,
-                    TT<:MOI.AbstractSymmetricMatrixSetTriangle,
-                    ST<:MOI.AbstractSymmetricMatrixSetSquare} <: AbstractBridge
+struct SquareBridge{
+    T,
+    F<:MOI.AbstractVectorFunction,
+    G<:MOI.AbstractScalarFunction,
+    TT<:MOI.AbstractSymmetricMatrixSetTriangle,
+    ST<:MOI.AbstractSymmetricMatrixSetSquare,
+} <: AbstractBridge
     square_set::ST
-    triangle::CI{F, TT}
-    sym::Vector{Pair{Tuple{Int, Int}, CI{G, MOI.EqualTo{T}}}}
+    triangle::CI{F,TT}
+    sym::Vector{Pair{Tuple{Int,Int},CI{G,MOI.EqualTo{T}}}}
 end
-function bridge_constraint(::Type{SquareBridge{T, F, G, TT, ST}},
-                           model::MOI.ModelLike, f::F,
-                           s::ST) where {T, F, G, TT, ST}
+function bridge_constraint(
+    ::Type{SquareBridge{T,F,G,TT,ST}},
+    model::MOI.ModelLike,
+    f::F,
+    s::ST,
+) where {T,F,G,TT,ST}
     f_scalars = MOIU.eachscalar(f)
-    sym = Pair{Tuple{Int, Int}, CI{G, MOI.EqualTo{T}}}[]
+    sym = Pair{Tuple{Int,Int},CI{G,MOI.EqualTo{T}}}[]
     dim = MOI.side_dimension(s)
     upper_triangle_indices = Int[]
     trilen = div(dim * (dim + 1), 2)
@@ -89,8 +95,8 @@ function bridge_constraint(::Type{SquareBridge{T, F, G, TT, ST}},
             k += 1
             push!(upper_triangle_indices, k)
             # We constrain the entries (i, j) and (j, i) to be equal
-            upper = f_scalars[i + (j - 1) * dim]
-            lower = f_scalars[j + (i - 1) * dim]
+            upper = f_scalars[i+(j-1)*dim]
+            lower = f_scalars[j+(i-1)*dim]
             diff = MOIU.operate!(-, T, upper, lower)
             MOIU.canonicalize!(diff)
             # The value 1e-10 was decided in https://github.com/jump-dev/JuMP.jl/pull/976
@@ -99,56 +105,83 @@ function bridge_constraint(::Type{SquareBridge{T, F, G, TT, ST}},
             if !MOIU.isapprox_zero(diff, 1e-10)
                 if MOIU.isapprox_zero(diff, 1e-8)
                     @warn "The entries ($i, $j) and ($j, $i) of the" *
-                        " positive semidefinite constraint are almost" *
-                        " identical but a constraint is added to ensure their" *
-                        " equality because the largest difference between the" *
-                        " coefficients is smaller than 1e-8 but larger than" *
-                        " 1e-10."
+                          " positive semidefinite constraint are almost" *
+                          " identical but a constraint is added to ensure their" *
+                          " equality because the largest difference between the" *
+                          " coefficients is smaller than 1e-8 but larger than" *
+                          " 1e-10."
                 end
-                push!(sym, (i, j) => MOIU.normalize_and_add_constraint(
-                    model, diff, MOI.EqualTo(zero(T)), allow_modify_function=true))
+                push!(
+                    sym,
+                    (i, j) => MOIU.normalize_and_add_constraint(
+                        model,
+                        diff,
+                        MOI.EqualTo(zero(T)),
+                        allow_modify_function = true,
+                    ),
+                )
             end
         end
         k += dim - j
     end
     @assert length(upper_triangle_indices) == trilen
-    triangle = MOI.add_constraint(model, f_scalars[upper_triangle_indices], MOI.triangular_form(s))
-    return SquareBridge{T, F, G, TT, ST}(s, triangle, sym)
+    triangle = MOI.add_constraint(
+        model,
+        f_scalars[upper_triangle_indices],
+        MOI.triangular_form(s),
+    )
+    return SquareBridge{T,F,G,TT,ST}(s, triangle, sym)
 end
 
-function MOI.supports_constraint(::Type{SquareBridge{T}},
-                                ::Type{<:MOI.AbstractVectorFunction},
-                                ::Type{<:MOI.AbstractSymmetricMatrixSetSquare}) where T
+function MOI.supports_constraint(
+    ::Type{SquareBridge{T}},
+    ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{<:MOI.AbstractSymmetricMatrixSetSquare},
+) where {T}
     return true
 end
-MOIB.added_constrained_variable_types(::Type{<:SquareBridge}) = Tuple{DataType}[]
-function MOIB.added_constraint_types(::Type{SquareBridge{T, F, G, TT, ST}}) where {T, F, G, TT, ST}
+function MOIB.added_constrained_variable_types(::Type{<:SquareBridge})
+    return Tuple{DataType}[]
+end
+function MOIB.added_constraint_types(
+    ::Type{SquareBridge{T,F,G,TT,ST}},
+) where {T,F,G,TT,ST}
     return [(F, TT), (G, MOI.EqualTo{T})]
 end
-function concrete_bridge_type(::Type{<:SquareBridge{T}},
-                              F::Type{<:MOI.AbstractVectorFunction},
-                              ST::Type{<:MOI.AbstractSymmetricMatrixSetSquare}) where T
+function concrete_bridge_type(
+    ::Type{<:SquareBridge{T}},
+    F::Type{<:MOI.AbstractVectorFunction},
+    ST::Type{<:MOI.AbstractSymmetricMatrixSetSquare},
+) where {T}
     S = MOIU.scalar_type(F)
     G = MOIU.promote_operation(-, T, S, S)
     TT = MOI.triangular_form(ST)
-    return SquareBridge{T, F, G, TT, ST}
+    return SquareBridge{T,F,G,TT,ST}
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(::SquareBridge{T, F, G, TT},
-                 ::MOI.NumberOfConstraints{F, TT}) where {T, F, G, TT}
+function MOI.get(
+    ::SquareBridge{T,F,G,TT},
+    ::MOI.NumberOfConstraints{F,TT},
+) where {T,F,G,TT}
     return 1
 end
-function MOI.get(bridge::SquareBridge{T, F, G},
-                 ::MOI.NumberOfConstraints{G, MOI.EqualTo{T}}) where {T, F, G}
+function MOI.get(
+    bridge::SquareBridge{T,F,G},
+    ::MOI.NumberOfConstraints{G,MOI.EqualTo{T}},
+) where {T,F,G}
     return length(bridge.sym)
 end
-function MOI.get(bridge::SquareBridge{T, F, G, TT},
-                 ::MOI.ListOfConstraintIndices{F, TT}) where {T, F, G, TT}
+function MOI.get(
+    bridge::SquareBridge{T,F,G,TT},
+    ::MOI.ListOfConstraintIndices{F,TT},
+) where {T,F,G,TT}
     return [bridge.triangle]
 end
-function MOI.get(bridge::SquareBridge{T, F, G},
-                 ::MOI.ListOfConstraintIndices{G, MOI.EqualTo{T}}) where {T, F, G}
+function MOI.get(
+    bridge::SquareBridge{T,F,G},
+    ::MOI.ListOfConstraintIndices{G,MOI.EqualTo{T}},
+) where {T,F,G}
     return map(pair -> pair.second, bridge.sym)
 end
 
@@ -161,8 +194,11 @@ function MOI.delete(model::MOI.ModelLike, bridge::SquareBridge)
 end
 
 # Attributes, Bridge acting as a constraint
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintFunction,
-                 bridge::SquareBridge{T}) where T
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::SquareBridge{T},
+) where {T}
     tri = MOIU.eachscalar(MOI.get(model, attr, bridge.triangle))
     dim = MOI.side_dimension(bridge.square_set)
     sqr = Vector{eltype(tri)}(undef, dim^2)
@@ -189,8 +225,11 @@ end
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SquareBridge)
     return bridge.square_set
 end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
-                 bridge::SquareBridge{T}) where T
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimal,
+    bridge::SquareBridge{T},
+) where {T}
     tri = MOI.get(model, attr, bridge.triangle)
     dim = MOI.side_dimension(bridge.square_set)
     sqr = Vector{eltype(tri)}(undef, dim^2)
@@ -198,13 +237,16 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintPrimal,
     for j in 1:dim
         for i in 1:j
             k += 1
-            sqr[i + (j - 1) * dim] = sqr[j + (i - 1) * dim] = tri[k]
+            sqr[i+(j-1)*dim] = sqr[j+(i-1)*dim] = tri[k]
         end
     end
     return sqr
 end
-function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                 bridge::SquareBridge)
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    bridge::SquareBridge,
+)
     tri = MOI.get(model, attr, bridge.triangle)
     dim = MOI.side_dimension(bridge.square_set)
     sqr = Vector{eltype(tri)}(undef, dim^2)
@@ -214,18 +256,18 @@ function MOI.get(model::MOI.ModelLike, attr::MOI.ConstraintDual,
             k += 1
             # The triangle constraint uses only the upper triangular part
             if i == j
-                sqr[i + (j - 1) * dim] = tri[k]
+                sqr[i+(j-1)*dim] = tri[k]
             else
-                sqr[i + (j - 1) * dim] = 2tri[k]
-                sqr[j + (i - 1) * dim] = zero(eltype(sqr))
+                sqr[i+(j-1)*dim] = 2tri[k]
+                sqr[j+(i-1)*dim] = zero(eltype(sqr))
             end
         end
     end
     for pair in bridge.sym
         i, j = pair.first
         dual = MOI.get(model, attr, pair.second)
-        sqr[i + (j - 1) * dim] += dual
-        sqr[j + (i - 1) * dim] -= dual
+        sqr[i+(j-1)*dim] += dual
+        sqr[j+(i-1)*dim] -= dual
     end
     return sqr
 end

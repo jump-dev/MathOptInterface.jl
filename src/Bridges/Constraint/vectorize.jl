@@ -11,30 +11,32 @@ The constraint `SingleVariable`-in-`LessThan{Float64}` becomes
 `F = VectorAffineFunction{Float64}`, `S = Nonpositives`, and
 `G = SingleVariable`.
 """
-mutable struct VectorizeBridge{T, F, S, G} <: AbstractBridge
-    vector_constraint::CI{F, S}
+mutable struct VectorizeBridge{T,F,S,G} <: AbstractBridge
+    vector_constraint::CI{F,S}
     set_constant::T # constant in scalar set
 end
 
 function bridge_constraint(
-    ::Type{VectorizeBridge{T, F, S, G}},
+    ::Type{VectorizeBridge{T,F,S,G}},
     model::MOI.ModelLike,
     scalar_f::G,
-    set::MOIU.ScalarLinearSet{T}
-) where {T, F, S, G}
+    set::MOIU.ScalarLinearSet{T},
+) where {T,F,S,G}
     scalar_const = MOI.constant(scalar_f, T)
     if !iszero(scalar_const)
-        throw(
-            MOI.ScalarFunctionConstantNotZero{
-                typeof(scalar_const), G, typeof(set)
-            }(scalar_const)
-        )
+        throw(MOI.ScalarFunctionConstantNotZero{
+            typeof(scalar_const),
+            G,
+            typeof(set),
+        }(
+            scalar_const,
+        ))
     end
     vector_f = convert(F, scalar_f)
     set_const = MOI.constant(set)
     MOIU.operate_output_index!(-, T, 1, vector_f, set_const)
     vector_constraint = MOI.add_constraint(model, vector_f, S(1))
-    return VectorizeBridge{T, F, S, G}(vector_constraint, set_const)
+    return VectorizeBridge{T,F,S,G}(vector_constraint, set_const)
 end
 
 function MOI.supports_constraint(
@@ -50,8 +52,8 @@ function MOIB.added_constrained_variable_types(::Type{<:VectorizeBridge})
 end
 
 function MOIB.added_constraint_types(
-    ::Type{<:VectorizeBridge{T, F, S}}
-) where {T, F, S}
+    ::Type{<:VectorizeBridge{T,F,S}},
+) where {T,F,S}
     return [(F, S)]
 end
 
@@ -62,32 +64,34 @@ function concrete_bridge_type(
 ) where {T}
     H = MOIU.promote_operation(-, T, G, T)
     F = MOIU.promote_operation(vcat, T, H)
-    return VectorizeBridge{T, F, MOIU.vector_set_type(S), G}
+    return VectorizeBridge{T,F,MOIU.vector_set_type(S),G}
 end
 
 # Attributes, Bridge acting as a model
 
 function MOI.get(
-    ::VectorizeBridge{T, F, S}, ::MOI.NumberOfConstraints{F, S}
-) where {T, F, S}
+    ::VectorizeBridge{T,F,S},
+    ::MOI.NumberOfConstraints{F,S},
+) where {T,F,S}
     return 1
 end
 
 function MOI.get(
-    bridge::VectorizeBridge{T, F, S}, ::MOI.ListOfConstraintIndices{F, S}
-) where {T, F, S}
+    bridge::VectorizeBridge{T,F,S},
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {T,F,S}
     return [bridge.vector_constraint]
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::VectorizeBridge)
-    MOI.delete(model, bridge.vector_constraint)
+    return MOI.delete(model, bridge.vector_constraint)
 end
 
 # Attributes, Bridge acting as a constraint
 
 function MOI.supports(
     ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart, MOI.ConstraintDualStart},
+    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
     ::Type{<:VectorizeBridge},
 )
     return true
@@ -111,14 +115,14 @@ function MOI.get(
     x = MOI.get(model, attr, bridge.vector_constraint)
     @assert length(x) == 1
     if MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.N)))
-       # If it is an infeasibility certificate, it is a ray and satisfies the
-       # homogenized problem, see https://github.com/jump-dev/MathOptInterface.jl/issues/433
-       return x[1]
+        # If it is an infeasibility certificate, it is a ray and satisfies the
+        # homogenized problem, see https://github.com/jump-dev/MathOptInterface.jl/issues/433
+        return x[1]
     else
-       # Otherwise, we need to add the set constant since the ConstraintPrimal
-       # is defined as the value of the function and the set_constant was
-       # removed from the original function
-       return x[1] + bridge.set_constant
+        # Otherwise, we need to add the set constant since the ConstraintPrimal
+        # is defined as the value of the function and the set_constant was
+        # removed from the original function
+        return x[1] + bridge.set_constant
     end
 end
 
@@ -129,14 +133,17 @@ function MOI.set(
     value,
 )
     MOI.set(
-        model, attr, bridge.vector_constraint, [value - bridge.set_constant]
+        model,
+        attr,
+        bridge.vector_constraint,
+        [value - bridge.set_constant],
     )
     return
 end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintDual, MOI.ConstraintDualStart},
+    attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
     bridge::VectorizeBridge,
 )
     x = MOI.get(model, attr, bridge.vector_constraint)
@@ -185,15 +192,17 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
-    bridge::VectorizeBridge{T, F, S, G}
-) where {T, F, S, G}
+    bridge::VectorizeBridge{T,F,S,G},
+) where {T,F,S,G}
     f = MOIU.scalarize(MOI.get(model, attr, bridge.vector_constraint), true)
     @assert length(f) == 1
     return convert(G, f[1])
 end
 
 function MOI.get(
-    model::MOI.ModelLike, ::MOI.ConstraintSet, bridge::VectorizeBridge{T, F, S}
-) where {T, F, S}
+    model::MOI.ModelLike,
+    ::MOI.ConstraintSet,
+    bridge::VectorizeBridge{T,F,S},
+) where {T,F,S}
     return MOIU.scalar_set_type(S, T)(bridge.set_constant)
 end
