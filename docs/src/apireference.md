@@ -95,7 +95,7 @@ UserCut
 
 ```@docs
 ModelLike
-isempty
+is_empty
 empty!
 write_to_file
 read_from_file
