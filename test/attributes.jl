@@ -93,9 +93,5 @@ MOI.Utilities.@model(
     MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-    err = ErrorException(
-        "Unable to query `ConstraintConflictStatus` of $(c) because the " *
-        "constraint is bridged."
-    )
-    @test_throws err MOI.get(model, MOI.ConstraintConflictStatus(), c)
+    @test_throws ArgumentError MOI.get(model, MOI.ConstraintConflictStatus(), c)
 end
