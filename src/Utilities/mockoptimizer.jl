@@ -133,7 +133,8 @@ function MOI.optimize!(mock::MockOptimizer)
     mock.hasdual = true
     return mock.optimize!(mock)
 end
-function MOI.compute_conflict!(::MockOptimizer) end
+
+MOI.compute_conflict!(::MockOptimizer) = nothing
 
 function throw_mock_unsupported_names(attr)
     return throw(MOI.UnsupportedAttribute(
@@ -305,13 +306,15 @@ function MOI.set(
 )
     return _safe_set_result(mock.con_basis, attr, idx, value)
 end
+
 function MOI.set(
     mock::MockOptimizer,
     ::MOI.ConstraintConflictStatus,
     idx::MOI.ConstraintIndex,
     value,
 )
-    return mock.constraint_conflict_status[idx] = value
+    mock.constraint_conflict_status[idx] = value
+    return
 end
 
 MOI.get(mock::MockOptimizer, ::MOI.RawSolver) = mock
@@ -529,6 +532,7 @@ function MOI.get(
     MOI.throw_if_not_valid(mock, idx)
     return _safe_get_result(mock.con_basis, attr, idx, "basis status")
 end
+
 function MOI.get(
     mock::MockOptimizer,
     ::MOI.ConstraintConflictStatus,
