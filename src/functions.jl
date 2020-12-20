@@ -198,7 +198,7 @@ function VectorQuadraticTerm(
 end
 
 """
-    VectorQuadraticFunction{T}(affine_terms, quadratic_terms, constant)
+    VectorQuadraticFunction{T}(affine_terms, quadratic_terms, constants)
 
 The vector-valued quadratic function with i`th` component ("output index")
 defined as ``\\frac{1}{2}x^TQ_ix + a_i^T x + b_i``, where:
