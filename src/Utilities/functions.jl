@@ -355,8 +355,7 @@ function scalar_terms_at_index(
     terms::Vector{<:Union{MOI.VectorAffineTerm,MOI.VectorQuadraticTerm}},
     i::Int,
 )
-    I = findall(t -> t.output_index == i, terms)
-    return map(i -> terms[i].scalar_term, I)
+    return [terms[idx].scalar_term for idx in eachindex(terms) if terms[idx].output_index == i]
 end
 function Base.getindex(it::ScalarFunctionIterator{<:VAF}, i::Integer)
     return SAF(scalar_terms_at_index(it.f.terms, i), it.f.constants[i])
