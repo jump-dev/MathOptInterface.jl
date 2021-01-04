@@ -379,7 +379,7 @@ function Base.getindex(
     terms = MOI.VectorAffineTerm{T}[]
     # assume at least one term per index
     sizehint!(terms, length(I))
-    constant = sort!(it.f.constants[I])
+    constant = it.f.constants[sort(I)]
     for term in it.f.terms
         if term.output_index in I
             push!(terms, MOI.VectorAffineTerm(length(terms)+1, term.scalar_term))
