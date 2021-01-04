@@ -385,8 +385,8 @@ function Base.getindex(
             if term.output_index == j
                 push!(terms, MOI.VectorAffineTerm(i, term.scalar_term))
             end
-            @inbounds constant[i] = it.f.constants[j]
         end
+        @inbounds constant[i] = it.f.constants[j]
     end
     return VAF(terms, constant)
 end
