@@ -377,11 +377,16 @@ function Base.getindex(
     I::AbstractVector,
 ) where {T}
     terms = MOI.VectorAffineTerm{T}[]
+    # assume at least one term per index
+    sizehint!(terms, length(I))
     constant = Vector{T}(undef, length(I))
     for (i, j) in enumerate(I)
-        g = it[j]
-        append!(terms, map(t -> MOI.VectorAffineTerm(i, t), g.terms))
-        constant[i] = g.constant
+        for term in it.f.terms
+            if term.output_index == j
+                push!(terms, MOI.VectorAffineTerm(i, term.scalar_term))
+            end
+            @inbounds constant[i] = it.f.constants[j]
+        end
     end
     return VAF(terms, constant)
 end
