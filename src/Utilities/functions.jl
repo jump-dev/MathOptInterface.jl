@@ -380,7 +380,7 @@ function Base.getindex(
     # assume at least one term per index
     sizehint!(terms, length(I))
     constant = it.f.constants[sort(I)]
-    for term in it.f.terms
+    for term in sort(it.f.terms, by=t->t.output_index)
         if term.output_index in I
             push!(terms, MOI.VectorAffineTerm(length(terms)+1, term.scalar_term))
         end
