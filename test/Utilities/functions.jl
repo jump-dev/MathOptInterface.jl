@@ -246,11 +246,11 @@ end
     @test g.constant == 5
     h = it[[3, 1]]
     @test h isa MOI.VectorAffineFunction    
-    @test sort(h.terms, by=t->t.output_index) == sort(MOI.VectorAffineTerm.([1, 1, 2, 2, 2], MOI.ScalarAffineTerm.([2, 6, 7, 1, 4], [z, x, y, z, x])), by=t->t.output_index)
+    @test sort(h.terms, by=t->t.output_index) == MOI.VectorAffineTerm.([1, 1, 2, 2, 2], MOI.ScalarAffineTerm.([2, 6, 7, 1, 4], [z, x, y, z, x]))
     @test MOIU.constant_vector(h) == [5, 2]
     F = MOIU.operate(vcat, Int, it[[1, 2]], it[3])
     @test F isa MOI.VectorAffineFunction{Int}
-    @test sort(F.terms, by=t->t.output_index) == sort(MOI.VectorAffineTerm.([1, 1, 1, 2, 2, 2, 2, 3, 3], MOI.ScalarAffineTerm.([7, 1, 4, 1, 9, 3, 1, 2, 6], [y, z, x, x, z, y, y, z, x])), by=t->t.output_index)
+    @test sort(F.terms, by=t->t.output_index) == MOI.VectorAffineTerm.([1, 1, 1, 2, 2, 2, 2, 3, 3], MOI.ScalarAffineTerm.([7, 1, 4, 1, 9, 3, 1, 2, 6], [y, z, x, x, z, y, y, z, x]))
     @test MOIU.constant_vector(F) == MOIU.constant_vector(f)
 end
 @testset "Indexing on VectorQuadraticFunction" begin
