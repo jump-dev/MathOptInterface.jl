@@ -245,7 +245,7 @@ end
     @test g.terms == MOI.ScalarAffineTerm.([2, 6], [z, x])
     @test g.constant == 5
     h = it[[3, 1]]
-    @test h isa MOI.VectorAffineFunction    
+    @test h isa MOI.VectorAffineFunction
     @test sort(h.terms, by=t->t.output_index) == MOI.VectorAffineTerm.([1, 1, 2, 2, 2], MOI.ScalarAffineTerm.([2, 6, 7, 1, 4], [z, x, y, z, x]))
     @test MOIU.constant_vector(h) == [5, 2]
     F = MOIU.operate(vcat, Int, it[[1, 2]], it[3])
