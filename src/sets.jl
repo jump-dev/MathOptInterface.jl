@@ -154,20 +154,20 @@ dual_set(s::Nonpositives) = copy(s)
 dual_set_type(::Type{Nonpositives}) = Nonpositives
 
 """
-    GreaterThan{T <: Real}(lower::T)
+    GreaterThan{T <: Number}(lower::T)
 
 The set ``[lower,\\infty) \\subseteq \\mathbb{R}``.
 """
-struct GreaterThan{T<:Real} <: AbstractScalarSet
+struct GreaterThan{T<:Number} <: AbstractScalarSet
     lower::T
 end
 
 """
-    LessThan{T <: Real}(upper::T)
+    LessThan{T <: Number}(upper::T)
 
 The set ``(-\\infty,upper] \\subseteq \\mathbb{R}``.
 """
-struct LessThan{T<:Real} <: AbstractScalarSet
+struct LessThan{T<:Number} <: AbstractScalarSet
     upper::T
 end
 
