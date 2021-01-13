@@ -355,8 +355,7 @@ function scalar_terms_at_index(
     terms::Vector{<:Union{MOI.VectorAffineTerm,MOI.VectorQuadraticTerm}},
     i::Int,
 )
-    I = findall(t -> t.output_index == i, terms)
-    return map(i -> terms[i].scalar_term, I)
+    return [term.scalar_term for term in terms if term.output_index == i]
 end
 function Base.getindex(it::ScalarFunctionIterator{<:VAF}, i::Integer)
     return SAF(scalar_terms_at_index(it.f.terms, i), it.f.constants[i])
@@ -378,11 +377,14 @@ function Base.getindex(
     I::AbstractVector,
 ) where {T}
     terms = MOI.VectorAffineTerm{T}[]
-    constant = Vector{T}(undef, length(I))
-    for (i, j) in enumerate(I)
-        g = it[j]
-        append!(terms, map(t -> MOI.VectorAffineTerm(i, t), g.terms))
-        constant[i] = g.constant
+    # assume at least one term per index
+    sizehint!(terms, length(I))
+    constant = it.f.constants[I]
+    for term in it.f.terms
+        idx = findfirst(Base.Fix1(==, term.output_index), I)
+        if idx !== nothing
+            push!(terms, MOI.VectorAffineTerm(idx, term.scalar_term))
+        end
     end
     return VAF(terms, constant)
 end
