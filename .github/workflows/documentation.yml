@@ -15,7 +15,7 @@ jobs:
           # Build documentation on Julia 1.0
           version: '1.0'
       - name: Install dependencies
-        shell: julia --project=. {0}
+        shell: julia --project=docs {0}
         run: |
           using Pkg
           Pkg.develop(PackageSpec(path=pwd()))
