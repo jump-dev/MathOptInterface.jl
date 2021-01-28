@@ -510,10 +510,12 @@ end
 
 function MOI.modify(
     model::AbstractModel,
-    obj::MOI.ObjectiveFunction,
+    ::MOI.ObjectiveFunction,
     change::MOI.AbstractFunctionModification,
 )
-    return model.objective = modify_function(model.objective, change)
+    model.objective = modify_function(model.objective, change)
+    model.objectiveset = true
+    return
 end
 
 function MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet)

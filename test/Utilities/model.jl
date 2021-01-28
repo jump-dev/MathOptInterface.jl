@@ -331,3 +331,11 @@ end
     @test !haskey(dest.ext, :my_store)
     @test model.ext[:my_store] == 2
 end
+
+@testset "Objective set via modify" begin
+    model = MOIU.Model{Float64}()
+    x = MOI.add_variable(model)
+    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    MOI.modify(model, attr, MOI.ScalarCoefficientChange(x, 1.0))
+    @test attr in MOI.get(model, MOI.ListOfModelAttributesSet())
+end
