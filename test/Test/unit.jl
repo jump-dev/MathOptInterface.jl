@@ -45,6 +45,8 @@ end
             "solve_zero_one_with_bounds_1",
             "solve_zero_one_with_bounds_2",
             "solve_zero_one_with_bounds_3",
+            "solve_constrs_with_inf_bounds",
+            "solve_one_sided_intervals",
             "solve_unbounded_model",
             "solve_single_variable_dual_min",
             "solve_single_variable_dual_max",
