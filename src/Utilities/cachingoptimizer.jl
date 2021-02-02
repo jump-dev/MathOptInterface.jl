@@ -113,14 +113,23 @@ mode(m::CachingOptimizer) = m.mode
 """
     reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
 
-Sets or resets `m` to have the given empty optimizer. Can be called
-from any state. The `CachingOptimizer` will be in state `EMPTY_OPTIMIZER` after the call.
+Sets or resets `m` to have the given empty optimizer `optimizer`.
+
+Can be called from any state. An assertion error will be thrown if `optimizer`
+is not empty.
+
+The `CachingOptimizer` `m` will be in state `EMPTY_OPTIMIZER` after the call.
 """
 function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     @assert MOI.is_empty(optimizer)
     m.optimizer = optimizer
     m.state = EMPTY_OPTIMIZER
     for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
+        if attr isa MOI.RawParameter
+            # Skip RawParameters because they may not apply to the new
+            # optimizer.
+            continue
+        end
         value = MOI.get(m.model_cache, attr)
         optimizer_value = map_indices(m.model_to_optimizer_map, value)
         MOI.set(m.optimizer, attr, optimizer_value)
