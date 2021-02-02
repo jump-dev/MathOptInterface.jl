@@ -391,8 +391,10 @@ function _delete_variables_in_variables_constraints(
     end
     # Delete all `MOI.SingleVariable` constraints of these variables.
     for vi in vis
-        for ci in Constraint.variable_constraints(Constraint.bridges(b), vi)
-            MOI.delete(b, ci)
+        for ci in reverse(Constraint.variable_constraints(Constraint.bridges(b), vi))
+            if MOI.is_valid(b, ci)
+                MOI.delete(b, ci)
+            end
         end
     end
 end
