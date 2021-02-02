@@ -287,6 +287,10 @@ function loadfromstring!(model, s)
             else
                 error("Unrecognized expression $ex")
             end
+            F, S = typeof(f), typeof(set)
+            if !MOI.supports_constraint(model, F, S)
+                throw(MOI.UnsupportedConstraint{F,S}())
+            end
             cindex = MOI.add_constraint(model, f, set)
             MOI.set(model, MOI.ConstraintName(), cindex, String(label))
         end
