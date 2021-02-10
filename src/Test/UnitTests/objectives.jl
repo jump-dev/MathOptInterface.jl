@@ -314,6 +314,13 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_qp_edge_cases"] = solve_qp_edge_cases
 
+"""
+    solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
+
+Test quadratic program with a zero off-diagonal term.
+
+If `config.solve=true` confirm that it solves correctly.
+"""
 function solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
