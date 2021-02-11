@@ -357,6 +357,7 @@ function solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
         variable_primal = [(x[1], 1.0), (x[2], 2.0)],
     )
 end
+unittests["solve_qp_zero_offdiag"] = solve_qp_zero_offdiag
 
 """
     solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
