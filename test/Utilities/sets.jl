@@ -37,6 +37,7 @@ end
     @test MOIU.shift_constant(MOI.GreaterThan(6), -1) == MOI.GreaterThan(5)
     @test MOIU.shift_constant(MOI.LessThan(2), 2) == MOI.LessThan(4)
     @test MOIU.shift_constant(MOI.Interval(-2, 3), 1) == MOI.Interval(-1, 4)
+    @test MOIU.shift_constant(MOI.ZeroOne(), 0.0) === nothing
 end
 
 @testset "Dimension" begin

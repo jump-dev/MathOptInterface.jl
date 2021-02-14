@@ -1,15 +1,32 @@
 """
-    shift_constant(set::MOI.AbstractScalarSet,
-                   offset)
+    shift_constant(set::MOI.AbstractScalarSet, offset)
 
 Returns a new scalar set `new_set` such that `func`-in-`set` is equivalent to
 `func + offset`-in-`new_set`.
+
+Only define this function if it makes sense to!
+
+By default, this function returns `nothing`, which can be used as a flag to
+check if the set supports shifting:
+```Julia
+new_set = shift_constant(old_set, offset)
+if new_set === nothing
+    add_constraint(model, f, old_set)
+else
+    f.constant = 0
+    add_constraint(model, f, new_set)
+end
+```
 
 ## Examples
 
 The call `shift_constant(MOI.Interval(-2, 3), 1)` is equal to
 `MOI.Interval(-1, 4)`.
 """
+function shift_constant(::MOI.AbstractScalarSet, ::Any)
+    return nothing
+end
+
 function shift_constant(
     set::Union{MOI.LessThan{T},MOI.GreaterThan{T},MOI.EqualTo{T}},
     offset::T,
