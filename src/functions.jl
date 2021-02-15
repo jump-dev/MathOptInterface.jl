@@ -637,7 +637,7 @@ end
 function Base.convert(
     ::Type{SF},
     f::AbstractScalarAffineFunction,
-) where {T, SF <: Union{ScalarAffineFunction{T}, ScalarAffineColumnFunction{T}}}
+) where {T, SF <: AbstractScalarAffineFunction}
     return SF(f.terms, f.constant)
 end
 
