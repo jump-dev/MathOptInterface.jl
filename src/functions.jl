@@ -644,7 +644,7 @@ end
 function Base.convert(
     ::Type{SF},
     f::ScalarQuadraticFunction{T},
-) where {T, SF <: Union{ScalarAffineFunction{T}, ScalarAffineColumnFunction{T}}}
+) where {T, SF <: AbstractScalarAffineFunction{T}}
     if !Base.isempty(f.quadratic_terms)
         throw(InexactError(:convert, ScalarAffineFunction{T}, f))
     end
