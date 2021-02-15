@@ -13,6 +13,15 @@ function MA.mutable_copy(func::MOI.ScalarAffineFunction)
     ]
     return MOI.ScalarAffineFunction(terms, MA.copy_if_mutable(func.constant))
 end
+
+function MA.mutable_copy(func::MOI.ScalarAffineColumnFunction{T}) where {T}
+    coefficients = [
+        MA.copy_if_mutable(c) for c in func.coefficients
+    ]
+    variable_indices = copy(func.variable_indices)
+    return MOI.ScalarAffineColumnFunction{T}(coefficients, variable_indices, MA.copy_if_mutable(func.constant))
+end
+
 function MA.mutable_copy(func::MOI.ScalarQuadraticFunction)
     affine_terms = [
         MOI.ScalarAffineTerm(

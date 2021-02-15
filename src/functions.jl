@@ -71,10 +71,23 @@ struct ScalarAffineTerm{T}
     variable_index::VariableIndex
 end
 
+"""
+    AbstractScalarAffineFunction{T}
+
+Abstract type for functions representing ``a^T x + b``.
+The concrete implementations are [`ScalarAffineTerm`](@ref)
+which stores ``a^T x`` as a vector of `ScalarAffineTerm`
+and [`ScalarAffineColumnFunction`](@ref) storing `a` and `x`
+in separate terms.
+"""
+abstract type AbstractScalarAffineFunction{T} <: AbstractScalarFunction
+end
+
 # Note: ScalarAffineFunction is mutable because its `constant` field is likely of an immutable
 # type, while its `terms` field is of a mutable type, meaning that creating a `ScalarAffineFunction`
 # allocates, and it is desirable to provide a zero-allocation option for working with
 # ScalarAffineFunctions. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
+
 """
     ScalarAffineFunction{T}(terms, constant)
 
@@ -86,10 +99,46 @@ The scalar-valued affine function ``a^T x + b``, where:
 Duplicate variable indices in `terms` are accepted, and the corresponding
 coefficients are summed together.
 """
-mutable struct ScalarAffineFunction{T} <: AbstractScalarFunction
+mutable struct ScalarAffineFunction{T} <: AbstractScalarAffineFunction{T}
     terms::Vector{ScalarAffineTerm{T}}
     constant::T
 end
+
+"""
+    ScalarAffineColumnFunction{T}
+
+Represents a scalar-valued affine function ``a^T x + b``.
+Unlike `ScalarAffineFunction`, it maintains the coefficients and variables in separate vectors.
+"""
+mutable struct ScalarAffineColumnFunction{T} <: AbstractScalarAffineFunction{T}
+    coefficients::Vector{T}
+    variable_indices::Vector{VariableIndex}
+    constant::T
+end
+
+function ScalarAffineColumnFunction(terms::AbstractVector{ScalarAffineTerm{T1}}, constant::T2) where {T1, T2}
+    T = promote_type(T1, T2)
+    coefficients = Vector{T}(undef, length(terms))
+    v_indices = Vector{VariableIndex}(undef, length(terms))
+    for idx in eachindex(terms)
+        coefficients[idx] = terms[idx].coefficient
+        v_indices[idx] = terms[idx].variable_index
+    end
+    return ScalarAffineColumnFunction{T}(coefficients, v_indices, constant)
+end
+
+scalar_terms(func::ScalarAffineFunction) = func.terms
+function scalar_terms(func::ScalarAffineColumnFunction)
+    return [
+        ScalarAffineTerm(coef, vi) for (coef, vi) in zip(func.coefficients, func.variable_indices)
+    ]
+end
+
+coefficients(func::ScalarAffineFunction) = [term.coefficient for term in func.terms]
+variable_indices(func::ScalarAffineFunction) = [term.variable_index for term in func.terms]
+
+coefficients(func::ScalarAffineColumnFunction) = func.coefficients
+variable_indices(func::ScalarAffineColumnFunction) = func.variable_indices
 
 """
     struct VectorAffineTerm{T}
@@ -307,11 +356,10 @@ function dict_compare(d1::Dict, d2::Dict{<:Any,T}, compare::Function) where {T}
 end
 
 # Build a dictionary where the duplicate keys are summed
-function sum_dict(kvs::Vector{Pair{K,V}}) where {K,V}
+function sum_dict(kvs::Union{Vector{Pair{K,V}}, Iterators.Zip{Tuple{Vector{K},Vector{V}}}}) where {K,V}
     d = Dict{K,V}()
-    for kv in kvs
-        key = kv.first
-        d[key] = kv.second + Base.get(d, key, zero(V))
+    for (key, v) in kvs
+        d[key] = v + Base.get(d, key, zero(V))
     end
     return d
 end
@@ -374,6 +422,10 @@ function _dicts(f::Union{ScalarAffineFunction,VectorAffineFunction})
     return (sum_dict(term_pair.(f.terms)),)
 end
 
+function _dicts(f::ScalarAffineColumnFunction)
+    return (sum_dict(zip(f.variable_indices, f.coefficients)),)
+end
+
 function _dicts(f::Union{ScalarQuadraticFunction,VectorQuadraticFunction})
     return (
         sum_dict(term_pair.(f.affine_terms)),
@@ -386,7 +438,7 @@ end
 
 Returns the constant term of the scalar function
 """
-constant(f::Union{ScalarAffineFunction,ScalarQuadraticFunction}) = f.constant
+constant(f::Union{AbstractScalarAffineFunction,ScalarQuadraticFunction}) = f.constant
 
 """
     constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
@@ -401,13 +453,13 @@ function Base.isapprox(
     kwargs...,
 ) where {
     F<:Union{
-        ScalarAffineFunction,
+        AbstractScalarAffineFunction,
         ScalarQuadraticFunction,
         VectorAffineFunction,
         VectorQuadraticFunction,
     },
     G<:Union{
-        ScalarAffineFunction,
+        AbstractScalarAffineFunction,
         ScalarQuadraticFunction,
         VectorAffineFunction,
         VectorQuadraticFunction,
@@ -421,7 +473,7 @@ function Base.isapprox(
 end
 
 function constant(
-    f::Union{ScalarAffineFunction,ScalarQuadraticFunction},
+    f::Union{AbstractScalarAffineFunction,ScalarQuadraticFunction},
     T::DataType,
 )
     return constant(f)
@@ -466,6 +518,14 @@ function Base.copy(
     return F(copy(func.terms), copy(constant(func)))
 end
 
+function Base.copy(func::ScalarAffineColumnFunction)
+    return ScalarAffineColumnFunction(
+        copy(func.coefficients),
+        copy(func.variable_indices),
+        copy(func.constant),
+    )
+end
+
 """
     copy(func::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
 
@@ -487,6 +547,15 @@ end
 function ScalarAffineFunction{T}(f::SingleVariable) where {T}
     return ScalarAffineFunction([ScalarAffineTerm(one(T), f.variable)], zero(T))
 end
+
+function ScalarAffineColumnFunction{T}(f::SingleVariable) where {T}
+    return ScalarAffineColumnFunction{T}(
+        [one(T)],
+        [f.variable],
+        zero(T),
+    )
+end
+
 # VectorOfVariables -> VectorAffineFunction
 function VectorAffineFunction{T}(f::VectorOfVariables) where {T}
     n = length(f.variables)
@@ -512,6 +581,19 @@ function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
     return SingleVariable(f.terms[1].variable_index)
 end
 
+function Base.convert(::Type{SingleVariable}, f::ScalarAffineColumnFunction)
+    # just one of the two vectors checked
+    # since must remain consistent
+    if (
+        !iszero(f.constant) ||
+        !isone(length(f.coefficients)) ||
+        !isone(f.coefficients[1])
+    )
+        throw(InexactError(:convert, SingleVariable, f))
+    end
+    return SingleVariable(f.variable_indices[1])
+end
+
 function Base.convert(
     ::Type{SingleVariable},
     f::ScalarQuadraticFunction{T},
@@ -520,15 +602,15 @@ function Base.convert(
 end
 
 # Conversion to ScalarAffineFunction
-function Base.convert(::Type{ScalarAffineFunction{T}}, α::T) where {T}
-    return ScalarAffineFunction{T}(ScalarAffineTerm{T}[], α)
+function Base.convert(::Type{SF}, α::T) where {T, SF <: AbstractScalarAffineFunction{T}}
+    return SF(ScalarAffineTerm{T}[], α)
 end
 
 function Base.convert(
-    ::Type{ScalarAffineFunction{T}},
+    ::Type{SF},
     f::SingleVariable,
-) where {T}
-    return ScalarAffineFunction{T}(f)
+) where {T, SF <: AbstractScalarAffineFunction{T}}
+    return SF(f)
 end
 
 function Base.convert(
@@ -546,27 +628,27 @@ function Base.convert(
 end
 
 function Base.convert(
-    ::Type{ScalarAffineFunction{T}},
-    f::ScalarAffineFunction{T},
-) where {T}
+    ::Type{SF},
+    f::SF,
+) where {T, SF <: AbstractScalarAffineFunction{T}}
     return f
 end
 
 function Base.convert(
-    ::Type{ScalarAffineFunction{T}},
-    f::ScalarAffineFunction,
-) where {T}
-    return ScalarAffineFunction{T}(f.terms, f.constant)
+    ::Type{SF},
+    f::AbstractScalarAffineFunction,
+) where {T, SF <: Union{ScalarAffineFunction{T}, ScalarAffineColumnFunction{T}}}
+    return SF(f.terms, f.constant)
 end
 
 function Base.convert(
-    ::Type{ScalarAffineFunction{T}},
+    ::Type{SF},
     f::ScalarQuadraticFunction{T},
-) where {T}
+) where {T, SF <: Union{ScalarAffineFunction{T}, ScalarAffineColumnFunction{T}}}
     if !Base.isempty(f.quadratic_terms)
         throw(InexactError(:convert, ScalarAffineFunction{T}, f))
     end
-    return ScalarAffineFunction{T}(f.affine_terms, f.constant)
+    return SF(f.affine_terms, f.constant)
 end
 
 # Conversion to ScalarQuadraticFunction
