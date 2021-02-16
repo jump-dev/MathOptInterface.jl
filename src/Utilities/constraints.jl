@@ -15,7 +15,7 @@ function normalize_and_add_constraint(
     func::MOI.AbstractScalarFunction,
     set::MOI.AbstractScalarSet;
     allow_modify_function::Bool = false,
-) where {T}
+)
     return MOI.add_constraint(
         model,
         normalize_constant(
@@ -45,11 +45,11 @@ function normalize_constant(
     return func, set
 end
 function normalize_constant(
-    func::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
+    func::Union{MOI.AbstractScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
     set::MOI.AbstractScalarSet;
     allow_modify_function::Bool = false,
 ) where {T}
-    set = shift_constant(set, -func.constant)
+    set = shift_constant(set, -MOI.constant(func))
     if !allow_modify_function
         func = copy(func)
     end

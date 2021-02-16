@@ -52,6 +52,36 @@ end
         @test MOI.output_dimension(quad) == 0
         @test quad isa MOI.VectorQuadraticFunction{Int}
     end
+    @testset "vectorize pure column affine" begin
+        g1 = MOI.ScalarAffineColumnFunction([MOI.ScalarAffineTerm(2, x)], 3)
+        g2 = MOI.ScalarAffineColumnFunction(Int[], MOI.VariableIndex[], 1)
+        g3 = MOI.ScalarAffineColumnFunction([5], [y], 4)
+        @test g ≈ MOIU.vectorize([g1, g2, g3])
+        vov = MOIU.vectorize(MOI.SingleVariable[])
+        @test MOI.output_dimension(vov) == 0
+        @test vov isa MOI.VectorOfVariables
+        aff = MOIU.vectorize(MOI.ScalarAffineColumnFunction{Int}[])
+        @test MOI.output_dimension(aff) == 0
+        @test aff isa MOI.VectorAffineFunction{Int}
+        quad = MOIU.vectorize(MOI.ScalarQuadraticFunction{Int}[])
+        @test MOI.output_dimension(quad) == 0
+        @test quad isa MOI.VectorQuadraticFunction{Int}        
+    end
+    @testset "vectorize mixed affine functions" begin
+        g1 = MOI.ScalarAffineColumnFunction([MOI.ScalarAffineTerm(2, x)], 3)
+        g2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Int}[], 1)
+        g3 = MOI.ScalarAffineColumnFunction([5], [y], 4)
+        @test g ≈ MOIU.vectorize([g1, g2, g3])
+        vov = MOIU.vectorize(MOI.SingleVariable[])
+        @test MOI.output_dimension(vov) == 0
+        @test vov isa MOI.VectorOfVariables
+        aff = MOIU.vectorize(MOI.ScalarAffineColumnFunction{Int}[])
+        @test MOI.output_dimension(aff) == 0
+        @test aff isa MOI.VectorAffineFunction{Int}
+        quad = MOIU.vectorize(MOI.ScalarQuadraticFunction{Int}[])
+        @test MOI.output_dimension(quad) == 0
+        @test quad isa MOI.VectorQuadraticFunction{Int}        
+    end
     @testset "operate vcat" begin
         v = MOI.VectorOfVariables([y, w])
         wf = MOI.SingleVariable(w)

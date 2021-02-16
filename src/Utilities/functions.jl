@@ -14,9 +14,14 @@ function.
 function eval_variables end
 eval_variables(varval::Function, f::SVF) = varval(f.variable)
 eval_variables(varval::Function, f::VVF) = varval.(f.variables)
+
 function eval_variables(varval::Function, f::SAF)
     return mapreduce(t -> eval_term(varval, t), +, f.terms, init = f.constant)
 end
+function eval_variables(varval::Function, f::SACF)
+    return sum(c * varval(v) for (c, v) in zip(f.coefficients, f.variable_indices))
+end
+
 function eval_variables(varval::Function, f::VAF)
     out = copy(f.constants)
     for t in f.terms
@@ -133,9 +138,14 @@ end
 function map_indices(index_map::Function, f::MOI.VectorOfVariables)
     return MOI.VectorOfVariables(index_map.(f.variables))
 end
-function map_indices(index_map::Function, f::Union{SAF,VAF})
-    return typeof(f)(map_indices.(index_map, f.terms), MOI.constant(f))
+function map_indices(index_map::Function, f::F) where {F <: VAF}
+    return F(map_indices.(index_map, f.terms), MOI.constant(f))
 end
+
+function map_indices(index_map::Function, f::F) where {F <: MOI.AbstractScalarAffineFunction}
+    return F(map_indices.(index_map, MOI.scalar_terms(f)), MOI.constant(f))
+end
+
 function map_indices(index_map::Function, f::Union{SQF,VQF})
     lin = map_indices.(index_map, f.affine_terms)
     quad = map_indices.(index_map, f.quadratic_terms)
@@ -226,10 +236,10 @@ function substitute_variables(
 end
 function substitute_variables(
     variable_map::Function,
-    func::MOI.ScalarAffineFunction{T},
-) where {T}
-    g = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], MOI.constant(func))
-    for term in func.terms
+    func::FT,
+) where {T, FT <: MOI.AbstractScalarAffineFunction{T}}
+    g = FT(MOI.ScalarAffineTerm{T}[], MOI.constant(func))
+    for term in MOI.scalar_terms(func)
         operate!(
             +,
             T,
@@ -301,7 +311,7 @@ function substitute_variables(
 end
 
 # Vector of constants
-constant_vector(f::Union{SAF,SQF}) = [f.constant]
+constant_vector(f::Union{SAF,SQF,SACF}) = [f.constant]
 constant_vector(f::Union{VAF,VQF}) = f.constants
 
 # Implements iterator interface
@@ -567,6 +577,29 @@ function canonicalize!(f::Union{SAF,VAF})
     return f
 end
 
+function canonicalize!(f::SACF)
+    delete_indices = BitSet()
+    for i in 1:length(f.variable_indices)-1
+        if iszero(f.coefficients[i])
+            push!(delete_indices, i)
+            continue
+        end
+        for j in i+1:length(f.variable_indices)
+            if j in delete_indices
+                continue
+            end
+            if f.variable_indices[i] == f.variable_indices[j]
+                f.coefficients[i] += f.coefficients[j]
+                f.coefficients[j] = 0
+                push!(delete_indices, j)
+            end
+        end
+    end
+    deleteat!(f.coefficients, delete_indices)
+    deleteat!(f.variable_indices, delete_indices)
+    return f
+end
+
 """
     canonicalize!(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
 
@@ -676,6 +709,9 @@ function all_coefficients end
 function all_coefficients(p::Function, f::MOI.ScalarAffineFunction)
     return p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
 end
+function all_coefficients(p::Function, f::MOI.ScalarAffineColumnFunction)
+    return all(p, f.coefficients)
+end
 function all_coefficients(p::Function, f::MOI.ScalarQuadraticFunction)
     return p(f.constant) &&
            all(t -> p(MOI.coefficient(t)), f.affine_terms) &&
@@ -708,20 +744,22 @@ function isapprox_zero(f::MOI.AbstractFunction, tol)
 end
 
 _is_constant(f::MOI.ScalarAffineFunction) = isempty(f.terms)
+_is_constant(f::MOI.ScalarAffineColumnFunction) = isempty(f.variable_indices)
+
 function _is_constant(f::MOI.ScalarQuadraticFunction)
     return isempty(f.affine_terms) && isempty(f.quadratic_terms)
 end
 
 Base.iszero(::MOI.SingleVariable) = false
 function Base.iszero(
-    f::Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
+    f::Union{MOI.AbstractScalarAffineFunction,MOI.ScalarQuadraticFunction},
 )
     return iszero(MOI.constant(f)) && _is_constant(canonical(f))
 end
 
 Base.isone(::MOI.SingleVariable) = false
 function Base.isone(
-    f::Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
+    f::Union{MOI.AbstractScalarAffineFunction,MOI.ScalarQuadraticFunction},
 )
     return isone(MOI.constant(f)) && _is_constant(canonical(f))
 end
@@ -816,6 +854,14 @@ function filter_variables(
 )
     return typeof(f)(_filter_variables(keep, f.terms), MOI.constant(f))
 end
+function filter_variables(keep::Function, f::MOI.ScalarAffineColumnFunction)
+    keep_filter = keep.(f.variable_indices)
+    typeof(f)(
+        f.coefficients[keep_filter],
+        f.variable_indices[keep_filter],
+        MOI.constant(f),
+    )
+end
 function filter_variables(
     keep,
     f::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
@@ -849,8 +895,8 @@ end
 
 Return a new function `f` modified according to `change`.
 """
-function modify_function(f::SAF, change::MOI.ScalarConstantChange)
-    return SAF(f.terms, change.new_constant)
+function modify_function(f::MOI.AbstractScalarAffineFunction, change::MOI.ScalarConstantChange)
+    return SAF(MOI.scalar_terms(f), change.new_constant)
 end
 function modify_function(f::VAF, change::MOI.VectorConstantChange)
     return VAF(f.terms, change.new_constant)
@@ -891,11 +937,11 @@ function _modifycoefficient(
 end
 
 function modify_function(
-    f::MOI.ScalarAffineFunction{T},
+    f::F,
     change::MOI.ScalarCoefficientChange{T},
-) where {T}
-    terms = _modifycoefficient(f.terms, change.variable, change.new_coefficient)
-    return MOI.ScalarAffineFunction(terms, f.constant)
+) where {T, F <: MOI.AbstractScalarAffineFunction{T}}
+    terms = _modifycoefficient(MOI.scalar_terms(f), change.variable, change.new_coefficient)
+    return F(terms, MOI.constant(f))
 end
 
 function modify_function(
@@ -1279,7 +1325,7 @@ end
 
 # Functions convertible to a ScalarAffineFunction
 const ScalarAffineLike{T} =
-    Union{T,MOI.SingleVariable,MOI.ScalarAffineFunction{T}}
+    Union{T,MOI.SingleVariable,MOI.AbstractScalarAffineFunction{T}}
 # Functions convertible to a ScalarQuadraticFunction
 const ScalarQuadraticLike{T} =
     Union{ScalarAffineLike{T},MOI.ScalarQuadraticFunction{T}}
@@ -2155,7 +2201,7 @@ function Base.:*(f::TypedLike, g::Bool)
 end
 Base.:*(f::Bool, g::TypedLike) = g * f
 
-function Base.:^(func::MOI.ScalarAffineFunction{T}, p::Integer) where {T}
+function Base.:^(func::MOI.AbstractScalarAffineFunction{T}, p::Integer) where {T}
     if iszero(p)
         return one(MOI.ScalarQuadraticFunction{T})
     elseif isone(p)
@@ -2195,7 +2241,7 @@ LinearAlgebra.symmetric(f::ScalarLike, ::Symbol) = f
 function promote_operation(
     ::typeof(/),
     ::Type{T},
-    ::Type{<:Union{MOI.SingleVariable,MOI.ScalarAffineFunction{T}}},
+    ::Type{<:Union{MOI.SingleVariable,MOI.AbstractScalarAffineFunction{T}}},
     ::Type{T},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
@@ -2391,13 +2437,17 @@ number_of_affine_terms(::Type, f::VVF) = length(f.variables)
 function number_of_affine_terms(::Type{T}, f::Union{SAF{T},VAF{T}}) where {T}
     return length(f.terms)
 end
+function number_of_affine_terms(::Type{T}, f::SACF{T}) where {T}
+    return length(f.variable_indices)
+end
+
 function number_of_affine_terms(::Type{T}, f::Union{SQF{T},VQF{T}}) where {T}
     return length(f.affine_terms)
 end
 
 function number_of_quadratic_terms(
     ::Type{T},
-    ::Union{T,SVF,VVF,SAF{T},VAF{T}},
+    ::Union{T,SVF,VVF,SAF{T},SACF{T},VAF{T}},
 ) where {T}
     return 0
 end
@@ -2459,6 +2509,16 @@ function fill_terms(
     terms::Vector{MOI.VectorAffineTerm{T}},
     offset::Int,
     output_offset::Int,
+    func::Union{SACF{T}},
+) where {T}
+    n = number_of_affine_terms(T, func)
+    return terms[offset.+(1:n)] .= offset_term.(MOI.scalar_terms(func), output_offset)
+end
+
+function fill_terms(
+    terms::Vector{MOI.VectorAffineTerm{T}},
+    offset::Int,
+    output_offset::Int,
     func::Union{SQF{T},VQF{T}},
 ) where {T}
     n = number_of_affine_terms(T, func)
@@ -2503,9 +2563,9 @@ function fill_constant(
     constant::Vector{T},
     offset::Int,
     output_offset::Int,
-    func::Union{SAF{T},SQF{T}},
+    func::Union{SAF{T},SACF{T},SQF{T}},
 ) where {T}
-    return constant[offset+1] = func.constant
+    return constant[offset+1] = MOI.constant(func)
 end
 function fill_constant(
     constant::Vector{T},
@@ -2534,7 +2594,7 @@ end
 Returns the vector of scalar affine functions in the form of a
 `MOI.VectorAffineFunction{T}`.
 """
-function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where {T}
+function vectorize(funcs::AbstractVector{<:MOI.AbstractScalarAffineFunction{T}}) where {T}
     nterms =
         mapreduce(func -> number_of_affine_terms(T, func), +, funcs, init = 0)
     out_dim = mapreduce(func -> output_dim(T, func), +, funcs, init = 0)
