@@ -33,3 +33,4 @@ function Base.iterate(it::LazyMap, args...)
 end
 Base.IteratorSize(it::LazyMap) = Base.IteratorSize(it.data)
 Base.eltype(::LazyMap{T}) where {T} = T
+Iterators.reverse(it::LazyMap{T}) where T = LazyMap{T}(it.f, Iterators.reverse(it.data))
