@@ -19,3 +19,18 @@ An abstraction layer for mathematical optimization solvers. Replaces [MathProgBa
 [gitter-url]: https://gitter.im/JuliaOpt/JuMP-dev?utm_source=share-link&utm_medium=link&utm_campaign=share-link
 [gitter-img]: https://badges.gitter.im/JuliaOpt/JuMP-dev.svg
 [discourse-url]: https://discourse.julialang.org/c/domain/opt
+
+## Citing MathOptInterface
+
+If you find MathOptInterface useful in your work, we kindly request that you cite the
+following paper:
+```bibtex
+@article{MathOptInterface-2021,
+   title={MathOptInterface: a data structure for mathematical optimization problems},
+   author={Legat, Benoit and Dowson, Oscar and Garcia, Joaquim and Lubin, Miles},
+   journal={INFORMS Journal on Computing},
+   year={in press},
+   publisher={INFORMS}
+ }
+```
+A preprint of this paper is [freely available](https://arxiv.org/abs/2002.03447). 
