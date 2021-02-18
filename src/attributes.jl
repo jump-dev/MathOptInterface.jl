@@ -572,11 +572,11 @@ An Enum of possible return values from calling [`get`](@ref) with
 
 Possible values are:
 
-* CALLBACK_NODE_STATUS_INTEGER: the primal solution available from
+* `CALLBACK_NODE_STATUS_INTEGER`: the primal solution available from
   [`CallbackVariablePrimal`](@ref) is integer feasible.
-* CALLBACK_NODE_STATUS_FRACTIONAL: the primal solution available from
+* `CALLBACK_NODE_STATUS_FRACTIONAL`: the primal solution available from
   [`CallbackVariablePrimal`](@ref) is integer infeasible.
-* CALLBACK_NODE_STATUS_UNKNOWN: the primal solution available from
+* `CALLBACK_NODE_STATUS_UNKNOWN`: the primal solution available from
   [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.
 """
 @enum(
