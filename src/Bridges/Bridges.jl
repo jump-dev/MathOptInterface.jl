@@ -67,4 +67,9 @@ function Base.show(io::IO, B::AbstractBridgeOptimizer)
     end
 end
 
+if Base.VERSION >= v"1.4.2"
+    include("precompile.jl")
+    _precompile_()
+end
+
 end # module

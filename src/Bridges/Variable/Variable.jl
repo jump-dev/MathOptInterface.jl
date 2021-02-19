@@ -63,4 +63,9 @@ function add_all_bridges(bridged_model, T::Type)
     return
 end
 
+if Base.VERSION >= v"1.4.2"
+    include("precompile.jl")
+    _precompile_()
+end
+
 end
