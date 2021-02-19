@@ -62,22 +62,6 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     set::BitSet
     vector::Vector{V}
     dict::OrderedCollections.OrderedDict{K,V}
-    function CleverDict{K,V}(n::Integer = 0) where {K,V}
-        set = BitSet()
-        sizehint!(set, n)
-        vec = Vector{K}(undef, n)
-        inverse_hash = x -> index_to_key(K, x)
-        hash = key_to_index
-        return new{K,V,typeof(hash),typeof(inverse_hash)}(
-            0,
-            hash,
-            inverse_hash,
-            true,
-            set,
-            vec,
-            OrderedCollections.OrderedDict{K,V}(),
-        )
-    end
     function CleverDict{K,V}(
         hash::F,
         inverse_hash::I,
@@ -96,6 +80,9 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
             OrderedCollections.OrderedDict{K,V}(),
         )
     end
+end
+function CleverDict{K,V}(n::Integer = 0) where {K,V}
+    return CleverDict{K,V}(key_to_index, index_to_key, n)
 end
 
 """
@@ -125,7 +112,7 @@ function add_item(c::CleverDict{K,V}, val::V)::K where {K,V}
         error("Keys were added out of order. `add_item` requires that keys are always added in order.")
     end
     # adding a key in order
-    key = c.inverse_hash(Int64(c.last_index + 1))::K
+    key = c.inverse_hash(K, Int64(c.last_index + 1))::K
     c[key] = val
     return key
 end
@@ -149,6 +136,14 @@ end
 
 function Base.haskey(c::CleverDict{K}, key::K) where {K}
     return _is_dense(c) ? c.hash(key)::Int64 in c.set : haskey(c.dict, key)
+end
+
+function Base.keys(c::CleverDict{K}) where K
+    return if _is_dense(c)
+        LazyMap{K}(K, eachindex(c.vector))
+    else
+        keys(c.dict)
+    end
 end
 
 function Base.get(c::CleverDict, key, default)
@@ -285,7 +280,7 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
+            new_el = c.inverse_hash(K, Int64(el))::K => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
                 return new_el, State(i[2], i[1])
             else
@@ -319,7 +314,7 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
+            new_el = c.inverse_hash(K, Int64(el))::K => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
                 return new_el, State(i[2], i[1])
             else
@@ -361,6 +356,20 @@ function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
         sizehint!(c.dict, n)
     end
     return
+end
+
+Base.values(d::CleverDict) = _is_dense(d) ? d.vector : values(d.dict)
+
+# TODO `map!(f, values(dict::AbstractDict))` requires Julia 1.2 or later,
+#      use `map_values` once we drop Julia 1.1 and earlier.
+function map_values!(f::Function, d::CleverDict)
+    if _is_dense(d)
+        map!(f, d.vector, d.vector)
+    else
+        for (k, v) in d.dict
+            d.dict[k] = f(v)
+        end
+    end
 end
 
 end

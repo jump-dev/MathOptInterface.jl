@@ -1,115 +1,9 @@
-## Storage of constraints
-#
-# All `F`-in-`S` constraints are stored in a vector of `ConstraintEntry{F, S}`.
-# The index in this vector of a constraint of index
-# `ci::MOI.ConstraintIndex{F, S}` is given by `model.constrmap[ci.value]`. The
-# advantage of this representation is that it does not require any dictionary
-# hence it never needs to compute a hash.
-#
-# It may seem redundant to store the constraint index `ci` as well as the
-# function and sets in the tuple but it is used to efficiently implement the
-# getter for `MOI.ListOfConstraintIndices{F, S}`. It is also used to implement
-# `MOI.delete`. Indeed, when a constraint is deleted, it is removed from the
-# vector hence the index in the vector of all the functions that were stored
-# after must be decreased by one. As the constraint index is stored in the
-# vector, it readily gives the entries of `model.constrmap` that need to be
-# updated.
-const ConstraintEntry{F,S} = Tuple{CI{F,S},F,S}
-
 const EMPTYSTRING = ""
-
-# Implementation of MOI for vector of constraint
-function _add_constraint(
-    constrs::Vector{ConstraintEntry{F,S}},
-    ci::CI,
-    f::F,
-    s::S,
-) where {F,S}
-    push!(constrs, (ci, f, s))
-    return length(constrs)
-end
-
-function _delete(constrs::Vector, ci::CI, i::Int)
-    deleteat!(constrs, i)
-    @view constrs[i:end] # will need to shift it in constrmap
-end
-
-_getindex(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = ci
-function _getindex(constrs::Vector, ci::CI, i::Int)
-    return _getindex(constrs[i]...)
-end
-
-_getfun(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = f
-function _getfunction(constrs::Vector, ci::CI, i::Int)
-    if !(1 ≤ i ≤ length(constrs))
-        throw(MOI.InvalidIndex(ci))
-    end
-    @assert ci.value == constrs[i][1].value
-    return _getfun(constrs[i]...)
-end
-
-_gets(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = s
-function _getset(constrs::Vector, ci::CI, i::Int)
-    if !(1 ≤ i ≤ length(constrs))
-        throw(MOI.InvalidIndex(ci))
-    end
-    @assert ci.value == constrs[i][1].value
-    return _gets(constrs[i]...)
-end
-
-_modifyconstr(ci::CI{F,S}, f::F, s::S, change::F) where {F,S} = (ci, change, s)
-_modifyconstr(ci::CI{F,S}, f::F, s::S, change::S) where {F,S} = (ci, f, change)
-function _modifyconstr(
-    ci::CI{F,S},
-    f::F,
-    s::S,
-    change::MOI.AbstractFunctionModification,
-) where {F,S}
-    return (ci, modify_function(f, change), s)
-end
-function _modify(
-    constrs::Vector{ConstraintEntry{F,S}},
-    ci::CI{F},
-    i::Int,
-    change,
-) where {F,S}
-    return constrs[i] = _modifyconstr(constrs[i]..., change)
-end
-
-function _getnoc(
-    constrs::Vector{ConstraintEntry{F,S}},
-    ::MOI.NumberOfConstraints{F,S},
-) where {F,S}
-    return length(constrs)
-end
-# Might be called when calling NumberOfConstraint with different coefficient type than the one supported
-_getnoc(::Vector, ::MOI.NumberOfConstraints) = 0
-
-function _getloc(
-    constrs::Vector{ConstraintEntry{F,S}},
-)::Vector{Tuple{DataType,DataType}} where {F,S}
-    return isempty(constrs) ? [] : [(F, S)]
-end
-
-function _getlocr(
-    constrs::Vector{ConstraintEntry{F,S}},
-    ::MOI.ListOfConstraintIndices{F,S},
-) where {F,S}
-    return map(constr -> constr[1], constrs)
-end
-function _getlocr(
-    constrs::Vector{<:ConstraintEntry},
-    ::MOI.ListOfConstraintIndices{F,S},
-) where {F,S}
-    return CI{F,S}[]
-end
 
 # Implementation of MOI for AbstractModel
 abstract type AbstractModelLike{T} <: MOI.ModelLike end
 abstract type AbstractOptimizer{T} <: MOI.AbstractOptimizer end
 const AbstractModel{T} = Union{AbstractModelLike{T},AbstractOptimizer{T}}
-
-getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 
 # Variables
 function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
@@ -152,22 +46,9 @@ function remove_variable(f::MOI.VectorOfVariables, s, vi::VI)
     end
     return g, t
 end
-function _remove_variable(constrs::Vector{<:ConstraintEntry}, vi::VI)
-    for i in eachindex(constrs)
-        ci, f, s = constrs[i]
-        constrs[i] = (ci, remove_variable(f, s, vi)...)
-    end
-end
 
-function filter_variables(keep::F, f, s) where {F<:Function}
-    return filter_variables(keep, f), s
-end
-
-function filter_variables(
-    keep::F,
-    f::MOI.VectorOfVariables,
-    s,
-) where {F<:Function}
+filter_variables(keep::F, f, s) where {F<:Function} = filter_variables(keep, f), s
+function filter_variables(keep::F, f::MOI.VectorOfVariables, s) where {F<:Function}
     g = filter_variables(keep, f)
     if length(g.variables) != length(f.variables)
         t = MOI.update_dimension(s, length(g.variables))
@@ -175,58 +56,6 @@ function filter_variables(
         t = s
     end
     return g, t
-end
-
-function _filter_variables(
-    keep::F,
-    constrs::Vector{<:ConstraintEntry},
-) where {F<:Function}
-    for i in eachindex(constrs)
-        ci, f, s = constrs[i]
-        constrs[i] = (ci, filter_variables(keep, f, s)...)
-    end
-end
-function _vector_of_variables_with(::Vector, ::Union{VI,MOI.Vector{VI}})
-    return CI{MOI.VectorOfVariables}[]
-end
-function throw_delete_variable_in_vov(vi::VI)
-    message = string(
-        "Cannot delete variable as it is constrained with other",
-        " variables in a `MOI.VectorOfVariables`.",
-    )
-    return throw(MOI.DeleteNotAllowed(vi, message))
-end
-function _vector_of_variables_with(
-    constrs::Vector{<:ConstraintEntry{MOI.VectorOfVariables}},
-    vi::VI,
-)
-    rm = CI{MOI.VectorOfVariables}[]
-    for (ci, f, s) in constrs
-        if vi in f.variables
-            if length(f.variables) > 1
-                # If `supports_dimension_update(s)` then the variable will be
-                # removed in `_remove_variable`.
-                if !MOI.supports_dimension_update(typeof(s))
-                    throw_delete_variable_in_vov(vi)
-                end
-            else
-                push!(rm, ci)
-            end
-        end
-    end
-    return rm
-end
-function _vector_of_variables_with(
-    constrs::Vector{<:ConstraintEntry{MOI.VectorOfVariables}},
-    vis::Vector{VI},
-)
-    rm = CI{MOI.VectorOfVariables}[]
-    for (ci, f, s) in constrs
-        if vis == f.variables
-            push!(rm, ci)
-        end
-    end
-    return rm
 end
 function _delete_variable(
     model::AbstractModel{T},
@@ -323,18 +152,7 @@ function MOI.is_valid(
     )
 end
 function MOI.is_valid(model::AbstractModel, ci::CI{F,S}) where {F,S}
-    if ci.value > length(model.constrmap)
-        false
-    else
-        loc = getconstrloc(model, ci)
-        if iszero(loc) # This means that it has been deleted
-            false
-        elseif loc > MOI.get(model, MOI.NumberOfConstraints{F,S}())
-            false
-        else
-            ci == _getindex(model, ci, getconstrloc(model, ci))
-        end
-    end
+    return MOI.is_valid(constraints(model, ci), ci)
 end
 function MOI.is_valid(model::AbstractModel, vi::VI)
     if model.variable_indices === nothing
@@ -678,47 +496,40 @@ function MOI.add_constraint(
     return CI{MOI.SingleVariable,typeof(s)}(index)
 end
 
-function MOI.add_constraint(
-    model::AbstractModel,
-    f::F,
-    s::S,
-) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    if MOI.supports_constraint(model, F, S)
-        # We give the index value `nextconstraintid + 1` to the new constraint.
-        # As the same counter is used for all pairs of F-in-S constraints,
-        # the index value is unique across all constraint types as mentioned in
-        # `@model`'s doc.
-        ci = CI{F,S}(model.nextconstraintid += 1)
-        # f needs to be copied, see #2
-        # We canonicalize the constraint so that solvers can avoid having to canonicalize
-        # it most of the time (they can check if they need to with `is_canonical`.
-        # Note that the canonicalization is not guaranteed if for instance
-        # `modify` is called and adds a new term.
-        # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
-        push!(
-            model.constrmap,
-            _add_constraint(model, ci, canonical(f), copy(s)),
-        )
-        return ci
+function MOI.add_constraint(model::AbstractModel, func::MOI.AbstractFunction, set::MOI.AbstractSet)
+    if MOI.supports_constraint(model, typeof(func), typeof(set))
+        return MOI.add_constraint(constraints(model, typeof(func), typeof(set)), func, set)
     else
-        throw(MOI.UnsupportedConstraint{F,S}())
+        throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}())
     end
+end
+function constraints(
+    model::AbstractModel,
+    ci::MOI.ConstraintIndex{F,S}
+) where {F,S}
+    if MOI.supports_constraint(model, F, S)
+        throw(MOI.InvalidIndex(ci))
+    end
+    return constraints(model, F, S)
+end
+function MOI.get(model::AbstractModel, attr::Union{MOI.AbstractFunction, MOI.AbstractSet}, ci::MOI.ConstraintIndex)
+    return MOI.get(constraints(model, ci), attr, ci)
+end
+function MOI.modify(model::AbstractModel, ci::MOI.ConstraintIndex, change)
+    return MOI.modify(constraints(model, ci), ci, change)
 end
 
 function _delete_constraint(
     model::AbstractModel,
-    ci::CI{MOI.SingleVariable,S},
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {S}
+    MOI.throw_if_not_valid(model, ci)
     return model.single_variable_mask[ci.value] &= ~single_variable_flag(S)
 end
-function _delete_constraint(model::AbstractModel, ci::CI)
-    for (ci_next, _, _) in _delete(model, ci, getconstrloc(model, ci))
-        model.constrmap[ci_next.value] -= 1
-    end
-    return model.constrmap[ci.value] = 0
+function _delete_constraint(model::AbstractModel, ci::MOI.ConstraintIndex)
+    return MOI.delete(constraints(model, ci), ci)
 end
-function MOI.delete(model::AbstractModel, ci::CI)
-    MOI.throw_if_not_valid(model, ci)
+function MOI.delete(model::AbstractModel, ci::MOI.ConstraintIndex)
     _delete_constraint(model, ci)
     model.name_to_con = nothing
     return delete!(model.con_to_name, ci)
@@ -726,10 +537,10 @@ end
 
 function MOI.modify(
     model::AbstractModel,
-    ci::CI,
+    ci::MOI.ConstraintIndex,
     change::MOI.AbstractFunctionModification,
 )
-    return _modify(model, ci, getconstrloc(model, ci), change)
+    return MOI.modify(constraints(model, ci), ci, change)
 end
 
 function MOI.set(
@@ -742,11 +553,11 @@ function MOI.set(
 end
 function MOI.set(
     model::AbstractModel,
-    ::MOI.ConstraintFunction,
-    ci::CI,
-    change::MOI.AbstractFunction,
-)
-    return _modify(model, ci, getconstrloc(model, ci), change)
+    attr::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex{F},
+    func::F,
+) where {F,S}
+    return MOI.set(constraints(model, ci), attr, ci, func)
 end
 function MOI.set(
     model::AbstractModel,
@@ -765,11 +576,11 @@ function MOI.set(
 end
 function MOI.set(
     model::AbstractModel,
-    ::MOI.ConstraintSet,
-    ci::CI,
-    change::MOI.AbstractSet,
-)
-    return _modify(model, ci, getconstrloc(model, ci), change)
+    attr::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,S},
+    set::S,
+) where {F,S}
+    return MOI.set(constraints(model, ci), attr, ci, set)
 end
 
 function MOI.get(
@@ -779,8 +590,12 @@ function MOI.get(
     flag = single_variable_flag(S)
     return count(mask -> !iszero(flag & mask), model.single_variable_mask)
 end
-function MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints)
-    return _getnoc(model, noc)
+function MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints{F,S}) where {F,S}
+    if MOI.supports_constraint(model, F, S)
+        return MOI.get(constraints(model, F, S), noc)
+    else
+        return 0
+    end
 end
 
 function _add_contraint_type(
@@ -795,7 +610,9 @@ function _add_contraint_type(
     return
 end
 function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where {T}
-    list = broadcastvcat(_getloc, model)
+    list = broadcastvcat(model) do v
+        MOI.get(v, loc)
+    end
     for S in (
         MOI.EqualTo{T},
         MOI.GreaterThan{T},
@@ -824,8 +641,13 @@ function MOI.get(
     end
     return list
 end
-function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices)
-    return broadcastvcat(constrs -> _getlocr(constrs, loc), model)
+
+function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices{F,S}) where {F,S}
+    if MOI.supports_constraint(model, F, S)
+        return MOI.ConstraintIndex{F,S}[]
+    else
+        return MOI.get(constraints(model, loc), loc)
+    end
 end
 
 function MOI.get(
@@ -1011,10 +833,10 @@ using Unicode
 
 _field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
 
-_getC(s::SymbolSet) = :(ConstraintEntry{F,$(_typedset(s))})
+_getC(s::SymbolSet) = :(VectorOfConstraints{F,$(_typedset(s))})
 _getC(s::SymbolFun) = _typedfun(s)
 
-_getCV(s::SymbolSet) = :($(_getC(s))[])
+_getCV(s::SymbolSet) = :($(_getC(s))())
 _getCV(s::SymbolFun) = :($(s.cname){T,$(_getC(s))}())
 
 _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
@@ -1181,7 +1003,7 @@ macro model(
         ((scalarconstraints, scalar_sets), (vectorconstraints, vector_sets))
         for s in sets
             field = _field(s)
-            push!(c.args[3].args, :($field::Vector{$(_getC(s))}))
+            push!(c.args[3].args, :($field::$(_getC(s))))
         end
     end
 
@@ -1269,44 +1091,33 @@ macro model(
         end
     end
 
-    for (funct, T) in (
-        (:_add_constraint, CI),
-        (:_modify, CI),
-        (:_delete, CI),
-        (:_getindex, CI),
-        (:_getfunction, CI),
-        (:_getset, CI),
-        (:_getnoc, MOI.NumberOfConstraints),
-    )
-        for (c, sets) in ((scname, scalar_sets), (vcname, vector_sets))
-            for s in sets
-                set = _set(s)
-                field = _field(s)
-                code = quote
-                    $code
-                    function $MOIU.$funct(
-                        model::$c,
-                        ci::$T{F,<:$set},
-                        args...,
-                    ) where {F}
-                        return $funct(model.$field, ci, args...)
-                    end
+    for (c, sets) in ((scname, scalar_sets), (vcname, vector_sets))
+        for s in sets
+            set = _set(s)
+            field = _field(s)
+            code = quote
+                $code
+                function $MOIU.constraints(
+                    model::$c,
+                    ::Type{<:$set},
+                ) where {F}
+                    return $MOIU.constraints(model.$field, ci, args...)
                 end
             end
         end
+    end
 
-        for f in funs
-            fun = _fun(f)
-            field = _field(f)
-            code = quote
-                $code
-                function $MOIU.$funct(
-                    model::$esc_model_name,
-                    ci::$T{<:$fun},
-                    args...,
-                )
-                    return $funct(model.$field, ci, args...)
-                end
+    for f in funs
+        fun = _fun(f)
+        field = _field(f)
+        code = quote
+            $code
+            function $MOIU.constraints(
+                model::$esc_model_name,
+                ::Type{<:$fun},
+                ::Type{S}
+            ) where S
+                return $MOIU.constraints(model.$field, S)
             end
         end
     end

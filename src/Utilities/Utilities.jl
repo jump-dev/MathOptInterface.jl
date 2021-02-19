@@ -57,6 +57,7 @@ include("copy.jl")
 include("results.jl")
 include("variables.jl")
 
+include("vector_of_constraints.jl")
 include("model.jl")
 include("parser.jl")
 include("mockoptimizer.jl")
