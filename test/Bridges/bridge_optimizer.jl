@@ -276,3 +276,38 @@ end
       with 0 constraint bridges
       with inner model $(MOIU.MockOptimizer{NoIntervalModel{Float64}})""")
 end
+
+MOI.Utilities.@model(AffineOnlyModel, (), (MOI.Interval,), (MOI.PositiveSemidefiniteConeTriangle,), (), (), (MOI.ScalarAffineFunction,), (), (MOI.VectorAffineFunction,), true)
+MOI.supports_constraint(::AffineOnlyModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{T}}) where T = false
+MOI.supports_constraint(::AffineOnlyModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.Interval{T}}) where T = false
+@testset "Double deletion of nested bridged SingleVariable constraint" begin
+    @testset "Scalar" begin
+        # The variable is bridged to `SingleVariable`-in-`Interval` and then `ScalarAffineFunction`-in-`Interval`.
+        # Hence there is two bridged `SingleVariable` constraints on the same variables and we need to be
+        # careful not to delete the second one twice, see https://github.com/jump-dev/MathOptInterface.jl/issues/1231
+        model = MOI.instantiate(AffineOnlyModel{Float64}, with_bridge_type=Float64)
+        x = MOI.add_variable(model)
+        c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+        # Need to test the bridging to make sure it's not functionized first as otherwise,
+        # this test would not cover the case we want to test
+        b1 = MOI.Bridges.bridge(model, c)
+        @test b1 isa MOI.Bridges.Constraint.LessToIntervalBridge
+        b2 = MOI.Bridges.bridge(model, b1.constraint)
+        @test b2 isa MOI.Bridges.Constraint.ScalarFunctionizeBridge
+        @test !MOI.Bridges.is_bridged(model, b2.constraint)
+        MOI.delete(model, x)
+        @test !MOI.is_valid(model, x)
+    end
+    @testset "Vector" begin
+        model = MOI.instantiate(AffineOnlyModel{Float64}, with_bridge_type=Float64)
+        x = MOI.add_variables(model, 4)
+        c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.PositiveSemidefiniteConeSquare(2))
+        b1 = MOI.Bridges.bridge(model, c)
+        @test b1 isa MOI.Bridges.Constraint.SquareBridge
+        b2 = MOI.Bridges.bridge(model, b1.triangle)
+        @test b2 isa MOI.Bridges.Constraint.VectorFunctionizeBridge
+        @test !MOI.Bridges.is_bridged(model, b2.constraint)
+        MOI.delete(model, x)
+        @test all(vi -> !MOI.is_valid(model, vi), x)
+    end
+end

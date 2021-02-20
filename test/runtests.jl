@@ -27,11 +27,11 @@ end
 
 # Utilities submodule tests
 @testset "MOI.$(submodule)" for submodule in [
-    "Benchmarks",
     "Bridges",
     "FileFormats",
     "Test",
     "Utilities",
+    "Benchmarks",
 ]
     include("$(submodule)/$(submodule).jl")
 end

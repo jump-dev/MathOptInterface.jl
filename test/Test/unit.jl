@@ -35,6 +35,7 @@ end
             "solve_duplicate_terms_scalar_affine",
             "solve_duplicate_terms_vector_affine",
             "solve_qp_edge_cases",
+            "solve_qp_zero_offdiag",
             "solve_qcp_edge_cases",
             "solve_affine_deletion_edge_cases",
             "solve_duplicate_terms_obj",
@@ -232,6 +233,15 @@ end
             )
         )
         MOIT.solve_qp_edge_cases(mock, config)
+    end
+    @testset "solve_qp_zero_offdiag" begin
+        MOIU.set_mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0, 2.0])
+            )
+        )
+        MOIT.solve_qp_zero_offdiag(mock, config)
     end
     @testset "solve_duplicate_terms_obj" begin
         MOIU.set_mock_optimize!(mock,
@@ -513,7 +523,7 @@ end
         )
         MOIT.solve_farkas_variable_lessthan_max(mock, config)
     end
-    
+
     @testset "solve_twice" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(

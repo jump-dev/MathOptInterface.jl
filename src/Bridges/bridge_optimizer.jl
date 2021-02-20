@@ -386,13 +386,23 @@ function _delete_variables_in_variables_constraints(
     vis::Vector{MOI.VariableIndex},
 )
     # Delete all `MOI.VectorOfVariables` constraints of these variables.
-    for ci in Constraint.vector_of_variables_constraints(Constraint.bridges(b))
+    # We reverse for the same reason as for `SingleVariable` below.
+    # As the iterators are lazy, when the inner bridge constraint is deleted,
+    # it won't be part of the iteration.
+    for ci in Iterators.reverse(Constraint.vector_of_variables_constraints(Constraint.bridges(b)))
         _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
     end
     # Delete all `MOI.SingleVariable` constraints of these variables.
     for vi in vis
-        for ci in Constraint.variable_constraints(Constraint.bridges(b), vi)
-            MOI.delete(b, ci)
+        # If a bridged `SingleVariable` constraints creates a second one,
+        # then we will delete the second one when deleting the first one hence we
+        # should not delete it again in this loop.
+        # For this, we reverse the order so that we encounter the first one first
+        # and we won't delete the second one since `MOI.is_valid(b, ci)` will be `false`.
+        for ci in Iterators.reverse(Constraint.variable_constraints(Constraint.bridges(b), vi))
+            if MOI.is_valid(b, ci)
+                MOI.delete(b, ci)
+            end
         end
     end
 end

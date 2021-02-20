@@ -281,6 +281,13 @@ with a ScalarQuadraticFunction-in-Set constraint.
 If `config.solve=true` confirm that it solves correctly.
 """
 function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    if !MOI.supports_constraint(
+        model,
+        MOI.ScalarQuadraticFunction{Float64},
+        MOI.LessThan{Float64}
+    )
+        return
+    end
     @testset "Duplicate on-diagonal" begin
         # max x + 2y | y + x^2 + x^2 <= 1, x >= 0.5, y >= 0.5
         MOI.empty!(model)
