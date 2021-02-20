@@ -1,6 +1,23 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.20 (February 20, 2021)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.20).
+
+- Improved performance of `Utilities.ScalarFunctionIterator`
+- Added support for `compute_conflict` to MOI layers
+- Added test with zero off-diagonal quadratic term in objective
+- Fixed double deletion of nested bridged `SingleVariable`/`VectorOfVariables`
+  constraints
+- Fixed modification of un-set objective
+- Fixed function modification with duplicate terms
+- Made unit tests abort without failing if the problem class is not supported
+- Formatted code with JuliaFormatter
+- Clarified `BasisStatusCode`'s docstring
+
 v0.9.19 (December 1, 2020)
 ---------------------------
 
