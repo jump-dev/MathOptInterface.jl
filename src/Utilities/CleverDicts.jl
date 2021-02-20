@@ -10,7 +10,11 @@ function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int64)
     return MathOptInterface.VariableIndex(index)
 end
 
-key_to_index(key::MathOptInterface.VariableIndex) = key.value
+function index_to_key(::Type{MathOptInterface.ConstraintIndex{F,S}}, index::Int64) where {F,S}
+    return MathOptInterface.ConstraintIndex{F,S}(index)
+end
+
+key_to_index(key::MathOptInterface.Index) = key.value
 
 # Now, on with `CleverDicts`.
 
@@ -138,9 +142,9 @@ function Base.haskey(c::CleverDict{K}, key::K) where {K}
     return _is_dense(c) ? c.hash(key)::Int64 in c.set : haskey(c.dict, key)
 end
 
-function Base.keys(c::CleverDict{K}) where K
+function Base.keys(c::CleverDict)
     return if _is_dense(c)
-        LazyMap{K}(K, eachindex(c.vector))
+        map(c.inverse_hash, c.set)
     else
         keys(c.dict)
     end

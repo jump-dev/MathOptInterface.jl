@@ -507,7 +507,7 @@ function constraints(
     model::AbstractModel,
     ci::MOI.ConstraintIndex{F,S}
 ) where {F,S}
-    if MOI.supports_constraint(model, F, S)
+    if !MOI.supports_constraint(model, F, S)
         throw(MOI.InvalidIndex(ci))
     end
     return constraints(model, F, S)
@@ -1086,7 +1086,7 @@ macro model(
                 return vcat($(_callfield.(:f, sets)...))
             end
             function $MOI.empty!(model::$cname)
-                return $(Expr(:block, _callfield.(Ref(:(Base.empty!)), sets)...))
+                return $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), sets)...))
             end
         end
     end
@@ -1101,7 +1101,7 @@ macro model(
                     model::$c,
                     ::Type{<:$set},
                 ) where {F}
-                    return $MOIU.constraints(model.$field, ci, args...)
+                    return model.$field
                 end
             end
         end

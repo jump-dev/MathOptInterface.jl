@@ -15,12 +15,29 @@
 # vector, it readily gives the entries of `model.constrmap` that need to be
 # updated.
 
-struct VectorOfConstraints{F,S} <: MOI.ModelLike
+struct VectorOfConstraints{F<:MOI.AbstractFunction,S<:MOI.AbstractSet} <: MOI.ModelLike
     constraints::CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S},typeof(CleverDicts.key_to_index),typeof(CleverDicts.index_to_key)}
+    function VectorOfConstraints{F,S}() where {F,S}
+        return new{F,S}(CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}())
+    end
 end
 
-function MOI.add_constraint(v::VectorOfConstraints{F,S}, func::F, set::S) where {F,S}
-    return CleverDicts.add_item(v.constraints, (F, S))
+function MOI.empty!(v::VectorOfConstraints)
+    empty!(v.constraints)
+end
+
+function MOI.add_constraint(
+    v::VectorOfConstraints{F,S},
+    func::F,
+    set::S
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return CleverDicts.add_item(v.constraints, (func, set))
+end
+function MOI.is_valid(
+    v::VectorOfConstraints{F,S},
+    ci::MOI.ConstraintIndex{F,S}
+) where {F,S}
+    return haskey(v.constraints, ci)
 end
 function MOI.delete(v::VectorOfConstraints{F,S}, ci::MOI.ConstraintIndex{F,S}) where {F,S}
     MOI.throw_if_not_valid(v, ci)
@@ -56,13 +73,13 @@ function MOI.modify(
 end
 
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
-    map_values(v.constraints) do func_set
+    CleverDicts.map_values!(v.constraints) do func_set
         remove_variable(func_set..., vi)
     end
 end
 function _filter_variables(keep::Function, v::VectorOfConstraints)
-    map_values(v.constraints) do func_set
-        filter_variables(kepp, func_set...)
+    CleverDicts.map_values!(v.constraints) do func_set
+        filter_variables(keep, func_set...)
     end
 end
 
@@ -81,7 +98,7 @@ function _vector_of_variables_with(
     vi::MOI.VariableIndex,
 )
     rm = MOI.ConstraintIndex{MOI.VectorOfVariables}[]
-    for (f, s) in values(v)
+    for (f, s) in values(v.constraints)
         if vi in f.variables
             if length(f.variables) > 1
                 # If `supports_dimension_update(s)` then the variable will be
@@ -101,8 +118,8 @@ function _vector_of_variables_with(
     vis::Vector{MOI.VariableIndex},
 )
     rm = MOI.ConstraintIndex{MOI.VectorOfVariables}[]
-    for (f, s) in values(v)
-        if vis == f.variables
+    for (ci, fs) in v.constraints
+        if vis == fs[1].variables
             push!(rm, ci)
         end
     end
