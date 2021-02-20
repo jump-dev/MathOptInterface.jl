@@ -215,6 +215,8 @@ objective function).
 If `config.solve=true` confirm that it solves correctly.
 """
 function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    obj_attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
+    MOI.supports(model, obj_attr) || return
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -235,7 +237,7 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         # min x^2 + y^2 | x>=1, y>=2
         MOI.set(
             model,
-            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            obj_attr,
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm{Float64}[],  # affine terms
                 MOI.ScalarQuadraticTerm.([2.0, 2.0], x, x),  # quad
@@ -253,7 +255,7 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         # min x + x + x^2 + y^2 | x>=1, y>=2
         MOI.set(
             model,
-            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            obj_attr,
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], x[1]]),  # affine terms
                 MOI.ScalarQuadraticTerm.([2.0, 2.0], x, x),  # quad
@@ -271,7 +273,7 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         # min x^2 + x^2 | x>=1, y>=2
         MOI.set(
             model,
-            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            obj_attr,
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm{Float64}[],  # affine terms
                 MOI.ScalarQuadraticTerm.(
@@ -293,7 +295,7 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
         # min x^2 + 0.25x*y + 0.25y*x + 0.5x*y + y^2 | x>=1, y>=2
         MOI.set(
             model,
-            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+            obj_attr,
             MOI.ScalarQuadraticFunction(
                 MOI.ScalarAffineTerm{Float64}[],  # affine terms
                 MOI.ScalarQuadraticTerm.(
@@ -322,6 +324,8 @@ Test quadratic program with a zero off-diagonal term.
 If `config.solve=true` confirm that it solves correctly.
 """
 function solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
+    obj_attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
+    MOI.supports(model, obj_attr) || return
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -339,7 +343,7 @@ function solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
     @test vc2.value == x[2].value
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
+        obj_attr,
         MOI.ScalarQuadraticFunction(
             MOI.ScalarAffineTerm{Float64}[],  # affine terms
             MOI.ScalarQuadraticTerm.(
