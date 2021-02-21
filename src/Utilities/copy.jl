@@ -121,7 +121,7 @@ end
 This function does not add variables to the IndexMap.
 It simply initializes the IndexMap with a proper data struture.
 If the variable indices are contiguous and start from 1, then
-a optimized data structure with pre allocated memmory is initialized.
+an optimized data structure with pre allocated memory is initialized.
 Otherwise the data structure will start empty and will try to
 keep using performant structure for as long as possible.
 """
