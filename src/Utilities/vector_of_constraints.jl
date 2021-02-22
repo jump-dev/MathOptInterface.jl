@@ -31,7 +31,13 @@ function MOI.add_constraint(
     func::F,
     set::S
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    return CleverDicts.add_item(v.constraints, (func, set))
+    # f needs to be copied, see #2
+    # We canonicalize the constraint so that solvers can avoid having to canonicalize
+    # it most of the time (they can check if they need to with `is_canonical`.
+    # Note that the canonicalization is not guaranteed if for instance
+    # `modify` is called and adds a new term.
+    # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
+    return CleverDicts.add_item(v.constraints, (canonical(func), copy(set)))
 end
 function MOI.is_valid(
     v::VectorOfConstraints{F,S},
@@ -44,10 +50,32 @@ function MOI.delete(v::VectorOfConstraints{F,S}, ci::MOI.ConstraintIndex{F,S}) w
     delete!(v.constraints, ci)
 end
 function MOI.get(v::VectorOfConstraints{F,S}, ::MOI.ConstraintFunction, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+    MOI.throw_if_not_valid(v, ci)
     return v.constraints[ci][1]
 end
 function MOI.get(v::VectorOfConstraints{F,S}, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+    MOI.throw_if_not_valid(v, ci)
     return v.constraints[ci][2]
+end
+function MOI.set(
+    v::VectorOfConstraints{F,S},
+    ::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex{F,S},
+    func::F,
+) where {F,S}
+    MOI.throw_if_not_valid(v, ci)
+    v.constraints[ci] = (func, v.constraints[ci][2])
+    return
+end
+function MOI.set(
+    v::VectorOfConstraints{F,S},
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,S},
+    set::S,
+) where {F,S}
+    MOI.throw_if_not_valid(v, ci)
+    v.constraints[ci] = (v.constraints[ci][1], set)
+    return
 end
 
 function MOI.get(
@@ -67,8 +95,8 @@ function MOI.modify(
     ci::MOI.ConstraintIndex{F,S},
     change::MOI.AbstractFunctionModification,
 ) where {F,S}
-    func, set = constraint[ci]
-    constraint[ci] = (modify_function(func, change), set)
+    func, set = v.constraints[ci]
+    v.constraints[ci] = (modify_function(func, change), set)
     return
 end
 

@@ -152,7 +152,11 @@ function MOI.is_valid(
     )
 end
 function MOI.is_valid(model::AbstractModel, ci::CI{F,S}) where {F,S}
-    return MOI.is_valid(constraints(model, ci), ci)
+    if MOI.supports_constraint(model, F, S)
+        return MOI.is_valid(constraints(model, ci), ci)
+    else
+        return false
+    end
 end
 function MOI.is_valid(model::AbstractModel, vi::VI)
     if model.variable_indices === nothing
@@ -644,9 +648,9 @@ end
 
 function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices{F,S}) where {F,S}
     if MOI.supports_constraint(model, F, S)
-        return MOI.ConstraintIndex{F,S}[]
+        return MOI.get(constraints(model, F, S), loc)
     else
-        return MOI.get(constraints(model, loc), loc)
+        return MOI.ConstraintIndex{F,S}[]
     end
 end
 
@@ -658,8 +662,12 @@ function MOI.get(
     MOI.throw_if_not_valid(model, ci)
     return MOI.SingleVariable(MOI.VariableIndex(ci.value))
 end
-function MOI.get(model::AbstractModel, ::MOI.ConstraintFunction, ci::CI)
-    return _getfunction(model, ci, getconstrloc(model, ci))
+function MOI.get(
+    model::AbstractModel,
+    attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
+    ci::MOI.ConstraintIndex
+)
+    return MOI.get(constraints(model, ci), attr, ci)
 end
 
 function _get_single_variable_set(
@@ -705,9 +713,6 @@ function MOI.get(
 ) where {S}
     MOI.throw_if_not_valid(model, ci)
     return _get_single_variable_set(model, S, ci.value)
-end
-function MOI.get(model::AbstractModel, ::MOI.ConstraintSet, ci::CI)
-    return _getset(model, ci, getconstrloc(model, ci))
 end
 
 function MOI.is_empty(model::AbstractModel)

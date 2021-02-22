@@ -142,11 +142,11 @@ function Base.haskey(c::CleverDict{K}, key::K) where {K}
     return _is_dense(c) ? c.hash(key)::Int64 in c.set : haskey(c.dict, key)
 end
 
-function Base.keys(c::CleverDict)
+function Base.keys(c::CleverDict{K}) where {K}
     return if _is_dense(c)
-        map(c.inverse_hash, c.set)
+        [c.inverse_hash(K, index) for index in  c.set]
     else
-        keys(c.dict)
+        collect(keys(c.dict))
     end
 end
 
