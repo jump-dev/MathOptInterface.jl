@@ -22,9 +22,8 @@ struct VectorOfConstraints{F<:MOI.AbstractFunction,S<:MOI.AbstractSet} <: MOI.Mo
     end
 end
 
-function MOI.empty!(v::VectorOfConstraints)
-    empty!(v.constraints)
-end
+MOI.is_empty(v::VectorOfConstraints)  = isempty(v.constraints)
+MOI.empty!(v::VectorOfConstraints) = empty!(v.constraints)
 
 function MOI.add_constraint(
     v::VectorOfConstraints{F,S},
@@ -126,7 +125,8 @@ function _vector_of_variables_with(
     vi::MOI.VariableIndex,
 )
     rm = MOI.ConstraintIndex{MOI.VectorOfVariables}[]
-    for (f, s) in values(v.constraints)
+    for (ci, fs) in v.constraints
+        f, s = fs
         if vi in f.variables
             if length(f.variables) > 1
                 # If `supports_dimension_update(s)` then the variable will be

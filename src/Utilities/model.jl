@@ -722,8 +722,26 @@ function MOI.is_empty(model::AbstractModel)
                isempty(model.objective.terms) &&
                iszero(model.objective.constant) &&
                iszero(model.num_variables_created) &&
-               iszero(model.nextconstraintid)
+               mapreduce_constraints(MOI.is_empty, &, model, true)
 end
+function MOI.empty!(model::AbstractModel{T}) where {T}
+    model.name = ""
+    model.senseset = false
+    model.sense = MOI.FEASIBILITY_SENSE
+    model.objectiveset = false
+    model.objective = zero(MOI.ScalarAffineFunction{T})
+    model.num_variables_created = 0
+    model.variable_indices = nothing
+    model.single_variable_mask = UInt8[]
+    model.lower_bound = T[]
+    model.upper_bound = T[]
+    empty!(model.var_to_name)
+    model.name_to_var = nothing
+    empty!(model.con_to_name)
+    model.name_to_con = nothing
+    broadcastcall(MOI.empty!, model)
+end
+
 
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
     return automatic_copy_to(dest, src; kws...)
@@ -794,6 +812,8 @@ MOIU.broadcastvcat(_getfuns, model)
 """
 function broadcastvcat end
 
+function mapreduce_constraints end
+
 # Macro to generate Model
 abstract type Constraints{F} end
 
@@ -846,6 +866,8 @@ _getCV(s::SymbolFun) = :($(s.cname){T,$(_getC(s))}())
 
 _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
 _broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
+_mapreduce_field(s::SymbolFS) = :(cur = $MOIU.mapreduce_constraints(f, op, model.$(_field(s)), cur))
+_mapreduce_constraints(s::SymbolFS) = :(cur = op(cur, f(model.$(_field(s)))))
 
 # This macro is for expert/internal use only. Prefer the concrete Model type
 # instantiated below.
@@ -951,10 +973,8 @@ mutable struct LPModel{T} <: MOIU.AbstractModel{T}
     var_to_name::Dict{MOI.VariableIndex, String}
     # If `nothing`, the dictionary hasn't been constructed yet.
     name_to_var::Union{Dict{String, MOI.VariableIndex}, Nothing}
-    nextconstraintid::Int64
     con_to_name::Dict{MOI.ConstraintIndex, String}
     name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
-    constrmap::Vector{Int}
     scalaraffinefunction::LPModelScalarConstraints{T, MOI.ScalarAffineFunction{T}}
     vectorofvariables::LPModelVectorConstraints{T, MOI.VectorOfVariables}
     vectoraffinefunction::LPModelVectorConstraints{T, MOI.VectorAffineFunction{T}}
@@ -1039,10 +1059,8 @@ macro model(
             var_to_name::Dict{$VI,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
             name_to_var::Union{Dict{String,$VI},Nothing}
-            nextconstraintid::Int64
             con_to_name::Dict{$CI,String}
             name_to_con::Union{Dict{String,$CI},Nothing}
-            constrmap::Vector{Int} # Constraint Reference value ci -> index in array in Constraints
             # A useful dictionary for extensions to store things. These are
             # _not_ copied between models!
             ext::Dict{Symbol,Any}
@@ -1061,24 +1079,8 @@ macro model(
         function $MOIU.broadcastvcat(f::F, model::$esc_model_name) where {F<:Function}
             return vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
         end
-        function $MOI.empty!(model::$esc_model_name{T}) where {T}
-            model.name = ""
-            model.senseset = false
-            model.sense = $MOI.FEASIBILITY_SENSE
-            model.objectiveset = false
-            model.objective = zero($MOI.ScalarAffineFunction{T})
-            model.num_variables_created = 0
-            model.variable_indices = nothing
-            model.single_variable_mask = UInt8[]
-            model.lower_bound = T[]
-            model.upper_bound = T[]
-            empty!(model.var_to_name)
-            model.name_to_var = nothing
-            model.nextconstraintid = 0
-            empty!(model.con_to_name)
-            model.name_to_con = nothing
-            empty!(model.constrmap)
-            return $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), funs)...))
+        function $MOIU.mapreduce_constraints(f::Function, op::Function, model::$esc_model_name, cur)
+            return $(Expr(:block, _mapreduce_field.(funs)...))
         end
     end
     for (cname, sets) in ((scname, scalar_sets), (vcname, vector_sets))
@@ -1090,8 +1092,8 @@ macro model(
             function $MOIU.broadcastvcat(f::F, model::$cname) where {F<:Function}
                 return vcat($(_callfield.(:f, sets)...))
             end
-            function $MOI.empty!(model::$cname)
-                return $(Expr(:block, _callfield.(Ref(:($MOI.empty!)), sets)...))
+            function $MOIU.mapreduce_constraints(f::Function, op::Function, model::$cname, cur)
+                return $(Expr(:block, _mapreduce_constraints.(sets)...))
             end
         end
     end
@@ -1153,10 +1155,8 @@ macro model(
                 T[],
                 Dict{$VI,String}(),
                 nothing,
-                0,
                 Dict{$CI,String}(),
                 nothing,
-                Int[],
                 Dict{Symbol,Any}(),
                 $(_getCV.(funs)...),
             )
