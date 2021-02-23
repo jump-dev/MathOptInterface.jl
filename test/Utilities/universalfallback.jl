@@ -278,7 +278,7 @@ end
 @testset "Show" begin
     model = ModelForUniversalFallback{Float64}()
     uf = MOIU.UniversalFallback(model)
-    @test sprint(show, uf) == raw"""
-    MOIU.UniversalFallback{ModelForUniversalFallback{Float64}}
-    fallback for ModelForUniversalFallback{Float64}"""
+    @test sprint(show, uf) == MOI.Utilities.replace_acronym("""
+    $(MOIU.UniversalFallback{ModelForUniversalFallback{Float64}})
+    fallback for $(ModelForUniversalFallback{Float64})""")
 end

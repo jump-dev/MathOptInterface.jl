@@ -39,6 +39,13 @@ end
 MOI.is_empty(v::VectorOfConstraints)  = isempty(v.constraints)
 MOI.empty!(v::VectorOfConstraints) = empty!(v.constraints)
 
+function MOI.supports_constraint(
+    v::VectorOfConstraints{F,S},
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return true
+end
 function MOI.add_constraint(
     v::VectorOfConstraints{F,S},
     func::F,
