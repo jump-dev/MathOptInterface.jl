@@ -548,34 +548,34 @@ function MOI.modify(
 end
 
 function MOI.set(
-    model::AbstractModel,
+    ::AbstractModel,
     ::MOI.ConstraintFunction,
-    ci::CI{MOI.SingleVariable},
-    change::MOI.AbstractFunction,
+    ::CI{MOI.SingleVariable},
+    ::MOI.SingleVariable,
 )
     return throw(MOI.SettingSingleVariableFunctionNotAllowed())
 end
 function MOI.set(
     model::AbstractModel,
-    attr::MOI.ConstraintFunction,
-    ci::MOI.ConstraintIndex{F},
-    func::F,
-) where {F,S}
-    return MOI.set(constraints(model, ci), attr, ci, func)
+    attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
+    ci::MOI.ConstraintIndex,
+    func_or_set,
+)
+    return MOI.set(constraints(model, ci), attr, ci, func_or_set)
 end
 function MOI.set(
-    model::AbstractModel,
+    model::AbstractModel{T},
     ::MOI.ConstraintSet,
     ci::CI{MOI.SingleVariable},
-    change::MOI.AbstractSet,
-)
+    set::SUPPORTED_VARIABLE_SCALAR_SETS{T},
+) where {T}
     MOI.throw_if_not_valid(model, ci)
-    flag = single_variable_flag(typeof(change))
+    flag = single_variable_flag(typeof(set))
     if !iszero(flag & LOWER_BOUND_MASK)
-        model.lower_bound[ci.value] = extract_lower_bound(change)
+        model.lower_bound[ci.value] = extract_lower_bound(set)
     end
     if !iszero(flag & UPPER_BOUND_MASK)
-        model.upper_bound[ci.value] = extract_upper_bound(change)
+        model.upper_bound[ci.value] = extract_upper_bound(set)
     end
 end
 function MOI.set(

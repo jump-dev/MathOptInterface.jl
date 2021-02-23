@@ -16,7 +16,9 @@
 # updated.
 
 struct VectorOfConstraints{F<:MOI.AbstractFunction,S<:MOI.AbstractSet} <: MOI.ModelLike
-    constraints::CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S},typeof(CleverDicts.key_to_index),typeof(CleverDicts.index_to_key)}
+    # FIXME It is not ideal that we have `DataType` here, it might induce type instabilities.
+    #       We should change `CleverDicts` so that we can just use `typeof(CleverDicts.index_to_key)` here.
+    constraints::CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S},typeof(CleverDicts.key_to_index),Base.Fix1{typeof(CleverDicts.index_to_key),DataType}}
     function VectorOfConstraints{F,S}() where {F,S}
         return new{F,S}(CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}())
     end
