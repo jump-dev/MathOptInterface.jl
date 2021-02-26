@@ -694,3 +694,145 @@ end
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 end
+
+MOI.Utilities.@model(
+    CachingAutoBridge,
+    (),
+    (MOI.GreaterThan, MOI.LessThan),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    (),
+    true,
+)
+function MOI.supports(
+    ::CachingAutoBridge,
+    ::MOI.ObjectiveFunction{MOI.SingleVariable},
+)
+    return false
+end
+
+@testset "auto-bridge-true-constraints" begin
+    model = MOIU.CachingOptimizer(
+        MOIU.Model{Float64}(),
+        CachingAutoBridge{Float64}();
+        auto_bridge = true,
+    )
+    @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
+    x = MOI.add_variables(model, 2)
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    # Supports:
+    MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
+        MOI.LessThan(1.0),
+    )
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    # Doesn't support:
+    MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(2))
+    @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
+end
+
+@testset "auto-bridge-true-constraints-fails" begin
+    model = MOIU.CachingOptimizer(
+        MOIU.Model{Float64}(),
+        CachingAutoBridge{Float64}();
+        auto_bridge = true,
+    )
+    @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
+    x = MOI.add_variables(model, 3)
+    MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.Utilities.attach_optimizer(model),
+    )
+end
+
+@testset "auto-bridge-true-add_constrained_variables" begin
+    model = MOIU.CachingOptimizer(
+        MOIU.Model{Float64}(),
+        CachingAutoBridge{Float64}();
+        auto_bridge = true,
+    )
+    @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    # Supports:
+    x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    # Doesn't support:
+    y, cy = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
+end
+
+@testset "auto-bridge-true-objective" begin
+    model = MOIU.CachingOptimizer(
+        MOIU.Model{Float64}(),
+        CachingAutoBridge{Float64}();
+        auto_bridge = true,
+    )
+    @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
+    x = MOI.add_variable(model)
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    # Supports:
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    # Doesn't support:
+    f = MOI.SingleVariable(x)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
+end
+
+@testset "auto-bridge-false" begin
+    model = MOIU.CachingOptimizer(
+        MOIU.Model{Float64}(),
+        CachingAutoBridge{Float64}(),
+    )
+    @test MOIU.state(model) == MOIU.ATTACHED_OPTIMIZER
+    x = MOI.add_variables(model, 2)
+    @test model.optimizer isa CachingAutoBridge{Float64}
+    # Constrained variables
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constrained_variables(model, MOI.Nonnegatives(2)),
+    )
+    # Constraints
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(2)),
+    )
+    # Objective functions
+    f = MOI.SingleVariable(x[1])
+    @test_throws(
+        MOI.UnsupportedAttribute,
+        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f),
+    )
+end
+
+@testset "auto-bridge-true-constraints-already-bridged" begin
+    optimizer = MOI.Bridges.full_bridge_optimizer(
+        CachingAutoBridge{Float64}(),
+        Float64,
+    )
+    model = MOIU.CachingOptimizer(
+        MOIU.Model{Float64}(),
+        optimizer;
+        auto_bridge = true,
+    )
+    @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
+    x = MOI.add_variables(model, 2)
+    @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
+    # Supports:
+    MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
+        MOI.LessThan(1.0),
+    )
+    @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
+    # Doesn't support:
+    MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(2))
+    @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
+end

@@ -18,50 +18,111 @@
 and links it with an optimizer. It supports incremental model
 construction and modification even when the optimizer doesn't.
 
-A `CachingOptimizer` may be in one of three possible states (`CachingOptimizerState`):
+A `CachingOptimizer` may be in one of three possible states
+(`CachingOptimizerState`):
 
 * `NO_OPTIMIZER`: The CachingOptimizer does not have any optimizer.
 * `EMPTY_OPTIMIZER`: The CachingOptimizer has an empty optimizer.
   The optimizer is not synchronized with the cached model.
-* `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is synchronized with the cached model.
+* `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is
+  synchronized with the cached model.
 
 A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 
 * `MANUAL`: The only methods that change the state of the `CachingOptimizer`
   are [`Utilities.reset_optimizer`](@ref), [`Utilities.drop_optimizer`](@ref),
-  and [`Utilities.attach_optimizer`](@ref).
-  Attempting to perform an operation in the incorrect state results in an error.
+  and [`Utilities.attach_optimizer`](@ref). Attempting to perform an operation
+  in the incorrect state results in an error.
 * `AUTOMATIC`: The `CachingOptimizer` changes its state when necessary. For
   example, `optimize!` will automatically call `attach_optimizer` (an
   optimizer must have been previously set). Attempting to add a constraint or
   perform a modification not supported by the optimizer results in a drop to
   `EMPTY_OPTIMIZER` mode.
 """
-mutable struct CachingOptimizer{OptimizerType,ModelType<:MOI.ModelLike} <:
-               MOI.AbstractOptimizer
+mutable struct CachingOptimizer{
+    OptimizerType,
+    ModelType<:MOI.ModelLike,
+} <: MOI.AbstractOptimizer
     optimizer::Union{Nothing,OptimizerType}
     model_cache::ModelType
     state::CachingOptimizerState
     mode::CachingOptimizerMode
     model_to_optimizer_map::IndexMap
     optimizer_to_model_map::IndexMap
-    # CachingOptimizer externally uses the same variable and constraint indices
-    # as the model_cache. model_to_optimizer_map maps from the model_cache indices to the
-    # optimizer indices.
+    auto_bridge::Bool
 end
 
+"""
+    CachingOptimizer(
+        model_cache::MOI.ModelLike,
+        optimizer::Union{Nothing,MOI.AbstractOptimizer} = nothing;
+        mode::CachingOptimizerMode = AUTOMATIC,
+        state::CachingOptimizerState =
+            optimizer === nothing ? NO_OPTIMIZER : EMPTY_OPTIMIZER,
+        auto_bridge::Bool = false,
+    )
+
+Creates a `CachingOptimizer` using `model_cache` and `optimizer`.
+
+## Notes
+
+ * If `auto_bridge == true`, when the caching optimizer encounters a constraint
+   or objective function that is not supported by `optimizer`, it automatically
+   adds a bridging layer to `optimizer`.
+ * If `auto_bridge == true`, and an optimizer is provided, the state is forced
+   to `EMPTY_OPTIMIZER`.
+ * If an `optimizer` is passed, the returned CachingOptimizer does not support
+   the function `reset_optimizer(model, new_optimizer)` if the type of
+   `new_optimizer` is different from the type of `optimizer`.
+
+## Examples
+
+```julia
+model = MOI.Utilities.CachingOptimizer(
+    MOI.Utilities.Model{Float64}(),
+    GLPK.Optimizer(),
+)
+```
+
+```julia
+model = MOI.Utilities.CachingOptimizer(
+    MOI.Utilities.Model{Float64}(),
+    auto_bridge = true,
+)
+MOI.Utilities.reset_optimizer(model, GLPK.Optimizer())
+```
+"""
 function CachingOptimizer(
     model_cache::MOI.ModelLike,
-    mode::CachingOptimizerMode,
+    optimizer::Union{Nothing,MOI.AbstractOptimizer} = nothing;
+    mode::CachingOptimizerMode = AUTOMATIC,
+    state::CachingOptimizerState =
+        optimizer === nothing ? NO_OPTIMIZER : EMPTY_OPTIMIZER,
+    auto_bridge::Bool = false,
 )
-    return CachingOptimizer{MOI.AbstractOptimizer,typeof(model_cache)}(
-        nothing,
+    T = optimizer !== nothing ? typeof(optimizer) : MOI.AbstractOptimizer
+    if optimizer !== nothing
+        @assert MOI.is_empty(model_cache)
+        @assert MOI.is_empty(optimizer)
+        if auto_bridge
+            state = EMPTY_OPTIMIZER
+            T = MOI.AbstractOptimizer
+        end
+    end
+    return CachingOptimizer{T,typeof(model_cache)}(
+        optimizer,
         model_cache,
-        NO_OPTIMIZER,
+        state,
         mode,
         IndexMap(),
         IndexMap(),
+        auto_bridge,
     )
+end
+
+# Added for compatibility with MOI 0.9.20
+function CachingOptimizer(cache::MOI.ModelLike, mode::CachingOptimizerMode)
+    return CachingOptimizer(cache; mode = mode)
 end
 
 function Base.show(io::IO, C::CachingOptimizer)
@@ -73,33 +134,6 @@ function Base.show(io::IO, C::CachingOptimizer)
     show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.model_cache)
     print(io, "\n$(indent)with optimizer ")
     return show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.optimizer)
-end
-
-"""
-    CachingOptimizer(model_cache::MOI.ModelLike, optimizer::AbstractOptimizer)
-
-Creates an `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer
-`optimizer`.
-
-The type of the optimizer returned is `CachingOptimizer{typeof(optimizer),
-typeof(model_cache)}` so it does not support the function
-`reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
-`new_optimizer` is different from the type of `optimizer`.
-"""
-function CachingOptimizer(
-    model_cache::MOI.ModelLike,
-    optimizer::MOI.AbstractOptimizer,
-)
-    @assert MOI.is_empty(model_cache)
-    @assert MOI.is_empty(optimizer)
-    return CachingOptimizer{typeof(optimizer),typeof(model_cache)}(
-        optimizer,
-        model_cache,
-        EMPTY_OPTIMIZER,
-        AUTOMATIC,
-        IndexMap(),
-        IndexMap(),
-    )
 end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.CoefficientType)
@@ -145,8 +179,8 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
         if attr isa MOI.RawOptimizerAttribute
             # Even if the optimizer claims to `supports` `attr`, the value
             # might have a different meaning (e.g., two solvers with `logLevel`
-            # as a RawOptimizerAttribute). To be on the safe side, just skip all raw
-            # parameters.
+            # as a RawOptimizerAttribute). To be on the safe side, just skip all
+            # raw parameters.
             continue
         elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)::Bool
             continue
@@ -352,19 +386,59 @@ function MOI.add_variables(m::CachingOptimizer, n)
     return vindices
 end
 
+
+"""
+    _bridge_if_needed(f::Function, m::CachingOptimizer)
+
+Return `f(m)`, adding bridges if `f(m.optimizer)` is currently `false`, but
+after doing so, it will allow `m.optimizer` to return `f(m) == true`. If bridges
+are added, it will return `f(m) = true`, not the original `f(m) = false`.
+
+`f` is a function that takes `m` as a single argument. It is typically a call
+like `f(m) = MOI.supports_constraint(m, F, S)` for some `F` and `S`.
+"""
+function _bridge_if_needed(f::Function, model::CachingOptimizer)
+    if !f(model.model_cache)
+        # If the cache doesn't, we dont.
+        return false
+    elseif model.state == NO_OPTIMIZER
+        # The cache does, and there is no optimizer, so we do.
+        return true
+    elseif f(model.optimizer)
+        # There is an optimizer, and it does.
+        return true
+    elseif !model.auto_bridge
+        # There is an optimizer, it doesn't, and we aren't bridging.
+        return false
+    end
+    reset_optimizer(model)
+    T = MOI.get(model, MOI.CoefficientType())
+    bridge = MOI.instantiate(model.optimizer; with_bridge_type = T)
+    if f(bridge)
+        model.optimizer = bridge
+        return true  # We bridged, and now we support.
+    end
+    return false  # Everything fails.
+end
+
 function MOI.supports_add_constrained_variable(
     m::CachingOptimizer,
     S::Type{<:MOI.AbstractScalarSet},
 )
-    return MOI.supports_add_constrained_variable(m.model_cache, S) && (
-        m.state == NO_OPTIMIZER ||
-        MOI.supports_add_constrained_variable(m.optimizer, S)::Bool
-    )
+    return _bridge_if_needed(m) do model
+        return MOI.supports_add_constrained_variable(model, S)
+    end
 end
+
 function MOI.add_constrained_variable(
     m::CachingOptimizer,
     set::S,
 ) where {S<:MOI.AbstractScalarSet}
+    if !MOI.supports_add_constrained_variable(m, S)
+        if state(m) == ATTACHED_OPTIMIZER
+            throw(MOI.UnsupportedConstraint{MOI.SingleVariable,S}())
+        end
+    end
     if m.state == MOIU.ATTACHED_OPTIMIZER
         if m.mode == MOIU.AUTOMATIC
             try
@@ -407,10 +481,9 @@ function _supports_add_constrained_variables(
     m::CachingOptimizer,
     S::Type{<:MOI.AbstractVectorSet},
 )
-    return MOI.supports_add_constrained_variables(m.model_cache, S) && (
-        m.state == NO_OPTIMIZER ||
-        MOI.supports_add_constrained_variables(m.optimizer, S)::Bool
-    )
+    return _bridge_if_needed(m) do model
+        return MOI.supports_add_constrained_variables(model, S)
+    end
 end
 
 # Split in two to solve ambiguity
@@ -432,6 +505,13 @@ function MOI.add_constrained_variables(
     m::CachingOptimizer,
     set::S,
 ) where {S<:MOI.AbstractVectorSet}
+    if !MOI.supports_add_constrained_variables(m, S)
+        if state(m) == ATTACHED_OPTIMIZER
+            throw(
+                MOI.UnsupportedConstraint{MOI.VectorOfVariables,S}()
+            )
+        end
+    end
     if m.state == ATTACHED_OPTIMIZER
         if m.mode == AUTOMATIC
             try
@@ -478,10 +558,9 @@ function MOI.supports_constraint(
     F::Type{<:MOI.AbstractFunction},
     S::Type{<:MOI.AbstractSet},
 )
-    return MOI.supports_constraint(m.model_cache, F, S) && (
-        m.state == NO_OPTIMIZER ||
-        MOI.supports_constraint(m.optimizer, F, S)::Bool
-    )
+    return _bridge_if_needed(m) do model
+        return MOI.supports_constraint(model, F, S)
+    end
 end
 
 function MOI.add_constraint(
@@ -489,6 +568,11 @@ function MOI.add_constraint(
     func::F,
     set::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    if !MOI.supports_constraint(m, F, S)
+        if state(m) == ATTACHED_OPTIMIZER
+            throw(MOI.UnsupportedConstraint{F,S}())
+        end
+    end
     if m.state == ATTACHED_OPTIMIZER
         if m.mode == AUTOMATIC
             try
@@ -719,6 +803,11 @@ end
 # As a result, values of attributes must implement `map_indices`.
 
 function MOI.set(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
+    if !MOI.supports(m, attr)
+        if state(m) == ATTACHED_OPTIMIZER
+            throw(MOI.UnsupportedAttribute(attr))
+        end
+    end
     if m.state == ATTACHED_OPTIMIZER
         optimizer_value = map_indices(m.model_to_optimizer_map, value)
         if m.mode == AUTOMATIC
@@ -783,6 +872,12 @@ function MOI.supports(
 )
     return MOI.supports(m.model_cache, attr) &&
            (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr)::Bool)
+end
+
+function MOI.supports(m::CachingOptimizer, attr::MOI.ObjectiveFunction)
+    return _bridge_if_needed(m) do model
+        return MOI.supports(model, attr)
+    end
 end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)

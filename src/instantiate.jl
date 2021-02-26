@@ -92,6 +92,13 @@ function _instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
     return optimizer
 end
 
+function _instantiate_and_check(optimizer::AbstractOptimizer)
+    if !is_empty(optimizer)
+        error("The provided `optimizer_constructor` is a non-empty optimizer.")
+    end
+    return optimizer
+end
+
 """
     instantiate(
         optimizer_constructor,
@@ -130,3 +137,6 @@ function instantiate(
     end
     return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
 end
+
+# Add a fallback so we don't add bridges on-top-of bridges!
+instantiate(optimizer::Bridges.LazyBridgeOptimizer; kwargs...) = optimizer
