@@ -108,7 +108,11 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
 
 @testset "Mapping of variables" begin
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    model = MOIU.CachingOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()), mock)
+    model = MOIU.CachingOptimizer(
+        MOIU.UniversalFallback(MOIU.Model{Float64}()),
+        mock,
+    )
+    MOIU.attach_optimizer(model)
     x = MOI.add_variable(model)
     y = first(MOI.get(mock, MOI.ListOfVariableIndices()))
     @test x != y # Otherwise, these tests will trivially pass
@@ -363,7 +367,7 @@ end
         s.add_con_allowed = true
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         MOI.empty!(m)
-        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
     end
 
     @testset "Add variable not allowed" begin
@@ -416,12 +420,12 @@ end
         m = MOIU.CachingOptimizer(model, s)
         @test m isa MOIU.CachingOptimizer{typeof(s), typeof(model)}
         @test MOI.is_empty(m)
-        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         @test MOIU.mode(m) == MOIU.AUTOMATIC
         @test MOI.get(m, MOI.SolverName()) == "Mock"
         @test sprint(show, m) == MOI.Utilities.replace_acronym("""
         $(MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64}},MOIU.Model{Float64}})
-        in state ATTACHED_OPTIMIZER
+        in state EMPTY_OPTIMIZER
         in mode AUTOMATIC
         with model cache MOIU.Model{Float64}
         with optimizer MOIU.MockOptimizer{MOIU.Model{Float64}}""")
