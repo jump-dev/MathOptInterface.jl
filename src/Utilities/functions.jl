@@ -320,9 +320,47 @@ function scalar_type(::Type{MOI.VectorQuadraticFunction{T}}) where {T}
     return MOI.ScalarQuadraticFunction{T}
 end
 
+"""
+    ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
+
+A type that allows iterating over the scalar-functions that comprise an
+`AbstractVectorFunction`.
+"""
 struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
+    # Dictionaries which map output indices to their terms.
+    affine::Dict{Int,Vector{Int}}
+    quadratic::Dict{Int,Vector{Int}}
 end
+
+function ScalarFunctionIterator(f::MOI.VectorOfVariables)
+    return ScalarFunctionIterator(
+        f,
+        Dict{Int,Vector{Int}}(),
+        Dict{Int,Vector{Int}}(),
+    )
+end
+
+function ScalarFunctionIterator(f::MOI.VectorAffineFunction)
+    d = Dict(i => Int[] for i = 1:MOI.output_dimension(f))
+    for (i, term) in enumerate(f.terms)
+        push!(d[term.output_index], i)
+    end
+    return ScalarFunctionIterator(f, d, Dict{Int,Vector{Int}}())
+end
+
+function ScalarFunctionIterator(f::MOI.VectorQuadraticFunction)
+    aff = Dict(i => Int[] for i = 1:MOI.output_dimension(f))
+    quad = Dict(i => Int[] for i = 1:MOI.output_dimension(f))
+    for (i, term) in enumerate(f.affine_terms)
+        push!(aff[term.output_index], i)
+    end
+    for (i, term) in enumerate(f.quadratic_terms)
+        push!(quad[term.output_index], i)
+    end
+    return ScalarFunctionIterator(f, aff, quad)
+end
+
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
 eachscalar(f::AbstractVector) = f
 
@@ -344,69 +382,88 @@ Base.lastindex(it::ScalarFunctionIterator) = length(it)
 
 # Define getindex for Vector functions
 
+# VectorOfVariables
+
 function Base.getindex(
     it::ScalarFunctionIterator{MOI.VectorOfVariables},
-    i::Integer,
+    output_index::Integer,
 )
-    return MOI.SingleVariable(it.f.variables[i])
-end
-# Returns the scalar terms of output_index i
-function scalar_terms_at_index(
-    terms::Vector{<:Union{MOI.VectorAffineTerm,MOI.VectorQuadraticTerm}},
-    i::Int,
-)
-    return [term.scalar_term for term in terms if term.output_index == i]
-end
-function Base.getindex(it::ScalarFunctionIterator{<:VAF}, i::Integer)
-    return SAF(scalar_terms_at_index(it.f.terms, i), it.f.constants[i])
-end
-function Base.getindex(it::ScalarFunctionIterator{<:VQF}, i::Integer)
-    lin = scalar_terms_at_index(it.f.affine_terms, i)
-    quad = scalar_terms_at_index(it.f.quadratic_terms, i)
-    return SQF(lin, quad, it.f.constants[i])
+    return MOI.SingleVariable(it.f.variables[output_index])
 end
 
 function Base.getindex(
     it::ScalarFunctionIterator{MOI.VectorOfVariables},
-    I::AbstractVector,
+    output_indices::AbstractVector{<:Integer},
 )
-    return MOI.VectorOfVariables(it.f.variables[I])
+    return MOI.VectorOfVariables(it.f.variables[output_indices])
 end
 
+# VectorAffineFunction
+
 function Base.getindex(
-    it::ScalarFunctionIterator{VAF{T}},
-    I::AbstractVector,
+    it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}},
+    output_index::Integer,
 ) where {T}
-    d = Dict(I[i] => i for i = 1:length(I))
-    return VAF(
-        MOI.VectorAffineTerm{T}[
-            MOI.VectorAffineTerm(d[term.output_index], term.scalar_term)
-            for term in it.f.terms if haskey(d, term.output_index)
+    return MOI.ScalarAffineFunction{T}(
+        MOI.ScalarAffineTerm{T}[
+            it.f.terms[i].scalar_term
+            for i in it.affine[output_index]
         ],
-        it.f.constants[I],
+        it.f.constants[output_index],
     )
 end
 
 function Base.getindex(
-    it::ScalarFunctionIterator{VQF{T}},
-    I::AbstractVector,
+    it::ScalarFunctionIterator{MOI.VectorAffineFunction{T}},
+    output_indices::AbstractVector{<:Integer},
 ) where {T}
-    affine_terms = MOI.VectorAffineTerm{T}[]
-    quadratic_terms = MOI.VectorQuadraticTerm{T}[]
-    constant = Vector{T}(undef, length(I))
-    for (i, j) in enumerate(I)
-        g = it[j]
-        append!(
-            affine_terms,
-            map(t -> MOI.VectorAffineTerm(i, t), g.affine_terms),
-        )
-        append!(
-            quadratic_terms,
-            map(t -> MOI.VectorQuadraticTerm(i, t), g.quadratic_terms),
-        )
-        constant[i] = g.constant
+    terms = MOI.VectorAffineTerm{T}[]
+    for (i, output_index) in enumerate(output_indices)
+        for j in it.affine[output_index]
+            push!(terms, MOI.VectorAffineTerm(i, it.f.terms[j].scalar_term))
+        end
     end
-    return VQF(affine_terms, quadratic_terms, constant)
+    return MOI.VectorAffineFunction(terms, it.f.constants[output_indices])
+end
+
+# VectorQuadraticFunction
+
+function Base.getindex(
+    it::ScalarFunctionIterator{MOI.VectorQuadraticFunction{T}},
+    output_index::Integer,
+) where {T}
+    return MOI.ScalarQuadraticFunction(
+        MOI.ScalarAffineTerm{T}[
+            it.f.affine_terms[i].scalar_term for i in it.affine[output_index]
+        ],
+        MOI.ScalarQuadraticTerm{T}[
+            it.f.quadratic_terms[i].scalar_term for i in it.quadratic[output_index]
+        ],
+        it.f.constants[output_index],
+    )
+end
+
+function Base.getindex(
+    it::ScalarFunctionIterator{MOI.VectorQuadraticFunction{T}},
+    output_indices::AbstractVector{<:Integer},
+) where {T}
+    vat = MOI.VectorAffineTerm{T}[]
+    vqt = MOI.VectorQuadraticTerm{T}[]
+    for (i, output_index) in enumerate(output_indices)
+        for j in it.affine[output_index]
+            push!(
+                vat,
+                MOI.VectorAffineTerm(i, it.f.affine_terms[j].scalar_term),
+            )
+        end
+        for j in it.quadratic[output_index]
+            push!(
+                vqt,
+                MOI.VectorQuadraticTerm(i, it.f.quadratic_terms[j].scalar_term),
+            )
+        end
+    end
+    return MOI.VectorQuadraticFunction(vat, vqt, it.f.constants[output_indices])
 end
 
 function zero_with_output_dimension(::Type{Vector{T}}, n::Integer) where {T}
