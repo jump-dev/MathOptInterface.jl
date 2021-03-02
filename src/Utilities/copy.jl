@@ -115,6 +115,16 @@ function IndexMap(n = 0)
     )
 end
 
+"""
+    index_map_for_variable_indices(variables)
+
+This function does not add variables to the IndexMap.
+It simply initializes the IndexMap with a proper data struture.
+If the variable indices are contiguous and start from 1, then
+an optimized data structure with pre allocated memory is initialized.
+Otherwise the data structure will start empty and will try to
+keep using performant structure for as long as possible.
+"""
 function index_map_for_variable_indices(variables)
     n = length(variables)
     if all(i -> variables[i] == MOI.VariableIndex(i), 1:n)
