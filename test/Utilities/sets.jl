@@ -33,11 +33,16 @@ end
 end
 
 @testset "Shifts" begin
+    @test MOIU.supports_shift_constant(MOI.EqualTo{Int})
     @test MOIU.shift_constant(MOI.EqualTo(3), 1) == MOI.EqualTo(4)
+    @test MOIU.supports_shift_constant(MOI.GreaterThan{Int})
     @test MOIU.shift_constant(MOI.GreaterThan(6), -1) == MOI.GreaterThan(5)
+    @test MOIU.supports_shift_constant(MOI.LessThan{Int})
     @test MOIU.shift_constant(MOI.LessThan(2), 2) == MOI.LessThan(4)
+    @test MOIU.supports_shift_constant(MOI.Interval{Int})
     @test MOIU.shift_constant(MOI.Interval(-2, 3), 1) == MOI.Interval(-1, 4)
-    @test MOIU.shift_constant(MOI.ZeroOne(), 0.0) === nothing
+    @test MOIU.supports_shift_constant(MOI.ZeroOne) == false
+    @test_throws MethodError MOIU.shift_constant(MOI.ZeroOne(), 1.0)
 end
 
 @testset "Dimension" begin
