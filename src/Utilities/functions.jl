@@ -377,9 +377,11 @@ function Base.getindex(
     it::ScalarFunctionIterator{VAF{T}},
     I::AbstractVector,
 ) where {T}
+    d = Dict(I[i] => i for i = 1:length(I))
     return VAF(
         MOI.VectorAffineTerm{T}[
-            term for term in it.f.terms if term.output_index in I
+            MOI.VectorAffineTerm(d[term.output_index], term.scalar_term)
+            for term in it.f.terms if haskey(d, term.output_index)
         ],
         it.f.constants[I],
     )
