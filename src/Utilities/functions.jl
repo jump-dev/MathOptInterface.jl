@@ -372,22 +372,19 @@ function Base.getindex(
 )
     return MOI.VectorOfVariables(it.f.variables[I])
 end
+
 function Base.getindex(
     it::ScalarFunctionIterator{VAF{T}},
     I::AbstractVector,
 ) where {T}
-    terms = MOI.VectorAffineTerm{T}[]
-    # assume at least one term per index
-    sizehint!(terms, length(I))
-    constant = it.f.constants[I]
-    for term in it.f.terms
-        idx = findfirst(Base.Fix1(==, term.output_index), I)
-        if idx !== nothing
-            push!(terms, MOI.VectorAffineTerm(idx, term.scalar_term))
-        end
-    end
-    return VAF(terms, constant)
+    return VAF(
+        MOI.VectorAffineTerm{T}[
+            term for term in it.f.terms if term.output_index in I
+        ],
+        it.f.constants[I],
+    )
 end
+
 function Base.getindex(
     it::ScalarFunctionIterator{VQF{T}},
     I::AbstractVector,
