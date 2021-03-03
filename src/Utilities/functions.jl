@@ -330,7 +330,7 @@ struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
     # Dictionaries which map output indices to their terms.
     affine::Vector{Vector{Int}}
-    quadratic:Vector{Vector{Int}}
+    quadratic::Vector{Vector{Int}}
 end
 
 function ScalarFunctionIterator(f::MOI.VectorOfVariables)
