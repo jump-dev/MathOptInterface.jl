@@ -3,8 +3,10 @@ const VI = MOI.VariableIndex
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
     enable_hessian_vector_product::Bool
-    function HS071(enable_hessian::Bool,
-                   enable_hessian_vector_product::Bool=false)
+    function HS071(
+        enable_hessian::Bool,
+        enable_hessian_vector_product::Bool = false,
+    )
         return new(enable_hessian, enable_hessian_vector_product)
     end
 end
@@ -27,13 +29,14 @@ function MOI.initialize(d::HS071, requested_features::Vector{Symbol})
 end
 
 function MOI.features_available(d::HS071)
+    features = [:Grad, :Jac, :ExprGraph]
     if d.enable_hessian
-        return [:Grad, :Jac, :Hess, :ExprGraph]
-    elseif d.enable_hessian_vector_product
-        return [:Grad, :Jac, :HessVec, :ExprGraph]
-    else
-        return [:Grad, :Jac, :ExprGraph]
+        push!(features, :Hess)
     end
+    if d.enable_hessian_vector_product
+        return push!(features, :HessVec)
+    end
+    return features
 end
 
 function MOI.objective_expr(d::HS071)
@@ -252,7 +255,7 @@ function hs071_no_hessian_test(model, config)
     return hs071test_template(model, config, HS071(false))
 end
 
-function hs071_hessian_vector_product_test(model, config
+function hs071_hessian_vector_product_test(model, config)
     return hs071test_template(model, config, HS071(false, true))
 end
 

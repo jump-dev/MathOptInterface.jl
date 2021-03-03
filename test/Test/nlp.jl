@@ -23,7 +23,7 @@ const MOI = MathOptInterface
     MOI.Test.hs071_no_hessian_test(mock, config)
     MOI.Test.hs071_hessian_vector_product_test(mock, config)
 
-    d = MOI.Test.HS071(false, false)
+    d = MOI.Test.HS071(false)
     VI = MOI.VariableIndex
     @test MOI.objective_expr(d) == :(x[$(VI(1))] * x[$(VI(4))] * (x[$(VI(1))] +
                                      x[$(VI(2))] + x[$(VI(3))]) + x[$(VI(3))])
