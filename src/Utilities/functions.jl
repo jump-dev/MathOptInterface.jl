@@ -329,29 +329,29 @@ A type that allows iterating over the scalar-functions that comprise an
 struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
     # Dictionaries which map output indices to their terms.
-    affine::Dict{Int,Vector{Int}}
-    quadratic::Dict{Int,Vector{Int}}
+    affine::Vector{Vector{Int}}
+    quadratic:Vector{Vector{Int}}
 end
 
 function ScalarFunctionIterator(f::MOI.VectorOfVariables)
     return ScalarFunctionIterator(
         f,
-        Dict{Int,Vector{Int}}(),
-        Dict{Int,Vector{Int}}(),
+        Vector{Int}[],
+        Vector{Int}[],
     )
 end
 
 function ScalarFunctionIterator(f::MOI.VectorAffineFunction)
-    d = Dict(i => Int[] for i = 1:MOI.output_dimension(f))
+    d = [Int[] for i = 1:MOI.output_dimension(f)]
     for (i, term) in enumerate(f.terms)
         push!(d[term.output_index], i)
     end
-    return ScalarFunctionIterator(f, d, Dict{Int,Vector{Int}}())
+    return ScalarFunctionIterator(f, d, Vector{Int}[])
 end
 
 function ScalarFunctionIterator(f::MOI.VectorQuadraticFunction)
-    aff = Dict(i => Int[] for i = 1:MOI.output_dimension(f))
-    quad = Dict(i => Int[] for i = 1:MOI.output_dimension(f))
+    aff = [Int[] for i = 1:MOI.output_dimension(f)]
+    quad = [Int[] for i = 1:MOI.output_dimension(f)]
     for (i, term) in enumerate(f.affine_terms)
         push!(aff[term.output_index], i)
     end
