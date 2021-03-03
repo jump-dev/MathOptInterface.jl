@@ -78,18 +78,15 @@ function bridge_constraint(
         sparse(F.L), F.p
     catch err
         if err isa PosDefException
-            error(
-                "The optimizer supports second-order cone constraints and",
-                " not quadratic constraints but you entered a quadratic",
-                " constraint of type: `$(typeof(func))`-in-`$(typeof(set))`.",
-                " A bridge attempted to transform the quadratic constraint",
-                " to a second order cone constraint but the constraint is",
-                " not strongly convex, i.e., the symmetric matrix of",
-                " quadratic coefficients is not positive definite. Convex",
-                " constraints that are not strongly convex, i.e. the matrix is",
-                " positive semidefinite but not positive definite, are not",
-                " supported yet.",
-            )
+            error("""
+            Unable to transfor a quadratic constraint into a second-order cone
+            because the quadratic constraint is not strongly convex.
+
+            Convex constraints that are not strongly convex (i.e., the matrix is
+            positive semidefinite but not positive definite) are not supported
+            yet.
+
+            Note that a quadratic equality constraint is non-convex.""")
         else
             rethrow(err)
         end
