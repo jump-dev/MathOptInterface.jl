@@ -80,7 +80,7 @@ function bridge_constraint(
         if err isa PosDefException
             error("""
             Unable to transform a quadratic constraint into a second-order cone
-            because the quadratic constraint is not strongly convex.
+            constraint because the quadratic constraint is not strongly convex.
 
             Convex constraints that are not strongly convex (i.e., the matrix is
             positive semidefinite but not positive definite) are not supported
