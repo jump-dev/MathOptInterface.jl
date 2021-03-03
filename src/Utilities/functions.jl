@@ -328,7 +328,7 @@ A type that allows iterating over the scalar-functions that comprise an
 """
 struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
     f::F
-    # Dictionaries which map output indices to their terms.
+    # Vectors which map output indices to their terms.
     affine::Vector{Vector{Int}}
     quadratic::Vector{Vector{Int}}
 end
