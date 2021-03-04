@@ -76,9 +76,13 @@ end
 # allocates, and it is desirable to provide a zero-allocation option for working with
 # ScalarAffineFunctions. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 
-mutable struct GenericScalarAffineFunction{T, VT<:AbstractVector{ScalarAffineTerm{T}}}
+mutable struct GenericScalarAffineFunction{T, VT<:AbstractVector{ScalarAffineTerm{T}}} <: AbstractScalarFunction
     terms::VT
     constant::T
+end
+
+function GenericScalarAffineFunction{T}(terms::VT, constant::T) where {T, VT <: AbstractVector{ScalarAffineTerm{T}}}
+    return GenericScalarAffineFunction{T,VT}(terms::VT, constant::T)
 end
 
 """
@@ -93,7 +97,9 @@ Duplicate variable indices in `terms` are accepted, and the corresponding
 coefficients are summed together.
 """
 const ScalarAffineFunction{T} = GenericScalarAffineFunction{T, Vector{ScalarAffineTerm{T}}}
-
+function ScalarAffineFunction(terms::Vector{ScalarAffineTerm{T}}, constant::T) where {T}
+    ScalarAffineFunction{T}(terms, constant)
+end
 
 struct ZipTermVector{T} <: AbstractVector{ScalarAffineTerm{T}}
     coefficients::Vector{T}
@@ -101,7 +107,8 @@ struct ZipTermVector{T} <: AbstractVector{ScalarAffineTerm{T}}
 end
 const ZippedAffineFunction{T} = GenericScalarAffineFunction{T, ZipTermVector{T}}
 
-Base.getindex(zv::ZipTermVector, i::Integer) = ScalarAffineTerm(zv.coefficients[i], zv.variable_indices[i])
+# Use `Base.Integer` here to disambiguate from the MOI set of the same name.
+Base.getindex(zv::ZipTermVector, i::Base.Integer) = ScalarAffineTerm(zv.coefficients[i], zv.variable_indices[i])
 Base.size(zv::ZipTermVector) = size(zv.coefficients)
 
 function Base.push!(zv::ZipTermVector, term::ScalarAffineTerm)
@@ -116,7 +123,8 @@ function Base.empty!(zv::ZipTermVector)
     return zv
 end
 
-function Base.setindex!(zv::ZipTermVector, term::ScalarAffineTerm, idx::Integer)
+# Use `Base.Integer` here to disambiguate from the MOI set of the same name.
+function Base.setindex!(zv::ZipTermVector, term::ScalarAffineTerm, idx::Base.Integer)
     zv.coefficients[idx] = term.coefficient
     zv.variable_indices[idx] = term.variable_index
     return term
