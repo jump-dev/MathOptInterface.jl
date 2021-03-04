@@ -18,10 +18,6 @@ eval_variables(varval::Function, f::VVF) = varval.(f.variables)
 function eval_variables(varval::Function, f::SAF)
     return mapreduce(t -> eval_term(varval, t), +, f.terms, init = f.constant)
 end
-function eval_variables(varval::Function, f::SACF)
-    return sum(c * varval(v) for (c, v) in zip(f.coefficients, f.variable_indices))
-end
-
 function eval_variables(varval::Function, f::VAF)
     out = copy(f.constants)
     for t in f.terms
@@ -311,7 +307,7 @@ function substitute_variables(
 end
 
 # Vector of constants
-constant_vector(f::Union{SAF,SQF,SACF}) = [f.constant]
+constant_vector(f::Union{SAF,SQF}) = [f.constant]
 constant_vector(f::Union{VAF,VQF}) = f.constants
 
 # Implements iterator interface
@@ -567,7 +563,7 @@ canonicalize!(f::Union{MOI.VectorOfVariables,MOI.SingleVariable}) = f
 Convert a function to canonical form in-place, without allocating a copy to hold
 the result. See [`canonical`](@ref).
 """
-function canonicalize!(f::Union{SAF,VAF})
+function canonicalize!(f::Union{MOI.ScalarAffineFunction,VAF})
     sort_and_compress!(
         f.terms,
         MOI.term_indices,
@@ -577,26 +573,26 @@ function canonicalize!(f::Union{SAF,VAF})
     return f
 end
 
-function canonicalize!(f::SACF)
+function canonicalize!(f::MOI.ZippedAffineFunction)
     delete_indices = BitSet()
-    for i in 1:length(f.variable_indices)-1
-        if iszero(f.coefficients[i])
+    for i in 1:length(f.terms.variable_indices)-1
+        if iszero(f.terms.coefficients[i])
             push!(delete_indices, i)
             continue
         end
-        for j in i+1:length(f.variable_indices)
+        for j in i+1:length(f.terms.variable_indices)
             if j in delete_indices
                 continue
             end
-            if f.variable_indices[i] == f.variable_indices[j]
-                f.coefficients[i] += f.coefficients[j]
-                f.coefficients[j] = 0
+            if f.terms.variable_indices[i] == f.terms.variable_indices[j]
+                f.terms.coefficients[i] += f.terms.coefficients[j]
+                f.terms.coefficients[j] = 0
                 push!(delete_indices, j)
             end
         end
     end
-    deleteat!(f.coefficients, delete_indices)
-    deleteat!(f.variable_indices, delete_indices)
+    deleteat!(f.terms.coefficients, delete_indices)
+    deleteat!(f.terms.variable_indices, delete_indices)
     return f
 end
 

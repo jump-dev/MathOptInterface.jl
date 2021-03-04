@@ -65,7 +65,7 @@ end
         @test aff isa MOI.VectorAffineFunction{Int}
         quad = MOIU.vectorize(MOI.ScalarQuadraticFunction{Int}[])
         @test MOI.output_dimension(quad) == 0
-        @test quad isa MOI.VectorQuadraticFunction{Int}        
+        @test quad isa MOI.VectorQuadraticFunction{Int}
     end
     @testset "vectorize mixed affine functions" begin
         g1 = MOI.ScalarAffineColumnFunction([MOI.ScalarAffineTerm(2, x)], 3)
@@ -80,7 +80,7 @@ end
         @test aff isa MOI.VectorAffineFunction{Int}
         quad = MOIU.vectorize(MOI.ScalarQuadraticFunction{Int}[])
         @test MOI.output_dimension(quad) == 0
-        @test quad isa MOI.VectorQuadraticFunction{Int}        
+        @test quad isa MOI.VectorQuadraticFunction{Int}
     end
     @testset "operate vcat" begin
         v = MOI.VectorOfVariables([y, w])

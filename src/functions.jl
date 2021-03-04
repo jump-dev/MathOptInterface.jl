@@ -97,28 +97,28 @@ const ScalarAffineFunction{T} = GenericScalarAffineFunction{T, Vector{ScalarAffi
 
 struct ZipTermVector{T} <: AbstractVector{ScalarAffineTerm{T}}
     coefficients::Vector{T}
-    variables::Vector{VariableIndex}
+    variable_indices::Vector{VariableIndex}
 end
 const ZippedAffineFunction{T} = GenericScalarAffineFunction{T, ZipTermVector{T}}
 
-Base.getindex(zv::ZipTermVector, i::Integer) = ScalarAffineTerm(zv.coefficients[i], zv.variables[i])
+Base.getindex(zv::ZipTermVector, i::Integer) = ScalarAffineTerm(zv.coefficients[i], zv.variable_indices[i])
 Base.size(zv::ZipTermVector) = size(zv.coefficients)
 
 function Base.push!(zv::ZipTermVector, term::ScalarAffineTerm)
     push!(zv.coefficients, term.coefficient)
-    push!(zv.variables, term.variables)
+    push!(zv.variable_indices, term.variable_index)
     return zv
 end
 
 function Base.empty!(zv::ZipTermVector)
     empty!(zv.coefficients)
-    empty!(zv.variables)
+    empty!(zv.variable_indices)
     return zv
 end
 
 function Base.setindex!(zv::ZipTermVector, term::ScalarAffineTerm, idx::Integer)
     zv.coefficients[idx] = term.coefficient
-    zv.variables[idx] = term.variable_index
+    zv.variable_indices[idx] = term.variable_index
     return term
 end
 
@@ -126,7 +126,7 @@ scalar_terms(func::ScalarAffineFunction) = func.terms
 
 function scalar_terms(func::ZippedAffineFunction)
     return [
-        ScalarAffineTerm(func.terms.coefficients[idx], func.terms.variables[idx])
+        ScalarAffineTerm(func.terms.coefficients[idx], func.terms.variable_indices[idx])
         for idx in eachindex(func.terms)
     ]
 end
@@ -541,7 +541,9 @@ end
 # Define shortcuts for
 # SingleVariable -> ScalarAffineFunction
 function ScalarAffineFunction{T}(f::SingleVariable) where {T}
-    return ScalarAffineFunction([ScalarAffineTerm(one(T), f.variable)], zero(T))
+    return ScalarAffineFunction(
+        [ScalarAffineTerm(one(T), f.variable)], zero(T),
+    )
 end
 
 function ZippedAffineFunction{T}(f::SingleVariable) where {T}

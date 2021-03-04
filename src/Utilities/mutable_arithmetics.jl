@@ -84,7 +84,7 @@ function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{T},
     G::Type{<:TypedLike{T}},
-) where {T,N}
+) where {T}
     return promote_operation(op, T, F, G)
 end
 function MA.promote_operation(
