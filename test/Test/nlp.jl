@@ -3,6 +3,38 @@ using Test
 import MathOptInterface
 const MOI = MathOptInterface
 
+@testset "hs071-manual" begin
+    d = MOI.Test.HS071(true, true)
+    MOI.initialize(d, [:Grad, :Jac, :ExprGraph, :Hess, :HessVec])
+    @test :HessVec in MOI.features_available(d)
+    x = ones(4)
+    # f(x)
+    @test MOI.eval_objective(d, x) == 4.0
+    # g(x)
+    g = zeros(2)
+    MOI.eval_constraint(d, g, x)
+    @test g == [1.0, 4.0]
+    # f'(x)
+    ∇f = fill(NaN, length(x))
+    MOI.eval_objective_gradient(d, ∇f, x)
+    @test ∇f == [4.0, 1.0, 2.0, 3.0]
+    # Jacobian
+    Js = MOI.jacobian_structure(d)
+    J = fill(NaN, length(Js))
+    MOI.eval_constraint_jacobian(d, J, x)
+    @test J == [1, 1, 1, 1, 2, 2, 2, 2]
+    # Hessian-lagrangian
+    Hs = MOI.hessian_lagrangian_structure(d)
+    H = fill(NaN, length(Hs))
+    MOI.eval_hessian_lagrangian(d, H, x, 1.0, [1.0, 1.0])
+    @test H == [4, 2, 2, 2, 1, 2, 5, 2, 2, 2]
+    # Hessian-lagrangian-product
+    Hv = fill(NaN, length(x))
+    v = [1.0, 1.1, 1.2, 1.3]
+    MOI.eval_hessian_lagrangian_product(d, Hv, x, v, 1.0, [1.0, 1.0])
+    @test Hv == [15.1, 8.0, 8.1, 12.2]
+end
+
 @testset "hs071" begin
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
