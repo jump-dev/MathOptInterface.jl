@@ -1073,6 +1073,7 @@ The following utilities are available for moving the function constant to the
 set for scalar constraints:
 ```@docs
 Utilities.shift_constant
+Utilities.supports_shift_constant
 Utilities.normalize_and_add_constraint
 Utilities.normalize_constant
 ```

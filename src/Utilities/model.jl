@@ -550,7 +550,7 @@ single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
 # If a set is added here, a line should be added in
 # `MOI.delete(::AbstractModel, ::MOI.VariableIndex)`
 
-function flag_to_set_type(flag::UInt8, T::Type)
+function flag_to_set_type(flag::UInt8, ::Type{T}) where {T}
     if flag == 0x1
         return MOI.EqualTo{T}
     elseif flag == 0x2
@@ -565,28 +565,46 @@ function flag_to_set_type(flag::UInt8, T::Type)
         return MOI.ZeroOne
     elseif flag == 0x40
         return MOI.Semicontinuous{T}
-    elseif flag == 0x80
-        return MOI.Semiinteger{T}
     else
-        # $flag would print it in decimal
-        error("Invalid flag `$(sprint(show, flag))`.")
+        @assert flag == 0x80
+        return MOI.Semiinteger{T}
     end
+end
+
+# Julia doesn't infer `S1` correctly, so we use a function barrier to improve
+# inference.
+function _throw_if_lower_bound_set(variable, S2, mask, T)
+    S1 = flag_to_set_type(mask, T)
+    throw(MOI.LowerBoundAlreadySet{S1,S2}(variable))
+    return
 end
 
 function throw_if_lower_bound_set(variable, S2, mask, T)
-    flag = single_variable_flag(S2)
-    if !iszero(flag & LOWER_BOUND_MASK) && !iszero(mask & LOWER_BOUND_MASK)
-        S1 = flag_to_set_type(mask & LOWER_BOUND_MASK, T)
-        throw(MOI.LowerBoundAlreadySet{S1,S2}(variable))
+    lower_mask = mask & LOWER_BOUND_MASK
+    if iszero(lower_mask)
+        return  # No lower bound set.
+    elseif iszero(single_variable_flag(S2) & LOWER_BOUND_MASK)
+        return  # S2 isn't related to the lower bound.
     end
+    return _throw_if_lower_bound_set(variable, S2, lower_mask, T)
+end
+
+# Julia doesn't infer `S1` correctly, so we use a function barrier to improve
+# inference.
+function _throw_if_upper_bound_set(variable, S2, mask, T)
+    S1 = flag_to_set_type(mask, T)
+    throw(MOI.UpperBoundAlreadySet{S1,S2}(variable))
+    return
 end
 
 function throw_if_upper_bound_set(variable, S2, mask, T)
-    flag = single_variable_flag(S2)
-    if !iszero(flag & UPPER_BOUND_MASK) && !iszero(mask & UPPER_BOUND_MASK)
-        S1 = flag_to_set_type(mask & UPPER_BOUND_MASK, T)
-        throw(MOI.UpperBoundAlreadySet{S1,S2}(variable))
+    upper_mask = mask & UPPER_BOUND_MASK
+    if iszero(upper_mask)
+        return  # No upper bound set.
+    elseif iszero(single_variable_flag(S2) & UPPER_BOUND_MASK)
+        return  # S2 isn't related to the upper bound.
     end
+    return _throw_if_upper_bound_set(variable, S2, upper_mask, T)
 end
 
 # Sets setting lower bound:

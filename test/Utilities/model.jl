@@ -102,9 +102,8 @@ end
 
 @testset "Setting lower/upper bound twice" begin
     @testset "flag_to_set_type" begin
-        err = ErrorException("Invalid flag `0x11`.")
         T = Int
-        @test_throws err MOIU.flag_to_set_type(0x11, T)
+        @test_throws AssertionError MOIU.flag_to_set_type(0x11, T)
         @test MOIU.flag_to_set_type(0x10, T) == MOI.Integer
         @test MOIU.flag_to_set_type(0x20, T) == MOI.ZeroOne
     end
