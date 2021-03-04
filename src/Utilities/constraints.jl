@@ -45,7 +45,7 @@ function normalize_constant(
     return func, set
 end
 function normalize_constant(
-    func::Union{MOI.AbstractScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
+    func::Union{MOI.GenericScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
     set::MOI.AbstractScalarSet;
     allow_modify_function::Bool = false,
 ) where {T}

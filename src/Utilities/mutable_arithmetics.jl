@@ -4,22 +4,14 @@
 
 MA.mutability(::Type{<:TypedLike}) = MA.IsMutable()
 
-function MA.mutable_copy(func::MOI.ScalarAffineFunction)
+function MA.mutable_copy(func::F) where {F <: MOI.GenericScalarAffineFunction}
     terms = [
         MOI.ScalarAffineTerm(
             MA.copy_if_mutable(t.coefficient),
             t.variable_index,
         ) for t in func.terms
     ]
-    return MOI.ScalarAffineFunction(terms, MA.copy_if_mutable(func.constant))
-end
-
-function MA.mutable_copy(func::MOI.ScalarAffineColumnFunction{T}) where {T}
-    coefficients = [
-        MA.copy_if_mutable(c) for c in func.coefficients
-    ]
-    variable_indices = copy(func.variable_indices)
-    return MOI.ScalarAffineColumnFunction{T}(coefficients, variable_indices, MA.copy_if_mutable(func.constant))
+    return F(terms, MA.copy_if_mutable(func.constant))
 end
 
 function MA.mutable_copy(func::MOI.ScalarQuadraticFunction)
@@ -85,7 +77,7 @@ function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{<:ScalarLike{T}},
     G::Type{<:ScalarLike{T}},
-) where {T,N}
+) where {T}
     return promote_operation(op, T, F, G)
 end
 function MA.promote_operation(

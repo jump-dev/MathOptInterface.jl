@@ -13,8 +13,7 @@ const MOIU = MOI.Utilities # used in macro
 
 const SVF = MOI.SingleVariable
 const VVF = MOI.VectorOfVariables
-const SAF{T} = MOI.ScalarAffineFunction{T}
-const SACF{T} = MOI.ScalarAffineColumnFunction{T}
+const SAF{T} = MOI.GenericScalarAffineFunction{T}
 const VAF{T} = MOI.VectorAffineFunction{T}
 const SQF{T} = MOI.ScalarQuadraticFunction{T}
 const VQF{T} = MOI.VectorQuadraticFunction{T}

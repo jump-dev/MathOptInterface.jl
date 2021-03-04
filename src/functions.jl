@@ -71,22 +71,15 @@ struct ScalarAffineTerm{T}
     variable_index::VariableIndex
 end
 
-"""
-    AbstractScalarAffineFunction{T}
-
-Abstract type for functions representing ``a^T x + b``.
-The concrete implementations are [`ScalarAffineTerm`](@ref)
-which stores ``a^T x`` as a vector of `ScalarAffineTerm`
-and [`ScalarAffineColumnFunction`](@ref) storing `a` and `x`
-in separate terms.
-"""
-abstract type AbstractScalarAffineFunction{T} <: AbstractScalarFunction
-end
-
-# Note: ScalarAffineFunction is mutable because its `constant` field is likely of an immutable
+# Note: GenericScalarAffineFunction is mutable because its `constant` field is likely of an immutable
 # type, while its `terms` field is of a mutable type, meaning that creating a `ScalarAffineFunction`
 # allocates, and it is desirable to provide a zero-allocation option for working with
 # ScalarAffineFunctions. See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
+
+mutable struct GenericScalarAffineFunction{T, VT<:AbstractVector{ScalarAffineTerm{T}}}
+    terms::VT
+    constant::T
+end
 
 """
     ScalarAffineFunction{T}(terms, constant)
@@ -99,46 +92,50 @@ The scalar-valued affine function ``a^T x + b``, where:
 Duplicate variable indices in `terms` are accepted, and the corresponding
 coefficients are summed together.
 """
-mutable struct ScalarAffineFunction{T} <: AbstractScalarAffineFunction{T}
-    terms::Vector{ScalarAffineTerm{T}}
-    constant::T
-end
+const ScalarAffineFunction{T} = GenericScalarAffineFunction{T, Vector{ScalarAffineTerm{T}}}
 
-"""
-    ScalarAffineColumnFunction{T}
 
-Represents a scalar-valued affine function ``a^T x + b``.
-Unlike `ScalarAffineFunction`, it maintains the coefficients and variables in separate vectors.
-"""
-mutable struct ScalarAffineColumnFunction{T} <: AbstractScalarAffineFunction{T}
+struct ZipTermVector{T} <: AbstractVector{ScalarAffineTerm{T}}
     coefficients::Vector{T}
-    variable_indices::Vector{VariableIndex}
-    constant::T
+    variables::Vector{VariableIndex}
+end
+const ZippedAffineFunction{T} = GenericScalarAffineFunction{T, ZipTermVector{T}}
+
+Base.getindex(zv::ZipTermVector, i::Integer) = ScalarAffineTerm(zv.coefficients[i], zv.variables[i])
+Base.size(zv::ZipTermVector) = size(zv.coefficients)
+
+function Base.push!(zv::ZipTermVector, term::ScalarAffineTerm)
+    push!(zv.coefficients, term.coefficient)
+    push!(zv.variables, term.variables)
+    return zv
 end
 
-function ScalarAffineColumnFunction(terms::AbstractVector{ScalarAffineTerm{T1}}, constant::T2) where {T1, T2}
-    T = promote_type(T1, T2)
-    coefficients = Vector{T}(undef, length(terms))
-    v_indices = Vector{VariableIndex}(undef, length(terms))
-    for idx in eachindex(terms)
-        coefficients[idx] = terms[idx].coefficient
-        v_indices[idx] = terms[idx].variable_index
-    end
-    return ScalarAffineColumnFunction{T}(coefficients, v_indices, constant)
+function Base.empty!(zv::ZipTermVector)
+    empty!(zv.coefficients)
+    empty!(zv.variables)
+    return zv
+end
+
+function Base.setindex!(zv::ZipTermVector, term::ScalarAffineTerm, idx::Integer)
+    zv.coefficients[idx] = term.coefficient
+    zv.variables[idx] = term.variable_index
+    return term
 end
 
 scalar_terms(func::ScalarAffineFunction) = func.terms
-function scalar_terms(func::ScalarAffineColumnFunction)
+
+function scalar_terms(func::ZippedAffineFunction)
     return [
-        ScalarAffineTerm(coef, vi) for (coef, vi) in zip(func.coefficients, func.variable_indices)
+        ScalarAffineTerm(func.terms.coefficients[idx], func.terms.variables[idx])
+        for idx in eachindex(func.terms)
     ]
 end
 
 coefficients(func::ScalarAffineFunction) = [term.coefficient for term in func.terms]
 variable_indices(func::ScalarAffineFunction) = [term.variable_index for term in func.terms]
 
-coefficients(func::ScalarAffineColumnFunction) = func.coefficients
-variable_indices(func::ScalarAffineColumnFunction) = func.variable_indices
+coefficients(func::ZippedAffineFunction) = func.terms.coefficients
+variable_indices(func::ZippedAffineFunction) = func.terms.variable_indices
 
 """
     struct VectorAffineTerm{T}
@@ -422,8 +419,8 @@ function _dicts(f::Union{ScalarAffineFunction,VectorAffineFunction})
     return (sum_dict(term_pair.(f.terms)),)
 end
 
-function _dicts(f::ScalarAffineColumnFunction)
-    return (sum_dict(zip(f.variable_indices, f.coefficients)),)
+function _dicts(f::ZippedAffineFunction)
+    return (sum_dict(zip(f.terms.variable_indices, f.terms.coefficients)),)
 end
 
 function _dicts(f::Union{ScalarQuadraticFunction,VectorQuadraticFunction})
@@ -438,7 +435,7 @@ end
 
 Returns the constant term of the scalar function
 """
-constant(f::Union{AbstractScalarAffineFunction,ScalarQuadraticFunction}) = f.constant
+constant(f::Union{GenericScalarAffineFunction,ScalarQuadraticFunction}) = f.constant
 
 """
     constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
@@ -453,13 +450,13 @@ function Base.isapprox(
     kwargs...,
 ) where {
     F<:Union{
-        AbstractScalarAffineFunction,
+        GenericScalarAffineFunction,
         ScalarQuadraticFunction,
         VectorAffineFunction,
         VectorQuadraticFunction,
     },
     G<:Union{
-        AbstractScalarAffineFunction,
+        GenericScalarAffineFunction,
         ScalarQuadraticFunction,
         VectorAffineFunction,
         VectorQuadraticFunction,
@@ -473,7 +470,7 @@ function Base.isapprox(
 end
 
 function constant(
-    f::Union{AbstractScalarAffineFunction,ScalarQuadraticFunction},
+    f::Union{GenericScalarAffineFunction,ScalarQuadraticFunction},
     T::DataType,
 )
     return constant(f)
@@ -518,10 +515,9 @@ function Base.copy(
     return F(copy(func.terms), copy(constant(func)))
 end
 
-function Base.copy(func::ScalarAffineColumnFunction)
-    return ScalarAffineColumnFunction(
-        copy(func.coefficients),
-        copy(func.variable_indices),
+function Base.copy(func::ZippedAffineFunction)
+    return ZippedAffineFunction(
+        copy(func.terms),
         copy(func.constant),
     )
 end
@@ -548,10 +544,12 @@ function ScalarAffineFunction{T}(f::SingleVariable) where {T}
     return ScalarAffineFunction([ScalarAffineTerm(one(T), f.variable)], zero(T))
 end
 
-function ScalarAffineColumnFunction{T}(f::SingleVariable) where {T}
-    return ScalarAffineColumnFunction{T}(
-        [one(T)],
-        [f.variable],
+function ZippedAffineFunction{T}(f::SingleVariable) where {T}
+    return ZippedAffineFunction{T}(
+        ZipTermVector(
+            [one(T)],
+            [f.variable],
+        ),
         zero(T),
     )
 end
@@ -570,7 +568,7 @@ end
 
 # Conversion between scalar functions
 # Conversion to SingleVariable
-function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
+function Base.convert(::Type{SingleVariable}, f::Union{ScalarAffineFunction, ZippedAffineFunction})
     if (
         !iszero(f.constant) ||
         !isone(length(f.terms)) ||
@@ -581,19 +579,6 @@ function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
     return SingleVariable(f.terms[1].variable_index)
 end
 
-function Base.convert(::Type{SingleVariable}, f::ScalarAffineColumnFunction)
-    # just one of the two vectors checked
-    # since must remain consistent
-    if (
-        !iszero(f.constant) ||
-        !isone(length(f.coefficients)) ||
-        !isone(f.coefficients[1])
-    )
-        throw(InexactError(:convert, SingleVariable, f))
-    end
-    return SingleVariable(f.variable_indices[1])
-end
-
 function Base.convert(
     ::Type{SingleVariable},
     f::ScalarQuadraticFunction{T},
@@ -602,14 +587,14 @@ function Base.convert(
 end
 
 # Conversion to ScalarAffineFunction
-function Base.convert(::Type{SF}, α::T) where {T, SF <: AbstractScalarAffineFunction{T}}
+function Base.convert(::Type{SF}, α::T) where {T, SF <: GenericScalarAffineFunction{T}}
     return SF(ScalarAffineTerm{T}[], α)
 end
 
 function Base.convert(
     ::Type{SF},
     f::SingleVariable,
-) where {T, SF <: AbstractScalarAffineFunction{T}}
+) where {T, SF <: GenericScalarAffineFunction{T}}
     return SF(f)
 end
 
@@ -630,21 +615,21 @@ end
 function Base.convert(
     ::Type{SF},
     f::SF,
-) where {T, SF <: AbstractScalarAffineFunction{T}}
+) where {T, SF <: GenericScalarAffineFunction{T}}
     return f
 end
 
 function Base.convert(
     ::Type{SF},
-    f::AbstractScalarAffineFunction,
-) where {T, SF <: AbstractScalarAffineFunction}
+    f::GenericScalarAffineFunction,
+) where {SF <: GenericScalarAffineFunction}
     return SF(f.terms, f.constant)
 end
 
 function Base.convert(
     ::Type{SF},
     f::ScalarQuadraticFunction{T},
-) where {T, SF <: AbstractScalarAffineFunction{T}}
+) where {T, SF <: GenericScalarAffineFunction{T}}
     if !Base.isempty(f.quadratic_terms)
         throw(InexactError(:convert, ScalarAffineFunction{T}, f))
     end
