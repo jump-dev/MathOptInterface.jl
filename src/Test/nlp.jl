@@ -466,6 +466,7 @@ end
 const nlptests = Dict(
     "hs071" => hs071_test,
     "hs071_no_hessian" => hs071_no_hessian_test,
+    "hs071_hessian_vector_product_test" => hs071_hessian_vector_product_test,
     "feasibility_sense_with_objective_and_hessian" =>
         feasibility_sense_with_objective_and_hessian_test,
     "feasibility_sense_with_objective_and_no_hessian" =>
