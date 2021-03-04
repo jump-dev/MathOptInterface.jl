@@ -140,6 +140,22 @@ function test_no_constraint_name()
     )
 end
 
+function test_coefficient_type()
+    model = MOI.Utilities.Model{Int}()
+    @test MOI.get(model, MOI.CoefficientType()) == Int
+    mock = MOI.Utilities.MockOptimizer(model)
+    @test MOI.get(mock, MOI.CoefficientType()) == Int
+    bridge = MOI.Bridges.full_bridge_optimizer(mock, Int)
+    @test MOI.get(bridge, MOI.CoefficientType()) == Int
+    cache = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        MOI.Utilities.AUTOMATIC,
+    )
+    @test MOI.get(cache, MOI.CoefficientType()) == Float64
+    MOI.Utilities.reset_optimizer(cache, bridge)
+    @test MOI.get(cache, MOI.CoefficientType()) == Int
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

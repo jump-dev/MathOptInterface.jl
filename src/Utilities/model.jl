@@ -5,6 +5,8 @@ abstract type AbstractModelLike{T} <: MOI.ModelLike end
 abstract type AbstractOptimizer{T} <: MOI.AbstractOptimizer end
 const AbstractModel{T} = Union{AbstractModelLike{T},AbstractOptimizer{T}}
 
+MOI.get(::AbstractModel{T}, ::MOI.CoefficientType) where {T} = T
+
 # Variables
 function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
     if model.variable_indices === nothing

@@ -37,6 +37,7 @@ copy_to
 ```@docs
 AbstractModelAttribute
 Name
+CoefficientType
 ObjectiveFunction
 ObjectiveFunctionType
 ObjectiveSense

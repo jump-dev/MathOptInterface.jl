@@ -921,6 +921,17 @@ attr = MOI.get(model, MOI.ObjectiveFunctionType())
 """
 struct ObjectiveFunctionType <: AbstractModelAttribute end
 
+"""
+    CoefficientType()
+
+Return the coefficient type of a model.
+
+Defaults to `Float64`.
+"""
+struct CoefficientType <: AbstractModelAttribute end
+
+get(::ModelLike, ::CoefficientType) = Float64
+
 ## Optimizer attributes
 
 """

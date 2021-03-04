@@ -102,6 +102,14 @@ function CachingOptimizer(
     )
 end
 
+function MOI.get(model::CachingOptimizer, attr::MOI.CoefficientType)
+    if state(model) == NO_OPTIMIZER
+        return MOI.get(model.model_cache, attr)
+     else
+        return MOI.get(model.optimizer, attr)
+    end
+end
+
 ## Methods for managing the state of CachingOptimizer.
 
 """

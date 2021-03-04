@@ -803,6 +803,10 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfModelAttributesSet)
     return unbridged_function(b, list)
 end
 
+function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.CoefficientType)
+    return MOI.get(b.model, attr)
+end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
