@@ -879,8 +879,8 @@ end
 
 Return a new function `f` modified according to `change`.
 """
-function modify_function(f::MOI.GenericScalarAffineFunction, change::MOI.ScalarConstantChange)
-    return SAF(MOI.scalar_terms(f), change.new_constant)
+function modify_function(f::F, change::MOI.ScalarConstantChange) where {F <: MOI.GenericScalarAffineFunction}
+    return F(MOI.scalar_terms(f), change.new_constant)
 end
 function modify_function(f::VAF, change::MOI.VectorConstantChange)
     return VAF(f.terms, change.new_constant)
