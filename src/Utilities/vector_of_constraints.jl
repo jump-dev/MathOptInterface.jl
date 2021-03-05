@@ -101,6 +101,8 @@ function MOI.modify(
     return
 end
 
+# Deletion of variables in vector of variables
+
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
     CleverDicts.map_values!(v.constraints) do func_set
         remove_variable(func_set..., vi)
@@ -112,9 +114,6 @@ function _filter_variables(keep::Function, v::VectorOfConstraints)
     end
 end
 
-function _vector_of_variables_with(::VectorOfConstraints, ::Union{MOI.VariableIndex,Vector{MOI.VariableIndex}})
-    return MOI.ConstraintIndex{MOI.VectorOfVariables}[]
-end
 function throw_delete_variable_in_vov(vi::MOI.VariableIndex)
     message = string(
         "Cannot delete variable as it is constrained with other",
@@ -122,36 +121,50 @@ function throw_delete_variable_in_vov(vi::MOI.VariableIndex)
     )
     return throw(MOI.DeleteNotAllowed(vi, message))
 end
-function _vector_of_variables_with(
-    v::VectorOfConstraints{MOI.VectorOfVariables},
-    vi::MOI.VariableIndex,
-)
-    rm = MOI.ConstraintIndex{MOI.VectorOfVariables}[]
-    for (ci, fs) in v.constraints
-        f, s = fs
-        if vi in f.variables
-            if length(f.variables) > 1
-                # If `supports_dimension_update(s)` then the variable will be
-                # removed in `_remove_variable`.
-                if !MOI.supports_dimension_update(typeof(s))
-                    throw_delete_variable_in_vov(vi)
+function _throw_if_cannot_delete(::VectorOfConstraints, vis, fast_in_vis)
+    # Nothing to do as it's not `VectorOfVariables` constraints
+end
+function _throw_if_cannot_delete(v::VectorOfConstraints{MOI.VectorOfVariables,S}, vis, fast_in_vis) where S<:MOI.AbstractVectorSet
+    if !MOI.supports_dimension_update(S)
+        for fs in values(v.constraints)
+            f = fs[1]::MOI.VectorOfVariables
+            if length(f.variables) > 1 && f.variables != vis
+                for vi in f.variables
+                    if vi in fast_in_vis
+                        # If `supports_dimension_update(S)` then the variable
+                        # will be removed in `_filter_variables`.
+                        throw_delete_variable_in_vov(vi)
+                    end
                 end
-            else
-                push!(rm, ci)
             end
         end
     end
-    return rm
 end
-function _vector_of_variables_with(
-    v::VectorOfConstraints{MOI.VectorOfVariables},
-    vis::Vector{MOI.VariableIndex},
-)
-    rm = MOI.ConstraintIndex{MOI.VectorOfVariables}[]
-    for (ci, fs) in v.constraints
-        if vis == fs[1].variables
-            push!(rm, ci)
+function _delete_variables(::Function, ::VectorOfConstraints, ::Vector{MOI.VariableIndex})
+    # Nothing to do as it's not `VectorOfVariables` constraints
+end
+function _delete_variables(callback::Function, v::VectorOfConstraints{MOI.VectorOfVariables,S}, vis::Vector{MOI.VariableIndex}) where {S<:MOI.AbstractVectorSet}
+    filter!(v.constraints) do p
+        f = p.second[1]
+        del = if length(f.variables) == 1
+            first(f.variables) in vis
+        else
+            vis == f.variables
         end
+        if del
+            callback(p.first)
+        end
+        return !del
     end
-    return rm
+    return
+end
+function _deleted_constraints(callback::Function, v::VectorOfConstraints, vi::MOI.VariableIndex)
+    vis = [vi]
+    _delete_variables(callback, v, vis)
+    _remove_variable(v, vi)
+end
+function _deleted_constraints(callback::Function, v::VectorOfConstraints, vis::Vector{MOI.VariableIndex})
+    removed = Set(vis)
+    _delete_variables(callback, v, vis)
+    _filter_variables(vi -> !(vi in removed), v)
 end
