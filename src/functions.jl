@@ -107,6 +107,7 @@ struct ZipTermVector{T} <: AbstractVector{ScalarAffineTerm{T}}
 end
 const ZippedAffineFunction{T} = GenericScalarAffineFunction{T, ZipTermVector{T}}
 
+ZipTermVector{T}() where {T} = ZipTermVector{T}(T[], VariableIndex[])
 # Use `Base.Integer` here to disambiguate from the MOI set of the same name.
 Base.getindex(zv::ZipTermVector, i::Base.Integer) = ScalarAffineTerm(zv.coefficients[i], zv.variable_indices[i])
 Base.size(zv::ZipTermVector) = size(zv.coefficients)
@@ -121,6 +122,30 @@ function Base.empty!(zv::ZipTermVector)
     empty!(zv.coefficients)
     empty!(zv.variable_indices)
     return zv
+end
+function Base.sizehint!(zv::ZipTermVector, n)
+    Base.sizehint!(zv.coefficients, n)
+    Base.sizehint!(zv.variable_indices, n)
+    return
+end
+
+function ZippedAffineFunction{T}(saf::GenericScalarAffineFunction) where {T}
+    zv = ZipTermVector{T}()
+    Base.sizehint!(zv, length(saf.terms))
+    for term in saf.terms
+        push!(zv, term)
+    end
+    return ZippedAffineFunction{T}(zv, saf.constant)
+end
+
+function ZippedAffineFunction{T}(zaf::ZippedAffineFunction) where {T}
+    return ZippedAffineFunction{T}(
+        ZipTermVector{T}(
+            copy(zaf.terms.coefficients),
+            copy(zaf.terms.variable_indices)
+        ),
+        zaf.constant,
+    )
 end
 
 # Use `Base.Integer` here to disambiguate from the MOI set of the same name.
