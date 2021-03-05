@@ -235,8 +235,8 @@ end
 function variable_coefficient(
     func::MOI.ScalarQuadraticFunction{T},
     vi::MOI.VariableIndex,
-    value::Function,
-) where {T}
+    value::F,
+) where {T,F<:Function}
     coef = zero(T)
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for term in func.affine_terms
@@ -256,8 +256,8 @@ end
 function variable_coefficient(
     func::MOI.VectorQuadraticFunction{T},
     vi::MOI.VariableIndex,
-    value::Function,
-) where {T}
+    value::F,
+) where {T,F<:Function}
     coef = zeros(T, MOI.output_dimension(func))
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for vector_term in func.affine_terms

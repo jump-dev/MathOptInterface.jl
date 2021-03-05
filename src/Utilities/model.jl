@@ -158,8 +158,16 @@ function _remove_variable(constrs::Vector{<:ConstraintEntry}, vi::VI)
         constrs[i] = (ci, remove_variable(f, s, vi)...)
     end
 end
-filter_variables(keep::Function, f, s) = filter_variables(keep, f), s
-function filter_variables(keep::Function, f::MOI.VectorOfVariables, s)
+
+function filter_variables(keep::F, f, s) where {F<:Function}
+    return filter_variables(keep, f), s
+end
+
+function filter_variables(
+    keep::F,
+    f::MOI.VectorOfVariables,
+    s,
+) where {F<:Function}
     g = filter_variables(keep, f)
     if length(g.variables) != length(f.variables)
         t = MOI.update_dimension(s, length(g.variables))
@@ -168,7 +176,11 @@ function filter_variables(keep::Function, f::MOI.VectorOfVariables, s)
     end
     return g, t
 end
-function _filter_variables(keep::Function, constrs::Vector{<:ConstraintEntry})
+
+function _filter_variables(
+    keep::F,
+    constrs::Vector{<:ConstraintEntry},
+) where {F<:Function}
     for i in eachindex(constrs)
         ci, f, s = constrs[i]
         constrs[i] = (ci, filter_variables(keep, f, s)...)
@@ -1216,10 +1228,10 @@ macro model(
     end
 
     code = quote
-        function $MOIU.broadcastcall(f::Function, model::$esc_model_name)
+        function $MOIU.broadcastcall(f::F, model::$esc_model_name) where {F<:Function}
             return $(Expr(:block, _broadcastfield.(Ref(:(broadcastcall)), funs)...))
         end
-        function $MOIU.broadcastvcat(f::Function, model::$esc_model_name)
+        function $MOIU.broadcastvcat(f::F, model::$esc_model_name) where {F<:Function}
             return vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
         end
         function $MOI.empty!(model::$esc_model_name{T}) where {T}
@@ -1245,10 +1257,10 @@ macro model(
     for (cname, sets) in ((scname, scalar_sets), (vcname, vector_sets))
         code = quote
             $code
-            function $MOIU.broadcastcall(f::Function, model::$cname)
+            function $MOIU.broadcastcall(f::F, model::$cname) where {F<:Function}
                 return $(Expr(:block, _callfield.(:f, sets)...))
             end
-            function $MOIU.broadcastvcat(f::Function, model::$cname)
+            function $MOIU.broadcastvcat(f::F, model::$cname) where {F<:Function}
                 return vcat($(_callfield.(:f, sets)...))
             end
             function $MOI.empty!(model::$cname)

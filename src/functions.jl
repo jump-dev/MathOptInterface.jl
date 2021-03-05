@@ -302,7 +302,11 @@ function Base.isapprox(
 end
 
 # For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_compare`
-function dict_compare(d1::Dict, d2::Dict{<:Any,T}, compare::Function) where {T}
+function dict_compare(
+    d1::Dict,
+    d2::Dict{<:Any,T},
+    compare::F,
+) where {T,F<:Function}
     return all(kv -> compare(kv.second, Base.get(d2, kv.first, zero(T))), d1)
 end
 
