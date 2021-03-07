@@ -966,7 +966,7 @@ not specialize on this. Define instead
 """
 function filter_variables end
 
-function filter_variables(keep::F, f::MOI.SingleVariable) where {F<:Function}
+function filter_variables(keep::Function, f::MOI.SingleVariable)
     if !keep(f.variable)
         error(
             "Cannot remove variable from a `SingleVariable` function of the",
@@ -976,21 +976,21 @@ function filter_variables(keep::F, f::MOI.SingleVariable) where {F<:Function}
     return f
 end
 
-function filter_variables(keep::F, f::MOI.VectorOfVariables) where {F<:Function}
+function filter_variables(keep::Function, f::MOI.VectorOfVariables)
     return MOI.VectorOfVariables(_filter_variables(keep, f.variables))
 end
 
 function filter_variables(
-    keep::F,
+    keep::Function,
     f::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
-) where {F<:Function}
+)
     return typeof(f)(_filter_variables(keep, f.terms), MOI.constant(f))
 end
 
 function filter_variables(
-    keep::F,
+    keep::Function,
     f::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
-) where {F<:Function}
+)
     return typeof(f)(
         _filter_variables(keep, f.affine_terms),
         _filter_variables(keep, f.quadratic_terms),
