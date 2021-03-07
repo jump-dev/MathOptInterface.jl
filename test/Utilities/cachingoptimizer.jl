@@ -724,6 +724,12 @@ end
     x = MOI.add_variables(model, 2)
     @test model.optimizer isa CachingAutoBridge{Float64}
     # Supports:
+    @test MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.LessThan{Float64},
+    )
+    @test model.optimizer isa CachingAutoBridge{Float64}
     MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
@@ -731,6 +737,12 @@ end
     )
     @test model.optimizer isa CachingAutoBridge{Float64}
     # Doesn't support:
+    @test MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.Nonnegatives,
+    )
+    @test model.optimizer isa CachingAutoBridge{Float64}
     MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(2))
     @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
 end
@@ -743,6 +755,12 @@ end
     )
     @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
     x = MOI.add_variables(model, 3)
+    @test !MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.SecondOrderCone,
+    )
+    @test model.optimizer isa CachingAutoBridge{Float64}
     MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.SecondOrderCone(3))
     @test model.optimizer isa CachingAutoBridge{Float64}
     @test_throws(
@@ -763,6 +781,8 @@ end
     x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
     @test model.optimizer isa CachingAutoBridge{Float64}
     # Doesn't support:
+    @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
+    @test model.optimizer isa CachingAutoBridge{Float64}
     y, cy = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
     @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
 end
@@ -782,6 +802,8 @@ end
     @test model.optimizer isa CachingAutoBridge{Float64}
     # Doesn't support:
     f = MOI.SingleVariable(x)
+    @test MOI.supports(model, MOI.ObjectiveFunction{typeof(f)}())
+    @test model.optimizer isa CachingAutoBridge{Float64}
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     @test model.optimizer isa MOI.Bridges.LazyBridgeOptimizer{CachingAutoBridge{Float64}}
 end
