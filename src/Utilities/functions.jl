@@ -823,24 +823,14 @@ end
 Determine whether predicate `p` returns `true` for all coefficients of `f`,
 returning `false` as soon as the first coefficient of `f` for which `p`
 returns `false` is encountered (short-circuiting). Similar to `all`.
-
-WARNING: Don't define `all_coefficients(::Function, ...)` because Julia will
-not specialize on this. Define instead
-`all_coefficients(::F, ...) where {F<:Function}`.
 """
 function all_coefficients end
 
-function all_coefficients(
-    p::F,
-    f::MOI.ScalarAffineFunction,
-) where {F<:Function}
+function all_coefficients(p::Function, f::MOI.ScalarAffineFunction)
     return p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
 end
 
-function all_coefficients(
-    p::F,
-    f::MOI.ScalarQuadraticFunction,
-) where {F<:Function}
+function all_coefficients(p::Function, f::MOI.ScalarQuadraticFunction)
     return p(f.constant) &&
            all(t -> p(MOI.coefficient(t)), f.affine_terms) &&
            all(t -> p(MOI.coefficient(t)), f.quadratic_terms)
