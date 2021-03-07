@@ -944,28 +944,28 @@ function test_models_equal(
     end
 end
 
-_keep_all(keep::F, v::MOI.VariableIndex) where {F<:Function} = keep(v)
+_keep_all(keep::Function, v::MOI.VariableIndex) = keep(v)
 
-function _keep_all(keep::F, t::MOI.ScalarAffineTerm) where {F<:Function}
+function _keep_all(keep::Function, t::MOI.ScalarAffineTerm)
     return keep(t.variable_index)
 end
 
-function _keep_all(keep::F, t::MOI.ScalarQuadraticTerm) where {F<:Function}
+function _keep_all(keep::Function, t::MOI.ScalarQuadraticTerm)
     return keep(t.variable_index_1) && keep(t.variable_index_2)
 end
 
 function _keep_all(
-    keep::F,
+    keep::Function,
     t::Union{MOI.VectorAffineTerm,MOI.VectorQuadraticTerm},
-) where {F<:Function}
+)
     return _keep_all(keep, t.scalar_term)
 end
 
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
 function _filter_variables(
-    keep::F,
+    keep::Function,
     variables_or_terms::Vector,
-) where {F<:Function}
+)
     return filter(el -> _keep_all(keep, el), variables_or_terms)
 end
 
@@ -1170,10 +1170,10 @@ function operate end
 
 # Without `<:Number`, Julia v1.1.1 fails at precompilation with a StackOverflowError.
 function operate(
-    op::F,
+    op::Function,
     ::Type{T},
     α::Union{T,AbstractVector{T}}...,
-) where {T<:Number,F<:Function}
+) where {T<:Number}
     return op(α...)
 end
 
@@ -1189,10 +1189,10 @@ can be modified. The return type is the same than the method
 function operate! end
 
 function operate!(
-    op::F,
+    op::Function,
     ::Type{T},
     α::Union{T,AbstractVector{T}}...,
-) where {T,F<:Function}
+) where {T}
     return op(α...)
 end
 
@@ -1211,12 +1211,12 @@ argument can be modified.
 function operate_output_index! end
 
 function operate_output_index!(
-    op::F,
+    op::Function,
     ::Type{T},
     i::Integer,
     x::Vector{T},
     args...,
-) where {T,F<:Function}
+) where {T}
     return x[i] = operate!(op, T, x[i], args...)
 end
 
