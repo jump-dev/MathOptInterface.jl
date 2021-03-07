@@ -10,26 +10,22 @@ Returns the value of function `f` if each variable index `vi` is evaluated as
 `varval(vi)`. Note that `varval` should return a number, see
 [`substitute_variables`](@ref) for a similar function where `varval` returns a
 function.
-
-WARNING: Don't define `eval_variables(::Function, ...)` because Julia will
-not specialize on this. Define instead
-`eval_variables(::F, ...) where {F<:Function}`.
 """
 function eval_variables end
 
-function eval_variables(varval::F, f::SVF) where {F<:Function}
+function eval_variables(varval::Function, f::SVF)
     return varval(f.variable)
 end
 
-function eval_variables(varval::F, f::VVF) where {F<:Function}
+function eval_variables(varval::Function, f::VVF)
     return varval.(f.variables)
 end
 
-function eval_variables(varval::F, f::SAF) where {F<:Function}
+function eval_variables(varval::Function, f::SAF)
     return mapreduce(t -> eval_term(varval, t), +, f.terms, init = f.constant)
 end
 
-function eval_variables(varval::F, f::VAF) where {F<:Function}
+function eval_variables(varval::Function, f::VAF)
     out = copy(f.constants)
     for t in f.terms
         out[t.output_index] += eval_term(varval, t.scalar_term)
@@ -37,7 +33,7 @@ function eval_variables(varval::F, f::VAF) where {F<:Function}
     return out
 end
 
-function eval_variables(varval::F, f::SQF) where {F<:Function}
+function eval_variables(varval::Function, f::SQF)
     init = zero(f.constant)
     lin = mapreduce(t -> eval_term(varval, t), +, f.affine_terms, init = init)
     quad =
@@ -45,7 +41,7 @@ function eval_variables(varval::F, f::SQF) where {F<:Function}
     return lin + quad + f.constant
 end
 
-function eval_variables(varval::F, f::VQF) where {F<:Function}
+function eval_variables(varval::Function, f::VQF)
     out = copy(f.constants)
     for t in f.affine_terms
         out[t.output_index] += eval_term(varval, t.scalar_term)
@@ -57,11 +53,11 @@ function eval_variables(varval::F, f::VQF) where {F<:Function}
 end
 
 # Affine term
-function eval_term(varval::F, t::MOI.ScalarAffineTerm) where {F<:Function}
+function eval_term(varval::Function, t::MOI.ScalarAffineTerm)
     return t.coefficient * varval(t.variable_index)
 end
 # Quadratic term
-function eval_term(varval::F, t::MOI.ScalarQuadraticTerm) where {F<:Function}
+function eval_term(varval::Function, t::MOI.ScalarQuadraticTerm)
     tval =
         t.coefficient * varval(t.variable_index_1) * varval(t.variable_index_2)
     return t.variable_index_1 == t.variable_index_2 ? tval / 2 : tval
