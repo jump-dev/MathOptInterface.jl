@@ -2,7 +2,7 @@
 
 """
     automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
-                      copy_names::Bool=true, 
+                      copy_names::Bool=true,
                       filter_constraints::Union{Nothing, Function}=nothing)
 
 Use [`Utilities.supports_default_copy_to`](@ref) and
@@ -11,8 +11,8 @@ Use [`Utilities.supports_default_copy_to`](@ref) and
 apply the copy operation.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function automatic_copy_to(
     dest::MOI.ModelLike,
@@ -402,8 +402,8 @@ Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
 [`pass_attributes`] to copy the constraint attributes.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function copy_constraints(
     dest::MOI.ModelLike,
@@ -443,7 +443,7 @@ function pass_constraints(
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     # copy_constraints can also take a filter_constraints argument; however, filtering
-    # is performed within this function (because it also calls MOI.set on the constraints). 
+    # is performed within this function (because it also calls MOI.set on the constraints).
     # Don't pass this argument to copy_constraints/pass_cons to avoid a double filtering.
     for (S, cis_src) in zip(single_variable_types, single_variable_indices)
         if filter_constraints !== nothing
@@ -497,8 +497,8 @@ function copy_free_variables(
     dest::MOI.ModelLike,
     idxmap::IndexMap,
     vis_src,
-    copy_variables::Function,
-)
+    copy_variables::F,
+) where {F<:Function}
     if length(vis_src) != length(keys(idxmap.varmap))
         vars = copy_variables(dest, length(vis_src) - length(idxmap.varmap))
         i = 1
@@ -549,9 +549,9 @@ function try_constrain_variables_on_creation(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     idxmap,
-    copy_constrained_variables::Function,
-    copy_constrained_variable::Function,
-)
+    copy_constrained_variables::F1,
+    copy_constrained_variable::F2,
+) where {F1<:Function,F2<:Function}
     single_or_vector_variables_types = sorted_variable_sets_by_cost(dest, src)
     vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
     vector_of_variables_added =
@@ -605,8 +605,8 @@ constraints and attributes incrementally. The function
 the copying a model incrementally.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function default_copy_to(
     dest::MOI.ModelLike,
@@ -972,7 +972,7 @@ function load_constraints(
 end
 
 """
-    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, 
+    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike,
                   filter_constraints::Union{Nothing, Function}=nothing
                   )
 
@@ -981,8 +981,8 @@ Implements `MOI.copy_to(dest, src)` using the Allocate-Load API. The function
 the Allocate-Load API.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function allocate_load(
     dest::MOI.ModelLike,

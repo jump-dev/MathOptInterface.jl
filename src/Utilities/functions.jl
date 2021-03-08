@@ -12,11 +12,19 @@ Returns the value of function `f` if each variable index `vi` is evaluated as
 function.
 """
 function eval_variables end
-eval_variables(varval::Function, f::SVF) = varval(f.variable)
-eval_variables(varval::Function, f::VVF) = varval.(f.variables)
+
+function eval_variables(varval::Function, f::SVF)
+    return varval(f.variable)
+end
+
+function eval_variables(varval::Function, f::VVF)
+    return varval.(f.variables)
+end
+
 function eval_variables(varval::Function, f::SAF)
     return mapreduce(t -> eval_term(varval, t), +, f.terms, init = f.constant)
 end
+
 function eval_variables(varval::Function, f::VAF)
     out = copy(f.constants)
     for t in f.terms
@@ -24,6 +32,7 @@ function eval_variables(varval::Function, f::VAF)
     end
     return out
 end
+
 function eval_variables(varval::Function, f::SQF)
     init = zero(f.constant)
     lin = mapreduce(t -> eval_term(varval, t), +, f.affine_terms, init = init)
@@ -31,6 +40,7 @@ function eval_variables(varval::Function, f::SQF)
         mapreduce(t -> eval_term(varval, t), +, f.quadratic_terms, init = init)
     return lin + quad + f.constant
 end
+
 function eval_variables(varval::Function, f::VQF)
     out = copy(f.constants)
     for t in f.affine_terms
@@ -41,6 +51,7 @@ function eval_variables(varval::Function, f::VQF)
     end
     return out
 end
+
 # Affine term
 function eval_term(varval::Function, t::MOI.ScalarAffineTerm)
     return t.coefficient * varval(t.variable_index)
@@ -95,31 +106,49 @@ const ObjectOrTupleOrArrayWithoutIndex = Union{
     AbstractArray{<:AbstractArray{<:ObjectOrTupleWithoutIndex}},
 }
 
-map_indices(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
+map_indices(::F, x::ObjectOrTupleOrArrayWithoutIndex) where {F<:Function} = x
 
-map_indices(index_map::Function, vi::MOI.VariableIndex) = index_map(vi)
-map_indices(index_map::Function, ci::MOI.ConstraintIndex) = index_map(ci)
-function map_indices(index_map::Function, array::AbstractArray{<:MOI.Index})
+function map_indices(index_map::F, vi::MOI.VariableIndex) where {F<:Function}
+    return index_map(vi)
+end
+
+function map_indices(index_map::F, ci::MOI.ConstraintIndex) where {F<:Function}
+    return index_map(ci)
+end
+
+function map_indices(
+    index_map::F,
+    array::AbstractArray{<:MOI.Index},
+) where {F<:Function}
     return map(index_map, array)
 end
 
-map_indices(::Function, block::MOI.NLPBlockData) = block
+map_indices(::F, block::MOI.NLPBlockData) where {F<:Function} = block
 
 # Terms
-function map_indices(index_map::Function, t::MOI.ScalarAffineTerm)
+function map_indices(index_map::F, t::MOI.ScalarAffineTerm) where {F<:Function}
     return MOI.ScalarAffineTerm(t.coefficient, index_map(t.variable_index))
 end
-function map_indices(index_map::Function, t::MOI.VectorAffineTerm)
+
+function map_indices(index_map::F, t::MOI.VectorAffineTerm) where {F<:Function}
     return MOI.VectorAffineTerm(
         t.output_index,
         map_indices(index_map, t.scalar_term),
     )
 end
-function map_indices(index_map::Function, t::MOI.ScalarQuadraticTerm)
+
+function map_indices(
+    index_map::F,
+    t::MOI.ScalarQuadraticTerm,
+) where {F<:Function}
     inds = index_map.((t.variable_index_1, t.variable_index_2))
     return MOI.ScalarQuadraticTerm(t.coefficient, inds...)
 end
-function map_indices(index_map::Function, t::MOI.VectorQuadraticTerm)
+
+function map_indices(
+    index_map::F,
+    t::MOI.VectorQuadraticTerm,
+) where {F<:Function}
     return MOI.VectorQuadraticTerm(
         t.output_index,
         map_indices(index_map, t.scalar_term),
@@ -127,35 +156,48 @@ function map_indices(index_map::Function, t::MOI.VectorQuadraticTerm)
 end
 
 # Functions
-function map_indices(index_map::Function, f::MOI.SingleVariable)
+
+function map_indices(index_map::F, f::MOI.SingleVariable) where {F<:Function}
     return MOI.SingleVariable(index_map(f.variable))
 end
-function map_indices(index_map::Function, f::MOI.VectorOfVariables)
+
+function map_indices(index_map::F, f::MOI.VectorOfVariables) where {F<:Function}
     return MOI.VectorOfVariables(index_map.(f.variables))
 end
-function map_indices(index_map::Function, f::Union{SAF,VAF})
+
+function map_indices(index_map::F, f::Union{SAF,VAF}) where {F<:Function}
     return typeof(f)(map_indices.(index_map, f.terms), MOI.constant(f))
 end
-function map_indices(index_map::Function, f::Union{SQF,VQF})
+
+function map_indices(index_map::F, f::Union{SQF,VQF}) where {F<:Function}
     lin = map_indices.(index_map, f.affine_terms)
     quad = map_indices.(index_map, f.quadratic_terms)
     return typeof(f)(lin, quad, MOI.constant(f))
 end
 
 # Function changes
+
 function map_indices(
-    index_map::Function,
+    index_map::F,
     change::Union{MOI.ScalarConstantChange,MOI.VectorConstantChange},
-)
+) where {F<:Function}
     return change
 end
-function map_indices(index_map::Function, change::MOI.ScalarCoefficientChange)
+
+function map_indices(
+    index_map::F,
+    change::MOI.ScalarCoefficientChange,
+) where {F<:Function}
     return MOI.ScalarCoefficientChange(
         index_map(change.variable),
         change.new_coefficient,
     )
 end
-function map_indices(index_map::Function, change::MOI.MultirowChange)
+
+function map_indices(
+    index_map::F,
+    change::MOI.MultirowChange,
+) where {F<:Function}
     return MOI.MultirowChange(
         index_map(change.variable),
         change.new_coefficients,
@@ -176,20 +218,36 @@ This function is used by bridge optimizers on constraint functions, attribute
 values and submittable values when at least one variable bridge is used hence it
 needs to be implemented for custom types that are meant to be used as attribute
 or submittable value.
+
+WARNING: Don't use `substitude_variables(::Function, ...)` because Julia will
+not specialize on this. Use instead
+`substitude_variables(::F, ...) where {F<:Function}`.
 """
 function substitute_variables end
 
-substitute_variables(::Function, x::ObjectOrTupleOrArrayWithoutIndex) = x
-substitute_variables(::Function, block::MOI.NLPBlockData) = block
+function substitute_variables(
+    ::F,
+    x::ObjectOrTupleOrArrayWithoutIndex,
+) where {F<:Function}
+    return x
+end
+
+function substitute_variables(::F, block::MOI.NLPBlockData) where {F<:Function}
+    return block
+end
 
 # Used when submitting `HeuristicSolution`.
 function substitute_variables(
-    variable_map::Function,
+    variable_map::F,
     vis::Vector{MOI.VariableIndex},
-)
+) where {F<:Function}
     return substitute_variables.(variable_map, vis)
 end
-function substitute_variables(variable_map::Function, vi::MOI.VariableIndex)
+
+function substitute_variables(
+    variable_map::F,
+    vi::MOI.VariableIndex,
+) where {F<:Function}
     func = variable_map(vi)
     if func != MOI.SingleVariable(vi)
         error("Cannot substitute `$vi` as it is bridged into `$func`.")
@@ -198,9 +256,9 @@ function substitute_variables(variable_map::Function, vi::MOI.VariableIndex)
 end
 
 function substitute_variables(
-    variable_map::Function,
+    variable_map::F,
     term::MOI.ScalarQuadraticTerm{T},
-) where {T}
+) where {T,F<:Function}
     # We could have `T = Complex{Float64}` and `variable_map(term.variable_index)`
     # be a `MOI.ScalarAffineFunction{Float64}` with the Hermitian to PSD bridge.
     # We convert to `MOI.ScalarAffineFunction{T}` to avoid any issue.
@@ -216,18 +274,20 @@ function substitute_variables(
     end
     return operate!(*, T, f12, coef)
 end
+
 function substitute_variables(
-    variable_map::Function,
+    variable_map::F,
     term::MOI.ScalarAffineTerm{T},
-) where {T}
+) where {T,F<:Function}
     # See comment for `term::MOI.ScalarQuadraticTerm` for the conversion.
     func::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index)
     return operate(*, T, term.coefficient, func)::MOI.ScalarAffineFunction{T}
 end
+
 function substitute_variables(
-    variable_map::Function,
+    variable_map::F,
     func::MOI.ScalarAffineFunction{T},
-) where {T}
+) where {T,F<:Function}
     g = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], MOI.constant(func))
     for term in func.terms
         operate!(
@@ -239,10 +299,11 @@ function substitute_variables(
     end
     return g
 end
+
 function substitute_variables(
-    variable_map::Function,
+    variable_map::F,
     func::MOI.VectorAffineFunction{T},
-) where {T}
+) where {T,F<:Function}
     g = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm{T}[],
         copy(MOI.constant(func)),
@@ -253,10 +314,11 @@ function substitute_variables(
     end
     return g
 end
+
 function substitute_variables(
-    variable_map::Function,
+    variable_map::F,
     func::MOI.ScalarQuadraticFunction{T},
-) where {T}
+) where {T,F<:Function}
     g = MOI.ScalarQuadraticFunction(
         MOI.ScalarAffineTerm{T}[],
         MOI.ScalarQuadraticTerm{T}[],
@@ -280,10 +342,11 @@ function substitute_variables(
     end
     return g
 end
+
 function substitute_variables(
-    variable_map::Function,
+    variable_map::F,
     func::MOI.VectorQuadraticFunction{T},
-) where {T}
+) where {T,F<:Function}
     g = MOI.VectorQuadraticFunction(
         MOI.VectorAffineTerm{T}[],
         MOI.VectorQuadraticTerm{T}[],
@@ -766,6 +829,7 @@ function all_coefficients end
 function all_coefficients(p::Function, f::MOI.ScalarAffineFunction)
     return p(f.constant) && all(t -> p(MOI.coefficient(t)), f.terms)
 end
+
 function all_coefficients(p::Function, f::MOI.ScalarQuadraticFunction)
     return p(f.constant) &&
            all(t -> p(MOI.coefficient(t)), f.affine_terms) &&
@@ -867,18 +931,27 @@ function test_models_equal(
 end
 
 _keep_all(keep::Function, v::MOI.VariableIndex) = keep(v)
-_keep_all(keep::Function, t::MOI.ScalarAffineTerm) = keep(t.variable_index)
+
+function _keep_all(keep::Function, t::MOI.ScalarAffineTerm)
+    return keep(t.variable_index)
+end
+
 function _keep_all(keep::Function, t::MOI.ScalarQuadraticTerm)
     return keep(t.variable_index_1) && keep(t.variable_index_2)
 end
+
 function _keep_all(
     keep::Function,
     t::Union{MOI.VectorAffineTerm,MOI.VectorQuadraticTerm},
 )
     return _keep_all(keep, t.scalar_term)
 end
+
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
-function _filter_variables(keep::Function, variables_or_terms::Vector)
+function _filter_variables(
+    keep::Function,
+    variables_or_terms::Vector,
+)
     return filter(el -> _keep_all(keep, el), variables_or_terms)
 end
 
@@ -886,8 +959,13 @@ end
     filter_variables(keep::Function, f::AbstractFunction)
 
 Return a new function `f` with the variable `vi` such that `!keep(vi)` removed.
+
+WARNING: Don't define `filter_variables(::Function, ...)` because Julia will
+not specialize on this. Define instead
+`filter_variables(::F, ...) where {F<:Function}`.
 """
 function filter_variables end
+
 function filter_variables(keep::Function, f::MOI.SingleVariable)
     if !keep(f.variable)
         error(
@@ -897,17 +975,20 @@ function filter_variables(keep::Function, f::MOI.SingleVariable)
     end
     return f
 end
+
 function filter_variables(keep::Function, f::MOI.VectorOfVariables)
     return MOI.VectorOfVariables(_filter_variables(keep, f.variables))
 end
+
 function filter_variables(
     keep::Function,
     f::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
 )
     return typeof(f)(_filter_variables(keep, f.terms), MOI.constant(f))
 end
+
 function filter_variables(
-    keep,
+    keep::Function,
     f::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
 )
     return typeof(f)(
@@ -2394,10 +2475,10 @@ function fill_vector end
 function fill_vector(
     vector::Vector,
     ::Type{T},
-    fill_func::Function,
-    dim_func::Function,
+    fill_func::F1,
+    dim_func::F2,
     funcs,
-) where {T}
+) where {T,F1<:Function,F2<:Function}
     vector_offset = 0
     output_offset = 0
     for func in funcs
@@ -2412,9 +2493,9 @@ function fill_vector(
     ::Type,
     vector_offset::Int,
     output_offset::Int,
-    fill_func::Function,
-    dim_func::Function,
-)
+    fill_func::F1,
+    dim_func::F2,
+) where {F1<:Function,F2<:Function}
     @assert length(vector) == vector_offset
 end
 function fill_vector(
@@ -2422,11 +2503,11 @@ function fill_vector(
     ::Type{T},
     vector_offset::Int,
     output_offset::Int,
-    fill_func::Function,
-    dim_func::Function,
+    fill_func::F1,
+    dim_func::F2,
     func,
     funcs...,
-) where {T}
+) where {T,F1<:Function,F2<:Function}
     fill_func(vector, vector_offset, output_offset, func)
     return fill_vector(
         vector,
