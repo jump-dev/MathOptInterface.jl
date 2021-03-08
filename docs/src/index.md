@@ -1,17 +1,34 @@
 # MathOptInterface
 
-Each mathematical optimization solver API has its own concepts and data
-structures for representing optimization models and obtaining results.
-However, it is often desirable to represent an instance of an optimization
-problem at a higher level so that it is easy to try using different solvers.
+!!! warning
+    This documentation is still under construction. If you need help with JuMP,
+    read the [JuMP documentation](https://jump.dev/JuMP.jl/stable/) instead. If
+    you are writing a solver interface and need help with MOI, join the
+    [developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) and ask away!
 
 [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) (MOI) is
 an abstraction layer designed to provide a unified interface to mathematical
 optimization solvers so that users do not need to understand multiple
 solver-specific APIs.
 
-MOI can be used directly, or through a higher-level modeling interface like
-[JuMP](https://github.com/jump-dev/JuMP.jl).
+!!! tip
+    While MOI can be used directly, we encourage you instead to use MOI through
+    a higher-level modeling interface like [JuMP](https://github.com/jump-dev/JuMP.jl)
+    or [Convex.jl](https://github.com/jump-dev/Convex.jl).
+
+## How the documentation is structured
+
+Having a high-level overview of how this documentation is structured will help
+you know where to look for certain things.
+
+* The **Manual** contains short code-snippets that explain how to use the MOI
+  API. Look here if you want to write a model in MOI.
+* The **API Reference** contains a complete list of functions and types that
+  comprise the MOI API. Look here is you want to know how to use (or implement)
+  a particular function.
+* The **Submodules** section contains stand-alone documentation for each of the
+  submodules within MOI. These submodules are not required to interface a solver
+  with MOI, but they make the job much easier.
 
 ## Background
 
@@ -42,28 +59,7 @@ MathProgBase. MOI is designed to:
 - Avoid requiring the solver wrapper to store an additional copy of the problem
   data
 
-## Sections of this documentation
-
-There are two main sections to this documentation.
-
-The manual introduces the concepts needed to understand MOI and gives a
-high-level picture of how all of the pieces fit together. The primary focus of
-[Basic usage](@ref) is on MOI from the perspective of a user of the interface.
-The section [Advanced usage](@ref) provides more detail on advanced topics
-such as [Duality](@ref). The manual also has a section on [Implementing a solver interface](@ref).
-
-In addition to the basic API, MathOptInterface.jl contains a number of
-submodules to help users interact with a model in MathOptInterface form. These
-include:
- - [The `Benchmarks` submodule](@ref)
- - [The `Bridges` submodule](@ref)
- - [The `FileFormats` submodule](@ref)
- - [The `Utilities` submodule](@ref)
- - [The `Test` submodule](@ref)
-
-The [API Reference](@ref) page lists the complete API.
-
-## Further reading
+## Citing JuMP
 
 A [paper describing the design and features of MathOptInterface](https://arxiv.org/abs/2002.03447)
 is available on [arXiv](https://arxiv.org).

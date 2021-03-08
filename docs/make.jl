@@ -23,16 +23,33 @@ makedocs(
             "manual/basic_usage.md",
             "manual/advanced_usage.md",
             "manual/implementing.md",
-            "manual/Benchmarks.md",
-            "manual/Bridges.md",
-            "manual/FileFormats.md",
-            "manual/Test.md",
-            "manual/Utilities.md",
         ],
-        "API Reference" => "apireference.md",
-    ]
+        "API Reference" => "reference/reference.md",
+        "Submodules" => [
+            "Benchmarks" => [
+                "Overview" => "submodules/Benchmarks/overview.md",
+                "API Reference" => "submodules/Benchmarks/reference.md",
+            ],
+            "Bridges" => [
+                "Overview" => "submodules/Bridges/overview.md",
+                "API Reference" => "submodules/Bridges/reference.md",
+            ],
+            "FileFormats" => [
+                "Overview" => "submodules/FileFormats/overview.md",
+                "API Reference" => "submodules/FileFormats/reference.md",
+            ],
+            "Utilities" => [
+                "Overview" => "submodules/Utilities/overview.md",
+                "API Reference" => "submodules/Utilities/reference.md",
+            ],
+            "Test" => [
+                "Overview" => "submodules/Test/overview.md",
+            ],
+        ],
+    ],
 )
 
 deploydocs(
-    repo   = "github.com/jump-dev/MathOptInterface.jl.git",
+    push_preview = true,
+    repo = "github.com/jump-dev/MathOptInterface.jl.git",
 )
