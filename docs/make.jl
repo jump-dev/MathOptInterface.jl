@@ -50,5 +50,6 @@ makedocs(
 )
 
 deploydocs(
-    repo   = "github.com/jump-dev/MathOptInterface.jl.git",
+    push_preview = true,
+    repo = "github.com/jump-dev/MathOptInterface.jl.git",
 )
