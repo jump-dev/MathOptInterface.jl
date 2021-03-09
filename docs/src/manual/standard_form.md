@@ -7,7 +7,7 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# [Standard form problem](@id standard_form)
+# Standard form problem
 
 MathOptInterface represents optimization problems in the standard form:
 ```math

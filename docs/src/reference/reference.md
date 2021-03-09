@@ -250,7 +250,7 @@ VariablePrimalStart
 VariablePrimal
 ```
 
-### Constraints
+### [Constraints](@id constraints_ref)
 
 Functions for adding and modifying constraints.
 
