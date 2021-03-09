@@ -308,3 +308,20 @@ order:
 2) [`Utilities.allocate`](@ref) and [`Utilities.allocate_constraint`](@ref)
 3) [`Utilities.load_variables`](@ref)
 4) [`Utilities.load`](@ref) and [`Utilities.load_constraint`](@ref)
+
+## Fallbacks
+
+The value of some attributes can be inferred from the value of other
+attributes.
+
+For example, the value of [`ObjectiveValue`](@ref) can be computed using
+[`ObjectiveFunction`](@ref) and [`VariablePrimal`](@ref).
+
+When a solver gives direct access to an attribute, it is better to return this
+value. However, if this is not the case, [`Utilities.get_fallback`](@ref) can be
+used instead. For example:
+```julia
+function MOI.get(model::Optimizer, attr::MOI.ObjectiveFunction)
+    return MOI.Utilities.get_fallback(model, attr)
+end
+```
