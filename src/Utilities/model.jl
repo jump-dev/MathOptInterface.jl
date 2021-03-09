@@ -733,27 +733,29 @@ function MOI.modify(
 end
 
 function MOI.set(
-    model::AbstractModel,
+    ::AbstractModel,
     ::MOI.ConstraintFunction,
-    ci::CI{MOI.SingleVariable},
-    change::MOI.AbstractFunction,
+    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractSet},
+    ::MOI.SingleVariable,
 )
     return throw(MOI.SettingSingleVariableFunctionNotAllowed())
 end
+
 function MOI.set(
     model::AbstractModel,
     ::MOI.ConstraintFunction,
-    ci::CI,
-    change::MOI.AbstractFunction,
-)
+    ci::MOI.ConstraintIndex{F,<:MOI.AbstractSet},
+    change::F,
+) where {F<:MOI.AbstractFunction}
     return _modify(model, ci, getconstrloc(model, ci), change)
 end
+
 function MOI.set(
     model::AbstractModel,
     ::MOI.ConstraintSet,
-    ci::CI{MOI.SingleVariable},
-    change::MOI.AbstractSet,
-)
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    change::S,
+) where {S<:MOI.AbstractScalarSet}
     MOI.throw_if_not_valid(model, ci)
     flag = single_variable_flag(typeof(change))
     if !iszero(flag & LOWER_BOUND_MASK)
@@ -763,12 +765,13 @@ function MOI.set(
         model.upper_bound[ci.value] = extract_upper_bound(change)
     end
 end
+
 function MOI.set(
     model::AbstractModel,
     ::MOI.ConstraintSet,
-    ci::CI,
-    change::MOI.AbstractSet,
-)
+    ci::MOI.ConstraintIndex{<:MOI.AbstractFunction,S},
+    change::S,
+) where {S<:MOI.AbstractSet}
     return _modify(model, ci, getconstrloc(model, ci), change)
 end
 
