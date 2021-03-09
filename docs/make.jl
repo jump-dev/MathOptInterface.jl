@@ -20,6 +20,7 @@ makedocs(
     pages = [
         "Introduction" => "index.md",
         "Manual" => [
+            "manual/standard_form.md",
             "manual/basic_usage.md",
             "manual/advanced_usage.md",
             "manual/implementing.md",
