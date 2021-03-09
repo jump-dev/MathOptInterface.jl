@@ -9,64 +9,264 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # The Utilities submodule
 
-## Model
+The Utilities submodule provides a variety of functionality for managing
+`MOI.ModelLike` objects.
+## Utilities.Model
 
 [`Utilities.Model`](@ref) provides an implementation of a [`ModelLike`](@ref)
 that efficiently supports all functions and sets defined within MOI. However,
 given the extensibility of MOI, this might not cover all use cases.
 
+Create a model as follows:
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+```
+
+## Utilities.UniversalFallback
+
 [`Utilities.UniversalFallback`](@ref) is a layer that sits on top of any
-`ModelLike` and provides non-specialized (slower) fallbacks for constraints and
-attributes that the underlying `ModeLike` does not support.
+[`ModelLike`](@ref) and provides non-specialized (slower) fallbacks for
+constraints and attributes that the underlying [`ModelLike`](@ref) does not
+support.
+
+For example, [`Utilities.Model`](@ref) doesn't support some variable attributes
+like [`VariablePrimalStart`](@ref), so JuMP uses a combination of Universal
+fallback and [`Utilities.Model`](@ref) as a generic problem cache:
+```jldoctest
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+MOIU.UniversalFallback{MOIU.Model{Float64}}
+fallback for MOIU.Model{Float64}
+```
+
+!!! warning
+    Adding a UniversalFallback means that your `model` will now support all
+    constraints, even if the inner-model does not! This can lead to unexpected
+    behavior.
+
+## Utilities.@model
 
 For advanced use cases that need efficient support for functions and sets
 defined outside of MOI (but still known at compile time), we provide the
 [`Utilities.@model`](@ref) macro.
 
-## CachingOptimizer
+The `@model` macro takes a name (for a new type, which must not exist yet),
+eight tuples specifying the types of constraints that are supported, and then a
+`Bool` indicating the type should be a subtype of `MOI.AbstractOptimizer` (if
+`true`) or `MOI.ModelLike` (if `false`).
 
-Some solvers do not support incremental definition of optimization
-models. Nevertheless, you are still able to build incrementally an optimization
-model with such solvers. MathOptInterface provides a utility,
-[`Utilities.CachingOptimizer`](@ref), that will store in a [`ModelLike`](@ref)
-the optimization model during its incremental definition. Once the
-model is completely defined, the `CachingOptimizer` specifies all problem
-information to the underlying solver, all at once.
+The eight tuples are in the following order:
+ 1. Un-typed scalar sets, e.g., [`Integer`](@ref)
+ 2. Typed scalar sets, e.g., [`LessThan`](@ref)
+ 3. Un-typed vector sets, e.g., [`Nonnegatives`](@ref)
+ 4. Typed vector sets, e.g., [`PowerCone`](@ref)
+ 5. Un-typed scalar functions, e.g., [`SingleVariable`](@ref)
+ 6. Typed scalar functions, e.g., [`ScalarAffineFunction`](@ref)
+ 7. Un-typed vector functions, e.g., [`VectorOfVariables`](@ref)
+ 8. Typed vector functions, e.g., [`VectorAffineFunction`](@ref)
 
-The function [`Utilities.state`](@ref) allows to query the state
-of the optimizer cached inside a `CachingOptimizer`. The state
-could be:
-* `NO_OPTIMIZER`, if no optimizer is attached;
-* `EMPTY_OPTIMIZER`, if the attached optimizer is empty;
-* `ATTACHED_OPTIMIZER`, if the attached optimizer is synchronized with the
-  cached model defined in `CachingOptimizer`.
+The tuples can contain more than one element. Typed-sets should be speficied
+without their type parameter, i.e., `MOI.LessThan`, not `MOI.LessThan{Float64}`.
 
-The following methods modify the state of the attached optimizer:
-* [`Utilities.attach_optimizer`](@ref) attachs a new `optimizer`
-  to a `cached_optimizer` with state `EMPTY_OPTIMIZER`.
-  The state of `cached_optimizer` is set to `ATTACHED_OPTIMIZER` after the call.
-* [`Utilities.drop_optimizer`](@ref) drops the underlying `optimizer`
-  from `cached_optimizer`, without emptying it. The state of `cached_optimizer`
-  is set to `NO_OPTIMIZER` after the call.
-* [`Utilities.reset_optimizer`](@ref) empties `optimizer` inside
-  `cached_optimizer`, without droping it. The state of `cached_optimizer`
-  is set to `EMPTY_OPTIMIZER` after the call.
+Here is an example:
+```jldoctest
+julia> MOI.Utilities.@model(
+           MyNewModel,
+           (MOI.Integer,),                  # Un-typed scalar sets
+           (MOI.GreaterThan,),              # Typed scalar sets
+           (MOI.Nonnegatives,),             # Un-typed vector sets
+           (MOI.PowerCone,),                # Typed vector sets
+           (MOI.SingleVariable,),           # Un-typed scalar functions
+           (MOI.ScalarAffineFunction,),     # Typed scalar functions
+           (MOI.VectorOfVariables,),        # Un-typed vector functions
+           (MOI.VectorAffineFunction,),     # Typed vector functions
+           true,                            # <:MOI.AbstractOptimizer?
+       )
 
-The way to operate a `CachingOptimizer` depends whether the mode
-is set to `AUTOMATIC` or to `MANUAL`.
-* In `MANUAL` mode, the state of the `CachingOptimizer` changes only
-  if the methods [`Utilities.attach_optimizer`](@ref),
-  [`Utilities.reset_optimizer`](@ref) or [`Utilities.drop_optimizer`](@ref)
-  are being called. Any unattended operation results in an error.
-* In `AUTOMATIC` mode, the state of the `CachingOptimizer` changes when
-  necessary. Any modification not supported by the solver (e.g. dropping
-  a constraint) results in a drop to the state `EMPTY_OPTIMIZER`.
+julia> model = MyNewModel{Float64}()
+MyNewModel{Float64}
+```
 
-When calling [`Utilities.attach_optimizer`](@ref), the `CachingOptimizer` copies
-the cached model to the optimizer with [`copy_to`](@ref).
-We refer to [Implementing copy](@ref) for more details.
+!!! warning
+    `MyNewModel` supports every `SingleVariable`-in-Set constraint, as well as
+    [`SingleVariable`](@ref), [`ScalarAffineFunction`](@ref), and
+    [`ScalarQuadraticFunction`](@ref) objective functions. Implement
+    `MOI.supports` as needed to forbid constraint and objective function
+    combinations.
+
+As another example, [PATHSolver](https://github.com/chkwon/PATHSolver.jl), which
+only supports [`VectorAffineFunction`](@ref)-in-[`Complements`](@ref)
+defines its optimizer as:
+```jldoctest pathoptimizer
+julia> MOI.Utilities.@model(
+           PathOptimizer,
+           (),  # Scalar sets
+           (),  # Typed scalar sets
+           (MOI.Complements,),  # Vector sets
+           (),  # Typed vector sets
+           (),  # Scalar functions
+           (),  # Typed scalar functions
+           (),  # Vector functions
+           (MOI.VectorAffineFunction,),  # Typed vector functions
+           true,  # is_optimizer
+       )
+```
+However, `PathOptimizer` does not support some `SingleVariable`-in-Set
+constraints, so we must explicitly define:
+```jldoctest pathoptimizer
+julia> function MOI.supports_constraint(
+           ::PathOptimizer,
+           ::Type{MOI.SingleVariable},
+           ::Type{Union{<:MOI.Semiinteger,MOI.Semicontinuous,MOI.ZeroOne,MOI.Integer}}
+       )
+           return false
+       end
+```
+
+Finally, PATH doesn't support an objective function, so we need to add:
+```jldoctest pathoptimizer
+julia> MOI.supports(::PathOptimizer, ::MOI.ObjectiveFunction) = false
+```
+
+!!! warning
+    This macro creates a new type, so it must be called from the top-level of a
+    module, e.g., it cannot be called from inside a function.
+
+## Utilities.CachingOptimizer
+
+A [`Utilities.CachingOptimizer`] is an MOI layer that abstracts the difference
+between solvers that support incremental modification (e.g., they support adding
+variables one-by-one), and solvers that require the entire problem in a single
+API call (e.g., they only accept the `A`, `b` and `c` matrices of a linear
+program).
+
+It has two parts:
+ 1. A cache, where the model can be built and modified incrementally
+ 2. An optimizer, which is used to solve the problem
+
+```jldoctest pathoptimizer
+julia> model = MOI.Utilities.CachingOptimizer(
+           MOI.Utilities.Model{Float64}(),
+           PathOptimizer{Float64}(),
+       )
+MOIU.CachingOptimizer{PathOptimizer{Float64},MOIU.Model{Float64}}
+in state ATTACHED_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.Model{Float64}
+with optimizer PathOptimizer{Float64}
+```
+
+A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible states:
+
+* `NO_OPTIMIZER`: The CachingOptimizer does not have any optimizer.
+* `EMPTY_OPTIMIZER`: The CachingOptimizer has an empty optimizer, and it is not
+  synchronized with the cached model. Modifications are forwarded to the cache,
+  but _not_ to the optimizer.
+* `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is
+  synchronized with the cached model. Modifications are forwarded to the
+  optimizer. If the optimizer does not support modifications, and error will be
+  thrown.
+
+Use [`Utilities.reset_optimizer`](@ref) to go from `ATTACHED_OPTIMIZER` to
+`EMPTY_OPTIMIZER`:
+```jldoctest pathoptimizer
+julia> MOI.Utilities.reset_optimizer(model)
+
+julia> model
+MOIU.CachingOptimizer{PathOptimizer{Float64},MOIU.Model{Float64}}
+in state EMPTY_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.Model{Float64}
+with optimizer PathOptimizer{Float64}
+```
+
+Use [`Utilities.attach_optimizer`](@ref) to go from `EMPTY_OPTIMIZER` to
+`ATTACHED_OPTIMIZER`:
+```jldoctest pathoptimizer
+julia> MOI.Utilities.attach_optimizer(model)
+
+julia> model
+MOIU.CachingOptimizer{PathOptimizer{Float64},MOIU.Model{Float64}}
+in state ATTACHED_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.Model{Float64}
+with optimizer PathOptimizer{Float64}
+```
+!!! info
+    You must be in `ATTACHED_OPTIMIZER` to use [`optimize!`](@ref).
+
+Use [`Utilities.drop_optimizer`](@ref) to go from any state to `NO_OPTIMIZER`:
+```jldoctest pathoptimizer
+julia> MOI.Utilities.drop_optimizer(model)
+
+julia> model
+MOIU.CachingOptimizer{PathOptimizer{Float64},MOIU.Model{Float64}}
+in state NO_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.Model{Float64}
+with optimizer nothing
+```
+
+Pass an empty optimizer to [`Utilities.reset_optimizer`](@ref) to go from
+`NO_OPTIMIZER` to `EMPTY_OPTIMIZER`:
+```jldoctest pathoptimizer
+julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
+
+julia> model
+MOIU.CachingOptimizer{PathOptimizer{Float64},MOIU.Model{Float64}}
+in state EMPTY_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.Model{Float64}
+with optimizer PathOptimizer{Float64}
+```
+
+Deciding when to attach and reset the optimizer is tedious, and you will often
+write code like this:
+```julia
+try
+    # modification
+catch
+    MOI.Utilities.reset_optimizer(model)
+    # Re-try modification
+end
+```
+
+To make this easier, [`Utilities.CachingOptimizer`](@ref) has two modes of
+operation:
+
+* `AUTOMATIC`: The `CachingOptimizer` changes its state when necessary.
+  Attempting to add a constraint or perform a modification not supported by the
+  optimizer results in a drop to `EMPTY_OPTIMIZER` mode.
+* `MANUAL`: The user must change the state of the `CachingOptimizer`. Attempting
+  to perform an operation in the incorrect state results in an error.
+
+By default, `AUTOMATIC` mode is chosen. However, you can create a
+`CachingOptimizer` in `MANUAL` mode as follows:
+```jldoctest pathoptimizer
+julia> model = MOI.Utilities.CachingOptimizer(
+           MOI.Utilities.Model{Float64}(),
+           MOI.Utilities.MANUAL,
+       )
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}}
+in state NO_OPTIMIZER
+in mode MANUAL
+with model cache MOIU.Model{Float64}
+with optimizer nothing
+
+julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
+
+julia> model
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}}
+in state EMPTY_OPTIMIZER
+in mode MANUAL
+with model cache MOIU.Model{Float64}
+with optimizer PathOptimizer{Float64}
+```
 
 ## Copy utilities
+
+!!! info
+    This section is unfinished.
 
 ### Allocate-Load API
 
@@ -108,3 +308,20 @@ order:
 2) [`Utilities.allocate`](@ref) and [`Utilities.allocate_constraint`](@ref)
 3) [`Utilities.load_variables`](@ref)
 4) [`Utilities.load`](@ref) and [`Utilities.load_constraint`](@ref)
+
+## Fallbacks
+
+The value of some attributes can be inferred from the value of other
+attributes.
+
+For example, the value of [`ObjectiveValue`](@ref) can be computed using
+[`ObjectiveFunction`](@ref) and [`VariablePrimal`](@ref).
+
+When a solver gives direct access to an attribute, it is better to return this
+value. However, if this is not the case, [`Utilities.get_fallback`](@ref) can be
+used instead. For example:
+```julia
+function MOI.get(model::Optimizer, attr::MOI.ObjectiveFunction)
+    return MOI.Utilities.get_fallback(model, attr)
+end
+```

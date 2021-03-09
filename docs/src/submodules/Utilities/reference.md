@@ -15,12 +15,33 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-## Models
+## Utilities.Model
 
 ```@docs
 Utilities.Model
+```
+
+## Utilities.UniversalFallback
+
+```@docs
 Utilities.UniversalFallback
+```
+
+## Utilities.@macro
+
+```@docs
 Utilities.@model
+```
+
+### Caching optimizer
+
+```@docs
+Utilities.CachingOptimizer
+Utilities.attach_optimizer
+Utilities.reset_optimizer
+Utilities.drop_optimizer
+Utilities.state
+Utilities.mode
 ```
 
 ## Copy utilities
@@ -47,15 +68,10 @@ Utilities.load
 Utilities.load_constraint
 ```
 
-### Caching optimizer
+## Fallbacks
 
 ```@docs
-Utilities.CachingOptimizer
-Utilities.attach_optimizer
-Utilities.reset_optimizer
-Utilities.drop_optimizer
-Utilities.state
-Utilities.mode
+Utilities.get_fallback
 ```
 
 ## Function utilities
@@ -115,21 +131,4 @@ The following utilities are useful when working with symmetric matrix cones.
 ```@docs
 Utilities.is_diagonal_vectorized_index
 Utilities.side_dimension_for_vectorized_dimension
-```
-
-### Fallbacks
-
-The value of some attributes can be inferred from the value of other
-attributes. For instance, the value of [`ObjectiveValue`](@ref) can be computed
-using [`ObjectiveFunction`](@ref) and [`VariablePrimal`](@ref). When a solver
-gives access to the objective value, it is better to return this value but
-otherwise, [`Utilities.get_fallback`](@ref) can be used.
-```julia
-function MOI.get(optimizer::Optimizer, attr::MOI.ObjectiveValue)
-    return MOI.Utilities.get_fallback(optimizer, attr)
-end
-```
-
-```@docs
-Utilities.get_fallback
 ```
