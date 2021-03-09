@@ -33,8 +33,7 @@ constraints of different types. There are two important concepts to distinguish:
   by using the list of bridges that were added to it by
   [`Bridges.add_bridge`](@ref). [`Bridges.full_bridge_optimizer`](@ref) wraps a
   model in a [`Bridges.LazyBridgeOptimizer`](@ref) where all the bridges defined
-  in MOI are added. This is the recommended way to use bridges in the
-  [Testing guideline](@ref), and JuMP automatically calls
+  in MOI are added. JuMP automatically calls
   [`Bridges.full_bridge_optimizer`](@ref) when attaching an optimizer.
   [`Bridges.debug_supports_constraint`](@ref) and [`Bridges.debug_supports`](@ref)
   allow introspection into the bridge selection rationale of
