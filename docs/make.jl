@@ -19,9 +19,16 @@ makedocs(
     doctest = _FIX ? :fix : true,
     pages = [
         "Introduction" => "index.md",
+        "Background" => [
+            "background/motivation.md",
+            "background/duality.md",
+        ],
         "Manual" => [
+            "manual/standard_form.md",
+            "manual/constraints.md",
+            "manual/status.md",
+            "manual/modification.md",
             "manual/basic_usage.md",
-            "manual/advanced_usage.md",
             "manual/implementing.md",
         ],
         "API Reference" => "reference/reference.md",
