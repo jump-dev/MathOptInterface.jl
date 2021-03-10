@@ -16,7 +16,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [compat]
-BenchmarkTools = "0.4, 0.5"
+BenchmarkTools = "0.4, 0.5, 0.6"
 CodecBzip2 = "~0.6, 0.7"
 CodecZlib = "~0.6, 0.7"
 JSON = "~0.21"
