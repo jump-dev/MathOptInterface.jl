@@ -11,31 +11,61 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 ## Add a variable
 
-All variables in MOI are scalar variables. New scalar variables are created with
-[`add_variable`](@ref) or [`add_variables`](@ref), which return a [`VariableIndex`](@ref)
-or `Vector{VariableIndex}` respectively. [`VariableIndex`](@ref) objects are
-type-safe wrappers around integers that refer to a variable in a particular
-model.
+Use [`add_variable`](@ref) to add a single variable.
 
-!!! note
+```jldoctest variables; setup=:(model = MOI.Utilities.Model{Float64}(); )
+julia> x = MOI.add_variable(mode)
+MathOptInterface.VariableIndex(1)
+```
+[`add_variable`](@ref) returns a [`VariableIndex`](@ref) type, which should be
+used to refer to the added variable in other calls.
+
+Check if a [`VariableIndex`](@ref) is valid using [`is_valid`](@ref).
+```jldoctest variables
+julia> MOI.is_valid(model, x)
+true
+```
+
+Use [`add_variables`](@ref) to add a number of variables.
+```jldoctest variables
+julia> y = MOI.add_variables(model, 2)
+2-element Array{MathOptInterface.VariableIndex,1}:
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+```
+
+!!! warning
     The integer does not necessarily corresond to the column inside an
     optimizer!
 
-One uses [`VariableIndex`](@ref) objects to set and get variable attributes. For
-example, the [`VariablePrimalStart`](@ref) attribute is used to provide an
-initial starting point for a variable or collection of variables:
-```julia
-v = MOI.add_variable(model)
-MOI.set(model, MOI.VariablePrimalStart(), v, 10.5)
-v2 = MOI.add_variables(model, 3)
-MOI.set(model, MOI.VariablePrimalStart(), v2, [1.3, 6.8, -4.6])
-```
-
 ## Delete a variable
 
-Delete a variable using
-[`delete(::ModelLike, ::VariableIndex)`](@ref MathOptInterface.delete(::MathOptInterface.ModelLike, ::MathOptInterface.Index)).
+Delete a variable using [`delete`](@ref).
+
+```jldoctest variables
+julia> MOI.delete(model, x)
+
+julia> MOI.is_valid(model, x)
+false
+```
 
 !!! warning
     Not all `ModelLike` models support deleting variables. A
     [`DeleteNotAllowed`](@ref) error is thrown if this is not supported.
+
+## Variable attributes
+
+The following attributes are available for variables
+
+* [`VariableName`](@ref)
+* [`VariablePrimalStart`](@ref)
+* [`VariablePrimal`](@ref)
+
+Get and set these attributes using [`get`(@ref) and [`set`](@ref).
+
+```jldoctest constraints
+julia> MOI.set(model, MOI.VariableName(), x, "var_x")
+
+julia> MOI.get(model, MOI.VariableName(), x)
+var_x
+```
