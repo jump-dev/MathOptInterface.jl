@@ -374,6 +374,7 @@ function map_values!(f::Function, d::CleverDict)
             d.dict[k] = f(v)
         end
     end
+    return
 end
 
 end

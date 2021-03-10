@@ -82,11 +82,14 @@ function MOI.empty!(uf::UniversalFallback)
     uf.name_to_con = nothing
     empty!(uf.modattr)
     empty!(uf.varattr)
-    return empty!(uf.conattr)
+    empty!(uf.conattr)
+    return
 end
+
 function MOI.copy_to(uf::UniversalFallback, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(uf, src; kws...)
 end
+
 function supports_default_copy_to(uf::UniversalFallback, copy_names::Bool)
     return supports_default_copy_to(uf.model, copy_names)
 end
@@ -116,9 +119,11 @@ function _delete(uf::UniversalFallback, ci::MOI.ConstraintIndex{MOI.SingleVariab
         MOI.is_valid(uf, ci) || throw(MOI.InvalidIndex(ci))
         delete!(uf.single_variable_constraints[S], ci)
     end
+    return
 end
 function _delete(uf::UniversalFallback, ci::MOI.ConstraintIndex)
     MOI.delete(constraints(uf, ci), ci)
+    return
 end
 function MOI.delete(uf::UniversalFallback, ci::MOI.ConstraintIndex{F,S}) where {F,S}
     _delete(uf, ci)
@@ -129,6 +134,7 @@ function MOI.delete(uf::UniversalFallback, ci::MOI.ConstraintIndex{F,S}) where {
     for d in values(uf.conattr)
         delete!(d, ci)
     end
+    return
 end
 function _remove_variable(
     uf::UniversalFallback,
@@ -161,6 +167,7 @@ function MOI.delete(uf::UniversalFallback, vi::MOI.VariableIndex)
             end
         end
     end
+    return
 end
 function MOI.delete(uf::UniversalFallback, vis::Vector{MOI.VariableIndex})
     fast_in_vis = Set(vis)
@@ -190,6 +197,7 @@ function MOI.delete(uf::UniversalFallback, vis::Vector{MOI.VariableIndex})
             end
         end
     end
+    return
 end
 
 # Attributes
@@ -225,9 +233,9 @@ function MOI.get(
     attr::Union{MOI.AbstractOptimizerAttribute,MOI.AbstractModelAttribute},
 )
     if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
-        MOI.get(uf.model, attr)
+        return MOI.get(uf.model, attr)
     else
-        _get(uf, attr)
+        return _get(uf, attr)
     end
 end
 function MOI.get(
@@ -237,9 +245,9 @@ function MOI.get(
 ) where {F,S}
     if MOI.supports_constraint(uf.model, F, S) &&
        (!MOI.is_copyable(attr) || MOI.supports(uf.model, attr, typeof(idx)))
-        MOI.get(uf.model, attr, idx)
+        return MOI.get(uf.model, attr, idx)
     else
-        _get(uf, attr, idx)
+        return _get(uf, attr, idx)
     end
 end
 function MOI.get(
@@ -248,9 +256,9 @@ function MOI.get(
     idx::MOI.VariableIndex,
 )
     if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr, typeof(idx))
-        MOI.get(uf.model, attr, idx)
+        return MOI.get(uf.model, attr, idx)
     else
-        _get(uf, attr, idx)
+        return _get(uf, attr, idx)
     end
 end
 function MOI.get(
@@ -280,9 +288,9 @@ function MOI.get(
 ) where {S}
     F = MOI.SingleVariable
     if MOI.supports_constraint(uf.model, F, S)
-        MOI.get(uf.model, listattr)
+        return MOI.get(uf.model, listattr)
     else
-        collect(keys(get(
+        return collect(keys(get(
             uf.single_variable_constraints,
             S,
             OrderedDict{CI{F,S},S}(),
@@ -359,7 +367,8 @@ function MOI.set(
     if sense == MOI.FEASIBILITY_SENSE
         uf.objective = nothing
     end
-    return MOI.set(uf.model, attr, sense)
+    MOI.set(uf.model, attr, sense)
+    return
 end
 function MOI.get(uf::UniversalFallback, attr::MOI.ObjectiveFunctionType)
     if uf.objective === nothing
@@ -394,6 +403,7 @@ function MOI.set(
         MOI.set(uf.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
         MOI.set(uf.model, MOI.ObjectiveSense(), sense)
     end
+    return
 end
 
 function MOI.modify(
@@ -406,6 +416,7 @@ function MOI.modify(
     else
         uf.objective = modify_function(uf.objective, change)
     end
+    return
 end
 
 # Name
@@ -628,6 +639,7 @@ function MOI.modify(
     change::MOI.AbstractFunctionModification,
 )
     MOI.modify(constraints(uf, ci), ci, change)
+    return
 end
 
 function MOI.get(
@@ -688,6 +700,7 @@ function MOI.set(
         MOI.throw_if_not_valid(uf, ci)
         uf.single_variable_constraints[S][ci] = set
     end
+    return
 end
 
 # Variables

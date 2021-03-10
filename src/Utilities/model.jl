@@ -8,11 +8,12 @@ const AbstractModel{T} = Union{AbstractModelLike{T},AbstractOptimizer{T}}
 # Variables
 function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
     if model.variable_indices === nothing
-        model.num_variables_created
+        return model.num_variables_created
     else
-        length(model.variable_indices)
+        return length(model.variable_indices)
     end
 end
+
 function MOI.add_variable(model::AbstractModel{T}) where {T}
     vi = VI(model.num_variables_created += 1)
     push!(model.single_variable_mask, 0x0)
@@ -23,6 +24,7 @@ function MOI.add_variable(model::AbstractModel{T}) where {T}
     end
     return vi
 end
+
 function MOI.add_variables(model::AbstractModel, n::Integer)
     return [MOI.add_variable(model) for i in 1:n]
 end
@@ -119,6 +121,7 @@ function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     model.name_to_con = nothing
     return
 end
+
 function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     if isempty(vis)
         # In `keep`, we assume that `model.variable_indices !== nothing` so
@@ -152,6 +155,7 @@ function MOI.is_valid(
         model.single_variable_mask[ci.value] & single_variable_flag(S),
     )
 end
+
 function MOI.is_valid(model::AbstractModel, ci::CI{F,S}) where {F,S}
     if MOI.supports_constraint(model, F, S)
         return MOI.is_valid(constraints(model, ci), ci)
@@ -159,6 +163,7 @@ function MOI.is_valid(model::AbstractModel, ci::CI{F,S}) where {F,S}
         return false
     end
 end
+
 function MOI.is_valid(model::AbstractModel, vi::VI)
     if model.variable_indices === nothing
         return 1 ≤ vi.value ≤ model.num_variables_created
@@ -187,8 +192,10 @@ MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
     model.var_to_name[vi] = name
-    return model.name_to_var = nothing # Invalidate the name map.
+    model.name_to_var = nothing # Invalidate the name map.
+    return
 end
+
 function MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI)
     return get(model.var_to_name, vi, EMPTYSTRING)
 end
@@ -252,8 +259,10 @@ function MOI.set(
     name::String,
 )
     model.con_to_name[ci] = name
-    return model.name_to_con = nothing # Invalidate the name map.
+    model.name_to_con = nothing # Invalidate the name map.
+    return
 end
+
 function MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI)
     return get(model.con_to_name, ci, EMPTYSTRING)
 end
@@ -285,11 +294,7 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     end
     ci = get(model.name_to_con, name, nothing)
     throw_if_multiple_with_name(ci, name)
-    if ci isa ConType
-        return ci
-    else
-        return nothing
-    end
+    return ci isa ConType ? ci : nothing
 end
 
 function MOI.get(
@@ -312,8 +317,10 @@ function MOI.set(
         model.objective = zero(MOI.ScalarAffineFunction{T})
     end
     model.senseset = true
-    return model.sense = sense
+    model.sense = sense
+    return
 end
+
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunctionType)
     return MOI.typeof(model.objective)
 end
@@ -340,7 +347,8 @@ function MOI.set(
     end
     model.objectiveset = true
     # f needs to be copied, see #2
-    return model.objective = copy(f)
+    model.objective = copy(f)
+    return
 end
 
 function MOI.modify(
@@ -529,15 +537,20 @@ function _delete_constraint(
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {S}
     MOI.throw_if_not_valid(model, ci)
-    return model.single_variable_mask[ci.value] &= ~single_variable_flag(S)
+    model.single_variable_mask[ci.value] &= ~single_variable_flag(S)
+    return
 end
+
 function _delete_constraint(model::AbstractModel, ci::MOI.ConstraintIndex)
-    return MOI.delete(constraints(model, ci), ci)
+    MOI.delete(constraints(model, ci), ci)
+    return
 end
+
 function MOI.delete(model::AbstractModel, ci::MOI.ConstraintIndex)
     _delete_constraint(model, ci)
     model.name_to_con = nothing
-    return delete!(model.con_to_name, ci)
+    delete!(model.con_to_name, ci)
+    return
 end
 
 function MOI.modify(
@@ -545,7 +558,8 @@ function MOI.modify(
     ci::MOI.ConstraintIndex,
     change::MOI.AbstractFunctionModification,
 )
-    return MOI.modify(constraints(model, ci), ci, change)
+    MOI.modify(constraints(model, ci), ci, change)
+    return
 end
 
 function MOI.set(
@@ -570,6 +584,7 @@ function MOI.set(
     if !iszero(flag & UPPER_BOUND_MASK)
         model.upper_bound[ci.value] = extract_upper_bound(set)
     end
+    return
 end
 function MOI.set(
     model::AbstractModel,
@@ -577,7 +592,8 @@ function MOI.set(
     ci::MOI.ConstraintIndex,
     func_or_set,
 )
-    return MOI.set(constraints(model, ci), attr, ci, func_or_set)
+    MOI.set(constraints(model, ci), attr, ci, func_or_set)
+    return
 end
 
 function MOI.get(
@@ -733,6 +749,7 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     empty!(model.con_to_name)
     model.name_to_con = nothing
     broadcastcall(MOI.empty!, model)
+    return
 end
 
 

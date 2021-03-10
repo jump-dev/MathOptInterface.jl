@@ -15,12 +15,24 @@
 # vector, it readily gives the entries of `model.constrmap` that need to be
 # updated.
 
-struct VectorOfConstraints{F<:MOI.AbstractFunction,S<:MOI.AbstractSet} <: MOI.ModelLike
-    # FIXME It is not ideal that we have `DataType` here, it might induce type instabilities.
-    #       We should change `CleverDicts` so that we can just use `typeof(CleverDicts.index_to_key)` here.
-    constraints::CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S},typeof(CleverDicts.key_to_index),Base.Fix1{typeof(CleverDicts.index_to_key),DataType}}
+struct VectorOfConstraints{
+    F<:MOI.AbstractFunction,
+    S<:MOI.AbstractSet
+} <: MOI.ModelLike
+    # FIXME: It is not ideal that we have `DataType` here, it might induce type
+    #        instabilities. We should change `CleverDicts` so that we can just
+    #        use `typeof(CleverDicts.index_to_key)` here.
+    constraints::CleverDicts.CleverDict{
+        MOI.ConstraintIndex{F,S},
+        Tuple{F,S},
+        typeof(CleverDicts.key_to_index),
+        Base.Fix1{typeof(CleverDicts.index_to_key),DataType}
+    }
+
     function VectorOfConstraints{F,S}() where {F,S}
-        return new{F,S}(CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}())
+        return new{F,S}(
+            CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}()
+        )
     end
 end
 
@@ -30,34 +42,51 @@ MOI.empty!(v::VectorOfConstraints) = empty!(v.constraints)
 function MOI.add_constraint(
     v::VectorOfConstraints{F,S},
     func::F,
-    set::S
+    set::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    # f needs to be copied, see #2
-    # We canonicalize the constraint so that solvers can avoid having to canonicalize
-    # it most of the time (they can check if they need to with `is_canonical`.
+    # We canonicalize the constraint so that solvers can avoid having to
+    # canonicalize it most of the time (they can check if they need to with
+    # `is_canonical`.
     # Note that the canonicalization is not guaranteed if for instance
     # `modify` is called and adds a new term.
     # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
     return CleverDicts.add_item(v.constraints, (canonical(func), copy(set)))
 end
+
 function MOI.is_valid(
     v::VectorOfConstraints{F,S},
-    ci::MOI.ConstraintIndex{F,S}
+    ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     return haskey(v.constraints, ci)
 end
-function MOI.delete(v::VectorOfConstraints{F,S}, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+
+function MOI.delete(
+    v::VectorOfConstraints{F,S},
+    ci::MOI.ConstraintIndex{F,S},
+) where {F,S}
     MOI.throw_if_not_valid(v, ci)
     delete!(v.constraints, ci)
+    return
 end
-function MOI.get(v::VectorOfConstraints{F,S}, ::MOI.ConstraintFunction, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+
+function MOI.get(
+    v::VectorOfConstraints{F,S},
+    ::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex{F,S},
+) where {F,S}
     MOI.throw_if_not_valid(v, ci)
     return v.constraints[ci][1]
 end
-function MOI.get(v::VectorOfConstraints{F,S}, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+
+function MOI.get(
+    v::VectorOfConstraints{F,S},
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,S},
+) where {F,S}
     MOI.throw_if_not_valid(v, ci)
     return v.constraints[ci][2]
 end
+
 function MOI.set(
     v::VectorOfConstraints{F,S},
     ::MOI.ConstraintFunction,
@@ -68,6 +97,7 @@ function MOI.set(
     v.constraints[ci] = (func, v.constraints[ci][2])
     return
 end
+
 function MOI.set(
     v::VectorOfConstraints{F,S},
     ::MOI.ConstraintSet,
@@ -81,16 +111,25 @@ end
 
 function MOI.get(
     v::VectorOfConstraints{F,S},
-    ::MOI.ListOfConstraints
+    ::MOI.ListOfConstraints,
 )::Vector{Tuple{DataType,DataType}} where {F,S}
     return isempty(v.constraints) ? [] : [(F, S)]
 end
-function MOI.get(v::VectorOfConstraints{F,S}, ::MOI.NumberOfConstraints{F,S}) where {F,S}
+
+function MOI.get(
+    v::VectorOfConstraints{F,S},
+    ::MOI.NumberOfConstraints{F,S},
+) where {F,S}
     return length(v.constraints)
 end
-function MOI.get(v::VectorOfConstraints{F,S}, ci::MOI.ListOfConstraintIndices{F,S}) where {F,S}
+
+function MOI.get(
+    v::VectorOfConstraints{F,S},
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
     return keys(v.constraints)
 end
+
 function MOI.modify(
     v::VectorOfConstraints{F,S},
     ci::MOI.ConstraintIndex{F,S},
@@ -105,13 +144,15 @@ end
 
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
     CleverDicts.map_values!(v.constraints) do func_set
-        remove_variable(func_set..., vi)
+        return remove_variable(func_set..., vi)
     end
+    return
 end
 function _filter_variables(keep::Function, v::VectorOfConstraints)
     CleverDicts.map_values!(v.constraints) do func_set
-        filter_variables(keep, func_set...)
+        return filter_variables(keep, func_set...)
     end
+    return
 end
 
 function throw_delete_variable_in_vov(vi::MOI.VariableIndex)
@@ -121,29 +162,46 @@ function throw_delete_variable_in_vov(vi::MOI.VariableIndex)
     )
     return throw(MOI.DeleteNotAllowed(vi, message))
 end
-function _throw_if_cannot_delete(::VectorOfConstraints, vis, fast_in_vis)
-    # Nothing to do as it's not `VectorOfVariables` constraints
-end
-function _throw_if_cannot_delete(v::VectorOfConstraints{MOI.VectorOfVariables,S}, vis, fast_in_vis) where S<:MOI.AbstractVectorSet
-    if !MOI.supports_dimension_update(S)
-        for fs in values(v.constraints)
-            f = fs[1]::MOI.VectorOfVariables
-            if length(f.variables) > 1 && f.variables != vis
-                for vi in f.variables
-                    if vi in fast_in_vis
-                        # If `supports_dimension_update(S)` then the variable
-                        # will be removed in `_filter_variables`.
-                        throw_delete_variable_in_vov(vi)
-                    end
+
+# Nothing to do as it's not `VectorOfVariables` constraints
+_throw_if_cannot_delete(::VectorOfConstraints, vis, fast_in_vis) = nothing
+
+function _throw_if_cannot_delete(
+    v::VectorOfConstraints{MOI.VectorOfVariables,S},
+    vis,
+    fast_in_vis,
+) where {S<:MOI.AbstractVectorSet}
+    if MOI.supports_dimension_update(S)
+        return
+    end
+    for fs in values(v.constraints)
+        f = fs[1]::MOI.VectorOfVariables
+        if length(f.variables) > 1 && f.variables != vis
+            for vi in f.variables
+                if vi in fast_in_vis
+                    # If `supports_dimension_update(S)` then the variable
+                    # will be removed in `_filter_variables`.
+                    throw_delete_variable_in_vov(vi)
                 end
             end
         end
     end
+    return
 end
-function _delete_variables(::Function, ::VectorOfConstraints, ::Vector{MOI.VariableIndex})
-    # Nothing to do as it's not `VectorOfVariables` constraints
+
+function _delete_variables(
+    ::Function,
+    ::VectorOfConstraints,
+    ::Vector{MOI.VariableIndex},
+)
+    return  # Nothing to do as it's not `VectorOfVariables` constraints
 end
-function _delete_variables(callback::Function, v::VectorOfConstraints{MOI.VectorOfVariables,S}, vis::Vector{MOI.VariableIndex}) where {S<:MOI.AbstractVectorSet}
+
+function _delete_variables(
+    callback::Function,
+    v::VectorOfConstraints{MOI.VectorOfVariables,S},
+    vis::Vector{MOI.VariableIndex},
+) where {S<:MOI.AbstractVectorSet}
     filter!(v.constraints) do p
         f = p.second[1]
         del = if length(f.variables) == 1
@@ -158,13 +216,25 @@ function _delete_variables(callback::Function, v::VectorOfConstraints{MOI.Vector
     end
     return
 end
-function _deleted_constraints(callback::Function, v::VectorOfConstraints, vi::MOI.VariableIndex)
+
+function _deleted_constraints(
+    callback::Function,
+    v::VectorOfConstraints,
+    vi::MOI.VariableIndex,
+)
     vis = [vi]
     _delete_variables(callback, v, vis)
     _remove_variable(v, vi)
+    return
 end
-function _deleted_constraints(callback::Function, v::VectorOfConstraints, vis::Vector{MOI.VariableIndex})
+
+function _deleted_constraints(
+    callback::Function,
+    v::VectorOfConstraints,
+    vis::Vector{MOI.VariableIndex},
+)
     removed = Set(vis)
     _delete_variables(callback, v, vis)
     _filter_variables(vi -> !(vi in removed), v)
+    return
 end
