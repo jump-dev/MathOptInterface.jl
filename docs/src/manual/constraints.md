@@ -11,81 +11,81 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 ## Add a constraint
 
-All constraints are specified with [`add_constraint`](@ref) by restricting the
-output of some function to a set. The interface allows an arbitrary combination
-of functions and sets, but of course solvers may decide to support only a small
-number of combinations.
+Use [`add_constraint`](@ref) to add a single constraint.
 
-For example, linear programming solvers should support, at least, combinations
-of affine functions with the [`LessThan`](@ref) and [`GreaterThan`](@ref) sets.
-These are simply linear constraints. [`SingleVariable`](@ref) functions combined
-with these same sets are used to specify upper- and lower-bounds on variables.
-
-The code example below encodes the linear optimization problem:
-```math
-\begin{align}
-& \max_{x \in \mathbb{R}^2} & 3x_1 + 2x_2 &
-\\
-& \;\;\text{s.t.} & x_1 + x_2 &\le 5
-\\
-&& x_1 & \ge 0
-\\
-&&x_2 & \ge -1
-\end{align}
+```jldoctest constraints; setup=:(model = MOI.Utilities.Model{Float64}(); x = MOI.add_variables(model, 2))
+julia> c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(2))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables,MathOptInterface.Nonnegatives}(1)
 ```
 
-```julia
-x = MOI.add_variables(model, 2)
-MOI.set(
-    model,
-    MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3.0, 2.0], x), 0.0),
-)
-MOI.set(model, MOI.ObjectiveSense(), MAX_SENSE)
-MOI.add_constraint(
-    model,
-    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
-    MOI.LessThan(5.0),
-)
-MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.GreaterThan(0.0))
-MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.GreaterThan(-1.0))
+[`add_constraint`](@ref) returns a [`ConstraintIndex`](@ref) type, which should
+be used to refer to the added constraint in other calls.
+
+Check if a [`ConstraintIndex`](@ref) is valid using [`is_valid`](@ref).
+
+```jldoctest constraints
+julia> MOI.is_valid(model, c)
+true
 ```
 
-Besides scalar-valued functions in scalar-valued sets, it's also possible to use
-vector-valued functions and sets.
+Use [`add_constraints`](@ref) to add a number of constraints of the same type.
 
-The code example below encodes the convex optimization problem:
-```math
-\begin{align}
-& \max_{x,y,z \in \mathbb{R}} & y + z &
-\\
-& \;\;\text{s.t.} & 3x &= 2
-\\
-&& x & \ge \lVert (y,z) \rVert_2
-\end{align}
+```jldoctest; setup=:(model = MOI.Utilities.Model{Float64}(); x = MOI.add_variables(model, 2))
+julia> c = MOI.add_constraints(
+           model,
+           [MOI.SingleVariable(x[1]), MOI.SingleVariable(x[2])],
+           [MOI.GreaterThan(0.0), MOI.GreaterThan(1.0)]
+       )
+2-element Array{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.GreaterThan{Float64}},1}:
+ MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.GreaterThan{Float64}}(1)
+ MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.GreaterThan{Float64}}(2)
+```
+This time, a vector of [`ConstraintIndex`](@ref) are returned.
+
+Use [`supports_constraint`](@ref) to check if the model supports adding a
+constraint type.
+```jldoctest; setup=:(model = MOI.Utilities.Model{Float64}())
+julia> MOI.supports_constraint(
+           model,
+           MOI.SingleVariable,
+           MOI.GreaterThan{Float64},
+       )
+true
 ```
 
-```julia
-x,y,z = MOI.add_variables(model, 3)
-MOI.set(
-    model,
-    MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, [y, z]), 0.0),
-)
-MOI.set(model, ObjectiveSense(), MAX_SENSE)
-MOI.add_constraint(
-    model,
-    MOI.VectorAffineFunction(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(3.0, x))], [-2.0]
-    ),
-    MOI.Zeros(1),
-)
-MOI.add_constraint(
-    model, MOI.VectorOfVariables([x, y, z]), MOI.SecondOrderCone(3)
-)
+## Delete a constraint
+
+Use [`delete`](@ref) to delete a constraint.
+
+```jldoctest constraints
+julia> MOI.delete(model, c)
+
+julia> MOI.is_valid(model, c)
+false
 ```
 
-[TODO Describe ConstraintIndex objects.]
+## Constraint attributes
+
+The following attributes are available for constraints
+
+* [`ConstraintName`](@ref)
+* [`ConstraintPrimalStart`](@ref)
+* [`ConstraintDualStart`](@ref)
+* [`ConstraintPrimal`](@ref)
+* [`ConstraintDual`](@ref)
+* [`ConstraintBasisStatus`](@ref)
+* [`ConstraintFunction`](@ref)
+* [`CanonicalConstraintFunction`](@ref)
+* [`ConstraintSet`](@ref)
+
+Get and set these attributes using [`get`(@ref) and [`set`](@ref).
+
+```jldoctest constraints
+julia> MOI.set(model, MOI.ConstraintName(), c, "con_c")
+
+julia> MOI.get(model, MOI.ConstraintName(), c)
+con_c
+```
 
 ## Constraints by function-set pairs
 
