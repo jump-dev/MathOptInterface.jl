@@ -39,6 +39,7 @@ makedocs(
             ],
             "Bridges" => [
                 "Overview" => "submodules/Bridges/overview.md",
+                "Implementation" => "submodules/Bridges/implementation.md",
                 "API Reference" => "submodules/Bridges/reference.md",
             ],
             "FileFormats" => [
