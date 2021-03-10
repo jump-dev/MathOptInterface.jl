@@ -470,7 +470,7 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     end
     ci = get(model.name_to_con, name, nothing)
     throw_if_multiple_with_name(ci, name)
-    return ci
+    return ci isa ConType ? ci : nothing
 end
 
 function MOI.get(
