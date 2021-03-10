@@ -291,7 +291,6 @@ MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
 # output
 
-MAX_SENSE::OptimizationSense = 1
 ```
 
 We add the knapsack constraint and integrality constraints:
