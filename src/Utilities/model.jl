@@ -31,7 +31,7 @@ end
 
 function _delete(constrs::Vector, ci::CI, i::Int)
     deleteat!(constrs, i)
-    @view constrs[i:end] # will need to shift it in constrmap
+    return @view constrs[i:end] # will need to shift it in constrmap
 end
 
 _getindex(ci::CI, f::MOI.AbstractFunction, s::MOI.AbstractSet) = ci
@@ -114,9 +114,9 @@ getconstrloc(model::AbstractModel, ci::CI) = model.constrmap[ci.value]
 # Variables
 function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
     if model.variable_indices === nothing
-        model.num_variables_created
+        return model.num_variables_created
     else
-        length(model.variable_indices)
+        return length(model.variable_indices)
     end
 end
 function MOI.add_variable(model::AbstractModel{T}) where {T}
@@ -157,6 +157,7 @@ function _remove_variable(constrs::Vector{<:ConstraintEntry}, vi::VI)
         ci, f, s = constrs[i]
         constrs[i] = (ci, remove_variable(f, s, vi)...)
     end
+    return
 end
 
 function filter_variables(keep::F, f, s) where {F<:Function}
@@ -185,6 +186,7 @@ function _filter_variables(
         ci, f, s = constrs[i]
         constrs[i] = (ci, filter_variables(keep, f, s)...)
     end
+    return
 end
 function _vector_of_variables_with(::Vector, ::Union{VI,MOI.Vector{VI}})
     return CI{MOI.VectorOfVariables}[]
@@ -288,7 +290,8 @@ function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     # `VectorOfVariables` constraints with sets not supporting dimension update
     # were either deleted or an error was thrown. The rest is modified now.
     broadcastcall(constrs -> _remove_variable(constrs, vi), model)
-    return model.objective = remove_variable(model.objective, vi)
+    model.objective = remove_variable(model.objective, vi)
+    return
 end
 function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     if isempty(vis)
@@ -310,7 +313,8 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     # were either deleted or an error was thrown. The rest is modified now.
     keep(vi::MOI.VariableIndex) = vi in model.variable_indices
     model.objective = filter_variables(keep, model.objective)
-    return broadcastcall(constrs -> _filter_variables(keep, constrs), model)
+    broadcastcall(constrs -> _filter_variables(keep, constrs), model)
+    return
 end
 
 function MOI.is_valid(
@@ -324,15 +328,15 @@ function MOI.is_valid(
 end
 function MOI.is_valid(model::AbstractModel, ci::CI{F,S}) where {F,S}
     if ci.value > length(model.constrmap)
-        false
+        return false
     else
         loc = getconstrloc(model, ci)
         if iszero(loc) # This means that it has been deleted
-            false
+            return false
         elseif loc > MOI.get(model, MOI.NumberOfConstraints{F,S}())
-            false
+            return false
         else
-            ci == _getindex(model, ci, getconstrloc(model, ci))
+            return ci == _getindex(model, ci, getconstrloc(model, ci))
         end
     end
 end
@@ -357,14 +361,16 @@ end
 # Names
 MOI.supports(::AbstractModel, ::MOI.Name) = true
 function MOI.set(model::AbstractModel, ::MOI.Name, name::String)
-    return model.name = name
+    model.name = name
+    return
 end
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
 MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
 function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
     model.var_to_name[vi] = name
-    return model.name_to_var = nothing # Invalidate the name map.
+    model.name_to_var = nothing # Invalidate the name map.
+    return
 end
 function MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI)
     return get(model.var_to_name, vi, EMPTYSTRING)
@@ -402,6 +408,7 @@ function throw_if_multiple_with_name(index::MOI.Index, name::String)
     if iszero(index.value)
         throw_multiple_name_error(typeof(index), name)
     end
+    return
 end
 
 function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
@@ -429,7 +436,8 @@ function MOI.set(
     name::String,
 )
     model.con_to_name[ci] = name
-    return model.name_to_con = nothing # Invalidate the name map.
+    model.name_to_con = nothing # Invalidate the name map.
+    return
 end
 function MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI)
     return get(model.con_to_name, ci, EMPTYSTRING)
@@ -462,11 +470,7 @@ function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
     end
     ci = get(model.name_to_con, name, nothing)
     throw_if_multiple_with_name(ci, name)
-    if ci isa ConType
-        return ci
-    else
-        return nothing
-    end
+    return ci
 end
 
 function MOI.get(
@@ -489,7 +493,8 @@ function MOI.set(
         model.objective = zero(MOI.ScalarAffineFunction{T})
     end
     model.senseset = true
-    return model.sense = sense
+    model.sense = sense
+    return
 end
 function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunctionType)
     return MOI.typeof(model.objective)
@@ -517,7 +522,8 @@ function MOI.set(
     end
     model.objectiveset = true
     # f needs to be copied, see #2
-    return model.objective = copy(f)
+    model.objective = copy(f)
+    return
 end
 
 function MOI.modify(
@@ -683,26 +689,25 @@ function MOI.add_constraint(
     f::F,
     s::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    if MOI.supports_constraint(model, F, S)
-        # We give the index value `nextconstraintid + 1` to the new constraint.
-        # As the same counter is used for all pairs of F-in-S constraints,
-        # the index value is unique across all constraint types as mentioned in
-        # `@model`'s doc.
-        ci = CI{F,S}(model.nextconstraintid += 1)
-        # f needs to be copied, see #2
-        # We canonicalize the constraint so that solvers can avoid having to canonicalize
-        # it most of the time (they can check if they need to with `is_canonical`.
-        # Note that the canonicalization is not guaranteed if for instance
-        # `modify` is called and adds a new term.
-        # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
-        push!(
-            model.constrmap,
-            _add_constraint(model, ci, canonical(f), copy(s)),
-        )
-        return ci
-    else
+    if !MOI.supports_constraint(model, F, S)
         throw(MOI.UnsupportedConstraint{F,S}())
     end
+    # We give the index value `nextconstraintid + 1` to the new constraint.
+    # As the same counter is used for all pairs of F-in-S constraints,
+    # the index value is unique across all constraint types as mentioned in
+    # `@model`'s doc.
+    ci = CI{F,S}(model.nextconstraintid += 1)
+    # f needs to be copied, see #2
+    # We canonicalize the constraint so that solvers can avoid having to canonicalize
+    # it most of the time (they can check if they need to with `is_canonical`.
+    # Note that the canonicalization is not guaranteed if for instance
+    # `modify` is called and adds a new term.
+    # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
+    push!(
+        model.constrmap,
+        _add_constraint(model, ci, canonical(f), copy(s)),
+    )
+    return ci
 end
 
 function _delete_constraint(
@@ -721,7 +726,8 @@ function MOI.delete(model::AbstractModel, ci::CI)
     MOI.throw_if_not_valid(model, ci)
     _delete_constraint(model, ci)
     model.name_to_con = nothing
-    return delete!(model.con_to_name, ci)
+    delete!(model.con_to_name, ci)
+    return
 end
 
 function MOI.modify(
