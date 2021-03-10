@@ -25,10 +25,12 @@ makedocs(
         ],
         "Manual" => [
             "manual/standard_form.md",
+            "manual/variables.md",
             "manual/constraints.md",
             "manual/status.md",
             "manual/modification.md",
             "manual/basic_usage.md",
+            "manual/example.md",
             "manual/implementing.md",
         ],
         "API Reference" => "reference/reference.md",

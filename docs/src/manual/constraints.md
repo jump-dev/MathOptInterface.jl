@@ -9,6 +9,8 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Constraints
 
+## Add a constraint
+
 All constraints are specified with [`add_constraint`](@ref) by restricting the
 output of some function to a set. The interface allows an arbitrary combination
 of functions and sets, but of course solvers may decide to support only a small
@@ -85,7 +87,7 @@ MOI.add_constraint(
 
 [TODO Describe ConstraintIndex objects.]
 
-### Constraints by function-set pairs
+## Constraints by function-set pairs
 
 Below is a list of common constraint types and how they are represented
 as function-set pairs in MOI. In the notation below, ``x`` is a vector of
@@ -94,7 +96,7 @@ scalar constants, ``a, b`` are constant vectors, `A` is a constant matrix and
 ``\mathbb{R}_+`` (resp. ``\mathbb{R}_-``) is the set of nonnegative (resp.
 nonpositive) real numbers.
 
-#### Linear constraints
+### Linear constraints
 
 | Mathematical Constraint       | MOI Function                 | MOI Set        |
 |-------------------------------|------------------------------|----------------|
@@ -133,7 +135,7 @@ allow the solver to return separate dual multipliers for the two bounds, while
 the former will allow the solver to return only a single dual for the interval
 constraint.
 
-#### Conic constraints
+### Conic constraints
 
 | Mathematical Constraint                                       | MOI Function                 | MOI Set                            |
 |---------------------------------------------------------------|------------------------------|------------------------------------|
@@ -151,7 +153,7 @@ where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
 ``A`` is an affine map that outputs symmetric matrices and
 ``B`` is an affine map that outputs square matrices.
 
-#### Quadratic constraints
+### Quadratic constraints
 
 | Mathematical Constraint       | MOI Function                 | MOI Set                       |
 |-------------------------------|------------------------------|-------------------------------|
@@ -160,8 +162,7 @@ where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
 | ``x^TQx + a^Tx + b = 0``      | `ScalarQuadraticFunction`    | `EqualTo`                     |
 | Bilinear matrix inequality    | `VectorQuadraticFunction`    | `PositiveSemidefiniteCone...` |
 
-
-#### Discrete and logical constraints
+### Discrete and logical constraints
 
 | Mathematical Constraint                                                                    | MOI Function           | MOI Set                            |
 |--------------------------------------------------------------------------------------------|------------------------|------------------------------------|
