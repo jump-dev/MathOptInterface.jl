@@ -357,9 +357,9 @@ Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
             @test sprint(MOIB.print_graph, bridged) == MOI.Utilities.replace_acronym("""
 Bridge graph with 1 variable nodes, 3 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.PositiveSemidefiniteConeSquare` are supported (distance 6) by adding free variables and then constrain them, see (1).
- (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeSquare` constraints are bridged (distance 3) by $(MOIB.Constraint.SquareBridge{T,MOI.VectorAffineFunction{T},MOI.ScalarAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeSquare}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
- (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are bridged (distance 2) by $(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle}).
+ (1) `$(MOI.VectorAffineFunction{T})`-in-`MOI.PositiveSemidefiniteConeSquare` constraints are bridged (distance 3) by $(MOIB.Constraint.SquareBridge{T,MOI.VectorAffineFunction{T},MOI.ScalarAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeSquare}).
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
+ (3) `$(MOI.VectorAffineFunction{T})`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are bridged (distance 2) by $(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle}).
 """)
         end
         @testset "Vectorize" begin
@@ -567,11 +567,11 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because no added bridge supports bridging it.
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because no added bridge supports bridging it.
  (3) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
    Cannot use `$(MOIB.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}})` because:
    (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
@@ -584,15 +584,15 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone})` because:
    [1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported
-   (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (3) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported
+ (3) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
  (4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
    Cannot use `$(MOIB.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}})` because:
    (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
@@ -604,14 +604,14 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone})` because:
-   (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (4) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported
+ (4) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
    Cannot use `$(MOIB.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}})` because:
    (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
@@ -623,9 +623,9 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
 Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  [1] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2) by $(MOIB.Variable.RSOCtoPSDBridge{T}).
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 5) by $(MOIB.Constraint.QuadtoSOCBridge{T}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4) by $(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4) by $(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
  (3) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarFunctionizeBridge{T,MOI.EqualTo{T}}).
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
+ (4) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5) by $(MOIB.Constraint.QuadtoSOCBridge{T}).
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 12) by $(MOIB.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
  |2| objective function of type `MOI.SingleVariable` is bridged (distance 1) by $(MOIB.Objective.FunctionizeBridge{T}).
@@ -637,31 +637,31 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
         S = MOI.ExponentialCone
         @test debug_string(MOIB.debug_supports_constraint, F, S) ==
 """
-`MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
- (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because no added bridge supports bridging it.
+`$(MOI.VectorAffineFunction{T})`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+ (1) `$(MOI.VectorAffineFunction{T})`-in-`MOI.ExponentialCone` constraints are not supported because no added bridge supports bridging it.
 """
         MOIB.add_bridge(bridged, MOIB.Constraint.VectorSlackBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) == MOI.Utilities.replace_acronym("""
-`MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+`$(MOI.VectorAffineFunction{T})`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
- (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
+ (1) `$(MOI.VectorAffineFunction{T})`-in-`MOI.ExponentialCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.ExponentialCone})` because:
    [1] constrained variables in `MOI.ExponentialCone` are not supported
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
 """)
         MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
         @test debug_string(MOIB.debug_supports_constraint, F, S) ==MOI.Utilities.replace_acronym("""
-`MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
+`$(MOI.VectorAffineFunction{T})`-in-`MOI.ExponentialCone` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.ExponentialCone` are not supported because no added bridge supports bridging it.
    Cannot add free variables and then constrain them because:
-   (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported
- (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
+   (1) `$(MOI.VectorAffineFunction{T})`-in-`MOI.ExponentialCone` constraints are not supported
+ (1) `$(MOI.VectorAffineFunction{T})`-in-`MOI.ExponentialCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.ExponentialCone})` because:
    [1] constrained variables in `MOI.ExponentialCone` are not supported
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
 """)
     end
 end
@@ -775,9 +775,9 @@ Bridge graph with 5 variable nodes, 11 constraint nodes and 0 objective nodes.
  [4] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (6).
  [5] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (8).
  (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorAffineFunction{T}}).
+ (2) `$(MOI.VectorAffineFunction{T})`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorAffineFunction{T}}).
  (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
+ (4) `$(MOI.VectorAffineFunction{T})`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (5) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (6) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOIB.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
  (7) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.SingleVariable}).
