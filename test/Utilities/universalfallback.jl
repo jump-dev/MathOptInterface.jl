@@ -110,6 +110,7 @@ end
 @testset "Optimizer Attribute" begin
     attr = UnknownOptimizerAttribute()
     listattr = MOI.ListOfOptimizerAttributesSet()
+    empty!(uf.optattr)
     test_optmodattrs(uf, model, attr, listattr)
 end
 @testset "Model Attribute" begin
@@ -262,8 +263,9 @@ end
         # check that the constraint types are in the order they were added in
         @test MOI.get(uf, MOI.ListOfConstraints()) == [(F, typeof(sets[1])), (F, typeof(sets[2]))]
         # check that the constraints given the constraint type are in the order they were added in
-        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[1])}()) == [MOI.ConstraintIndex{F, typeof(sets[1])}(1), MOI.ConstraintIndex{F, typeof(sets[1])}(3)]
-        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[2])}()) == [MOI.ConstraintIndex{F, typeof(sets[2])}(2), MOI.ConstraintIndex{F, typeof(sets[2])}(4)]
+        for set in sets
+            @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(set)}()) == [MOI.ConstraintIndex{F, typeof(set)}(1), MOI.ConstraintIndex{F, typeof(set)}(2)]
+        end
     end
 end
 

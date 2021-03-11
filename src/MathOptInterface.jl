@@ -140,6 +140,10 @@ include("modifications.jl")
 include("variables.jl")
 include("nlp.jl")
 
+if VERSION > v"1.4.2"
+    include("precompile.jl")
+end
+
 # submodules
 include("Utilities/Utilities.jl") # MOI.Utilities
 include("Test/Test.jl")           # MOI.Test

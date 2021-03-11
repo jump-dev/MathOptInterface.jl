@@ -19,7 +19,7 @@ Works as a `AbstractDict{CI, V}` with minimal differences.
 Note that `CI` is not a concrete type, opposed to `CI{MOI.SingleVariable, MOI.Integers}`,
 which is a concrete type.
 
-When optimal performance or type stability is required its possible to obtain a
+When optimal performance or type stability is required it is possible to obtain a
 fully type stable dictionary with values of type `V` and keys of type
 `CI{MOI.SingleVariable, MOI.Integers}` from the dictionary `dict`, for instance:
 

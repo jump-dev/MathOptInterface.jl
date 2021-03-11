@@ -7,9 +7,7 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# Advanced usage
-
-## Duality
+# Duality
 
 Conic duality is the starting point for MOI's duality conventions. When all
 functions are affine (or coordinate projections), and all constraint sets are
@@ -109,11 +107,11 @@ and similarly, the dual is:
 \end{align}
 ```
 
-!!! warn
+!!! warning
     For the LP case is that the signs of the feasible duals depend only on the
     sense of the inequality and not on the objective sense.
 
-### Duality and scalar product
+## Duality and scalar product
 
 The scalar product is different from the canonical one for the sets
 [`PositiveSemidefiniteConeTriangle`](@ref), [`LogDetConeTriangle`](@ref),
@@ -125,7 +123,7 @@ twice the value of the `coefficients` field in the [`VectorAffineFunction`](@ref
 for the corresponding rows. See [`PositiveSemidefiniteConeTriangle`](@ref) for
 details.
 
-### Dual for problems with quadratic functions
+## Dual for problems with quadratic functions
 
 Given a problem with quadratic functions:
 ```math

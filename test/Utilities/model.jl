@@ -219,8 +219,8 @@ end
 
     loc1 = MOI.get(model, MOI.ListOfConstraints())
     loc2 = Vector{Tuple{DataType, DataType}}()
-    function _pushloc(constrs::Vector{MOIU.ConstraintEntry{F, S}}) where {F, S}
-        if !isempty(constrs)
+    function _pushloc(v::MOI.Utilities.VectorOfConstraints{F, S}) where {F, S}
+        if !MOI.is_empty(v)
             push!(loc2, (F, S))
         end
     end
