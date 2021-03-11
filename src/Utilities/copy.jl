@@ -87,8 +87,8 @@ _index_to_variable(i) = MOI.VariableIndex(i)
 const DenseVariableDict{V} = CleverDicts.CleverDict{
     MOI.VariableIndex,
     V,
-    typeof(MOI.index_value),
-    typeof(_index_to_variable),
+    typeof(CleverDicts.key_to_index),
+    typeof(CleverDicts.index_to_key),
 }
 function dense_variable_dict(::Type{V}, n) where {V}
     return CleverDicts.CleverDict{MOI.VariableIndex,V}(

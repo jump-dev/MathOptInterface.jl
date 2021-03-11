@@ -249,4 +249,16 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
         @test d[MathOptInterface.VariableIndex(0)] == "b"
         @test_throws ErrorException CleverDicts.add_item(d, "c")
     end
+
+    @testset "convert" begin
+        vals = [MathOptInterface.VariableIndex(-i) for i in 1:10]
+        d = Dict(MathOptInterface.VariableIndex(i) => vals[i] for i in 1:10)
+        T = MathOptInterface.Utilities.DenseVariableDict{MathOptInterface.VariableIndex}
+        c = convert(T, d)
+        @test c isa T
+        @test c.is_dense
+        @test c.last_index == 10
+        @test c.vector == vals
+        @test c === convert(T, c)
+    end
 end
