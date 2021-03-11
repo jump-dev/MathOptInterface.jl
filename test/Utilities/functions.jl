@@ -53,9 +53,9 @@ end
         @test quad isa MOI.VectorQuadraticFunction{Int}
     end
     @testset "vectorize pure column affine" begin
-        g1 = MOI.ScalarAffineColumnFunction([MOI.ScalarAffineTerm(2, x)], 3)
-        g2 = MOI.ScalarAffineColumnFunction(Int[], MOI.VariableIndex[], 1)
-        g3 = MOI.ScalarAffineColumnFunction([5], [y], 4)
+        g1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2, x)], 3)
+        g2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Int}[], 1)
+        g3 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(5, y)], 4)
         @test g ≈ MOIU.vectorize([g1, g2, g3])
         vov = MOIU.vectorize(MOI.SingleVariable[])
         @test MOI.output_dimension(vov) == 0
@@ -68,9 +68,9 @@ end
         @test quad isa MOI.VectorQuadraticFunction{Int}
     end
     @testset "vectorize mixed affine functions" begin
-        g1 = MOI.ScalarAffineColumnFunction([MOI.ScalarAffineTerm(2, x)], 3)
+        g1 = MOI.ZippedAffineFunction([MOI.ScalarAffineTerm(2, x)], 3)
         g2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Int}[], 1)
-        g3 = MOI.ScalarAffineColumnFunction([5], [y], 4)
+        g3 = MOI.ZippedAffineFunction{T}([5], [y], 4)
         @test g ≈ MOIU.vectorize([g1, g2, g3])
         vov = MOIU.vectorize(MOI.SingleVariable[])
         @test MOI.output_dimension(vov) == 0
