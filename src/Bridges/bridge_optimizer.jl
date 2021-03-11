@@ -718,7 +718,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)
     for bridge in values(Objective.bridges(b))
         s -= MOI.get(bridge, attr)
     end
-    return s
+    return Int64(s)
 end
 
 # Number of all constraints, including those bridged
@@ -756,7 +756,7 @@ function MOI.get(
     for bridge in values(Objective.bridges(b))
         s -= MOI.get(bridge, attr)
     end
-    return s
+    return Int64(s)
 end
 
 function MOI.get(

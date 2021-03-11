@@ -322,7 +322,7 @@ end
 function MOI.get(
     uf::UniversalFallback,
     attr::MOI.NumberOfConstraints{MOI.SingleVariable,S},
-) where {S}
+)::Int64 where {S}
     F = MOI.SingleVariable
     if MOI.supports_constraint(uf.model, F, S)
         return MOI.get(uf.model, attr)
@@ -335,7 +335,7 @@ end
 function MOI.get(
     uf::UniversalFallback,
     attr::MOI.NumberOfConstraints{F,S},
-) where {F,S}
+)::Int64 where {F,S}
     return MOI.get(constraints(uf, F, S), attr)
 end
 function MOI.get(

@@ -87,7 +87,7 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(bridge::RSOCtoPSDBridge, ::MOI.NumberOfVariables)
-    return length(bridge.variables)
+    return Int64(length(bridge.variables))
 end
 
 function MOI.get(bridge::RSOCtoPSDBridge, ::MOI.ListOfVariableIndices)
@@ -98,7 +98,11 @@ function MOI.get(
     bridge::RSOCtoPSDBridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S},
 ) where {S<:Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}}
-    return bridge.psd isa MOI.ConstraintIndex{MOI.VectorOfVariables,S} ? 1 : 0
+    if bridge.psd isa MOI.ConstraintIndex{MOI.VectorOfVariables,S}
+        return Int64(1)
+    else
+        return Int64(0)
+    end
 end
 
 function MOI.get(
@@ -116,7 +120,7 @@ function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}},
 ) where {T}
-    return length(bridge.off_diag)
+    return Int64(length(bridge.off_diag))
 end
 
 function MOI.get(
@@ -130,7 +134,7 @@ function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
-    return length(bridge.diag)
+    return Int64(length(bridge.diag))
 end
 
 function MOI.get(

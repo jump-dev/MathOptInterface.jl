@@ -649,13 +649,14 @@ function MOI.get(
     ::MOI.NumberOfConstraints{MOI.SingleVariable,S},
 ) where {S}
     flag = single_variable_flag(S)
-    return count(mask -> !iszero(flag & mask), model.single_variable_mask)
+    n = count(mask -> !iszero(flag & mask), model.single_variable_mask)
+    return Int64(n)
 end
 function MOI.get(
     model::AbstractModel,
     noc::MOI.NumberOfConstraints{F,S},
 ) where {F,S}
-    return MOI.get(model.constraints, noc)
+    return Int64(MOI.get(model.constraints, noc))
 end
 
 function _add_constraint_type(
@@ -1100,7 +1101,7 @@ for (loop_name, loop_super_type) in [
                     MOI.FEASIBILITY_SENSE,
                     false,
                     zero(MOI.ScalarAffineFunction{T}),
-                    0,
+                    Int64(0),
                     nothing,
                     UInt8[],
                     T[],

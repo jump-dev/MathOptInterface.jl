@@ -128,3 +128,103 @@ function solve_time(model::MOI.ModelLike, config::Config)
     end
 end
 unittests["solve_time"] = solve_time
+
+# Model and Optimizer attributes.
+for attr in (
+    :BarrierIterations,
+    :ConflictStatus,
+    :DualStatus,
+    :Name,
+    :NodeCount,
+    :NumberOfThreads,
+    :NumberOfVariables,
+    :ObjectiveFunctionType,
+    :ObjectiveSense,
+    :PrimalStatus,
+    :RelativeGap,
+    :ResultCount,
+    :Silent,
+    :SimplexIterations,
+    :SolverName,
+    :SolveTime,
+    :TerminationStatus,
+    :TimeLimitSec,
+)
+    f = Symbol("test_attribute_$(attr)")
+    @eval begin
+        function $(f)(model::MOI.ModelLike, config::TestConfig)
+            MOI.empty!(model)
+            MOI.optimize!(model)
+            attribute = MOI.$(attr)()
+            T = MOI.attribute_value_type(attribute)
+            @static if VERSION < v"1.5"
+                @test MOI.get(model, attribute) isa T
+            else
+                @test @inferred(T, MOI.get(model, attribute)) isa T
+            end
+        end
+        # unittests["test_attribute_$(attr)"]
+    end
+end
+
+# Variable attributes.
+for attr in (:VariableName,)
+    f = Symbol("test_attribute_$(attr)")
+    @eval begin
+        function $(f)(model::MOI.ModelLike, config::TestConfig)
+            MOI.empty!(model)
+            x = MOI.add_variable(model)
+            MOI.set(model, MOI.VariableName(), x, "x")
+            MOI.optimize!(model)
+            attribute = MOI.$(attr)()
+            T = MOI.attribute_value_type(attribute)
+            @static if VERSION < v"1.5"
+                @test MOI.get(model, attribute, x) isa T
+            else
+                @test @inferred(T, MOI.get(model, attribute, x)) isa T
+            end
+        end
+        # unittests["test_attribute_$(attr)"]
+    end
+end
+
+# Constraint attributes.
+for attr in (
+    :CanonicalConstraintFunction,
+    :ConstraintFunction,
+    :ConstraintName,
+    :ConstraintSet,
+)
+    f = Symbol("test_attribute_$(attr)")
+    @eval begin
+        function $(f)(model::MOI.ModelLike, config::TestConfig)
+            MOI.empty!(model)
+            x = MOI.add_variable(model)
+            ci = MOI.add_constraint(
+                model,
+                MOI.SingleVariable(x),
+                MOI.GreaterThan(0.0),
+            )
+            MOI.optimize!(model)
+            MOI.set(model, MOI.ConstraintName(), ci, "ci")
+            attribute = MOI.$(attr)()
+            T = MOI.attribute_value_type(attribute)
+            @static if VERSION < v"1.5"
+                @test MOI.get(model, attribute, ci) isa T
+            else
+                @test @inferred(T, MOI.get(model, attribute, ci)) isa T
+            end
+        end
+        # unittests["test_attribute_$(attr)"]
+    end
+end
+
+# TODO(odow): attributes not tested:
+# CallbackNodeStatus()
+# LazyConstraintCallback()
+# NumberOfConstraints{F,S}()
+# ObjectiveFunction{F}()
+# ConstraintBasisStatus()
+# ConstraintConflictStatus()
+# VariableBridgingCost()
+# ConstraintBridgingCost()

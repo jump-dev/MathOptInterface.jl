@@ -104,14 +104,14 @@ function MOI.get(
     bridge::ZeroOneBridge{T},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{T}},
 ) where {T}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
     bridge::ZeroOneBridge,
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer},
 )
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

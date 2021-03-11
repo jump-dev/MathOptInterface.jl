@@ -210,7 +210,10 @@ function subsum(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::LogDetBridge, ::MOI.NumberOfVariables) = length(b.Δ) + length(b.l)
+
+function MOI.get(b::LogDetBridge, ::MOI.NumberOfVariables)
+    return Int64(length(b.Δ) + length(b.l))
+end
 
 MOI.get(b::LogDetBridge, ::MOI.ListOfVariableIndices) = [b.Δ; b.l]
 
@@ -221,21 +224,21 @@ function MOI.get(
         MOI.PositiveSemidefiniteConeTriangle,
     },
 ) where {T}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
     b::LogDetBridge{T},
     ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.ExponentialCone},
 ) where {T}
-    return length(b.lcindex)
+    return Int64(length(b.lcindex))
 end
 
 function MOI.get(
     ::LogDetBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
 ) where {T}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
@@ -407,7 +410,8 @@ function MOIB.added_constraint_types(::Type{RootDetBridge{T}}) where {T}
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables) = length(b.Δ)
+
+MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables) = Int64(length(b.Δ))
 
 MOI.get(b::RootDetBridge, ::MOI.ListOfVariableIndices) = copy(b.Δ)
 
@@ -418,7 +422,7 @@ function MOI.get(
         MOI.PositiveSemidefiniteConeTriangle,
     },
 ) where {T}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
@@ -428,7 +432,7 @@ function MOI.get(
         MOI.GeometricMeanCone,
     },
 ) where {T}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

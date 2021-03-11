@@ -34,7 +34,7 @@ end
 The number of constraints of the type `F`-in-`S` created by the bridge `b` in
 the model.
 """
-MOI.get(::AbstractBridge, ::MOI.NumberOfConstraints) = 0
+MOI.get(::AbstractBridge, ::MOI.NumberOfConstraints) = Int64(0)
 
 """
     MOI.get(b::AbstractBridge, ::MOI.ListOfConstraintIndices{F, S}) where {F, S}

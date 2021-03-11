@@ -63,7 +63,7 @@ function eval_term(varval::Function, t::MOI.ScalarQuadraticTerm)
 end
 
 """
-    map_indices(index_map::Function, x)
+    map_indices(index_map::Function, x::X)::X where {X}
 
 Substitute any [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
 in `x` by the [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
@@ -77,11 +77,17 @@ submittable value.
 function map_indices end
 
 """
-    map_indices(variable_map::AbstractDict{T, T}, x) where {T <: MOI.Index}
+    map_indices(
+        variable_map::AbstractDict{T,T},
+        x::X,
+    )::X where {T<:MOI.Index,X}
 
 Shortcut for `map_indices(vi -> variable_map[vi], x)`.
 """
-function map_indices(variable_map::AbstractDict{T,T}, x) where {T<:MOI.Index}
+function map_indices(
+    variable_map::AbstractDict{T,T},
+    x::X,
+)::X where {T<:MOI.Index,X}
     return map_indices(vi -> variable_map[vi], x)
 end
 

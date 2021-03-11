@@ -48,9 +48,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(::VectorizeBridge, ::MOI.NumberOfVariables)
-    return 1
-end
+MOI.get(::VectorizeBridge, ::MOI.NumberOfVariables) = Int64(1)
 
 function MOI.get(bridge::VectorizeBridge, ::MOI.ListOfVariableIndices)
     return [bridge.variable]
@@ -60,7 +58,7 @@ function MOI.get(
     ::VectorizeBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S},
 ) where {T,S}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

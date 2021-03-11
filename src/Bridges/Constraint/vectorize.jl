@@ -75,7 +75,7 @@ function MOI.get(
     ::VectorizeBridge{T,F,S},
     ::MOI.NumberOfConstraints{F,S},
 ) where {T,F,S}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

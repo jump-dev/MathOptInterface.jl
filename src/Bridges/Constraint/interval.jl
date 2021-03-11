@@ -87,14 +87,14 @@ function MOI.get(
     ::SplitIntervalBridge{T,F,S,LS},
     ::MOI.NumberOfConstraints{F,LS},
 ) where {T,F,S,LS}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
     ::SplitIntervalBridge{T,F,S,LS,US},
     ::MOI.NumberOfConstraints{F,US},
 ) where {T,F,S,LS,US}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

@@ -28,7 +28,7 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(bridge::FlipSignBridge, ::MOI.NumberOfVariables)
-    return length(bridge.flipped_variables)
+    return Int64(length(bridge.flipped_variables))
 end
 
 function MOI.get(bridge::FlipSignBridge, ::MOI.ListOfVariableIndices)
@@ -39,7 +39,7 @@ function MOI.get(
     ::FlipSignBridge{T,S1,S2},
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S2},
 ) where {T,S1,S2<:MOI.AbstractVectorSet}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

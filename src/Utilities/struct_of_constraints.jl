@@ -108,9 +108,9 @@ function MOI.get(
     attr::MOI.NumberOfConstraints{F,S},
 ) where {F,S}
     if !MOI.supports_constraint(model, F, S)
-        return 0
+        return Int64(0)
     end
-    return MOI.get(constraints(model, F, S), attr)
+    return Int64(MOI.get(constraints(model, F, S), attr))
 end
 
 function MOI.get(

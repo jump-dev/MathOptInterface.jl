@@ -73,7 +73,7 @@ function MOI.get(
     bridge::NormSpectralBridge{T,F,G},
     ::MOI.NumberOfConstraints{F,MOI.PositiveSemidefiniteConeTriangle},
 ) where {T,F,G}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
@@ -281,7 +281,7 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(bridge::NormNuclearBridge, ::MOI.NumberOfVariables)
-    return length(bridge.U) + length(bridge.V)
+    return Int64(length(bridge.U) + length(bridge.V))
 end
 
 function MOI.get(bridge::NormNuclearBridge, ::MOI.ListOfVariableIndices)
@@ -292,14 +292,14 @@ function MOI.get(
     bridge::NormNuclearBridge{T,F,G,H},
     ::MOI.NumberOfConstraints{F,MOI.GreaterThan{T}},
 ) where {T,F,G,H}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
     bridge::NormNuclearBridge{T,F,G,H},
     ::MOI.NumberOfConstraints{G,MOI.PositiveSemidefiniteConeTriangle},
 ) where {T,F,G,H}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

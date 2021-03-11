@@ -39,7 +39,7 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(::FunctionizeBridge, ::MOI.NumberOfVariables)
-    return 0
+    return Int64(0)
 end
 
 function MOI.get(::FunctionizeBridge, ::MOI.ListOfVariableIndices)

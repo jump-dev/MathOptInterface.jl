@@ -168,14 +168,14 @@ function MOI.get(
     ::SquareBridge{T,F,G,TT},
     ::MOI.NumberOfConstraints{F,TT},
 ) where {T,F,G,TT}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
     bridge::SquareBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.EqualTo{T}},
 ) where {T,F,G}
-    return length(bridge.sym)
+    return Int64(length(bridge.sym))
 end
 
 function MOI.get(

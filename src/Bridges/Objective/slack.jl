@@ -78,9 +78,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(::SlackBridge, ::MOI.NumberOfVariables)
-    return 1
-end
+MOI.get(::SlackBridge, ::MOI.NumberOfVariables) = Int64(1)
 
 function MOI.get(bridge::SlackBridge, ::MOI.ListOfVariableIndices)
     return [bridge.slack]
@@ -90,7 +88,7 @@ function MOI.get(
     bridge::SlackBridge{T,F},
     ::MOI.NumberOfConstraints{F,S},
 ) where {T,F,S<:Union{MOI.GreaterThan{T},MOI.LessThan{T}}}
-    return bridge.constraint isa MOI.ConstraintIndex{F,S} ? 1 : 0
+    return Int64(bridge.constraint isa MOI.ConstraintIndex{F,S} ? 1 : 0)
 end
 
 function MOI.get(

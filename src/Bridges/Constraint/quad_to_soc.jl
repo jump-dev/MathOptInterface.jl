@@ -187,7 +187,7 @@ function MOI.get(
         MOI.RotatedSecondOrderCone,
     },
 ) where {T}
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(

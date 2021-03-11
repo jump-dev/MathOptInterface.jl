@@ -40,7 +40,7 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(bridge::SOCtoRSOCBridge, ::MOI.NumberOfVariables)
-    return length(bridge.variables)
+    return Int64(length(bridge.variables))
 end
 
 function MOI.get(bridge::SOCtoRSOCBridge, ::MOI.ListOfVariableIndices)
@@ -51,7 +51,7 @@ function MOI.get(
     bridge::SOCtoRSOCBridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone},
 )
-    return 1
+    return Int64(1)
 end
 
 function MOI.get(
