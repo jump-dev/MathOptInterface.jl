@@ -338,3 +338,21 @@ end
     MOI.modify(model, attr, MOI.ScalarCoefficientChange(x, 1.0))
     @test attr in MOI.get(model, MOI.ListOfModelAttributesSet())
 end
+
+@testset "Incorrect modifications" begin
+    model = MOIU.Model{Float64}()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.EqualTo(1.0),
+    )
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
+    )
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintFunction(), c, MOI.SingleVariable(x)),
+    )
+end
