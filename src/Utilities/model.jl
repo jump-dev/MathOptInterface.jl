@@ -339,9 +339,9 @@ function MOI.supports(
 end
 function MOI.set(
     model::AbstractModel,
-    attr::MOI.ObjectiveFunction,
-    f::MOI.AbstractFunction,
-)
+    attr::MOI.ObjectiveFunction{F},
+    f::F,
+) where {F<:MOI.AbstractFunction}
     if !MOI.supports(model, attr)
         throw(MOI.UnsupportedAttribute(attr))
     end
@@ -565,7 +565,7 @@ end
 function MOI.set(
     ::AbstractModel,
     ::MOI.ConstraintFunction,
-    ::CI{MOI.SingleVariable},
+    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
     ::MOI.SingleVariable,
 )
     return throw(MOI.SettingSingleVariableFunctionNotAllowed())
@@ -573,9 +573,9 @@ end
 function MOI.set(
     model::AbstractModel{T},
     ::MOI.ConstraintSet,
-    ci::CI{MOI.SingleVariable},
-    set::SUPPORTED_VARIABLE_SCALAR_SETS{T},
-) where {T}
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    set::S,
+) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(model, ci)
     flag = single_variable_flag(typeof(set))
     if !iszero(flag & LOWER_BOUND_MASK)
@@ -586,13 +586,24 @@ function MOI.set(
     end
     return
 end
+
 function MOI.set(
     model::AbstractModel,
-    attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
-    ci::MOI.ConstraintIndex,
-    func_or_set,
-)
-    MOI.set(constraints(model, ci), attr, ci, func_or_set)
+    attr::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{<:MOI.AbstractFunction,S},
+    set::S,
+) where {S<:MOI.AbstractSet}
+    MOI.set(constraints(model, ci), attr, ci, set)
+    return
+end
+
+function MOI.set(
+    model::AbstractModel,
+    attr::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex{F,<:MOI.AbstractSet},
+    func::F,
+) where {F<:MOI.AbstractFunction}
+    MOI.set(constraints(model, ci), attr, ci, func)
     return
 end
 
