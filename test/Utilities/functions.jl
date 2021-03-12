@@ -60,7 +60,7 @@ end
         vov = MOIU.vectorize(MOI.SingleVariable[])
         @test MOI.output_dimension(vov) == 0
         @test vov isa MOI.VectorOfVariables
-        aff = MOIU.vectorize(MOI.ScalarAffineColumnFunction{Int}[])
+        aff = MOIU.vectorize(MOI.ZippedAffineFunction{Int}[])
         @test MOI.output_dimension(aff) == 0
         @test aff isa MOI.VectorAffineFunction{Int}
         quad = MOIU.vectorize(MOI.ScalarQuadraticFunction{Int}[])
@@ -70,12 +70,12 @@ end
     @testset "vectorize mixed affine functions" begin
         g1 = MOI.ZippedAffineFunction([MOI.ScalarAffineTerm(2, x)], 3)
         g2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Int}[], 1)
-        g3 = MOI.ZippedAffineFunction{T}([5], [y], 4)
+        g3 = MOI.ZippedAffineFunction([5], [y], 4)
         @test g ≈ MOIU.vectorize([g1, g2, g3])
         vov = MOIU.vectorize(MOI.SingleVariable[])
         @test MOI.output_dimension(vov) == 0
         @test vov isa MOI.VectorOfVariables
-        aff = MOIU.vectorize(MOI.ScalarAffineColumnFunction{Int}[])
+        aff = MOIU.vectorize(MOI.ZippedAffineFunction{Int}[])
         @test MOI.output_dimension(aff) == 0
         @test aff isa MOI.VectorAffineFunction{Int}
         quad = MOIU.vectorize(MOI.ScalarQuadraticFunction{Int}[])

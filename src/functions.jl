@@ -111,6 +111,21 @@ const ZippedAffineFunction{T} = GenericScalarAffineFunction{T, ZipTermVector{T}}
 Base.getindex(zv::ZipTermVector, i::Base.Integer) = ScalarAffineTerm(zv.coefficients[i], zv.variable_indices[i])
 Base.size(zv::ZipTermVector) = size(zv.coefficients)
 
+function ZipTermVector(terms::AbstractVector{ScalarAffineTerm{T}}) where {T}
+    coefficients = Vector{T}()
+    variable_indices = Vector{VariableIndex}()
+    Base.sizehint!(coefficients, length(terms))
+    Base.sizehint!(variable_indices, length(terms))
+    for term in terms
+        push!(coefficients, term.coefficient)
+        push!(variable_indices, term.variable_index)
+    end
+    return ZipTermVector{T}(
+        coefficients,
+        variable_indices,
+    )
+end
+
 function Base.push!(zv::ZipTermVector, term::ScalarAffineTerm)
     push!(zv.coefficients, term.coefficient)
     push!(zv.variable_indices, term.variable_index)
@@ -144,6 +159,24 @@ variable_indices(func::ScalarAffineFunction) = [term.variable_index for term in 
 
 coefficients(func::ZippedAffineFunction) = func.terms.coefficients
 variable_indices(func::ZippedAffineFunction) = func.terms.variable_indices
+
+function ZippedAffineFunction(terms::AbstractVector{MathOptInterface.ScalarAffineTerm{T}}, c::T) where {T}
+    return ZippedAffineFunction{T}(
+        ZipTermVector(terms),
+        c,
+    )
+end
+
+function ZippedAffineFunction(coefficients::Vector{T}, variable_indices::Vector{MathOptInterface.VariableIndex}, c::T = zero(T)) where {T}
+    return ZippedAffineFunction(
+        ZipTermVector(
+            coefficients,
+            variable_indices,
+        ),
+        c,
+    )
+end
+
 
 """
     struct VectorAffineTerm{T}

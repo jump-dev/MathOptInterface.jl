@@ -2590,7 +2590,7 @@ end
 number_of_affine_terms(::Type{T}, ::T) where {T} = 0
 number_of_affine_terms(::Type, ::SVF) = 1
 number_of_affine_terms(::Type, f::VVF) = length(f.variables)
-function number_of_affine_terms(::Type{T}, f::Union{SAF{T},VAF{T}}) where {T}
+function number_of_affine_terms(::Type{T}, f::Union{GAF{T},VAF{T}}) where {T}
     return length(f.terms)
 end
 function number_of_affine_terms(::Type{T}, f::Union{SQF{T},VQF{T}}) where {T}
@@ -2599,7 +2599,7 @@ end
 
 function number_of_quadratic_terms(
     ::Type{T},
-    ::Union{T,SVF,VVF,SAF{T},VAF{T}},
+    ::Union{T,SVF,VVF,GAF{T},VAF{T}},
 ) where {T}
     return 0
 end
@@ -2652,7 +2652,7 @@ function fill_terms(
     terms::Vector{MOI.VectorAffineTerm{T}},
     offset::Int,
     output_offset::Int,
-    func::Union{SAF{T},VAF{T}},
+    func::Union{GAF{T},VAF{T}},
 ) where {T}
     n = number_of_affine_terms(T, func)
     return terms[offset.+(1:n)] .= offset_term.(func.terms, output_offset)
@@ -2706,7 +2706,7 @@ function fill_constant(
     constant::Vector{T},
     offset::Int,
     output_offset::Int,
-    func::Union{SAF{T},SQF{T}},
+    func::Union{GAF{T},SQF{T}},
 ) where {T}
     return constant[offset+1] = MOI.constant(func)
 end
@@ -2732,7 +2732,7 @@ function vectorize(funcs::AbstractVector{MOI.SingleVariable})
 end
 
 """
-    vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
+    vectorize(funcs::AbstractVector{<:MOI.GenericScalarAffineFunction{T}}) where {T}
 
 Returns the vector of scalar affine functions in the form of a
 `MOI.VectorAffineFunction{T}`.
