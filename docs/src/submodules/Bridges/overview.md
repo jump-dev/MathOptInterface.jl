@@ -90,14 +90,14 @@ in a [`Bridges.full_bridge_optimizer`](@ref).
 
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 
 julia> optimizer = MOI.Bridges.full_bridge_optimizer(inner_optimizer, Float64)
-MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
+MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
 with 0 variable bridges
 with 0 constraint bridges
 with 0 objective bridges
-with inner model MOIU.Model{Float64}
+with inner model MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 ```
 
 That's all you have to do! Use `optimizer` as normal, and bridging will happen
@@ -122,12 +122,12 @@ However, this will force the constraint to be bridged, even if the
 
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 
 julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer)
-MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOIU.Model{Float64}}
+MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
 with 0 constraint bridges
-with inner model MOIU.Model{Float64}
+with inner model MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 
 julia> x = MOI.add_variable(optimizer)
 MOI.VariableIndex(1)
@@ -154,14 +154,14 @@ manually construct a [`Bridges.LazyBridgeOptimizer`](@ref).
 First, wrap an inner optimizer:
 ```jldoctest lazy_bridge_optimizer
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 
 julia> optimizer = MOI.Bridges.LazyBridgeOptimizer(inner_optimizer)
-MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
+MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
 with 0 variable bridges
 with 0 constraint bridges
 with 0 objective bridges
-with inner model MOIU.Model{Float64}
+with inner model MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 ```
 
 Then use [`Bridges.add_bridge`](@ref) to add individual bridges:
