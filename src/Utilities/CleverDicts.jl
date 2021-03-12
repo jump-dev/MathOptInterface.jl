@@ -384,11 +384,17 @@ function map_values!(f::Function, d::CleverDict)
     return
 end
 
-function Base.convert(::Type{CleverDict{K,V,F,I}}, d::CleverDict{K,V,F,I}) where {K,V,F,I}
+function Base.convert(
+    ::Type{CleverDict{K,V,typeof(key_to_index),typeof(index_to_key)}},
+    d::CleverDict{K,V,typeof(key_to_index),typeof(index_to_key)},
+) where {K,V}
     return d
 end
-function Base.convert(::Type{CleverDict{K,V,F,I}}, src::AbstractDict{K,V}) where {K,V,F,I}
-    dest = CleverDict{K,V}()::CleverDict{K,V,F,I}
+function Base.convert(
+    ::Type{CleverDict{K,V,typeof(key_to_index),typeof(index_to_key)}},
+    src::AbstractDict{K,V},
+) where {K,V}
+    dest = CleverDict{K,V}()
     for key in sort(collect(keys(src)), by=dest.hash)
         dest[key] = src[key]
     end
