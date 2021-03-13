@@ -26,7 +26,7 @@ struct VectorOfConstraints{
         MOI.ConstraintIndex{F,S},
         Tuple{F,S},
         typeof(CleverDicts.key_to_index),
-        Base.Fix1{typeof(CleverDicts.index_to_key),DataType}
+        typeof(CleverDicts.index_to_key),
     }
 
     function VectorOfConstraints{F,S}() where {F,S}

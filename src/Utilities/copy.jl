@@ -87,8 +87,8 @@ _index_to_variable(i) = MOI.VariableIndex(i)
 const DenseVariableDict{V} = CleverDicts.CleverDict{
     MOI.VariableIndex,
     V,
-    typeof(MOI.index_value),
-    typeof(_index_to_variable),
+    typeof(CleverDicts.key_to_index),
+    typeof(CleverDicts.index_to_key),
 }
 function dense_variable_dict(::Type{V}, n) where {V}
     return CleverDicts.CleverDict{MOI.VariableIndex,V}(
@@ -99,12 +99,7 @@ function dense_variable_dict(::Type{V}, n) where {V}
 end
 
 struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
-    # just keeping the union to make it more backward compatible
-    # we should remove as soon as possible.
-    varmap::Union{
-        DenseVariableDict{MOI.VariableIndex},
-        Dict{MOI.VariableIndex,MOI.VariableIndex},
-    }
+    varmap::DenseVariableDict{MOI.VariableIndex}
     conmap::DoubleDicts.MainIndexDoubleDict
 end
 
