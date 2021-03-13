@@ -158,14 +158,16 @@ _set(s::SymbolSet) = esc(s.s)
 _fun(s::SymbolFun) = esc(s.s)
 function _typedset(s::SymbolSet)
     if s.typed
-        :($(_set(s)){T})
+        T = esc(:T)
+        :($(_set(s)){$T})
     else
         _set(s)
     end
 end
 function _typedfun(s::SymbolFun)
     if s.typed
-        :($(_fun(s)){T})
+        T = esc(:T)
+        :($(_fun(s)){$T})
     else
         _fun(s)
     end
@@ -198,7 +200,8 @@ of that function (resp. set) type are stored in the corresponding field.
 """
 function struct_of_constraint_code(struct_name, types, field_types = nothing)
     esc_struct_name = struct_name
-    typed_struct = :($(esc_struct_name){T})
+    T = esc(:T)
+    typed_struct = :($(esc_struct_name){$T})
     type_parametrized = field_types === nothing
     if type_parametrized
         field_types = [Symbol("C$i") for i in eachindex(types)]
@@ -247,10 +250,10 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
     supports_code = if eltype(types) <: SymbolFun
         quote
             function $MOI.supports_constraint(
-                model::$esc_struct_name{T},
+                model::$esc_struct_name{$T},
                 ::Type{F},
                 ::Type{S},
-            ) where {T, F<:Union{$(_typedfun.(types)...)}, S<:MOI.AbstractSet}
+            ) where {$T, F<:Union{$(_typedfun.(types)...)}, S<:MOI.AbstractSet}
                 return $MOI.supports_constraint(constraints(model, F, S), F, S)
             end
         end
@@ -258,10 +261,10 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         @assert eltype(types) <: SymbolSet
         quote
             function $MOI.supports_constraint(
-                model::$esc_struct_name{T},
+                model::$esc_struct_name{$T},
                 ::Type{F},
                 ::Type{S},
-            ) where {T, F<:MOI.AbstractFunction, S<:Union{$(_typedset.(types)...)}}
+            ) where {$T, F<:MOI.AbstractFunction, S<:Union{$(_typedset.(types)...)}}
                 return $MOI.supports_constraint(constraints(model, F, S), F, S)
             end
         end
@@ -276,7 +279,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         constructors = [:($field_type()) for field_type in field_types]
         # If there is no field type, the default constructor is sufficient and
         # adding this constructor will make a `StackOverflow`.
-        constructor_code = :(function $typed_struct() where {T}
+        constructor_code = :(function $typed_struct() where {$T}
             return $typed_struct($(constructors...))
         end)
         if type_parametrized

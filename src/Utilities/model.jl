@@ -769,7 +769,8 @@ function _struct_of_constraints_type(name, subtypes, parametrized_type)
         # Only one type, no need for a `StructOfConstraints`.
         return subtypes[1]
     else
-        t = :($name{T})
+        T = esc(:T)
+        t = :($name{$T})
         if parametrized_type
             append!(t.args, subtypes)
         end
@@ -924,15 +925,16 @@ macro model(
     end
     func_name = esc(Symbol(string(model_name) * "FunctionConstraints"))
     func_typed = _struct_of_constraints_type(func_name, set_struct_types, false)
+    T = esc(:T)
     generic = if is_optimizer
-        :(GenericOptimizer{T, $func_typed})
+        :(GenericOptimizer{$T, $func_typed})
     else
-        :(GenericModel{T, $func_typed})
+        :(GenericModel{$T, $func_typed})
     end
     model_code = if is_optimizer
-        :(const $esc_model_name{T} = $generic)
+        :(const $esc_model_name{$T} = $generic)
     else
-        :(const $esc_model_name{T} = $generic)
+        :(const $esc_model_name{$T} = $generic)
     end
     expr = Expr(:block)
     if length(scalar_sets) >= 2
