@@ -320,6 +320,47 @@ function MOI.supports(
     return MOI.supports(b.model, attr)
 end
 
+function MOIU.pass_nonvariable_constraints(
+    dest::AbstractBridgeOptimizer,
+    src::MOI.ModelLike,
+    copy_names::Bool,
+    idxmap::MOIU.IndexMap,
+    constraint_types,
+    pass_cons,
+    pass_attr;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    not_bridged_types = eltype(constraint_types)[]
+    bridged_types = eltype(constraint_types)[]
+    for (F, S) in constraint_types
+        if is_bridged(dest, F, S)
+            push!(bridged_types, (F, S))
+        else
+            push!(not_bridged_types, (F, S))
+        end
+    end
+    MOIU.pass_nonvariable_constraints(
+        dest.model,
+        src,
+        copy_names,
+        idxmap,
+        not_bridged_types,
+        pass_cons,
+        pass_attr;
+        filter_constraints = filter_constraints,
+    )
+    MOIU.pass_nonvariable_constraints_fallback(
+        dest,
+        src,
+        copy_names,
+        idxmap,
+        bridged_types,
+        pass_cons,
+        pass_attr;
+        filter_constraints = filter_constraints,
+    )
+end
+
 function MOI.copy_to(mock::AbstractBridgeOptimizer, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(mock, src; kws...)
 end

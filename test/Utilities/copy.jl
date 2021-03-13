@@ -620,3 +620,77 @@ end
         MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}(),
     ) == 0
 end
+
+# We create a `OnlyCopyConstraints` that don't implement `add_constraint` but
+# implements `pass_nonvariable_constraints` to check that this is passed accross
+# all layers without falling back to `pass_nonvariable_constraints_fallback`
+# which calls `add_constraint`.
+
+struct OnlyCopyConstraints{F,S} <: MOI.ModelLike
+    constraints::MOIU.VectorOfConstraints{F,S}
+    function OnlyCopyConstraints{F,S}() where {F,S}
+        return new{F,S}(MOIU.VectorOfConstraints{F,S}())
+    end
+end
+MOI.empty!(model::OnlyCopyConstraints) = MOI.empty!(model.constraints)
+function MOI.supports_constraint(
+    model::OnlyCopyConstraints,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOI.supports_constraint(model.constraints, F, S)
+end
+function MOIU.pass_nonvariable_constraints(
+    dest::OnlyCopyConstraints,
+    src::MOI.ModelLike,
+    copy_names::Bool,
+    idxmap::MOIU.IndexMap,
+    constraint_types,
+    pass_cons,
+    pass_attr;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    MOIU.pass_nonvariable_constraints(
+        dest.constraints,
+        src,
+        copy_names,
+        idxmap,
+        constraint_types,
+        pass_cons,
+        pass_attr;
+        filter_constraints = filter_constraints,
+    )
+end
+
+function test_pass_copy(::Type{T}) where {T}
+    F = MOI.ScalarAffineFunction{T}
+    S = MOI.EqualTo{T}
+    S2 = MOI.GreaterThan{T}
+    src = MOIU.Model{T}()
+    x = MOI.add_variable(src)
+    fx = MOI.SingleVariable(x)
+    MOI.add_constraint(src, T(1) * fx, MOI.EqualTo(T(1)))
+    MOI.add_constraint(src, T(2) * fx, MOI.EqualTo(T(2)))
+    MOI.add_constraint(src, T(3) * fx, MOI.GreaterThan(T(3)))
+    MOI.add_constraint(src, T(4) * fx, MOI.GreaterThan(T(4)))
+    dest = MOIU.CachingOptimizer(
+        MOI.Bridges.full_bridge_optimizer(
+            MOIU.UniversalFallback(
+                MOIU.GenericOptimizer{T,OnlyCopyConstraints{F,S}}()
+            ),
+            T,
+        ),
+        MOIU.AUTOMATIC,
+    )
+    MOI.copy_to(dest, src)
+    voc = dest.model_cache.model.model.constraints.constraints
+    @test MOI.get(voc, MOI.NumberOfConstraints{F,S}()) == 2
+    @test !haskey(dest.model_cache.model.constraints, (F,S))
+    @test MOI.get(dest, MOI.NumberOfConstraints{F,S2}()) == 2
+    @test haskey(dest.model_cache.model.constraints, (F,S2))
+end
+
+@testset "copy of constraints passed as copy accross layers" begin
+    test_pass_copy(Int)
+    test_pass_copy(Float64)
+end
