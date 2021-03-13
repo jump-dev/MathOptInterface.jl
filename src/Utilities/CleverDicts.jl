@@ -285,7 +285,7 @@ function Base.iterate(
         else
             el, i = itr
             new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
-            @static if VERSION >= v"1.4.0"
+            @static if (VersionNumber)(split(string(VERSION),"-")[1]) >= v"1.4.0"
                 return new_el, State(i[2], i[1])
             else
                 return new_el, State(i)
@@ -309,7 +309,7 @@ function Base.iterate(
     # Note that BitSet is defined by machine Int, so we need to cast any `.int`
     # fields to `Int` for 32-bit machines.
     if _is_dense(c)
-        @static if VERSION >= v"1.4.0"
+        @static if (VersionNumber)(split(string(VERSION),"-")[1]) >= v"1.4.0"
             itr = iterate(c.set, (s.uint, Int(s.int)))
         else
             itr = iterate(c.set, Int(s.int))
@@ -319,7 +319,7 @@ function Base.iterate(
         else
             el, i = itr
             new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
-            @static if VERSION >= v"1.4.0"
+            @static if (VersionNumber)(split(string(VERSION),"-")[1]) >= v"1.4.0"
                 return new_el, State(i[2], i[1])
             else
                 return new_el, State(i)
