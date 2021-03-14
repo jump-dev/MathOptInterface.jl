@@ -60,8 +60,12 @@ julia> MOI.set(
        );
 
 julia> MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-MAX_SENSE::OptimizationSense = 1
 ```
+
+!!! tip
+    `MOI.ScalarAffineTerm.(c, x)` is a shortcut for
+    `[MOI.ScalarAffineTerm(c[i], x[i]) for i = 1:3]`. This is Julia's broadcast
+    syntax in action, and is used quite often throughout MOI.
 
 ## Add the constraints
 

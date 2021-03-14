@@ -14,7 +14,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 Use [`add_variable`](@ref) to add a single variable.
 
 ```jldoctest variables; setup=:(model = MOI.Utilities.Model{Float64}(); )
-julia> x = MOI.add_variable(mode)
+julia> x = MOI.add_variable(model)
 MathOptInterface.VariableIndex(1)
 ```
 [`add_variable`](@ref) returns a [`VariableIndex`](@ref) type, which should be
@@ -55,7 +55,7 @@ false
 
 ## Variable attributes
 
-The following attributes are available for variables
+The following attributes are available for variables:
 
 * [`VariableName`](@ref)
 * [`VariablePrimalStart`](@ref)
@@ -63,9 +63,9 @@ The following attributes are available for variables
 
 Get and set these attributes using [`get`(@ref) and [`set`](@ref).
 
-```jldoctest constraints
+```jldoctest variables
 julia> MOI.set(model, MOI.VariableName(), x, "var_x")
 
 julia> MOI.get(model, MOI.VariableName(), x)
-var_x
+"var_x"
 ```

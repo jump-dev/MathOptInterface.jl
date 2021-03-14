@@ -66,7 +66,7 @@ false
 
 ## Constraint attributes
 
-The following attributes are available for constraints
+The following attributes are available for constraints:
 
 * [`ConstraintName`](@ref)
 * [`ConstraintPrimalStart`](@ref)
@@ -78,13 +78,13 @@ The following attributes are available for constraints
 * [`CanonicalConstraintFunction`](@ref)
 * [`ConstraintSet`](@ref)
 
-Get and set these attributes using [`get`(@ref) and [`set`](@ref).
+Get and set these attributes using [`get`](@ref) and [`set`](@ref).
 
 ```jldoctest constraints
 julia> MOI.set(model, MOI.ConstraintName(), c, "con_c")
 
 julia> MOI.get(model, MOI.ConstraintName(), c)
-con_c
+"con_c"
 ```
 
 ## Constraints by function-set pairs
