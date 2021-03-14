@@ -7,7 +7,16 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# Statuses
+# Solutions
+
+## Solving and retrieving the results
+
+Once an optimizer is loaded with the objective function and all of the
+constraints, we can ask the solver to solve the model by calling
+[`optimize!`](@ref).
+```julia
+MOI.optimize!(optimizer)
+```
 
 ## Why did the solver stop?
 
@@ -38,33 +47,32 @@ available, other statuses do not. For example, in the case of infeasiblity, a
 solver may return no result or a proof of infeasibility. The [`ResultCount`](@ref)
 attribute distinguishes between these two cases.
 
-## What solution did the solver return?
+## Primal solutions
 
-The [`PrimalStatus`](@ref) and [`DualStatus`](@ref) attributes return a
-[`ResultStatusCode`](@ref) that indicates if that component of the result
-is present (i.e., not `NO_SOLUTION`) and explains how to interpret the result.
+Use the [`PrimalStatus`](@ref) optimizer attribute to return a
+[`ResultStatusCode`](@ref) describing the status of the primal solution.
 
-If `PrimalStatus` is not `NO_SOLUTION`, then the primal may be retrieved with
-the [`VariablePrimal`](@ref) attribute:
-```julia
-MOI.get(optimizer, VariablePrimal(), x)
-```
+Common returns are described below in the [Common status situations](@ref)
+section.
 
-If `x` is a [`VariableIndex`](@ref) then the function call returns a scalar, and
-if `x` is a `Vector{VariableIndex}` then the call returns a vector of scalars.
-`VariablePrimal()` is equivalent to `VariablePrimal(1)`, i.e., the variable
-primal vector of the first result. Use `VariablePrimal(N)` to access the `N`th
-result.
+Query the primal solution using the [`VariablePrimal`](@ref) and
+[`ConstraintPrimal`](@ref) attributes.
 
-See also the attributes [`ConstraintPrimal`](@ref), and [`ConstraintDual`](@ref).
+Query the objective function value using the [`ObjectiveValue`](@ref) attribute.
 
-See [Duality](@ref) for a discussion of the MOI conventions for primal-dual
-pairs and certificates.
+## Dual solutions
 
-!!! note
-    We omit discussion of how to handle multiple results, i.e., when
-    `ResultCount` is greater than 1. This is supported in the API but not yet
-    implemented in any solver.
+!!! warning
+    See [Duality](@ref) for a discussion of the MOI conventions for primal-dual
+    pairs and certificates.
+
+Use the [`DualStatus`](@ref) optimizer attribute to return a
+[`ResultStatusCode`](@ref) describing the status of the dual solution.
+
+Query the dual solution using the [`ConstraintDual`](@ref) attribute.
+
+Query the dual objective function value using the [`DualObjectiveValue`](@ref)
+attribute.
 
 ## Common status situations
 
