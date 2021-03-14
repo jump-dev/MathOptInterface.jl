@@ -132,6 +132,10 @@ function MOI.supports_incremental_interface(
     return MOI.supports_incremental_interface(uf.model, copy_names)
 end
 
+function final_touch(uf::UniversalFallback, index_map)
+    return final_touch(uf.model, index_map)
+end
+
 # References
 function MOI.is_valid(uf::UniversalFallback, idx::MOI.VariableIndex)
     return MOI.is_valid(uf.model, idx)

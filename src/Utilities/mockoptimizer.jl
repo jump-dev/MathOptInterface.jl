@@ -761,6 +761,9 @@ function MOI.supports_incremental_interface(
     return !mock.needs_allocate_load &&
            MOI.supports_incremental_interface(mock.inner_model, copy_names)
 end
+function final_touch(uf::MockOptimizer, index_map)
+    return final_touch(uf.inner_model, index_map)
+end
 
 # Allocate-Load Interface
 function supports_allocate_load(mock::MockOptimizer, copy_names::Bool)

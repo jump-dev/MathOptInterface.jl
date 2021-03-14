@@ -28,6 +28,7 @@ function MOI.add_variable(model::AbstractModel{T}) where {T}
     if model.variable_indices !== nothing
         push!(model.variable_indices, vi)
     end
+    _add_variable(model.constraints)
     return vi
 end
 
@@ -786,6 +787,9 @@ function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
     return automatic_copy_to(dest, src; kws...)
 end
 MOI.supports_incremental_interface(::AbstractModel, ::Bool) = true
+function final_touch(model::AbstractModel, index_map)
+    return final_touch(model.constraints, index_map)
+end
 
 # Allocate-Load Interface
 # Even if the model does not need it and use default_copy_to, it could be used

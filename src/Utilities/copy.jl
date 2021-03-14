@@ -569,6 +569,8 @@ function try_constrain_variables_on_creation(
     single_variable_not_added
 end
 
+function final_touch(::MOI.ModelLike, idxmap) end
+
 """
     default_copy_to(
         dest::MOI.ModelLike,
@@ -648,6 +650,8 @@ function default_copy_to(
         vector_of_variables_not_added,
         filter_constraints = filter_constraints,
     )
+
+    final_touch(dest, idxmap)
 
     return idxmap
 end

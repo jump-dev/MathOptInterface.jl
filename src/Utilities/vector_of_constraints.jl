@@ -145,6 +145,8 @@ function MOI.modify(
     return
 end
 
+function _add_variable(::VectorOfConstraints) end
+
 # Deletion of variables in vector of variables
 
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
