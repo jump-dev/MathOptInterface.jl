@@ -120,12 +120,23 @@ end
     mock.eval_variable_constraint_dual = true
     n = 2
     ub = 3.0
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0; zeros(n-1); ub; √ub; ones(2)],
-                          (MOI.SingleVariable,                MOI.EqualTo{Float64})       => [-√ub/4, -√ub/4],
-                          (MOI.VectorOfVariables,             MOI.Nonnegatives)           => [zeros(n)],
-                          (MOI.SingleVariable,                MOI.GreaterThan{Float64})   => [0.0],
-                          (MOI.SingleVariable,                MOI.LessThan{Float64})      => [-1/(2*√ub)],
-                          (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√ub/(2*√2); √ub/(2*√2); -√ub/2; zeros(n-1)], [√ub/√2, 1/√(2*ub), -1.0]])
+    mock.optimize! =
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0; zeros(n - 1); ub; √ub; ones(2)],
+            (MOI.SingleVariable, MOI.EqualTo{Float64}) =>
+                [-√ub / 4, -√ub / 4],
+            (MOI.VectorOfVariables, MOI.Nonnegatives) => [zeros(n)],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
+            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
+            (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [
+#! format:off
+# TODO(odow): formatting incorrectly modifies this line.
+                [√ub / (2 * √2); √ub / (2 * √2); -√ub / 2; zeros(n - 1)],
+#! format:on
+                [√ub / √2, 1 / √(2 * ub), -1.0],
+            ],
+        )
     # double variable bounds on u
     mock.eval_variable_constraint_dual = false
     MOIT.rotatedsoc3test(mock, config)
