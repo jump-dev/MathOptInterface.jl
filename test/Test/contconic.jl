@@ -249,7 +249,10 @@ end
             (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [
-                [√ub / (2 * √2) √ub / (2 * √2) -√ub / 2 zeros(n - 1)],
+#! format:off
+# TODO(odow): formatting incorrectly modifies this line.
+                [√ub / (2 * √2); √ub / (2 * √2); -√ub / 2; zeros(n - 1)],
+#! format:on
                 [√ub / √2, 1 / √(2 * ub), -1.0],
             ],
         )
