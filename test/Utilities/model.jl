@@ -12,33 +12,35 @@ end
 # We need to test this in a module at the top level because it can't be defined
 # in a testset. If it runs without error, then we're okay.
 module TestExternalModel
-    using MathOptInterface
-    struct NewSet <: MathOptInterface.AbstractScalarSet end
-    struct NewFunction <: MathOptInterface.AbstractScalarFunction end
-    MathOptInterface.Utilities.canonicalize!(f::NewFunction) = f
-    Base.copy(::NewFunction) = NewFunction()
-    Base.copy(::NewSet) = NewSet()
-    MathOptInterface.Utilities.@model(ExternalModel,
-        (MathOptInterface.ZeroOne, NewSet,),
-        (),
-        (),
-        (),
-        (NewFunction,),
-        (),
-        (),
-        ()
-    )
-    MathOptInterface.Utilities.@model(ExternalOptimizer,
-        (MathOptInterface.ZeroOne, NewSet,),
-        (),
-        (),
-        (),
-        (NewFunction,),
-        (),
-        (),
-        (),
-        true
-    )
+using MathOptInterface
+struct NewSet <: MathOptInterface.AbstractScalarSet end
+struct NewFunction <: MathOptInterface.AbstractScalarFunction end
+MathOptInterface.Utilities.canonicalize!(f::NewFunction) = f
+Base.copy(::NewFunction) = NewFunction()
+Base.copy(::NewSet) = NewSet()
+MathOptInterface.Utilities.@model(
+    ExternalModel,
+    (MathOptInterface.ZeroOne, NewSet),
+    (),
+    (),
+    (),
+    (NewFunction,),
+    (),
+    (),
+    ()
+)
+MathOptInterface.Utilities.@model(
+    ExternalOptimizer,
+    (MathOptInterface.ZeroOne, NewSet),
+    (),
+    (),
+    (),
+    (NewFunction,),
+    (),
+    (),
+    (),
+    true
+)
 end
 
 @testset "Super-types" begin
@@ -55,13 +57,21 @@ end
 @testset "External @model" begin
     model = TestExternalModel.ExternalModel{Float64}()
     c = MOI.add_constraint(
-        model, TestExternalModel.NewFunction(), TestExternalModel.NewSet())
-    @test typeof(c) == MOI.ConstraintIndex{TestExternalModel.NewFunction,
-        TestExternalModel.NewSet}
+        model,
+        TestExternalModel.NewFunction(),
+        TestExternalModel.NewSet(),
+    )
+    @test typeof(c) == MOI.ConstraintIndex{
+        TestExternalModel.NewFunction,
+        TestExternalModel.NewSet,
+    }
     c2 = MOI.add_constraint(
-        model, TestExternalModel.NewFunction(), MOI.ZeroOne())
+        model,
+        TestExternalModel.NewFunction(),
+        MOI.ZeroOne(),
+    )
     @test typeof(c2) ==
-        MOI.ConstraintIndex{TestExternalModel.NewFunction, MOI.ZeroOne}
+          MOI.ConstraintIndex{TestExternalModel.NewFunction,MOI.ZeroOne}
 end
 
 struct DummyFunction <: MOI.AbstractScalarFunction end
@@ -71,9 +81,11 @@ struct DummySet <: MOI.AbstractScalarSet end
     model = MOIU.Model{T}()
     @testset "ObjectiveFunction" begin
         @test !MOI.supports(model, MOI.ObjectiveFunction{DummyFunction}())
-        for F in [MOI.SingleVariable,
-                  MOI.ScalarAffineFunction{T},
-                  MOI.ScalarQuadraticFunction{T}]
+        for F in [
+            MOI.SingleVariable,
+            MOI.ScalarAffineFunction{T},
+            MOI.ScalarQuadraticFunction{T},
+        ]
             @test MOI.supports(model, MOI.ObjectiveFunction{F}())
         end
         U = Float32
@@ -85,15 +97,28 @@ struct DummySet <: MOI.AbstractScalarSet end
         @test !MOI.supports_constraint(model, DummyFunction, DummySet)
         @test !MOI.supports_constraint(model, MOI.SingleVariable, DummySet)
         @test !MOI.supports_add_constrained_variable(model, DummySet)
-        for S in [MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.LessThan{T},
-                  MOI.Interval{T}, MOI.Integer, MOI.ZeroOne,
-                  MOI.Semicontinuous{T}, MOI.Semiinteger{T}]
+        for S in [
+            MOI.EqualTo{T},
+            MOI.GreaterThan{T},
+            MOI.LessThan{T},
+            MOI.Interval{T},
+            MOI.Integer,
+            MOI.ZeroOne,
+            MOI.Semicontinuous{T},
+            MOI.Semiinteger{T},
+        ]
             @test MOI.supports_constraint(model, MOI.SingleVariable, S)
             @test MOI.supports_add_constrained_variable(model, S)
         end
         U = Float32
-        for S in [MOI.EqualTo{U}, MOI.GreaterThan{U}, MOI.LessThan{U},
-                  MOI.Interval{U}, MOI.Semicontinuous{U}, MOI.Semiinteger{U}]
+        for S in [
+            MOI.EqualTo{U},
+            MOI.GreaterThan{U},
+            MOI.LessThan{U},
+            MOI.Interval{U},
+            MOI.Semicontinuous{U},
+            MOI.Semiinteger{U},
+        ]
             @test !MOI.supports_constraint(model, MOI.SingleVariable, S)
             @test !MOI.supports_add_constrained_variable(model, S)
         end
@@ -140,39 +165,82 @@ end
 end
 
 @testset "Continuous Linear tests" begin
-    config = MOIT.TestConfig(solve=false)
+    config = MOIT.TestConfig(solve = false)
     exclude = ["partial_start"] # Model doesn't support VariablePrimalStart.
     MOIT.contlineartest(MOIU.Model{Float64}(), config, exclude)
 end
 
 @testset "Continuous Conic tests" begin
-    config = MOIT.TestConfig(solve=false)
+    config = MOIT.TestConfig(solve = false)
     MOIT.contconictest(MOIU.Model{Float64}(), config)
 end
 
 @testset "Quadratic functions" begin
-
     model = MOIU.Model{Int}()
 
     x, y = MOI.add_variables(model, 2)
     @test 2 == @inferred MOI.get(model, MOI.NumberOfVariables())
 
-    f1 = MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm.([3], [x]), MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]), 7)
+    f1 = MOI.ScalarQuadraticFunction(
+        MOI.ScalarAffineTerm.([3], [x]),
+        MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        7,
+    )
     c1 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
 
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Int},MOI.Interval{Int}}())
-    @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.ScalarQuadraticFunction{Int},MOI.Interval{Int}}())) == [c1]
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{
+            MOI.ScalarQuadraticFunction{Int},
+            MOI.Interval{Int},
+        }(),
+    )
+    @test (@inferred MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{
+            MOI.ScalarQuadraticFunction{Int},
+            MOI.Interval{Int},
+        }(),
+    )) == [c1]
 
-    f2 = MOI.VectorQuadraticFunction(MOI.VectorAffineTerm.([1, 2, 2], MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y])), MOI.VectorQuadraticTerm.([1, 1, 2], MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y])), [7, 3, 4])
+    f2 = MOI.VectorQuadraticFunction(
+        MOI.VectorAffineTerm.(
+            [1, 2, 2],
+            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
+        ),
+        MOI.VectorQuadraticTerm.(
+            [1, 1, 2],
+            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        ),
+        [7, 3, 4],
+    )
     c2 = MOI.add_constraint(model, f2, MOI.PositiveSemidefiniteConeTriangle(3))
 
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle}())
-    @test (@inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle}())) == [c2]
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{
+            MOI.VectorQuadraticFunction{Int},
+            MOI.PositiveSemidefiniteConeTriangle,
+        }(),
+    )
+    @test (@inferred MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{
+            MOI.VectorQuadraticFunction{Int},
+            MOI.PositiveSemidefiniteConeTriangle,
+        }(),
+    )) == [c2]
 
     loc = MOI.get(model, MOI.ListOfConstraints())
     @test length(loc) == 2
-    @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
-    @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
+    @test (
+        MOI.VectorQuadraticFunction{Int},
+        MOI.PositiveSemidefiniteConeTriangle,
+    ) in loc
+    @test (
+        MOI.VectorQuadraticFunction{Int},
+        MOI.PositiveSemidefiniteConeTriangle,
+    ) in loc
 
     c3 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
 
@@ -195,31 +263,66 @@ end
     @test F3 === MOI.get(model, MOI.ConstraintFunction(), c3)
     @test MOI.Utilities.is_canonical(F3)
     @test MOI.get(model, MOI.CanonicalConstraintFunction(), c1) ≈ f3
-    @test MOI.Utilities.is_canonical(MOI.get(model, MOI.CanonicalConstraintFunction(), c1))
+    @test MOI.Utilities.is_canonical(
+        MOI.get(model, MOI.CanonicalConstraintFunction(), c1),
+    )
 
-    f4 = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 1, 2], MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y])), [5, 7])
+    f4 = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm.(
+            [1, 1, 2],
+            MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y]),
+        ),
+        [5, 7],
+    )
     c4 = MOI.add_constraint(model, f4, MOI.SecondOrderCone(2))
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}())
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{
+            MOI.VectorAffineFunction{Int},
+            MOI.SecondOrderCone,
+        }(),
+    )
 
     f5 = MOI.VectorOfVariables([x])
     c5 = MOI.add_constraint(model, f5, MOI.RotatedSecondOrderCone(1))
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone}())
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{
+            MOI.VectorOfVariables,
+            MOI.RotatedSecondOrderCone,
+        }(),
+    )
 
-    f6 = MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([2, 9], [x, y])), [6, 8])
+    f6 = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([2, 9], [x, y])),
+        [6, 8],
+    )
     c6 = MOI.add_constraint(model, f6, MOI.SecondOrderCone(2))
-    @test 2 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}())
+    @test 2 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{
+            MOI.VectorAffineFunction{Int},
+            MOI.SecondOrderCone,
+        }(),
+    )
 
     f7 = MOI.VectorOfVariables([x, y])
     c7 = MOI.add_constraint(model, f7, MOI.Nonpositives(2))
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}())
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
+    )
 
     f8 = MOI.VectorOfVariables([x, y])
     c8 = MOI.add_constraint(model, f8, MOI.SecondOrderCone(2))
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}())
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
+    )
 
     loc1 = MOI.get(model, MOI.ListOfConstraints())
-    loc2 = Vector{Tuple{DataType, DataType}}()
-    function _pushloc(v::MOI.Utilities.VectorOfConstraints{F, S}) where {F, S}
+    loc2 = Vector{Tuple{DataType,DataType}}()
+    function _pushloc(v::MOI.Utilities.VectorOfConstraints{F,S}) where {F,S}
         if !MOI.is_empty(v)
             push!(loc2, (F, S))
         end
@@ -227,26 +330,40 @@ end
     MOIU.broadcastcall(_pushloc, model)
     for loc in (loc1, loc2)
         @test length(loc) == 6
-        @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
-        @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc
-        @test (MOI.VectorOfVariables,MOI.RotatedSecondOrderCone) in loc
-        @test (MOI.VectorAffineFunction{Int},MOI.SecondOrderCone) in loc
-        @test (MOI.VectorOfVariables,MOI.Nonpositives) in loc
+        @test (
+            MOI.VectorQuadraticFunction{Int},
+            MOI.PositiveSemidefiniteConeTriangle,
+        ) in loc
+        @test (
+            MOI.VectorQuadraticFunction{Int},
+            MOI.PositiveSemidefiniteConeTriangle,
+        ) in loc
+        @test (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) in loc
+        @test (MOI.VectorAffineFunction{Int}, MOI.SecondOrderCone) in loc
+        @test (MOI.VectorOfVariables, MOI.Nonpositives) in loc
     end
 
     @test MOI.is_valid(model, c4)
     MOI.delete(model, c4)
     @test !MOI.is_valid(model, c4)
 
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Int},MOI.SecondOrderCone}())
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{
+            MOI.VectorAffineFunction{Int},
+            MOI.SecondOrderCone,
+        }(),
+    )
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
 
     fx = MOI.SingleVariable(x)
     fy = MOI.SingleVariable(y)
     obj = 1fx + 2fy
     MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
-    message = string("Cannot delete variable as it is constrained with other",
-                     " variables in a `MOI.VectorOfVariables`.")
+    message = string(
+        "Cannot delete variable as it is constrained with other",
+        " variables in a `MOI.VectorOfVariables`.",
+    )
     err = MOI.DeleteNotAllowed(y, message)
     @test_throws err MOI.delete(model, y)
     @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx + 2fy
@@ -254,27 +371,38 @@ end
     @test MOI.is_valid(model, c8)
     MOI.delete(model, c8)
     @test !MOI.is_valid(model, c8)
-    @test 0 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}())
+    @test 0 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
+    )
 
     MOI.delete(model, y)
     @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx
 
     f = MOI.get(model, MOI.ConstraintFunction(), c2)
-    @test f.affine_terms == MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([3, 1], [x, x]))
-    @test f.quadratic_terms == MOI.VectorQuadraticTerm.([1], MOI.ScalarQuadraticTerm.([1], [x], [x]))
+    @test f.affine_terms ==
+          MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([3, 1], [x, x]))
+    @test f.quadratic_terms ==
+          MOI.VectorQuadraticTerm.([1], MOI.ScalarQuadraticTerm.([1], [x], [x]))
     @test f.constants == [7, 3, 4]
 
     f = MOI.get(model, MOI.ConstraintFunction(), c6)
     @test f.terms == MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([2], [x]))
     @test f.constants == [6, 8]
 
-    @test 1 == @inferred MOI.get(model, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}())
-    @test [c7] == @inferred MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}())
+    @test 1 == @inferred MOI.get(
+        model,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
+    )
+    @test [c7] == @inferred MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
+    )
 
-    f =  MOI.get(model, MOI.ConstraintFunction(), c7)
+    f = MOI.get(model, MOI.ConstraintFunction(), c7)
     @test f.variables == [x]
 
-    s =  MOI.get(model, MOI.ConstraintSet(), c7)
+    s = MOI.get(model, MOI.ConstraintSet(), c7)
     @test MOI.dimension(s) == 1
 end
 
@@ -290,31 +418,60 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
         x = MOI.add_variable(model)
         func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
         c = MOI.add_constraint(model, func, MOI.LessThan(0.0))
-        @test !MOI.supports_constraint(model, FunctionNotSupportedBySolvers, SetNotSupportedBySolvers)
+        @test !MOI.supports_constraint(
+            model,
+            FunctionNotSupportedBySolvers,
+            SetNotSupportedBySolvers,
+        )
 
         # set of different type
-        @test_throws Exception MOI.set(model, MOI.ConstraintSet(), c, MOI.GreaterThan(0.0))
+        @test_throws Exception MOI.set(
+            model,
+            MOI.ConstraintSet(),
+            c,
+            MOI.GreaterThan(0.0),
+        )
         # set not implemented
-        @test_throws Exception MOI.set(model, MOI.ConstraintSet(), c, SetNotSupportedBySolvers())
+        @test_throws Exception MOI.set(
+            model,
+            MOI.ConstraintSet(),
+            c,
+            SetNotSupportedBySolvers(),
+        )
 
         # function of different type
-        @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, MOI.VectorOfVariables([x]))
+        @test_throws Exception MOI.set(
+            model,
+            MOI.ConstraintFunction(),
+            c,
+            MOI.VectorOfVariables([x]),
+        )
         # function not implemented
-        @test_throws Exception MOI.set(model, MOI.ConstraintFunction(), c, FunctionNotSupportedBySolvers(x))
+        @test_throws Exception MOI.set(
+            model,
+            MOI.ConstraintFunction(),
+            c,
+            FunctionNotSupportedBySolvers(x),
+        )
     end
 end
 
 @testset "ListOfSupportedConstraints" begin
     @testset "$set" for set in (
-        MOI.EqualTo(1.0), MOI.GreaterThan(1.0), MOI.LessThan(1.0),
-        MOI.Interval(1.0, 2.0), MOI.Semicontinuous(1.0, 2.0),
-        MOI.Semiinteger(1.0, 2.0), MOI.Integer(), MOI.ZeroOne()
+        MOI.EqualTo(1.0),
+        MOI.GreaterThan(1.0),
+        MOI.LessThan(1.0),
+        MOI.Interval(1.0, 2.0),
+        MOI.Semicontinuous(1.0, 2.0),
+        MOI.Semiinteger(1.0, 2.0),
+        MOI.Integer(),
+        MOI.ZeroOne(),
     )
         model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         MOI.add_constraint(model, MOI.SingleVariable(x), set)
         @test MOI.get(model, MOI.ListOfConstraints()) ==
-            [(MOI.SingleVariable, typeof(set))]
+              [(MOI.SingleVariable, typeof(set))]
     end
 end
 

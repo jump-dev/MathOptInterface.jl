@@ -387,8 +387,9 @@ function MOI.supports_constraint(
     F::Type{<:MOI.AbstractFunction},
     S::Type{<:MOI.AbstractSet},
 )
-    return MOI.supports_constraint(m.model_cache, F, S) &&
-        (m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S))
+    return MOI.supports_constraint(m.model_cache, F, S) && (
+        m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S)
+    )
 end
 
 function MOI.add_constraint(

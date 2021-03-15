@@ -230,8 +230,8 @@ end
     MOI.add_constraints(
         model,
         [
-            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, xi)], 0.0)
-            for xi in x
+            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, xi)], 0.0) for
+            xi in x
         ],
         MOI.LessThan.(1:1.0:10_000),
     )

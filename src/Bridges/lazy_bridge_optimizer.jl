@@ -135,19 +135,23 @@ function functionized_type(
     return MOI.VectorAffineFunction{T}
 end
 function functionized_type(b::LazyBridgeOptimizer, ::Type{MOI.SingleVariable})
-    return functionized_type(_first_functionize_bridge(
-        b.constraint_bridge_types,
-        Constraint.ScalarFunctionizeBridge,
-    ))
+    return functionized_type(
+        _first_functionize_bridge(
+            b.constraint_bridge_types,
+            Constraint.ScalarFunctionizeBridge,
+        ),
+    )
 end
 function functionized_type(
     b::LazyBridgeOptimizer,
     ::Type{MOI.VectorOfVariables},
 )
-    return functionized_type(_first_functionize_bridge(
-        b.constraint_bridge_types,
-        Constraint.VectorFunctionizeBridge,
-    ))
+    return functionized_type(
+        _first_functionize_bridge(
+            b.constraint_bridge_types,
+            Constraint.VectorFunctionizeBridge,
+        ),
+    )
 end
 
 function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})

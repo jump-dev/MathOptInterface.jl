@@ -7,12 +7,12 @@ const CI{F,S} = MOI.ConstraintIndex{F,S}
 
 const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
 
-const CI_I = CI{MOI.SingleVariable, MOI.Integer}
-const CI_B = CI{MOI.SingleVariable, MOI.ZeroOne}
+const CI_I = CI{MOI.SingleVariable,MOI.Integer}
+const CI_B = CI{MOI.SingleVariable,MOI.ZeroOne}
 
 function test_iterator(dict)
     kk, vv = [], []
-    for (k,v) in dict
+    for (k, v) in dict
         push!(kk, k)
         push!(vv, v)
     end
@@ -69,7 +69,7 @@ function basic_functionality(dict, k_values, v_values)
     dict[k_values[1]] = v_values[1]
     @test length(dict) == 1
 
-    for (k,v) in zip(k_values, v_values)
+    for (k, v) in zip(k_values, v_values)
         dict[k] = v
     end
 
@@ -117,43 +117,31 @@ function basic_functionality(dict, k_values, v_values)
     length(bdict) == 1
 
     edict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.EqualTo{Bool})
-    ek = CI{MOI.SingleVariable, MOI.EqualTo{Bool}}(1)
+    ek = CI{MOI.SingleVariable,MOI.EqualTo{Bool}}(1)
     delete!(edict, ek)
     @test_throws KeyError edict[ek]
     sizehint!(edict, 0)
     @test length(edict) == 0
     @test_throws KeyError edict[ek]
     delete!(edict, ek)
-    test_iterator(edict)
+    return test_iterator(edict)
 end
 
 @testset "DoubleDict" begin
     dict = DoubleDicts.DoubleDict{Float64}()
-    keys = [
-        CI_I(1),
-        CI_I(2),
-        CI_B(1),
-    ]
-    vals = [
-        1.0,
-        2.0,
-        1.0,
-    ]
+    keys = [CI_I(1), CI_I(2), CI_B(1)]
+    vals = [1.0, 2.0, 1.0]
     basic_functionality(dict, keys, vals)
 end
 
 @testset "IndexDoubleDict" begin
     dict = DoubleDicts.IndexDoubleDict()
-    keys = [
-        CI_I(1),
-        CI_I(2),
-        CI_B(1),
-    ]
+    keys = [CI_I(1), CI_I(2), CI_B(1)]
     vals = keys
     basic_functionality(dict, keys, vals)
 
     src = DoubleDicts.IndexDoubleDict()
-    for (k,v) in zip(keys, vals)
+    for (k, v) in zip(keys, vals)
         dict[k] = v
     end
     dest = DoubleDicts.IndexDoubleDict()
@@ -165,11 +153,7 @@ end
 
 @testset "FunctionSetDoubleDict" begin
     dict = DoubleDicts.FunctionSetDoubleDict()
-    keys = [
-        CI_I(1),
-        CI_I(2),
-        CI_B(1),
-    ]
+    keys = [CI_I(1), CI_I(2), CI_B(1)]
     vals = [
         (MOI.SingleVariable(MOI.VariableIndex(1)), MOI.Integer()),
         (MOI.SingleVariable(MOI.VariableIndex(2)), MOI.Integer()),

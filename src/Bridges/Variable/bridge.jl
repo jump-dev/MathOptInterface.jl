@@ -38,7 +38,11 @@ function MOI.get(
     attr::MOI.AbstractVariableAttribute,
     bridge::AbstractBridge,
 )
-    return throw(ArgumentError("Variable bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`."))
+    return throw(
+        ArgumentError(
+            "Variable bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`.",
+        ),
+    )
 end
 
 """
@@ -54,7 +58,11 @@ function MOI.get(
     bridge::AbstractBridge,
     ::IndexInVector,
 )
-    return throw(ArgumentError("Variable bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`."))
+    return throw(
+        ArgumentError(
+            "Variable bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`.",
+        ),
+    )
 end
 
 """

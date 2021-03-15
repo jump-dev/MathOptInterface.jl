@@ -49,8 +49,14 @@ function remove_variable(f::MOI.VectorOfVariables, s, vi::VI)
     return g, t
 end
 
-filter_variables(keep::F, f, s) where {F<:Function} = filter_variables(keep, f), s
-function filter_variables(keep::F, f::MOI.VectorOfVariables, s) where {F<:Function}
+function filter_variables(keep::F, f, s) where {F<:Function}
+    return filter_variables(keep, f), s
+end
+function filter_variables(
+    keep::F,
+    f::MOI.VectorOfVariables,
+    s,
+) where {F<:Function}
     g = filter_variables(keep, f)
     if length(g.variables) != length(f.variables)
         t = MOI.update_dimension(s, length(g.variables))
@@ -109,12 +115,12 @@ end
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     vis = [vi]
     broadcastcall(model) do constrs
-        _throw_if_cannot_delete(constrs, vis, vis)
+        return _throw_if_cannot_delete(constrs, vis, vis)
     end
     _delete_variable(model, vi)
     broadcastcall(model) do constrs
         _deleted_constraints(constrs, vi) do ci
-            delete!(model.con_to_name, ci)
+            return delete!(model.con_to_name, ci)
         end
     end
     model.objective = remove_variable(model.objective, vi)
@@ -130,11 +136,11 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     end
     fast_in_vis = Set(vis)
     broadcastcall(model) do constrs
-        _throw_if_cannot_delete(constrs, vis, fast_in_vis)
+        return _throw_if_cannot_delete(constrs, vis, fast_in_vis)
     end
     broadcastcall(model) do constrs
         _deleted_constraints(constrs, vis) do ci
-            delete!(model.con_to_name, ci)
+            return delete!(model.con_to_name, ci)
         end
     end
     for vi in vis
@@ -329,11 +335,13 @@ function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where {T}
 end
 function MOI.supports(
     model::AbstractModel{T},
-    ::MOI.ObjectiveFunction{<:Union{
-        MOI.SingleVariable,
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-    }},
+    ::MOI.ObjectiveFunction{
+        <:Union{
+            MOI.SingleVariable,
+            MOI.ScalarAffineFunction{T},
+            MOI.ScalarQuadraticFunction{T},
+        },
+    },
 ) where {T}
     return true
 end
@@ -509,23 +517,35 @@ function MOI.add_constraint(
     return CI{MOI.SingleVariable,typeof(s)}(index)
 end
 
-function MOI.add_constraint(model::AbstractModel, func::MOI.AbstractFunction, set::MOI.AbstractSet)
+function MOI.add_constraint(
+    model::AbstractModel,
+    func::MOI.AbstractFunction,
+    set::MOI.AbstractSet,
+)
     if MOI.supports_constraint(model, typeof(func), typeof(set))
-        return MOI.add_constraint(constraints(model, typeof(func), typeof(set)), func, set)
+        return MOI.add_constraint(
+            constraints(model, typeof(func), typeof(set)),
+            func,
+            set,
+        )
     else
         throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}())
     end
 end
 function constraints(
     model::AbstractModel,
-    ci::MOI.ConstraintIndex{F,S}
+    ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     if !MOI.supports_constraint(model, F, S)
         throw(MOI.InvalidIndex(ci))
     end
     return constraints(model, F, S)
 end
-function MOI.get(model::AbstractModel, attr::Union{MOI.AbstractFunction, MOI.AbstractSet}, ci::MOI.ConstraintIndex)
+function MOI.get(
+    model::AbstractModel,
+    attr::Union{MOI.AbstractFunction,MOI.AbstractSet},
+    ci::MOI.ConstraintIndex,
+)
     return MOI.get(constraints(model, ci), attr, ci)
 end
 function MOI.modify(model::AbstractModel, ci::MOI.ConstraintIndex, change)
@@ -614,7 +634,10 @@ function MOI.get(
     flag = single_variable_flag(S)
     return count(mask -> !iszero(flag & mask), model.single_variable_mask)
 end
-function MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints{F,S}) where {F,S}
+function MOI.get(
+    model::AbstractModel,
+    noc::MOI.NumberOfConstraints{F,S},
+) where {F,S}
     if MOI.supports_constraint(model, F, S)
         return MOI.get(constraints(model, F, S), noc)
     else
@@ -635,7 +658,7 @@ function _add_contraint_type(
 end
 function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where {T}
     list = broadcastvcat(model) do v
-        MOI.get(v, loc)
+        return MOI.get(v, loc)
     end
     for S in (
         MOI.EqualTo{T},
@@ -666,7 +689,10 @@ function MOI.get(
     return list
 end
 
-function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices{F,S}) where {F,S}
+function MOI.get(
+    model::AbstractModel,
+    loc::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
     if MOI.supports_constraint(model, F, S)
         return MOI.get(constraints(model, F, S), loc)
     else
@@ -684,8 +710,8 @@ function MOI.get(
 end
 function MOI.get(
     model::AbstractModel,
-    attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
-    ci::MOI.ConstraintIndex
+    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
+    ci::MOI.ConstraintIndex,
 )
     return MOI.get(constraints(model, ci), attr, ci)
 end
@@ -737,12 +763,12 @@ end
 
 function MOI.is_empty(model::AbstractModel)
     return isempty(model.name) &&
-               !model.senseset &&
-               !model.objectiveset &&
-               isempty(model.objective.terms) &&
-               iszero(model.objective.constant) &&
-               iszero(model.num_variables_created) &&
-               mapreduce_constraints(MOI.is_empty, &, model, true)
+           !model.senseset &&
+           !model.objectiveset &&
+           isempty(model.objective.terms) &&
+           iszero(model.objective.constant) &&
+           iszero(model.num_variables_created) &&
+           mapreduce_constraints(MOI.is_empty, &, model, true)
 end
 function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name = ""
@@ -762,7 +788,6 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     broadcastcall(MOI.empty!, model)
     return
 end
-
 
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
     return automatic_copy_to(dest, src; kws...)
@@ -887,7 +912,9 @@ _getCV(s::SymbolFun) = :($(s.cname){T,$(_getC(s))}())
 
 _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
 _broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
-_mapreduce_field(s::SymbolFS) = :(cur = $MOIU.mapreduce_constraints(f, op, model.$(_field(s)), cur))
+function _mapreduce_field(s::SymbolFS)
+    return :(cur = $MOIU.mapreduce_constraints(f, op, model.$(_field(s)), cur))
+end
 _mapreduce_constraints(s::SymbolFS) = :(cur = op(cur, f(model.$(_field(s)))))
 
 # This macro is for expert/internal use only. Prefer the concrete Model type
@@ -1094,26 +1121,48 @@ macro model(
     end
 
     code = quote
-        function $MOIU.broadcastcall(f::F, model::$esc_model_name) where {F<:Function}
+        function $MOIU.broadcastcall(
+            f::F,
+            model::$esc_model_name,
+        ) where {F<:Function}
             return $(Expr(:block, _broadcastfield.(Ref(:(broadcastcall)), funs)...))
         end
-        function $MOIU.broadcastvcat(f::F, model::$esc_model_name) where {F<:Function}
+        function $MOIU.broadcastvcat(
+            f::F,
+            model::$esc_model_name,
+        ) where {F<:Function}
             return vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
         end
-        function $MOIU.mapreduce_constraints(f::Function, op::Function, model::$esc_model_name, cur)
+        function $MOIU.mapreduce_constraints(
+            f::Function,
+            op::Function,
+            model::$esc_model_name,
+            cur,
+        )
             return $(Expr(:block, _mapreduce_field.(funs)...))
         end
     end
     for (cname, sets) in ((scname, scalar_sets), (vcname, vector_sets))
         code = quote
             $code
-            function $MOIU.broadcastcall(f::F, model::$cname) where {F<:Function}
+            function $MOIU.broadcastcall(
+                f::F,
+                model::$cname,
+            ) where {F<:Function}
                 return $(Expr(:block, _callfield.(:f, sets)...))
             end
-            function $MOIU.broadcastvcat(f::F, model::$cname) where {F<:Function}
+            function $MOIU.broadcastvcat(
+                f::F,
+                model::$cname,
+            ) where {F<:Function}
                 return vcat($(_callfield.(:f, sets)...))
             end
-            function $MOIU.mapreduce_constraints(f::Function, op::Function, model::$cname, cur)
+            function $MOIU.mapreduce_constraints(
+                f::Function,
+                op::Function,
+                model::$cname,
+                cur,
+            )
                 return $(Expr(:block, _mapreduce_constraints.(sets)...))
             end
         end
@@ -1125,10 +1174,7 @@ macro model(
             field = _field(s)
             code = quote
                 $code
-                function $MOIU.constraints(
-                    model::$c,
-                    ::Type{<:$set},
-                ) where {F}
+                function $MOIU.constraints(model::$c, ::Type{<:$set}) where {F}
                     return model.$field
                 end
             end
@@ -1143,8 +1189,8 @@ macro model(
             function $MOIU.constraints(
                 model::$esc_model_name,
                 ::Type{<:$fun},
-                ::Type{S}
-            ) where S
+                ::Type{S},
+            ) where {S}
                 return $MOIU.constraints(model.$field, S)
             end
         end

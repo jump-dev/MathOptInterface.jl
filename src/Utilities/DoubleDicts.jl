@@ -28,10 +28,9 @@ fully type stable dictionary with values of type `V` and keys of type
 struct DoubleDict{V,DI,DO} <: AbstractDoubleDict{DataTypePair,V,Int64,DI,DO}
     dict::DO
     function DoubleDict{V}() where {V}
-        return new{V,Dict{Int64,V},Dict{DataTypePair,Dict{Int64,V}}}(Dict{
-            DataTypePair,
-            Dict{Int64,V},
-        }())
+        return new{V,Dict{Int64,V},Dict{DataTypePair,Dict{Int64,V}}}(
+            Dict{DataTypePair,Dict{Int64,V}}(),
+        )
     end
 end
 
@@ -56,10 +55,9 @@ fully type stable dictionary with values of type
 struct IndexDoubleDict{DI,DO} <: AbstractDoubleDict{DataTypePair,CI,Int64,DI,DO}
     dict::DO
     function IndexDoubleDict()
-        return new{Dict{Int64,Int64},Dict{DataTypePair,Dict{Int64,Int64}}}(Dict{
-            DataTypePair,
-            Dict{Int64,Int64},
-        }())
+        return new{Dict{Int64,Int64},Dict{DataTypePair,Dict{Int64,Int64}}}(
+            Dict{DataTypePair,Dict{Int64,Int64}}(),
+        )
     end
 end
 
@@ -67,10 +65,9 @@ struct FunctionSetDoubleDict{DI,DO} <:
        AbstractDoubleDict{DataTypePair,Tuple,Int64,DI,DO}
     dict::DO
     function FunctionSetDoubleDict()
-        return new{Dict{Int64},Dict{DataTypePair,Dict{Int64}}}(Dict{
-            DataTypePair,
-            Dict{Int64},
-        }())
+        return new{Dict{Int64},Dict{DataTypePair,Dict{Int64}}}(
+            Dict{DataTypePair,Dict{Int64}}(),
+        )
     end
 end
 
@@ -118,11 +115,13 @@ end
 # We keep the default fallback
 
 function Base.sizehint!(::AbstractDoubleDict, ::Integer)
-    return throw(ErrorException(
-        "sizehint!(d::DoubleDict, ::Integer) has no proper" *
-        " meaning for DoubleDict, use sizehint!(d[F,S], n::Integer) " *
-        "instead.",
-    ))
+    return throw(
+        ErrorException(
+            "sizehint!(d::DoubleDict, ::Integer) has no proper" *
+            " meaning for DoubleDict, use sizehint!(d[F,S], n::Integer) " *
+            "instead.",
+        ),
+    )
 end
 
 function Base.length(d::AbstractDoubleDict)

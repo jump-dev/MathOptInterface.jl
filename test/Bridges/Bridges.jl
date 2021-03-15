@@ -4,11 +4,12 @@ function _timed_include(file)
     println("Testing ", file)
     start = time()
     include(file)
-    run_time = round(time() - start, digits=1)
-    println("    Took $(run_time) seconds")
+    run_time = round(time() - start, digits = 1)
+    return println("    Took $(run_time) seconds")
 end
 
-@testset "$(file)" for file in ["bridge_optimizer.jl", "lazy_bridge_optimizer.jl"]
+@testset "$(file)" for file in
+                       ["bridge_optimizer.jl", "lazy_bridge_optimizer.jl"]
     _timed_include(file)
 end
 @testset "Variable bridges" begin

@@ -112,7 +112,11 @@ function Base.delete!(map::Map, vis::Vector{MOI.VariableIndex})
         map.sets[bridge_index(map, first(vis))] = nothing
         return
     else
-        throw(ArgumentError("`$vis` is not a valid key vector as returned by `add_keys_for_bridge`."))
+        throw(
+            ArgumentError(
+                "`$vis` is not a valid key vector as returned by `add_keys_for_bridge`.",
+            ),
+        )
     end
 end
 function Base.keys(map::Map)
@@ -192,8 +196,8 @@ Return the list of constraints corresponding to bridged variables in `S`.
 function constraints_with_set(map::Map, S::Type{<:MOI.AbstractSet})
     F = MOIU.variable_function_type(S)
     return [
-        MOI.ConstraintIndex{F,S}(-i)
-        for i in eachindex(map.sets) if map.sets[i] == S
+        MOI.ConstraintIndex{F,S}(-i) for
+        i in eachindex(map.sets) if map.sets[i] == S
     ]
 end
 
@@ -338,8 +342,8 @@ function add_keys_for_bridge(
         map.bridges[bridge_index] =
             call_in_context(map, bridge_index, bridge_fun)
         variables = MOI.VariableIndex[
-            MOI.VariableIndex(-(bridge_index - 1 + i))
-            for i in 1:MOI.dimension(set)
+            MOI.VariableIndex(-(bridge_index - 1 + i)) for
+            i in 1:MOI.dimension(set)
         ]
         if map.unbridged_function !== nothing
             mappings = unbridged_map(map.bridges[bridge_index], variables)

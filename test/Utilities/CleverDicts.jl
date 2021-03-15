@@ -12,14 +12,14 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
 
 @testset "CleverDict" begin
     @testset "MyKey type" begin
-        d = CleverDicts.CleverDict{MyKey, String}()
+        d = CleverDicts.CleverDict{MyKey,String}()
         key = CleverDicts.add_item(d, "first")
         @test key == MyKey(1)
         @test d[MyKey(1)] == "first"
     end
 
     @testset "Abstract Value" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, Any}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,Any}()
         key = CleverDicts.add_item(d, :a)
         @test key == MathOptInterface.VariableIndex(1)
         @test d[MathOptInterface.VariableIndex(1)] == :a
@@ -37,7 +37,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "get/set" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         key = CleverDicts.add_item(d, "first")
         @test key == MathOptInterface.VariableIndex(1)
         @test get(d, key, nothing) == "first"
@@ -84,7 +84,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "LinearIndex" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         key = CleverDicts.add_item(d, "first")
         @test d[CleverDicts.LinearIndex(1)] == "first"
         key2 = CleverDicts.add_item(d, "second")
@@ -97,43 +97,25 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "keys/values" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         key = CleverDicts.add_item(d, "first")
         key2 = CleverDicts.add_item(d, "second")
-        @test collect(keys(d)) == [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
+        @test collect(keys(d)) == [
+            MathOptInterface.VariableIndex(1),
+            MathOptInterface.VariableIndex(2),
+        ]
         @test collect(values(d)) == ["first", "second"]
         delete!(d, key)
         key3 = CleverDicts.add_item(d, "third")
-        @test collect(keys(d)) == [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
+        @test collect(keys(d)) == [
+            MathOptInterface.VariableIndex(2),
+            MathOptInterface.VariableIndex(3),
+        ]
         @test collect(values(d)) == ["second", "third"]
     end
 
     @testset "iterate" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
-        key = CleverDicts.add_item(d, "first")
-        key2 = CleverDicts.add_item(d, "second")
-        my_keys = MathOptInterface.VariableIndex[]
-        my_values = String[]
-        for (k, v) in d
-           push!(my_keys, k)
-           push!(my_values, v)
-        end
-        @test my_keys == [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
-        @test my_values == ["first", "second"]
-        delete!(d, key)
-        key3 = CleverDicts.add_item(d, "third")
-        my_keys = MathOptInterface.VariableIndex[]
-        my_values = String[]
-        for (k, v) in d
-           push!(my_keys, k)
-           push!(my_values, v)
-        end
-        @test my_keys == [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
-        @test my_values == ["second", "third"]
-    end
-
-    @testset "iterate ii" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         key = CleverDicts.add_item(d, "first")
         key2 = CleverDicts.add_item(d, "second")
         my_keys = MathOptInterface.VariableIndex[]
@@ -142,7 +124,40 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
             push!(my_keys, k)
             push!(my_values, v)
         end
-        @test my_keys == [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
+        @test my_keys == [
+            MathOptInterface.VariableIndex(1),
+            MathOptInterface.VariableIndex(2),
+        ]
+        @test my_values == ["first", "second"]
+        delete!(d, key)
+        key3 = CleverDicts.add_item(d, "third")
+        my_keys = MathOptInterface.VariableIndex[]
+        my_values = String[]
+        for (k, v) in d
+            push!(my_keys, k)
+            push!(my_values, v)
+        end
+        @test my_keys == [
+            MathOptInterface.VariableIndex(2),
+            MathOptInterface.VariableIndex(3),
+        ]
+        @test my_values == ["second", "third"]
+    end
+
+    @testset "iterate ii" begin
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+        key = CleverDicts.add_item(d, "first")
+        key2 = CleverDicts.add_item(d, "second")
+        my_keys = MathOptInterface.VariableIndex[]
+        my_values = String[]
+        for (k, v) in d
+            push!(my_keys, k)
+            push!(my_values, v)
+        end
+        @test my_keys == [
+            MathOptInterface.VariableIndex(1),
+            MathOptInterface.VariableIndex(2),
+        ]
         @test my_values == ["first", "second"]
         delete!(d, key)
         @test d[CleverDicts.LinearIndex(1)] == "second"
@@ -153,12 +168,15 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
             push!(my_keys, k)
             push!(my_values, v)
         end
-        @test my_keys == [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
+        @test my_keys == [
+            MathOptInterface.VariableIndex(2),
+            MathOptInterface.VariableIndex(3),
+        ]
         @test my_values == ["second", "third"]
     end
 
     @testset "iterate iii" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         y = 0
         for (k, v) in d
             y += 1
@@ -167,7 +185,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "haskey" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         @test !haskey(d, 1)
         k = CleverDicts.add_item(d, "a")
         @test haskey(d, k)
@@ -179,7 +197,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "haskey" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         @test isempty(d) == true
         k = CleverDicts.add_item(d, "a")
         @test isempty(d) == false
@@ -190,7 +208,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "delete!" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         @test length(d) == 0
         @test delete!(d, MathOptInterface.VariableIndex(0)) == nothing
         k1 = CleverDicts.add_item(d, "a")
@@ -209,7 +227,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
         inverse_hash(x::Int64) = Int(x * 2)
         # hash :: Int -> Int64
         hash(x::Int) = Int64(div(x, 2))
-        d = CleverDicts.CleverDict{Int, Float64}(hash, inverse_hash, 3)
+        d = CleverDicts.CleverDict{Int,Float64}(hash, inverse_hash, 3)
 
         d[4] = 0.25
         @test !haskey(d, 2)
@@ -240,7 +258,7 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     end
 
     @testset "Negative index" begin
-        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex, String}()
+        d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
         d[MathOptInterface.VariableIndex(-3)] = "a"
         @test d[MathOptInterface.VariableIndex(-3)] == "a"
         @test_throws ErrorException CleverDicts.add_item(d, "b")
@@ -253,7 +271,9 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     @testset "convert" begin
         vals = [MathOptInterface.VariableIndex(-i) for i in 1:10]
         d = Dict(MathOptInterface.VariableIndex(i) => vals[i] for i in 1:10)
-        T = MathOptInterface.Utilities.DenseVariableDict{MathOptInterface.VariableIndex}
+        T = MathOptInterface.Utilities.DenseVariableDict{
+            MathOptInterface.VariableIndex,
+        }
         c = convert(T, d)
         @test c isa T
         @test c.is_dense
