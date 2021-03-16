@@ -839,7 +839,7 @@ The model describing an linear program would be:
     )
 ```
 
-Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities`:x.
+Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities`.
 The macro would create the following types with
 [`struct_of_constraint_code`](@ref):
 ```julia
