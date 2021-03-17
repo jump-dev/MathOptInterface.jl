@@ -10,7 +10,10 @@ function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int64)
     return MathOptInterface.VariableIndex(index)
 end
 
-function index_to_key(::Type{MathOptInterface.ConstraintIndex{F,S}}, index::Int64) where {F,S}
+function index_to_key(
+    ::Type{MathOptInterface.ConstraintIndex{F,S}},
+    index::Int64,
+) where {F,S}
     return MathOptInterface.ConstraintIndex{F,S}(index)
 end
 
@@ -109,7 +112,10 @@ _is_dense(c::CleverDict) = c.is_dense
 function _inverse_hash(c::CleverDict{K}, index::Integer) where {K}
     return c.inverse_hash(Int64(index))::K
 end
-function _inverse_hash(c::CleverDict{K,V,F,typeof(index_to_key)}, index::Integer) where {K,V,F<:Function}
+function _inverse_hash(
+    c::CleverDict{K,V,F,typeof(index_to_key)},
+    index::Integer,
+) where {K,V,F<:Function}
     return index_to_key(K, Int64(index))::K
 end
 
@@ -120,7 +126,9 @@ Set `val` in the next available key, and return that key.
 """
 function add_item(c::CleverDict{K,V}, val::V)::K where {K,V}
     if c.last_index == -1
-        error("Keys were added out of order. `add_item` requires that keys are always added in order.")
+        error(
+            "Keys were added out of order. `add_item` requires that keys are always added in order.",
+        )
     end
     # adding a key in order
     key = _inverse_hash(c, c.last_index + 1)
@@ -359,7 +367,9 @@ end
 function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
     if _is_dense(c)
         if n < length(c.vector)
-            error("CleverDict cannot be resized to a size smaller than the current")
+            error(
+                "CleverDict cannot be resized to a size smaller than the current",
+            )
         end
         resize!(c.vector, n)
         sizehint!(c.set, n)
@@ -395,7 +405,7 @@ function Base.convert(
     src::AbstractDict{K,V},
 ) where {K,V}
     dest = CleverDict{K,V}()
-    for key in sort(collect(keys(src)), by=dest.hash)
+    for key in sort(collect(keys(src)), by = dest.hash)
         dest[key] = src[key]
     end
     return dest

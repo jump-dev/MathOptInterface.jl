@@ -24,13 +24,15 @@ function bridge_constraint(
 ) where {T,F,S,G}
     scalar_const = MOI.constant(scalar_f, T)
     if !iszero(scalar_const)
-        throw(MOI.ScalarFunctionConstantNotZero{
-            typeof(scalar_const),
-            G,
-            typeof(set),
-        }(
-            scalar_const,
-        ))
+        throw(
+            MOI.ScalarFunctionConstantNotZero{
+                typeof(scalar_const),
+                G,
+                typeof(set),
+            }(
+                scalar_const,
+            ),
+        )
     end
     vector_f = convert(F, scalar_f)
     set_const = MOI.constant(set)

@@ -45,8 +45,9 @@ end
 end
 
 c1, c2 = MOI.add_constraints(
-    bridged_mock, [1.0fy + 1.0fz, 1.0fx + 1.0fy + 1.0fz],
-    [MOI.EqualTo(0.0), MOI.GreaterThan(1.0)]
+    bridged_mock,
+    [1.0fy + 1.0fz, 1.0fx + 1.0fy + 1.0fz],
+    [MOI.EqualTo(0.0), MOI.GreaterThan(1.0)],
 )
 MOI.set(bridged_mock, MOI.ConstraintName(), c1, "con1")
 MOI.set(bridged_mock, MOI.ConstraintName(), c2, "con2")
@@ -54,19 +55,27 @@ MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 obj = 1.0fx - 1.0fy - 1.0fz
 MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}(), obj)
 
-@test MOIB.Variable.unbridged_map(MOIB.bridge(bridged_mock, y), y, MOIB.Variable.IndexInVector(1)) === nothing
-@test MOIB.Variable.unbridged_map(MOIB.bridge(bridged_mock, z), z, MOIB.Variable.IndexInVector(2)) === nothing
+@test MOIB.Variable.unbridged_map(
+    MOIB.bridge(bridged_mock, y),
+    y,
+    MOIB.Variable.IndexInVector(1),
+) === nothing
+@test MOIB.Variable.unbridged_map(
+    MOIB.bridge(bridged_mock, z),
+    z,
+    MOIB.Variable.IndexInVector(2),
+) === nothing
 
 err = ErrorException(
     "Cannot delete constraint index of bridged constrained variables. Delete" *
-    " the scalar variable or the vector of variables instead."
+    " the scalar variable or the vector of variables instead.",
 )
 @test_throws err MOI.delete(bridged_mock, cyz)
 
 err = ErrorException(
     "Cannot unbridge function because some variables are bridged by" *
     " variable bridges that do not support reverse mapping, e.g.," *
-    " `ZerosBridge`."
+    " `ZerosBridge`.",
 )
 @test_throws err MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}())
 # With `c1`, the function does not contain any variable so it tests that it
@@ -76,16 +85,21 @@ err = ErrorException(
 
 err = ArgumentError(
     "Variable bridge of type `MathOptInterface.Bridges.Variable.ZerosBridge{Float64}`" *
-    " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`."
+    " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`.",
 )
 @test_throws err MOI.get(bridged_mock, MOIT.UnknownVariableAttribute(), y)
 
 @testset "Results" begin
-    MOIU.set_mock_optimize!(mock,
+    MOIU.set_mock_optimize!(
+        mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock, [1.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => 0.0,
-            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => 1.0)
+            mock,
+            [1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+                0.0,
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                1.0,
+        ),
     )
     MOI.optimize!(bridged_mock)
     @test MOI.get(bridged_mock, MOI.VariablePrimal(), x) == 1.0
@@ -101,7 +115,7 @@ err = ArgumentError(
     err = ArgumentError(
         "Bridge of type `MathOptInterface.Bridges.Variable.ZerosBridge{Float64}`" *
         " does not support accessing the attribute" *
-        " `MathOptInterface.ConstraintDual(1)`."
+        " `MathOptInterface.ConstraintDual(1)`.",
     )
     @test_throws err MOI.get(bridged_mock, MOI.ConstraintDual(), cyz)
 end
@@ -112,9 +126,18 @@ end
     @test MOI.get(mock, MOI.ListOfVariableIndices()) == [x]
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 3
     @test MOI.get(bridged_mock, MOI.ListOfVariableIndices()) == [x, y, z]
-    @test MOI.get(mock, MOI.NumberOfConstraints{MOI.VectorOfVariables, MOI.Zeros}()) == 0
-    @test MOI.get(bridged_mock, MOI.NumberOfConstraints{MOI.VectorOfVariables, MOI.Zeros}()) == 1
-    @test MOI.get(bridged_mock, MOI.ListOfConstraintIndices{MOI.VectorOfVariables, MOI.Zeros}()) == [cyz]
+    @test MOI.get(
+        mock,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Zeros}(),
+    ) == 0
+    @test MOI.get(
+        bridged_mock,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Zeros}(),
+    ) == 1
+    @test MOI.get(
+        bridged_mock,
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Zeros}(),
+    ) == [cyz]
 end
 
 @testset "Test mock model" begin
@@ -131,9 +154,13 @@ end
 end
 
 @testset "Delete" begin
-    test_delete_bridged_variables(bridged_mock, yz, MOI.Zeros, 3, (
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}, 1),
-    ))
+    test_delete_bridged_variables(
+        bridged_mock,
+        yz,
+        MOI.Zeros,
+        3,
+        ((MOI.SingleVariable, MOI.GreaterThan{Float64}, 1),),
+    )
     @test MOI.is_valid(bridged_mock, x)
     @test !MOI.is_valid(bridged_mock, y)
     @test !MOI.is_valid(bridged_mock, z)

@@ -152,16 +152,24 @@ end
 function MOI.eval_hessian_lagrangian_product(d::HS071, h, x, v, σ, μ)
     @assert d.enable_hessian_vector_product
     # Objective
-    h[1] = 2.0 * x[4] * v[1] + x[4] * v[2] + x[4] * v[3] + (2.0 * x[1] + x[2] + x[3]) * v[4]
+    h[1] =
+        2.0 * x[4] * v[1] +
+        x[4] * v[2] +
+        x[4] * v[3] +
+        (2.0 * x[1] + x[2] + x[3]) * v[4]
     h[2] = x[4] * v[1] + x[1] * v[4]
     h[3] = x[4] * v[1] + x[1] * v[4]
     h[4] = (2.0 * x[1] + x[2] + x[3]) * v[1] + x[1] * v[2] + x[1] * v[3]
     h .*= σ
     # First constraint
-    h[1] += μ[1] * (x[3] * x[4] * v[2] + x[2] * x[4] * v[3] + x[2] * x[3] * v[4])
-    h[2] += μ[1] * (x[3] * x[4] * v[1] + x[1] * x[4] * v[3] + x[1] * x[3] * v[4])
-    h[3] += μ[1] * (x[2] * x[4] * v[1] + x[1] * x[4] * v[2] + x[1] * x[2] * v[4])
-    h[4] += μ[1] * (x[2] * x[3] * v[1] + x[1] * x[3] * v[2] + x[1] * x[2] * v[3])
+    h[1] +=
+        μ[1] * (x[3] * x[4] * v[2] + x[2] * x[4] * v[3] + x[2] * x[3] * v[4])
+    h[2] +=
+        μ[1] * (x[3] * x[4] * v[1] + x[1] * x[4] * v[3] + x[1] * x[3] * v[4])
+    h[3] +=
+        μ[1] * (x[2] * x[4] * v[1] + x[1] * x[4] * v[2] + x[1] * x[2] * v[4])
+    h[4] +=
+        μ[1] * (x[2] * x[3] * v[1] + x[1] * x[3] * v[2] + x[1] * x[2] * v[3])
 
     # Second constraint
     h[1] += μ[2] * 2.0 * v[1]
@@ -470,7 +478,8 @@ end
 const nlptests = Dict(
     "hs071" => hs071_test,
     "hs071_no_hessian" => hs071_no_hessian_test,
-    "hs071_hessian_vector_product_test" => hs071_hessian_vector_product_test,
+    "hs071_hessian_vector_product_test" =>
+        hs071_hessian_vector_product_test,
     "feasibility_sense_with_objective_and_hessian" =>
         feasibility_sense_with_objective_and_hessian_test,
     "feasibility_sense_with_objective_and_no_hessian" =>

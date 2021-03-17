@@ -20,7 +20,9 @@ end
 _to_param(param::Pair{<:AbstractOptimizerAttribute}) = param
 _to_param(param::Pair{String}) = RawParameter(param.first) => param.second
 function _to_param(param::Pair)
-    return error("Expected an optimizer attribute or a string, got `$(param.first)` which is a `$(typeof(param.first))`.")
+    return error(
+        "Expected an optimizer attribute or a string, got `$(param.first)` which is a `$(typeof(param.first))`.",
+    )
 end
 
 """
@@ -66,7 +68,9 @@ function _instantiate_and_check(optimizer_constructor)
         )
     end
     if !is_empty(optimizer)
-        error("The provided `optimizer_constructor` returned a non-empty optimizer.")
+        error(
+            "The provided `optimizer_constructor` returned a non-empty optimizer.",
+        )
     end
     return optimizer
 end

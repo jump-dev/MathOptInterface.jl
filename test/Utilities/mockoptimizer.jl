@@ -24,14 +24,29 @@ MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.Reals}) = false
 
 @testset "supports_add_constrained_variable" begin
     optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    @test MOI.supports_add_constrained_variable(optimizer, MOI.GreaterThan{Float64})
-    @test !MOI.supports_add_constrained_variable(optimizer, MOIT.UnknownScalarSet{Float64})
+    @test MOI.supports_add_constrained_variable(
+        optimizer,
+        MOI.GreaterThan{Float64},
+    )
+    @test !MOI.supports_add_constrained_variable(
+        optimizer,
+        MOIT.UnknownScalarSet{Float64},
+    )
     @test MOI.supports_add_constrained_variables(optimizer, MOI.Nonnegatives)
-    @test !MOI.supports_add_constrained_variables(optimizer, MOIT.UnknownVectorSet)
+    @test !MOI.supports_add_constrained_variables(
+        optimizer,
+        MOIT.UnknownVectorSet,
+    )
 
     nofree_optimizer = MOIU.MockOptimizer(NoFreeModel())
-    @test !MOI.supports_add_constrained_variable(nofree_optimizer, MOI.GreaterThan{Float64})
-    @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.Nonnegatives)
+    @test !MOI.supports_add_constrained_variable(
+        nofree_optimizer,
+        MOI.GreaterThan{Float64},
+    )
+    @test !MOI.supports_add_constrained_variables(
+        nofree_optimizer,
+        MOI.Nonnegatives,
+    )
     @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.Reals)
 end
 
@@ -48,8 +63,16 @@ end
     MOI.set(optimizer, MOIU.MockVariableAttribute(), [v1], [-11])
     @test MOI.get(optimizer, MOIU.MockVariableAttribute(), [v1]) == [-11]
 
-    @test MOI.supports_constraint(optimizer, MOI.SingleVariable, MOI.GreaterThan{Float64})
-    c1 = MOI.add_constraint(optimizer, MOI.SingleVariable(v1), MOI.GreaterThan(1.0))
+    @test MOI.supports_constraint(
+        optimizer,
+        MOI.SingleVariable,
+        MOI.GreaterThan{Float64},
+    )
+    c1 = MOI.add_constraint(
+        optimizer,
+        MOI.SingleVariable(v1),
+        MOI.GreaterThan(1.0),
+    )
     @test MOI.supports(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
     MOI.set(optimizer, MOIU.MockConstraintAttribute(), c1, 12)
     @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), c1) == 12
@@ -73,14 +96,28 @@ end
 end
 
 @testset "Optimizer solve with result" begin
-    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}(),
-                                   eval_objective_value=false,
-                                   eval_variable_constraint_dual=false)
+    optimizer = MOIU.MockOptimizer(
+        MOIU.Model{Float64}(),
+        eval_objective_value = false,
+        eval_variable_constraint_dual = false,
+    )
 
     v = MOI.add_variables(optimizer, 2)
-    c1 = MOI.add_constraint(optimizer, MOI.SingleVariable(v[1]), MOI.GreaterThan(1.0))
-    soc = MOI.add_constraint(optimizer, MOI.VectorOfVariables(v), MOI.SecondOrderCone(2))
-    MOI.set(optimizer, MOI.ObjectiveFunction{MOI.SingleVariable}(), MOI.SingleVariable(v[1]))
+    c1 = MOI.add_constraint(
+        optimizer,
+        MOI.SingleVariable(v[1]),
+        MOI.GreaterThan(1.0),
+    )
+    soc = MOI.add_constraint(
+        optimizer,
+        MOI.VectorOfVariables(v),
+        MOI.SecondOrderCone(2),
+    )
+    MOI.set(
+        optimizer,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.SingleVariable(v[1]),
+    )
     MOI.set(optimizer, MOI.ResultCount(), 1)
     @test_throws(
         ErrorException("No mock primal is set for variable `$(v[1])`."),
@@ -107,7 +144,7 @@ end
     MOI.set(optimizer, MOI.VariablePrimal(), v, [1.0, 2.0])
     MOI.set(optimizer, MOI.VariablePrimal(), v[1], 3.0)
     MOI.set(optimizer, MOI.ConstraintDual(2), c1, 5.9)
-    MOI.set(optimizer, MOI.ConstraintDual(2), soc, [1.0,2.0])
+    MOI.set(optimizer, MOI.ConstraintDual(2), soc, [1.0, 2.0])
 
     MOI.optimize!(optimizer)
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
@@ -117,11 +154,15 @@ end
     optimizer.eval_objective_value = true
     @test MOI.get(optimizer, MOI.ObjectiveValue()) == 3.0
     @test_throws(
-        ErrorException("No mock primal is set for variable `$(v[1])` at result index `2`."),
+        ErrorException(
+            "No mock primal is set for variable `$(v[1])` at result index `2`.",
+        ),
         MOI.get(optimizer, MOI.ObjectiveValue(2))
     )
     @test_throws(
-        ErrorException("No mock dual is set for constraint `$c1` at result index `1`."),
+        ErrorException(
+            "No mock dual is set for constraint `$c1` at result index `1`.",
+        ),
         MOI.get(optimizer, MOI.DualObjectiveValue())
     )
     @test MOI.get(optimizer, MOI.DualObjectiveValue(2)) == 5.9
@@ -130,23 +171,31 @@ end
     @test MOI.get(optimizer, MOI.VariablePrimal(), v) == [3.0, 2.0]
     @test MOI.get(optimizer, MOI.VariablePrimal(), v[1]) == 3.0
     @test_throws(
-        ErrorException("No mock primal is set for variable `$(v[1])` at result index `2`."),
+        ErrorException(
+            "No mock primal is set for variable `$(v[1])` at result index `2`.",
+        ),
         MOI.get(optimizer, MOI.VariablePrimal(2), v[1])
     )
     @test MOI.get(optimizer, MOI.ConstraintPrimal(), c1) == 3.0
     @test MOI.get(optimizer, MOI.ConstraintPrimal(), soc) == [3.0, 2.0]
     @test_throws(
-        ErrorException("No mock primal is set for variable `$(v[1])` at result index `2`."),
+        ErrorException(
+            "No mock primal is set for variable `$(v[1])` at result index `2`.",
+        ),
         @show MOI.get(optimizer, MOI.ConstraintPrimal(2), c1)
     )
     @test_throws(
-        ErrorException("No mock primal is set for variable `$(v[1])` at result index `2`."),
+        ErrorException(
+            "No mock primal is set for variable `$(v[1])` at result index `2`.",
+        ),
         MOI.get(optimizer, MOI.ConstraintPrimal(2), soc)
     )
     @test MOI.get(optimizer, MOI.ConstraintDual(2), c1) == 5.9
-    @test MOI.get(optimizer, MOI.ConstraintDual(2), soc) == [1.0,2.0]
+    @test MOI.get(optimizer, MOI.ConstraintDual(2), soc) == [1.0, 2.0]
     @test_throws(
-        ErrorException("No mock dual is set for constraint `$c1` at result index `1`."),
+        ErrorException(
+            "No mock dual is set for constraint `$c1` at result index `1`.",
+        ),
         MOI.get(optimizer, MOI.ConstraintDual(1), c1)
     )
 end
@@ -162,7 +211,9 @@ end
     cx = MOI.add_constraint(mock, fx, MOI.LessThan(0))
     c = MOI.add_constraint(mock, 1fx + fy, MOI.LessThan(1))
     @test MOIU.is_canonical(MOI.get(mock, MOI.ConstraintFunction(), cx))
-    @test MOIU.is_canonical(MOI.get(mock, MOI.CanonicalConstraintFunction(), cx))
+    @test MOIU.is_canonical(
+        MOI.get(mock, MOI.CanonicalConstraintFunction(), cx),
+    )
     @test !MOIU.is_canonical(MOI.get(mock, MOI.ConstraintFunction(), c))
     @test MOIU.is_canonical(MOI.get(mock, MOI.CanonicalConstraintFunction(), c))
 end
@@ -176,6 +227,7 @@ end
     MOI.set(mock, MOI.ConstraintConflictStatus(), c, MOI.IN_CONFLICT)
     MOI.compute_conflict!(mock)
 
-    @test MOI.get(mock, MOI.ConstraintConflictStatus(), cx) == MOI.NOT_IN_CONFLICT
+    @test MOI.get(mock, MOI.ConstraintConflictStatus(), cx) ==
+          MOI.NOT_IN_CONFLICT
     @test MOI.get(mock, MOI.ConstraintConflictStatus(), c) == MOI.IN_CONFLICT
 end

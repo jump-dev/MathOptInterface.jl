@@ -389,17 +389,14 @@ end
 A type that allows iterating over the scalar-functions that comprise an
 `AbstractVectorFunction`.
 """
-struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction, C}
+struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction,C}
     f::F
     # Cache that can be used to store a precomputed datastructure that allows
     # an efficient implementation of `getindex`.
     cache::C
 end
 function ScalarFunctionIterator(func::MOI.AbstractVectorFunction)
-    return ScalarFunctionIterator(
-        func,
-        scalar_iterator_cache(func),
-    )
+    return ScalarFunctionIterator(func, scalar_iterator_cache(func))
 end
 
 scalar_iterator_cache(func::MOI.AbstractVectorFunction) = nothing
@@ -447,14 +444,19 @@ function Base.iterate(it::ChainedIteratorAtIndex, i = it.start)
 end
 
 function ScalarFunctionIterator(f::MOI.VectorAffineFunction)
-    return ScalarFunctionIterator(f, output_index_iterator(f.terms, MOI.output_dimension(f)))
+    return ScalarFunctionIterator(
+        f,
+        output_index_iterator(f.terms, MOI.output_dimension(f)),
+    )
 end
 
 function ScalarFunctionIterator(f::MOI.VectorQuadraticFunction)
     return ScalarFunctionIterator(
         f,
-        (output_index_iterator(f.affine_terms, MOI.output_dimension(f)),
-         output_index_iterator(f.quadratic_terms, MOI.output_dimension(f))),
+        (
+            output_index_iterator(f.affine_terms, MOI.output_dimension(f)),
+            output_index_iterator(f.quadratic_terms, MOI.output_dimension(f)),
+        ),
     )
 end
 
@@ -503,8 +505,8 @@ function Base.getindex(
 ) where {T}
     return MOI.ScalarAffineFunction{T}(
         MOI.ScalarAffineTerm{T}[
-            it.f.terms[i].scalar_term
-            for i in ChainedIteratorAtIndex(it.cache, output_index)
+            it.f.terms[i].scalar_term for
+            i in ChainedIteratorAtIndex(it.cache, output_index)
         ],
         it.f.constants[output_index],
     )
@@ -531,10 +533,12 @@ function Base.getindex(
 ) where {T}
     return MOI.ScalarQuadraticFunction(
         MOI.ScalarAffineTerm{T}[
-            it.f.affine_terms[i].scalar_term for i in ChainedIteratorAtIndex(it.cache[1], output_index)
+            it.f.affine_terms[i].scalar_term for
+            i in ChainedIteratorAtIndex(it.cache[1], output_index)
         ],
         MOI.ScalarQuadraticTerm{T}[
-            it.f.quadratic_terms[i].scalar_term for i in ChainedIteratorAtIndex(it.cache[2], output_index)
+            it.f.quadratic_terms[i].scalar_term for
+            i in ChainedIteratorAtIndex(it.cache[2], output_index)
         ],
         it.f.constants[output_index],
     )
@@ -783,10 +787,14 @@ function test_variablenames_equal(model, variablenames)
     for index in MOI.get(model, MOI.ListOfVariableIndices())
         vname = MOI.get(model, MOI.VariableName(), index)
         if !haskey(seen_name, vname)
-            error("Variable with name $vname present in model but not expected list of variable names.")
+            error(
+                "Variable with name $vname present in model but not expected list of variable names.",
+            )
         end
         if seen_name[vname]
-            error("Variable with name $vname present twice in model (shouldn't happen!)")
+            error(
+                "Variable with name $vname present twice in model (shouldn't happen!)",
+            )
         end
         seen_name[vname] = true
     end
@@ -802,10 +810,14 @@ function test_constraintnames_equal(model, constraintnames)
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             cname = MOI.get(model, MOI.ConstraintName(), index)
             if !haskey(seen_name, cname)
-                error("Constraint with name $cname present in model but not expected list of constraint names.")
+                error(
+                    "Constraint with name $cname present in model but not expected list of constraint names.",
+                )
             end
             if seen_name[cname]
-                error("Constraint with name $cname present twice in model (shouldn't happen!)")
+                error(
+                    "Constraint with name $cname present twice in model (shouldn't happen!)",
+                )
             end
             seen_name[cname] = true
         end
@@ -948,10 +960,7 @@ function _keep_all(
 end
 
 # Removes terms or variables in `vis_or_terms` that contains the variable of index `vi`
-function _filter_variables(
-    keep::Function,
-    variables_or_terms::Vector,
-)
+function _filter_variables(keep::Function, variables_or_terms::Vector)
     return filter(el -> _keep_all(keep, el), variables_or_terms)
 end
 
@@ -1052,7 +1061,7 @@ function _modifycoefficient(
         end
         # To account for duplicates, we need to delete any other instances of
         # `variable` in `terms`.
-        for j = length(terms):-1:(i + 1)
+        for j in length(terms):-1:(i+1)
             if terms[j].variable_index == variable
                 deleteat!(terms, j)
             end
@@ -1122,11 +1131,8 @@ function modify_function(
     f::MOI.VectorAffineFunction{T},
     change::MOI.MultirowChange{T},
 ) where {T}
-    terms = _modifycoefficients(
-        f.terms,
-        change.variable,
-        change.new_coefficients,
-    )
+    terms =
+        _modifycoefficients(f.terms, change.variable, change.new_coefficients)
     return MOI.VectorAffineFunction(terms, f.constants)
 end
 
@@ -2173,8 +2179,8 @@ function operate(
 ) where {T}
     return MOI.VectorAffineFunction{T}(
         [
-            MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(α, f.variables[i]))
-            for i in eachindex(f.variables)
+            MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(α, f.variables[i])) for
+            i in eachindex(f.variables)
         ],
         zeros(T, MOI.output_dimension(f)),
     )
@@ -2221,11 +2227,13 @@ function operate(
 ) where {T}
     return MOI.ScalarQuadraticFunction(
         MOI.ScalarAffineTerm{T}[],
-        [MOI.ScalarQuadraticTerm(
-            f.variable == g.variable ? 2one(T) : one(T),
-            f.variable,
-            g.variable,
-        )],
+        [
+            MOI.ScalarQuadraticTerm(
+                f.variable == g.variable ? 2one(T) : one(T),
+                f.variable,
+                g.variable,
+            ),
+        ],
         zero(T),
     )
 end
@@ -2904,8 +2912,8 @@ function convert_approx(
     tol = tol_default(T),
 ) where {T}
     return MOI.VectorOfVariables([
-        convert_approx(MOI.SingleVariable, f, tol = tol).variable
-        for f in scalarize(func)
+        convert_approx(MOI.SingleVariable, f, tol = tol).variable for
+        f in scalarize(func)
     ])
 end
 

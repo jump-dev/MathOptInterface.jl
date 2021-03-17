@@ -596,8 +596,10 @@ struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
 end
 
 function _dual_set_square_error()
-    return error("""Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
-                    For more details see the comments in `src/Bridges/Constraint/square.jl`.""")
+    return error(
+        """Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
+           For more details see the comments in `src/Bridges/Constraint/square.jl`.""",
+    )
 end
 function dual_set(::PositiveSemidefiniteConeSquare)
     return _dual_set_square_error()

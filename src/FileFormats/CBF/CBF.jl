@@ -531,17 +531,16 @@ function Base.read!(io::IO, model::Model)
                 if cone_str in ("EXP", "EXP*") # Exponential cones.
                     # Reverse order of indices.
                     @assert cone_dim == 3
-                    con_func = MOI.VectorOfVariables(scalar_vars[[
-                        var_idx + 3,
-                        var_idx + 2,
-                        var_idx + 1,
-                    ]])
+                    con_func = MOI.VectorOfVariables(
+                        scalar_vars[[var_idx + 3, var_idx + 2, var_idx + 1]],
+                    )
                     con_set =
                         (cone_str == "EXP") ? MOI.ExponentialCone() :
                         MOI.DualExponentialCone()
                 else
-                    con_func =
-                        MOI.VectorOfVariables(scalar_vars[(var_idx+1):(var_idx+cone_dim)])
+                    con_func = MOI.VectorOfVariables(
+                        scalar_vars[(var_idx+1):(var_idx+cone_dim)],
+                    )
                     if startswith(cone_str, "@") # Power cones (parametric).
                         @assert cone_dim == 3
                         con_set = powcone_to_moi_cone(
@@ -798,8 +797,8 @@ function Base.read!(io::IO, model::Model)
         cone_dim = div(side_dim * (side_dim + 1), 2)
         con_func = MOI.VectorAffineFunction(
             [
-                MOI.VectorAffineTerm{Float64}(l, t) for l in 1:cone_dim
-                for t in psd_row_terms[row_start+l]
+                MOI.VectorAffineTerm{Float64}(l, t) for l in 1:cone_dim for
+                t in psd_row_terms[row_start+l]
             ],
             psd_row_constants[(row_start+1):(row_start+cone_dim)],
         )

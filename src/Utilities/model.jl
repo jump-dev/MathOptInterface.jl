@@ -49,8 +49,14 @@ function remove_variable(f::MOI.VectorOfVariables, s, vi::VI)
     return g, t
 end
 
-filter_variables(keep::F, f, s) where {F<:Function} = filter_variables(keep, f), s
-function filter_variables(keep::F, f::MOI.VectorOfVariables, s) where {F<:Function}
+function filter_variables(keep::F, f, s) where {F<:Function}
+    return filter_variables(keep, f), s
+end
+function filter_variables(
+    keep::F,
+    f::MOI.VectorOfVariables,
+    s,
+) where {F<:Function}
     g = filter_variables(keep, f)
     if length(g.variables) != length(f.variables)
         t = MOI.update_dimension(s, length(g.variables))
@@ -111,7 +117,7 @@ function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     _throw_if_cannot_delete(model.constraints, vis, vis)
     _delete_variable(model, vi)
     _deleted_constraints(model.constraints, vi) do ci
-        delete!(model.con_to_name, ci)
+        return delete!(model.con_to_name, ci)
     end
     model.objective = remove_variable(model.objective, vi)
     model.name_to_con = nothing
@@ -126,7 +132,7 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     end
     _throw_if_cannot_delete(model.constraints, vis, Set(vis))
     _deleted_constraints(model.constraints, vis) do ci
-        delete!(model.con_to_name, ci)
+        return delete!(model.con_to_name, ci)
     end
     for vi in vis
         _delete_variable(model, vi)
@@ -315,11 +321,13 @@ function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where {T}
 end
 function MOI.supports(
     model::AbstractModel{T},
-    ::MOI.ObjectiveFunction{<:Union{
-        MOI.SingleVariable,
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-    }},
+    ::MOI.ObjectiveFunction{
+        <:Union{
+            MOI.SingleVariable,
+            MOI.ScalarAffineFunction{T},
+            MOI.ScalarQuadraticFunction{T},
+        },
+    },
 ) where {T}
     return true
 end
@@ -477,7 +485,7 @@ function MOI.supports_constraint(
     model::AbstractModel,
     ::Type{F},
     ::Type{S},
-) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     return MOI.supports_constraint(model.constraints, F, S)
 end
 
@@ -502,11 +510,19 @@ function MOI.add_constraint(
     return CI{MOI.SingleVariable,typeof(s)}(index)
 end
 
-function MOI.add_constraint(model::AbstractModel, func::MOI.AbstractFunction, set::MOI.AbstractSet)
+function MOI.add_constraint(
+    model::AbstractModel,
+    func::MOI.AbstractFunction,
+    set::MOI.AbstractSet,
+)
     return MOI.add_constraint(model.constraints, func, set)
 end
 
-function MOI.get(model::AbstractModel, attr::Union{MOI.AbstractFunction, MOI.AbstractSet}, ci::MOI.ConstraintIndex)
+function MOI.get(
+    model::AbstractModel,
+    attr::Union{MOI.AbstractFunction,MOI.AbstractSet},
+    ci::MOI.ConstraintIndex,
+)
     return MOI.get(model.constraints, attr, ci)
 end
 
@@ -591,7 +607,10 @@ function MOI.get(
     flag = single_variable_flag(S)
     return count(mask -> !iszero(flag & mask), model.single_variable_mask)
 end
-function MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints{F,S}) where {F,S}
+function MOI.get(
+    model::AbstractModel,
+    noc::MOI.NumberOfConstraints{F,S},
+) where {F,S}
     return MOI.get(model.constraints, noc)
 end
 
@@ -637,7 +656,10 @@ function MOI.get(
     return list
 end
 
-function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices{F,S}) where {F,S}
+function MOI.get(
+    model::AbstractModel,
+    loc::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
     return MOI.get(model.constraints, loc)
 end
 
@@ -651,8 +673,8 @@ function MOI.get(
 end
 function MOI.get(
     model::AbstractModel,
-    attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
-    ci::MOI.ConstraintIndex
+    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
+    ci::MOI.ConstraintIndex,
 )
     return MOI.get(model.constraints, attr, ci)
 end
@@ -704,12 +726,12 @@ end
 
 function MOI.is_empty(model::AbstractModel)
     return isempty(model.name) &&
-               !model.senseset &&
-               !model.objectiveset &&
-               isempty(model.objective.terms) &&
-               iszero(model.objective.constant) &&
-               iszero(model.num_variables_created) &&
-               MOI.is_empty(model.constraints)
+           !model.senseset &&
+           !model.objectiveset &&
+           isempty(model.objective.terms) &&
+           iszero(model.objective.constant) &&
+           iszero(model.num_variables_created) &&
+           MOI.is_empty(model.constraints)
 end
 function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name = ""
@@ -729,7 +751,6 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     MOI.empty!(model.constraints)
     return
 end
-
 
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
     return automatic_copy_to(dest, src; kws...)
@@ -919,7 +940,7 @@ macro model(
             sets = vector_sets
         end
         voc = map(sets) do set
-            :(VectorOfConstraints{$(_typedfun(funs[i])),$(_typedset(set))})
+            return :(VectorOfConstraints{$(_typedfun(funs[i])),$(_typedset(set))})
         end
         return _struct_of_constraints_type(cname, voc, true)
     end
@@ -927,9 +948,9 @@ macro model(
     func_typed = _struct_of_constraints_type(func_name, set_struct_types, false)
     T = esc(:T)
     generic = if is_optimizer
-        :(GenericOptimizer{$T, $func_typed})
+        :(GenericOptimizer{$T,$func_typed})
     else
-        :(GenericModel{$T, $func_typed})
+        :(GenericModel{$T,$func_typed})
     end
     model_code = if is_optimizer
         :(const $esc_model_name{$T} = $generic)
@@ -944,17 +965,19 @@ macro model(
         push!(expr.args, struct_of_constraint_code(vcname, vector_sets))
     end
     if length(funs) != 1
-        push!(expr.args, struct_of_constraint_code(
-            func_name,
-            funs,
-            set_struct_types,
-        ))
+        push!(
+            expr.args,
+            struct_of_constraint_code(func_name, funs, set_struct_types),
+        )
     end
     push!(expr.args, model_code)
     return expr
 end
 
-for (loop_name, loop_super_type) in [(:GenericModel, :AbstractModelLike), (:GenericOptimizer, :AbstractOptimizer)]
+for (loop_name, loop_super_type) in [
+    (:GenericModel, :AbstractModelLike),
+    (:GenericOptimizer, :AbstractOptimizer),
+]
     global name = loop_name
     global super_type = loop_super_type
     @eval begin
