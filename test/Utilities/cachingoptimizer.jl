@@ -290,7 +290,7 @@ end
     $(MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}})
     in state NO_OPTIMIZER
     in mode MANUAL
-    with model cache MOIU.Model{Float64}
+    with model cache $(MOIU.Model{Float64})
     with optimizer nothing""")
 end
 
@@ -405,8 +405,8 @@ end
     $(MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}})
     in state ATTACHED_OPTIMIZER
     in mode AUTOMATIC
-    with model cache MOIU.Model{Float64}
-    with optimizer MOIU.MockOptimizer{MOIU.Model{Float64}}""")
+    with model cache $(MOIU.Model{Float64})
+    with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64}})""")
 end
 
 @testset "Constructor with optimizer" begin
@@ -423,8 +423,8 @@ end
         $(MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64}},MOIU.Model{Float64}})
         in state ATTACHED_OPTIMIZER
         in mode AUTOMATIC
-        with model cache MOIU.Model{Float64}
-        with optimizer MOIU.MockOptimizer{MOIU.Model{Float64}}""")
+        with model cache $(MOIU.Model{Float64})
+        with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64}})""")
     end
     @testset "Non-empty optimizer" begin
         s = MOIU.MockOptimizer(MOIU.Model{Float64}(), supports_names=false)

@@ -24,7 +24,7 @@ module TestExternalModel
         (),
         (),
         (NewFunction,),
-        (),
+        (MathOptInterface.ScalarAffineFunction,),
         (),
         ()
     )
@@ -40,6 +40,24 @@ module TestExternalModel
         true
     )
 end
+@test  isdefined(TestExternalModel, :ExternalModelScalarConstraints)
+@test !isdefined(TestExternalModel, :ExternalModelVectorConstraints)
+@test  isdefined(TestExternalModel, :ExternalModelFunctionConstraints)
+@test  isdefined(TestExternalModel, :ExternalOptimizerScalarConstraints)
+@test !isdefined(TestExternalModel, :ExternalOptimizerVectorConstraints)
+@test !isdefined(TestExternalModel, :ExternalOptimizerFunctionConstraints)
+@test TestExternalModel.ExternalModel{Int} == MOIU.GenericModel{
+    Int,
+    TestExternalModel.ExternalModelFunctionConstraints{Int},
+}
+@test TestExternalModel.ExternalOptimizer{Int} == MOIU.GenericOptimizer{
+    Int,
+    TestExternalModel.ExternalOptimizerScalarConstraints{
+        Int,
+        MOIU.VectorOfConstraints{TestExternalModel.NewFunction,MOI.ZeroOne},
+        MOIU.VectorOfConstraints{TestExternalModel.NewFunction,TestExternalModel.NewSet},
+    },
+}
 
 @testset "Super-types" begin
     model = TestExternalModel.ExternalModel{Float64}()
@@ -224,7 +242,10 @@ end
             push!(loc2, (F, S))
         end
     end
-    MOIU.broadcastcall(_pushloc, model)
+    function _pushloc(model::MOI.Utilities.StructOfConstraints)
+        MOIU.broadcastcall(_pushloc, model)
+    end
+    MOIU.broadcastcall(_pushloc, model.constraints)
     for loc in (loc1, loc2)
         @test length(loc) == 6
         @test (MOI.VectorQuadraticFunction{Int},MOI.PositiveSemidefiniteConeTriangle) in loc

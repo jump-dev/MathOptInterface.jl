@@ -31,6 +31,9 @@ Utilities.UniversalFallback
 
 ```@docs
 Utilities.@model
+Utilities.GenericModel
+Utilities.GenericOptimizer
+Utilities.struct_of_constraint_code
 ```
 
 ### Caching optimizer

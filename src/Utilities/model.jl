@@ -108,14 +108,10 @@ function _delete_variable(
 end
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     vis = [vi]
-    broadcastcall(model) do constrs
-        _throw_if_cannot_delete(constrs, vis, vis)
-    end
+    _throw_if_cannot_delete(model.constraints, vis, vis)
     _delete_variable(model, vi)
-    broadcastcall(model) do constrs
-        _deleted_constraints(constrs, vi) do ci
-            delete!(model.con_to_name, ci)
-        end
+    _deleted_constraints(model.constraints, vi) do ci
+        delete!(model.con_to_name, ci)
     end
     model.objective = remove_variable(model.objective, vi)
     model.name_to_con = nothing
@@ -128,14 +124,9 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
         # at least one variable need to be deleted.
         return
     end
-    fast_in_vis = Set(vis)
-    broadcastcall(model) do constrs
-        _throw_if_cannot_delete(constrs, vis, fast_in_vis)
-    end
-    broadcastcall(model) do constrs
-        _deleted_constraints(constrs, vis) do ci
-            delete!(model.con_to_name, ci)
-        end
+    _throw_if_cannot_delete(model.constraints, vis, Set(vis))
+    _deleted_constraints(model.constraints, vis) do ci
+        delete!(model.con_to_name, ci)
     end
     for vi in vis
         _delete_variable(model, vi)
@@ -155,13 +146,8 @@ function MOI.is_valid(
         model.single_variable_mask[ci.value] & single_variable_flag(S),
     )
 end
-
-function MOI.is_valid(model::AbstractModel, ci::CI{F,S}) where {F,S}
-    if MOI.supports_constraint(model, F, S)
-        return MOI.is_valid(constraints(model, ci), ci)
-    else
-        return false
-    end
+function MOI.is_valid(model::AbstractModel, ci::MOI.ConstraintIndex)
+    return MOI.is_valid(model.constraints, ci)
 end
 
 function MOI.is_valid(model::AbstractModel, vi::VI)
@@ -487,6 +473,13 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+function MOI.supports_constraint(
+    model::AbstractModel,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    return MOI.supports_constraint(model.constraints, F, S)
+end
 
 function MOI.add_constraint(
     model::AbstractModel{T},
@@ -510,26 +503,11 @@ function MOI.add_constraint(
 end
 
 function MOI.add_constraint(model::AbstractModel, func::MOI.AbstractFunction, set::MOI.AbstractSet)
-    if MOI.supports_constraint(model, typeof(func), typeof(set))
-        return MOI.add_constraint(constraints(model, typeof(func), typeof(set)), func, set)
-    else
-        throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}())
-    end
+    return MOI.add_constraint(model.constraints, func, set)
 end
-function constraints(
-    model::AbstractModel,
-    ci::MOI.ConstraintIndex{F,S}
-) where {F,S}
-    if !MOI.supports_constraint(model, F, S)
-        throw(MOI.InvalidIndex(ci))
-    end
-    return constraints(model, F, S)
-end
+
 function MOI.get(model::AbstractModel, attr::Union{MOI.AbstractFunction, MOI.AbstractSet}, ci::MOI.ConstraintIndex)
-    return MOI.get(constraints(model, ci), attr, ci)
-end
-function MOI.modify(model::AbstractModel, ci::MOI.ConstraintIndex, change)
-    return MOI.modify(constraints(model, ci), ci, change)
+    return MOI.get(model.constraints, attr, ci)
 end
 
 function _delete_constraint(
@@ -542,8 +520,7 @@ function _delete_constraint(
 end
 
 function _delete_constraint(model::AbstractModel, ci::MOI.ConstraintIndex)
-    MOI.delete(constraints(model, ci), ci)
-    return
+    return MOI.delete(model.constraints, ci)
 end
 
 function MOI.delete(model::AbstractModel, ci::MOI.ConstraintIndex)
@@ -558,7 +535,7 @@ function MOI.modify(
     ci::MOI.ConstraintIndex,
     change::MOI.AbstractFunctionModification,
 )
-    MOI.modify(constraints(model, ci), ci, change)
+    MOI.modify(model.constraints, ci, change)
     return
 end
 
@@ -593,7 +570,7 @@ function MOI.set(
     ci::MOI.ConstraintIndex{<:MOI.AbstractFunction,S},
     set::S,
 ) where {S<:MOI.AbstractSet}
-    MOI.set(constraints(model, ci), attr, ci, set)
+    MOI.set(model.constraints, attr, ci, set)
     return
 end
 
@@ -603,7 +580,7 @@ function MOI.set(
     ci::MOI.ConstraintIndex{F,<:MOI.AbstractSet},
     func::F,
 ) where {F<:MOI.AbstractFunction}
-    MOI.set(constraints(model, ci), attr, ci, func)
+    MOI.set(model.constraints, attr, ci, func)
     return
 end
 
@@ -615,11 +592,7 @@ function MOI.get(
     return count(mask -> !iszero(flag & mask), model.single_variable_mask)
 end
 function MOI.get(model::AbstractModel, noc::MOI.NumberOfConstraints{F,S}) where {F,S}
-    if MOI.supports_constraint(model, F, S)
-        return MOI.get(constraints(model, F, S), noc)
-    else
-        return 0
-    end
+    return MOI.get(model.constraints, noc)
 end
 
 function _add_contraint_type(
@@ -634,9 +607,7 @@ function _add_contraint_type(
     return
 end
 function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where {T}
-    list = broadcastvcat(model) do v
-        MOI.get(v, loc)
-    end
+    list = copy(MOI.get(model.constraints, loc))
     for S in (
         MOI.EqualTo{T},
         MOI.GreaterThan{T},
@@ -667,11 +638,7 @@ function MOI.get(
 end
 
 function MOI.get(model::AbstractModel, loc::MOI.ListOfConstraintIndices{F,S}) where {F,S}
-    if MOI.supports_constraint(model, F, S)
-        return MOI.get(constraints(model, F, S), loc)
-    else
-        return MOI.ConstraintIndex{F,S}[]
-    end
+    return MOI.get(model.constraints, loc)
 end
 
 function MOI.get(
@@ -687,12 +654,12 @@ function MOI.get(
     attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
     ci::MOI.ConstraintIndex
 )
-    return MOI.get(constraints(model, ci), attr, ci)
+    return MOI.get(model.constraints, attr, ci)
 end
 
 function _get_single_variable_set(
     model::AbstractModel,
-    S::Type{<:MOI.EqualTo},
+    ::Type{<:MOI.EqualTo},
     index,
 )
     return MOI.EqualTo(model.lower_bound[index])
@@ -742,7 +709,7 @@ function MOI.is_empty(model::AbstractModel)
                isempty(model.objective.terms) &&
                iszero(model.objective.constant) &&
                iszero(model.num_variables_created) &&
-               mapreduce_constraints(MOI.is_empty, &, model, true)
+               MOI.is_empty(model.constraints)
 end
 function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name = ""
@@ -759,7 +726,7 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name_to_var = nothing
     empty!(model.con_to_name)
     model.name_to_con = nothing
-    broadcastcall(MOI.empty!, model)
+    MOI.empty!(model.constraints)
     return
 end
 
@@ -795,100 +762,21 @@ function load_constraint(
     ::MOI.AbstractSet,
 ) end
 
-# Can be used to access constraints of a model
-"""
-broadcastcall(f::Function, model::AbstractModel)
-
-Calls `f(contrs)` for every vector `constrs::Vector{ConstraintIndex{F, S}, F, S}` of the model.
-
-# Examples
-
-To add all constraints of the model to a solver `solver`, one can do
-```julia
-_addcon(solver, ci, f, s) = MOI.add_constraint(solver, f, s)
-function _addcon(solver, constrs::Vector)
-    for constr in constrs
-        _addcon(solver, constr...)
-    end
-end
-MOIU.broadcastcall(constrs -> _addcon(solver, constrs), model)
-```
-"""
-function broadcastcall end
-
-"""
-broadcastvcat(f::Function, model::AbstractModel)
-
-Calls `f(contrs)` for every vector `constrs::Vector{ConstraintIndex{F, S}, F, S}` of the model and concatenate the results with `vcat` (this is used internally for `ListOfConstraints`).
-
-# Examples
-
-To get the list of all functions:
-```julia
-_getfun(ci, f, s) = f
-_getfun(cindices::Tuple) = _getfun(cindices...)
-_getfuns(constrs::Vector) = _getfun.(constrs)
-MOIU.broadcastvcat(_getfuns, model)
-```
-"""
-function broadcastvcat end
-
-function mapreduce_constraints end
-
 # Macro to generate Model
-abstract type Constraints{F} end
 
-abstract type SymbolFS end
-struct SymbolFun <: SymbolFS
-    s::Union{Symbol,Expr}
-    typed::Bool
-    cname::Expr # `esc(scname)` or `esc(vcname)`
-end
-struct SymbolSet <: SymbolFS
-    s::Union{Symbol,Expr}
-    typed::Bool
-end
-
-# QuoteNode prevents s from being interpolated and keeps it as a symbol
-# Expr(:., MOI, s) would be MOI.s
-# Expr(:., MOI, $s) would be Expr(:., MOI, EqualTo)
-# Expr(:., MOI, :($s)) would be Expr(:., MOI, :EqualTo)
-# Expr(:., MOI, :($(QuoteNode(s)))) is Expr(:., MOI, :(:EqualTo)) <- what we want
-
-# (MOI, :Zeros) -> :(MOI.Zeros)
-# (:Zeros) -> :(MOI.Zeros)
-_set(s::SymbolSet) = esc(s.s)
-_fun(s::SymbolFun) = esc(s.s)
-function _typedset(s::SymbolSet)
-    if s.typed
-        :($(_set(s)){T})
+function _struct_of_constraints_type(name, subtypes, parametrized_type)
+    if length(subtypes) == 1
+        # Only one type, no need for a `StructOfConstraints`.
+        return subtypes[1]
     else
-        _set(s)
+        T = esc(:T)
+        t = :($name{$T})
+        if parametrized_type
+            append!(t.args, subtypes)
+        end
+        return t
     end
 end
-function _typedfun(s::SymbolFun)
-    if s.typed
-        :($(_fun(s)){T})
-    else
-        _fun(s)
-    end
-end
-
-# Base.lowercase is moved to Unicode.lowercase in Julia v0.7
-using Unicode
-
-_field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
-
-_getC(s::SymbolSet) = :(VectorOfConstraints{F,$(_typedset(s))})
-_getC(s::SymbolFun) = _typedfun(s)
-
-_getCV(s::SymbolSet) = :($(_getC(s))())
-_getCV(s::SymbolFun) = :($(s.cname){T,$(_getC(s))}())
-
-_callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
-_broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
-_mapreduce_field(s::SymbolFS) = :(cur = $MOIU.mapreduce_constraints(f, op, model.$(_field(s)), cur))
-_mapreduce_constraints(s::SymbolFS) = :(cur = op(cur, f(model.$(_field(s)))))
 
 # This macro is for expert/internal use only. Prefer the concrete Model type
 # instantiated below.
@@ -914,8 +802,8 @@ vector functions and `typed_vector_functions` typed vector functions.
 To give no set/function, write `()`, to give one set `S`, write `(S,)`.
 
 The function [`MathOptInterface.SingleVariable`](@ref) should not be given in
-`scalar_functions`. The model supports [`MathOptInterface.SingleVariable`](@ref)-in-`F`
-constraints where `F` is [`MathOptInterface.EqualTo`](@ref),
+`scalar_functions`. The model supports [`MathOptInterface.SingleVariable`](@ref)-in-`S`
+constraints where `S` is [`MathOptInterface.EqualTo`](@ref),
 [`MathOptInterface.GreaterThan`](@ref), [`MathOptInterface.LessThan`](@ref),
 [`MathOptInterface.Interval`](@ref), [`MathOptInterface.Integer`](@ref),
 [`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
@@ -928,18 +816,10 @@ by defining specialized structures and methods. To create a model that,
 in addition to be optimized for specific constraints, also support arbitrary
 constraints and attributes, use [`UniversalFallback`](@ref).
 
-This implementation of the MOI model certifies that the constraint indices, in
-addition to being different between constraints `F`-in-`S` for the same types
-`F` and `S`, are also different between constraints for different types `F` and
-`S`. This means that for constraint indices `ci1`, `ci2` of this model,
-`ci1 == ci2` if and only if `ci1.value == ci2.value`. This fact can be used to
-use the the value of the index directly in a dictionary representing a mapping
-between constraint indices and something else.
-
-If `is_optimizer = true`, the resulting struct is a subtype of
-of `MOIU.AbstractOptimizer`, which is a subtype of
-[`MathOptInterface.AbstractOptimizer`](@ref), otherwise, it is a subtype of
-`MOIU.AbstractModelLike`, which is a subtype of
+If `is_optimizer = true`, the resulting struct is a
+of [`GenericOptimizer`](@ref), which is a subtype of
+[`MathOptInterface.AbstractOptimizer`](@ref), otherwise, it is a
+[`GenericModel`](@ref), which is a subtype of
 [`MathOptInterface.ModelLike`](@ref).
 
 ### Examples
@@ -959,50 +839,46 @@ The model describing an linear program would be:
     )
 ```
 
-Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities` and
-`MOIU.ConstraintEntry{F, S}` be defined as `MOI.Tuple{MOI.ConstraintIndex{F, S}, F, S}`.
-The macro would create the types:
+Let `MOI` denote `MathOptInterface`, `MOIU` denote `MOI.Utilities`.
+The macro would create the following types with
+[`struct_of_constraint_code`](@ref):
 ```julia
-struct LPModelScalarConstraints{T, F <: MOI.AbstractScalarFunction} <: MOIU.Constraints{F}
-    equalto::Vector{MOIU.ConstraintEntry{F, MOI.EqualTo{T}}}
-    greaterthan::Vector{MOIU.ConstraintEntry{F, MOI.GreaterThan{T}}}
-    lessthan::Vector{MOIU.ConstraintEntry{F, MOI.LessThan{T}}}
-    interval::Vector{MOIU.ConstraintEntry{F, MOI.Interval{T}}}
+struct LPModelScalarConstraints{T, C1, C2, C3, C4} <: MOIU.StructOfConstraints
+    moi_equalto::C1
+    moi_greaterthan::C2
+    moi_lessthan::C3
+    moi_interval::C4
 end
-struct LPModelVectorConstraints{T, F <: MOI.AbstractVectorFunction} <: MOIU.Constraints{F}
-    zeros::Vector{MOIU.ConstraintEntry{F, MOI.Zeros}}
-    nonnegatives::Vector{MOIU.ConstraintEntry{F, MOI.Nonnegatives}}
-    nonpositives::Vector{MOIU.ConstraintEntry{F, MOI.Nonpositives}}
+struct LPModelVectorConstraints{T, C1, C2, C3} <: MOIU.StructOfConstraints
+    moi_zeros::C1
+    moi_nonnegatives::C2
+    moi_nonpositives::C3
 end
-mutable struct LPModel{T} <: MOIU.AbstractModel{T}
-    name::String
-    sense::MOI.OptimizationSense
-    objective::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
-    num_variables_created::Int64
-    # If nothing, no variable has been deleted so the indices of the
-    # variables are VI.(1:num_variables_created)
-    variable_indices::Union{Nothing, Set{MOI.VariableIndex}}
-    # Union of flags of `S` such that a `SingleVariable`-in-`S`
-    # constraint was added to the model and not deleted yet.
-    single_variable_mask::Vector{UInt8}
-    # Lower bound set by `SingleVariable`-in-`S` where `S`is
-    # `GreaterThan{T}`, `EqualTo{T}` or `Interval{T}`.
-    lower_bound::Vector{T}
-    # Lower bound set by `SingleVariable`-in-`S` where `S`is
-    # `LessThan{T}`, `EqualTo{T}` or `Interval{T}`.
-    upper_bound::Vector{T}
-    var_to_name::Dict{MOI.VariableIndex, String}
-    # If `nothing`, the dictionary hasn't been constructed yet.
-    name_to_var::Union{Dict{String, MOI.VariableIndex}, Nothing}
-    con_to_name::Dict{MOI.ConstraintIndex, String}
-    name_to_con::Union{Dict{String, MOI.ConstraintIndex}, Nothing}
-    scalaraffinefunction::LPModelScalarConstraints{T, MOI.ScalarAffineFunction{T}}
-    vectorofvariables::LPModelVectorConstraints{T, MOI.VectorOfVariables}
-    vectoraffinefunction::LPModelVectorConstraints{T, MOI.VectorAffineFunction{T}}
+struct LPModelFunctionConstraints{T} <: MOIU.StructOfConstraints
+    moi_scalaraffinefunction::LPModelScalarConstraints{
+        T,
+        MOIU.VectorOfConstraints{MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}},
+        MOIU.VectorOfConstraints{MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}},
+        MOIU.VectorOfConstraints{MOI.ScalarAffineFunction{T}, MOI.LessThan{T}},
+        MOIU.VectorOfConstraints{MOI.ScalarAffineFunction{T}, MOI.Interval{T}}
+    }
+    moi_vectorofvariables::LPModelVectorConstraints{
+        T,
+        MOIU.VectorOfConstraints{MOI.VectorOfVariables, MOI.Zeros},
+        MOIU.VectorOfConstraints{MOI.VectorOfVariables, MOI.Nonnegatives},
+        MOIU.VectorOfConstraints{MOI.VectorOfVariables, MOI.Nonpositives}
+    }
+    moi_vectoraffinefunction::LPModelVectorConstraints{
+        T,
+        MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.Zeros},
+        MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.Nonnegatives},
+        MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.Nonpositives}
+    }
 end
+const LPModel{T} = MOIU.GenericModel{T, LPModelFunctionConstraints{T}}
 ```
 The type `LPModel` implements the MathOptInterface API except methods specific
-to solver models like `optimize!` or `getattribute` with `VariablePrimal`.
+to optimizers like `optimize!` or `get` with `VariablePrimal`.
 """
 macro model(
     model_name,
@@ -1023,51 +899,94 @@ macro model(
     vcname = esc(Symbol(string(model_name) * "VectorConstraints"))
 
     esc_model_name = esc(model_name)
-    header = if is_optimizer
-        :($(esc(model_name)){T} <: AbstractOptimizer{T})
-    else
-        :($(esc(model_name)){T} <: AbstractModelLike{T})
-    end
+    # TODO if there is only one function or one set, remove the layer
 
     scalar_funs = [
-        SymbolFun.(sf.args, false, Ref(scname))
-        SymbolFun.(sft.args, true, Ref(scname))
+        SymbolFun.(sf.args, false)
+        SymbolFun.(sft.args, true)
     ]
     vector_funs = [
-        SymbolFun.(vf.args, false, Ref(vcname))
-        SymbolFun.(vft.args, true, Ref(vcname))
+        SymbolFun.(vf.args, false)
+        SymbolFun.(vft.args, true)
     ]
     funs = [scalar_funs; vector_funs]
-
-    scalarconstraints = :(
-        struct $scname{T,F<:$MOI.AbstractScalarFunction} <: Constraints{F} end
-    )
-    vectorconstraints = :(
-        struct $vcname{T,F<:$MOI.AbstractVectorFunction} <: Constraints{F} end
-    )
-    for (c, sets) in
-        ((scalarconstraints, scalar_sets), (vectorconstraints, vector_sets))
-        for s in sets
-            field = _field(s)
-            push!(c.args[3].args, :($field::$(_getC(s))))
+    set_struct_types = map(eachindex(funs)) do i
+        if i <= length(scalar_funs)
+            cname = scname
+            sets = scalar_sets
+        else
+            cname = vcname
+            sets = vector_sets
         end
+        voc = map(sets) do set
+            :(VectorOfConstraints{$(_typedfun(funs[i])),$(_typedset(set))})
+        end
+        return _struct_of_constraints_type(cname, voc, true)
     end
+    func_name = esc(Symbol(string(model_name) * "FunctionConstraints"))
+    func_typed = _struct_of_constraints_type(func_name, set_struct_types, false)
+    T = esc(:T)
+    generic = if is_optimizer
+        :(GenericOptimizer{$T, $func_typed})
+    else
+        :(GenericModel{$T, $func_typed})
+    end
+    model_code = if is_optimizer
+        :(const $esc_model_name{$T} = $generic)
+    else
+        :(const $esc_model_name{$T} = $generic)
+    end
+    expr = Expr(:block)
+    if length(scalar_sets) >= 2
+        push!(expr.args, struct_of_constraint_code(scname, scalar_sets))
+    end
+    if length(vector_sets) >= 2
+        push!(expr.args, struct_of_constraint_code(vcname, vector_sets))
+    end
+    if length(funs) != 1
+        push!(expr.args, struct_of_constraint_code(
+            func_name,
+            funs,
+            set_struct_types,
+        ))
+    end
+    push!(expr.args, model_code)
+    return expr
+end
 
-    modeldef = quote
-        mutable struct $header
+for (loop_name, loop_super_type) in [(:GenericModel, :AbstractModelLike), (:GenericOptimizer, :AbstractOptimizer)]
+    global name = loop_name
+    global super_type = loop_super_type
+    @eval begin
+        """
+            mutable struct $name{T,C} <: $super_type{T}
+
+        Implements a models supporting
+        * an objective function of type
+          `MOI.SingleVariable`, `MOI.ScalarAffineFunction{T}` and
+          `MOI.ScalarQuadraticFunction{T}`,
+        * [`MathOptInterface.SingleVariable`](@ref)-in-`S`
+          constraints where `S` is [`MathOptInterface.EqualTo`](@ref),
+          [`MathOptInterface.GreaterThan`](@ref), [`MathOptInterface.LessThan`](@ref),
+          [`MathOptInterface.Interval`](@ref), [`MathOptInterface.Integer`](@ref),
+          [`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
+          or [`MathOptInterface.Semiinteger`](@ref).
+        * `F`-in-`S` constraints that are supported by `C`.
+        """
+        mutable struct $name{T,C} <: $super_type{T}
             name::String
             senseset::Bool
-            sense::$MOI.OptimizationSense
+            sense::MOI.OptimizationSense
             objectiveset::Bool
             objective::Union{
-                $MOI.SingleVariable,
-                $MOI.ScalarAffineFunction{T},
-                $MOI.ScalarQuadraticFunction{T},
+                MOI.SingleVariable,
+                MOI.ScalarAffineFunction{T},
+                MOI.ScalarQuadraticFunction{T},
             }
             num_variables_created::Int64
             # If nothing, no variable has been deleted so the indices of the
             # variables are VI.(1:num_variables_created)
-            variable_indices::Union{Nothing,Set{$VI}}
+            variable_indices::Union{Nothing,Set{VI}}
             # Union of flags of `S` such that a `SingleVariable`-in-`S`
             # constraint was added to the model and not deleted yet.
             single_variable_mask::Vector{UInt8}
@@ -1077,130 +996,37 @@ macro model(
             # Lower bound set by `SingleVariable`-in-`S` where `S`is
             # `LessThan{T}`, `EqualTo{T}` or `Interval{T}`.
             upper_bound::Vector{T}
-            var_to_name::Dict{$VI,String}
+            constraints::C
+            var_to_name::Dict{MOI.VariableIndex,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
-            name_to_var::Union{Dict{String,$VI},Nothing}
-            con_to_name::Dict{$CI,String}
-            name_to_con::Union{Dict{String,$CI},Nothing}
+            name_to_var::Union{Dict{String,MOI.VariableIndex},Nothing}
+            con_to_name::Dict{MOI.ConstraintIndex,String}
+            name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
             # A useful dictionary for extensions to store things. These are
             # _not_ copied between models!
             ext::Dict{Symbol,Any}
-        end
-    end
-    for f in funs
-        cname = f.cname
-        field = _field(f)
-        push!(modeldef.args[2].args[3].args, :($field::$cname{T,$(_getC(f))}))
-    end
-
-    code = quote
-        function $MOIU.broadcastcall(f::F, model::$esc_model_name) where {F<:Function}
-            return $(Expr(:block, _broadcastfield.(Ref(:(broadcastcall)), funs)...))
-        end
-        function $MOIU.broadcastvcat(f::F, model::$esc_model_name) where {F<:Function}
-            return vcat($(_broadcastfield.(Ref(:(broadcastvcat)), funs)...))
-        end
-        function $MOIU.mapreduce_constraints(f::Function, op::Function, model::$esc_model_name, cur)
-            return $(Expr(:block, _mapreduce_field.(funs)...))
-        end
-    end
-    for (cname, sets) in ((scname, scalar_sets), (vcname, vector_sets))
-        code = quote
-            $code
-            function $MOIU.broadcastcall(f::F, model::$cname) where {F<:Function}
-                return $(Expr(:block, _callfield.(:f, sets)...))
-            end
-            function $MOIU.broadcastvcat(f::F, model::$cname) where {F<:Function}
-                return vcat($(_callfield.(:f, sets)...))
-            end
-            function $MOIU.mapreduce_constraints(f::Function, op::Function, model::$cname, cur)
-                return $(Expr(:block, _mapreduce_constraints.(sets)...))
+            function $name{T,C}() where {T,C}
+                return new{T,C}(
+                    EMPTYSTRING,
+                    false,
+                    MOI.FEASIBILITY_SENSE,
+                    false,
+                    zero(MOI.ScalarAffineFunction{T}),
+                    0,
+                    nothing,
+                    UInt8[],
+                    T[],
+                    T[],
+                    C(),
+                    Dict{MOI.VariableIndex,String}(),
+                    nothing,
+                    Dict{MOI.ConstraintIndex,String}(),
+                    nothing,
+                    Dict{Symbol,Any}(),
+                )
             end
         end
     end
-
-    for (c, sets) in ((scname, scalar_sets), (vcname, vector_sets))
-        for s in sets
-            set = _set(s)
-            field = _field(s)
-            code = quote
-                $code
-                function $MOIU.constraints(
-                    model::$c,
-                    ::Type{<:$set},
-                ) where {F}
-                    return model.$field
-                end
-            end
-        end
-    end
-
-    for f in funs
-        fun = _fun(f)
-        field = _field(f)
-        code = quote
-            $code
-            function $MOIU.constraints(
-                model::$esc_model_name,
-                ::Type{<:$fun},
-                ::Type{S}
-            ) where S
-                return $MOIU.constraints(model.$field, S)
-            end
-        end
-    end
-
-    code = quote
-        $scalarconstraints
-        function $scname{T,F}() where {T,F}
-            return $scname{T,F}($(_getCV.(scalar_sets)...))
-        end
-
-        $vectorconstraints
-        function $vcname{T,F}() where {T,F}
-            return $vcname{T,F}($(_getCV.(vector_sets)...))
-        end
-
-        $modeldef
-        function $esc_model_name{T}() where {T}
-            return $esc_model_name{T}(
-                "",
-                false,
-                $MOI.FEASIBILITY_SENSE,
-                false,
-                $SAF{T}($MOI.ScalarAffineTerm{T}[], zero(T)),
-                0,
-                nothing,
-                UInt8[],
-                T[],
-                T[],
-                Dict{$VI,String}(),
-                nothing,
-                Dict{$CI,String}(),
-                nothing,
-                Dict{Symbol,Any}(),
-                $(_getCV.(funs)...),
-            )
-        end
-
-        function $MOI.supports_constraint(
-            model::$esc_model_name{T},
-            ::Type{<:Union{$(_typedfun.(scalar_funs)...)}},
-            ::Type{<:Union{$(_typedset.(scalar_sets)...)}},
-        ) where {T}
-            return true
-        end
-        function $MOI.supports_constraint(
-            model::$esc_model_name{T},
-            ::Type{<:Union{$(_typedfun.(vector_funs)...)}},
-            ::Type{<:Union{$(_typedset.(vector_sets)...)}},
-        ) where {T}
-            return true
-        end
-
-        $code
-    end
-    return code
 end
 
 const LessThanIndicatorSetOne{T} =

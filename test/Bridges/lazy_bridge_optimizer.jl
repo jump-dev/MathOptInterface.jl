@@ -215,6 +215,7 @@ MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.G
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{T}}) where {T} = false
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.EqualTo{T}}) where {T} = false
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.Interval{T}}) where {T} = false
+MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Reals}) where {T} = false
 MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.Nonnegatives}) = true
 MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.PositiveSemidefiniteConeTriangle}) = true
 MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.Reals}) = false
@@ -229,23 +230,24 @@ end
 
 @testset "Show SPDA model" begin
     model = SDPAModel{Float64}()
+    model_str = sprint(MOIU.print_with_acronym, string(typeof(model)))
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     # no bridges
-    @test sprint(show, bridged) === raw"""
-    MOIB.LazyBridgeOptimizer{SDPAModel{Float64}}
+    @test sprint(show, bridged) === """
+    MOIB.LazyBridgeOptimizer{$model_str}
     with 0 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
-    with inner model SDPAModel{Float64}"""
+    with inner model $model_str"""
 
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
-    @test sprint(show, bridged) == raw"""
-    MOIB.LazyBridgeOptimizer{SDPAModel{Float64}}
+    @test sprint(show, bridged) == """
+    MOIB.LazyBridgeOptimizer{$model_str}
     with 2 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
-    with inner model SDPAModel{Float64}"""
+    with inner model $model_str"""
 end
 
 @testset "SDPA format with $T" for T in [Float64, Int]
