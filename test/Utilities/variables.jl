@@ -11,11 +11,12 @@ const MOIU = MOI.Utilities
         x = MOI.add_variable(model)
         y_v, y_c = MOI.add_constrained_variable(model, MOI.GreaterThan{T}(1.0))
         z_v, z_c = MOI.add_constrained_variable(model, MOI.LessThan{T}(-1.0))
-        w_v, w_c = MOI.add_constrained_variable(model, MOI.Interval{T}(-2.0, 3.0))
-        u_v, u_c = MOI.add_constrained_variable(
-            model, MOI.Semicontinuous{T}(1.0, 3.5))
-        v_v, v_c = MOI.add_constrained_variable(
-            model, MOI.Semiinteger{T}(-1.0, 2.5))
+        w_v, w_c =
+            MOI.add_constrained_variable(model, MOI.Interval{T}(-2.0, 3.0))
+        u_v, u_c =
+            MOI.add_constrained_variable(model, MOI.Semicontinuous{T}(1.0, 3.5))
+        v_v, v_c =
+            MOI.add_constrained_variable(model, MOI.Semiinteger{T}(-1.0, 2.5))
         e_v, e_c = MOI.add_constrained_variable(model, MOI.EqualTo(1.35))
 
         @test -Inf == @inferred MOIU.get_bounds(model, T, x)[1]
@@ -53,10 +54,9 @@ const MOIU = MOI.Utilities
         y_v, y_c = MOI.add_constrained_variable(model, MOI.GreaterThan{T}(1))
         z_v, z_c = MOI.add_constrained_variable(model, MOI.LessThan{T}(1))
         w_v, w_c = MOI.add_constrained_variable(model, MOI.Interval{T}(2, 3))
-        u_v, u_c = MOI.add_constrained_variable(
-            model, MOI.Semicontinuous{T}(1, 3))
-        v_v, v_c = MOI.add_constrained_variable(
-            model, MOI.Semiinteger{T}(4, 7))
+        u_v, u_c =
+            MOI.add_constrained_variable(model, MOI.Semicontinuous{T}(1, 3))
+        v_v, v_c = MOI.add_constrained_variable(model, MOI.Semiinteger{T}(4, 7))
 
         @test typemin(T) == @inferred MOIU.get_bounds(model, T, x)[1]
         @test typemax(T) == @inferred MOIU.get_bounds(model, T, x)[2]

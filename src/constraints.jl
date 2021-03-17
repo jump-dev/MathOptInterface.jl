@@ -171,7 +171,9 @@ function throw_add_constraint_error_fallback(
     set::AbstractVectorSet;
     kwargs...,
 )
-    return error("Cannot add a constraint of the form `ScalarFunction`-in-`VectorSet`")
+    return error(
+        "Cannot add a constraint of the form `ScalarFunction`-in-`VectorSet`",
+    )
 end
 function throw_add_constraint_error_fallback(
     model::ModelLike,
@@ -179,7 +181,9 @@ function throw_add_constraint_error_fallback(
     set::AbstractScalarSet;
     kwargs...,
 )
-    return error("Cannot add a constraint of the form `VectorFunction`-in-`ScalarSet`")
+    return error(
+        "Cannot add a constraint of the form `VectorFunction`-in-`ScalarSet`",
+    )
 end
 
 # func and set are both scalar or both vector

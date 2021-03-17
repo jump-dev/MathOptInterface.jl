@@ -323,12 +323,11 @@ function copy_vector_of_variables(
     not_added = MOI.ConstraintIndex{MOI.VectorOfVariables,S}[]
     cis_src =
         MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.VectorOfVariables}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.VectorOfVariables}
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if all(vi -> !haskey(idxmap, vi), f_src.variables) &&
            allunique(f_src.variables)
@@ -366,12 +365,11 @@ function copy_single_variable(
     added = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
     not_added = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.SingleVariable}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.SingleVariable}
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if !haskey(idxmap, f_src.variable)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
@@ -472,9 +470,7 @@ function pass_constraints(
     end
 
     nonvariable_constraint_types = [
-        (F, S)
-        for
-        (F, S) in MOI.get(src, MOI.ListOfConstraints()) if
+        (F, S) for (F, S) in MOI.get(src, MOI.ListOfConstraints()) if
         F != MOI.SingleVariable && F != MOI.VectorOfVariables
     ]
     for (F, S) in nonvariable_constraint_types
@@ -519,9 +515,7 @@ end
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
     single_or_vector_variables_types = [
-        (F, S)
-        for
-        (F, S) in constraint_types if
+        (F, S) for (F, S) in constraint_types if
         F === MOI.SingleVariable || F === MOI.VectorOfVariables
     ]
     sort!(
@@ -875,12 +869,11 @@ function load_single_variable(
     idxmap::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable,S}},
 ) where {S}
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.SingleVariable}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.SingleVariable}
     sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
     for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
         vi_dest = idxmap[f_src.variable]
@@ -903,12 +896,11 @@ function load_vector_of_variables(
     idxmap::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{MOI.VectorOfVariables,S}},
 ) where {S}
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.VectorOfVariables}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.VectorOfVariables}
     sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
     for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
         vis_dest = [idxmap[vi] for vi in f_src.variables]

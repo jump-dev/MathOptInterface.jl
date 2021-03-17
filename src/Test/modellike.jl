@@ -369,28 +369,36 @@ function validtest(model::MOI.ModelLike)
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float32},
             MOI.LessThan{Float32},
-        }(1),
+        }(
+            1,
+        ),
     )
     @test !MOI.is_valid(
         model,
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float32},
             MOI.LessThan{Float64},
-        }(1),
+        }(
+            1,
+        ),
     )
     @test !MOI.is_valid(
         model,
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float64},
             MOI.LessThan{Float32},
-        }(1),
+        }(
+            1,
+        ),
     )
     @test !MOI.is_valid(
         model,
         MOI.ConstraintIndex{
             MOI.VectorQuadraticFunction{Float64},
             MOI.SecondOrderCone,
-        }(1),
+        }(
+            1,
+        ),
     )
 end
 
@@ -1039,7 +1047,9 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
             Float64,
             MOI.ScalarAffineFunction{Float64},
             MOI.EqualTo{Float64},
-        }(1.0)
+        }(
+            1.0,
+        )
         @test_throws err begin
             MOI.add_constraint(
                 model,
@@ -1051,7 +1061,9 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
             Float64,
             MOI.ScalarAffineFunction{Float64},
             MOI.GreaterThan{Float64},
-        }(2.0)
+        }(
+            2.0,
+        )
         @test_throws err begin
             MOI.add_constraint(
                 model,
@@ -1221,13 +1233,15 @@ function delete_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
     @test MOI.get(model, MOI.ListOfConstraints()) ==
           [(MOI.VectorOfVariables, MOI.Nonpositives)]
-    @test isempty(MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
-            MOI.GreaterThan{Float64},
-        }(),
-    ))
+    @test isempty(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ),
+    )
     @test MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
@@ -1241,15 +1255,22 @@ function delete_test(model::MOI.ModelLike)
     @test !MOI.is_valid(model, cx)
     @test !MOI.is_valid(model, cy)
     @test isempty(MOI.get(model, MOI.ListOfConstraints()))
-    @test isempty(MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
-            MOI.GreaterThan{Float64},
-        }(),
-    ))
-    @test isempty(MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
-    ))
+    @test isempty(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ),
+    )
+    @test isempty(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{
+                MOI.VectorOfVariables,
+                MOI.Nonpositives,
+            }(),
+        ),
+    )
 end

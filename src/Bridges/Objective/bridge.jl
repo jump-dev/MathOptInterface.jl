@@ -22,7 +22,9 @@ function bridge_objective(
     ::MOI.ModelLike,
     func::MOI.AbstractScalarFunction,
 )
-    return throw(MOI.UnsupportedAttribute(MOI.ObjectiveFunction{typeof(func)}()))
+    return throw(
+        MOI.UnsupportedAttribute(MOI.ObjectiveFunction{typeof(func)}()),
+    )
 end
 
 """
@@ -40,12 +42,14 @@ function MOI.set(
     bridge::AbstractBridge,
     ::MOI.OptimizationSense,
 )
-    return throw(ArgumentError(
-        "Objective bridge of type `$(typeof(bridge))` does not support" *
-        " modifying the objective sense. As a workaround, set the sense to" *
-        " `MOI.FEASIBILITY_SENSE` to clear the objective function and" *
-        " bridges.",
-    ))
+    return throw(
+        ArgumentError(
+            "Objective bridge of type `$(typeof(bridge))` does not support" *
+            " modifying the objective sense. As a workaround, set the sense to" *
+            " `MOI.FEASIBILITY_SENSE` to clear the objective function and" *
+            " bridges.",
+        ),
+    )
 end
 
 """
@@ -60,10 +64,12 @@ function MOI.get(
     ::MOI.ObjectiveFunction,
     bridge::AbstractBridge,
 )
-    return throw(ArgumentError(
-        "ObjectiveFunction bridge of type `$(typeof(bridge))` does not" *
-        " support getting the objective function.",
-    ))
+    return throw(
+        ArgumentError(
+            "ObjectiveFunction bridge of type `$(typeof(bridge))` does not" *
+            " support getting the objective function.",
+        ),
+    )
 end
 
 """
@@ -72,7 +78,11 @@ end
 Delete any variable or constraint added by `bridge`.
 """
 function MOI.delete(::MOI.ModelLike, bridge::AbstractBridge)
-    return throw(ArgumentError("`MOI.delete` not implemented for `ObjectiveFunction` bridges of type `$(typeof(bridge))`"))
+    return throw(
+        ArgumentError(
+            "`MOI.delete` not implemented for `ObjectiveFunction` bridges of type `$(typeof(bridge))`",
+        ),
+    )
 end
 
 """
