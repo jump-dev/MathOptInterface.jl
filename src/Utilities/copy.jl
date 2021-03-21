@@ -425,11 +425,9 @@ end
 function pass_nonvariable_constraints_fallback(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     idxmap::IndexMap,
     constraint_types,
-    pass_cons = copy_constraints,
-    pass_attr = MOI.set;
+    pass_cons = copy_constraints;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     for (F, S) in constraint_types
@@ -439,7 +437,6 @@ function pass_nonvariable_constraints_fallback(
         end
         # do the rest in `pass_cons` which is type stable
         pass_cons(dest, src, idxmap, cis_src)
-        pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 end
 
@@ -447,11 +444,9 @@ end
     pass_nonvariable_constraints(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        copy_names::Bool,
         idxmap::IndexMap,
         constraint_types,
-        pass_cons = copy_constraints,
-        pass_attr = MOI.set;
+        pass_cons = copy_constraints;
         filter_constraints::Union{Nothing,Function} = nothing,
     )
 
@@ -468,21 +463,17 @@ A method can be implemented to use a specialized copy for a given type of
 function pass_nonvariable_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     idxmap::IndexMap,
     constraint_types,
-    pass_cons = copy_constraints,
-    pass_attr = MOI.set;
+    pass_cons = copy_constraints;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
-    pass_nonvariable_constraints_fallback(
+    return pass_nonvariable_constraints_fallback(
         dest,
         src,
-        copy_names,
         idxmap,
         constraint_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
 end
@@ -541,13 +532,19 @@ function pass_constraints(
     pass_nonvariable_constraints(
         dest,
         src,
-        copy_names,
         idxmap,
         nonvariable_constraint_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
+    for (F, S) in nonvariable_constraint_types
+        cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        if filter_constraints !== nothing
+            filter!(filter_constraints, cis_src)
+        end
+        # do the rest in `pass_cons` which is type stable
+        pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
+    end
 end
 
 function copy_free_variables(

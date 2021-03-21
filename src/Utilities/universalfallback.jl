@@ -86,45 +86,12 @@ function MOI.empty!(uf::UniversalFallback)
     return
 end
 
-function _pass_unsupported_attributes(
-    dest::UniversalFallback,
-    src::MOI.ModelLike,
-    copy_names::Bool,
-    idxmap::IndexMap,
-    pass_attr::Function,
-    ::Type{F},
-    ::Type{S},
-) where {F,S}
-    # Copy constraint attributes
-    attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
-    attrs = filter(attrs) do attr
-        return !MOI.supports(dest.model, attr, MOI.ConstraintIndex{F,S}) &&
-            (copy_names || !(attr isa MOI.ConstraintName))
-    end
-    if !isempty(attrs) # If `attrs` is empty, we can spare the computation of `cis_dest`
-        cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
-        cis_dest = map(ci -> idxmap[ci], cis_src)
-        _pass_attributes(
-            dest,
-            src,
-            idxmap,
-            attrs,
-            (MOI.ConstraintIndex{F,S},),
-            (cis_src,),
-            (cis_dest,),
-            pass_attr,
-        )
-    end
-end
-
 function pass_nonvariable_constraints(
     dest::UniversalFallback,
     src::MOI.ModelLike,
-    copy_names::Bool,
     idxmap::IndexMap,
     constraint_types,
-    pass_cons,
-    pass_attr;
+    pass_cons;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     supported_types = eltype(constraint_types)[]
@@ -139,32 +106,17 @@ function pass_nonvariable_constraints(
     pass_nonvariable_constraints(
         dest.model,
         src,
-        copy_names,
         idxmap,
         supported_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
-    for (F, S) in supported_types
-        _pass_unsupported_attributes(
-            dest,
-            src,
-            copy_names,
-            idxmap,
-            pass_attr,
-            F,
-            S,
-        )
-    end
-    pass_nonvariable_constraints_fallback(
+    return pass_nonvariable_constraints_fallback(
         dest,
         src,
-        copy_names,
         idxmap,
         unsupported_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
 end

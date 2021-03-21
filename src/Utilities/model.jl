@@ -755,21 +755,17 @@ end
 function pass_nonvariable_constraints(
     dest::AbstractModel,
     src::MOI.ModelLike,
-    copy_names::Bool,
     idxmap::IndexMap,
     constraint_types,
-    pass_cons,
-    pass_attr;
+    pass_cons;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
-    pass_nonvariable_constraints(
+    return pass_nonvariable_constraints(
         dest.constraints,
         src,
-        copy_names,
         idxmap,
         constraint_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
 end

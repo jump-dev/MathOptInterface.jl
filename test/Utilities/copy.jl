@@ -45,7 +45,8 @@ end
     MOIT.failcopytestia(model)
     MOIT.failcopytestva(model)
     MOIT.failcopytestca(model)
-    MOIT.copytest(model, MOIU.Model{Float64}())
+    MOIT.copytest(model, MOIU.Model{Float64}(), copy_names = false)
+    MOIT.copytest(model, MOIU.Model{Float64}(), copy_names = true)
 end
 @testset "Allocate-Load" begin
     @test !MOIU.supports_allocate_load(DummyModel(), false)
@@ -55,7 +56,8 @@ end
     MOIT.failcopytestia(mock)
     MOIT.failcopytestva(mock)
     MOIT.failcopytestca(mock)
-    MOIT.copytest(mock, MOIU.Model{Float64}())
+    MOIT.copytest(mock, MOIU.Model{Float64}(), copy_names = false)
+    MOIT.copytest(mock, MOIU.Model{Float64}(), copy_names = true)
 end
 
 struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
@@ -643,21 +645,17 @@ end
 function MOIU.pass_nonvariable_constraints(
     dest::OnlyCopyConstraints,
     src::MOI.ModelLike,
-    copy_names::Bool,
     idxmap::MOIU.IndexMap,
     constraint_types,
-    pass_cons,
-    pass_attr;
+    pass_cons;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
-    MOIU.pass_nonvariable_constraints(
+    return MOIU.pass_nonvariable_constraints(
         dest.constraints,
         src,
-        copy_names,
         idxmap,
         constraint_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
 end
@@ -676,7 +674,7 @@ function test_pass_copy(::Type{T}) where {T}
     dest = MOIU.CachingOptimizer(
         MOI.Bridges.full_bridge_optimizer(
             MOIU.UniversalFallback(
-                MOIU.GenericOptimizer{T,OnlyCopyConstraints{F,S}}()
+                MOIU.GenericOptimizer{T,OnlyCopyConstraints{F,S}}(),
             ),
             T,
         ),
@@ -685,9 +683,9 @@ function test_pass_copy(::Type{T}) where {T}
     MOI.copy_to(dest, src)
     voc = dest.model_cache.model.model.constraints.constraints
     @test MOI.get(voc, MOI.NumberOfConstraints{F,S}()) == 2
-    @test !haskey(dest.model_cache.model.constraints, (F,S))
+    @test !haskey(dest.model_cache.model.constraints, (F, S))
     @test MOI.get(dest, MOI.NumberOfConstraints{F,S2}()) == 2
-    @test haskey(dest.model_cache.model.constraints, (F,S2))
+    @test haskey(dest.model_cache.model.constraints, (F, S2))
 end
 
 @testset "copy of constraints passed as copy accross layers" begin

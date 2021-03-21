@@ -323,11 +323,9 @@ end
 function MOIU.pass_nonvariable_constraints(
     dest::AbstractBridgeOptimizer,
     src::MOI.ModelLike,
-    copy_names::Bool,
     idxmap::MOIU.IndexMap,
     constraint_types,
-    pass_cons,
-    pass_attr;
+    pass_cons;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     not_bridged_types = eltype(constraint_types)[]
@@ -342,21 +340,17 @@ function MOIU.pass_nonvariable_constraints(
     MOIU.pass_nonvariable_constraints(
         dest.model,
         src,
-        copy_names,
         idxmap,
         not_bridged_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
-    MOIU.pass_nonvariable_constraints_fallback(
+    return MOIU.pass_nonvariable_constraints_fallback(
         dest,
         src,
-        copy_names,
         idxmap,
         bridged_types,
-        pass_cons,
-        pass_attr;
+        pass_cons;
         filter_constraints = filter_constraints,
     )
 end
