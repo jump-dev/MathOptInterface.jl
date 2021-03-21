@@ -752,6 +752,24 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     return
 end
 
+function pass_nonvariable_constraints(
+    dest::AbstractModel,
+    src::MOI.ModelLike,
+    idxmap::IndexMap,
+    constraint_types,
+    pass_cons;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    return pass_nonvariable_constraints(
+        dest.constraints,
+        src,
+        idxmap,
+        constraint_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+end
+
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
     return automatic_copy_to(dest, src; kws...)
 end

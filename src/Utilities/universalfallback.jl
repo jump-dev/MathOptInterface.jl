@@ -86,6 +86,41 @@ function MOI.empty!(uf::UniversalFallback)
     return
 end
 
+function pass_nonvariable_constraints(
+    dest::UniversalFallback,
+    src::MOI.ModelLike,
+    idxmap::IndexMap,
+    constraint_types,
+    pass_cons;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    supported_types = eltype(constraint_types)[]
+    unsupported_types = eltype(constraint_types)[]
+    for (F, S) in constraint_types
+        if MOI.supports_constraint(dest.model, F, S)
+            push!(supported_types, (F, S))
+        else
+            push!(unsupported_types, (F, S))
+        end
+    end
+    pass_nonvariable_constraints(
+        dest.model,
+        src,
+        idxmap,
+        supported_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+    return pass_nonvariable_constraints_fallback(
+        dest,
+        src,
+        idxmap,
+        unsupported_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+end
+
 function MOI.copy_to(uf::UniversalFallback, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(uf, src; kws...)
 end
