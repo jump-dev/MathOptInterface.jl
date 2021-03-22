@@ -162,6 +162,11 @@ struct GreaterThan{T<:Real} <: AbstractScalarSet
     lower::T
 end
 
+# guimarqu
+struct ExtendedGreaterThan{T<:Real} <: AbstractScalarSet
+    lower::T
+end
+
 """
     LessThan{T <: Real}(upper::T)
 
@@ -169,6 +174,11 @@ The set ``(-\\infty,upper] \\subseteq \\mathbb{R}``.
 """
 struct LessThan{T<:Real} <: AbstractScalarSet
     upper::T
+end
+
+# guimarqu
+struct ExtendedLessThan{T<:Real} <: AbstractScalarSet
+    lower::T
 end
 
 """

@@ -12,6 +12,7 @@ mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
 config = MOIT.TestConfig()
 config_with_basis = MOIT.TestConfig(basis = true)
 
+
 @testset "Split" begin
     T = Float64
     bridged_mock = MOIB.Constraint.SplitInterval{T}(mock)
@@ -31,6 +32,46 @@ config_with_basis = MOIT.TestConfig(basis = true)
         ],
     )
 end
+
+@testset "my test" begin
+    bridged_mock = MOIB.Constraint.SplitInterval{Float64}(mock)
+
+    MOIU.set_mock_optimize!(
+        mock,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0, -1.0, 1.0],
+        ),
+    )
+
+    # variables: x, y, z
+    # maxobjective: x + -1y + z
+    # c1: x in Interval(-Inf, 1.0)
+    # c2: y in Interval(-1.0, Inf)
+    # c3: z in Interval(-Inf, Inf)
+    # c4: 1z <= 1.0
+    MOIT.solve_one_sided_intervals(bridged_mock, config_with_basis)
+
+    println("====== ****** ======")
+    for (i, b) in bridged_mock.map.single_variable_constraints
+        @show MOI.get(bridged_mock.model, MOI.ConstraintSet(), b.lower)
+        @show MOI.get(bridged_mock.model, MOI.ConstraintSet(), b.upper)
+    end
+
+    println("====== ****** ======")
+
+    @show MOI.get(
+            bridged_mock,
+            MOI.ListOfConstraintIndices{
+                MOI.SingleVariable,
+                MOI.Interval{Float64},
+            }(),
+        )
+
+    
+    
+end
+exit()
 
 @testset "Interval" begin
     bridged_mock = MOIB.Constraint.SplitInterval{Float64}(mock)

@@ -1,5 +1,5 @@
-_lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
-_upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
+_lower_set(set::MOI.Interval) = isinf(set.lower) ? MOI.ExtendedGreaterThan(set.lower) : MOI.GreaterThan(set.lower)
+_upper_set(set::MOI.Interval) = isinf(set.upper) ? MOI.ExtendedLessThan(set.upper) : MOI.LessThan(set.upper)
 _lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)
 _upper_set(set::MOI.EqualTo) = MOI.LessThan(set.value)
 _lower_set(set::MOI.Zeros) = MOI.Nonnegatives(set.dimension)
@@ -266,4 +266,32 @@ function MOI.get(
     bridge::SplitIntervalBridge{T,F,MOI.Zeros},
 ) where {T,F}
     return MOI.Zeros(MOI.get(model, attr, bridge.lower).dimension)
+end
+
+
+# guimarqu : new bridge (to improve)
+"""
+    UnextendBridge
+
+Bridge for ExtendedGreatherThan to GreaterThan ...
+"""
+struct UnextendBridge{
+    T,
+    F<:MOI.AbstractFunction,
+    ES<:MOI.AbstractSet,
+    S<:MOI.AbstractSet
+} <: AbstractBridge
+    non_extended::Union{Nothing, CI{F,S}}
+end
+
+function bridge_constraint(
+    ::Type{UnextendBridge{T,F,ES,S}},
+    model::MOI.ModelLike,
+    f::F,
+    set::S,
+) where {T,F,ES,S}
+    if isinf(set.value)
+        return UnextendBridge{T,F,ES,S}(nothing)
+    end
+    return UnextendBridge{T,F,ES,S}(MOI.GreaterThan(3))
 end
