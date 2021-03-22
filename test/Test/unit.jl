@@ -45,7 +45,6 @@ end
             "solve_zero_one_with_bounds_1",
             "solve_zero_one_with_bounds_2",
             "solve_zero_one_with_bounds_3",
-            "solve_constrs_with_inf_bounds",
             "solve_one_sided_intervals",
             "solve_unbounded_model",
             "solve_single_variable_dual_min",
@@ -348,7 +347,7 @@ end
         MOIT.solve_zero_one_with_bounds_3(mock, config)
     end
 
-    @testset "solve_constrs_inf_bounds" begin
+    @testset "solve_one_sided_intervals" begin
         MOIU.set_mock_optimize!(mock,
             (mock::MOIU.MockOptimizer) -> begin
                 MOIU.mock_optimize!(
@@ -361,7 +360,6 @@ end
                 )
             end
         )
-        MOIT.solve_constrs_with_inf_bounds(mock, config)
         MOIT.solve_one_sided_intervals(mock, config)
     end
 
