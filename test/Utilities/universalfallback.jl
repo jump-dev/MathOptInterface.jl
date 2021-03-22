@@ -12,8 +12,17 @@ function test_optmodattrs(uf, model, attr, listattr)
     @test MOI.get(uf, attr) == 0
     @test MOI.get(uf, listattr) == [attr]
 end
-function test_varconattrs(uf, model, attr, listattr, I::Type{<:MOI.Index},
-                          addfun, x, y, z)
+function test_varconattrs(
+    uf,
+    model,
+    attr,
+    listattr,
+    I::Type{<:MOI.Index},
+    addfun,
+    x,
+    y,
+    z,
+)
     @test !MOI.supports(model, attr, I)
     @test MOI.supports(uf, attr, I)
     @test isempty(MOI.get(uf, listattr))
@@ -54,24 +63,36 @@ struct UnknownOptimizerAttribute <: MOI.AbstractOptimizerAttribute end
 
 # A few objective/constraint types are supported to test both the fallback and the
 # delegation to the internal model
-@MOIU.model(ModelForUniversalFallback,
-            (),
-            (MOI.LessThan,),
-            (),
-            (),
-            (),
-            (MOI.ScalarAffineFunction,),
-            (),
-            ())
+MOIU.@model(
+    ModelForUniversalFallback,
+    (),
+    (MOI.LessThan,),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+)
 function MOI.supports(
     ::ModelForUniversalFallback{T},
-    ::Type{MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}}) where T
+    ::Type{MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}},
+) where {T}
     return false
 end
 function MOI.supports_constraint(
-    ::ModelForUniversalFallback{T}, ::Type{MOI.SingleVariable},
-    ::Type{<:Union{MOI.EqualTo{T}, MOI.GreaterThan{T}, MOI.Interval{T},
-                   MOI.Integer, MOI.ZeroOne}}) where T
+    ::ModelForUniversalFallback{T},
+    ::Type{MOI.SingleVariable},
+    ::Type{
+        <:Union{
+            MOI.EqualTo{T},
+            MOI.GreaterThan{T},
+            MOI.Interval{T},
+            MOI.Integer,
+            MOI.ZeroOne,
+        },
+    },
+) where {T}
     return false
 end
 
@@ -110,6 +131,7 @@ end
 @testset "Optimizer Attribute" begin
     attr = UnknownOptimizerAttribute()
     listattr = MOI.ListOfOptimizerAttributesSet()
+    empty!(uf.optattr)
     test_optmodattrs(uf, model, attr, listattr)
 end
 @testset "Model Attribute" begin
@@ -131,12 +153,25 @@ end
 @testset "Objective Attribute" begin
     global x, y, z
     _single(vi) = MOI.SingleVariable(vi)
-    _affine(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
+    function _affine(vi)
+        return convert(
+            MOI.ScalarAffineFunction{Float64},
+            MOI.SingleVariable(vi),
+        )
+    end
     function _add_single_objective(vi)
-        return MOI.set(uf, MOI.ObjectiveFunction{MOI.SingleVariable}(), _single(vi))
+        return MOI.set(
+            uf,
+            MOI.ObjectiveFunction{MOI.SingleVariable}(),
+            _single(vi),
+        )
     end
     function _add_affine_objective(vi)
-        return MOI.set(uf, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), _affine(vi))
+        return MOI.set(
+            uf,
+            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            _affine(vi),
+        )
     end
     @testset "Supported objective" begin
         F = MOI.SingleVariable
@@ -152,7 +187,11 @@ end
         @test MOI.supports(uf, MOI.ObjectiveFunction{F}())
         _add_affine_objective(x)
         @test MOI.get(uf, MOI.ObjectiveFunction{F}()) ≈ _affine(x)
-        MOI.modify(uf, MOI.ObjectiveFunction{F}(), MOI.ScalarCoefficientChange(y, 1.))
+        MOI.modify(
+            uf,
+            MOI.ObjectiveFunction{F}(),
+            MOI.ScalarCoefficientChange(y, 1.0),
+        )
         fx = MOI.SingleVariable(x)
         fy = MOI.SingleVariable(y)
         obj = 1fx + 1fy
@@ -161,24 +200,43 @@ end
 end
 @testset "Constraint Attribute" begin
     global x, y, z
-    _affine(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
+    function _affine(vi)
+        return convert(
+            MOI.ScalarAffineFunction{Float64},
+            MOI.SingleVariable(vi),
+        )
+    end
     function _add_affine_constraint(vi, ub)
         return MOI.add_constraint(uf, _affine(vi), MOI.LessThan(ub))
     end
     attr = MOIT.UnknownConstraintAttribute()
     @testset "Supported constraint" begin
-        cx = _add_affine_constraint(x, 0.)
-        cy = _add_affine_constraint(y, 1.)
-        cz = _add_affine_constraint(z, 2.)
-        CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}}
-        listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.LessThan{Float64}}()
-        test_varconattrs(uf, model, attr, listattr, CI,
-                         uf -> _add_affine_constraint(x, 0.), cx, cy, cz)
+        cx = _add_affine_constraint(x, 0.0)
+        cy = _add_affine_constraint(y, 1.0)
+        cz = _add_affine_constraint(z, 2.0)
+        CI = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}
+        listattr = MOI.ListOfConstraintAttributesSet{
+            MOI.SingleVariable,
+            MOI.LessThan{Float64},
+        }()
+        test_varconattrs(
+            uf,
+            model,
+            attr,
+            listattr,
+            CI,
+            uf -> _add_affine_constraint(x, 0.0),
+            cx,
+            cy,
+            cz,
+        )
 
         MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
         @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
         @test MOI.get(uf, MOI.CanonicalConstraintFunction(), cx) ≈ _affine(y)
-        @test MOIU.is_canonical(MOI.get(uf, MOI.CanonicalConstraintFunction(), cx))
+        @test MOIU.is_canonical(
+            MOI.get(uf, MOI.CanonicalConstraintFunction(), cx),
+        )
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "LessThan")
@@ -192,18 +250,32 @@ end
     x = MOI.add_variable(uf)
     y, z = MOI.add_variables(uf, 2)
     @testset "Unsupported constraint" begin
-        cx = _add_affine_constraint(x, 0.)
-        cy = _add_affine_constraint(y, 1.)
-        cz = _add_affine_constraint(z, 2.)
-        CI = MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}}
-        listattr = MOI.ListOfConstraintAttributesSet{MOI.SingleVariable, MOI.EqualTo{Float64}}()
-        test_varconattrs(uf, model, attr, listattr, CI,
-                         uf -> _add_affine_constraint(x, 0.), cx, cy, cz)
+        cx = _add_affine_constraint(x, 0.0)
+        cy = _add_affine_constraint(y, 1.0)
+        cz = _add_affine_constraint(z, 2.0)
+        CI = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}
+        listattr = MOI.ListOfConstraintAttributesSet{
+            MOI.SingleVariable,
+            MOI.EqualTo{Float64},
+        }()
+        test_varconattrs(
+            uf,
+            model,
+            attr,
+            listattr,
+            CI,
+            uf -> _add_affine_constraint(x, 0.0),
+            cx,
+            cy,
+            cz,
+        )
 
         MOI.set(uf, MOI.ConstraintFunction(), cx, _affine(y))
         @test MOI.get(uf, MOI.ConstraintFunction(), cx) ≈ _affine(y)
         @test MOI.get(uf, MOI.CanonicalConstraintFunction(), cx) ≈ _affine(y)
-        @test MOIU.is_canonical(MOI.get(uf, MOI.CanonicalConstraintFunction(), cx))
+        @test MOIU.is_canonical(
+            MOI.get(uf, MOI.CanonicalConstraintFunction(), cx),
+        )
 
         @test MOI.supports(uf, MOI.ConstraintName(), typeof(cx))
         MOI.set(uf, MOI.ConstraintName(), cx, "EqualTo")
@@ -213,7 +285,7 @@ end
         @test MOI.get(uf, typeof(cx), "EqualTo") === nothing
     end
 end
-config = MOIT.TestConfig(solve=false)
+config = MOIT.TestConfig(solve = false)
 @testset "empty" begin
     MOI.empty!(uf)
     @test MOI.is_empty(uf)
@@ -233,15 +305,24 @@ end
     uf = MOIU.UniversalFallback(model)
     x = MOI.add_variable(uf)
     # These are both intercepted by the fallback.
-    _affine(vi) = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(vi))
+    function _affine(vi)
+        return convert(
+            MOI.ScalarAffineFunction{Float64},
+            MOI.SingleVariable(vi),
+        )
+    end
     x_eq = MOI.add_constraint(uf, _affine(x), MOI.EqualTo(1.0))
     x_gt = MOI.add_constraint(uf, _affine(x), MOI.GreaterThan(1.0))
     MOI.set(uf, MOI.ConstraintName(), x_eq, "a name")
     MOI.set(uf, MOI.ConstraintName(), x_gt, "a name")
-    @test_throws Exception MOI.get(uf,
-                                   MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64},
-                                                       MOI.EqualTo{Float64}},
-                                   "a name")
+    @test_throws Exception MOI.get(
+        uf,
+        MOI.ConstraintIndex{
+            MOI.ScalarAffineFunction{Float64},
+            MOI.EqualTo{Float64},
+        },
+        "a name",
+    )
     @test_throws Exception MOI.get(uf, MOI.ConstraintIndex, "a name")
 end
 
@@ -260,10 +341,15 @@ end
         cy1 = MOI.add_constraint(uf, _affine(y), sets[1])
         cy2 = MOI.add_constraint(uf, _affine(y), sets[2])
         # check that the constraint types are in the order they were added in
-        @test MOI.get(uf, MOI.ListOfConstraints()) == [(F, typeof(sets[1])), (F, typeof(sets[2]))]
+        @test MOI.get(uf, MOI.ListOfConstraints()) ==
+              [(F, typeof(sets[1])), (F, typeof(sets[2]))]
         # check that the constraints given the constraint type are in the order they were added in
-        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[1])}()) == [MOI.ConstraintIndex{F, typeof(sets[1])}(1), MOI.ConstraintIndex{F, typeof(sets[1])}(3)]
-        @test MOI.get(uf, MOI.ListOfConstraintIndices{F, typeof(sets[2])}()) == [MOI.ConstraintIndex{F, typeof(sets[2])}(2), MOI.ConstraintIndex{F, typeof(sets[2])}(4)]
+        for set in sets
+            @test MOI.get(uf, MOI.ListOfConstraintIndices{F,typeof(set)}()) == [
+                MOI.ConstraintIndex{F,typeof(set)}(1),
+                MOI.ConstraintIndex{F,typeof(set)}(2),
+            ]
+        end
     end
 end
 
@@ -276,7 +362,7 @@ end
 @testset "Show" begin
     model = ModelForUniversalFallback{Float64}()
     uf = MOIU.UniversalFallback(model)
-    @test sprint(show, uf) == raw"""
-    MOIU.UniversalFallback{ModelForUniversalFallback{Float64}}
-    fallback for ModelForUniversalFallback{Float64}"""
+    @test sprint(show, uf) == MOI.Utilities.replace_acronym("""
+    $(MOIU.UniversalFallback{ModelForUniversalFallback{Float64}})
+    fallback for $(ModelForUniversalFallback{Float64})""")
 end

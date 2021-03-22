@@ -34,7 +34,8 @@ end
         @test f_vov ≈ MOI.VectorOfVariables([x])
         f_vaf = convert(MOI.VectorAffineFunction{Float64}, f)
         @test f_vaf ≈ MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))], [0.0]
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
+            [0.0],
         )
         f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, f)
         @test f_vqf ≈ MOI.VectorQuadraticFunction(
@@ -50,7 +51,8 @@ end
         @test_throws(MethodError, convert(MOI.VectorOfVariables, f))
         f_vaf = convert(MOI.VectorAffineFunction{Float64}, f)
         @test f_vaf ≈ MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))], [1.0]
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
+            [1.0],
         )
         f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, f)
         @test f_vqf ≈ MOI.VectorQuadraticFunction(
@@ -72,9 +74,10 @@ end
         f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, f)
         @test f_vqf ≈ MOI.VectorQuadraticFunction(
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
-            MOI.VectorQuadraticTerm{Float64}[
-                MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(3.0, x, x))
-            ],
+            MOI.VectorQuadraticTerm{Float64}[MOI.VectorQuadraticTerm(
+                1,
+                MOI.ScalarQuadraticTerm(3.0, x, x),
+            )],
             [1.0],
         )
     end

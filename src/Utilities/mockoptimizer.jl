@@ -137,12 +137,14 @@ end
 MOI.compute_conflict!(::MockOptimizer) = nothing
 
 function throw_mock_unsupported_names(attr)
-    return throw(MOI.UnsupportedAttribute(
-        attr,
-        "The MockOptimizer was configured not to support names for " *
-        "testing purpose using the `support_names=false` constructor keyword " *
-        "argument.",
-    ))
+    return throw(
+        MOI.UnsupportedAttribute(
+            attr,
+            "The MockOptimizer was configured not to support names for " *
+            "testing purpose using the `support_names=false` constructor keyword " *
+            "argument.",
+        ),
+    )
 end
 
 function MOI.supports(

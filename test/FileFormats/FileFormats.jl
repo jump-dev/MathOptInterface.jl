@@ -23,9 +23,8 @@ const MOI = MathOptInterface
                 MOI.copy_to(model_dest, model_src)
                 @test !isempty(sprint(write, model_dest))
             end
-            model_dest = MOI.Utilities.MockOptimizer(
-                MOI.Utilities.Model{Float64}()
-            )
+            model_dest =
+                MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
             MOI.copy_to(model_dest, model_src)
         end
     end
@@ -34,7 +33,10 @@ const MOI = MathOptInterface
         for cs in [MOI.FileFormats.Bzip2(), MOI.FileFormats.Gzip()]
             for open_type in ["a", "r+", "w+", "a+"]
                 @test_throws ArgumentError MOI.FileFormats.compressed_open(
-                    (x) -> nothing, "dummy.gz", open_type, cs
+                    (x) -> nothing,
+                    "dummy.gz",
+                    open_type,
+                    cs,
                 )
             end
         end
@@ -67,12 +69,12 @@ const MOI = MathOptInterface
             (MOI.FileFormats.FORMAT_SDPA, MOI.FileFormats.SDPA.Model()),
         ]
             @test typeof(
-                MOI.FileFormats.Model(format = format, filename = "foo.bar")
+                MOI.FileFormats.Model(format = format, filename = "foo.bar"),
             ) == typeof(model)
         end
         @test_throws(
             ErrorException(
-                "When `format==FORMAT_AUTOMATIC` you must pass a `filename`."
+                "When `format==FORMAT_AUTOMATIC` you must pass a `filename`.",
             ),
             MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_AUTOMATIC)
         )
@@ -84,9 +86,9 @@ const MOI = MathOptInterface
             (".sdpa", MOI.FileFormats.SDPA.Model()),
         ]
             @test typeof(MOI.FileFormats.Model(filename = "a$(ext)")) ==
-                typeof(model)
+                  typeof(model)
             @test typeof(MOI.FileFormats.Model(filename = "a$(ext).gz")) ==
-                typeof(model)
+                  typeof(model)
         end
         @test_throws(
             ErrorException("Unable to automatically detect format of a.b."),

@@ -39,8 +39,8 @@ function bridge_constraint(
         ) for i in 1:v_dim
     ]
     exp_indices = [
-        MOI.add_constraint(model, exp_func_i, MOI.ExponentialCone())
-        for exp_func_i in exp_funcs
+        MOI.add_constraint(model, exp_func_i, MOI.ExponentialCone()) for
+        exp_func_i in exp_funcs
     ]
     return RelativeEntropyBridge{T,F,G,H}(y, ge_index, exp_indices)
 end
@@ -131,11 +131,9 @@ function MOI.get(
     )
     w_start = 1 + length(bridge.y)
     for i in eachindex(bridge.y)
-        exp_func_i = MOIU.eachscalar(MOI.get(
-            model,
-            MOI.ConstraintFunction(),
-            bridge.exp_indices[i],
-        ))
+        exp_func_i = MOIU.eachscalar(
+            MOI.get(model, MOI.ConstraintFunction(), bridge.exp_indices[i]),
+        )
         MOIU.operate_output_index!(-, T, 1, func, exp_func_i[1])
         MOIU.operate_output_index!(+, T, 1 + i, func, exp_func_i[3])
         MOIU.operate_output_index!(+, T, w_start + i, func, exp_func_i[2])

@@ -86,10 +86,12 @@ function MOI.set(
 )
     # This would require modifing any constraint which uses the bridged
     # variable.
-    return throw(MOI.SetAttributeNotAllowed(
-        attr,
-        "The variable `$(bridge.variable)` is bridged by the `VectorizeBridge`.",
-    ))
+    return throw(
+        MOI.SetAttributeNotAllowed(
+            attr,
+            "The variable `$(bridge.variable)` is bridged by the `VectorizeBridge`.",
+        ),
+    )
 end
 
 function MOI.get(

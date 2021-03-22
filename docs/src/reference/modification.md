@@ -7,6 +7,13 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# The `Utilities` submodule
+# Modifications
 
-TODO: document the utilities submodule
+```@docs
+modify
+AbstractFunctionModification
+ScalarConstantChange
+VectorConstantChange
+ScalarCoefficientChange
+MultirowChange
+```

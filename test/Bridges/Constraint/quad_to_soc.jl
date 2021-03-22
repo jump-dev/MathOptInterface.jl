@@ -16,35 +16,52 @@ config = MOIT.TestConfig()
     @testset "Error for non-convex quadratic constraints" begin
         x = MOI.add_variable(bridged_mock)
         @test_throws ErrorException begin
-            MOI.add_constraint(bridged_mock,
-                               MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
-                                                           [MOI.ScalarQuadraticTerm(1.0, x, x)],
-                                                           0.0),
-                               MOI.GreaterThan(0.0))
+            MOI.add_constraint(
+                bridged_mock,
+                MOI.ScalarQuadraticFunction(
+                    MOI.ScalarAffineTerm{Float64}[],
+                    [MOI.ScalarQuadraticTerm(1.0, x, x)],
+                    0.0,
+                ),
+                MOI.GreaterThan(0.0),
+            )
         end
         @test_throws ErrorException begin
-            MOI.add_constraint(bridged_mock,
-                               MOI.ScalarQuadraticFunction(MOI.ScalarAffineTerm{Float64}[],
-                                                           [MOI.ScalarQuadraticTerm(-1.0, x, x)],
-                                                           0.0),
-                               MOI.LessThan(0.0))
+            MOI.add_constraint(
+                bridged_mock,
+                MOI.ScalarQuadraticFunction(
+                    MOI.ScalarAffineTerm{Float64}[],
+                    [MOI.ScalarQuadraticTerm(-1.0, x, x)],
+                    0.0,
+                ),
+                MOI.LessThan(0.0),
+            )
         end
     end
     @testset "Quadratic constraints with 2 variables" begin
-        MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+        MOIU.set_mock_optimize!(
+            mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
                 MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [0.5, 0.5])
+                (MOI.FEASIBLE_POINT, [0.5, 0.5]),
             ),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
                 MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [0.5, (√13 - 1)/4])
-            )
+                (MOI.FEASIBLE_POINT, [0.5, (√13 - 1) / 4]),
+            ),
         )
         MOIT.solve_qcp_edge_cases(bridged_mock, config)
-        ci = first(MOI.get(mock,
-                           MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},
-                                                       MOI.RotatedSecondOrderCone}()))
+        ci = first(
+            MOI.get(
+                mock,
+                MOI.ListOfConstraintIndices{
+                    MOI.VectorAffineFunction{Float64},
+                    MOI.RotatedSecondOrderCone,
+                }(),
+            ),
+        )
         x, y = MOI.get(mock, MOI.ListOfVariableIndices())
         # The matrix is
         # 2 1
@@ -52,32 +69,75 @@ config = MOIT.TestConfig()
         # for which the cholesky factorization is U' * U with U =
         # √2 √2/2
         #  . √3/√2
-        expected = MOI.VectorAffineFunction{Float64}(MOI.VectorAffineTerm.([3, 3, 4],
-                                                                           MOI.ScalarAffineTerm.([√2, √2/2, √3/√2],
-                                                                                                 [x, y, y])),
-                                                     [1.0, 1.0, 0.0, 0.0])
+        expected = MOI.VectorAffineFunction{Float64}(
+            MOI.VectorAffineTerm.(
+                [3, 3, 4],
+                MOI.ScalarAffineTerm.([√2, √2 / 2, √3 / √2], [x, y, y]),
+            ),
+            [1.0, 1.0, 0.0, 0.0],
+        )
         @test MOI.get(mock, MOI.ConstraintFunction(), ci) ≈ expected
     end
     @testset "QCP tests" begin
-        MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/2, 7/4],
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)  => [zeros(2)],
-                (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)  => [[0.25, 1.0, -1/√2]]))
+        MOIU.set_mock_optimize!(
+            mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                [1 / 2, 7 / 4],
+                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                    [zeros(2)],
+                (
+                    MOI.VectorAffineFunction{Float64},
+                    MOI.RotatedSecondOrderCone,
+                ) => [[0.25, 1.0, -1 / √2]],
+            ),
+        )
         MOIT.qcp1test(bridged_mock, config)
-        MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [√2],
-                (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)  => [[1/√2, 1/(2 * √2), -1/√2]]))
+        MOIU.set_mock_optimize!(
+            mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                [√2],
+                (
+                    MOI.VectorAffineFunction{Float64},
+                    MOI.RotatedSecondOrderCone,
+                ) => [[1 / √2, 1 / (2 * √2), -1 / √2]],
+            ),
+        )
         MOIT.qcp2test(bridged_mock, config)
         MOIT.qcp3test(bridged_mock, config)
         @testset "Bridge deletion" begin
-            ci = first(MOI.get(bridged_mock,
-                               MOI.ListOfConstraintIndices{MOI.ScalarQuadraticFunction{Float64},
-                                                           MOI.LessThan{Float64}}()))
-            test_delete_bridge(bridged_mock, ci, 1, ((MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone, 0),))
+            ci = first(
+                MOI.get(
+                    bridged_mock,
+                    MOI.ListOfConstraintIndices{
+                        MOI.ScalarQuadraticFunction{Float64},
+                        MOI.LessThan{Float64},
+                    }(),
+                ),
+            )
+            test_delete_bridge(
+                bridged_mock,
+                ci,
+                1,
+                ((
+                    MOI.VectorAffineFunction{Float64},
+                    MOI.RotatedSecondOrderCone,
+                    0,
+                ),),
+            )
         end
-        MOIU.set_mock_optimize!(mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0],
-                (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone)  => [[1.0, 1/3, -1/√2, -1/√6]]))
+        MOIU.set_mock_optimize!(
+            mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                [1.0, 1.0],
+                (
+                    MOI.VectorAffineFunction{Float64},
+                    MOI.RotatedSecondOrderCone,
+                ) => [[1.0, 1 / 3, -1 / √2, -1 / √6]],
+            ),
+        )
         MOIT.qcp4test(bridged_mock, config)
         MOIT.qcp5test(bridged_mock, config)
     end

@@ -193,11 +193,13 @@ function supports(
     attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
 )
     if !is_copyable(attr)
-        throw(ArgumentError(
-            "`supports` is not defined for $attr, it is only" *
-            " defined for attributes such that `is_copyable`" *
-            " returns `true`.",
-        ))
+        throw(
+            ArgumentError(
+                "`supports` is not defined for $attr, it is only" *
+                " defined for attributes such that `is_copyable`" *
+                " returns `true`.",
+            ),
+        )
     end
     return false
 end
@@ -207,11 +209,13 @@ function supports(
     ::Type{<:Index},
 )
     if !is_copyable(attr)
-        throw(ArgumentError(
-            "`supports` is not defined for $attr, it is only" *
-            " defined for attributes such that `is_copyable`" *
-            " returns `true`.",
-        ))
+        throw(
+            ArgumentError(
+                "`supports` is not defined for $attr, it is only" *
+                " defined for attributes such that `is_copyable`" *
+                " returns `true`.",
+            ),
+        )
     end
     return false
 end
@@ -289,7 +293,11 @@ function get(model::ModelLike, attr::AnyAttribute, args...)
     return get_fallback(model, attr, args...)
 end
 function get_fallback(model::ModelLike, attr::AnyAttribute, args...)
-    return throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+    return throw(
+        ArgumentError(
+            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
+        ),
+    )
 end
 
 """
@@ -300,7 +308,11 @@ The signature matches that of `get` except that the the result is placed in the 
 """
 function get! end
 function get!(output, model::ModelLike, attr::AnyAttribute, args...)
-    return throw(ArgumentError("ModelLike of type $(typeof(model)) does not support accessing the attribute $attr"))
+    return throw(
+        ArgumentError(
+            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
+        ),
+    )
 end
 
 """
@@ -383,11 +395,13 @@ function set(
     vector_of_values::Vector,
 )
     if length(idxs) != length(vector_of_values)
-        throw(DimensionMismatch(
-            "Number of indices ($(length(idxs))) does " *
-            "not match the number of values " *
-            "($(length(vector_of_values))) set to `$attr`.",
-        ))
+        throw(
+            DimensionMismatch(
+                "Number of indices ($(length(idxs))) does " *
+                "not match the number of values " *
+                "($(length(vector_of_values))) set to `$attr`.",
+            ),
+        )
     end
     return set.(model, attr, idxs, vector_of_values)
 end
@@ -446,7 +460,11 @@ error is thrown if it supports the submittable `sub` but it cannot be submitted.
 function submit end
 function submit(model::ModelLike, sub::AbstractSubmittable, args...)
     if supports(model, sub)
-        throw(ArgumentError("Submitting $(typeof.(args)) for `$(typeof(sub))` is not valid."))
+        throw(
+            ArgumentError(
+                "Submitting $(typeof.(args)) for `$(typeof(sub))` is not valid.",
+            ),
+        )
     else
         throw(UnsupportedSubmittable(sub))
     end
@@ -572,11 +590,11 @@ An Enum of possible return values from calling [`get`](@ref) with
 
 Possible values are:
 
-* CALLBACK_NODE_STATUS_INTEGER: the primal solution available from
+* `CALLBACK_NODE_STATUS_INTEGER`: the primal solution available from
   [`CallbackVariablePrimal`](@ref) is integer feasible.
-* CALLBACK_NODE_STATUS_FRACTIONAL: the primal solution available from
+* `CALLBACK_NODE_STATUS_FRACTIONAL`: the primal solution available from
   [`CallbackVariablePrimal`](@ref) is integer infeasible.
-* CALLBACK_NODE_STATUS_UNKNOWN: the primal solution available from
+* `CALLBACK_NODE_STATUS_UNKNOWN`: the primal solution available from
   [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.
 """
 @enum(
@@ -1252,9 +1270,11 @@ function throw_set_error_fallback(
     func::AbstractFunction;
     kwargs...,
 )
-    return throw(ArgumentError("""Cannot modify functions of different types.
-           Constraint type is $(func_type(constraint_index)) while the replacement
-           function is of type $(typeof(func))."""))
+    return throw(
+        ArgumentError("""Cannot modify functions of different types.
+  Constraint type is $(func_type(constraint_index)) while the replacement
+  function is of type $(typeof(func))."""),
+    )
 end
 
 """
@@ -1281,9 +1301,11 @@ function throw_set_error_fallback(
     set::AbstractSet;
     kwargs...,
 )
-    return throw(ArgumentError("""Cannot modify sets of different types. Constraint
-           type is $(set_type(constraint_index)) while the replacement set is of
-           type $(typeof(set)). Use `transform` instead."""))
+    return throw(
+        ArgumentError("""Cannot modify sets of different types. Constraint
+  type is $(set_type(constraint_index)) while the replacement set is of
+  type $(typeof(set)). Use `transform` instead."""),
+    )
 end
 
 """

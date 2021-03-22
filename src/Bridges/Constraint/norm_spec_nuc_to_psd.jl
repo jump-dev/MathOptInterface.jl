@@ -89,16 +89,14 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::NormSpectralBridge{T,F,G},
 ) where {T,F,G}
-    psd_func = MOIU.eachscalar(MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge.psd_index,
-    ))
+    psd_func = MOIU.eachscalar(
+        MOI.get(model, MOI.ConstraintFunction(), bridge.psd_index),
+    )
     t = psd_func[1]
     side_dim = bridge.row_dim + bridge.column_dim
     X = psd_func[[
-        trimap(i, j) for j in 1:bridge.column_dim
-        for i in (bridge.column_dim+1):side_dim
+        trimap(i, j) for j in 1:bridge.column_dim for
+        i in (bridge.column_dim+1):side_dim
     ]]
     return MOIU.convert_approx(G, MOIU.operate(vcat, T, t, X))
 end
@@ -125,8 +123,8 @@ function MOI.get(
     t = primal[1]
     side_dim = bridge.row_dim + bridge.column_dim
     X = primal[[
-        trimap(i, j) for j in 1:bridge.column_dim
-        for i in (bridge.column_dim+1):side_dim
+        trimap(i, j) for j in 1:bridge.column_dim for
+        i in (bridge.column_dim+1):side_dim
     ]]
     return vcat(t, X)
 end
@@ -314,11 +312,9 @@ function MOI.get(
     bridge::NormNuclearBridge{T,F,G,H},
 ) where {T,F,G,H}
     ge_func = MOI.get(model, MOI.ConstraintFunction(), bridge.ge_index)
-    psd_func = MOIU.eachscalar(MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge.psd_index,
-    ))
+    psd_func = MOIU.eachscalar(
+        MOI.get(model, MOI.ConstraintFunction(), bridge.psd_index),
+    )
     column_dim = bridge.column_dim
     side_dim = bridge.row_dim + column_dim
     t = MOIU.operate(
@@ -334,8 +330,8 @@ function MOI.get(
     )
     t = MOIU.remove_variable(MOIU.remove_variable(t, bridge.U), bridge.V)
     X = psd_func[[
-        trimap(i, j) for j in 1:bridge.column_dim
-        for i in (bridge.column_dim+1):side_dim
+        trimap(i, j) for j in 1:bridge.column_dim for
+        i in (bridge.column_dim+1):side_dim
     ]]
     return MOIU.convert_approx(H, MOIU.operate(vcat, T, t, X))
 end
@@ -363,8 +359,8 @@ function MOI.get(
     side_dim = bridge.row_dim + bridge.column_dim
     t = ge_primal + sum(psd_primal[trimap(i, i)] for i in 1:side_dim) / 2
     X = psd_primal[[
-        trimap(i, j) for j in 1:bridge.column_dim
-        for i in (bridge.column_dim+1):side_dim
+        trimap(i, j) for j in 1:bridge.column_dim for
+        i in (bridge.column_dim+1):side_dim
     ]]
     return vcat(t, X)
 end
@@ -380,8 +376,8 @@ function MOI.get(
     side_dim = bridge.row_dim + bridge.column_dim
     X =
         2 * psd_dual[[
-            trimap(i, j) for j in 1:bridge.column_dim
-            for i in (bridge.column_dim+1):side_dim
+            trimap(i, j) for j in 1:bridge.column_dim for
+            i in (bridge.column_dim+1):side_dim
         ]]
     return vcat(t, X)
 end

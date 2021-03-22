@@ -15,7 +15,11 @@ function MOI.get(
     if invariant_under_function_conversion(attr)
         return MOI.get(model, attr, bridge.constraint)
     else
-        throw(ArgumentError("Bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`."))
+        throw(
+            ArgumentError(
+                "Bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
+            ),
+        )
     end
 end
 
@@ -36,7 +40,11 @@ function MOI.set(
     if invariant_under_function_conversion(attr)
         return MOI.set(model, attr, bridge.constraint, value)
     else
-        throw(ArgumentError("Bridge of type `$(typeof(bridge))` does not support setting the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`."))
+        throw(
+            ArgumentError(
+                "Bridge of type `$(typeof(bridge))` does not support setting the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
+            ),
+        )
     end
 end
 

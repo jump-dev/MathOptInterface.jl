@@ -9,7 +9,8 @@ const MOI = MathOptInterface
 # should not affect it
 Dict = nothing
 
-MathOptInterface.Utilities.@model(LPModel,                      # Name of model
+MathOptInterface.Utilities.@model(
+    LPModel,                      # Name of model
     (),                                                         # untyped scalar sets
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval), #   typed scalar sets
     (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives),            # untyped vector sets
@@ -17,7 +18,8 @@ MathOptInterface.Utilities.@model(LPModel,                      # Name of model
     (),                                                         # untyped scalar functions
     (MOI.ScalarAffineFunction,),                                #   typed scalar functions
     (MOI.VectorOfVariables,),                                   # untyped vector functions
-    (MOI.VectorAffineFunction,))                                #   typed vector functions
+    (MOI.VectorAffineFunction,)
+)                                #   typed vector functions
 
 model = LPModel{Float64}()
 

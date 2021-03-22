@@ -10,7 +10,14 @@ function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int64)
     return MathOptInterface.VariableIndex(index)
 end
 
-key_to_index(key::MathOptInterface.VariableIndex) = key.value
+function index_to_key(
+    ::Type{MathOptInterface.ConstraintIndex{F,S}},
+    index::Int64,
+) where {F,S}
+    return MathOptInterface.ConstraintIndex{F,S}(index)
+end
+
+key_to_index(key::MathOptInterface.Index) = key.value
 
 # Now, on with `CleverDicts`.
 
@@ -62,22 +69,6 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     set::BitSet
     vector::Vector{V}
     dict::OrderedCollections.OrderedDict{K,V}
-    function CleverDict{K,V}(n::Integer = 0) where {K,V}
-        set = BitSet()
-        sizehint!(set, n)
-        vec = Vector{K}(undef, n)
-        inverse_hash = x -> index_to_key(K, x)
-        hash = key_to_index
-        return new{K,V,typeof(hash),typeof(inverse_hash)}(
-            0,
-            hash,
-            inverse_hash,
-            true,
-            set,
-            vec,
-            OrderedCollections.OrderedDict{K,V}(),
-        )
-    end
     function CleverDict{K,V}(
         hash::F,
         inverse_hash::I,
@@ -97,6 +88,9 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
         )
     end
 end
+function CleverDict{K,V}(n::Integer = 0) where {K,V}
+    return CleverDict{K,V}(key_to_index, index_to_key, n)
+end
 
 """
     index_to_key(::Type{K}, index::Int)
@@ -115,6 +109,16 @@ function key_to_index end
 
 _is_dense(c::CleverDict) = c.is_dense
 
+function _inverse_hash(c::CleverDict{K}, index::Integer) where {K}
+    return c.inverse_hash(Int64(index))::K
+end
+function _inverse_hash(
+    c::CleverDict{K,V,F,typeof(index_to_key)},
+    index::Integer,
+) where {K,V,F<:Function}
+    return index_to_key(K, Int64(index))::K
+end
+
 """
     add_item(c::CleverDict{K, V}, val::Val)::K where {K, V}
 
@@ -122,10 +126,12 @@ Set `val` in the next available key, and return that key.
 """
 function add_item(c::CleverDict{K,V}, val::V)::K where {K,V}
     if c.last_index == -1
-        error("Keys were added out of order. `add_item` requires that keys are always added in order.")
+        error(
+            "Keys were added out of order. `add_item` requires that keys are always added in order.",
+        )
     end
     # adding a key in order
-    key = c.inverse_hash(Int64(c.last_index + 1))::K
+    key = _inverse_hash(c, c.last_index + 1)
     c[key] = val
     return key
 end
@@ -149,6 +155,14 @@ end
 
 function Base.haskey(c::CleverDict{K}, key::K) where {K}
     return _is_dense(c) ? c.hash(key)::Int64 in c.set : haskey(c.dict, key)
+end
+
+function Base.keys(c::CleverDict)
+    return if _is_dense(c)
+        [_inverse_hash(c, index) for index in c.set]
+    else
+        collect(keys(c.dict))
+    end
 end
 
 function Base.get(c::CleverDict, key, default)
@@ -285,7 +299,7 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
+            new_el = _inverse_hash(c, el) => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
                 return new_el, State(i[2], i[1])
             else
@@ -319,7 +333,7 @@ function Base.iterate(
             return nothing
         else
             el, i = itr
-            new_el = c.inverse_hash(Int64(el))::K => c.vector[el]::V
+            new_el = _inverse_hash(c, el) => c.vector[el]::V
             @static if VERSION >= v"1.4.0"
                 return new_el, State(i[2], i[1])
             else
@@ -353,7 +367,9 @@ end
 function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
     if _is_dense(c)
         if n < length(c.vector)
-            error("CleverDict cannot be resized to a size smaller than the current")
+            error(
+                "CleverDict cannot be resized to a size smaller than the current",
+            )
         end
         resize!(c.vector, n)
         sizehint!(c.set, n)
@@ -361,6 +377,38 @@ function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
         sizehint!(c.dict, n)
     end
     return
+end
+
+Base.values(d::CleverDict) = _is_dense(d) ? d.vector : values(d.dict)
+
+# TODO `map!(f, values(dict::AbstractDict))` requires Julia 1.2 or later,
+#      use `map_values` once we drop Julia 1.1 and earlier.
+function map_values!(f::Function, d::CleverDict)
+    if _is_dense(d)
+        map!(f, d.vector, d.vector)
+    else
+        for (k, v) in d.dict
+            d.dict[k] = f(v)
+        end
+    end
+    return
+end
+
+function Base.convert(
+    ::Type{CleverDict{K,V,typeof(key_to_index),typeof(index_to_key)}},
+    d::CleverDict{K,V,typeof(key_to_index),typeof(index_to_key)},
+) where {K,V}
+    return d
+end
+function Base.convert(
+    ::Type{CleverDict{K,V,typeof(key_to_index),typeof(index_to_key)}},
+    src::AbstractDict{K,V},
+) where {K,V}
+    dest = CleverDict{K,V}()
+    for key in sort(collect(keys(src)), by = dest.hash)
+        dest[key] = src[key]
+    end
+    return dest
 end
 
 end

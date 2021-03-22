@@ -155,6 +155,7 @@ unittests["update_dimension_nonnegative_variables"] =
 Test adding, and then deleting, second-order cone variables.
 """
 function delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
+    MOI.supports_add_constrained_variables(model, MOI.SecondOrderCone) || return
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0

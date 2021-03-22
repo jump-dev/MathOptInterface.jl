@@ -2,7 +2,7 @@
 
 """
     automatic_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike;
-                      copy_names::Bool=true, 
+                      copy_names::Bool=true,
                       filter_constraints::Union{Nothing, Function}=nothing)
 
 Use [`Utilities.supports_default_copy_to`](@ref) and
@@ -11,8 +11,8 @@ Use [`Utilities.supports_default_copy_to`](@ref) and
 apply the copy operation.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function automatic_copy_to(
     dest::MOI.ModelLike,
@@ -87,8 +87,8 @@ _index_to_variable(i) = MOI.VariableIndex(i)
 const DenseVariableDict{V} = CleverDicts.CleverDict{
     MOI.VariableIndex,
     V,
-    typeof(MOI.index_value),
-    typeof(_index_to_variable),
+    typeof(CleverDicts.key_to_index),
+    typeof(CleverDicts.index_to_key),
 }
 function dense_variable_dict(::Type{V}, n) where {V}
     return CleverDicts.CleverDict{MOI.VariableIndex,V}(
@@ -99,12 +99,7 @@ function dense_variable_dict(::Type{V}, n) where {V}
 end
 
 struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
-    # just keeping the union to make it more backward compatible
-    # we should remove as soon as possible.
-    varmap::Union{
-        DenseVariableDict{MOI.VariableIndex},
-        Dict{MOI.VariableIndex,MOI.VariableIndex},
-    }
+    varmap::DenseVariableDict{MOI.VariableIndex}
     conmap::DoubleDicts.MainIndexDoubleDict
 end
 
@@ -115,6 +110,16 @@ function IndexMap(n = 0)
     )
 end
 
+"""
+    index_map_for_variable_indices(variables)
+
+This function does not add variables to the IndexMap.
+It simply initializes the IndexMap with a proper data struture.
+If the variable indices are contiguous and start from 1, then
+an optimized data structure with pre allocated memory is initialized.
+Otherwise the data structure will start empty and will try to
+keep using performant structure for as long as possible.
+"""
 function index_map_for_variable_indices(variables)
     n = length(variables)
     if all(i -> variables[i] == MOI.VariableIndex(i), 1:n)
@@ -318,12 +323,11 @@ function copy_vector_of_variables(
     not_added = MOI.ConstraintIndex{MOI.VectorOfVariables,S}[]
     cis_src =
         MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.VectorOfVariables}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.VectorOfVariables}
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if all(vi -> !haskey(idxmap, vi), f_src.variables) &&
            allunique(f_src.variables)
@@ -361,12 +365,11 @@ function copy_single_variable(
     added = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
     not_added = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
     cis_src = MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.SingleVariable}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.SingleVariable}
     for (ci_src, f_src) in zip(cis_src, fs_src)
         if !haskey(idxmap, f_src.variable)
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
@@ -392,8 +395,8 @@ Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
 [`pass_attributes`] to copy the constraint attributes.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function copy_constraints(
     dest::MOI.ModelLike,
@@ -419,6 +422,62 @@ function copy_constraints(
     end
 end
 
+function pass_nonvariable_constraints_fallback(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    idxmap::IndexMap,
+    constraint_types,
+    pass_cons = copy_constraints;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    for (F, S) in constraint_types
+        cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        if filter_constraints !== nothing
+            filter!(filter_constraints, cis_src)
+        end
+        # do the rest in `pass_cons` which is type stable
+        pass_cons(dest, src, idxmap, cis_src)
+    end
+end
+
+"""
+    pass_nonvariable_constraints(
+        dest::MOI.ModelLike,
+        src::MOI.ModelLike,
+        idxmap::IndexMap,
+        constraint_types,
+        pass_cons = copy_constraints;
+        filter_constraints::Union{Nothing,Function} = nothing,
+    )
+
+For all tuples `(F, S)` in `constraint_types`, copy all constraints of type
+`F`-in-`S` from `src` to `dest` mapping the variables indices with `idxmap`.
+If `filter_constraints` is not nothing, only indices `ci` such that
+`filter_constraints(ci)` is true are copied.
+
+The default implementation calls `pass_nonvariable_constraints_fallback` which
+copies the constraints with `pass_cons` and their attributes with `pass_attr`.
+A method can be implemented to use a specialized copy for a given type of
+`dest`.
+"""
+function pass_nonvariable_constraints(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    idxmap::IndexMap,
+    constraint_types,
+    pass_cons = copy_constraints;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    return pass_nonvariable_constraints_fallback(
+        dest,
+        src,
+        idxmap,
+        constraint_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+end
+
 function pass_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
@@ -433,7 +492,7 @@ function pass_constraints(
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     # copy_constraints can also take a filter_constraints argument; however, filtering
-    # is performed within this function (because it also calls MOI.set on the constraints). 
+    # is performed within this function (because it also calls MOI.set on the constraints).
     # Don't pass this argument to copy_constraints/pass_cons to avoid a double filtering.
     for (S, cis_src) in zip(single_variable_types, single_variable_indices)
         if filter_constraints !== nothing
@@ -467,18 +526,23 @@ function pass_constraints(
     end
 
     nonvariable_constraint_types = [
-        (F, S)
-        for
-        (F, S) in MOI.get(src, MOI.ListOfConstraints()) if
+        (F, S) for (F, S) in MOI.get(src, MOI.ListOfConstraints()) if
         F != MOI.SingleVariable && F != MOI.VectorOfVariables
     ]
+    pass_nonvariable_constraints(
+        dest,
+        src,
+        idxmap,
+        nonvariable_constraint_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
     for (F, S) in nonvariable_constraint_types
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
         if filter_constraints !== nothing
             filter!(filter_constraints, cis_src)
         end
         # do the rest in `pass_cons` which is type stable
-        pass_cons(dest, src, idxmap, cis_src)
         pass_attributes(dest, src, copy_names, idxmap, cis_src, pass_attr)
     end
 end
@@ -487,8 +551,8 @@ function copy_free_variables(
     dest::MOI.ModelLike,
     idxmap::IndexMap,
     vis_src,
-    copy_variables::Function,
-)
+    copy_variables::F,
+) where {F<:Function}
     if length(vis_src) != length(keys(idxmap.varmap))
         vars = copy_variables(dest, length(vis_src) - length(idxmap.varmap))
         i = 1
@@ -514,9 +578,7 @@ end
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraints())
     single_or_vector_variables_types = [
-        (F, S)
-        for
-        (F, S) in constraint_types if
+        (F, S) for (F, S) in constraint_types if
         F === MOI.SingleVariable || F === MOI.VectorOfVariables
     ]
     sort!(
@@ -539,9 +601,9 @@ function try_constrain_variables_on_creation(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     idxmap,
-    copy_constrained_variables::Function,
-    copy_constrained_variable::Function,
-)
+    copy_constrained_variables::F1,
+    copy_constrained_variable::F2,
+) where {F1<:Function,F2<:Function}
     single_or_vector_variables_types = sorted_variable_sets_by_cost(dest, src)
     vector_of_variables_types = Type{<:MOI.AbstractVectorSet}[]
     vector_of_variables_added =
@@ -595,8 +657,8 @@ constraints and attributes incrementally. The function
 the copying a model incrementally.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function default_copy_to(
     dest::MOI.ModelLike,
@@ -870,12 +932,11 @@ function load_single_variable(
     idxmap::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable,S}},
 ) where {S}
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.SingleVariable}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.SingleVariable}
     sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
     for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
         vi_dest = idxmap[f_src.variable]
@@ -898,12 +959,11 @@ function load_vector_of_variables(
     idxmap::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{MOI.VectorOfVariables,S}},
 ) where {S}
-    fs_src =
-        MOI.get(
-            src,
-            MOI.ConstraintFunction(),
-            cis_src,
-        )::Vector{MOI.VectorOfVariables}
+    fs_src = MOI.get(
+        src,
+        MOI.ConstraintFunction(),
+        cis_src,
+    )::Vector{MOI.VectorOfVariables}
     sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
     for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
         vis_dest = [idxmap[vi] for vi in f_src.variables]
@@ -962,7 +1022,7 @@ function load_constraints(
 end
 
 """
-    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike, 
+    allocate_load(dest::MOI.ModelLike, src::MOI.ModelLike,
                   filter_constraints::Union{Nothing, Function}=nothing
                   )
 
@@ -971,8 +1031,8 @@ Implements `MOI.copy_to(dest, src)` using the Allocate-Load API. The function
 the Allocate-Load API.
 
 If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a 
-constraint index as argument. 
+this function returns `true` will be copied. This function is given a
+constraint index as argument.
 """
 function allocate_load(
     dest::MOI.ModelLike,

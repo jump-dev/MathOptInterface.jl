@@ -71,7 +71,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 
     # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
     objf = MOI.ScalarAffineFunction{T}(
-        MOI.ScalarAffineTerm{T}.(
+        MOI.ScalarAffineTerm{
+            T,
+        }.(
             [zero(T), zero(T), -one(T), zero(T), zero(T), zero(T)],
             [v; v; v],
         ),
@@ -351,7 +353,9 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
     MOI.delete(model, c)
     # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
     cf = MOI.ScalarAffineFunction{T}(
-        MOI.ScalarAffineTerm{T}.(
+        MOI.ScalarAffineTerm{
+            T,
+        }.(
             [
                 zero(T),
                 zero(T),
@@ -1315,10 +1319,12 @@ function linear7test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
         c1 = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction{T}(
-                [MOI.VectorAffineTerm{T}(
-                    1,
-                    MOI.ScalarAffineTerm{T}(one(T), x),
-                )],
+                [
+                    MOI.VectorAffineTerm{T}(
+                        1,
+                        MOI.ScalarAffineTerm{T}(one(T), x),
+                    ),
+                ],
                 [-T(100)],
             ),
             MOI.Nonnegatives(1),
@@ -1349,10 +1355,12 @@ function linear7test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
         c2 = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction{T}(
-                [MOI.VectorAffineTerm{T}(
-                    1,
-                    MOI.ScalarAffineTerm{T}(one(T), y),
-                )],
+                [
+                    MOI.VectorAffineTerm{T}(
+                        1,
+                        MOI.ScalarAffineTerm{T}(one(T), y),
+                    ),
+                ],
                 [T(100)],
             ),
             MOI.Nonpositives(1),
@@ -1665,10 +1673,12 @@ function linear9test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 
     c1 = MOI.add_constraints(
         model,
-        [MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), -T(3 // 2)], [x, y]),
-            zero(T),
-        )],
+        [
+            MOI.ScalarAffineFunction{T}(
+                MOI.ScalarAffineTerm{T}.([one(T), -T(3 // 2)], [x, y]),
+                zero(T),
+            ),
+        ],
         [MOI.GreaterThan(zero(T))],
     )
 

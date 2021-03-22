@@ -207,7 +207,8 @@ function _standardize(d::IndexMap)
 end
 
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
-    return automatic_copy_to(m, src; kws...)
+    m.state == ATTACHED_OPTIMIZER && reset_optimizer(m)
+    return MOI.copy_to(m.model_cache, src; kws...)
 end
 function supports_default_copy_to(model::CachingOptimizer, copy_names::Bool)
     return supports_default_copy_to(model.model_cache, copy_names)
@@ -387,8 +388,9 @@ function MOI.supports_constraint(
     F::Type{<:MOI.AbstractFunction},
     S::Type{<:MOI.AbstractSet},
 )
-    return MOI.supports_constraint(m.model_cache, F, S) &&
-        (m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S))
+    return MOI.supports_constraint(m.model_cache, F, S) && (
+        m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S)
+    )
 end
 
 function MOI.add_constraint(

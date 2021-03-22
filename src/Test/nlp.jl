@@ -2,6 +2,13 @@ const VI = MOI.VariableIndex
 
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
+    enable_hessian_vector_product::Bool
+    function HS071(
+        enable_hessian::Bool,
+        enable_hessian_vector_product::Bool = false,
+    )
+        return new(enable_hessian, enable_hessian_vector_product)
+    end
 end
 
 # hs071
@@ -16,18 +23,20 @@ function MOI.initialize(d::HS071, requested_features::Vector{Symbol})
     for feat in requested_features
         if !(feat in MOI.features_available(d))
             error("Unsupported feature $feat")
-            # TODO: implement Jac-vec and Hess-vec products
-            # for solvers that need them
+            # TODO: implement Jac-vec products for solvers that need them
         end
     end
 end
 
 function MOI.features_available(d::HS071)
+    features = [:Grad, :Jac, :ExprGraph]
     if d.enable_hessian
-        return [:Grad, :Jac, :Hess, :ExprGraph]
-    else
-        return [:Grad, :Jac, :ExprGraph]
+        push!(features, :Hess)
     end
+    if d.enable_hessian_vector_product
+        return push!(features, :HessVec)
+    end
+    return features
 end
 
 function MOI.objective_expr(d::HS071)
@@ -54,14 +63,16 @@ MOI.eval_objective(d::HS071, x) = x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
 
 function MOI.eval_constraint(d::HS071, g, x)
     g[1] = x[1] * x[2] * x[3] * x[4]
-    return g[2] = x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2
+    g[2] = x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2
+    return
 end
 
 function MOI.eval_objective_gradient(d::HS071, grad_f, x)
     grad_f[1] = x[1] * x[4] + x[4] * (x[1] + x[2] + x[3])
     grad_f[2] = x[1] * x[4]
     grad_f[3] = x[1] * x[4] + 1
-    return grad_f[4] = x[1] * (x[1] + x[2] + x[3])
+    grad_f[4] = x[1] * (x[1] + x[2] + x[3])
+    return
 end
 
 function MOI.jacobian_structure(d::HS071)
@@ -103,7 +114,8 @@ function MOI.eval_constraint_jacobian(d::HS071, J, x)
     J[5] = 2 * x[1]  # 2,1
     J[6] = 2 * x[2]  # 2,2
     J[7] = 2 * x[3]  # 2,3
-    return J[8] = 2 * x[4]  # 2,4
+    J[8] = 2 * x[4]  # 2,4
+    return
 end
 
 function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
@@ -133,7 +145,38 @@ function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
     H[1] += μ[2] * 2  # 1,1
     H[3] += μ[2] * 2  # 2,2
     H[6] += μ[2] * 2  # 3,3
-    return H[10] += μ[2] * 2
+    H[10] += μ[2] * 2
+    return
+end
+
+function MOI.eval_hessian_lagrangian_product(d::HS071, h, x, v, σ, μ)
+    @assert d.enable_hessian_vector_product
+    # Objective
+    h[1] =
+        2.0 * x[4] * v[1] +
+        x[4] * v[2] +
+        x[4] * v[3] +
+        (2.0 * x[1] + x[2] + x[3]) * v[4]
+    h[2] = x[4] * v[1] + x[1] * v[4]
+    h[3] = x[4] * v[1] + x[1] * v[4]
+    h[4] = (2.0 * x[1] + x[2] + x[3]) * v[1] + x[1] * v[2] + x[1] * v[3]
+    h .*= σ
+    # First constraint
+    h[1] +=
+        μ[1] * (x[3] * x[4] * v[2] + x[2] * x[4] * v[3] + x[2] * x[3] * v[4])
+    h[2] +=
+        μ[1] * (x[3] * x[4] * v[1] + x[1] * x[4] * v[3] + x[1] * x[3] * v[4])
+    h[3] +=
+        μ[1] * (x[2] * x[4] * v[1] + x[1] * x[4] * v[2] + x[1] * x[2] * v[4])
+    h[4] +=
+        μ[1] * (x[2] * x[3] * v[1] + x[1] * x[3] * v[2] + x[1] * x[2] * v[3])
+
+    # Second constraint
+    h[1] += μ[2] * 2.0 * v[1]
+    h[2] += μ[2] * 2.0 * v[2]
+    h[3] += μ[2] * 2.0 * v[3]
+    h[4] += μ[2] * 2.0 * v[4]
+    return
 end
 
 function hs071test_template(
@@ -216,9 +259,16 @@ function hs071test_template(
     end
 end
 
-hs071_test(model, config) = hs071test_template(model, config, HS071(true))
+function hs071_test(model, config)
+    return hs071test_template(model, config, HS071(true))
+end
+
 function hs071_no_hessian_test(model, config)
     return hs071test_template(model, config, HS071(false))
+end
+
+function hs071_hessian_vector_product_test(model, config)
+    return hs071test_template(model, config, HS071(false, true))
 end
 
 # Test for FEASIBILITY_SENSE.
@@ -428,6 +478,8 @@ end
 const nlptests = Dict(
     "hs071" => hs071_test,
     "hs071_no_hessian" => hs071_no_hessian_test,
+    "hs071_hessian_vector_product_test" =>
+        hs071_hessian_vector_product_test,
     "feasibility_sense_with_objective_and_hessian" =>
         feasibility_sense_with_objective_and_hessian_test,
     "feasibility_sense_with_objective_and_no_hessian" =>
