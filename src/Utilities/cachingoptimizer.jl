@@ -125,9 +125,10 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     m.optimizer = optimizer
     m.state = EMPTY_OPTIMIZER
     for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
+        # Skip attributes which don't apply to the new optimizer.
         if attr isa MOI.RawParameter
-            # Skip RawParameters because they may not apply to the new
-            # optimizer.
+            continue
+        elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)
             continue
         end
         value = MOI.get(m.model_cache, attr)

@@ -662,6 +662,7 @@ function MOI.get(model::Issue1220, ::MOI.ListOfOptimizerAttributesSet)
     return collect(keys(model.optimizer_attributes))
 end
 MOI.supports(::Issue1220, ::MOI.AbstractOptimizerAttribute) = true
+MOI.supports(::Issue1220, ::MOI.NumberOfThreads) = false
 function MOI.get(model::Issue1220, attr::MOI.AbstractOptimizerAttribute)
     return model.optimizer_attributes[attr]
 end
@@ -673,7 +674,9 @@ end
     model = MOIU.CachingOptimizer(Issue1220(), Issue1220())
     MOI.set(model, MOI.Silent(), true)
     MOI.set(model, MOI.RawParameter("foo"), "bar")
+    MOI.set(model, MOI.NumberOfThreads(), 1)
     MOIU.reset_optimizer(model, Issue1220())
     @test MOI.get(model, MOI.Silent()) == true
     @test_throws KeyError MOI.get(model, MOI.RawParameter("foo"))
+    @test_throws KeyError MOI.get(model, MOI.NumberOfThreads())
 end
