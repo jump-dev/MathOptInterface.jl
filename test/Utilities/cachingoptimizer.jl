@@ -652,3 +652,31 @@ end
     MOIU.reset_optimizer(model, optimizer)
     constrained_variables_test(model)
 end
+
+struct Issue1220 <: MOI.AbstractOptimizer
+    optimizer_attributes::Dict{Any,Any}
+    Issue1220() = new(Dict{Any,Any}())
+end
+MOI.is_empty(model::Issue1220) = isempty(model.optimizer_attributes)
+function MOI.get(model::Issue1220, ::MOI.ListOfOptimizerAttributesSet)
+    return collect(keys(model.optimizer_attributes))
+end
+MOI.supports(::Issue1220, ::MOI.AbstractOptimizerAttribute) = true
+MOI.supports(::Issue1220, ::MOI.NumberOfThreads) = false
+function MOI.get(model::Issue1220, attr::MOI.AbstractOptimizerAttribute)
+    return model.optimizer_attributes[attr]
+end
+function MOI.set(model::Issue1220, attr::MOI.AbstractOptimizerAttribute, value)
+    model.optimizer_attributes[attr] = value
+    return value
+end
+@testset "Issue1220_dont_pass_raw_parameter" begin
+    model = MOIU.CachingOptimizer(Issue1220(), Issue1220())
+    MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.RawParameter("foo"), "bar")
+    MOI.set(model, MOI.NumberOfThreads(), 1)
+    MOIU.reset_optimizer(model, Issue1220())
+    @test MOI.get(model, MOI.Silent()) == true
+    @test_throws KeyError MOI.get(model, MOI.RawParameter("foo"))
+    @test_throws KeyError MOI.get(model, MOI.NumberOfThreads())
+end
