@@ -733,7 +733,24 @@ function MOI.is_empty(model::AbstractModel)
            iszero(model.num_variables_created) &&
            MOI.is_empty(model.constraints)
 end
-function MOI.empty!(model::AbstractModel{T}) where {T}
+
+"""
+    empty_excluding_ext(model::AbstractModel{T})
+
+Empty `model`, but leave the extension dictionary untouched.
+
+This function is useful for subtypes of `AbstractModel` which store things in
+the `.ext` dictionary that need to be modified on `empty!`. For example, write a
+custom `MOI.empty!` function as:
+```julia
+function MOI.empty!(model::MyModel{Float64})
+    MOI.Utilities.empty_excluding_ext(model)
+    empty!(model.ext)  # Or empty part of model.ext
+    return
+end
+```
+"""
+function empty_excluding_ext(model::AbstractModel{T})
     model.name = ""
     model.senseset = false
     model.sense = MOI.FEASIBILITY_SENSE
@@ -751,6 +768,8 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     MOI.empty!(model.constraints)
     return
 end
+
+MOI.empty!(model::AbstractModel) = empty_excluding_ext(model)
 
 function pass_nonvariable_constraints(
     dest::AbstractModel,
@@ -860,6 +879,11 @@ of [`GenericOptimizer`](@ref), which is a subtype of
 [`MathOptInterface.AbstractOptimizer`](@ref), otherwise, it is a
 [`GenericModel`](@ref), which is a subtype of
 [`MathOptInterface.ModelLike`](@ref).
+
+Each model has an extension dictionary in `.ext`. This dictionary is not cleared
+on a call to [`MathOptInterface.empty!`](@ref). However, you can use
+[`empty_excluding_ext`](@ref) to write a custom empty function that modifies the
+extension dictionary.
 
 ### Examples
 
