@@ -750,7 +750,7 @@ function MOI.empty!(model::MyModel{Float64})
 end
 ```
 """
-function empty_excluding_ext(model::AbstractModel{T})
+function empty_excluding_ext(model::AbstractModel{T}) where {T}
     model.name = ""
     model.senseset = false
     model.sense = MOI.FEASIBILITY_SENSE
