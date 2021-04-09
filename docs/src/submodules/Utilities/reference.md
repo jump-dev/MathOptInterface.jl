@@ -34,7 +34,7 @@ Utilities.@model
 Utilities.GenericModel
 Utilities.GenericOptimizer
 Utilities.struct_of_constraint_code
-Utilitiess.empty_excluding_ext
+Utilities.empty_excluding_ext
 ```
 
 ### Caching optimizer
