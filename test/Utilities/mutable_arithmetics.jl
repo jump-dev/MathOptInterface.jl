@@ -121,6 +121,7 @@ function all_tests(T::Type, a, b, c, d, e, f, g)
         "matrix_uniform_scaling",
         "symmetric_matrix_uniform_scaling",
         "matrix_vector_division",
+        "transpose",
     ]
     if a isa MOI.ScalarQuadraticFunction
         push!(exclude, "dot")
