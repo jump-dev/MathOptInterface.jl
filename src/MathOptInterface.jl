@@ -1,5 +1,7 @@
 module MathOptInterface
 
+import LinearAlgebra
+
 """
     ModelLike
 

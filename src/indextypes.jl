@@ -42,6 +42,12 @@ Base.hash(v::VariableIndex, h::UInt) = hash(v.value, h)
 
 const Index = Union{ConstraintIndex,VariableIndex}
 
+# These are required to create symmetric containers and transposes of `Index`s.
+LinearAlgebra.symmetric_type(::Type{T}) where {T<:Index} = T
+LinearAlgebra.symmetric(f::Index, ::Symbol) = f
+LinearAlgebra.adjoint(f::Index) = f
+LinearAlgebra.transpose(f::Index) = f
+
 """
     struct InvalidIndex{IndexType<:Index} <: Exception
         index::IndexType

@@ -1,5 +1,6 @@
 using Test
 using MathOptInterface
+using LinearAlgebra
 const MOI = MathOptInterface
 
 @testset "Functions" begin
@@ -22,6 +23,21 @@ const MOI = MathOptInterface
             f_copy.variables[2] = z
             @test f.variables[2] == y
         end
+    end
+end
+
+@testset "LinearAlgebra: Index" begin
+    indices = [
+        MOI.VariableIndex,
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne},
+    ]
+    for T in indices
+        x = T(1)
+        y = T(2)
+        @test LinearAlgebra.adjoint(x) == x
+        @test [x x; y y]' == [x y; x y]
+        @test LinearAlgebra.symmetric(x, :U) == x
+        @test LinearAlgebra.symmetric([x x; y y], :U) == [x x; x y]
     end
 end
 
