@@ -145,7 +145,7 @@ level.
 
 When implementing an interface, it is important to keep in mind that the way the
 user can express problems in JuMP is not directly limited by the constraints
-which a solver supports via MOI as JuMP performs automatic reformulation](@ref)
+which a solver supports via MOI as JuMP performs automatic reformulation
 via [The Bridges submodule](@ref).
 
 Therefore, we recommend to only support the constraint types that directly map
