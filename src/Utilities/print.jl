@@ -45,13 +45,13 @@ end
 # Functions
 #------------------------------------------------------------------------
 
-function _to_string(::MIME, model::ModelLike, v::VariableIndex)
-    var_name = get(model, VariableName(), v)
+function _to_string(::MIME, model::MOI.ModelLike, v::MOI.VariableIndex)
+    var_name = MOI.get(model, MOI.VariableName(), v)
     return isempty(var_name) ? "noname" : var_name
 end
 
-function _to_string(::MIME"text/latex", model::ModelLike, v::VariableIndex)
-    var_name = get(model, VariableName(), v)
+function _to_string(::MIME"text/latex", model::MOI.ModelLike, v::MOI.VariableIndex)
+    var_name = MOI.get(model, MOI.VariableName(), v)
     if isempty(var_name)
         return "noname"
     end
@@ -70,11 +70,11 @@ function _to_string(::MIME"text/latex", model::ModelLike, v::VariableIndex)
     return var_name
 end
 
-function _to_string(mime, model::ModelLike, f::SingleVariable)
+function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.SingleVariable)
     return _to_string(mime, model, f.variable)
 end
 
-function _to_string(mime, model::ModelLike, term::ScalarAffineTerm)
+function _to_string(mime::MIME, model::MOI.ModelLike, term::MOI.ScalarAffineTerm)
     name = _to_string(mime, model, term.variable_index)
     if term.coefficient < 0
         return string(" - ", string(-term.coefficient), " ", name)
@@ -83,7 +83,7 @@ function _to_string(mime, model::ModelLike, term::ScalarAffineTerm)
     end
 end
 
-function _to_string(mime, model::ModelLike, f::ScalarAffineFunction)
+function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.ScalarAffineFunction)
     s = string(f.constant)
     for term in f.terms
         s *= _to_string(mime, model, term)
@@ -91,7 +91,7 @@ function _to_string(mime, model::ModelLike, f::ScalarAffineFunction)
     return s
 end
 
-function _to_string(mime, model::ModelLike, term::ScalarQuadraticTerm)
+function _to_string(mime::MIME, model::MOI.ModelLike, term::MOI.ScalarQuadraticTerm)
     name_1 = _to_string(mime, model, term.variable_index_1)
     name_2 = _to_string(mime, model, term.variable_index_2)
     name = if term.variable_index_1 == term.variable_index_2
@@ -106,7 +106,7 @@ function _to_string(mime, model::ModelLike, term::ScalarQuadraticTerm)
     end
 end
 
-function _to_string(mime, model::ModelLike, f::ScalarQuadraticFunction)
+function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.ScalarQuadraticFunction)
     s = string(f.constant)
     for term in f.affine_terms
         s *= _to_string(mime, model, term)
@@ -117,8 +117,8 @@ function _to_string(mime, model::ModelLike, f::ScalarQuadraticFunction)
     return s
 end
 
-function _to_string(mime, model::ModelLike, f::AbstractVectorFunction)
-    rows = map(fi -> _to_string(mime, model, fi), Utilities.eachscalar(f))
+function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.AbstractVectorFunction)
+    rows = map(fi -> _to_string(mime, model, fi), eachscalar(f))
     max_length = maximum(length.(rows))
     s = join(map(r -> string("│", rpad(r, max_length), "│"), rows), '\n')
     return string(
@@ -134,15 +134,12 @@ end
 
 function _to_string(
     mime::MIME"text/latex",
-    model::ModelLike,
-    f::AbstractVectorFunction,
+    model::MOI.ModelLike,
+    f::MOI.AbstractVectorFunction,
 )
     return string(
         "\\begin{bmatrix}\n",
-        join(
-            map(fi -> _to_string(mime, model, fi), Utilities.eachscalar(f)),
-            "\\\\\n",
-        ),
+        join(map(fi -> _to_string(mime, model, fi), eachscalar(f)), "\\\\\n"),
         "\\end{bmatrix}",
     )
 end
@@ -151,45 +148,45 @@ end
 # Sets
 #------------------------------------------------------------------------
 
-function _to_string(mime, set::LessThan)
+function _to_string(mime::MIME, set::MOI.LessThan)
     return string(_to_string(mime, :leq), " ", set.upper)
 end
 
-_to_string(::MIME"text/latex", set::LessThan) = "\\le $(set.upper)"
+_to_string(::MIME"text/latex", set::MOI.LessThan) = "\\le $(set.upper)"
 
-function _to_string(mime, set::GreaterThan)
+function _to_string(mime::MIME, set::MOI.GreaterThan)
     return string(_to_string(mime, :geq), " ", set.lower)
 end
 
-_to_string(::MIME"text/latex", set::GreaterThan) = "\\ge $(set.lower)"
+_to_string(::MIME"text/latex", set::MOI.GreaterThan) = "\\ge $(set.lower)"
 
-function _to_string(mime, set::EqualTo)
+function _to_string(mime::MIME, set::MOI.EqualTo)
     return string(_to_string(mime, :eq), " ", set.value)
 end
 
-_to_string(::MIME"text/latex", set::EqualTo) = "= $(set.value)"
+_to_string(::MIME"text/latex", set::MOI.EqualTo) = "= $(set.value)"
 
-function _to_string(mime, set::Interval)
+function _to_string(mime::MIME, set::MOI.Interval)
     return string(_to_string(mime, :in), " [", set.lower, ", ", set.upper, "]")
 end
 
-function _to_string(::MIME"text/latex", set::Interval)
+function _to_string(::MIME"text/latex", set::MOI.Interval)
     return "\\in \\[$(set.lower), $(set.upper)\\]"
 end
 
-_to_string(::MIME, ::ZeroOne) = "∈ {0, 1}"
+_to_string(mime::MIME, ::MOI.ZeroOne) = string(_to_string(mime, :in), " {0, 1}")
 
-_to_string(::MIME"text/latex", ::ZeroOne) = "\\in \\{0, 1\\}"
+_to_string(::MIME"text/latex", ::MOI.ZeroOne) = "\\in \\{0, 1\\}"
 
-_to_string(::MIME, ::Integer) = "∈ ℤ"
+_to_string(mime::MIME, ::MOI.Integer) = string(_to_string(mime, :in), " ℤ")
 
-_to_string(::MIME"text/latex", ::Integer) = "\\in \\mathbb{Z}"
+_to_string(::MIME"text/latex", ::MOI.Integer) = "\\in \\mathbb{Z}"
 
-function _to_string(mime, set::AbstractSet)
+function _to_string(mime::MIME, set::MOI.AbstractSet)
     return string(_to_string(mime, :in), " ", _drop_moi(set))
 end
 
-function _to_string(::MIME"text/latex", set::AbstractSet)
+function _to_string(::MIME"text/latex", set::MOI.AbstractSet)
     set_str = replace(replace(_drop_moi(set), "{" => "\\{"), "}" => "\\}")
     return string("\\in \\text{", set_str, "}")
 end
@@ -198,40 +195,40 @@ end
 # Constraints
 #------------------------------------------------------------------------
 
-function _to_string(mime::MIME, model::ModelLike, cref::ConstraintIndex)
-    f = get(model, ConstraintFunction(), cref)
-    s = get(model, ConstraintSet(), cref)
+function _to_string(mime::MIME, model::MOI.ModelLike, cref::MOI.ConstraintIndex)
+    f = MOI.get(model, MOI.ConstraintFunction(), cref)
+    s = MOI.get(model, MOI.ConstraintSet(), cref)
     return string(_to_string(mime, model, f), " ", _to_string(mime, s))
 end
 
 #------------------------------------------------------------------------
-# ModelLike
+# MOI.ModelLike
 #------------------------------------------------------------------------
 
 """
-    _print_model(io::IO, model::ModelLike, mime::MIME"text/plain")
+    _print_model(io::IO, mime::MIME"text/plain", model::MOI.ModelLike)
 
 Print a plain-text formulation of `model` to `io`.
 """
-function _print_model(io::IO, model::ModelLike, mime::MIME"text/plain")
-    sense = get(model, ObjectiveSense())
-    if sense == MAX_SENSE
-        F = get(model, ObjectiveFunctionType())
+function _print_model(io::IO, mime::MIME"text/plain", model::MOI.ModelLike)
+    sense = MOI.get(model, MOI.ObjectiveSense())
+    if sense == MOI.MAX_SENSE
+        F = MOI.get(model, MOI.ObjectiveFunctionType())
         println(io, "Maximize $(_drop_moi(F)):")
-        f = get(model, ObjectiveFunction{F}())
+        f = MOI.get(model, MOI.ObjectiveFunction{F}())
         println(io, " ", _to_string(mime, model, f))
-    elseif sense == MIN_SENSE
-        F = get(model, ObjectiveFunctionType())
+    elseif sense == MOI.MIN_SENSE
+        F = MOI.get(model, MOI.ObjectiveFunctionType())
         println(io, "Minimize $(_drop_moi(F)):")
-        f = get(model, ObjectiveFunction{F}())
+        f = MOI.get(model, MOI.ObjectiveFunction{F}())
         println(io, " ", _to_string(mime, model, f))
     else
         println(io, "Feasibility")
     end
     println(io, "\nSubject to:")
-    for (F, S) in get(model, ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
         println(io, "\n$(_drop_moi(F))-in-$(_drop_moi(S))")
-        for cref in get(model, ListOfConstraintIndices{F,S}())
+        for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             s = _to_string(mime, model, cref)
             println(io, " ", replace(s, '\n' => "\n "))
         end
@@ -240,31 +237,31 @@ function _print_model(io::IO, model::ModelLike, mime::MIME"text/plain")
 end
 
 """
-    _print_model(io::IO, model::ModelLike, mime::MIME"text/latex")
+    _print_model(io::IO, mime::MIME"text/latex", model::MOI.ModelLike)
 
 Print a LaTeX formulation of `model` to `io`.
 """
-function _print_model(io::IO, model::ModelLike, mime::MIME"text/latex")
+function _print_model(io::IO, mime::MIME"text/latex", model::MOI.ModelLike)
     println(io, "\$\$ \\begin{aligned}")
-    sense = get(model, ObjectiveSense())
-    if sense == MAX_SENSE
+    sense = MOI.get(model, MOI.ObjectiveSense())
+    if sense == MOI.MAX_SENSE
         print(io, "\\max\\quad & ")
-        F = get(model, ObjectiveFunctionType())
-        f = get(model, ObjectiveFunction{F}())
-        println(io, _to_string(mime, model, f), "\\\\")
-    elseif sense == MIN_SENSE
+        F = MOI.get(model, MOI.ObjectiveFunctionType())
+        f = MOI.get(model, MOI.ObjectiveFunction{F}())
+        println(io, _to_string(mime, model, f), " \\\\")
+    elseif sense == MOI.MIN_SENSE
         print(io, "\\min\\quad & ")
-        F = get(model, ObjectiveFunctionType())
-        f = get(model, ObjectiveFunction{F}())
-        println(io, _to_string(mime, model, f), "\\\\")
+        F = MOI.get(model, MOI.ObjectiveFunctionType())
+        f = MOI.get(model, MOI.ObjectiveFunction{F}())
+        println(io, _to_string(mime, model, f), " \\\\")
     else
         println(io, "\\text{feasibility}\\\\")
     end
-    print(io, "\\text{Subject to} \\quad")
-    for (F, S) in get(model, ListOfConstraints())
-        println(io, "$F-in-$S")
-        for cref in get(model, ListOfConstraintIndices{F,S}())
-            println(io, " & ", _to_string(mime, model, cref), "\\\\")
+    println(io, "\\text{Subject to}\\\\")
+    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+        println(io, " & \\text{$(_drop_moi(F))-in-$(_drop_moi(S))} \\\\")
+        for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            println(io, " & ", _to_string(mime, model, cref), " \\\\")
         end
     end
     return print(io, "\\end{aligned} \$\$")
@@ -274,12 +271,12 @@ end
 # Latex
 #------------------------------------------------------------------------
 
-struct _LatexModel{T<:ModelLike}
+struct _LatexModel{T<:MOI.ModelLike}
     model::T
 end
 
 """
-    latex_formulation(model::ModelLike)
+    latex_formulation(model::MOI.ModelLike)
 
 Wrap `model` in a type so that it can be pretty-printed as `text/latex` in a
 notebook like IJulia, or in Documenter.
@@ -288,24 +285,24 @@ To render the model, end the cell with `latex_formulation(model)`, or call
 `display(latex_formulation(model))` in to force the display of the model from
 inside a function.
 """
-latex_formulation(model::ModelLike) = _LatexModel(model)
+latex_formulation(model::MOI.ModelLike) = _LatexModel(model)
 
 function Base.show(io::IO, model::_LatexModel)
-    return _print_model(io, model.model, MIME("text/latex"))
+    return _print_model(io, MIME("text/latex"), model.model)
 end
 
 Base.show(io::IO, ::MIME"text/latex", model::_LatexModel) = show(io, model)
 
-function Base.print(model::ModelLike)
+function Base.print(model::MOI.ModelLike)
     for d in Base.Multimedia.displays
         if Base.Multimedia.displayable(d, "text/latex") &&
            startswith("$(typeof(d))", "IJulia.")
             return display(d, "text/latex", latex_formulation(model))
         end
     end
-    return _print_model(stdout, model, MIME("text/plain"))
+    return _print_model(stdout, MIME("text/plain"), model)
 end
 
-function Base.print(io::IO, model::ModelLike)
-    return _print_model(io, model, MIME("text/plain"))
+function Base.print(io::IO, model::MOI.ModelLike)
+    return _print_model(io, MIME("text/plain"), model)
 end

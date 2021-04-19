@@ -47,6 +47,12 @@ Utilities.state
 Utilities.mode
 ```
 
+## Printing
+
+```@docs
+Utilities.latex_formulation
+```
+
 ## Copy utilities
 
 The following utilities can be used to implement [`copy_to`](@ref). See

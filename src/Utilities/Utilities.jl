@@ -64,6 +64,7 @@ include("parser.jl")
 include("mockoptimizer.jl")
 include("cachingoptimizer.jl")
 include("universalfallback.jl")
+include("print.jl")
 
 include("lazy_iterators.jl")
 
