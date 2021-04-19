@@ -17,7 +17,8 @@ MathOptInterface for a new solver.
     work. Before starting, we recommend that you join the
     [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) and explain a
     little bit about the solver you are wrapping. If you have questions that are
-    not answered by this guide, please ask them in the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev).
+    not answered by this guide, please ask them in the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev)
+    so we can improve this guide!
 
 ## Deciding if MathOptInterface is right for you
 
@@ -50,6 +51,7 @@ has a good list of solvers, along with the problem classes they support.
 
 Before writing a MathOptInterface, you first been to be able to call the solver
 from Julia.
+
 ### Wrapping solvers written in Julia
 
 If your solver is written in Julia, there's nothing to do here! Go to the next
@@ -152,9 +154,9 @@ Follow the guide [How to test a solver](@ref) to set up the
 
 !!! tip
     Run the tests frequently when developing. However, at the start there is
-    going to be a lot of warnings! Comment out all the `test_` functions but
-    one, run the tests, implement any missing methods until the test passes,
-    then uncomment another test and repeat.
+    going to be a lot of errors! Comment out all the `test_` functions but one,
+    run the tests, implement any missing methods until the test passes, then
+    uncomment another test and repeat.
 
 ## The `Optimizer` object
 
@@ -163,6 +165,9 @@ these optimizers should not be exported and should be named
 `PackageName.Optimizer`.
 
 ```julia
+import MathOptInterface
+const MOI = MathOptInterface
+
 struct Optimizer <: MOI.AbstractOptimizer
     # Fields go here
 end
@@ -224,10 +229,12 @@ For each attribute
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
 | ---------------------- | --------------| ------------- | ------------------ |
 | [`SolverName`](@ref)   | Yes           | No            | No                 |
+| [`RawSolver`](@ref)    | Yes           | No            | No                 |
 | [`Name`](@ref)         | Yes           | Yes           | Yes                |
 | [`Silent`](@ref)       | Yes           | Yes           | Yes                |
 | [`TimeLimitSec`](@ref) | Yes           | Yes           | Yes                |
 | [`RawParameter`](@ref) | Yes           | Yes           | Yes                |
+| [`NumberOfThreads`](@ref) | Yes        | Yes           | Yes                |
 
 For example:
 ```julia
@@ -319,10 +326,13 @@ one for simplicity.
 In general, supporting incremental modification is more work, and it usually
 requires some extra book-keeping. However, it provides a more efficient
 interface to the solver if the problem is going to be resolved multiple times
-with small modifications.
+with small modifications. Moreover, once you've implemented incremental
+modification, it's usually not much extra work to add a [`copy_to`](@ref)
+interface. The converse is not true.
 
-Moreover, once you've implemented incremental modification, it's usually not
-much extra work to add a [`copy_to`](@ref) interface. The converse is not true.
+!!! tip
+    If this is your first time writing an interface, start with
+    [`copy_to`](@ref).
 
 ## The `copy_to` interface
 
@@ -343,10 +353,24 @@ To implement the incremental interface, implement the following functions:
 
 In addition, you should implement the following attributes:
 
+* [`ObjectiveFunction`](@ref)
+* [`ObjectiveSense`](@ref)
 * [`ConstraintFunction`](@ref)
 * [`ConstraintSet`](@ref)
+* [`NumberOfConstraints`](@ref)
+* [`NumberOfVariables`](@ref)
 
-### `copy_to`
+### Modifications
+
+If your solver supports modifying data in-place, implement:
+
+* [`modify`](@ref)
+* [`ScalarConstantChange`](@ref)
+* [`ScalarCoefficientChange`](@ref)
+* [`VectorConstantChange`](@ref)
+* [`MultirowChange`](@ref)
+
+### Incremental and `copy_to`
 
 If you implement the incremental interface, you have the option of also
 implementing [`copy_to`](@ref). If you don't want to implement
@@ -421,18 +445,24 @@ solution information.
 * [`VariablePrimal`](@ref)
 * [`SolveTime`](@ref)
 
+!!! note
+    Solver wrappers should document how the low-level statuses map to the MOI
+    statuses. Statuses like `NEARLY_FEASIBLE_POINT` and `INFEASIBLE_POINT`, are
+    designed to be used when the solver explicitly indicates that relaxed
+    tolerances are satisfied or the returned point is infeasible, respectively.
+
 !!! tip
     Attributes like [`VariablePrimal`](@ref) and [`ObjectiveValue`](@ref) are
     indexed by the result count. Use
     `MOI.check_result_index_bounds(model, attr)` to throw an error if the
     attribute is not available.
 
-If dual solutions are available, implement:
+If your solver returns dual solutions, implement:
 
 * [`ConstraintDual`](@ref)
 * [`DualObjectiveValue`](@ref)
 
-For integer problems, implement:
+For integer solvers, implement:
 
 * [`ObjectiveBound`](@ref)
 * [`RelativeGap`](@ref)
@@ -443,20 +473,16 @@ If applicable, implement:
 * [`BarrierIterations`](@ref)
 * [`NodeCount`](@ref)
 
-!!! note
-    Solver wrappers should document how the low-level statuses map to the MOI
-    statuses. Statuses like `NEARLY_FEASIBLE_POINT` and `INFEASIBLE_POINT`, are
-    designed to be used when the solver explicitly indicates that relaxed
-    tolerances are satisfied or the returned point is infeasible, respectively.
+If your solver uses the Simplex method, implement:
 
-## Extra: starting points
+* [`ConstraintBasisStatus`](@ref)
+
+## Warm-starts
+
+If your solver accepts primal or dual warm-starts, implement:
 
 * [`VariablePrimalStart`](@ref)
 * [`ConstraintDualStart`](@ref)
-
-## Extra: basis status
-
-* [`ConstraintBasisStatus`](@ref)
 
 ## Extra: solver-specific attributes
 
@@ -515,7 +541,30 @@ then it should only implement [`add_constrained_variable`](@ref) and not
 
 ## Other tips
 
-### Be wary of duplicate coefficients
+### Unsupported constraints at runtime
+
+In some cases, your solver may support a particular type of constraint (e.g.,
+quadratic constraints), but only if the data meets some condition (e.g., it is
+convex).
+
+In this case, declare that you `support` the constraint, and throw
+[`AddConstraintNotAllowed`](@ref).
+
+### Dealing with multiple variable bounds
+
+MathOptInterface uses [`SingleVariable`](@ref) constraints to represent variable
+bounds. Defining multiple variable bounds on a single variable is not allowed.
+
+Throw [`LowerBoundAlreadySet`](@ref) or [`UpperBoundAlreadySet`](@ref) if the
+user adds a constraint that results in multiple bounds.
+
+Only throw if the constraints conflict. It is okay to add
+[`SingleVariable`](@ref)-in-[`GreaterThan`](@ref) and then
+[`SingleVariable`](@ref)-in-[`LessThan`](@ref), but not
+[`SingleVariable`](@ref)-in-[`Interval`](@ref) and then
+[`SingleVariable`](@ref)-in-[`LessThan`](@ref),
+
+### Expect duplicate coefficients
 
 Solvers should expect that functions such as [`ScalarAffineFunction`](@ref) and
 [`VectorQuadraticFunction`](@ref) may contain duplicate coefficents.
