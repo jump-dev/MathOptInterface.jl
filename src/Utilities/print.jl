@@ -50,7 +50,11 @@ function _to_string(::MIME, model::MOI.ModelLike, v::MOI.VariableIndex)
     return isempty(var_name) ? "noname" : var_name
 end
 
-function _to_string(::MIME"text/latex", model::MOI.ModelLike, v::MOI.VariableIndex)
+function _to_string(
+    ::MIME"text/latex",
+    model::MOI.ModelLike,
+    v::MOI.VariableIndex,
+)
     var_name = MOI.get(model, MOI.VariableName(), v)
     if isempty(var_name)
         return "noname"
@@ -74,7 +78,11 @@ function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.SingleVariable)
     return _to_string(mime, model, f.variable)
 end
 
-function _to_string(mime::MIME, model::MOI.ModelLike, term::MOI.ScalarAffineTerm)
+function _to_string(
+    mime::MIME,
+    model::MOI.ModelLike,
+    term::MOI.ScalarAffineTerm,
+)
     name = _to_string(mime, model, term.variable_index)
     if term.coefficient < 0
         return string(" - ", string(-term.coefficient), " ", name)
@@ -83,7 +91,11 @@ function _to_string(mime::MIME, model::MOI.ModelLike, term::MOI.ScalarAffineTerm
     end
 end
 
-function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.ScalarAffineFunction)
+function _to_string(
+    mime::MIME,
+    model::MOI.ModelLike,
+    f::MOI.ScalarAffineFunction,
+)
     s = string(f.constant)
     for term in f.terms
         s *= _to_string(mime, model, term)
@@ -91,7 +103,11 @@ function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.ScalarAffineFunctio
     return s
 end
 
-function _to_string(mime::MIME, model::MOI.ModelLike, term::MOI.ScalarQuadraticTerm)
+function _to_string(
+    mime::MIME,
+    model::MOI.ModelLike,
+    term::MOI.ScalarQuadraticTerm,
+)
     name_1 = _to_string(mime, model, term.variable_index_1)
     name_2 = _to_string(mime, model, term.variable_index_2)
     name = if term.variable_index_1 == term.variable_index_2
@@ -106,7 +122,11 @@ function _to_string(mime::MIME, model::MOI.ModelLike, term::MOI.ScalarQuadraticT
     end
 end
 
-function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.ScalarQuadraticFunction)
+function _to_string(
+    mime::MIME,
+    model::MOI.ModelLike,
+    f::MOI.ScalarQuadraticFunction,
+)
     s = string(f.constant)
     for term in f.affine_terms
         s *= _to_string(mime, model, term)
@@ -117,7 +137,11 @@ function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.ScalarQuadraticFunc
     return s
 end
 
-function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.AbstractVectorFunction)
+function _to_string(
+    mime::MIME,
+    model::MOI.ModelLike,
+    f::MOI.AbstractVectorFunction,
+)
     rows = map(fi -> _to_string(mime, model, fi), eachscalar(f))
     max_length = maximum(length.(rows))
     s = join(map(r -> string("│", rpad(r, max_length), "│"), rows), '\n')
@@ -202,8 +226,138 @@ function _to_string(mime::MIME, model::MOI.ModelLike, cref::MOI.ConstraintIndex)
 end
 
 #------------------------------------------------------------------------
+# Nonlinear constraints
+#------------------------------------------------------------------------
+
+"""
+    _VariableNode
+
+A type used to work-around the default printing of Julia expressions. If we
+subsititued the variable names into the expression and the converted to a
+string, each variable would be printed with enclosing `"`.
+
+To work-around this, create a new type and overload `show`.
+"""
+struct _VariableNode
+    x::String
+end
+Base.show(io::IO, x::_VariableNode) = print(io, x.x)
+
+_replace_names(::MIME, ::MOI.ModelLike, x, ::Any) = x
+function _replace_names(mime::MIME, model::MOI.ModelLike, x::Expr, lookup)
+    if x.head == :ref
+        return get!(lookup, x.args[2]) do
+            return _VariableNode(_to_string(mime, model, x.args[2]))
+        end
+    else
+        for (i, arg) in enumerate(x.args)
+            x.args[i] = _replace_names(mime, model, arg, lookup)
+        end
+    end
+    return x
+end
+
+function _replace_nonlinear_latex(::MIME"text/latex", s::String)
+    s = replace(s, " * " => " \\times ")
+    s = replace(s, " >= " => " \\ge ")
+    s = replace(s, " <= " => " \\le ")
+    s = replace(s, " == " => " = ")
+    return s
+end
+_replace_nonlinear_latex(::MIME, s::String) = s
+
+function _print_nonlinear_constraints(
+    io::IO,
+    mime::MIME"text/plain",
+    model::MOI.ModelLike,
+    block::MOI.NLPBlockData,
+)
+    lookup = Dict{MOI.VariableIndex,_VariableNode}()
+    println(io, "\nNonlinear")
+    has_expr = :ExprGraph in MOI.features_available(block.evaluator)
+    for (i, bound) in enumerate(block.constraint_bounds)
+        if has_expr
+            ex = MOI.constraint_expr(block.evaluator, i)
+            println(io, " ", _replace_names(mime, model, ex, lookup))
+        else
+            println(io, " ", bound.lower, " <= g_$(i)(x) <= ", bound.upper)
+        end
+    end
+end
+
+function _print_nonlinear_constraints(
+    io::IO,
+    mime::MIME"text/latex",
+    model::MOI.ModelLike,
+    block::MOI.NLPBlockData,
+)
+    lookup = Dict{MOI.VariableIndex,_VariableNode}()
+    println(io, " & \\text{Nonlinear} \\\\")
+    has_expr = :ExprGraph in MOI.features_available(block.evaluator)
+    for (i, bound) in enumerate(block.constraint_bounds)
+        if has_expr
+            ex = MOI.constraint_expr(block.evaluator, i)
+            nl_c = string(_replace_names(mime, model, ex, lookup))
+            println(io, " & ", _replace_nonlinear_latex(mime, nl_c), " \\\\")
+        else
+            println(
+                io,
+                "& ",
+                bound.lower,
+                " \\le g_$(i)(x) \\le ",
+                bound.upper,
+                " \\\\",
+            )
+        end
+    end
+end
+
+_print_nonlinear_constraints(::IO, ::MIME, ::MOI.ModelLike, ::Nothing) = nothing
+
+#------------------------------------------------------------------------
+# ObjectiveFunction
+#------------------------------------------------------------------------
+
+function _objective_function_string(mime::MIME, model::MOI.ModelLike, ::Nothing)
+    F = MOI.get(model, MOI.ObjectiveFunctionType())
+    f = MOI.get(model, MOI.ObjectiveFunction{F}())
+    return _drop_moi(F), _to_string(mime, model, f)
+end
+
+function _objective_function_string(
+    mime::MIME,
+    model::MOI.ModelLike,
+    block::MOI.NLPBlockData,
+)
+    lookup = Dict{MOI.VariableIndex,_VariableNode}()
+    if block.has_objective
+        f = "f(x)"
+        if :ExprGraph in MOI.features_available(block.evaluator)
+            ex = MOI.objective_expr(block.evaluator)
+            f = string(_replace_names(mime, model, ex, lookup))
+            f = _replace_nonlinear_latex(mime, f)
+        end
+        return "Nonlinear", f
+    else
+        return _objective_function_string(mime, model, nothing)
+    end
+end
+
+#------------------------------------------------------------------------
 # MOI.ModelLike
 #------------------------------------------------------------------------
+
+function _nlp_block(model::MOI.ModelLike)
+    try
+        block = MOI.get(model, MOI.NLPBlock())
+        if :ExprGraph in MOI.features_available(block.evaluator)
+            MOI.initialize(block.evaluator, [:ExprGraph])
+        end
+        return block
+    catch
+        return nothing
+    end
+end
 
 """
     _print_model(io::IO, mime::MIME"text/plain", model::MOI.ModelLike)
@@ -211,19 +365,14 @@ end
 Print a plain-text formulation of `model` to `io`.
 """
 function _print_model(io::IO, mime::MIME"text/plain", model::MOI.ModelLike)
+    nlp_block = _nlp_block(model)
     sense = MOI.get(model, MOI.ObjectiveSense())
-    if sense == MOI.MAX_SENSE
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        println(io, "Maximize $(_drop_moi(F)):")
-        f = MOI.get(model, MOI.ObjectiveFunction{F}())
-        println(io, " ", _to_string(mime, model, f))
-    elseif sense == MOI.MIN_SENSE
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        println(io, "Minimize $(_drop_moi(F)):")
-        f = MOI.get(model, MOI.ObjectiveFunction{F}())
-        println(io, " ", _to_string(mime, model, f))
-    else
+    if sense == MOI.FEASIBILITY_SENSE
         println(io, "Feasibility")
+    else
+        F, f = _objective_function_string(mime, model, nlp_block)
+        sense_s = sense == MOI.MIN_SENSE ? "Minimize" : "Maximize"
+        println(io, sense_s, " ", F, ":\n ", f)
     end
     println(io, "\nSubject to:")
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
@@ -233,6 +382,7 @@ function _print_model(io::IO, mime::MIME"text/plain", model::MOI.ModelLike)
             println(io, " ", replace(s, '\n' => "\n "))
         end
     end
+    _print_nonlinear_constraints(io, mime, model, nlp_block)
     return
 end
 
@@ -242,20 +392,15 @@ end
 Print a LaTeX formulation of `model` to `io`.
 """
 function _print_model(io::IO, mime::MIME"text/latex", model::MOI.ModelLike)
+    nlp_block = _nlp_block(model)
     println(io, "\$\$ \\begin{aligned}")
     sense = MOI.get(model, MOI.ObjectiveSense())
-    if sense == MOI.MAX_SENSE
-        print(io, "\\max\\quad & ")
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        f = MOI.get(model, MOI.ObjectiveFunction{F}())
-        println(io, _to_string(mime, model, f), " \\\\")
-    elseif sense == MOI.MIN_SENSE
-        print(io, "\\min\\quad & ")
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        f = MOI.get(model, MOI.ObjectiveFunction{F}())
-        println(io, _to_string(mime, model, f), " \\\\")
-    else
+    if sense == MOI.FEASIBILITY_SENSE
         println(io, "\\text{feasibility}\\\\")
+    else
+        F, f = _objective_function_string(mime, model, nlp_block)
+        sense_s = sense == MOI.MIN_SENSE ? "min" : "max"
+        println(io, "\\", sense_s, "\\quad & ", f, " \\\\")
     end
     println(io, "\\text{Subject to}\\\\")
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
@@ -264,6 +409,7 @@ function _print_model(io::IO, mime::MIME"text/latex", model::MOI.ModelLike)
             println(io, " & ", _to_string(mime, model, cref), " \\\\")
         end
     end
+    _print_nonlinear_constraints(io, mime, model, nlp_block)
     return print(io, "\\end{aligned} \$\$")
 end
 

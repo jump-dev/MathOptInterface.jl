@@ -283,8 +283,9 @@ function test_latex()
         c5: x + -1 * y == 0.0
         """,
     )
-    evaluated =
-        sprint(io -> show(io, MIME("text/latex"), MOIU.latex_formulation(model)))
+    evaluated = sprint(
+        io -> show(io, MIME("text/latex"), MOIU.latex_formulation(model)),
+    )
     @test evaluated == raw"""
     $$ \begin{aligned}
     \min\quad & 2.0 + 1.0 x + 3.1 y - 1.2 z \\
@@ -322,6 +323,63 @@ function test_latex()
      & \text{SingleVariable-in-ZeroOne} \\
      & x \in \{0, 1\} \\
      & y \in \{0, 1\} \\
+    \end{aligned} $$"""
+end
+
+function test_nlp()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    v = MOI.add_variables(model, 4)
+    l = [1.1, 1.2, 1.3, 1.4]
+    u = [5.1, 5.2, 5.3, 5.4]
+    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.GreaterThan.(l))
+    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
+    for i in 1:4
+        MOI.set(model, MOI.VariableName(), v[i], "x[$i]")
+    end
+    lb, ub = [25.0, 40.0], [Inf, 40.0]
+    evaluator = MOI.Test.HS071(true)
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test sprint(print, model) == """
+    Minimize Nonlinear:
+     x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
+
+    Subject to:
+
+    SingleVariable-in-GreaterThan{Float64}
+     x[1] >= 1.1
+     x[2] >= 1.2
+     x[3] >= 1.3
+     x[4] >= 1.4
+
+    SingleVariable-in-LessThan{Float64}
+     x[1] <= 5.1
+     x[2] <= 5.2
+     x[3] <= 5.3
+     x[4] <= 5.4
+
+    Nonlinear
+     x[1] * x[2] * x[3] * x[4] >= 25.0
+     x[1] ^ 2 + x[2] ^ 2 + x[3] ^ 2 + x[4] ^ 2 == 40.0
+    """
+    @test sprint(print, MOIU.latex_formulation(model)) == raw"""
+    $$ \begin{aligned}
+    \min\quad & x_{1} \times x_{4} \times (x_{1} + x_{2} + x_{3}) + x_{3} \\
+    \text{Subject to}\\
+     & \text{SingleVariable-in-GreaterThan{Float64}} \\
+     & x_{1} \ge 1.1 \\
+     & x_{2} \ge 1.2 \\
+     & x_{3} \ge 1.3 \\
+     & x_{4} \ge 1.4 \\
+     & \text{SingleVariable-in-LessThan{Float64}} \\
+     & x_{1} \le 5.1 \\
+     & x_{2} \le 5.2 \\
+     & x_{3} \le 5.3 \\
+     & x_{4} \le 5.4 \\
+     & \text{Nonlinear} \\
+     & x_{1} \times x_{2} \times x_{3} \times x_{4} \ge 25.0 \\
+     & x_{1} ^ 2 + x_{2} ^ 2 + x_{3} ^ 2 + x_{4} ^ 2 = 40.0 \\
     \end{aligned} $$"""
 end
 

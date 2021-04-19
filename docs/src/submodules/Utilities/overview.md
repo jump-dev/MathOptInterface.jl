@@ -280,7 +280,7 @@ julia> f = MOI.SingleVariable(x)
 MathOptInterface.SingleVariable(MathOptInterface.VariableIndex(1))
 
 julia> MOI.add_constraint(model, f, MOI.ZeroOne())
-MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable, MathOptInterface.ZeroOne}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.ZeroOne}(1)
 
 julia> MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
 
@@ -296,20 +296,20 @@ SingleVariable-in-ZeroOne
  x_var ∈ {0, 1}
 ```
 
-Use [`latex_formulation`](@Ref) to display the model in LaTeX form:
+Use [`Utilities.latex_formulation`](@Ref) to display the model in LaTeX form:
 ```jldoctest utilities_print
 julia> MOI.Utilities.latex_formulation(model)
 $$ \begin{aligned}
 \max\quad & x\_var \\
-\text{Subject to} \\
+\text{Subject to}\\
  & \text{SingleVariable-in-ZeroOne} \\
  & x\_var \in \{0, 1\} \\
 \end{aligned} $$
 ```
 
 !!! tip
-    In IJulia, calling `print` or ending a cell with [`latex_formulation`](@ref)
-    will render the model in LaTex.
+    In IJulia, calling `print` or ending a cell with
+    [`Utilities.latex_formulation`](@ref) will render the model in LaTex.
 
 ## Copy utilities
 
