@@ -311,6 +311,24 @@ order:
 3) [`Utilities.load_variables`](@ref)
 4) [`Utilities.load`](@ref) and [`Utilities.load_constraint`](@ref)
 
+If you choose to implement the Allocate-Load API, also implement;
+```julia
+function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
+    return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
+end
+
+function MOI.Utilities.supports_allocate_load(
+    model::Optimizer, 
+    copy_names::Bool,
+)
+    # If you support names...
+    return true
+    # Otherwise...
+    return !copy_names
+end
+```
+See [`Utilities.supports_allocate_load`](@ref) for more details.
+
 ## Fallbacks
 
 The value of some attributes can be inferred from the value of other
