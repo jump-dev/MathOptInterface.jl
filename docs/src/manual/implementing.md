@@ -9,8 +9,220 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Implementing a solver interface
 
-[The interface is designed for multiple dispatch, e.g., attributes, combinations
-of sets and functions.]
+This guide outlines the basic steps to implement an interface to 
+MathOptInterface for a new solver. 
+
+!!! warning
+    Implementing an interface to MathOptInterface for a new solver is a lot of 
+    work. Before starting, we recommend that you join the 
+    [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) and explain a 
+    little bit about the solver you are wrapping. If you have questions that are
+    not answered by this guide, please ask them in the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev).
+
+## Deciding if MathOptInterface is right for you
+
+The first step in writing a wrapper is to decide whether implementing an 
+interface is the right thing to do. 
+
+MathOptInterface is an abstraction layer for unifying _constrained_ mathematical 
+optimization solvers. If your solver doesn't fit in the category, i.e., it
+implements a derivative-free algorithm for unconstrained objective functions, 
+MathOptInterface may not be the right tool for the job. 
+
+!!! tip
+    If you're not sure whether you ssould write an interface, ask in the 
+    [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev).
+
+## Find a similar solver already wrapped
+
+The next step is to find (if possible) a similar solver that is already wrapped.
+Although not strictly necessary, this will be a good place to look for 
+inspiration when implementing your wrapper.
+
+The [JuMP documentation](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
+has a good list of solvers, along with the problem classes they support. 
+
+!!! tip
+    If you're not sure which solver is most similar, ask in the 
+    [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev).
+
+## Create a low-level interface
+
+### Wrapping solvers written in Julia
+
+If your solver is written in Julia, there's nothing to do here! Go to the next 
+section.
+
+### Solvers written in C
+
+Julia is well suited to wrapping solvers written in C.
+
+!!! warning
+    This is _not_ true for C++.
+
+Before writing a MathOptInterface wrapper, there are a few extra steps.
+
+#### Create a JLL
+
+If the C code is publicly available under an open-source license, create a 
+JLL package via [Yggdrasil](https://github.com/JuliaPackaging/Yggdrasil). The 
+easiest way to do this is to copy an existing solver. Good examples to follow
+are the [COIN-OR solvers](https://github.com/JuliaPackaging/Yggdrasil/tree/master/C/Coin-OR).
+
+!!! warning
+    Building the solver via Yggdrasil is non-trivial. please ask the 
+    [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) for help.
+
+If the code is commercial or not publicly available, the user will need to
+manually install the solver. See [Gurobi.jl](https://github.com/jump-dev/Gurobi.jl)
+or [CPLEX.jl](https://github.com/jump-dev/CPLEX.jl) for examples of how to 
+structure this.
+
+#### Use Clang.jl to wrap the C API
+
+The next step is to use [Clang.jl](https://github.com/JuliaInterop/Clang.jl) to 
+automatically wrap the C API. The easiest way to do this is to follow an 
+example. Good examples to follow are 
+[Cbc.jl](https://github.com/jump-dev/Cbc.jl/blob/master/scripts/clang.jl) and
+[HiGHS.jl](https://github.com/jump-dev/HiGHS.jl/blob/master/gen/gen.jl).
+
+Sometimes, you will need to make manual modifications to the resulting files.
+
+### Solvers written in other languages
+
+Ask the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) for advice.
+You may be able to use on of the JuliaInterop packages to call out to the 
+solver.
+
+For example, [SeDuMi.jl](https://github.com/jump-dev/SeDuMi.jl) uses 
+[MATLAB.jl](https://github.com/JuliaInterop/MATLAB.jl) to call the SeDuMi solver
+written in MATLAB.
+
+## Structuring the package
+
+Structure your wrapper as a Julia package.
+
+MOI solver interfaces may be in the same package as the solver itself (either 
+the C wrapper if the solver is accessible through C, or the Julia code if the 
+solver is written in Julia, for example). 
+
+!!! note
+    The JuMP [core contributors](https://jump.dev/pages/governance/#core-contributors)
+    request that you do not use "JuMP" in the name of your package without prior
+    consent.
+
+The guideline for naming the file containing the MOI wrapper is 
+`src/MOI_wrapper.jl` and `test/MOI_wrapper.jl` for the tests. 
+
+If the MOI wrapper implementation is spread in several files, they should be 
+stored in a `src/MOI_wrapper` folder and included by a 
+`src/MOI_wrapper/MOI_wrapper.jl` file.
+
+For example:
+```
+/gen
+    gen.jl  # Code to wrap the C API
+/src
+    NewSolver.jl
+    /gen
+        libnewsolver_api.jl
+        libnewsolver_common.jl
+    /MOI_wrapper
+        MOI_wrapper.jl
+        other_files.jl
+/test
+    runtests.jl
+    /MOI_wrapper
+        MOI_wrapper.jl
+```
+
+!!! tip
+    For the info on how to structure the tests, see 
+    [How to test a solver](@ref).
+
+## The `Optimizer` object
+
+The first object to create is a subtype of `AbstractOptimizer`. By convention, 
+these optimizers should not be exported and should be named 
+`PackageName.Optimizer`.
+
+```julia
+struct Optimizer <: MOI.AbstractOptimizer
+    # Fields go here
+end
+```
+
+### Optimizer objects for C solvers
+
+!!! warning 
+    This section is important if you wrap a solver written in C.
+
+Wrapping a solver written in C will require the use of pointers. **Never pass 
+the pointer directly to a low-level function.** Instead, store the pointer as a 
+field in your `Optimizer`, and implement `Base.cconvert` and 
+`Base.unsafe_convert`.
+
+```julia
+struct Optimizer <: MOI.AbstractOptimizer
+    ptr::Ptr{Cvoid}
+end
+
+Base.cconvert(::Type{Ptr{Cvoid}}, model::Optimizer) = model
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Optimizer) = model.ptr
+```
+
+Then, pass `model` instead of `model.ptr` to low-level functions that expect the
+model pointer.
+
+### Implement methods for `Optimizer`
+
+Now that we have an `Optimizer`, we need to implement a few basic methods.
+
+* `Base.show(::IO, ::Optimizer)` 
+    Overload `show` to print a nice string when some prints your model.
+* [`empty!`](@ref) and [`is_empty`](@ref)
+
+### Implement Optimizer attributes
+
+* [`SolverName`](@ref)
+* [`Name`](@ref)
+* [`Silent`](@ref)
+* [`TimeLimitSec`](@ref)
+* [`RawParameter`](@ref)
+
+## The first big decision: incremental modifications?
+
+The first big decision you face is whether to support incremental modification.
+
+Incremental modification means that you can add variables and constraints 
+one-by-one without needing to rebuild the entire problem, and you can modify 
+the problem data after an [`optimize!`](@ref) call. Supporting incremental 
+modification means implementing functions like [`add_variable`](@ref) and 
+[`add_constraint`](@ref).
+
+The alternative is to accept the problem data in a single [`copy_to`](@ref) 
+function call, afterwhich it cannot be modified.
+
+Good examples of solvers supporting incremental modification are MILP solvers
+like [GLPK.jl](https://github.com/jump-dev/GLPK.jl) and 
+[Gurobi.jl](https://github.com/jump-dev/Gurobi.jl). Examples of [`copy_to`](@ref)
+solvers are [AmplNLWriter.jl](https://github.com/jump-dev/AmplNLWriter.jl) and
+[SCS.jl](https://github.com/jump-dev/SCS.jl)
+
+It is possible to implement both approaches, but you should probably start with
+one for simplicity.
+
+!!! tip
+    Only support incremental modification if your solver has native support for 
+    it.
+
+In general, supporting incremental modification is more work, and it usually 
+some extra book-keeping. However, it provides a more efficient interface to the 
+solver, particularly if the problem is going to be resolved multiple times with
+small modifications. 
+
+Moreover, once you've implemented incremental modification, it's usually not 
+much extra work to add a [`copy_to`](@ref) interface. The converse is not true.
 
 ## Solver-specific attributes
 
@@ -201,17 +413,3 @@ Solver wrappers should document how the low-level statuses map to the MOI
 statuses. Statuses like `NEARLY_FEASIBLE_POINT` and `INFEASIBLE_POINT`, are
 designed to be used when the solver explicitly indicates that relaxed tolerances
 are satisfied or the returned point is infeasible, respectively.
-
-## Naming
-
-MOI solver interfaces may be in the same package as the solver itself (either
-the C wrapper if the solver is accessible through C, or the Julia code if the
-solver is written in Julia, for example). The guideline for naming the file
-containing the MOI wrapper is `src/MOI_wrapper.jl` and `test/MOI_wrapper.jl` for
-the tests. If the MOI wrapper implementation is spread in several files, they
-should be stored in a `src/MOI_wrapper` folder and included by a
-`src/MOI_wrapper/MOI_wrapper.jl` file.
-
-By convention, optimizers should not be exported and should be named
-`PackageName.Optimizer`. For example, `CPLEX.Optimizer`, `Gurobi.Optimizer`, and
-`Xpress.Optimizer`.
