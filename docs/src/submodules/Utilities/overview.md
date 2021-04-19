@@ -276,7 +276,7 @@ The Allocate-Load API allows solvers that do not support loading the problem
 incrementally to implement [`copy_to`](@ref) in a way that still allows
 transformations to be applied in the copy between the cache and the
 model if the transformations are implemented as MOI layers implementing the
-Allocate-Load API, see [Implementing copy](@ref) for more details.
+Allocate-Load API.
 
 Loading a model using the Allocate-Load interface consists of two passes
 through the model data:
@@ -318,7 +318,7 @@ function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
 end
 
 function MOI.Utilities.supports_allocate_load(
-    model::Optimizer, 
+    model::Optimizer,
     copy_names::Bool,
 )
     # If you support names...

@@ -7,7 +7,7 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# The Test submodule
+# [The Test submodule](@id test_module)
 
 The `Test` submodule provides tools to help solvers implement unit tests in
 order to ensure they implement the MathOptInterface API correctly, and to check

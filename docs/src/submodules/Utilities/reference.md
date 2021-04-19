@@ -49,9 +49,6 @@ Utilities.mode
 
 ## Copy utilities
 
-The following utilities can be used to implement [`copy_to`](@ref). See
-[Implementing copy](@ref) for more details.
-
 ```@docs
 Utilities.automatic_copy_to
 Utilities.default_copy_to

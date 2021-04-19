@@ -117,10 +117,6 @@ on the solver package.
 Create a file named `src/MOI_wrapper.jl` for the MOI wrapper, and a file named
 `test/MOI_wrapper.jl` for the tests.
 
-!!! tip
-    For the info on how to structure the tests, see
-    [How to test a solver](@ref).
-
 If the MOI wrapper implementation is spread in several files, they should be
 stored in a `src/MOI_wrapper` folder and included by a
 `src/MOI_wrapper/MOI_wrapper.jl` file.
@@ -142,6 +138,23 @@ For example:
     /MOI_wrapper
         MOI_wrapper.jl
 ```
+
+## Setup tests
+
+The best way to implement an interface to MathOptInterface is via
+[test-driven development](https://en.wikipedia.org/wiki/Test-driven_development).
+
+The [`MOI.Test` submodule](@ref test_module) contains a large test suite to help
+check that you have implemented things correctly.
+
+Follow the guide [How to test a solver](@ref) to set up the
+`test/MOI_wrapper.jl` file for your package.
+
+!!! tip
+    Run the tests frequently when developing. However, at the start there is
+    going to be a lot of warnings! Comment out all the `test_` functions but
+    one, run the tests, implement any missing methods until the test passes,
+    then uncomment another test and repeat.
 
 ## The `Optimizer` object
 
@@ -205,7 +218,7 @@ For each attribute
  * [`get`](@ref) gets the current value of the attribute
  * [`set`](@ref) sets a new value of the attribute. Not all attributes can be
    set. For example, the user can't modify the [`SolverName`](@ref).
- * [`supports](@ref) returns a `Bool` indicating whether the solver supports the
+ * [`supports`](@ref) returns a `Bool` indicating whether the solver supports the
    attribute. Only implement this if you implement the getter and setter!
 
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
@@ -319,7 +332,7 @@ much extra work to add a [`copy_to`](@ref) interface. The converse is not true.
 * [`add_variables`](@ref)
 * [`add_constraint`](@ref)
 * [`add_constraints`](@ref)
-* [`is_valid](@ref)
+* [`is_valid`](@ref)
 * [`delete`](@ref)
 
 * [`ConstraintFunction`](@ref)
@@ -459,7 +472,7 @@ API for setting coefficients in existing constraints when adding a new variable,
 it is possible to queue modifications and new variables and then call the
 solver's API once all of the new coefficients are known.
 
-## JuMP and MathOptInterface
+## JuMP mapping
 
 MOI defines a very general interface, with multiple possible ways to describe
 the same constraint.
