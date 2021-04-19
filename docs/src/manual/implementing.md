@@ -299,7 +299,9 @@ modification means implementing functions like [`add_variable`](@ref) and
 [`add_constraint`](@ref).
 
 The alternative is to accept the problem data in a single [`copy_to`](@ref)
-function call, afterwhich it cannot be modified.
+function call, afterwhich it cannot be modified. Because [`copy_to`](@ref) sees
+all of the data at once, it can typically call a more efficient function to load
+data into the underlying solver.
 
 Good examples of solvers supporting incremental modification are MILP solvers
 like [GLPK.jl](https://github.com/jump-dev/GLPK.jl) and
@@ -316,17 +318,21 @@ one for simplicity.
 
 In general, supporting incremental modification is more work, and it usually
 requires some extra book-keeping. However, it provides a more efficient
-interface to the solver, particularly if the problem is going to be resolved
-multiple times with small modifications.
+interface to the solver if the problem is going to be resolved multiple times
+with small modifications.
 
 Moreover, once you've implemented incremental modification, it's usually not
 much extra work to add a [`copy_to`](@ref) interface. The converse is not true.
 
 ## The `copy_to` interface
 
+To implement the [`copy_to`](@ref) interface, implement the following function:
+
 * [`copy_to`](@ref)
 
 ## The incremental interface
+
+To implement the incremental interface, implement the following functions:
 
 * [`add_variable`](@ref)
 * [`add_variables`](@ref)
@@ -335,9 +341,17 @@ much extra work to add a [`copy_to`](@ref) interface. The converse is not true.
 * [`is_valid`](@ref)
 * [`delete`](@ref)
 
+In addition, you should implement the following attributes:
+
 * [`ConstraintFunction`](@ref)
 * [`ConstraintSet`](@ref)
 
+### `copy_to`
+
+If you implement the incremental interface, you have the option of also
+implementing [`copy_to`](@ref). If you don't want to implement
+[`copy_to`](@ref), e.g., because the solver has no API for building the problem
+in a single function call, define the following fallback:
 ```julia
 function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
     return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
@@ -355,19 +369,79 @@ end
 ```
 See [`Utilities.supports_default_copy_to`](@ref) for more details.
 
-## Names
+## [Names](@id implement_names)
+
+Regardless of which interface you implement, you have the option of implementing
+the `Name` attribute for variables and constraints:
 
 * [`VariableName`](@ref)
 * [`ConstraintName`](@ref)
+
+If you implement names, you should also implement the following three methods:
+```julia
+function MOI.get(model::Optimizer, ::Type{MOI.VariableIndex}, name::String)
+    return # The variable named `name`.
+end
+
+function MOI.get(model::Optimizer, ::Type{MOI.ConstraintIndex}, name::String)
+    return # The constraint any type named `name`.
+end
+
+function MOI.get(
+    model::Optimizer,
+    ::Type{MOI.ConstraintIndex{F,S}},
+    name::String,
+) where {F,S}
+    return # The constraint of type F-in-S named `name`.
+end
+```
+
+These methods have the following rules:
+
+* If there is no variable or constraint with the name, return `nothing`
+* If there is a single variable or constraint with that name, return the
+  variable or constraint
+* If there are multiple variables or constraints with the name, throw an error.
+
 ## Solutions
+
+Implement [`optimize!`](@ref) to solve the model:
+
+* [`optimize!`](@ref)
+
+At a minimum, implement the following attributes to allow the user to access
+solution information.
 
 * [`TerminationStatus`](@ref)
 * [`PrimalStatus`](@ref)
 * [`DualStatus`](@ref)
 * [`RawStatusString`](@ref)
 * [`ResultCount`](@ref)
+* [`ObjectiveValue`](@ref)
 * [`VariablePrimal`](@ref)
+* [`SolveTime`](@ref)
+
+!!! tip
+    Attributes like [`VariablePrimal`](@ref) and [`ObjectiveValue`](@ref) are
+    indexed by the result count. Use
+    `MOI.check_result_index_bounds(model, attr)` to throw an error if the
+    attribute is not available.
+
+If dual solutions are available, implement:
+
 * [`ConstraintDual`](@ref)
+* [`DualObjectiveValue`](@ref)
+
+For integer problems, implement:
+
+* [`ObjectiveBound`](@ref)
+* [`RelativeGap`](@ref)
+
+If applicable, implement:
+
+* [`SimplexIterations`](@ref)
+* [`BarrierIterations`](@ref)
+* [`NodeCount`](@ref)
 
 !!! note
     Solver wrappers should document how the low-level statuses map to the MOI
