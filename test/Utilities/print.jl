@@ -72,8 +72,8 @@ function test_ScalarQuadraticTerm()
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.VariableName(), y, "y")
     term = MOI.ScalarQuadraticTerm(-1.2, x, x)
-    @test MOIU._to_string(PLAIN, model, term) == " - 1.2 x²"
-    @test MOIU._to_string(LATEX, model, term) == " - 1.2 x^2"
+    @test MOIU._to_string(PLAIN, model, term) == " - 0.6 x²"
+    @test MOIU._to_string(LATEX, model, term) == " - 0.6 x^2"
     term = MOI.ScalarQuadraticTerm(1.2, x, y)
     @test MOIU._to_string(PLAIN, model, term) == " + 1.2 x*y"
     @test MOIU._to_string(LATEX, model, term) == " + 1.2 x\\times y"
@@ -91,9 +91,9 @@ function test_ScalarQuadraticFunction()
         1.4,
     )
     @test MOIU._to_string(PLAIN, model, f) ==
-          "1.4 - 1.2 x + 1.3 x + 0.5 x² + 0.6 x*y"
+          "1.4 - 1.2 x + 1.3 x + 0.25 x² + 0.6 x*y"
     @test MOIU._to_string(LATEX, model, f) ==
-          "1.4 - 1.2 x + 1.3 x + 0.5 x^2 + 0.6 x\\times y"
+          "1.4 - 1.2 x + 1.3 x + 0.25 x^2 + 0.6 x\\times y"
 end
 
 function test_VectorOfVariables()
@@ -241,7 +241,7 @@ function test_model()
      0.0 + 2.0 x $(IN) [1.0, 2.0]
 
     ScalarQuadraticFunction{Float64}-in-LessThan{Float64}
-     0.0 + 1.0 y - 1.0 z + 4.0 x² <= 1.0
+     0.0 + 1.0 y - 1.0 z + 2.0 x² <= 1.0
 
     VectorOfVariables-in-SecondOrderCone
      ┌ ┐
@@ -258,13 +258,13 @@ function test_model()
 
     VectorQuadraticFunction{Float64}-in-ExponentialCone
      ┌            ┐
-     │0.0 + 2.0 x²│
+     │0.0 + 1.0 x²│
      │0.0 + 1.0 y │
      │1.0         │
      └            ┘ $(IN) ExponentialCone()
      ┌            ┐
      │1.0         │
-     │0.0 + 2.0 x²│
+     │0.0 + 1.0 x²│
      │0.0 + 1.0 y │
      └            ┘ $(IN) ExponentialCone()
 
@@ -316,7 +316,7 @@ function test_latex()
          & \text{ScalarAffineFunction{Float64}-in-Interval{Float64}} \\
          & 0.0 + 2.0 x \in \[1.0, 2.0\] \\
          & \text{ScalarQuadraticFunction{Float64}-in-LessThan{Float64}} \\
-         & 0.0 + 1.0 y - 1.0 z + 4.0 x^2 \le 1.0 \\
+         & 0.0 + 1.0 y - 1.0 z + 2.0 x^2 \le 1.0 \\
          & \text{VectorOfVariables-in-SecondOrderCone} \\
          & \begin{bmatrix}
         x\\
@@ -328,12 +328,12 @@ function test_latex()
         0.0 + 1.0 y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
          & \text{VectorQuadraticFunction{Float64}-in-ExponentialCone} \\
          & \begin{bmatrix}
-        0.0 + 2.0 x^2\\
+        0.0 + 1.0 x^2\\
         0.0 + 1.0 y\\
         1.0\end{bmatrix} \in \text{ExponentialCone()} \\
          & \begin{bmatrix}
         1.0\\
-        0.0 + 2.0 x^2\\
+        0.0 + 1.0 x^2\\
         0.0 + 1.0 y\end{bmatrix} \in \text{ExponentialCone()} \\
          & \text{SingleVariable-in-GreaterThan{Float64}} \\
          & x \ge 0.1 \\

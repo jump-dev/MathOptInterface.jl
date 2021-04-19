@@ -110,15 +110,19 @@ function _to_string(
 )
     name_1 = _to_string(mime, model, term.variable_index_1)
     name_2 = _to_string(mime, model, term.variable_index_2)
+    # Be careful here when printing the coefficient. ScalarQuadraticFunction
+    # assumes an additional 0.5 factor!
+    coef = term.coefficient
     name = if term.variable_index_1 == term.variable_index_2
+        coef /= 2
         string(" ", name_1, _to_string(mime, :sq))
     else
         string(" ", name_1, _to_string(mime, :times), name_2)
     end
-    if term.coefficient < 0
-        return string(" - ", string(-term.coefficient), name)
+    if coef < 0
+        return string(" - ", string(-coef), name)
     else
-        return string(" + ", string(term.coefficient), name)
+        return string(" + ", string(coef), name)
     end
 end
 
