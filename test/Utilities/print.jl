@@ -10,6 +10,12 @@ const LATEX = MIME("text/latex")
 const PLAIN = MIME("text/plain")
 const IN = Sys.iswindows() ? "in" : "∈"
 
+# Windows fun...
+function _string_compare(a, b)
+    @test replace(a, "\r\n" => "\n") == replace(b, "\r\n" => "\n")
+    return
+end
+
 function test_nonname_variable()
     model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)
@@ -147,11 +153,15 @@ end
 function test_feasibility()
     model = MOIU.Model{Float64}()
     @test sprint(print, model) == "Feasibility\n\nSubject to:\n"
-    @test sprint(print, MOIU.latex_formulation(model)) == raw"""
-    $$ \begin{aligned}
-    \text{feasibility}\\
-    \text{Subject to}\\
-    \end{aligned} $$"""
+    _string_compare(
+        sprint(print, MOIU.latex_formulation(model)),
+        raw"""
+        $$ \begin{aligned}
+        \text{feasibility}\\
+        \text{Subject to}\\
+        \end{aligned} $$""",
+    )
+    return
 end
 
 function test_min()
@@ -163,11 +173,15 @@ function test_min()
 
     Subject to:
     """
-    @test sprint(print, MOIU.latex_formulation(model)) == raw"""
-    $$ \begin{aligned}
-    \min\quad & x \\
-    \text{Subject to}\\
-    \end{aligned} $$"""
+    _string_compare(
+        sprint(print, MOIU.latex_formulation(model)),
+        raw"""
+        $$ \begin{aligned}
+        \min\quad & x \\
+        \text{Subject to}\\
+        \end{aligned} $$""",
+    )
+    return
 end
 
 function test_max()
@@ -179,11 +193,15 @@ function test_max()
 
     Subject to:
     """
-    @test sprint(print, MOIU.latex_formulation(model)) == raw"""
-    $$ \begin{aligned}
-    \max\quad & x \\
-    \text{Subject to}\\
-    \end{aligned} $$"""
+    _string_compare(
+        sprint(print, MOIU.latex_formulation(model)),
+        raw"""
+        $$ \begin{aligned}
+        \max\quad & x \\
+        \text{Subject to}\\
+        \end{aligned} $$""",
+    )
+    return
 end
 
 function test_model()
@@ -283,47 +301,50 @@ function test_latex()
         c5: x + -1 * y == 0.0
         """,
     )
-    evaluated = sprint(
-        io -> show(io, MIME("text/latex"), MOIU.latex_formulation(model)),
+    _string_compare(
+        sprint(
+          io -> show(io, MIME("text/latex"), MOIU.latex_formulation(model)),
+        ),
+        raw"""
+        $$ \begin{aligned}
+        \min\quad & 2.0 + 1.0 x + 3.1 y - 1.2 z \\
+        \text{Subject to}\\
+         & \text{ScalarAffineFunction{Float64}-in-EqualTo{Float64}} \\
+         & 0.0 + 1.0 x - 1.0 y = 0.0 \\
+         & \text{ScalarAffineFunction{Float64}-in-GreaterThan{Float64}} \\
+         & 0.0 + 2.0 x \ge 1.0 \\
+         & \text{ScalarAffineFunction{Float64}-in-Interval{Float64}} \\
+         & 0.0 + 2.0 x \in \[1.0, 2.0\] \\
+         & \text{ScalarQuadraticFunction{Float64}-in-LessThan{Float64}} \\
+         & 0.0 + 1.0 y - 1.0 z + 4.0 x^2 \le 1.0 \\
+         & \text{VectorOfVariables-in-SecondOrderCone} \\
+         & \begin{bmatrix}
+        x\\
+        y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
+         & \text{VectorAffineFunction{Float64}-in-SecondOrderCone} \\
+         & \begin{bmatrix}
+        1.0\\
+        0.0 + 1.0 x\\
+        0.0 + 1.0 y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
+         & \text{VectorQuadraticFunction{Float64}-in-ExponentialCone} \\
+         & \begin{bmatrix}
+        0.0 + 2.0 x^2\\
+        0.0 + 1.0 y\\
+        1.0\end{bmatrix} \in \text{ExponentialCone()} \\
+         & \begin{bmatrix}
+        1.0\\
+        0.0 + 2.0 x^2\\
+        0.0 + 1.0 y\end{bmatrix} \in \text{ExponentialCone()} \\
+         & \text{SingleVariable-in-GreaterThan{Float64}} \\
+         & x \ge 0.1 \\
+         & \text{SingleVariable-in-Integer} \\
+         & z \in \mathbb{Z} \\
+         & \text{SingleVariable-in-ZeroOne} \\
+         & x \in \{0, 1\} \\
+         & y \in \{0, 1\} \\
+        \end{aligned} $$""",
     )
-    @test evaluated == raw"""
-    $$ \begin{aligned}
-    \min\quad & 2.0 + 1.0 x + 3.1 y - 1.2 z \\
-    \text{Subject to}\\
-     & \text{ScalarAffineFunction{Float64}-in-EqualTo{Float64}} \\
-     & 0.0 + 1.0 x - 1.0 y = 0.0 \\
-     & \text{ScalarAffineFunction{Float64}-in-GreaterThan{Float64}} \\
-     & 0.0 + 2.0 x \ge 1.0 \\
-     & \text{ScalarAffineFunction{Float64}-in-Interval{Float64}} \\
-     & 0.0 + 2.0 x \in \[1.0, 2.0\] \\
-     & \text{ScalarQuadraticFunction{Float64}-in-LessThan{Float64}} \\
-     & 0.0 + 1.0 y - 1.0 z + 4.0 x^2 \le 1.0 \\
-     & \text{VectorOfVariables-in-SecondOrderCone} \\
-     & \begin{bmatrix}
-    x\\
-    y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
-     & \text{VectorAffineFunction{Float64}-in-SecondOrderCone} \\
-     & \begin{bmatrix}
-    1.0\\
-    0.0 + 1.0 x\\
-    0.0 + 1.0 y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
-     & \text{VectorQuadraticFunction{Float64}-in-ExponentialCone} \\
-     & \begin{bmatrix}
-    0.0 + 2.0 x^2\\
-    0.0 + 1.0 y\\
-    1.0\end{bmatrix} \in \text{ExponentialCone()} \\
-     & \begin{bmatrix}
-    1.0\\
-    0.0 + 2.0 x^2\\
-    0.0 + 1.0 y\end{bmatrix} \in \text{ExponentialCone()} \\
-     & \text{SingleVariable-in-GreaterThan{Float64}} \\
-     & x \ge 0.1 \\
-     & \text{SingleVariable-in-Integer} \\
-     & z \in \mathbb{Z} \\
-     & \text{SingleVariable-in-ZeroOne} \\
-     & x \in \{0, 1\} \\
-     & y \in \{0, 1\} \\
-    \end{aligned} $$"""
+    return
 end
 
 function test_nlp()
@@ -363,24 +384,27 @@ function test_nlp()
      x[1] * x[2] * x[3] * x[4] >= 25.0
      x[1] ^ 2 + x[2] ^ 2 + x[3] ^ 2 + x[4] ^ 2 == 40.0
     """
-    @test sprint(print, MOIU.latex_formulation(model)) == raw"""
-    $$ \begin{aligned}
-    \min\quad & x_{1} \times x_{4} \times (x_{1} + x_{2} + x_{3}) + x_{3} \\
-    \text{Subject to}\\
-     & \text{SingleVariable-in-GreaterThan{Float64}} \\
-     & x_{1} \ge 1.1 \\
-     & x_{2} \ge 1.2 \\
-     & x_{3} \ge 1.3 \\
-     & x_{4} \ge 1.4 \\
-     & \text{SingleVariable-in-LessThan{Float64}} \\
-     & x_{1} \le 5.1 \\
-     & x_{2} \le 5.2 \\
-     & x_{3} \le 5.3 \\
-     & x_{4} \le 5.4 \\
-     & \text{Nonlinear} \\
-     & x_{1} \times x_{2} \times x_{3} \times x_{4} \ge 25.0 \\
-     & x_{1} ^ 2 + x_{2} ^ 2 + x_{3} ^ 2 + x_{4} ^ 2 = 40.0 \\
-    \end{aligned} $$"""
+    _string_compare(
+        sprint(print, MOIU.latex_formulation(model)),
+        raw"""
+        $$ \begin{aligned}
+        \min\quad & x_{1} \times x_{4} \times (x_{1} + x_{2} + x_{3}) + x_{3} \\
+        \text{Subject to}\\
+         & \text{SingleVariable-in-GreaterThan{Float64}} \\
+         & x_{1} \ge 1.1 \\
+         & x_{2} \ge 1.2 \\
+         & x_{3} \ge 1.3 \\
+         & x_{4} \ge 1.4 \\
+         & \text{SingleVariable-in-LessThan{Float64}} \\
+         & x_{1} \le 5.1 \\
+         & x_{2} \le 5.2 \\
+         & x_{3} \le 5.3 \\
+         & x_{4} \le 5.4 \\
+         & \text{Nonlinear} \\
+         & x_{1} \times x_{2} \times x_{3} \times x_{4} \ge 25.0 \\
+         & x_{1} ^ 2 + x_{2} ^ 2 + x_{3} ^ 2 + x_{4} ^ 2 = 40.0 \\
+        \end{aligned} $$""",
+    )
 end
 
 function runtests()
