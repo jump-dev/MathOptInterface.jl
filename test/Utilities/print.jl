@@ -303,7 +303,7 @@ function test_latex()
     )
     _string_compare(
         sprint(
-          io -> show(io, MIME("text/latex"), MOIU.latex_formulation(model)),
+            io -> show(io, MIME("text/latex"), MOIU.latex_formulation(model)),
         ),
         raw"""
         $$ \begin{aligned}
@@ -405,6 +405,7 @@ function test_nlp()
          & x_{1} ^ 2 + x_{2} ^ 2 + x_{3} ^ 2 + x_{4} ^ 2 = 40.0 \\
         \end{aligned} $$""",
     )
+    return
 end
 
 function runtests()
