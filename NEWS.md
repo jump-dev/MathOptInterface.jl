@@ -1,6 +1,24 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.9.21 (In development)
+---------------------------
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.21).
+
+- Added `supports_shift_constant`.
+- Improve performance of bridging quadratic constraints.
+- Add precompilation statements.
+- Large improvements to the documentation.
+- Fix a variety of inference issues, benefiting precompilation and reducing
+  initial latency.
+- `RawParameter`s are now ignored when resettting a `CachingOptimizer`.
+  Previously, changing the underlying optimizer after `RawParameter`s were set
+  would throw an errror.
+- `Utilities.AbstractModel` is being refactored. This may break users
+  interacting with private fields of a model generated using `@model`.
+
 v0.9.20 (February 20, 2021)
 ---------------------------
 
