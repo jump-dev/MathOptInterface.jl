@@ -203,22 +203,40 @@ end
 !!! warning
     This section is important if you wrap a solver written in C.
 
-Wrapping a solver written in C will require the use of pointers. **Never pass
-the pointer directly to a low-level function.** Instead, store the pointer as a
-field in your `Optimizer`, and implement `Base.cconvert` and
-`Base.unsafe_convert as follows:
+Wrapping a solver written in C will require the use of pointers, and for you to
+manually free the solver's memory when the `Optimizer` is garbage collected by
+Julia.
 
+**Never pass the pointer directly to a Julia `ccall` function.**
+
+Instead, store the pointer as a field in your `Optimizer`, and implement
+`Base.cconvert` and `Base.unsafe_convert`. Then you can pass `Optimizer` to any
+`ccall` function that expects the pointer.
+
+In addition, make sure you implement a `finalizer` for each model you create.
+
+If `newsolver_createProblem()` is the low-level function that creates the
+problem pointer in C, and `newsolver_freeProblem(::Ptr{Cvoid})` is the low-level
+function that frees memory associated with the pointer, your `Optimizer()`
+function should look like this:
 ```julia
 struct Optimizer <: MOI.AbstractOptimizer
     ptr::Ptr{Cvoid}
+
+    function Optimizer()
+        ptr = newsolver_createProblem()
+        model = Optimizer(ptr)
+        finalizer(model) do m
+            newsolver_freeProblem(m)
+            return
+        end
+        return model
+    end
 end
 
 Base.cconvert(::Type{Ptr{Cvoid}}, model::Optimizer) = model
 Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Optimizer) = model.ptr
 ```
-
-Then, pass `model` instead of `model.ptr` to low-level functions that expect the
-model pointer.
 
 ### Implement methods for `Optimizer`
 
@@ -287,7 +305,7 @@ support.
 For each function-set constraint pair, define [`supports_constraint`](@ref):
 ```julia
 function MOI.supports_constraint(
-    ::Model,
+    ::Optimizer,
     ::Type{MOI.SingleVariable},
     ::Type{MOI.ZeroOne},
 )
@@ -297,7 +315,7 @@ end
 To make this easier, you may want to use `Union`s:
 ```julia
 function MOI.supports_constraint(
-    ::Model,
+    ::Optimizer,
     ::Type{MOI.SingleVariable},
     ::Type{<:Union{MOI.LessThan,MOI.GreaterThan,MOI.EqualTo}},
 )
@@ -309,7 +327,7 @@ You also need to define which objective functions you support via
 [`supports`](@ref):
 ```julia
 function MOI.supports(
-    ::Model,
+    ::Optimizer,
     ::MOI.ObjectiveFunction{MOI.SingleVariable},
 )
     return true
@@ -322,10 +340,10 @@ end
 
 ## The big decision: copy-to or incremental modifications?
 
-The first big decision you face is whether to support incremental modification.
+Now you need to decide whether to support incremental modification or not.
 
-Incremental modification means that you can add variables and constraints
-one-by-one without needing to rebuild the entire problem, and you can modify
+Incremental modification means that the user can add variables and constraints
+one-by-one without needing to rebuild the entire problem, and they can modify
 the problem data after an [`optimize!`](@ref) call. Supporting incremental
 modification means implementing functions like [`add_variable`](@ref) and
 [`add_constraint`](@ref).
@@ -367,8 +385,8 @@ To implement the [`copy_to`](@ref) interface, implement the following function:
 
 ### The incremental interface
 
-!!! tip
-    Defining this interface is a lot of work. The easiest way is to consult the
+!!! warning
+    Writing this interface is a lot of work. The easiest way is to consult the
     source code of a similar solver!
 
 To implement the incremental interface, implement the following functions:
