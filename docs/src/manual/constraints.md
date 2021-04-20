@@ -173,3 +173,26 @@ where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
 | At most one component of ``x`` can be nonzero                                              | `VectorOfVariables`    | `SOS1`                             |
 | At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorOfVariables`    | `SOS2`                             |
 | ``y = 1 \implies a^T x \in S``                                                             | `VectorAffineFunction` | `IndicatorSet`                     |
+
+## JuMP mapping
+
+The following bullet points show examples of how JuMP constraints are translated
+into MOI function-set pairs:
+
+ - `@constraint(m, 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`LessThan`
+ - `@constraint(m, 2x + y >= 10)` becomes `ScalarAffineFunction`-in-`GreaterThan`
+ - `@constraint(m, 2x + y == 10)` becomes `ScalarAffineFunction`-in-`EqualTo`
+ - `@constraint(m, 0 <= 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`Interval`
+ - `@constraint(m, 2x + y in ArbitrarySet())` becomes
+   `ScalarAffineFunction`-in-`ArbitrarySet`.
+
+Variable bounds are handled in a similar fashion:
+
+ - `@variable(m, x <= 1)` becomes `SingleVariable`-in-`LessThan`
+ - `@variable(m, x >= 1)` becomes `SingleVariable`-in-`GreaterThan`
+
+One notable difference is that a variable with an upper and lower bound is
+translated into two constraints, rather than an interval. i.e.:
+
+ - `@variable(m, 0 <= x <= 1)` becomes `SingleVariable`-in-`LessThan` *and*
+    `SingleVariable`-in-`GreaterThan`.

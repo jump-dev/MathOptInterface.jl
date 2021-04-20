@@ -20,7 +20,9 @@ MathOptInterface for a new solver.
     not answered by this guide, please ask them in the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev)
     so we can improve this guide!
 
-## Deciding if MathOptInterface is right for you
+## Preliminaries
+
+### Decide if MathOptInterface is right for you
 
 The first step in writing a wrapper is to decide whether implementing an
 interface is the right thing to do.
@@ -34,7 +36,7 @@ MathOptInterface may not be the right tool for the job.
     If you're not sure whether you should write an interface, ask in the
     [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev).
 
-## Find a similar solver already wrapped
+### Find a similar solver already wrapped
 
 The next step is to find (if possible) a similar solver that is already wrapped.
 Although not strictly necessary, this will be a good place to look for
@@ -47,24 +49,24 @@ has a good list of solvers, along with the problem classes they support.
     If you're not sure which solver is most similar, ask in the
     [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev).
 
-## Create a low-level interface
+### Create a low-level interface
 
 Before writing a MathOptInterface, you first been to be able to call the solver
 from Julia.
 
-### Wrapping solvers written in Julia
+#### Wrapping solvers written in Julia
 
 If your solver is written in Julia, there's nothing to do here! Go to the next
 section.
 
-### Solvers written in C
+#### Solvers written in C
 
 Julia is well suited to wrapping solvers written in C. (This is _not_ true for
 C++.)
 
 Before writing a MathOptInterface wrapper, there are a few extra steps.
 
-#### Create a JLL
+##### Create a JLL
 
 If the C code is publicly available under an open-source license, create a
 JLL package via [Yggdrasil](https://github.com/JuliaPackaging/Yggdrasil). The
@@ -80,7 +82,7 @@ manually install the solver. See [Gurobi.jl](https://github.com/jump-dev/Gurobi.
 or [CPLEX.jl](https://github.com/jump-dev/CPLEX.jl) for examples of how to
 structure this.
 
-#### Use Clang.jl to wrap the C API
+##### [Use Clang.jl to wrap the C API](@id implement_clang)
 
 The next step is to use [Clang.jl](https://github.com/JuliaInterop/Clang.jl) to
 automatically wrap the C API. The easiest way to do this is to follow an
@@ -90,7 +92,7 @@ example. Good examples to follow are
 
 Sometimes, you will need to make manual modifications to the resulting files.
 
-### Solvers written in other languages
+#### Solvers written in other languages
 
 Ask the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) for advice.
 You may be able to use on of the JuliaInterop packages to call out to the
@@ -104,7 +106,9 @@ If your solver is written in C++, you will first need to write a C interface.
 
 ## Structuring the package
 
-Structure your wrapper as a Julia package.
+Structure your wrapper as a Julia package. Consult the
+[Julia documentation](https://pkgdocs.julialang.org/v1/creating-packages/)
+if you haven't done this before.
 
 MOI solver interfaces may be in the same package as the solver itself (either
 the C wrapper if the solver is accessible through C, or the Julia code if the
@@ -116,15 +120,13 @@ on the solver package.
     request that you do not use "JuMP" in the name of your package without prior
     consent.
 
-Create a file named `src/MOI_wrapper.jl` for the MOI wrapper, and a file named
-`test/MOI_wrapper.jl` for the tests.
-
-If the MOI wrapper implementation is spread in several files, they should be
-stored in a `src/MOI_wrapper` folder and included by a
-`src/MOI_wrapper/MOI_wrapper.jl` file.
-
-For example:
+Your package should have the following structure:
 ```
+/.github
+    /workflows
+        ci.yml
+        format_check.yml
+        TagBot.yml
 /gen
     gen.jl  # Code to wrap the C API
 /src
@@ -139,9 +141,25 @@ For example:
     runtests.jl
     /MOI_wrapper
         MOI_wrapper.jl
+.gitignore
+.JuliaFormatter.toml
+README.md
+LICENSE.md
+Project.toml
 ```
 
-## Setup tests
+ * The `/.github` folder contains the scripts for GitHub actions. The easiest
+   way to write these is to copy the ones from an existing solver.
+ * The `/gen` and `/src/gen` folders are only needed if you are wrapping a
+   [solver written in C](@ref implement_clang).
+ * The `/src/MOI_wrapper` folder contains the Julia code for the MOI wrapper.
+ * The `/test` folder contains code for testing your package. See
+   [Setup tests](@ref) for more information.
+ * The `.JuliaFormatter.toml` and `.github/workflows/format_check.yml` enforce
+   code formatting using [JuliaFormatter.jl](https://github.com/domluna/JuliaFormatter.jl).
+   Check existing solvers or JuMP.jl for details.
+
+### Setup tests
 
 The best way to implement an interface to MathOptInterface is via
 [test-driven development](https://en.wikipedia.org/wiki/Test-driven_development).
@@ -158,10 +176,17 @@ Follow the guide [How to test a solver](@ref) to set up the
     run the tests, implement any missing methods until the test passes, then
     uncomment another test and repeat.
 
-## The `Optimizer` object
+## Initial code
 
-The first object to create is a subtype of `AbstractOptimizer`. By convention,
-these optimizers should not be exported and should be named
+By this point, you should have a package setup with tests, formatting, and
+access to the underlying solver. Now it's time to start writing the wrapper.
+
+### The `Optimizer` object
+
+The first object to create is a subtype of `AbstractOptimizer`. This type is
+going to store everything related to the problem.
+
+By convention, these optimizers should not be exported and should be named
 `PackageName.Optimizer`.
 
 ```julia
@@ -173,7 +198,7 @@ struct Optimizer <: MOI.AbstractOptimizer
 end
 ```
 
-### Optimizer objects for C solvers
+#### Optimizer objects for C solvers
 
 !!! warning
     This section is important if you wrap a solver written in C.
@@ -254,7 +279,7 @@ end
 MOI.supports(::Optimizer, ::MOI.Silent) = true
 ```
 
-## Define `supports`
+### Define `supports`
 
 The next step is to define which constraints and objective functions you plan to
 support.
@@ -295,7 +320,7 @@ end
     Only support a constraint or objective function if your solver has native
     support for it.
 
-## The first big decision: incremental modifications?
+## The big decision: copy-to or incremental modifications?
 
 The first big decision you face is whether to support incremental modification.
 
@@ -334,13 +359,17 @@ interface. The converse is not true.
     If this is your first time writing an interface, start with
     [`copy_to`](@ref).
 
-## The `copy_to` interface
+### The `copy_to` interface
 
 To implement the [`copy_to`](@ref) interface, implement the following function:
 
 * [`copy_to`](@ref)
 
-## The incremental interface
+### The incremental interface
+
+!!! tip
+    Defining this interface is a lot of work. The easiest way is to consult the
+    source code of a similar solver!
 
 To implement the incremental interface, implement the following functions:
 
@@ -351,16 +380,27 @@ To implement the incremental interface, implement the following functions:
 * [`is_valid`](@ref)
 * [`delete`](@ref)
 
+!!! info
+    Solvers do not have to support `AbstractScalarFunction` in
+    `GreaterThan`, `LessThan`, `EqualTo`, or `Interval` with a nonzero constant
+    in the function. Throw [`ScalarFunctionConstantNotZero`](@ref) if the
+    function constant is not zero.
+
 In addition, you should implement the following attributes:
 
+* [`ListOfModelAttributesSet`](@ref)
+* [`ObjectiveFunctionType`](@ref)
 * [`ObjectiveFunction`](@ref)
 * [`ObjectiveSense`](@ref)
+* [`ListOfVariableAttributesSet`](@ref)
+* [`NumberOfVariables`](@ref)
+* [`ListOfVariableIndices`](@ref)
+* [`ListOfConstraintAttributesSet`](@ref)
+* [`ListOfConstraints`](@ref)
+* [`NumberOfConstraints`](@ref)
+* [`ListOfConstraintIndices`](@ref)
 * [`ConstraintFunction`](@ref)
 * [`ConstraintSet`](@ref)
-* [`NumberOfConstraints`](@ref)
-* [`NumberOfVariables`](@ref)
-
-### Modifications
 
 If your solver supports modifying data in-place, implement:
 
@@ -369,6 +409,24 @@ If your solver supports modifying data in-place, implement:
 * [`ScalarCoefficientChange`](@ref)
 * [`VectorConstantChange`](@ref)
 * [`MultirowChange`](@ref)
+
+#### Variables constrained on creation
+
+Some solvers require variables be associated with a set _when they are created_.
+This conflicts with the incremental modification approach, since you cannot
+first add a free variable and then constrain it to the set.
+
+If this is the case, implement:
+
+* [`add_constrained_variable`](@ref)
+* [`add_constrained_variables`](@ref)
+* [`supports_add_constrained_variables`](@ref)
+
+By default, MathOptInterface assumes solvers support free variables. If your
+solver does not support free variables, define:
+```julia
+MOI.supports_add_constrained_variables(::Optimizer, ::Type{Reals}) = false
+```
 
 ### Incremental and `copy_to`
 
@@ -477,67 +535,10 @@ If your solver uses the Simplex method, implement:
 
 * [`ConstraintBasisStatus`](@ref)
 
-## Warm-starts
-
 If your solver accepts primal or dual warm-starts, implement:
 
 * [`VariablePrimalStart`](@ref)
 * [`ConstraintDualStart`](@ref)
-
-## Extra: solver-specific attributes
-
-You don't need to restrict yourself to the attributes defined in the
-MathOptInterface.jl package.
-
-Solver-specific attributes should be specified by creating an appropriate
-subtype of [`AbstractModelAttribute`](@ref), [`AbstractOptimizerAttribute`](@ref),
-[`AbstractVariableAttribute`](@ref), or [`AbstractConstraintAttribute`](@ref).
-
-For example, Gurobi.jl adds attributes for multiobjective optimization by
-[defining](https://github.com/jump-dev/Gurobi.jl/blob/d9cebe4ec05a102df8917ff2602e6c38abdac090/src/MOI_multi_objective.jl#L1-L15):
-```julia
-struct NumberOfObjectives <: MOI.AbstractModelAttribute end
-
-function MOI.set(model::Optimizer, ::NumberOfObjectives, n::Integer)
-    # Code to set NumberOfOBjectives
-    return
-end
-
-function MOI.get(model::Optimizer, ::NumberOfObjectives)
-    n = # Code to get NumberOfobjectives
-    return n
-end
-```
-
-Then, the user can write:
-```julia
-model = Gurobi.Optimizer()
-MOI.set(model, Gurobi.NumberofObjectives(), 3)
-```
-
-## Extra: variables constrained on creation
-
-The solver interface should only implement support for variables
-constrained on creation (see
-[`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref)) or
-constraints that directly map to a structure exploited by the solver algorithm.
-There is no need to add support for additional types, this is handled by
-[The Bridges submodule](@ref). Furthermore, this allows
-[`supports_constraint`](@ref) to indicate which types are exploited by the
-solver and hence allows layers such as [`Bridges.LazyBridgeOptimizer`](@ref)
-to accurately select the most appropriate transformations.
-
-As [`add_constrained_variable`](@ref) (resp. [`add_constrained_variables`](@ref))
-falls back to [`add_variable`](@ref) (resp. [`add_variables`](@ref)) followed by
-[`add_constraint`](@ref), there is no need to implement this function
-if `model` does not require that variables be constrained when they are created.
-However, if `model` requires that variables be constrained when they're created,
-then it should only implement [`add_constrained_variable`](@ref) and not
-[`add_variable`](@ref) nor [`add_constraint`](@ref) for
-[`SingleVariable`](@ref)-in-`typeof(set)`. In addition, it should implement
-`supports_add_constrained_variables(::Optimizer, ::Type{Reals})` and return
-`false` so that these variables are bridged, see
-[`supports_add_constrained_variables`](@ref).
 
 ## Other tips
 
@@ -588,55 +589,40 @@ This applies, for example, to the `terms` vector in
 afterwards. The in-place version of [`get!`](@ref) can be used by users to avoid
 extra copies in this case.
 
-## Column Generation
+### Column Generation
 
 There is no special interface for column generation. If the solver has a special
 API for setting coefficients in existing constraints when adding a new variable,
 it is possible to queue modifications and new variables and then call the
 solver's API once all of the new coefficients are known.
 
-## JuMP mapping
+## Extra: solver-specific attributes
 
-MOI defines a very general interface, with multiple possible ways to describe
-the same constraint.
+You don't need to restrict yourself to the attributes defined in the
+MathOptInterface.jl package.
 
-This is considered a feature, not a bug.
+Solver-specific attributes should be specified by creating an appropriate
+subtype of [`AbstractModelAttribute`](@ref), [`AbstractOptimizerAttribute`](@ref),
+[`AbstractVariableAttribute`](@ref), or [`AbstractConstraintAttribute`](@ref).
 
-MOI is designed to make it possible to experiment with alternative
-representations of an optimization problem at both the solving and modeling
-level.
+For example, Gurobi.jl adds attributes for multiobjective optimization by
+[defining](https://github.com/jump-dev/Gurobi.jl/blob/d9cebe4ec05a102df8917ff2602e6c38abdac090/src/MOI_multi_objective.jl#L1-L15):
+```julia
+struct NumberOfObjectives <: MOI.AbstractModelAttribute end
 
-When implementing an interface, it is important to keep in mind that the way the
-user can express problems in JuMP is not directly limited by the constraints
-which a solver supports via MOI as JuMP performs automatic reformulation
-via [The Bridges submodule](@ref).
+function MOI.set(model::Optimizer, ::NumberOfObjectives, n::Integer)
+    # Code to set NumberOfOBjectives
+    return
+end
 
-Therefore, we recommend to only support the constraint types that directly map
-to a structure exploited by the solver algorithm.
+function MOI.get(model::Optimizer, ::NumberOfObjectives)
+    n = # Code to get NumberOfobjectives
+    return n
+end
+```
 
-The following bullet points show examples of how JuMP constraints are translated
-into MOI function-set pairs:
-
- - `@constraint(m, 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`LessThan`
- - `@constraint(m, 2x + y >= 10)` becomes `ScalarAffineFunction`-in-`GreaterThan`
- - `@constraint(m, 2x + y == 10)` becomes `ScalarAffineFunction`-in-`EqualTo`
- - `@constraint(m, 0 <= 2x + y <= 10)` becomes `ScalarAffineFunction`-in-`Interval`
- - `@constraint(m, 2x + y in ArbitrarySet())` becomes
-   `ScalarAffineFunction`-in-`ArbitrarySet`.
-
-Variable bounds are handled in a similar fashion:
-
- - `@variable(m, x <= 1)` becomes `SingleVariable`-in-`LessThan`
- - `@variable(m, x >= 1)` becomes `SingleVariable`-in-`GreaterThan`
-
-One notable difference is that a variable with an upper and lower bound is
-translated into two constraints, rather than an interval. i.e.:
-
- - `@variable(m, 0 <= x <= 1)` becomes `SingleVariable`-in-`LessThan` *and*
-    `SingleVariable`-in-`GreaterThan`.
-
-Solvers are not expected to support `AbstractScalarFunction` in `GreaterThan`,
-`LessThan`, `EqualTo`, or `Interval` with a nonzero constant in the function.
-Constants in the affine function should instead be moved into the parameters of
-the corresponding sets. The [`ScalarFunctionConstantNotZero`](@ref) exception
-may be thrown in this case.
+Then, the user can write:
+```julia
+model = Gurobi.Optimizer()
+MOI.set(model, Gurobi.NumberofObjectives(), 3)
+```
