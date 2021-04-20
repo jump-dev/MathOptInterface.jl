@@ -236,9 +236,11 @@ end
 """
     _VariableNode
 
-A type used to work-around the default printing of Julia expressions. If we
-subsititued the variable names into the expression and the converted to a
-string, each variable would be printed with enclosing `"`.
+A type used to work-around the default printing of Julia expressions. 
+
+Without this type, if we subsititued the variable names into the expression 
+and then converted to a string, each variable would be printed with enclosing 
+`"`.
 
 To work-around this, create a new type and overload `show`.
 """
