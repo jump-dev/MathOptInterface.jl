@@ -51,7 +51,7 @@ has a good list of solvers, along with the problem classes they support.
 
 ### Create a low-level interface
 
-Before writing a MathOptInterface, you first been to be able to call the solver
+Before writing a MathOptInterface, you first need to be able to call the solver
 from Julia.
 
 #### Wrapping solvers written in Julia
@@ -59,10 +59,13 @@ from Julia.
 If your solver is written in Julia, there's nothing to do here! Go to the next
 section.
 
-#### Solvers written in C
+#### Wrapping solvers written in C
 
-Julia is well suited to wrapping solvers written in C. (This is _not_ true for
-C++.)
+Julia is well suited to wrapping solvers written in C.
+
+!!! info
+    This is _not_ true for C++. If you have a solver written in C++, first write
+    a C interface, then wrap the C interface.
 
 Before writing a MathOptInterface wrapper, there are a few extra steps.
 
@@ -95,14 +98,12 @@ Sometimes, you will need to make manual modifications to the resulting files.
 #### Solvers written in other languages
 
 Ask the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) for advice.
-You may be able to use on of the JuliaInterop packages to call out to the
-solver.
+You may be able to use one of the [JuliaInterop](https://github.com/JuliaInterop)
+packages to call out to the solver.
 
 For example, [SeDuMi.jl](https://github.com/jump-dev/SeDuMi.jl) uses
 [MATLAB.jl](https://github.com/JuliaInterop/MATLAB.jl) to call the SeDuMi solver
 written in MATLAB.
-
-If your solver is written in C++, you will first need to write a C interface.
 
 ## Structuring the package
 
@@ -167,8 +168,8 @@ The best way to implement an interface to MathOptInterface is via
 The [`MOI.Test` submodule](@ref test_module) contains a large test suite to help
 check that you have implemented things correctly.
 
-Follow the guide [How to test a solver](@ref) to set up the
-`test/MOI_wrapper.jl` file for your package.
+Follow the guide [How to test a solver](@ref) to set up the tests for your
+package.
 
 !!! tip
     Run the tests frequently when developing. However, at the start there is
@@ -183,8 +184,8 @@ access to the underlying solver. Now it's time to start writing the wrapper.
 
 ### The `Optimizer` object
 
-The first object to create is a subtype of `AbstractOptimizer`. This type is
-going to store everything related to the problem.
+The first object to create is a subtype of [`AbstractOptimizer`](@ref). This
+type is going to store everything related to the problem.
 
 By convention, these optimizers should not be exported and should be named
 `PackageName.Optimizer`.
@@ -207,7 +208,7 @@ Wrapping a solver written in C will require the use of pointers, and for you to
 manually free the solver's memory when the `Optimizer` is garbage collected by
 Julia.
 
-**Never pass the pointer directly to a Julia `ccall` function.**
+**Never pass a pointer directly to a Julia `ccall` function.**
 
 Instead, store the pointer as a field in your `Optimizer`, and implement
 `Base.cconvert` and `Base.unsafe_convert`. Then you can pass `Optimizer` to any
@@ -248,6 +249,7 @@ Now that we have an `Optimizer`, we need to implement a few basic methods.
     For this and all future methods, read the docstrings to understand what each
     method does, what it expects as input, and what it produces as output. If it
     isn't clear, let us know and we will improve the docstrings!
+    It is also very helpful to look at an existing wrapper for a similar solver.
 
 You should also implement `Base.show(::IO, ::Optimizer)` to print a nice string
 when some prints your model. For example
@@ -267,7 +269,10 @@ For each attribute
  * [`set`](@ref) sets a new value of the attribute. Not all attributes can be
    set. For example, the user can't modify the [`SolverName`](@ref).
  * [`supports`](@ref) returns a `Bool` indicating whether the solver supports the
-   attribute. Only implement this if you implement the getter and setter!
+   attribute.
+
+Each column in the table indicates whether you need to implement the particular
+method for each attribute.
 
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
 | ---------------------- | --------------| ------------- | ------------------ |
@@ -297,7 +302,7 @@ end
 MOI.supports(::Optimizer, ::MOI.Silent) = true
 ```
 
-### Define `supports`
+### Define `supports_constraint`
 
 The next step is to define which constraints and objective functions you plan to
 support.
@@ -323,20 +328,8 @@ function MOI.supports_constraint(
 end
 ```
 
-You also need to define which objective functions you support via
-[`supports`](@ref):
-```julia
-function MOI.supports(
-    ::Optimizer,
-    ::MOI.ObjectiveFunction{MOI.SingleVariable},
-)
-    return true
-end
-```
-
 !!! tip
-    Only support a constraint or objective function if your solver has native
-    support for it.
+    Only support a constraint if your solver has native support for it.
 
 ## The big decision: copy-to or incremental modifications?
 
@@ -404,21 +397,32 @@ To implement the incremental interface, implement the following functions:
     in the function. Throw [`ScalarFunctionConstantNotZero`](@ref) if the
     function constant is not zero.
 
-In addition, you should implement the following attributes:
+In addition, you should implement the following model attributes:
 
-* [`ListOfModelAttributesSet`](@ref)
-* [`ObjectiveFunctionType`](@ref)
-* [`ObjectiveFunction`](@ref)
-* [`ObjectiveSense`](@ref)
-* [`ListOfVariableAttributesSet`](@ref)
-* [`NumberOfVariables`](@ref)
-* [`ListOfVariableIndices`](@ref)
-* [`ListOfConstraintAttributesSet`](@ref)
-* [`ListOfConstraints`](@ref)
-* [`NumberOfConstraints`](@ref)
-* [`ListOfConstraintIndices`](@ref)
-* [`ConstraintFunction`](@ref)
-* [`ConstraintSet`](@ref)
+| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
+| ---------------------- | --------------| ------------- | ------------------ |
+| [`ListOfModelAttributesSet`](@ref) | Yes           | No            | No     |
+| [`ObjectiveFunctionType`](@ref)    | Yes           | No            | No     |
+| [`ObjectiveFunction`](@ref)        | Yes           | Yes           | Yes    |
+| [`ObjectiveSense`](@ref)           | Yes           | Yes           | Yes    |
+
+Variable-related attributes:
+
+| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
+| ---------------------- | --------------| ------------- | ------------------ |
+| [`ListOfVariableAttributesSet`](@ref)  | Yes           | No            | No |
+| [`NumberOfVariables`](@ref)            | Yes           | No            | No |
+| [`ListOfVariableIndices`](@ref)        | Yes           | No            | No |
+
+Constraint-related attributes:
+
+| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
+| ---------------------- | --------------| ------------- | ------------------ |
+| [`ListOfConstraintAttributesSet`](@ref) | Yes          | No            | No |
+| [`NumberOfConstraints`](@ref)           | Yes          | No            | No |
+| [`ListOfConstraints`](@ref)             | Yes          | No            | No |
+| [`ConstraintFunction`](@ref)            | Yes          | Yes           | No |
+| [`ConstraintSet`](@ref)                 | Yes          | Yes           | No |
 
 If your solver supports modifying data in-place, implement:
 
@@ -474,8 +478,10 @@ See [`Utilities.supports_default_copy_to`](@ref) for more details.
 Regardless of which interface you implement, you have the option of implementing
 the `Name` attribute for variables and constraints:
 
-* [`VariableName`](@ref)
-* [`ConstraintName`](@ref)
+| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
+| ---------------------- | --------------| ------------- | ------------------ |
+| [`VariableName`](@ref)   | Yes         | Yes           | Yes                |
+| [`ConstraintName`](@ref) | Yes         | Yes           | Yes                |
 
 If you implement names, you should also implement the following three methods:
 ```julia
@@ -520,6 +526,10 @@ solution information.
 * [`ObjectiveValue`](@ref)
 * [`VariablePrimal`](@ref)
 * [`SolveTime`](@ref)
+
+!!! info
+    You only need to implement [`get`](@ref) for solution attributes. Don't
+    implement [`set`](@ref) or [`supports`](@ref).
 
 !!! note
     Solver wrappers should document how the low-level statuses map to the MOI
