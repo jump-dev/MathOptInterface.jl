@@ -13,7 +13,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 - Large improvements to the documentation.
 - Fix a variety of inference issues, benefiting precompilation and reducing
   initial latency.
-- `RawParameter`s are now ignored when resettting a `CachingOptimizer`.
+- `RawParameter`s are now ignored when resetting a `CachingOptimizer`.
   Previously, changing the underlying optimizer after `RawParameter`s were set
   would throw an errror.
 - `Utilities.AbstractModel` is being refactored. This may break users
