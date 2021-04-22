@@ -1,7 +1,7 @@
 MathOptInterface (MOI) release notes
 ====================================
 
-v0.9.21 (In development)
+v0.9.21 (April 23, 2021)
 ---------------------------
 
 For a detailed list of the closed issues and pull requests from this release,
