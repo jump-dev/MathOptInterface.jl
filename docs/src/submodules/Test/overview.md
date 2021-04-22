@@ -20,7 +20,9 @@ so that all solvers can benefit.
 ## How to test a solver
 
 The skeleton below can be used for the wrapper test file of a solver named
-`FooBar`. Remove unnecessary tests as appropriate.
+`FooBar`. Remove unnecessary tests as appropriate, for example tests for
+features that the solver does not support (tests are not skipped depending
+on the value of `supports`). 
 
 ```julia
 # ============================ /test/MOI_wrapper.jl ============================
