@@ -418,7 +418,7 @@ end
         MOIU.set_mock_optimize!(
             mock,
             (mock::MOIU.MockOptimizer) -> begin
-                MOI.set(mock, MOI.SolveTime(), 0.0)
+                MOI.set(mock, MOI.SolveTimeSec(), 0.0)
                 MOIU.mock_optimize!(
                     mock,
                     MOI.OPTIMAL,

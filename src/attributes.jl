@@ -956,11 +956,13 @@ A model attribute for the final relative optimality gap, defined as ``\\frac{|b-
 struct RelativeGap <: AbstractModelAttribute end
 
 """
-    SolveTime()
+    SolveTimeSec()
 
 A model attribute for the total elapsed solution time (in seconds) as reported by the optimizer.
 """
-struct SolveTime <: AbstractModelAttribute end
+struct SolveTimeSec <: AbstractModelAttribute end
+
+@deprecate SolveTime SolveTimeSec
 
 """
     SimplexIterations()
@@ -1584,7 +1586,7 @@ function is_set_by_optimize(
         DualObjectiveValue,
         ObjectiveBound,
         RelativeGap,
-        SolveTime,
+        SolveTimeSec,
         SimplexIterations,
         BarrierIterations,
         NodeCount,
