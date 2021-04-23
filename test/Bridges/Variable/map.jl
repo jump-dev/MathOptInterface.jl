@@ -6,7 +6,9 @@ const MOIB = MOI.Bridges
 struct VariableDummyBridge <: MOIB.Variable.AbstractBridge
     id::Int
 end
-MOIB.Variable.unbridged_map(::VariableDummyBridge, ::MOI.VariableIndex) = nothing
+function MOIB.Variable.unbridged_map(::VariableDummyBridge, ::MOI.VariableIndex)
+    return nothing
+end
 
 map = MOIB.Variable.Map()
 @testset "Empty" begin
@@ -22,7 +24,7 @@ S1 = typeof(set1)
 v1, c1 = MOIB.Variable.add_key_for_bridge(map, () -> b1, set1)
 cannot_unbridge_err = ErrorException(
     "Cannot unbridge function because some variables are bridged by variable" *
-    " bridges that do not support reverse mapping, e.g., `ZerosBridge`."
+    " bridges that do not support reverse mapping, e.g., `ZerosBridge`.",
 )
 @testset "Scalar set" begin
     @test v1.value == c1.value == -1
@@ -34,7 +36,9 @@ cannot_unbridge_err = ErrorException(
     @test MOIB.Variable.constraints_with_set(map, S1) == [c1]
     @test MOIB.Variable.function_for(map, c1) == MOI.SingleVariable(v1)
     @test_throws cannot_unbridge_err MOIB.Variable.unbridged_function(
-        map, MOI.VariableIndex(1))
+        map,
+        MOI.VariableIndex(1),
+    )
 
     @test MOIB.Variable.number_of_variables(map) == 1
     @test MOIB.Variable.list_of_constraint_types(map) == Set([(F1, S1)])
@@ -60,16 +64,20 @@ v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
         @test map[v2[i]] == b2
         @test MOIB.Variable.constrained_set(map, v2[i]) == S2
         @test MOIB.Variable.length_of_vector_of_variables(map, v2[i]) == 4
-        @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) == MOIB.Variable.IndexInVector(i)
+        @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) ==
+              MOIB.Variable.IndexInVector(i)
     end
     @test MOIB.Variable.number_with_set(map, S2) == 1
     @test MOIB.Variable.constraints_with_set(map, S2) == [c2]
     @test MOIB.Variable.function_for(map, c2) == MOI.VectorOfVariables(v2)
     @test_throws cannot_unbridge_err MOIB.Variable.unbridged_function(
-        map, MOI.VariableIndex(1))
+        map,
+        MOI.VariableIndex(1),
+    )
 
     @test MOIB.Variable.number_of_variables(map) == 5
-    @test MOIB.Variable.list_of_constraint_types(map) == Set([(F1, S1), (F2, S2)])
+    @test MOIB.Variable.list_of_constraint_types(map) ==
+          Set([(F1, S1), (F2, S2)])
     @test length(map) == 2
     @test sprint(MOIB.print_num_bridges, map) == "\nwith 2 variable bridges"
     @test !isempty(map)
@@ -116,7 +124,7 @@ end
 
     rev_v2 = reverse(v2)
     err = ArgumentError(
-        "`$rev_v2` is not a valid key vector as returned by `add_keys_for_bridge`."
+        "`$rev_v2` is not a valid key vector as returned by `add_keys_for_bridge`.",
     )
     @test_throws err delete!(map, rev_v2)
 
@@ -146,7 +154,8 @@ end
         @test map[v2[i]] == b2
         @test MOIB.Variable.constrained_set(map, v2[i]) == S2
         @test MOIB.Variable.length_of_vector_of_variables(map, v2[i]) == 3
-        @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) == MOIB.Variable.IndexInVector(j)
+        @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) ==
+              MOIB.Variable.IndexInVector(j)
     end
     @test MOIB.Variable.function_for(map, c2) == MOI.VectorOfVariables(v2[left])
 
@@ -179,7 +188,8 @@ end
         @test map[v2[i]] == b2
         @test MOIB.Variable.constrained_set(map, v2[i]) == S2
         @test MOIB.Variable.length_of_vector_of_variables(map, v2[i]) == 2
-        @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) == MOIB.Variable.IndexInVector(j)
+        @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) ==
+              MOIB.Variable.IndexInVector(j)
     end
     @test MOIB.Variable.function_for(map, c2) == MOI.VectorOfVariables(v2[left])
 

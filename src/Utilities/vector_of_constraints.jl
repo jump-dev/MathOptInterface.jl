@@ -15,10 +15,8 @@
 # vector, it readily gives the entries of `model.constrmap` that need to be
 # updated.
 
-struct VectorOfConstraints{
-    F<:MOI.AbstractFunction,
-    S<:MOI.AbstractSet
-} <: MOI.ModelLike
+struct VectorOfConstraints{F<:MOI.AbstractFunction,S<:MOI.AbstractSet} <:
+       MOI.ModelLike
     # FIXME: It is not ideal that we have `DataType` here, it might induce type
     #        instabilities. We should change `CleverDicts` so that we can just
     #        use `typeof(CleverDicts.index_to_key)` here.
@@ -26,19 +24,26 @@ struct VectorOfConstraints{
         MOI.ConstraintIndex{F,S},
         Tuple{F,S},
         typeof(CleverDicts.key_to_index),
-        Base.Fix1{typeof(CleverDicts.index_to_key),DataType}
+        typeof(CleverDicts.index_to_key),
     }
 
     function VectorOfConstraints{F,S}() where {F,S}
         return new{F,S}(
-            CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}()
+            CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}(),
         )
     end
 end
 
-MOI.is_empty(v::VectorOfConstraints)  = isempty(v.constraints)
+MOI.is_empty(v::VectorOfConstraints) = isempty(v.constraints)
 MOI.empty!(v::VectorOfConstraints) = empty!(v.constraints)
 
+function MOI.supports_constraint(
+    v::VectorOfConstraints{F,S},
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return true
+end
 function MOI.add_constraint(
     v::VectorOfConstraints{F,S},
     func::F,

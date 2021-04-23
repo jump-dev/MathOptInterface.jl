@@ -31,6 +31,9 @@ Utilities.UniversalFallback
 
 ```@docs
 Utilities.@model
+Utilities.GenericModel
+Utilities.GenericOptimizer
+Utilities.struct_of_constraint_code
 ```
 
 ### Caching optimizer
@@ -45,9 +48,6 @@ Utilities.mode
 ```
 
 ## Copy utilities
-
-The following utilities can be used to implement [`copy_to`](@ref). See
-[Implementing copy](@ref) for more details.
 
 ```@docs
 Utilities.automatic_copy_to

@@ -14,22 +14,39 @@ config = MOIT.TestConfig()
 bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
 
 @testset "soc1v" begin
-    mock.optimize! = (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1/√2 + 1/2, 1/√2 - 1/2, 1/√2],
-        (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]])
+    mock.optimize! =
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1 / √2 + 1 / 2, 1 / √2 - 1 / 2, 1 / √2],
+            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+        )
     MOIT.soc1vtest(bridged_mock, config)
 
-    ceqs = MOI.get(mock, MOI.ListOfConstraintIndices{
-        MOI.VectorAffineFunction{Float64}, MOI.Zeros}())
+    ceqs = MOI.get(
+        mock,
+        MOI.ListOfConstraintIndices{
+            MOI.VectorAffineFunction{Float64},
+            MOI.Zeros,
+        }(),
+    )
     @test length(ceqs) == 1
     MOI.set(bridged_mock, MOI.ConstraintName(), ceqs[1], "ceq")
 
     @testset "Test mock model" begin
         var_names = ["a", "b", "c"]
         MOI.set(
-            mock, MOI.VariableName(),
-            MOI.get(mock, MOI.ListOfVariableIndices()), var_names)
-        rsocs = MOI.get(mock, MOI.ListOfConstraintIndices{
-            MOI.VectorOfVariables, MOI.RotatedSecondOrderCone}())
+            mock,
+            MOI.VariableName(),
+            MOI.get(mock, MOI.ListOfVariableIndices()),
+            var_names,
+        )
+        rsocs = MOI.get(
+            mock,
+            MOI.ListOfConstraintIndices{
+                MOI.VectorOfVariables,
+                MOI.RotatedSecondOrderCone,
+            }(),
+        )
         @test length(rsocs) == 1
         MOI.set(mock, MOI.ConstraintName(), rsocs[1], "rsoc")
 
@@ -48,10 +65,18 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
     @testset "Test bridged model" begin
         var_names = ["x", "y", "z"]
         MOI.set(
-            bridged_mock, MOI.VariableName(),
-            MOI.get(bridged_mock, MOI.ListOfVariableIndices()), var_names)
-        socs = MOI.get(bridged_mock, MOI.ListOfConstraintIndices{
-            MOI.VectorOfVariables, MOI.SecondOrderCone}())
+            bridged_mock,
+            MOI.VariableName(),
+            MOI.get(bridged_mock, MOI.ListOfVariableIndices()),
+            var_names,
+        )
+        socs = MOI.get(
+            bridged_mock,
+            MOI.ListOfConstraintIndices{
+                MOI.VectorOfVariables,
+                MOI.SecondOrderCone,
+            }(),
+        )
         @test length(socs) == 1
         MOI.set(bridged_mock, MOI.ConstraintName(), socs[1], "soc")
 
@@ -69,15 +94,21 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
     @testset "Delete" begin
         xyz = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
 
-        message = string("Cannot delete variable as it is constrained with other",
-                         " variables in a `MOI.VectorOfVariables`.")
+        message = string(
+            "Cannot delete variable as it is constrained with other",
+            " variables in a `MOI.VectorOfVariables`.",
+        )
         for i in eachindex(xyz)
             err = MOI.DeleteNotAllowed(xyz[i], message)
             @test_throws err MOI.delete(bridged_mock, xyz[i])
         end
 
-        test_delete_bridged_variables(bridged_mock, xyz, MOI.SecondOrderCone, 3, (
-            (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone, 0),
-        ))
+        test_delete_bridged_variables(
+            bridged_mock,
+            xyz,
+            MOI.SecondOrderCone,
+            3,
+            ((MOI.VectorOfVariables, MOI.RotatedSecondOrderCone, 0),),
+        )
     end
 end

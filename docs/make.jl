@@ -25,13 +25,24 @@ makedocs(
         ],
         "Manual" => [
             "manual/standard_form.md",
+            "manual/models.md",
+            "manual/variables.md",
             "manual/constraints.md",
-            "manual/status.md",
+            "manual/solutions.md",
             "manual/modification.md",
-            "manual/basic_usage.md",
+            "manual/example.md",
             "manual/implementing.md",
         ],
-        "API Reference" => "reference/reference.md",
+        "API Reference" => [
+            "reference/standard_form.md",
+            "reference/models.md",
+            "reference/variables.md",
+            "reference/constraints.md",
+            "reference/modification.md",
+            "reference/nonlinear.md",
+            "reference/callbacks.md",
+            "reference/errors.md",
+        ],
         "Submodules" => [
             "Benchmarks" => [
                 "Overview" => "submodules/Benchmarks/overview.md",

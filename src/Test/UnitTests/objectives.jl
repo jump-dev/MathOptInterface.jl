@@ -354,7 +354,7 @@ function solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
             0.0,  # constant
         ),
     )
-    test_model_solution(
+    return test_model_solution(
         model,
         config;
         objective_value = 5.0,

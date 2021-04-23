@@ -54,7 +54,9 @@ struct InvalidIndex{IndexType<:Index} <: Exception
 end
 
 function Base.showerror(io::IO, err::InvalidIndex)
-    return print("The index $(err.index) is invalid. Note that an index becomes invalid after it has been deleted.")
+    return print(
+        "The index $(err.index) is invalid. Note that an index becomes invalid after it has been deleted.",
+    )
 end
 
 """

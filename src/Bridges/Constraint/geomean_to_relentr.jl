@@ -23,10 +23,12 @@ function bridge_constraint(
 ) where {T,F,G,H}
     f_scalars = MOIU.eachscalar(f)
     (y, nn_index) = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
-    w_func = MOIU.vectorize(fill(
-        MOIU.operate(+, T, f_scalars[1], MOI.SingleVariable(y[1])),
-        MOI.dimension(s) - 1,
-    ))
+    w_func = MOIU.vectorize(
+        fill(
+            MOIU.operate(+, T, f_scalars[1], MOI.SingleVariable(y[1])),
+            MOI.dimension(s) - 1,
+        ),
+    )
     relentr_func = MOIU.operate(
         vcat,
         T,
@@ -117,11 +119,9 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::GeoMeantoRelEntrBridge{T,F,G,H},
 ) where {T,F,G,H}
-    relentr_func = MOIU.eachscalar(MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge.relentr_index,
-    ))
+    relentr_func = MOIU.eachscalar(
+        MOI.get(model, MOI.ConstraintFunction(), bridge.relentr_index),
+    )
     d = div(length(relentr_func) - 1, 2)
     u_func = MOIU.remove_variable(
         MOIU.operate(-, T, relentr_func[end], MOI.SingleVariable(bridge.y)),
@@ -137,11 +137,9 @@ function MOI.get(
 )
     return MOI.GeometricMeanCone(
         1 + div(
-            MOI.dimension(MOI.get(
-                model,
-                MOI.ConstraintSet(),
-                bridge.relentr_index,
-            )) - 1,
+            MOI.dimension(
+                MOI.get(model, MOI.ConstraintSet(), bridge.relentr_index),
+            ) - 1,
             2,
         ),
     )

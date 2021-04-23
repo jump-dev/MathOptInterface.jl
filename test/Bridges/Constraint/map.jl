@@ -69,7 +69,7 @@ c3 = MOIB.Constraint.add_key_for_bridge(map, b3, 1.0fx + 2.0, MOI.EqualTo(0.0))
     @test MOIB.Constraint.list_of_key_types(map) == Set([
         (MOI.VectorOfVariables, MOI.SecondOrderCone),
         (MOI.SingleVariable, MOI.EqualTo{Float64}),
-        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}),
     ])
     @test MOIB.Constraint.variable_constraints(map, x) == [c1]
     @test isempty(MOIB.Constraint.variable_constraints(map, y))
@@ -84,7 +84,7 @@ end
 
     @test MOIB.Constraint.list_of_key_types(map) == Set([
         (MOI.VectorOfVariables, MOI.SecondOrderCone),
-        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}),
     ])
     @test isempty(MOIB.Constraint.variable_constraints(map, x))
     @test isempty(MOIB.Constraint.variable_constraints(map, y))
@@ -98,9 +98,8 @@ end
     @test !isempty(map)
     @test MOIB.Constraint.has_bridges(map)
 
-    @test MOIB.Constraint.list_of_key_types(map) == Set([
-        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
-    ])
+    @test MOIB.Constraint.list_of_key_types(map) ==
+          Set([(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})])
     @test MOIB.Constraint.number_of_type(map, typeof(c1)) == 0
     @test MOIB.Constraint.number_of_type(map, typeof(c2)) == 0
     @test MOIB.Constraint.number_of_type(map, typeof(c3)) == 1

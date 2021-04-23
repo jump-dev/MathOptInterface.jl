@@ -86,6 +86,41 @@ function MOI.empty!(uf::UniversalFallback)
     return
 end
 
+function pass_nonvariable_constraints(
+    dest::UniversalFallback,
+    src::MOI.ModelLike,
+    idxmap::IndexMap,
+    constraint_types,
+    pass_cons;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    supported_types = eltype(constraint_types)[]
+    unsupported_types = eltype(constraint_types)[]
+    for (F, S) in constraint_types
+        if MOI.supports_constraint(dest.model, F, S)
+            push!(supported_types, (F, S))
+        else
+            push!(unsupported_types, (F, S))
+        end
+    end
+    pass_nonvariable_constraints(
+        dest.model,
+        src,
+        idxmap,
+        supported_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+    return pass_nonvariable_constraints_fallback(
+        dest,
+        src,
+        idxmap,
+        unsupported_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+end
+
 function MOI.copy_to(uf::UniversalFallback, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(uf, src; kws...)
 end
@@ -98,21 +133,31 @@ end
 function MOI.is_valid(uf::UniversalFallback, idx::MOI.VariableIndex)
     return MOI.is_valid(uf.model, idx)
 end
-function MOI.is_valid(uf::UniversalFallback, idx::CI{MOI.SingleVariable,S}) where {S}
+function MOI.is_valid(
+    uf::UniversalFallback,
+    idx::CI{MOI.SingleVariable,S},
+) where {S}
     if MOI.supports_constraint(uf.model, MOI.SingleVariable, S)
         return MOI.is_valid(uf.model, idx)
     else
         return haskey(uf.single_variable_constraints, S) &&
-            haskey(uf.single_variable_constraints[S], idx)
+               haskey(uf.single_variable_constraints[S], idx)
     end
 end
-function MOI.is_valid(uf::UniversalFallback, idx::MOI.ConstraintIndex{F,S}) where {F,S}
-    if !MOI.supports_constraint(uf.model, F, S) && !haskey(uf.constraints, (F, S))
+function MOI.is_valid(
+    uf::UniversalFallback,
+    idx::MOI.ConstraintIndex{F,S},
+) where {F,S}
+    if !MOI.supports_constraint(uf.model, F, S) &&
+       !haskey(uf.constraints, (F, S))
         return false
     end
     return MOI.is_valid(constraints(uf, idx), idx)
 end
-function _delete(uf::UniversalFallback, ci::MOI.ConstraintIndex{MOI.SingleVariable,S}) where {S}
+function _delete(
+    uf::UniversalFallback,
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+) where {S}
     if MOI.supports_constraint(uf.model, MOI.SingleVariable, S)
         MOI.delete(uf.model, ci)
     else
@@ -125,7 +170,10 @@ function _delete(uf::UniversalFallback, ci::MOI.ConstraintIndex)
     MOI.delete(constraints(uf, ci), ci)
     return
 end
-function MOI.delete(uf::UniversalFallback, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+function MOI.delete(
+    uf::UniversalFallback,
+    ci::MOI.ConstraintIndex{F,S},
+) where {F,S}
     _delete(uf, ci)
     if !MOI.supports_constraint(uf.model, F, S)
         delete!(uf.con_to_name, ci)
@@ -141,7 +189,10 @@ function _remove_variable(
     constraints::OrderedDict{<:CI{MOI.SingleVariable}},
     vi::MOI.VariableIndex,
 )
-    return MOI.delete(uf, [ci for ci in keys(constraints) if ci.value == vi.value])
+    return MOI.delete(
+        uf,
+        [ci for ci in keys(constraints) if ci.value == vi.value],
+    )
 end
 function MOI.delete(uf::UniversalFallback, vi::MOI.VariableIndex)
     vis = [vi]
@@ -269,11 +320,9 @@ function MOI.get(
     if MOI.supports_constraint(uf.model, F, S)
         return MOI.get(uf.model, attr)
     else
-        return length(get(
-            uf.single_variable_constraints,
-            S,
-            OrderedDict{CI{F,S},S}(),
-        ))
+        return length(
+            get(uf.single_variable_constraints, S, OrderedDict{CI{F,S},S}()),
+        )
     end
 end
 function MOI.get(
@@ -290,11 +339,15 @@ function MOI.get(
     if MOI.supports_constraint(uf.model, F, S)
         return MOI.get(uf.model, listattr)
     else
-        return collect(keys(get(
-            uf.single_variable_constraints,
-            S,
-            OrderedDict{CI{F,S},S}(),
-        )))
+        return collect(
+            keys(
+                get(
+                    uf.single_variable_constraints,
+                    S,
+                    OrderedDict{CI{F,S},S}(),
+                ),
+            ),
+        )
     end
 end
 function MOI.get(
@@ -586,7 +639,7 @@ function constraints(
     uf::UniversalFallback,
     ::Type{F},
     ::Type{S},
-    getter::Function=get,
+    getter::Function = get,
 ) where {F,S}
     if MOI.supports_constraint(uf.model, F, S)
         return uf.model
@@ -598,7 +651,7 @@ function constraints(
 end
 function constraints(
     uf::UniversalFallback,
-    ci::MOI.ConstraintIndex{F,S}
+    ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     if !MOI.supports_constraint(uf, F, S)
         throw(MOI.InvalidIndex(ci))
@@ -609,14 +662,19 @@ function MOI.add_constraint(
     uf::UniversalFallback,
     func::MOI.SingleVariable,
     set::S,
-) where S <: MOI.AbstractScalarSet
+) where {S<:MOI.AbstractScalarSet}
     if MOI.supports_constraint(uf.model, MOI.SingleVariable, S)
         return MOI.add_constraint(uf.model, func, set)
     else
-        constraints =
-            get!(uf.single_variable_constraints, S) do
-                return OrderedDict{CI{MOI.SingleVariable,S},S,}()
-            end::OrderedDict{CI{MOI.SingleVariable,S},S}
+        constraints = get!(
+            uf.single_variable_constraints,
+            S,
+        ) do
+            return OrderedDict{
+                CI{MOI.SingleVariable,S},
+                S,
+            }()
+        end::OrderedDict{CI{MOI.SingleVariable,S},S}
         ci = MOI.ConstraintIndex{MOI.SingleVariable,S}(func.variable.value)
         constraints[ci] = set
         return ci
@@ -644,7 +702,7 @@ end
 
 function MOI.get(
     uf::UniversalFallback,
-    attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
+    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
     ci::MOI.ConstraintIndex,
 )
     return MOI.get(constraints(uf, ci), attr, ci)
@@ -652,7 +710,7 @@ end
 
 function MOI.set(
     uf::UniversalFallback,
-    attr::Union{MOI.ConstraintFunction, MOI.ConstraintSet},
+    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
     ci::MOI.ConstraintIndex,
     func_or_set,
 )

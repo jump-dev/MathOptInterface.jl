@@ -284,7 +284,7 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
     if !MOI.supports_constraint(
         model,
         MOI.ScalarQuadraticFunction{Float64},
-        MOI.LessThan{Float64}
+        MOI.LessThan{Float64},
     )
         return
     end

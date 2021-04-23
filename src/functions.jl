@@ -503,11 +503,13 @@ function Base.isapprox(
         VectorQuadraticFunction,
     },
 }
-    return isapprox(constant(f), constant(g); kwargs...) && all(dict_compare.(
-        _dicts(f),
-        _dicts(g),
-        (α, β) -> isapprox(α, β; kwargs...),
-    ))
+    return isapprox(constant(f), constant(g); kwargs...) && all(
+        dict_compare.(
+            _dicts(f),
+            _dicts(g),
+            (α, β) -> isapprox(α, β; kwargs...),
+        ),
+    )
 end
 
 function constant(

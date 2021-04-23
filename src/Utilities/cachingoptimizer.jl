@@ -113,14 +113,28 @@ mode(m::CachingOptimizer) = m.mode
 """
     reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
 
-Sets or resets `m` to have the given empty optimizer. Can be called
-from any state. The `CachingOptimizer` will be in state `EMPTY_OPTIMIZER` after the call.
+Sets or resets `m` to have the given empty optimizer `optimizer`.
+
+Can be called from any state. An assertion error will be thrown if `optimizer`
+is not empty.
+
+The `CachingOptimizer` `m` will be in state `EMPTY_OPTIMIZER` after the call.
 """
 function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     @assert MOI.is_empty(optimizer)
     m.optimizer = optimizer
     m.state = EMPTY_OPTIMIZER
     for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
+        # Skip attributes which don't apply to the new optimizer.
+        if attr isa MOI.RawParameter
+            # Even if the optimizer claims to `supports` `attr`, the value 
+            # might have a different meaning (e.g., two solvers with `logLevel`
+            # as a RawParameter). To be on the safe side, just skip all raw 
+            # parameters.
+            continue
+        elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)
+            continue
+        end
         value = MOI.get(m.model_cache, attr)
         optimizer_value = map_indices(m.model_to_optimizer_map, value)
         MOI.set(m.optimizer, attr, optimizer_value)
@@ -207,7 +221,8 @@ function _standardize(d::IndexMap)
 end
 
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
-    return automatic_copy_to(m, src; kws...)
+    m.state == ATTACHED_OPTIMIZER && reset_optimizer(m)
+    return MOI.copy_to(m.model_cache, src; kws...)
 end
 function supports_default_copy_to(model::CachingOptimizer, copy_names::Bool)
     return supports_default_copy_to(model.model_cache, copy_names)
@@ -387,8 +402,9 @@ function MOI.supports_constraint(
     F::Type{<:MOI.AbstractFunction},
     S::Type{<:MOI.AbstractSet},
 )
-    return MOI.supports_constraint(m.model_cache, F, S) &&
-        (m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S))
+    return MOI.supports_constraint(m.model_cache, F, S) && (
+        m.state == NO_OPTIMIZER || MOI.supports_constraint(m.optimizer, F, S)
+    )
 end
 
 function MOI.add_constraint(

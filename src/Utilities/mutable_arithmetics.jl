@@ -38,18 +38,17 @@ end
 function MA.isequal_canonical(
     f::F,
     g::F,
-) where {F<:Union{
-    MOI.ScalarAffineFunction,
-    MOI.ScalarQuadraticFunction,
-    MOI.VectorAffineFunction,
-    MOI.VectorQuadraticFunction,
-}}
-    return MA.isequal_canonical(MOI.constant(f), MOI.constant(g)) &&
-           all(MOI.dict_compare.(
-        MOI._dicts(f),
-        MOI._dicts(g),
-        MA.isequal_canonical,
-    ))
+) where {
+    F<:Union{
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+}
+    return MA.isequal_canonical(MOI.constant(f), MOI.constant(g)) && all(
+        MOI.dict_compare.(MOI._dicts(f), MOI._dicts(g), MA.isequal_canonical),
+    )
 end
 
 function MA.iszero!(f::TypedScalarLike)
