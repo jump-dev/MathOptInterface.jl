@@ -2,7 +2,7 @@ using Test
 using MathOptInterface
 const MOI = MathOptInterface
 
-@testest "deprecations" begin
+@testset "deprecations" begin
     attr = MOI.VariablePrimal()
     @test_deprecated begin
         @test MOI._result_index_field(attr) == 1
