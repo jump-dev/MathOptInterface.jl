@@ -175,7 +175,7 @@ function get_fallback(
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
     # TODO do not include constant if primal solution is a ray
     return eval_variables(
-        vi -> MOI.get(model, MOI.VariablePrimal(attr.N), vi),
+        vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi),
         f,
     )
 end
@@ -308,7 +308,7 @@ function variable_dual(
 )
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
-    primal_attr = MOI.VariablePrimal(attr.N)
+    primal_attr = MOI.VariablePrimal(attr.result_index)
     coef = variable_coefficient(func, vi, vi -> MOI.get(model, primal_attr, vi))
     dual = MOI.get(model, attr, ci)
     return set_dot(coef, dual, set)
@@ -331,7 +331,7 @@ function variable_dual(
     ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction},
 )
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
-    primal_attr = MOI.VariablePrimal(attr.N)
+    primal_attr = MOI.VariablePrimal(attr.result_index)
     coef = variable_coefficient(func, vi, vi -> MOI.get(model, primal_attr, vi))
     dual = MOI.get(model, attr, ci)
     return coef * dual
@@ -421,7 +421,7 @@ function variable_dual(
             dual += sign * variable_coefficient(f, vi)
         elseif F <: MOI.ScalarQuadraticFunction
             f = MOI.get(model, obj_attr)
-            primal_attr = MOI.VariablePrimal(attr.N)
+            primal_attr = MOI.VariablePrimal(attr.result_index)
             dual +=
                 sign * variable_coefficient(
                     f,
