@@ -26,7 +26,13 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         b() = big(2)
         @test a() !== a()
         @test b() !== b()
-        for S in [MOI.LessThan, MOI.GreaterThan, MOI.EqualTo, MOI.PowerCone, MOI.DualPowerCone]
+        for S in [
+            MOI.LessThan,
+            MOI.GreaterThan,
+            MOI.EqualTo,
+            MOI.PowerCone,
+            MOI.DualPowerCone,
+        ]
             @test S(a()) == S(a())
             @test S(a()) != S(b())
             @test S(b()) == S(b())
@@ -76,16 +82,17 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         model = DummyModelWithAdd()
         x = MOI.add_variables(model, 3)
         cis = MOI.add_constraint.(model, x, MOI.EqualTo(0.0))
-        @test cis isa Vector{MOI.ConstraintIndex{MOI.SingleVariable,
-                                                 MOI.EqualTo{Float64}}}
+        @test cis isa Vector{
+            MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
+        }
         @test length(cis) == 3
     end
 
     @testset "dimension" begin
         @test MOI.dimension(MOI.ExponentialCone()) == 3
         @test MOI.dimension(MOI.DualExponentialCone()) == 3
-        @test MOI.dimension(MOI.PowerCone(1/2)) == 3
-        @test MOI.dimension(MOI.DualPowerCone(1/2)) == 3
+        @test MOI.dimension(MOI.PowerCone(1 / 2)) == 3
+        @test MOI.dimension(MOI.DualPowerCone(1 / 2)) == 3
         @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(5)) == 15
         @test MOI.dimension(MOI.PositiveSemidefiniteConeSquare(5)) == 25
         @test MOI.dimension(MOI.LogDetConeTriangle(5)) == 17
@@ -94,7 +101,9 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         @test MOI.dimension(MOI.RootDetConeSquare(5)) == 26
         @test MOI.dimension(MOI.SOS1([1.0, 2.0])) == 2
         @test MOI.dimension(MOI.SOS2([1.0, 2.0])) == 2
-        @test MOI.dimension(MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(1.0))) == 2
+        @test MOI.dimension(
+            MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(1.0)),
+        ) == 2
         @test MOI.dimension(MOI.Complements(5)) == 10
     end
 
@@ -184,8 +193,10 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         @test MOI.dual_set(dual_pow03) != dual_pow03
         # PSDSquare error
         s = MOI.PositiveSemidefiniteConeSquare(4)
-        err = ErrorException("""Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
-                                For more details see the comments in `src/Bridges/Constraint/square.jl`.""")
+        err = ErrorException(
+            """Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
+               For more details see the comments in `src/Bridges/Constraint/square.jl`.""",
+        )
         @test_throws err MOI.dual_set(MOI.PositiveSemidefiniteConeSquare(4))
         @test_throws err MOI.dual_set_type(MOI.PositiveSemidefiniteConeSquare)
         # Not implemented

@@ -320,6 +320,41 @@ function MOI.supports(
     return MOI.supports(b.model, attr)
 end
 
+function MOIU.pass_nonvariable_constraints(
+    dest::AbstractBridgeOptimizer,
+    src::MOI.ModelLike,
+    idxmap::MOIU.IndexMap,
+    constraint_types,
+    pass_cons;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    not_bridged_types = eltype(constraint_types)[]
+    bridged_types = eltype(constraint_types)[]
+    for (F, S) in constraint_types
+        if is_bridged(dest, F, S)
+            push!(bridged_types, (F, S))
+        else
+            push!(not_bridged_types, (F, S))
+        end
+    end
+    MOIU.pass_nonvariable_constraints(
+        dest.model,
+        src,
+        idxmap,
+        not_bridged_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+    return MOIU.pass_nonvariable_constraints_fallback(
+        dest,
+        src,
+        idxmap,
+        bridged_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+end
+
 function MOI.copy_to(mock::AbstractBridgeOptimizer, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(mock, src; kws...)
 end
@@ -389,7 +424,9 @@ function _delete_variables_in_variables_constraints(
     # We reverse for the same reason as for `SingleVariable` below.
     # As the iterators are lazy, when the inner bridge constraint is deleted,
     # it won't be part of the iteration.
-    for ci in Iterators.reverse(Constraint.vector_of_variables_constraints(Constraint.bridges(b)))
+    for ci in Iterators.reverse(
+        Constraint.vector_of_variables_constraints(Constraint.bridges(b)),
+    )
         _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
     end
     # Delete all `MOI.SingleVariable` constraints of these variables.
@@ -399,7 +436,9 @@ function _delete_variables_in_variables_constraints(
         # should not delete it again in this loop.
         # For this, we reverse the order so that we encounter the first one first
         # and we won't delete the second one since `MOI.is_valid(b, ci)` will be `false`.
-        for ci in Iterators.reverse(Constraint.variable_constraints(Constraint.bridges(b), vi))
+        for ci in Iterators.reverse(
+            Constraint.variable_constraints(Constraint.bridges(b), vi),
+        )
             if MOI.is_valid(b, ci)
                 MOI.delete(b, ci)
             end
@@ -441,10 +480,9 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     if is_bridged(b, vi)
         MOI.throw_if_not_valid(b, vi)
         if Variable.length_of_vector_of_variables(Variable.bridges(b), vi) > 1
-            if MOI.supports_dimension_update(Variable.constrained_set(
-                Variable.bridges(b),
-                vi,
-            ))
+            if MOI.supports_dimension_update(
+                Variable.constrained_set(Variable.bridges(b), vi),
+            )
                 call_in_context(
                     b,
                     vi,
@@ -689,10 +727,14 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
     # constraints of that type have been created by bridges and not by the user.
     # The code in `NumberOfConstraints` takes care of removing these constraints
     # from the counter so we can rely on it to remove these constraint types.
-    types_to_remove = findall(iszero.(map(
-        FS -> MOI.get(b, MOI.NumberOfConstraints{FS...}()),
-        list_of_types,
-    )))
+    types_to_remove = findall(
+        iszero.(
+            map(
+                FS -> MOI.get(b, MOI.NumberOfConstraints{FS...}()),
+                list_of_types,
+            ),
+        ),
+    )
     deleteat!(list_of_types, types_to_remove)
     return list_of_types
 end
@@ -1281,8 +1323,9 @@ function _check_double_single_variable(
     if !is_bridged(b, typeof(set))
         # The variable might have been constrained in `b.model` to a set of type
         # `typeof(set)` on creation.
-        ci =
-            MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(func.variable.value)
+        ci = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(
+            func.variable.value,
+        )
         if MOI.is_valid(b.model, ci)
             error(
                 "The variable `$(func.variable)` was constrained on creation ",
@@ -1304,7 +1347,9 @@ function MOI.add_constraint(
             if is_bridged(b, f.variable)
                 if MOI.is_valid(
                     b,
-                    MOI.ConstraintIndex{MOI.SingleVariable,typeof(s)}(f.variable.value),
+                    MOI.ConstraintIndex{MOI.SingleVariable,typeof(s)}(
+                        f.variable.value,
+                    ),
                 )
                     # The other constraint could have been through a variable bridge.
                     error(
@@ -1700,13 +1745,15 @@ function bridged_constraint_function(
             # We use the fact that the initial function constant was zero to
             # implement getters for `MOI.ConstraintFunction` and
             # `MOI.ConstraintSet`. See `unbridged_constraint_function`.
-            throw(MOI.ScalarFunctionConstantNotZero{
-                typeof(constant),
-                typeof(func),
-                typeof(set),
-            }(
-                constant,
-            ))
+            throw(
+                MOI.ScalarFunctionConstantNotZero{
+                    typeof(constant),
+                    typeof(func),
+                    typeof(set),
+                }(
+                    constant,
+                ),
+            )
         end
     end
     f = bridged_function(b, func)::typeof(func)

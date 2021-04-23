@@ -14,20 +14,23 @@
         model = DummyModel()
         @test_throws ArgumentError MOI.supports(model, MOI.TerminationStatus())
         @test_throws ArgumentError begin
-            MOI.supports(model, MOI.ConstraintSet(),
-                         MOI.ConstraintIndex{MOI.SingleVariable,
-                                             MOI.EqualTo{Float64}})
+            MOI.supports(
+                model,
+                MOI.ConstraintSet(),
+                MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
+            )
         end
         @test MOI.supports(model, MOI.ObjectiveSense())
     end
     @testset "set vector" begin
         attr = MOI.VariablePrimalStart()
-        err = DimensionMismatch("Number of indices (1) does not match the " *
-                                "number of values (2) set to `$attr`.")
+        err = DimensionMismatch(
+            "Number of indices (1) does not match the " *
+            "number of values (2) set to `$attr`.",
+        )
         model = DummyModel()
         x = MOI.VariableIndex(1)
-        @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x],
-                                 ones(2))
+        @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x], ones(2))
     end
 end
 
@@ -41,14 +44,18 @@ end
     c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
     c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     MOI.optimize!(model)
-    @test MOI.get(optimizer, MOI.ConflictStatus()) == MOI.COMPUTE_CONFLICT_NOT_CALLED
+    @test MOI.get(optimizer, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
     MOI.set(
         optimizer,
         MOI.ConstraintConflictStatus(),
         MOI.get(
             optimizer,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+            MOI.ListOfConstraintIndices{
+                MOI.SingleVariable,
+                MOI.LessThan{Float64},
+            }(),
         )[1],
         MOI.NOT_IN_CONFLICT,
     )
@@ -57,13 +64,17 @@ end
         MOI.ConstraintConflictStatus(),
         MOI.get(
             optimizer,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+            MOI.ListOfConstraintIndices{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
         )[1],
         MOI.IN_CONFLICT,
     )
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.NOT_IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) ==
+          MOI.NOT_IN_CONFLICT
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
 end
 
@@ -89,7 +100,8 @@ MOI.Utilities.@model(
         MOI.Interval(0.0, 1.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(optimizer, MOI.ConflictStatus()) == MOI.COMPUTE_CONFLICT_NOT_CALLED
+    @test MOI.get(optimizer, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND

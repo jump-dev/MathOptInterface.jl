@@ -147,7 +147,9 @@ end
 ###
 
 function error_mode(mode::String)
-    return throw(ArgumentError("Compressed mode must be \"r\" or \"w\". Got: $mode."))
+    return throw(
+        ArgumentError("Compressed mode must be \"r\" or \"w\". Got: $mode."),
+    )
 end
 
 """

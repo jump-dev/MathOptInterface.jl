@@ -278,7 +278,9 @@ function Base.read!(io::IO, model::Model{T}) where {T}
                 integer_read = true
             elseif integer_read
                 if !num_variables_read
-                    error("The number of variables should be given before *INTEGER section.")
+                    error(
+                        "The number of variables should be given before *INTEGER section.",
+                    )
                 end
                 push!(intvar_idx, parse(Int, strip(line[2:end])))
             end
@@ -305,7 +307,9 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             end
             block_sets = dim_to_set.(split(line))
             if length(block_sets) != num_blocks
-                error("The number of blocks ($num_blocks) does not match the length of the list of blocks dimensions ($(length(block_sets))).")
+                error(
+                    "The number of blocks ($num_blocks) does not match the length of the list of blocks dimensions ($(length(block_sets))).",
+                )
             end
             funcs = [
                 MOI.VectorAffineFunction(
@@ -321,7 +325,9 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             objective_read = true
             c = parse.(T, split(line))
             if length(c) != num_vars
-                error("The number of variables ($num_vars) does not match the length of the list of coefficients for the objective function vector of coefficients ($(length(c))).")
+                error(
+                    "The number of variables ($num_vars) does not match the length of the list of coefficients for the objective function vector of coefficients ($(length(c))).",
+                )
             end
             obj = zero(MOI.ScalarAffineFunction{T})
             for i in eachindex(c)
@@ -336,7 +342,9 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             end
             values = split(line)
             if length(values) != 5
-                error("Invalid line specifying entry: $line. There are $(length(values)) values instead of 5.")
+                error(
+                    "Invalid line specifying entry: $line. There are $(length(values)) values instead of 5.",
+                )
             end
             matrix = parse(Int, values[1])
             block = parse(Int, values[2])
@@ -346,7 +354,9 @@ function Base.read!(io::IO, model::Model{T}) where {T}
                 k = mat_to_vec_idx(row, col)
             else
                 if row != col
-                    error("Invalid line specifying entry: $line. `$row != $col` while block $block has dimension $(MOI.dimension(block_sets[block])) so it is a diagonal block.")
+                    error(
+                        "Invalid line specifying entry: $line. `$row != $col` while block $block has dimension $(MOI.dimension(block_sets[block])) so it is a diagonal block.",
+                    )
                 end
                 k = row
             end

@@ -33,10 +33,16 @@ end
 end
 
 @testset "Shifts" begin
+    @test MOIU.supports_shift_constant(MOI.EqualTo{Int})
     @test MOIU.shift_constant(MOI.EqualTo(3), 1) == MOI.EqualTo(4)
+    @test MOIU.supports_shift_constant(MOI.GreaterThan{Int})
     @test MOIU.shift_constant(MOI.GreaterThan(6), -1) == MOI.GreaterThan(5)
+    @test MOIU.supports_shift_constant(MOI.LessThan{Int})
     @test MOIU.shift_constant(MOI.LessThan(2), 2) == MOI.LessThan(4)
+    @test MOIU.supports_shift_constant(MOI.Interval{Int})
     @test MOIU.shift_constant(MOI.Interval(-2, 3), 1) == MOI.Interval(-1, 4)
+    @test MOIU.supports_shift_constant(MOI.ZeroOne) == false
+    @test_throws MethodError MOIU.shift_constant(MOI.ZeroOne(), 1.0)
 end
 
 @testset "Dimension" begin
@@ -77,30 +83,45 @@ end
     vec[5] = 1
     @test MOIU.set_dot(vec, vec, MOI.RootDetConeTriangle(3)) == 2
     vec = zeros(8)
-    @test MOIU. set_dot(vec, vec, MOI.LogDetConeTriangle(3)) == 0
+    @test MOIU.set_dot(vec, vec, MOI.LogDetConeTriangle(3)) == 0
     vec[5] = 1
     @test MOIU.set_dot(vec, vec, MOI.LogDetConeTriangle(3)) == 1
 
     sp_vec = spzeros(6)
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.SecondOrderCone(6)) == 0
-    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeTriangle(3)) == 0
-    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeSquare(3)) == 0
+    @test MOIU.set_dot(
+        sp_vec,
+        sp_vec,
+        MOI.PositiveSemidefiniteConeTriangle(3),
+    ) == 0
+    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeSquare(3)) ==
+          0
     sp_vec[5] = 1
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.SecondOrderCone(6)) == 1
-    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeTriangle(3)) == 2
-    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeSquare(3)) == 1
+    @test MOIU.set_dot(
+        sp_vec,
+        sp_vec,
+        MOI.PositiveSemidefiniteConeTriangle(3),
+    ) == 2
+    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeSquare(3)) ==
+          1
     sp_vec[5] = 0
     sp_vec[3] = 1
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.SecondOrderCone(6)) == 1
-    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeTriangle(3)) == 1
-    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeSquare(3)) == 1
+    @test MOIU.set_dot(
+        sp_vec,
+        sp_vec,
+        MOI.PositiveSemidefiniteConeTriangle(3),
+    ) == 1
+    @test MOIU.set_dot(sp_vec, sp_vec, MOI.PositiveSemidefiniteConeSquare(3)) ==
+          1
 
     sp_vec = spzeros(7)
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.RootDetConeTriangle(3)) == 0
     sp_vec[5] = 1
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.RootDetConeTriangle(3)) == 2
     sp_vec = spzeros(8)
-    @test MOIU. set_dot(sp_vec, sp_vec, MOI.LogDetConeTriangle(3)) == 0
+    @test MOIU.set_dot(sp_vec, sp_vec, MOI.LogDetConeTriangle(3)) == 0
     sp_vec[5] = 1
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.LogDetConeTriangle(3)) == 1
 end
@@ -108,41 +129,54 @@ end
 @testset "dot coefficients" begin
     vec = zeros(6)
     @test MOIU.dot_coefficients(vec, MOI.SecondOrderCone(6)) == vec
-    @test MOIU.dot_coefficients(vec, MOI.PositiveSemidefiniteConeTriangle(3)) == vec
+    @test MOIU.dot_coefficients(vec, MOI.PositiveSemidefiniteConeTriangle(3)) ==
+          vec
     vec[5] = 1
     @test MOIU.dot_coefficients(vec, MOI.SecondOrderCone(6)) == vec
-    @test MOIU.dot_coefficients(vec, MOI.PositiveSemidefiniteConeTriangle(3)) == vec./2
+    @test MOIU.dot_coefficients(vec, MOI.PositiveSemidefiniteConeTriangle(3)) ==
+          vec ./ 2
     vec[5] = 0
     vec[3] = 1
     @test MOIU.dot_coefficients(vec, MOI.SecondOrderCone(6)) == vec
-    @test MOIU.dot_coefficients(vec, MOI.PositiveSemidefiniteConeTriangle(3)) == vec
+    @test MOIU.dot_coefficients(vec, MOI.PositiveSemidefiniteConeTriangle(3)) ==
+          vec
 
     vec = zeros(7)
     @test MOIU.dot_coefficients(vec, MOI.RootDetConeTriangle(3)) == vec
     vec[5] = 1
-    @test MOIU.dot_coefficients(vec, MOI.RootDetConeTriangle(3)) == vec./2
+    @test MOIU.dot_coefficients(vec, MOI.RootDetConeTriangle(3)) == vec ./ 2
     vec = zeros(8)
-    @test MOIU. dot_coefficients(vec, MOI.LogDetConeTriangle(3)) == vec
+    @test MOIU.dot_coefficients(vec, MOI.LogDetConeTriangle(3)) == vec
     vec[5] = 1
     @test MOIU.dot_coefficients(vec, MOI.LogDetConeTriangle(3)) == vec
 
     sp_vec = spzeros(6)
     @test MOIU.dot_coefficients(sp_vec, MOI.SecondOrderCone(6)) == sp_vec
-    @test MOIU.dot_coefficients(sp_vec, MOI.PositiveSemidefiniteConeTriangle(3)) == sp_vec
+    @test MOIU.dot_coefficients(
+        sp_vec,
+        MOI.PositiveSemidefiniteConeTriangle(3),
+    ) == sp_vec
     sp_vec[5] = 1
     @test MOIU.dot_coefficients(sp_vec, MOI.SecondOrderCone(6)) == sp_vec
-    @test MOIU.dot_coefficients(sp_vec, MOI.PositiveSemidefiniteConeTriangle(3)) == sp_vec./2
+    @test MOIU.dot_coefficients(
+        sp_vec,
+        MOI.PositiveSemidefiniteConeTriangle(3),
+    ) == sp_vec ./ 2
     sp_vec[5] = 0
     sp_vec[3] = 1
     @test MOIU.dot_coefficients(sp_vec, MOI.SecondOrderCone(6)) == sp_vec
-    @test MOIU.dot_coefficients(sp_vec, MOI.PositiveSemidefiniteConeTriangle(3)) == sp_vec
+    @test MOIU.dot_coefficients(
+        sp_vec,
+        MOI.PositiveSemidefiniteConeTriangle(3),
+    ) == sp_vec
 
     sp_vec = spzeros(7)
     @test MOIU.dot_coefficients(sp_vec, MOI.RootDetConeTriangle(3)) == sp_vec
     sp_vec[5] = 1
-    @test MOIU.dot_coefficients(sp_vec, MOI.RootDetConeTriangle(3)) == sp_vec./2
+    @test MOIU.dot_coefficients(sp_vec, MOI.RootDetConeTriangle(3)) ==
+          sp_vec ./ 2
     sp_vec = spzeros(8)
-    @test MOIU. dot_coefficients(sp_vec, MOI.LogDetConeTriangle(3)) == sp_vec
+    @test MOIU.dot_coefficients(sp_vec, MOI.LogDetConeTriangle(3)) == sp_vec
     sp_vec[5] = 1
     @test MOIU.dot_coefficients(sp_vec, MOI.LogDetConeTriangle(3)) == sp_vec
 end

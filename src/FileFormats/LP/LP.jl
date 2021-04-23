@@ -216,8 +216,8 @@ function Base.write(io::IO, model::Model)
         ],
     )
     variable_names = Dict{MOI.VariableIndex,String}(
-        index => MOI.get(model, MOI.VariableName(), index)
-        for index in MOI.get(model, MOI.ListOfVariableIndices())
+        index => MOI.get(model, MOI.VariableName(), index) for
+        index in MOI.get(model, MOI.ListOfVariableIndices())
     )
     write_sense(io, model)
     write_objective(io, model, variable_names)

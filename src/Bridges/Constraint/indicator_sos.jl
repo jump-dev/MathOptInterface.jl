@@ -78,11 +78,9 @@ function MOI.get(
     attr::MOI.ConstraintSet,
     b::IndicatorSOS1Bridge,
 )
-    return MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.get(
-        model,
-        attr,
-        b.linear_constraint_index,
-    ),)
+    return MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(
+        MOI.get(model, attr, b.linear_constraint_index),
+    )
 end
 
 function MOI.get(

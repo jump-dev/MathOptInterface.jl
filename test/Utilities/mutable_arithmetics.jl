@@ -36,12 +36,18 @@ end
 end
 
 @testset "promote_operation with $T" for T in [Int, Float64, Float32]
-    @test MA.promote_operation(*, MOI.SingleVariable, T) == MOI.ScalarAffineFunction{T}
-    @test MA.promote_operation(*, T, MOI.SingleVariable) == MOI.ScalarAffineFunction{T}
-    @test MA.promote_operation(*, MOI.ScalarAffineFunction{T}, T) == MOI.ScalarAffineFunction{T}
-    @test MA.promote_operation(*, T, MOI.ScalarAffineFunction{T}) == MOI.ScalarAffineFunction{T}
-    @test MA.promote_operation(*, MOI.ScalarQuadraticFunction{T}, T) == MOI.ScalarQuadraticFunction{T}
-    @test MA.promote_operation(*, T, MOI.ScalarQuadraticFunction{T}) == MOI.ScalarQuadraticFunction{T}
+    @test MA.promote_operation(*, MOI.SingleVariable, T) ==
+          MOI.ScalarAffineFunction{T}
+    @test MA.promote_operation(*, T, MOI.SingleVariable) ==
+          MOI.ScalarAffineFunction{T}
+    @test MA.promote_operation(*, MOI.ScalarAffineFunction{T}, T) ==
+          MOI.ScalarAffineFunction{T}
+    @test MA.promote_operation(*, T, MOI.ScalarAffineFunction{T}) ==
+          MOI.ScalarAffineFunction{T}
+    @test MA.promote_operation(*, MOI.ScalarQuadraticFunction{T}, T) ==
+          MOI.ScalarQuadraticFunction{T}
+    @test MA.promote_operation(*, T, MOI.ScalarQuadraticFunction{T}) ==
+          MOI.ScalarQuadraticFunction{T}
 end
 
 @testset "scaling with $T" for T in [Float64, Float32]
@@ -56,7 +62,7 @@ end
 @testset "Unary `-` with $T" for T in [Float64, Float32]
     x = MOI.VariableIndex(1)
     fx = MOI.SingleVariable(x)
-    for f in [T(2)fx + T(3), T(4)*fx*fx + T(2)fx + T(3)]
+    for f in [T(2)fx + T(3), T(4) * fx * fx + T(2)fx + T(3)]
         g = -f
         @test g ≈ MA.operate!(-, f)
         @test g ≈ f
@@ -110,7 +116,12 @@ function all_tests(T::Type, a, b, c, d, e, f, g)
         MA.Test.array_test([d, e, a], exclude = exclude)
         MA.Test.array_test([e, a, b], exclude = exclude)
     end
-    exclude = ["broadcast_division", "matrix_uniform_scaling", "symmetric_matrix_uniform_scaling", "matrix_vector_division"]
+    exclude = [
+        "broadcast_division",
+        "matrix_uniform_scaling",
+        "symmetric_matrix_uniform_scaling",
+        "matrix_vector_division",
+    ]
     if a isa MOI.ScalarQuadraticFunction
         push!(exclude, "dot")
         push!(exclude, "broadcast_multiplication")
@@ -145,7 +156,10 @@ end
 
 @testset "Affine in $T" for T in [Int]
     @testset "Int" begin
-        MA.Test.int_test(MOI.ScalarAffineFunction{T}, exclude = ["int_mul", "int_add_mul"])
+        MA.Test.int_test(
+            MOI.ScalarAffineFunction{T},
+            exclude = ["int_mul", "int_add_mul"],
+        )
     end
     a = T(2) * fx + T(1)
     b = T(4) * fy + T(2)
@@ -159,7 +173,10 @@ end
 
 @testset "Quadratic in $T" for T in [Int]
     @testset "Int" begin
-        MA.Test.int_test(MOI.ScalarQuadraticFunction{T}, exclude = ["int_mul", "int_add_mul"])
+        MA.Test.int_test(
+            MOI.ScalarQuadraticFunction{T},
+            exclude = ["int_mul", "int_add_mul"],
+        )
     end
     a = T(2) * fx + T(1) + T(4) * fx * fy
     b = T(4) * fy + T(3) * fy * fy - T(3) * fy * fx + T(2)

@@ -57,6 +57,8 @@ include("copy.jl")
 include("results.jl")
 include("variables.jl")
 
+include("vector_of_constraints.jl")
+include("struct_of_constraints.jl")
 include("model.jl")
 include("parser.jl")
 include("mockoptimizer.jl")
@@ -64,5 +66,10 @@ include("cachingoptimizer.jl")
 include("universalfallback.jl")
 
 include("lazy_iterators.jl")
+
+if VERSION > v"1.4.2"
+    include("precompile.jl")
+    _precompile_()
+end
 
 end # module

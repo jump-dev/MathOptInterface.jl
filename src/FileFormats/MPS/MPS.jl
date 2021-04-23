@@ -828,8 +828,8 @@ function _add_objective(model, data, variable_map)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(
             [
-                MOI.ScalarAffineTerm(data.c[i], variable_map[v])
-                for (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
+                MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
+                (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
             ],
             0.0,
         ),
@@ -839,8 +839,8 @@ end
 
 function _add_linear_constraint(model, data, variable_map, j, c_name, set)
     terms = MOI.ScalarAffineTerm{Float64}[
-        MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]])
-        for (i, coef) in data.A[j]
+        MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]]) for
+        (i, coef) in data.A[j]
     ]
     c = MOI.add_constraint(model, MOI.ScalarAffineFunction(terms, 0.0), set)
     MOI.set(model, MOI.ConstraintName(), c, c_name)

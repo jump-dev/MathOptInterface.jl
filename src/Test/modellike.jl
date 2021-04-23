@@ -369,28 +369,36 @@ function validtest(model::MOI.ModelLike)
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float32},
             MOI.LessThan{Float32},
-        }(1),
+        }(
+            1,
+        ),
     )
     @test !MOI.is_valid(
         model,
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float32},
             MOI.LessThan{Float64},
-        }(1),
+        }(
+            1,
+        ),
     )
     @test !MOI.is_valid(
         model,
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float64},
             MOI.LessThan{Float32},
-        }(1),
+        }(
+            1,
+        ),
     )
     @test !MOI.is_valid(
         model,
         MOI.ConstraintIndex{
             MOI.VectorQuadraticFunction{Float64},
             MOI.SecondOrderCone,
-        }(1),
+        }(
+            1,
+        ),
     )
 end
 
@@ -775,7 +783,7 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
     end
 end
 
-function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
+function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     @test MOIU.supports_default_copy_to(src, true) #=copy_names=#
     MOI.empty!(src)
     MOI.empty!(dest)
@@ -842,13 +850,15 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
         MOI.Zeros,
     )
 
-    dict = MOI.copy_to(dest, src, copy_names = false)
+    dict = MOI.copy_to(dest, src, copy_names = copy_names)
 
-    @test !MOI.supports(dest, MOI.Name()) || MOI.get(dest, MOI.Name()) == ""
+    dest_name(src_name) = copy_names ? src_name : ""
+    @test !MOI.supports(dest, MOI.Name()) ||
+          MOI.get(dest, MOI.Name()) == dest_name("ModelName")
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     if MOI.supports(dest, MOI.VariableName(), MOI.VariableIndex)
-        for vi in v
-            MOI.get(dest, MOI.VariableName(), dict[vi]) == ""
+        for i in eachindex(v)
+            MOI.get(dest, MOI.VariableName(), dict[v[i]]) == dest_name("var$i")
         end
     end
     @test MOI.get(
@@ -900,17 +910,17 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
 
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csv)) ||
-          MOI.get(dest, MOI.ConstraintName(), dict[csv]) == ""
+          MOI.get(dest, MOI.ConstraintName(), dict[csv]) == dest_name("csv")
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) ==
           MOI.SingleVariable(dict[w])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.0)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cvv)) ||
-          MOI.get(dest, MOI.ConstraintName(), dict[cvv]) == ""
+          MOI.get(dest, MOI.ConstraintName(), dict[cvv]) == dest_name("cvv")
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) ==
           MOI.VectorOfVariables(getindex.(Ref(dict), v))
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.Nonnegatives(3)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) ||
-          MOI.get(dest, MOI.ConstraintName(), dict[csa]) == ""
+          MOI.get(dest, MOI.ConstraintName(), dict[csa]) == dest_name("csa")
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈
           MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1.0, 3.0], [dict[v[3]], dict[v[1]]]),
@@ -918,7 +928,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike)
     )
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csa]) == MOI.LessThan(2.0)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cva)) ||
-          MOI.get(dest, MOI.ConstraintName(), dict[cva]) == ""
+          MOI.get(dest, MOI.ConstraintName(), dict[cva]) == dest_name("cva")
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cva]) ≈
           MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(
@@ -1039,7 +1049,9 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
             Float64,
             MOI.ScalarAffineFunction{Float64},
             MOI.EqualTo{Float64},
-        }(1.0)
+        }(
+            1.0,
+        )
         @test_throws err begin
             MOI.add_constraint(
                 model,
@@ -1051,7 +1063,9 @@ function scalar_function_constant_not_zero(model::MOI.ModelLike)
             Float64,
             MOI.ScalarAffineFunction{Float64},
             MOI.GreaterThan{Float64},
-        }(2.0)
+        }(
+            2.0,
+        )
         @test_throws err begin
             MOI.add_constraint(
                 model,
@@ -1221,13 +1235,15 @@ function delete_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
     @test MOI.get(model, MOI.ListOfConstraints()) ==
           [(MOI.VectorOfVariables, MOI.Nonpositives)]
-    @test isempty(MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
-            MOI.GreaterThan{Float64},
-        }(),
-    ))
+    @test isempty(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ),
+    )
     @test MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
@@ -1241,15 +1257,22 @@ function delete_test(model::MOI.ModelLike)
     @test !MOI.is_valid(model, cx)
     @test !MOI.is_valid(model, cy)
     @test isempty(MOI.get(model, MOI.ListOfConstraints()))
-    @test isempty(MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
-            MOI.GreaterThan{Float64},
-        }(),
-    ))
-    @test isempty(MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
-    ))
+    @test isempty(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ),
+    )
+    @test isempty(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{
+                MOI.VectorOfVariables,
+                MOI.Nonpositives,
+            }(),
+        ),
+    )
 end
