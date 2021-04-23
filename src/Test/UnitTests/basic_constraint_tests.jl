@@ -286,7 +286,7 @@ end
         config::TestConfig,
         func::Function,
         set::MOI.AbstractSet,
-        result_index::Int;
+        N::Int;
         delete::Bool                  = true,
         get_constraint_function::Bool = true,
         get_constraint_set::Bool      = true,
@@ -319,7 +319,7 @@ function basic_constraint_test_helper(
     config::TestConfig,
     func::Function,
     set::MOI.AbstractSet,
-    result_index::Int = 1;
+    N::Int = 1;
     delete::Bool = true,
     get_constraint_function::Bool = true,
     get_constraint_set::Bool = true,
