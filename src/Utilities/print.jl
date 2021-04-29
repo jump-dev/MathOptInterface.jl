@@ -2,6 +2,29 @@ using Printf
 
 _drop_moi(s) = replace(string(s), "MathOptInterface." => "")
 
+struct _PrintOptions{T<:MIME}
+    simplify_coefficients::Bool
+    default_name::String
+    print_constraint_types::Bool
+
+    function _PrintOptions(
+        mime::MIME;
+        simplify_coefficients::Bool = false,
+        default_name::String = "v",
+        print_constraint_types::Bool = true,
+    )
+        return new{typeof(mime)}(
+            simplify_coefficients,
+            default_name,
+            print_constraint_types,
+        )
+    end
+end
+
+function _to_string(mime::MIME, args...; kwargs...)
+    return _to_string(_PrintOptions(mime), args...; kwargs...)
+end
+
 #------------------------------------------------------------------------
 # Math Symbols
 #------------------------------------------------------------------------
@@ -9,7 +32,7 @@ _drop_moi(s) = replace(string(s), "MathOptInterface." => "")
 # REPL-specific symbols
 # Anything here: https://en.wikipedia.org/wiki/Windows-1252
 # should probably work fine on Windows
-function _to_string(::MIME, name::Symbol)
+function _to_string(::_PrintOptions, name::Symbol)
     if name == :leq
         return "<="
     elseif name == :geq
@@ -25,7 +48,7 @@ function _to_string(::MIME, name::Symbol)
     end
 end
 
-function _to_string(::MIME"text/latex", name::Symbol)
+function _to_string(::_PrintOptions{MIME"text/latex"}, name::Symbol)
     if name == :leq
         return "\\leq"
     elseif name == :geq
@@ -45,19 +68,27 @@ end
 # Functions
 #------------------------------------------------------------------------
 
-function _to_string(::MIME, model::MOI.ModelLike, v::MOI.VariableIndex)
-    var_name = MOI.get(model, MOI.VariableName(), v)
-    return isempty(var_name) ? "noname" : var_name
-end
-
 function _to_string(
-    ::MIME"text/latex",
+    options::_PrintOptions,
     model::MOI.ModelLike,
     v::MOI.VariableIndex,
 )
     var_name = MOI.get(model, MOI.VariableName(), v)
     if isempty(var_name)
-        return "noname"
+        return string(options.default_name, "[", v.value, "]")
+    else
+        return var_name
+    end
+end
+
+function _to_string(
+    options::_PrintOptions{MIME"text/latex"},
+    model::MOI.ModelLike,
+    v::MOI.VariableIndex,
+)
+    var_name = MOI.get(model, MOI.VariableName(), v)
+    if isempty(var_name)
+        return string(options.default_name, "_{", v.value, "}")
     end
     # We need to escape latex math characters that appear in the name.
     # However, it's probably impractical to catch everything, so let's just
@@ -74,79 +105,129 @@ function _to_string(
     return var_name
 end
 
-function _to_string(mime::MIME, model::MOI.ModelLike, f::MOI.SingleVariable)
-    return _to_string(mime, model, f.variable)
+function _shorten(options::_PrintOptions, x::Float64)
+    if options.simplify_coefficients && isinteger(x)
+        return string(round(Int, x))
+    end
+    return string(x)
 end
 
 function _to_string(
-    mime::MIME,
+    options::_PrintOptions,
     model::MOI.ModelLike,
-    term::MOI.ScalarAffineTerm,
+    f::MOI.SingleVariable,
 )
-    name = _to_string(mime, model, term.variable_index)
-    if term.coefficient < 0
-        return string(" - ", string(-term.coefficient), " ", name)
+    return _to_string(options, model, f.variable)
+end
+
+"""
+    _to_string(options::_PrintOptions, c::Float64, x::String)
+
+Write a coefficient-name pair to string. There are a few cases to handle.
+
+          | is_first | !is_first
+    -----------------------------
+    +2.1x | "2.1 x"  | " + 2.1 x"
+    -2.1x | "-2.1 x" | " - 2.1 x"
+    -----------------------------
+    +2.0x | "2 x"    | " + 2 x"
+    -2.0x | "-2 x"   | " - 2 x"
+    +1.0x | "x"      | " + x"
+    -1.0x | "-x"     | " - x"
+"""
+function _to_string(
+    options::_PrintOptions,
+    c::Float64,
+    x::String;
+    is_first::Bool,
+)
+    prefix = if is_first
+        c < 0 ? "-" : ""
     else
-        return string(" + ", string(term.coefficient), " ", name)
+        c < 0 ? " - " : " + "
+    end
+    s = _shorten(options, abs(c))
+    if options.simplify_coefficients && s == "1"
+        return string(prefix, x)
+    else
+        return string(prefix, s, " ", x)
     end
 end
 
 function _to_string(
-    mime::MIME,
+    options::_PrintOptions,
+    model::MOI.ModelLike,
+    term::MOI.ScalarAffineTerm;
+    is_first::Bool,
+)
+    name = _to_string(options, model, term.variable_index)
+    return _to_string(options, term.coefficient, name; is_first = is_first)
+end
+
+function _to_string(
+    options::_PrintOptions,
     model::MOI.ModelLike,
     f::MOI.ScalarAffineFunction,
 )
-    s = string(f.constant)
+    s = _shorten(options, f.constant)
+    if options.simplify_coefficients && iszero(f.constant)
+        s = ""
+    end
+    is_first = isempty(s)
     for term in f.terms
-        s *= _to_string(mime, model, term)
+        s *= _to_string(options, model, term; is_first = is_first)
+        is_first = false
     end
     return s
 end
 
 function _to_string(
-    mime::MIME,
+    options::_PrintOptions,
     model::MOI.ModelLike,
-    term::MOI.ScalarQuadraticTerm,
+    term::MOI.ScalarQuadraticTerm;
+    is_first::Bool,
 )
-    name_1 = _to_string(mime, model, term.variable_index_1)
-    name_2 = _to_string(mime, model, term.variable_index_2)
+    name_1 = _to_string(options, model, term.variable_index_1)
+    name_2 = _to_string(options, model, term.variable_index_2)
     # Be careful here when printing the coefficient. ScalarQuadraticFunction
     # assumes an additional 0.5 factor!
     coef = term.coefficient
     name = if term.variable_index_1 == term.variable_index_2
         coef /= 2
-        string(" ", name_1, _to_string(mime, :sq))
+        string(name_1, _to_string(options, :sq))
     else
-        string(" ", name_1, _to_string(mime, :times), name_2)
+        string(name_1, _to_string(options, :times), name_2)
     end
-    if coef < 0
-        return string(" - ", string(-coef), name)
-    else
-        return string(" + ", string(coef), name)
-    end
+    return _to_string(options, coef, name; is_first = is_first)
 end
 
 function _to_string(
-    mime::MIME,
+    options::_PrintOptions,
     model::MOI.ModelLike,
     f::MOI.ScalarQuadraticFunction,
 )
-    s = string(f.constant)
+    s = _shorten(options, f.constant)
+    if options.simplify_coefficients && iszero(f.constant)
+        s = ""
+    end
+    is_first = isempty(s)
     for term in f.affine_terms
-        s *= _to_string(mime, model, term)
+        s *= _to_string(options, model, term; is_first = is_first)
+        is_first = false
     end
     for term in f.quadratic_terms
-        s *= _to_string(mime, model, term)
+        s *= _to_string(options, model, term; is_first = is_first)
+        is_first = false
     end
     return s
 end
 
 function _to_string(
-    mime::MIME,
+    options::_PrintOptions,
     model::MOI.ModelLike,
     f::MOI.AbstractVectorFunction,
 )
-    rows = map(fi -> _to_string(mime, model, fi), eachscalar(f))
+    rows = map(fi -> _to_string(options, model, fi), eachscalar(f))
     max_length = maximum(length.(rows))
     s = join(map(r -> string("│", rpad(r, max_length), "│"), rows), '\n')
     return string(
@@ -161,13 +242,16 @@ function _to_string(
 end
 
 function _to_string(
-    mime::MIME"text/latex",
+    options::_PrintOptions{MIME"text/latex"},
     model::MOI.ModelLike,
     f::MOI.AbstractVectorFunction,
 )
     return string(
         "\\begin{bmatrix}\n",
-        join(map(fi -> _to_string(mime, model, fi), eachscalar(f)), "\\\\\n"),
+        join(
+            map(fi -> _to_string(options, model, fi), eachscalar(f)),
+            "\\\\\n",
+        ),
         "\\end{bmatrix}",
     )
 end
@@ -176,45 +260,73 @@ end
 # Sets
 #------------------------------------------------------------------------
 
-function _to_string(mime::MIME, set::MOI.LessThan)
-    return string(_to_string(mime, :leq), " ", set.upper)
+function _to_string(options::_PrintOptions, set::MOI.LessThan)
+    return string(_to_string(options, :leq), " ", _shorten(options, set.upper))
 end
 
-_to_string(::MIME"text/latex", set::MOI.LessThan) = "\\le $(set.upper)"
-
-function _to_string(mime::MIME, set::MOI.GreaterThan)
-    return string(_to_string(mime, :geq), " ", set.lower)
+function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.LessThan)
+    return string("\\le ", _shorten(options, set.upper))
 end
 
-_to_string(::MIME"text/latex", set::MOI.GreaterThan) = "\\ge $(set.lower)"
-
-function _to_string(mime::MIME, set::MOI.EqualTo)
-    return string(_to_string(mime, :eq), " ", set.value)
+function _to_string(options::_PrintOptions, set::MOI.GreaterThan)
+    return string(_to_string(options, :geq), " ", _shorten(options, set.lower))
 end
 
-_to_string(::MIME"text/latex", set::MOI.EqualTo) = "= $(set.value)"
-
-function _to_string(mime::MIME, set::MOI.Interval)
-    return string(_to_string(mime, :in), " [", set.lower, ", ", set.upper, "]")
+function _to_string(
+    options::_PrintOptions{MIME"text/latex"},
+    set::MOI.GreaterThan,
+)
+    return string("\\ge ", _shorten(options, set.lower))
 end
 
-function _to_string(::MIME"text/latex", set::MOI.Interval)
-    return "\\in \\[$(set.lower), $(set.upper)\\]"
+function _to_string(options::_PrintOptions, set::MOI.EqualTo)
+    return string(_to_string(options, :eq), " ", _shorten(options, set.value))
 end
 
-_to_string(mime::MIME, ::MOI.ZeroOne) = string(_to_string(mime, :in), " {0, 1}")
-
-_to_string(::MIME"text/latex", ::MOI.ZeroOne) = "\\in \\{0, 1\\}"
-
-_to_string(mime::MIME, ::MOI.Integer) = string(_to_string(mime, :in), " ℤ")
-
-_to_string(::MIME"text/latex", ::MOI.Integer) = "\\in \\mathbb{Z}"
-
-function _to_string(mime::MIME, set::MOI.AbstractSet)
-    return string(_to_string(mime, :in), " ", _drop_moi(set))
+function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.EqualTo)
+    return string("= ", _shorten(options, set.value))
 end
 
-function _to_string(::MIME"text/latex", set::MOI.AbstractSet)
+function _to_string(options::_PrintOptions, set::MOI.Interval)
+    return string(
+        _to_string(options, :in),
+        " [",
+        _shorten(options, set.lower),
+        ", ",
+        _shorten(options, set.upper),
+        "]",
+    )
+end
+
+function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.Interval)
+    return string(
+        "\\in \\[",
+        _shorten(options, set.lower),
+        ", ",
+        _shorten(options, set.upper),
+        "\\]",
+    )
+end
+
+function _to_string(options::_PrintOptions, ::MOI.ZeroOne)
+    return string(_to_string(options, :in), " {0, 1}")
+end
+
+_to_string(::_PrintOptions{MIME"text/latex"}, ::MOI.ZeroOne) = "\\in \\{0, 1\\}"
+
+function _to_string(options::_PrintOptions, ::MOI.Integer)
+    return string(_to_string(options, :in), " ℤ")
+end
+
+function _to_string(::_PrintOptions{MIME"text/latex"}, ::MOI.Integer)
+    return "\\in \\mathbb{Z}"
+end
+
+function _to_string(options::_PrintOptions, set::MOI.AbstractSet)
+    return string(_to_string(options, :in), " ", _drop_moi(set))
+end
+
+function _to_string(::_PrintOptions{MIME"text/latex"}, set::MOI.AbstractSet)
     set_str = replace(replace(_drop_moi(set), "{" => "\\{"), "}" => "\\}")
     return string("\\in \\text{", set_str, "}")
 end
@@ -223,10 +335,14 @@ end
 # Constraints
 #------------------------------------------------------------------------
 
-function _to_string(mime::MIME, model::MOI.ModelLike, cref::MOI.ConstraintIndex)
+function _to_string(
+    options::_PrintOptions,
+    model::MOI.ModelLike,
+    cref::MOI.ConstraintIndex,
+)
     f = MOI.get(model, MOI.ConstraintFunction(), cref)
     s = MOI.get(model, MOI.ConstraintSet(), cref)
-    return string(_to_string(mime, model, f), " ", _to_string(mime, s))
+    return string(_to_string(options, model, f), " ", _to_string(options, s))
 end
 
 #------------------------------------------------------------------------
@@ -236,10 +352,10 @@ end
 """
     _VariableNode
 
-A type used to work-around the default printing of Julia expressions. 
+A type used to work-around the default printing of Julia expressions.
 
-Without this type, if we subsititued the variable names into the expression 
-and then converted to a string, each variable would be printed with enclosing 
+Without this type, if we subsititued the variable names into the expression
+and then converted to a string, each variable would be printed with enclosing
 `"`.
 
 To work-around this, create a new type and overload `show`.
@@ -249,42 +365,49 @@ struct _VariableNode
 end
 Base.show(io::IO, x::_VariableNode) = print(io, x.x)
 
-_replace_names(::MIME, ::MOI.ModelLike, x, ::Any) = x
-function _replace_names(mime::MIME, model::MOI.ModelLike, x::Expr, lookup)
+_replace_names(::_PrintOptions, ::MOI.ModelLike, x, ::Any) = x
+function _replace_names(
+    options::_PrintOptions,
+    model::MOI.ModelLike,
+    x::Expr,
+    lookup,
+)
     if x.head == :ref
         return get!(lookup, x.args[2]) do
-            return _VariableNode(_to_string(mime, model, x.args[2]))
+            return _VariableNode(_to_string(options, model, x.args[2]))
         end
     else
         for (i, arg) in enumerate(x.args)
-            x.args[i] = _replace_names(mime, model, arg, lookup)
+            x.args[i] = _replace_names(options, model, arg, lookup)
         end
     end
     return x
 end
 
-function _replace_nonlinear_latex(::MIME"text/latex", s::String)
+function _replace_nonlinear_latex(::_PrintOptions{MIME"text/latex"}, s::String)
     s = replace(s, " * " => " \\times ")
     s = replace(s, " >= " => " \\ge ")
     s = replace(s, " <= " => " \\le ")
     s = replace(s, " == " => " = ")
     return s
 end
-_replace_nonlinear_latex(::MIME, s::String) = s
+_replace_nonlinear_latex(::_PrintOptions, s::String) = s
 
 function _print_nonlinear_constraints(
     io::IO,
-    mime::MIME"text/plain",
+    options::_PrintOptions{MIME"text/plain"},
     model::MOI.ModelLike,
     block::MOI.NLPBlockData,
 )
     lookup = Dict{MOI.VariableIndex,_VariableNode}()
-    println(io, "\nNonlinear")
+    if options.print_constraint_types
+        println(io, "\nNonlinear")
+    end
     has_expr = :ExprGraph in MOI.features_available(block.evaluator)
     for (i, bound) in enumerate(block.constraint_bounds)
         if has_expr
             ex = MOI.constraint_expr(block.evaluator, i)
-            println(io, " ", _replace_names(mime, model, ex, lookup))
+            println(io, " ", _replace_names(options, model, ex, lookup))
         else
             println(io, " ", bound.lower, " <= g_$(i)(x) <= ", bound.upper)
         end
@@ -293,18 +416,20 @@ end
 
 function _print_nonlinear_constraints(
     io::IO,
-    mime::MIME"text/latex",
+    options::_PrintOptions{MIME"text/latex"},
     model::MOI.ModelLike,
     block::MOI.NLPBlockData,
 )
     lookup = Dict{MOI.VariableIndex,_VariableNode}()
-    println(io, " & \\text{Nonlinear} \\\\")
+    if options.print_constraint_types
+        println(io, " & \\text{Nonlinear} \\\\")
+    end
     has_expr = :ExprGraph in MOI.features_available(block.evaluator)
     for (i, bound) in enumerate(block.constraint_bounds)
         if has_expr
             ex = MOI.constraint_expr(block.evaluator, i)
-            nl_c = string(_replace_names(mime, model, ex, lookup))
-            println(io, " & ", _replace_nonlinear_latex(mime, nl_c), " \\\\")
+            nl_c = string(_replace_names(options, model, ex, lookup))
+            println(io, " & ", _replace_nonlinear_latex(options, nl_c), " \\\\")
         else
             println(
                 io,
@@ -318,20 +443,31 @@ function _print_nonlinear_constraints(
     end
 end
 
-_print_nonlinear_constraints(::IO, ::MIME, ::MOI.ModelLike, ::Nothing) = nothing
+function _print_nonlinear_constraints(
+    ::IO,
+    ::_PrintOptions,
+    ::MOI.ModelLike,
+    ::Nothing,
+)
+    return
+end
 
 #------------------------------------------------------------------------
 # ObjectiveFunction
 #------------------------------------------------------------------------
 
-function _objective_function_string(mime::MIME, model::MOI.ModelLike, ::Nothing)
+function _objective_function_string(
+    options::_PrintOptions,
+    model::MOI.ModelLike,
+    ::Nothing,
+)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
-    return _drop_moi(F), _to_string(mime, model, f)
+    return _drop_moi(F), _to_string(options, model, f)
 end
 
 function _objective_function_string(
-    mime::MIME,
+    options::_PrintOptions,
     model::MOI.ModelLike,
     block::MOI.NLPBlockData,
 )
@@ -340,12 +476,12 @@ function _objective_function_string(
         f = "f(x)"
         if :ExprGraph in MOI.features_available(block.evaluator)
             ex = MOI.objective_expr(block.evaluator)
-            f = string(_replace_names(mime, model, ex, lookup))
-            f = _replace_nonlinear_latex(mime, f)
+            f = string(_replace_names(options, model, ex, lookup))
+            f = _replace_nonlinear_latex(options, f)
         end
         return "Nonlinear", f
     else
-        return _objective_function_string(mime, model, nothing)
+        return _objective_function_string(options, model, nothing)
     end
 end
 
@@ -366,56 +502,80 @@ function _nlp_block(model::MOI.ModelLike)
 end
 
 """
-    _print_model(io::IO, mime::MIME"text/plain", model::MOI.ModelLike)
+    _print_model(
+        io::IO,
+        options::_PrintOptions{MIME"text/plain"},
+        model::MOI.ModelLike,
+    )
 
 Print a plain-text formulation of `model` to `io`.
 """
-function _print_model(io::IO, mime::MIME"text/plain", model::MOI.ModelLike)
+function _print_model(
+    io::IO,
+    options::_PrintOptions{MIME"text/plain"},
+    model::MOI.ModelLike,
+)
     nlp_block = _nlp_block(model)
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.FEASIBILITY_SENSE
         println(io, "Feasibility")
     else
-        F, f = _objective_function_string(mime, model, nlp_block)
+        F, f = _objective_function_string(options, model, nlp_block)
         sense_s = sense == MOI.MIN_SENSE ? "Minimize" : "Maximize"
-        println(io, sense_s, " ", F, ":\n ", f)
+        if options.print_constraint_types
+            println(io, sense_s, " ", F, ":\n ", f)
+        else
+            println(io, sense_s, ": ", f)
+        end
     end
     println(io, "\nSubject to:")
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        println(io, "\n$(_drop_moi(F))-in-$(_drop_moi(S))")
+        if options.print_constraint_types
+            println(io, "\n$(_drop_moi(F))-in-$(_drop_moi(S))")
+        end
         for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            s = _to_string(mime, model, cref)
+            s = _to_string(options, model, cref)
             println(io, " ", replace(s, '\n' => "\n "))
         end
     end
-    _print_nonlinear_constraints(io, mime, model, nlp_block)
+    _print_nonlinear_constraints(io, options, model, nlp_block)
     return
 end
 
 """
-    _print_model(io::IO, mime::MIME"text/latex", model::MOI.ModelLike)
+    _print_model(
+        io::IO,
+        options::_PrintOptions{MIME"text/latex"},
+        model::MOI.ModelLike,
+    )
 
 Print a LaTeX formulation of `model` to `io`.
 """
-function _print_model(io::IO, mime::MIME"text/latex", model::MOI.ModelLike)
+function _print_model(
+    io::IO,
+    options::_PrintOptions{MIME"text/latex"},
+    model::MOI.ModelLike,
+)
     nlp_block = _nlp_block(model)
     println(io, "\$\$ \\begin{aligned}")
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.FEASIBILITY_SENSE
         println(io, "\\text{feasibility}\\\\")
     else
-        F, f = _objective_function_string(mime, model, nlp_block)
+        F, f = _objective_function_string(options, model, nlp_block)
         sense_s = sense == MOI.MIN_SENSE ? "min" : "max"
         println(io, "\\", sense_s, "\\quad & ", f, " \\\\")
     end
     println(io, "\\text{Subject to}\\\\")
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        println(io, " & \\text{$(_drop_moi(F))-in-$(_drop_moi(S))} \\\\")
+        if options.print_constraint_types
+            println(io, " & \\text{$(_drop_moi(F))-in-$(_drop_moi(S))} \\\\")
+        end
         for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            println(io, " & ", _to_string(mime, model, cref), " \\\\")
+            println(io, " & ", _to_string(options, model, cref), " \\\\")
         end
     end
-    _print_nonlinear_constraints(io, mime, model, nlp_block)
+    _print_nonlinear_constraints(io, options, model, nlp_block)
     return print(io, "\\end{aligned} \$\$")
 end
 
@@ -440,7 +600,7 @@ inside a function.
 latex_formulation(model::MOI.ModelLike) = _LatexModel(model)
 
 function Base.show(io::IO, model::_LatexModel)
-    return _print_model(io, MIME("text/latex"), model.model)
+    return _print_model(io, _PrintOptions(MIME("text/latex")), model.model)
 end
 
 Base.show(io::IO, ::MIME"text/latex", model::_LatexModel) = show(io, model)
@@ -452,9 +612,9 @@ function Base.print(model::MOI.ModelLike)
             return display(d, "text/latex", latex_formulation(model))
         end
     end
-    return _print_model(stdout, MIME("text/plain"), model)
+    return print(stdout, model)
 end
 
-function Base.print(io::IO, model::MOI.ModelLike)
-    return _print_model(io, MIME("text/plain"), model)
+function Base.print(io::IO, model::MOI.ModelLike; kwargs...)
+    return _print_model(io, _PrintOptions(MIME("text/plain"); kwargs...), model)
 end

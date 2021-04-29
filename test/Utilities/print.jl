@@ -19,8 +19,32 @@ end
 function test_nonname_variable()
     model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)
-    @test MOIU._to_string(PLAIN, model, x) == "noname"
-    @test MOIU._to_string(LATEX, model, x) == "noname"
+    @test MOIU._to_string(PLAIN, model, x) == "v[1]"
+    @test MOIU._to_string(LATEX, model, x) == "v_{1}"
+end
+
+function test_numbers()
+    options =
+        MOIU._PrintOptions(MIME("text/plain"); simplify_coefficients = true)
+    @test MOIU._to_string(options, 1.0, "x"; is_first = true) == "x"
+    @test MOIU._to_string(options, 1.0, "x"; is_first = false) == " + x"
+    @test MOIU._to_string(options, -1.0, "x"; is_first = true) == "-x"
+    @test MOIU._to_string(options, -1.0, "x"; is_first = false) == " - x"
+    @test MOIU._to_string(options, 1.2, "x"; is_first = true) == "1.2 x"
+    @test MOIU._to_string(options, 1.2, "x"; is_first = false) == " + 1.2 x"
+    @test MOIU._to_string(options, -1.2, "x"; is_first = true) == "-1.2 x"
+    @test MOIU._to_string(options, -1.2, "x"; is_first = false) == " - 1.2 x"
+
+    options =
+        MOIU._PrintOptions(MIME("text/plain"); simplify_coefficients = false)
+    @test MOIU._to_string(options, 1.0, "x"; is_first = true) == "1.0 x"
+    @test MOIU._to_string(options, 1.0, "x"; is_first = false) == " + 1.0 x"
+    @test MOIU._to_string(options, -1.0, "x"; is_first = true) == "-1.0 x"
+    @test MOIU._to_string(options, -1.0, "x"; is_first = false) == " - 1.0 x"
+    @test MOIU._to_string(options, 1.2, "x"; is_first = true) == "1.2 x"
+    @test MOIU._to_string(options, 1.2, "x"; is_first = false) == " + 1.2 x"
+    @test MOIU._to_string(options, -1.2, "x"; is_first = true) == "-1.2 x"
+    @test MOIU._to_string(options, -1.2, "x"; is_first = false) == " - 1.2 x"
 end
 
 function test_variable()
@@ -47,10 +71,18 @@ function test_ScalarAffineTerm()
     model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
-    @test MOIU._to_string(PLAIN, model, MOI.ScalarAffineTerm(-1.2, x)) ==
-          " - 1.2 x"
-    @test MOIU._to_string(LATEX, model, MOI.ScalarAffineTerm(1.2, x)) ==
-          " + 1.2 x"
+    @test MOIU._to_string(
+        PLAIN,
+        model,
+        MOI.ScalarAffineTerm(-1.2, x);
+        is_first = false,
+    ) == " - 1.2 x"
+    @test MOIU._to_string(
+        LATEX,
+        model,
+        MOI.ScalarAffineTerm(1.2, x);
+        is_first = false,
+    ) == " + 1.2 x"
 end
 
 function test_ScalarAffineFunction()
@@ -72,11 +104,12 @@ function test_ScalarQuadraticTerm()
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.VariableName(), y, "y")
     term = MOI.ScalarQuadraticTerm(-1.2, x, x)
-    @test MOIU._to_string(PLAIN, model, term) == " - 0.6 x²"
-    @test MOIU._to_string(LATEX, model, term) == " - 0.6 x^2"
+    @test MOIU._to_string(PLAIN, model, term; is_first = false) == " - 0.6 x²"
+    @test MOIU._to_string(LATEX, model, term; is_first = false) == " - 0.6 x^2"
     term = MOI.ScalarQuadraticTerm(1.2, x, y)
-    @test MOIU._to_string(PLAIN, model, term) == " + 1.2 x*y"
-    @test MOIU._to_string(LATEX, model, term) == " + 1.2 x\\times y"
+    @test MOIU._to_string(PLAIN, model, term; is_first = false) == " + 1.2 x*y"
+    @test MOIU._to_string(LATEX, model, term; is_first = false) ==
+          " + 1.2 x\\times y"
 end
 
 function test_ScalarQuadraticFunction()
@@ -345,6 +378,138 @@ function test_latex()
         \end{aligned} $$""",
     )
     return
+end
+
+function test_latex_simplified()
+    model = MOIU.Model{Float64}()
+    MOIU.loadfromstring!(
+        model,
+        """
+        variables: x, y, z
+        minobjective: x + 2 + 3.1*y + -1.2*z
+        c1: x >= 0.1
+        c2: y in ZeroOne()
+        c2: z in Integer()
+        c3: [x, y] in SecondOrderCone(2)
+        c4: [1, x, y] in SecondOrderCone(2)
+        c4: [1.0 * x * x, y, 1] in ExponentialCone()
+        c4: [1, 1.0 * x * x, y] in ExponentialCone()
+        c2: x in ZeroOne()
+        c5: 2.0 * x * x + y + -1 * z <= 1.0
+        c5: x + x >= 1.0
+        c5: x + x in Interval(1.0, 2.0)
+        c5: x + -1 * y == 0.0
+        """,
+    )
+    model_string = sprint() do io
+        return MOIU._print_model(
+            io,
+            MOIU._PrintOptions(
+                MIME("text/latex");
+                simplify_coefficients = true,
+                print_constraint_types = false,
+            ),
+            model,
+        )
+    end
+    _string_compare(
+        model_string,
+        raw"""
+        $$ \begin{aligned}
+        \min\quad & 2 + x + 3.1 y - 1.2 z \\
+        \text{Subject to}\\
+         & x - y = 0 \\
+         & 2 x \ge 1 \\
+         & 2 x \in \[1, 2\] \\
+         & y - z + 2 x^2 \le 1 \\
+         & \begin{bmatrix}
+        x\\
+        y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
+         & \begin{bmatrix}
+        1\\
+        x\\
+        y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
+         & \begin{bmatrix}
+        x^2\\
+        y\\
+        1\end{bmatrix} \in \text{ExponentialCone()} \\
+         & \begin{bmatrix}
+        1\\
+        x^2\\
+        y\end{bmatrix} \in \text{ExponentialCone()} \\
+         & x \ge 0.1 \\
+         & z \in \mathbb{Z} \\
+         & x \in \{0, 1\} \\
+         & y \in \{0, 1\} \\
+        \end{aligned} $$""",
+    )
+    return
+end
+
+function test_plain_simplified()
+    model = MOIU.Model{Float64}()
+    MOIU.loadfromstring!(
+        model,
+        """
+        variables: x, y, z
+        minobjective: x + -2 + 3.1*y + -1.2*z
+        c1: x >= 0.1
+        c2: y in ZeroOne()
+        c2: z in Integer()
+        c3: [x, y] in SecondOrderCone(2)
+        c4: [1, x, y] in SecondOrderCone(2)
+        c4: [1.0 * x * x, y, 1] in ExponentialCone()
+        c4: [1, 1.0 * x * x, y] in ExponentialCone()
+        c2: x in ZeroOne()
+        c5: 2.0 * x * x + y + -1 * z <= 1.0
+        c5: x + x >= 1.0
+        c5: x + x in Interval(1.0, 2.0)
+        c5: x + -1 * y == 0.0
+        """,
+    )
+    model_string = sprint() do io
+        return MOIU._print_model(
+            io,
+            MOIU._PrintOptions(
+                MIME("text/plain");
+                simplify_coefficients = true,
+                print_constraint_types = false,
+            ),
+            model,
+        )
+    end
+    @test model_string == """
+    Minimize: -2 + x + 3.1 y - 1.2 z
+
+    Subject to:
+     x - y == 0
+     2 x >= 1
+     2 x $(IN) [1, 2]
+     y - z + 2 x² <= 1
+     ┌ ┐
+     │x│
+     │y│
+     └ ┘ $(IN) SecondOrderCone(2)
+     ┌ ┐
+     │1│
+     │x│
+     │y│
+     └ ┘ $(IN) SecondOrderCone(2)
+     ┌  ┐
+     │x²│
+     │y │
+     │1 │
+     └  ┘ $(IN) ExponentialCone()
+     ┌  ┐
+     │1 │
+     │x²│
+     │y │
+     └  ┘ $(IN) ExponentialCone()
+     x >= 0.1
+     z $(IN) ℤ
+     x $(IN) {0, 1}
+     y $(IN) {0, 1}
+    """
 end
 
 function test_nlp()
