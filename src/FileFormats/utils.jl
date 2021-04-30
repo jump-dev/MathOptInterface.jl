@@ -38,14 +38,14 @@ function create_unique_constraint_names(
     replacements::Vector{Function},
 )
     original_names = Set{String}()
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             name = MOI.get(model, MOI.ConstraintName(), index)
             push!(original_names, _replace(name, replacements))
         end
     end
     added_names = Set{String}()
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             original_name = MOI.get(model, MOI.ConstraintName(), index)
             new_name = _replace(

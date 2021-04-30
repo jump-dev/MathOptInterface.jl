@@ -41,7 +41,7 @@ ObjectiveFunctionType
 ObjectiveSense
 NumberOfVariables
 ListOfVariableIndices
-ListOfConstraints
+ListOfConstraintTypesPresent
 NumberOfConstraints
 ListOfConstraintIndices
 ListOfOptimizerAttributesSet

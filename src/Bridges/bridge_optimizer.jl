@@ -695,7 +695,10 @@ function MOI.get(
     end
     return s
 end
-function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfConstraints)
+function MOI.get(
+    b::AbstractBridgeOptimizer,
+    attr::MOI.ListOfConstraintTypesPresent,
+)
     if Constraint.has_bridges(Constraint.bridges(b)) &&
        Variable.has_bridges(Variable.bridges(b))
         set_of_types = Constraint.list_of_key_types(Constraint.bridges(b))

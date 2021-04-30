@@ -341,7 +341,7 @@ end
         cy1 = MOI.add_constraint(uf, _affine(y), sets[1])
         cy2 = MOI.add_constraint(uf, _affine(y), sets[2])
         # check that the constraint types are in the order they were added in
-        @test MOI.get(uf, MOI.ListOfConstraints()) ==
+        @test MOI.get(uf, MOI.ListOfConstraintTypesPresent()) ==
               [(F, typeof(sets[1])), (F, typeof(sets[2]))]
         # check that the constraints given the constraint type are in the order they were added in
         for set in sets

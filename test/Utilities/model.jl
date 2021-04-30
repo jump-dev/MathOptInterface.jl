@@ -252,7 +252,7 @@ end
         }(),
     )) == [c2]
 
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (
         MOI.VectorQuadraticFunction{Int},
@@ -341,7 +341,7 @@ end
         MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
     )
 
-    loc1 = MOI.get(model, MOI.ListOfConstraints())
+    loc1 = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     loc2 = Vector{Tuple{DataType,DataType}}()
     function _pushloc(v::MOI.Utilities.VectorOfConstraints{F,S}) where {F,S}
         if !MOI.is_empty(v)
@@ -494,7 +494,7 @@ end
         model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
         MOI.add_constraint(model, MOI.SingleVariable(x), set)
-        @test MOI.get(model, MOI.ListOfConstraints()) ==
+        @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
               [(MOI.SingleVariable, typeof(set))]
     end
 end

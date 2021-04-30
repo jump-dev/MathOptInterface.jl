@@ -135,11 +135,11 @@ MOI.VariableIndex(1)
 julia> MOI.add_constraint(optimizer, MOI.SingleVariable(x), MOI.Interval(0.0, 1.0))
 MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.Interval{Float64}}(1)
 
-julia> MOI.get(optimizer, MOI.ListOfConstraints())
+julia> MOI.get(optimizer, MOI.ListOfConstraintTypesPresent())
 1-element Array{Tuple{DataType,DataType},1}:
  (MathOptInterface.SingleVariable, MathOptInterface.Interval{Float64})
 
-julia> MOI.get(inner_optimizer, MOI.ListOfConstraints())
+julia> MOI.get(inner_optimizer, MOI.ListOfConstraintTypesPresent())
 2-element Array{Tuple{DataType,DataType},1}:
  (MathOptInterface.SingleVariable, MathOptInterface.GreaterThan{Float64})
  (MathOptInterface.SingleVariable, MathOptInterface.LessThan{Float64})
@@ -181,11 +181,11 @@ MOI.VariableIndex(1)
 julia> MOI.add_constraint(optimizer, MOI.SingleVariable(x), MOI.Interval(0.0, 1.0))
 MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.Interval{Float64}}(1)
 
-julia> MOI.get(optimizer, MOI.ListOfConstraints())
+julia> MOI.get(optimizer, MOI.ListOfConstraintTypesPresent())
 1-element Array{Tuple{DataType,DataType},1}:
  (MathOptInterface.SingleVariable, MathOptInterface.Interval{Float64})
 
-julia> MOI.get(inner_optimizer, MOI.ListOfConstraints())
+julia> MOI.get(inner_optimizer, MOI.ListOfConstraintTypesPresent())
 1-element Array{Tuple{DataType,DataType},1}:
  (MathOptInterface.SingleVariable, MathOptInterface.Interval{Float64})
 ```

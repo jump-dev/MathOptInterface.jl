@@ -145,7 +145,7 @@ function get_fallback(
     T::Type,
 )
     value = zero(T) # sum will not work if there are zero constraints
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         value += dual_objective_value(model, F, S, T, attr.result_index)::T
     end
     if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
@@ -436,7 +436,7 @@ function variable_dual(
             )
         end
     end
-    for FS in MOI.get(model, MOI.ListOfConstraints())
+    for FS in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         dual -= variable_dual(model, attr, ci, vi, FS[1], FS[2])
     end
     return dual

@@ -60,7 +60,7 @@ end
 function precompile_model(model, constraints)
     Base.precompile(empty!, (model,))
     Base.precompile(is_empty, (model,))
-    Base.precompile(get, (model, ListOfConstraints))
+    Base.precompile(get, (model, ListOfConstraintTypesPresent))
     Base.precompile(optimize!, (model,))
     Base.precompile(add_variable, (model,))
     Base.precompile(add_variables, (model, Int))

@@ -59,7 +59,7 @@ function write_constraints(
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             push!(object["constraints"], moi_to_object(index, model, name_map))
         end
