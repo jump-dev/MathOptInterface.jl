@@ -888,6 +888,7 @@ and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
 struct ListOfConstraintTypesPresent <: AbstractModelAttribute end
+@deprecate ListOfConstraints ListOfConstraintTypesPresent
 
 """
     ObjectiveFunction{F<:AbstractScalarFunction}()
