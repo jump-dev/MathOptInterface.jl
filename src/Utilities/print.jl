@@ -5,18 +5,35 @@ _drop_moi(s) = replace(string(s), "MathOptInterface." => "")
 struct _PrintOptions{T<:MIME}
     simplify_coefficients::Bool
     default_name::String
-    print_constraint_types::Bool
+    print_types::Bool
 
+    """
+        _PrintOptions(
+            mime::MIME;
+            simplify_coefficients::Bool = false,
+            default_name::String = "v",
+            print_types::Bool = true,
+        )
+
+    A struct to control options for printing.
+
+    ## Arguments
+
+     * `simplifiy_coefficients` : Simplify coefficients if possible by omitting
+       them or removing trailing zeros.
+     * `default_name` : The name given to variables with an empty name.
+     * `print_types` : Print the MOI type of each function and set for clarity.
+    """
     function _PrintOptions(
         mime::MIME;
         simplify_coefficients::Bool = false,
         default_name::String = "v",
-        print_constraint_types::Bool = true,
+        print_types::Bool = true,
     )
         return new{typeof(mime)}(
             simplify_coefficients,
             default_name,
-            print_constraint_types,
+            print_types,
         )
     end
 end
@@ -400,7 +417,7 @@ function _print_nonlinear_constraints(
     block::MOI.NLPBlockData,
 )
     lookup = Dict{MOI.VariableIndex,_VariableNode}()
-    if options.print_constraint_types
+    if options.print_types
         println(io, "\nNonlinear")
     end
     has_expr = :ExprGraph in MOI.features_available(block.evaluator)
@@ -421,7 +438,7 @@ function _print_nonlinear_constraints(
     block::MOI.NLPBlockData,
 )
     lookup = Dict{MOI.VariableIndex,_VariableNode}()
-    if options.print_constraint_types
+    if options.print_types
         println(io, " & \\text{Nonlinear} \\\\")
     end
     has_expr = :ExprGraph in MOI.features_available(block.evaluator)
@@ -522,7 +539,7 @@ function _print_model(
     else
         F, f = _objective_function_string(options, model, nlp_block)
         sense_s = sense == MOI.MIN_SENSE ? "Minimize" : "Maximize"
-        if options.print_constraint_types
+        if options.print_types
             println(io, sense_s, " ", F, ":\n ", f)
         else
             println(io, sense_s, ": ", f)
@@ -530,7 +547,7 @@ function _print_model(
     end
     println(io, "\nSubject to:")
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        if options.print_constraint_types
+        if options.print_types
             println(io, "\n$(_drop_moi(F))-in-$(_drop_moi(S))")
         end
         for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -568,7 +585,7 @@ function _print_model(
     end
     println(io, "\\text{Subject to}\\\\")
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        if options.print_constraint_types
+        if options.print_types
             println(io, " & \\text{$(_drop_moi(F))-in-$(_drop_moi(S))} \\\\")
         end
         for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -585,10 +602,11 @@ end
 
 struct _LatexModel{T<:MOI.ModelLike}
     model::T
+    kwargs::Any
 end
 
 """
-    latex_formulation(model::MOI.ModelLike)
+    latex_formulation(model::MOI.ModelLike; kwargs...)
 
 Wrap `model` in a type so that it can be pretty-printed as `text/latex` in a
 notebook like IJulia, or in Documenter.
@@ -596,23 +614,34 @@ notebook like IJulia, or in Documenter.
 To render the model, end the cell with `latex_formulation(model)`, or call
 `display(latex_formulation(model))` in to force the display of the model from
 inside a function.
+
+Possible keyword arguments are:
+
+ * `simplifiy_coefficients` : Simplify coefficients if possible by omitting
+   them or removing trailing zeros.
+ * `default_name` : The name given to variables with an empty name.
+ * `print_types` : Print the MOI type of each function and set for clarity.
 """
-latex_formulation(model::MOI.ModelLike) = _LatexModel(model)
+latex_formulation(model::MOI.ModelLike; kwargs...) = _LatexModel(model, kwargs)
 
 function Base.show(io::IO, model::_LatexModel)
-    return _print_model(io, _PrintOptions(MIME("text/latex")), model.model)
+    return _print_model(
+        io,
+        _PrintOptions(MIME("text/latex"); model.kwargs...),
+        model.model,
+    )
 end
 
 Base.show(io::IO, ::MIME"text/latex", model::_LatexModel) = show(io, model)
 
-function Base.print(model::MOI.ModelLike)
+function Base.print(model::MOI.ModelLike; kwargs...)
     for d in Base.Multimedia.displays
         if Base.Multimedia.displayable(d, "text/latex") &&
            startswith("$(typeof(d))", "IJulia.")
             return display(d, "text/latex", latex_formulation(model))
         end
     end
-    return print(stdout, model)
+    return print(stdout, model; kwargs...)
 end
 
 function Base.print(io::IO, model::MOI.ModelLike; kwargs...)

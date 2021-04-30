@@ -407,7 +407,7 @@ function test_latex_simplified()
             MOIU._PrintOptions(
                 MIME("text/latex");
                 simplify_coefficients = true,
-                print_constraint_types = false,
+                print_types = false,
             ),
             model,
         )
@@ -473,7 +473,7 @@ function test_plain_simplified()
             MOIU._PrintOptions(
                 MIME("text/plain");
                 simplify_coefficients = true,
-                print_constraint_types = false,
+                print_types = false,
             ),
             model,
         )
