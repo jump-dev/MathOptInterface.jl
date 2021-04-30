@@ -65,7 +65,10 @@ end
 function map_set(::Type{<:SOCtoRSOCBridge}, set::MOI.SecondOrderCone)
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
-function inverse_map_set(::Type{<:SOCtoRSOCBridge}, set::MOI.RotatedSecondOrderCone)
+function inverse_map_set(
+    ::Type{<:SOCtoRSOCBridge},
+    set::MOI.RotatedSecondOrderCone,
+)
     return MOI.SecondOrderCone(MOI.dimension(set))
 end
 
@@ -87,11 +90,17 @@ function map_function(
     return MOIU.operate(vcat, T, z, y, x)
 end
 # The map is an involution
-function inverse_map_function(BT::Type{<:Union{RSOCtoSOCBridge,SOCtoRSOCBridge}}, func)
+function inverse_map_function(
+    BT::Type{<:Union{RSOCtoSOCBridge,SOCtoRSOCBridge}},
+    func,
+)
     return map_function(BT, func)
 end
 # The map is symmetric
-function adjoint_map_function(BT::Type{<:Union{RSOCtoSOCBridge,SOCtoRSOCBridge}}, func)
+function adjoint_map_function(
+    BT::Type{<:Union{RSOCtoSOCBridge,SOCtoRSOCBridge}},
+    func,
+)
     return map_function(BT, func)
 end
 # The map is a symmetric involution
