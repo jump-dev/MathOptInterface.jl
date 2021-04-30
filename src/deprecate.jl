@@ -23,3 +23,22 @@ function Base.getproperty(
     end
     return getfield(attr, f)
 end
+
+function Base.getproperty(f::ScalarAffineTerm, key::Symbol)
+    if key == :variable_index
+        @warn("`.variable_index` is deprecated in favor of `.variable`.")
+        return getfield(f, :variable)
+    end
+    return getfield(f, key)
+end
+
+function Base.getproperty(f::ScalarQuadraticTerm, key::Symbol)
+    if key == :variable_index_1
+        @warn("`.variable_index_1` is deprecated in favor of `.variable_1`.")
+        return getfield(f, :variable_1)
+    elseif key == :variable_index_2
+        @warn("`.variable_index_2` is deprecated in favor of `.variable_2`.")
+        return getfield(f, :variable_2)
+    end
+    return getfield(f, key)
+end

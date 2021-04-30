@@ -6,25 +6,21 @@ MA.mutability(::Type{<:TypedLike}) = MA.IsMutable()
 
 function MA.mutable_copy(func::MOI.ScalarAffineFunction)
     terms = [
-        MOI.ScalarAffineTerm(
-            MA.copy_if_mutable(t.coefficient),
-            t.variable_index,
-        ) for t in func.terms
+        MOI.ScalarAffineTerm(MA.copy_if_mutable(t.coefficient), t.variable)
+        for t in func.terms
     ]
     return MOI.ScalarAffineFunction(terms, MA.copy_if_mutable(func.constant))
 end
 function MA.mutable_copy(func::MOI.ScalarQuadraticFunction)
     affine_terms = [
-        MOI.ScalarAffineTerm(
-            MA.copy_if_mutable(t.coefficient),
-            t.variable_index,
-        ) for t in func.affine_terms
+        MOI.ScalarAffineTerm(MA.copy_if_mutable(t.coefficient), t.variable)
+        for t in func.affine_terms
     ]
     quadratic_terms = [
         MOI.ScalarQuadraticTerm(
             MA.copy_if_mutable(t.coefficient),
-            t.variable_index_1,
-            t.variable_index_2,
+            t.variable_1,
+            t.variable_2,
         ) for t in func.quadratic_terms
     ]
     return MOI.ScalarQuadraticFunction(

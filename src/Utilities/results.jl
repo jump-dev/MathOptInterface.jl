@@ -213,7 +213,7 @@ function variable_coefficient(
 ) where {T}
     coef = zero(T)
     for term in func.terms
-        if term.variable_index == vi
+        if term.variable == vi
             coef += term.coefficient
         end
     end
@@ -226,7 +226,7 @@ function variable_coefficient(
     coef = zeros(T, MOI.output_dimension(func))
     for vector_term in func.terms
         term = vector_term.scalar_term
-        if term.variable_index == vi
+        if term.variable == vi
             coef[vector_term.output_index] += term.coefficient
         end
     end
@@ -240,15 +240,15 @@ function variable_coefficient(
     coef = zero(T)
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for term in func.affine_terms
-        if term.variable_index == vi
+        if term.variable == vi
             coef += term.coefficient
         end
     end
     for term in func.quadratic_terms
-        if term.variable_index_1 == vi
-            coef += term.coefficient * value(term.variable_index_2)
-        elseif term.variable_index_2 == vi
-            coef += term.coefficient * value(term.variable_index_1)
+        if term.variable_1 == vi
+            coef += term.coefficient * value(term.variable_2)
+        elseif term.variable_2 == vi
+            coef += term.coefficient * value(term.variable_1)
         end
     end
     return coef
@@ -262,17 +262,17 @@ function variable_coefficient(
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for vector_term in func.affine_terms
         term = vector_term.scalar_term
-        if term.variable_index == vi
+        if term.variable == vi
             coef[vector_term.output_index] += term.coefficient
         end
     end
     for vector_term in func.quadratic_terms
         term = vector_term.scalar_term
         oi = vector_term.output_index
-        if term.variable_index_1 == vi
-            coef[oi] += term.coefficient * value(term.variable_index_2)
-        elseif term.variable_index_2 == vi
-            coef[oi] += term.coefficient * value(term.variable_index_1)
+        if term.variable_1 == vi
+            coef[oi] += term.coefficient * value(term.variable_2)
+        elseif term.variable_2 == vi
+            coef[oi] += term.coefficient * value(term.variable_1)
         end
     end
     return coef

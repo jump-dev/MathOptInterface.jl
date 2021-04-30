@@ -111,7 +111,7 @@ function matrix_from_quadratic_terms(
     index_to_variable_map = Dict{Int,MOI.VariableIndex}()
     n = 0
     for term in terms
-        for variable in (term.variable_index_1, term.variable_index_2)
+        for variable in (term.variable_1, term.variable_2)
             if !(variable in keys(variable_to_index_map))
                 n += 1
                 variable_to_index_map[variable] = n
@@ -123,8 +123,8 @@ function matrix_from_quadratic_terms(
     J = Int[]
     V = T[]
     for term in terms
-        i = variable_to_index_map[term.variable_index_1]
-        j = variable_to_index_map[term.variable_index_2]
+        i = variable_to_index_map[term.variable_1]
+        j = variable_to_index_map[term.variable_2]
         push!(I, i)
         push!(J, j)
         push!(V, term.coefficient)

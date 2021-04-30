@@ -52,7 +52,7 @@ include("../utilities.jl")
     @test BT === BT2
     @test bridge isa BT
 
-    z1comp = bridge.variable_index
+    z1comp = bridge.variable
     @test MOI.get(model, MOI.ConstraintFunction(), bridge.zero_one_cons) ==
           MOI.SingleVariable(z1comp)
     @test MOI.get(model, MOI.ConstraintSet(), bridge.disjunction_cons) ==
@@ -60,7 +60,7 @@ include("../utilities.jl")
     disjunction_cons =
         MOI.get(model, MOI.ConstraintFunction(), bridge.disjunction_cons)
     for t in disjunction_cons.terms
-        @test t.variable_index == z1 || t.variable_index == z1comp
+        @test t.variable == z1 || t.variable == z1comp
         @test t.coefficient ≈ 1.0
     end
 end

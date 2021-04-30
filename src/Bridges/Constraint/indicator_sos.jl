@@ -18,8 +18,8 @@ struct IndicatorSOS1Bridge{
     BC<:MOI.AbstractScalarSet,
     MaybeBC<:Union{MOI.ConstraintIndex{MOI.SingleVariable,BC},Nothing},
 } <: AbstractBridge
-    w_variable_index::MOI.VariableIndex
-    z_variable_index::MOI.VariableIndex
+    w_variable::MOI.VariableIndex
+    z_variable::MOI.VariableIndex
     affine_func::MOI.ScalarAffineFunction{T}
     bound_constraint_index::MaybeBC
     sos_constraint_index::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.SOS1{T}}
@@ -88,7 +88,7 @@ function MOI.get(
     attr::MOI.ConstraintFunction,
     b::IndicatorSOS1Bridge{T},
 ) where {T}
-    z = b.z_variable_index
+    z = b.z_variable
     terms = [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), z))]
     for affine_term in b.affine_func.terms
         push!(terms, MOI.VectorAffineTerm(2, affine_term))
@@ -102,7 +102,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::IndicatorSOS1Bridge)
     end
     MOI.delete(model, bridge.sos_constraint_index)
     MOI.delete(model, bridge.linear_constraint_index)
-    MOI.delete(model, bridge.w_variable_index)
+    MOI.delete(model, bridge.w_variable)
     return
 end
 
@@ -159,7 +159,7 @@ function MOI.get(::IndicatorSOS1Bridge, ::MOI.NumberOfVariables)
 end
 
 function MOI.get(b::IndicatorSOS1Bridge, ::MOI.ListOfVariableIndices)
-    return [b.w_variable_index]
+    return [b.w_variable]
 end
 
 function MOI.get(
@@ -234,12 +234,12 @@ function MOI.get(
     zvalue = MOI.get(
         model,
         MOI.VariablePrimal(attr.result_index),
-        bridge.z_variable_index,
+        bridge.z_variable,
     )
     wvalue = MOI.get(
         model,
         MOI.VariablePrimal(attr.result_index),
-        bridge.w_variable_index,
+        bridge.w_variable,
     )
     lin_primal_start = MOI.get(model, attr, bridge.linear_constraint_index)
     return [zvalue, lin_primal_start - wvalue]
@@ -250,8 +250,8 @@ function MOI.get(
     attr::MOI.ConstraintPrimalStart,
     bridge::IndicatorSOS1Bridge,
 )
-    zstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.z_variable_index)
-    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
+    zstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.z_variable)
+    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable)
     lin_primal_start = MOI.get(model, attr, bridge.linear_constraint_index)
     return [zstart, lin_primal_start - wstart]
 end
@@ -264,8 +264,8 @@ function MOI.set(
 ) where {T}
     zvalue = value[1]
     lin_start = value[2]
-    MOI.set(model, MOI.VariablePrimalStart(), bridge.z_variable_index, zvalue)
-    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.z_variable, zvalue)
+    wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable)
     wstart = wstart === nothing ? zero(T) : wstart
     return MOI.set(
         model,

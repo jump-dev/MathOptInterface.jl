@@ -1447,7 +1447,7 @@ function modify_bridged_change(
     for t in func.terms
         coefs =
             [(i, coef * t.coefficient) for (i, coef) in change.new_coefficients]
-        MOI.modify(b, obj, MOI.MultirowChange(t.variable_index, coefs))
+        MOI.modify(b, obj, MOI.MultirowChange(t.variable, coefs))
     end
 end
 function modify_bridged_change(
@@ -1470,7 +1470,7 @@ function modify_bridged_change(
     end
     for t in func.terms
         coef = t.coefficient * change.new_coefficient
-        MOI.modify(b, obj, MOI.ScalarCoefficientChange(t.variable_index, coef))
+        MOI.modify(b, obj, MOI.ScalarCoefficientChange(t.variable, coef))
     end
 end
 function MOI.modify(

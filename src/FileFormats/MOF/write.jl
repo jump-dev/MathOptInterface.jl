@@ -129,7 +129,7 @@ function moi_to_object(
 )
     return OrderedObject(
         "coefficient" => foo.coefficient,
-        "variable" => name_map[foo.variable_index],
+        "variable" => name_map[foo.variable],
     )
 end
 
@@ -150,8 +150,8 @@ function moi_to_object(
 )
     return OrderedObject(
         "coefficient" => foo.coefficient,
-        "variable_1" => name_map[foo.variable_index_1],
-        "variable_2" => name_map[foo.variable_index_2],
+        "variable_1" => name_map[foo.variable_1],
+        "variable_2" => name_map[foo.variable_2],
     )
 end
 

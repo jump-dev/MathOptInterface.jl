@@ -19,6 +19,23 @@ const MOI = MathOptInterface
         MOI.NLPBlockDual,
     )
         attr = attr_type(1)
-        @test_logs (:warn, "Field attr.N is deprecated, use attr.result_index") attr.N
+        @test_logs(
+            (:warn, "Field attr.N is deprecated, use attr.result_index"),
+            attr.N,
+        )
     end
+end
+
+@testset "ScalarAffineTerm" begin
+    x = MOI.VariableIndex(1)
+    t = MOI.ScalarAffineTerm(1.0, x)
+    @test_logs (:warn,) t.variable_index == x
+end
+
+@testset "ScalarQuadraticTerm" begin
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    t = MOI.ScalarQuadraticTerm(1.0, x, y)
+    @test_logs (:warn,) t.variable_index_1 == x
+    @test_logs (:warn,) t.variable_index_2 == y
 end

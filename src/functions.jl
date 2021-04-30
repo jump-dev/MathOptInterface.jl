@@ -60,15 +60,15 @@ output_dimension(f::VectorOfVariables) = length(f.variables)
 """
     struct ScalarAffineTerm{T}
         coefficient::T
-        variable_index::VariableIndex
+        variable::VariableIndex
     end
 
 Represents ``c x_i`` where ``c`` is `coefficient` and ``x_i`` is the variable
-identified by `variable_index`.
+identified by `variable`.
 """
 struct ScalarAffineTerm{T}
     coefficient::T
-    variable_index::VariableIndex
+    variable::VariableIndex
 end
 
 # Note: ScalarAffineFunction is mutable because its `constant` field is likely of an immutable
@@ -133,18 +133,18 @@ output_dimension(f::VectorAffineFunction) = length(f.constants)
 """
     struct ScalarQuadraticTerm{T}
         coefficient::T
-        variable_index_1::VariableIndex
-        variable_index_2::VariableIndex
+        variable_1::VariableIndex
+        variable_2::VariableIndex
     end
 
 Represents ``c x_i x_j`` where ``c`` is `coefficient`, ``x_i`` is the variable
-identified by `variable_index_1` and ``x_j`` is the variable identified by
-`variable_index_2`.
+identified by `variable_1` and ``x_j`` is the variable identified by
+`variable_2`.
 """
 struct ScalarQuadraticTerm{T}
     coefficient::T
-    variable_index_1::VariableIndex
-    variable_index_2::VariableIndex
+    variable_1::VariableIndex
+    variable_2::VariableIndex
 end
 
 # Note: ScalarQuadraticFunction is mutable because its `constant` field is likely of an immutable
@@ -345,9 +345,9 @@ Returns the indices of the input term `t` as a tuple of `Int`s.
 * For `t::VectorQuadraticTerm`, this is a 3-tuple of the row/output and
   variable indices in non-decreasing order.
 """
-term_indices(t::ScalarAffineTerm) = (t.variable_index.value,)
+term_indices(t::ScalarAffineTerm) = (t.variable.value,)
 function term_indices(t::ScalarQuadraticTerm)
-    return minmax(t.variable_index_1.value, t.variable_index_2.value)
+    return minmax(t.variable_1.value, t.variable_2.value)
 end
 function term_indices(t::Union{VectorAffineTerm,VectorQuadraticTerm})
     return (t.output_index, term_indices(t.scalar_term)...)
@@ -511,7 +511,7 @@ function Base.convert(::Type{SingleVariable}, f::ScalarAffineFunction)
     )
         throw(InexactError(:convert, SingleVariable, f))
     end
-    return SingleVariable(f.terms[1].variable_index)
+    return SingleVariable(f.terms[1].variable)
 end
 
 function Base.convert(
@@ -544,7 +544,7 @@ function Base.convert(
     ::Type{ScalarAffineTerm{T}},
     t::ScalarAffineTerm,
 ) where {T}
-    return ScalarAffineTerm{T}(t.coefficient, t.variable_index)
+    return ScalarAffineTerm{T}(t.coefficient, t.variable)
 end
 
 function Base.convert(
