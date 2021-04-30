@@ -45,6 +45,13 @@ julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
 A Mathematical Programming System (MPS) model
 ```
 
+**The NL file format**
+
+```jldoctest
+julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_NL)
+An AMPL (.nl) model
+```
+
 **The SDPA file format**
 
 ```jldoctest
