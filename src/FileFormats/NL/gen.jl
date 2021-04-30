@@ -4,9 +4,10 @@
 using ASL_jll
 
 open("opcode.jl", "w") do io
-    println("""
-    # Do not modify. This file is automatically created by the script in `gen.jl`.
-    """)
+    println(
+        "# Do not modify. This file is automatically created by the script " *
+        "in `gen.jl`.\n",
+    )
     filename = joinpath(ASL_jll.artifact_dir, "include", "opcode.hd")
     for line in readlines(filename)
         items = split(line, c -> c == '\t' || c == ' '; keepempty = false)
