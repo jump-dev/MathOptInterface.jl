@@ -47,7 +47,7 @@ which is equivalent to
 ```
 This bridge is not added by default by [`MOI.Bridges.full_bridge_optimizer`](@ref)
 as bridging second order cone constraints to semidefinite constraints can be
-achieved by the [`SOCRBridge`](@ref) followed by the [`RSOCtoPSDBridge`](@ref)
+achieved by the [`SOCtoRSOCBridge`](@ref) followed by the [`RSOCtoPSDBridge`](@ref)
 while creating a smaller semidefinite constraint.
 """
 struct SOCtoPSDBridge{T,F,G} <: SetMapBridge{

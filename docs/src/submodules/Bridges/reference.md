@@ -43,8 +43,8 @@ Bridges.Constraint.add_all_bridges
 
 ```@docs
 Bridges.Constraint.GreaterToIntervalBridge
-Bridges.Constraint.LessToIntervalBridge
 Bridges.Constraint.GreaterToLessBridge
+Bridges.Constraint.LessToIntervalBridge
 Bridges.Constraint.LessToGreaterBridge
 Bridges.Constraint.NonnegToNonposBridge
 Bridges.Constraint.NonposToNonnegBridge
@@ -55,11 +55,13 @@ Bridges.Constraint.VectorSlackBridge
 Bridges.Constraint.ScalarFunctionizeBridge
 Bridges.Constraint.VectorFunctionizeBridge
 Bridges.Constraint.SplitIntervalBridge
-Bridges.Constraint.RSOCBridge
-Bridges.Constraint.SOCRBridge
-Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.SOCtoRSOCBridge
+Bridges.Constraint.RSOCtoSOCBridge
 Bridges.Constraint.SOCtoNonConvexQuadBridge
 Bridges.Constraint.RSOCtoNonConvexQuadBridge
+Bridges.Constraint.QuadtoSOCBridge
+Bridges.Constraint.SOCtoPSDBridge
+Bridges.Constraint.RSOCtoPSDBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
 Bridges.Constraint.GeoMeantoRelEntrBridge
@@ -70,8 +72,6 @@ Bridges.Constraint.NormNuclearBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge
 Bridges.Constraint.LogDetBridge
-Bridges.Constraint.SOCtoPSDBridge
-Bridges.Constraint.RSOCtoPSDBridge
 Bridges.Constraint.IndicatorActiveOnFalseBridge
 Bridges.Constraint.IndicatorSOS1Bridge
 Bridges.Constraint.SemiToBinaryBridge

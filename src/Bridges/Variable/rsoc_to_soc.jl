@@ -69,7 +69,7 @@ end
 """
     RSOCtoSOCBridge{T} <: Bridges.Variable.AbstractBridge
 
-Same transformation as [`MOI.Bridges.Constraint.RSOCBridge`](@ref).
+Same transformation as [`MOI.Bridges.Constraint.RSOCtoSOCBridge`](@ref).
 """
 struct RSOCtoSOCBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}

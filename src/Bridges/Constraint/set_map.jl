@@ -151,8 +151,8 @@ const NonnegToNonpos{T,OT<:MOI.ModelLike} =
 const NonposToNonneg{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NonposToNonnegBridge{T},OT}
 include("rsoc.jl")
-const RSOC{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCBridge{T},OT}
-const SOCR{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCRBridge{T},OT}
+const RSOC{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoSOCBridge{T},OT}
+const SOCR{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoRSOCBridge{T},OT}
 include("ltgt_to_interval.jl")
 const GreaterToInterval{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{GreaterToIntervalBridge{T},OT}

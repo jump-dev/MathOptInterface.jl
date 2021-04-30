@@ -1276,7 +1276,7 @@ end
         MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(4))
     @test !any(v -> MOIB.is_bridged(bridged, v), y)
     @test !MOIB.is_variable_bridged(bridged, cy)
-    @test MOIB.bridge(bridged, cy) isa MOIB.Constraint.RSOCBridge{T}
+    @test MOIB.bridge(bridged, cy) isa MOIB.Constraint.RSOCtoSOCBridge{T}
     @test sprint(MOIB.print_graph, bridged) == MOI.Utilities.replace_acronym(
         """
 Bridge graph with 5 variable nodes, 11 constraint nodes and 0 objective nodes.
@@ -1286,8 +1286,8 @@ Bridge graph with 5 variable nodes, 11 constraint nodes and 0 objective nodes.
  [4] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (6).
  [5] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (8).
  (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorAffineFunction{T}}).
- (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorAffineFunction{T}}).
+ (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (5) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (6) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOIB.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
@@ -1662,7 +1662,7 @@ end
 MOIB.add_bridge(bridged_mock, MOIB.Constraint.SplitIntervalBridge{Float64})
 MOIB.add_bridge(bridged_mock, MOIB.Constraint.RSOCtoPSDBridge{Float64})
 MOIB.add_bridge(bridged_mock, MOIB.Constraint.SOCtoPSDBridge{Float64})
-MOIB.add_bridge(bridged_mock, MOIB.Constraint.RSOCBridge{Float64})
+MOIB.add_bridge(bridged_mock, MOIB.Constraint.RSOCtoSOCBridge{Float64})
 
 @testset "Name test" begin
     MOIT.nametest(bridged_mock)

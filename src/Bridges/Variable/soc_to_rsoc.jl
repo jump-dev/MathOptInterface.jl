@@ -1,7 +1,7 @@
 """
     SOCtoRSOCBridge{T} <: Bridges.Variable.AbstractBridge
 
-Same transformation as [`MOI.Bridges.Constraint.SOCRBridge`](@ref).
+Same transformation as [`MOI.Bridges.Constraint.SOCtoRSOCBridge`](@ref).
 """
 struct SOCtoRSOCBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}
