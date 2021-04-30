@@ -52,7 +52,6 @@ Utilities.mode
 ```@docs
 Utilities.automatic_copy_to
 Utilities.default_copy_to
-Utilities.supports_incremental_interface
 ```
 
 ### [Allocate-Load API](@id allocate_load_api_ref)

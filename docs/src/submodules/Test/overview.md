@@ -62,9 +62,9 @@ function test_SolverName()
 end
 
 function test_supports_incremental_interface()
-    @test MOI.Utilities.supports_incremental_interface(OPTIMIZER, false)
+    @test MOI.supports_incremental_interface(OPTIMIZER, false)
     # Use `@test !...` if names are not supported
-    @test MOI.Utilities.supports_incremental_interface(OPTIMIZER, true)
+    @test MOI.supports_incremental_interface(OPTIMIZER, true)
 end
 
 function test_unittest()

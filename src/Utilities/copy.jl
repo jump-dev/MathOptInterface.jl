@@ -5,7 +5,7 @@
                       copy_names::Bool=true,
                       filter_constraints::Union{Nothing, Function}=nothing)
 
-Use [`Utilities.supports_incremental_interface`](@ref) and
+Use [`MOI.supports_incremental_interface`](@ref) and
 [`Utilities.supports_allocate_load`](@ref) to automatically choose between
 [`Utilities.default_copy_to`](@ref) or [`Utilities.allocate_load`](@ref) to
 apply the copy operation.
