@@ -96,7 +96,10 @@ function MOI.empty!(model::ConstrainedVariablesModel)
     return empty!(model.added_constrained)
 end
 
-function MOI.supports_incremental_interface(model::ConstrainedVariablesModel, ::Bool)
+function MOI.supports_incremental_interface(
+    model::ConstrainedVariablesModel,
+    ::Bool,
+)
     return !model.allocate_load
 end
 function MOIU.supports_allocate_load(model::ConstrainedVariablesModel, ::Bool)

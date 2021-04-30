@@ -125,7 +125,10 @@ function MOI.copy_to(uf::UniversalFallback, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(uf, src; kws...)
 end
 
-function MOI.supports_incremental_interface(uf::UniversalFallback, copy_names::Bool)
+function MOI.supports_incremental_interface(
+    uf::UniversalFallback,
+    copy_names::Bool,
+)
     return MOI.supports_incremental_interface(uf.model, copy_names)
 end
 

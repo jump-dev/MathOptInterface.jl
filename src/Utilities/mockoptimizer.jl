@@ -754,7 +754,10 @@ end
 function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; kws...)
     return automatic_copy_to(mock, src; kws...)
 end
-function MOI.supports_incremental_interface(mock::MockOptimizer, copy_names::Bool)
+function MOI.supports_incremental_interface(
+    mock::MockOptimizer,
+    copy_names::Bool,
+)
     return !mock.needs_allocate_load &&
            MOI.supports_incremental_interface(mock.inner_model, copy_names)
 end

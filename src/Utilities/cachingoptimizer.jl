@@ -224,7 +224,10 @@ function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
     m.state == ATTACHED_OPTIMIZER && reset_optimizer(m)
     return MOI.copy_to(m.model_cache, src; kws...)
 end
-function MOI.supports_incremental_interface(model::CachingOptimizer, copy_names::Bool)
+function MOI.supports_incremental_interface(
+    model::CachingOptimizer,
+    copy_names::Bool,
+)
     return MOI.supports_incremental_interface(model.model_cache, copy_names)
 end
 

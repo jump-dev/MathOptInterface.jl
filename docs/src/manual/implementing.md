@@ -468,7 +468,7 @@ function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
     return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
 end
 ```
-See [`MOI.supports_incremental_interface`](@ref) for more details on whether to
+See [`supports_incremental_interface`](@ref) for more details on whether to
 implement the `true` or `!copy_names` version.
 
 ## [Names](@id implement_names)
