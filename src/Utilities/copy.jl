@@ -5,7 +5,7 @@
                       copy_names::Bool=true,
                       filter_constraints::Union{Nothing, Function}=nothing)
 
-Use [`MOI.supports_incremental_interface`](@ref) and
+Use [`MathOptInterface.supports_incremental_interface`](@ref) and
 [`Utilities.supports_allocate_load`](@ref) to automatically choose between
 [`Utilities.default_copy_to`](@ref) or [`Utilities.allocate_load`](@ref) to
 apply the copy operation.
@@ -613,8 +613,8 @@ end
 
 Implements `MOI.copy_to(dest, src)` by adding the variables and then the
 constraints and attributes incrementally. The function
-[`supports_incremental_interface`](@ref) can be used to check whether `dest` supports
-the copying a model incrementally.
+[`MathOptInterface.supports_incremental_interface`](@ref) can be used to check
+whether `dest` supports the copying a model incrementally.
 
 If the `filter_constraints` arguments is given, only the constraints for which
 this function returns `true` will be copied. This function is given a
