@@ -70,9 +70,9 @@ end
 """
     CachingOptimizer(model_cache::MOI.ModelLike, optimizer::AbstractOptimizer)
 
-Creates an `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer `optimizer`.
-The `model_cache` manager returned behaves like an `AbstractOptimizer` as long as no
-`CachingOptimizer`-specific functions (e.g. `reset_optimizer`) are called on it.
+Creates an `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer
+`optimizer`.
+
 The type of the optimizer returned is `CachingOptimizer{typeof(optimizer),
 typeof(model_cache)}` so it does not support the function
 `reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
@@ -87,7 +87,7 @@ function CachingOptimizer(
     return CachingOptimizer{typeof(optimizer),typeof(model_cache)}(
         optimizer,
         model_cache,
-        ATTACHED_OPTIMIZER,
+        EMPTY_OPTIMIZER,
         AUTOMATIC,
         IndexMap(),
         IndexMap(),
@@ -232,9 +232,6 @@ function MOI.empty!(m::CachingOptimizer)
     MOI.empty!(m.model_cache)
     if m.state == ATTACHED_OPTIMIZER
         MOI.empty!(m.optimizer)
-    end
-    if m.state == EMPTY_OPTIMIZER && m.mode == AUTOMATIC
-        m.state = ATTACHED_OPTIMIZER
     end
     m.model_to_optimizer_map = IndexMap()
     return m.optimizer_to_model_map = IndexMap()

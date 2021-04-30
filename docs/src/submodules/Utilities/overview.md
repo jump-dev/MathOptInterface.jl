@@ -152,7 +152,7 @@ julia> model = MOI.Utilities.CachingOptimizer(
            PathOptimizer{Float64}(),
        )
 MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
-in state ATTACHED_OPTIMIZER
+in state EMPTY_OPTIMIZER
 in mode AUTOMATIC
 with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
@@ -169,19 +169,6 @@ A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible states:
   optimizer. If the optimizer does not support modifications, and error will be
   thrown.
 
-Use [`Utilities.reset_optimizer`](@ref) to go from `ATTACHED_OPTIMIZER` to
-`EMPTY_OPTIMIZER`:
-```jldoctest pathoptimizer
-julia> MOI.Utilities.reset_optimizer(model)
-
-julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
-in state EMPTY_OPTIMIZER
-in mode AUTOMATIC
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
-with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
-```
-
 Use [`Utilities.attach_optimizer`](@ref) to go from `EMPTY_OPTIMIZER` to
 `ATTACHED_OPTIMIZER`:
 ```jldoctest pathoptimizer
@@ -194,8 +181,22 @@ in mode AUTOMATIC
 with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
 with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
 ```
+
 !!! info
     You must be in `ATTACHED_OPTIMIZER` to use [`optimize!`](@ref).
+
+Use [`Utilities.reset_optimizer`](@ref) to go from `ATTACHED_OPTIMIZER` to
+`EMPTY_OPTIMIZER`:
+```jldoctest pathoptimizer
+julia> MOI.Utilities.reset_optimizer(model)
+
+julia> model
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state EMPTY_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
+```
 
 Use [`Utilities.drop_optimizer`](@ref) to go from any state to `NO_OPTIMIZER`:
 ```jldoctest pathoptimizer
