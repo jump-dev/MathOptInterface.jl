@@ -85,7 +85,7 @@ ObjectiveValue
 DualObjectiveValue
 ObjectiveBound
 RelativeGap
-SolveTime
+SolveTimeSec
 SimplexIterations
 BarrierIterations
 NodeCount

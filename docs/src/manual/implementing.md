@@ -525,7 +525,7 @@ solution information.
 * [`ResultCount`](@ref)
 * [`ObjectiveValue`](@ref)
 * [`VariablePrimal`](@ref)
-* [`SolveTime`](@ref)
+* [`SolveTimeSec`](@ref)
 
 !!! info
     You only need to implement [`get`](@ref) for solution attributes. Don't
