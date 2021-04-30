@@ -281,7 +281,12 @@ function variables(func::MOI.VectorQuadraticFunction)
 end
 
 """
-    basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int;
+    basic_constraint_test_helper(
+        model::MOI.ModelLike,
+        config::TestConfig,
+        func::Function,
+        set::MOI.AbstractSet,
+        N::Int;
         delete::Bool                  = true,
         get_constraint_function::Bool = true,
         get_constraint_set::Bool      = true,

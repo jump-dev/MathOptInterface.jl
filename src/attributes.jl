@@ -129,13 +129,10 @@ struct ResultIndexBoundsError{AttrType} <: Exception
     attr::AttrType
     result_count::Int
 end
-# TODO: rename the .N -> .result_index field in necessary attributes (e.g.,
-# VariablePrimal, ConstraintPrimal, ConstraintDual), and remove this helper
-# function.
-_result_index_field(attr) = attr.result_index
+
 function check_result_index_bounds(model::ModelLike, attr)
     result_count = get(model, ResultCount())
-    if !(1 <= _result_index_field(attr) <= result_count)
+    if !(1 <= attr.result_index <= result_count)
         throw(ResultIndexBoundsError(attr, result_count))
     end
 end
@@ -1058,17 +1055,16 @@ A variable attribute for the initial assignment to some primal variable's value 
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
 """
-    VariablePrimal(N)
+    VariablePrimal(result_index::Int = 1)
     VariablePrimal()
 
-A variable attribute for the assignment to some primal variable's value in result `N`.
-If `N` is omitted, it is 1 by default.
+A variable attribute for the assignment to some primal variable's value in
+result `result_index`. If `result_index` is omitted, it is 1 by default.
 """
 struct VariablePrimal <: AbstractVariableAttribute
-    N::Int
+    result_index::Int
 end
 VariablePrimal() = VariablePrimal(1)
-_result_index_field(attr::VariablePrimal) = attr.N
 
 """
     CallbackVariablePrimal(callback_data)
@@ -1158,11 +1154,11 @@ A constraint attribute for the initial assignment to some constraint's dual valu
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
 """
-    ConstraintPrimal(N)
+    ConstraintPrimal(result_index::Int)
     ConstraintPrimal()
 
-A constraint attribute for the assignment to some constraint's primal value(s) in result `N`.
-If `N` is omitted, it is 1 by default.
+A constraint attribute for the assignment to some constraint's primal value(s)
+in result `result_index`. If `result_index` is omitted, it is 1 by default.
 
 Given a constraint `function-in-set`, the `ConstraintPrimal` is the value of the
 function evaluated at the primal solution of the variables. For example, given
@@ -1171,23 +1167,21 @@ a primal solution of `(x,y) = (4,5)`, the `ConstraintPrimal` solution of the
 constraint is `1 * 4 + 2 * 5 + 3 = 17`.
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
-    N::Int
+    result_index::Int
 end
 ConstraintPrimal() = ConstraintPrimal(1)
-_result_index_field(attr::ConstraintPrimal) = attr.N
 
 """
-    ConstraintDual(N)
+    ConstraintDual(result_index::Int)
     ConstraintDual()
 
-A constraint attribute for the assignment to some constraint's dual value(s) in result `N`.
-If `N` is omitted, it is 1 by default.
+A constraint attribute for the assignment to some constraint's dual value(s) in
+result `result_index`. If `result_index` is omitted, it is 1 by default.
 """
 struct ConstraintDual <: AbstractConstraintAttribute
-    N::Int
+    result_index::Int
 end
 ConstraintDual() = ConstraintDual(1)
-_result_index_field(attr::ConstraintDual) = attr.N
 
 """
     ConstraintBasisStatus(result_index)
@@ -1515,32 +1509,34 @@ The values indicate how to interpret the result vector.
 )
 
 """
-    PrimalStatus(N)
+    PrimalStatus(result_index)
     PrimalStatus()
 
-A model attribute for the `ResultStatusCode` of the primal result `N`.
-If `N` is omitted, it defaults to 1. If `N` is larger than the value of
-[`ResultCount`](@ref) then `NO_SOLUTION` is returned.
+A model attribute for the `ResultStatusCode` of the primal result
+`result_index`. If `result_index` is omitted, it defaults to 1.
+
+If `result_index` is larger than the value of [`ResultCount`](@ref) then
+`NO_SOLUTION` is returned.
 """
 struct PrimalStatus <: AbstractModelAttribute
-    N::Int
+    result_index::Int
 end
 PrimalStatus() = PrimalStatus(1)
-_result_index_field(attr::PrimalStatus) = attr.N
 
 """
-    DualStatus(N)
+    DualStatus(result_index)
     DualStatus()
 
-A model attribute for the `ResultStatusCode` of the dual result `N`.
-If `N` is omitted, it defaults to 1. If `N` is larger than the value of
-[`ResultCount`](@ref) then `NO_SOLUTION` is returned.
+A model attribute for the `ResultStatusCode` of the dual result `result_index`.
+If `result_index` is omitted, it defaults to 1.
+
+If `result_index` is larger than the value of [`ResultCount`](@ref) then
+`NO_SOLUTION` is returned.
 """
 struct DualStatus <: AbstractModelAttribute
-    N::Int
+    result_index::Int
 end
 DualStatus() = DualStatus(1)
-_result_index_field(attr::DualStatus) = attr.N
 
 # Cost of bridging constrained variable in S
 struct VariableBridgingCost{S<:AbstractSet} <: AbstractModelAttribute end

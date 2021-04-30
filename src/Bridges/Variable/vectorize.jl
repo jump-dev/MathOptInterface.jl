@@ -102,7 +102,7 @@ function MOI.get(
     x = MOI.get(model, attr, bridge.vector_constraint)
     @assert length(x) == 1
     y = x[1]
-    if !MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.N)))
+    if !MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.result_index)))
         # If it is an infeasibility certificate, it is a ray and satisfies the
         # homogenized problem, see https://github.com/jump-dev/MathOptInterface.jl/issues/433
         # Otherwise, we need to add the set constant since the ConstraintPrimal
@@ -130,7 +130,7 @@ function MOI.get(
     value = MOI.get(model, attr, bridge.variable)
     if !(
         attr isa MOI.VariablePrimal &&
-        MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.N)))
+        MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.result_index)))
     )
         value += bridge.set_constant
     end
