@@ -79,7 +79,7 @@ function nametest(model::MOI.ModelLike)
 
     @testset "Name test with $(typeof(model))" begin
         MOI.empty!(model)
-        @test MOIU.supports_default_copy_to(model, true) #=copy_names=#
+        @test MOI.supports_incremental_interface(model, true) #=copy_names=#
         @test MOI.supports(model, MOI.Name())
         @test !(MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet()))
         @test MOI.get(model, MOI.Name()) == ""
@@ -352,7 +352,7 @@ end
 # Taken from https://github.com/jump-dev/MathOptInterfaceUtilities.jl/issues/41
 function validtest(model::MOI.ModelLike)
     MOI.empty!(model)
-    @test MOIU.supports_default_copy_to(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     v = MOI.add_variables(model, 2)
     @test MOI.is_valid(model, v[1])
     @test MOI.is_valid(model, v[2])
@@ -404,7 +404,7 @@ end
 
 function emptytest(model::MOI.ModelLike)
     MOI.empty!(model)
-    @test MOIU.supports_default_copy_to(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     # Taken from LIN1
     v = MOI.add_variables(model, 3)
     @test MOI.supports_constraint(
@@ -700,7 +700,7 @@ end
 
 function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
     MOI.empty!(dest)
-    @test MOIU.supports_default_copy_to(src, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(src, false) #=copy_names=#
     x, y, z = MOI.add_variables(src, 3)
     fz = MOI.SingleVariable(z)
     a = MOI.add_constraint(src, x, MOI.EqualTo(1.0))
@@ -784,7 +784,7 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
 end
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
-    @test MOIU.supports_default_copy_to(src, true) #=copy_names=#
+    @test MOI.supports_incremental_interface(src, true) #=copy_names=#
     MOI.empty!(src)
     MOI.empty!(dest)
     MOI.set(src, MOI.Name(), "ModelName")
@@ -1000,7 +1000,7 @@ Test whether the model returns ListOfVariableIndices and ListOfConstraintIndices
 sorted by creation time.
 """
 function orderedindicestest(model::MOI.ModelLike)
-    @test MOIU.supports_default_copy_to(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     MOI.empty!(model)
     v1 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]

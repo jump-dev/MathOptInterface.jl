@@ -38,8 +38,8 @@ end
     end
 end
 @testset "Default" begin
-    @test !MOIU.supports_default_copy_to(DummyModel(), false)
-    @test !MOIU.supports_default_copy_to(DummyModel(), true)
+    @test !MOI.supports_incremental_interface(DummyModel(), false)
+    @test !MOI.supports_incremental_interface(DummyModel(), true)
     model = MOIU.Model{Float64}()
     MOIT.failcopytestc(model)
     MOIT.failcopytestia(model)
@@ -96,7 +96,7 @@ function MOI.empty!(model::ConstrainedVariablesModel)
     return empty!(model.added_constrained)
 end
 
-function MOIU.supports_default_copy_to(model::ConstrainedVariablesModel, ::Bool)
+function MOI.supports_incremental_interface(model::ConstrainedVariablesModel, ::Bool)
     return !model.allocate_load
 end
 function MOIU.supports_allocate_load(model::ConstrainedVariablesModel, ::Bool)
@@ -226,7 +226,7 @@ function MOI.copy_to(
     return MOIU.automatic_copy_to(dest, src; kws...)
 end
 
-function MOIU.supports_default_copy_to(
+function MOI.supports_incremental_interface(
     model::AbstractConstrainedVariablesModel,
     ::Bool,
 )
@@ -581,7 +581,7 @@ function MOI.supports_constraint(
     return true
 end
 
-MOIU.supports_default_copy_to(::BoundModel, ::Bool) = true
+MOI.supports_incremental_interface(::BoundModel, ::Bool) = true
 function MOI.copy_to(dest::BoundModel, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(dest, src; kws...)
 end

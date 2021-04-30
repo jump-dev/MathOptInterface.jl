@@ -609,7 +609,7 @@ function MOI.add_constrained_variables(
     return MOI.add_constrained_variables(model.inner, set)
 end
 
-MOI.Utilities.supports_default_copy_to(::NoFreeVariables, names::Bool) = !names
+MOI.Utilities.supports_incremental_interface(::NoFreeVariables, names::Bool) = !names
 function MOI.copy_to(dest::NoFreeVariables, src::MOI.ModelLike; kwargs...)
     return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
 end

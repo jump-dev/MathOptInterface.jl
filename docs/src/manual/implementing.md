@@ -453,25 +453,23 @@ MOI.supports_add_constrained_variables(::Optimizer, ::Type{Reals}) = false
 ### Incremental and `copy_to`
 
 If you implement the incremental interface, you have the option of also
-implementing [`copy_to`](@ref). If you don't want to implement
-[`copy_to`](@ref), e.g., because the solver has no API for building the problem
-in a single function call, define the following fallback:
+implementing [`copy_to`](@ref).
+
+If you don't want to implement [`copy_to`](@ref), e.g., because the solver has
+no API for building the problem in a single function call, define the following
+fallback:
 ```julia
+# If you support VariableName and ConstraintName...
+MOI.supports_incremental_interface(::Optimizer, copy_names::Bool) = true
+# Otherwise...
+MOI.supports_incremental_interface(::Optimizer, copy_names::Bool) = !copy_names
+
 function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
     return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
 end
-
-function MOI.Utilities.supports_default_copy_to(
-    model::Optimizer,
-    copy_names::Bool,
-)
-    # If you support names...
-    return true
-    # Otherwise...
-    return !copy_names
-end
 ```
-See [`Utilities.supports_default_copy_to`](@ref) for more details.
+See [`MOI.supports_incremental_interface`](@ref) for more details on whether to
+implement the `true` or `!copy_names` version.
 
 ## [Names](@id implement_names)
 

@@ -95,6 +95,36 @@ Empty the model, that is, remove all variables, constraints and model attributes
 function empty! end
 
 """
+    supports_incremental_interface(model::ModelLike, copy_names::Bool)
+
+Return a `Bool` indicating whether `model` supports building incrementally via
+[`add_variable`](@ref) and [`add_constraint`](@ref).
+
+`copy_names` is a `Bool` indicating whether the user wishes to set
+[`VariableName`](@ref) and [`ConstraintName`](@ref) attributes.
+If `model` supports the incremental interface but does not support name
+attributes, define
+```julia
+supports_incremental_interface(::MyNewModel, copy_names::Bool) = !copy_names
+```
+
+The main purpose of this function is to determine whether a model can be loaded
+into `model` incrementally or whether it should be cached and copied at once
+instead.
+
+This is used by [`instantiate`](@ref) to determine whether to add a cache in two
+situations:
+1. A first cache can be used to store the model as entered by the user as well
+   as the names of variables and constraints. This cache is created if this
+   function returns `false` when `copy_names` is `true`.
+2. If bridges are used, then a second cache can be used to store the bridged
+   model with unnamed variables and constraints. This cache is created if this
+   function returns `false` when `copy_names` is `false`.
+```
+"""
+supports_incremental_interface(::ModelLike, ::Bool) = false
+
+"""
     copy_to(dest::ModelLike, src::ModelLike; copy_names=true, warn_attributes=true)
 
 Copy the model from `src` into `dest`. The target `dest` is emptied, and all

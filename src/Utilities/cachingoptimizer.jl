@@ -127,9 +127,9 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
         # Skip attributes which don't apply to the new optimizer.
         if attr isa MOI.RawParameter
-            # Even if the optimizer claims to `supports` `attr`, the value 
+            # Even if the optimizer claims to `supports` `attr`, the value
             # might have a different meaning (e.g., two solvers with `logLevel`
-            # as a RawParameter). To be on the safe side, just skip all raw 
+            # as a RawParameter). To be on the safe side, just skip all raw
             # parameters.
             continue
         elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)
@@ -224,8 +224,8 @@ function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
     m.state == ATTACHED_OPTIMIZER && reset_optimizer(m)
     return MOI.copy_to(m.model_cache, src; kws...)
 end
-function supports_default_copy_to(model::CachingOptimizer, copy_names::Bool)
-    return supports_default_copy_to(model.model_cache, copy_names)
+function MOI.supports_incremental_interface(model::CachingOptimizer, copy_names::Bool)
+    return MOI.supports_incremental_interface(model.model_cache, copy_names)
 end
 
 function MOI.empty!(m::CachingOptimizer)

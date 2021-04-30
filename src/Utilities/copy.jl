@@ -5,7 +5,7 @@
                       copy_names::Bool=true,
                       filter_constraints::Union{Nothing, Function}=nothing)
 
-Use [`Utilities.supports_default_copy_to`](@ref) and
+Use [`Utilities.supports_incremental_interface`](@ref) and
 [`Utilities.supports_allocate_load`](@ref) to automatically choose between
 [`Utilities.default_copy_to`](@ref) or [`Utilities.allocate_load`](@ref) to
 apply the copy operation.
@@ -20,7 +20,7 @@ function automatic_copy_to(
     copy_names::Bool = true,
     filter_constraints::Union{Nothing,Function} = nothing,
 )
-    if supports_default_copy_to(dest, copy_names)
+    if MOI.supports_incremental_interface(dest, copy_names)
         default_copy_to(dest, src, copy_names, filter_constraints)
     elseif supports_allocate_load(dest, copy_names)
         allocate_load(dest, src, copy_names, filter_constraints)
@@ -33,47 +33,7 @@ function automatic_copy_to(
     end
 end
 
-"""
-    supports_default_copy_to(model::ModelLike, copy_names::Bool)
-
-Return a `Bool` indicating whether the model `model` supports
-[`default_copy_to(model, src, copy_names=copy_names)`](@ref) if all the
-attributes set to `src` and constraints added to `src` are supported by `model`.
-
-This function can be used to determine whether a model can be loaded into
-`model` incrementally or whether it should be cached and copied at once instead.
-This is used by JuMP to determine whether to add a cache or not in two
-situations:
-1. A first cache can be used to store the model as entered by the user as well
-   as the names of variables and constraints. This cache is created if this
-   function returns `false` when `copy_names` is `true`.
-2. If bridges are used, then a second cache can be used to store the bridged
-   model with unnamed variables and constraints. This cache is created if this
-   function returns `false` when `copy_names` is `false`.
-
-## Examples
-
-If [`MathOptInterface.set`](@ref), [`MathOptInterface.add_variable`](@ref) and
-[`MathOptInterface.add_constraint`](@ref) are implemented for a model of type
-`MyModel` and names are supported, then [`MathOptInterface.copy_to`](@ref) can
-be implemented as
-```julia
-MOI.Utilities.supports_default_copy_to(model::MyModel, copy_names::Bool) = true
-function MOI.copy_to(dest::MyModel, src::MOI.ModelLike; kws...)
-    return MOI.Utilities.automatic_copy_to(dest, src; kws...)
-end
-```
-The [`Utilities.automatic_copy_to`](@ref) function automatically redirects to
-[`Utilities.default_copy_to`](@ref).
-
-If names are not supported, simply change the first line by
-```julia
-MOI.supports_default_copy_to(model::MyModel, copy_names::Bool) = !copy_names
-```
-The [`Utilities.default_copy_to`](@ref) function automatically throws an helpful
-error in case `copy_to` is called with `copy_names` equal to `true`.
-"""
-supports_default_copy_to(model::MOI.ModelLike, copy_names::Bool) = false
+@deprecate supports_default_copy_to MOI.supports_incremental_interface
 
 """
     _index_to_variable(i::Int)
@@ -653,7 +613,7 @@ end
 
 Implements `MOI.copy_to(dest, src)` by adding the variables and then the
 constraints and attributes incrementally. The function
-[`supports_default_copy_to`](@ref) can be used to check whether `dest` supports
+[`supports_incremental_interface`](@ref) can be used to check whether `dest` supports
 the copying a model incrementally.
 
 If the `filter_constraints` arguments is given, only the constraints for which
