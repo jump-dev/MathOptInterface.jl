@@ -1154,7 +1154,7 @@ An error to be thrown when the user tries to set `ConstraintName` on a
 """
 function SingleVariableConstraintNameError()
     return UnsupportedAttribute(
-        MOI.ConstraintName(),
+        ConstraintName(),
         "ConstraintNames are not supported for SingleVariable constraints",
     )
 end
