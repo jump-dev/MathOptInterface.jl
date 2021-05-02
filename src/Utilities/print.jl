@@ -177,7 +177,7 @@ function _to_string(
     term::MOI.ScalarAffineTerm;
     is_first::Bool,
 )
-    name = _to_string(options, model, term.variable_index)
+    name = _to_string(options, model, term.variable)
     return _to_string(options, term.coefficient, name; is_first = is_first)
 end
 
@@ -204,12 +204,12 @@ function _to_string(
     term::MOI.ScalarQuadraticTerm;
     is_first::Bool,
 )
-    name_1 = _to_string(options, model, term.variable_index_1)
-    name_2 = _to_string(options, model, term.variable_index_2)
+    name_1 = _to_string(options, model, term.variable_1)
+    name_2 = _to_string(options, model, term.variable_2)
     # Be careful here when printing the coefficient. ScalarQuadraticFunction
     # assumes an additional 0.5 factor!
     coef = term.coefficient
-    name = if term.variable_index_1 == term.variable_index_2
+    name = if term.variable_1 == term.variable_2
         coef /= 2
         string(name_1, _to_string(options, :sq))
     else
@@ -546,7 +546,7 @@ function _print_model(
         end
     end
     println(io, "\nSubject to:")
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         if options.print_types
             println(io, "\n$(_drop_moi(F))-in-$(_drop_moi(S))")
         end
@@ -584,7 +584,7 @@ function _print_model(
         println(io, "\\", sense_s, "\\quad & ", f, " \\\\")
     end
     println(io, "\\text{Subject to}\\\\")
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         if options.print_types
             println(io, " & \\text{$(_drop_moi(F))-in-$(_drop_moi(S))} \\\\")
         end
