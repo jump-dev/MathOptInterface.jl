@@ -183,7 +183,7 @@ end
     variables: x
     maxobjective: 3.0x
     c: 2.0x in Interval(1.0, 4.0)
-    d: x in LessThan(1.5)
+    x in LessThan(1.5)
 """,
     )
     x = MOI.get(bridged_mock, MOI.VariableIndex, "x")
@@ -205,14 +205,9 @@ end
     )
     c2 = MOI.get(bridged_mock, MOI.ConstraintIndex, "c")
     @test c1 == c2
-    d1 = MOI.get(
-        bridged_mock,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
-        "d",
+    @test MOI.is_valid(
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value),
     )
-    @test isa(d1, MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}})
-    d2 = MOI.get(bridged_mock, MOI.ConstraintIndex, "d")
-    @test d1 == d2
 end
 
 MOI.empty!(bridged_mock)

@@ -10,8 +10,8 @@ function getconstraint(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     minobjective: 2.0x
-    c1: x >= 1.0
-    c2: x <= 2.0
+    c1: 1.0 * x >= 1.0
+    c2: 1.0 * x <= 2.0
 """,
     )
     @test MOI.get(model, MOI.ConstraintIndex, "c3") === nothing
@@ -465,9 +465,9 @@ function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     maxobjective: 2.0x
-    c1: x in ZeroOne()
-    c2: x >= 0.0
-    c3: x <= 1.0
+    x in ZeroOne()
+    x >= 0.0
+    x <= 1.0
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
@@ -487,9 +487,9 @@ function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     maxobjective: 2.0x
-    c1: x in ZeroOne()
-    c2: x >= 0.0
-    c3: x <= 0.5
+    x in ZeroOne()
+    x >= 0.0
+    x <= 0.5
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
@@ -509,9 +509,9 @@ function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     maxobjective: 2.0x
-    c1: x in ZeroOne()
-    c2: x >= 0.2
-    c3: x <= 0.5
+    x in ZeroOne()
+    x >= 0.2
+    x <= 0.5
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")

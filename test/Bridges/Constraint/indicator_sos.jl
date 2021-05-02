@@ -245,9 +245,9 @@ end
     s = """
     variables: z, x, w
     sos1: [w, z] in MathOptInterface.SOS1([0.4, 0.6])
-    wless: w <= 0.0
+    w <= 0.0
     ineq: x + w <= 8.0
-    bin_cons: z in MathOptInterface.ZeroOne()
+    z in MathOptInterface.ZeroOne()
     maxobjective: z
     """
     model = MOIU.Model{Float64}()
@@ -256,7 +256,7 @@ end
         mock,
         model,
         var_names,
-        ["sos1", "wless", "ineq", "bin_cons"],
+        ["sos1", "ineq"],
     )
 
     test_delete_bridge(
@@ -276,11 +276,11 @@ end
     model = MOIU.Model{Float64}()
     sbridged = """
     variables: x, z
-    bin_cons: z in MathOptInterface.ZeroOne()
+    z in MathOptInterface.ZeroOne()
     maxobjective: z
     """
     MOIU.loadfromstring!(model, sbridged)
-    MOIU.test_models_equal(bridged_mock, model, ["z", "x"], ["bin_cons"])
+    MOIU.test_models_equal(bridged_mock, model, ["z", "x"], String[])
 end
 
 @testset "Getting primal attributes" begin

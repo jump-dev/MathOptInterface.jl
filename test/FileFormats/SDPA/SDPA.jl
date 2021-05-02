@@ -107,7 +107,7 @@ function test_support()
         model_string = """
         variables: x
         minobjective: 1x
-        c: x in $set
+        x in $set
         """
         model = SDPA.Model()
         @test !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set))

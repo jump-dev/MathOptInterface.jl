@@ -12,8 +12,8 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     minobjective: 2.0x + -1.0
-    c1: x >= 1.5
-    c2: x in Integer()
+    x >= 1.5
+    x in Integer()
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
@@ -36,8 +36,8 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     maxobjective: 2.0x + 1.0
-    c1: x <= 1.5
-    c2: x in Integer()
+    x <= 1.5
+    x in Integer()
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
@@ -60,7 +60,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     minobjective: 2.0x + -1.0
-    c1: x >= 1.5
+    x >= 1.5
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
@@ -83,7 +83,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     maxobjective: 2.0x + 1.0
-    c1: x <= 1.5
+    x <= 1.5
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")

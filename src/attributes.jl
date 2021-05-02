@@ -1132,10 +1132,17 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 """
     ConstraintName()
 
-A constraint attribute for a string identifying the constraint. It is *valid*
-for constraints variables to have the same name; however, constraints with
-duplicate names cannot be looked up using [`get`](@ref) regardless of if they
-have the same `F`-in-`S` type. It has a default value of `""` if not set.
+A constraint attribute for a string identifying the constraint.
+
+It is *valid* for constraints variables to have the same name; however,
+constraints with duplicate names cannot be looked up using [`get`](@ref),
+regardless of whether they have the same `F`-in-`S` type.
+
+`ConstraintName` has a default value of `""` if not set.
+
+## Notes
+
+You should _not_ implement `ConstraintName` for `SingleVariable` constraints.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 

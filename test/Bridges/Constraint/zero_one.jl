@@ -90,17 +90,17 @@ config = MOIT.TestConfig()
 
     s = """
     variables: x, y
-    cy: y == 1.0
-    cx: x in ZeroOne()
+    y == 1.0
+    x in ZeroOne()
     minobjective: x
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
     sb = """
     variables: x, y
-    cy: y == 1.0
-    intg: x in Integer()
-    intv: x in Interval(0.0,1.0)
+    y == 1.0
+    x in Integer()
+    x in Interval(0.0,1.0)
     minobjective: x
     """
     modelb = MOIU.Model{Float64}()
