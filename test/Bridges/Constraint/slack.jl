@@ -141,11 +141,11 @@ config = MOIT.TestConfig()
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), c2[]) ≈ 1.0
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c2[]) ≈ 0.0
 
-    loc = MOI.get(bridged_mock, MOI.ListOfConstraints())
+    loc = MOI.get(bridged_mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in loc
     @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in loc
-    loc = MOI.get(mock, MOI.ListOfConstraints())
+    loc = MOI.get(mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 3
     @test (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) in loc
     @test (MOI.SingleVariable, MOI.LessThan{Float64}) in loc
@@ -275,11 +275,11 @@ end
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), c2[]) ≈ [-100.0]
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c2[]) ≈ [1.0]
 
-    loc = MOI.get(bridged_mock, MOI.ListOfConstraints())
+    loc = MOI.get(bridged_mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) in loc
-    loc = MOI.get(mock, MOI.ListOfConstraints())
+    loc = MOI.get(mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 3
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
     @test (MOI.VectorOfVariables, MOI.Nonnegatives) in loc

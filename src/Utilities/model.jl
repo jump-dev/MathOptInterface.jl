@@ -625,7 +625,10 @@ function _add_contraint_type(
     end
     return
 end
-function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where {T}
+function MOI.get(
+    model::AbstractModel{T},
+    loc::MOI.ListOfConstraintTypesPresent,
+) where {T}
     list = copy(MOI.get(model.constraints, loc))
     for S in (
         MOI.EqualTo{T},

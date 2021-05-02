@@ -82,7 +82,7 @@ end
 
 function MOI.get(
     model::StructOfConstraints,
-    loc::MOI.ListOfConstraints,
+    loc::MOI.ListOfConstraintTypesPresent,
 ) where {T}
     return broadcastvcat(model) do v
         return MOI.get(v, loc)
@@ -142,7 +142,7 @@ function broadcastcall end
 """
 broadcastvcat(f::Function, model::AbstractModel)
 
-Calls `f(contrs)` for every vector `constrs::Vector{ConstraintIndex{F, S}, F, S}` of the model and concatenate the results with `vcat` (this is used internally for `ListOfConstraints`).
+Calls `f(contrs)` for every vector `constrs::Vector{ConstraintIndex{F, S}, F, S}` of the model and concatenate the results with `vcat` (this is used internally for `ListOfConstraintTypesPresent`).
 
 # Examples
 

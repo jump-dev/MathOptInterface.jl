@@ -420,7 +420,7 @@ Constraint-related attributes:
 | ---------------------- | --------------| ------------- | ------------------ |
 | [`ListOfConstraintAttributesSet`](@ref) | Yes          | No            | No |
 | [`NumberOfConstraints`](@ref)           | Yes          | No            | No |
-| [`ListOfConstraints`](@ref)             | Yes          | No            | No |
+| [`ListOfConstraintTypesPresent`](@ref)  | Yes          | No            | No |
 | [`ConstraintFunction`](@ref)            | Yes          | Yes           | No |
 | [`ConstraintSet`](@ref)                 | Yes          | Yes           | No |
 

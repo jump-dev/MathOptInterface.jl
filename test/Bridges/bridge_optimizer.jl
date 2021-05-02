@@ -245,7 +245,7 @@ end
     f1 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 7)
     c1 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
 
-    @test MOI.get(model, MOI.ListOfConstraints()) ==
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
           [(MOI.ScalarAffineFunction{Int}, MOI.Interval{Int})]
     test_num_constraints(
         model,
@@ -270,7 +270,7 @@ end
     f2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, -1], [x, y]), 2)
     c2 = MOI.add_constraint(model, f1, MOI.GreaterThan(-2))
 
-    @test MOI.get(model, MOI.ListOfConstraints()) == [
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == [
         (MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}),
         (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
     ]
@@ -309,7 +309,7 @@ end
         c = MOI.add_constraint(model, f, MOI.Interval(i, 2i))
         push!(scon_indices, c)
 
-        @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([
+        @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
             (MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}),
             (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
             (MOI.SingleVariable, MOI.Interval{Int}),
@@ -354,7 +354,7 @@ end
         c = MOI.add_constraint(model, f, MOI.Nonnegatives(1))
         push!(vcon_indices, c)
 
-        @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([
+        @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
             (MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}),
             (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
             (MOI.SingleVariable, MOI.Interval{Int}),
@@ -410,7 +410,7 @@ end
     @test MOI.is_valid(model, c2)
     MOI.delete(model, c2)
 
-    @test Set(MOI.get(model, MOI.ListOfConstraints())) == Set([
+    @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
         (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
         (MOI.SingleVariable, MOI.Interval{Int}),
         (MOI.VectorOfVariables, MOI.Nonnegatives),

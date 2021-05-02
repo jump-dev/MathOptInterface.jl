@@ -878,13 +878,14 @@ A model attribute for the number of constraints of the type `F`-in-`S` present i
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
 """
-    ListOfConstraints()
+    ListOfConstraintTypesPresent()
 
 A model attribute for the list of tuples of the form `(F,S)`, where `F` is a function type
 and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
-struct ListOfConstraints <: AbstractModelAttribute end
+struct ListOfConstraintTypesPresent <: AbstractModelAttribute end
+@deprecate ListOfConstraints ListOfConstraintTypesPresent
 
 """
     ObjectiveFunction{F<:AbstractScalarFunction}()
@@ -1626,7 +1627,7 @@ method should be defined for attributes which are copied indirectly during
 * [`ObjectiveFunctionType`](@ref): this attribute is set indirectly when setting
   the [`ObjectiveFunction`](@ref) attribute.
 * [`NumberOfConstraints`](@ref), [`ListOfConstraintIndices`](@ref),
-  [`ListOfConstraints`](@ref), [`CanonicalConstraintFunction`](@ref),
+  [`ListOfConstraintTypesPresent`](@ref), [`CanonicalConstraintFunction`](@ref),
   [`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref):
   these attributes are set indirectly by
   [`add_constraint`](@ref) and [`add_constraints`](@ref).
@@ -1647,7 +1648,7 @@ function is_copyable(
         NumberOfConstraints,
         ObjectiveFunctionType,
         ListOfConstraintIndices,
-        ListOfConstraints,
+        ListOfConstraintTypesPresent,
         CanonicalConstraintFunction,
         ConstraintFunction,
         ConstraintSet,

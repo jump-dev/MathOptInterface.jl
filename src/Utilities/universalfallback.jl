@@ -356,7 +356,10 @@ function MOI.get(
 ) where {F,S}
     return MOI.get(constraints(uf, F, S), listattr)
 end
-function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfConstraints)
+function MOI.get(
+    uf::UniversalFallback,
+    listattr::MOI.ListOfConstraintTypesPresent,
+)
     list = MOI.get(uf.model, listattr)
     for (S, constraints) in uf.single_variable_constraints
         if !isempty(constraints)

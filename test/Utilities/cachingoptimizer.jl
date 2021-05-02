@@ -633,12 +633,12 @@ function constrained_variables_test(model)
         (MOI.SingleVariable, MOI.ZeroOne),
         (MOI.VectorOfVariables, MOI.Nonnegatives),
     ])
-    @test Set(MOI.get(model.model_cache, MOI.ListOfConstraints())) ==
+    @test Set(MOI.get(model.model_cache, MOI.ListOfConstraintTypesPresent())) ==
           constraint_types
     if MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
         MOIU.attach_optimizer(model)
     end
-    @test Set(MOI.get(model.optimizer, MOI.ListOfConstraints())) ==
+    @test Set(MOI.get(model.optimizer, MOI.ListOfConstraintTypesPresent())) ==
           constraint_types
 end
 
