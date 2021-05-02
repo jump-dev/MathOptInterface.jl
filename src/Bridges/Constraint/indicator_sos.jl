@@ -231,16 +231,10 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     bridge::IndicatorSOS1Bridge,
 )
-    zvalue = MOI.get(
-        model,
-        MOI.VariablePrimal(attr.result_index),
-        bridge.z_variable,
-    )
-    wvalue = MOI.get(
-        model,
-        MOI.VariablePrimal(attr.result_index),
-        bridge.w_variable,
-    )
+    zvalue = 
+        MOI.get(model, MOI.VariablePrimal(attr.result_index), bridge.z_variable)
+    wvalue = 
+        MOI.get(model, MOI.VariablePrimal(attr.result_index), bridge.w_variable)
     lin_primal_start = MOI.get(model, attr, bridge.linear_constraint_index)
     return [zvalue, lin_primal_start - wvalue]
 end
