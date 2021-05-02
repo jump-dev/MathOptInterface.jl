@@ -250,6 +250,14 @@ function MOI.get(
 end
 
 MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
+function MOI.supports(
+    ::AbstractModel,
+    ::MOI.ConstraintName,
+    ::Type{MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+)
+    return false
+end
+
 function MOI.set(
     model::AbstractModel,
     ::MOI.ConstraintName,
@@ -259,6 +267,15 @@ function MOI.set(
     model.con_to_name[ci] = name
     model.name_to_con = nothing # Invalidate the name map.
     return
+end
+
+function MOI.set(
+    ::AbstractModel,
+    attr::MOI.ConstraintName,
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::String,
+)
+    return throw(MOI.SingleVariableConstraintNameError())
 end
 
 function MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI)

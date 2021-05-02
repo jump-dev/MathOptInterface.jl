@@ -1147,6 +1147,19 @@ You should _not_ implement `ConstraintName` for `SingleVariable` constraints.
 struct ConstraintName <: AbstractConstraintAttribute end
 
 """
+    SingleVariableConstraintNameError()
+
+An error to be thrown when the user tries to set `ConstraintName` on a
+`SingleVariable` constraint.
+"""
+function SingleVariableConstraintNameError()
+    return UnsupportedAttribute(
+        MOI.ConstraintName(),
+        "ConstraintNames are not supported for SingleVariable constraints",
+    )
+end
+
+"""
     ConstraintPrimalStart()
 
 A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).

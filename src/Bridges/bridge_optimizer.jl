@@ -1319,6 +1319,23 @@ function MOI.set(
     return
 end
 
+function MOI.supports(
+    ::AbstractBridgeOptimizer,
+    ::MOI.ConstraintName,
+    ::Type{MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+)
+    return false
+end
+
+function MOI.set(
+    ::AbstractBridgeOptimizer,
+    ::MOI.ConstraintName,
+    ::CI{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::String,
+)
+    return throw(MOI.SingleVariableConstraintNameError())
+end
+
 # Query index from name (similar to `UniversalFallback`)
 function MOI.get(
     b::AbstractBridgeOptimizer,
