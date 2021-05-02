@@ -19,7 +19,7 @@ struct _PrintOptions{T<:MIME}
 
     ## Arguments
 
-     * `simplifiy_coefficients` : Simplify coefficients if possible by omitting
+     * `simplify_coefficients` : Simplify coefficients if possible by omitting
        them or removing trailing zeros.
      * `default_name` : The name given to variables with an empty name.
      * `print_types` : Print the MOI type of each function and set for clarity.
@@ -617,7 +617,7 @@ inside a function.
 
 Possible keyword arguments are:
 
- * `simplifiy_coefficients` : Simplify coefficients if possible by omitting
+ * `simplify_coefficients` : Simplify coefficients if possible by omitting
    them or removing trailing zeros.
  * `default_name` : The name given to variables with an empty name.
  * `print_types` : Print the MOI type of each function and set for clarity.
@@ -638,7 +638,7 @@ function Base.print(model::MOI.ModelLike; kwargs...)
     for d in Base.Multimedia.displays
         if Base.Multimedia.displayable(d, "text/latex") &&
            startswith("$(typeof(d))", "IJulia.")
-            return display(d, "text/latex", latex_formulation(model))
+            return display(d, "text/latex", latex_formulation(model; kwargs...))
         end
     end
     return print(stdout, model; kwargs...)
