@@ -256,7 +256,7 @@ function extract_terms(
     multiplier::Float64 = 1.0,
 )
     for term in func.terms
-        variable_name = v_names[term.variable_index]
+        variable_name = v_names[term.variable]
         push!(
             coefficients[variable_name],
             (row_name, multiplier * term.coefficient),

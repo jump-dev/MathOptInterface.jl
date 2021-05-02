@@ -101,7 +101,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
 
     num_vars = MOI.get(model, MOI.NumberOfVariables())
     println(io, num_vars)
-    function _check_variable_index(vi::MOI.VariableIndex)
+    function _check_variable(vi::MOI.VariableIndex)
         if vi.value > num_vars
             error(
                 "Non-contiguous variable indices not supported. This might " *
@@ -147,8 +147,8 @@ function Base.write(io::IO, model::Model{T}) where {T}
             )
         end
         for term in obj.terms
-            _check_variable_index(term.variable_index)
-            c[term.variable_index.value] = term.coefficient
+            _check_variable(term.variable)
+            c[term.variable.value] = term.coefficient
         end
         if sense == MOI.MAX_SENSE
             for i in eachindex(c)
@@ -194,8 +194,8 @@ function Base.write(io::IO, model::Model{T}) where {T}
             end
         end
         for term in func.terms
-            vi = term.scalar_term.variable_index
-            _check_variable_index(vi)
+            vi = term.scalar_term.variable
+            _check_variable(vi)
             α = term.scalar_term.coefficient
             if !iszero(α)
                 _print_entry(vi.value, block, psd, term.output_index, α)
@@ -270,7 +270,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         if startswith(line, '"')
             continue
         end
-        # The lines starting with * should also be skipped 
+        # The lines starting with * should also be skipped
         # according to http://plato.asu.edu/ftp/sdpa_format.txt.
         if startswith(line, '*')
             # Exceptions for integer variables

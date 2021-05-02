@@ -197,7 +197,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
     if config.query
         # Test that the modification of v has not affected the model
         vars = map(
-            t -> t.variable_index,
+            t -> t.variable,
             MOI.get(model, MOI.ConstraintFunction(), c).terms,
         )
         @test vars == [v[1], v[2]] || vars == [v[2], v[1]]

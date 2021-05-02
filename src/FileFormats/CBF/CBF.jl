@@ -152,7 +152,7 @@ function Base.write(io::IO, model::Model)
             println(io, "OBJACOORD")
             println(io, length(obj_function.terms))
             for t in obj_function.terms
-                println(io, t.variable_index.value - 1, " ", t.coefficient)
+                println(io, t.variable.value - 1, " ", t.coefficient)
             end
             println(io)
         end
@@ -220,7 +220,7 @@ function Base.write(io::IO, model::Model)
                         acoord,
                         (
                             num_rows + 4 - t.output_index,
-                            t.scalar_term.variable_index.value,
+                            t.scalar_term.variable.value,
                             t.scalar_term.coefficient,
                         ),
                     )
@@ -235,7 +235,7 @@ function Base.write(io::IO, model::Model)
                         acoord,
                         (
                             num_rows + t.output_index,
-                            t.scalar_term.variable_index.value,
+                            t.scalar_term.variable.value,
                             t.scalar_term.coefficient,
                         ),
                     )
@@ -316,7 +316,7 @@ function Base.write(io::IO, model::Model)
                 hcoord,
                 (
                     length(psd_side_dims),
-                    t.scalar_term.variable_index.value,
+                    t.scalar_term.variable.value,
                     i,
                     j,
                     t.scalar_term.coefficient,

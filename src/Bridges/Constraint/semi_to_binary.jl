@@ -20,8 +20,8 @@ is replaced by:
 """
 mutable struct SemiToBinaryBridge{T,S<:SemiSets{T}} <: AbstractBridge
     semi_set::S
-    variable_index::MOI.VariableIndex
-    binary_variable_index::MOI.VariableIndex
+    variable::MOI.VariableIndex
+    binary_variable::MOI.VariableIndex
     binary_constraint_index::MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}
     lower_bound_index::MOI.ConstraintIndex{
         MOI.ScalarAffineFunction{T},
@@ -131,12 +131,12 @@ function MOI.set(
     MOI.modify(
         model,
         bridge.upper_bound_index,
-        MOI.ScalarCoefficientChange(bridge.binary_variable_index, -set.upper),
+        MOI.ScalarCoefficientChange(bridge.binary_variable, -set.upper),
     )
     MOI.modify(
         model,
         bridge.lower_bound_index,
-        MOI.ScalarCoefficientChange(bridge.binary_variable_index, -set.lower),
+        MOI.ScalarCoefficientChange(bridge.binary_variable, -set.lower),
     )
     return
 end
@@ -146,7 +146,7 @@ function MOI.get(
     attr::MOI.ConstraintFunction,
     b::SemiToBinaryBridge{T},
 ) where {T}
-    return MOI.SingleVariable(b.variable_index)
+    return MOI.SingleVariable(b.variable)
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::SemiToBinaryBridge)
@@ -156,7 +156,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::SemiToBinaryBridge)
     MOI.delete(model, bridge.upper_bound_index)
     MOI.delete(model, bridge.lower_bound_index)
     MOI.delete(model, bridge.binary_constraint_index)
-    MOI.delete(model, bridge.binary_variable_index)
+    MOI.delete(model, bridge.binary_variable)
     return
 end
 
@@ -168,7 +168,7 @@ function MOI.get(
     return MOI.get(
         model,
         MOI.VariablePrimal(attr.result_index),
-        bridge.variable_index,
+        bridge.variable,
     )
 end
 
@@ -185,7 +185,7 @@ function MOI.get(
     attr::MOI.ConstraintPrimalStart,
     bridge::SemiToBinaryBridge,
 )
-    return MOI.get(model, MOI.VariablePrimalStart(), bridge.variable_index)
+    return MOI.get(model, MOI.VariablePrimalStart(), bridge.variable)
 end
 
 function MOI.set(
@@ -194,14 +194,9 @@ function MOI.set(
     bridge::SemiToBinaryBridge{T},
     value,
 ) where {T}
-    MOI.set(model, MOI.VariablePrimalStart(), bridge.variable_index, value)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.variable, value)
     bin_value = ifelse(iszero(value), 0.0, 1.0)
-    MOI.set(
-        model,
-        MOI.VariablePrimalStart(),
-        bridge.binary_variable_index,
-        bin_value,
-    )
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.binary_variable, bin_value)
     MOI.set(
         model,
         MOI.ConstraintPrimalStart(),
@@ -224,7 +219,7 @@ function MOI.get(::SemiToBinaryBridge, ::MOI.NumberOfVariables)
 end
 
 function MOI.get(b::SemiToBinaryBridge, ::MOI.ListOfVariableIndices)
-    return [b.binary_variable_index]
+    return [b.binary_variable]
 end
 
 function MOI.get(

@@ -60,10 +60,10 @@ end
 @testset "Names" begin
     @testset "Blank variable name" begin
         model = MOF.Model()
-        variable_index = MOI.add_variable(model)
-        @test_throws Exception MOF.moi_to_object(variable_index, model)
+        variable = MOI.add_variable(model)
+        @test_throws Exception MOF.moi_to_object(variable, model)
         MOI.FileFormats.create_unique_names(model, warn = true)
-        @test MOF.moi_to_object(variable_index, model) ==
+        @test MOF.moi_to_object(variable, model) ==
               MOF.OrderedObject("name" => "x1")
     end
     @testset "Duplicate variable name" begin
