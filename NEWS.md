@@ -1,6 +1,28 @@
 MathOptInterface (MOI) release notes
 ====================================
 
+v0.10.0 (In development)
+------------------------
+
+**This is a breaking release.**
+
+Breaking renames: 
+
+- `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
+- `SolveTime` has been renamed to `SolveTimeSec`
+- The `.N` field in some result attributes has been renamed to `.result_index`
+- The `.variable_index` field in `ScalarAffineTerm` has been renamed to `.variable`
+- The `.variable_index_1` field in `ScalarQuadraticTerm` has been renamed to `.variable_1`
+- The `.variable_index_2` field in `ScalarQuadraticTerm` has been renamed to `.variable_2`
+- `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
+- `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
+
+Breaking behavior changes:
+
+- `CachingOptimizer`s are now initialized as `EMPTY_OPTIMIZER` instead of `ATTACHED_OPTIMIZER`.
+  If your code relies on the optimizer being attached, call `MOIU.attach_optimizer(model)`
+  after creation.
+
 v0.9.21 (April 23, 2021)
 ---------------------------
 
