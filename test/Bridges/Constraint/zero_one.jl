@@ -114,7 +114,7 @@ config = MOIT.TestConfig()
         model,
         ["x", "y"],
         String[],
-        [("y", MOI.EqualTo{Float64}), ("x", MOI.ZeroOne)],
+        [("y", MOI.EqualTo{Float64}(1.0)), ("x", MOI.ZeroOne())],
     )
     MOIU.test_models_equal(
         mock,
@@ -122,9 +122,9 @@ config = MOIT.TestConfig()
         ["x", "y"],
         String[],
         [
-            ("y", MOI.EqualTo{Float64}),
-            ("x", MOI.Integer),
-            ("x", MOI.Interval{Float64}),
+            ("y", MOI.EqualTo{Float64}(4.0)),
+            ("x", MOI.Integer()),
+            ("x", MOI.Interval{Float64}(0.0, 1.0)),
         ],
     )
 end

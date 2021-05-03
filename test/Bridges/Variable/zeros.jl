@@ -45,7 +45,7 @@ end
         model,
         ["x", "y", "z"],
         ["cyz"],
-        [("x", MOI.GreaterThan{Float64})],
+        [("x", MOI.GreaterThan{Float64}(0.0))],
     )
 end
 
@@ -160,7 +160,7 @@ end
         model,
         ["x"],
         ["con1", "con2"],
-        [("x", MOI.GreaterThan{Float64})],
+        [("x", MOI.GreaterThan{Float64}(0.0))],
     )
 end
 

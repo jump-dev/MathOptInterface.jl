@@ -26,7 +26,7 @@ function _set_var_and_con_names(model::MOI.ModelLike)
     )
         idx += 1
         x = MOI.get(model, MOI.VariableName(), MOI.VariableIndex(i.value))
-        push!(single_variable_constraints, (x, MOI.Integer))
+        push!(single_variable_constraints, (x, MOI.Integer()))
     end
     for i in Iterators.flatten((
         MOI.get(

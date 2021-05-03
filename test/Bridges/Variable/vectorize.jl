@@ -69,7 +69,7 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
             model,
             ["x"],
             ["c"],
-            [("x", MOI.GreaterThan{Float64})],
+            [("x", MOI.GreaterThan{Float64}(1.0))],
         )
     end
 end

@@ -178,7 +178,10 @@ config = MOIT.TestConfig()
         model,
         ["x", "y"],
         String[],
-        [("x", MOI.Semiinteger{Float64}), ("y", MOI.EqualTo{Float64})],
+        [
+            ("x", MOI.Semiinteger{Float64}(2.0, 3.0)),
+            ("y", MOI.EqualTo{Float64}(4.0)),
+        ],
     )
 
     # setting names on mock
@@ -222,6 +225,10 @@ config = MOIT.TestConfig()
         modelb,
         ["x", "y", "z"],
         ["clo", "cup"],
-        [("x", MOI.Integer), ("y", MOI.EqualTo{Float64}), ("z", MOI.ZeroOne)],
+        [
+            ("x", MOI.Integer()),
+            ("y", MOI.EqualTo{Float64}(4.0)),
+            ("z", MOI.ZeroOne()),
+        ],
     )
 end

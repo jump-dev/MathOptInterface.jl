@@ -96,7 +96,7 @@ end
             model2,
             ["x"],
             String[],
-            [("x", MOI.GreaterThan{Float64})],
+            [("x", MOI.GreaterThan{Float64}(1.0))],
         )
     end
 

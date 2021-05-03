@@ -255,7 +255,7 @@ end
         model,
         var_names,
         ["sos1", "ineq"],
-        [("w", MOI.LessThan{Float64}), ("z", MOI.ZeroOne)],
+        [("w", MOI.LessThan{Float64}(0.0)), ("z", MOI.ZeroOne())],
     )
 
     test_delete_bridge(
@@ -284,7 +284,7 @@ end
         model,
         ["z", "x"],
         String[],
-        [("z", MOI.ZeroOne)],
+        [("z", MOI.ZeroOne())],
     )
 end
 

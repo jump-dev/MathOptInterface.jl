@@ -86,7 +86,10 @@ end
             model,
             [var_names; "s"],
             ["quad"],
-            [("x", MOI.GreaterThan{Float64}), ("y", MOI.GreaterThan{Float64})],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
         )
     end
 
@@ -105,7 +108,10 @@ end
             model,
             var_names,
             String[],
-            [("x", MOI.GreaterThan{Float64}), ("y", MOI.GreaterThan{Float64})],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
         )
     end
 
@@ -159,7 +165,10 @@ end
             model,
             [var_names; "s"],
             ["quad"],
-            [("x", MOI.GreaterThan{Float64}), ("y", MOI.GreaterThan{Float64})],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
         )
     end
 
@@ -177,7 +186,10 @@ end
             model,
             var_names,
             String[],
-            [("x", MOI.GreaterThan{Float64}), ("y", MOI.GreaterThan{Float64})],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
         )
     end
 

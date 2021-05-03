@@ -141,7 +141,11 @@ z in ZeroOne()
         model_2,
         ["x", "y", "z"],
         ["con1", "con2", "con3", "con4"],
-        [("y", MOI.Integer), ("y", MOI.Interval{Float64}), ("z", MOI.ZeroOne)],
+        [
+            ("y", MOI.Integer()),
+            ("y", MOI.Interval{Float64}(1.0, 4.0)),
+            ("z", MOI.ZeroOne())
+        ],
     )
 end
 
@@ -163,7 +167,7 @@ x in Integer()
         model_2,
         ["x"],
         ["con1"],
-        [("x", MOI.Integer)],
+        [("x", MOI.Integer())],
     )
 end
 
@@ -432,7 +436,7 @@ end
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
-            @testset "name" begin
+            @testset "$name" begin
                 getfield(@__MODULE__, name)()
             end
         end
