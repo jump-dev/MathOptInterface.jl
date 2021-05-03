@@ -187,7 +187,7 @@ end
             model,
             var_names,
             ["psd", "diag33", "c"],
-            [("Q23", MOI.EqualTo{Float64})],
+            [("Q23", MOI.EqualTo{Float64}(0.0))],
         )
     end
 

@@ -218,7 +218,7 @@ end
             model,
             ["x", "y"],
             ["xc", "ec"],
-            [("y", MOI.LessThan{Float64})],
+            [("y", MOI.LessThan{Float64}(5.0))],
         )
     end
 

@@ -122,7 +122,7 @@ config = MOIT.TestConfig()
         ["x", "y"],
         String[],
         [
-            ("y", MOI.EqualTo{Float64}(4.0)),
+            ("y", MOI.EqualTo{Float64}(1.0)),
             ("x", MOI.Integer()),
             ("x", MOI.Interval{Float64}(0.0, 1.0)),
         ],
