@@ -144,7 +144,7 @@ z in ZeroOne()
         [
             ("y", MOI.Integer()),
             ("y", MOI.Interval{Float64}(1.0, 4.0)),
-            ("z", MOI.ZeroOne())
+            ("z", MOI.ZeroOne()),
         ],
     )
 end
