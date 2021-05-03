@@ -99,7 +99,6 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.VariableName(), v[1]) == ""
         x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
         @test MOI.get(model, MOI.VariableName(), x) == ""
-        @test MOI.get(model, MOI.ConstraintName(), cx) == ""
         y, cy = MOI.add_constrained_variables(model, MOI.Nonpositives(4))
         for yi in y
             @test MOI.get(model, MOI.VariableName(), yi) == ""
@@ -164,15 +163,13 @@ function nametest(model::MOI.ModelLike)
         )
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
         @test MOI.get(model, MOI.ConstraintName(), c2) == ""
-        @test MOI.get(model, MOI.ConstraintName(), cx) == ""
         @test MOI.get(model, MOI.ConstraintName(), cy) == ""
 
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
         MOI.set(model, MOI.ConstraintName(), c, "")
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c2))
         MOI.set(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
-        @test MOI.supports(model, MOI.ConstraintName(), typeof(cx))
-        MOI.set(model, MOI.ConstraintName(), cx, "")
+        @test !MOI.supports(model, MOI.ConstraintName(), typeof(cx))
         @test MOI.supports(model, MOI.ConstraintName(), typeof(cy))
         MOI.set(model, MOI.ConstraintName(), cy, "")
 
@@ -223,30 +220,25 @@ function nametest(model::MOI.ModelLike)
 
         MOI.set(model, MOI.ConstraintName(), [c], ["Con1"])
 
-        MOI.set(model, MOI.ConstraintName(), [c2, cx], ["Con2", "Con2"])
+        MOI.set(model, MOI.ConstraintName(), [c2, cy], ["Con2", "Con2"])
         @test_throws Exception MOI.get(model, MOI.ConstraintIndex, "Con2")
         @test_throws Exception MOI.get(model, typeof(c2), "Con2")
-        @test_throws Exception MOI.get(model, typeof(cx), "Con2")
-
-        MOI.set(model, MOI.ConstraintName(), [cx, cy], ["Con3", "Con3"])
-        @test_throws Exception MOI.get(model, MOI.ConstraintIndex, "Con3")
-        @test_throws Exception MOI.get(model, typeof(cx), "Con3")
-        @test_throws Exception MOI.get(model, typeof(cy), "Con3")
+        @test_throws Exception MOI.get(model, typeof(cy), "Con2")
 
         MOI.set(model, MOI.ConstraintName(), cy, "Con4")
 
-        for (i, ca) in enumerate([c, c2, cx, cy])
+        for (i, ca) in enumerate([c, c2, cy])
             namea = "Con$i"
             @test MOI.get(model, MOI.ConstraintName(), ca) == namea
             @test MOI.get(model, typeof(ca), namea) == ca
             @test MOI.get(model, MOI.ConstraintIndex, namea) == ca
-            for cb in [c, c2, cx, cy]
+            for cb in [c, c2, cy]
                 if ca === cb
                     continue
                 end
                 nameb = MOI.get(model, MOI.ConstraintName(), cb)
-                @test MOI.get(model, typeof(cb), namea) == nothing
-                @test MOI.get(model, typeof(ca), nameb) == nothing
+                @test MOI.get(model, typeof(cb), namea) === nothing
+                @test MOI.get(model, typeof(ca), nameb) === nothing
             end
         end
 
@@ -257,14 +249,8 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, typeof(c), "Con1") === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") === nothing
 
-        MOI.set(model, MOI.ConstraintName(), cx, "Con2")
-        @test_throws Exception MOI.get(model, MOI.ConstraintIndex, "Con2")
-        @test_throws Exception MOI.get(model, typeof(c2), "Con2")
-        @test_throws Exception MOI.get(model, typeof(cx), "Con2")
-
         MOI.delete(model, x)
         @test MOI.get(model, MOI.VariableIndex, "Varx") === nothing
-        @test MOI.get(model, typeof(cx), "Con3") === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con3") === nothing
         @test MOI.get(model, typeof(c2), "Con2") === c2
         @test MOI.get(model, MOI.ConstraintIndex, "Con2") === c2
@@ -295,31 +281,6 @@ function nametest(model::MOI.ModelLike)
             @test_throws ErrorException MOI.get(model, MOI.VariableIndex, "x")
             MOI.delete(model, x)
             @test MOI.get(model, MOI.VariableIndex, "x") == z
-        end
-        @testset "SingleVariable" begin
-            MOI.empty!(model)
-            x = MOI.add_variables(model, 3)
-            c = MOI.add_constraints(
-                model,
-                MOI.SingleVariable.(x),
-                MOI.GreaterThan(0.0),
-            )
-            MOI.set(model, MOI.ConstraintName(), c[1], "x")
-            MOI.set(model, MOI.ConstraintName(), c[2], "x")
-            MOI.set(model, MOI.ConstraintName(), c[3], "z")
-            @test MOI.get(model, MOI.ConstraintIndex, "z") == c[3]
-            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
-            MOI.set(model, MOI.ConstraintName(), c[2], "y")
-            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[1]
-            @test MOI.get(model, MOI.ConstraintIndex, "y") == c[2]
-            MOI.set(model, MOI.ConstraintName(), c[3], "x")
-            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
-            MOI.delete(model, c[1])
-            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[3]
-            MOI.set(model, MOI.ConstraintName(), c[2], "x")
-            @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
-            MOI.delete(model, x[3])
-            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[2]
         end
         @testset "ScalarAffineFunction" begin
             MOI.empty!(model)

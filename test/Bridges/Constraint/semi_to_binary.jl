@@ -152,17 +152,17 @@ config = MOIT.TestConfig()
 
     s = """
     variables: x, y
-    cy: y == 4.0
-    cx: x in Semiinteger(2.0, 3.0)
+    y == 4.0
+    x in Semiinteger(2.0, 3.0)
     minobjective: x
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
     sb = """
     variables: x, y, z
-    cy: y == 4.0
-    bin: z in ZeroOne()
-    int: x in Integer()
+    y == 4.0
+    z in ZeroOne()
+    x in Integer()
     clo: x + -2.0z >= 0.0
     cup: x + -3.0z <= 0.0
     minobjective: x

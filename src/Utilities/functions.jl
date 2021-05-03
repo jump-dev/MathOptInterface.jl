@@ -808,6 +808,9 @@ end
 function test_constraintnames_equal(model, constraintnames)
     seen_name = Dict(name => false for name in constraintnames)
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if F == MOI.SingleVariable
+            continue
+        end
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             cname = MOI.get(model, MOI.ConstraintName(), index)
             if !haskey(seen_name, cname)
@@ -903,7 +906,16 @@ function test_models_equal(
     model2::MOI.ModelLike,
     variablenames::Vector{String},
     constraintnames::Vector{String},
+    single_variable_constraints::Vector{<:Tuple} = Tuple[],
 )
+    for (x_name, set) in single_variable_constraints
+        x1 = MOI.get(model1, MOI.VariableIndex, x_name)
+        ci1 = MOI.ConstraintIndex{MOI.SingleVariable,set}(x1.value)
+        @test MOI.is_valid(model1, ci1)
+        x2 = MOI.get(model2, MOI.VariableIndex, x_name)
+        ci2 = MOI.ConstraintIndex{MOI.SingleVariable,set}(x2.value)
+        @test MOI.is_valid(model2, ci2)
+    end
     # TODO: give test-friendly feedback instead of errors?
     test_variablenames_equal(model1, variablenames)
     test_variablenames_equal(model2, variablenames)

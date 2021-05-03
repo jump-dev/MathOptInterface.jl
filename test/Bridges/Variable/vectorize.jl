@@ -57,15 +57,14 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
     end
     @testset "Bridged model" begin
         MOI.set(bridged_mock, MOI.VariableName(), x, "x")
-        MOI.set(bridged_mock, MOI.ConstraintName(), cx, "cx")
         s = """
         variables: x
-        cx: x >= 1.0
+        x >= 1.0
         c: 2.0x >= 5.0
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(bridged_mock, model, ["x"], ["cx", "c"])
+        MOIU.test_models_equal(bridged_mock, model, ["x"], ["c"])
     end
 end
 
