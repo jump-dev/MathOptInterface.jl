@@ -151,7 +151,7 @@ function pass_attributes(
 ) where {F,S}
     # Copy constraint attributes
     attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
-    if !copy_names
+    if !copy_names || F == MOI.SingleVariable
         attrs = filter(attr -> !(attr isa MOI.ConstraintName), attrs)
     end
     # If `attrs` is empty, we can spare the computation of `cis_dest`
