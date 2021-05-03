@@ -39,10 +39,8 @@ A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
   perform a modification not supported by the optimizer results in a drop to
   `EMPTY_OPTIMIZER` mode.
 """
-mutable struct CachingOptimizer{
-    OptimizerType,
-    ModelType<:MOI.ModelLike,
-} <: MOI.AbstractOptimizer
+mutable struct CachingOptimizer{OptimizerType,ModelType<:MOI.ModelLike} <:
+               MOI.AbstractOptimizer
     optimizer::Union{Nothing,OptimizerType}
     model_cache::ModelType
     state::CachingOptimizerState
@@ -96,8 +94,8 @@ function CachingOptimizer(
     model_cache::MOI.ModelLike,
     optimizer::Union{Nothing,MOI.AbstractOptimizer} = nothing;
     mode::CachingOptimizerMode = AUTOMATIC,
-    state::CachingOptimizerState =
-        optimizer === nothing ? NO_OPTIMIZER : EMPTY_OPTIMIZER,
+    state::CachingOptimizerState = optimizer === nothing ? NO_OPTIMIZER :
+                                   EMPTY_OPTIMIZER,
     auto_bridge::Bool = false,
 )
     T = optimizer !== nothing ? typeof(optimizer) : MOI.AbstractOptimizer
@@ -139,7 +137,7 @@ end
 function MOI.get(model::CachingOptimizer, attr::MOI.CoefficientType)
     if state(model) == NO_OPTIMIZER
         return MOI.get(model.model_cache, attr)
-     else
+    else
         return MOI.get(model.optimizer, attr)
     end
 end
@@ -385,7 +383,6 @@ function MOI.add_variables(m::CachingOptimizer, n)
     end
     return vindices
 end
-
 
 """
     _bridge_if_needed(
