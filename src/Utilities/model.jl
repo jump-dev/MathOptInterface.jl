@@ -250,10 +250,11 @@ function MOI.get(
 end
 
 MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
+
 function MOI.supports(
     ::AbstractModel,
     ::MOI.ConstraintName,
-    ::Type{MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+    ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
 )
     return false
 end
