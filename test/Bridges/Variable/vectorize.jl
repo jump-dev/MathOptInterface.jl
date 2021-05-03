@@ -205,7 +205,6 @@ end
     end
     @testset "Bridged model" begin
         MOI.set(bridged_mock, MOI.VariableName(), y, "y")
-        MOI.set(bridged_mock, MOI.ConstraintName(), yc, "yc")
         s = """
         variables: x, y
         y <= 5.0
@@ -219,7 +218,7 @@ end
             model,
             ["x", "y"],
             ["xc", "ec"],
-            [("y", MOI.LessThan{Float64})]
+            [("y", MOI.LessThan{Float64})],
         )
     end
 

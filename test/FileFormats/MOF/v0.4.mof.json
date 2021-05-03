@@ -19,11 +19,9 @@
         },
         "set": {"head": "GreaterThan", "lower": 1.0}
     }, {
-        "name": "x ∈ [0, 1]",
         "function": {"head": "SingleVariable", "variable": "x"},
         "set": {"head": "Interval", "lower": 0.0, "upper": 1.0}
     }, {
-        "name": "y ∈ {0, 1}",
         "function": {"head": "SingleVariable", "variable": "y"},
         "set": {"head": "ZeroOne"}
     }]

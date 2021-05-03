@@ -120,36 +120,6 @@ end
 function test_stacked_data()
     model = MPS.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "stacked_data.mps"))
-    MOI.set(
-        model,
-        MOI.ConstraintName(),
-        MOI.get(
-            model,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
-        )[1],
-        "con5",
-    )
-    MOI.set(
-        model,
-        MOI.ConstraintName(),
-        MOI.get(
-            model,
-            MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
-                MOI.Interval{Float64},
-            }(),
-        )[1],
-        "con6",
-    )
-    MOI.set(
-        model,
-        MOI.ConstraintName(),
-        MOI.get(
-            model,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.ZeroOne}(),
-        )[1],
-        "con7",
-    )
     model_2 = MPS.Model()
     MOIU.loadfromstring!(
         model_2,
@@ -160,9 +130,9 @@ con1: 1.0 * x in Interval(1.0, 5.0)
 con2: 1.0 * x in Interval(2.0, 6.0)
 con3: 1.0 * x in Interval(3.0, 7.0)
 con4: 2.0 * x in Interval(4.0, 8.0)
-con5: y in Integer()
-con6: y in Interval(1.0, 4.0)
-con7: z in ZeroOne()
+y in Integer()
+y in Interval(1.0, 4.0)
+z in ZeroOne()
 """,
     )
     MOI.set(model_2, MOI.Name(), "stacked_data")
@@ -170,22 +140,14 @@ con7: z in ZeroOne()
         model,
         model_2,
         ["x", "y", "z"],
-        ["con1", "con2", "con3", "con4", "con5", "con6", "con7"],
+        ["con1", "con2", "con3", "con4"],
+        [("y", MOI.Integer), ("y", MOI.Interval{Float64}), ("z", MOI.ZeroOne)],
     )
 end
 
 function test_free_integer()
     model = MPS.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "free_integer.mps"))
-    MOI.set(
-        model,
-        MOI.ConstraintName(),
-        MOI.get(
-            model,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
-        )[1],
-        "con2",
-    )
     model_2 = MPS.Model()
     MOIU.loadfromstring!(
         model_2,
@@ -193,10 +155,16 @@ function test_free_integer()
 variables: x
 minobjective: x
 con1: 1.0 * x >= 1.0
-con2: x in Integer()
+x in Integer()
 """,
     )
-    return MOIU.test_models_equal(model, model_2, ["x"], ["con1", "con2"])
+    return MOIU.test_models_equal(
+        model,
+        model_2,
+        ["x"],
+        ["con1"],
+        [("x", MOI.Integer)],
+    )
 end
 
 function test_min_objective()
@@ -312,35 +280,25 @@ function test_MARKER_INT()
         """
 variables: x, y, z
 minobjective: x + y + z
-c1: x in Integer()
+x in Integer()
 c2: 2 * x + -1.0 * z <= 1.0
-c3: z in ZeroOne()
-c4: x >= 1.0
+z in ZeroOne()
+x >= 1.0
 """,
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
     MOI.read_from_file(model_2, MPS_TEST_FILE)
-    for (set_type, constraint_name) in [
-        (MOI.Integer, "c1"),
-        (MOI.ZeroOne, "c3"),
-        (MOI.GreaterThan{Float64}, "c4"),
-    ]
-        MOI.set(
-            model_2,
-            MOI.ConstraintName(),
-            MOI.get(
-                model_2,
-                MOI.ListOfConstraintIndices{MOI.SingleVariable,set_type}(),
-            )[1],
-            constraint_name,
-        )
-    end
     return MOIU.test_models_equal(
         model,
         model_2,
         ["x", "y", "z"],
-        ["c1", "c2", "c3", "c4"],
+        ["c2"],
+        [
+            ("x", MOI.Integer()),
+            ("z", MOI.ZeroOne()),
+            ("x", MOI.GreaterThan(1.0)),
+        ],
     )
 end
 
@@ -351,26 +309,23 @@ function test_zero_variable_bounds()
         """
 variables: x, y, z
 minobjective: x + y + z
-c1: x >= 0.0
-c2: y <= 0.0
+x >= 0.0
+y <= 0.0
 """,
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
     MOI.read_from_file(model_2, MPS_TEST_FILE)
-    for (set_type, constraint_name) in
-        [(MOI.GreaterThan{Float64}, "c1"), (MOI.LessThan{Float64}, "c2")]
-        MOI.set(
-            model_2,
-            MOI.ConstraintName(),
-            MOI.get(
-                model_2,
-                MOI.ListOfConstraintIndices{MOI.SingleVariable,set_type}(),
-            )[1],
-            constraint_name,
-        )
-    end
-    return MOIU.test_models_equal(model, model_2, ["x", "y", "z"], ["c1", "c2"])
+    return MOIU.test_models_equal(
+        model,
+        model_2,
+        ["x", "y", "z"],
+        String[],
+        [
+            ("x", MOI.GreaterThan{Float64}(0.0)),
+            ("y", MOI.LessThan{Float64}(0.0)),
+        ],
+    )
 end
 
 function test_nonzero_variable_bounds()
@@ -380,36 +335,26 @@ function test_nonzero_variable_bounds()
         """
 variables: w, x, y, z
 minobjective: w + x + y + z
-c1: x == 1.0
-c2: y >= 2.0
-c3: z <= 3.0
-c4: w in Interval(4.0, 5.0)
+x == 1.0
+y >= 2.0
+z <= 3.0
+w in Interval(4.0, 5.0)
 """,
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
     MOI.read_from_file(model_2, MPS_TEST_FILE)
-    for (set_type, constraint_name) in [
-        (MOI.EqualTo{Float64}, "c1"),
-        (MOI.GreaterThan{Float64}, "c2"),
-        (MOI.LessThan{Float64}, "c3"),
-        (MOI.Interval{Float64}, "c4"),
-    ]
-        MOI.set(
-            model_2,
-            MOI.ConstraintName(),
-            MOI.get(
-                model_2,
-                MOI.ListOfConstraintIndices{MOI.SingleVariable,set_type}(),
-            )[1],
-            constraint_name,
-        )
-    end
     return MOIU.test_models_equal(
         model,
         model_2,
         ["w", "x", "y", "z"],
-        ["c1", "c2", "c3", "c4"],
+        String[],
+        [
+            ("x", MOI.EqualTo{Float64}(1.0)),
+            ("y", MOI.GreaterThan{Float64}(2.0)),
+            ("z", MOI.LessThan{Float64}(3.0)),
+            ("w", MOI.Interval{Float64}(4.0, 5.0)),
+        ],
     )
 end
 
@@ -420,8 +365,8 @@ function test_multiple_variable_bounds()
         """
 variables: a_really_long_name
 minobjective: a_really_long_name
-c1: a_really_long_name >= 1.0
-c2: a_really_long_name <= 2.0
+a_really_long_name >= 1.0
+a_really_long_name <= 2.0
 """,
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
@@ -449,7 +394,7 @@ function test_unused_variable()
 variables: x, y
 minobjective: y
 c1: 2.0 * y >= 1.0
-c2: x >= 0.0
+x >= 0.0
 """,
     )
     MOI.write_to_file(model, MPS_TEST_FILE)

@@ -19,14 +19,14 @@ function _set_var_and_con_names(model::MOI.ModelLike)
 
     idx = 0
     constraint_names = String[]
+    single_variable_constraints = Tuple[]
     for i in MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
     )
         idx += 1
-        con_name_i = "c" * string(idx)
-        push!(constraint_names, con_name_i)
-        MOI.set(model, MOI.ConstraintName(), i, con_name_i)
+        x = MOI.get(model, MOI.VariableName(), MOI.VariableIndex(i.value))
+        push!(single_variable_constraints, (x, MOI.Integer))
     end
     for S in [
             MOI.Reals,
@@ -51,7 +51,7 @@ function _set_var_and_con_names(model::MOI.ModelLike)
         end
     end
 
-    return (variable_names, constraint_names)
+    return variable_names, constraint_names, single_variable_constraints
 end
 
 function Base.isapprox(
@@ -65,36 +65,26 @@ end
 function _test_write_then_read(model_string::String)
     model1 = CBF.Model()
     MOIU.loadfromstring!(model1, model_string)
-    (variable_names, constraint_names) = _set_var_and_con_names(model1)
+    args = _set_var_and_con_names(model1)
 
     MOI.write_to_file(model1, CBF_TEST_FILE)
     model2 = CBF.Model()
     MOI.read_from_file(model2, CBF_TEST_FILE)
     _set_var_and_con_names(model2)
 
-    return MOIU.test_models_equal(
-        model1,
-        model2,
-        variable_names,
-        constraint_names,
-    )
+    return MOIU.test_models_equal(model1, model2, args...)
 end
 
 function _test_read(filename::String, model_string::String)
     model1 = CBF.Model()
     MOIU.loadfromstring!(model1, model_string)
-    (variable_names, constraint_names) = _set_var_and_con_names(model1)
+    args = _set_var_and_con_names(model1)
 
     model2 = CBF.Model()
     MOI.read_from_file(model2, filename)
     _set_var_and_con_names(model2)
 
-    return MOIU.test_models_equal(
-        model1,
-        model2,
-        variable_names,
-        constraint_names,
-    )
+    return MOIU.test_models_equal(model1, model2, args...)
 end
 
 function test_show()
@@ -114,7 +104,7 @@ function test_support_errors()
         model_string = """
         variables: x
         minobjective: x
-        c: x in $set
+        x in $set
         """
         model = CBF.Model()
         err = MOI.UnsupportedConstraint{MOI.SingleVariable,typeof(set)}
@@ -226,7 +216,7 @@ const _WRITE_READ_MODELS = [
         """
     variables: x, y
     minobjective: 1.2x
-    c1: y in Integer()
+    y in Integer()
 """,
     ),
     (
@@ -457,9 +447,9 @@ const _EXAMPLE_MODELS = [
     c2: [x, y, z] in DualPowerCone(0.1)
     c3: [1, u, u + v] in PowerCone(0.8)
     c4: [1, y, x + y] in DualPowerCone(0.75)
-    c5: u in Integer()
-    c6: w in Integer()
-    c7: y in Integer()
+    u in Integer()
+    w in Integer()
+    y in Integer()
 """,
     ),
 ]
