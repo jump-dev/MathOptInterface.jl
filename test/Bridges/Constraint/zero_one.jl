@@ -110,25 +110,5 @@ config = MOIT.TestConfig()
     @test MOI.is_empty(bridged_mock)
     MOIU.loadfromstring!(bridged_mock, s)
     MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["cy", "cx"])
-
-    # setting names on mock
-    ci = first(
-        MOI.get(
-            mock,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
-        ),
-    )
-    MOI.set(mock, MOI.ConstraintName(), ci, "intg")
-    ci = first(
-        MOI.get(
-            mock,
-            MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
-                MOI.Interval{Float64},
-            }(),
-        ),
-    )
-    MOI.set(mock, MOI.ConstraintName(), ci, "intv")
-
-    MOIU.test_models_equal(mock, modelb, ["x", "y"], ["cy", "intg", "intv"])
+    MOIU.test_models_equal(mock, modelb, ["x", "y"], ["cy"])
 end

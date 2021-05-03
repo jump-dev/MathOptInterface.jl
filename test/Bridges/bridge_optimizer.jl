@@ -206,6 +206,7 @@ end
     c2 = MOI.get(bridged_mock, MOI.ConstraintIndex, "c")
     @test c1 == c2
     @test MOI.is_valid(
+        bridged_mock,
         MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value),
     )
 end

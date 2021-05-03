@@ -14,29 +14,19 @@ function getconstraint(model::MOI.ModelLike, config::TestConfig)
     c2: 1.0 * x <= 2.0
 """,
     )
+    F = MOI.ScalarAffineFunction{Float64}
     @test MOI.get(model, MOI.ConstraintIndex, "c3") === nothing
+    @test MOI.get(model, MOI.ConstraintIndex{F,MOI.LessThan{Float64}}, "c1") ===
+          nothing
     @test MOI.get(
         model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
-        "c1",
-    ) === nothing
-    @test MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
+        MOI.ConstraintIndex{F,MOI.GreaterThan{Float64}},
         "c2",
     ) === nothing
-    c1 = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
-        "c1",
-    )
+    c1 = MOI.get(model, MOI.ConstraintIndex{F,MOI.GreaterThan{Float64}}, "c1")
     @test MOI.get(model, MOI.ConstraintIndex, "c1") == c1
     @test MOI.is_valid(model, c1)
-    c2 = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
-        "c2",
-    )
+    c2 = MOI.get(model, MOI.ConstraintIndex{F,MOI.LessThan{Float64}}, "c2")
     @test MOI.get(model, MOI.ConstraintIndex, "c2") == c2
     @test MOI.is_valid(model, c2)
 end

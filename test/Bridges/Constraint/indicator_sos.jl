@@ -252,12 +252,7 @@ end
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
-    MOIU.test_models_equal(
-        mock,
-        model,
-        var_names,
-        ["sos1", "ineq"],
-    )
+    MOIU.test_models_equal(mock, model, var_names, ["sos1", "ineq"])
 
     test_delete_bridge(
         bridged_mock,

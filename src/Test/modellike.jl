@@ -49,15 +49,10 @@ function nametest(model::MOI.ModelLike)
             MOI.GreaterThan(0.0),
         )
         c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
-        MOI.set(model, MOI.ConstraintName(), c1, "c1")
-        @test MOI.get(model, MOI.ConstraintIndex, "c1") == c1
-        MOI.set(model, MOI.ConstraintName(), c1, "c2")
-        @test MOI.get(model, MOI.ConstraintIndex, "c1") === nothing
-        @test MOI.get(model, MOI.ConstraintIndex, "c2") == c1
-        MOI.set(model, MOI.ConstraintName(), c2, "c1")
-        @test MOI.get(model, MOI.ConstraintIndex, "c1") == c2
-        MOI.set(model, MOI.ConstraintName(), c1, "c1")
-        @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
+        @test_throws(
+            MOI.SingleVariableConstraintNameError(),
+            MOI.set(model, MOI.ConstraintName(), c1, "c1"),
+        )
     end
 
     @testset "Affine constraints" begin
@@ -795,7 +790,6 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     # We test this after the creation of every `SingleVariable` constraint
     # to ensure a good coverage of corner cases.
     @test csv.value == w.value
-    MOI.set(src, MOI.ConstraintName(), csv, "csv")
     cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.Nonnegatives(3))
     MOI.set(src, MOI.ConstraintName(), cvv, "cvv")
     csa = MOI.add_constraint(
@@ -909,8 +903,6 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
 
-    @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csv)) ||
-          MOI.get(dest, MOI.ConstraintName(), dict[csv]) == dest_name("csv")
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) ==
           MOI.SingleVariable(dict[w])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.0)
