@@ -194,7 +194,6 @@ end
     )
     (z, bin_cons) = MOI.add_constrained_variable(bridged_mock, MOI.ZeroOne())
     MOI.set(bridged_mock, MOI.VariableName(), z, "z")
-    MOI.set(mock, MOI.ConstraintName(), bin_cons, "bin_cons")
     x = MOI.add_variable(bridged_mock)
     MOI.set(bridged_mock, MOI.VariableName(), x, "x")
     var_names = ["z", "x", "w"]
@@ -225,7 +224,6 @@ end
         MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
     )
     @test length(single_less_cons) == 1
-    MOI.set(mock, MOI.ConstraintName(), single_less_cons[1], "wless")
 
     inequality_list = MOI.get(
         mock,
@@ -252,7 +250,13 @@ end
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
-    MOIU.test_models_equal(mock, model, var_names, ["sos1", "ineq"])
+    MOIU.test_models_equal(
+        mock,
+        model,
+        var_names,
+        ["sos1", "ineq"],
+        [("w", MOI.LessThan{Float64}), ("z", MOI.ZeroOne)],
+    )
 
     test_delete_bridge(
         bridged_mock,
@@ -275,7 +279,13 @@ end
     maxobjective: z
     """
     MOIU.loadfromstring!(model, sbridged)
-    MOIU.test_models_equal(bridged_mock, model, ["z", "x"], String[])
+    MOIU.test_models_equal(
+        bridged_mock,
+        model,
+        ["z", "x"],
+        String[],
+        [("z", MOI.ZeroOne)],
+    )
 end
 
 @testset "Getting primal attributes" begin

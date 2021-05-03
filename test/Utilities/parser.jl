@@ -91,7 +91,13 @@ end
 
         model2 = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model2, s)
-        MOIU.test_models_equal(model, model2, ["x"], String[])
+        MOIU.test_models_equal(
+            model,
+            model2,
+            ["x"],
+            String[],
+            [("x", MOI.GreaterThan{Float64})],
+        )
     end
 
     @testset "linear constraints" begin

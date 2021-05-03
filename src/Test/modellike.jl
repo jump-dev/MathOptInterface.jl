@@ -218,8 +218,6 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") == c
         @test MOI.get(model, MOI.ConstraintIndex, "Con2") === nothing
 
-        MOI.set(model, MOI.ConstraintName(), [c], ["Con1"])
-
         MOI.set(model, MOI.ConstraintName(), [c2, cy], ["Con2", "Con2"])
         @test_throws Exception MOI.get(model, MOI.ConstraintIndex, "Con2")
         @test_throws Exception MOI.get(model, typeof(c2), "Con2")
@@ -227,7 +225,7 @@ function nametest(model::MOI.ModelLike)
 
         MOI.set(model, MOI.ConstraintName(), cy, "Con4")
 
-        for (i, ca) in enumerate([c, c2, cy])
+        for (i, ca) in zip([1, 2, 4], [c, c2, cy])
             namea = "Con$i"
             @test MOI.get(model, MOI.ConstraintName(), ca) == namea
             @test MOI.get(model, typeof(ca), namea) == ca

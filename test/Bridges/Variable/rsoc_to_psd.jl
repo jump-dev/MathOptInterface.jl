@@ -153,7 +153,6 @@ end
             }(),
         )
         @test length(off_diag) == 1
-        MOI.set(mock, MOI.ConstraintName(), off_diag[1], "off_diag23")
         diag = MOI.get(
             mock,
             MOI.ListOfConstraintIndices{
@@ -176,7 +175,7 @@ end
         s = """
         variables: Q11, Q12, Q13, Q22, Q23, Q33
         psd: [Q11, Q12, Q22, Q13, Q23, Q33] in MathOptInterface.PositiveSemidefiniteConeTriangle(3)
-        off_diag23: Q23 == 0.0
+        Q23 == 0.0
         diag33: Q22 + -1.0Q33 == 0.0
         c: Q11 + 0.5Q22 <= 2.0
         maxobjective: Q12 + Q13
@@ -187,7 +186,8 @@ end
             mock,
             model,
             var_names,
-            ["psd", "off_diag23", "diag33", "c"],
+            ["psd", "diag33", "c"],
+            [("Q23", MOI.EqualTo{Float64})],
         )
     end
 

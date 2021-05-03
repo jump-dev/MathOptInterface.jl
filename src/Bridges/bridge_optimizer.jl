@@ -1322,15 +1322,15 @@ end
 function MOI.supports(
     ::AbstractBridgeOptimizer,
     ::MOI.ConstraintName,
-    ::Type{MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
-)
+    ::Type{MOI.ConstraintIndex{MOI.SingleVariable,S}},
+) where {S}
     return false
 end
 
 function MOI.set(
     ::AbstractBridgeOptimizer,
     ::MOI.ConstraintName,
-    ::CI{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
     ::String,
 )
     return throw(MOI.SingleVariableConstraintNameError())

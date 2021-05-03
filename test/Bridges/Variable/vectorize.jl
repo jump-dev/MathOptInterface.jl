@@ -64,7 +64,13 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(bridged_mock, model, ["x"], ["c"])
+        MOIU.test_models_equal(
+            bridged_mock,
+            model,
+            ["x"],
+            ["c"],
+            [("x", MOI.GreaterThan{Float64})],
+        )
     end
 end
 
@@ -202,7 +208,7 @@ end
         MOI.set(bridged_mock, MOI.ConstraintName(), yc, "yc")
         s = """
         variables: x, y
-        yc: y <= 5.0
+        y <= 5.0
         xc: 2.0x <= 4.0
         ec: [x, 1.0, y] in MathOptInterface.ExponentialCone()
         """
@@ -212,7 +218,8 @@ end
             bridged_mock,
             model,
             ["x", "y"],
-            ["yc", "xc", "ec"],
+            ["xc", "ec"],
+            [("y", MOI.LessThan{Float64})]
         )
     end
 

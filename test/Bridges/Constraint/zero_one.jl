@@ -109,6 +109,22 @@ config = MOIT.TestConfig()
     MOI.empty!(bridged_mock)
     @test MOI.is_empty(bridged_mock)
     MOIU.loadfromstring!(bridged_mock, s)
-    MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["cy", "cx"])
-    MOIU.test_models_equal(mock, modelb, ["x", "y"], ["cy"])
+    MOIU.test_models_equal(
+        bridged_mock,
+        model,
+        ["x", "y"],
+        String[],
+        [("y", MOI.EqualTo{Float64}), ("x", MOI.ZeroOne)],
+    )
+    MOIU.test_models_equal(
+        mock,
+        modelb,
+        ["x", "y"],
+        String[],
+        [
+            ("y", MOI.EqualTo{Float64}),
+            ("x", MOI.Integer),
+            ("x", MOI.Interval{Float64}),
+        ],
+    )
 end

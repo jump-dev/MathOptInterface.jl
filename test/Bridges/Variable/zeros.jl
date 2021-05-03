@@ -40,7 +40,13 @@ end
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
-    MOIU.test_models_equal(bridged_mock, model, ["x", "y", "z"], ["cyz"])
+    MOIU.test_models_equal(
+        bridged_mock,
+        model,
+        ["x", "y", "z"],
+        ["cyz"],
+        [("x", MOI.GreaterThan{Float64})],
+    )
 end
 
 c1, c2 = MOI.add_constraints(
