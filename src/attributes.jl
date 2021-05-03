@@ -1155,7 +1155,7 @@ An error to be thrown when the user tries to set `ConstraintName` on a
 function SingleVariableConstraintNameError()
     return UnsupportedAttribute(
         ConstraintName(),
-        "ConstraintNames are not supported for SingleVariable constraints",
+        "`ConstraintName`s are not supported for `SingleVariable` constraints.",
     )
 end
 

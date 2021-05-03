@@ -498,7 +498,7 @@ end
 function MOI.supports(
     ::UniversalFallback,
     ::MOI.ConstraintName,
-    ::Type{MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+    ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
 )
     return false
 end
@@ -506,7 +506,7 @@ end
 function MOI.set(
     ::UniversalFallback,
     ::MOI.ConstraintName,
-    ::CI{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
     ::String,
 )
     return throw(MOI.SingleVariableConstraintNameError())

@@ -333,12 +333,20 @@ function basic_constraint_test_helper(
         c = MOI.add_constraint(model, constraint_function, set)
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
 
-        if name && F != MOI.SingleVariable
+        if name
             @testset "ConstraintName" begin
-                @test MOI.get(model, MOI.ConstraintName(), c) == ""
-                @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
-                MOI.set(model, MOI.ConstraintName(), c, "c")
-                @test MOI.get(model, MOI.ConstraintName(), c) == "c"
+                if F == MOI.SingleVariable
+                    @test !MOI.supports(model, MOI.ConstraintName(), typeof(c))
+                    @test_throws(
+                        MOI.SingleVariableConstraintNameError(),
+                        MOI.set(model, MOI.ConstraintName(), c, "c"),
+                    )
+                else
+                    @test MOI.get(model, MOI.ConstraintName(), c) == ""
+                    @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
+                    MOI.set(model, MOI.ConstraintName(), c, "c")
+                    @test MOI.get(model, MOI.ConstraintName(), c) == "c"
+                end
             end
         end
 
