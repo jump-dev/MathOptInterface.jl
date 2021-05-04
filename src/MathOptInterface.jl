@@ -112,8 +112,7 @@ The main purpose of this function is to determine whether a model can be loaded
 into `model` incrementally or whether it should be cached and copied at once
 instead.
 
-This is used by [`instantiate`](@ref) to determine whether to add a cache in two
-situations:
+This is used in two places to determine whether to add a cache:
 1. A first cache can be used to store the model as entered by the user as well
    as the names of variables and constraints. This cache is created if this
    function returns `false` when `copy_names` is `true`.
