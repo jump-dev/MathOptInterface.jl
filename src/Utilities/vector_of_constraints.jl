@@ -148,14 +148,14 @@ end
 # Deletion of variables in vector of variables
 
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
-    CleverDicts.map_values!(v.constraints) do func_set
-        return remove_variable(func_set..., vi)
+    CleverDicts.map_values!(v.constraints) do f, s
+        return remove_variable(f, s, vi)
     end
     return
 end
 function _filter_variables(keep::Function, v::VectorOfConstraints)
-    CleverDicts.map_values!(v.constraints) do func_set
-        return filter_variables(keep, func_set...)
+    CleverDicts.map_values!(v.constraints) do f, s
+        return filter_variables(keep, f, s)
     end
     return
 end
