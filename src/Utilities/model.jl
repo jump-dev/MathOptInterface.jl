@@ -614,31 +614,27 @@ function MOI.get(
     return MOI.get(model.constraints, noc)
 end
 
-function _add_contraint_type(
+function _add_constraint_type(
     list,
     model::AbstractModel,
     S::Type{<:MOI.AbstractScalarSet},
 )
-    flag = single_variable_flag(S)
+    flag = single_variable_flag(S)::UInt8
     if any(mask -> !iszero(flag & mask), model.single_variable_mask)
         push!(list, (MOI.SingleVariable, S))
     end
     return
 end
-function MOI.get(model::AbstractModel{T}, loc::MOI.ListOfConstraints) where {T}
-    list = copy(MOI.get(model.constraints, loc))
-    for S in (
-        MOI.EqualTo{T},
-        MOI.GreaterThan{T},
-        MOI.LessThan{T},
-        MOI.Interval{T},
-        MOI.Semicontinuous{T},
-        MOI.Semiinteger{T},
-        MOI.Integer,
-        MOI.ZeroOne,
-    )
-        _add_contraint_type(list, model, S)
-    end
+function MOI.get(model::AbstractModel{T}, attr::MOI.ListOfConstraints) where {T}
+    list = MOI.get(model.constraints, attr)::Vector{Tuple{DataType,DataType}}
+    _add_constraint_type(list, model, MOI.EqualTo{T})
+    _add_constraint_type(list, model, MOI.GreaterThan{T})
+    _add_constraint_type(list, model, MOI.LessThan{T})
+    _add_constraint_type(list, model, MOI.Interval{T})
+    _add_constraint_type(list, model, MOI.Semicontinuous{T})
+    _add_constraint_type(list, model, MOI.Semiinteger{T})
+    _add_constraint_type(list, model, MOI.Integer)
+    _add_constraint_type(list, model, MOI.ZeroOne)
     return list
 end
 

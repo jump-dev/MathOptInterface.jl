@@ -127,9 +127,9 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
         # Skip attributes which don't apply to the new optimizer.
         if attr isa MOI.RawParameter
-            # Even if the optimizer claims to `supports` `attr`, the value 
+            # Even if the optimizer claims to `supports` `attr`, the value
             # might have a different meaning (e.g., two solvers with `logLevel`
-            # as a RawParameter). To be on the safe side, just skip all raw 
+            # as a RawParameter). To be on the safe side, just skip all raw
             # parameters.
             continue
         elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)
@@ -280,7 +280,8 @@ function MOI.add_variables(m::CachingOptimizer, n)
     if m.state == ATTACHED_OPTIMIZER
         if m.mode == AUTOMATIC
             try
-                vindices_optimizer = MOI.add_variables(m.optimizer, n)
+                vindices_optimizer =
+                    MOI.add_variables(m.optimizer, n)::Vector{MOI.VariableIndex}
             catch err
                 if err isa MOI.NotAllowedError
                     reset_optimizer(m)
@@ -289,7 +290,8 @@ function MOI.add_variables(m::CachingOptimizer, n)
                 end
             end
         else
-            vindices_optimizer = MOI.add_variables(m.optimizer, n)
+            vindices_optimizer =
+                MOI.add_variables(m.optimizer, n)::Vector{MOI.VariableIndex}
         end
     end
     vindices = MOI.add_variables(m.model_cache, n)
