@@ -408,7 +408,7 @@ function MOI.add_constrained_variables(
                         m.optimizer,
                         set,
                     )::Tuple{
-                        MOI.VectorOfVariables,
+                        Vector{MOI.VariableIndex},
                         MOI.ConstraintIndex{MOI.VectorOfVariables,S},
                     }
             catch err
@@ -424,7 +424,7 @@ function MOI.add_constrained_variables(
                     m.optimizer,
                     set,
                 )::Tuple{
-                    MOI.VectorOfVariables,
+                    Vector{MOI.VariableIndex},
                     MOI.ConstraintIndex{MOI.VectorOfVariables,S},
                 }
         end
