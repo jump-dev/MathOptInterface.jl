@@ -15,54 +15,72 @@
 # vector, it readily gives the entries of `model.constrmap` that need to be
 # updated.
 
-struct VectorOfConstraints{F<:MOI.AbstractFunction,S<:MOI.AbstractSet} <:
-       MOI.ModelLike
-    # FIXME: It is not ideal that we have `DataType` here, it might induce type
-    #        instabilities. We should change `CleverDicts` so that we can just
-    #        use `typeof(CleverDicts.index_to_key)` here.
-    constraints::CleverDicts.CleverDict{
-        MOI.ConstraintIndex{F,S},
-        Tuple{F,S},
-        typeof(CleverDicts.key_to_index),
-        typeof(CleverDicts.index_to_key),
-    }
+const _VectorOfConstraintsCleverDict{F,S} = CleverDicts.CleverDict{
+    MOI.ConstraintIndex{F,S},
+    Tuple{F,S},
+    typeof(CleverDicts.key_to_index),
+    typeof(CleverDicts.index_to_key),
+}
 
-    function VectorOfConstraints{F,S}() where {F,S}
-        return new{F,S}(
-            CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}(),
-        )
-    end
+mutable struct VectorOfConstraints{
+    F<:MOI.AbstractFunction,
+    S<:MOI.AbstractSet,
+} <: MOI.ModelLike
+    # We create a lot of these objects (one for each function-set pair)! Since
+    # most users will probably only use a few of these, we can optimize our
+    # storage by using a `Union{Nothing,X}`.
+    constraints::Union{Nothing,_VectorOfConstraintsCleverDict{F,S}}
+
+    VectorOfConstraints{F,S}() where {F,S} = new{F,S}(nothing)
 end
 
-MOI.is_empty(v::VectorOfConstraints) = isempty(v.constraints)
-MOI.empty!(v::VectorOfConstraints) = empty!(v.constraints)
+MOI.is_empty(v::VectorOfConstraints) = v.constraints === nothing
+MOI.empty!(v::VectorOfConstraints) = (v.constraints = nothing)
 
 function MOI.supports_constraint(
-    v::VectorOfConstraints{F,S},
+    ::VectorOfConstraints{F,S},
     ::Type{F},
     ::Type{S},
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     return true
 end
+
+"""
+    _constraints(v::VectorOfConstraints{F,S}) where {F,S}
+
+Return a type-stable reference to the constraints in `v`. Throws an error if the
+field is `nothing`.
+"""
+function _constraints(v::VectorOfConstraints{F,S}) where {F,S}
+    return v.constraints::_VectorOfConstraintsCleverDict{F,S}
+end
+
 function MOI.add_constraint(
     v::VectorOfConstraints{F,S},
     func::F,
     set::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    if MOI.is_empty(v)
+        v.constraints =
+            CleverDicts.CleverDict{MOI.ConstraintIndex{F,S},Tuple{F,S}}()
+    end
     # We canonicalize the constraint so that solvers can avoid having to
     # canonicalize it most of the time (they can check if they need to with
     # `is_canonical`.
     # Note that the canonicalization is not guaranteed if for instance
     # `modify` is called and adds a new term.
     # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118
-    return CleverDicts.add_item(v.constraints, (canonical(func), copy(set)))
+    return CleverDicts.add_item(_constraints(v), (canonical(func), copy(set)))
 end
 
 function MOI.is_valid(
     v::VectorOfConstraints{F,S},
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    return haskey(v.constraints, ci)
+    if MOI.is_empty(v)
+        return false
+    end
+    return haskey(_constraints(v), ci)
 end
 
 function MOI.delete(
@@ -70,7 +88,11 @@ function MOI.delete(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    delete!(v.constraints, ci)
+    cons = _constraints(v)
+    delete!(cons, ci)
+    if length(cons) == 0
+        MOI.empty!(v)
+    end
     return
 end
 
@@ -80,7 +102,7 @@ function MOI.get(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    return v.constraints[ci][1]
+    return _constraints(v)[ci][1]
 end
 
 function MOI.get(
@@ -89,7 +111,7 @@ function MOI.get(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    return v.constraints[ci][2]
+    return _constraints(v)[ci][2]
 end
 
 function MOI.set(
@@ -99,7 +121,8 @@ function MOI.set(
     func::F,
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    v.constraints[ci] = (func, v.constraints[ci][2])
+    cons = _constraints(v)
+    cons[ci] = (func, cons[ci][2])
     return
 end
 
@@ -110,7 +133,8 @@ function MOI.set(
     set::S,
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    v.constraints[ci] = (v.constraints[ci][1], set)
+    cons = _constraints(v)
+    cons[ci] = (cons[ci][1], set)
     return
 end
 
@@ -118,21 +142,21 @@ function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.ListOfConstraintTypesPresent,
 )::Vector{Tuple{DataType,DataType}} where {F,S}
-    return isempty(v.constraints) ? [] : [(F, S)]
+    return MOI.is_empty(v) ? [] : [(F, S)]
 end
 
 function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.NumberOfConstraints{F,S},
 ) where {F,S}
-    return length(v.constraints)
+    return MOI.is_empty(v) ? 0 : length(_constraints(v))
 end
 
 function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.ListOfConstraintIndices{F,S},
 ) where {F,S}
-    return keys(v.constraints)
+    return MOI.is_empty(v) ? MOI.ConstraintIndex{F,S}[] : keys(_constraints(v))
 end
 
 function MOI.modify(
@@ -140,21 +164,28 @@ function MOI.modify(
     ci::MOI.ConstraintIndex{F,S},
     change::MOI.AbstractFunctionModification,
 ) where {F,S}
-    func, set = v.constraints[ci]
-    v.constraints[ci] = (modify_function(func, change), set)
+    cons = _constraints(v)
+    func, set = cons[ci]
+    cons[ci] = (modify_function(func, change), set)
     return
 end
 
 # Deletion of variables in vector of variables
 
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
-    CleverDicts.map_values!(v.constraints) do (f, s)
+    if MOI.is_empty(v)
+        return
+    end
+    CleverDicts.map_values!(_constraints(v)) do (f, s)
         return remove_variable(f, s, vi)
     end
     return
 end
-function _filter_variables(keep::F, v::VectorOfConstraints) where {F<:Function}
-    CleverDicts.map_values!(v.constraints) do (f, s)
+function _filter_variables(keep::Function, v::VectorOfConstraints)
+    if MOI.is_empty(v)
+        return
+    end
+    CleverDicts.map_values!(_constraints(v)) do (f, s)
         return filter_variables(keep, f, s)
     end
     return
@@ -176,10 +207,10 @@ function _throw_if_cannot_delete(
     vis,
     fast_in_vis,
 ) where {S<:MOI.AbstractVectorSet}
-    if MOI.supports_dimension_update(S)
+    if MOI.supports_dimension_update(S) || MOI.is_empty(v)
         return
     end
-    for fs in values(v.constraints)
+    for fs in values(_constraints(v))
         f = fs[1]::MOI.VectorOfVariables
         if length(f.variables) > 1 && f.variables != vis
             for vi in f.variables
@@ -207,7 +238,11 @@ function _delete_variables(
     v::VectorOfConstraints{MOI.VectorOfVariables,<:MOI.AbstractVectorSet},
     vis::Vector{MOI.VariableIndex},
 ) where {F<:Function}
-    filter!(v.constraints) do p
+    if MOI.is_empty(v)
+        return
+    end
+    cons = _constraints(v)
+    filter!(cons) do p
         f = p.second[1]
         del = if length(f.variables) == 1
             first(f.variables) in vis
@@ -218,6 +253,9 @@ function _delete_variables(
             callback(p.first)
         end
         return !del
+    end
+    if length(cons) == 0
+        MOI.empty!(v)
     end
     return
 end
