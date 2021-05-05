@@ -340,7 +340,10 @@ function MOI.add_constrained_variable(
                     MOI.add_constrained_variable(
                         m.optimizer,
                         set,
-                    )::Tuple{MOI.VariableIndex,S}
+                    )::Tuple{
+                        MOI.VariableIndex,
+                        MOI.ConstraintIndex{MOI.SingleVariable,S},
+                    }
             catch err
                 if err isa MOI.NotAllowedError
                     reset_optimizer(m)
@@ -352,7 +355,10 @@ function MOI.add_constrained_variable(
             vindex_optimizer, cindex_optimizer = MOI.add_constrained_variable(
                 m.optimizer,
                 set,
-            )::Tuple{MOI.VariableIndex,S}
+            )::Tuple{
+                MOI.VariableIndex,
+                MOI.ConstraintIndex{MOI.SingleVariable,S},
+            }
         end
     end
     vindex, cindex = MOI.add_constrained_variable(m.model_cache, set)
@@ -401,7 +407,10 @@ function MOI.add_constrained_variables(
                     MOI.add_constrained_variables(
                         m.optimizer,
                         set,
-                    )::Tuple{MOI.VectorOfVariables,S}
+                    )::Tuple{
+                        MOI.VectorOfVariables,
+                        MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+                    }
             catch err
                 if err isa MOI.NotAllowedError
                     reset_optimizer(m)
@@ -414,7 +423,10 @@ function MOI.add_constrained_variables(
                 MOI.add_constrained_variables(
                     m.optimizer,
                     set,
-                )::Tuple{MOI.VectorOfVariables,S}
+                )::Tuple{
+                    MOI.VectorOfVariables,
+                    MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+                }
         end
     end
     vindices, cindex = MOI.add_constrained_variables(m.model_cache, set)
