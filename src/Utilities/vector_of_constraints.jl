@@ -249,9 +249,6 @@ function _delete_variables(
         end
         return !del
     end
-    if length(cons) == 0
-        MOI.empty!(v)
-    end
     return
 end
 
@@ -263,8 +260,7 @@ function _deleted_constraints(
     if MOI.is_empty(v)
         return
     end
-    vis = [vi]
-    _delete_variables(callback, v, vis)
+    _delete_variables(callback, v, [vi])
     _remove_variable(v, vi)
     return
 end
