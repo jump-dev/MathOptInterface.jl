@@ -500,7 +500,7 @@ function MOI.supports(
     ::MOI.ConstraintName,
     ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
 )
-    return false
+    return throw(MOI.SingleVariableConstraintNameError())
 end
 
 function MOI.set(

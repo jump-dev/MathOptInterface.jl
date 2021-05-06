@@ -169,7 +169,6 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.ConstraintName(), c, "")
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c2))
         MOI.set(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
-        @test !MOI.supports(model, MOI.ConstraintName(), typeof(cx))
         @test MOI.supports(model, MOI.ConstraintName(), typeof(cy))
         MOI.set(model, MOI.ConstraintName(), cy, "")
 

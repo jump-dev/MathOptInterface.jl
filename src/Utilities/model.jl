@@ -251,14 +251,6 @@ end
 
 MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
 
-function MOI.supports(
-    ::AbstractModel,
-    ::MOI.ConstraintName,
-    ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
-)
-    return false
-end
-
 function MOI.set(
     model::AbstractModel,
     ::MOI.ConstraintName,
@@ -270,10 +262,18 @@ function MOI.set(
     return
 end
 
+function MOI.supports(
+    ::AbstractModel,
+    ::MOI.ConstraintName,
+    ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+)
+    return throw(MOI.SingleVariableConstraintNameError())
+end
+
 function MOI.set(
     ::AbstractModel,
-    attr::MOI.ConstraintName,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::MOI.ConstraintName,
+    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
     ::String,
 )
     return throw(MOI.SingleVariableConstraintNameError())

@@ -336,7 +336,10 @@ function basic_constraint_test_helper(
         if name
             @testset "ConstraintName" begin
                 if F == MOI.SingleVariable
-                    @test !MOI.supports(model, MOI.ConstraintName(), typeof(c))
+                    @test_throws(
+                        MOI.SingleVariableConstraintNameError(),
+                        MOI.supports(model, MOI.ConstraintName(), typeof(c)),
+                    )
                     @test_throws(
                         MOI.SingleVariableConstraintNameError(),
                         MOI.set(model, MOI.ConstraintName(), c, "c"),

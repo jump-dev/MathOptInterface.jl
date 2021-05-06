@@ -1324,7 +1324,7 @@ function MOI.supports(
     ::MOI.ConstraintName,
     ::Type{MOI.ConstraintIndex{MOI.SingleVariable,S}},
 ) where {S}
-    return false
+    return throw(MOI.SingleVariableConstraintNameError())
 end
 
 function MOI.set(
