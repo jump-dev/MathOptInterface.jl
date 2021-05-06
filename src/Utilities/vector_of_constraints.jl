@@ -259,7 +259,7 @@ function _deleted_constraints(
     callback::Function,
     v::VectorOfConstraints,
     vi::MOI.VariableIndex,
-)s
+)
     if MOI.is_empty(v)
         return
     end
