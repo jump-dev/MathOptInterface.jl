@@ -184,21 +184,16 @@ struct SymbolSet <: SymbolFS
     typed::Bool
 end
 
-# QuoteNode prevents s from being interpolated and keeps it as a symbol
-# Expr(:., MOI, s) would be MOI.s
-# Expr(:., MOI, $s) would be Expr(:., MOI, EqualTo)
-# Expr(:., MOI, :($s)) would be Expr(:., MOI, :EqualTo)
-# Expr(:., MOI, :($(QuoteNode(s)))) is Expr(:., MOI, :(:EqualTo)) <- what we want
-
-# (MOI, :Zeros) -> :(MOI.Zeros)
-# (:Zeros) -> :(MOI.Zeros)
 _typedset(s::SymbolSet) = s.typed ? Expr(:curly, esc(s.s), esc(:T)) : esc(s.s)
 _typedfun(s::SymbolFun) = s.typed ? Expr(:curly, esc(s.s), esc(:T)) : esc(s.s)
 
 # Base.lowercase is moved to Unicode.lowercase in Julia v0.7
-using Unicode
+import Unicode
 
-_field(s::SymbolFS) = Symbol(replace(lowercase(string(s.s)), "." => "_"))
+function _field(s::SymbolFS)
+    return Symbol(replace(Unicode.lowercase(string(s.s)), "." => "_"))
+end
+
 _callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
 _broadcastfield(b, s::SymbolFS) = :($b(f, model.$(_field(s))))
 _mapreduce_field(s::SymbolFS) = :(cur = op(cur, f(model.$(_field(s)))))

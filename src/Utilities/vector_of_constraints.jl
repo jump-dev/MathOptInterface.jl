@@ -172,19 +172,16 @@ end
 
 # Deletion of variables in vector of variables
 
+"This function assumes that v.constraints is not nothing."
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
-    if MOI.is_empty(v)
-        return
-    end
     CleverDicts.map_values!(_constraints(v)) do (f, s)
         return remove_variable(f, s, vi)
     end
     return
 end
+
+"This function assumes that v.constraints is not nothing."
 function _filter_variables(keep::Function, v::VectorOfConstraints)
-    if MOI.is_empty(v)
-        return
-    end
     CleverDicts.map_values!(_constraints(v)) do (f, s)
         return filter_variables(keep, f, s)
     end
@@ -233,14 +230,12 @@ function _delete_variables(
     return  # Nothing to do as it's not `VectorOfVariables` constraints
 end
 
+"This function assumes that v.constraints is not nothing."
 function _delete_variables(
-    callback::F,
+    callback::Function,
     v::VectorOfConstraints{MOI.VectorOfVariables,<:MOI.AbstractVectorSet},
     vis::Vector{MOI.VariableIndex},
-) where {F<:Function}
-    if MOI.is_empty(v)
-        return
-    end
+)
     cons = _constraints(v)
     filter!(cons) do p
         f = p.second[1]
@@ -261,10 +256,13 @@ function _delete_variables(
 end
 
 function _deleted_constraints(
-    callback::F,
+    callback::Function,
     v::VectorOfConstraints,
     vi::MOI.VariableIndex,
-) where {F<:Function}
+)s
+    if MOI.is_empty(v)
+        return
+    end
     vis = [vi]
     _delete_variables(callback, v, vis)
     _remove_variable(v, vi)
@@ -272,10 +270,13 @@ function _deleted_constraints(
 end
 
 function _deleted_constraints(
-    callback::F,
+    callback::Function,
     v::VectorOfConstraints,
     vis::Vector{MOI.VariableIndex},
-) where {F<:Function}
+)
+    if MOI.is_empty(v)
+        return
+    end
     removed = Set(vis)
     _delete_variables(callback, v, vis)
     _filter_variables(vi -> !(vi in removed), v)
