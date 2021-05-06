@@ -1,8 +1,9 @@
 function test_num_constraints(bridged_mock, F, S, n)
     @test MOI.get(bridged_mock, MOI.NumberOfConstraints{F,S}()) == n
     @test length(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{F,S}())) == n
-    @test ((F, S) in MOI.get(bridged_mock, MOI.ListOfConstraints())) ==
-          !iszero(n)
+    @test (
+        (F, S) in MOI.get(bridged_mock, MOI.ListOfConstraintTypesPresent())
+    ) == !iszero(n)
 end
 
 function warn_incomplete_list_num_constraints(BT, list_num_constraints)

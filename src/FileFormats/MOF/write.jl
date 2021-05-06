@@ -59,7 +59,7 @@ function write_constraints(
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             push!(object["constraints"], moi_to_object(index, model, name_map))
         end
@@ -129,7 +129,7 @@ function moi_to_object(
 )
     return OrderedObject(
         "coefficient" => foo.coefficient,
-        "variable" => name_map[foo.variable_index],
+        "variable" => name_map[foo.variable],
     )
 end
 
@@ -150,8 +150,8 @@ function moi_to_object(
 )
     return OrderedObject(
         "coefficient" => foo.coefficient,
-        "variable_1" => name_map[foo.variable_index_1],
-        "variable_2" => name_map[foo.variable_index_2],
+        "variable_1" => name_map[foo.variable_1],
+        "variable_2" => name_map[foo.variable_2],
     )
 end
 

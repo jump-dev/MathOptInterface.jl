@@ -76,7 +76,7 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         model,
         MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
     ) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
@@ -599,7 +599,7 @@ function _norminf1test(
             MOI.NormInfinityCone,
         }(),
     ) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
     @test (
@@ -819,7 +819,7 @@ function norminf3test(model::MOI.ModelLike, config::TestConfig)
             MOI.Nonnegatives,
         }(),
     ) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
@@ -955,7 +955,7 @@ function _normone1test(
             MOI.NormOneCone,
         }(),
     ) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
     @test (
@@ -1175,7 +1175,7 @@ function normone3test(model::MOI.ModelLike, config::TestConfig)
             MOI.Nonnegatives,
         }(),
     ) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
@@ -1298,7 +1298,7 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
             MOI.SecondOrderCone,
         }(),
     ) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
     @test (

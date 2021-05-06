@@ -128,8 +128,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, SquareBridge{T})
     MOIB.add_bridge(bridged_model, LogDetBridge{T})
     MOIB.add_bridge(bridged_model, RootDetBridge{T})
-    MOIB.add_bridge(bridged_model, RSOCBridge{T})
-    MOIB.add_bridge(bridged_model, SOCRBridge{T})
+    MOIB.add_bridge(bridged_model, RSOCtoSOCBridge{T})
+    MOIB.add_bridge(bridged_model, SOCtoRSOCBridge{T})
     # We do not add `SOCtoPSDBridge` as transforming the `SOC` to `RSOC` and
     # then to `PSD` produces a smaller SDP constraint.
     MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})

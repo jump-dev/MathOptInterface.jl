@@ -260,28 +260,29 @@ end
 variables(func::MOI.SingleVariable) = func.variable
 variables(func::MOI.VectorOfVariables) = func.variables
 function variables(func::MOI.ScalarAffineFunction)
-    return Set(term.variable_index for term in func.terms)
+    return Set(term.variable for term in func.terms)
 end
 function variables(func::MOI.VectorAffineFunction)
-    return Set(term.scalar_term.variable_index for term in func.terms)
+    return Set(term.scalar_term.variable for term in func.terms)
 end
 function variables(func::MOI.ScalarQuadraticFunction)
-    return Set(term.variable_index for term in func.affine_terms) ∪
-           Set(term.variable_index_1 for term in func.quadratic_terms)
-    return Set(term.variable_index_2 for term in func.quadratic_terms)
+    return Set(term.variable for term in func.affine_terms) ∪
+           Set(term.variable_1 for term in func.quadratic_terms)
+    return Set(term.variable_2 for term in func.quadratic_terms)
 end
 function variables(func::MOI.VectorQuadraticFunction)
-    return Set(term.scalar_term.variable_index for term in func.affine_terms) ∪
-           Set(
-        term.scalar_term.variable_index_1 for term in func.quadratic_terms
-    )
-    return Set(
-        term.scalar_term.variable_index_2 for term in func.quadratic_terms
-    )
+    return Set(term.scalar_term.variable for term in func.affine_terms) ∪
+           Set(term.scalar_term.variable_1 for term in func.quadratic_terms)
+    return Set(term.scalar_term.variable_2 for term in func.quadratic_terms)
 end
 
 """
-    basic_constraint_test_helper(model::MOI.ModelLike, config::TestConfig, func::Function, set::MOI.AbstractSet, N::Int;
+    basic_constraint_test_helper(
+        model::MOI.ModelLike,
+        config::TestConfig,
+        func::Function,
+        set::MOI.AbstractSet,
+        N::Int;
         delete::Bool                  = true,
         get_constraint_function::Bool = true,
         get_constraint_set::Bool      = true,

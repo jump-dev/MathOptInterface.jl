@@ -486,7 +486,8 @@ function pass_constraints(
     end
 
     nonvariable_constraint_types = [
-        (F, S) for (F, S) in MOI.get(src, MOI.ListOfConstraints()) if
+        (F, S) for
+        (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent()) if
         F != MOI.SingleVariable && F != MOI.VectorOfVariables
     ]
     pass_nonvariable_constraints(
@@ -536,7 +537,7 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
 end
 
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
-    constraint_types = MOI.get(src, MOI.ListOfConstraints())
+    constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
     single_or_vector_variables_types = [
         (F, S) for (F, S) in constraint_types if
         F === MOI.SingleVariable || F === MOI.VectorOfVariables
@@ -633,7 +634,7 @@ function default_copy_to(
 
     # The `NLPBlock` assumes that the order of variables does not change (#849)
     if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
-        constraint_types = MOI.get(src, MOI.ListOfConstraints())
+        constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
         single_variable_types =
             [S for (F, S) in constraint_types if F == MOI.SingleVariable]
         vector_of_variables_types =
@@ -1004,7 +1005,7 @@ function allocate_load(
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
     idxmap = index_map_for_variable_indices(vis_src)
-    constraint_types = MOI.get(src, MOI.ListOfConstraints())
+    constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
     single_variable_types =
         [S for (F, S) in constraint_types if F === MOI.SingleVariable]
     vector_of_variables_types =

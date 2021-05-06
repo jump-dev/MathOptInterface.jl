@@ -195,14 +195,14 @@ function MOI.set(
     attr::MOI.PrimalStatus,
     value::MOI.ResultStatusCode,
 )
-    return mock.primal_status[attr.N] = value
+    return mock.primal_status[attr.result_index] = value
 end
 function MOI.set(
     mock::MockOptimizer,
     attr::MOI.DualStatus,
     value::MOI.ResultStatusCode,
 )
-    return mock.dual_status[attr.N] = value
+    return mock.dual_status[attr.result_index] = value
 end
 function MOI.set(
     mock::MockOptimizer,
@@ -421,17 +421,17 @@ function MOI.get(mock::MockOptimizer, attr::MOI.DualObjectiveValue)
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.PrimalStatus)
-    if attr.N > mock.result_count
+    if attr.result_index > mock.result_count
         return MOI.NO_SOLUTION
     else
-        return get(mock.primal_status, attr.N, MOI.NO_SOLUTION)
+        return get(mock.primal_status, attr.result_index, MOI.NO_SOLUTION)
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.DualStatus)
-    if attr.N > mock.result_count
+    if attr.result_index > mock.result_count
         return MOI.NO_SOLUTION
     else
-        return get(mock.dual_status, attr.N, MOI.NO_SOLUTION)
+        return get(mock.dual_status, attr.result_index, MOI.NO_SOLUTION)
     end
 end
 MOI.get(mock::MockOptimizer, ::MockModelAttribute) = mock.attribute
@@ -554,7 +554,7 @@ function _safe_set_result(
     if !haskey(dict, xored)
         dict[xored] = V()
     end
-    return dict[xored][MOI._result_index_field(attr)] = value
+    return dict[xored][attr.result_index] = value
 end
 function _safe_get_result(
     dict::Dict,
@@ -567,7 +567,7 @@ function _safe_get_result(
     if result_to_value === nothing
         error("No mock $name is set for ", index_name, " `", index, "`.")
     end
-    value = get(result_to_value, MOI._result_index_field(attr), nothing)
+    value = get(result_to_value, attr.result_index, nothing)
     if value === nothing
         error(
             "No mock $name is set for ",
@@ -575,7 +575,7 @@ function _safe_get_result(
             " `",
             index,
             "` at result index `",
-            MOI._result_index_field(attr),
+            attr.result_index,
             "`.",
         )
     end

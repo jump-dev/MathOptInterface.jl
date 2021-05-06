@@ -22,17 +22,16 @@ optionally a nonlinear objective.
 struct NLPBlock <: AbstractModelAttribute end
 
 """
-    NLPBlockDual(N)
+    NLPBlockDual(result_index::Int)
     NLPBlockDual()
 
-The Lagrange multipliers on the constraints from the `NLPBlock` in result `N`.
-If `N` is omitted, it is 1 by default.
+The Lagrange multipliers on the constraints from the `NLPBlock` in result
+`result_index`. If `result_index` is omitted, it is 1 by default.
 """
 struct NLPBlockDual <: AbstractModelAttribute
-    N::Int
+    result_index::Int
 end
 NLPBlockDual() = NLPBlockDual(1)
-_result_index_field(attr::NLPBlockDual) = attr.N
 
 is_set_by_optimize(::NLPBlockDual) = true
 

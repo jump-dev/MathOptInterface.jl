@@ -3,7 +3,7 @@
 
 The `IndicatorActiveOnFalseBridge` replaces an indicator constraint activated
 on 0 with a variable ``z_0`` with the constraint activated on 1, with a variable ``z_1``.
-It stores the added `variable_index` and added constraints:
+It stores the added `variable` and added constraints:
 - ``z_1 \\in \\mathbb{B}`` in `zero_one_cons`
 - ``z_0 + z_1 == 1`` in `` in `disjunction_cons`
 - The added `ACTIVATE_ON_ONE` indicator constraint in `indicator_cons_index`.
@@ -13,7 +13,7 @@ struct IndicatorActiveOnFalseBridge{
     F<:MOI.AbstractVectorFunction,
     S<:MOI.AbstractScalarSet,
 } <: AbstractBridge
-    variable_index::MOI.VariableIndex
+    variable::MOI.VariableIndex
     zero_one_cons::MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}
     disjunction_cons::MOI.ConstraintIndex{
         MOI.ScalarAffineFunction{T},

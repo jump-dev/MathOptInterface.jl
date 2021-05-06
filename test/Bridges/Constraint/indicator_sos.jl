@@ -92,7 +92,7 @@ include("../utilities.jl")
     }
     @test bridge3 isa BT3
 
-    w1 = bridge1.w_variable_index
+    w1 = bridge1.w_variable
     @test MOI.get(
         model,
         MOI.ConstraintFunction(),
@@ -113,7 +113,7 @@ include("../utilities.jl")
     )
     @test MOI.get(model, MOI.ConstraintSet(), lin_cons1) == MOI.LessThan(8.0)
 
-    w2 = bridge2.w_variable_index
+    w2 = bridge2.w_variable
     @test bridge2.bound_constraint_index === nothing
     @test MOI.get(
         model,
@@ -132,7 +132,7 @@ include("../utilities.jl")
     )
     @test MOI.get(model, MOI.ConstraintSet(), lin_cons2) == MOI.EqualTo(9.0)
 
-    w3 = bridge3.w_variable_index
+    w3 = bridge3.w_variable
     @test MOI.get(
         model,
         MOI.ConstraintFunction(),
@@ -303,7 +303,7 @@ end
     )
     bridge1 = MOIB.Constraint.bridge_constraint(BT, mock, f, iset)
     # w value should be defaulted to 0
-    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable_index, 0.0)
+    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable, 0.0)
     affine_value = 6.0
     MOI.set(mock, MOI.ConstraintPrimalStart(), bridge1, [1.0, affine_value])
     @test MOI.get(mock, MOI.VariablePrimalStart(), z) ≈ 1.0
@@ -315,7 +315,7 @@ end
 
     # after setting the w value
     w_value = 3.0
-    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable_index, w_value)
+    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable, w_value)
     # linear function should not move
     @test all(
         MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1) .≈
@@ -360,9 +360,9 @@ end
     )
 
     # VariablePrimal
-    MOI.set(mock, MOI.VariablePrimal(), bridge1.w_variable_index, 33.0)
+    MOI.set(mock, MOI.VariablePrimal(), bridge1.w_variable, 33.0)
     z_value = 1.0
-    MOI.set(mock, MOI.VariablePrimal(), bridge1.z_variable_index, z_value)
+    MOI.set(mock, MOI.VariablePrimal(), bridge1.z_variable, z_value)
     MOI.set(mock, MOI.VariablePrimal(), x, affine_value)
 
     # linear function should not move

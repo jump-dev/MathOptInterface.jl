@@ -17,7 +17,7 @@ using Base.Meta: isexpr
 
 struct ParsedScalarAffineTerm
     coefficient::Float64
-    variable_index::Symbol
+    variable::Symbol
 end
 
 struct ParsedScalarAffineFunction
@@ -37,8 +37,8 @@ end
 
 struct ParsedScalarQuadraticTerm
     coefficient::Float64
-    variable_index_1::Symbol
-    variable_index_2::Symbol
+    variable_1::Symbol
+    variable_2::Symbol
 end
 
 struct ParsedScalarQuadraticFunction

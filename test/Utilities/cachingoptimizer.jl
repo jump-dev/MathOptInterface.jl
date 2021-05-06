@@ -118,6 +118,7 @@ struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
         MOIU.UniversalFallback(MOIU.Model{Float64}()),
         mock,
     )
+    MOIU.attach_optimizer(model)
     x = MOI.add_variable(model)
     y = first(MOI.get(mock, MOI.ListOfVariableIndices()))
     @test x != y # Otherwise, these tests will trivially pass
@@ -441,7 +442,7 @@ end
         s.add_con_allowed = true
         @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         MOI.empty!(m)
-        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
     end
 
     @testset "Add variable not allowed" begin
@@ -494,12 +495,12 @@ end
         m = MOIU.CachingOptimizer(model, s)
         @test m isa MOIU.CachingOptimizer{typeof(s),typeof(model)}
         @test MOI.is_empty(m)
-        @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
+        @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
         @test MOIU.mode(m) == MOIU.AUTOMATIC
         @test MOI.get(m, MOI.SolverName()) == "Mock"
         @test sprint(show, m) == MOI.Utilities.replace_acronym("""
         $(MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64}},MOIU.Model{Float64}})
-        in state ATTACHED_OPTIMIZER
+        in state EMPTY_OPTIMIZER
         in mode AUTOMATIC
         with model cache $(MOIU.Model{Float64})
         with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64}})""")
@@ -632,12 +633,12 @@ function constrained_variables_test(model)
         (MOI.SingleVariable, MOI.ZeroOne),
         (MOI.VectorOfVariables, MOI.Nonnegatives),
     ])
-    @test Set(MOI.get(model.model_cache, MOI.ListOfConstraints())) ==
+    @test Set(MOI.get(model.model_cache, MOI.ListOfConstraintTypesPresent())) ==
           constraint_types
     if MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
         MOIU.attach_optimizer(model)
     end
-    @test Set(MOI.get(model.optimizer, MOI.ListOfConstraints())) ==
+    @test Set(MOI.get(model.optimizer, MOI.ListOfConstraintTypesPresent())) ==
           constraint_types
 end
 

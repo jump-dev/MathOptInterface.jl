@@ -42,7 +42,7 @@ ObjectiveFunctionType
 ObjectiveSense
 NumberOfVariables
 ListOfVariableIndices
-ListOfConstraints
+ListOfConstraintTypesPresent
 NumberOfConstraints
 ListOfConstraintIndices
 ListOfOptimizerAttributesSet
@@ -86,7 +86,7 @@ ObjectiveValue
 DualObjectiveValue
 ObjectiveBound
 RelativeGap
-SolveTime
+SolveTimeSec
 SimplexIterations
 BarrierIterations
 NodeCount

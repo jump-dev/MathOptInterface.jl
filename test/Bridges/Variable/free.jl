@@ -100,7 +100,7 @@ end
     )
     MOIT.linear6test(bridged_mock, config)
 
-    loc = MOI.get(bridged_mock, MOI.ListOfConstraints())
+    loc = MOI.get(bridged_mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test !((MOI.VectorOfVariables, MOI.Reals) in loc)
     @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in loc

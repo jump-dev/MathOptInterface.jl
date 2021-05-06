@@ -213,7 +213,7 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     bridge::AbstractSOCtoNonConvexQuadBridge,
 )
-    vals = MOI.get.(model, MOI.VariablePrimal(attr.N), bridge.vars)
+    vals = MOI.get.(model, MOI.VariablePrimal(attr.result_index), bridge.vars)
     return vals
 end
 

@@ -116,7 +116,7 @@ end
 
 function MOI.get(
     v::VectorOfConstraints{F,S},
-    ::MOI.ListOfConstraints,
+    ::MOI.ListOfConstraintTypesPresent,
 )::Vector{Tuple{DataType,DataType}} where {F,S}
     return isempty(v.constraints) ? [] : [(F, S)]
 end
@@ -148,14 +148,14 @@ end
 # Deletion of variables in vector of variables
 
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
-    CleverDicts.map_values!(v.constraints) do func_set
-        return remove_variable(func_set..., vi)
+    CleverDicts.map_values!(v.constraints) do (f, s)
+        return remove_variable(f, s, vi)
     end
     return
 end
-function _filter_variables(keep::Function, v::VectorOfConstraints)
-    CleverDicts.map_values!(v.constraints) do func_set
-        return filter_variables(keep, func_set...)
+function _filter_variables(keep::F, v::VectorOfConstraints) where {F<:Function}
+    CleverDicts.map_values!(v.constraints) do (f, s)
+        return filter_variables(keep, f, s)
     end
     return
 end
@@ -203,10 +203,10 @@ function _delete_variables(
 end
 
 function _delete_variables(
-    callback::Function,
-    v::VectorOfConstraints{MOI.VectorOfVariables,S},
+    callback::F,
+    v::VectorOfConstraints{MOI.VectorOfVariables,<:MOI.AbstractVectorSet},
     vis::Vector{MOI.VariableIndex},
-) where {S<:MOI.AbstractVectorSet}
+) where {F<:Function}
     filter!(v.constraints) do p
         f = p.second[1]
         del = if length(f.variables) == 1
@@ -223,10 +223,10 @@ function _delete_variables(
 end
 
 function _deleted_constraints(
-    callback::Function,
+    callback::F,
     v::VectorOfConstraints,
     vi::MOI.VariableIndex,
-)
+) where {F<:Function}
     vis = [vi]
     _delete_variables(callback, v, vis)
     _remove_variable(v, vi)
@@ -234,10 +234,10 @@ function _deleted_constraints(
 end
 
 function _deleted_constraints(
-    callback::Function,
+    callback::F,
     v::VectorOfConstraints,
     vis::Vector{MOI.VariableIndex},
-)
+) where {F<:Function}
     removed = Set(vis)
     _delete_variables(callback, v, vis)
     _filter_variables(vi -> !(vi in removed), v)

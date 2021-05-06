@@ -64,7 +64,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
         model,
         MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
     ) == 1
-    loc = MOI.get(model, MOI.ListOfConstraints())
+    loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
     @test (MOI.VectorOfVariables, MOI.SecondOrderCone) in loc

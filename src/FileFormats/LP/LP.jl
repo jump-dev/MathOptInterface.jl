@@ -111,7 +111,7 @@ function write_function(
                 print_shortest(io, abs(term.coefficient))
             end
 
-            print(io, " ", variable_names[term.variable_index])
+            print(io, " ", variable_names[term.variable])
         end
     end
     return

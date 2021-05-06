@@ -181,5 +181,6 @@ include("Benchmarks/Benchmarks.jl")
 include("FileFormats/FileFormats.jl")
 
 include("instantiate.jl")
+include("deprecate.jl")
 
 end

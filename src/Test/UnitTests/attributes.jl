@@ -103,7 +103,7 @@ unittests["raw_status_string"] = raw_status_string
 """
     solve_time(model::MOI.ModelLike, config::TestConfig)
 
-Test that the [`MOI.SolveTime`](@ref) attribute is implemented for `model`.
+Test that the [`MOI.SolveTimeSec`](@ref) attribute is implemented for `model`.
 """
 function solve_time(model::MOI.ModelLike, config::TestConfig)
     MOI.empty!(model)
@@ -123,7 +123,7 @@ function solve_time(model::MOI.ModelLike, config::TestConfig)
         variable_primal = [(x, 0.0)],
     )
     if config.solve
-        time = MOI.get(model, MOI.SolveTime())
+        time = MOI.get(model, MOI.SolveTimeSec())
         @test time ≥ 0.0
     end
 end

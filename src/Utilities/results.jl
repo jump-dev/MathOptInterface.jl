@@ -145,7 +145,7 @@ function get_fallback(
     T::Type,
 )
     value = zero(T) # sum will not work if there are zero constraints
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         value += dual_objective_value(model, F, S, T, attr.result_index)::T
     end
     if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
@@ -175,7 +175,7 @@ function get_fallback(
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
     # TODO do not include constant if primal solution is a ray
     return eval_variables(
-        vi -> MOI.get(model, MOI.VariablePrimal(attr.N), vi),
+        vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi),
         f,
     )
 end
@@ -213,7 +213,7 @@ function variable_coefficient(
 ) where {T}
     coef = zero(T)
     for term in func.terms
-        if term.variable_index == vi
+        if term.variable == vi
             coef += term.coefficient
         end
     end
@@ -226,7 +226,7 @@ function variable_coefficient(
     coef = zeros(T, MOI.output_dimension(func))
     for vector_term in func.terms
         term = vector_term.scalar_term
-        if term.variable_index == vi
+        if term.variable == vi
             coef[vector_term.output_index] += term.coefficient
         end
     end
@@ -240,15 +240,15 @@ function variable_coefficient(
     coef = zero(T)
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for term in func.affine_terms
-        if term.variable_index == vi
+        if term.variable == vi
             coef += term.coefficient
         end
     end
     for term in func.quadratic_terms
-        if term.variable_index_1 == vi
-            coef += term.coefficient * value(term.variable_index_2)
-        elseif term.variable_index_2 == vi
-            coef += term.coefficient * value(term.variable_index_1)
+        if term.variable_1 == vi
+            coef += term.coefficient * value(term.variable_2)
+        elseif term.variable_2 == vi
+            coef += term.coefficient * value(term.variable_1)
         end
     end
     return coef
@@ -262,17 +262,17 @@ function variable_coefficient(
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
     for vector_term in func.affine_terms
         term = vector_term.scalar_term
-        if term.variable_index == vi
+        if term.variable == vi
             coef[vector_term.output_index] += term.coefficient
         end
     end
     for vector_term in func.quadratic_terms
         term = vector_term.scalar_term
         oi = vector_term.output_index
-        if term.variable_index_1 == vi
-            coef[oi] += term.coefficient * value(term.variable_index_2)
-        elseif term.variable_index_2 == vi
-            coef[oi] += term.coefficient * value(term.variable_index_1)
+        if term.variable_1 == vi
+            coef[oi] += term.coefficient * value(term.variable_2)
+        elseif term.variable_2 == vi
+            coef[oi] += term.coefficient * value(term.variable_1)
         end
     end
     return coef
@@ -308,7 +308,7 @@ function variable_dual(
 )
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
-    primal_attr = MOI.VariablePrimal(attr.N)
+    primal_attr = MOI.VariablePrimal(attr.result_index)
     coef = variable_coefficient(func, vi, vi -> MOI.get(model, primal_attr, vi))
     dual = MOI.get(model, attr, ci)
     return set_dot(coef, dual, set)
@@ -331,7 +331,7 @@ function variable_dual(
     ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction},
 )
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
-    primal_attr = MOI.VariablePrimal(attr.N)
+    primal_attr = MOI.VariablePrimal(attr.result_index)
     coef = variable_coefficient(func, vi, vi -> MOI.get(model, primal_attr, vi))
     dual = MOI.get(model, attr, ci)
     return coef * dual
@@ -421,7 +421,7 @@ function variable_dual(
             dual += sign * variable_coefficient(f, vi)
         elseif F <: MOI.ScalarQuadraticFunction
             f = MOI.get(model, obj_attr)
-            primal_attr = MOI.VariablePrimal(attr.N)
+            primal_attr = MOI.VariablePrimal(attr.result_index)
             dual +=
                 sign * variable_coefficient(
                     f,
@@ -436,7 +436,7 @@ function variable_dual(
             )
         end
     end
-    for FS in MOI.get(model, MOI.ListOfConstraints())
+    for FS in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         dual -= variable_dual(model, attr, ci, vi, FS[1], FS[2])
     end
     return dual

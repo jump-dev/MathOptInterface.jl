@@ -54,13 +54,12 @@ end
 
 # Affine term
 function eval_term(varval::Function, t::MOI.ScalarAffineTerm)
-    return t.coefficient * varval(t.variable_index)
+    return t.coefficient * varval(t.variable)
 end
 # Quadratic term
 function eval_term(varval::Function, t::MOI.ScalarQuadraticTerm)
-    tval =
-        t.coefficient * varval(t.variable_index_1) * varval(t.variable_index_2)
-    return t.variable_index_1 == t.variable_index_2 ? tval / 2 : tval
+    tval = t.coefficient * varval(t.variable_1) * varval(t.variable_2)
+    return t.variable_1 == t.variable_2 ? tval / 2 : tval
 end
 
 """
@@ -127,7 +126,7 @@ map_indices(::F, block::MOI.NLPBlockData) where {F<:Function} = block
 
 # Terms
 function map_indices(index_map::F, t::MOI.ScalarAffineTerm) where {F<:Function}
-    return MOI.ScalarAffineTerm(t.coefficient, index_map(t.variable_index))
+    return MOI.ScalarAffineTerm(t.coefficient, index_map(t.variable))
 end
 
 function map_indices(index_map::F, t::MOI.VectorAffineTerm) where {F<:Function}
@@ -141,7 +140,7 @@ function map_indices(
     index_map::F,
     t::MOI.ScalarQuadraticTerm,
 ) where {F<:Function}
-    inds = index_map.((t.variable_index_1, t.variable_index_2))
+    inds = index_map.((t.variable_1, t.variable_2))
     return MOI.ScalarQuadraticTerm(t.coefficient, inds...)
 end
 
@@ -259,17 +258,17 @@ function substitute_variables(
     variable_map::F,
     term::MOI.ScalarQuadraticTerm{T},
 ) where {T,F<:Function}
-    # We could have `T = Complex{Float64}` and `variable_map(term.variable_index)`
+    # We could have `T = Complex{Float64}` and `variable_map(term.variable)`
     # be a `MOI.ScalarAffineFunction{Float64}` with the Hermitian to PSD bridge.
     # We convert to `MOI.ScalarAffineFunction{T}` to avoid any issue.
-    f1::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index_1)
-    f2::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index_2)
+    f1::MOI.ScalarAffineFunction{T} = variable_map(term.variable_1)
+    f2::MOI.ScalarAffineFunction{T} = variable_map(term.variable_2)
     f12 = operate(*, T, f1, f2)::MOI.ScalarQuadraticFunction{T}
     coef = term.coefficient
     # The quadratic terms are evaluated as x'Qx/2 so a diagonal term should
     # be divided by 2 while an off-diagonal term appears twice in the matrix
     # and is divided by 2 so it stays the same.
-    if term.variable_index_1 == term.variable_index_2
+    if term.variable_1 == term.variable_2
         coef /= 2
     end
     return operate!(*, T, f12, coef)
@@ -280,7 +279,7 @@ function substitute_variables(
     term::MOI.ScalarAffineTerm{T},
 ) where {T,F<:Function}
     # See comment for `term::MOI.ScalarQuadraticTerm` for the conversion.
-    func::MOI.ScalarAffineFunction{T} = variable_map(term.variable_index)
+    func::MOI.ScalarAffineFunction{T} = variable_map(term.variable)
     return operate(*, T, term.coefficient, func)::MOI.ScalarAffineFunction{T}
 end
 
@@ -590,35 +589,32 @@ end
 """
     unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm)
 
-Sums the coefficients of `t1` and `t2` and returns an output `MOI.ScalarAffineTerm`. It is unsafe because it uses the `variable_index` of `t1` as the `variable_index` of the output without checking that it is equal to that of `t2`.
+Sums the coefficients of `t1` and `t2` and returns an output `MOI.ScalarAffineTerm`. It is unsafe because it uses the `variable` of `t1` as the `variable` of the output without checking that it is equal to that of `t2`.
 """
 function unsafe_add(t1::MOI.ScalarAffineTerm, t2::MOI.ScalarAffineTerm)
-    return MOI.ScalarAffineTerm(
-        t1.coefficient + t2.coefficient,
-        t1.variable_index,
-    )
+    return MOI.ScalarAffineTerm(t1.coefficient + t2.coefficient, t1.variable)
 end
 
 """
     unsafe_add(t1::MOI.ScalarQuadraticTerm, t2::MOI.ScalarQuadraticTerm)
 
 Sums the coefficients of `t1` and `t2` and returns an output
-`MOI.ScalarQuadraticTerm`. It is unsafe because it uses the `variable_index`'s
-of `t1` as the `variable_index`'s of the output without checking that they are
+`MOI.ScalarQuadraticTerm`. It is unsafe because it uses the `variable`'s
+of `t1` as the `variable`'s of the output without checking that they are
 the same (up to permutation) to those of `t2`.
 """
 function unsafe_add(t1::MOI.ScalarQuadraticTerm, t2::MOI.ScalarQuadraticTerm)
     return MOI.ScalarQuadraticTerm(
         t1.coefficient + t2.coefficient,
-        t1.variable_index_1,
-        t1.variable_index_2,
+        t1.variable_1,
+        t1.variable_2,
     )
 end
 
 """
     unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm)
 
-Sums the coefficients of `t1` and `t2` and returns an output `MOI.VectorAffineTerm`. It is unsafe because it uses the `output_index` and `variable_index` of `t1` as the `output_index` and `variable_index` of the output term without checking that they are equal to those of `t2`.
+Sums the coefficients of `t1` and `t2` and returns an output `MOI.VectorAffineTerm`. It is unsafe because it uses the `output_index` and `variable` of `t1` as the `output_index` and `variable` of the output term without checking that they are equal to those of `t2`.
 """
 function unsafe_add(
     t1::VT,
@@ -806,7 +802,7 @@ function test_variablenames_equal(model, variablenames)
 end
 function test_constraintnames_equal(model, constraintnames)
     seen_name = Dict(name => false for name in constraintnames)
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             cname = MOI.get(model, MOI.ConstraintName(), index)
             if !haskey(seen_name, cname)
@@ -945,11 +941,11 @@ end
 _keep_all(keep::Function, v::MOI.VariableIndex) = keep(v)
 
 function _keep_all(keep::Function, t::MOI.ScalarAffineTerm)
-    return keep(t.variable_index)
+    return keep(t.variable)
 end
 
 function _keep_all(keep::Function, t::MOI.ScalarQuadraticTerm)
-    return keep(t.variable_index_1) && keep(t.variable_index_2)
+    return keep(t.variable_1) && keep(t.variable_2)
 end
 
 function _keep_all(
@@ -1048,7 +1044,7 @@ function _modifycoefficient(
     new_coefficient::T,
 ) where {T}
     terms = copy(terms)
-    i = something(findfirst(t -> t.variable_index == variable, terms), 0)
+    i = something(findfirst(t -> t.variable == variable, terms), 0)
     if iszero(i)  # The variable was not already in the function
         if !iszero(new_coefficient)
             push!(terms, MOI.ScalarAffineTerm(new_coefficient, variable))
@@ -1062,7 +1058,7 @@ function _modifycoefficient(
         # To account for duplicates, we need to delete any other instances of
         # `variable` in `terms`.
         for j in length(terms):-1:(i+1)
-            if terms[j].variable_index == variable
+            if terms[j].variable == variable
                 deleteat!(terms, j)
             end
         end
@@ -1099,7 +1095,7 @@ function _modifycoefficients(
     coef_dict = Dict(k => v for (k, v) in new_coefficients)
     elements_to_delete = Int[]
     for (i, term) in enumerate(terms)
-        if term.scalar_term.variable_index != variable
+        if term.scalar_term.variable != variable
             continue
         end
         new_coef = Base.get(coef_dict, term.output_index, nothing)
@@ -1236,13 +1232,13 @@ function operate_term(
     return term
 end
 function operate_term(::typeof(-), term::MOI.ScalarAffineTerm)
-    return MOI.ScalarAffineTerm(-term.coefficient, term.variable_index)
+    return MOI.ScalarAffineTerm(-term.coefficient, term.variable)
 end
 function operate_term(::typeof(-), term::MOI.ScalarQuadraticTerm)
     return MOI.ScalarQuadraticTerm(
         -term.coefficient,
-        term.variable_index_1,
-        term.variable_index_2,
+        term.variable_1,
+        term.variable_2,
     )
 end
 function operate_term(::typeof(-), term::MOI.VectorAffineTerm)
@@ -1259,7 +1255,7 @@ function operate_term(::typeof(-), term::MOI.VectorQuadraticTerm)
 end
 
 function operate_term(::typeof(*), α::T, t::MOI.ScalarAffineTerm{T}) where {T}
-    return MOI.ScalarAffineTerm(α * t.coefficient, t.variable_index)
+    return MOI.ScalarAffineTerm(α * t.coefficient, t.variable)
 end
 # `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
 function operate_term(
@@ -1267,7 +1263,7 @@ function operate_term(
     t::MOI.ScalarAffineTerm{T},
     β::T,
 ) where {T<:Number}
-    return MOI.ScalarAffineTerm(t.coefficient * β, t.variable_index)
+    return MOI.ScalarAffineTerm(t.coefficient * β, t.variable)
 end
 function operate_term(
     ::typeof(*),
@@ -1275,7 +1271,7 @@ function operate_term(
     t::MOI.ScalarAffineTerm{T},
     β::T,
 ) where {T}
-    return MOI.ScalarAffineTerm(α * t.coefficient * β, t.variable_index)
+    return MOI.ScalarAffineTerm(α * t.coefficient * β, t.variable)
 end
 
 function operate_term(
@@ -1285,8 +1281,8 @@ function operate_term(
 ) where {T}
     return MOI.ScalarQuadraticTerm(
         α * t.coefficient,
-        t.variable_index_1,
-        t.variable_index_2,
+        t.variable_1,
+        t.variable_2,
     )
 end
 function operate_term(
@@ -1296,8 +1292,8 @@ function operate_term(
 ) where {T}
     return MOI.ScalarQuadraticTerm(
         t.coefficient * β,
-        t.variable_index_1,
-        t.variable_index_2,
+        t.variable_1,
+        t.variable_2,
     )
 end
 function operate_term(
@@ -1308,8 +1304,8 @@ function operate_term(
 ) where {T}
     return MOI.ScalarQuadraticTerm(
         α * t.coefficient * β,
-        t.variable_index_1,
-        t.variable_index_2,
+        t.variable_1,
+        t.variable_2,
     )
 end
 
@@ -1319,10 +1315,10 @@ function operate_term(
     t2::MOI.ScalarAffineTerm,
 )
     coef = t1.coefficient * t2.coefficient
-    if t1.variable_index == t2.variable_index
+    if t1.variable == t2.variable
         coef *= 2
     end
-    return MOI.ScalarQuadraticTerm(coef, t1.variable_index, t2.variable_index)
+    return MOI.ScalarQuadraticTerm(coef, t1.variable, t2.variable)
 end
 
 function operate_term(::typeof(*), α::T, t::MOI.VectorAffineTerm{T}) where {T}
@@ -1370,7 +1366,7 @@ function operate_term(
 end
 
 function operate_term(::typeof(/), t::MOI.ScalarAffineTerm{T}, α::T) where {T}
-    return MOI.ScalarAffineTerm(t.coefficient / α, t.variable_index)
+    return MOI.ScalarAffineTerm(t.coefficient / α, t.variable)
 end
 function operate_term(
     ::typeof(/),
@@ -1379,8 +1375,8 @@ function operate_term(
 ) where {T}
     return MOI.ScalarQuadraticTerm(
         t.coefficient / α,
-        t.variable_index_1,
-        t.variable_index_2,
+        t.variable_1,
+        t.variable_2,
     )
 end
 function operate_term(::typeof(/), t::MOI.VectorAffineTerm{T}, α::T) where {T}
@@ -2251,8 +2247,8 @@ function operate(
     end
     quad_terms = map(
         t -> MOI.ScalarQuadraticTerm(
-            t.variable_index == g.variable ? 2t.coefficient : t.coefficient,
-            t.variable_index,
+            t.variable == g.variable ? 2t.coefficient : t.coefficient,
+            t.variable,
             g.variable,
         ),
         f.terms,
@@ -2904,7 +2900,7 @@ function convert_approx(
        )
         throw(InexactError(:convert_approx, MOI.SingleVariable, func))
     end
-    return MOI.SingleVariable(f.terms[i].variable_index)
+    return MOI.SingleVariable(f.terms[i].variable)
 end
 function convert_approx(
     ::Type{MOI.VectorOfVariables},
@@ -2927,13 +2923,13 @@ end
 Base.promote_rule(::Type{F}, ::Type{T}) where {T,F<:TypedScalarLike{T}} = F
 
 function operate_coefficient(f, term::MOI.ScalarAffineTerm)
-    return MOI.ScalarAffineTerm(f(term.coefficient), term.variable_index)
+    return MOI.ScalarAffineTerm(f(term.coefficient), term.variable)
 end
 function operate_coefficient(f, term::MOI.ScalarQuadraticTerm)
     return MOI.ScalarQuadraticTerm(
         f(term.coefficient),
-        term.variable_index_1,
-        term.variable_index_2,
+        term.variable_1,
+        term.variable_2,
     )
 end
 function operate_coefficient(f, term::MOI.VectorAffineTerm)
