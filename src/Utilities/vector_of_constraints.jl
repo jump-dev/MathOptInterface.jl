@@ -142,7 +142,7 @@ function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.ListOfConstraintTypesPresent,
 )::Vector{Tuple{DataType,DataType}} where {F,S}
-    return (MOI.is_empty(v) || length(_constraints(v)) == 0) ? [] : [(F, S)]
+    return MOI.is_empty(v) ? [] : [(F, S)]
 end
 
 function MOI.get(
@@ -249,6 +249,9 @@ function _delete_variables(
         end
         return !del
     end
+    if length(cons) == 0
+        MOI.empty!(v)
+    end
     return
 end
 
@@ -261,6 +264,11 @@ function _deleted_constraints(
         return
     end
     _delete_variables(callback, v, [vi])
+    # We need this second check in case deleting the variables also removes the
+    # last constraint!
+    if MOI.is_empty(v)
+        return
+    end
     _remove_variable(v, vi)
     return
 end
@@ -273,8 +281,13 @@ function _deleted_constraints(
     if MOI.is_empty(v)
         return
     end
-    removed = Set(vis)
     _delete_variables(callback, v, vis)
+    # We need this second check in case deleting the variables also removes the
+    # last constraint!
+    if MOI.is_empty(v)
+        return
+    end
+    removed = Set(vis)
     _filter_variables(vi -> !(vi in removed), v)
     return
 end
