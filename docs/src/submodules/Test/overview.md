@@ -22,7 +22,7 @@ so that all solvers can benefit.
 The skeleton below can be used for the wrapper test file of a solver named
 `FooBar`. Remove unnecessary tests as appropriate, for example tests for
 features that the solver does not support (tests are not skipped depending
-on the value of `supports`). 
+on the value of `supports`).
 
 ```julia
 # ============================ /test/MOI_wrapper.jl ============================
@@ -61,10 +61,10 @@ function test_SolverName()
     @test MOI.get(OPTIMIZER, MOI.SolverName()) == "FooBar"
 end
 
-function test_supports_default_copy_to()
-    @test MOI.Utilities.supports_default_copy_to(OPTIMIZER, false)
+function test_supports_incremental_interface()
+    @test MOI.supports_incremental_interface(OPTIMIZER, false)
     # Use `@test !...` if names are not supported
-    @test MOI.Utilities.supports_default_copy_to(OPTIMIZER, true)
+    @test MOI.supports_incremental_interface(OPTIMIZER, true)
 end
 
 function test_unittest()

@@ -358,11 +358,11 @@ end
 function MOI.copy_to(mock::AbstractBridgeOptimizer, src::MOI.ModelLike; kws...)
     return MOIU.automatic_copy_to(mock, src; kws...)
 end
-function MOIU.supports_default_copy_to(
+function MOI.supports_incremental_interface(
     b::AbstractBridgeOptimizer,
     copy_names::Bool,
 )
-    return MOIU.supports_default_copy_to(b.model, copy_names)
+    return MOI.supports_incremental_interface(b.model, copy_names)
 end
 
 # References

@@ -772,7 +772,7 @@ end
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
     return automatic_copy_to(dest, src; kws...)
 end
-supports_default_copy_to(model::AbstractModel, copy_names::Bool) = true
+MOI.supports_incremental_interface(::AbstractModel, ::Bool) = true
 
 # Allocate-Load Interface
 # Even if the model does not need it and use default_copy_to, it could be used

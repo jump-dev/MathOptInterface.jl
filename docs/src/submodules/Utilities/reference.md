@@ -58,7 +58,6 @@ Utilities.latex_formulation
 ```@docs
 Utilities.automatic_copy_to
 Utilities.default_copy_to
-Utilities.supports_default_copy_to
 ```
 
 ### [Allocate-Load API](@id allocate_load_api_ref)

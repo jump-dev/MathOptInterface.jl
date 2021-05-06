@@ -239,8 +239,11 @@ function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
     return MOI.copy_to(m.model_cache, src; kws...)
 end
 
-function supports_default_copy_to(model::CachingOptimizer, copy_names::Bool)
-    return supports_default_copy_to(model.model_cache, copy_names)
+function MOI.supports_incremental_interface(
+    model::CachingOptimizer,
+    copy_names::Bool,
+)
+    return MOI.supports_incremental_interface(model.model_cache, copy_names)
 end
 
 function MOI.empty!(m::CachingOptimizer)

@@ -10,7 +10,7 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
     #      x >= ||(y,z)||
     #      (y,z) binary
 
-    @test MOIU.supports_default_copy_to(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

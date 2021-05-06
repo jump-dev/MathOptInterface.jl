@@ -91,26 +91,26 @@ function _instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
 end
 
 """
-    instantiate(optimizer_constructor,
-                with_bridge_type::Union{Nothing, Type}=nothing,
-                with_names::Bool=false)
+    instantiate(
+        optimizer_constructor,
+        with_bridge_type::Union{Nothing, Type} = nothing,
+        with_names::Bool = false,
+    )
 
-Creates an instance of optimizer either by calling
-`optimizer_constructor.optimizer_constructor()` and setting the parameters in
-`optimizer_constructor.params` if `optimizer_constructor` is a
-[`OptimizerWithAttributes`](@ref) or by calling `optimizer_constructor()`
-if `optimizer_constructor` is callable.
+Creates an instance of optimizer by either:
+ * calling `optimizer_constructor.optimizer_constructor()` and setting the
+   parameters in `optimizer_constructor.params` if `optimizer_constructor` is a
+   [`OptimizerWithAttributes`](@ref)
+*  calling `optimizer_constructor()` if `optimizer_constructor` is callable.
 
 If `with_bridge_type` is not `nothing`, it enables all the bridges defined in
-the MathOptInterface.Bridges submodule with coefficient type
-`with_bridge_type`.
+the MathOptInterface.Bridges submodule with coefficient type `with_bridge_type`.
 
 If the optimizer created by `optimizer_constructor` does not support loading the
-problem incrementally or does not support names and `with_names` is `true` (see
-[`Utilities.supports_default_copy_to`](@ref)) then a
+problem incrementally (see [`supports_incremental_interface`](@ref)), or does
+not support names and `with_names` is `true`, then a
 [`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
-model.
-Hence set `with_names` to `true` if names might be set.
+model. Hence set `with_names` to `true` if names might be set.
 """
 function instantiate(
     optimizer_constructor;
@@ -121,7 +121,7 @@ function instantiate(
     if with_bridge_type === nothing
         return optimizer
     end
-    if !Utilities.supports_default_copy_to(optimizer, with_names)
+    if !supports_incremental_interface(optimizer, with_names)
         universal_fallback =
             Utilities.UniversalFallback(Utilities.Model{with_bridge_type}())
         optimizer = Utilities.CachingOptimizer(universal_fallback, optimizer)
