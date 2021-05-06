@@ -270,7 +270,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
                 model::$esc_struct_name,
                 ::Type{<:$fun},
                 ::Type{<:$set},
-            ) where {S}
+            )
                 return model.$field
             end
         end
