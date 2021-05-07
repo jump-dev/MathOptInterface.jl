@@ -297,7 +297,7 @@ function MOI.copy_to(
     dest.sense = MOI.get(model, MOI.ObjectiveSense())
     resize!(dest.order, length(dest.x))
     # Now deal with the normal MOI constraints.
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresents())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         _process_constraint(dest, model, F, S, mapping)
     end
     # Correct bounds of binary variables. Mainly because AMPL doesn't have the
