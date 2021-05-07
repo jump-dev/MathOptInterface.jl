@@ -265,12 +265,12 @@ function loadfromstring!(model, s)
             end
         elseif label == :maxobjective
             f = parsedtoMOI(model, parsefunction(ex))
-            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
             MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
         elseif label == :minobjective
             f = parsedtoMOI(model, parsefunction(ex))
-            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
             MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
         else
             # constraint
             @assert isexpr(ex, :call)
