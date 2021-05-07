@@ -757,13 +757,6 @@ function test_Name()
     @test MOI.get(model, MOI.Name()) == "MyModel"
 end
 
-function test_RawParameter()
-    model = NL.Model()
-    @test MOI.supports(model, MOI.RawParameter("print_level"))
-    MOI.set(model, MOI.RawParameter("print_level"), 0)
-    @test MOI.get(model, MOI.RawParameter("print_level")) == 0
-end
-
 function test_SolverName()
     model = NL.Model()
     @test MOI.get(model, MOI.SolverName()) == "AmplNLWriter"

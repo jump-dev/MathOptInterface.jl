@@ -220,15 +220,6 @@ end
 MOI.supports(::Model, ::MOI.ObjectiveSense) = true
 MOI.supports(::Model, ::MOI.ObjectiveFunction{<:_SCALAR_FUNCTIONS}) = true
 
-MOI.supports(::Model, ::MOI.RawParameter) = true
-function MOI.get(model::Model, attr::MOI.RawParameter)
-    return get(model.options, attr.name, nothing)
-end
-function MOI.set(model::Model, attr::MOI.RawParameter, value)
-    model.options[attr.name] = value
-    return
-end
-
 # ==============================================================================
 
 function MOI.supports(
@@ -306,7 +297,7 @@ function MOI.copy_to(
     dest.sense = MOI.get(model, MOI.ObjectiveSense())
     resize!(dest.order, length(dest.x))
     # Now deal with the normal MOI constraints.
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresents())
         _process_constraint(dest, model, F, S, mapping)
     end
     # Correct bounds of binary variables. Mainly because AMPL doesn't have the
