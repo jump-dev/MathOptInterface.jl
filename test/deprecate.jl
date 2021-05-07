@@ -39,3 +39,7 @@ end
     @test_logs (:warn,) t.variable_index_1 == x
     @test_logs (:warn,) t.variable_index_2 == y
 end
+
+@testset "RawParameter" begin
+    @test_logs (:warn,) MOI.RawParameter(:a) == MOI.RawParameter("a")
+end
