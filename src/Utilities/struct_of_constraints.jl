@@ -243,7 +243,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
                 model::$typed_struct,
                 ::Type{<:$fun},
                 ::Type{<:$set},
-            ) where {$T}
+            )::$(field_type) where {$T}
                 if model.$field === nothing
                     model.$field = $(field_type)()
                 end
