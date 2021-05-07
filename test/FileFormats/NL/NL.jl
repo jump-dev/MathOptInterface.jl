@@ -197,11 +197,11 @@ function test_nlmodel_hs071()
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
-    @test MOI.supports(model, MOI.NLPBlock())
     MOI.set(model, MOI.NLPBlock(), block_data)
-    @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     n = NL.Model()
+    @test MOI.supports(n, MOI.NLPBlock())
+    @test MOI.supports(n, MOI.ObjectiveSense())
     @test MOI.is_empty(n)
     MOI.copy_to(n, model)
     @test !MOI.is_empty(n)
@@ -343,17 +343,17 @@ function test_nlmodel_hs071_linear_obj()
     MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
     MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.ZeroOne())
     MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.Integer())
-    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
     MOI.set.(model, MOI.VariablePrimalStart(), v, start)
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, false)
     MOI.set(model, MOI.NLPBlock(), block_data)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(l, v), 2.0)
-    @test MOI.supports(model, MOI.ObjectiveFunction{typeof(f)}())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     n = NL.Model()
+    @test MOI.supports(n, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    @test MOI.supports(n, MOI.ObjectiveFunction{typeof(f)}())
     MOI.copy_to(n, model)
     @test n.sense == MOI.MAX_SENSE
     @test n.f == NL._NLExpr(f)
@@ -769,9 +769,12 @@ end
 
 function test_linear_constraint_types()
     model = MOI.Utilities.Model{Float64}()
+    n = NL.Model()
     y = MOI.add_variables(model, 3)
     MOI.add_constraint(model, MOI.SingleVariable(y[1]), MOI.ZeroOne())
     MOI.add_constraint(model, MOI.SingleVariable(y[2]), MOI.Integer())
+    @test MOI.supports_constraint(n, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(n, MOI.SingleVariable, MOI.Integer)
     for set in [
         MOI.GreaterThan(0.0),
         MOI.LessThan(1.0),
@@ -779,6 +782,16 @@ function test_linear_constraint_types()
         MOI.Interval(3.0, 4.0),
     ]
         x = MOI.add_variable(model)
+        @test MOI.supports_constraint(
+            n,
+            MOI.SingleVariable,
+            typeof(set),
+        )
+        @test MOI.supports_constraint(
+            n,
+            MOI.ScalarAffineFunction{Float64},
+            typeof(set),
+        )
         MOI.add_constraint(model, MOI.SingleVariable(x), set)
         MOI.add_constraint(
             model,
@@ -786,7 +799,6 @@ function test_linear_constraint_types()
             set,
         )
     end
-    n = NL.Model()
     map = MOI.copy_to(n, model)
     @test length(n.g) == 0
     @test length(n.h) == 4
@@ -800,6 +812,18 @@ function test_linear_constraint_types()
         MOI.VariableIndex(1),
         MOI.VariableIndex(2),
     ]
+    file = sprint(Base.write, n)
+end
+
+
+function test_empty()
+    model = MOI.Utilities.Model{Float64}()
+    y = MOI.add_variables(model, 3)
+    n = NL.Model()
+    map = MOI.copy_to(n, model)
+    @test !MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
 end
 
 function runtests()
