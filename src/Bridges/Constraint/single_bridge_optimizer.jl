@@ -76,3 +76,10 @@ function MOIB.bridge_type(
     return BT
 end
 MOIB.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0
+
+function MOIB.is_bridged(
+    b::SingleBridgeOptimizer,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+) where {S}
+    return ci.value < 0 && haskey(bridges(b), ci)
+end
