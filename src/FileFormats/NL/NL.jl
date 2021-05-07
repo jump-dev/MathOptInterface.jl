@@ -259,8 +259,6 @@ struct _LinearNLPEvaluator <: MOI.AbstractNLPEvaluator end
 MOI.features_available(::_LinearNLPEvaluator) = [:ExprGraph]
 MOI.initialize(::_LinearNLPEvaluator, ::Vector{Symbol}) = nothing
 
-MOI.Utilities.supports_default_copy_to(::Model, ::Bool) = false
-
 function MOI.copy_to(
     dest::Model,
     model::MOI.ModelLike;
@@ -296,10 +294,13 @@ function MOI.copy_to(
         )
     end
     dest.nlpblock_dim = length(dest.g)
+    starts = MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
     for x in MOI.get(model, MOI.ListOfVariableIndices())
         dest.x[x] = _VariableInfo()
-        start = MOI.get(model, MOI.VariablePrimalStart(), x)
-        MOI.set(dest, MOI.VariablePrimalStart(), x, start)
+        if starts
+            start = MOI.get(model, MOI.VariablePrimalStart(), x)
+            MOI.set(dest, MOI.VariablePrimalStart(), x, start)
+        end
         mapping[x] = x
     end
     dest.sense = MOI.get(model, MOI.ObjectiveSense())

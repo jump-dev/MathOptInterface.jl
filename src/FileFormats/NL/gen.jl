@@ -1,5 +1,9 @@
 # This script builds the list of recognized ASL opcodes using the header files
-# in ASL_jll. Only re-run it if AMPL adds new opcodes (which is unlikely).
+# in ASL_jll.
+#
+# Because it is used for code generation, it is not included by
+# `MathOptInterface.FileFormats.NL`. Only re-run it if AMPL adds new opcodes
+# (which is unlikely).
 
 using ASL_jll
 

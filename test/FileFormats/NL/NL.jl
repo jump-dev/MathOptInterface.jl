@@ -197,10 +197,14 @@ function test_nlmodel_hs071()
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
+    @test MOI.supports(model, MOI.NLPBlock())
     MOI.set(model, MOI.NLPBlock(), block_data)
+    @test MOI.supports(model, MOI.ObjectiveSense())
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     n = NL.Model()
+    @test MOI.is_empty(n)
     MOI.copy_to(n, model)
+    @test !MOI.is_empty(n)
     @test n.sense == MOI.MIN_SENSE
     @test n.f == NL._NLExpr(MOI.objective_expr(evaluator))
     _test_nlexpr(
@@ -339,12 +343,14 @@ function test_nlmodel_hs071_linear_obj()
     MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
     MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.ZeroOne())
     MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.Integer())
+    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
     MOI.set.(model, MOI.VariablePrimalStart(), v, start)
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, false)
     MOI.set(model, MOI.NLPBlock(), block_data)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(l, v), 2.0)
+    @test MOI.supports(model, MOI.ObjectiveFunction{typeof(f)}())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     n = NL.Model()
@@ -742,6 +748,65 @@ function test_noexpr_graph()
     MOI.set(model, MOI.NLPBlock(), block_data)
     n = NL.Model()
     @test_throws ErrorException MOI.copy_to(n, model)
+end
+
+function test_Name()
+    model = NL.Model()
+    @test MOI.supports(model, MOI.Name())
+    MOI.set(model, MOI.Name(), "MyModel")
+    @test MOI.get(model, MOI.Name()) == "MyModel"
+end
+
+function test_RawParameter()
+    model = NL.Model()
+    @test MOI.supports(model, MOI.RawParameter("print_level"))
+    MOI.set(model, MOI.RawParameter("print_level"), 0)
+    @test MOI.get(model, MOI.RawParameter("print_level")) == 0
+end
+
+function test_SolverName()
+    model = NL.Model()
+    @test MOI.get(model, MOI.SolverName()) == "AmplNLWriter"
+end
+
+function test_show()
+    model = NL.Model()
+    @test sprint(show, model) == "An AMPL (.nl) model"
+end
+
+function test_linear_constraint_types()
+    model = MOI.Utilities.Model{Float64}()
+    y = MOI.add_variables(model, 3)
+    MOI.add_constraint(model, MOI.SingleVariable(y[1]), MOI.ZeroOne())
+    MOI.add_constraint(model, MOI.SingleVariable(y[2]), MOI.Integer())
+    for set in [
+        MOI.GreaterThan(0.0),
+        MOI.LessThan(1.0),
+        MOI.EqualTo(2.0),
+        MOI.Interval(3.0, 4.0),
+    ]
+        x = MOI.add_variable(model)
+        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+        MOI.add_constraint(
+            model,
+            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+            set,
+        )
+    end
+    n = NL.Model()
+    map = MOI.copy_to(n, model)
+    @test length(n.g) == 0
+    @test length(n.h) == 4
+    @test length(n.x) == 7
+    @test n.order == [
+        MOI.VariableIndex(3),
+        MOI.VariableIndex(4),
+        MOI.VariableIndex(5),
+        MOI.VariableIndex(6),
+        MOI.VariableIndex(7),
+        MOI.VariableIndex(1),
+        MOI.VariableIndex(2),
+    ]
 end
 
 function runtests()

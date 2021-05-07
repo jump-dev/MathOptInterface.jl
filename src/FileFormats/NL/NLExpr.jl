@@ -310,7 +310,7 @@ end
 function _NLExpr(x::MOI.ScalarAffineFunction)
     linear = Dict{MOI.VariableIndex,Float64}()
     for (i, term) in enumerate(x.terms)
-        _add_or_set(linear, term.variable_index, term.coefficient)
+        _add_or_set(linear, term.variable, term.coefficient)
     end
     return _NLExpr(true, _NLTerm[], linear, x.constant)
 end
@@ -318,7 +318,7 @@ end
 function _NLExpr(x::MOI.ScalarQuadraticFunction)
     linear = Dict{MOI.VariableIndex,Float64}()
     for (i, term) in enumerate(x.affine_terms)
-        _add_or_set(linear, term.variable_index, term.coefficient)
+        _add_or_set(linear, term.variable, term.coefficient)
     end
     terms = _NLTerm[]
     N = length(x.quadratic_terms)
@@ -335,7 +335,7 @@ function _NLExpr(x::MOI.ScalarQuadraticFunction)
     for term in x.quadratic_terms
         coefficient = term.coefficient
         # MOI defines quadratic as 1/2 x' Q x :(
-        if term.variable_index_1 == term.variable_index_2
+        if term.variable_1 == term.variable_2
             coefficient *= 0.5
         end
         # Optimization: no need for the OPMULT if the coefficient is 1.
@@ -344,12 +344,12 @@ function _NLExpr(x::MOI.ScalarQuadraticFunction)
             push!(terms, coefficient)
         end
         push!(terms, OPMULT)
-        push!(terms, term.variable_index_1)
-        push!(terms, term.variable_index_2)
+        push!(terms, term.variable_1)
+        push!(terms, term.variable_2)
         # For the Jacobian sparsity patterns, we need to add a linear term, even
         # if the variable only appears nonlinearly.
-        _add_or_set(linear, term.variable_index_1, 0.0)
-        _add_or_set(linear, term.variable_index_2, 0.0)
+        _add_or_set(linear, term.variable_1, 0.0)
+        _add_or_set(linear, term.variable_2, 0.0)
     end
     return _NLExpr(false, terms, linear, x.constant)
 end
