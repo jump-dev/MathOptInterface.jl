@@ -36,4 +36,5 @@ AbstractVariableAttribute
 VariableName
 VariablePrimalStart
 VariablePrimal
+VariableBasisStatus
 ```

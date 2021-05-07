@@ -1114,8 +1114,9 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
 """
     BasisStatusCode
 
-An Enum of possible values for the `ConstraintBasisStatus` attribute, explaining
-the status of a given element with respect to an optimal solution basis.
+An Enum of possible values for the [`ConstraintBasisStatus`](@ref) and
+[`VariableBasisStatus`](@ref) attributes, explaining the status of a given
+element with respect to an optimal solution basis.
 
 Possible values are:
 
@@ -1126,7 +1127,7 @@ Possible values are:
 * `SUPER_BASIC`: element is not in the basis but is also not at one of its
   bounds
 
-Notes
+## Notes
 
 * `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
   constraints with the `Interval` set. In this case, they are necessary to
@@ -1134,9 +1135,8 @@ Notes
   (e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
   `NONBASIC_AT_*` values.
 
-* In general, `SUPER_BASIC` usually occurs when the problem is nonlinear. For
-  linear programs, `SUPER_BASIC` variables only occur if the solver returns a
-  solution that is not at a vertex of the feasible region.
+* In linear programs, `SUPER_BASIC` occurs when a variable with no bounds is not
+  in the basis.
 """
 @enum(
     BasisStatusCode,
@@ -1146,6 +1146,17 @@ Notes
     NONBASIC_AT_UPPER,
     SUPER_BASIC
 )
+
+"""
+    VariableBasisStatus(result_index::Int = 1)
+
+A variable attribute for the `BasisStatusCode` of a variable in result
+`result_index`, with respect to an available optimal solution basis.
+"""
+struct VariableBasisStatus <: AbstractVariableAttribute
+    result_index::Int
+    VariableBasisStatus(result_index::Int = 1) = new(result_index)
+end
 
 ## Constraint attributes
 
@@ -1260,8 +1271,7 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
-**For the basis status of a variable, query the corresponding `SingleVariable`
-constraint that enforces the variable's bounds.**
+For the basis status of a variable, query [`VariableBasisStatus`](@ref).
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
     result_index::Int
@@ -1667,6 +1677,7 @@ function is_set_by_optimize(
         ConstraintPrimal,
         ConstraintDual,
         ConstraintBasisStatus,
+        VariableBasisStatus,
     },
 )
     return true
