@@ -708,18 +708,10 @@ end
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
     if MOI.is_set_by_optimize(attr)
         if state(model) == NO_OPTIMIZER
-            if attr == MOI.TerminationStatus()
-                return MOI.OPTIMIZE_NOT_CALLED
-            elseif attr == MOI.PrimalStatus()
-                return MOI.NO_SOLUTION
-            elseif attr == MOI.DualStatus()
-                return MOI.NO_SOLUTION
-            else
-                error(
-                    "Cannot query $(attr) from caching optimizer because no" *
-                    " optimizer is attached.",
-                )
-            end
+            error(
+                "Cannot query $(attr) from caching optimizer because no " *
+                "optimizer is attached.",
+            )
         end
         return map_indices(
             model.optimizer_to_model_map,
@@ -729,6 +721,27 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
         return MOI.get(model.model_cache, attr)
     end
 end
+
+function MOI.get(
+    model::CachingOptimizer,
+    attr::MOI.TerminationStatus,
+)::MOI.TerminationStatusCode
+    if state(model) == NO_OPTIMIZER
+        return MOI.OPTIMIZE_NOT_CALLED
+    end
+    return MOI.get(model.optimizer, attr)
+end
+
+function MOI.get(
+    model::CachingOptimizer,
+    attr::Union{MOI.PrimalStatus,MOI.DualStatus},
+)::MOI.ResultStatusCode
+    if state(model) == NO_OPTIMIZER
+        return MOI.NO_SOLUTION
+    end
+    return MOI.get(model.optimizer, attr)
+end
+
 function MOI.get(
     model::CachingOptimizer,
     attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},

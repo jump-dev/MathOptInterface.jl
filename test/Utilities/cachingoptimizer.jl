@@ -680,3 +680,15 @@ end
     @test_throws KeyError MOI.get(model, MOI.RawParameter("foo"))
     @test_throws KeyError MOI.get(model, MOI.NumberOfThreads())
 end
+
+@testset "Status codes" begin
+    optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        optimizer,
+    )
+    MOI.set(optimizer, MOI.TerminationStatus(), MOI.OPTIMAL)
+    MOI.set(optimizer, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+end
