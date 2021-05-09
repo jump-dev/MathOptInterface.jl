@@ -103,7 +103,7 @@ mutable struct _VariableInfo
     jacobian_count::Int
     # If the variable appears in the objective.
     in_nonlinear_objective::Bool
-    # If the objetive appears in a nonlinear constraint.
+    # If the variable appears in a nonlinear constraint.
     in_nonlinear_constraint::Bool
     # The 0-indexed column of the variable. Computed right at the end.
     order::Int
@@ -298,7 +298,7 @@ function MOI.copy_to(
     resize!(dest.order, length(dest.x))
     # Now deal with the normal MOI constraints.
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _process_constraint(dest, model, F, S, mapping)
+        _process_constraint(dest, model, mapping.conmap[F, S])
     end
     # Correct bounds of binary variables. Mainly because AMPL doesn't have the
     # concept of binary nonlinear variables, but it does have binary linear
@@ -444,7 +444,11 @@ _set_to_bounds(set::MOI.LessThan) = (1, -Inf, set.upper)
 _set_to_bounds(set::MOI.GreaterThan) = (2, set.lower, Inf)
 _set_to_bounds(set::MOI.EqualTo) = (4, set.value, set.value)
 
-function _process_constraint(dest::Model, model, F, S, mapping)
+function _process_constraint(
+    dest::Model,
+    model,
+    mapping::MOI.Utilities.DoubleDicts.IndexWithType{F,S},
+) where {F,S}
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
         s = MOI.get(model, MOI.ConstraintSet(), ci)
@@ -456,7 +460,7 @@ function _process_constraint(dest::Model, model, F, S, mapping)
             else
                 error(
                     "Malformed constraint. There are no variables and the " *
-                    "bounds don't make sense.",
+                    "function constant $(con.expr.constant) is not in [$l, $u]",
                 )
             end
         elseif con.expr.is_linear
@@ -473,10 +477,8 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    F::Type{MOI.SingleVariable},
-    S,
-    mapping,
-)
+    mapping::MOI.Utilities.DoubleDicts.IndexWithType{F,S},
+) where {F<:MOI.SingleVariable,S}
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
@@ -495,10 +497,8 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    F::Type{MOI.SingleVariable},
-    S::Union{Type{MOI.ZeroOne},Type{MOI.Integer}},
-    mapping,
-)
+    mapping::MOI.Utilities.DoubleDicts.IndexWithType{F,S},
+) where {F<:MOI.SingleVariable,S<:Union{MOI.ZeroOne,MOI.Integer}}
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)

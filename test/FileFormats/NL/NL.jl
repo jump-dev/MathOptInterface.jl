@@ -782,11 +782,7 @@ function test_linear_constraint_types()
         MOI.Interval(3.0, 4.0),
     ]
         x = MOI.add_variable(model)
-        @test MOI.supports_constraint(
-            n,
-            MOI.SingleVariable,
-            typeof(set),
-        )
+        @test MOI.supports_constraint(n, MOI.SingleVariable, typeof(set))
         @test MOI.supports_constraint(
             n,
             MOI.ScalarAffineFunction{Float64},
@@ -812,9 +808,66 @@ function test_linear_constraint_types()
         MOI.VariableIndex(1),
         MOI.VariableIndex(2),
     ]
-    file = sprint(Base.write, n)
+    @test sprint(Base.write, n) == """
+    g3 1 1 0
+     7 4 1 1 1 0
+     0 1
+     0 0
+     0 0 0
+     0 0 0 1
+     1 1 0 0 0
+     4 0
+     0 0
+     0 0 0 0 0
+    C0
+    n0
+    C1
+    n0
+    C2
+    n0
+    C3
+    n0
+    O0 0
+    n0
+    x7
+    0 0
+    1 0
+    2 0
+    3 0
+    4 0
+    5 0
+    6 0
+    r
+    4 2
+    2 0
+    1 1
+    0 3 4
+    b
+    3
+    2 0
+    1 1
+    4 2
+    0 3 4
+    0 0 1
+    3
+    k6
+    0
+    1
+    2
+    3
+    4
+    4
+    J0 1
+    3 1
+    J1 1
+    1 1
+    J2 1
+    2 1
+    J3 1
+    4 1
+    """
+    return
 end
-
 
 function test_empty()
     model = MOI.Utilities.Model{Float64}()
