@@ -6,14 +6,27 @@ const NL = MOI.FileFormats.NL
 
 using Test
 
-function _test_nlexpr(expr::NL._NLExpr, nonlinear_terms, linear_terms, constant)
-    @test expr.is_linear == (length(nonlinear_terms) == 0)
+function _test_nlexpr(
+    expr::NL._NLExpr,
+    nonlinear_terms,
+    linear_terms,
+    constant;
+    force_nonlinear::Bool = false,
+)
+    if force_nonlinear
+        @test expr.is_linear == false
+    else
+        @test expr.is_linear == (length(nonlinear_terms) == 0)
+    end
     @test expr.nonlinear_terms == nonlinear_terms
     @test expr.linear_terms == linear_terms
     @test expr.constant == constant
     return
 end
-_test_nlexpr(x, args...) = _test_nlexpr(NL._NLExpr(x), args...)
+
+function _test_nlexpr(x, args...; kwargs...)
+    return _test_nlexpr(NL._NLExpr(x), args...; kwargs...)
+end
 
 function test_nlexpr_singlevariable()
     x = MOI.VariableIndex(1)
@@ -27,7 +40,23 @@ function test_nlexpr_scalaraffine()
     return _test_nlexpr(f, NL._NLTerm[], Dict(x .=> 1), 4.0)
 end
 
-function test_nlexpr_scalarquadratic()
+function test_nlexpr_scalarquadratic_0()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarAffineTerm(1.1, x)],
+        MOI.ScalarQuadraticTerm{Float64}[],
+        3.0,
+    )
+    return _test_nlexpr(
+        f,
+        NL._NLTerm[],
+        Dict(x => 1.1),
+        3.0;
+        force_nonlinear = true,
+    )
+end
+
+function test_nlexpr_scalarquadratic_1a()
     x = MOI.VariableIndex(1)
     f = MOI.ScalarQuadraticFunction(
         [MOI.ScalarAffineTerm(1.1, x)],
@@ -36,6 +65,77 @@ function test_nlexpr_scalarquadratic()
     )
     terms = [NL.OPMULT, x, x]
     return _test_nlexpr(f, terms, Dict(x => 1.1), 3.0)
+end
+
+function test_nlexpr_scalarquadratic_1b()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarAffineTerm(1.1, x)],
+        [MOI.ScalarQuadraticTerm(2.5, x, x)],
+        3.0,
+    )
+    terms = [NL.OPMULT, 1.25, NL.OPMULT, x, x]
+    return _test_nlexpr(f, terms, Dict(x => 1.1), 3.0)
+end
+
+function test_nlexpr_scalarquadratic_1c()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarAffineTerm(1.1, x)],
+        [MOI.ScalarQuadraticTerm(1.0, x, y)],
+        3.0,
+    )
+    terms = [NL.OPMULT, x, y]
+    return _test_nlexpr(f, terms, Dict(x => 1.1, y => 0.0), 3.0)
+end
+
+function test_nlexpr_scalarquadratic_2()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarAffineTerm(1.1, x)],
+        [
+            MOI.ScalarQuadraticTerm(2.0, x, x),
+            MOI.ScalarQuadraticTerm(1.0, x, y),
+        ],
+        3.0,
+    )
+    terms = [NL.OPPLUS, NL.OPMULT, x, x, NL.OPMULT, x, y]
+    return _test_nlexpr(f, terms, Dict(x => 1.1, y => 0.0), 3.0)
+end
+
+function test_nlexpr_scalarquadratic_3()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    z = MOI.VariableIndex(3)
+    f = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarAffineTerm(1.1, x)],
+        [
+            MOI.ScalarQuadraticTerm(2.0, x, x),
+            MOI.ScalarQuadraticTerm(0.5, x, y),
+            MOI.ScalarQuadraticTerm(4.0, x, z),
+        ],
+        3.0,
+    )
+    terms = [
+        NL.OPSUMLIST,
+        3,
+        NL.OPMULT,
+        x,
+        x,
+        NL.OPMULT,
+        0.5,
+        NL.OPMULT,
+        x,
+        y,
+        NL.OPMULT,
+        4.0,
+        NL.OPMULT,
+        x,
+        z,
+    ]
+    return _test_nlexpr(f, terms, Dict(x => 1.1, y => 0.0, z => 0.0), 3.0)
 end
 
 function test_nlexpr_unary_addition()
@@ -119,6 +219,16 @@ end
 function test_nlexpr_ref()
     x = MOI.VariableIndex(1)
     return _test_nlexpr(:(x[$x]), [x], Dict(x => 0.0), 0.0)
+end
+
+function test_nlexpr_empty()
+    return _test_nlexpr(
+        :(),
+        NL._NLTerm[],
+        Dict{MOI.VariableIndex,Float64}(),
+        0.0;
+        force_nonlinear = true,
+    )
 end
 
 function test_nlconstraint_interval()
@@ -874,9 +984,9 @@ function test_empty()
     y = MOI.add_variables(model, 3)
     n = NL.Model()
     map = MOI.copy_to(n, model)
-    @test !MOI.is_empty(model)
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
+    @test !MOI.is_empty(n)
+    MOI.empty!(n)
+    @test MOI.is_empty(n)
 end
 
 function runtests()

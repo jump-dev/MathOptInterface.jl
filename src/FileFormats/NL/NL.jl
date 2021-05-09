@@ -162,16 +162,6 @@ MOI.get(model::Model, ::MOI.Name) = model.name
 MOI.set(model::Model, ::MOI.Name, name::String) = (model.name = name)
 
 function MOI.empty!(model::Model)
-    model.results = _NLResults(
-        "Optimize not called.",
-        MOI.OPTIMIZE_NOT_CALLED,
-        MOI.NO_SOLUTION,
-        NaN,
-        Dict{MOI.VariableIndex,Float64}(),
-        Float64[],
-        Dict{MOI.VariableIndex,Float64}(),
-        Dict{MOI.VariableIndex,Float64}(),
-    )
     model.f = _NLExpr(false, _NLTerm[], Dict{MOI.VariableIndex,Float64}(), 0.0)
     empty!(model.g)
     model.nlpblock_dim = 0

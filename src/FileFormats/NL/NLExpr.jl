@@ -393,10 +393,8 @@ function _process_expr!(expr::_NLExpr, arg::Expr)
         return _process_expr!(expr, arg.args[2])
     elseif arg == :()
         return  # Some evalators return a null objective of `:()`.
-    else
-        error("Unsupported expression: $(arg)")
     end
-    return
+    return error("Unsupported expression: $(arg)")
 end
 
 function _process_expr!(expr::_NLExpr, args::Vector{Any})
