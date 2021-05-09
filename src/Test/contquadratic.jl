@@ -29,13 +29,15 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     cf1 =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], v), 0.0)
     c1 = MOI.add_constraint(model, cf1, MOI.GreaterThan(4.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.GreaterThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+    end
 
     c2 = MOI.add_constraint(
         model,
@@ -45,13 +47,15 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
         ),
         MOI.GreaterThan(1.0),
     )
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.GreaterThan{Float64},
-        }(),
-    ) == 2
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 2
+    end
 
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
@@ -140,13 +144,15 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     c1f =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0, 3.0], v), 0.0)
     c1 = MOI.add_constraint(model, c1f, MOI.GreaterThan(4.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.GreaterThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+    end
 
     c2 = MOI.add_constraint(
         model,
@@ -156,13 +162,15 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
         ),
         MOI.GreaterThan(1.0),
     )
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.GreaterThan{Float64},
-        }(),
-    ) == 2
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 2
+    end
 
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
@@ -448,13 +456,15 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
         ),
         MOI.Nonnegatives(2),
     )
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+    end
 
     c2f = MOI.ScalarQuadraticFunction(
         [MOI.ScalarAffineTerm(1.0, y)],
@@ -462,13 +472,15 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
         0.0,
     )
     c2 = MOI.add_constraint(model, c2f, MOI.LessThan(2.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarQuadraticFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarQuadraticFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -563,13 +575,15 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
         0.0,
     )
     c = MOI.add_constraint(model, cf, MOI.LessThan(2.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarQuadraticFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarQuadraticFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -641,13 +655,15 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
         0.0,
     )
     c = MOI.add_constraint(model, cf, MOI.LessThan(2.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarQuadraticFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarQuadraticFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -732,13 +748,15 @@ function _qcp4test(model::MOI.ModelLike, config::TestConfig, less_than::Bool)
         MOIU.operate!(-, Float64, cf)
     end
     c = MOI.add_constraint(model, cf, quad_set)
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarQuadraticFunction{Float64},
-            typeof(quad_set),
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarQuadraticFunction{Float64},
+                typeof(quad_set),
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -847,13 +865,15 @@ function ncqcp1test(model::MOI.ModelLike, config::TestConfig)
         0.0,
     )
     c = MOI.add_constraint(model, cf, MOI.LessThan(4.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarQuadraticFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarQuadraticFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -936,13 +956,15 @@ function ncqcp2test(model::MOI.ModelLike, config::TestConfig)
     )
     c2 = MOI.add_constraint(model, cf2, MOI.EqualTo(4.0))
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarQuadraticFunction{Float64},
-            MOI.EqualTo{Float64},
-        }(),
-    ) == 2
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarQuadraticFunction{Float64},
+                MOI.EqualTo{Float64},
+            }(),
+        ) == 2
+    end
 
     if config.query
         @test cf ≈ MOI.get(model, MOI.ConstraintFunction(), c)
@@ -1022,13 +1044,15 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
     c1f =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]), 0.0)
     c1 = MOI.add_constraint(model, c1f, MOI.GreaterThan(1.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.GreaterThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+    end
 
     c2f = MOI.ScalarQuadraticFunction(
         MOI.ScalarAffineTerm{Float64}[],
@@ -1036,21 +1060,28 @@ function socp1test(model::MOI.ModelLike, config::TestConfig)
         0.0,
     )
     c2 = MOI.add_constraint(model, c2f, MOI.LessThan(0.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarQuadraticFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarQuadraticFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     bound =
         MOI.add_constraint(model, MOI.SingleVariable(t), MOI.GreaterThan(0.0))
     @test bound.value == t.value
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
