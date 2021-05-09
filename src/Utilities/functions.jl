@@ -669,18 +669,21 @@ function is_strictly_sorted(x::Vector, by, filter)
     if isempty(x)
         return true
     end
-    if !filter(first(x))
+    current_x = first(x)
+    if !filter(current_x)
         return false
     end
-    for i in eachindex(x)[2:end]
-        prev = @inbounds(x[i-1])
-        cur = @inbounds(x[i])
-        if by(cur) <= by(prev)
+    current_fx = by(current_x)
+    @inbounds for i in eachindex(x)[2:end]
+        next_x = x[i]
+        if !filter(next_x)
             return false
         end
-        if !filter(cur)
+        next_fx = by(next_x)
+        if next_fx <= current_fx
             return false
         end
+        current_x, current_fx = next_x, next_fx
     end
     return true
 end
