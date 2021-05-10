@@ -111,38 +111,37 @@ struct Card
     end
 end
 
-function Base.println(io::IO, card::Card)
-    if card.num_fields == 0
-        println(io)
-        return
-    elseif card.num_fields == 1
-        println(io, " ", card.f1)
-        return
-    end
+function Base.show(io::IO, card::Card)
+    # if card.num_fields == 0
+    #     return
+    # elseif card.num_fields == 1
+    #     print(io, " ", card.f1)
+    #     return
+    # end
     print(io, " ", rpad(card.f1, 3))
     if card.num_fields == 2
-        println(io, card.f2)
+        print(io, card.f2)
         return
     end
     print(io, rpad(card.f2, 10))
     if card.num_fields == 3
-        println(io, card.f3)
+        print(io, card.f3)
         return
     end
     print(io, rpad(card.f3, 10))
     if card.num_fields == 4
-        println(io, card.f4)
+        print(io, card.f4)
         return
     end
     print(io, rpad(card.f4, 15))
     if card.num_fields == 5
-        println(io, card.f5)
+        print(io, card.f5)
         return
     end
     print(io, rpad(card.f5, 10))
-    if card.num_fields == 6
-        print(io, card.f6)
-    end
+    # if card.num_fields == 6
+    #     print(io, card.f6)
+    # end
     return
 end
 
