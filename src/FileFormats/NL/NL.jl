@@ -288,7 +288,7 @@ function MOI.copy_to(
     resize!(dest.order, length(dest.x))
     # Now deal with the normal MOI constraints.
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _process_constraint(dest, model, mapping.conmap[F, S])
+        _process_constraint(dest, model, F, S, mapping)
     end
     # Correct bounds of binary variables. Mainly because AMPL doesn't have the
     # concept of binary nonlinear variables, but it does have binary linear
@@ -437,7 +437,9 @@ _set_to_bounds(set::MOI.EqualTo) = (4, set.value, set.value)
 function _process_constraint(
     dest::Model,
     model,
-    mapping::MOI.Utilities.DoubleDicts.IndexWithType{F,S},
+    ::Type{F},
+    ::Type{S},
+    mapping,
 ) where {F,S}
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
@@ -468,8 +470,10 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    mapping::MOI.Utilities.DoubleDicts.IndexWithType{F,S},
-) where {F<:MOI.SingleVariable,S}
+    F::Type{MOI.SingleVariable},
+    S::Type{<:_SCALAR_SETS},
+    mapping,
+)
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
@@ -488,8 +492,10 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    mapping::MOI.Utilities.DoubleDicts.IndexWithType{F,S},
-) where {F<:MOI.SingleVariable,S<:Union{MOI.ZeroOne,MOI.Integer}}
+    F::Type{MOI.SingleVariable},
+    S::Type{<:Union{MOI.ZeroOne,MOI.Integer}},
+    mapping,
+)
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
