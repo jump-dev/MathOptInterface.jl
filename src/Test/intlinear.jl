@@ -41,24 +41,28 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     cf =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0, 1.0], v), 0.0)
     c = MOI.add_constraint(model, cf, MOI.LessThan(10.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     cf2 =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0, 1.0], v), 0.0)
     c2 = MOI.add_constraint(model, cf2, MOI.LessThan(15.0))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 2
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 2
+    end
 
     vc1 = MOI.add_constraint(
         model,
@@ -68,10 +72,12 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
     # We test this after the creation of every `SingleVariable` constraint
     # to ensure a good coverage of corner cases.
     @test vc1.value == v[1].value
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
+        ) == 1
+    end
 
     vc2 = MOI.add_constraint(
         model,
@@ -79,23 +85,29 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
         MOI.Interval(0.0, 10.0),
     )
     @test vc2.value == v[2].value
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
-    ) == 2
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
+        ) == 2
+    end
     vc3 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.Integer())
     @test vc3.value == v[2].value
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}(),
+        ) == 1
+    end
 
     vc4 = MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.ZeroOne())
     @test vc4.value == v[3].value
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+        ) == 1
+    end
 
     objf =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.1, 2.0, 5.0], v), 0.0)
@@ -198,10 +210,15 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
             MOI.VectorOfVariables([v[1], v[3]]),
             MOI.SOS1([1.0, 2.0]),
         )
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1{Float64}}(),
-        ) == 2
+        if config.query_number_of_constraints
+            @test MOI.get(
+                model,
+                MOI.NumberOfConstraints{
+                    MOI.VectorOfVariables,
+                    MOI.SOS1{Float64},
+                }(),
+            ) == 2
+        end
 
         #=
             To allow for permutations in the sets and variable vectors
@@ -539,10 +556,12 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
         vc = MOI.add_constraint(model, MOI.SingleVariable(vi), MOI.ZeroOne())
         @test vc.value == vi.value
     end
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
-    ) == 5
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+        ) == 5
+    end
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
@@ -551,13 +570,15 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
         ),
         MOI.LessThan(10.0),
     )
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -1074,20 +1095,27 @@ function _semitest(
             MOI.SingleVariable(v[1]),
             MOI.Semicontinuous(T(2), T(3)),
         )
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semicontinuous{T}}(),
-        ) == 1
+        if config.query_number_of_constraints
+            @test MOI.get(
+                model,
+                MOI.NumberOfConstraints{
+                    MOI.SingleVariable,
+                    MOI.Semicontinuous{T},
+                }(),
+            ) == 1
+        end
     else
         vc1 = MOI.add_constraint(
             model,
             MOI.SingleVariable(v[1]),
             MOI.Semiinteger(T(2), T(3)),
         )
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semiinteger{T}}(),
-        ) == 1
+        if config.query_number_of_constraints
+            @test MOI.get(
+                model,
+                MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semiinteger{T}}(),
+            ) == 1
+        end
     end
 
     vc2 = MOI.add_constraint(
@@ -1095,23 +1123,27 @@ function _semitest(
         MOI.SingleVariable(v[2]),
         MOI.EqualTo(zero(T)),
     )
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}(),
+        ) == 1
+    end
 
     cf = MOI.ScalarAffineFunction{T}(
         MOI.ScalarAffineTerm{T}.([one(T), -one(T)], v),
         zero(T),
     )
     c = MOI.add_constraint(model, cf, MOI.GreaterThan(zero(T)))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{T},
-            MOI.GreaterThan{T},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{T},
+                MOI.GreaterThan{T},
+            }(),
+        ) == 1
+    end
 
     objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.0], v), 0.0)
     MOI.set(

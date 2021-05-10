@@ -64,18 +64,23 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         ),
         MOI.Zeros(2),
     )
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 1
+    end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (
@@ -257,26 +262,31 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         )
     end
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 2 - vecofvars
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 2 - vecofvars
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonpositives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -385,20 +395,22 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
         MOI.Nonpositives(1),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonpositives,
+            }(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -464,17 +476,19 @@ function lin4test(model::MOI.ModelLike, config::TestConfig)
         MOI.Nonnegatives(1),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -587,18 +601,23 @@ function _norminf1test(
         )
     end
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 2
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.NormInfinityCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 2
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.NormInfinityCone,
+            }(),
+        ) == 1
+    end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
@@ -723,27 +742,29 @@ function norminf2test(model::MOI.ModelLike, config::TestConfig)
         MOI.NormInfinityCone(2),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.NormInfinityCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonpositives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.NormInfinityCone,
+            }(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -805,20 +826,22 @@ function norminf3test(model::MOI.ModelLike, config::TestConfig)
     )
     nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.NormInfinityCone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.NormInfinityCone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+    end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) in loc
@@ -943,18 +966,23 @@ function _normone1test(
         )
     end
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 2
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.NormOneCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 2
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.NormOneCone,
+            }(),
+        ) == 1
+    end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
@@ -1079,27 +1107,29 @@ function normone2test(model::MOI.ModelLike, config::TestConfig)
         MOI.NormOneCone(2),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.NormOneCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonpositives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.NormOneCone,
+            }(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -1161,20 +1191,22 @@ function normone3test(model::MOI.ModelLike, config::TestConfig)
     )
     nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.NormOneCone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.NormOneCone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+    end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) in loc
@@ -1286,18 +1318,23 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
         MOI.Zeros(1),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.SecondOrderCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.SecondOrderCone,
+            }(),
+        ) == 1
+    end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
@@ -1446,24 +1483,29 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
         MOI.SecondOrderCone(3),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            nonneg ? MOI.Nonnegatives : MOI.Nonpositives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.SecondOrderCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                nonneg ? MOI.Nonnegatives : MOI.Nonpositives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.SecondOrderCone,
+            }(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -1582,27 +1624,29 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
         MOI.SecondOrderCone(2),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.SecondOrderCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonpositives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.SecondOrderCone,
+            }(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -1677,14 +1721,19 @@ function soc4test(model::MOI.ModelLike, config::TestConfig)
         MOI.SecondOrderCone(3),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -1815,17 +1864,20 @@ function _rotatedsoc1test(
         )
     end
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
-    ) == (abvars ? 2 : 0)
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            abvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
-            MOI.RotatedSecondOrderCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+        ) == (abvars ? 2 : 0)
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                abvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.RotatedSecondOrderCone,
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -1956,25 +2008,30 @@ function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
     )
     @test vc3.value == x[3].value
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorOfVariables,
-            MOI.RotatedSecondOrderCone,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorOfVariables,
+                MOI.RotatedSecondOrderCone,
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -2104,33 +2161,41 @@ function rotatedsoc3test(
         MOI.RotatedSecondOrderCone(3),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
-    ) == 2
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.RotatedSecondOrderCone,
-        }(),
-    ) == 2
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+        ) == 2
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.SingleVariable,
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.RotatedSecondOrderCone,
+            }(),
+        ) == 2
+    end
 
     MOI.set(
         model,
@@ -2382,21 +2447,23 @@ function _geomean1test(
         MOI.LessThan(Float64(n)),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.GeometricMeanCone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.GeometricMeanCone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -2507,21 +2574,23 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
         )
     end
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.GeometricMeanCone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        }(),
-    ) == n
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.GeometricMeanCone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.EqualTo{Float64},
+            }(),
+        ) == n
+    end
 
     MOI.set(
         model,
@@ -2618,21 +2687,23 @@ function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
         MOI.LessThan(2.0),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            MOI.GeometricMeanCone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                MOI.GeometricMeanCone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.LessThan{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -3978,21 +4049,23 @@ function _psd0test(
         MOI.EqualTo(1.0),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            psdcone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                psdcone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.EqualTo{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -4215,25 +4288,27 @@ function _psd1test(
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            psdcone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        }(),
-    ) == 2
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                psdcone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.EqualTo{Float64},
+            }(),
+        ) == 2
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4399,34 +4474,36 @@ function psdt2test(model::MOI.ModelLike, config::TestConfig)
         MOI.EqualTo(0.0),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.GreaterThan{Float64},
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.PositiveSemidefiniteConeTriangle,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.GreaterThan{Float64},
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonpositives,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.PositiveSemidefiniteConeTriangle,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{Float64},
+                MOI.EqualTo{Float64},
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -4697,21 +4774,23 @@ function _det1test(
         MOI.Nonnegatives(2),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            vecofvars ? MOI.VectorOfVariables :
-            MOI.VectorAffineFunction{Float64},
-            detcone,
-        }(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-        }(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                vecofvars ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{Float64},
+                detcone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Nonnegatives,
+            }(),
+        ) == 1
+    end
 
     MOI.set(
         model,
@@ -4837,10 +4916,12 @@ function _det2test(model::MOI.ModelLike, config::TestConfig, detcone)
         constant_vec,
     )
     det_constraint = MOI.add_constraint(model, vaf, detcone(3))
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},detcone}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},detcone}(),
+        ) == 1
+    end
 
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED

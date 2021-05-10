@@ -56,14 +56,19 @@ function intsoc1test(model::MOI.ModelLike, config::TestConfig)
         MOI.SecondOrderCone(3),
     )
 
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
-    ) == 1
-    @test MOI.get(
-        model,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
-    ) == 1
+    if config.query_number_of_constraints
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.VectorAffineFunction{Float64},
+                MOI.Zeros,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
+        ) == 1
+    end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
