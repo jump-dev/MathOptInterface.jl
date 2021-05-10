@@ -69,6 +69,25 @@ function IndexMap(n = 0)
         DoubleDicts.IndexDoubleDict(),
     )
 end
+function _identity_constraints_map(
+    index_map::MOIU.DoubleDicts.IndexWithType{F,S},
+    model,
+) where {F,S}
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        index_map[ci] = ci
+    end
+end
+function identity_index_map(model::MOI.ModelLike)
+    vis = MOI.get(model, MOI.ListOfVariableIndices())
+    index_map = IndexMap(length(vis))
+    for vi in vis
+        index_map[vi] = vi
+    end
+    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
+        _identity_constraints_map(index_map.conmap[F, S], model)
+    end
+    return index_map
+end
 
 """
     index_map_for_variable_indices(variables)

@@ -13,6 +13,22 @@ function compare_without_moi(x::String, y::String)
     @test remove_moi(x) == remove_moi(y)
 end
 
+function identity_index_map_test(::Type{T}) where {T}
+    model = MOI.Utilities.Model{T}()
+    x, y = MOI.add_variables(model, 2)
+    fx = MOI.SingleVariable(x)
+    fy = MOI.SingleVariable(y)
+    cx = MOI.add_constraint(model, fx, MOI.EqualTo(one(T)))
+    cy = MOI.add_constraint(model, fy, MOI.EqualTo(zero(T)))
+    c = MOI.add_constraint(model, one(T) * fx + fy, MOI.LessThan(zero(T)))
+    index_map = MOI.Utilities.identity_index_map(model)
+    @test x == index_map[x]
+    @test y == index_map[y]
+    @test cx == index_map[cx]
+    @test cy == index_map[cy]
+    @test c == index_map[c]
+end
+
 @testset "IndexMap" begin
     map = MOIU.IndexMap()
     @test length(map) == 0
@@ -694,4 +710,9 @@ end
 @testset "copy of constraints passed as copy accross layers" begin
     test_pass_copy(Int)
     test_pass_copy(Float64)
+end
+
+@testset "identity_index_map" begin
+    identity_index_map_test(Int)
+    identity_index_map_test(Float64)
 end
