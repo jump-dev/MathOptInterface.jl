@@ -445,14 +445,15 @@ function _process_constraint(
         op, l, u = _set_to_bounds(s)
         con = _NLConstraint(l, u, op, _NLExpr(f))
         if isempty(con.expr.linear_terms) && isempty(con.expr.nonlinear_terms)
-            if l <= con.expr.constant <= u
-                continue
-            else
+            if !(l <= con.expr.constant <= u)
                 error(
                     "Malformed constraint. There are no variables and the " *
                     "function constant $(con.expr.constant) is not in [$l, $u]",
                 )
             end
+            # Just use a placeholder for the constraint index. It's not going to
+            # be used.
+            mapping[ci] = MOI.ConstraintIndex{F,S}(-abs(ci.value))
         elseif con.expr.is_linear
             push!(dest.h, con)
             mapping[ci] = MOI.ConstraintIndex{F,S}(length(dest.h))
@@ -514,31 +515,13 @@ function _write_nlexpr(io::IO, expr::_NLExpr, nlmodel::Model)
         _write_term(io, expr.constant, nlmodel)
         return
     end
-    # If the constant term is non-zero, we need to write it out.
-    skip_terms = 0
     if !iszero(expr.constant)
-        if expr.nonlinear_terms[1] == OPSUMLIST
-            # The nonlinear expression is a summation. We can write our constant
-            # first, but we also need to increment the number of arguments by
-            # one. In addition, since we're writing out the first two terms now,
-            # we must skip them below.
-            _write_term(io, OPSUMLIST, nlmodel)
-            println(io, expr.nonlinear_terms[2] + 1)
-            _write_term(io, expr.constant, nlmodel)
-            skip_terms = 2
-        else
-            # The nonlinear expression is something other than a summation, so
-            # add a new + node to the expression.
-            _write_term(io, OPPLUS, nlmodel)
-            _write_term(io, expr.constant, nlmodel)
-        end
+        # If the constant term is non-zero, we need to write it out.
+        _write_term(io, OPPLUS, nlmodel)
+        _write_term(io, expr.constant, nlmodel)
     end
     last_nary = false
     for term in expr.nonlinear_terms
-        if skip_terms > 0
-            skip_terms -= 1
-            continue
-        end
         if last_nary
             println(io, term::Int)
             last_nary = false

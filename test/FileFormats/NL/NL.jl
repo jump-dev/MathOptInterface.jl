@@ -840,6 +840,19 @@ end
 function test_malformed_constraint_error()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(model)
+    ci = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 1.0),
+        MOI.LessThan(2.0),
+    )
+    n = NL.Model()
+    mapping = MOI.copy_to(n, model)
+    @test haskey(mapping, ci)
+end
+
+function test_malformed_constraint_error()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
     MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 1.0),

@@ -1,4 +1,15 @@
-# Do not modify. This file is automatically created by the script in `gen.jl`.
+# This file is automatically created by the folowing script. Only re-run it if
+# AMPL adds new opcodes (which is unlikely).
+# ```julia
+# using ASL_jll
+# open("opcode.jl", "w") do io
+#     filename = joinpath(ASL_jll.artifact_dir, "include", "opcode.hd")
+#     for line in readlines(filename)
+#         items = split(line, c -> c == '\t' || c == ' '; keepempty = false)
+#         println(io, "const ", items[2], " = ", items[3])
+#     end
+# end
+# ```
 
 const OPPLUS = 0
 const OPMINUS = 1
