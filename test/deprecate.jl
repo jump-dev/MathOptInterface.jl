@@ -40,6 +40,6 @@ end
     @test_logs (:warn,) t.variable_index_2 == y
 end
 
-@testset "RawParameter" begin
-    @test_logs (:warn,) MOI.RawParameter(:a) == MOI.RawParameter("a")
+@testset "RawOptimizerAttribute" begin
+    @test_logs (:warn,) MOI.RawParameter(:a) == MOI.RawOptimizerAttribute("a")
 end

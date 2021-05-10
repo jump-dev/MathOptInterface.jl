@@ -134,10 +134,10 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     m.state = EMPTY_OPTIMIZER
     for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
         # Skip attributes which don't apply to the new optimizer.
-        if attr isa MOI.RawParameter
+        if attr isa MOI.RawOptimizerAttribute
             # Even if the optimizer claims to `supports` `attr`, the value
             # might have a different meaning (e.g., two solvers with `logLevel`
-            # as a RawParameter). To be on the safe side, just skip all raw
+            # as a RawOptimizerAttribute). To be on the safe side, just skip all raw
             # parameters.
             continue
         elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)::Bool

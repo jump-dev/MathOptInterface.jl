@@ -16,7 +16,8 @@ Breaking renames and type changes:
 - The `.variable_index_2` field in `ScalarQuadraticTerm` has been renamed to `.variable_2`
 - `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
-- The `.name` field of `RawParameter` is now typed `::String` instead of `::Any`
+- `RawParameter` has been renamed to `RawOptimizerAttribute` and now takes
+  `String` instead of `Any` as the only argument
 
 Breaking behavior changes:
 

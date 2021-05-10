@@ -281,7 +281,7 @@ method for each attribute.
 | [`Name`](@ref)         | Yes           | Yes           | Yes                |
 | [`Silent`](@ref)       | Yes           | Yes           | Yes                |
 | [`TimeLimitSec`](@ref) | Yes           | Yes           | Yes                |
-| [`RawParameter`](@ref) | Yes           | Yes           | Yes                |
+| [`RawOptimizerAttribute`](@ref) | Yes           | Yes           | Yes                |
 | [`NumberOfThreads`](@ref) | Yes        | Yes           | Yes                |
 
 For example:

@@ -662,20 +662,12 @@ to `nothing`, it deactivates the solver time limit. The default value is
 struct TimeLimitSec <: AbstractOptimizerAttribute end
 
 """
-    RawParameter(name::String)
+    RawOptimizerAttribute(name::String)
 
 An optimizer attribute for the solver-specific parameter identified by `name`.
 """
-struct RawParameter <: AbstractOptimizerAttribute
+struct RawOptimizerAttribute <: AbstractOptimizerAttribute
     name::String
-    RawParameter(name::String) = new(name)
-    function RawParameter(name::Any)
-        @warn(
-            "RawParameters(::$(typeof(name)) is deprecated. RawParameters " *
-            "must now accept `String` only.",
-        )
-        return new(string(name))
-    end
 end
 
 """
