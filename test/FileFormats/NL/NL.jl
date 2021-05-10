@@ -837,7 +837,7 @@ function test_issue_79()
     @test n.x[z].order == 0
 end
 
-function test_malformed_constraint_error()
+function test_empty_constraint()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(model)
     ci = MOI.add_constraint(
