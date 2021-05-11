@@ -7,7 +7,7 @@ import JSONSchema
 import MathOptInterface
 
 const MOI = MathOptInterface
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.0.5.schema.json")
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.0.6.schema.json")
 const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap = false)
     VersionNumber(
         data["properties"]["version"]["properties"]["major"]["const"],

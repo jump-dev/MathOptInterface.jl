@@ -302,3 +302,10 @@ function moi_to_object(
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
     )
 end
+
+function moi_to_object(set::MOI.Complements, ::Dict{MOI.VariableIndex,String})
+    return OrderedObject(
+        "type" => "Complements",
+        "dimension" => MOI.dimension(set),
+    )
+end
