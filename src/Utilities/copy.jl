@@ -70,8 +70,8 @@ function IndexMap(n = 0)
     )
 end
 function _identity_constraints_map(
-    index_map::MOIU.DoubleDicts.IndexWithType{F,S},
     model,
+    index_map::MOIU.DoubleDicts.IndexWithType{F,S},
 ) where {F,S}
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         index_map[ci] = ci
@@ -84,7 +84,7 @@ function identity_index_map(model::MOI.ModelLike)
         index_map[vi] = vi
     end
     for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        _identity_constraints_map(index_map.conmap[F, S], model)
+        _identity_constraints_map(model, index_map.conmap[F, S])
     end
     return index_map
 end
