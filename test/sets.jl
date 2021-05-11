@@ -104,7 +104,7 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         @test MOI.dimension(
             MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(1.0)),
         ) == 2
-        @test MOI.dimension(MOI.Complements(5)) == 10
+        @test MOI.dimension(MOI.Complements(10)) == 10
     end
     @testset "Complements" begin
         @test_throws ArgumentError MOI.Complements(3)
