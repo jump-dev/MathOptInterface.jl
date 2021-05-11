@@ -388,6 +388,13 @@ end
             ["c1"],
         )
     end
+    @testset "Complements" begin
+        test_model_equality(
+            "variables: x, y\nc1: [x, y] in Complements(1)",
+            ["x", "y"],
+            ["c1"],
+        )
+    end
     @testset "vectoraffine-in-zeros" begin
         test_model_equality(
             """

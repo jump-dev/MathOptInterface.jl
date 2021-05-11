@@ -84,7 +84,7 @@ julia> print(read("file.mof.json", String))
   "name": "MathOptFormat Model",
   "version": {
     "major": 0,
-    "minor": 5
+    "minor": 6
   },
   "variables": [
     {

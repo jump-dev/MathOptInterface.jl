@@ -316,6 +316,7 @@ end
     SOS1,
     SOS2,
     IndicatorSet,
+    Complements,
 )
 
 """
@@ -448,6 +449,10 @@ end
 
 function set_to_moi(::Val{:DualExponentialCone}, ::Object)
     return MOI.DualExponentialCone()
+end
+
+function set_to_moi(::Val{:Complements}, object::Object)
+    return MOI.Complements(div(object["dimension"], 2))
 end
 
 # ========== Typed vector sets ==========

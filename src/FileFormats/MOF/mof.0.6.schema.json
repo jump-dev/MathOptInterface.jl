@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.0.5.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.0.6.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "const": 5
+                    "const": 6
                 },
                 "major": {
                     "const": 0
@@ -857,6 +857,19 @@
                     "column_dim": {
                         "type": "integer",
                         "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The set corresponding to a mixed complementarity constraint. Complementarity constraints should be specified with an AbstractVectorFunction-in-Complements(dimension) constraint. The dimension of the vector-valued function `F` must be `dimension`. This defines a complementarity constraint between the scalar function `F[i]` and the variable in `F[i + dimension/2]`. Thus, `F[i + dimension/2]` must be interpretable as a single variable `x_i` (e.g., `1.0 * x + 0.0`). The mixed complementarity problem consists of finding `x_i` in the interval `[lb, ub]` (i.e., in the set `Interval(lb, ub)`), such that the following holds: 1. `F_i(x) == 0` if `lb_i < x_i < ub_i`; 2. `F_i(x) >= 0` if `lb_i == x_i`; 3. `F_i(x) <= 0` if `x_i == ub_i`. Classically, the bounding set for `x_i` is `Interval(0, Inf)`, which recovers: `0 <= F_i(x) ⟂ x_i >= 0`, where the `⟂` operator implies `F_i(x) * x_i = 0`.",
+                "examples": ["{\"type\": \"Complements\", \"dimension\": 2}"],
+                "required": ["dimension"],
+                "properties": {
+                    "type": {
+                        "const": "Complements"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 2
                     }
                 }
             }]
