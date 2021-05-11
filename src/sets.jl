@@ -852,7 +852,9 @@ defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 """
 struct Complements <: AbstractVectorSet
     dimension::Int
-    function Complements(dimension::Integer)
+    # Need an explicit Int64 here, because JSON parses Int as Int64, even on
+    # 32-bit machines.
+    function Complements(dimension::Union{Int,Int64})
         if !iseven(dimension)
             throw(
                 ArgumentError(
