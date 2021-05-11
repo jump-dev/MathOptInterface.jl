@@ -221,7 +221,7 @@ julia> good_model = JSON.parse("""
        {
          "version": {
            "major": 0,
-           "minor": 5
+           "minor": 6
          },
          "variables": [{"name": "x"}],
          "objective": {"sense": "feasibility"},
@@ -240,7 +240,7 @@ julia> bad_model = JSON.parse("""
        {
          "version": {
            "major": 0,
-           "minor": 5
+           "minor": 6
          },
          "variables": [{"NaMe": "x"}],
          "objective": {"sense": "feasibility"},
@@ -257,7 +257,7 @@ Use `JSONSchema.validate` to obtain more insight into why the validation failed:
 julia> JSONSchema.validate(bad_model, schema)
 Validation failed:
 path:         [variables][1]
-instance:     Dict{String, Any}("NaMe" => "x")
+instance:     Dict{String,Any}("NaMe"=>"x")
 schema key:   required
 schema value: Any["name"]
 ```
