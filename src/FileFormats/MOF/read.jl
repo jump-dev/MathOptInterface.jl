@@ -7,10 +7,6 @@ function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")
     end
-    options = get_options(model)
-    if options.validate
-        validate(io)
-    end
     object = JSON.parse(io; dicttype = UnorderedObject)
     file_version = _parse_mof_version(object["version"]::UnorderedObject)
     if file_version.major != VERSION.major || file_version.minor > VERSION.minor
