@@ -852,7 +852,7 @@ defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 """
 struct Complements <: AbstractVectorSet
     dimension::Int
-    function Complements(dimension::Int)
+    function Complements(dimension::Integer)
         if !iseven(dimension)
             throw(
                 ArgumentError(
@@ -860,7 +860,7 @@ struct Complements <: AbstractVectorSet
                 ),
             )
         end
-        return new(dimension)
+        return new(convert(Int, dimension))
     end
 end
 
