@@ -14,9 +14,6 @@ Breaking renames:
 - The `.variable_index` field in `ScalarAffineTerm` has been renamed to `.variable`
 - The `.variable_index_1` field in `ScalarQuadraticTerm` has been renamed to `.variable_1`
 - The `.variable_index_2` field in `ScalarQuadraticTerm` has been renamed to `.variable_2`
-- The `dimension` argument to `Complements(dimension::Int)` should now be the
-  length of the corresponding function, instead of half the length. An
-  `ArgumentError` is thrown if `dimension` is not even.
 - `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
 
@@ -25,6 +22,9 @@ Breaking behavior changes:
 - `CachingOptimizer`s are now initialized as `EMPTY_OPTIMIZER` instead of `ATTACHED_OPTIMIZER`.
   If your code relies on the optimizer being attached, call `MOIU.attach_optimizer(model)`
   after creation.
+- The `dimension` argument to `Complements(dimension::Int)` should now be the
+  length of the corresponding function, instead of half the length. An
+  `ArgumentError` is thrown if `dimension` is not even.
 
 v0.9.21 (April 23, 2021)
 ---------------------------
