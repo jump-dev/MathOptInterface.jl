@@ -303,10 +303,7 @@ function moi_to_object(
     )
 end
 
-function moi_to_object(
-    set::MOI.Complements,
-    ::Dict{MOI.VariableIndex,String},
-)
+function moi_to_object(set::MOI.Complements, ::Dict{MOI.VariableIndex,String})
     return OrderedObject(
         "type" => "Complements",
         "dimension" => MOI.dimension(set),
