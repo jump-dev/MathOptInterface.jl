@@ -6,7 +6,7 @@ v0.10.0 (In development)
 
 **This is a breaking release.**
 
-Breaking renames: 
+Breaking renames:
 
 - `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
 - `SolveTime` has been renamed to `SolveTimeSec`
@@ -14,6 +14,9 @@ Breaking renames:
 - The `.variable_index` field in `ScalarAffineTerm` has been renamed to `.variable`
 - The `.variable_index_1` field in `ScalarQuadraticTerm` has been renamed to `.variable_1`
 - The `.variable_index_2` field in `ScalarQuadraticTerm` has been renamed to `.variable_2`
+- The `dimension` argument to `Complements(dimension::Int)` should now be the
+  length of the corresponding function, instead of half the length. An
+  `ArgumentError` is thrown if `dimension` is not even.
 - `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
 

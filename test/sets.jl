@@ -106,7 +106,9 @@ Base.copy(mlt::MutLessThan) = MutLessThan(Base.copy(mlt.upper))
         ) == 2
         @test MOI.dimension(MOI.Complements(5)) == 10
     end
-
+    @testset "Complements" begin
+        @test_throws ArgumentError MOI.Complements(3)
+    end
     @testset "Dual Set" begin
         function dual_set_test(set1, set2)
             @test MOI.dual_set(set1) == set2

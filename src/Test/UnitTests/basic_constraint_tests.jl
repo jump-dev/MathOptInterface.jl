@@ -123,7 +123,7 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
         (dummy_vector_affine, 2, MOI.Nonnegatives(2)),
     (MOI.VectorAffineFunction{Float64}, MOI.Complements) =>
-        (dummy_vector_affine, 2, MOI.Complements(1)),
+        (dummy_vector_affine, 2, MOI.Complements(2)),
     (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) =>
         (dummy_vector_affine, 3, MOI.NormInfinityCone(3)),
     (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) =>
