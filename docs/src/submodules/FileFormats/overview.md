@@ -204,10 +204,10 @@ julia> read!(io, src_2)
 
 ## Validating MOF files
 
-MathOptFormat files are governed by a schema. Use the [JSONSchema.jl](https://github.com/fredo-dedup/JSONSchema.jl)
-package to check if a `.mof.json` file satisfies the schema.
+MathOptFormat files are governed by a schema. Use [JSONSchema.jl](https://github.com/fredo-dedup/JSONSchema.jl)
+to check if a `.mof.json` file satisfies the schema.
 
-First, consturct the schema object as follows:
+First, construct the schema object as follows:
 ```jldoctest schema_mof
 julia> import JSON, JSONSchema
 
