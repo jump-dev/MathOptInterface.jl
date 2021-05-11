@@ -527,7 +527,7 @@ function test_linear_mixed_complementarity(
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(terms, [q; 0.0; 0.0; 0.0; 0.0]),
-        MOI.Complements(4),
+        MOI.Complements(8),
     )
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     if config.solve
@@ -631,7 +631,7 @@ function test_qp_complementarity_constraint(
     MOI.add_constraint(
         model,
         MOI.VectorOfVariables([x[3], x[4], x[5], x[6], x[7], x[8]]),
-        MOI.Complements(3),
+        MOI.Complements(6),
     )
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     if config.solve

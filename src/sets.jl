@@ -806,10 +806,11 @@ The set corresponding to a mixed complementarity constraint.
 Complementarity constraints should be specified with an
 [`AbstractVectorFunction`](@ref)-in-`Complements(dimension)` constraint.
 
-The dimension of the vector-valued function `F` must be `2 * dimension`. This
+The dimension of the vector-valued function `F` must be `dimension`. This
 defines a complementarity constraint between the scalar function `F[i]` and the
-variable in `F[i + dimension]`. Thus, `F[i + dimension]` must be interpretable
-as a single variable `x_i` (e.g., `1.0 * x + 0.0`).
+variable in `F[i + dimension/2]`. Thus, `F[i + dimension/2]` must be
+interpretable as a single variable `x_i` (e.g., `1.0 * x + 0.0`), and
+`dimension` must be even.
 
 The mixed complementarity problem consists of finding `x_i` in the interval
 `[lb, ub]` (i.e., in the set `Interval(lb, ub)`), such that the following holds:
@@ -826,7 +827,7 @@ Classically, the bounding set for `x_i` is `Interval(0, Inf)`, which recovers:
 The problem:
 
     x -in- Interval(-1, 1)
-    [-4 * x - 3, x] -in- Complements(1)
+    [-4 * x - 3, x] -in- Complements(2)
 
 defines the mixed complementarity problem where the following holds:
 
@@ -844,16 +845,26 @@ The function `F` can also be defined in terms of single variables. For example,
 the problem:
 
     [x_3, x_4] -in- Nonnegatives(2)
-    [x_1, x_2, x_3, x_4] -in- Complements(2)
+    [x_1, x_2, x_3, x_4] -in- Complements(4)
 
 defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 `0 <= x_2 ⟂ x_4 >= 0`.
 """
 struct Complements <: AbstractVectorSet
     dimension::Int
+    # Need an explicit Int64 here, because JSON parses Int as Int64, even on
+    # 32-bit machines.
+    function Complements(dimension::Union{Int,Int64})
+        if !iseven(dimension)
+            throw(
+                ArgumentError(
+                    "The dimension of a Complements set must be even.",
+                ),
+            )
+        end
+        return new(convert(Int, dimension))
+    end
 end
-
-dimension(set::Complements) = 2 * set.dimension
 
 # isbits types, nothing to copy
 function Base.copy(

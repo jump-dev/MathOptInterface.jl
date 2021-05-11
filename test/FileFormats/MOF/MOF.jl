@@ -390,7 +390,7 @@ end
     end
     @testset "Complements" begin
         test_model_equality(
-            "variables: x, y\nc1: [x, y] in Complements(1)",
+            "variables: x, y\nc1: [x, y] in Complements(2)",
             ["x", "y"],
             ["c1"],
         )

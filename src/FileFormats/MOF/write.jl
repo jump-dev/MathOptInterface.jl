@@ -284,6 +284,7 @@ end
 function head_name(::Type{MOI.PositiveSemidefiniteConeSquare})
     return "PositiveSemidefiniteConeSquare"
 end
+head_name(::Type{MOI.Complements}) = "Complements"
 
 # ========== Typed vector sets ==========
 head_name(::Type{<:MOI.PowerCone}) = "PowerCone"
@@ -300,12 +301,5 @@ function moi_to_object(
         "type" => "IndicatorSet",
         "set" => moi_to_object(set.set, name_map),
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
-    )
-end
-
-function moi_to_object(set::MOI.Complements, ::Dict{MOI.VariableIndex,String})
-    return OrderedObject(
-        "type" => "Complements",
-        "dimension" => MOI.dimension(set),
     )
 end

@@ -452,7 +452,7 @@ function set_to_moi(::Val{:DualExponentialCone}, ::Object)
 end
 
 function set_to_moi(::Val{:Complements}, object::Object)
-    return MOI.Complements(div(object["dimension"], 2))
+    return MOI.Complements(object["dimension"])
 end
 
 # ========== Typed vector sets ==========

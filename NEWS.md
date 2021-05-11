@@ -6,7 +6,7 @@ v0.10.0 (In development)
 
 **This is a breaking release.**
 
-Breaking renames: 
+Breaking renames:
 
 - `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
 - `SolveTime` has been renamed to `SolveTimeSec`
@@ -22,6 +22,9 @@ Breaking behavior changes:
 - `CachingOptimizer`s are now initialized as `EMPTY_OPTIMIZER` instead of `ATTACHED_OPTIMIZER`.
   If your code relies on the optimizer being attached, call `MOIU.attach_optimizer(model)`
   after creation.
+- The `dimension` argument to `Complements(dimension::Int)` should now be the
+  length of the corresponding function, instead of half the length. An
+  `ArgumentError` is thrown if `dimension` is not even.
 
 v0.9.21 (April 23, 2021)
 ---------------------------
