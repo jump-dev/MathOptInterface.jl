@@ -146,37 +146,54 @@ for attr in (
     :Silent,
     :SimplexIterations,
     :SolverName,
-    :SolveTime,
+    :SolveTimeSec,
     :TerminationStatus,
     :TimeLimitSec,
 )
     f = Symbol("test_attribute_$(attr)")
-    @eval begin
-        function $(f)(model::MOI.ModelLike, config::TestConfig)
+    unittests["test_attribute_$(attr)"] = @eval begin
+        function $(f)(model::MOI.ModelLike, config::Config)
             MOI.empty!(model)
-            MOI.optimize!(model)
             attribute = MOI.$(attr)()
+            if MOI.is_set_by_optimize(attribute)
+                if !config.solve
+                    return
+                end
+                MOI.optimize!(model)
+            end
             T = MOI.attribute_value_type(attribute)
+            try
+                MOI.get(model, attribute)
+            catch err
+                if err isa ArgumentError
+                    return  # Solver does not support accessing the attribute.
+                end
+            end
+
             @static if VERSION < v"1.5"
                 @test MOI.get(model, attribute) isa T
             else
                 @test @inferred(T, MOI.get(model, attribute)) isa T
             end
         end
-        # unittests["test_attribute_$(attr)"]
     end
 end
 
 # Variable attributes.
 for attr in (:VariableName,)
     f = Symbol("test_attribute_$(attr)")
-    @eval begin
-        function $(f)(model::MOI.ModelLike, config::TestConfig)
+    unittests["test_attribute_$(attr)"] = @eval begin
+        function $(f)(model::MOI.ModelLike, config::Config)
             MOI.empty!(model)
             x = MOI.add_variable(model)
             MOI.set(model, MOI.VariableName(), x, "x")
-            MOI.optimize!(model)
             attribute = MOI.$(attr)()
+            if MOI.is_set_by_optimize(attribute)
+                if !config.solve
+                    return
+                end
+                MOI.optimize!(model)
+            end
             T = MOI.attribute_value_type(attribute)
             @static if VERSION < v"1.5"
                 @test MOI.get(model, attribute, x) isa T
@@ -184,7 +201,6 @@ for attr in (:VariableName,)
                 @test @inferred(T, MOI.get(model, attribute, x)) isa T
             end
         end
-        # unittests["test_attribute_$(attr)"]
     end
 end
 
@@ -196,26 +212,51 @@ for attr in (
     :ConstraintSet,
 )
     f = Symbol("test_attribute_$(attr)")
-    @eval begin
-        function $(f)(model::MOI.ModelLike, config::TestConfig)
+    unittests["test_attribute_$(attr)"] = @eval begin
+        function $(f)(model::MOI.ModelLike, config::Config{T}) where {T}
             MOI.empty!(model)
             x = MOI.add_variable(model)
-            ci = MOI.add_constraint(
-                model,
-                MOI.SingleVariable(x),
-                MOI.GreaterThan(0.0),
-            )
-            MOI.optimize!(model)
-            MOI.set(model, MOI.ConstraintName(), ci, "ci")
+            ci =
+                if MOI.supports_constraint(
+                    model,
+                    MOI.ScalarAffineFunction{T},
+                    MOI.GreaterThan{T},
+                )
+                    MOI.add_constraint(
+                        model,
+                        MOI.ScalarAffineFunction(
+                            [MOI.ScalarAffineTerm(one(T), x)],
+                            zero(T),
+                        ),
+                        MOI.GreaterThan(zero(T)),
+                    )
+                elseif MOI.supports_constraint(
+                    model,
+                    MOI.VectorOfVariables,
+                    MOI.Nonnegatives,
+                )
+                    MOI.add_constraint(
+                        model,
+                        MOI.VectorOfVariables([x]),
+                        MOI.Nonnegatives(1),
+                    )
+                else
+                    return
+                end
             attribute = MOI.$(attr)()
-            T = MOI.attribute_value_type(attribute)
+            if MOI.is_set_by_optimize(attribute)
+                if !config.solve
+                    return
+                end
+                MOI.optimize!(model)
+            end
+            VT = MOI.attribute_value_type(attribute)
             @static if VERSION < v"1.5"
-                @test MOI.get(model, attribute, ci) isa T
+                @test MOI.get(model, attribute, ci) isa VT
             else
-                @test @inferred(T, MOI.get(model, attribute, ci)) isa T
+                @test @inferred(T, MOI.get(model, attribute, ci)) isa VT
             end
         end
-        # unittests["test_attribute_$(attr)"]
     end
 end
 

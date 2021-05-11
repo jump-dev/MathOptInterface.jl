@@ -556,7 +556,17 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
 
         config = MOIT.Config(solve = false)
         @testset "Unit" begin
-            MOIT.unittest(m, config)
+            MOIT.unittest(
+                m,
+                config,
+                # Exclude these tests because no optimizer is attached.
+                [
+                    "test_attribute_Silent",
+                    "test_attribute_SolverName",
+                    "test_attribute_NumberOfThreads",
+                    "test_attribute_TimeLimitSec",
+                ],
+            )
         end
         @testset "Continuous Linear" begin
             exclude = ["partial_start"] # VariablePrimalStart not supported.

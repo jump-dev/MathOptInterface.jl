@@ -241,29 +241,23 @@ end
     model = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
-    config = MOI.Test.TestConfig()
+    config = MOI.Test.Config()
     MOI.set(model, MOI.NumberOfThreads(), 4)
     MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Name(), "Mock")
+    MOI.set(model, MOI.TimeLimitSec(), 1.0)
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.set(mock, MOI.BarrierIterations(), 1),
-        mock -> nothing,  # ConflictStatus
-        mock -> nothing,  # DualStatus
-        mock -> MOI.set(mock, MOI.Name(), "Mock"),
-        mock -> MOI.set(mock, MOI.NodeCount(), 1),
-        mock -> nothing,  # NumberOfThreads
-        mock -> nothing,  # NumberOfVariables
-        mock -> nothing,  # ObjectiveFunctionType
-        mock -> nothing,  # ObjectiveSense
-        mock -> nothing,  # PrimalStatus
-        mock -> MOI.set(mock, MOI.RelativeGap(), 0.0),
-        mock -> nothing,  # ResultCount
-        mock -> nothing,  # Silent
-        mock -> MOI.set(mock, MOI.SimplexIterations(), 1),
         mock -> nothing,
-        mock -> MOI.set(mock, MOI.SolveTime(), 1.0),
+        mock -> nothing,
+        mock -> MOI.set(mock, MOI.NodeCount(), 1),
+        mock -> nothing,
+        mock -> MOI.set(mock, MOI.RelativeGap(), 0.0),
+        mock -> nothing,
+        mock -> MOI.set(mock, MOI.SimplexIterations(), 1),
+        mock -> MOI.set(mock, MOI.SolveTimeSec(), 1.0),
         mock -> MOI.set(mock, MOI.TerminationStatus(), MOI.OPTIMAL),
-        mock -> MOI.set(mock, MOI.TimeLimitSec(), 1.0),
     )
     MOI.Test.test_attribute_BarrierIterations(model, config)
     MOI.Test.test_attribute_ConflictStatus(model, config)
@@ -280,7 +274,7 @@ end
     MOI.Test.test_attribute_Silent(model, config)
     MOI.Test.test_attribute_SimplexIterations(model, config)
     MOI.Test.test_attribute_SolverName(model, config)
-    MOI.Test.test_attribute_SolveTime(model, config)
+    MOI.Test.test_attribute_SolveTimeSec(model, config)
     MOI.Test.test_attribute_TerminationStatus(model, config)
     MOI.Test.test_attribute_TimeLimitSec(model, config)
 end
@@ -289,7 +283,7 @@ end
     model = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
-    config = MOI.Test.TestConfig()
+    config = MOI.Test.Config()
     MOI.Test.test_attribute_VariableName(model, config)
 end
 
@@ -297,7 +291,7 @@ end
     model = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
-    config = MOI.Test.TestConfig()
+    config = MOI.Test.Config()
     MOI.Test.test_attribute_ConstraintFunction(model, config)
     MOI.Test.test_attribute_ConstraintName(model, config)
     MOI.Test.test_attribute_ConstraintSet(model, config)

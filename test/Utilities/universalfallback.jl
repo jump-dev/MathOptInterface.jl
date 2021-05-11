@@ -291,7 +291,17 @@ config = MOIT.Config(solve = false)
     @test MOI.is_empty(uf)
 end
 @testset "Unit" begin
-    MOIT.unittest(uf, config)
+    MOIT.unittest(
+        uf,
+        config,
+        # Exclude these tests because no optimizer is attached.
+        [
+            "test_attribute_Silent",
+            "test_attribute_SolverName",
+            "test_attribute_NumberOfThreads",
+            "test_attribute_TimeLimitSec",
+        ],
+    )
 end
 @testset "Modification" begin
     MOIT.modificationtest(uf, config)
