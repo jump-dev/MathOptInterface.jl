@@ -217,14 +217,6 @@ function supports(
     return false
 end
 
-function supports(
-    ::ModelLike,
-    ::ConstraintName,
-    ::Type{ConstraintIndex{SingleVariable,S}},
-) where {S}
-    return throw(SingleVariableConstraintNameError())
-end
-
 """
     get(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)
 
@@ -1165,6 +1157,14 @@ function SingleVariableConstraintNameError()
         ConstraintName(),
         "`ConstraintName`s are not supported for `SingleVariable` constraints.",
     )
+end
+
+function supports(
+    ::ModelLike,
+    ::ConstraintName,
+    ::Type{ConstraintIndex{SingleVariable,S}},
+) where {S}
+    return throw(SingleVariableConstraintNameError())
 end
 
 """
