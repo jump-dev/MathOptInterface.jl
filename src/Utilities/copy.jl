@@ -42,7 +42,7 @@ end
 include("copy/index_map.jl")
 
 """
-    _pass_model_attributes(
+    pass_model_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
         copy_names::Bool,
@@ -55,15 +55,14 @@ Pass the model attributes from the model `src` to the model `dest` using
 
 Does not copy [`Name`](@ref) if `copy_names` is `false`.
 """
-function _pass_model_attributes(
+function pass_model_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     copy_names::Bool,
     index_map::IndexMap,
-    pass_attributes::F = MOI.set,
-) where {F<:Function}
-    attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
-    for attr in attrs
+    pass_attributes::Function = MOI.set,
+)
+    for attr in MOI.get(src, MOI.ListOfModelAttributesSet())
         if attr == MOI.Name() && !copy_names
             continue
         end
@@ -76,7 +75,7 @@ function _pass_model_attributes(
 end
 
 """
-    _pass_variable_attributes(
+    pass_variable_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
         copy_names::Bool,
@@ -90,14 +89,14 @@ Pass the variable attributes from the model `src` to the model `dest` using
 
 Does not copy [`VariableName`](@ref) if `copy_names` is `false`.
 """
-function _pass_variable_attributes(
+function pass_variable_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     copy_names::Bool,
     index_map::IndexMap,
     src_variables::Vector{MOI.VariableIndex},
-    pass_attributes::F = MOI.set,
-) where {F<:Function}
+    pass_attributes::Function = MOI.set,
+)
     attrs = MOI.get(src, MOI.ListOfVariableAttributesSet())
     if isempty(attrs)
         return
@@ -127,7 +126,7 @@ function _pass_variable_attributes(
 end
 
 """
-    _pass_constraint_attributes(
+    pass_constraint_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
         copy_names::Bool,
@@ -141,14 +140,14 @@ the model `dest` using `pass_attributes`.
 
 Does not copy [`ConstraintName`](@ref) if `copy_names` is `false`.
 """
-function _pass_constraint_attributes(
+function pass_constraint_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     copy_names::Bool,
     index_map::IndexMap,
     src_constraints::Vector{MOI.ConstraintIndex{F,S}},
-    pass_attributes::F1 = MOI.set,
-) where {F,S,F1<:Function}
+    pass_attributes::Function = MOI.set,
+) where {F,S}
     attrs = MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
     if isempty(attrs)
         return
@@ -189,13 +188,17 @@ end
         src::MOI.ModelLike,
         map::IndexMap,
         ::Type{S},
+        filter_constraints::Union{Nothing,Function},
         copy_constrained_variables::Function = MOI.add_constrained_variables,
     ) where {S<:MOI.AbstractVectorSet}
 
-Copy the constraints of type `MOI.VectorOfVariables`-in-`S` from the model `src`
-to the model `dest` and fill `index_map` accordingly. The copy is only done when
-the variables to be copied are not already keys of `index_map`. It returns a
-list of the constraints and whether they were added.
+Copy the constraints, using `copy_constrained_variables` of type
+[`MOI.VectorOfVariables`](@ref)-in-`S` from `src` to `dest` and fill `index_map`
+accordingly.
+
+The copy is only done when the variables to be copied are not already keys of
+`index_map`, the function contains unique variables, and
+`filter_constraints(ci) == true` for the corresponding constraint index `ci`.
 """
 function _copy_constrained_variables(
     dest::MOI.ModelLike,
@@ -203,8 +206,8 @@ function _copy_constrained_variables(
     map::IndexMap,
     ::Type{S},
     filter_constraints::Union{Nothing,Function},
-    copy_constrained_variables::F1 = MOI.add_constrained_variables,
-) where {S<:MOI.AbstractVectorSet,F1<:Function}
+    copy_constrained_variables::Function = MOI.add_constrained_variables,
+) where {S<:MOI.AbstractVectorSet}
     src_constraints =
         MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
     if filter_constraints !== nothing
@@ -240,13 +243,17 @@ end
         src::MOI.ModelLike,
         map::IndexMap,
         ::Type{S},
+        filter_constraints::Union{Nothing,Function},
         copy_constrained_variable::Function = MOI.add_constrained_variable,
     ) where {S<:MOI.AbstractScalarSet}
 
-Copy the constraints of type `MOI.SingleVariable`-in-`S` from the model `src` to
-the model `dest` and fill `index_map` accordingly. The copy is only done when
-the variables to be copied are not already keys of `index_map`. It returns a
-list of the constraints not copied.
+Copy the constraints, using `copy_constrained_variables` of type
+[`MOI.SingleVariable`](@ref)-in-`S` from `src` to `dest` and fill `index_map`
+accordingly.
+
+The copy is only done when the variables to be copied are not already keys of
+`index_map`, the function contains unique variables, and
+`filter_constraints(ci) == true` for the corresponding constraint index `ci`.
 """
 function _copy_constrained_variable(
     dest::MOI.ModelLike,
@@ -254,8 +261,8 @@ function _copy_constrained_variable(
     map::IndexMap,
     ::Type{S},
     filter_constraints::Union{Nothing,Function},
-    copy_constrained_variable::F1 = MOI.add_constrained_variable,
-) where {S<:MOI.AbstractScalarSet,F1<:Function}
+    copy_constrained_variable::Function = MOI.add_constrained_variable,
+) where {S<:MOI.AbstractScalarSet}
     src_constraints =
         MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
     if filter_constraints !== nothing
@@ -295,8 +302,8 @@ function _pass_free_variables(
     dest::MOI.ModelLike,
     map::IndexMap,
     src_variables::Vector{MOI.VariableIndex},
-    copy_variables::F = MOI.add_variables,
-) where {F}
+    copy_variables::Function = MOI.add_variables,
+)
     if length(src_variables) == length(map.var_map)
         return  # All variables have already been added. Nothing to do here.
     end
@@ -346,16 +353,16 @@ function _pass_constraint_cache(
     copy_names::Bool,
     index_map::IndexMap,
     cache::_VariableConstraintCache{F,S},
-    pass_constraints::F1,
-    pass_attributes::F2,
-) where {F,S,F1,F2}
+    pass_constraints::Function,
+    pass_attributes::Function,
+) where {F,S}
     pass_constraints(
         dest,
         src,
         index_map,
         [i for (i, a) in zip(cache.indices, cache.added) if !a],
     )
-    _pass_constraint_attributes(
+    pass_constraint_attributes(
         dest,
         src,
         copy_names,
@@ -373,9 +380,9 @@ function _pass_constraints(
     index_map::IndexMap,
     variable_constraint_cache::Vector{<:_VariableConstraintCache},
     filter_constraints::Union{Nothing,Function},
-    pass_constraints::F1 = _default_copy_constraints,
-    pass_attributes::F2 = MOI.set,
-) where {F1,F2}
+    pass_constraints::Function = _default_copy_constraints,
+    pass_attributes::Function = MOI.set,
+)
     # Copy MOI.SingleVariable and MOI.VectorOfVariables constraints.
     for cache in variable_constraint_cache
         _pass_constraint_cache(
@@ -398,7 +405,7 @@ function _pass_constraints(
             filter!(filter_constraints, cis_src)
         end
         pass_constraints(dest, src, index_map, cis_src)
-        _pass_constraint_attributes(
+        pass_constraint_attributes(
             dest,
             src,
             copy_names,
@@ -418,24 +425,21 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     return default_copy_to(dest, src, true)
 end
 
+function _bridge_cost(dest, ::Type{F}, ::Type{S}) where {F,S}
+    # We give priority for sets such that there is a big cost reduction
+    # constraining the variable on creation.
+    cost = MOI.get(dest, MOI.VariableBridgingCost{S}()) -
+           MOI.get(dest, MOI.ConstraintBridgingCost{F,S}())
+    # In case of ties, we give priority to vector sets. See issue #987.
+    return cost, F === MOI.SingleVariable
+end
+
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
     filter!(constraint_types) do (F, S)
         return F === MOI.SingleVariable || F === MOI.VectorOfVariables
     end
-    sort!(
-        constraint_types;
-        by = ((F, S),) ->
-        # We give priority for sets such that there is a big cost reduction
-        # constraining the variable on creation.
-            (
-                MOI.get(dest, MOI.VariableBridgingCost{S}()) -
-                MOI.get(dest, MOI.ConstraintBridgingCost{F,S}()),
-                # In case of ties, we give priority to vector sets.
-                # See issue #987
-                F === MOI.SingleVariable,
-            ),
-    )
+    sort!(constraint_types; by = x -> _bridge_cost(dest, x[1], x[2]))
     return constraint_types
 end
 
@@ -443,10 +447,10 @@ function _try_constrain_variables_on_creation(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map,
-    copy_constrained_variables::F1,
-    copy_constrained_variable::F2,
+    copy_constrained_variables::Function,
+    copy_constrained_variable::Function,
     filter_constraints::Union{Nothing,Function},
-) where {F1<:Function,F2<:Function}
+)
     variable_constraint_cache = _VariableConstraintCache[]
     for (F, S) in sorted_variable_sets_by_cost(dest, src)
         if F === MOI.VectorOfVariables
@@ -534,8 +538,8 @@ function default_copy_to(
     end
 
     _pass_free_variables(dest, index_map, variables)
-    _pass_variable_attributes(dest, src, copy_names, index_map, variables)
-    _pass_model_attributes(dest, src, copy_names, index_map)
+    pass_variable_attributes(dest, src, copy_names, index_map, variables)
+    pass_model_attributes(dest, src, copy_names, index_map)
     _pass_constraints(
         dest,
         src,

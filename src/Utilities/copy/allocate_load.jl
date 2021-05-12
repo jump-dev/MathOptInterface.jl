@@ -407,7 +407,7 @@ function allocate_load(
         filter_constraints,
     )
     _pass_free_variables(dest, index_map, variables, allocate_variables)
-    _pass_variable_attributes(
+    pass_variable_attributes(
         dest,
         src,
         copy_names,
@@ -415,7 +415,7 @@ function allocate_load(
         variables,
         allocate,
     )
-    _pass_model_attributes(dest, src, copy_names, index_map, allocate)
+    pass_model_attributes(dest, src, copy_names, index_map, allocate)
     _pass_constraints(
         dest,
         src,
@@ -431,8 +431,8 @@ function allocate_load(
     for cache in variable_constraint_cache
         _load_cache(dest, src, index_map, cache)
     end
-    _pass_variable_attributes(dest, src, copy_names, index_map, variables, load)
-    _pass_model_attributes(dest, src, copy_names, index_map, load)
+    pass_variable_attributes(dest, src, copy_names, index_map, variables, load)
+    pass_model_attributes(dest, src, copy_names, index_map, load)
     _pass_constraints(
         dest,
         src,

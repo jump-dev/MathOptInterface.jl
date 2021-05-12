@@ -60,6 +60,9 @@ Utilities.automatic_copy_to
 Utilities.default_copy_to
 Utilities.IndexMap
 Utilities.identity_index_map
+Utilities.pass_model_attributes
+Utilities.pass_variable_attributes
+Utilities.pass_constraint_attributes
 ```
 
 ### [Allocate-Load API](@id allocate_load_api_ref)
