@@ -1742,23 +1742,10 @@ function bridged_constraint_function(
     if !Variable.has_bridges(Variable.bridges(b))
         return func, set
     end
-    if func isa MOI.AbstractScalarFunction
-        constant = MOI.constant(func)
-        if !iszero(constant)
-            # We use the fact that the initial function constant was zero to
-            # implement getters for `MOI.ConstraintFunction` and
-            # `MOI.ConstraintSet`. See `unbridged_constraint_function`.
-            throw(
-                MOI.ScalarFunctionConstantNotZero{
-                    typeof(constant),
-                    typeof(func),
-                    typeof(set),
-                }(
-                    constant,
-                ),
-            )
-        end
-    end
+    # We use the fact that the initial function constant was zero to
+    # implement getters for `MOI.ConstraintFunction` and
+    # `MOI.ConstraintSet`. See `unbridged_constraint_function`.
+    MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
     f = bridged_function(b, func)::typeof(func)
     return MOIU.normalize_constant(f, set)
 end
