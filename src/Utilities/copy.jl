@@ -747,8 +747,7 @@ function default_copy_to(
             ) for S in vector_of_variables_types
         ]
         single_variable_not_added = [
-            MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
-            for S in single_variable_types
+            MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}()) for S in single_variable_types
         ]
     else
         vector_of_variables_types,
