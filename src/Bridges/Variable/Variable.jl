@@ -49,12 +49,12 @@ const RSOCtoPSD{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}
 
 """
-    add_all_bridges(bridged_model, T::Type)
+    add_all_bridges(bridged_model, ::Type{T}) where {T}
 
 Add all bridges defined in the `Bridges.Variable` submodule to `bridged_model`.
 The coefficient type used is `T`.
 """
-function add_all_bridges(bridged_model, T::Type)
+function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOIB.add_bridge(bridged_model, ZerosBridge{T})
     MOIB.add_bridge(bridged_model, FreeBridge{T})
     MOIB.add_bridge(bridged_model, NonposToNonnegBridge{T})

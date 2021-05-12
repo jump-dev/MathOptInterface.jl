@@ -20,12 +20,12 @@ include("lazy_bridge_optimizer.jl")
 include("debug.jl")
 
 """
-    full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
+    full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where {T}
 
 Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in
 this package and for the coefficient type `T`.
 """
-function full_bridge_optimizer(model::MOI.ModelLike, T::Type)
+function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where {T}
     bridged_model = LazyBridgeOptimizer(model)
     Variable.add_all_bridges(bridged_model, T)
     Constraint.add_all_bridges(bridged_model, T)
