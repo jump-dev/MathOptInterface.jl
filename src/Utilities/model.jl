@@ -1029,8 +1029,7 @@ for (loop_name, loop_super_type) in [
         The lower (resp. upper) bound of a variable of index `VariableIndex(i)`
         is at the `i`th index of the vector stored in the field `lower_bound`
         (resp. `upper_bound`). When no lower (resp. upper) bound is set, it is
-        `typemin(T)` (resp. `typemax(T)`) if `T <: AbstractFloat` and `zero(T)`
-        otherwise.
+        `typemin(T)` (resp. `typemax(T)`) if `T <: AbstractFloat`.
         """
         mutable struct $name{T,C} <: $super_type{T}
             name::String
