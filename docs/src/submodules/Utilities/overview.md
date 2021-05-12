@@ -312,12 +312,7 @@ $$ \begin{aligned}
     In IJulia, calling `print` or ending a cell with
     [`Utilities.latex_formulation`](@ref) will render the model in LaTex.
 
-## Copy utilities
-
-!!! info
-    This section is unfinished.
-
-### Allocate-Load API
+## Allocate-Load
 
 The Allocate-Load API allows solvers that do not support loading the problem
 incrementally to implement [`copy_to`](@ref) in a way that still allows
@@ -327,11 +322,11 @@ Allocate-Load API.
 
 Loading a model using the Allocate-Load interface consists of two passes
 through the model data:
-1) the allocate pass where the model typically records the necessary information
-   about the constraints and attributes such as their number and size.
-   This information may be used by the solver to allocate datastructures of
-   appropriate size.
-2) the load pass where the model typically loads the constraint and attribute
+1) the _allocate_ pass where the model typically records the necessary
+   information about the constraints and attributes such as their number and
+   size. This information may be used by the solver to allocate datastructures
+   of appropriate size.
+2) the _load_ pass where the model typically loads the constraint and attribute
    data to the model.
 
 The description above only gives a suggestion of what to achieve in each pass.
@@ -344,21 +339,29 @@ before the other during a copy, is that the allocate pass needs to create and
 return new variable and constraint indices, while during the load pass the
 appropriate constraint indices are provided.
 
-The Allocate-Load API is **not** meant to be used outside a copy operation,
-that is, the interface is not meant to be used to create new constraints with
-[`Utilities.allocate_constraint`](@ref) followed by
-[`Utilities.load_constraint`](@ref) after a solve.
-This means that the order in which the different functions of the API are
-called is fixed by [`Utilities.allocate_load`](@ref) and models implementing the
-API can rely on the fact that functions will be called in this order. That is,
-it can be assumed that the different functions will the called in the following
-order:
-1) [`Utilities.allocate_variables`](@ref)
-2) [`Utilities.allocate`](@ref) and [`Utilities.allocate_constraint`](@ref)
-3) [`Utilities.load_variables`](@ref)
-4) [`Utilities.load`](@ref) and [`Utilities.load_constraint`](@ref)
+If you choose to implement the Allocate-Load API, implement the following
+functions, which will be called in order:
 
-If you choose to implement the Allocate-Load API, also implement;
+**Allocate**
+
+ * [`Utilities.allocate_variables`](@ref)
+ * [`Utilities.allocate_constrained_variable`](@ref)
+ * [`Utilities.allocate_constrained_variables`](@ref)
+ * [`Utilities.allocate`](@ref)
+ * [`Utilities.allocate_constraint`](@ref)
+
+**Load**
+
+ * [`Utilities.load_variables`](@ref)
+ * [`Utilities.load_constrained_variable`](@ref)
+ * [`Utilities.load_constrained_variables`](@ref)
+ * [`Utilities.load`](@ref)
+ * [`Utilities.load_constraint`](@ref)
+
+Note that the `_constrained_variable` functions are optional, and are only
+needed if the solver requires variables be constrained on creation.
+
+You must also implement:
 ```julia
 function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
     return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
@@ -375,6 +378,9 @@ function MOI.Utilities.supports_allocate_load(
 end
 ```
 See [`Utilities.supports_allocate_load`](@ref) for more details.
+
+!!! warning
+    The Allocate-Load API should **not** be used outside [`copy_to`](@ref).
 
 ## Fallbacks
 

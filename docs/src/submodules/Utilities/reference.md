@@ -68,9 +68,13 @@ Utilities.identity_index_map
 Utilities.allocate_load
 Utilities.supports_allocate_load
 Utilities.allocate_variables
+Utilities.allocate_constrained_variable
+Utilities.allocate_constrained_variables
 Utilities.allocate
 Utilities.allocate_constraint
 Utilities.load_variables
+Utilities.load_constrained_variable
+Utilities.load_constrained_variables
 Utilities.load
 Utilities.load_constraint
 ```
