@@ -428,8 +428,9 @@ end
 function _bridge_cost(dest, ::Type{F}, ::Type{S}) where {F,S}
     # We give priority for sets such that there is a big cost reduction
     # constraining the variable on creation.
-    cost = MOI.get(dest, MOI.VariableBridgingCost{S}()) -
-           MOI.get(dest, MOI.ConstraintBridgingCost{F,S}())
+    cost =
+        MOI.get(dest, MOI.VariableBridgingCost{S}()) -
+        MOI.get(dest, MOI.ConstraintBridgingCost{F,S}())
     # In case of ties, we give priority to vector sets. See issue #987.
     return cost, F === MOI.SingleVariable
 end
