@@ -217,6 +217,14 @@ function supports(
     return false
 end
 
+function supports(
+    ::ModelLike,
+    ::ConstraintName,
+    ::Type{ConstraintIndex{SingleVariable,S}},
+) where {S}
+    return throw(SingleVariableConstraintNameError())
+end
+
 """
     get(optimizer::AbstractOptimizer, attr::AbstractOptimizerAttribute)
 
