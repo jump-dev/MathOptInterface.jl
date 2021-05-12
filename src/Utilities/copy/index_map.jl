@@ -46,11 +46,12 @@ end
 
 function _identity_constraints_map(
     model,
-    index_map::MOIU.DoubleDicts.IndexWithType{F,S},
+    map::MOIU.DoubleDicts.IndexWithType{F,S},
 ) where {F,S}
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        index_map[ci] = ci
+    for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        map[ci] = c
     end
+    return
 end
 
 """
@@ -60,15 +61,15 @@ Return an [`IndexMap`](@ref) that maps all variable and constraint indices of
 `model` to themselves.
 """
 function identity_index_map(model::MOI.ModelLike)
-    vis = MOI.get(model, MOI.ListOfVariableIndices())
-    index_map = IndexMap(length(vis))
-    for vi in vis
-        index_map[vi] = vi
+    variables = MOI.get(model, MOI.ListOfVariableIndices())
+    map = _index_map_for_variable_indices(variables)
+    for x in variables
+        map[x] = x
     end
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        _identity_constraints_map(model, index_map.conmap[F, S])
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        _identity_constraints_map(model, map.con_map[F, S])
     end
-    return index_map
+    return map
 end
 
 Base.getindex(map::IndexMap, key::MOI.VariableIndex) = map.var_map[key]
