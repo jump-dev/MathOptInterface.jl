@@ -205,9 +205,9 @@ end
 
 function _reverse_index_map(src::IndexMap)
     dest = IndexMap()
-    sizehint!(dest.varmap, length(src.varmap))
-    _reverse_dict(dest.varmap, src.varmap)
-    _reverse_dict(dest.conmap, src.conmap)
+    sizehint!(dest.var_map, length(src.var_map))
+    _reverse_dict(dest.var_map, src.var_map)
+    _reverse_dict(dest.con_map, src.con_map)
     return dest
 end
 

@@ -38,7 +38,7 @@ end
     cx = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1)
     cy = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2)
     map = MOIU.IndexMap(Dict(x => y), DoubleDicts.IndexDoubleDict())
-    map.conmap[cx] = cy
+    map[cx] = cy
     @test length(map) == 2
 end
 
