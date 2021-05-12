@@ -230,7 +230,7 @@ end
     load_single_variable(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        idxmap::IndexMap,
+        index_map::IndexMap,
         cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable, S}},
     ) where {S}
 
@@ -240,7 +240,7 @@ using `load_constrained_variable`.
 function load_single_variable(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    idxmap::IndexMap,
+    index_map::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{MOI.SingleVariable,S}},
 ) where {S}
     fs_src = MOI.get(
@@ -250,8 +250,8 @@ function load_single_variable(
     )::Vector{MOI.SingleVariable}
     sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
     for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
-        vi_dest = idxmap[f_src.variable]
-        ci_dest = idxmap[ci_src]
+        vi_dest = index_map[f_src.variable]
+        ci_dest = index_map[ci_src]
         load_constrained_variable(dest, vi_dest, ci_dest, set)
     end
     return
@@ -261,7 +261,7 @@ end
     load_vector_of_variables(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        idxmap::IndexMap,
+        index_map::IndexMap,
         cis_src::Vector{MOI.ConstraintIndex{MOI.VectorOfVariables, S}},
     ) where {S}
 
@@ -271,7 +271,7 @@ using `load_constrained_variable`.
 function load_vector_of_variables(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    idxmap::IndexMap,
+    index_map::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{MOI.VectorOfVariables,S}},
 ) where {S}
     fs_src = MOI.get(
@@ -281,8 +281,8 @@ function load_vector_of_variables(
     )::Vector{MOI.VectorOfVariables}
     sets = MOI.get(src, MOI.ConstraintSet(), cis_src)::Vector{S}
     for (ci_src, f_src, set) in zip(cis_src, fs_src, sets)
-        vis_dest = [idxmap[vi] for vi in f_src.variables]
-        ci_dest = idxmap[ci_src]
+        vis_dest = [index_map[vi] for vi in f_src.variables]
+        ci_dest = index_map[ci_src]
         load_constrained_variables(dest, vis_dest, ci_dest, set)
     end
     return
@@ -315,31 +315,61 @@ end
 function allocate_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    idxmap::IndexMap,
+    index_map::IndexMap,
     cis_src::Vector{<:MOI.ConstraintIndex},
 )
     for ci_src in cis_src
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
-        f_dest = map_indices(idxmap, f_src)
+        f_dest = map_indices(index_map, f_src)
         ci_dest = allocate_constraint(dest, f_dest, s)
-        idxmap[ci_src] = ci_dest
+        index_map[ci_src] = ci_dest
     end
 end
 
 function load_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    idxmap::IndexMap,
+    index_map::IndexMap,
     cis_src::Vector{<:MOI.ConstraintIndex},
 )
     for ci_src in cis_src
-        ci_dest = idxmap[ci_src]
+        ci_dest = index_map[ci_src]
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-        f_dest = map_indices(idxmap, f_src)
+        f_dest = map_indices(index_map, f_src)
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
         load_constraint(dest, ci_dest, f_dest, s)
     end
+    return
+end
+
+function _load_cache(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    index_map::IndexMap,
+    cache::_VariableConstraintCache{MOI.SingleVariable,S}
+) where {S}
+    load_single_variable(
+        dest,
+        src,
+        index_map,
+        [i for (i, a) in zip(cache.indices, cache.added) if a],
+    )
+    return
+end
+
+function _load_cache(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    index_map::IndexMap,
+    cache::_VariableConstraintCache{MOI.VectorOfVariables,S}
+) where {S}
+    load_vector_of_variables(
+        dest,
+        src,
+        index_map,
+        [i for (i, a) in zip(cache.indices, cache.added) if a],
+    )
     return
 end
 
@@ -365,81 +395,59 @@ function allocate_load(
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     MOI.empty!(dest)
-
-    vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    idxmap = _index_map_for_variable_indices(vis_src)
-    constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
-    single_variable_types =
-        [S for (F, S) in constraint_types if F === MOI.SingleVariable]
-    vector_of_variables_types =
-        [S for (F, S) in constraint_types if F === MOI.VectorOfVariables]
-
-    # Allocate variables
-    vector_of_variables_types,
-    vector_of_variables_allocated,
-    vector_of_variables_not_allocated,
-    single_variable_type,
-    single_variable_allocated,
-    single_variable_not_allocated = try_constrain_variables_on_creation(
+    variables = MOI.get(src, MOI.ListOfVariableIndices())
+    index_map = _index_map_for_variable_indices(variables)
+    # Allocate
+    variable_constraint_cache = _try_constrain_variables_on_creation(
         dest,
         src,
-        idxmap,
+        index_map,
         allocate_constrained_variables,
         allocate_constrained_variable,
+        filter_constraints
     )
-
-    copy_free_variables(dest, idxmap, vis_src, allocate_variables)
-
-    # Allocate variable attributes
-    pass_attributes(dest, src, copy_names, idxmap, vis_src, allocate)
-
-    # Allocate model attributes
-    pass_attributes(dest, src, copy_names, idxmap, allocate)
-
-    # Allocate constraints
-    pass_constraints(
+    _pass_free_variables(dest, index_map, variables, allocate_variables)
+    _pass_variable_attributes(
         dest,
         src,
         copy_names,
-        idxmap,
-        single_variable_types,
-        single_variable_not_allocated,
-        vector_of_variables_types,
-        vector_of_variables_not_allocated,
+        index_map,
+        variables,
+        allocate,
+    )
+    _pass_model_attributes(
+        dest,
+        src,
+        copy_names,
+        index_map,
+        allocate,
+    )
+    _pass_constraints(
+        dest,
+        src,
+        copy_names,
+        index_map,
+        variable_constraint_cache,
+        filter_constraints,
         allocate_constraints,
         allocate,
-        filter_constraints = filter_constraints,
     )
-
-    # Load variables
-    load_variables(dest, length(vis_src))
-    for cis_src in vector_of_variables_allocated
-        load_vector_of_variables(dest, src, idxmap, cis_src)
+    # Load
+    load_variables(dest, length(variables))
+    for cache in variable_constraint_cache
+        _load_cache(dest, src, index_map, cache)
     end
-    for cis_src in single_variable_allocated
-        load_single_variable(dest, src, idxmap, cis_src)
-    end
-
-    # Load variable attributes
-    pass_attributes(dest, src, copy_names, idxmap, vis_src, load)
-
-    # Load model attributes
-    pass_attributes(dest, src, copy_names, idxmap, load)
-
-    # Load constraints
-    pass_constraints(
+    _pass_variable_attributes(dest, src, copy_names, index_map, variables, load)
+    _pass_model_attributes(dest, src, copy_names, index_map, load)
+    _pass_constraints(
         dest,
         src,
         copy_names,
-        idxmap,
-        single_variable_types,
-        single_variable_not_allocated,
-        vector_of_variables_types,
-        vector_of_variables_not_allocated,
+        index_map,
+        variable_constraint_cache,
+        filter_constraints,
         load_constraints,
         load,
-        filter_constraints = filter_constraints,
     )
-
-    return idxmap
+    return index_map
 end
