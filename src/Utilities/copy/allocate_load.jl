@@ -347,7 +347,7 @@ function _load_cache(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    cache::_VariableConstraintCache{MOI.SingleVariable,S}
+    cache::_VariableConstraintCache{MOI.SingleVariable,S},
 ) where {S}
     load_single_variable(
         dest,
@@ -362,7 +362,7 @@ function _load_cache(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    cache::_VariableConstraintCache{MOI.VectorOfVariables,S}
+    cache::_VariableConstraintCache{MOI.VectorOfVariables,S},
 ) where {S}
     load_vector_of_variables(
         dest,
@@ -404,7 +404,7 @@ function allocate_load(
         index_map,
         allocate_constrained_variables,
         allocate_constrained_variable,
-        filter_constraints
+        filter_constraints,
     )
     _pass_free_variables(dest, index_map, variables, allocate_variables)
     _pass_variable_attributes(
@@ -415,13 +415,7 @@ function allocate_load(
         variables,
         allocate,
     )
-    _pass_model_attributes(
-        dest,
-        src,
-        copy_names,
-        index_map,
-        allocate,
-    )
+    _pass_model_attributes(dest, src, copy_names, index_map, allocate)
     _pass_constraints(
         dest,
         src,
