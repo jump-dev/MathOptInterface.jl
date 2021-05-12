@@ -323,7 +323,7 @@ function allocate_constraints(
         s = MOI.get(src, MOI.ConstraintSet(), ci_src)
         f_dest = map_indices(idxmap, f_src)
         ci_dest = allocate_constraint(dest, f_dest, s)
-        idxmap.conmap[ci_src] = ci_dest
+        idxmap[ci_src] = ci_dest
     end
 end
 
@@ -367,7 +367,7 @@ function allocate_load(
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    idxmap = index_map_for_variable_indices(vis_src)
+    idxmap = _index_map_for_variable_indices(vis_src)
     constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
     single_variable_types =
         [S for (F, S) in constraint_types if F === MOI.SingleVariable]

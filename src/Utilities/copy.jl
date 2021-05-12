@@ -39,143 +39,7 @@ end
 
 @deprecate supports_default_copy_to MOI.supports_incremental_interface
 
-"""
-    _index_to_variable(i::Int)
-
-Simply returns `MOI.VariableIndex(i)`. This is necessary to pass a function that
-creates the `VariableIndex` from an integer. If we pass `MOI.VariableIndex`
-julia understands is as a `DataType` and not a function, this leads to type
-instability issues.
-"""
-_index_to_variable(i) = MOI.VariableIndex(i)
-const DenseVariableDict{V} = CleverDicts.CleverDict{
-    MOI.VariableIndex,
-    V,
-    typeof(CleverDicts.key_to_index),
-    typeof(CleverDicts.index_to_key),
-}
-function dense_variable_dict(::Type{V}, n) where {V}
-    return CleverDicts.CleverDict{MOI.VariableIndex,V}(
-        MOI.index_value,
-        _index_to_variable,
-        n,
-    )
-end
-
-"""
-    struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
-        varmap::DenseVariableDict{MOI.VariableIndex}
-        conmap::DoubleDicts.MainIndexDoubleDict
-    end
-
-Dictionary-like object returned by [`MathOptInterface.copy_to`](@ref) that
-contains the mapping between variable indices in `varmap` and between
-constraint indices in `conmap`.
-"""
-struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
-    varmap::DenseVariableDict{MOI.VariableIndex}
-    conmap::DoubleDicts.MainIndexDoubleDict
-end
-
-function IndexMap(n = 0)
-    return IndexMap(
-        dense_variable_dict(MOI.VariableIndex, n),
-        DoubleDicts.IndexDoubleDict(),
-    )
-end
-
-function _identity_constraints_map(
-    model,
-    index_map::MOIU.DoubleDicts.IndexWithType{F,S},
-) where {F,S}
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        index_map[ci] = ci
-    end
-end
-
-"""
-    identity_index_map(model::MOI.ModelLike)
-
-Return an [`IndexMap`](@ref) that maps all variable and constraint indices of
-`model` to themselves.
-"""
-function identity_index_map(model::MOI.ModelLike)
-    vis = MOI.get(model, MOI.ListOfVariableIndices())
-    index_map = IndexMap(length(vis))
-    for vi in vis
-        index_map[vi] = vi
-    end
-    for (F, S) in MOI.get(model, MOI.ListOfConstraints())
-        _identity_constraints_map(model, index_map.conmap[F, S])
-    end
-    return index_map
-end
-
-"""
-    index_map_for_variable_indices(variables)
-
-This function does not add variables to the IndexMap.
-It simply initializes the IndexMap with a proper data struture.
-If the variable indices are contiguous and start from 1, then
-an optimized data structure with pre allocated memory is initialized.
-Otherwise the data structure will start empty and will try to
-keep using performant structure for as long as possible.
-"""
-function index_map_for_variable_indices(variables)
-    n = length(variables)
-    if all(i -> variables[i] == MOI.VariableIndex(i), 1:n)
-        return IndexMap(n)
-    else
-        return IndexMap()
-    end
-end
-
-Base.getindex(idxmap::IndexMap, vi::MOI.VariableIndex) = idxmap.varmap[vi]
-function Base.getindex(
-    idxmap::IndexMap,
-    ci::MOI.ConstraintIndex{F,S},
-) where {F,S}
-    return idxmap.conmap[ci]::MOI.ConstraintIndex{F,S}
-end
-
-function Base.setindex!(
-    idxmap::IndexMap,
-    vi1::MOI.VariableIndex,
-    vi2::MOI.VariableIndex,
-)
-    return Base.setindex!(idxmap.varmap, vi1, vi2)
-end
-function Base.setindex!(
-    idxmap::IndexMap,
-    ci1::MOI.ConstraintIndex{F,S},
-    ci2::MOI.ConstraintIndex{F,S},
-) where {F,S}
-    return Base.setindex!(idxmap.conmap, ci1, ci2)
-end
-
-function Base.delete!(idxmap::IndexMap, vi::MOI.VariableIndex)
-    return delete!(idxmap.varmap, vi)
-end
-function Base.delete!(idxmap::IndexMap, ci::MOI.ConstraintIndex)
-    return delete!(idxmap.conmap, ci)
-end
-
-function Base.haskey(idxmap::IndexMap, ci::MOI.ConstraintIndex)
-    return haskey(idxmap.conmap, ci)
-end
-Base.haskey(idxmap::IndexMap, vi::MOI.VariableIndex) = haskey(idxmap.varmap, vi)
-
-function Base.keys(idxmap::IndexMap)
-    return Iterators.flatten((keys(idxmap.varmap), keys(idxmap.conmap)))
-end
-
-Base.length(idxmap::IndexMap) = length(idxmap.varmap) + length(idxmap.conmap)
-function Base.iterate(idxmap::IndexMap, args...)
-    return iterate(
-        Base.Iterators.flatten((idxmap.varmap, idxmap.conmap)),
-        args...,
-    )
-end
+include("copy/index_map.jl")
 
 """
     pass_attributes(
@@ -467,7 +331,7 @@ function copy_constraints(
     s = MOI.get(src, MOI.ConstraintSet(), cis_src)
     cis_dest = MOI.add_constraints(dest, f_dest, s)
     for (ci_src, ci_dest) in zip(cis_src, cis_dest)
-        idxmap.conmap[ci_src] = ci_dest
+        idxmap[ci_src] = ci_dest
     end
     return
 end
@@ -610,17 +474,17 @@ function copy_free_variables(
     vis_src,
     copy_variables::F,
 ) where {F<:Function}
-    if length(vis_src) != length(keys(idxmap.varmap))
-        vars = copy_variables(dest, length(vis_src) - length(idxmap.varmap))
+    if length(vis_src) != length(idxmap.var_map)
+        vars = copy_variables(dest, length(vis_src) - length(idxmap.var_map))
         i = 1
         for vi in vis_src
-            if !haskey(idxmap.varmap, vi)
-                idxmap.varmap[vi] = vars[i]
+            if !haskey(idxmap, vi)
+                idxmap[vi] = vars[i]
                 i += 1
             end
         end
         @assert i == length(vars) + 1
-        @assert length(vis_src) == length(idxmap.varmap)
+        @assert length(vis_src) == length(idxmap.var_map)
     end
     return
 end
@@ -731,7 +595,7 @@ function default_copy_to(
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    idxmap = index_map_for_variable_indices(vis_src)
+    idxmap = _index_map_for_variable_indices(vis_src)
 
     # The `NLPBlock` assumes that the order of variables does not change (#849)
     if MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
