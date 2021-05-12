@@ -7,10 +7,6 @@ function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")
     end
-    options = get_options(model)
-    if options.validate
-        validate(io)
-    end
     object = JSON.parse(io; dicttype = UnorderedObject)
     file_version = _parse_mof_version(object["version"]::UnorderedObject)
     if file_version.major != VERSION.major || file_version.minor > VERSION.minor
@@ -316,6 +312,7 @@ end
     SOS1,
     SOS2,
     IndicatorSet,
+    Complements,
 )
 
 """
@@ -448,6 +445,10 @@ end
 
 function set_to_moi(::Val{:DualExponentialCone}, ::Object)
     return MOI.DualExponentialCone()
+end
+
+function set_to_moi(::Val{:Complements}, object::Object)
+    return MOI.Complements(object["dimension"])
 end
 
 # ========== Typed vector sets ==========

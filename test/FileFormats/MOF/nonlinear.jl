@@ -56,7 +56,7 @@ end
             read(joinpath(@__DIR__, "nlp.mof.json"), String),
             '\r' => "",
         )
-        MOF.validate(TEST_MOF_FILE)
+        return _validate(TEST_MOF_FILE)
     end
     @testset "Error handling" begin
         node_list = MOF.Object[]
@@ -188,6 +188,6 @@ end
         @test foo2.expr == :(2 * $x + sin($x)^2 - $y)
         @test MOI.get(model, MOI.ConstraintSet(), con) ==
               MOI.get(model2, MOI.ConstraintSet(), con2)
-        MOF.validate(TEST_MOF_FILE)
+        return _validate(TEST_MOF_FILE)
     end
 end

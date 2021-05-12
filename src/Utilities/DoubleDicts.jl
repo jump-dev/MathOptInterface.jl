@@ -417,7 +417,9 @@ end
 end
 
 function initialize_inner!(d::AbstractWithType{F,S,V,D}) where {F,S,V,D}
-    return d.inner = D()
+    d.inner = D()
+    d.dict.dict[(F, S)] = d.inner
+    return
 end
 
 inner_is_empty(d::AbstractWithType)::Bool = d.inner === nothing

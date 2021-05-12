@@ -12,6 +12,7 @@ include("CBF/CBF.jl")
 include("LP/LP.jl")
 include("MOF/MOF.jl")
 include("MPS/MPS.jl")
+include("NL/NL.jl")
 include("SDPA/SDPA.jl")
 
 """
@@ -24,6 +25,7 @@ List of accepted export formats.
 - `FORMAT_LP`: the LP file format
 - `FORMAT_MOF`: the MathOptFormat file format
 - `FORMAT_MPS`: the MPS file format
+- `FORMAT_NL`: the AMPL .nl file format
 - `FORMAT_SDPA`: the SemiDefinite Programming Algorithm format
 """
 @enum(
@@ -33,6 +35,7 @@ List of accepted export formats.
     FORMAT_LP,
     FORMAT_MOF,
     FORMAT_MPS,
+    FORMAT_NL,
     FORMAT_SDPA,
 )
 
@@ -64,6 +67,8 @@ function Model(;
         return MOF.Model(; kwargs...)
     elseif format == FORMAT_MPS
         return MPS.Model(; kwargs...)
+    elseif format == FORMAT_NL
+        return NL.Model(; kwargs...)
     elseif format == FORMAT_SDPA
         return SDPA.Model(; kwargs...)
     else
@@ -76,6 +81,7 @@ function Model(;
             (".lp", LP.Model),
             (".mof.json", MOF.Model),
             (".mps", MPS.Model),
+            (".nl", NL.Model),
             (".dat-s", SDPA.Model),
             (".sdpa", SDPA.Model),
         ]
@@ -88,7 +94,7 @@ function Model(;
 end
 
 const MATH_OPT_FORMATS =
-    Union{CBF.Model,LP.Model,MOF.Model,MPS.Model,SDPA.Model}
+    Union{CBF.Model,LP.Model,MOF.Model,MPS.Model,NL.Model,SDPA.Model}
 
 function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)
     compressed_open(filename, "w", AutomaticCompression()) do io

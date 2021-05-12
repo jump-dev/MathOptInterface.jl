@@ -1,3 +1,5 @@
+import JSON
+import JSONSchema
 import MathOptInterface
 using Test
 
@@ -9,19 +11,40 @@ const TEST_MOF_FILE = "test.mof.json"
 
 @test sprint(show, MOF.Model()) == "A MathOptFormat Model"
 
+const SCHEMA =
+    JSONSchema.Schema(JSON.parsefile(MOI.FileFormats.MOF.SCHEMA_PATH))
+
+function _validate(filename::String)
+    MOI.FileFormats.compressed_open(
+        filename,
+        "r",
+        MOI.FileFormats.AutomaticCompression(),
+    ) do io
+        object = JSON.parse(io)
+        ret = JSONSchema.validate(object, SCHEMA)
+        if ret !== nothing
+            error(
+                "Unable to read file because it does not conform to the MOF " *
+                "schema: ",
+                ret,
+            )
+        end
+    end
+end
+
 include("nonlinear.jl")
 
 struct UnsupportedSet <: MOI.AbstractSet end
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
 function test_model_equality(model_string, variables, constraints; suffix = "")
-    model = MOF.Model(validate = true)
+    model = MOF.Model()
     MOIU.loadfromstring!(model, model_string)
     MOI.write_to_file(model, TEST_MOF_FILE * suffix)
     model_2 = MOF.Model()
     MOI.read_from_file(model_2, TEST_MOF_FILE * suffix)
     MOIU.test_models_equal(model, model_2, variables, constraints)
-    return MOF.validate(TEST_MOF_FILE * suffix)
+    return _validate(TEST_MOF_FILE * suffix)
 end
 
 @testset "Error handling: read_from_file" begin
@@ -106,35 +129,27 @@ end
         @test MOF.moi_to_object(c1, model, name_map)["name"] == "c_1"
         @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
     end
-    @testset "v0.4" begin
-        filename = joinpath(@__DIR__, "v0.4.mof.json")
-        model = MOF.Model(validate = true)
-        @test_throws ErrorException MOI.read_from_file(model, filename)
-        model = MOF.Model(validate = false)
-        MOI.read_from_file(model, filename)
-        @test MOI.get(model, MOI.NumberOfVariables()) == 2
-    end
 end
 @testset "round trips" begin
     @testset "Empty model" begin
-        model = MOF.Model(validate = true)
+        model = MOF.Model()
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model(validate = true)
+        model_2 = MOF.Model()
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, String[], String[])
     end
     @testset "FEASIBILITY_SENSE" begin
-        model = MOF.Model(validate = true)
+        model = MOF.Model()
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model(validate = true)
+        model_2 = MOF.Model()
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, ["x"], String[])
     end
     @testset "Empty function term" begin
-        model = MOF.Model(validate = true)
+        model = MOF.Model()
         x = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), x, "x")
         c = MOI.add_constraint(
@@ -144,7 +159,7 @@ end
         )
         MOI.set(model, MOI.ConstraintName(), c, "c")
         MOI.write_to_file(model, TEST_MOF_FILE)
-        model_2 = MOF.Model(validate = true)
+        model_2 = MOF.Model()
         MOI.read_from_file(model_2, TEST_MOF_FILE)
         MOIU.test_models_equal(model, model_2, ["x"], ["c"])
     end
@@ -385,6 +400,13 @@ end
     c1: [x, y, z] in GeometricMeanCone(3)
 """,
             ["x", "y", "z"],
+            ["c1"],
+        )
+    end
+    @testset "Complements" begin
+        test_model_equality(
+            "variables: x, y\nc1: [x, y] in Complements(2)",
+            ["x", "y"],
             ["c1"],
         )
     end

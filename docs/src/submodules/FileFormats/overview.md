@@ -45,6 +45,13 @@ julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
 A Mathematical Programming System (MPS) model
 ```
 
+**The NL file format**
+
+```jldoctest
+julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_NL)
+An AMPL (.nl) model
+```
+
 **The SDPA file format**
 
 ```jldoctest
@@ -77,7 +84,7 @@ julia> print(read("file.mof.json", String))
   "name": "MathOptFormat Model",
   "version": {
     "major": 0,
-    "minor": 5
+    "minor": 6
   },
   "variables": [
     {
@@ -193,4 +200,64 @@ julia> src_2 = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
 A Mathematical Programming System (MPS) model
 
 julia> read!(io, src_2)
+```
+
+## Validating MOF files
+
+MathOptFormat files are governed by a schema. Use [JSONSchema.jl](https://github.com/fredo-dedup/JSONSchema.jl)
+to check if a `.mof.json` file satisfies the schema.
+
+First, construct the schema object as follows:
+```jldoctest schema_mof
+julia> import JSON, JSONSchema
+
+julia> schema = JSONSchema.Schema(JSON.parsefile(MOI.FileFormats.MOF.SCHEMA_PATH))
+A JSONSchema
+```
+
+Then, check if a model file is valid using `isvalid`:
+```jldoctest schema_mof
+julia> good_model = JSON.parse("""
+       {
+         "version": {
+           "major": 0,
+           "minor": 6
+         },
+         "variables": [{"name": "x"}],
+         "objective": {"sense": "feasibility"},
+         "constraints": []
+       }
+       """);
+
+julia> isvalid(good_model, schema)
+true
+```
+
+If we construct an invalid file, for example by mis-typing `name` as `NaMe`, the
+validation fails:
+```jldoctest schema_mof
+julia> bad_model = JSON.parse("""
+       {
+         "version": {
+           "major": 0,
+           "minor": 6
+         },
+         "variables": [{"NaMe": "x"}],
+         "objective": {"sense": "feasibility"},
+         "constraints": []
+       }
+       """);
+
+julia> isvalid(bad_model, schema)
+false
+```
+
+Use `JSONSchema.validate` to obtain more insight into why the validation failed:
+```jldoctest schema_mof
+julia> JSONSchema.validate(bad_model, schema)
+Validation failed:
+path:         [variables][1]
+instance:     Dict{String,Any}("NaMe"=>"x")
+schema key:   required
+schema value: Any["name"]
 ```

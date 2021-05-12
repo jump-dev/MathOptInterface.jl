@@ -2,6 +2,7 @@ struct TestConfig{T<:Real}
     atol::T # absolute tolerance for ...
     rtol::T # relative tolerance for ...
     solve::Bool # optimize and test result
+    query_number_of_constraints::Bool # can get `MOI.NumberOfConstraints` attribute
     query::Bool # can get objective function, and constraint functions, and constraint sets
     modify_lhs::Bool # can modify function of a constraint
     duals::Bool # test dual solutions
@@ -15,6 +16,7 @@ struct TestConfig{T<:Real}
         atol::Real = Base.rtoldefault(T),
         rtol::Real = Base.rtoldefault(T),
         solve::Bool = true,
+        query_number_of_constraints::Bool = true,
         query::Bool = true,
         modify_lhs::Bool = true,
         duals::Bool = true,
@@ -27,6 +29,7 @@ struct TestConfig{T<:Real}
             atol,
             rtol,
             solve,
+            query_number_of_constraints,
             query,
             modify_lhs,
             duals,

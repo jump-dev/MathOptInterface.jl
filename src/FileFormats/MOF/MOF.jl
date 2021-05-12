@@ -3,17 +3,12 @@ module MOF
 import ..FileFormats
 import OrderedCollections
 import JSON
-import JSONSchema
 import MathOptInterface
 
 const MOI = MathOptInterface
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.0.5.schema.json")
-const VERSION = let data = JSON.parsefile(SCHEMA_PATH, use_mmap = false)
-    VersionNumber(
-        data["properties"]["version"]["properties"]["major"]["const"],
-        data["properties"]["version"]["properties"]["minor"]["const"],
-    )
-end
+
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.0.6.schema.json")
+const VERSION = v"0.6"
 
 const OrderedObject = OrderedCollections.OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}
@@ -75,12 +70,11 @@ const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 
 struct Options
     print_compact::Bool
-    validate::Bool
     warn::Bool
 end
 
 function get_options(m::Model)
-    return get(m.model.ext, :MOF_OPTIONS, Options(false, false, false))
+    return get(m.model.ext, :MOF_OPTIONS, Options(false, false))
 end
 
 """
@@ -93,58 +87,16 @@ Keyword arguments are:
  - `print_compact::Bool=false`: print the JSON file in a compact format without
    spaces or newlines.
 
- - `validate::Bool=false`: validate each file prior to reading against the MOF
-   schema. Defaults to `false` because this can take a long time for large
-   models.
-
  - `warn::Bool=false`: print a warning when variables or constraints are renamed
 """
-function Model(;
-    print_compact::Bool = false,
-    validate::Bool = false,
-    warn::Bool = false,
-)
+function Model(; print_compact::Bool = false, warn::Bool = false)
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
-    model.model.ext[:MOF_OPTIONS] = Options(print_compact, validate, warn)
+    model.model.ext[:MOF_OPTIONS] = Options(print_compact, warn)
     return model
 end
 
 function Base.show(io::IO, ::Model)
     print(io, "A MathOptFormat Model")
-    return
-end
-
-"""
-    validate(filename::String)
-
-Validate that the MOF file `filename` conforms to the MOF JSON schema. Returns
-`nothing` if the file is valid, otherwise throws an error describing why the
-file is not valid.
-"""
-function validate(filename::String)
-    FileFormats.compressed_open(
-        filename,
-        "r",
-        FileFormats.AutomaticCompression(),
-    ) do io
-        return validate(io)
-    end
-    return
-end
-
-function validate(io::IO)
-    object = JSON.parse(io)
-    seekstart(io)
-    mof_schema =
-        JSONSchema.Schema(JSON.parsefile(SCHEMA_PATH, use_mmap = false))
-    ret = JSONSchema.validate(object, mof_schema)
-    if ret !== nothing
-        error(
-            "Unable to read file because it does not conform to the MOF " *
-            "schema: ",
-            ret,
-        )
-    end
     return
 end
 

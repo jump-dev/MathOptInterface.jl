@@ -104,6 +104,35 @@ function Base.showerror(
 end
 
 """
+    throw_if_scalar_and_constant_not_zero(func, S::Type)
+
+Throw a `ScalarFunctionConstantNotZero(index)` error `func` is a scalar function
+whose constant is not zero.
+"""
+function throw_if_scalar_and_constant_not_zero(
+    func::AbstractScalarFunction,
+    ::Type{S},
+) where {S<:AbstractScalarSet}
+    cst = constant(func)
+    if !iszero(cst)
+        throw(ScalarFunctionConstantNotZero{typeof(cst),typeof(func),S}(cst))
+    end
+    return
+end
+function throw_if_scalar_and_constant_not_zero(
+    ::SingleVariable,
+    ::Type{S},
+) where {S<:AbstractScalarSet}
+    return
+end
+function throw_if_scalar_and_constant_not_zero(
+    ::AbstractVectorFunction,
+    ::Type{S},
+) where {S<:AbstractVectorSet}
+    return
+end
+
+"""
     add_constraint(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
 
 Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.

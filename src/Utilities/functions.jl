@@ -660,25 +660,30 @@ function is_canonical(f::Union{SQF,VQF})
 end
 
 """
-    is_strictly_sorted(x::AbstractVector, by, filter)
+    is_strictly_sorted(x::Vector, by, filter)
 
 Returns `true` if `by(x[i]) < by(x[i + 1])` and `filter(x[i]) == true` for
 all indices i.
 """
-function is_strictly_sorted(x::AbstractVector, by, filter)
+function is_strictly_sorted(x::Vector, by, filter)
     if isempty(x)
         return true
     end
-    if !filter(first(x))
+    @inbounds current_x = first(x)
+    if !filter(current_x)
         return false
     end
+    current_fx = by(current_x)
     for i in eachindex(x)[2:end]
-        if by(x[i]) <= by(x[i-1])
+        @inbounds next_x = x[i]
+        if !filter(next_x)
             return false
         end
-        if !filter(x[i])
+        next_fx = by(next_x)
+        if next_fx <= current_fx
             return false
         end
+        current_x, current_fx = next_x, next_fx
     end
     return true
 end

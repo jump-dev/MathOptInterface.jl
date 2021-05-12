@@ -4,7 +4,7 @@ using Test
 const MOI = MathOptInterface
 
 @testset "MOI.FileFormats tests" begin
-    @testset "$(file)" for file in ["CBF", "LP", "MOF", "MPS", "SDPA"]
+    @testset "$(file)" for file in ["CBF", "LP", "MOF", "MPS", "NL", "SDPA"]
         include(joinpath(@__DIR__, file, "$(file).jl"))
     end
 
@@ -66,6 +66,7 @@ const MOI = MathOptInterface
             (MOI.FileFormats.FORMAT_LP, MOI.FileFormats.LP.Model()),
             (MOI.FileFormats.FORMAT_MOF, MOI.FileFormats.MOF.Model()),
             (MOI.FileFormats.FORMAT_MPS, MOI.FileFormats.MPS.Model()),
+            (MOI.FileFormats.FORMAT_NL, MOI.FileFormats.NL.Model()),
             (MOI.FileFormats.FORMAT_SDPA, MOI.FileFormats.SDPA.Model()),
         ]
             @test typeof(
@@ -83,6 +84,7 @@ const MOI = MathOptInterface
             (".lp", MOI.FileFormats.LP.Model()),
             (".mof.json", MOI.FileFormats.MOF.Model()),
             (".mps", MOI.FileFormats.MPS.Model()),
+            (".nl", MOI.FileFormats.NL.Model()),
             (".sdpa", MOI.FileFormats.SDPA.Model()),
         ]
             @test typeof(MOI.FileFormats.Model(filename = "a$(ext)")) ==

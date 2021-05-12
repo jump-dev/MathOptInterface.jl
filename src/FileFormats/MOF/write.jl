@@ -284,6 +284,7 @@ end
 function head_name(::Type{MOI.PositiveSemidefiniteConeSquare})
     return "PositiveSemidefiniteConeSquare"
 end
+head_name(::Type{MOI.Complements}) = "Complements"
 
 # ========== Typed vector sets ==========
 head_name(::Type{<:MOI.PowerCone}) = "PowerCone"
