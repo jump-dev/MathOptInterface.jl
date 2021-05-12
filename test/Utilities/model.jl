@@ -348,6 +348,7 @@ end
             push!(loc2, (F, S))
         end
     end
+    _pushloc(::Nothing) = nothing
     function _pushloc(model::MOI.Utilities.StructOfConstraints)
         return MOIU.broadcastcall(_pushloc, model)
     end

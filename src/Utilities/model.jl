@@ -957,7 +957,7 @@ macro model(
             sets = vector_sets
         end
         voc = map(sets) do set
-            return :(VectorOfConstraints{$(_typedfun(funs[i])),$(_typedset(set))})
+            return :(VectorOfConstraints{$(_typed(funs[i])),$(_typed(set))})
         end
         return _struct_of_constraints_type(cname, voc, true)
     end
