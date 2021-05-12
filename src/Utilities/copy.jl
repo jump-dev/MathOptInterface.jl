@@ -58,6 +58,16 @@ function dense_variable_dict(::Type{V}, n) where {V}
     )
 end
 
+"""
+    struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
+        varmap::DenseVariableDict{MOI.VariableIndex}
+        conmap::DoubleDicts.MainIndexDoubleDict
+    end
+
+Dictionary-like object returned by [`MathOptInterface.copy_to`](@ref) that
+contains the mapping between variable indices in `varmap` and between
+constraint indices in `conmap`.
+"""
 struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
     varmap::DenseVariableDict{MOI.VariableIndex}
     conmap::DoubleDicts.MainIndexDoubleDict
@@ -69,6 +79,7 @@ function IndexMap(n = 0)
         DoubleDicts.IndexDoubleDict(),
     )
 end
+
 function _identity_constraints_map(
     model,
     index_map::MOIU.DoubleDicts.IndexWithType{F,S},
@@ -77,6 +88,13 @@ function _identity_constraints_map(
         index_map[ci] = ci
     end
 end
+
+"""
+    identity_index_map(model::MOI.ModelLike)
+
+Return an [`IndexMap`](@ref) that maps all variable and constraint indices of
+`model` to themselves.
+"""
 function identity_index_map(model::MOI.ModelLike)
     vis = MOI.get(model, MOI.ListOfVariableIndices())
     index_map = IndexMap(length(vis))
