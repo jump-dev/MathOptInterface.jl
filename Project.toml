@@ -7,7 +7,6 @@ BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MutableArithmetics = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
@@ -25,3 +24,9 @@ JSONSchema = "0.3"
 MutableArithmetics = "0.2"
 OrderedCollections = "1"
 julia = "1"
+
+[extras]
+JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
+
+[targets]
+test = ["JSONSchema"]
