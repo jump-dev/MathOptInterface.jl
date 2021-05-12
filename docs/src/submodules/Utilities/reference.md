@@ -58,6 +58,8 @@ Utilities.latex_formulation
 ```@docs
 Utilities.automatic_copy_to
 Utilities.default_copy_to
+Utilities.IndexMap
+Utilities.identity_index_map
 ```
 
 ### [Allocate-Load API](@id allocate_load_api_ref)
