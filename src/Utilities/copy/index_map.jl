@@ -71,12 +71,9 @@ function identity_index_map(model::MOI.ModelLike)
     return index_map
 end
 
-Base.getindex(idxmap::IndexMap, vi::MOI.VariableIndex) = idxmap.var_map[vi]
+Base.getindex(map::IndexMap, key::MOI.VariableIndex) = map.var_map[key]
 
-function Base.getindex(
-    map::IndexMap,
-    key::MOI.ConstraintIndex{F,S},
-) where {F,S}
+function Base.getindex(map::IndexMap, key::MOI.ConstraintIndex{F,S}) where {F,S}
     return map.con_map[key]::MOI.ConstraintIndex{F,S}
 end
 
