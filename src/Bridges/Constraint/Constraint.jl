@@ -92,7 +92,7 @@ include("zero_one.jl")
 const ZeroOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZeroOneBridge{T},OT}
 
 """
-    add_all_bridges(bridged_model, ::Type{T})
+    add_all_bridges(bridged_model, ::Type{T}) where {T}
 
 Add all bridges defined in the `Bridges.Constraint` submodule to
 `bridged_model`. The coefficient type used is `T`.
