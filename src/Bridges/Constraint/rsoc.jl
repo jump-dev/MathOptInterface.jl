@@ -39,6 +39,7 @@ end
 function map_set(::Type{<:RSOCtoSOCBridge}, set::MOI.RotatedSecondOrderCone)
     return MOI.SecondOrderCone(MOI.dimension(set))
 end
+
 function inverse_map_set(::Type{<:RSOCtoSOCBridge}, set::MOI.SecondOrderCone)
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
@@ -65,6 +66,7 @@ end
 function map_set(::Type{<:SOCtoRSOCBridge}, set::MOI.SecondOrderCone)
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
+
 function inverse_map_set(
     ::Type{<:SOCtoRSOCBridge},
     set::MOI.RotatedSecondOrderCone,

@@ -18,8 +18,11 @@ abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 function supports_constraint_bridges end
 
 """
-    is_bridged(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction},
-               S::Type{<:MOI.AbstractSet})::Bool
+    is_bridged(
+        b::AbstractBridgeOptimizer,
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
+    )::Bool
 
 Return a `Bool` indicating whether `b` tries to bridge `F`-in-`S` constraints
 instead of passing it as is to its internal model.
@@ -29,7 +32,10 @@ instead of passing it as is to its internal model.
 Return a `Bool` indicating whether `b` tries to bridge constrained variables in
 `S` instead of passing it as is to its internal model.
 
-    is_bridged(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction})::Bool
+    is_bridged(
+        b::AbstractBridgeOptimizer,
+        F::Type{<:MOI.AbstractFunction},
+    )::Bool
 
 Return a `Bool` indicating whether `b` tries to bridge objective functions of
 type `F` instead of passing it as is to its internal model.
@@ -56,6 +62,7 @@ function is_bridged(
 ) where {F,S}
     return is_bridged(b, F, S)
 end
+
 function is_bridged(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
@@ -88,16 +95,16 @@ function is_bridged(
         (is_bridged(b, S) || haskey(Constraint.bridges(b), ci))
     )
 end
+
 function is_bridged(
-    b::AbstractBridgeOptimizer,
+    ::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
 ) where {S}
     return ci.value < 0
 end
 
 """
-    is_bridged(b::AbstractBridgeOptimizer,
-               attr::MOI.ObjectiveFunction)
+    is_bridged(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
 
 Return a `Bool` indicating whether `attr` is bridged. The objective function is
 said to be bridged the objective function attribute passed to `b.model` is
@@ -112,7 +119,9 @@ const ObjectiveAttribute =
 
 """
     supports_bridging_constrained_variable(
-        ::AbstractBridgeOptimizer, ::Type{<:MOI.AbstractSet})
+        ::AbstractBridgeOptimizer,
+        ::Type{<:MOI.AbstractSet},
+    )
 
 Return a `Bool` indicating whether `b` supports bridging constrained variable in
 `S`.
@@ -126,7 +135,9 @@ end
 
 """
     is_variable_bridged(
-        b::AbstractBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+        b::AbstractBridgeOptimizer,
+        S::Type{<:MOI.AbstractSet},
+    )
 
 Return a `Bool` indicating whether `b` bridges constrained variable in
 `S` using a variable bridge, assuming `is_bridged(b, S)`. If it returns `false`,
@@ -141,8 +152,7 @@ function is_variable_bridged(
 end
 
 """
-    is_variable_bridged(b::AbstractBridgeOptimizer,
-                        ci::MOI.ConstraintIndex)
+    is_variable_bridged(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
 
 Returns whether `ci` is the constraint of a bridged constrained variable. That
 is, if it was returned by `Variable.add_key_for_bridge` or
@@ -150,6 +160,7 @@ is, if it was returned by `Variable.add_key_for_bridge` or
 `ci.value < 0` as, it can also simply be a constraint on a bridged variable.
 """
 is_variable_bridged(::AbstractBridgeOptimizer, ::MOI.ConstraintIndex) = false
+
 function is_variable_bridged(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
@@ -164,7 +175,8 @@ end
     supports_bridging_constraint(
         b::AbstractBridgeOptimizer,
         F::Type{<:MOI.AbstractFunction},
-        S::Type{<:MOI.AbstractSet})::Bool
+        S::Type{<:MOI.AbstractSet},
+    )::Bool
 
 Return a `Bool` indicating whether `b` supports bridging `F`-in-`S` constraints.
 """
@@ -179,7 +191,8 @@ end
 """
     supports_bridging_objective_function(
         b::AbstractBridgeOptimizer,
-        F::Type{<:MOI.AbstractScalarFunction})::Bool
+        F::Type{<:MOI.AbstractScalarFunction},
+    )::Bool
 
 Return a `Bool` indicating whether `b` supports bridging objective functions of
 type `F`.
@@ -192,9 +205,11 @@ function supports_bridging_objective_function(
 end
 
 """
-    bridge_type(b::AbstractBridgeOptimizer,
-                F::Type{<:MOI.AbstractFunction},
-                S::Type{<:MOI.AbstractSet})
+    bridge_type(
+        b::AbstractBridgeOptimizer,
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
+    )
 
 Return the `AbstractBridge` type to be used to bridge `F`-in-`S` constraints.
 This function should only be called if `is_bridged(b, F, S)`.
@@ -235,7 +250,11 @@ function bridge(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
 end
 
 """
-    call_in_context(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex, f::Function)
+    call_in_context(
+        b::AbstractBridgeOptimizer,
+        vi::MOI.VariableIndex,
+        f::Function,
+    )
 
 Call `f(bridge)` where `vi` is bridged by `bridge` in its context, see
 [`Variable.call_in_context`](@ref).
@@ -249,7 +268,11 @@ function call_in_context(
 end
 
 """
-    call_in_context(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex, f::Function)
+    call_in_context(
+        b::AbstractBridgeOptimizer,
+        ci::MOI.ConstraintIndex,
+        f::Function,
+    )
 
 Call `f(bridge)` where `ci` is bridged by `bridge` in its context, see
 [`Variable.call_in_context`](@ref).
@@ -278,12 +301,15 @@ function _functionize_bridge(b::AbstractBridgeOptimizer, bridge_type)
         " `$(typeof(b))`.",
     )
 end
+
 function constraint_scalar_functionize_bridge(b::AbstractBridgeOptimizer)
     return _functionize_bridge(b, Constraint.ScalarFunctionizeBridge)
 end
+
 function constraint_vector_functionize_bridge(b::AbstractBridgeOptimizer)
     return _functionize_bridge(b, Constraint.VectorFunctionizeBridge)
 end
+
 function objective_functionize_bridge(b::AbstractBridgeOptimizer)
     return _functionize_bridge(b, Objective.FunctionizeBridge)
 end
@@ -298,6 +324,7 @@ function MOI.is_empty(b::AbstractBridgeOptimizer)
            isempty(Constraint.bridges(b)) &&
            MOI.is_empty(b.model)
 end
+
 function MOI.empty!(b::AbstractBridgeOptimizer)
     MOI.empty!(b.model)
     if Variable.has_bridges(Variable.bridges(b))
@@ -311,8 +338,10 @@ function MOI.empty!(b::AbstractBridgeOptimizer)
     end
     empty!(Variable.bridges(b))
     empty!(Constraint.bridges(b))
-    return empty!(Objective.bridges(b))
+    empty!(Objective.bridges(b))
+    return
 end
+
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
@@ -345,7 +374,7 @@ function MOIU.pass_nonvariable_constraints(
         pass_cons;
         filter_constraints = filter_constraints,
     )
-    return MOIU.pass_nonvariable_constraints_fallback(
+    MOIU.pass_nonvariable_constraints_fallback(
         dest,
         src,
         idxmap,
@@ -353,11 +382,13 @@ function MOIU.pass_nonvariable_constraints(
         pass_cons;
         filter_constraints = filter_constraints,
     )
+    return
 end
 
-function MOI.copy_to(mock::AbstractBridgeOptimizer, src::MOI.ModelLike; kws...)
-    return MOIU.automatic_copy_to(mock, src; kws...)
+function MOI.copy_to(b::AbstractBridgeOptimizer, src::MOI.ModelLike; kwargs...)
+    return MOIU.automatic_copy_to(b, src; kwargs...)
 end
+
 function MOI.supports_incremental_interface(
     b::AbstractBridgeOptimizer,
     copy_names::Bool,
@@ -373,6 +404,7 @@ function MOI.is_valid(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
         return MOI.is_valid(b.model, vi)
     end
 end
+
 function MOI.is_valid(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F,S},
@@ -389,6 +421,7 @@ function MOI.is_valid(
         return MOI.is_valid(b.model, ci)
     end
 end
+
 function _delete_variables_in_vector_of_variables_constraint(
     b::AbstractBridgeOptimizer,
     vis::Vector{MOI.VariableIndex},
@@ -416,6 +449,7 @@ function _delete_variables_in_vector_of_variables_constraint(
         end
     end
 end
+
 function _delete_variables_in_variables_constraints(
     b::AbstractBridgeOptimizer,
     vis::Vector{MOI.VariableIndex},
@@ -445,6 +479,7 @@ function _delete_variables_in_variables_constraints(
         end
     end
 end
+
 function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
     if Constraint.has_bridges(Constraint.bridges(b))
         _delete_variables_in_variables_constraints(b, vis)
@@ -473,6 +508,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
         MOI.delete(b.model, vis)
     end
 end
+
 function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     if Constraint.has_bridges(Constraint.bridges(b))
         _delete_variables_in_variables_constraints(b, [vi])
@@ -504,6 +540,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
         MOI.delete(b.model, vi)
     end
 end
+
 function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
@@ -533,31 +570,35 @@ end
 
 """
     function reduce_bridged(
-        b::AbstractBridgeOptimizer, args,
+        b::AbstractBridgeOptimizer,
+        args,
         F::Type{<:MOI.AbstractFunction},
         S::Type{<:MOI.AbstractSet},
-        init, operate_variable_bridges!,
-        operate_constraint_bridges!)
+        init,
+        operate_variable_bridges!,
+        operate_constraint_bridges!,
+    )
 
-If `F`-in-`S` constraints may be added to `b.model`,
-starts with `value = MOI.get(b.model, args...)`, otherwise, starts with
-`value = init()`. Then
-* if `F`-in-`S` constraints may correspond to
-    bridged variables, modify it with `operate_variable_bridges!`;
-* if `F`-in-`S` constraints may correspond to
-    bridged constraints, modify it with `operate_constraint_bridges!`;
+If `F`-in-`S` constraints may be added to `b.model`, starts with
+`value = MOI.get(b.model, args...)`, otherwise, starts with `value = init()`.
+
+Then:
+ * if `F`-in-`S` constraints may correspond to bridged variables, modify it with
+   `operate_variable_bridges!`
+ * if `F`-in-`S` constraints may correspond to bridged constraints, modify it
+   with `operate_constraint_bridges!`
 then return the final `value`.
 
-For instance, [`MOI.supports`](@ref) calls this function with
-`init = () -> true`, `operate_variable_bridges(ok) =
-ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S))` and
-`operate_constraint_bridges(ok) = ok &&
-MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S))`.
+For example, [`MOI.supports`](@ref) calls this function with
+ * `init = () -> true`
+ * `operate_variable_bridges(ok) = ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S))`
+ * `operate_constraint_bridges(ok) = ok && MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S))`.
 """
 function reduce_bridged(
     b::AbstractBridgeOptimizer,
     F::Type{<:MOI.AbstractFunction},
     S::Type{<:MOI.AbstractSet},
+    # TODO(odow): why is init a function and not a constant?
     init,
     model_value,
     operate_variable_bridges!,
@@ -591,10 +632,12 @@ function get_all_including_bridged(
 )
     list = MOI.get(b.model, attr)
     if !isempty(Variable.bridges(b))
+        # TODO(odow): Fix this!
         list = append!(copy(list), keys(Variable.bridges(b)))
     end
     return list
 end
+
 function get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintIndices{F,S},
@@ -618,15 +661,19 @@ function get_all_including_bridged(
         ),
     )
 end
+
 # Remove constraints bridged by `bridge` from `list`
 function _remove_bridged(list, bridge, attr)
     for c in MOI.get(bridge, attr)
+        # TODO(odow): fix this
         i = something(findfirst(isequal(c), list), 0)
         if !iszero(i)
             MOI.deleteat!(list, i)
         end
     end
+    return
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::Union{MOI.ListOfConstraintIndices,MOI.ListOfVariableIndices},
@@ -643,6 +690,7 @@ function MOI.get(
     end
     return list
 end
+
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)
     s =
         MOI.get(b.model, attr) +
@@ -678,6 +726,7 @@ function get_all_including_bridged(
             ),
     )
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.NumberOfConstraints{F,S},
@@ -739,18 +788,21 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ListOfModelAttributesSet)
     end
     return unbridged_function(b, list)
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
 )
     return unbridged_function(b, MOI.get(b.model, attr))
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
     value,
 )
-    return MOI.set(b.model, attr, bridged_function(b, value))
+    MOI.set(b.model, attr, bridged_function(b, value))
+    return
 end
 
 """
@@ -759,9 +811,14 @@ end
 Return the cost of bridging variables constrained in `S` on creation,
 `is_bridged(b, S)` is assumed to be `true`.
 
-    bridging_cost(b::AbstractBridgeOptimizer, F::Type{<:MOI.AbstractFunction, S::Type{<:MOI.AbstractSet}})
+    bridging_cost(
+        b::AbstractBridgeOptimizer,
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
+    )
 
-Return the cost of bridging `F`-in-`S` constraints,
+Return the cost of bridging `F`-in-`S` constraints.
+
 `is_bridged(b, S)` is assumed to be `true`.
 """
 function bridging_cost end
@@ -776,6 +833,7 @@ function MOI.get(
         return MOI.get(b.model, attr)
     end
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintBridgingCost{F,S},
@@ -797,9 +855,11 @@ said to be bridged if the value of `MOI.ObjectiveFunctionType` is different for
 `b` and `b.model`.
 """
 is_objective_bridged(b) = !isempty(Objective.bridges(b))
+
 function _delete_objective_bridges(b)
     MOI.delete(b, Objective.root_bridge(Objective.bridges(b)))
-    return empty!(Objective.bridges(b))
+    empty!(Objective.bridges(b))
+    return
 end
 
 function MOI.supports(
@@ -824,6 +884,7 @@ underlying model.
 struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction}
     result_index::Int
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::ObjectiveFunctionValue{F},
@@ -835,6 +896,7 @@ function MOI.get(
         return MOI.get(b.model, MOI.ObjectiveValue(attr.result_index))
     end
 end
+
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveValue)
     if is_objective_bridged(b)
         F = Objective.function_type(Objective.bridges(b))
@@ -843,6 +905,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveValue)
         return MOI.get(b.model, attr)
     end
 end
+
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunctionType)
     if is_objective_bridged(b)
         return Objective.function_type(Objective.bridges(b))
@@ -850,9 +913,11 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunctionType)
         return MOI.get(b.model, attr)
     end
 end
+
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveSense)
     return MOI.get(b.model, attr)
 end
+
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
     value = if is_bridged(b, attr)
         MOI.get(b, attr, bridge(b, attr))
@@ -861,6 +926,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
     end
     return unbridged_function(b, value)
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ObjectiveSense,
@@ -876,11 +942,15 @@ function MOI.set(
             end
         end
     end
+    return
 end
+
 function _bridge_objective(b, BridgeType, func)
     bridge = Objective.bridge_objective(BridgeType, b, func)
-    return Objective.add_key_for_bridge(Objective.bridges(b), bridge, func)
+    Objective.add_key_for_bridge(Objective.bridges(b), bridge, func)
+    return
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ObjectiveFunction,
@@ -918,7 +988,9 @@ function MOI.set(
     else
         MOI.set(b.model, attr, func)
     end
+    return
 end
+
 function MOI.modify(
     b::AbstractBridgeOptimizer,
     obj::MOI.ObjectiveFunction,
@@ -926,13 +998,12 @@ function MOI.modify(
 )
     if is_bridged(b, change)
         modify_bridged_change(b, obj, change)
+    elseif is_bridged(b, obj)
+        MOI.modify(b, bridge(b, obj), change)
     else
-        if is_bridged(b, obj)
-            MOI.modify(b, bridge(b, obj), change)
-        else
-            MOI.modify(b.model, obj, change)
-        end
+        MOI.modify(b.model, obj, change)
     end
+    return
 end
 
 # Variable attributes
@@ -961,6 +1032,7 @@ function MOI.get(
     end
     return unbridged_function(b, value)
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractVariableAttribute,
@@ -972,6 +1044,7 @@ function MOI.get(
         return unbridged_function.(b, MOI.get(b.model, attr, indices))
     end
 end
+
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractVariableAttribute,
@@ -979,6 +1052,7 @@ function MOI.supports(
 )
     return MOI.supports(b.model, attr, MOI.VariableIndex)
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractVariableAttribute,
@@ -987,15 +1061,17 @@ function MOI.set(
 )
     value = bridged_function(b, value)
     if is_bridged(b, index)
-        return call_in_context(
+        call_in_context(
             b,
             index,
             bridge -> MOI.set(b, attr, bridge, value, _index(b, index)...),
         )
     else
-        return MOI.set(b.model, attr, index, value)
+        MOI.set(b.model, attr, index, value)
     end
+    return
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractVariableAttribute,
@@ -1003,10 +1079,11 @@ function MOI.set(
     values::Vector,
 )
     if any(index -> is_bridged(b, index), indices)
-        return MOI.set.(b, attr, indices, values)
+        MOI.set.(b, attr, indices, values)
     else
-        return MOI.set(b.model, attr, indices, bridged_function.(b, values))
+        MOI.set(b.model, attr, indices, bridged_function.(b, values))
     end
+    return
 end
 
 # Constraint attributes
@@ -1023,8 +1100,10 @@ function MOI.set(
             _set_substituted(b, MOI.ConstraintSet(), ci, new_set)
         end
     end
-    return _set_substituted(b, attr, ci, func)
+    _set_substituted(b, attr, ci, func)
+    return
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintFunction,
@@ -1036,32 +1115,36 @@ function MOI.get(
             return Variable.function_for(Variable.bridges(b), ci)
         else
             func = call_in_context(b, ci, br -> MOI.get(b, attr, br))
+            return unbridged_constraint_function(b, func)
         end
     else
-        func = MOI.get(b.model, attr, ci)
+        return unbridged_constraint_function(b, MOI.get(b.model, attr, ci))
     end
-    return unbridged_constraint_function(b, func)
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
     value::S,
 ) where {S<:MOI.AbstractScalarSet}
-    return _set_substituted(b, attr, ci, value)
+    _set_substituted(b, attr, ci, value)
+    return
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.SingleVariable},
 )
-    return if is_bridged(b, ci)
+    if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        call_in_context(b, ci, bridge -> MOI.get(b, attr, bridge))
+        return call_in_context(b, ci, bridge -> MOI.get(b, attr, bridge))
     else
-        MOI.get(b.model, attr, ci)
+        return MOI.get(b.model, attr, ci)
     end
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
@@ -1072,8 +1155,10 @@ function MOI.set(
         func = MOI.get(b, MOI.ConstraintFunction(), ci)
         new_func, set = bridged_constraint_function(b, func, set)
     end
-    return _set_substituted(b, attr, ci, set)
+    _set_substituted(b, attr, ci, set)
+    return
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
@@ -1102,6 +1187,7 @@ function MOI.get(
     end
     return set
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
@@ -1115,6 +1201,7 @@ function MOI.get(
     end
     return unbridged_function(b, func)
 end
+
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
@@ -1145,15 +1232,19 @@ function _set_substituted(
     else
         MOI.set(b.model, attr, ci, value)
     end
+    return
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
     ci::MOI.ConstraintIndex,
     value,
 )
-    return _set_substituted(b, attr, ci, bridged_function(b, value))
+    _set_substituted(b, attr, ci, bridged_function(b, value))
+    return
 end
+
 ## Getting and Setting names
 function MOI.get(
     b::AbstractBridgeOptimizer,
@@ -1166,6 +1257,7 @@ function MOI.get(
         return MOI.get(b.model, attr, vi)
     end
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.VariableName,
@@ -1178,6 +1270,7 @@ function MOI.set(
     else
         MOI.set(b.model, attr, vi, name)
     end
+    return
 end
 
 function MOI.get(
@@ -1191,6 +1284,7 @@ function MOI.get(
         return MOI.get(b.model, attr, constraint_index)
     end
 end
+
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintName,
@@ -1198,6 +1292,7 @@ function MOI.supports(
 ) where {F,S}
     return is_bridged(b, F, S) || MOI.supports(b.model, attr, Index)
 end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintName,
@@ -1210,6 +1305,7 @@ function MOI.set(
     else
         MOI.set(b.model, attr, constraint_index, name)
     end
+    return
 end
 
 # Query index from name (similar to `UniversalFallback`)
@@ -1219,22 +1315,22 @@ function MOI.get(
     name::String,
 )
     vi = MOI.get(b.model, MOI.VariableIndex, name)
-    if Variable.has_bridges(Variable.bridges(b))
-        if b.name_to_var === nothing
-            b.name_to_var = MOIU.build_name_to_var_map(b.var_to_name)
-        end
-        vi_bridged = get(b.name_to_var, name, nothing)
-        MOIU.throw_if_multiple_with_name(vi_bridged, name)
-        return MOIU.check_type_and_multiple_names(
-            MOI.VariableIndex,
-            vi_bridged,
-            vi,
-            name,
-        )
-    else
+    if !Variable.has_bridges(Variable.bridges(b))
         return vi
     end
+    if b.name_to_var === nothing
+        b.name_to_var = MOIU.build_name_to_var_map(b.var_to_name)
+    end
+    vi_bridged = get(b.name_to_var, name, nothing)
+    MOIU.throw_if_multiple_with_name(vi_bridged, name)
+    return MOIU.check_type_and_multiple_names(
+        MOI.VariableIndex,
+        vi_bridged,
+        vi,
+        name,
+    )
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     IdxT::Type{MOI.ConstraintIndex{F,S}},
@@ -1259,6 +1355,7 @@ function MOI.get(
     MOIU.throw_if_multiple_with_name(ci_bridged, name)
     return MOIU.check_type_and_multiple_names(IdxT, ci_bridged, ci, name)
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     IdxT::Type{MOI.ConstraintIndex},
@@ -1294,12 +1391,14 @@ function MOI.supports_constraint(
         return MOI.supports_constraint(b.model, F, S)
     end
 end
+
 function add_bridged_constraint(b, BridgeType, f, s)
     bridge = Constraint.bridge_constraint(BridgeType, b, f, s)
     ci = Constraint.add_key_for_bridge(Constraint.bridges(b), bridge, f, s)
     Variable.register_context(Variable.bridges(b), ci)
     return ci
 end
+
 function _check_double_single_variable(
     b::AbstractBridgeOptimizer,
     func::MOI.SingleVariable,
@@ -1320,8 +1419,11 @@ function _check_double_single_variable(
             )
         end
     end
+    return
 end
-function _check_double_single_variable(b::AbstractBridgeOptimizer, func, set) end
+
+_check_double_single_variable(b::AbstractBridgeOptimizer, func, set) = nothing
+
 function MOI.add_constraint(
     b::AbstractBridgeOptimizer,
     f::MOI.AbstractFunction,
@@ -1375,6 +1477,7 @@ function MOI.add_constraint(
         return MOI.add_constraint(b.model, f, s)
     end
 end
+
 function MOI.add_constraints(
     b::AbstractBridgeOptimizer,
     f::Vector{F},
@@ -1382,35 +1485,37 @@ function MOI.add_constraints(
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     if is_bridged(b, F, S)
         return MOI.add_constraint.(b, f, s)
-    else
-        if Variable.has_bridges(Variable.bridges(b))
-            if F == MOI.SingleVariable
-                if any(func -> is_bridged(b, func.variable), f)
-                    return MOI.add_constraint.(b, f, s)
-                end
-            elseif F == MOI.VectorOfVariables
-                if any(func -> any(vi -> is_bridged(b, vi), func.variables), f)
-                    return MOI.add_constraint.(b, f, s)
-                end
-            else
-                f = F[bridged_function(b, func)::F for func in f]
-            end
-        end
-        return MOI.add_constraints(b.model, f, s)
     end
+    if Variable.has_bridges(Variable.bridges(b))
+        if F == MOI.SingleVariable
+            if any(func -> is_bridged(b, func.variable), f)
+                return MOI.add_constraint.(b, f, s)
+            end
+        elseif F == MOI.VectorOfVariables
+            if any(func -> any(vi -> is_bridged(b, vi), func.variables), f)
+                return MOI.add_constraint.(b, f, s)
+            end
+        else
+            f = F[bridged_function(b, func)::F for func in f]
+        end
+    end
+    return MOI.add_constraints(b.model, f, s)
 end
+
 function is_bridged(
     ::AbstractBridgeOptimizer,
     ::Union{MOI.ScalarConstantChange,MOI.VectorConstantChange},
 )
     return false
 end
+
 function is_bridged(
     b::AbstractBridgeOptimizer,
     change::Union{MOI.ScalarCoefficientChange,MOI.MultirowChange},
 )
     return is_bridged(b, change.variable)
 end
+
 function modify_bridged_change(
     b::AbstractBridgeOptimizer,
     obj,
@@ -1434,7 +1539,9 @@ function modify_bridged_change(
             [(i, coef * t.coefficient) for (i, coef) in change.new_coefficients]
         MOI.modify(b, obj, MOI.MultirowChange(t.variable, coefs))
     end
+    return
 end
+
 function modify_bridged_change(
     b::AbstractBridgeOptimizer,
     obj,
@@ -1457,7 +1564,9 @@ function modify_bridged_change(
         coef = t.coefficient * change.new_coefficient
         MOI.modify(b, obj, MOI.ScalarCoefficientChange(t.variable, coef))
     end
+    return
 end
+
 function MOI.modify(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex,
@@ -1472,6 +1581,7 @@ function MOI.modify(
             MOI.modify(b.model, ci, change)
         end
     end
+    return
 end
 
 # Variables
@@ -1484,6 +1594,7 @@ function MOI.add_variable(b::AbstractBridgeOptimizer)
         return MOI.add_variable(b.model)
     end
 end
+
 function MOI.add_variables(b::AbstractBridgeOptimizer, n)
     if is_bridged(b, MOI.Reals)
         variables, constraint = MOI.add_constrained_variables(b, MOI.Reals(n))
@@ -1504,6 +1615,7 @@ function MOI.supports_add_constrained_variables(
         return MOI.supports_add_constrained_variables(b.model, MOI.Reals)
     end
 end
+
 function MOI.supports_add_constrained_variables(
     b::AbstractBridgeOptimizer,
     S::Type{<:MOI.AbstractVectorSet},
@@ -1514,28 +1626,29 @@ function MOI.supports_add_constrained_variables(
         return MOI.supports_add_constrained_variables(b.model, S)
     end
 end
+
 function MOI.add_constrained_variables(
     b::AbstractBridgeOptimizer,
     set::MOI.AbstractVectorSet,
 )
-    if is_bridged(b, typeof(set))
-        if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
-            BridgeType = Variable.concrete_bridge_type(b, typeof(set))
-            return Variable.add_keys_for_bridge(
-                Variable.bridges(b),
-                () -> Variable.bridge_constrained_variable(BridgeType, b, set),
-                set,
-            )
-        else
-            variables = MOI.add_variables(b, MOI.dimension(set))
-            constraint =
-                MOI.add_constraint(b, MOI.VectorOfVariables(variables), set)
-            return variables, constraint
-        end
-    else
+    if !is_bridged(b, typeof(set))
         return MOI.add_constrained_variables(b.model, set)
     end
+    if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
+        BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        return Variable.add_keys_for_bridge(
+            Variable.bridges(b),
+            () -> Variable.bridge_constrained_variable(BridgeType, b, set),
+            set,
+        )
+    else
+        variables = MOI.add_variables(b, MOI.dimension(set))
+        constraint =
+            MOI.add_constraint(b, MOI.VectorOfVariables(variables), set)
+        return variables, constraint
+    end
 end
+
 function MOI.supports_add_constrained_variable(
     b::AbstractBridgeOptimizer,
     S::Type{<:MOI.AbstractScalarSet},
@@ -1546,32 +1659,32 @@ function MOI.supports_add_constrained_variable(
         return MOI.supports_add_constrained_variable(b.model, S)
     end
 end
+
 function MOI.add_constrained_variable(
     b::AbstractBridgeOptimizer,
     set::MOI.AbstractScalarSet,
 )
-    if is_bridged(b, typeof(set))
-        if is_variable_bridged(b, typeof(set))
-            BridgeType = Variable.concrete_bridge_type(b, typeof(set))
-            return Variable.add_key_for_bridge(
-                Variable.bridges(b),
-                () -> Variable.bridge_constrained_variable(BridgeType, b, set),
-                set,
-            )
-        else
-            variable = MOI.add_variable(b)
-            constraint =
-                MOI.add_constraint(b, MOI.SingleVariable(variable), set)
-            return variable, constraint
-        end
-    else
+    if !is_bridged(b, typeof(set))
         return MOI.add_constrained_variable(b.model, set)
+    end
+    if is_variable_bridged(b, typeof(set))
+        BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        return Variable.add_key_for_bridge(
+            Variable.bridges(b),
+            () -> Variable.bridge_constrained_variable(BridgeType, b, set),
+            set,
+        )
+    else
+        variable = MOI.add_variable(b)
+        constraint = MOI.add_constraint(b, MOI.SingleVariable(variable), set)
+        return variable, constraint
     end
 end
 
 function MOI.supports(b::AbstractBridgeOptimizer, sub::MOI.AbstractSubmittable)
     return MOI.supports(b.model, sub)
 end
+
 function MOI.submit(
     b::AbstractBridgeOptimizer,
     sub::MOI.AbstractSubmittable,
@@ -1581,8 +1694,10 @@ function MOI.submit(
 end
 
 """
-    bridged_variable_function(b::AbstractBridgeOptimizer,
-                              vi::MOI.VariableIndex)
+    bridged_variable_function(
+        b::AbstractBridgeOptimizer,
+        vi::MOI.VariableIndex,
+    )
 
 Return a `MOI.AbstractScalarFunction` of variables of `b.model` that equals
 `vi`. That is, if the variable `vi` is bridged, it returns its expression in
@@ -1623,6 +1738,7 @@ function bridged_function(bridge::AbstractBridgeOptimizer, value)
         value,
     )::typeof(value)
 end
+
 function bridged_function(b::AbstractBridgeOptimizer, func::MOI.SingleVariable)
     # Should not be called by `add_constraint` as it force-bridges it
     # but could be called by attributes
@@ -1632,6 +1748,7 @@ function bridged_function(b::AbstractBridgeOptimizer, func::MOI.SingleVariable)
     end
     return func
 end
+
 # Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
 function bridge_function(
     ::AbstractBridgeOptimizer,
@@ -1641,13 +1758,15 @@ function bridge_function(
 end
 
 """
-    unbridged_variable_function(b::AbstractBridgeOptimizer,
-                                vi::MOI.VariableIndex)
+    unbridged_variable_function(
+        b::AbstractBridgeOptimizer,
+        vi::MOI.VariableIndex,
+    )
 
 Return a `MOI.AbstractScalarFunction` of variables of `b` that equals `vi`.
-That is, if the variable `vi` is an internal variable of `b.model` created by a bridge
-but not visible to the user, it returns its expression in terms of the variables
-of bridged variables. Otherwise, it returns `MOI.SingleVariable(vi)`.
+That is, if the variable `vi` is an internal variable of `b.model` created by a
+bridge but not visible to the user, it returns its expression in terms of the
+variables of bridged variables. Otherwise, it returns `MOI.SingleVariable(vi)`.
 """
 function unbridged_variable_function(
     b::AbstractBridgeOptimizer,
@@ -1683,12 +1802,14 @@ function unbridged_function(b::AbstractBridgeOptimizer, value)
         value,
     )::typeof(value)
 end
+
 function unbridged_function(
-    bridge::AbstractBridgeOptimizer,
+    ::AbstractBridgeOptimizer,
     func::Union{MOI.SingleVariable,MOI.VectorOfVariables},
 )
     return func # bridged variables are not allowed in non-bridged constraints
 end
+
 # Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
 function unbridged_function(
     ::AbstractBridgeOptimizer,
@@ -1716,6 +1837,7 @@ function bridged_constraint_function(
 )
     return bridged_function(b, func), set
 end
+
 function bridged_constraint_function(
     b::AbstractBridgeOptimizer,
     func::MOI.AbstractScalarFunction,
@@ -1731,6 +1853,7 @@ function bridged_constraint_function(
     f = bridged_function(b, func)::typeof(func)
     return MOIU.normalize_constant(f, set)
 end
+
 function bridged_constraint_function(
     b::AbstractBridgeOptimizer,
     func::MOI.SingleVariable,
@@ -1756,6 +1879,7 @@ function unbridged_constraint_function(
 )
     return unbridged_function(b, func)
 end
+
 function unbridged_constraint_function(
     b::AbstractBridgeOptimizer,
     func::MOI.AbstractScalarFunction,
@@ -1770,6 +1894,7 @@ function unbridged_constraint_function(
     end
     return f
 end
+
 function unbridged_constraint_function(
     b::AbstractBridgeOptimizer,
     func::MOI.SingleVariable,

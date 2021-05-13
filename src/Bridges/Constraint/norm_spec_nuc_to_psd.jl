@@ -9,6 +9,7 @@ struct NormSpectralBridge{T,F,G} <: AbstractBridge
     column_dim::Int # column dimension of X
     psd_index::CI{F,MOI.PositiveSemidefiniteConeTriangle}
 end
+
 function bridge_constraint(
     ::Type{NormSpectralBridge{T,F,G}},
     model::MOI.ModelLike,
@@ -47,14 +48,17 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:NormSpectralBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{NormSpectralBridge{T,F,G}},
 ) where {T,F,G}
     return [(F, MOI.PositiveSemidefiniteConeTriangle)]
 end
+
 function concrete_bridge_type(
     ::Type{<:NormSpectralBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -71,6 +75,7 @@ function MOI.get(
 ) where {T,F,G}
     return 1
 end
+
 function MOI.get(
     bridge::NormSpectralBridge{T,F,G},
     ::MOI.ListOfConstraintIndices{F,MOI.PositiveSemidefiniteConeTriangle},
@@ -80,7 +85,8 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::NormSpectralBridge)
-    return MOI.delete(model, bridge.psd_index)
+    MOI.delete(model, bridge.psd_index)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -100,6 +106,7 @@ function MOI.get(
     ]]
     return MOIU.convert_approx(G, MOIU.operate(vcat, T, t, X))
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintSet,
@@ -107,6 +114,7 @@ function MOI.get(
 )
     return MOI.NormSpectralCone(bridge.row_dim, bridge.column_dim)
 end
+
 function MOI.supports(
     ::MOI.ModelLike,
     ::MOI.ConstraintPrimalStart,
@@ -114,6 +122,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
@@ -128,6 +137,7 @@ function MOI.get(
     ]]
     return vcat(t, X)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     ::MOI.ConstraintPrimalStart,
@@ -181,6 +191,7 @@ struct NormNuclearBridge{T,F,G,H} <: AbstractBridge
     ge_index::CI{F,MOI.GreaterThan{T}}
     psd_index::CI{G,MOI.PositiveSemidefiniteConeTriangle}
 end
+
 function bridge_constraint(
     ::Type{NormNuclearBridge{T,F,G,H}},
     model::MOI.ModelLike,
@@ -241,14 +252,17 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:NormNuclearBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{NormNuclearBridge{T,F,G,H}},
 ) where {T,F,G,H}
     return [(F, MOI.GreaterThan{T}), (G, MOI.PositiveSemidefiniteConeTriangle)]
 end
+
 function concrete_bridge_type(
     ::Type{<:NormNuclearBridge{T}},
     H::Type{<:MOI.AbstractVectorFunction},
@@ -269,27 +283,32 @@ end
 function MOI.get(bridge::NormNuclearBridge, ::MOI.NumberOfVariables)
     return length(bridge.U) + length(bridge.V)
 end
+
 function MOI.get(bridge::NormNuclearBridge, ::MOI.ListOfVariableIndices)
     return vcat(bridge.U, bridge.V)
 end
+
 function MOI.get(
     bridge::NormNuclearBridge{T,F,G,H},
     ::MOI.NumberOfConstraints{F,MOI.GreaterThan{T}},
 ) where {T,F,G,H}
     return 1
 end
+
 function MOI.get(
     bridge::NormNuclearBridge{T,F,G,H},
     ::MOI.NumberOfConstraints{G,MOI.PositiveSemidefiniteConeTriangle},
 ) where {T,F,G,H}
     return 1
 end
+
 function MOI.get(
     bridge::NormNuclearBridge{T,F,G,H},
     ::MOI.ListOfConstraintIndices{F,MOI.GreaterThan{T}},
 ) where {T,F,G,H}
     return [bridge.ge_index]
 end
+
 function MOI.get(
     bridge::NormNuclearBridge{T,F,G,H},
     ::MOI.ListOfConstraintIndices{G,MOI.PositiveSemidefiniteConeTriangle},
@@ -302,7 +321,8 @@ function MOI.delete(model::MOI.ModelLike, bridge::NormNuclearBridge)
     MOI.delete(model, bridge.ge_index)
     MOI.delete(model, bridge.psd_index)
     MOI.delete(model, bridge.U)
-    return MOI.delete(model, bridge.V)
+    MOI.delete(model, bridge.V)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -335,6 +355,7 @@ function MOI.get(
     ]]
     return MOIU.convert_approx(H, MOIU.operate(vcat, T, t, X))
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintSet,
@@ -342,6 +363,7 @@ function MOI.get(
 )
     return MOI.NormNuclearCone(bridge.row_dim, bridge.column_dim)
 end
+
 function MOI.supports(
     ::MOI.ModelLike,
     ::MOI.ConstraintDualStart,
@@ -349,6 +371,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintPrimal,
@@ -381,6 +404,7 @@ function MOI.get(
         ]]
     return vcat(t, X)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     ::MOI.ConstraintDualStart,

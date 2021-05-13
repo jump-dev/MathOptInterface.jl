@@ -12,6 +12,7 @@ struct RelativeEntropyBridge{T,F,G,H} <: AbstractBridge
     ge_index::CI{F,MOI.GreaterThan{T}}
     exp_indices::Vector{CI{G,MOI.ExponentialCone}}
 end
+
 function bridge_constraint(
     ::Type{RelativeEntropyBridge{T,F,G,H}},
     model::MOI.ModelLike,
@@ -52,14 +53,17 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:RelativeEntropyBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{RelativeEntropyBridge{T,F,G,H}},
 ) where {T,F,G,H}
     return [(F, MOI.GreaterThan{T}), (G, MOI.ExponentialCone)]
 end
+
 function concrete_bridge_type(
     ::Type{<:RelativeEntropyBridge{T}},
     H::Type{<:MOI.AbstractVectorFunction},
@@ -87,18 +91,21 @@ function MOI.get(
 ) where {T,F}
     return 1
 end
+
 function MOI.get(
     bridge::RelativeEntropyBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.ExponentialCone},
 ) where {T,F,G}
     return length(bridge.y)
 end
+
 function MOI.get(
     bridge::RelativeEntropyBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,MOI.GreaterThan{T}},
 ) where {T,F}
     return [bridge.ge_index]
 end
+
 function MOI.get(
     bridge::RelativeEntropyBridge{T,F,G},
     ::MOI.ListOfConstraintIndices{G,MOI.ExponentialCone},
@@ -112,7 +119,8 @@ function MOI.delete(model::MOI.ModelLike, bridge::RelativeEntropyBridge)
         MOI.delete(model, exp_index_i)
     end
     MOI.delete(model, bridge.ge_index)
-    return MOI.delete(model, bridge.y)
+    MOI.delete(model, bridge.y)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -140,6 +148,7 @@ function MOI.get(
     end
     return MOIU.convert_approx(H, MOIU.remove_variable(func, bridge.y))
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintSet,
@@ -147,6 +156,7 @@ function MOI.get(
 )
     return MOI.RelativeEntropyCone(1 + 2 * length(bridge.y))
 end
+
 function MOI.supports(
     ::MOI.ModelLike,
     ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
@@ -154,6 +164,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
@@ -170,6 +181,7 @@ function MOI.get(
     end
     return primal
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,

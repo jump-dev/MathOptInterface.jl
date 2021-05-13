@@ -18,6 +18,7 @@ include("single_bridge_optimizer.jl")
 include("functionize.jl")
 const Functionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{FunctionizeBridge{T},OT}
+
 include("slack.jl")
 const Slack{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SlackBridge{T},OT}
 
