@@ -31,21 +31,22 @@ function MOI.supports(
     return invariant_under_function_conversion(attr) &&
            MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.AbstractConstraintAttribute,
     bridge::AbstractFunctionConversionBridge,
     value,
 )
-    if invariant_under_function_conversion(attr)
-        return MOI.set(model, attr, bridge.constraint, value)
-    else
+    if !invariant_under_function_conversion(attr)
         throw(
             ArgumentError(
                 "Bridge of type `$(typeof(bridge))` does not support setting the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
             ),
         )
     end
+    MOI.set(model, attr, bridge.constraint, value)
+    return
 end
 
 """

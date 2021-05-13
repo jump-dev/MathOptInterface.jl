@@ -11,19 +11,23 @@ mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
     model::OT
     map::Map # `MOI.ObjectiveFunction` -> objective bridge
 end
+
 function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
     return SingleBridgeOptimizer{BT,OT}(model, Map())
 end
 
-function bridges(bridge::MOI.Bridges.AbstractBridgeOptimizer)
+function bridges(::MOI.Bridges.AbstractBridgeOptimizer)
     return EmptyMap()
 end
+
 bridges(bridge::SingleBridgeOptimizer) = bridge.map
 
 MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = false
+
 function MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{<:MOI.AbstractSet})
     return false
 end
+
 function MOIB.is_bridged(
     ::SingleBridgeOptimizer,
     ::Type{<:MOI.AbstractFunction},
@@ -31,18 +35,21 @@ function MOIB.is_bridged(
 )
     return false
 end
+
 function MOIB.supports_bridging_objective_function(
     ::SingleBridgeOptimizer{BT},
     F::Type{<:MOI.AbstractScalarFunction},
 ) where {BT}
     return supports_objective_function(BT, F)
 end
+
 function MOIB.is_bridged(
     b::SingleBridgeOptimizer,
     F::Type{<:MOI.AbstractScalarFunction},
 )
     return MOIB.supports_bridging_objective_function(b, F)
 end
+
 function MOIB.bridge_type(
     ::SingleBridgeOptimizer{BT},
     ::Type{<:MOI.AbstractScalarFunction},

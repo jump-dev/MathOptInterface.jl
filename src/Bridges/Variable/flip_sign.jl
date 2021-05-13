@@ -15,11 +15,13 @@ function supports_constrained_variable(
 ) where {T,S1<:MOI.AbstractVectorSet}
     return true
 end
+
 function MOIB.added_constrained_variable_types(
     ::Type{<:FlipSignBridge{T,S1,S2}},
 ) where {T,S1,S2}
     return [(S2,)]
 end
+
 function MOIB.added_constraint_types(::Type{<:FlipSignBridge})
     return Tuple{DataType,DataType}[]
 end
@@ -28,15 +30,18 @@ end
 function MOI.get(bridge::FlipSignBridge, ::MOI.NumberOfVariables)
     return length(bridge.flipped_variables)
 end
+
 function MOI.get(bridge::FlipSignBridge, ::MOI.ListOfVariableIndices)
     return bridge.flipped_variables
 end
+
 function MOI.get(
     ::FlipSignBridge{T,S1,S2},
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S2},
 ) where {T,S1,S2<:MOI.AbstractVectorSet}
     return 1
 end
+
 function MOI.get(
     bridge::FlipSignBridge{T,S1,S2},
     ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S2},
@@ -46,7 +51,8 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::FlipSignBridge)
-    return MOI.delete(model, bridge.flipped_variables)
+    MOI.delete(model, bridge.flipped_variables)
+    return
 end
 
 function MOI.delete(
@@ -55,13 +61,14 @@ function MOI.delete(
     i::IndexInVector,
 )
     MOI.delete(model, bridge.flipped_variables[i.value])
-    return deleteat!(bridge.flipped_variables, i.value)
+    deleteat!(bridge.flipped_variables, i.value)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintSet,
+    ::MOI.ModelLike,
+    ::MOI.ConstraintSet,
     bridge::FlipSignBridge{T,S1},
 ) where {T,S1<:MOI.AbstractVectorSet}
     return S1(length(bridge.flipped_variables))
@@ -91,6 +98,7 @@ function MOIB.bridged_function(
     func = MOI.SingleVariable(bridge.flipped_variables[i.value])
     return MOIU.operate(-, T, func)
 end
+
 function unbridged_map(
     bridge::FlipSignBridge{T},
     vi::MOI.VariableIndex,
@@ -107,6 +115,7 @@ function MOI.supports(
 )
     return MOI.supports(model, attr, MOI.VariableIndex)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimalStart,
@@ -114,12 +123,13 @@ function MOI.set(
     value,
     i::IndexInVector,
 )
-    return MOI.set(model, attr, bridge.flipped_variables[i.value], -value)
+    MOI.set(model, attr, bridge.flipped_variables[i.value], -value)
+    return
 end
 
 """
-    NonposToNonnegBridge{T, F<:MOI.AbstractVectorFunction, G<:MOI.AbstractVectorFunction} <:
-        FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F, G}
+    NonposToNonnegBridge{T} <:
+        FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives}
 
 Transforms constrained variables in `Nonpositives` into constrained variables in
 `Nonnegatives`.
@@ -132,6 +142,7 @@ struct NonposToNonnegBridge{T} <:
         MOI.Nonnegatives,
     }
 end
+
 function bridge_constrained_variable(
     ::Type{NonposToNonnegBridge{T}},
     model::MOI.ModelLike,

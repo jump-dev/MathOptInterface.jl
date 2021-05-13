@@ -153,6 +153,7 @@ function add_variable_node(graph::Graph)
     push!(graph.variable_best, 0)
     return VariableNode(length(graph.variable_best))
 end
+
 function set_variable_constraint_node(
     graph::Graph,
     variable_node::VariableNode,

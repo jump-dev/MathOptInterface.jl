@@ -167,10 +167,8 @@ with inner model MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64
 Then use [`Bridges.add_bridge`](@ref) to add individual bridges:
 ```jldoctest lazy_bridge_optimizer
 julia> MOI.Bridges.add_bridge(optimizer, MOI.Bridges.Constraint.SplitIntervalBridge{Float64})
-Dict{Any,DataType} with 0 entries
 
 julia> MOI.Bridges.add_bridge(optimizer, MOI.Bridges.Objective.FunctionizeBridge{Float64})
-Dict{Any,DataType} with 0 entries
 ```
 
 Now the constraints will be bridged only if needed:

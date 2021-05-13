@@ -7,9 +7,11 @@ bridges.
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
 """
-    bridge_objective(BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-                     model::MOI.ModelLike,
-                     func::MOI.AbstractScalarFunction)
+    bridge_objective(
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+        model::MOI.ModelLike,
+        func::MOI.AbstractScalarFunction,
+    )
 
 Bridge the objective function `func` using bridge `BT` to `model` and returns
 a bridge object of type `BT`. The bridge type `BT` should be a concrete type,
@@ -28,9 +30,12 @@ function bridge_objective(
 end
 
 """
-    function MOI.set(model::MOI.ModelLike, ::MOI.ObjectiveSense,
-                     bridge::MOI.Bridges.Objective.AbstractBridge,
-                     sense::MOI.ObjectiveSense)
+    function MOI.set(
+        model::MOI.ModelLike,
+        ::MOI.ObjectiveSense,
+        bridge::MOI.Bridges.Objective.AbstractBridge,
+        sense::MOI.ObjectiveSense,
+    )
 
 Informs `bridge` that the objective sense is changed to `sense`. If changing
 the objective sense is not supported, the bridge should not implement this
@@ -53,11 +58,13 @@ function MOI.set(
 end
 
 """
-    function MOI.get(model::MOI.ModelLike, attr::MOI.ObjectiveFunction,
-                     bridge::MOI.Bridges.Objective.AbstractBridge)
+    function MOI.get(
+        model::MOI.ModelLike,
+        attr::MOI.ObjectiveFunction,
+        bridge::MOI.Bridges.Objective.AbstractBridge,
+    )
 
-Return the objective function object bridged by `bridge` for the model
-`model`.
+Return the objective function object bridged by `bridge` for the model `model`.
 """
 function MOI.get(
     ::MOI.ModelLike,
@@ -73,7 +80,10 @@ function MOI.get(
 end
 
 """
-    function MOI.delete(model::MOI.ModelLike, bridge::MOI.Bridges.Objective.AbstractBridge)
+    function MOI.delete(
+        model::MOI.ModelLike,
+        bridge::MOI.Bridges.Objective.AbstractBridge,
+    )
 
 Delete any variable or constraint added by `bridge`.
 """
@@ -88,7 +98,8 @@ end
 """
     supports_objective_function(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction})::Bool
+        F::Type{<:MOI.AbstractScalarFunction},
+    )::Bool
 
 Return a `Bool` indicating whether the bridges of type `BT` support bridging
 objective functions of type `F`.
@@ -101,8 +112,10 @@ function supports_objective_function(
 end
 
 """
-    added_constrained_variable_types(BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-                                     F::Type{<:MOI.AbstractScalarFunction})
+    added_constrained_variable_types(
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+        F::Type{<:MOI.AbstractScalarFunction},
+    )
 
 Return a list of the types of constrained variables that bridges of type `BT`
 add for bridging objective functions of type `F`. This fallbacks to
@@ -118,13 +131,15 @@ function MOIB.added_constrained_variable_types(
 end
 
 """
-    added_constraint_types(BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-                           F::Type{<:MOI.AbstractScalarFunction})
+    added_constraint_types(
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+        F::Type{<:MOI.AbstractScalarFunction},
+    )
 
-Return a list of the types of constraints that bridges of type `BT` add
-for bridging objective functions of type `F`. This fallbacks to
-`added_constraint_types(concrete_bridge_type(BT, S))`
-so bridges should not implement this method.
+Return a list of the types of constraints that bridges of type `BT` add for
+bridging objective functions of type `F`. This fallbacks to
+`added_constraint_types(concrete_bridge_type(BT, S))` so bridges should not
+implement this method.
 """
 function MOIB.added_constraint_types(
     BT::Type{<:AbstractBridge},
@@ -134,13 +149,15 @@ function MOIB.added_constraint_types(
 end
 
 """
-    set_objective_function_type(BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-                                F::Type{<:MOI.AbstractScalarFunction})
+    set_objective_function_type(
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+        F::Type{<:MOI.AbstractScalarFunction},
+    )
 
-Return the type of objective function that bridges of type `BT` set
-for bridging objective functions of type `F`. This fallbacks to
-`set_objective_function_type(concrete_bridge_type(BT, F))`
-so bridges should not implement this method.
+Return the type of objective function that bridges of type `BT` set for bridging
+objective functions of type `F`. This fallbacks to
+`set_objective_function_type(concrete_bridge_type(BT, F))` so bridges should not
+implement this method.
 """
 function MOIB.set_objective_function_type(
     BT::Type{<:AbstractBridge},
@@ -150,8 +167,10 @@ function MOIB.set_objective_function_type(
 end
 
 """
-    concrete_bridge_type(BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-                         F::Type{<:MOI.AbstractScalarFunction})::DataType
+    concrete_bridge_type(
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+        F::Type{<:MOI.AbstractScalarFunction},
+    )::DataType
 
 Return the concrete type of the bridge supporting objective functions of type
 `F`. This function can only be called if `MOI.supports_objective_function(BT, F)`

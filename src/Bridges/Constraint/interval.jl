@@ -28,6 +28,7 @@ struct SplitIntervalBridge{
     lower::CI{F,LS}
     upper::CI{F,US}
 end
+
 function bridge_constraint(
     ::Type{SplitIntervalBridge{T,F,S,LS,US}},
     model::MOI.ModelLike,
@@ -46,6 +47,7 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOI.supports_constraint(
     ::Type{SplitIntervalBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
@@ -53,14 +55,17 @@ function MOI.supports_constraint(
 ) where {T}
     return MOIU.is_coefficient_type(F, T)
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:SplitIntervalBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{SplitIntervalBridge{T,F,S,LS,US}},
 ) where {T,F,S,LS,US}
     return [(F, LS), (F, US)]
 end
+
 function concrete_bridge_type(
     ::Type{<:SplitIntervalBridge},
     F::Type{<:MOI.AbstractScalarFunction},
@@ -68,6 +73,7 @@ function concrete_bridge_type(
 ) where {T}
     return SplitIntervalBridge{T,F,S,MOI.GreaterThan{T},MOI.LessThan{T}}
 end
+
 function concrete_bridge_type(
     ::Type{<:SplitIntervalBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
@@ -83,18 +89,21 @@ function MOI.get(
 ) where {T,F,S,LS}
     return 1
 end
+
 function MOI.get(
     ::SplitIntervalBridge{T,F,S,LS,US},
     ::MOI.NumberOfConstraints{F,US},
 ) where {T,F,S,LS,US}
     return 1
 end
+
 function MOI.get(
     bridge::SplitIntervalBridge{T,F,S,LS},
     ::MOI.ListOfConstraintIndices{F,LS},
 ) where {T,F,S,LS}
     return [bridge.lower]
 end
+
 function MOI.get(
     bridge::SplitIntervalBridge{T,F,S,LS,US},
     ::MOI.ListOfConstraintIndices{F,US},
@@ -105,7 +114,8 @@ end
 # Indices
 function MOI.delete(model::MOI.ModelLike, bridge::SplitIntervalBridge)
     MOI.delete(model, bridge.lower)
-    return MOI.delete(model, bridge.upper)
+    MOI.delete(model, bridge.upper)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -116,6 +126,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
@@ -124,6 +135,7 @@ function MOI.get(
     # lower and upper should give the same value
     return MOI.get(model, attr, bridge.lower)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
@@ -131,7 +143,8 @@ function MOI.set(
     value,
 )
     MOI.set(model, attr, bridge.lower, value)
-    return MOI.set(model, attr, bridge.upper, value)
+    MOI.set(model, attr, bridge.upper, value)
+    return
 end
 # The map is:
 # x ∈ S <=> [1 1]' * x ∈ LS × US
@@ -147,6 +160,7 @@ function MOI.get(
     return MOI.get(model, attr, bridge.lower) +
            MOI.get(model, attr, bridge.upper)
 end
+
 function _split_dual_start(value)
     if value < 0
         return zero(value), value
@@ -154,6 +168,7 @@ function _split_dual_start(value)
         return value, zero(value)
     end
 end
+
 function _split_dual_start(value::Vector)
     lower = similar(value)
     upper = similar(value)
@@ -161,6 +176,7 @@ function _split_dual_start(value::Vector)
         lower[i], upper[i] = _split_dual_start(value[i])
     end
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
@@ -169,7 +185,8 @@ function MOI.set(
 ) where {T}
     lower, upper = _split_dual_start(value)
     MOI.set(model, attr, bridge.lower, lower)
-    return MOI.set(model, attr, bridge.upper, upper)
+    MOI.set(model, attr, bridge.upper, upper)
+    return
 end
 
 function MOI.get(
@@ -213,7 +230,8 @@ function MOI.modify(
     change::MOI.AbstractFunctionModification,
 )
     MOI.modify(model, bridge.lower, change)
-    return MOI.modify(model, bridge.upper, change)
+    MOI.modify(model, bridge.upper, change)
+    return
 end
 
 function MOI.set(
@@ -223,7 +241,8 @@ function MOI.set(
     func::F,
 ) where {T,F}
     MOI.set(model, MOI.ConstraintFunction(), bridge.lower, func)
-    return MOI.set(model, MOI.ConstraintFunction(), bridge.upper, func)
+    MOI.set(model, MOI.ConstraintFunction(), bridge.upper, func)
+    return
 end
 
 function MOI.set(
@@ -233,7 +252,8 @@ function MOI.set(
     change::S,
 ) where {T,F,S}
     MOI.set(model, MOI.ConstraintSet(), bridge.lower, _lower_set(change))
-    return MOI.set(model, MOI.ConstraintSet(), bridge.upper, _upper_set(change))
+    MOI.set(model, MOI.ConstraintSet(), bridge.upper, _upper_set(change))
+    return
 end
 
 function MOI.get(
@@ -243,6 +263,7 @@ function MOI.get(
 )
     return MOI.get(model, attr, bridge.lower)
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
@@ -253,6 +274,7 @@ function MOI.get(
         MOI.get(model, attr, bridge.upper).upper,
     )
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
@@ -260,6 +282,7 @@ function MOI.get(
 ) where {T,F}
     return MOI.EqualTo(MOI.get(model, attr, bridge.lower).lower)
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,

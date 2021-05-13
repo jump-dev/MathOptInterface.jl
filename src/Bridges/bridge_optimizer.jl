@@ -820,7 +820,8 @@ function MOI.set(
     attr::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
     value,
 )
-    return MOI.set(b.model, attr, bridged_function(b, value))
+    MOI.set(b.model, attr, bridged_function(b, value))
+    return
 end
 
 """
