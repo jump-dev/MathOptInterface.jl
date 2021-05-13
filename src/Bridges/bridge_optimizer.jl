@@ -704,7 +704,7 @@ function MOI.get(
     if Constraint.has_bridges(Constraint.bridges(b))
         union!(
             list_of_types,
-            Constraint.list_of_key_types(Constraint.bridges(b))
+            Constraint.list_of_key_types(Constraint.bridges(b)),
         )
     end
     if Variable.has_bridges(Variable.bridges(b))
