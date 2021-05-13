@@ -1,19 +1,21 @@
-using Test
+module TestInstantiate
 
+using Test
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIU = MathOptInterface.Utilities
 
 struct DummyOptimizer <: MOI.AbstractOptimizer end
 MOI.is_empty(::DummyOptimizer) = true
 
-@testset "Instantiate with $T" for T in [Float64, Int]
-    f() = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{T}()))
+function _test_instantiate(T)
+    f() = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
+    )
     optimizer_constructor =
         MOI.OptimizerWithAttributes(f, MOI.Silent() => true, "a" => 1, "b" => 2)
     optimizer = MOI.instantiate(optimizer_constructor)
     @test optimizer isa
-          MOIU.MockOptimizer{MOIU.UniversalFallback{MOIU.Model{T}}}
+          MOI.Utilities.MockOptimizer{MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}}}
     @test MOI.get(optimizer, MOI.Silent())
     for with_names in [true, false]
         optimizer = MOI.instantiate(
@@ -22,7 +24,7 @@ MOI.is_empty(::DummyOptimizer) = true
             with_names = with_names,
         )
         @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
-            MOIU.MockOptimizer{MOIU.UniversalFallback{MOIU.Model{T}}},
+            MOI.Utilities.MockOptimizer{MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}}},
         }
         @test MOI.get(optimizer, MOI.Silent())
         @test MOI.get(optimizer, MOI.RawParameter("a")) == 1
@@ -39,9 +41,9 @@ MOI.is_empty(::DummyOptimizer) = true
             with_names = with_names,
         )
         @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
-            MOIU.CachingOptimizer{
+            MOI.Utilities.CachingOptimizer{
                 DummyOptimizer,
-                MOIU.UniversalFallback{MOIU.Model{T}},
+                MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
             },
         }
     end
@@ -83,3 +85,27 @@ MOI.is_empty(::DummyOptimizer) = true
         with_bridge_type = T,
     )
 end
+
+function test_instantiate_Float64()
+    _test_instantiate(Float64)
+    return
+end
+
+function test_instantiate_Int()
+    _test_instantiate(Int)
+    return
+end
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+end
+
+end
+
+TestInstantiate.runtests()
