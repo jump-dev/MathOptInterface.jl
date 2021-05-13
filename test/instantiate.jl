@@ -8,14 +8,17 @@ struct DummyOptimizer <: MOI.AbstractOptimizer end
 MOI.is_empty(::DummyOptimizer) = true
 
 function _test_instantiate(T)
-    f() = MOI.Utilities.MockOptimizer(
-        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
-    )
+    function f()
+        return MOI.Utilities.MockOptimizer(
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
+        )
+    end
     optimizer_constructor =
         MOI.OptimizerWithAttributes(f, MOI.Silent() => true, "a" => 1, "b" => 2)
     optimizer = MOI.instantiate(optimizer_constructor)
-    @test optimizer isa
-          MOI.Utilities.MockOptimizer{MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}}}
+    @test optimizer isa MOI.Utilities.MockOptimizer{
+        MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+    }
     @test MOI.get(optimizer, MOI.Silent())
     for with_names in [true, false]
         optimizer = MOI.instantiate(
@@ -24,7 +27,9 @@ function _test_instantiate(T)
             with_names = with_names,
         )
         @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
-            MOI.Utilities.MockOptimizer{MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}}},
+            MOI.Utilities.MockOptimizer{
+                MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+            },
         }
         @test MOI.get(optimizer, MOI.Silent())
         @test MOI.get(optimizer, MOI.RawParameter("a")) == 1

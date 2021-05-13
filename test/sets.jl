@@ -90,9 +90,8 @@ function test_sets_broadcast()
     model = DummyModelWithAdd()
     x = MOI.add_variables(model, 3)
     cis = MOI.add_constraint.(model, x, MOI.EqualTo(0.0))
-    @test cis isa Vector{
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
-    }
+    @test cis isa
+          Vector{MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}}
     @test length(cis) == 3
 end
 
@@ -118,7 +117,6 @@ end
 function test_sets_complement()
     @test_throws ArgumentError MOI.Complements(3)
 end
-
 
 function _dual_set_test(set1, set2)
     @test MOI.dual_set(set1) == set2

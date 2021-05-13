@@ -13,11 +13,11 @@ function test_errors_fallback_AddVariableNotAllowed()
         MOI.add_variable(model)
     catch err
         @test sprint(showerror, err) ==
-                "MathOptInterface.AddVariableNotAllowed:" *
-                " Adding variables cannot be performed. You may want to use a" *
-                " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-                " `reset_optimizer` before doing this operation if the" *
-                " `CachingOptimizer` is in `MANUAL` mode."
+              "MathOptInterface.AddVariableNotAllowed:" *
+              " Adding variables cannot be performed. You may want to use a" *
+              " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
+              " `reset_optimizer` before doing this operation if the" *
+              " `CachingOptimizer` is in `MANUAL` mode."
     end
     @test_throws MOI.AddVariableNotAllowed MOI.add_variables(model, 2)
     return
@@ -46,17 +46,14 @@ function _test_errors_UnsupportedConstraint(f)
     model = DummyModel()
     vi = MOI.VariableIndex(1)
     func = MOI.SingleVariable(vi)
-    @test_throws(
-        MOI.UnsupportedConstraint,
-        f(model, func, MOI.EqualTo(0)),
-    )
+    @test_throws(MOI.UnsupportedConstraint, f(model, func, MOI.EqualTo(0)),)
     try
         f(model, func, MOI.EqualTo(0))
     catch err
         @test sprint(showerror, err) ==
-                "$(MOI.UnsupportedConstraint{MOI.SingleVariable,MOI.EqualTo{Int}}):" *
-                " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
-                " not supported by the model."
+              "$(MOI.UnsupportedConstraint{MOI.SingleVariable,MOI.EqualTo{Int}}):" *
+              " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
+              " not supported by the model."
     end
     return
 end
@@ -85,11 +82,7 @@ function test_errors_UnsupportedConstraint_shortcut()
         MOI.add_constraint(model, [vi, vi], MOI.Nonnegatives(2))
     end
     @test_throws MOI.UnsupportedConstraint begin
-        MOI.add_constraints(
-            model,
-            [vi, vi],
-            [MOI.EqualTo(0), MOI.EqualTo(0)],
-        )
+        MOI.add_constraints(model, [vi, vi], [MOI.EqualTo(0), MOI.EqualTo(0)])
     end
 end
 
@@ -105,12 +98,12 @@ function test_errors_add_constraint()
         MOI.add_constraint(model, func, MOI.EqualTo(0.0))
     catch err
         @test sprint(showerror, err) ==
-                "$(MOI.AddConstraintNotAllowed{MOI.SingleVariable,MOI.EqualTo{Float64}}):" *
-                " Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}`" *
-                " constraints cannot be performed. You may want to use a" *
-                " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-                " `reset_optimizer` before doing this operation if the" *
-                " `CachingOptimizer` is in `MANUAL` mode."
+              "$(MOI.AddConstraintNotAllowed{MOI.SingleVariable,MOI.EqualTo{Float64}}):" *
+              " Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}`" *
+              " constraints cannot be performed. You may want to use a" *
+              " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
+              " `reset_optimizer` before doing this operation if the" *
+              " `CachingOptimizer` is in `MANUAL` mode."
     end
     @test_throws(
         MOI.AddConstraintNotAllowed,
@@ -174,24 +167,24 @@ function test_errors_DeleteNotAllowed()
         MOI.delete(model, vi)
     catch err
         @test sprint(showerror, err) ==
-                "MathOptInterface.DeleteNotAllowed{MathOptInterface.VariableIndex}:" *
-                " Deleting the index MathOptInterface.VariableIndex(1) cannot be" *
-                " performed. You may want to use a `CachingOptimizer` in" *
-                " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-                " before doing this operation if the `CachingOptimizer` is in" *
-                " `MANUAL` mode."
+              "MathOptInterface.DeleteNotAllowed{MathOptInterface.VariableIndex}:" *
+              " Deleting the index MathOptInterface.VariableIndex(1) cannot be" *
+              " performed. You may want to use a `CachingOptimizer` in" *
+              " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
+              " before doing this operation if the `CachingOptimizer` is in" *
+              " `MANUAL` mode."
     end
     @test_throws MOI.DeleteNotAllowed{typeof(ci)} MOI.delete(model, ci)
     try
         MOI.delete(model, ci)
     catch err
         @test sprint(showerror, err) ==
-                "$(MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}):" *
-                " Deleting the index $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
-                " cannot be performed. You may want to use a `CachingOptimizer`" *
-                " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-                " before doing this operation if the `CachingOptimizer` is in" *
-                " `MANUAL` mode."
+              "$(MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}):" *
+              " Deleting the index $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
+              " cannot be performed. You may want to use a `CachingOptimizer`" *
+              " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
+              " before doing this operation if the `CachingOptimizer` is in" *
+              " `MANUAL` mode."
     end
     return
 end
@@ -331,13 +324,13 @@ function test_errors_ModifyNotAllowed_constraint()
     err = MOI.ModifyConstraintNotAllowed(ci, change)
     @test_throws err MOI.modify(model, ci, change)
     @test sprint(showerror, err) ==
-            "$(MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}):" *
-            " Modifying the constraints $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
-            " with MathOptInterface.ScalarConstantChange{Float64}(1.0) cannot" *
-            " be performed. You may want to use a `CachingOptimizer` in" *
-            " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-            " before doing this operation if the `CachingOptimizer` is in" *
-            " `MANUAL` mode."
+          "$(MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}):" *
+          " Modifying the constraints $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
+          " with MathOptInterface.ScalarConstantChange{Float64}(1.0) cannot" *
+          " be performed. You may want to use a `CachingOptimizer` in" *
+          " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
+          " before doing this operation if the `CachingOptimizer` is in" *
+          " `MANUAL` mode."
 end
 
 function test_errors_ModifyNotAllowed_objective()
@@ -347,12 +340,12 @@ function test_errors_ModifyNotAllowed_objective()
     err = MOI.ModifyObjectiveNotAllowed(change)
     @test_throws err MOI.modify(model, attr, change)
     @test sprint(showerror, err) ==
-            "$(MathOptInterface.ModifyObjectiveNotAllowed{MathOptInterface.ScalarConstantChange{Float64}}):" *
-            " Modifying the objective function with $(MathOptInterface.ScalarConstantChange{Float64}(1.0))" *
-            " cannot be performed. You may want to use a `CachingOptimizer`" *
-            " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-            " before doing this operation if the `CachingOptimizer` is in" *
-            " `MANUAL` mode."
+          "$(MathOptInterface.ModifyObjectiveNotAllowed{MathOptInterface.ScalarConstantChange{Float64}}):" *
+          " Modifying the objective function with $(MathOptInterface.ScalarConstantChange{Float64}(1.0))" *
+          " cannot be performed. You may want to use a `CachingOptimizer`" *
+          " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
+          " before doing this operation if the `CachingOptimizer` is in" *
+          " `MANUAL` mode."
 end
 
 function test_errors_show_SetAttributeNotAllowed()

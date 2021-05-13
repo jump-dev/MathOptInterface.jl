@@ -125,22 +125,16 @@ function test_isapprox_ScalarAffineFunction()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
-    @test MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([1, 1], [x, z]),
-        1,
-    ) ≈ MOI.ScalarAffineFunction(
+    @test MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 1], [x, z]), 1) ≈
+          MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1.0, 1e-7, 1.0], [x, y, z]),
         1.0,
     ) atol = 1e-6
     @test MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1.0, 1e-7], [x, y]),
         1.0,
-    ) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol =
-        1e-6
-    f = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([2, 4], [x, y]),
-        6,
-    )
+    ) ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 1) atol = 1e-6
+    f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4], [x, y]), 6)
     g = deepcopy(f)
     @test g ≈ f
     f.terms[2] = MOI.ScalarAffineTerm(3, y)
@@ -202,17 +196,10 @@ function test_isapprox_VectorQuadraticFunction()
     )
     g = deepcopy(f)
     @test f ≈ g
-    f.affine_terms[1] =
-        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(4, x))
+    f.affine_terms[1] = MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(4, x))
     @test !(f ≈ g)
-    push!(
-        g.affine_terms,
-        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(-3, x)),
-    )
-    push!(
-        g.affine_terms,
-        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(4, x)),
-    )
+    push!(g.affine_terms, MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(-3, x)))
+    push!(g.affine_terms, MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(4, x)))
     @test f ≈ g
     f.quadratic_terms[1] =
         MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1, x, x))
