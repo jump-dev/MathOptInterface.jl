@@ -1,8 +1,10 @@
+module TestConstraints
+
 using Test
 using MathOptInterface
 const MOI = MathOptInterface
 
-function constant_not_zero_test(::Type{T}) where {T}
+function _constant_not_zero_test(::Type{T}) where {T}
     S = MOI.EqualTo{T}
     x = MOI.VariableIndex(1)
     fx = MOI.SingleVariable(x)
@@ -17,7 +19,22 @@ function constant_not_zero_test(::Type{T}) where {T}
     @test nothing === MOI.throw_if_scalar_and_constant_not_zero(func, MOI.Zeros)
 end
 
-@testset "Constant not zero" begin
-    constant_not_zero_test(Int)
-    constant_not_zero_test(Float64)
+function test_constraints_ConstantNotZero()
+    _constant_not_zero_test(Int)
+    _constant_not_zero_test(Float64)
+    return
 end
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+end
+
+end
+
+TestConstraints.runtests()
