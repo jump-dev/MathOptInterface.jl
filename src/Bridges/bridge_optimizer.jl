@@ -1694,8 +1694,7 @@ function MOI.add_constrained_variable(
         )
     else
         variable = MOI.add_variable(b)
-        constraint =
-            MOI.add_constraint(b, MOI.SingleVariable(variable), set)
+        constraint = MOI.add_constraint(b, MOI.SingleVariable(variable), set)
         return variable, constraint
     end
 end

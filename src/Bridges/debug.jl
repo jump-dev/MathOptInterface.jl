@@ -9,10 +9,7 @@ end
 
 function print_node(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
     F, S = b.constraint_types[node.index]
-    MOIU.print_with_acronym(
-        io,
-        "($(node.index)) `$F`-in-`$S` constraints are",
-    )
+    MOIU.print_with_acronym(io, "($(node.index)) `$F`-in-`$S` constraints are")
     return
 end
 
