@@ -695,51 +695,32 @@ function MOI.get(
     end
     return s
 end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintTypesPresent,
 )
-    if Constraint.has_bridges(Constraint.bridges(b)) &&
-       Variable.has_bridges(Variable.bridges(b))
-        set_of_types = Constraint.list_of_key_types(Constraint.bridges(b))
+    list_of_types = Set(MOI.get(b.model, attr))
+    if Constraint.has_bridges(Constraint.bridges(b))
         union!(
-            set_of_types,
+            list_of_types,
+            Constraint.list_of_key_types(Constraint.bridges(b))
+        )
+    end
+    if Variable.has_bridges(Variable.bridges(b))
+        union!(
+            list_of_types,
             Variable.list_of_constraint_types(Variable.bridges(b)),
         )
-        # There may be types already in `list_of_types` of a supported constraint
-        # that was force-bridged because a variable in the `SingleVariable` or
-        # `VectorOfVariables` function was bridged even though the constraint type
-        # is supported by `b.model`. As `set_of_types` is a set, these duplicates
-        # are merge automatically.
-        union!(set_of_types, MOI.get(b.model, attr))
-        list_of_types = collect(set_of_types)
-    elseif Constraint.has_bridges(Constraint.bridges(b))
-        # There should be no duplicate so no need to do `Set` union.
-        list_of_types = [
-            MOI.get(b.model, attr)
-            collect(Constraint.list_of_key_types(Constraint.bridges(b)))
-        ]
-    elseif Variable.has_bridges(Variable.bridges(b))
-        set_of_types = Variable.list_of_constraint_types(Variable.bridges(b))
-        union!(set_of_types, MOI.get(b.model, attr))
-        list_of_types = collect(set_of_types)
-    else
-        list_of_types = copy(MOI.get(b.model, attr))
     end
     # Some constraint types show up in `list_of_types` including when all the
     # constraints of that type have been created by bridges and not by the user.
     # The code in `NumberOfConstraints` takes care of removing these constraints
     # from the counter so we can rely on it to remove these constraint types.
-    types_to_remove = findall(
-        iszero.(
-            map(
-                FS -> MOI.get(b, MOI.NumberOfConstraints{FS...}()),
-                list_of_types,
-            ),
-        ),
-    )
-    deleteat!(list_of_types, types_to_remove)
-    return list_of_types
+    filter!(list_of_types) do (F, S)
+        return MOI.get(b, MOI.NumberOfConstraints{F,S}()) > 0
+    end
+    return collect(list_of_types)
 end
 
 # Model an optimizer attributes
