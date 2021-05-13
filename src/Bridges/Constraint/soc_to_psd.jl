@@ -59,6 +59,7 @@ struct SOCtoPSDBridge{T,F,G} <: SetMapBridge{
 }
     constraint::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
+
 function concrete_bridge_type(
     ::Type{<:SOCtoPSDBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -71,6 +72,7 @@ end
 function map_set(::Type{<:SOCtoPSDBridge}, set::MOI.SecondOrderCone)
     return MOI.PositiveSemidefiniteConeTriangle(MOI.dimension(set))
 end
+
 function inverse_map_set(
     ::Type{<:SOCtoPSDBridge},
     set::MOI.PositiveSemidefiniteConeTriangle,
@@ -81,17 +83,20 @@ end
 function map_function(::Type{<:SOCtoPSDBridge{T}}, func) where {T}
     return _SOCtoPSDaff(T, func, MOIU.eachscalar(func)[1])
 end
+
 function inverse_map_function(::Type{<:SOCtoPSDBridge}, func)
     scalars = MOIU.eachscalar(func)
     dim = MOIU.side_dimension_for_vectorized_dimension(length(scalars))
     return scalars[trimap.(1, 1:dim)]
 end
+
 function adjoint_map_function(::Type{<:SOCtoPSDBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
     dim = MOIU.side_dimension_for_vectorized_dimension(length(scalars))
     tdual = sum(i -> func[trimap(i, i)], 1:dim)
     return MOIU.operate(vcat, T, tdual, func[trimap.(2:dim, 1)] * 2)
 end
+
 function inverse_adjoint_map_function(
     ::Type{<:SOCtoPSDBridge{T}},
     func,
@@ -144,6 +149,7 @@ struct RSOCtoPSDBridge{T,F,G} <: SetMapBridge{
 }
     constraint::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
+
 function concrete_bridge_type(
     ::Type{<:RSOCtoPSDBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -158,6 +164,7 @@ end
 function map_set(::Type{<:RSOCtoPSDBridge}, set::MOI.RotatedSecondOrderCone)
     return MOI.PositiveSemidefiniteConeTriangle(MOI.dimension(set) - 1)
 end
+
 function inverse_map_set(
     ::Type{<:RSOCtoPSDBridge},
     set::MOI.PositiveSemidefiniteConeTriangle,
@@ -170,6 +177,7 @@ function map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     h = MOIU.operate!(*, T, scalars[2], convert(T, 2))
     return _SOCtoPSDaff(T, scalars[[1; 3:length(scalars)]], h)
 end
+
 function inverse_map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
     dim = MOIU.side_dimension_for_vectorized_dimension(length(scalars))
@@ -178,12 +186,14 @@ function inverse_map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     u = MOIU.operate!(/, T, scalars[3], convert(T, 2))
     return MOIU.operate(vcat, T, t, u, scalars[[trimap(1, i) for i in 2:dim]])
 end
+
 function adjoint_map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
     dim = MOIU.side_dimension_for_vectorized_dimension(length(scalars))
     udual = sum(i -> func[trimap(i, i)], 2:dim)
     return MOIU.operate(vcat, T, func[1], 2udual, func[trimap.(2:dim, 1)] * 2)
 end
+
 function inverse_adjoint_map_function(
     ::Type{<:RSOCtoPSDBridge{T}},
     func,

@@ -77,6 +77,7 @@ struct SquareBridge{
     triangle::CI{F,TT}
     sym::Vector{Pair{Tuple{Int,Int},CI{G,MOI.EqualTo{T}}}}
 end
+
 function bridge_constraint(
     ::Type{SquareBridge{T,F,G,TT,ST}},
     model::MOI.ModelLike,
@@ -140,14 +141,17 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:SquareBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{SquareBridge{T,F,G,TT,ST}},
 ) where {T,F,G,TT,ST}
     return [(F, TT), (G, MOI.EqualTo{T})]
 end
+
 function concrete_bridge_type(
     ::Type{<:SquareBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
@@ -166,18 +170,21 @@ function MOI.get(
 ) where {T,F,G,TT}
     return 1
 end
+
 function MOI.get(
     bridge::SquareBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.EqualTo{T}},
 ) where {T,F,G}
     return length(bridge.sym)
 end
+
 function MOI.get(
     bridge::SquareBridge{T,F,G,TT},
     ::MOI.ListOfConstraintIndices{F,TT},
 ) where {T,F,G,TT}
     return [bridge.triangle]
 end
+
 function MOI.get(
     bridge::SquareBridge{T,F,G},
     ::MOI.ListOfConstraintIndices{G,MOI.EqualTo{T}},
@@ -222,9 +229,11 @@ function MOI.get(
     end
     return MOIU.vectorize(sqr)
 end
+
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SquareBridge)
     return bridge.square_set
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimal,
@@ -242,6 +251,7 @@ function MOI.get(
     end
     return sqr
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,

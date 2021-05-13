@@ -18,6 +18,7 @@ function MOI.supports_constraint(
 ) where {T,S2,S1<:MOI.AbstractScalarSet}
     return true
 end
+
 function MOI.supports_constraint(
     ::Type{<:SetMapBridge{T,S2,S1}},
     ::Type{<:MOI.AbstractVectorFunction},
@@ -25,9 +26,11 @@ function MOI.supports_constraint(
 ) where {T,S2,S1<:MOI.AbstractVectorSet}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:SetMapBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{<:SetMapBridge{T,S2,S1,F}},
 ) where {T,S2,S1,F}
@@ -41,6 +44,7 @@ function MOI.get(
 ) where {T,S2,S1,F}
     return 1
 end
+
 function MOI.get(
     bridge::SetMapBridge{T,S2,S1,F},
     ::MOI.ListOfConstraintIndices{F,S2},
@@ -50,7 +54,8 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::SetMapBridge)
-    return MOI.delete(model, bridge.constraint)
+    MOI.delete(model, bridge.constraint)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -63,6 +68,7 @@ function MOI.get(
     func = inverse_map_function(typeof(bridge), mapped_func)
     return MOIU.convert_approx(G, func)
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
@@ -71,18 +77,15 @@ function MOI.get(
     set = MOI.get(model, attr, bridge.constraint)
     return inverse_map_set(typeof(bridge), set)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
     bridge::SetMapBridge{T,S2,S1},
     new_set::S1,
 ) where {T,S2,S1}
-    return MOI.set(
-        model,
-        attr,
-        bridge.constraint,
-        map_set(typeof(bridge), new_set),
-    )
+    MOI.set(model, attr, bridge.constraint, map_set(typeof(bridge), new_set))
+    return
 end
 
 function MOI.supports(
@@ -92,6 +95,7 @@ function MOI.supports(
 ) where {T,S2,S1,F}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F,S2})
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
@@ -100,6 +104,7 @@ function MOI.get(
     value = MOI.get(model, attr, bridge.constraint)
     return inverse_map_function(typeof(bridge), value)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
@@ -107,8 +112,10 @@ function MOI.set(
     value,
 )
     mapped_value = map_function(typeof(bridge), value)
-    return MOI.set(model, attr, bridge.constraint, mapped_value)
+    MOI.set(model, attr, bridge.constraint, mapped_value)
+    return
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
@@ -117,6 +124,7 @@ function MOI.get(
     value = MOI.get(model, attr, bridge.constraint)
     return adjoint_map_function(typeof(bridge), value)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
@@ -124,7 +132,8 @@ function MOI.set(
     value,
 )
     mapped_value = inverse_adjoint_map_function(typeof(bridge), value)
-    return MOI.set(model, attr, bridge.constraint, mapped_value)
+    MOI.set(model, attr, bridge.constraint, mapped_value)
+    return
 end
 
 function MOI.modify(
@@ -134,11 +143,8 @@ function MOI.modify(
 )
     # By linearity of the map, we can just change the constant
     constant = map_function(typeof(bridge), change.new_constant)
-    return MOI.modify(
-        model,
-        bridge.constraint,
-        MOI.VectorConstantChange(constant),
-    )
+    MOI.modify(model, bridge.constraint, MOI.VectorConstantChange(constant))
+    return
 end
 
 include("flip_sign.jl")

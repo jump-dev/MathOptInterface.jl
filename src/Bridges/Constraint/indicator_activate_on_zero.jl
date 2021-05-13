@@ -63,6 +63,7 @@ function MOIB.added_constrained_variable_types(
 )
     return [(MOI.ZeroOne,)]
 end
+
 function MOIB.added_constraint_types(
     ::Type{IndicatorActiveOnFalseBridge{T,F,S}},
 ) where {T,F,S}

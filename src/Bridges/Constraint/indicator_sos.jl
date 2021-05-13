@@ -84,8 +84,8 @@ function MOI.get(
 end
 
 function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintFunction,
+    ::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
     b::IndicatorSOS1Bridge{T},
 ) where {T}
     z = b.z_variable_index
@@ -259,10 +259,6 @@ function MOI.set(
     MOI.set(model, MOI.VariablePrimalStart(), bridge.z_variable_index, zvalue)
     wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable_index)
     wstart = wstart === nothing ? zero(T) : wstart
-    return MOI.set(
-        model,
-        attr,
-        bridge.linear_constraint_index,
-        lin_start + wstart,
-    )
+    MOI.set(model, attr, bridge.linear_constraint_index, lin_start + wstart)
+    return
 end

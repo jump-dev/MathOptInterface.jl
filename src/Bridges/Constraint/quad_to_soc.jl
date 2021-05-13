@@ -60,6 +60,7 @@ struct QuadtoSOCBridge{T} <: AbstractBridge
     less_than::Bool # whether the constraint was ≤ or ≥
     set_constant::T # the constant that was on the set
 end
+
 function bridge_constraint(
     ::Type{QuadtoSOCBridge{T}},
     model,
@@ -161,12 +162,15 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:QuadtoSOCBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(::Type{QuadtoSOCBridge{T}}) where {T}
     return [(MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
 end
+
 function concrete_bridge_type(
     ::Type{<:QuadtoSOCBridge{T}},
     ::Type{MOI.ScalarQuadraticFunction{T}},
@@ -185,6 +189,7 @@ function MOI.get(
 ) where {T}
     return 1
 end
+
 function MOI.get(
     bridge::QuadtoSOCBridge{T},
     ::MOI.ListOfConstraintIndices{
@@ -197,7 +202,8 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::QuadtoSOCBridge)
-    return MOI.delete(model, bridge.soc)
+    MOI.delete(model, bridge.soc)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -270,6 +276,7 @@ function MOI.get(
         return MOI.GreaterThan(b.set_constant)
     end
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,

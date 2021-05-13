@@ -10,6 +10,7 @@ struct ScalarFunctionizeBridge{T,S} <:
        AbstractFunctionConversionBridge{MOI.ScalarAffineFunction{T},S}
     constraint::CI{MOI.ScalarAffineFunction{T},S}
 end
+
 function bridge_constraint(
     ::Type{ScalarFunctionizeBridge{T,S}},
     model,
@@ -28,16 +29,19 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(
     ::Type{<:ScalarFunctionizeBridge},
 )
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{ScalarFunctionizeBridge{T,S}},
 ) where {T,S}
     return [(MOI.ScalarAffineFunction{T}, S)]
 end
+
 function concrete_bridge_type(
     ::Type{<:ScalarFunctionizeBridge{T}},
     ::Type{MOI.SingleVariable},
@@ -48,11 +52,12 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(
-    b::ScalarFunctionizeBridge{T,S},
+    ::ScalarFunctionizeBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},S},
 ) where {T,S}
     return 1
 end
+
 function MOI.get(
     b::ScalarFunctionizeBridge{T,S},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},S},
@@ -73,13 +78,15 @@ function MOI.set(
     c::ScalarFunctionizeBridge{T},
     f::MOI.SingleVariable,
 ) where {T}
-    return MOI.set(
+    MOI.set(
         model,
         MOI.ConstraintFunction(),
         c.constraint,
         MOI.ScalarAffineFunction{T}(f),
     )
+    return
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
@@ -101,6 +108,7 @@ mutable struct VectorFunctionizeBridge{T,S} <:
                AbstractFunctionConversionBridge{MOI.VectorAffineFunction{T},S}
     constraint::CI{MOI.VectorAffineFunction{T},S}
 end
+
 function bridge_constraint(
     ::Type{VectorFunctionizeBridge{T,S}},
     model,
@@ -118,16 +126,19 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(
     ::Type{<:VectorFunctionizeBridge},
 )
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{VectorFunctionizeBridge{T,S}},
 ) where {T,S}
     return [(MOI.VectorAffineFunction{T}, S)]
 end
+
 function concrete_bridge_type(
     ::Type{<:VectorFunctionizeBridge{T}},
     ::Type{<:MOI.AbstractVectorFunction},
@@ -138,11 +149,12 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(
-    b::VectorFunctionizeBridge{T,S},
+    ::VectorFunctionizeBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},S},
 ) where {T,S}
     return 1
 end
+
 function MOI.get(
     b::VectorFunctionizeBridge{T,S},
     ::MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T},S},
@@ -155,6 +167,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::VectorFunctionizeBridge)
     MOI.delete(model, bridge.constraint)
     return
 end
+
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::VectorFunctionizeBridge,
@@ -166,7 +179,8 @@ function MOI.delete(
     set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
     new_set = MOI.update_dimension(set, MOI.dimension(set) - 1)
     MOI.delete(model, bridge.constraint)
-    return bridge.constraint = MOI.add_constraint(model, new_func, new_set)
+    bridge.constraint = MOI.add_constraint(model, new_func, new_set)
+    return
 end
 
 # Constraints
@@ -176,13 +190,15 @@ function MOI.set(
     bridge::VectorFunctionizeBridge{T},
     func::MOI.VectorOfVariables,
 ) where {T}
-    return MOI.set(
+    MOI.set(
         model,
         MOI.ConstraintFunction(),
         bridge.constraint,
         MOI.VectorAffineFunction{T}(func),
     )
+    return
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,

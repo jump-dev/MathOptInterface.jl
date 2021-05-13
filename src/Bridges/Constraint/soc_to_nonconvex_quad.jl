@@ -29,6 +29,7 @@ struct SOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
     var_pos::Vector{CI{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}}
     vars::Vector{MOI.VariableIndex}
 end
+
 function bridge_constraint(
     ::Type{SOCtoNonConvexQuadBridge{T}},
     model,
@@ -87,6 +88,7 @@ struct RSOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
     var_pos::Vector{CI{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}}
     vars::Vector{MOI.VariableIndex}
 end
+
 function bridge_constraint(
     ::Type{RSOCtoNonConvexQuadBridge{T}},
     model,
@@ -126,6 +128,7 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOI.supports_constraint(
     ::Type{RSOCtoNonConvexQuadBridge{T}},
     ::Type{MOI.VectorOfVariables},
@@ -139,6 +142,7 @@ function MOIB.added_constrained_variable_types(
 )
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{<:AbstractSOCtoNonConvexQuadBridge{T}},
 ) where {T}
@@ -155,6 +159,7 @@ function concrete_bridge_type(
 ) where {T}
     return SOCtoNonConvexQuadBridge{T}
 end
+
 function concrete_bridge_type(
     ::Type{RSOCtoNonConvexQuadBridge{T}},
     ::Type{MOI.VectorOfVariables},
@@ -204,7 +209,8 @@ function MOI.delete(
     bridge::AbstractSOCtoNonConvexQuadBridge,
 )
     MOI.delete(model, bridge.quad)
-    return MOI.delete.(model, bridge.var_pos)
+    MOI.delete.(model, bridge.var_pos)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -224,6 +230,7 @@ function MOI.get(
 ) where {T}
     return MOI.SecondOrderCone(length(b.vars))
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,

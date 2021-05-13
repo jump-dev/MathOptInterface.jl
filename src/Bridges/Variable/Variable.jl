@@ -30,20 +30,26 @@ end
 # Variable bridges
 include("zeros.jl")
 const Zeros{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZerosBridge{T},OT}
+
 include("free.jl")
 const Free{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{FreeBridge{T},OT}
+
 include("flip_sign.jl")
 const NonposToNonneg{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NonposToNonnegBridge{T},OT}
+
 include("vectorize.jl")
 const Vectorize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{VectorizeBridge{T},OT}
+
 include("soc_to_rsoc.jl")
 const SOCtoRSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SOCtoRSOCBridge{T},OT}
+
 include("rsoc_to_soc.jl")
 const RSOCtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RSOCtoSOCBridge{T},OT}
+
 include("rsoc_to_psd.jl")
 const RSOCtoPSD{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}

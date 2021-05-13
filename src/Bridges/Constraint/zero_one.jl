@@ -68,7 +68,8 @@ end
 
 function MOI.delete(model::MOI.ModelLike, bridge::ZeroOneBridge)
     MOI.delete(model, bridge.interval_index)
-    return MOI.delete(model, bridge.integer_index)
+    MOI.delete(model, bridge.integer_index)
+    return
 end
 
 function MOI.get(
@@ -94,7 +95,8 @@ function MOI.set(
     value,
 ) where {T}
     MOI.set(model, attr, bridge.integer_index, value)
-    return MOI.set(model, attr, bridge.interval_index, value)
+    MOI.set(model, attr, bridge.interval_index, value)
+    return
 end
 
 # Attributes, Bridge acting as a model

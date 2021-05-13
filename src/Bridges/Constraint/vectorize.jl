@@ -86,7 +86,8 @@ function MOI.get(
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::VectorizeBridge)
-    return MOI.delete(model, bridge.vector_constraint)
+    MOI.delete(model, bridge.vector_constraint)
+    return
 end
 
 # Attributes, Bridge acting as a constraint

@@ -35,59 +35,77 @@ include("set_map.jl")
 include("vectorize.jl")
 const Vectorize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{VectorizeBridge{T},OT}
+
 include("scalarize.jl")
 const Scalarize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{ScalarizeBridge{T},OT}
+
 include("slack.jl")
 const ScalarSlack{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{ScalarSlackBridge{T},OT}
 const VectorSlack{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{VectorSlackBridge{T},OT}
+
 include("interval.jl")
 const SplitInterval{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SplitIntervalBridge{T},OT}
+
 include("quad_to_soc.jl")
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
+
 include("soc_to_nonconvex_quad.jl") # do not add these bridges by default
 const SOCtoNonConvexQuad{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SOCtoNonConvexQuadBridge{T},OT}
 const RSOCtoNonConvexQuad{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RSOCtoNonConvexQuadBridge{T},OT}
+
 include("norm_to_lp.jl")
 const NormInfinity{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NormInfinityBridge{T},OT}
 const NormOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T},OT}
+
 include("geomean_to_relentr.jl")
 const GeoMeantoRelEntr{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{GeoMeantoRelEntrBridge{T},OT}
+
 include("geomean.jl")
 const GeoMean{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T},OT}
+
 include("relentr_to_exp.jl")
 const RelativeEntropy{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RelativeEntropyBridge{T},OT}
+
 include("norm_spec_nuc_to_psd.jl")
 const NormSpectral{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NormSpectralBridge{T},OT}
 const NormNuclear{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NormNuclearBridge{T},OT}
+
 include("square.jl")
 const Square{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquareBridge{T},OT}
+
 include("det.jl")
 const LogDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{LogDetBridge{T},OT}
 const RootDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T},OT}
+
 include("soc_to_psd.jl")
 const SOCtoPSD{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SOCtoPSDBridge{T},OT}
 const RSOCtoPSD{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}
+
 include("indicator_activate_on_zero.jl")
+# TODO(odow): should something go here?
+
 include("indicator_sos.jl")
 const IndicatortoSOS1{T,BC<:MOI.AbstractScalarSet,MaybeBC} =
     SingleBridgeOptimizer{IndicatorSOS1Bridge{T,BC,MaybeBC}}
+
 include("semi_to_binary.jl")
 const SemiToBinary{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SemiToBinaryBridge{T},OT}
+
 include("zero_one.jl")
 const ZeroOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZeroOneBridge{T},OT}
 
@@ -102,7 +120,6 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
         MOIB.add_bridge(bridged_model, GreaterToIntervalBridge{T})
         MOIB.add_bridge(bridged_model, LessToIntervalBridge{T})
     end
-
     MOIB.add_bridge(bridged_model, GreaterToLessBridge{T})
     MOIB.add_bridge(bridged_model, LessToGreaterBridge{T})
     MOIB.add_bridge(bridged_model, NonnegToNonposBridge{T})

@@ -8,6 +8,7 @@ struct FreeBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
 end
+
 function bridge_constrained_variable(
     ::Type{FreeBridge{T}},
     model::MOI.ModelLike,
@@ -23,9 +24,11 @@ end
 function supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.Reals})
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:FreeBridge})
     return [(MOI.Nonnegatives,)]
 end
+
 function MOIB.added_constraint_types(::Type{FreeBridge{T}}) where {T}
     return Tuple{DataType,DataType}[]
 end
@@ -34,15 +37,18 @@ end
 function MOI.get(bridge::FreeBridge, ::MOI.NumberOfVariables)
     return length(bridge.variables)
 end
+
 function MOI.get(bridge::FreeBridge, ::MOI.ListOfVariableIndices)
     return vcat(bridge.variables)
 end
+
 function MOI.get(
-    bridge::FreeBridge,
+    ::FreeBridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
 )
     return 1
 end
+
 function MOI.get(
     bridge::FreeBridge,
     ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives},
@@ -52,14 +58,16 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::FreeBridge)
-    return MOI.delete(model, bridge.variables)
+    MOI.delete(model, bridge.variables)
+    return
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::FreeBridge, i::IndexInVector)
     n = div(length(bridge.variables), 2)
     MOI.delete(model, bridge.variables[i.value])
     MOI.delete(model, bridge.variables[n+i.value])
-    return deleteat!(bridge.variables, [i.value, n + i.value])
+    deleteat!(bridge.variables, [i.value, n + i.value])
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -73,6 +81,7 @@ function MOI.get(
     primal = MOI.get(model, attr, bridge.constraint)
     return primal[1:n] - primal[n.+(1:n)]
 end
+
 # The transformation is x_free = [I -I] * x
 # so the transformation of the dual is
 # y = [I; -I] * y_free
@@ -111,6 +120,7 @@ function MOIB.bridged_function(
         MOI.SingleVariable(bridge.variables[n+i.value]),
     )
 end
+
 # x_free has been replaced by x[i] - x[n + i].
 # To undo it we replace x[i] by x_free and x[n + i] by 0.
 function unbridged_map(
@@ -125,6 +135,7 @@ function unbridged_map(
     return bridge.variables[i.value] => func,
     bridge.variables[n+i.value] => zero(MOI.ScalarAffineFunction{T})
 end
+
 function MOI.supports(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimalStart,
@@ -132,6 +143,7 @@ function MOI.supports(
 )
     return MOI.supports(model, attr, MOI.VariableIndex)
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimalStart,
@@ -148,5 +160,6 @@ function MOI.set(
     end
     n = div(length(bridge.variables), 2)
     MOI.set(model, attr, bridge.variables[i.value], nonneg)
-    return MOI.set(model, attr, bridge.variables[n+i.value], nonpos)
+    MOI.set(model, attr, bridge.variables[n+i.value], nonpos)
+    return
 end
