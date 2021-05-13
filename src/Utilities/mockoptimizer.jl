@@ -387,6 +387,24 @@ function MOI.set(
         throw_mock_unsupported_names(attr)
     end
 end
+
+function MOI.supports(
+    ::MockOptimizer,
+    ::MOI.ConstraintName,
+    ::Type{MOI.ConstraintIndex{MOI.ConstraintIndex,<:MOI.AbstractSet}},
+)
+    return throw(MOI.SingleVariableConstraintNameError())
+end
+
+function MOI.set(
+    ::MockOptimizer,
+    ::MOI.ConstraintName,
+    ::MOI.ConstraintIndex{MOI.ConstraintIndex,<:MOI.AbstractSet},
+    ::String,
+)
+    return throw(MOI.SingleVariableConstraintNameError())
+end
+
 function MOI.get(b::MockOptimizer, IdxT::Type{<:MOI.Index}, name::String)
     index = MOI.get(b.inner_model, IdxT, name)
     if index === nothing
