@@ -700,19 +700,20 @@ function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintTypesPresent,
 )
-    list_of_types = Set(MOI.get(b.model, attr))
+    list_of_types = MOI.get(b.model, attr)
     if Constraint.has_bridges(Constraint.bridges(b))
-        union!(
+        append!(
             list_of_types,
-            Constraint.list_of_key_types(Constraint.bridges(b))
+            Constraint.list_of_key_types(Constraint.bridges(b)),
         )
     end
     if Variable.has_bridges(Variable.bridges(b))
-        union!(
+        append!(
             list_of_types,
             Variable.list_of_constraint_types(Variable.bridges(b)),
         )
     end
+    unique!(list_of_types)
     # Some constraint types show up in `list_of_types` including when all the
     # constraints of that type have been created by bridges and not by the user.
     # The code in `NumberOfConstraints` takes care of removing these constraints
@@ -720,7 +721,7 @@ function MOI.get(
     filter!(list_of_types) do (F, S)
         return MOI.get(b, MOI.NumberOfConstraints{F,S}()) > 0
     end
-    return collect(list_of_types)
+    return list_of_types
 end
 
 # Model an optimizer attributes
