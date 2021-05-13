@@ -141,12 +141,7 @@ function MOI.set(
     value,
 )
     # TODO do no add constant if the primal status is a ray like in Vectorize
-    MOI.set.(
-        model,
-        attr,
-        bridge.scalar_constraints,
-        value .- bridge.constants,
-    )
+    MOI.set.(model, attr, bridge.scalar_constraints, value .- bridge.constants)
     return
 end
 

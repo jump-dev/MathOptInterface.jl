@@ -84,12 +84,7 @@ function MOI.set(
     bridge::SetMapBridge{T,S2,S1},
     new_set::S1,
 ) where {T,S2,S1}
-    MOI.set(
-        model,
-        attr,
-        bridge.constraint,
-        map_set(typeof(bridge), new_set),
-    )
+    MOI.set(model, attr, bridge.constraint, map_set(typeof(bridge), new_set))
     return
 end
 
@@ -148,11 +143,7 @@ function MOI.modify(
 )
     # By linearity of the map, we can just change the constant
     constant = map_function(typeof(bridge), change.new_constant)
-    MOI.modify(
-        model,
-        bridge.constraint,
-        MOI.VectorConstantChange(constant),
-    )
+    MOI.modify(model, bridge.constraint, MOI.VectorConstantChange(constant))
     return
 end
 

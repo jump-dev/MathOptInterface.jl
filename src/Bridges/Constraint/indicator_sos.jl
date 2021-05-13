@@ -261,11 +261,6 @@ function MOI.set(
     MOI.set(model, MOI.VariablePrimalStart(), bridge.z_variable, zvalue)
     wstart = MOI.get(model, MOI.VariablePrimalStart(), bridge.w_variable)
     wstart = wstart === nothing ? zero(T) : wstart
-    MOI.set(
-        model,
-        attr,
-        bridge.linear_constraint_index,
-        lin_start + wstart,
-    )
+    MOI.set(model, attr, bridge.linear_constraint_index, lin_start + wstart)
     return
 end
