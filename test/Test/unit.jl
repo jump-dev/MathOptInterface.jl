@@ -664,8 +664,8 @@ end
                     (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
                         [MOI.NONBASIC],
                     (MOI.SingleVariable, MOI.Reals) => [MOI.SUPER_BASIC],
-                ]
-            )
+                ],
+            ),
         )
         MOIT.solve_basis_lower_bound(mock, MOI.Test.TestConfig(basis = true))
     end
@@ -677,10 +677,13 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [4.0, 0.0]);
                 con_basis = [
-                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                        [MOI.NONBASIC],
-                    (MOI.SingleVariable, MOI.Reals) => [MOI.BASIC, MOI.SUPER_BASIC],
-                ]
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.LessThan{Float64},
+                    ) => [MOI.NONBASIC],
+                    (MOI.SingleVariable, MOI.Reals) =>
+                        [MOI.BASIC, MOI.SUPER_BASIC],
+                ],
             ),
         )
         MOIT.solve_basis_superbasic(mock, MOI.Test.TestConfig(basis = true))
