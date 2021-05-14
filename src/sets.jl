@@ -112,7 +112,7 @@ The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension `dimens
 """
 struct Reals <: AbstractVectorSet
     dimension::Int
-    function Reals(dimension::Int)
+    function Reals(dimension::Base.Integer)
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
@@ -135,7 +135,7 @@ The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension `dim
 """
 struct Zeros <: AbstractVectorSet
     dimension::Int
-    function Zeros(dimension::Int)
+    function Zeros(dimension::Base.Integer)
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
@@ -158,7 +158,7 @@ The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of
 """
 struct Nonnegatives <: AbstractVectorSet
     dimension::Int
-    function Nonnegatives(dimension::Int)
+    function Nonnegatives(dimension::Base.Integer)
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
@@ -181,7 +181,7 @@ The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of
 """
 struct Nonpositives <: AbstractVectorSet
     dimension::Int
-    function Nonpositives(dimension::Int)
+    function Nonpositives(dimension::Base.Integer)
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
@@ -274,7 +274,7 @@ The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\g
 """
 struct NormInfinityCone <: AbstractVectorSet
     dimension::Int
-    function NormInfinityCone(dimension::Int)
+    function NormInfinityCone(dimension::Base.Integer)
         if !(dimension > 1)
             throw(
                 DimensionMismatch(
@@ -297,7 +297,7 @@ The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lV
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
-    function NormOneCone(dimension::Int)
+    function NormOneCone(dimension::Base.Integer)
         if !(dimension > 1)
             throw(
                 DimensionMismatch(
@@ -320,7 +320,7 @@ The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in
 """
 struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
-    function SecondOrderCone(dimension::Int)
+    function SecondOrderCone(dimension::Base.Integer)
         if !(dimension > 1)
             throw(
                 DimensionMismatch(
@@ -343,7 +343,7 @@ The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int
-    function RotatedSecondOrderCone(dimension::Int)
+    function RotatedSecondOrderCone(dimension::Base.Integer)
         if !(dimension > 2)
             throw(
                 DimensionMismatch(
@@ -371,7 +371,7 @@ The dual of the geometric mean cone is
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
-    function GeometricMeanCone(dimension::Int)
+    function GeometricMeanCone(dimension::Base.Integer)
         if !(dimension > 1)
             throw(
                 DimensionMismatch(
@@ -450,7 +450,7 @@ The dual of the relative entropy cone is
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
-    function RelativeEntropyCone(dimension::Int)
+    function RelativeEntropyCone(dimension::Base.Integer)
         if !(dimension > 1 && isodd(dimension))
             throw(
                 DimensionMismatch(
@@ -472,7 +472,7 @@ The matrix X is vectorized by stacking the columns, matching the behavior of Jul
 struct NormSpectralCone <: AbstractVectorSet
     row_dim::Int
     column_dim::Int
-    function NormSpectralCone(row_dim::Int, column_dim::Int)
+    function NormSpectralCone(row_dim::Base.Integer, column_dim::Base.Integer)
         if !(row_dim > 0 && column_dim > 0)
             throw(
                 DimensionMismatch(
@@ -497,7 +497,7 @@ The matrix X is vectorized by stacking the columns, matching the behavior of Jul
 struct NormNuclearCone <: AbstractVectorSet
     row_dim::Int
     column_dim::Int
-    function NormNuclearCone(row_dim::Int, column_dim::Int)
+    function NormNuclearCone(row_dim::Base.Integer, column_dim::Base.Integer)
         if !(row_dim > 0 && column_dim > 0)
             throw(
                 DimensionMismatch(
@@ -692,7 +692,7 @@ form.
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractSymmetricMatrixSetTriangle
     side_dimension::Int
-    function PositiveSemidefiniteConeTriangle(side_dimension::Int)
+    function PositiveSemidefiniteConeTriangle(side_dimension::Base.Integer)
         if !(side_dimension > 0)
             throw(
                 DimensionMismatch(
@@ -736,7 +736,7 @@ It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `Po
 """
 struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
     side_dimension::Int
-    function PositiveSemidefiniteConeSquare(side_dimension::Int)
+    function PositiveSemidefiniteConeSquare(side_dimension::Base.Integer)
         if !(side_dimension > 0)
             throw(
                 DimensionMismatch(
@@ -774,7 +774,7 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct LogDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
-    function LogDetConeTriangle(side_dimension::Int)
+    function LogDetConeTriangle(side_dimension::Base.Integer)
         if !(side_dimension > 0)
             throw(
                 DimensionMismatch(
@@ -800,7 +800,7 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct LogDetConeSquare <: AbstractVectorSet
     side_dimension::Int
-    function LogDetConeSquare(side_dimension::Int)
+    function LogDetConeSquare(side_dimension::Base.Integer)
         if !(side_dimension > 0)
             throw(
                 DimensionMismatch(
@@ -823,7 +823,7 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct RootDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
-    function RootDetConeTriangle(side_dimension::Int)
+    function RootDetConeTriangle(side_dimension::Base.Integer)
         if !(side_dimension > 0)
             throw(
                 DimensionMismatch(
@@ -849,7 +849,7 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct RootDetConeSquare <: AbstractVectorSet
     side_dimension::Int
-    function RootDetConeSquare(side_dimension::Int)
+    function RootDetConeSquare(side_dimension::Base.Integer)
         if !(side_dimension > 0)
             throw(
                 DimensionMismatch(
@@ -997,7 +997,7 @@ function Base.:(==)(
 end
 
 """
-    Complements(dimension::Int)
+    Complements(dimension::Base.Integer)
 
 The set corresponding to a mixed complementarity constraint.
 
@@ -1050,9 +1050,7 @@ defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 """
 struct Complements <: AbstractVectorSet
     dimension::Int
-    # Need an explicit Int64 here, because JSON parses Int as Int64, even on
-    # 32-bit machines.
-    function Complements(dimension::Union{Int,Int64})
+    function Complements(dimension::Base.Integer)
         if !(dimension > 0 && iseven(dimension))
             throw(
                 DimensionMismatch(
@@ -1060,7 +1058,7 @@ struct Complements <: AbstractVectorSet
                 ),
             )
         end
-        return new(convert(Int, dimension))
+        return new(dimension)
     end
 end
 
