@@ -112,6 +112,17 @@ The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension `dimens
 """
 struct Reals <: AbstractVectorSet
     dimension::Int
+    function Reals(dimension::Int)
+        if !(dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Reals must be greater than 0, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Reals) = Zeros(dimension(s))
@@ -124,6 +135,17 @@ The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension `dim
 """
 struct Zeros <: AbstractVectorSet
     dimension::Int
+    function Zeros(dimension::Int)
+        if !(dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Zeros must be greater than 0, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Zeros) = Reals(dimension(s))
@@ -136,6 +158,17 @@ The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of
 """
 struct Nonnegatives <: AbstractVectorSet
     dimension::Int
+    function Nonnegatives(dimension::Int)
+        if !(dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Nonnegatives must be greater than 0, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Nonnegatives) = copy(s)
@@ -148,6 +181,17 @@ The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of
 """
 struct Nonpositives <: AbstractVectorSet
     dimension::Int
+    function Nonpositives(dimension::Int)
+        if !(dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Nonpositives must be greater than 0, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Nonpositives) = copy(s)
@@ -230,6 +274,17 @@ The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\g
 """
 struct NormInfinityCone <: AbstractVectorSet
     dimension::Int
+    function NormInfinityCone(dimension::Int)
+        if !(dimension > 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormInfinityCone must be greater than 1, " *
+                    "not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
@@ -242,6 +297,17 @@ The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lV
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
+    function NormOneCone(dimension::Int)
+        if !(dimension > 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormOneCone must be greater than 1, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
@@ -254,6 +320,17 @@ The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in
 """
 struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
+    function SecondOrderCone(dimension::Int)
+        if !(dimension > 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of SecondOrderCone must be greater than 1, " *
+                    "not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::SecondOrderCone) = copy(s)
@@ -266,6 +343,17 @@ The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int
+    function RotatedSecondOrderCone(dimension::Int)
+        if !(dimension > 2)
+            throw(
+                DimensionMismatch(
+                    "Dimension of RotatedSecondOrderCone must be greater " *
+                    "than 2, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::RotatedSecondOrderCone) = copy(s)
@@ -283,6 +371,17 @@ The dual of the geometric mean cone is
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
+    function GeometricMeanCone(dimension::Int)
+        if !(dimension > 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of GeometricMeanCone must be greater than 1, " *
+                    "not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 """
@@ -351,6 +450,17 @@ The dual of the relative entropy cone is
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
+    function RelativeEntropyCone(dimension::Int)
+        if !(dimension > 1 && isodd(dimension))
+            throw(
+                DimensionMismatch(
+                    "Dimension of RelativeEntropyCone must be greater an odd " *
+                    "integer greater than 2, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 """
@@ -362,6 +472,17 @@ The matrix X is vectorized by stacking the columns, matching the behavior of Jul
 struct NormSpectralCone <: AbstractVectorSet
     row_dim::Int
     column_dim::Int
+    function NormSpectralCone(row_dim::Int, column_dim::Int)
+        if !(row_dim > 0 && column_dim > 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormSpectralCone must be strictly " *
+                    "positive, not ($(row_dim), $(column_dim)).",
+                ),
+            )
+        end
+        return new(row_dim, column_dim)
+    end
 end
 
 dual_set(s::NormSpectralCone) = NormNuclearCone(s.row_dim, s.column_dim)
@@ -376,6 +497,17 @@ The matrix X is vectorized by stacking the columns, matching the behavior of Jul
 struct NormNuclearCone <: AbstractVectorSet
     row_dim::Int
     column_dim::Int
+    function NormNuclearCone(row_dim::Int, column_dim::Int)
+        if !(row_dim > 0 && column_dim > 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormNuclearCone must be strictly " *
+                    "positive, not ($(row_dim), $(column_dim)).",
+                ),
+            )
+        end
+        return new(row_dim, column_dim)
+    end
 end
 
 dual_set(s::NormNuclearCone) = NormSpectralCone(s.row_dim, s.column_dim)
@@ -560,6 +692,17 @@ form.
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractSymmetricMatrixSetTriangle
     side_dimension::Int
+    function PositiveSemidefiniteConeTriangle(side_dimension::Int)
+        if !(side_dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of PositiveSemidefiniteConeTriangle must " *
+                    "be strictly positive, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 dual_set(s::PositiveSemidefiniteConeTriangle) = copy(s)
@@ -593,6 +736,17 @@ It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `Po
 """
 struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
     side_dimension::Int
+    function PositiveSemidefiniteConeSquare(side_dimension::Int)
+        if !(side_dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of PositiveSemidefiniteConeSquare must " *
+                    "be strictly positive, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 function _dual_set_square_error()
@@ -620,6 +774,17 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct LogDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
+    function LogDetConeTriangle(side_dimension::Int)
+        if !(side_dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of LogDetConeTriangle must " *
+                    "be strictly positive, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 function dimension(s::LogDetConeTriangle)
@@ -635,6 +800,17 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct LogDetConeSquare <: AbstractVectorSet
     side_dimension::Int
+    function LogDetConeSquare(side_dimension::Int)
+        if !(side_dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of LogDetConeSquare must " *
+                    "be strictly positive, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 dimension(s::LogDetConeSquare) = 2 + s.side_dimension^2
@@ -647,6 +823,17 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct RootDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
+    function RootDetConeTriangle(side_dimension::Int)
+        if !(side_dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of RootDetConeTriangle must " *
+                    "be strictly positive, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 function dimension(s::RootDetConeTriangle)
@@ -662,6 +849,17 @@ The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
 """
 struct RootDetConeSquare <: AbstractVectorSet
     side_dimension::Int
+    function RootDetConeSquare(side_dimension::Int)
+        if !(side_dimension > 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of RootDetConeSquare must " *
+                    "be strictly positive, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 dimension(s::RootDetConeSquare) = 1 + s.side_dimension^2
@@ -855,10 +1053,10 @@ struct Complements <: AbstractVectorSet
     # Need an explicit Int64 here, because JSON parses Int as Int64, even on
     # 32-bit machines.
     function Complements(dimension::Union{Int,Int64})
-        if !iseven(dimension)
+        if !(dimension > 0 && iseven(dimension))
             throw(
-                ArgumentError(
-                    "The dimension of a Complements set must be even.",
+                DimensionMismatch(
+                    "Dimension of Complements must be even, not $(dimension).",
                 ),
             )
         end

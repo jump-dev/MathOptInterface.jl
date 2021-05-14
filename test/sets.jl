@@ -114,8 +114,31 @@ function test_sets_dimension()
     @test MOI.dimension(MOI.Complements(10)) == 10
 end
 
-function test_sets_complement()
-    @test_throws ArgumentError MOI.Complements(3)
+function test_sets_DimensionMismatch()
+    @test_throws DimensionMismatch MOI.Reals(0)
+    @test_throws DimensionMismatch MOI.Zeros(0)
+    @test_throws DimensionMismatch MOI.Nonnegatives(0)
+    @test_throws DimensionMismatch MOI.Nonpositives(0)
+    @test_throws DimensionMismatch MOI.NormInfinityCone(1)
+    @test_throws DimensionMismatch MOI.NormOneCone(1)
+    @test_throws DimensionMismatch MOI.SecondOrderCone(1)
+    @test_throws DimensionMismatch MOI.RotatedSecondOrderCone(2)
+    @test_throws DimensionMismatch MOI.GeometricMeanCone(1)
+    @test_throws DimensionMismatch MOI.RelativeEntropyCone(1)
+    @test_throws DimensionMismatch MOI.RelativeEntropyCone(4)
+    @test_throws DimensionMismatch MOI.NormSpectralCone(1, 0)
+    @test_throws DimensionMismatch MOI.NormSpectralCone(0, 1)
+    @test_throws DimensionMismatch MOI.NormNuclearCone(1, 0)
+    @test_throws DimensionMismatch MOI.NormNuclearCone(0, 1)
+    @test_throws DimensionMismatch MOI.PositiveSemidefiniteConeTriangle(0)
+    @test_throws DimensionMismatch MOI.PositiveSemidefiniteConeSquare(0)
+    @test_throws DimensionMismatch MOI.LogDetConeTriangle(0)
+    @test_throws DimensionMismatch MOI.LogDetConeSquare(0)
+    @test_throws DimensionMismatch MOI.RootDetConeTriangle(0)
+    @test_throws DimensionMismatch MOI.RootDetConeSquare(0)
+    @test_throws DimensionMismatch MOI.Complements(0)
+    @test_throws DimensionMismatch MOI.Complements(3)
+    return
 end
 
 function _dual_set_test(set1, set2)
