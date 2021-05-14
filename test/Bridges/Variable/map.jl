@@ -87,7 +87,7 @@ v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
 end
 
 b3 = VariableDummyBridge(3)
-set3 = MOI.Zeros(0)
+set3 = MOI.Zeros(1)
 v3, c3 = MOIB.Variable.add_keys_for_bridge(map, () -> b3, set3)
 @testset "Vector set of length 0" begin
     @test isempty(v3)
