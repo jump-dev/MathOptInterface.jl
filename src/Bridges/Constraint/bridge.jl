@@ -6,7 +6,6 @@ bridges.
 """
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
-# TODO [breaking] merge with `Bridges.Variable.IndexInVector` into `Bridges.IndexInVector`
 """
     IndexInVector
 
