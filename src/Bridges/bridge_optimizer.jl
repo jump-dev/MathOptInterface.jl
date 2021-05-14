@@ -632,7 +632,8 @@ function get_all_including_bridged(
 )
     list = MOI.get(b.model, attr)
     if !isempty(Variable.bridges(b))
-        return vcat(list, keys(Variable.bridges(b)))
+        # The conversion from `keys` into a `Vector` happens inside `append!`.
+        append!(list, keys(Variable.bridges(b)))
     end
     return list
 end
