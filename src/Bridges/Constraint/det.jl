@@ -255,7 +255,7 @@ function MOI.get(
         MOI.ExponentialCone,
     },
 ) where {T}
-    return b.lcindex
+    return copy(b.lcindex)
 end
 
 function MOI.get(
@@ -409,7 +409,7 @@ end
 # Attributes, Bridge acting as a model
 MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables) = length(b.Δ)
 
-MOI.get(b::RootDetBridge, ::MOI.ListOfVariableIndices) = b.Δ
+MOI.get(b::RootDetBridge, ::MOI.ListOfVariableIndices) = copy(b.Δ)
 
 function MOI.get(
     ::RootDetBridge{T},

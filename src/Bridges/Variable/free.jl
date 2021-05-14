@@ -39,7 +39,7 @@ function MOI.get(bridge::FreeBridge, ::MOI.NumberOfVariables)
 end
 
 function MOI.get(bridge::FreeBridge, ::MOI.ListOfVariableIndices)
-    return vcat(bridge.variables)
+    return copy(bridge.variables)
 end
 
 function MOI.get(

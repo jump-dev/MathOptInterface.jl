@@ -200,7 +200,7 @@ function MOI.get(
         MOI.GreaterThan{T},
     },
 ) where {T}
-    return bridge.var_pos
+    return copy(bridge.var_pos)
 end
 
 # References

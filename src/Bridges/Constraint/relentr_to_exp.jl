@@ -84,7 +84,11 @@ end
 function MOI.get(bridge::RelativeEntropyBridge, ::MOI.NumberOfVariables)
     return length(bridge.y)
 end
-MOI.get(bridge::RelativeEntropyBridge, ::MOI.ListOfVariableIndices) = bridge.y
+
+function MOI.get(bridge::RelativeEntropyBridge, ::MOI.ListOfVariableIndices)
+    return copy(bridge.y)
+end
+
 function MOI.get(
     bridge::RelativeEntropyBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.GreaterThan{T}},
@@ -110,7 +114,7 @@ function MOI.get(
     bridge::RelativeEntropyBridge{T,F,G},
     ::MOI.ListOfConstraintIndices{G,MOI.ExponentialCone},
 ) where {T,F,G}
-    return bridge.exp_indices
+    return copy(bridge.exp_indices)
 end
 
 # References

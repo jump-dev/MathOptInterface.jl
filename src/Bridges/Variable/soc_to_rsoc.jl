@@ -44,7 +44,7 @@ function MOI.get(bridge::SOCtoRSOCBridge, ::MOI.NumberOfVariables)
 end
 
 function MOI.get(bridge::SOCtoRSOCBridge, ::MOI.ListOfVariableIndices)
-    return bridge.variables
+    return copy(bridge.variables)
 end
 
 function MOI.get(
