@@ -79,7 +79,7 @@ end
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::ScalarizeBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     MOI.delete(model, bridge.scalar_constraints[i.value])
     deleteat!(bridge.scalar_constraints, i.value)

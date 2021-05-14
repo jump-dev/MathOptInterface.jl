@@ -58,7 +58,7 @@ end
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::FlipSignBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     MOI.delete(model, bridge.flipped_variables[i.value])
     deleteat!(bridge.flipped_variables, i.value)
@@ -86,14 +86,14 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::FlipSignBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     return -MOI.get(model, attr, bridge.flipped_variables[i.value])
 end
 
 function MOIB.bridged_function(
     bridge::FlipSignBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     func = MOI.SingleVariable(bridge.flipped_variables[i.value])
     return MOIU.operate(-, T, func)
@@ -102,7 +102,7 @@ end
 function unbridged_map(
     bridge::FlipSignBridge{T},
     vi::MOI.VariableIndex,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     func = MOIU.operate(-, T, MOI.SingleVariable(vi))
     return (bridge.flipped_variables[i.value] => func,)
@@ -121,7 +121,7 @@ function MOI.set(
     attr::MOI.VariablePrimalStart,
     bridge::FlipSignBridge,
     value,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     MOI.set(model, attr, bridge.flipped_variables[i.value], -value)
     return

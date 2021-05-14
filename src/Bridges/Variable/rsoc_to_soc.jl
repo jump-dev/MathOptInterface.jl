@@ -13,7 +13,7 @@ function rotate_result(
     model,
     attr::MOI.VariablePrimal,
     variables,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     if i.value == 1 || i.value == 2
         t, u = MOI.get(model, attr, variables[1:2])
@@ -29,7 +29,7 @@ function rotate_result(
     end
 end
 
-function rotate_bridged_function(T::Type, variables, i::IndexInVector)
+function rotate_bridged_function(T::Type, variables, i::MOIB.IndexInVector)
     s2 = √T(2)
     if i.value == 1 || i.value == 2
         t = MOIU.operate(/, T, MOI.SingleVariable(variables[1]), s2)
@@ -154,14 +154,14 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimal,
     bridge::RSOCtoSOCBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     return rotate_result(model, attr, bridge.variables, i)
 end
 
 function MOIB.bridged_function(
     bridge::RSOCtoSOCBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     return rotate_bridged_function(T, bridge.variables, i)
 end

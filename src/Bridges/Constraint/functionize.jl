@@ -171,7 +171,7 @@ end
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::VectorFunctionizeBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
     idx = setdiff(1:MOI.output_dimension(func), i.value)

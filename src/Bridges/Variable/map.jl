@@ -261,12 +261,12 @@ function length_of_vector_of_variables(map::Map, vi::MOI.VariableIndex)
 end
 
 """
-    index_in_vector_of_variables(map::Map, vi::MOI.VariableIndex)::IndexInVector
+    index_in_vector_of_variables(map::Map, vi::MOI.VariableIndex)::MOIB.IndexInVector
 
 Return the index of `vi` in the vector of variables in which it was bridged.
 """
 function index_in_vector_of_variables(map::Map, vi::MOI.VariableIndex)
-    return IndexInVector(map.index_in_vector[-vi.value])
+    return MOIB.IndexInVector(map.index_in_vector[-vi.value])
 end
 
 """

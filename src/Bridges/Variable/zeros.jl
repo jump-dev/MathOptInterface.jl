@@ -67,13 +67,13 @@ function MOI.get(
     ::MOI.ModelLike,
     ::MOI.VariablePrimal,
     ::ZerosBridge{T},
-    ::IndexInVector,
+    ::MOIB.IndexInVector,
 ) where {T}
     return zero(T)
 end
 
-function MOIB.bridged_function(::ZerosBridge{T}, ::IndexInVector) where {T}
+function MOIB.bridged_function(::ZerosBridge{T}, ::MOIB.IndexInVector) where {T}
     return zero(MOI.ScalarAffineFunction{T})
 end
 
-unbridged_map(::ZerosBridge, ::MOI.VariableIndex, ::IndexInVector) = nothing
+unbridged_map(::ZerosBridge, ::MOI.VariableIndex, ::MOIB.IndexInVector) = nothing

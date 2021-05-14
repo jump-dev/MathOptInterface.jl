@@ -62,7 +62,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::FreeBridge)
     return
 end
 
-function MOI.delete(model::MOI.ModelLike, bridge::FreeBridge, i::IndexInVector)
+function MOI.delete(model::MOI.ModelLike, bridge::FreeBridge, i::MOIB.IndexInVector)
     n = div(length(bridge.variables), 2)
     MOI.delete(model, bridge.variables[i.value])
     MOI.delete(model, bridge.variables[n+i.value])
@@ -101,7 +101,7 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::FreeBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     n = div(length(bridge.variables), 2)
     return MOI.get(model, attr, bridge.variables[i.value]) -
@@ -110,7 +110,7 @@ end
 
 function MOIB.bridged_function(
     bridge::FreeBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     n = div(length(bridge.variables), 2)
     return MOIU.operate(
@@ -126,7 +126,7 @@ end
 function unbridged_map(
     bridge::FreeBridge{T},
     vi::MOI.VariableIndex,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     sv = MOI.SingleVariable(vi)
     # `unbridged_map` is required to return a `MOI.ScalarAffineFunction`.
@@ -149,7 +149,7 @@ function MOI.set(
     attr::MOI.VariablePrimalStart,
     bridge::FreeBridge,
     value,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     if value < 0
         nonneg = zero(value)
