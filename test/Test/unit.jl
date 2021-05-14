@@ -66,6 +66,8 @@ end
                 "solve_farkas_variable_lessthan",
                 "solve_farkas_variable_lessthan_max",
                 "solve_twice",
+                "solve_basis_lower_bound",
+                "solve_basis_superbasic",
             ],
         )
         MOI.empty!(model)
@@ -650,6 +652,38 @@ end
             ),
         )
         MOIT.solve_twice(mock, config)
+    end
+    @testset "solve_basis_lower_bound" begin
+        MOIU.set_mock_optimize!(
+            mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0, 0.0]);
+                con_basis = [
+                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+                        [MOI.NONBASIC],
+                    (MOI.SingleVariable, MOI.Reals) => [MOI.SUPER_BASIC],
+                ]
+            )
+        )
+        MOIT.solve_basis_lower_bound(mock, MOI.Test.TestConfig(basis = true))
+    end
+    @testset "solve_basis_superbasic" begin
+        MOIU.set_mock_optimize!(
+            mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [4.0, 0.0]);
+                con_basis = [
+                    (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                        [MOI.NONBASIC],
+                    (MOI.SingleVariable, MOI.Reals) => [MOI.BASIC, MOI.SUPER_BASIC],
+                ]
+            ),
+        )
+        MOIT.solve_basis_superbasic(mock, MOI.Test.TestConfig(basis = true))
     end
 end
 

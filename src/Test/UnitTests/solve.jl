@@ -462,3 +462,68 @@ function solve_twice(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_twice"] = solve_twice
+
+"""
+The problem:
+```
+ min 1x
+s.t. x >= 1
+     y free
+```
+This has the solution `(x, y) = (1, 0)`. So the lower-bound constraint on `x` is
+non-basic, y is superbasic, and querying the status of x as a free variable
+throws `MOI.InvalidIndex`
+"""
+function solve_basis_lower_bound(model::MOI.ModelLike, config::TestConfig)
+    if !config.solve || !config.basis
+        return
+    end
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC
+    cx = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Reals}(x.value)
+    @test_throws(
+        MOI.InvalidIndex,
+        MOI.get(model, MOI.ConstraintBasisStatus(), cx),
+    )
+    cy = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Reals}(y.value)
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), cy) == MOI.SUPER_BASIC
+end
+unittests["solve_basis_lower_bound"] = solve_basis_lower_bound
+
+"""
+The problem:
+```
+max 2x + 3y
+s.t. x + 2y <= 4
+```
+This has a solution of `(x, y) = (4, 0)`. x is a BASIC variable, y is a
+SUPERBASIC variable (it is nonbasic, and set to 0), and the inequality is
+NONBASIC.
+"""
+function solve_basis_superbasic(model::MOI.ModelLike, config::TestConfig)
+    if !config.solve || !config.basis
+        return
+    end
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0)
+    c = MOI.add_constraint(model, f, MOI.LessThan(4.0))
+    g = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0], x), 0.0)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(g)}(), g)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [4.0, 0.0]
+    cx = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Reals}(x[1].value)
+    cy = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Reals}(x[2].value)
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), cx) == MOI.BASIC
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), cy) == MOI.SUPER_BASIC
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC
+end
+unittests["solve_basis_superbasic"] = solve_basis_superbasic

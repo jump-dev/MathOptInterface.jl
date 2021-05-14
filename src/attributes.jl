@@ -1192,8 +1192,16 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
 `result_index` is omitted, it is 1 by default.
 
-**For the basis status of a variable, query the corresponding `SingleVariable`
-constraint that enforces the variable's bounds.**
+## Querying the basis status of a variable
+
+For the basis status of a variable, query the corresponding `SingleVariable`
+constraint that enforces the variable's bounds.
+
+Use `ConstraintIndex{MOI.SingleVariable,MOI.Reals}` to query the basis status of
+a free variable (i.e., one with no other `SingleVariable` constraints). The
+`BasisStatusCode` of a free variable can only be `BASIC` (if the variable is in
+the basis) or `SUPERBASIC` (if the variable is nonbasic, e.g., because it is at
+0).
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
     result_index::Int

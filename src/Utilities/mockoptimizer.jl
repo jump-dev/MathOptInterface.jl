@@ -938,3 +938,39 @@ function mock_basis_status!(mock::MockOptimizer, con_basis::Pair)
         MOI.set(mock, MOI.ConstraintBasisStatus(), ci, bases[i])
     end
 end
+
+# Exceptions for free variable ConstraintBasisStatus.
+function MOI.is_valid(
+    mock::MockOptimizer,
+    idx::MOI.ConstraintIndex{MOI.SingleVariable,MOI.Reals},
+)
+    x = xor_index(MOI.VariableIndex(idx.value))
+    for S in (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.Interval{Float64},
+        MOI.EqualTo{Float64},
+    )
+        if MOI.is_valid(
+            mock.inner_model,
+            MOI.ConstraintIndex{MOI.SingleVariable,S}(x.value),
+        )
+            return false
+        end
+    end
+    return true
+end
+
+function MOI.get(
+    mock::MockOptimizer,
+    ::MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Reals},
+)
+    ret = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Reals}[]
+    for x in MOI.get(mock, MOI.ListOfVariableIndices())
+        ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Reals}(x.value)
+        if MOI.is_valid(mock, ci)
+            push!(ret, ci)
+        end
+    end
+    return ret
+end
