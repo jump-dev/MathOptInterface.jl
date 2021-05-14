@@ -170,7 +170,7 @@ end
 # Attributes, Bridge acting as a model
 MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables) = length(b.xij)
 
-MOI.get(b::GeoMeanBridge, ::MOI.ListOfVariableIndices) = b.xij
+MOI.get(b::GeoMeanBridge, ::MOI.ListOfVariableIndices) = copy(b.xij)
 
 function MOI.get(
     ::GeoMeanBridge{T,F},
@@ -204,7 +204,7 @@ function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.ListOfConstraintIndices{G,MOI.RotatedSecondOrderCone},
 ) where {T,F,G}
-    return b.socrc
+    return copy(b.socrc)
 end
 
 function MOI.get(

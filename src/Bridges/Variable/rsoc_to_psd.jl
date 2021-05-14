@@ -91,7 +91,7 @@ function MOI.get(bridge::RSOCtoPSDBridge, ::MOI.NumberOfVariables)
 end
 
 function MOI.get(bridge::RSOCtoPSDBridge, ::MOI.ListOfVariableIndices)
-    return bridge.variables
+    return copy(bridge.variables)
 end
 
 function MOI.get(
@@ -123,7 +123,7 @@ function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{T}},
 ) where {T}
-    return bridge.off_diag
+    return copy(bridge.off_diag)
 end
 
 function MOI.get(
@@ -137,7 +137,7 @@ function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
-    return bridge.diag
+    return copy(bridge.diag)
 end
 
 # References

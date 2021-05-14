@@ -632,8 +632,7 @@ function get_all_including_bridged(
 )
     list = MOI.get(b.model, attr)
     if !isempty(Variable.bridges(b))
-        # TODO(odow): Fix this!
-        list = append!(copy(list), keys(Variable.bridges(b)))
+        return vcat(list, keys(Variable.bridges(b)))
     end
     return list
 end

@@ -313,7 +313,7 @@ end
 
 # Attributes, Bridge acting as a model
 MOI.get(b::VectorSlackBridge, ::MOI.NumberOfVariables) = length(b.slack)
-MOI.get(b::VectorSlackBridge, ::MOI.ListOfVariableIndices) = b.slack
+MOI.get(b::VectorSlackBridge, ::MOI.ListOfVariableIndices) = copy(b.slack)
 
 # Attributes, Bridge acting as a constraint
 function MOI.set(

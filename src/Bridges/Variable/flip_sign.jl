@@ -32,7 +32,7 @@ function MOI.get(bridge::FlipSignBridge, ::MOI.NumberOfVariables)
 end
 
 function MOI.get(bridge::FlipSignBridge, ::MOI.ListOfVariableIndices)
-    return bridge.flipped_variables
+    return copy(bridge.flipped_variables)
 end
 
 function MOI.get(

@@ -66,7 +66,7 @@ function MOI.get(
     bridge::ScalarizeBridge{T,F,S},
     ::MOI.ListOfConstraintIndices{F,S},
 ) where {T,F,S}
-    return bridge.scalar_constraints
+    return copy(bridge.scalar_constraints)
 end
 
 # References

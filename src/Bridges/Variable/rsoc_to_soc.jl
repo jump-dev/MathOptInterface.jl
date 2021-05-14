@@ -109,7 +109,7 @@ function MOI.get(bridge::RSOCtoSOCBridge, ::MOI.NumberOfVariables)
 end
 
 function MOI.get(bridge::RSOCtoSOCBridge, ::MOI.ListOfVariableIndices)
-    return bridge.variables
+    return copy(bridge.variables)
 end
 
 function MOI.get(
