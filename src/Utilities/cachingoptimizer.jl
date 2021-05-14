@@ -237,7 +237,7 @@ function pass_nonvariable_constraints(
     src::MOI.ModelLike,
     idxmap::IndexMap,
     constraint_types,
-    pass_cons = copy_constraints;
+    pass_cons;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     dest.state == ATTACHED_OPTIMIZER && reset_optimizer(dest)
@@ -249,6 +249,9 @@ function pass_nonvariable_constraints(
         pass_cons;
         filter_constraints = filter_constraints,
     )
+end
+function final_touch(m::CachingOptimizer, index_map)
+    return final_touch(m.model_cache, index_map)
 end
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
     if m.state == ATTACHED_OPTIMIZER

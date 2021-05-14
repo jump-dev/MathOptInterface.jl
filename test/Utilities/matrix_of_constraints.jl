@@ -95,6 +95,24 @@ function _test(
         MOI.empty!(optimizer)
         model = MOIU.CachingOptimizer(
             MOIU.Model{Float64}(),
+            MOI.Bridges.full_bridge_optimizer(
+                MOIU.CachingOptimizer(optimizer, MOIU.MANUAL),
+                Float64,
+            ),
+        )
+        model.mode = MOIU.MANUAL
+        MOIU.reset_optimizer(model)
+        @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
+        test(model, config)
+        MOIU.attach_optimizer(model)
+        inner = model.optimizer.model.model_cache
+        _test_matrix_equal(_A(inner), A)
+        @test _b(inner) == b
+        query_test(inner)
+
+        MOI.empty!(optimizer)
+        model = MOIU.CachingOptimizer(
+            MOIU.Model{Float64}(),
             MOI.Bridges.full_bridge_optimizer(optimizer, Float64),
         )
         model.mode = MOIU.MANUAL
@@ -235,12 +253,32 @@ MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
               MOI.get(optimizer, MOI.ListOfConstraintTypesPresent())
         k = 0
         for (F, S) in con_types
+            function bad_types(F, S)
+                @test 0 == @inferred MOI.get(
+                    optimizer,
+                    MOI.NumberOfConstraints{F,S}(),
+                )
+                @test isempty(
+                    @inferred MOI.get(
+                        optimizer,
+                        MOI.ListOfConstraintIndices{F,S}(),
+                    )
+                )
+                @test !MOI.is_valid(optimizer, MOI.ConstraintIndex{F,S}(1))
+            end
+            BadF = MOI.ScalarAffineFunction{Int}
+            BadS = MOI.EqualTo{Int}
+            bad_types(F, BadS)
+            bad_types(BadF, S)
+            bad_types(BadF, BadS)
             n = div(2, length(con_types))
-            @test n == MOI.get(optimizer, MOI.NumberOfConstraints{F,S}())
+            @test n ==
+                  @inferred MOI.get(optimizer, MOI.NumberOfConstraints{F,S}())
             cis = MOI.get(optimizer, MOI.ListOfConstraintIndices{F,S}())
             @test n == length(collect(cis))
             for ci in cis
                 @test MOI.is_valid(optimizer, ci)
+                @test !MOI.is_valid(optimizer, typeof(ci)(-1))
                 k += 1
                 @test k:k == MOI.Utilities.rows(optimizer.constraints, ci)
             end

@@ -11,6 +11,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 The Utilities submodule provides a variety of functionality for managing
 `MOI.ModelLike` objects.
+
 ## Utilities.Model
 
 [`Utilities.Model`](@ref) provides an implementation of a [`ModelLike`](@ref)
@@ -381,6 +382,93 @@ See [`Utilities.supports_allocate_load`](@ref) for more details.
 
 !!! warning
     The Allocate-Load API should **not** be used outside [`copy_to`](@ref).
+
+## Utilities.MatrixOfConstraints
+
+The constraints of [`Utilities.Model`](@ref) are stored as a vector of tuples
+of function and set in a `Utilities.VectorOfConstraints`. Other representations
+can be used by parametrizing the type [`Utilities.GenericModel`](@ref)
+(resp. [`Utilities.GenericOptimizer`](@ref)). For instance, if all
+non-`SingleVariable` constraints are affine, the coefficients of all the
+constraints can be stored in a single sparse matrix using
+[`Utilities.MatrixOfConstraints`](@ref). The constraints storage can even be
+customized up to a point where it exactly matches the storage of the solver of
+interest, in which case [`copy_to`](@ref) can be implemented for the solver by
+calling [`copy_to`](@ref) to this custom model.
+
+For instance, [Clp](https://github.com/jump-dev/Clp.jl) defines the following
+model
+```julia
+MOI.Utilities.@product_of_scalar_sets(LP, MOI.EqualTo{T}, MOI.LessThan{T}, MOI.GreaterThan{T})
+const Model = MOI.Utilities.GenericModel{
+    Float64,
+    MOI.Utilities.MatrixOfConstraints{
+        Float64,
+        MOI.Utilities.MutableSparseMatrixCSC{Float64,Cint,MOI.Utilities.ZeroBasedIndexing},
+        MOI.Utilities.Box{Float64},
+        LP{Float64},
+    },
+}
+```
+
+The [`copy_to`](@ref) operation can now be implemented as follows (assuming that
+the `Model` definition above is in the `Clp` module so that it can be referred
+to as `Model`, to be distinguished with [`Utilities.Model`](@ref)):
+```julia
+function _copy_to(
+    dest::Optimizer,
+    src::Model
+)
+    @assert MOI.is_empty(dest)
+    A = src.constraints.coefficients
+    row_bounds = src.constraints.constants
+    Clp_loadProblem(
+        dest,
+        A.n,
+        A.m,
+        A.colptr,
+        A.rowval,
+        A.nzval,
+        src.lower_bound,
+        src.upper_bound,
+        # (...) objective vector (omitted),
+        row_bounds.lower,
+        row_bounds.upper,
+    )
+    # Set objective sense and constant (omitted)
+    return
+end
+
+function MOI.copy_to(
+    dest::Optimizer,
+    src::Model;
+    copy_names::Bool = false
+)
+    _copy_to(dest, src)
+    return MOI.Utilities.identity_index_map(src)
+end
+
+function MOI.copy_to(
+    dest::Optimizer,
+    src::MOI.Utilities.UniversalFallback{Model};
+    copy_names::Bool = false
+)
+    # Copy attributes from `src` to `dest` and error in case any unsupported
+    # constraints or attributes are set in `UniversalFallback`.
+    return MOI.copy_to(dest, src.model)
+end
+
+function MOI.copy_to(
+    dest::Optimizer,
+    src::MOI.ModelLike;
+    copy_names::Bool = false
+)
+    model = Model()
+    index_map = MOI.copy_to(model, src)
+    _copy_to(dest, model)
+    return index_map
+end
+```
 
 ## Fallbacks
 

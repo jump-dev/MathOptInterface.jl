@@ -5,8 +5,18 @@
     load_constants(constants, offset, func_or_set)
 
 This function loads the constants of `func_or_set` in `constants` at an offset
-of `offset`. The storage should be preallocated with `resize!` before calling
+of `offset`. Where `offset` is the sum of the dimensions of the constraints
+already loaded. The storage should be preallocated with `resize!` before calling
 this function.
+
+This function should be implemented to be usable as storage of constants for
+[`MatrixOfConstraints`](@ref).
+
+# The constants are loaded in three steps:
+# 1) `Base.empty!` is called.
+# 2) `Base.resize!` is called with the sum of the dimensions of all constraints.
+# 3) `MOI.Utilities.load_constants` is called for each function for vector
+#    constraint or set for scalar constraint.
 """
 function load_constants end
 
@@ -39,12 +49,18 @@ function Base.empty!(b::Box)
     empty!(b.upper)
     return b
 end
+
 function Base.resize!(b::Box, n)
     resize!(b.lower, n)
     resize!(b.upper, n)
     return
 end
-function load_constants(b::Box{T}, offset, set) where {T}
+
+function load_constants(
+    b::Box{T},
+    offset,
+    set::SUPPORTED_VARIABLE_SCALAR_SETS{T},
+) where {T}
     flag = single_variable_flag(typeof(set))
     b.lower[offset+1] = if iszero(flag & LOWER_BOUND_MASK)
         typemin(T)
@@ -122,7 +138,7 @@ function MOI.empty!(v::MatrixOfConstraints{T}) where {T}
     MOI.empty!(v.sets)
     empty!(v.are_indices_mapped)
     v.caches =
-        [Tuple{affine_function_type(T, S),S}[] for S in set_types(v.sets)]
+        [Tuple{_affine_function_type(T, S),S}[] for S in set_types(v.sets)]
     return
 end
 
@@ -132,77 +148,34 @@ end
 Return the rows corresponding to the constraint of index `ci`. If it is a
 vector constraint, this is a `UnitRange`, otherwise, this is an integer.
 """
-rows(model::MatrixOfConstraints, ci::MOI.ConstraintIndex) = rows(model.sets, ci)
+function rows(model::MatrixOfConstraints, ci::MOI.ConstraintIndex)
+    return indices(model.sets, ci)
+end
 
-function affine_function_type(
+function _affine_function_type(
     ::Type{T},
     ::Type{<:MOI.AbstractScalarSet},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
 end
-function affine_function_type(
+
+function _affine_function_type(
     ::Type{T},
     ::Type{<:MOI.AbstractVectorSet},
 ) where {T}
     return MOI.VectorAffineFunction{T}
 end
+
 function MOI.supports_constraint(
     v::MatrixOfConstraints{T},
     ::Type{F},
     ::Type{S},
 ) where {T,F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    return F == affine_function_type(T, S) && set_index(v.sets, S) !== nothing
+    return F == _affine_function_type(T, S) && set_index(v.sets, S) !== nothing
 end
 
 function MOI.is_valid(v::MatrixOfConstraints, ci::MOI.ConstraintIndex)
     return MOI.is_valid(v.sets, ci)
-end
-
-function MOI.delete(v::MatrixOfConstraints, ci::MOI.ConstraintIndex)
-    MOI.throw_if_not_valid(v, ci)
-    MOI.delete(v.functions, rows(v.sets, ci))
-    MOI.delete(v.sets, ci)
-    return
-end
-
-function MOI.get(
-    v::MatrixOfConstraints,
-    attr::MOI.ConstraintFunction,
-    ci::MOI.ConstraintIndex,
-)
-    MOI.throw_if_not_valid(v, ci)
-    return MOI.get(v.coefficients, attr, rows(v.sets, ci))
-end
-
-function MOI.get(
-    v::MatrixOfConstraints,
-    attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex,
-)
-    MOI.throw_if_not_valid(v, ci)
-    return MOI.get(v.sets, attr, ci)
-end
-
-function MOI.set(
-    v::MatrixOfConstraints,
-    attr::MOI.ConstraintFunction,
-    ci::MOI.ConstraintIndex{F},
-    func::F,
-) where {F}
-    MOI.throw_if_not_valid(v, ci)
-    MOI.set(v.functions, attr, rows(v.sets, ci), func)
-    return
-end
-
-function MOI.set(
-    v::MatrixOfConstraints,
-    ::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{F,S},
-    set::S,
-) where {F,S}
-    MOI.throw_if_not_valid(v, ci)
-    MOI.set(v.sets, attr, ci, set)
-    return
 end
 
 function MOI.get(
@@ -216,45 +189,35 @@ function MOI.get(
     return MOI.get(v.sets, attr)
 end
 
-function MOI.modify(
-    v::MatrixOfConstraints,
-    ci::MOI.ConstraintIndex,
-    change::MOI.AbstractFunctionModification,
-)
-    MOI.modify(v.functions, rows(v.sets, ci), change)
-    return
+_add_set(sets, i, func::MOI.AbstractScalarFunction) = add_set(sets, i)
+function _add_set(sets, i, func::MOI.AbstractVectorFunction)
+    return add_set(sets, i, MOI.output_dimension(func))
 end
-
-function _delete_variables(
-    ::Function,
-    ::MatrixOfConstraints,
-    ::Vector{MOI.VariableIndex},
-)
-    return  # Nothing to do as it's not `VectorOfVariables` constraints
-end
-
 function _add_constraint(model::MatrixOfConstraints, i, index_map, func, set)
     allocate_terms(model.coefficients, index_map, func)
     # Without this type annotation, the compiler is unable to know the type
     # of `caches[i]` so this is slower and produce an allocation.
     push!(model.caches[i]::Vector{Tuple{typeof(func),typeof(set)}}, (func, set))
     return MOI.ConstraintIndex{typeof(func),typeof(set)}(
-        add_set(model.sets, i, MOI.output_dimension(func)),
+        _add_set(model.sets, i, func),
     )
 end
+
 struct IdentityMap <: AbstractDict{MOI.VariableIndex,MOI.VariableIndex} end
 Base.getindex(::IdentityMap, vi::MOI.VariableIndex) = vi
+
 function MOI.add_constraint(
     model::MatrixOfConstraints{T},
     func::MOI.AbstractFunction,
     set::MOI.AbstractSet,
 ) where {T}
     i = set_index(model.sets, typeof(set))
-    if i === nothing || typeof(func) != affine_function_type(T, typeof(set))
+    if i === nothing || typeof(func) != _affine_function_type(T, typeof(set))
         throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}())
     end
     return _add_constraint(model, i, IdentityMap(), func, set)
 end
+
 function _allocate_constraints(
     model::MatrixOfConstraints{T},
     src,
@@ -264,12 +227,12 @@ function _allocate_constraints(
     filter_constraints::Union{Nothing,Function},
 ) where {T,F,S}
     i = set_index(model.sets, S)
-    if i === nothing || F != affine_function_type(T, S)
+    if i === nothing || F != _affine_function_type(T, S)
         throw(MOI.UnsupportedConstraint{F,S}())
     end
     cis_src = MOI.get(
         src,
-        MOI.ListOfConstraintIndices{affine_function_type(T, S),S}(),
+        MOI.ListOfConstraintIndices{_affine_function_type(T, S),S}(),
     )
     if filter_constraints !== nothing
         filter!(filter_constraints, cis_src)
@@ -280,6 +243,7 @@ function _allocate_constraints(
         push!(model.are_indices_mapped, length(model.caches) + 1)
         index_map[ci_src] = _add_constraint(model, i, index_map, func, set)
     end
+    return
 end
 
 function _load_constants(
@@ -308,12 +272,11 @@ function _load_constraints(
 )
     for i in eachindex(func_sets)
         func, set = func_sets[i]
-        index_map = if i in dest.are_indices_mapped
-            index_map
+        if i in dest.are_indices_mapped
+            load_terms(dest.coefficients, index_map, func, offset)
         else
-            IdentityMap()
+            load_terms(dest.coefficients, IdentityMap(), func, offset)
         end
-        load_terms(dest.coefficients, index_map, func, offset)
         _load_constants(dest.constants, offset, func, set)
         offset += MOI.output_dimension(func)
     end
@@ -330,18 +293,14 @@ function pass_nonvariable_constraints(
     pass_cons = copy_constraints;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
-    set_number_of_columns(
-        dest.coefficients,
-        MOI.get(src, MOI.NumberOfVariables()),
-    )
-
     for (F, S) in constraint_types
         _allocate_constraints(dest, src, index_map, F, S, filter_constraints)
     end
+    return
 end
 
 function final_touch(model::MatrixOfConstraints, index_map)
-    num_rows = number_of_rows(model.sets)
+    num_rows = MOI.dimension(model.sets)
     resize!(model.constants, num_rows)
     set_number_of_rows(model.coefficients, num_rows)
 

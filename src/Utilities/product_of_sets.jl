@@ -9,7 +9,8 @@ abstract type ProductOfSets{T} end
     set_index(sets::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet}
 
 Return an integer corresponding to the index of the set type in the list given
-by [`set_types`](@ref)..
+by [`set_types`](@ref). If this set is not part of the list then it returns
+`nothing`.
 """
 set_index(sets::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet} = nothing
 
@@ -19,6 +20,29 @@ set_index(sets::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet} = nothing
 Return the list of the types of the sets allowed in the cartesian product.
 """
 function set_types end
+
+"""
+    add_set(sets::OrderedProductOfSets, i)
+
+Add a scalar set of type index `i`.
+
+    add_set(sets::OrderedProductOfSets, i, dim)
+
+Add a vector set of type index `i` and dimension `dim`.
+
+Both method return a unique id of the set that
+can be used to reference this set.
+"""
+function add_set end
+
+"""
+    indices(sets::OrderedProductOfSets, ci::MOI.ConstraintIndex)
+
+Return the indices in `1:MOI.dimension(sets)` corresponding to the set of id
+`ci.value`. For scalar sets, this return an integer and for vector sets, this
+return an `UnitRange`.
+"""
+function indices end
 
 function _sets_code(esc_name, T, type_def, set_types...)
     code = Expr(:block, type_def)
@@ -63,10 +87,9 @@ end
 
 MOI.is_empty(sets::MixOfScalarSets) = isempty(sets.set_ids)
 MOI.empty!(sets::MixOfScalarSets) = empty!(sets.set_ids)
-number_of_rows(sets::MixOfScalarSets) = length(sets.set_ids)
-rows(::MixOfScalarSets, ci::MOI.ConstraintIndex) = ci.value
-function add_set(sets::MixOfScalarSets, i, dim)
-    @assert dim == 1
+MOI.dimension(sets::MixOfScalarSets) = length(sets.set_ids)
+indices(::MixOfScalarSets, ci::MOI.ConstraintIndex) = ci.value
+function add_set(sets::MixOfScalarSets, i)
     push!(sets.set_ids, i)
     return length(sets.set_ids)
 end
@@ -76,7 +99,7 @@ function MOI.get(
 ) where {T}
     present = Set(sets.set_ids)
     return [
-        (affine_function_type(T, S), S) for
+        (_affine_function_type(T, S), S) for
         S in set_types(sets) if set_index(sets, S) in present
     ]
 end
@@ -162,38 +185,38 @@ function MOI.empty!(sets::OrderedProductOfScalarSets)
     return
 end
 
-function number_of_rows(sets::OrderedProductOfSets)
+function MOI.dimension(sets::OrderedProductOfSets)
     for i in 3:length(sets.num_rows)
         sets.num_rows[i] += sets.num_rows[i-1]
     end
     return sets.num_rows[end]
 end
-function rows(
+function indices(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S},
 ) where {T,S}
     i = set_index(sets, S)
     return sets.num_rows[i] + ci.value + 1
 end
-function rows(
+function indices(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S},
 ) where {T,S}
     i = set_index(sets, S)
     return (sets.num_rows[i] + ci.value) .+ (1:sets.dimension[(i, ci.value)])
 end
-_set_dim(::OrderedProductOfScalarSets, i, offset, dim) = nothing
-function _set_dim(sets::OrderedProductOfSets, i, offset, dim)
-    sets.dimension[(i, offset)] = dim
-    return
+function add_set(sets::OrderedProductOfSets, i)
+    offset = sets.num_rows[i+1]
+    sets.num_rows[i+1] = offset + 1
+    return offset
 end
 function add_set(sets::OrderedProductOfSets, i, dim)
     offset = sets.num_rows[i+1]
-    _set_dim(sets, i, offset, dim)
     sets.num_rows[i+1] = offset + dim
+    sets.dimension[(i, offset)] = dim
     return offset
 end
-function num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
+function _num_indices(sets::OrderedProductOfSets, ::Type{S}) where {S}
     i = set_index(sets, S)
     return sets.num_rows[i+1] - sets.num_rows[i]
 end
@@ -202,8 +225,8 @@ function MOI.get(
     ::MOI.ListOfConstraintTypesPresent,
 ) where {T}
     return [
-        (affine_function_type(T, S), S) for
-        S in set_types(sets) if !iszero(num_rows(sets, S))
+        (_affine_function_type(T, S), S) for
+        S in set_types(sets) if !iszero(_num_indices(sets, S))
     ]
 end
 struct UnevenIterator
@@ -220,7 +243,7 @@ function Base.iterate(it::UnevenIterator, cur = it.start)
         return (cur, cur + it.dimension[(it.i, cur)])
     end
 end
-function Base.in(it::UnevenIterator, x)
+function Base.in(x, it::UnevenIterator)
     return x in it.start:(it.stop-1) && haskey(it.dimension, (it.i, x))
 end
 function _range_iterator(
@@ -247,7 +270,7 @@ function _range(
     ::Type{S},
 ) where {T,F,S}
     i = set_index(sets, S)
-    if F != affine_function_type(T, S) || i === nothing
+    if F != _affine_function_type(T, S) || i === nothing
         return nothing
     else
         return _range_iterator(
@@ -274,13 +297,13 @@ function MOI.get(
 end
 function _empty(
     ::OrderedProductOfSets{T},
-    ::Type{MOI.ScalarAffineFunction{T}},
+    ::Type{<:MOI.ScalarAffineFunction},
 ) where {T}
     return 1:0
 end
 function _empty(
     sets::OrderedProductOfSets{T},
-    ::Type{MOI.VectorAffineFunction{T}},
+    ::Type{<:MOI.VectorAffineFunction},
 ) where {T}
     return UnevenIterator(1, 1, 0, sets.dimension)
 end
