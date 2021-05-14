@@ -440,7 +440,7 @@ function _delete_variables_in_vector_of_variables_constraint(
                         b,
                         ci,
                         bridge ->
-                            MOI.delete(b, bridge, Constraint.IndexInVector(i)),
+                            MOI.delete(b, bridge, IndexInVector(i)),
                     )
                 else
                     MOIU.throw_delete_variable_in_vov(vi)

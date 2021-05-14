@@ -13,7 +13,7 @@ struct DummyVariableBridge <: MOIB.Variable.AbstractBridge end
     bridge = DummyVariableBridge()
     attr = MOI.VariablePrimalStart()
     @test !MOI.supports(model, attr, typeof(bridge))
-    i = MOIB.Variable.IndexInVector(1)
+    i = MOIB.IndexInVector(1)
     @test_throws MOI.UnsupportedAttribute(attr) MOI.set(
         model,
         attr,
