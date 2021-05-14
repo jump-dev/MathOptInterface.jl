@@ -1,281 +1,16 @@
-abstract type ProductOfSets{T} end
+# Constants: stored in a `Vector` or `Box` or any other type implementing:
+# `empty!`, `resize!` and `load_constants`.
 
-set_index(sets::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet} = nothing
-function set_types end
+"""
+    load_constants(constants, offset, func_or_set)
 
-function _sets_code(esc_name, T, type_def, set_types...)
-    code = Expr(:block, type_def)
-    esc_types = esc.(set_types)
-    for (i, esc_type) in enumerate(esc_types)
-        method = push!(
-            code.args,
-            :(
-                function $MOIU.set_index(
-                    ::$esc_name{$T},
-                    ::Type{$esc_type},
-                ) where {$T}
-                    return $i
-                end
-            ),
-        )
-    end
-    push!(code.args, :(function $MOIU.set_types(::$esc_name{$T}) where {$T}
-        return [$(esc_types...)]
-    end))
-    return code
-end
+This function loads the constants of `func_or_set` in `constants` at an offset
+of `offset`. The storage should be preallocated with `resize!` before calling
+this function.
+"""
+function load_constants end
 
-abstract type MixOfScalarSets{T} <: ProductOfSets{T} end
-macro mix_of_scalar_sets(name, set_types...)
-    esc_name = esc(name)
-    T = esc(:T)
-    type_def = :(struct $esc_name{$T} <: $MOIU.MixOfScalarSets{$T}
-        set_ids::Vector{Int}
-        function $esc_name{$T}() where {$T}
-            return new(Int[])
-        end
-    end)
-    return _sets_code(esc_name, T, type_def, set_types...)
-end
-
-MOI.is_empty(sets::MixOfScalarSets) = isempty(sets.set_ids)
-MOI.empty!(sets::MixOfScalarSets) = empty!(sets.set_ids)
-number_of_rows(sets::MixOfScalarSets) = length(sets.set_ids)
-rows(::MixOfScalarSets, ci::MOI.ConstraintIndex) = ci.value
-function add_set(sets::MixOfScalarSets, i, dim)
-    @assert dim == 1
-    push!(sets.set_ids, i)
-    return length(sets.set_ids)
-end
-function MOI.get(
-    sets::MixOfScalarSets{T},
-    ::MOI.ListOfConstraintTypesPresent,
-) where {T}
-    present = Set(sets.set_ids)
-    return [
-        (affine_function_type(T, S), S) for
-        S in set_types(sets) if set_index(sets, S) in present
-    ]
-end
-function MOI.get(
-    sets::MixOfScalarSets,
-    ::MOI.NumberOfConstraints{F,S},
-) where {F,S}
-    i = set_index(sets, S)
-    return count(isequal(i), sets.set_ids)
-end
-function MOI.get(
-    sets::MixOfScalarSets,
-    ::MOI.ListOfConstraintIndices{F,S},
-) where {F,S}
-    i = set_index(sets, S)
-    return LazyMap{MOI.ConstraintIndex{F,S}}(
-        j -> MOI.ConstraintIndex{F,S}(j),
-        Base.Iterators.Filter(
-            j -> sets.set_ids[j] == i,
-            eachindex(sets.set_ids),
-        ),
-    )
-end
-function MOI.is_valid(
-    sets::MixOfScalarSets,
-    ci::MOI.ConstraintIndex{F,S},
-) where {F,S}
-    i = set_index(sets, S)
-    return i !== nothing &&
-           ci.value in eachindex(sets.set_ids) &&
-           sets.set_ids[ci.value] == i
-end
-
-abstract type OrderedProductOfSets{T} <: ProductOfSets{T} end
-macro product_of_sets(name, set_types...)
-    esc_name = esc(name)
-    T = esc(:T)
-    type_def = :(
-        struct $esc_name{$T} <: $MOIU.OrderedProductOfSets{$T}
-            num_rows::Vector{Int}
-            dimension::Dict{Tuple{Int,Int},Int}
-            function $esc_name{$T}() where {$T}
-                return new(zeros(Int, $(1 + length(set_types))), Dict{Int,Int}())
-            end
-        end
-    )
-    return _sets_code(esc_name, T, type_def, set_types...)
-end
-
-abstract type OrderedProductOfScalarSets{T} <: OrderedProductOfSets{T} end
-macro product_of_scalar_sets(name, set_types...)
-    esc_name = esc(name)
-    T = esc(:T)
-    type_def = :(struct $esc_name{$T} <: $MOIU.OrderedProductOfScalarSets{$T}
-        num_rows::Vector{Int}
-        function $esc_name{$T}() where {$T}
-            return new(zeros(Int, $(1 + length(set_types))))
-        end
-    end)
-    return _sets_code(esc_name, T, type_def, set_types...)
-end
-
-MOI.is_empty(sets::OrderedProductOfSets) = all(iszero, sets.num_rows)
-function MOI.empty!(sets::OrderedProductOfSets)
-    fill!(sets.num_rows, 0)
-    empty!(sets.dimension)
-    return
-end
-function MOI.empty!(sets::OrderedProductOfScalarSets)
-    fill!(sets.num_rows, 0)
-    return
-end
-
-function number_of_rows(sets::OrderedProductOfSets)
-    for i in 3:length(sets.num_rows)
-        sets.num_rows[i] += sets.num_rows[i-1]
-    end
-    return sets.num_rows[end]
-end
-function rows(
-    sets::OrderedProductOfSets{T},
-    ci::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S},
-) where {T,S}
-    i = set_index(sets, S)
-    return sets.num_rows[i] + ci.value + 1
-end
-function rows(
-    sets::OrderedProductOfSets{T},
-    ci::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S},
-) where {T,S}
-    i = set_index(sets, S)
-    return (sets.num_rows[i] + ci.value) .+ (1:sets.dimension[(i, ci.value)])
-end
-_set_dim(::OrderedProductOfScalarSets, i, offset, dim) = nothing
-function _set_dim(sets::OrderedProductOfSets, i, offset, dim)
-    sets.dimension[(i, offset)] = dim
-    return
-end
-function add_set(sets::OrderedProductOfSets, i, dim)
-    offset = sets.num_rows[i+1]
-    _set_dim(sets, i, offset, dim)
-    sets.num_rows[i+1] = offset + dim
-    return offset
-end
-function num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
-    i = set_index(sets, S)
-    return sets.num_rows[i+1] - sets.num_rows[i]
-end
-function MOI.get(
-    sets::OrderedProductOfSets{T},
-    ::MOI.ListOfConstraintTypesPresent,
-) where {T}
-    return [
-        (affine_function_type(T, S), S) for
-        S in set_types(sets) if !iszero(num_rows(sets, S))
-    ]
-end
-struct UnevenIterator
-    i::Int
-    start::Int
-    stop::Int
-    dimension::Dict{Tuple{Int,Int},Int}
-end
-Base.IteratorSize(::UnevenIterator) = Base.SizeUnknown()
-function Base.iterate(it::UnevenIterator, cur = it.start)
-    if cur >= it.stop
-        return nothing
-    else
-        return (cur, cur + it.dimension[(it.i, cur)])
-    end
-end
-function Base.in(it::UnevenIterator, x)
-    return x in it.start:(it.stop-1) && haskey(it.dimension, (it.i, x))
-end
-function _range_iterator(
-    ::OrderedProductOfSets{T},
-    ::Int,
-    start::Int,
-    stop::Int,
-    ::Type{MOI.ScalarAffineFunction{T}},
-) where {T}
-    return start:(stop-1)
-end
-function _range_iterator(
-    sets::OrderedProductOfSets{T},
-    i::Int,
-    start::Int,
-    stop::Int,
-    ::Type{MOI.VectorAffineFunction{T}},
-) where {T}
-    return UnevenIterator(i, start, stop, sets.dimension)
-end
-function _range(
-    sets::OrderedProductOfSets{T},
-    ::Type{F},
-    ::Type{S},
-) where {T,F,S}
-    i = set_index(sets, S)
-    if F != affine_function_type(T, S) || i === nothing
-        return nothing
-    else
-        return _range_iterator(
-            sets,
-            i,
-            0,
-            sets.num_rows[i+1] - sets.num_rows[i],
-            F,
-        )
-    end
-end
-_length(r::UnitRange) = length(r)
-_length(r::UnevenIterator) = count(_ -> true, r)
-function MOI.get(
-    sets::OrderedProductOfSets,
-    ::MOI.NumberOfConstraints{F,S},
-) where {F,S}
-    r = _range(sets, F, S)
-    if r === nothing
-        return 0
-    else
-        return _length(r)
-    end
-end
-function _empty(
-    ::OrderedProductOfSets{T},
-    ::Type{MOI.ScalarAffineFunction{T}},
-) where {T}
-    return 1:0
-end
-function _empty(
-    sets::OrderedProductOfSets{T},
-    ::Type{MOI.VectorAffineFunction{T}},
-) where {T}
-    return UnevenIterator(1, 1, 0, sets.dimension)
-end
-
-function MOI.get(
-    sets::OrderedProductOfSets,
-    ::MOI.ListOfConstraintIndices{F,S},
-) where {F,S}
-    rows = _range(sets, F, S)
-    if rows === nothing
-        # Empty iterator
-        rows = _empty(sets, F)
-    end
-    return LazyMap{MOI.ConstraintIndex{F,S}}(
-        i -> MOI.ConstraintIndex{F,S}(i),
-        rows,
-    )
-end
-function MOI.is_valid(
-    sets::OrderedProductOfSets,
-    ci::MOI.ConstraintIndex{F,S},
-) where {F,S}
-    r = _range(sets, F, S)
-    return r !== nothing && ci.value in r
-end
-
-function set_number_of_rows(b::Vector, num_rows)
-    return resize!(b, num_rows)
-end
-function load_constant(
+function load_constants(
     b::Vector{T},
     offset,
     func::MOI.VectorAffineFunction{T},
@@ -283,15 +18,16 @@ function load_constant(
     copyto!(b, offset + 1, func.constants)
     return
 end
-#function load_constant(
-#    b::Vector{T},
-#    offset,
-#    func::MOI.ScalarAffineFunction{T},
-#) where {T}
-#    b[offset + 1] = func.constant
-#    return
-#end
 
+"""
+    struct Box{T}
+        lower::Vector{T}
+        upper::Vector{T}
+    end
+
+Stores the constants of scalar constraints with the lower bound of the set in
+`lower` and the upper bound in `upper`.
+"""
 struct Box{T}
     lower::Vector{T}
     upper::Vector{T}
@@ -303,12 +39,12 @@ function Base.empty!(b::Box)
     empty!(b.upper)
     return b
 end
-function set_number_of_rows(b::Box, n)
+function Base.resize!(b::Box, n)
     resize!(b.lower, n)
     resize!(b.upper, n)
     return
 end
-function load_constant(b::Box{T}, offset, set) where {T}
+function load_constants(b::Box{T}, offset, set) where {T}
     flag = single_variable_flag(typeof(set))
     b.lower[offset+1] = if iszero(flag & LOWER_BOUND_MASK)
         typemin(T)
@@ -389,7 +125,14 @@ function MOI.empty!(v::MatrixOfConstraints{T}) where {T}
         [Tuple{affine_function_type(T, S),S}[] for S in set_types(v.sets)]
     return
 end
-rows(v::MatrixOfConstraints, ci::MOI.ConstraintIndex) = rows(v.sets, ci)
+
+"""
+    rows(model::MatrixOfConstraints, ci::MOI.ConstraintIndex)
+
+Return the rows corresponding to the constraint of index `ci`. If it is a
+vector constraint, this is a `UnitRange`, otherwise, this is an integer.
+"""
+rows(model::MatrixOfConstraints, ci::MOI.ConstraintIndex) = rows(model.sets, ci)
 
 function affine_function_type(
     ::Type{T},
@@ -539,22 +282,22 @@ function _allocate_constraints(
     end
 end
 
-function _load_constant(
+function _load_constants(
     constants,
     offset,
     func::MOI.AbstractScalarFunction,
     set::MOI.AbstractScalarSet,
 )
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
-    return load_constant(constants, offset, set)
+    return load_constants(constants, offset, set)
 end
-function _load_constant(
+function _load_constants(
     constants,
     offset,
     func::MOI.AbstractVectorFunction,
     set::MOI.AbstractVectorSet,
 )
-    return load_constant(constants, offset, func)
+    return load_constants(constants, offset, func)
 end
 
 function _load_constraints(
@@ -571,7 +314,7 @@ function _load_constraints(
             IdentityMap()
         end
         load_terms(dest.coefficients, index_map, func, offset)
-        _load_constant(dest.constants, offset, func, set)
+        _load_constants(dest.constants, offset, func, set)
         offset += MOI.output_dimension(func)
     end
     return offset
@@ -599,7 +342,7 @@ end
 
 function final_touch(model::MatrixOfConstraints, index_map)
     num_rows = number_of_rows(model.sets)
-    set_number_of_rows(model.constants, num_rows)
+    resize!(model.constants, num_rows)
     set_number_of_rows(model.coefficients, num_rows)
 
     offset = 0

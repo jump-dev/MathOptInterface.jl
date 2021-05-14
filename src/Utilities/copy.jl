@@ -569,6 +569,13 @@ function try_constrain_variables_on_creation(
     single_variable_not_added
 end
 
+"""
+    function final_touch(model::MOI.ModelLike, idxmap) end
+
+This is called at the end of [`default_copy_to`](@ref) to inform the model that
+the copy is finished. This allows `model` to perform thats that should be done
+only once all the model information is gathered.
+"""
 function final_touch(::MOI.ModelLike, idxmap) end
 
 """

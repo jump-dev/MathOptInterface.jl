@@ -20,6 +20,16 @@ _no_lower_bound(::Type{T}) where {T<:AbstractFloat} = typemin(T)
 _no_upper_bound(::Type{T}) where {T} = zero(T)
 _no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
 
+"""
+    function _add_variable end
+
+This is called by `AbstractModel` to inform the `constraints` field that a
+variable has been added. This is similar to
+[`MathOptInterface.add_variable`](@ref) except that it should return `nothing`.
+"""
+function _add_variable end
+
+function _add_variable(::Nothing) end
 function MOI.add_variable(model::AbstractModel{T}) where {T}
     vi = VI(model.num_variables_created += 1)
     push!(model.single_variable_mask, 0x0)

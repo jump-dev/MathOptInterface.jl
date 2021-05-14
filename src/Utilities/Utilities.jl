@@ -59,6 +59,7 @@ include("variables.jl")
 
 include("vector_of_constraints.jl")
 include("sparse_matrix.jl")
+include("product_of_sets.jl")
 include("matrix_of_constraints.jl")
 include("struct_of_constraints.jl")
 include("model.jl")

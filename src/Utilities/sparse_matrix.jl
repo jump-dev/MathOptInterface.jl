@@ -42,6 +42,14 @@ function set_number_of_columns(A::MutableSparseMatrixCSC, num_cols)
     fill!(A.colptr, 0)
     return
 end
+
+"""
+    set_number_of_rows(coefficients, n)
+
+This function sets the number of rows to `coefficients`. This allows it
+to preallocate necessary datastructures before the data is loaded with
+[`load_terms`](@ref).
+"""
 function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     A.m = num_rows
     for i in 3:length(A.colptr)
