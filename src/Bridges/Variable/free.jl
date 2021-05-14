@@ -62,7 +62,11 @@ function MOI.delete(model::MOI.ModelLike, bridge::FreeBridge)
     return
 end
 
-function MOI.delete(model::MOI.ModelLike, bridge::FreeBridge, i::MOIB.IndexInVector)
+function MOI.delete(
+    model::MOI.ModelLike,
+    bridge::FreeBridge,
+    i::MOIB.IndexInVector,
+)
     n = div(length(bridge.variables), 2)
     MOI.delete(model, bridge.variables[i.value])
     MOI.delete(model, bridge.variables[n+i.value])

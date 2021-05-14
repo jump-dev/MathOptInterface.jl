@@ -76,4 +76,6 @@ function MOIB.bridged_function(::ZerosBridge{T}, ::MOIB.IndexInVector) where {T}
     return zero(MOI.ScalarAffineFunction{T})
 end
 
-unbridged_map(::ZerosBridge, ::MOI.VariableIndex, ::MOIB.IndexInVector) = nothing
+function unbridged_map(::ZerosBridge, ::MOI.VariableIndex, ::MOIB.IndexInVector)
+    return nothing
+end
