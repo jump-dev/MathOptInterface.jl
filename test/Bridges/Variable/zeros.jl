@@ -58,12 +58,12 @@ MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}(), obj)
 @test MOIB.Variable.unbridged_map(
     MOIB.bridge(bridged_mock, y),
     y,
-    MOIB.Variable.IndexInVector(1),
+    MOIB.IndexInVector(1),
 ) === nothing
 @test MOIB.Variable.unbridged_map(
     MOIB.bridge(bridged_mock, z),
     z,
-    MOIB.Variable.IndexInVector(2),
+    MOIB.IndexInVector(2),
 ) === nothing
 
 err = ErrorException(

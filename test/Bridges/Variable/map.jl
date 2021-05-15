@@ -65,7 +65,7 @@ v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
         @test MOIB.Variable.constrained_set(map, v2[i]) == S2
         @test MOIB.Variable.length_of_vector_of_variables(map, v2[i]) == 4
         @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) ==
-              MOIB.Variable.IndexInVector(i)
+              MOIB.IndexInVector(i)
     end
     @test MOIB.Variable.number_with_set(map, S2) == 1
     @test MOIB.Variable.constraints_with_set(map, S2) == [c2]
@@ -155,7 +155,7 @@ end
         @test MOIB.Variable.constrained_set(map, v2[i]) == S2
         @test MOIB.Variable.length_of_vector_of_variables(map, v2[i]) == 3
         @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) ==
-              MOIB.Variable.IndexInVector(j)
+              MOIB.IndexInVector(j)
     end
     @test MOIB.Variable.function_for(map, c2) == MOI.VectorOfVariables(v2[left])
 
@@ -189,7 +189,7 @@ end
         @test MOIB.Variable.constrained_set(map, v2[i]) == S2
         @test MOIB.Variable.length_of_vector_of_variables(map, v2[i]) == 2
         @test MOIB.Variable.index_in_vector_of_variables(map, v2[i]) ==
-              MOIB.Variable.IndexInVector(j)
+              MOIB.IndexInVector(j)
     end
     @test MOIB.Variable.function_for(map, c2) == MOI.VectorOfVariables(v2[left])
 

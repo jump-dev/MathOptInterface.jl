@@ -20,6 +20,15 @@ the bridge so they should be implemented by the bridge.
 abstract type AbstractBridge end
 
 """
+    IndexInVector
+
+Index of variable in vector of variables.
+"""
+struct IndexInVector
+    value::Int
+end
+
+"""
     MOI.get(b::AbstractBridge, ::MOI.NumberOfConstraints{F, S}) where {F, S}
 
 The number of constraints of the type `F`-in-`S` created by the bridge `b` in

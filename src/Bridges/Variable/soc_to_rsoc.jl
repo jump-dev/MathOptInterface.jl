@@ -92,14 +92,14 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimal,
     bridge::SOCtoRSOCBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     return rotate_result(model, attr, bridge.variables, i)
 end
 
 function MOIB.bridged_function(
     bridge::SOCtoRSOCBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     return rotate_bridged_function(T, bridge.variables, i)
 end

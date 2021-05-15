@@ -7,15 +7,6 @@ bridges.
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
 """
-    IndexInVector
-
-Index of variable in vector of variables.
-"""
-struct IndexInVector
-    value::Int
-end
-
-"""
     bridge_constrained_variable(
         BT::Type{<:AbstractBridge},
         model::MOI.ModelLike,
@@ -56,7 +47,7 @@ end
         model::MOI.ModelLike,
         attr::MOI.AbstractVariableAttribute,
         bridge::AbstractBridge,
-        i::IndexInVector,
+        i::MOIB.IndexInVector,
     )
 
 Return the value of the attribute `attr` of the model `model` for the variable
@@ -66,7 +57,7 @@ function MOI.get(
     ::MOI.ModelLike,
     attr::MOI.AbstractVariableAttribute,
     bridge::AbstractBridge,
-    ::IndexInVector,
+    ::MOIB.IndexInVector,
 )
     return throw(
         ArgumentError(
@@ -98,7 +89,7 @@ end
         attr::MOI.AbstractVariableAttribute,
         bridge::AbstractBridge,
         value[,
-        ::IndexInVector],
+        ::MOIB.IndexInVector],
     )
 
 Return the value of the attribute `attr` of the model `model` for the variable
@@ -109,7 +100,7 @@ function MOI.set(
     attr::MOI.AbstractVariableAttribute,
     bridge::AbstractBridge,
     value,
-    ::IndexInVector...,
+    ::MOIB.IndexInVector...,
 )
     if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
         throw(MOI.UnsupportedAttribute(attr))
@@ -271,7 +262,7 @@ the following method for every variable of `vis`.
     unbridged_map(
         bridge::MOI.Bridges.Variable.AbstractBridge,
         vi::MOI.VariableIndex,
-        i::IndexInVector,
+        i::MOIB.IndexInVector,
     )
 
 For a bridged variable in a vector set, return a tuple of pairs mapping the
@@ -287,7 +278,7 @@ function unbridged_map end
 function unbridged_map(bridge::AbstractBridge, vis::Vector{MOI.VariableIndex})
     mappings = Pair{MOI.VariableIndex,MOI.AbstractScalarFunction}[]
     for (i, vi) in enumerate(vis)
-        vi_mappings = unbridged_map(bridge, vi, IndexInVector(i))
+        vi_mappings = unbridged_map(bridge, vi, MOIB.IndexInVector(i))
         if vi_mappings === nothing
             return
         end

@@ -169,7 +169,7 @@ function trimap(i::Integer, j::Integer)
     end
 end
 
-function _variable_map(bridge::RSOCtoPSDBridge, i::IndexInVector)
+function _variable_map(bridge::RSOCtoPSDBridge, i::MOIB.IndexInVector)
     if bridge.psd isa
        MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
         return i.value
@@ -182,7 +182,7 @@ function _variable_map(bridge::RSOCtoPSDBridge, i::IndexInVector)
     end
 end
 
-function _variable(bridge::RSOCtoPSDBridge, i::IndexInVector)
+function _variable(bridge::RSOCtoPSDBridge, i::MOIB.IndexInVector)
     return bridge.variables[_variable_map(bridge, i)]
 end
 
@@ -193,7 +193,7 @@ function MOI.get(
 )
     values = MOI.get(model, attr, bridge.psd)
     n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
-    mapped = [values[_variable_map(bridge, IndexInVector(i))] for i in 1:n]
+    mapped = [values[_variable_map(bridge, MOIB.IndexInVector(i))] for i in 1:n]
     if length(mapped) >= 2
         mapped[2] /= 2
     end
@@ -207,7 +207,7 @@ function MOI.get(
 )
     dual = MOI.get(model, attr, bridge.psd)
     n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
-    mapped = [dual[_variable_map(bridge, IndexInVector(i))] for i in 1:n]
+    mapped = [dual[_variable_map(bridge, MOIB.IndexInVector(i))] for i in 1:n]
     for ci in bridge.diag
         mapped[2] += MOI.get(model, attr, ci)
     end
@@ -224,7 +224,7 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimal,
     bridge::RSOCtoPSDBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     value = MOI.get(model, attr, _variable(bridge, i))
     if i.value == 2
@@ -236,7 +236,7 @@ end
 
 function MOIB.bridged_function(
     bridge::RSOCtoPSDBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     func = MOI.SingleVariable(_variable(bridge, i))
     if i.value == 2
@@ -249,7 +249,7 @@ end
 function unbridged_map(
     bridge::RSOCtoPSDBridge{T},
     vi::MOI.VariableIndex,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     sv = MOI.SingleVariable(vi)
     if i.value == 2
