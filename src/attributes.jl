@@ -1241,8 +1241,6 @@ function get_fallback(
     else
         return Utilities.canonical(func)
     end
-
-    return Utilities.canonical(get(model, ConstraintFunction(), ci))
 end
 
 """
