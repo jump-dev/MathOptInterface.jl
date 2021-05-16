@@ -1185,8 +1185,7 @@ end
 ConstraintDual() = ConstraintDual(1)
 
 """
-    ConstraintBasisStatus(result_index)
-    ConstraintBasisStatus()
+    ConstraintBasisStatus(result_index::Int = 1)
 
 A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
@@ -1197,16 +1196,21 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 For the basis status of a variable, query the corresponding `SingleVariable`
 constraint that enforces the variable's bounds.
 
-Use `ConstraintIndex{MOI.SingleVariable,MOI.Reals}` to query the basis status of
-a free variable (i.e., one with no other `SingleVariable` constraints). The
+Use `ConstraintIndex{SingleVariable,Reals}` to query the basis status of a free
+variable (i.e., one with no other `SingleVariable` constraints). The
 `BasisStatusCode` of a free variable can only be `BASIC` (if the variable is in
 the basis) or `SUPERBASIC` (if the variable is nonbasic, e.g., because it is at
-0).
+0). If the variable has other `SingleVariable` constraints, an [`InvalidIndex`(@ref)
+error will be thrown.
+
+Note that `ConstraintIndex{SingleVariable,Reals}` is only valid in the context
+of querying `ConstraintBasisStatus` of a free variable. It should not be used
+for any other constraint attribute.
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
     result_index::Int
+    ConstraintBasisStatus(result_index::Int = 1) = new(result_index)
 end
-ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
 """
     CanonicalConstraintFunction()
