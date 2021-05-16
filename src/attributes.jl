@@ -185,7 +185,12 @@ list of attributes set obtained by `ListOf...AttributesSet`.
 """
 function supports end
 supports(::ModelLike, ::AbstractSubmittable) = false
-function supports(
+
+function supports(model::ModelLike, attr::AnyAttribute, args...)
+    return supports_fallback(model, attr, args...)
+end
+
+function supports_fallback(
     ::ModelLike,
     attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
 )
@@ -200,7 +205,8 @@ function supports(
     end
     return false
 end
-function supports(
+
+function supports_fallback(
     ::ModelLike,
     attr::Union{AbstractVariableAttribute,AbstractConstraintAttribute},
     ::Type{<:Index},
@@ -1159,7 +1165,7 @@ function SingleVariableConstraintNameError()
     )
 end
 
-function supports(
+function supports_fallback(
     ::ModelLike,
     ::ConstraintName,
     ::Type{ConstraintIndex{SingleVariable,S}},
