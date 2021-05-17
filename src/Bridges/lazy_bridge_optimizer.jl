@@ -106,6 +106,15 @@ function Objective.bridges(bridge::LazyBridgeOptimizer)
     return _graph(bridge).objective_map
 end
 
+function is_objective_bridged(b::LazyBridgeOptimizer)
+    return is_objective_bridged(b.graph)
+end
+is_objective_bridged(::Nothing) = false
+function is_objective_bridged(graph::Graph)
+    return !isempty(graph.objective_map)
+end
+
+
 # After `add_bridge(b, BT)`, some constrained variables `(S,)` in
 # `keys(b.variable_best)` or constraints `(F, S)` in `keys(b.constraint_best)`
 # or `(F,)` in `keys(b.objective_best)` may be bridged with less bridges than

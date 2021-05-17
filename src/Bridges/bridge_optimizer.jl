@@ -944,15 +944,15 @@ function MOI.set(
     value::MOI.OptimizationSense,
 )
     MOI.set(b.model, attr, value)
-    # if is_objective_bridged(b)
-    #     if value == MOI.FEASIBILITY_SENSE
-    #         _delete_objective_bridges(b)
-    #     else
-    #         for bridge in values(Objective.bridges(b))
-    #             MOI.set(b, attr, bridge, value)
-    #         end
-    #     end
-    # end
+    if is_objective_bridged(b)
+        if value == MOI.FEASIBILITY_SENSE
+            _delete_objective_bridges(b)
+        else
+            for bridge in values(Objective.bridges(b))
+                MOI.set(b, attr, bridge, value)
+            end
+        end
+    end
     return
 end
 
@@ -967,38 +967,38 @@ function MOI.set(
     attr::MOI.ObjectiveFunction,
     func::MOI.AbstractScalarFunction,
 )
-    # if is_objective_bridged(b)
-    #     # Clear objective function by setting sense to `MOI.FEASIBILITY_SENSE`
-    #     # first. This is needed if the objective function of `b.model` is
-    #     # `MOI.SingleVariable(slack)` where `slack` is the slack variable
-    #     # created by `Objective.SlackBridge`.
-    #     sense = MOI.get(b.model, MOI.ObjectiveSense())
-    #     MOI.set(b.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
-    #     _delete_objective_bridges(b)
-    #     if sense != MOI.FEASIBILITY_SENSE
-    #         MOI.set(b.model, MOI.ObjectiveSense(), sense)
-    #     end
-    # end
-    # if Variable.has_bridges(b)
-    #     if func isa MOI.SingleVariable
-    #         if is_bridged(b, func.variable)
-    #             BridgeType = Objective.concrete_bridge_type(
-    #                 objective_functionize_bridge(b),
-    #                 typeof(func),
-    #             )
-    #             _bridge_objective(b, BridgeType, func)
-    #             return
-    #         end
-    #     else
-    #         func = bridged_function(b, func)::typeof(func)
-    #     end
-    # end
-    # if is_bridged(b, typeof(func))
-    #     BridgeType = Objective.concrete_bridge_type(b, typeof(func))
-    #     _bridge_objective(b, BridgeType, func)
-    # else
-    #     MOI.set(b.model, attr, func)
-    # end
+    if is_objective_bridged(b)
+        # Clear objective function by setting sense to `MOI.FEASIBILITY_SENSE`
+        # first. This is needed if the objective function of `b.model` is
+        # `MOI.SingleVariable(slack)` where `slack` is the slack variable
+        # created by `Objective.SlackBridge`.
+        sense = MOI.get(b.model, MOI.ObjectiveSense())
+        MOI.set(b.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+        _delete_objective_bridges(b)
+        if sense != MOI.FEASIBILITY_SENSE
+            MOI.set(b.model, MOI.ObjectiveSense(), sense)
+        end
+    end
+    if Variable.has_bridges(b)
+        if func isa MOI.SingleVariable
+            if is_bridged(b, func.variable)
+                BridgeType = Objective.concrete_bridge_type(
+                    objective_functionize_bridge(b),
+                    typeof(func),
+                )
+                _bridge_objective(b, BridgeType, func)
+                return
+            end
+        else
+            func = bridged_function(b, func)::typeof(func)
+        end
+    end
+    if is_bridged(b, typeof(func))
+        BridgeType = Objective.concrete_bridge_type(b, typeof(func))
+        _bridge_objective(b, BridgeType, func)
+    else
+        MOI.set(b.model, attr, func)
+    end
     return
 end
 
