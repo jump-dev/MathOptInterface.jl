@@ -514,13 +514,13 @@ These methods have the following rules:
 !!! warning
     You should _not_ implement [`ConstraintName`](@ref) for
     [`SingleVariable`](@ref) constraints. If you implement [`ConstraintName`](@ref)
-    for other constraints, you may need to add the following two methods to
-    avoid method ambiguities:
+    for other constraints, you can add the following two methods to disable
+    [`ConstraintName`](@ref) for [`SingleVariable`](@ref) constraints.
     ```julia
     function MOI.supports(
         ::Optimizer,
         ::MOI.ConstraintName,
-        ::Type{MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+        ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
     )
         return throw(MOI.SingleVariableConstraintNameError())
     end
