@@ -10,6 +10,7 @@ struct SOCtoRSOCBridge{T} <: AbstractBridge
         MOI.RotatedSecondOrderCone,
     }
 end
+
 function bridge_constrained_variable(
     ::Type{SOCtoRSOCBridge{T}},
     model::MOI.ModelLike,
@@ -28,9 +29,11 @@ function supports_constrained_variable(
 )
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:SOCtoRSOCBridge})
     return [(MOI.RotatedSecondOrderCone,)]
 end
+
 function MOIB.added_constraint_types(::Type{<:SOCtoRSOCBridge})
     return Tuple{DataType,DataType}[]
 end
@@ -39,15 +42,18 @@ end
 function MOI.get(bridge::SOCtoRSOCBridge, ::MOI.NumberOfVariables)
     return length(bridge.variables)
 end
+
 function MOI.get(bridge::SOCtoRSOCBridge, ::MOI.ListOfVariableIndices)
-    return bridge.variables
+    return copy(bridge.variables)
 end
+
 function MOI.get(
     bridge::SOCtoRSOCBridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.RotatedSecondOrderCone},
 )
     return 1
 end
+
 function MOI.get(
     bridge::SOCtoRSOCBridge,
     ::MOI.ListOfConstraintIndices{
@@ -60,7 +66,8 @@ end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::SOCtoRSOCBridge)
-    return MOI.delete(model, bridge.variables)
+    MOI.delete(model, bridge.variables)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -85,17 +92,18 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimal,
     bridge::SOCtoRSOCBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     return rotate_result(model, attr, bridge.variables, i)
 end
 
 function MOIB.bridged_function(
     bridge::SOCtoRSOCBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     return rotate_bridged_function(T, bridge.variables, i)
 end
+
 function unbridged_map(
     bridge::SOCtoRSOCBridge{T},
     vis::Vector{MOI.VariableIndex},

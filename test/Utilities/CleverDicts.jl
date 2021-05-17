@@ -271,8 +271,11 @@ CleverDicts.index_to_key(::Type{MyKey}, index::Int64) = MyKey(index)
     @testset "convert" begin
         vals = [MathOptInterface.VariableIndex(-i) for i in 1:10]
         d = Dict(MathOptInterface.VariableIndex(i) => vals[i] for i in 1:10)
-        T = MathOptInterface.Utilities.DenseVariableDict{
-            MathOptInterface.VariableIndex,
+        T = CleverDicts.CleverDict{
+            MOI.VariableIndex,
+            MOI.VariableIndex,
+            typeof(CleverDicts.key_to_index),
+            typeof(CleverDicts.index_to_key),
         }
         c = convert(T, d)
         @test c isa T

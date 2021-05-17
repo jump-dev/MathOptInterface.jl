@@ -14,11 +14,17 @@ function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
     end
 end
 
+# Use `-Inf` and `Inf` for `AbstractFloat` subtypes.
+_no_lower_bound(::Type{T}) where {T} = zero(T)
+_no_lower_bound(::Type{T}) where {T<:AbstractFloat} = typemin(T)
+_no_upper_bound(::Type{T}) where {T} = zero(T)
+_no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
+
 function MOI.add_variable(model::AbstractModel{T}) where {T}
     vi = VI(model.num_variables_created += 1)
     push!(model.single_variable_mask, 0x0)
-    push!(model.lower_bound, zero(T))
-    push!(model.upper_bound, zero(T))
+    push!(model.lower_bound, _no_lower_bound(T))
+    push!(model.upper_bound, _no_upper_bound(T))
     if model.variable_indices !== nothing
         push!(model.variable_indices, vi)
     end
@@ -527,11 +533,18 @@ function MOI.get(
 end
 
 function _delete_constraint(
-    model::AbstractModel,
+    model::AbstractModel{T},
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
-) where {S}
+) where {T,S}
     MOI.throw_if_not_valid(model, ci)
-    model.single_variable_mask[ci.value] &= ~single_variable_flag(S)
+    flag = single_variable_flag(S)
+    model.single_variable_mask[ci.value] &= ~flag
+    if !iszero(flag & LOWER_BOUND_MASK)
+        model.lower_bound[ci.value] = _no_lower_bound(T)
+    end
+    if !iszero(flag & UPPER_BOUND_MASK)
+        model.upper_bound[ci.value] = _no_upper_bound(T)
+    end
     return
 end
 
@@ -957,7 +970,7 @@ macro model(
             sets = vector_sets
         end
         voc = map(sets) do set
-            return :(VectorOfConstraints{$(_typedfun(funs[i])),$(_typedset(set))})
+            return :(VectorOfConstraints{$(_typed(funs[i])),$(_typed(set))})
         end
         return _struct_of_constraints_type(cname, voc, true)
     end
@@ -1012,6 +1025,11 @@ for (loop_name, loop_super_type) in [
           [`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
           or [`MathOptInterface.Semiinteger`](@ref).
         * `F`-in-`S` constraints that are supported by `C`.
+
+        The lower (resp. upper) bound of a variable of index `VariableIndex(i)`
+        is at the `i`th index of the vector stored in the field `lower_bound`
+        (resp. `upper_bound`). When no lower (resp. upper) bound is set, it is
+        `typemin(T)` (resp. `typemax(T)`) if `T <: AbstractFloat`.
         """
         mutable struct $name{T,C} <: $super_type{T}
             name::String

@@ -21,6 +21,7 @@ struct SlackBridge{
         MOI.ConstraintIndex{F,MOI.GreaterThan{T}},
     }
 end
+
 function bridge_objective(
     ::Type{SlackBridge{T,F,G}},
     model::MOI.ModelLike,
@@ -50,19 +51,24 @@ function supports_objective_function(
 )
     return false
 end
+
 function supports_objective_function(
     ::Type{<:SlackBridge},
     ::Type{<:MOI.AbstractScalarFunction},
 )
     return true
 end
+
 MOIB.added_constrained_variable_types(::Type{<:SlackBridge}) = Tuple{DataType}[]
+
 function MOIB.added_constraint_types(::Type{<:SlackBridge{T,F}}) where {T,F}
     return [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
 end
+
 function MOIB.set_objective_function_type(::Type{<:SlackBridge})
     return MOI.SingleVariable
 end
+
 function concrete_bridge_type(
     ::Type{<:SlackBridge{T}},
     G::Type{<:MOI.AbstractScalarFunction},
@@ -72,18 +78,21 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(bridge::SlackBridge, ::MOI.NumberOfVariables)
+function MOI.get(::SlackBridge, ::MOI.NumberOfVariables)
     return 1
 end
+
 function MOI.get(bridge::SlackBridge, ::MOI.ListOfVariableIndices)
     return [bridge.slack]
 end
+
 function MOI.get(
     bridge::SlackBridge{T,F},
     ::MOI.NumberOfConstraints{F,S},
 ) where {T,F,S<:Union{MOI.GreaterThan{T},MOI.LessThan{T}}}
     return bridge.constraint isa MOI.ConstraintIndex{F,S} ? 1 : 0
 end
+
 function MOI.get(
     bridge::SlackBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,S},
@@ -97,7 +106,8 @@ end
 
 function MOI.delete(model::MOI.ModelLike, bridge::SlackBridge)
     MOI.delete(model, bridge.constraint)
-    return MOI.delete(model, bridge.slack)
+    MOI.delete(model, bridge.slack)
+    return
 end
 
 function MOI.get(
@@ -120,9 +130,10 @@ function MOI.get(
         MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.constraint))
     return obj_slack_constant + slack - constant
 end
+
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ObjectiveFunction{G},
+    ::MOI.ObjectiveFunction{G},
     bridge::SlackBridge{T,F,G},
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)

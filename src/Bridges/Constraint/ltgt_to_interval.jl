@@ -31,14 +31,17 @@ function MOI.modify(
     bridge::AbstractToIntervalBridge,
     change::MOI.ScalarCoefficientChange,
 )
-    return MOI.modify(model, bridge.constraint, change)
+    MOI.modify(model, bridge.constraint, change)
+    return
 end
+
 function MOI.modify(
     model::MOI.ModelLike,
     bridge::AbstractToIntervalBridge,
     change::MOI.MultirowChange{T},
 ) where {T}
-    return MOI.modify(model, bridge.constraint, change)
+    MOI.modify(model, bridge.constraint, change)
+    return
 end
 
 """
@@ -52,12 +55,15 @@ struct GreaterToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
        AbstractToIntervalBridge{T,MOI.GreaterThan{T},F}
     constraint::CI{F,MOI.Interval{T}}
 end
+
 function map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.GreaterThan)
     return MOI.Interval(set.lower, typemax(set.lower))
 end
+
 function inverse_map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.Interval)
     return MOI.GreaterThan(set.lower)
 end
+
 function concrete_bridge_type(
     ::Type{<:GreaterToIntervalBridge{T}},
     F::Type{<:MOI.AbstractScalarFunction},
@@ -77,12 +83,15 @@ struct LessToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
        AbstractToIntervalBridge{T,MOI.LessThan{T},F}
     constraint::CI{F,MOI.Interval{T}}
 end
+
 function map_set(::Type{<:LessToIntervalBridge}, set::MOI.LessThan)
     return MOI.Interval(typemin(set.upper), set.upper)
 end
+
 function inverse_map_set(::Type{<:LessToIntervalBridge}, set::MOI.Interval)
     return MOI.LessThan(set.upper)
 end
+
 function concrete_bridge_type(
     ::Type{<:LessToIntervalBridge{T}},
     F::Type{<:MOI.AbstractScalarFunction},

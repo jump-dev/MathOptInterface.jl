@@ -5,13 +5,20 @@ include("graph.jl")
 """
     LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
 
-The `LazyBridgeOptimizer` combines several bridges, which are added using the [`add_bridge`](@ref) function.
-Whenever a constraint is added, it only attempts to bridge it if it is not supported by the internal model (hence its name `Lazy`).
+The `LazyBridgeOptimizer` combines several bridges, which are added using the
+[`add_bridge`](@ref) function.
+
+Whenever a constraint is added, it only attempts to bridge it if it is not
+supported by the internal model (hence its name `Lazy`).
+
 When bridging a constraint, it selects the minimal number of bridges needed.
-For instance, a constraint `F`-in-`S` can be bridged into a constraint `F1`-in-`S1` (supported by the internal model) using bridge 1 or
-bridged into a constraint `F2`-in-`S2` (unsupported by the internal model) using bridge 2 which can then be
-bridged into a constraint `F3`-in-`S3` (supported by the internal model) using bridge 3,
-it will choose bridge 1 as it allows to bridge `F`-in-`S` using only one bridge instead of two if it uses bridge 2 and 3.
+
+For example, if a constraint `F`-in-`S` can be bridged into a constraint
+`F1`-in-`S1` (supported by the internal model) using bridge 1 or bridged into a
+constraint `F2`-in-`S2` (unsupported by the internal model) using bridge 2 which
+can then be bridged into a constraint `F3`-in-`S3` (supported by the internal
+model) using bridge 3, it will choose bridge 1 as it allows to bridge `F`-in-`S
+using only one bridge instead of two if it uses bridge 2 and 3.
 """
 mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     # Internal model
@@ -44,6 +51,7 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     # `concrete_bridge_type` at runtime, which is slow.
     cached_bridge_type::Dict{Any,DataType}
 end
+
 function LazyBridgeOptimizer(model::MOI.ModelLike)
     return LazyBridgeOptimizer{typeof(model)}(
         model,
@@ -71,23 +79,26 @@ end
 function Variable.bridges(bridge::LazyBridgeOptimizer)
     return bridge.variable_map
 end
+
 function Constraint.bridges(bridge::LazyBridgeOptimizer)
     return bridge.constraint_map
 end
+
 function Objective.bridges(b::LazyBridgeOptimizer)
     return b.objective_map
 end
 
 # After `add_bridge(b, BT)`, some constrained variables `(S,)` in
 # `keys(b.variable_best)` or constraints `(F, S)` in `keys(b.constraint_best)`
-# or `(F,)` in `keys(b.objective_best)` may be bridged
-# with less bridges than `b.variable_dist[(S,)]`,
-# `b.constraint_dist[(F, S)]` or `b.objective_dist[(F,)]` using `BT`.
-# We could either recompute the distance from every node or clear the
-# dictionary so that the distance is computed lazily at the next
-# `supports_constraint` call. We prefer clearing the dictionaries so as this is
-# called for each bridge added and recomputing the distance for each bridge
-# would be a waste if several bridges are added consecutively.
+# or `(F,)` in `keys(b.objective_best)` may be bridged with less bridges than
+# `b.variable_dist[(S,)]`, `b.constraint_dist[(F, S)]` or
+# `b.objective_dist[(F,)]` using `BT`.
+#
+# We could either recompute the distance from every node or clear the dictionary
+# so that the distance is computed lazily at the next `supports_constraint`
+# call. We prefer clearing the dictionaries so as this is called for each bridge
+# added and recomputing the distance for each bridge would be a waste if several
+# bridges are added consecutively.
 function _reset_dist(b::LazyBridgeOptimizer)
     empty!(b.variable_node)
     empty!(b.variable_types)
@@ -96,7 +107,8 @@ function _reset_dist(b::LazyBridgeOptimizer)
     empty!(b.objective_node)
     empty!(b.objective_types)
     empty!(b.graph)
-    return empty!(b.cached_bridge_type)
+    empty!(b.cached_bridge_type)
+    return
 end
 
 function edge(b::LazyBridgeOptimizer, bridge_index, BT::Type{<:AbstractBridge})
@@ -108,6 +120,7 @@ function edge(b::LazyBridgeOptimizer, bridge_index, BT::Type{<:AbstractBridge})
         ConstraintNode[node(b, C[1], C[2]) for C in added_constraint_types(BT)],
     )
 end
+
 function edge(
     b::LazyBridgeOptimizer,
     bridge_index,
@@ -124,16 +137,19 @@ function edge(
 end
 
 functionized_type(::Nothing) = nothing
+
 function functionized_type(
     ::Type{<:Constraint.ScalarFunctionizeBridge{T}},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
 end
+
 function functionized_type(
     ::Type{<:Constraint.VectorFunctionizeBridge{T}},
 ) where {T}
     return MOI.VectorAffineFunction{T}
 end
+
 function functionized_type(b::LazyBridgeOptimizer, ::Type{MOI.SingleVariable})
     return functionized_type(
         _first_functionize_bridge(
@@ -142,6 +158,7 @@ function functionized_type(b::LazyBridgeOptimizer, ::Type{MOI.SingleVariable})
         ),
     )
 end
+
 function functionized_type(
     b::LazyBridgeOptimizer,
     ::Type{MOI.VectorOfVariables},
@@ -264,12 +281,14 @@ function _bridge_types(
 )
     return b.variable_bridge_types
 end
+
 function _bridge_types(
     b::LazyBridgeOptimizer,
     ::Type{<:Constraint.AbstractBridge},
 )
     return b.constraint_bridge_types
 end
+
 function _bridge_types(
     b::LazyBridgeOptimizer,
     ::Type{<:Objective.AbstractBridge},
@@ -287,9 +306,12 @@ function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
         _add_bridge(b, BT)
         _reset_dist(b)
     end
+    return
 end
+
 function _add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
-    return push!(_bridge_types(b, BT), BT)
+    push!(_bridge_types(b, BT), BT)
+    return
 end
 
 """

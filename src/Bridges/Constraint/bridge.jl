@@ -6,19 +6,13 @@ bridges.
 """
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
-# TODO [breaking] merge with `Bridges.Variable.IndexInVector` into `Bridges.IndexInVector`
 """
-    IndexInVector
-
-Index of variable in vector of variables.
-"""
-struct IndexInVector
-    value::Int
-end
-
-"""
-    bridge_constraint(BT::Type{<:AbstractBridge}, model::MOI.ModelLike,
-                      func::AbstractFunction, set::MOI.AbstractSet)
+    bridge_constraint(
+        BT::Type{<:AbstractBridge},
+        model::MOI.ModelLike,
+        func::AbstractFunction,
+        set::MOI.AbstractSet,
+    )
 
 Bridge the constraint `func`-in-`set` using bridge `BT` to `model` and returns
 a bridge object of type `BT`. The bridge type `BT` should be a concrete type,
@@ -43,9 +37,14 @@ The list of variables created by the bridge `b` in the model.
 MOI.get(::AbstractBridge, ::MOI.ListOfVariableIndices) = MOI.VariableIndex[]
 
 """
-    MOI.supports_constraint(BT::Type{<:AbstractBridge}, F::Type{<:MOI.AbstractFunction}, S::Type{<:MOI.AbstractSet})::Bool
+    MOI.supports_constraint(
+        BT::Type{<:AbstractBridge},
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
+    )::Bool
 
-Return a `Bool` indicating whether the bridges of type `BT` support bridging `F`-in-`S` constraints.
+Return a `Bool` indicating whether the bridges of type `BT` support bridging
+`F`-in-`S` constraints.
 """
 function MOI.supports_constraint(
     ::Type{<:AbstractBridge},
@@ -56,14 +55,16 @@ function MOI.supports_constraint(
 end
 
 """
-    added_constrained_variable_types(BT::Type{<:MOI.Bridges.Constraint.AbstractBridge},
-                                     F::Type{<:MOI.AbstractFunction},
-                                     S::Type{<:MOI.AbstractSet})
+    added_constrained_variable_types(
+        BT::Type{<:MOI.Bridges.Constraint.AbstractBridge},
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
+    )
 
 Return a list of the types of constrained variables that bridges of type `BT`
 add for bridging `F`-in-`S` constraints. This falls back to
-`added_constrained_variable_types(concrete_bridge_type(BT, F, S))`
-so bridges should not implement this method.
+`added_constrained_variable_types(concrete_bridge_type(BT, F, S))` so bridges
+should not implement this method.
 """
 function MOIB.added_constrained_variable_types(
     BT::Type{<:AbstractBridge},
@@ -74,9 +75,11 @@ function MOIB.added_constrained_variable_types(
 end
 
 """
-    added_constraint_types(BT::Type{<:MOI.Bridges.Constraint.AbstractBridge},
-                           F::Type{<:MOI.AbstractFunction},
-                           S::Type{<:MOI.AbstractSet})
+    added_constraint_types(
+        BT::Type{<:MOI.Bridges.Constraint.AbstractBridge},
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
+    )
 
 Return a list of the types of constraints that bridges of type `BT` add for
 bridging `F`-in-`S` constraints. This falls back to

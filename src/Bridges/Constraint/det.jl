@@ -1,3 +1,4 @@
+# TODO(odow): this appears elsewhere
 function trimap(i::Integer, j::Integer)
     if i < j
         trimap(j, i)
@@ -7,13 +8,20 @@ function trimap(i::Integer, j::Integer)
 end
 
 """
-    extract_eigenvalues(model, f::MOI.VectorAffineFunction{T}, d::Int, offset::Int) where T
+    extract_eigenvalues(
+        model,
+        f::MOI.VectorAffineFunction{T},
+        d::Int,
+        offset::Int
+    ), where {T}
 
 The vector `f` contains `t` (if `offset = 1`) or `(t, u)` (if `offset = 2`)
 followed by the matrix `X` of dimension `d`.
-This functions extracts the eigenvalues of `X` and returns a vector containing `t` or `(t, u)`,
-a vector `MOI.VariableIndex` containing the eigenvalues of `X`,
-the variables created and the index of the constraint created to extract the eigenvalues.
+
+This functions extracts the eigenvalues of `X` and returns a vector containing
+`t` or `(t, u)`, a vector `MOI.VariableIndex` containing the eigenvalues of `X`,
+the variables created and the index of the constraint created to extract the
+eigenvalues.
 """
 function extract_eigenvalues(
     model,
@@ -65,9 +73,15 @@ end
 """
     LogDetBridge{T}
 
-The `LogDetConeTriangle` is representable by a `PositiveSemidefiniteConeTriangle` and `ExponentialCone` constraints.
-Indeed, ``\\log\\det(X) = \\log(\\delta_1) + \\cdots + \\log(\\delta_n)`` where ``\\delta_1``, ..., ``\\delta_n`` are the eigenvalues of ``X``.
-Adapting the method from [1, p. 149], we see that ``t \\le u \\log(\\det(X/u))`` for ``u > 0`` if and only if there exists a lower triangular matrix ``Δ`` such that
+The `LogDetConeTriangle` is representable by a
+`PositiveSemidefiniteConeTriangle` and `ExponentialCone` constraints.
+
+Indeed, ``\\log\\det(X) = \\log(\\delta_1) + \\cdots + \\log(\\delta_n)`` where
+``\\delta_1``, ..., ``\\delta_n`` are the eigenvalues of ``X``.
+
+Adapting the method from [1, p. 149], we see that ``t \\le u \\log(\\det(X/u))``
+for ``u > 0`` if and only if there exists a lower triangular matrix ``Δ`` such
+that
 ```math
 \\begin{align*}
   \\begin{pmatrix}
@@ -78,7 +92,9 @@ Adapting the method from [1, p. 149], we see that ``t \\le u \\log(\\det(X/u))``
 \\end{align*}
 ```
 
-[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
+[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex
+    optimization: analysis, algorithms, and engineering applications*. Society
+    for Industrial and Applied Mathematics, 2001.
 ```
 """
 struct LogDetBridge{T} <: AbstractBridge
@@ -91,6 +107,7 @@ struct LogDetBridge{T} <: AbstractBridge
     lcindex::Vector{CI{MOI.VectorAffineFunction{T},MOI.ExponentialCone}}
     tlindex::CI{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}
 end
+
 function bridge_constraint(
     ::Type{LogDetBridge{T}},
     model,
@@ -104,6 +121,7 @@ function bridge_constraint(
         s,
     )
 end
+
 function bridge_constraint(
     ::Type{LogDetBridge{T}},
     model,
@@ -126,9 +144,11 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:LogDetBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(::Type{LogDetBridge{T}}) where {T}
     return [
         (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle),
@@ -138,7 +158,13 @@ function MOIB.added_constraint_types(::Type{LogDetBridge{T}}) where {T}
 end
 
 """
-    sublog(model, x::MOI.VariableIndex, y::MOI.VariableIndex, z::MOI.VariableIndex, ::Type{T}) where T
+    sublog(
+        model,
+        x::MOI.VariableIndex,
+        y::MOI.VariableIndex,
+        z::MOI.VariableIndex,
+        ::Type{T},
+    ) where {T}
 
 Constrains ``x \\le y \\log(z/y)`` and returns the constraint index.
 """
@@ -157,9 +183,15 @@ function sublog(
 end
 
 """
-    subsum(model, t::MOI.ScalarAffineFunction, l::Vector{MOI.VariableIndex}, ::Type{T}) where T
+    subsum(
+        model,
+        t::MOI.ScalarAffineFunction,
+        l::Vector{MOI.VariableIndex},
+        ::Type{T}
+    ) where {T}
 
-Constrains ``t \\le l_1 + \\cdots + l_n`` where `n` is the length of `l` and returns the constraint index.
+Constrains ``t \\le l_1 + \\cdots + l_n`` where `n` is the length of `l` and
+returns the constraint index.
 """
 function subsum(
     model,
@@ -179,9 +211,11 @@ end
 
 # Attributes, Bridge acting as a model
 MOI.get(b::LogDetBridge, ::MOI.NumberOfVariables) = length(b.Δ) + length(b.l)
+
 MOI.get(b::LogDetBridge, ::MOI.ListOfVariableIndices) = [b.Δ; b.l]
+
 function MOI.get(
-    b::LogDetBridge{T},
+    ::LogDetBridge{T},
     ::MOI.NumberOfConstraints{
         MOI.VectorAffineFunction{T},
         MOI.PositiveSemidefiniteConeTriangle,
@@ -189,18 +223,21 @@ function MOI.get(
 ) where {T}
     return 1
 end
+
 function MOI.get(
     b::LogDetBridge{T},
     ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.ExponentialCone},
 ) where {T}
     return length(b.lcindex)
 end
+
 function MOI.get(
-    b::LogDetBridge{T},
+    ::LogDetBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
 ) where {T}
     return 1
 end
+
 function MOI.get(
     b::LogDetBridge{T},
     ::MOI.ListOfConstraintIndices{
@@ -210,6 +247,7 @@ function MOI.get(
 ) where {T}
     return [b.sdindex]
 end
+
 function MOI.get(
     b::LogDetBridge{T},
     ::MOI.ListOfConstraintIndices{
@@ -217,8 +255,9 @@ function MOI.get(
         MOI.ExponentialCone,
     },
 ) where {T}
-    return b.lcindex
+    return copy(b.lcindex)
 end
+
 function MOI.get(
     b::LogDetBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
@@ -232,7 +271,8 @@ function MOI.delete(model::MOI.ModelLike, bridge::LogDetBridge)
     MOI.delete(model, bridge.lcindex)
     MOI.delete(model, bridge.sdindex)
     MOI.delete(model, bridge.l)
-    return MOI.delete(model, bridge.Δ)
+    MOI.delete(model, bridge.Δ)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -250,6 +290,7 @@ function MOI.get(
     x = MOI.get(model, attr, bridge.sdindex)[1:length(bridge.Δ)]
     return vcat(t, u, x)
 end
+
 # [X Δ; Δ' Diag(Δ)] in PSD
 # t - sum(l) >= 0
 # (l_i, u, Δ_ii) in Exp
@@ -285,8 +326,12 @@ end
 """
     RootDetBridge{T}
 
-The `RootDetConeTriangle` is representable by a `PositiveSemidefiniteConeTriangle` and an `GeometricMeanCone` constraints; see [1, p. 149].
-Indeed, ``t \\le \\det(X)^{1/n}`` if and only if there exists a lower triangular matrix ``Δ`` such that
+The `RootDetConeTriangle` is representable by a
+`PositiveSemidefiniteConeTriangle` and an `GeometricMeanCone` constraints; see
+[1, p. 149].
+
+Indeed, ``t \\le \\det(X)^{1/n}`` if and only if there exists a lower triangular
+matrix ``Δ`` such that:
 ```math
 \\begin{align*}
   \\begin{pmatrix}
@@ -297,7 +342,9 @@ Indeed, ``t \\le \\det(X)^{1/n}`` if and only if there exists a lower triangular
 \\end{align*}
 ```
 
-[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
+[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex
+    optimization: analysis, algorithms, and engineering applications*. Society
+    for Industrial and Applied Mathematics, 2001.
 """
 struct RootDetBridge{T} <: AbstractBridge
     Δ::Vector{MOI.VariableIndex}
@@ -307,6 +354,7 @@ struct RootDetBridge{T} <: AbstractBridge
     }
     gmindex::CI{MOI.VectorAffineFunction{T},MOI.GeometricMeanCone}
 end
+
 function bridge_constraint(
     ::Type{RootDetBridge{T}},
     model,
@@ -320,6 +368,7 @@ function bridge_constraint(
         s,
     )
 end
+
 function bridge_constraint(
     ::Type{RootDetBridge{T}},
     model,
@@ -335,7 +384,6 @@ function bridge_constraint(
         MOIU.operate(vcat, T, t, DF),
         MOI.GeometricMeanCone(d + 1),
     )
-
     return RootDetBridge(Δ, sdindex, gmindex)
 end
 
@@ -346,9 +394,11 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:RootDetBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(::Type{RootDetBridge{T}}) where {T}
     return [
         (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle),
@@ -358,9 +408,11 @@ end
 
 # Attributes, Bridge acting as a model
 MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables) = length(b.Δ)
-MOI.get(b::RootDetBridge, ::MOI.ListOfVariableIndices) = b.Δ
+
+MOI.get(b::RootDetBridge, ::MOI.ListOfVariableIndices) = copy(b.Δ)
+
 function MOI.get(
-    b::RootDetBridge{T},
+    ::RootDetBridge{T},
     ::MOI.NumberOfConstraints{
         MOI.VectorAffineFunction{T},
         MOI.PositiveSemidefiniteConeTriangle,
@@ -368,8 +420,9 @@ function MOI.get(
 ) where {T}
     return 1
 end
+
 function MOI.get(
-    b::RootDetBridge{T},
+    ::RootDetBridge{T},
     ::MOI.NumberOfConstraints{
         MOI.VectorAffineFunction{T},
         MOI.GeometricMeanCone,
@@ -377,6 +430,7 @@ function MOI.get(
 ) where {T}
     return 1
 end
+
 function MOI.get(
     b::RootDetBridge{T},
     ::MOI.ListOfConstraintIndices{
@@ -386,6 +440,7 @@ function MOI.get(
 ) where {T}
     return [b.sdindex]
 end
+
 function MOI.get(
     b::RootDetBridge{T},
     ::MOI.ListOfConstraintIndices{
@@ -400,7 +455,8 @@ end
 function MOI.delete(model::MOI.ModelLike, bridge::RootDetBridge)
     MOI.delete(model, bridge.gmindex)
     MOI.delete(model, bridge.sdindex)
-    return MOI.delete(model, bridge.Δ)
+    MOI.delete(model, bridge.Δ)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -413,6 +469,7 @@ function MOI.get(
     x = MOI.get(model, attr, bridge.sdindex)[1:length(bridge.Δ)]
     return vcat(t, x)
 end
+
 # (t, x) in RootDet <=> exists Δ such that At + Bx + CΔ in (PSD, GeoMean)
 # so RootDet* = [A'; B'] (PSD, GeoMean)*
 # and 0 = [C'] (PSD, GeoMean)*

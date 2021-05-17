@@ -9,23 +9,20 @@ const CI = MOI.ConstraintIndex
 include("bridge.jl")
 include("bridge_optimizer.jl")
 
-# Variable bridges
 include("Variable/Variable.jl")
-# Constraint bridges
 include("Constraint/Constraint.jl")
-# Objective bridges
 include("Objective/Objective.jl")
 
 include("lazy_bridge_optimizer.jl")
 include("debug.jl")
 
 """
-    full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where T
+    full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where {T}
 
 Returns a `LazyBridgeOptimizer` bridging `model` for every bridge defined in
 this package and for the coefficient type `T`.
 """
-function full_bridge_optimizer(model::MOI.ModelLike, T::Type)
+function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where {T}
     bridged_model = LazyBridgeOptimizer(model)
     Variable.add_all_bridges(bridged_model, T)
     Constraint.add_all_bridges(bridged_model, T)
@@ -34,25 +31,33 @@ function full_bridge_optimizer(model::MOI.ModelLike, T::Type)
 end
 
 print_num_bridges(io::IO, ::Variable.EmptyMap) = nothing
+
 print_num_bridges(io::IO, ::Constraint.EmptyMap) = nothing
+
 print_num_bridges(io::IO, ::Objective.EmptyMap) = nothing
+
 function print_num_bridges(io::IO, B::Variable.Map)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
     n = length(B)
-    return print(io, "\n$(indent)with $(n) variable bridge$(s(n))")
+    print(io, "\n$(indent)with $(n) variable bridge$(s(n))")
+    return
 end
+
 function print_num_bridges(io::IO, B::Constraint.Map)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
     n = length(B)
-    return print(io, "\n$(indent)with $(n) constraint bridge$(s(n))")
+    print(io, "\n$(indent)with $(n) constraint bridge$(s(n))")
+    return
 end
+
 function print_num_bridges(io::IO, B::Objective.Map)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
     n = length(B)
-    return print(io, "\n$(indent)with $(n) objective bridge$(s(n))")
+    print(io, "\n$(indent)with $(n) objective bridge$(s(n))")
+    return
 end
 
 function Base.show(io::IO, B::AbstractBridgeOptimizer)
@@ -65,6 +70,7 @@ function Base.show(io::IO, B::AbstractBridgeOptimizer)
         print(io, "\n$(indent)with inner model ")
         show(IOContext(io, :indent => get(io, :indent, 0) + 2), B.model)
     end
+    return
 end
 
-end # module
+end

@@ -5,6 +5,7 @@ function _ilog2(n, i)
         _ilog2(n, i + 1)
     end
 end
+
 function ilog2(n::Integer)
     @assert n > zero(n)
     return _ilog2(n, zero(n))
@@ -14,20 +15,23 @@ end
     GeoMeanBridge{T, F, G, H}
 
 The `GeometricMeanCone` is `SecondOrderCone` representable; see [1, p. 105].
+
 The reformulation is best described in an example.
-Consider the cone of dimension 4
+
+Consider the cone of dimension 4:
 ```math
 t \\le \\sqrt[3]{x_1 x_2 x_3}
 ```
-This can be rewritten as ``\\exists x_{21} \\ge 0`` such that
+This can be rewritten as ``\\exists x_{21} \\ge 0`` such that:
 ```math
 \\begin{align*}
   t & \\le x_{21},\\\\
   x_{21}^4 & \\le x_1 x_2 x_3 x_{21}.
 \\end{align*}
 ```
-Note that we need to create ``x_{21}`` and not use ``t^4`` directly as ``t`` is allowed to be negative.
-Now, this is equivalent to
+
+Note that we need to create ``x_{21}`` and not use ``t^4`` directly as ``t`` is
+allowed to be negative. Now, this is equivalent to:
 ```math
 \\begin{align*}
   t & \\le x_{21}/\\sqrt{4},\\\\
@@ -36,7 +40,9 @@ Now, this is equivalent to
 \\end{align*}
 ```
 
-[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
+[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex
+    optimization: analysis, algorithms, and engineering applications*. Society
+    for Industrial and Applied Mathematics, 2001.
 """
 struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
     # Initially, (t, x) is of dimension d so x is dimension (d-1)
@@ -50,6 +56,7 @@ struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
     socrc::Vector{CI{G,MOI.RotatedSecondOrderCone}}
     nonneg::Union{Nothing,CI{H,MOI.Nonnegatives}}
 end
+
 function bridge_constraint(
     ::Type{GeoMeanBridge{T,F,G,H}},
     model,
@@ -133,9 +140,11 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:GeoMeanBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(
     ::Type{<:GeoMeanBridge{T,F,G}},
 ) where {T,F,G}
@@ -145,6 +154,7 @@ function MOIB.added_constraint_types(
         (G, MOI.Nonnegatives),
     ]
 end
+
 function concrete_bridge_type(
     ::Type{<:GeoMeanBridge{T}},
     H::Type{<:MOI.AbstractVectorFunction},
@@ -159,37 +169,44 @@ end
 
 # Attributes, Bridge acting as a model
 MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables) = length(b.xij)
-MOI.get(b::GeoMeanBridge, ::MOI.ListOfVariableIndices) = b.xij
+
+MOI.get(b::GeoMeanBridge, ::MOI.ListOfVariableIndices) = copy(b.xij)
+
 function MOI.get(
-    b::GeoMeanBridge{T,F},
+    ::GeoMeanBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.LessThan{T}},
 ) where {T,F}
     return 1 # t ≤ x_{l1}/sqrt(N)
 end
+
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.RotatedSecondOrderCone},
 ) where {T,F,G}
     return length(b.socrc)
 end
+
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.Nonnegatives},
 ) where {T,F,G}
     return (b.d > 2 ? 0 : 1)
 end
+
 function MOI.get(
     b::GeoMeanBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,MOI.LessThan{T}},
 ) where {T,F}
     return [b.tubc]
 end
+
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.ListOfConstraintIndices{G,MOI.RotatedSecondOrderCone},
 ) where {T,F,G}
-    return b.socrc
+    return copy(b.socrc)
 end
+
 function MOI.get(
     b::GeoMeanBridge{T,F,G,H},
     ::MOI.ListOfConstraintIndices{H,MOI.Nonnegatives},
@@ -205,12 +222,14 @@ function MOI.delete(model::MOI.ModelLike, bridge::GeoMeanBridge)
     if bridge.d == 2
         MOI.delete(model, bridge.nonneg)
     end
+    return
 end
 
 # Attributes, Bridge acting as a constraint
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::GeoMeanBridge)
     return MOI.GeometricMeanCone(bridge.d)
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
@@ -245,6 +264,7 @@ function MOI.get(
     end
     return MOIU.vectorize(f_scalars)
 end
+
 function _getconstrattr(model, attr, bridge::GeoMeanBridge{T}) where {T}
     output = Vector{T}(undef, bridge.d)
     output[1] = MOI.get(model, attr, bridge.tubc)
@@ -262,6 +282,7 @@ function _getconstrattr(model, attr, bridge::GeoMeanBridge{T}) where {T}
     end
     return output
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimal,
@@ -278,6 +299,7 @@ function MOI.get(
     end
     return output
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,

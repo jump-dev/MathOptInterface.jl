@@ -1,33 +1,19 @@
-using MathOptInterface
-const MOI = MathOptInterface
-const MOIT = MathOptInterface.Test
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
-
 using Test
 
-# It needs to be called first to trigger the crash.
+# This file gets called first. It it doesn't crash, all is well.
 include("issue980.jl")
 
-# Tests for solvers are located in MOI.Test.
-
-include("dummy.jl")
-
-# MOI tests not relying on any submodule
-@testset "MOI" begin
-    include("isbits.jl")
-    include("isapprox.jl")
-    include("interval.jl")
-    include("errors.jl")
-    include("functions.jl")
-    include("sets.jl")
-    include("attributes.jl")
-    include("constraints.jl")
-    include("instantiate.jl")
-    include("deprecate.jl")
+for file in readdir(@__DIR__)
+    if file in ["issue980.jl", "dummy.jl", "hygiene.jl", "runtests.jl"]
+        continue
+    elseif !endswith(file, ".jl")
+        continue
+    end
+    @testset "$(file)" begin
+        include(file)
+    end
 end
 
-# Utilities submodule tests
 @testset "MOI.$(submodule)" for submodule in [
     "Bridges",
     "FileFormats",

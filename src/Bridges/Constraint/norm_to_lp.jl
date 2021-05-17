@@ -9,6 +9,7 @@ struct NormInfinityBridge{T,F,G} <:
        SetMapBridge{T,MOI.Nonnegatives,MOI.NormInfinityCone,F,G}
     constraint::CI{F,MOI.Nonnegatives}
 end
+
 function concrete_bridge_type(
     ::Type{<:NormInfinityBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -21,6 +22,7 @@ end
 function map_set(::Type{<:NormInfinityBridge}, set::MOI.NormInfinityCone)
     return MOI.Nonnegatives(2 * (MOI.dimension(set) - 1))
 end
+
 function inverse_map_set(::Type{<:NormInfinityBridge}, set::MOI.Nonnegatives)
     return MOI.NormInfinityCone(div(MOI.dimension(set), 2) + 1)
 end
@@ -36,6 +38,7 @@ function map_function(::Type{<:NormInfinityBridge{T}}, func) where {T}
     end
     return f_new
 end
+
 function inverse_map_function(::Type{<:NormInfinityBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
     t = MOIU.operate!(/, T, sum(scalars), T(length(scalars)))
@@ -58,6 +61,7 @@ function adjoint_map_function(::Type{<:NormInfinityBridge}, func)
     x = (scalars[(d+1):end] - scalars[1:d])
     return vcat(t, x)
 end
+
 function inverse_adjoint_map_function(
     ::Type{<:NormInfinityBridge{T}},
     func::AbstractVector{T},
@@ -87,6 +91,7 @@ struct NormOneBridge{T,F,G} <: AbstractBridge
     y::Vector{MOI.VariableIndex}
     nn_index::CI{F,MOI.Nonnegatives}
 end
+
 function bridge_constraint(
     ::Type{NormOneBridge{T,F,G}},
     model::MOI.ModelLike,
@@ -113,12 +118,15 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:NormOneBridge})
     return Tuple{DataType}[]
 end
+
 function MOIB.added_constraint_types(::Type{<:NormOneBridge{T,F}}) where {T,F}
     return [(F, MOI.Nonnegatives)]
 end
+
 function concrete_bridge_type(
     ::Type{<:NormOneBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -136,13 +144,14 @@ end
 
 # Attributes, Bridge acting as a model
 MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables) = length(b.y)
-MOI.get(b::NormOneBridge, ::MOI.ListOfVariableIndices) = b.y
+MOI.get(b::NormOneBridge, ::MOI.ListOfVariableIndices) = copy(b.y)
 function MOI.get(
     b::NormOneBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.Nonnegatives},
 ) where {T,F}
     return 1
 end
+
 function MOI.get(
     b::NormOneBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,MOI.Nonnegatives},
@@ -153,7 +162,8 @@ end
 # References
 function MOI.delete(model::MOI.ModelLike, c::NormOneBridge)
     MOI.delete(model, c.nn_index)
-    return MOI.delete(model, c.y)
+    MOI.delete(model, c.y)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -177,6 +187,7 @@ function MOI.get(
         MOIU.remove_variable(MOIU.operate(vcat, T, t, x), c.y),
     )
 end
+
 function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormOneBridge)
     dim = div(
         MOI.dimension(MOI.get(model, MOI.ConstraintSet(), c.nn_index)) + 1,
@@ -184,6 +195,7 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormOneBridge)
     )
     return MOI.NormOneCone(dim)
 end
+
 function MOI.supports(
     ::MOI.ModelLike,
     ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
@@ -191,6 +203,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
@@ -210,6 +223,7 @@ function MOI.set(
     MOI.set(model, attr, bridge.nn_index, nn_value)
     return
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},

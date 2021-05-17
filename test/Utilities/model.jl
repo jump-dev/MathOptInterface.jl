@@ -4,6 +4,56 @@ const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
+function bound_vectors_test(::Type{T}, nolb, noub) where {T}
+    model = MOIU.Model{T}()
+    @test model.lower_bound == T[]
+    @test model.upper_bound == T[]
+    x = MOI.add_variable(model)
+    fx = MOI.SingleVariable(x)
+    @test model.lower_bound == [nolb]
+    @test model.upper_bound == [noub]
+    ux = MOI.add_constraint(model, fx, MOI.LessThan(T(1)))
+    @test model.lower_bound == [nolb]
+    @test model.upper_bound == [T(1)]
+    y = MOI.add_variable(model)
+    fy = MOI.SingleVariable(y)
+    @test model.lower_bound == [nolb, nolb]
+    @test model.upper_bound == [T(1), noub]
+    cy = MOI.add_constraint(model, fy, MOI.Interval(T(2), T(3)))
+    @test model.lower_bound == [nolb, T(2)]
+    @test model.upper_bound == [T(1), T(3)]
+    lx = MOI.add_constraint(model, fx, MOI.GreaterThan(T(0)))
+    @test model.lower_bound == [T(0), T(2)]
+    @test model.upper_bound == [T(1), T(3)]
+    MOI.delete(model, lx)
+    @test model.lower_bound == [nolb, T(2)]
+    @test model.upper_bound == [T(1), T(3)]
+    MOI.delete(model, ux)
+    @test model.lower_bound == [nolb, T(2)]
+    @test model.upper_bound == [noub, T(3)]
+    cx = MOI.add_constraint(model, fx, MOI.Semicontinuous(T(3), T(4)))
+    @test model.lower_bound == [T(3), T(2)]
+    @test model.upper_bound == [T(4), T(3)]
+    MOI.delete(model, cy)
+    @test model.lower_bound == [T(3), nolb]
+    @test model.upper_bound == [T(4), noub]
+    sy = MOI.add_constraint(model, fy, MOI.Semiinteger(T(-2), T(-1)))
+    @test model.lower_bound == [T(3), T(-2)]
+    @test model.upper_bound == [T(4), T(-1)]
+    MOI.delete(model, sy)
+    @test model.lower_bound == [T(3), nolb]
+    @test model.upper_bound == [T(4), noub]
+    ey = MOI.add_constraint(model, fy, MOI.EqualTo(T(-3)))
+    @test model.lower_bound == [T(3), T(-3)]
+    @test model.upper_bound == [T(4), T(-3)]
+    MOI.delete(model, ey)
+    @test model.lower_bound == [T(3), nolb]
+    @test model.upper_bound == [T(4), noub]
+    MOI.delete(model, cx)
+    @test model.lower_bound == [nolb, nolb]
+    @test model.upper_bound == [noub, noub]
+end
+
 @testset "Basic constraint tests" begin
     model = MOIU.Model{Float64}()
     MOIT.basic_constraint_tests(model, MOIT.TestConfig())
@@ -348,6 +398,7 @@ end
             push!(loc2, (F, S))
         end
     end
+    _pushloc(::Nothing) = nothing
     function _pushloc(model::MOI.Utilities.StructOfConstraints)
         return MOIU.broadcastcall(_pushloc, model)
     end
@@ -536,4 +587,9 @@ end
         ArgumentError,
         MOI.set(model, MOI.ConstraintFunction(), c, MOI.SingleVariable(x)),
     )
+end
+
+@testset "Bound vector" begin
+    bound_vectors_test(Int, 0, 0)
+    bound_vectors_test(Float64, -Inf, Inf)
 end

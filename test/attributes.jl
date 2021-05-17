@@ -1,40 +1,49 @@
-@testset "Attributes" begin
-    @testset "is_set_by_optimize" begin
-        @test MOI.is_set_by_optimize(MOI.TerminationStatus())
-        @test !MOI.is_set_by_optimize(MOI.ConstraintSet())
-        @test !MOI.is_set_by_optimize(MOI.ObjectiveSense())
-        @test MOI.is_set_by_optimize(MOI.CallbackNodeStatus(1))
-    end
-    @testset "is_copyable" begin
-        @test !MOI.is_copyable(MOI.TerminationStatus())
-        @test !MOI.is_copyable(MOI.ConstraintSet())
-        @test MOI.is_copyable(MOI.ObjectiveSense())
-    end
-    @testset "supports" begin
-        model = DummyModel()
-        @test_throws ArgumentError MOI.supports(model, MOI.TerminationStatus())
-        @test_throws ArgumentError begin
-            MOI.supports(
-                model,
-                MOI.ConstraintSet(),
-                MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
-            )
-        end
-        @test MOI.supports(model, MOI.ObjectiveSense())
-    end
-    @testset "set vector" begin
-        attr = MOI.VariablePrimalStart()
-        err = DimensionMismatch(
-            "Number of indices (1) does not match the " *
-            "number of values (2) set to `$attr`.",
-        )
-        model = DummyModel()
-        x = MOI.VariableIndex(1)
-        @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x], ones(2))
-    end
+module TestAttributes
+
+using Test
+using MathOptInterface
+const MOI = MathOptInterface
+
+include("dummy.jl")
+
+function test_attributes_is_set_by_optimize()
+    @test MOI.is_set_by_optimize(MOI.TerminationStatus())
+    @test !MOI.is_set_by_optimize(MOI.ConstraintSet())
+    @test !MOI.is_set_by_optimize(MOI.ObjectiveSense())
+    @test MOI.is_set_by_optimize(MOI.CallbackNodeStatus(1))
 end
 
-@testset "test_integration_compute_conflict" begin
+function test_attributes_is_copyable()
+    @test !MOI.is_copyable(MOI.TerminationStatus())
+    @test !MOI.is_copyable(MOI.ConstraintSet())
+    @test MOI.is_copyable(MOI.ObjectiveSense())
+end
+
+function test_attributes_supports()
+    model = DummyModel()
+    @test_throws ArgumentError MOI.supports(model, MOI.TerminationStatus())
+    @test_throws ArgumentError begin
+        MOI.supports(
+            model,
+            MOI.ConstraintSet(),
+            MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
+        )
+    end
+    @test MOI.supports(model, MOI.ObjectiveSense())
+end
+
+function test_attributes_set_vector()
+    attr = MOI.VariablePrimalStart()
+    err = DimensionMismatch(
+        "Number of indices (1) does not match the " *
+        "number of values (2) set to `$attr`.",
+    )
+    model = DummyModel()
+    x = MOI.VariableIndex(1)
+    @test_throws err MOI.set(model, MOI.VariablePrimalStart(), [x], ones(2))
+end
+
+function test_attributes_integration_compute_conflict_1()
     optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.Model{Float64}(),
@@ -90,7 +99,7 @@ MOI.Utilities.@model(
     ()
 )
 
-@testset "test_integration_compute_conflict" begin
+function test_attributes_integration_compute_conflict_2()
     optimizer = MOI.Utilities.MockOptimizer(OnlyScalarConstraints{Float64}())
     model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
     x = MOI.add_variable(model)
@@ -107,3 +116,17 @@ MOI.Utilities.@model(
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test_throws ArgumentError MOI.get(model, MOI.ConstraintConflictStatus(), c)
 end
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+end
+
+end
+
+TestAttributes.runtests()

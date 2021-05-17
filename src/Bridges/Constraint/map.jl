@@ -18,6 +18,7 @@ struct Map <: AbstractDict{MOI.ConstraintIndex,AbstractBridge}
         AbstractBridge,
     }
 end
+
 function Map()
     return Map(
         Union{Nothing,AbstractBridge}[],
@@ -32,12 +33,14 @@ function Base.isempty(map::Map)
     return all(bridge -> bridge === nothing, map.bridges) &&
            isempty(map.single_variable_constraints)
 end
+
 function Base.empty!(map::Map)
     empty!(map.bridges)
     empty!(map.constraint_types)
     empty!(map.single_variable_constraints)
     return map
 end
+
 function Base.length(map::Map)
     return count(bridge -> bridge !== nothing, map.bridges) +
            length(map.single_variable_constraints)
@@ -49,25 +52,30 @@ function Base.haskey(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
            map.bridges[_index(ci)] !== nothing &&
            (F, S) == map.constraint_types[_index(ci)]
 end
+
 function Base.getindex(map::Map, ci::MOI.ConstraintIndex)
     return map.bridges[_index(ci)]
 end
+
 function Base.haskey(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {S}
     return haskey(map.single_variable_constraints, (ci.value, S))
 end
+
 function Base.getindex(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {S}
     return map.single_variable_constraints[(ci.value, S)]
 end
+
 function Base.delete!(map::Map, ci::MOI.ConstraintIndex)
     map.bridges[_index(ci)] = nothing
     return map
 end
+
 function Base.delete!(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
@@ -75,6 +83,7 @@ function Base.delete!(
     delete!(map.single_variable_constraints, (ci.value, S))
     return map
 end
+
 function Base.values(map::Map)
     return Base.Iterators.flatten((
         # See comment in `values(::Variable.Map)`.
@@ -98,12 +107,15 @@ function _iterate_sv(
         return ci => bridge, (2, elem_state[2])
     end
 end
+
 function _index(index, F, S)
     return MOI.ConstraintIndex{F,S}(index)
 end
+
 function _index(index, F::Type{MOI.VectorOfVariables}, S)
     return MOI.ConstraintIndex{F,S}(-index)
 end
+
 function _iterate(map::Map, state = 1)
     while state ≤ length(map.bridges) && map.bridges[state] === nothing
         state += 1
@@ -148,18 +160,21 @@ function keys_of_type end
 function number_of_type(map::Map, ::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
     return count(i -> haskey(map, _index(i, F, S)), eachindex(map.bridges))
 end
+
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
     return Base.Iterators.Filter(
         ci -> haskey(map, ci),
         MOIU.LazyMap{C}(i -> _index(i, F, S), eachindex(map.bridges)),
     )
 end
+
 function number_of_type(
     map::Map,
     C::Type{MOI.ConstraintIndex{MOI.SingleVariable,S}},
 ) where {S}
     return count(key -> key[2] == S, keys(map.single_variable_constraints))
 end
+
 function keys_of_type(
     map::Map,
     C::Type{MOI.ConstraintIndex{MOI.SingleVariable,S}},
@@ -256,6 +271,7 @@ function add_key_for_bridge(
     push!(map.constraint_types, (typeof(func), typeof(set)))
     return _index(length(map.bridges), typeof(func), typeof(set))
 end
+
 function add_key_for_bridge(
     map::Map,
     bridge::AbstractBridge,

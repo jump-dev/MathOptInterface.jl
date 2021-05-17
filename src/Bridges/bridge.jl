@@ -20,9 +20,19 @@ the bridge so they should be implemented by the bridge.
 abstract type AbstractBridge end
 
 """
+    IndexInVector
+
+Index of variable in vector of variables.
+"""
+struct IndexInVector
+    value::Int
+end
+
+"""
     MOI.get(b::AbstractBridge, ::MOI.NumberOfConstraints{F, S}) where {F, S}
 
-The number of constraints of the type `F`-in-`S` created by the bridge `b` in the model.
+The number of constraints of the type `F`-in-`S` created by the bridge `b` in
+the model.
 """
 MOI.get(::AbstractBridge, ::MOI.NumberOfConstraints) = 0
 
@@ -41,8 +51,11 @@ function MOI.get(
 end
 
 """
-    MOI.supports(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
-                 BT::Type{<:AbstractBridge})
+    MOI.supports(
+        model::MOI.ModelLike,
+        attr::MOI.AbstractConstraintAttribute,
+        BT::Type{<:AbstractBridge},
+    )
 
 Return a `Bool` indicating whether `BT` supports setting `attr` to `model`.
 """
@@ -55,8 +68,11 @@ function MOI.supports(
 end
 
 """
-    function MOI.get(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
-                     bridge::AbstractBridge)
+    function MOI.get(
+        model::MOI.ModelLike,
+        attr::MOI.AbstractConstraintAttribute,
+        bridge::AbstractBridge,
+    )
 
 Return the value of the attribute `attr` of the model `model` for the
 constraint bridged by `bridge`.
@@ -84,8 +100,12 @@ function MOI.get(
 end
 
 """
-    function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractConstraintAttribute,
-                     bridge::AbstractBridge, value)
+    function MOI.set(
+        model::MOI.ModelLike,
+        attr::MOI.AbstractConstraintAttribute,
+        bridge::AbstractBridge,
+        value,
+    )
 
 Set the value of the attribute `attr` of the model `model` for the
 constraint bridged by `bridge`.
@@ -104,7 +124,9 @@ function MOI.set(
 end
 
 """
-    added_constrained_variable_types(BT::Type{<:Variable.AbstractBridge})::Vector{Tuple{DataType}}
+    added_constrained_variable_types(
+        BT::Type{<:Variable.AbstractBridge},
+    )::Vector{Tuple{DataType}}
 
 Return a list of the types of constrained variables that bridges of concrete
 type `BT` add. This is used by the [`LazyBridgeOptimizer`](@ref).
@@ -112,7 +134,9 @@ type `BT` add. This is used by the [`LazyBridgeOptimizer`](@ref).
 function added_constrained_variable_types end
 
 """
-    added_constraint_types(BT::Type{<:Constraint.AbstractBridge})::Vector{Tuple{DataType, DataType}}
+    added_constraint_types(
+        BT::Type{<:Constraint.AbstractBridge},
+    )::Vector{Tuple{DataType, DataType}}
 
 Return a list of the types of constraints that bridges of concrete type `BT`
 add. This is used by the [`LazyBridgeOptimizer`](@ref).
@@ -120,7 +144,9 @@ add. This is used by the [`LazyBridgeOptimizer`](@ref).
 function added_constraint_types end
 
 """
-    set_objective_function_type(BT::Type{<:Objective.AbstractBridge})::Type{<:MOI.AbstractScalarFunction}
+    set_objective_function_type(
+        BT::Type{<:Objective.AbstractBridge},
+    )::Type{<:MOI.AbstractScalarFunction}
 
 Return the type of objective function that bridges of concrete type `BT`
 set. This is used by the [`LazyBridgeOptimizer`](@ref).

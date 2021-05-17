@@ -7,31 +7,28 @@ bridges.
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
 """
-    IndexInVector
+    bridge_constrained_variable(
+        BT::Type{<:AbstractBridge},
+        model::MOI.ModelLike,
+        set::MOI.AbstractSet,
+    )
 
-Index of variable in vector of variables.
-"""
-struct IndexInVector
-    value::Int
-end
-
-"""
-    bridge_constrained_variable(BT::Type{<:AbstractBridge}, model::MOI.ModelLike,
-                                set::MOI.AbstractSet)
-
-Bridge the constrained variable in `set` using bridge `BT` to `model` and returns
-a bridge object of type `BT`. The bridge type `BT` should be a concrete type,
-that is, all the type parameters of the bridge should be set. Use
+Bridge the constrained variable in `set` using bridge `BT` to `model` and
+returns a bridge object of type `BT`. The bridge type `BT` should be a concrete
+type, that is, all the type parameters of the bridge should be set. Use
 [`concrete_bridge_type`](@ref) to obtain a concrete type for given set types.
 """
 function bridge_constrained_variable end
 
 """
-    function MOI.get(model::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
-                     bridge::AbstractBridge)
+    function MOI.get(
+        model::MOI.ModelLike,
+        attr::MOI.AbstractVariableAttribute,
+        bridge::AbstractBridge,
+    )
 
-Return the value of the attribute `attr` of the model `model` for the
-variable bridged by `bridge`.
+Return the value of the attribute `attr` of the model `model` for the variable
+bridged by `bridge`.
 """
 function MOI.get(
     ::MOI.ModelLike,
@@ -46,17 +43,21 @@ function MOI.get(
 end
 
 """
-    function MOI.get(model::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
-                     bridge::AbstractBridge, i::IndexInVector)
+    function MOI.get(
+        model::MOI.ModelLike,
+        attr::MOI.AbstractVariableAttribute,
+        bridge::AbstractBridge,
+        i::MOIB.IndexInVector,
+    )
 
-Return the value of the attribute `attr` of the model `model` for the
-variable at index `i` in the vector of variables bridged by `bridge`.
+Return the value of the attribute `attr` of the model `model` for the variable
+at index `i` in the vector of variables bridged by `bridge`.
 """
 function MOI.get(
     ::MOI.ModelLike,
     attr::MOI.AbstractVariableAttribute,
     bridge::AbstractBridge,
-    ::IndexInVector,
+    ::MOIB.IndexInVector,
 )
     return throw(
         ArgumentError(
@@ -66,8 +67,11 @@ function MOI.get(
 end
 
 """
-    MOI.supports(model::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
-                 BT::Type{<:AbstractBridge})
+    MOI.supports(
+        model::MOI.ModelLike,
+        attr::MOI.AbstractVariableAttribute,
+        BT::Type{<:AbstractBridge},
+    )
 
 Return a `Bool` indicating whether `BT` supports setting `attr` to `model`.
 """
@@ -80,18 +84,23 @@ function MOI.supports(
 end
 
 """
-    function MOI.set(model::MOI.ModelLike, attr::MOI.AbstractVariableAttribute,
-        bridge::AbstractBridge, value[, ::IndexInVector])
+    function MOI.set(
+        model::MOI.ModelLike,
+        attr::MOI.AbstractVariableAttribute,
+        bridge::AbstractBridge,
+        value[,
+        ::MOIB.IndexInVector],
+    )
 
-Return the value of the attribute `attr` of the model `model` for the
-variable bridged by `bridge`.
+Return the value of the attribute `attr` of the model `model` for the variable
+bridged by `bridge`.
 """
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.AbstractVariableAttribute,
     bridge::AbstractBridge,
     value,
-    ::IndexInVector...,
+    ::MOIB.IndexInVector...,
 )
     if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
         throw(MOI.UnsupportedAttribute(attr))
@@ -101,8 +110,10 @@ function MOI.set(
 end
 
 """
-    supports_constrained_variable(::Type{<:AbstractBridge},
-                                   ::Type{<:MOI.AbstractSet})::Bool
+    supports_constrained_variable(
+        ::Type{<:AbstractBridge},
+        ::Type{<:MOI.AbstractSet},
+    )::Bool
 
 Return a `Bool` indicating whether the bridges of type `BT` support bridging
 constrained variables in `S`.
@@ -229,23 +240,30 @@ function concrete_bridge_type(
 end
 
 """
-   unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
-                 vi::MOI.VariableIndex)
+   unbridged_map(
+       bridge::MOI.Bridges.Variable.AbstractBridge,
+        vi::MOI.VariableIndex,
+    )
 
 For a bridged variable in a scalar set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the
 bridged variable `vi`.
 
-   unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
-                 vis::Vector{MOI.VariableIndex})
+    unbridged_map(
+        bridge::MOI.Bridges.Variable.AbstractBridge,
+        vis::Vector{MOI.VariableIndex},
+    )
 
 For a bridged variable in a vector set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the bridged
 variable `vis`. If this method is not implemented, it falls back to calling
 the following method for every variable of `vis`.
 
-    unbridged_map(bridge::MOI.Bridges.Variable.AbstractBridge,
-                  vi::MOI.VariableIndex, i::IndexInVector)
+    unbridged_map(
+        bridge::MOI.Bridges.Variable.AbstractBridge,
+        vi::MOI.VariableIndex,
+        i::MOIB.IndexInVector,
+    )
 
 For a bridged variable in a vector set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the bridged
@@ -260,9 +278,9 @@ function unbridged_map end
 function unbridged_map(bridge::AbstractBridge, vis::Vector{MOI.VariableIndex})
     mappings = Pair{MOI.VariableIndex,MOI.AbstractScalarFunction}[]
     for (i, vi) in enumerate(vis)
-        vi_mappings = unbridged_map(bridge, vi, IndexInVector(i))
+        vi_mappings = unbridged_map(bridge, vi, MOIB.IndexInVector(i))
         if vi_mappings === nothing
-            return nothing
+            return
         end
         for mapping in vi_mappings
             push!(mappings, mapping)

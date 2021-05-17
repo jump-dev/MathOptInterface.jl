@@ -1,8 +1,10 @@
 """
     RSOCtoPSDBridge{T} <: Bridges.Variable.AbstractBridge
 
-Transforms constrained variables in [`MathOptInterface.RotatedSecondOrderCone`](@ref)
-to constrained variables in [`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref).
+Transforms constrained variables in
+[`MathOptInterface.RotatedSecondOrderCone`](@ref)
+to constrained variables in
+[`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref).
 """
 struct RSOCtoPSDBridge{T} <: AbstractBridge
     # `t` is `variables[1]`
@@ -21,6 +23,7 @@ struct RSOCtoPSDBridge{T} <: AbstractBridge
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
     }
 end
+
 function bridge_constrained_variable(
     ::Type{RSOCtoPSDBridge{T}},
     model::MOI.ModelLike,
@@ -70,9 +73,11 @@ function supports_constrained_variable(
 )
     return true
 end
+
 function MOIB.added_constrained_variable_types(::Type{<:RSOCtoPSDBridge})
     return [(MOI.PositiveSemidefiniteConeTriangle,), (MOI.Nonnegatives,)]
 end
+
 function MOIB.added_constraint_types(::Type{RSOCtoPSDBridge{T}}) where {T}
     return [
         (MOI.SingleVariable, MOI.EqualTo{T}),
@@ -84,15 +89,18 @@ end
 function MOI.get(bridge::RSOCtoPSDBridge, ::MOI.NumberOfVariables)
     return length(bridge.variables)
 end
+
 function MOI.get(bridge::RSOCtoPSDBridge, ::MOI.ListOfVariableIndices)
-    return bridge.variables
+    return copy(bridge.variables)
 end
+
 function MOI.get(
     bridge::RSOCtoPSDBridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S},
 ) where {S<:Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}}
     return bridge.psd isa MOI.ConstraintIndex{MOI.VectorOfVariables,S} ? 1 : 0
 end
+
 function MOI.get(
     bridge::RSOCtoPSDBridge,
     ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S},
@@ -103,29 +111,33 @@ function MOI.get(
         return MOI.ConstraintIndex{MOI.VectorOfVariables,S}[]
     end
 end
+
 function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}},
 ) where {T}
     return length(bridge.off_diag)
 end
+
 function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{T}},
 ) where {T}
-    return bridge.off_diag
+    return copy(bridge.off_diag)
 end
+
 function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
     return length(bridge.diag)
 end
+
 function MOI.get(
     bridge::RSOCtoPSDBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
-    return bridge.diag
+    return copy(bridge.diag)
 end
 
 # References
@@ -133,7 +145,8 @@ function MOI.delete(model::MOI.ModelLike, bridge::RSOCtoPSDBridge)
     for ci in bridge.diag
         MOI.delete(model, ci)
     end
-    return MOI.delete(model, bridge.variables)
+    MOI.delete(model, bridge.variables)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
@@ -155,21 +168,21 @@ function trimap(i::Integer, j::Integer)
         return div((i - 1) * i, 2) + j
     end
 end
-function _variable_map(bridge::RSOCtoPSDBridge, i::IndexInVector)
+
+function _variable_map(bridge::RSOCtoPSDBridge, i::MOIB.IndexInVector)
     if bridge.psd isa
        MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
         return i.value
+    elseif i.value == 1
+        return 1
+    elseif i.value == 2
+        return 3
     else
-        if i.value == 1
-            return 1
-        elseif i.value == 2
-            return 3
-        else
-            return trimap(1, i.value - 1)
-        end
+        return trimap(1, i.value - 1)
     end
 end
-function _variable(bridge::RSOCtoPSDBridge, i::IndexInVector)
+
+function _variable(bridge::RSOCtoPSDBridge, i::MOIB.IndexInVector)
     return bridge.variables[_variable_map(bridge, i)]
 end
 
@@ -180,12 +193,13 @@ function MOI.get(
 )
     values = MOI.get(model, attr, bridge.psd)
     n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
-    mapped = [values[_variable_map(bridge, IndexInVector(i))] for i in 1:n]
+    mapped = [values[_variable_map(bridge, MOIB.IndexInVector(i))] for i in 1:n]
     if length(mapped) >= 2
         mapped[2] /= 2
     end
     return mapped
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
@@ -193,7 +207,7 @@ function MOI.get(
 )
     dual = MOI.get(model, attr, bridge.psd)
     n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
-    mapped = [dual[_variable_map(bridge, IndexInVector(i))] for i in 1:n]
+    mapped = [dual[_variable_map(bridge, MOIB.IndexInVector(i))] for i in 1:n]
     for ci in bridge.diag
         mapped[2] += MOI.get(model, attr, ci)
     end
@@ -210,7 +224,7 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimal,
     bridge::RSOCtoPSDBridge,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 )
     value = MOI.get(model, attr, _variable(bridge, i))
     if i.value == 2
@@ -222,7 +236,7 @@ end
 
 function MOIB.bridged_function(
     bridge::RSOCtoPSDBridge{T},
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     func = MOI.SingleVariable(_variable(bridge, i))
     if i.value == 2
@@ -231,10 +245,11 @@ function MOIB.bridged_function(
         return convert(MOI.ScalarAffineFunction{T}, func)
     end
 end
+
 function unbridged_map(
     bridge::RSOCtoPSDBridge{T},
     vi::MOI.VariableIndex,
-    i::IndexInVector,
+    i::MOIB.IndexInVector,
 ) where {T}
     sv = MOI.SingleVariable(vi)
     if i.value == 2
