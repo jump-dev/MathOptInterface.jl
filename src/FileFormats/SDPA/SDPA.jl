@@ -164,10 +164,12 @@ function Base.write(io::IO, model::Model{T}) where {T}
     end
     println(io)
 
-    index_map = Vector{Tuple{Int,Int}}(
-        undef,
-        MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(max_dim)),
-    )
+    max_index_dim = if max_dim > 0
+        MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(max_dim))
+    else
+        0
+    end
+    index_map = Vector{Tuple{Int,Int}}(undef, max_index_dim)
     k = 0
     for col in 1:max_dim
         for row in 1:col
