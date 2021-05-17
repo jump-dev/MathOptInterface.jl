@@ -67,7 +67,7 @@ AbstractOptimizerAttribute
 SolverName
 Silent
 TimeLimitSec
-RawParameter
+RawOptimizerAttribute
 NumberOfThreads
 RawSolver
 ```

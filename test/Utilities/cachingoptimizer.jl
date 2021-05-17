@@ -674,11 +674,11 @@ end
 @testset "Issue1220_dont_pass_raw_parameter" begin
     model = MOIU.CachingOptimizer(Issue1220(), Issue1220())
     MOI.set(model, MOI.Silent(), true)
-    MOI.set(model, MOI.RawParameter("foo"), "bar")
+    MOI.set(model, MOI.RawOptimizerAttribute("foo"), "bar")
     MOI.set(model, MOI.NumberOfThreads(), 1)
     MOIU.reset_optimizer(model, Issue1220())
     @test MOI.get(model, MOI.Silent()) == true
-    @test_throws KeyError MOI.get(model, MOI.RawParameter("foo"))
+    @test_throws KeyError MOI.get(model, MOI.RawOptimizerAttribute("foo"))
     @test_throws KeyError MOI.get(model, MOI.NumberOfThreads())
 end
 

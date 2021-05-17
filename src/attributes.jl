@@ -662,13 +662,12 @@ to `nothing`, it deactivates the solver time limit. The default value is
 struct TimeLimitSec <: AbstractOptimizerAttribute end
 
 """
-    RawParameter(name)
+    RawOptimizerAttribute(name::String)
 
-An optimizer attribute for the solver-specific parameter identified by `name`
-which is typically an `Enum` or a `String`.
+An optimizer attribute for the solver-specific parameter identified by `name`.
 """
-struct RawParameter <: AbstractOptimizerAttribute
-    name::Any
+struct RawOptimizerAttribute <: AbstractOptimizerAttribute
+    name::String
 end
 
 """

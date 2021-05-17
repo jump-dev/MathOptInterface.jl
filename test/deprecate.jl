@@ -42,6 +42,10 @@ function test_deprecations_ScalarQuadraticTerm()
     @test_logs (:warn,) t.variable_index_2 == y
 end
 
+function test_RawOptimizerAttribute()
+    @test_logs (:warn,) MOI.RawParameter(:a) == MOI.RawOptimizerAttribute("a")
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

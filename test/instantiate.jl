@@ -32,8 +32,8 @@ function _test_instantiate(T)
             },
         }
         @test MOI.get(optimizer, MOI.Silent())
-        @test MOI.get(optimizer, MOI.RawParameter("a")) == 1
-        @test MOI.get(optimizer, MOI.RawParameter("b")) == 2
+        @test MOI.get(optimizer, MOI.RawOptimizerAttribute("a")) == 1
+        @test MOI.get(optimizer, MOI.RawOptimizerAttribute("b")) == 2
     end
 
     optimizer_constructor = MOI.OptimizerWithAttributes(DummyOptimizer, [])

@@ -18,7 +18,9 @@ struct OptimizerWithAttributes
 end
 
 _to_param(param::Pair{<:AbstractOptimizerAttribute}) = param
-_to_param(param::Pair{String}) = RawParameter(param.first) => param.second
+function _to_param(param::Pair{String})
+    return RawOptimizerAttribute(param.first) => param.second
+end
 function _to_param(param::Pair)
     return error(
         "Expected an optimizer attribute or a string, got `$(param.first)` which is a `$(typeof(param.first))`.",

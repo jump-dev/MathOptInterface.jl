@@ -6,7 +6,7 @@ v0.10.0 (In development)
 
 **This is a breaking release.**
 
-Breaking renames:
+Breaking renames and type changes:
 
 - `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
 - `SolveTime` has been renamed to `SolveTimeSec`
@@ -16,6 +16,8 @@ Breaking renames:
 - The `.variable_index_2` field in `ScalarQuadraticTerm` has been renamed to `.variable_2`
 - `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
+- `RawParameter` has been renamed to `RawOptimizerAttribute` and now takes
+  `String` instead of `Any` as the only argument
 
 Breaking behavior changes:
 

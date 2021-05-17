@@ -42,3 +42,11 @@ function Base.getproperty(f::ScalarQuadraticTerm, key::Symbol)
     end
     return getfield(f, key)
 end
+
+function RawParameter(name::Any)
+    @warn(
+        "RawParameter(::$(typeof(name)) is deprecated. Use " *
+        "`RawOptimizerAttribute(::String)` instead.",
+    )
+    return RawOptimizerAttribute(string(name))
+end
