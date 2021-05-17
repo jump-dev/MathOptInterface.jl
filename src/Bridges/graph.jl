@@ -203,7 +203,7 @@ function add_edge(graph::Graph, node::ObjectiveNode, edge::ObjectiveEdge)
     return
 end
 
-function add_variable_node(graph::Graph, key::Type{T}) where {T}
+function add_variable_node(graph::Graph, key)
     push!(graph.variable_edges, Edge[])
     # Use an invalid index so that the code errors instead return something
     # incorrect in case `set_variable_constraint_node` is not called.
@@ -227,7 +227,7 @@ function set_variable_constraint_node(
     return
 end
 
-function add_constraint_node(graph::Graph, key::Type{T}) where {T}
+function add_constraint_node(graph::Graph, key)
     push!(graph.constraint_edges, Edge[])
     push!(graph.constraint_dist, INFINITY)
     push!(graph.constraint_best, 0)
@@ -236,7 +236,7 @@ function add_constraint_node(graph::Graph, key::Type{T}) where {T}
     return node
 end
 
-function add_objective_node(graph::Graph, key::Type{T}) where {T}
+function add_objective_node(graph::Graph, key)
     push!(graph.objective_edges, ObjectiveEdge[])
     push!(graph.objective_dist, INFINITY)
     push!(graph.objective_best, 0)
