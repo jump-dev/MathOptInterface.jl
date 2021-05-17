@@ -30,7 +30,58 @@ struct ObjectiveEdge <: AbstractEdge
     added_objective::ObjectiveNode
 end
 
+# When doing stuff with bridges, we need to map the function or set type to the
+# corresponding node in the graph. Therefore, we'd need something like
+# Dict{Tuple{DataType,DataType},ConstraintNode}. For bridge debugging, we also
+# need the reverse operation of `ConstraintNode => Tuple{DataType,DataType}`.
+#
+# Importantly though, these two operations aren't equal. We only infrequently
+# debugging, and it isn't performance critical.
+#
+# A key insight is that the `Dict{Tuple{DataType,DataType},ConstraintNode}` is a
+# "bad" type from Julia's perspective. It's hard to write fast code for the
+# key-type. You can simplify things to `Dict{Any,ConstraintNode}` for a small
+# performance win, but we'd like to do better.
+#
+# We also know a few other things: the nodes are going to be added sequentially,
+# and looking up a key in `Dict{Any` requires a hash. Therefore, why not split
+# these two operations?
+#
+# Here `.data` is for going forward: we take the key, hash it, and then do a
+# fast, type-stable look-up on `Dict{UInt64,V}`.
+#
+# Then, since we only infrequently do the reverse, we maintain an ordered list
+# `.debug_keys` that we can get using the `AbstractNode`.
+struct _Node{V}
+    data::Dict{UInt64,V}
+    debug_keys::Vector{Any}
+    _Node{V}() where {V<:AbstractNode} = new(Dict{UInt64,V}(), Any[])
+end
+
+Base.get(n::_Node{V}, key::V) where {V} = n.debug_keys[key.index]
+Base.get(n::_Node, key::Any, default) = get(n.data, hash(key), default)
+
+function Base.setindex!(n::_Node{V}, value::V, key) where {V}
+    h = hash(key)
+    setindex!(n.data, value, h)
+    push!(n.debug_keys, key)
+    return value
+end
+
+function Base.empty!(n::_Node)
+    empty!(n.data)
+    empty!(n.debug_keys)
+    return n
+end
+
 mutable struct Graph
+    variable_nodes::_Node{VariableNode}
+    variable_map::Variable.Map
+    constraint_nodes::_Node{ConstraintNode}
+    constraint_map::Constraint.Map
+    objective_nodes::_Node{ObjectiveNode}
+    objective_map::Objective.Map
+
     variable_edges::Vector{Vector{Edge}}
     variable_constraint_node::Vector{ConstraintNode}
     variable_constraint_cost::Vector{Int}
@@ -55,6 +106,12 @@ end
 
 function Graph()
     return Graph(
+        _Node{VariableNode}(),
+        Variable.Map(),
+        _Node{ConstraintNode}(),
+        Constraint.Map(),
+        _Node{ObjectiveNode}(),
+        Objective.Map(),
         Vector{Edge}[],
         ConstraintNode[],
         Int[],
@@ -111,6 +168,9 @@ end
 # bridge added and recomputing the distance for each bridge would be a wase
 # if several bridges are added consecutively.
 function Base.empty!(graph::Graph)
+    empty!(graph.variable_nodes)
+    empty!(graph.constraint_nodes)
+    empty!(graph.objective_nodes)
     empty!(graph.variable_edges)
     empty!(graph.variable_constraint_node)
     empty!(graph.variable_constraint_cost)
@@ -143,7 +203,7 @@ function add_edge(graph::Graph, node::ObjectiveNode, edge::ObjectiveEdge)
     return
 end
 
-function add_variable_node(graph::Graph)
+function add_variable_node(graph::Graph, key::Type{T}) where {T}
     push!(graph.variable_edges, Edge[])
     # Use an invalid index so that the code errors instead return something
     # incorrect in case `set_variable_constraint_node` is not called.
@@ -151,7 +211,9 @@ function add_variable_node(graph::Graph)
     push!(graph.variable_constraint_cost, 0)
     push!(graph.variable_dist, INFINITY)
     push!(graph.variable_best, 0)
-    return VariableNode(length(graph.variable_best))
+    node = VariableNode(length(graph.variable_best))
+    graph.variable_nodes[key] = node
+    return node
 end
 
 function set_variable_constraint_node(
@@ -165,18 +227,22 @@ function set_variable_constraint_node(
     return
 end
 
-function add_constraint_node(graph::Graph)
+function add_constraint_node(graph::Graph, key::Type{T}) where {T}
     push!(graph.constraint_edges, Edge[])
     push!(graph.constraint_dist, INFINITY)
     push!(graph.constraint_best, 0)
-    return ConstraintNode(length(graph.constraint_best))
+    node = ConstraintNode(length(graph.constraint_best))
+    graph.constraint_nodes[key] = node
+    return node
 end
 
-function add_objective_node(graph::Graph)
+function add_objective_node(graph::Graph, key::Type{T}) where {T}
     push!(graph.objective_edges, ObjectiveEdge[])
     push!(graph.objective_dist, INFINITY)
     push!(graph.objective_best, 0)
-    return ObjectiveNode(length(graph.objective_best))
+    node = ObjectiveNode(length(graph.objective_best))
+    graph.objective_nodes[key] = node
+    return node
 end
 
 function bridging_cost(graph::Graph, node::AbstractNode)

@@ -21,32 +21,20 @@ model) using bridge 3, it will choose bridge 1 as it allows to bridge `F`-in-`S
 using only one bridge instead of two if it uses bridge 2 and 3.
 """
 mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
-    # Internal model
     model::OT
-    # Bridged variables
-    variable_map::Variable.Map
+    # The Bellman-Ford hyper-graph
+    graph::Graph
+    # Variable bridges
+    variable_bridge_types::Vector{Any}
+    # Constraint bridges
+    constraint_bridge_types::Vector{Any}
+    # Objective bridges
+    objective_bridge_types::Vector{Any}
+    # VariableName and ConstraintName
     var_to_name::Dict{MOI.VariableIndex,String}
     name_to_var::Union{Dict{String,MOI.VariableIndex},Nothing}
-    # Bridged constraints
-    constraint_map::Constraint.Map
     con_to_name::Dict{MOI.ConstraintIndex,String}
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
-    # Bridged objective
-    objective_map::Objective.Map
-    # Bellman-Ford graph
-    graph::Graph
-    # List of types of available bridges
-    variable_bridge_types::Vector{Any}
-    variable_node::OrderedDict{Tuple{DataType},VariableNode}
-    variable_types::Vector{Tuple{DataType}}
-    # List of types of available bridges
-    constraint_bridge_types::Vector{Any}
-    constraint_node::OrderedDict{Tuple{DataType,DataType},ConstraintNode}
-    constraint_types::Vector{Tuple{DataType,DataType}}
-    # List of types of available bridges
-    objective_bridge_types::Vector{Any}
-    objective_node::OrderedDict{Tuple{DataType},ObjectiveNode}
-    objective_types::Vector{Tuple{DataType}}
     # Cache for (F, S) -> BridgeType. Avoids having to look up
     # `concrete_bridge_type` at runtime, which is slow.
     cached_bridge_type::Dict{Any,DataType}
@@ -55,37 +43,33 @@ end
 function LazyBridgeOptimizer(model::MOI.ModelLike)
     return LazyBridgeOptimizer{typeof(model)}(
         model,
-        Variable.Map(),
+        Graph(),
+        # Variable bridges
+        DataType[],
+        # Constraint bridges
+        DataType[],
+        # Objective bridges
+        DataType[],
+        # VariableName and ConstraintName
         Dict{MOI.VariableIndex,String}(),
         nothing,
-        Constraint.Map(),
         Dict{MOI.ConstraintIndex,String}(),
         nothing,
-        Objective.Map(),
-        Graph(),
-        Any[],
-        OrderedDict{Tuple{DataType},VariableNode}(),
-        Tuple{DataType}[],
-        Any[],
-        OrderedDict{Tuple{DataType,DataType},ConstraintNode}(),
-        Tuple{DataType,DataType}[],
-        Any[],
-        OrderedDict{Tuple{DataType},ObjectiveNode}(),
-        Tuple{DataType}[],
+        # Type cache
         Dict{Any,DataType}(),
     )
 end
 
 function Variable.bridges(bridge::LazyBridgeOptimizer)
-    return bridge.variable_map
+    return bridge.graph.variable_map
 end
 
 function Constraint.bridges(bridge::LazyBridgeOptimizer)
-    return bridge.constraint_map
+    return bridge.graph.constraint_map
 end
 
-function Objective.bridges(b::LazyBridgeOptimizer)
-    return b.objective_map
+function Objective.bridges(bridge::LazyBridgeOptimizer)
+    return bridge.graph.objective_map
 end
 
 # After `add_bridge(b, BT)`, some constrained variables `(S,)` in
@@ -100,12 +84,6 @@ end
 # added and recomputing the distance for each bridge would be a waste if several
 # bridges are added consecutively.
 function _reset_dist(b::LazyBridgeOptimizer)
-    empty!(b.variable_node)
-    empty!(b.variable_types)
-    empty!(b.constraint_node)
-    empty!(b.constraint_types)
-    empty!(b.objective_node)
-    empty!(b.objective_types)
     empty!(b.graph)
     empty!(b.cached_bridge_type)
     return
@@ -182,13 +160,11 @@ function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     )
         return VariableNode(0)
     end
-    variable_node = get(b.variable_node, (S,), nothing)
+    variable_node = get(b.graph.variable_nodes, (S,), nothing)
     if variable_node !== nothing
         return variable_node
     end
-    variable_node = add_variable_node(b.graph)
-    b.variable_node[(S,)] = variable_node
-    push!(b.variable_types, (S,))
+    variable_node = add_variable_node(b.graph, (S,))
     if is_bridged(b, MOI.Reals)
         FF = functionized_type(b, F)
         if FF !== nothing
@@ -228,21 +204,17 @@ function node(
     if MOI.supports_constraint(b.model, F, S)
         return ConstraintNode(0)
     end
-    constraint_node = get(b.constraint_node, (F, S), nothing)
+    constraint_node = get(b.graph.constraint_nodes, (F, S), nothing)
     if constraint_node !== nothing
         return constraint_node
     end
-    constraint_node = add_constraint_node(b.graph)
-    b.constraint_node[(F, S)] = constraint_node
-    push!(b.constraint_types, (F, S))
+    constraint_node = add_constraint_node(b.graph, (F, S))
     for (i, BT) in enumerate(b.constraint_bridge_types)
-        if MOI.supports_constraint(BT, F, S)
-            add_edge(
-                b.graph,
-                constraint_node,
-                edge(b, i, Constraint.concrete_bridge_type(BT, F, S))::Edge,
-            )
+        if !MOI.supports_constraint(BT, F, S)
+            continue
         end
+        e = edge(b, i, Constraint.concrete_bridge_type(BT, F, S))::Edge
+        add_edge(b.graph, constraint_node, e)
     end
     return constraint_node
 end
@@ -251,26 +223,17 @@ function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
     if MOI.supports(b.model, MOI.ObjectiveFunction{F}())
         return ObjectiveNode(0)
     end
-    objective_node = get(b.objective_node, (F,), nothing)
+    objective_node = get(b.graph.objective_nodes, (F,), nothing)
     if objective_node !== nothing
         return objective_node
     end
-    objective_node = add_objective_node(b.graph)
-    b.objective_node[(F,)] = objective_node
-    push!(b.objective_types, (F,))
-    # Add the added nodes to the graph.
+    objective_node = add_objective_node(b.graph, (F,))
     for (i, BT) in enumerate(b.objective_bridge_types)
-        if Objective.supports_objective_function(BT, F)
-            add_edge(
-                b.graph,
-                objective_node,
-                edge(
-                    b,
-                    i,
-                    Objective.concrete_bridge_type(BT, F),
-                )::ObjectiveEdge,
-            )
+        if !Objective.supports_objective_function(BT, F)
+            continue
         end
+        e = edge(b, i, Objective.concrete_bridge_type(BT, F))::ObjectiveEdge
+        add_edge(b.graph, objective_node, e)
     end
     return objective_node
 end

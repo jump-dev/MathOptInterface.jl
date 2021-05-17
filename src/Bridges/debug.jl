@@ -1,5 +1,5 @@
 function print_node(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
-    S, = b.variable_types[node.index]
+    S, = b.graph.variable_nodes[node]
     MOIU.print_with_acronym(
         io,
         "[$(node.index)] constrained variables in `$S` are",
@@ -8,13 +8,13 @@ function print_node(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
 end
 
 function print_node(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
-    F, S = b.constraint_types[node.index]
+    F, S = b.graph.constraint_nodes[node]
     MOIU.print_with_acronym(io, "($(node.index)) `$F`-in-`$S` constraints are")
     return
 end
 
 function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
-    F, = b.objective_types[node.index]
+    F, = b.graph.objective_nodes[node]
     MOIU.print_with_acronym(
         io,
         "|$(node.index)| objective function of type `$F` is",
@@ -161,7 +161,7 @@ function _bridge_type(
 )
     return Variable.concrete_bridge_type(
         b.variable_bridge_types[bridge_index],
-        b.variable_types[node.index]...,
+        b.graph.variable_nodes[node]...,
     )
 end
 
@@ -172,7 +172,7 @@ function _bridge_type(
 )
     return Constraint.concrete_bridge_type(
         b.constraint_bridge_types[bridge_index],
-        b.constraint_types[node.index]...,
+        b.graph.constraint_nodes[node]...,
     )
 end
 
@@ -183,7 +183,7 @@ function _bridge_type(
 )
     return Objective.concrete_bridge_type(
         b.objective_bridge_types[bridge_index],
-        b.objective_types[node.index]...,
+        b.graph.objective_nodes[node]...,
     )
 end
 
