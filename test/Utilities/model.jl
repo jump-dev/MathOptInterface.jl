@@ -354,8 +354,8 @@ end
         }(),
     )
 
-    f5 = MOI.VectorOfVariables([x])
-    c5 = MOI.add_constraint(model, f5, MOI.RotatedSecondOrderCone(1))
+    f5 = MOI.VectorOfVariables([x, x])
+    c5 = MOI.add_constraint(model, f5, MOI.RotatedSecondOrderCone(2))
     @test 1 == @inferred MOI.get(
         model,
         MOI.NumberOfConstraints{
