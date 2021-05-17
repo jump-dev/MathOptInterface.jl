@@ -357,6 +357,18 @@ function MOIU.pass_nonvariable_constraints(
     pass_cons;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
+    if Variable.has_bridges(Variable.bridges(dest))
+        # The functions may contained bridged variables which needs to be
+        # substituted so we use the fallback.
+        MOIU.pass_nonvariable_constraints_fallback(
+            dest,
+            src,
+            idxmap,
+            constraint_types,
+            pass_cons;
+            filter_constraints = filter_constraints,
+        )
+    end
     not_bridged_types = eltype(constraint_types)[]
     bridged_types = eltype(constraint_types)[]
     for (F, S) in constraint_types

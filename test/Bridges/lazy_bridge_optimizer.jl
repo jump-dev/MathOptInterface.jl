@@ -1163,6 +1163,8 @@ end
     # caching optimizer works with negative indices
     cached = MOIU.CachingOptimizer(MOIU.Model{Float64}(), MOIU.MANUAL)
     vi_cache = MOI.add_variable(cached)
+    f(vi) = 1.0 * MOI.SingleVariable(vi)
+    ci_cache = MOI.add_constraint(cached, f(vi_cache), MOI.EqualTo(1.0))
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     MOIU.reset_optimizer(cached, bridged)
@@ -1171,6 +1173,15 @@ end
     @test vi_bridged == MOI.VariableIndex(-1)
     @test cached.model_to_optimizer_map[vi_cache] == vi_bridged
     @test cached.optimizer_to_model_map[vi_bridged] == vi_cache
+    vis_sdpa = MOI.get(model, MOI.ListOfVariableIndices())
+    F = typeof(f(vi_cache))
+    S = MOI.EqualTo{Float64}
+    ci_bridged = first(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    attr = MOI.ConstraintFunction()
+    @test MOI.get(bridged, attr, ci_bridged) ≈ f(vi_bridged)
+    ci_sdpa = first(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    func = [1.0, -1.0]'MOI.SingleVariable.(vis_sdpa)
+    @test MOI.get(model, attr, ci_sdpa) ≈ func
 end
 
 @testset "Continuous Conic with SDPAModel{Float64}" begin
