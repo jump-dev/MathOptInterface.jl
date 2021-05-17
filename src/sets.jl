@@ -275,11 +275,11 @@ The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\g
 struct NormInfinityCone <: AbstractVectorSet
     dimension::Int
     function NormInfinityCone(dimension::Base.Integer)
-        if !(dimension > 1)
+        if !(dimension >= 1)
             throw(
                 DimensionMismatch(
-                    "Dimension of NormInfinityCone must be greater than 1, " *
-                    "not $(dimension).",
+                    "Dimension of NormInfinityCone must be >= 1, not" *
+                    "$(dimension).",
                 ),
             )
         end
@@ -298,11 +298,10 @@ The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lV
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
     function NormOneCone(dimension::Base.Integer)
-        if !(dimension > 1)
+        if !(dimension >= 1)
             throw(
                 DimensionMismatch(
-                    "Dimension of NormOneCone must be greater than 1, not " *
-                    "$(dimension).",
+                    "Dimension of NormOneCone must be >= 1, not $(dimension).",
                 ),
             )
         end
@@ -321,11 +320,11 @@ The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in
 struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
     function SecondOrderCone(dimension::Base.Integer)
-        if !(dimension > 1)
+        if !(dimension >= 1)
             throw(
                 DimensionMismatch(
-                    "Dimension of SecondOrderCone must be greater than 1, " *
-                    "not $(dimension).",
+                    "Dimension of SecondOrderCone must be >= 1, not " *
+                    "$(dimension).",
                 ),
             )
         end
@@ -344,11 +343,11 @@ The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int
     function RotatedSecondOrderCone(dimension::Base.Integer)
-        if !(dimension > 2)
+        if !(dimension >= 2)
             throw(
                 DimensionMismatch(
-                    "Dimension of RotatedSecondOrderCone must be greater " *
-                    "than 2, not $(dimension).",
+                    "Dimension of RotatedSecondOrderCone must be >= 2, not " *
+                    "$(dimension).",
                 ),
             )
         end

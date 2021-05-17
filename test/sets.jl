@@ -119,10 +119,10 @@ function test_sets_DimensionMismatch()
     @test_throws DimensionMismatch MOI.Zeros(0)
     @test_throws DimensionMismatch MOI.Nonnegatives(0)
     @test_throws DimensionMismatch MOI.Nonpositives(0)
-    @test_throws DimensionMismatch MOI.NormInfinityCone(1)
-    @test_throws DimensionMismatch MOI.NormOneCone(1)
-    @test_throws DimensionMismatch MOI.SecondOrderCone(1)
-    @test_throws DimensionMismatch MOI.RotatedSecondOrderCone(2)
+    @test_throws DimensionMismatch MOI.NormInfinityCone(0)
+    @test_throws DimensionMismatch MOI.NormOneCone(0)
+    @test_throws DimensionMismatch MOI.SecondOrderCone(0)
+    @test_throws DimensionMismatch MOI.RotatedSecondOrderCone(1)
     @test_throws DimensionMismatch MOI.GeometricMeanCone(1)
     @test_throws DimensionMismatch MOI.RelativeEntropyCone(1)
     @test_throws DimensionMismatch MOI.RelativeEntropyCone(4)
@@ -205,10 +205,10 @@ function test_sets_dual_soc()
 end
 
 function test_sets_dual_rsoc()
-    # rsoc2 = MOI.RotatedSecondOrderCone(2)
+    rsoc2 = MOI.RotatedSecondOrderCone(2)
     rsoc3 = MOI.RotatedSecondOrderCone(3)
-    # _self_dual_set_test(rsoc2)
-    # @test MOI.dual_set(rsoc2) != rsoc3
+    _self_dual_set_test(rsoc2)
+    @test MOI.dual_set(rsoc2) != rsoc3
     _self_dual_set_test(rsoc3)
     return
 end
