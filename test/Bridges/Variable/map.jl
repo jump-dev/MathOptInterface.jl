@@ -86,13 +86,15 @@ v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
     @test collect(values(map)) == [b1, b2]
 end
 
+struct _ZeroDimSet <: MOI.AbstractVectorSet
+    dimension::Int
+end
 b3 = VariableDummyBridge(3)
-set3 = MOI.Zeros(1)
+set3 = _ZeroDimSet(0)
 v3, c3 = MOIB.Variable.add_keys_for_bridge(map, () -> b3, set3)
 @testset "Vector set of length 0" begin
     @test isempty(v3)
     @test c3.value == 0
-
     bridges = collect(values(map))
     @test sort([b.id for b in bridges]) == 1:2
     elements = sort(collect(map), by = el -> el.second.id)
