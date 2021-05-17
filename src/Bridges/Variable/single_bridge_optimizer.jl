@@ -39,6 +39,8 @@ end
 
 bridges(bridge::SingleBridgeOptimizer) = bridge.map
 
+has_bridges(b::MOIB.AbstractBridgeOptimizer) = has_bridges(bridges(b))
+
 MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = false
 
 function MOIB.supports_bridging_constrained_variable(

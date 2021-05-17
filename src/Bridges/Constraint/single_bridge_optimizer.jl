@@ -32,6 +32,8 @@ function bridges(bridge::SingleBridgeOptimizer)
     return bridge.map
 end
 
+has_bridges(b::MOIB.AbstractBridgeOptimizer) = has_bridges(bridges(b))
+
 MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = true
 
 # If `BT` bridges `MOI.Reals` (such as `Constraint.FunctionizeBridge` bridge,
