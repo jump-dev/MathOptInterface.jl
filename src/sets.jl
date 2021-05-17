@@ -116,8 +116,7 @@ struct Reals <: AbstractVectorSet
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Reals must be greater than 0, not " *
-                    "$(dimension).",
+                    "Dimension of Reals must be > 0, not $(dimension).",
                 ),
             )
         end
@@ -139,8 +138,7 @@ struct Zeros <: AbstractVectorSet
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Zeros must be greater than 0, not " *
-                    "$(dimension).",
+                    "Dimension of Zeros must be > 0, not $(dimension).",
                 ),
             )
         end
@@ -162,8 +160,7 @@ struct Nonnegatives <: AbstractVectorSet
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Nonnegatives must be greater than 0, not " *
-                    "$(dimension).",
+                    "Dimension of Nonnegatives must be > 0, not $(dimension).",
                 ),
             )
         end
@@ -185,8 +182,7 @@ struct Nonpositives <: AbstractVectorSet
         if !(dimension > 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Nonpositives must be greater than 0, not " *
-                    "$(dimension).",
+                    "Dimension of Nonpositives must be > 0, not $(dimension).",
                 ),
             )
         end
@@ -374,8 +370,8 @@ struct GeometricMeanCone <: AbstractVectorSet
         if !(dimension > 1)
             throw(
                 DimensionMismatch(
-                    "Dimension of GeometricMeanCone must be greater than 1, " *
-                    "not $(dimension).",
+                    "Dimension of GeometricMeanCone must be > 1, not " *
+                    "$(dimension).",
                 ),
             )
         end
@@ -450,11 +446,11 @@ The dual of the relative entropy cone is
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
     function RelativeEntropyCone(dimension::Base.Integer)
-        if !(dimension > 1 && isodd(dimension))
+        if !(dimension >= 3 && isodd(dimension))
             throw(
                 DimensionMismatch(
-                    "Dimension of RelativeEntropyCone must be greater an odd " *
-                    "integer greater than 2, not $(dimension).",
+                    "Dimension of RelativeEntropyCone must be an odd integer " *
+                    ">= 3, not $(dimension).",
                 ),
             )
         end
