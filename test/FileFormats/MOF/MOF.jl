@@ -305,7 +305,7 @@ function test_Duplicate_constraint_name()
     c1 = MOI.add_constraint(model, f, MOI.LessThan(1.0))
     c2 = MOI.add_constraint(model, f, MOI.GreaterThan(0.0))
     MOI.set(model, MOI.ConstraintName(), c1, "c")
-s    MOI.set(model, MOI.ConstraintName(), c2, "c")
+    MOI.set(model, MOI.ConstraintName(), c2, "c")
     name_map = Dict(x => "x")
     @test MOF.moi_to_object(c1, model, name_map)["name"] == "c"
     @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
@@ -852,7 +852,7 @@ function runtests()
                 getfield(@__MODULE__, name)()
             end
         end
-    ends
+    end
     sleep(1.0)  # allow time for unlink to happen
     rm(TEST_MOF_FILE, force = true)
     rm(TEST_MOF_FILE * ".gz", force = true)
