@@ -1,3 +1,5 @@
+module TestCBF
+
 import MathOptInterface
 using Test
 
@@ -7,7 +9,7 @@ const CBF = MOI.FileFormats.CBF
 const CBF_TEST_FILE = "test.cbf"
 const MODELS_DIR = joinpath(@__DIR__, "models")
 
-function set_var_and_con_names(model::MOI.ModelLike)
+function _set_var_and_con_names(model::MOI.ModelLike)
     variable_names = String[]
     for j in MOI.get(model, MOI.ListOfVariableIndices())
         var_name_j = "v" * string(j.value)
@@ -60,15 +62,15 @@ function Base.isapprox(
     return isapprox(MOI.VectorAffineFunction{Float64}(f), g)
 end
 
-function test_write_then_read(model_string::String)
+function _test_write_then_read(model_string::String)
     model1 = CBF.Model()
     MOIU.loadfromstring!(model1, model_string)
-    (variable_names, constraint_names) = set_var_and_con_names(model1)
+    (variable_names, constraint_names) = _set_var_and_con_names(model1)
 
     MOI.write_to_file(model1, CBF_TEST_FILE)
     model2 = CBF.Model()
     MOI.read_from_file(model2, CBF_TEST_FILE)
-    set_var_and_con_names(model2)
+    _set_var_and_con_names(model2)
 
     return MOIU.test_models_equal(
         model1,
@@ -78,14 +80,14 @@ function test_write_then_read(model_string::String)
     )
 end
 
-function test_read(filename::String, model_string::String)
+function _test_read(filename::String, model_string::String)
     model1 = CBF.Model()
     MOIU.loadfromstring!(model1, model_string)
-    (variable_names, constraint_names) = set_var_and_con_names(model1)
+    (variable_names, constraint_names) = _set_var_and_con_names(model1)
 
     model2 = CBF.Model()
     MOI.read_from_file(model2, filename)
-    set_var_and_con_names(model2)
+    _set_var_and_con_names(model2)
 
     return MOIU.test_models_equal(
         model1,
@@ -95,10 +97,12 @@ function test_read(filename::String, model_string::String)
     )
 end
 
-@test sprint(show, CBF.Model()) == "A Conic Benchmark Format (CBF) model"
+function test_show()
+    @test sprint(show, CBF.Model()) == "A Conic Benchmark Format (CBF) model"
+end
 
-@testset "Support errors" begin
-    @testset "$set variable bound" for set in [
+function test_support_errors()
+    for set in [
         MOI.EqualTo(1.0),
         MOI.LessThan(1.0),
         MOI.GreaterThan(1.0),
@@ -118,25 +122,25 @@ end
     end
 end
 
-@testset "Read errors" begin
-    @testset "Non-empty model" begin
-        model = CBF.Model()
-        MOI.add_variable(model)
-        @test_throws Exception MOI.read_from_file(
-            model,
-            joinpath(MODELS_DIR, "example1.cbf"),
-        )
-    end
+function test_read_nonempty()
+    model = CBF.Model()
+    MOI.add_variable(model)
+    @test_throws Exception MOI.read_from_file(
+        model,
+        joinpath(MODELS_DIR, "example1.cbf"),
+    )
+end
 
-    @testset "Incompatible version" begin
-        model = CBF.Model()
-        @test_throws Exception MOI.read_from_file(
-            model,
-            joinpath(MODELS_DIR, "incompatible_version.cbf"),
-        )
-    end
+function test_read_incompatible()
+    model = CBF.Model()
+    @test_throws Exception MOI.read_from_file(
+        model,
+        joinpath(MODELS_DIR, "incompatible_version.cbf"),
+    )
+end
 
-    @testset "$filename" for filename in [
+function test_read_badcones()
+    for filename in [
         "bad_cone_string_A.cbf",
         "bad_cone_string_B.cbf",
         "bad_cone_string_C.cbf",
@@ -148,17 +152,20 @@ end
             joinpath(MODELS_DIR, filename),
         )
     end
+end
 
-    @testset "$filename" for filename in
-                             ["bad_power_dim_A.cbf", "bad_power_dim_B.cbf"]
+function test_read_badpowerdim()
+    for filename in ["bad_power_dim_A.cbf", "bad_power_dim_B.cbf"]
         model = CBF.Model()
         @test_throws Exception MOI.read_from_file(
             model,
             joinpath(MODELS_DIR, filename),
         )
     end
+end
 
-    @testset "$filename" for filename in [
+function test_read_corrupt()
+    for filename in [
         "corrupt_line_A.cbf",
         "corrupt_line_B.cbf",
         "corrupt_line_C.cbf",
@@ -173,23 +180,19 @@ end
     end
 end
 
-@testset "Write errors" begin
-    @testset "Quadratic objective" begin
-        model = CBF.Model()
-        MOIU.loadfromstring!(
-            model,
-            """
-    variables: x
-    minobjective: 1 * x * x
-""",
-        )
-        @test_throws Exception MOI.write_to_file(model, CBF_TEST_FILE)
-    end
-
-    # TODO NLP not supported test.
+function test_write_quadratic()
+    model = CBF.Model()
+    MOIU.loadfromstring!(
+        model,
+        """
+        variables: x
+        minobjective: 1 * x * x
+        """,
+    )
+    @test_throws Exception MOI.write_to_file(model, CBF_TEST_FILE)
 end
 
-write_read_models = [
+const _WRITE_READ_MODELS = [
     (
         "min SingleVariable",
         """
@@ -403,12 +406,14 @@ write_read_models = [
 """,
     ),
 ]
-@testset "Write/read $model_name" for (model_name, model_string) in
-                                      write_read_models
-    test_write_then_read(model_string)
+
+function test_write_read_models()
+    for (model_name, model_string) in _WRITE_READ_MODELS
+        _test_write_then_read(model_string)
+    end
 end
 
-example_models = [
+const _EXAMPLE_MODELS = [
     (
         "example_A.cbf",
         """
@@ -458,12 +463,27 @@ example_models = [
 """,
     ),
 ]
-@testset "Read and write/read $model_name" for (model_name, model_string) in
-                                               example_models
-    test_read(joinpath(MODELS_DIR, model_name), model_string)
-    test_write_then_read(model_string)
+
+function test_example_models()
+    for (model_name, model_string) in _EXAMPLE_MODELS
+        _test_read(joinpath(MODELS_DIR, model_name), model_string)
+        _test_write_then_read(model_string)
+    end
 end
 
-# Clean up.
-sleep(1.0)  # Allow time for unlink to happen.
-rm(CBF_TEST_FILE, force = true)
+function runtests()
+    for name in names(@__MODULE__, all = true)
+        if startswith("$(name)", "test_")
+            @testset "$name" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    sleep(1.0)  # Allow time for unlink to happen.
+    rm(CBF_TEST_FILE, force = true)
+    return
+end
+
+end
+
+TestCBF.runtests()
