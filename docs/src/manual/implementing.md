@@ -511,6 +511,29 @@ These methods have the following rules:
   variable or constraint
 * If there are multiple variables or constraints with the name, throw an error.
 
+!!! warning
+    You should _not_ implement [`ConstraintName`](@ref) for
+    [`SingleVariable`](@ref) constraints. If you implement [`ConstraintName`](@ref)
+    for other constraints, you can add the following two methods to disable
+    [`ConstraintName`](@ref) for [`SingleVariable`](@ref) constraints.
+    ```julia
+    function MOI.supports(
+        ::Optimizer,
+        ::MOI.ConstraintName,
+        ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+    )
+        return throw(MOI.SingleVariableConstraintNameError())
+    end
+    function MOI.set(
+        ::Optimizer,
+        ::MOI.ConstraintName,
+        ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+        ::String,
+    )
+        return throw(MOI.SingleVariableConstraintNameError())
+    end
+    ```
+
 ## Solutions
 
 Implement [`optimize!`](@ref) to solve the model:

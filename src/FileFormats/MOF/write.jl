@@ -88,10 +88,12 @@ function moi_to_object(
 ) where {F,S}
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
-    name = MOI.get(model, MOI.ConstraintName(), index)
     object = OrderedObject()
-    if name != ""
-        object["name"] = name
+    if F != MOI.SingleVariable
+        name = MOI.get(model, MOI.ConstraintName(), index)
+        if name != ""
+            object["name"] = name
+        end
     end
     object["function"] = moi_to_object(func, name_map)
     object["set"] = moi_to_object(set, name_map)

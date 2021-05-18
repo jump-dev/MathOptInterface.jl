@@ -387,6 +387,7 @@ function MOI.set(
         throw_mock_unsupported_names(attr)
     end
 end
+
 function MOI.get(b::MockOptimizer, IdxT::Type{<:MOI.Index}, name::String)
     index = MOI.get(b.inner_model, IdxT, name)
     if index === nothing

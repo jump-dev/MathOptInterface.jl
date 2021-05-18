@@ -56,16 +56,6 @@ end
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
     ]
 
-    con_names = ["cx", "cy"]
-    cxcy = MOI.get(
-        bridged_mock,
-        MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
-            MOI.GreaterThan{Float64},
-        }(),
-    )
-    MOI.set(bridged_mock, MOI.ConstraintName(), cxcy, con_names)
-
     var_names = ["x", "y"]
     xy = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
     MOI.set(bridged_mock, MOI.VariableName(), xy, var_names)
@@ -84,8 +74,8 @@ end
 
         s = """
         variables: x, y, s
-        cx: x >= 1.0
-        cy: y >= 2.0
+        x >= 1.0
+        y >= 2.0
         quad: 1.0 * x * x + 1.0 * x * y + 1.0 * y * y + -1.0 * s <= 0.0
         minobjective: s
         """
@@ -95,7 +85,11 @@ end
             mock,
             model,
             [var_names; "s"],
-            [con_names; "quad"],
+            ["quad"],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
         )
     end
 
@@ -103,13 +97,22 @@ end
     @testset "Test bridged model" begin
         s = """
         variables: x, y
-        cx: x >= 1.0
-        cy: y >= 2.0
+        x >= 1.0
+        y >= 2.0
         minobjective: 1.0 * x * x + 1.0 * x * y + 1.0 * y * y
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(bridged_mock, model, var_names, con_names)
+        MOIU.test_models_equal(
+            bridged_mock,
+            model,
+            var_names,
+            String[],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
+        )
     end
 
     err = ArgumentError(
@@ -150,8 +153,8 @@ end
 
         s = """
         variables: x, y, s
-        cx: x >= 1.0
-        cy: y >= 2.0
+        x >= 1.0
+        y >= 2.0
         quad: 1.0 * x * x + 1.0 * x * y + 1.0 * y * y + -1.0 * s >= 0.0
         maxobjective: s
         """
@@ -161,20 +164,33 @@ end
             mock,
             model,
             [var_names; "s"],
-            [con_names; "quad"],
+            ["quad"],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
         )
     end
 
     @testset "Test bridged model" begin
         s = """
         variables: x, y
-        cx: x >= 1.0
-        cy: y >= 2.0
+        x >= 1.0
+        y >= 2.0
         maxobjective: 1.0 * x * x + 1.0 * x * y + 1.0 * y * y
         """
         model = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(bridged_mock, model, var_names, con_names)
+        MOIU.test_models_equal(
+            bridged_mock,
+            model,
+            var_names,
+            String[],
+            [
+                ("x", MOI.GreaterThan{Float64}(1.0)),
+                ("y", MOI.GreaterThan{Float64}(2.0)),
+            ],
+        )
     end
 
     test_delete_objective(

@@ -19,11 +19,16 @@ function _set_var_and_con_names(model::MOI.ModelLike)
 
     idx = 0
     constraint_names = String[]
+    single_variable_constraints = Tuple[]
+    for i in MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
+    )
+        idx += 1
+        x = MOI.get(model, MOI.VariableName(), MOI.VariableIndex(i.value))
+        push!(single_variable_constraints, (x, MOI.Integer()))
+    end
     for i in Iterators.flatten((
-        MOI.get(
-            model,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
-        ),
         MOI.get(
             model,
             MOI.ListOfConstraintIndices{
@@ -45,13 +50,13 @@ function _set_var_and_con_names(model::MOI.ModelLike)
         MOI.set(model, MOI.ConstraintName(), i, con_name_i)
     end
 
-    return (variable_names, constraint_names)
+    return variable_names, constraint_names, single_variable_constraints
 end
 
 function _test_write_then_read(model_string::String)
     model1 = SDPA.Model()
     MOIU.loadfromstring!(model1, model_string)
-    (variable_names, constraint_names) = _set_var_and_con_names(model1)
+    args = _set_var_and_con_names(model1)
 
     MOI.write_to_file(model1, SDPA_TEST_FILE)
     model2 = SDPA.Model()
@@ -64,29 +69,17 @@ function _test_write_then_read(model_string::String)
         MOI.set(model2, attr, MOIU.operate(-, Float64, obj))
     end
 
-    return MOIU.test_models_equal(
-        model1,
-        model2,
-        variable_names,
-        constraint_names,
-    )
+    return MOIU.test_models_equal(model1, model2, args...)
 end
 
 function _test_read(filename::String, model_string::String)
     model1 = MOI.FileFormats.Model(filename = filename)
     MOIU.loadfromstring!(model1, model_string)
-    (variable_names, constraint_names) = _set_var_and_con_names(model1)
-
+    args = _set_var_and_con_names(model1)
     model2 = SDPA.Model()
     MOI.read_from_file(model2, filename)
     _set_var_and_con_names(model2)
-
-    return MOIU.test_models_equal(
-        model1,
-        model2,
-        variable_names,
-        constraint_names,
-    )
+    return MOIU.test_models_equal(model1, model2, args...)
 end
 
 function test_show()
@@ -107,7 +100,7 @@ function test_support()
         model_string = """
         variables: x
         minobjective: 1x
-        c: x in $set
+        x in $set
         """
         model = SDPA.Model()
         @test !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set))
@@ -288,9 +281,9 @@ const _EXAMPLE_MODELS = [
     c1: [1x, 1y, 1z] in PositiveSemidefiniteConeTriangle(2)
     c2: [1z, 1x, 2.1] in PositiveSemidefiniteConeTriangle(2)
     c3: [1x + 1y + 1z + -1, -1x + -1y + -1z + 8] in Nonnegatives(2)
-    c4: x in Integer()
-    c5: y in Integer()
-    c6: z in Integer()
+    x in Integer()
+    y in Integer()
+    z in Integer()
 """,
     ),
 ]

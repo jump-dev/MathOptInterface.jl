@@ -186,8 +186,8 @@ function getvariable(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     minobjective: 2.0x
-    c1: x >= 1.0
-    c2: x <= 2.0
+    x >= 1.0
+    x <= 2.0
 """,
     )
     @test MOI.get(model, MOI.VariableIndex, "y") === nothing
@@ -231,23 +231,17 @@ function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     maxobjective: 2.0x
-    c1: x <= 1.0
-    c2: x >= 0.0
+    x <= 1.0
+    x >= 0.0
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c1 = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
-        "c1",
-    )
+    c1 = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
     # We test this after the creation of every `SingleVariable` constraint
     # to ensure a good coverage of corner cases.
     @test c1.value == x.value
-    c2 = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
-        "c2",
+    c2 = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
+        x.value,
     )
     @test c2.value == x.value
     return test_model_solution(
@@ -276,22 +270,16 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     minobjective: 2.0x
-    c1: x >= 1.0
-    c2: x <= 2.0
+    x >= 1.0
+    x <= 2.0
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c1 = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
-        "c1",
+    c1 = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
+        x.value,
     )
     @test c1.value == x.value
-    c2 = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
-        "c2",
-    )
+    c2 = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
     @test c2.value == x.value
     return test_model_solution(
         model,
@@ -318,8 +306,8 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     minobjective: 2.0x
-    c1: x >= 1.5
-    c2: x in Integer()
+    x >= 1.5
+    x in Integer()
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
@@ -338,8 +326,8 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     minobjective: -2.0x
-    c1: x <= 1.5
-    c2: x in Integer()
+    x <= 1.5
+    x in Integer()
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
@@ -359,8 +347,8 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     minobjective: -2.0x
-    c1: x <= 2.0
-    c2: x in ZeroOne()
+    x <= 2.0
+    x in ZeroOne()
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
@@ -380,8 +368,8 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
             """
     variables: x
     minobjective: 1.0x
-    c1: x <= 0.0
-    c2: x in ZeroOne()
+    x <= 0.0
+    x in ZeroOne()
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")

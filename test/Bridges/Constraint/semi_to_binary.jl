@@ -152,17 +152,17 @@ config = MOIT.TestConfig()
 
     s = """
     variables: x, y
-    cy: y == 4.0
-    cx: x in Semiinteger(2.0, 3.0)
+    y == 4.0
+    x in Semiinteger(2.0, 3.0)
     minobjective: x
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
     sb = """
     variables: x, y, z
-    cy: y == 4.0
-    bin: z in ZeroOne()
-    int: x in Integer()
+    y == 4.0
+    z in ZeroOne()
+    x in Integer()
     clo: x + -2.0z >= 0.0
     cup: x + -3.0z <= 0.0
     minobjective: x
@@ -173,7 +173,16 @@ config = MOIT.TestConfig()
     MOI.empty!(bridged_mock)
     @test MOI.is_empty(bridged_mock)
     MOIU.loadfromstring!(bridged_mock, s)
-    MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["cy", "cx"])
+    MOIU.test_models_equal(
+        bridged_mock,
+        model,
+        ["x", "y"],
+        String[],
+        [
+            ("x", MOI.Semiinteger{Float64}(2.0, 3.0)),
+            ("y", MOI.EqualTo{Float64}(4.0)),
+        ],
+    )
 
     # setting names on mock
     ci = first(
@@ -182,7 +191,6 @@ config = MOIT.TestConfig()
             MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.ZeroOne}(),
         ),
     )
-    MOI.set(mock, MOI.ConstraintName(), ci, "bin")
     z = MOI.VariableIndex(ci.value)
     MOI.set(mock, MOI.VariableName(), z, "z")
     ci = first(
@@ -191,7 +199,6 @@ config = MOIT.TestConfig()
             MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
         ),
     )
-    MOI.set(mock, MOI.ConstraintName(), ci, "int")
     ci = first(
         MOI.get(
             mock,
@@ -217,6 +224,11 @@ config = MOIT.TestConfig()
         mock,
         modelb,
         ["x", "y", "z"],
-        ["cy", "bin", "int", "clo", "cup"],
+        ["clo", "cup"],
+        [
+            ("x", MOI.Integer()),
+            ("y", MOI.EqualTo{Float64}(4.0)),
+            ("z", MOI.ZeroOne()),
+        ],
     )
 end

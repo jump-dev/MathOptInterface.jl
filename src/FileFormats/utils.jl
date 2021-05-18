@@ -39,6 +39,9 @@ function create_unique_constraint_names(
 )
     original_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if F == MOI.SingleVariable
+            continue  # SingleVariable constraints do not need a name.
+        end
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             name = MOI.get(model, MOI.ConstraintName(), index)
             push!(original_names, _replace(name, replacements))
@@ -46,6 +49,9 @@ function create_unique_constraint_names(
     end
     added_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if F == MOI.SingleVariable
+            continue  # SingleVariable constraints do not need a name.
+        end
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             original_name = MOI.get(model, MOI.ConstraintName(), index)
             new_name = _replace(

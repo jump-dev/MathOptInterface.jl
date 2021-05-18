@@ -290,7 +290,8 @@ function test_Blank_constraint_name()
     model = MOF.Model()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    c = MOI.add_constraint(model, f, MOI.ZeroOne())
     name_map = Dict(x => "x")
     MOI.FileFormats.create_unique_names(model, warn = true)
     @test MOF.moi_to_object(c, model, name_map)["name"] == "c1"
@@ -300,8 +301,9 @@ function test_Duplicate_constraint_name()
     model = MOF.Model()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
-    c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    c1 = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    c2 = MOI.add_constraint(model, f, MOI.GreaterThan(0.0))
     MOI.set(model, MOI.ConstraintName(), c1, "c")
     MOI.set(model, MOI.ConstraintName(), c2, "c")
     name_map = Dict(x => "x")
@@ -398,10 +400,10 @@ function test_singlevariable_in_lower()
         """
 variables: x
 minobjective: 1.2x + 0.5
-c1: x >= 1.0
+x >= 1.0
 """,
         ["x"],
-        ["c1"],
+        String[],
     )
 end
 
@@ -410,10 +412,10 @@ function test_singlevariable_in_upper()
         """
 variables: x
 maxobjective: 1.2x + 0.5
-c1: x <= 1.0
+x <= 1.0
 """,
         ["x"],
-        ["c1"],
+        String[],
         suffix = ".gz",
     )
 end
@@ -423,10 +425,10 @@ function test_singlevariable_in_interval()
         """
 variables: x
 minobjective: 1.2x + 0.5
-c1: x in Interval(1.0, 2.0)
+x in Interval(1.0, 2.0)
 """,
         ["x"],
-        ["c1"],
+        String[],
     )
 end
 
@@ -435,10 +437,10 @@ function test_singlevariable_in_equalto()
         """
 variables: x
 minobjective: 1.2x + 0.5
-c1: x == 1.0
+x == 1.0
 """,
         ["x"],
-        ["c1"],
+        String[],
     )
 end
 
@@ -447,10 +449,10 @@ function test_singlevariable_in_zeroone()
         """
 variables: x
 minobjective: 1.2x + 0.5
-c1: x in ZeroOne()
+x in ZeroOne()
 """,
         ["x"],
-        ["c1"],
+        String[],
     )
 end
 
@@ -459,10 +461,10 @@ function test_singlevariable_in_integer()
         """
 variables: x
 minobjective: 1.2x + 0.5
-c1: x in Integer()
+x in Integer()
 """,
         ["x"],
-        ["c1"],
+        String[],
     )
 end
 
@@ -471,10 +473,10 @@ function test_singlevariable_in_Semicontinuous()
         """
 variables: x
 minobjective: 1.2x + 0.5
-c1: x in Semicontinuous(1.0, 2.0)
+x in Semicontinuous(1.0, 2.0)
 """,
         ["x"],
-        ["c1"],
+        String[],
     )
 end
 
@@ -483,10 +485,10 @@ function test_singlevariable_in_Semiinteger()
         """
 variables: x
 minobjective: 1.2x + 0.5
-c1: x in Semiinteger(1.0, 2.0)
+x in Semiinteger(1.0, 2.0)
 """,
         ["x"],
-        ["c1"],
+        String[],
     )
 end
 
@@ -767,10 +769,9 @@ function test_IndicatorSet()
 variables: x, y
 minobjective: x
 c1: [x, y] in IndicatorSet{ACTIVATE_ON_ONE}(GreaterThan(1.0))
-c2: x >= 0.0
 """,
         ["x", "y"],
-        ["c1", "c2"],
+        ["c1"],
     )
 
     return _test_model_equality(
@@ -778,10 +779,9 @@ c2: x >= 0.0
 variables: x, y
 minobjective: x
 c1: [x, y] in IndicatorSet{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
-c2: x >= 0.0
 """,
         ["x", "y"],
-        ["c1", "c2"],
+        ["c1"],
     )
 end
 
@@ -791,10 +791,9 @@ function test_NormOneCone()
 variables: x, y
 minobjective: x
 c1: [x, y] in NormOneCone(2)
-c2: x >= 0.0
 """,
         ["x", "y"],
-        ["c1", "c2"],
+        ["c1"],
     )
 end
 
@@ -804,10 +803,9 @@ function test_NormInfinityCone()
 variables: x, y
 minobjective: x
 c1: [x, y] in NormInfinityCone(2)
-c2: x >= 0.0
 """,
         ["x", "y"],
-        ["c1", "c2"],
+        ["c1"],
     )
 end
 
@@ -817,10 +815,9 @@ function test_RelativeEntropyCone()
 variables: x, y, z
 minobjective: x
 c1: [x, y, z] in RelativeEntropyCone(3)
-c2: x >= 0.0
 """,
         ["x", "y", "z"],
-        ["c1", "c2"],
+        ["c1"],
     )
 end
 

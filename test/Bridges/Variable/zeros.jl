@@ -15,7 +15,6 @@ bridged_mock = MOIB.Variable.Zeros{Float64}(mock)
 
 x, cx = MOI.add_constrained_variable(bridged_mock, MOI.GreaterThan(0.0))
 MOI.set(bridged_mock, MOI.VariableName(), x, "x")
-MOI.set(bridged_mock, MOI.ConstraintName(), cx, "cx")
 yz, cyz = MOI.add_constrained_variables(bridged_mock, MOI.Zeros(2))
 MOI.set(bridged_mock, MOI.VariableName(), yz, ["y", "z"])
 MOI.set(bridged_mock, MOI.ConstraintName(), cyz, "cyz")
@@ -35,13 +34,19 @@ end
 @testset "Test bridged model" begin
     s = """
     variables: x, y, z
-    cx: x >= 0.0
+    x >= 0.0
     cyz: [y, z] in MathOptInterface.Zeros(2)
     minobjective: x
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
-    MOIU.test_models_equal(bridged_mock, model, ["x", "y", "z"], ["cx", "cyz"])
+    MOIU.test_models_equal(
+        bridged_mock,
+        model,
+        ["x", "y", "z"],
+        ["cyz"],
+        [("x", MOI.GreaterThan{Float64}(0.0))],
+    )
 end
 
 c1, c2 = MOI.add_constraints(
@@ -143,14 +148,20 @@ end
 @testset "Test mock model" begin
     s = """
     variables: x
-    cx: x >= 0.0
+    x >= 0.0
     con1: x + 0.0 == 0.0
     con2: x + 0.0 >= 1.0
     minobjective: x
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
-    MOIU.test_models_equal(mock, model, ["x"], ["cx", "con1", "con2"])
+    MOIU.test_models_equal(
+        mock,
+        model,
+        ["x"],
+        ["con1", "con2"],
+        [("x", MOI.GreaterThan{Float64}(0.0))],
+    )
 end
 
 @testset "Delete" begin

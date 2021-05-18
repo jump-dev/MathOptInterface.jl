@@ -90,17 +90,17 @@ config = MOIT.TestConfig()
 
     s = """
     variables: x, y
-    cy: y == 1.0
-    cx: x in ZeroOne()
+    y == 1.0
+    x in ZeroOne()
     minobjective: x
     """
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, s)
     sb = """
     variables: x, y
-    cy: y == 1.0
-    intg: x in Integer()
-    intv: x in Interval(0.0,1.0)
+    y == 1.0
+    x in Integer()
+    x in Interval(0.0,1.0)
     minobjective: x
     """
     modelb = MOIU.Model{Float64}()
@@ -109,26 +109,22 @@ config = MOIT.TestConfig()
     MOI.empty!(bridged_mock)
     @test MOI.is_empty(bridged_mock)
     MOIU.loadfromstring!(bridged_mock, s)
-    MOIU.test_models_equal(bridged_mock, model, ["x", "y"], ["cy", "cx"])
-
-    # setting names on mock
-    ci = first(
-        MOI.get(
-            mock,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
-        ),
+    MOIU.test_models_equal(
+        bridged_mock,
+        model,
+        ["x", "y"],
+        String[],
+        [("y", MOI.EqualTo{Float64}(1.0)), ("x", MOI.ZeroOne())],
     )
-    MOI.set(mock, MOI.ConstraintName(), ci, "intg")
-    ci = first(
-        MOI.get(
-            mock,
-            MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
-                MOI.Interval{Float64},
-            }(),
-        ),
+    MOIU.test_models_equal(
+        mock,
+        modelb,
+        ["x", "y"],
+        String[],
+        [
+            ("y", MOI.EqualTo{Float64}(1.0)),
+            ("x", MOI.Integer()),
+            ("x", MOI.Interval{Float64}(0.0, 1.0)),
+        ],
     )
-    MOI.set(mock, MOI.ConstraintName(), ci, "intv")
-
-    MOIU.test_models_equal(mock, modelb, ["x", "y"], ["cy", "intg", "intv"])
 end

@@ -19,16 +19,16 @@ function test_comprehensive_write()
         """
 variables: a, x, y, z
 minobjective: x
-c1: x >= -1.0
-c2: x <= 2.0
-c3: y == 3.0
-c4: z in Interval(4.0, 5.0)
+x >= -1.0
+x <= 2.0
+y == 3.0
+z in Interval(4.0, 5.0)
 c5: 1.1x + 0.0 <= 5.1
 c6: 1.3x + -1.4 >= -0.1
 c7: 1.5a + 1.6 == 0.2
 c8: 1.7a + 1.8 in Interval(0.3, 0.4)
-c9: x in ZeroOne()
-c10: y in Integer()
+x in ZeroOne()
+y in Integer()
 """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
@@ -205,8 +205,8 @@ function test_free_variables()
         """
 variables: x, y, z
 maxobjective: x
-c1: x in ZeroOne()
-c2: y in Integer()
+x in ZeroOne()
+y in Integer()
 """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)

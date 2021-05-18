@@ -808,6 +808,9 @@ end
 function test_constraintnames_equal(model, constraintnames)
     seen_name = Dict(name => false for name in constraintnames)
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if F == MOI.SingleVariable
+            continue
+        end
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             cname = MOI.get(model, MOI.ConstraintName(), index)
             if !haskey(seen_name, cname)
@@ -894,16 +897,40 @@ function Base.isone(
 end
 
 """
-    test_models_equal(model1::ModelLike, model2::ModelLike, variablenames::Vector{String}, constraintnames::Vector{String})
+    test_models_equal(
+        model1::ModelLike,
+        model2::ModelLike,
+        variablenames::Vector{String},
+        constraintnames::Vector{String},
+        single_variable_constraints::Vector{Tuple{String,<:MOI.AbstractScalarSet}}
+    )
 
-Test that `model1` and `model2` are identical using `variablenames` as as keys for the variable names and `constraintnames` as keys for the constraint names. Uses `Base.Test` macros.
+Test that `model1` and `model2` are identical using `variablenames` as as keys
+for the variable names and `constraintnames` as keys for the constraint names.
+
+In addition, it checks that there is a SingleVariable-in-Set constraint for each
+`(name, set)` tuple in `single_variable_constraints`, where `name` is the name
+of the corresponding variable.
+
+Uses `Base.Test` macros.
 """
 function test_models_equal(
     model1::MOI.ModelLike,
     model2::MOI.ModelLike,
     variablenames::Vector{String},
     constraintnames::Vector{String},
+    single_variable_constraints::Vector{<:Tuple} = Tuple[],
 )
+    for (x_name, set) in single_variable_constraints
+        x1 = MOI.get(model1, MOI.VariableIndex, x_name)
+        ci1 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x1.value)
+        @test MOI.is_valid(model1, ci1)
+        @test MOI.get(model1, MOI.ConstraintSet(), ci1) == set
+        x2 = MOI.get(model2, MOI.VariableIndex, x_name)
+        ci2 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x2.value)
+        @test MOI.is_valid(model2, ci2)
+        @test MOI.get(model2, MOI.ConstraintSet(), ci2) == set
+    end
     # TODO: give test-friendly feedback instead of errors?
     test_variablenames_equal(model1, variablenames)
     test_variablenames_equal(model2, variablenames)
@@ -941,6 +968,7 @@ function test_models_equal(
             @test value1 == value2
         end
     end
+    return
 end
 
 _keep_all(keep::Function, v::MOI.VariableIndex) = keep(v)

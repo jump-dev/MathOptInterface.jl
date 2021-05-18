@@ -105,14 +105,12 @@ function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     minobjective: 2.0x + 1.0
-    c: x >= 1.0
+    x >= 1.0
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
-        "c",
+    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
+        x.value,
     )
     # We test this after the creation of every `SingleVariable` constraint
     # to ensure a good coverage of corner cases.
@@ -144,14 +142,12 @@ function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     minobjective: 0.0x + 0.0
-    c: x >= 1.0
+    x >= 1.0
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
-        "c",
+    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
+        x.value,
     )
     @test c.value == x.value
     test_model_solution(
@@ -185,14 +181,12 @@ function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
         """
     variables: x
     minobjective: x
-    c: x >= 1.0
+    x >= 1.0
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.get(
-        model,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
-        "c",
+    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
+        x.value,
     )
     @test c.value == x.value
     return test_model_solution(

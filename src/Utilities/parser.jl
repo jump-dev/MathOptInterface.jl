@@ -8,10 +8,11 @@ using Base.Meta: isexpr
 # minobjective: 2x + 3y
 # con1: x + y <= 1
 # con2: [x,y] in Set
+# x >= 0.0
 #
 # special labels: variables, minobjective, maxobjective
 # everything else denotes a constraint with a name
-# all constraints must be named
+#
 # "x - y" does NOT currently parse, needs to be written as "x + -1.0*y"
 # "x^2" does NOT currently parse, needs to be written as "x*x"
 
@@ -186,8 +187,10 @@ end
 # see tests for examples
 function separatelabel(ex)
     if isexpr(ex, :call) && ex.args[1] == :(:)
+        # A line like `variables: x`.
         return ex.args[2], ex.args[3]
     elseif isexpr(ex, :tuple)
+        # A line like `variables: x, y`. Parsed as `((variables:x), y)`
         ex = copy(ex)
         @assert isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
         label = ex.args[1].args[2]
@@ -195,10 +198,15 @@ function separatelabel(ex)
         return label, ex
     elseif isexpr(ex, :call)
         ex = copy(ex)
-        @assert isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
-        label = ex.args[2].args[2]
-        ex.args[2] = ex.args[2].args[3]
-        return label, ex
+        if isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
+            # A line like `c: x <= 1`
+            label = ex.args[2].args[2]
+            ex.args[2] = ex.args[2].args[3]
+            return label, ex
+        else
+            # A line like `x <= 1`
+            return Symbol(""), ex
+        end
     else
         error("Unrecognized expression $ex")
     end
@@ -292,7 +300,9 @@ function loadfromstring!(model, s)
                 throw(MOI.UnsupportedConstraint{F,S}())
             end
             cindex = MOI.add_constraint(model, f, set)
-            MOI.set(model, MOI.ConstraintName(), cindex, String(label))
+            if F != MOI.SingleVariable
+                MOI.set(model, MOI.ConstraintName(), cindex, String(label))
+            end
         end
     end
 end

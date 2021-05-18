@@ -185,7 +185,12 @@ list of attributes set obtained by `ListOf...AttributesSet`.
 """
 function supports end
 supports(::ModelLike, ::AbstractSubmittable) = false
-function supports(
+
+function supports(model::ModelLike, attr::AnyAttribute, args...)
+    return supports_fallback(model, attr, args...)
+end
+
+function supports_fallback(
     ::ModelLike,
     attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
 )
@@ -200,7 +205,8 @@ function supports(
     end
     return false
 end
-function supports(
+
+function supports_fallback(
     ::ModelLike,
     attr::Union{AbstractVariableAttribute,AbstractConstraintAttribute},
     ::Type{<:Index},
@@ -1132,12 +1138,40 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 """
     ConstraintName()
 
-A constraint attribute for a string identifying the constraint. It is *valid*
-for constraints variables to have the same name; however, constraints with
-duplicate names cannot be looked up using [`get`](@ref) regardless of if they
-have the same `F`-in-`S` type. It has a default value of `""` if not set.
+A constraint attribute for a string identifying the constraint.
+
+It is *valid* for constraints variables to have the same name; however,
+constraints with duplicate names cannot be looked up using [`get`](@ref),
+regardless of whether they have the same `F`-in-`S` type.
+
+`ConstraintName` has a default value of `""` if not set.
+
+## Notes
+
+You should _not_ implement `ConstraintName` for `SingleVariable` constraints.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
+
+"""
+    SingleVariableConstraintNameError()
+
+An error to be thrown when the user tries to set `ConstraintName` on a
+`SingleVariable` constraint.
+"""
+function SingleVariableConstraintNameError()
+    return UnsupportedAttribute(
+        ConstraintName(),
+        "`ConstraintName`s are not supported for `SingleVariable` constraints.",
+    )
+end
+
+function supports_fallback(
+    ::ModelLike,
+    ::ConstraintName,
+    ::Type{ConstraintIndex{SingleVariable,S}},
+) where {S}
+    return throw(SingleVariableConstraintNameError())
+end
 
 """
     ConstraintPrimalStart()

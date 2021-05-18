@@ -117,6 +117,29 @@ function test_attributes_integration_compute_conflict_2()
     @test_throws ArgumentError MOI.get(model, MOI.ConstraintConflictStatus(), c)
 end
 
+struct _NoConstraintName <: MOI.AbstractOptimizer end
+
+function test_no_constraint_name()
+    model = _NoConstraintName()
+    @test_throws(
+        MOI.SingleVariableConstraintNameError(),
+        MOI.supports(
+            model,
+            MOI.ConstraintName(),
+            MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne},
+        ),
+    )
+    @test_throws(
+        MOI.SingleVariableConstraintNameError(),
+        MOI.set(
+            model,
+            MOI.ConstraintName(),
+            MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1),
+            "name",
+        ),
+    )
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

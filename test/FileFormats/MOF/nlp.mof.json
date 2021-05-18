@@ -203,7 +203,6 @@
       }
     },
     {
-      "name": "c1",
       "function": {
         "type": "SingleVariable",
         "variable": "var_1"
@@ -215,7 +214,6 @@
       }
     },
     {
-      "name": "c2",
       "function": {
         "type": "SingleVariable",
         "variable": "var_2"
@@ -227,7 +225,6 @@
       }
     },
     {
-      "name": "c3",
       "function": {
         "type": "SingleVariable",
         "variable": "var_3"
@@ -239,7 +236,6 @@
       }
     },
     {
-      "name": "c4",
       "function": {
         "type": "SingleVariable",
         "variable": "var_4"

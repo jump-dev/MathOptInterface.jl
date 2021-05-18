@@ -494,6 +494,24 @@ function MOI.set(
     end
     return
 end
+
+function MOI.supports(
+    ::UniversalFallback,
+    ::MOI.ConstraintName,
+    ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+)
+    return throw(MOI.SingleVariableConstraintNameError())
+end
+
+function MOI.set(
+    ::UniversalFallback,
+    ::MOI.ConstraintName,
+    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::String,
+)
+    return throw(MOI.SingleVariableConstraintNameError())
+end
+
 function MOI.get(
     uf::UniversalFallback,
     attr::MOI.ConstraintName,

@@ -78,7 +78,7 @@ end
     @testset "one variable" begin
         s = """
         variables: x
-        bound: x >= 1.0
+        x >= 1.0
         """
         model = MOIU.Model{Float64}()
         x = MOI.add_variable(model)
@@ -88,11 +88,16 @@ end
             MOI.SingleVariable(x),
             MOI.GreaterThan(1.0),
         )
-        MOI.set(model, MOI.ConstraintName(), bound, "bound")
 
         model2 = MOIU.Model{Float64}()
         MOIU.loadfromstring!(model2, s)
-        MOIU.test_models_equal(model, model2, ["x"], ["bound"])
+        MOIU.test_models_equal(
+            model,
+            model2,
+            ["x"],
+            String[],
+            [("x", MOI.GreaterThan{Float64}(1.0))],
+        )
     end
 
     @testset "linear constraints" begin
@@ -250,7 +255,7 @@ end
     @testset "Invalid variable name" begin
         s = """
         variables: x
-        bound: y >= 1.0
+        y >= 1.0
         """
         model = MOIU.Model{Float64}()
         err = ErrorException("Invalid variable name y.")
