@@ -1,5 +1,9 @@
 abstract type StructOfConstraints <: MOI.ModelLike end
 
+function _add_variable(model::StructOfConstraints)
+    return broadcastcall(_add_variable, model)
+end
+
 function _throw_if_cannot_delete(model::StructOfConstraints, vis, fast_in_vis)
     broadcastcall(model) do constrs
         if constrs !== nothing

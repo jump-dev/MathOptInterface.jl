@@ -407,6 +407,9 @@ function MOI.supports_incremental_interface(
 )
     return MOI.supports_incremental_interface(b.model, copy_names)
 end
+function MOIU.final_touch(uf::AbstractBridgeOptimizer, index_map)
+    return MOIU.final_touch(uf.model, index_map)
+end
 
 # References
 function MOI.is_valid(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)

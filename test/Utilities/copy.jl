@@ -653,6 +653,7 @@ struct OnlyCopyConstraints{F,S} <: MOI.ModelLike
         return new{F,S}(MOIU.VectorOfConstraints{F,S}())
     end
 end
+function MOI.Utilities._add_variable(::OnlyCopyConstraints) end
 MOI.empty!(model::OnlyCopyConstraints) = MOI.empty!(model.constraints)
 function MOI.supports_constraint(
     model::OnlyCopyConstraints,

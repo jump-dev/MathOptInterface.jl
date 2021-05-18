@@ -232,6 +232,27 @@ end
 
 _standardize(d::IndexMap) = d
 
+function pass_nonvariable_constraints(
+    dest::CachingOptimizer,
+    src::MOI.ModelLike,
+    idxmap::IndexMap,
+    constraint_types,
+    pass_cons;
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    dest.state == ATTACHED_OPTIMIZER && reset_optimizer(dest)
+    return pass_nonvariable_constraints(
+        dest.model_cache,
+        src,
+        idxmap,
+        constraint_types,
+        pass_cons;
+        filter_constraints = filter_constraints,
+    )
+end
+function final_touch(m::CachingOptimizer, index_map)
+    return final_touch(m.model_cache, index_map)
+end
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
     if m.state == ATTACHED_OPTIMIZER
         reset_optimizer(m)
