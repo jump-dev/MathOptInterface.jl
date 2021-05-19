@@ -98,7 +98,7 @@ function MOI.get(
     ::MOI.ListOfConstraintTypesPresent,
 ) where {T}
     present = Set(sets.set_ids)
-    return [
+    return Tuple{DataType,DataType}[
         (_affine_function_type(T, S), S) for
         S in set_types(sets) if set_index(sets, S) in present
     ]
@@ -224,7 +224,7 @@ function MOI.get(
     sets::OrderedProductOfSets{T},
     ::MOI.ListOfConstraintTypesPresent,
 ) where {T}
-    return [
+    return Tuple{DataType,DataType}[
         (_affine_function_type(T, S), S) for
         S in set_types(sets) if !iszero(_num_indices(sets, S))
     ]
