@@ -272,11 +272,11 @@ function _load_constraints(
 )
     for i in eachindex(func_sets)
         func, set = func_sets[i]
-        if i in dest.are_indices_mapped
+        # if i in dest.are_indices_mapped
             load_terms(dest.coefficients, index_map, func, offset)
-        else
-            load_terms(dest.coefficients, IdentityMap(), func, offset)
-        end
+        # else
+        #     load_terms(dest.coefficients, IdentityMap(), func, offset)
+        # end
         _load_constants(dest.constants, offset, func, set)
         offset += MOI.output_dimension(func)
     end
