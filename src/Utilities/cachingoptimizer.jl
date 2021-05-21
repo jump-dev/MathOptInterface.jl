@@ -90,7 +90,6 @@ function CachingOptimizer(
     model_cache::MOI.ModelLike,
     optimizer::MOI.AbstractOptimizer,
 )
-    @assert MOI.is_empty(model_cache)
     @assert MOI.is_empty(optimizer)
     return CachingOptimizer{typeof(optimizer),typeof(model_cache)}(
         optimizer,
