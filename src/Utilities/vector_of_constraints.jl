@@ -186,7 +186,7 @@ function _throw_if_cannot_delete(
         f = fs[1]::MOI.VectorOfVariables
         if length(f.variables) > 1 && f.variables != vis
             for vi in f.variables
-                if vi in fast_in_vis
+                if _fast_in(vi, fast_in_vis)
                     # If `supports_dimension_update(S)` then the variable
                     # will be removed in `_filter_variables`.
                     throw_delete_variable_in_vov(vi)

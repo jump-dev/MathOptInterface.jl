@@ -218,6 +218,14 @@ MOIU.@product_of_sets(
             false,
             Indexing,
         ) do optimizer
+            vis = MOI.get(optimizer, MOI.ListOfVariableIndices())
+            @test_throws MOI.DeleteNotAllowed(first(vis)) MOI.delete(
+                optimizer,
+                vis,
+            )
+            for vi in vis
+                @test_throws MOI.DeleteNotAllowed(vi) MOI.delete(optimizer, vi)
+            end
             con_types = [
                 (F, MOI.EqualTo{Float64}),
                 (F, MOI.GreaterThan{Float64}),
@@ -234,6 +242,10 @@ MOIU.@product_of_sets(
                 for ci in cis
                     @test MOI.is_valid(optimizer, ci)
                     @test i == MOI.Utilities.rows(optimizer.constraints, ci)
+                    @test_throws MOI.DeleteNotAllowed(ci) MOI.delete(
+                        optimizer,
+                        ci,
+                    )
                 end
             end
         end

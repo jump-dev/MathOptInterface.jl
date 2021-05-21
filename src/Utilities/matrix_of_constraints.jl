@@ -314,3 +314,20 @@ function final_touch(model::MatrixOfConstraints, index_map)
     empty!(model.caches)
     return
 end
+
+# Users of `MatrixOfConstraints` assume variable indices to be `1:n` where `n`
+# is the number of columns so we don't support variable deletion.
+function _throw_if_cannot_delete(
+    ::MatrixOfConstraints,
+    ::Vector{MOI.VariableIndex},
+    vi::MOI.VariableIndex,
+)
+    return throw(MOI.DeleteNotAllowed(vi))
+end
+function _throw_if_cannot_delete(
+    ::MatrixOfConstraints,
+    vis::Vector{MOI.VariableIndex},
+    ::Set{MOI.VariableIndex},
+)
+    return throw(MOI.DeleteNotAllowed(first(vis)))
+end

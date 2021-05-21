@@ -204,7 +204,7 @@ end
 function MOI.delete(uf::UniversalFallback, vi::MOI.VariableIndex)
     vis = [vi]
     for constraints in values(uf.constraints)
-        _throw_if_cannot_delete(constraints, vis, vis)
+        _throw_if_cannot_delete(constraints, vis, vi)
     end
     MOI.delete(uf.model, vi)
     for d in values(uf.varattr)

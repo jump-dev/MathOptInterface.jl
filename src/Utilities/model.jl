@@ -129,9 +129,11 @@ function _delete_variable(
         MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(vi.value),
     )
 end
+_fast_in(vi1::MOI.VariableIndex, vi2::MOI.VariableIndex) = vi1 == vi2
+_fast_in(vi::MOI.VariableIndex, vis::Set{MOI.VariableIndex}) = vi in vis
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     vis = [vi]
-    _throw_if_cannot_delete(model.constraints, vis, vis)
+    _throw_if_cannot_delete(model.constraints, vis, vi)
     _delete_variable(model, vi)
     _deleted_constraints(model.constraints, vi) do ci
         return delete!(model.con_to_name, ci)
