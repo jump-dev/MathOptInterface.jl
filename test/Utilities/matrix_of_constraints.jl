@@ -66,8 +66,12 @@ function _test(
     @test _b(_inner(optimizer)) == b
     query_test(_inner(optimizer))
 
+    # Use mock to have xor indices to check that they are mapped
+    cache = MOIU.MockOptimizer(MOIU.Model{Float64}())
+
+    MOI.empty!(cache)
     MOI.empty!(optimizer)
-    model = MOIU.CachingOptimizer(MOIU.Model{Float64}(), optimizer)
+    model = MOIU.CachingOptimizer(cache, optimizer)
     model.mode = MOIU.MANUAL
     MOIU.reset_optimizer(model)
     @test MOIU.state(model) == MOIU.EMPTY_OPTIMIZER
@@ -77,9 +81,10 @@ function _test(
     @test _b(_inner(model)) == b
     query_test(_inner(optimizer))
 
+    MOI.empty!(cache)
     MOI.empty!(optimizer)
     model = MOIU.CachingOptimizer(
-        MOIU.Model{Float64}(),
+        cache,
         MOIU.MockOptimizer(MOIU.UniversalFallback(optimizer)),
     )
     model.mode = MOIU.MANUAL
@@ -92,9 +97,10 @@ function _test(
     query_test(_inner(optimizer))
 
     if !bridged
+        MOI.empty!(cache)
         MOI.empty!(optimizer)
         model = MOIU.CachingOptimizer(
-            MOIU.Model{Float64}(),
+            cache,
             MOI.Bridges.full_bridge_optimizer(
                 MOIU.CachingOptimizer(optimizer, MOIU.MANUAL),
                 Float64,
@@ -110,9 +116,10 @@ function _test(
         @test _b(inner) == b
         query_test(inner)
 
+        MOI.empty!(cache)
         MOI.empty!(optimizer)
         model = MOIU.CachingOptimizer(
-            MOIU.Model{Float64}(),
+            cache,
             MOI.Bridges.full_bridge_optimizer(optimizer, Float64),
         )
         model.mode = MOIU.MANUAL

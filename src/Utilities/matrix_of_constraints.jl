@@ -80,8 +80,8 @@ end
         coefficients::AT
         constants::BT
         sets::ST
-        are_indices_mapped::BitSet
-        caches::Union{Nothing, Vector}
+        caches::Union{Nothing,Vector}
+        are_indices_mapped::Union{Nothing,Vector{BitSet}}
         function MatrixOfConstraints{T,AT,BT,ST}() where {T,AT,BT,ST}
             return new{T,AT,BT,ST}(AT(), BT(), ST(), BitSet(), nothing)
         end
@@ -124,10 +124,10 @@ mutable struct MatrixOfConstraints{T,AT,BT,ST} <: MOI.ModelLike
     coefficients::AT
     constants::BT
     sets::ST
-    are_indices_mapped::BitSet
     caches::Union{Nothing,Vector}
+    are_indices_mapped::Union{Nothing,Vector{BitSet}}
     function MatrixOfConstraints{T,AT,BT,ST}() where {T,AT,BT,ST}
-        return new{T,AT,BT,ST}(AT(), BT(), ST(), BitSet(), nothing)
+        return new{T,AT,BT,ST}(AT(), BT(), ST(), nothing, nothing)
     end
 end
 
@@ -136,9 +136,9 @@ function MOI.empty!(v::MatrixOfConstraints{T}) where {T}
     MOI.empty!(v.coefficients)
     empty!(v.constants)
     MOI.empty!(v.sets)
-    empty!(v.are_indices_mapped)
     v.caches =
         [Tuple{_affine_function_type(T, S),S}[] for S in set_types(v.sets)]
+    v.are_indices_mapped = [BitSet() for _ in eachindex(v.caches)]
     return
 end
 
@@ -240,7 +240,7 @@ function _allocate_constraints(
     for ci_src in cis_src
         func = MOI.get(src, MOI.CanonicalConstraintFunction(), ci_src)
         set = MOI.get(src, MOI.ConstraintSet(), ci_src)
-        push!(model.are_indices_mapped, length(model.caches) + 1)
+        push!(model.are_indices_mapped[i], length(model.caches[i]) + 1)
         index_map[ci_src] = _add_constraint(model, i, index_map, func, set)
     end
     return
@@ -269,10 +269,11 @@ function _load_constraints(
     index_map,
     offset,
     func_sets,
+    are_indices_mapped,
 )
     for i in eachindex(func_sets)
         func, set = func_sets[i]
-        if i in dest.are_indices_mapped
+        if i in are_indices_mapped
             load_terms(dest.coefficients, index_map, func, offset)
         else
             load_terms(dest.coefficients, IdentityMap(), func, offset)
@@ -305,12 +306,19 @@ function final_touch(model::MatrixOfConstraints, index_map)
     set_number_of_rows(model.coefficients, num_rows)
 
     offset = 0
-    for cache in model.caches
-        offset = _load_constraints(model, index_map, offset, cache)
+    for (cache, are_indices_mapped) in
+        zip(model.caches, model.are_indices_mapped)
+        offset = _load_constraints(
+            model,
+            index_map,
+            offset,
+            cache,
+            are_indices_mapped,
+        )
     end
 
     final_touch(model.coefficients)
-    empty!(model.are_indices_mapped)
-    empty!(model.caches)
+    model.caches = nothing
+    model.are_indices_mapped = nothing
     return
 end
