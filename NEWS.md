@@ -28,6 +28,20 @@ Breaking behavior changes:
   length of the corresponding function, instead of half the length. An
   `ArgumentError` is thrown if `dimension` is not even.
 
+v0.9.22 (May 22, 2021)
+---------------------------
+
+This release contains backports from the ongoing development of the v0.10 release.
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.22).
+
+- Improved type inference in `Utilities`, `Bridges` and `FileFormats` submodules
+  to reduce latency.
+- Improved performance of `Utilities.is_canonical`.
+- Fixed `Utilities.pass_nonvariable_constraints` with bridged variables.
+- Fixed performance regression of `Utilities.Model`.
+- Fixed ordering of objective setting in parser.
+
 v0.9.21 (April 23, 2021)
 ---------------------------
 
