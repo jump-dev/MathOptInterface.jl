@@ -1179,7 +1179,9 @@ end
     ci_bridged = first(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
     attr = MOI.ConstraintFunction()
     @test MOI.get(bridged, attr, ci_bridged) ≈ f(vi_bridged)
-    ci_sdpa = first(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    cis = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    @test length(cis) == 1
+    ci_sdpa = first(cis)
     func = [1.0, -1.0]'MOI.SingleVariable.(vis_sdpa)
     @test MOI.get(model, attr, ci_sdpa) ≈ func
 end

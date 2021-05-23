@@ -360,7 +360,7 @@ function MOIU.pass_nonvariable_constraints(
     if Variable.has_bridges(Variable.bridges(dest))
         # The functions may contained bridged variables which needs to be
         # substituted so we use the fallback.
-        MOIU.pass_nonvariable_constraints_fallback(
+        return MOIU.pass_nonvariable_constraints_fallback(
             dest,
             src,
             idxmap,
