@@ -519,7 +519,7 @@ end
         MOI.add_variable(model)
         @test !MOI.is_empty(model)
         @test MOI.is_empty(s)
-        @test_throws AssertionError MOIU.CachingOptimizer(model, s)
+        @test MOIU.CachingOptimizer(model, s) isa MOIU.CachingOptimizer
     end
 end
 
