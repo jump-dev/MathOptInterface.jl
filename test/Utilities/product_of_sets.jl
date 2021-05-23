@@ -162,9 +162,9 @@ function test_vector_dimension()
     MOI.Utilities.add_set(sets, 1, 1)
     @test MOI.dimension(sets) == 1
     MOI.Utilities.add_set(sets, 1, 2)
-    @test_broken MOI.dimension(sets) == 3
+    @test MOI.dimension(sets) == 3
     MOI.Utilities.add_set(sets, 2, 3)
-    @test_broken MOI.dimension(sets) == 6
+    @test MOI.dimension(sets) == 6
 end
 
 function test_vector_empty()
@@ -180,7 +180,7 @@ function test_vector_ConstraintTypesPresent()
     sets = _VectorSets{Float64}()
     @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == []
     MOI.Utilities.add_set(sets, 1, 1)
-    @test_broken MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)]
+    @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)]
 end
 
 function test_vector_NumberOfConstraints()
@@ -190,11 +190,10 @@ function test_vector_NumberOfConstraints()
     MOI.Utilities.add_set(sets, 2, 2)
     @test MOI.get(sets, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 0
     for (x, S) in zip([2, 1], MOI.Utilities.set_types(sets))
-        @test_broken true == false
-        # @test MOI.get(
-        #     sets,
-        #     MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},S}(),
-        # ) == x
+        @test MOI.get(
+            sets,
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},S}(),
+        ) == x
     end
     return
 end
@@ -204,12 +203,12 @@ function test_vector_ListOfConstraintIndices()
     MOI.Utilities.add_set(sets, 2, 2)
     MOI.Utilities.add_set(sets, 1, 4)
     MOI.Utilities.add_set(sets, 2, 3)
-    for (x, S) in zip([[2], [0, 6]], MOI.Utilities.set_types(sets))
+    for (x, S) in zip([[0], [0, 2]], MOI.Utilities.set_types(sets))
         ci = MOI.get(
             sets,
             MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},S}(),
         )
-        @test_broken ci == MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64},S}.(x)
+        @test ci == MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64},S}.(x)
     end
     return
 end

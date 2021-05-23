@@ -151,11 +151,23 @@ macro product_of_sets(name, set_types...)
     esc_name = esc(name)
     T = esc(:T)
     type_def = :(
-        struct $esc_name{$T} <: $MOIU.OrderedProductOfSets{$T}
+        struct $(esc_name){$(T)} <: $MOIU.OrderedProductOfSets{$(T)}
+            """
+            The number of rows that each set takes.
+            """
             num_rows::Vector{Int}
+
+            """
+            A dictionary which maps the `set_index` and `offset` of a set to the
+            dimension, i.e., `dimension[(set_index,offset)] → dim`.
+            """
             dimension::Dict{Tuple{Int,Int},Int}
-            function $esc_name{$T}() where {$T}
-                return new(zeros(Int, $(1 + length(set_types))), Dict{Int,Int}())
+
+            function $(esc_name){$(T)}() where {$(T)}
+                return new(
+                    zeros(Int, $(length(set_types))),
+                    Dict{Tuple{Int,Int},Int}(),
+                )
             end
         end
     )
@@ -170,19 +182,18 @@ function MOI.empty!(sets::OrderedProductOfSets)
     return
 end
 
-function MOI.dimension(sets::OrderedProductOfSets)
-    for i in 3:length(sets.num_rows)
-        sets.num_rows[i] += sets.num_rows[i-1]
-    end
-    return sets.num_rows[end]
-end
+MOI.dimension(sets::OrderedProductOfSets) = sum(sets.num_rows)
 
 function indices(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S},
 ) where {T,S}
     i = set_index(sets, S)
-    return sets.num_rows[i] + ci.value + 1
+    offset = 0
+    for j = 1:i
+        offset += sets.num_rows[j]
+    end
+    return offset + ci.value + 1
 end
 
 function indices(
@@ -190,25 +201,28 @@ function indices(
     ci::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S},
 ) where {T,S}
     i = set_index(sets, S)
-    return (sets.num_rows[i] + ci.value) .+ (1:sets.dimension[(i, ci.value)])
+    offset = ci.value + 1
+    for j = 1:(i-1)
+        offset += sets.num_rows[j]
+    end
+    return offset:(offset + sets.dimension[(i, ci.value)] - 1)
 end
 
 function add_set(sets::OrderedProductOfSets, i)
-    offset = sets.num_rows[i+1]
-    sets.num_rows[i+1] = offset + 1
-    return offset
+    sets.num_rows[i] += 1
+    return sets.num_rows[i] - 1
 end
 
 function add_set(sets::OrderedProductOfSets, i, dim)
-    offset = sets.num_rows[i+1]
-    sets.num_rows[i+1] = offset + dim
-    sets.dimension[(i, offset)] = dim
-    return offset
+    ci = sets.num_rows[i]
+    sets.dimension[(i, ci)] = dim
+    sets.num_rows[i] += dim
+    return ci
 end
 
 function _num_indices(sets::OrderedProductOfSets, ::Type{S}) where {S}
     i = set_index(sets, S)
-    return sets.num_rows[i+1] - sets.num_rows[i]
+    return sets.num_rows[i]
 end
 
 function MOI.get(
@@ -275,7 +289,7 @@ function _range(
             sets,
             i,
             0,
-            sets.num_rows[i+1] - sets.num_rows[i],
+            sets.num_rows[i],
             F,
         )
     end
