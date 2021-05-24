@@ -225,7 +225,7 @@ function rows(
     @assert sets.final_touch
     i = set_index(sets, S)
     offset = i == 1 ? 0 : sets.num_rows[i-1]
-    return (ci.value+offset).+1:sets.dimension[(i, ci.value)]
+    return (ci.value+offset).+(1:sets.dimension[(i, ci.value)])
 end
 
 function add_set(sets::OrderedProductOfSets, i)
