@@ -105,7 +105,6 @@ function test_VectorAffine_OneBased()
     @test A.colptr == [1, 2, 4, 6]
 end
 
-
 function test_ScalarAffine_ZeroBased()
     A = MOI.Utilities.MutableSparseMatrixCSC{
         Float64,
@@ -115,10 +114,8 @@ function test_ScalarAffine_ZeroBased()
     MOI.empty!(A)
     x = MOI.VariableIndex.(1:3)
     f1 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.5)
-    f2 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([2.0, 3.0], x[2:3]),
-        1.2,
-    )
+    f2 =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0], x[2:3]), 1.2)
     index_map = MOI.Utilities.IndexMap()
     for i in 1:3
         MOI.Utilities.add_column(A)
@@ -146,10 +143,8 @@ function test_ScalarAffine_OneBased()
     MOI.empty!(A)
     x = MOI.VariableIndex.(1:3)
     f1 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.5)
-    f2 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([2.0, 3.0], x[2:3]),
-        1.2,
-    )
+    f2 =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 3.0], x[2:3]), 1.2)
     index_map = MOI.Utilities.IndexMap()
     for i in 1:3
         MOI.Utilities.add_column(A)

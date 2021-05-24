@@ -128,7 +128,7 @@ _variable(term::MOI.VectorAffineTerm) = _variable(term.scalar_term)
 """
     allocate_terms(
         A::MutableSparseMatrixCSC,
-        index_map::MOI.Utilities.IndexMap,
+        index_map,
         func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
     )
 
@@ -138,7 +138,7 @@ The function `func` should be canonicalized, see [`is_canonical`](@ref).
 """
 function allocate_terms(
     A::MutableSparseMatrixCSC,
-    index_map::MOI.Utilities.IndexMap,
+    index_map,
     func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
 )
     for term in func.terms
@@ -153,7 +153,7 @@ _output_index(term::MOI.VectorAffineTerm) = term.output_index
 """
     load_terms(
         A::MutableSparseMatrixCSC,
-        index_map::MOI.Utilities.IndexMap,
+        index_map,
         func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
         offset::Int,
     )
@@ -165,7 +165,7 @@ function should be allocated first with [`allocate_terms`](@ref). The function
 """
 function load_terms(
     A::MutableSparseMatrixCSC,
-    index_map::MOI.Utilities.IndexMap,
+    index_map,
     func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
     offset::Int,
 )
