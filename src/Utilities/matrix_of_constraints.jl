@@ -397,13 +397,8 @@ function final_touch(model::MatrixOfConstraints, index_map)
     set_number_of_rows(model.coefficients, num_rows)
     offset = 0
     for (cache, mapped_indices) in zip(model.caches, model.are_indices_mapped)
-        offset = _load_constraints(
-            model,
-            index_map,
-            offset,
-            cache,
-            mapped_indices,
-        )
+        offset =
+            _load_constraints(model, index_map, offset, cache, mapped_indices)
     end
     final_touch(model.coefficients)
     empty!(model.caches)
