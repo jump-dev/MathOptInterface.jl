@@ -80,24 +80,12 @@ function MOI.empty!(A::MutableSparseMatrixCSC)
     return
 end
 
-"""
-    add_column(A::MutableSparseMatrixCSC)
-
-Add a column to the matrix `A`.
-"""
 function add_column(A::MutableSparseMatrixCSC)
     A.n += 1
     push!(A.colptr, 0)
     return
 end
 
-"""
-    set_number_of_rows(coefficients, n)
-
-This function sets the number of rows to `coefficients`. This allows it
-to preallocate necessary datastructures before the data is loaded with
-[`load_terms`](@ref).
-"""
 function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     A.m = num_rows
     for i in 3:length(A.colptr)
@@ -108,12 +96,6 @@ function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     return
 end
 
-"""
-    final_touch(A::MutableSparseMatrixCSC)
-
-Informs the matrix `A` that all functions have been added with `load_terms`.
-No more modification is allowed unless `MOI.empty!` is called.
-"""
 function final_touch(A::MutableSparseMatrixCSC)
     for i in length(A.colptr):-1:2
         A.colptr[i] = _shift(A.colptr[i-1], ZeroBasedIndexing(), A.indexing)
@@ -125,17 +107,6 @@ end
 _variable(term::MOI.ScalarAffineTerm) = term.variable
 _variable(term::MOI.VectorAffineTerm) = _variable(term.scalar_term)
 
-"""
-    allocate_terms(
-        A::MutableSparseMatrixCSC,
-        index_map,
-        func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
-    )
-
-Informs `A` that the terms of the function `func` where the variable
-indices are mapped with `index_map` will be loaded with [`load_terms`](@ref).
-The function `func` should be canonicalized, see [`is_canonical`](@ref).
-"""
 function allocate_terms(
     A::MutableSparseMatrixCSC,
     index_map,
@@ -150,19 +121,6 @@ end
 _output_index(::MOI.ScalarAffineTerm) = 1
 _output_index(term::MOI.VectorAffineTerm) = term.output_index
 
-"""
-    load_terms(
-        A::MutableSparseMatrixCSC,
-        index_map,
-        func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
-        offset::Int,
-    )
-
-Loads the terms of `func` to `A` mapping the variable indices with `index_map`.
-The `i`th dimension of `func` is loaded at the `(offset + i)`th row of `A`. The
-function should be allocated first with [`allocate_terms`](@ref). The function
-`func` should be canonicalized, see [`is_canonical`](@ref).
-"""
 function load_terms(
     A::MutableSparseMatrixCSC,
     index_map,

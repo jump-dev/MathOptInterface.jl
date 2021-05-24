@@ -79,27 +79,15 @@ Utilities.load
 Utilities.load_constraint
 ```
 
-## Utilities.MatrixOfConstraints
+## MatrixOfConstraints
 
 ```@docs
 Utilities.MatrixOfConstraints
-Utilities.rows
 ```
 
-### Constants
+### `.coefficients`
 
 ```@docs
-Utilities.Box
-Utilities.load_constants
-```
-
-### Mutable sparse matrix
-
-```@docs
-Utilities.MutableSparseMatrixCSC
-Utilities.AbstractIndexing
-Utilities.ZeroBasedIndexing
-Utilities.OneBasedIndexing
 Utilities.add_column
 Utilities.allocate_terms
 Utilities.set_number_of_rows
@@ -107,14 +95,34 @@ Utilities.load_terms
 Utilities.final_touch
 ```
 
-### Product of sets
+```@docs
+Utilities.MutableSparseMatrixCSC
+Utilities.AbstractIndexing
+Utilities.ZeroBasedIndexing
+Utilities.OneBasedIndexing
+```
+
+### `.constants`
 
 ```@docs
-Utilities.ProductOfSets
+Utilities.load_constants
+```
+
+```@docs
+Utilities.Box
+```
+
+### `.sets`
+
+```@docs
 Utilities.set_index
 Utilities.set_types
 Utilities.add_set
-Utilities.indices
+Utilities.rows
+```
+
+```@docs
+Utilities.ProductOfSets
 Utilities.MixOfScalarSets
 Utilities.OrderedProductOfSets
 Utilities.OrderedProductOfScalarSets
