@@ -48,14 +48,18 @@ function test_scalar_basic()
     ci = MOI.ConstraintIndex{
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
-    }(12345)
+    }(
+        12345,
+    )
     @test !MOI.is_valid(sets, ci)
     i = MOI.Utilities.set_index(sets, MOI.EqualTo{Float64})
     ci_value = MOI.Utilities.add_set(sets, i)
     ci = MOI.ConstraintIndex{
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
-    }(ci_value)
+    }(
+        ci_value,
+    )
     @test MOI.is_valid(sets, ci)
     @test MOI.Utilities.indices(sets, ci) == ci.value
 end
@@ -84,7 +88,8 @@ function test_scalar_ConstraintTypesPresent()
     sets = _ScalarSets{Float64}()
     @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == []
     MOI.Utilities.add_set(sets, 1)
-    @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == [(MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64})]
+    @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})]
 end
 
 function test_scalar_NumberOfConstraints()
@@ -92,7 +97,10 @@ function test_scalar_NumberOfConstraints()
     MOI.Utilities.add_set(sets, 1)
     MOI.Utilities.add_set(sets, 1)
     MOI.Utilities.add_set(sets, 2)
-    @test MOI.get(sets, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}()) == 0
+    @test MOI.get(
+        sets,
+        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+    ) == 0
     for (x, S) in zip([2, 1, 0, 0], MOI.Utilities.set_types(sets))
         @test MOI.get(
             sets,
@@ -121,39 +129,51 @@ MOI.Utilities.@product_of_sets(
     _VectorSets,
     MOI.Nonpositives,
     MOI.Nonnegatives,
+    MOI.EqualTo{T},
 )
 
 function test_vector_set_index()
     sets = _VectorSets{Float64}()
-    @test MOI.Utilities.set_index(sets, MOI.EqualTo{Float64}) === nothing
     @test MOI.Utilities.set_index(sets, MOI.Nonpositives) == 1
     @test MOI.Utilities.set_index(sets, MOI.Nonnegatives) == 2
+    @test MOI.Utilities.set_index(sets, MOI.EqualTo{Float64}) == 3
+    @test MOI.Utilities.set_index(sets, MOI.LessThan{Float64}) === nothing
 end
 
 function test_vector_set_types()
     sets = _VectorSets{Float64}()
-    @test MOI.Utilities.set_types(sets) == [
-        MOI.Nonpositives,
-        MOI.Nonnegatives,
-    ]
+    @test MOI.Utilities.set_types(sets) ==
+          [MOI.Nonpositives, MOI.Nonnegatives, MOI.EqualTo{Float64}]
 end
 
 function test_vector_basic()
     sets = _VectorSets{Float64}()
-    ci = MOI.ConstraintIndex{
-        MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
-    }(12345)
+    ci =
+        MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}(
+            12345,
+        )
     @test !MOI.is_valid(sets, ci)
     i = MOI.Utilities.set_index(sets, MOI.Nonnegatives)
     ci_value = MOI.Utilities.add_set(sets, i, 2)
     @test ci_value == 0
-    ci = MOI.ConstraintIndex{
-        MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
-    }(ci_value)
+    ci =
+        MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}(
+            ci_value,
+        )
     @test MOI.is_valid(sets, ci)
     @test MOI.Utilities.indices(sets, ci) == 1:2
+
+    i = MOI.Utilities.set_index(sets, MOI.EqualTo{Float64})
+    ci_value = MOI.Utilities.add_set(sets, i)
+    @test ci_value == 0
+    ci = MOI.ConstraintIndex{
+        MOI.ScalarAffineFunction{Float64},
+        MOI.EqualTo{Float64},
+    }(
+        ci_value,
+    )
+    @test MOI.is_valid(sets, ci)
+    @test MOI.Utilities.indices(sets, ci) == 3
 end
 
 function test_vector_dimension()
@@ -165,6 +185,8 @@ function test_vector_dimension()
     @test MOI.dimension(sets) == 3
     MOI.Utilities.add_set(sets, 2, 3)
     @test MOI.dimension(sets) == 6
+    MOI.Utilities.add_set(sets, 3)
+    @test MOI.dimension(sets) == 7
 end
 
 function test_vector_empty()
@@ -180,7 +202,11 @@ function test_vector_ConstraintTypesPresent()
     sets = _VectorSets{Float64}()
     @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == []
     MOI.Utilities.add_set(sets, 1, 1)
-    @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == [(MOI.VectorAffineFunction{Float64},MOI.Nonpositives)]
+    MOI.Utilities.add_set(sets, 3)
+    @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == [
+        (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives),
+        (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}),
+    ]
 end
 
 function test_vector_NumberOfConstraints()
@@ -188,13 +214,24 @@ function test_vector_NumberOfConstraints()
     MOI.Utilities.add_set(sets, 1, 2)
     MOI.Utilities.add_set(sets, 1, 2)
     MOI.Utilities.add_set(sets, 2, 2)
-    @test MOI.get(sets, MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}()) == 0
-    for (x, S) in zip([2, 1], MOI.Utilities.set_types(sets))
+    MOI.Utilities.add_set(sets, 3)
+    @test MOI.get(
+        sets,
+        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
+    ) == 0
+    for (x, S) in zip([2, 1], MOI.Utilities.set_types(sets)[1:2])
         @test MOI.get(
             sets,
             MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},S}(),
         ) == x
     end
+    @test MOI.get(
+        sets,
+        MOI.NumberOfConstraints{
+            MOI.ScalarAffineFunction{Float64},
+            MOI.EqualTo{Float64},
+        }(),
+    ) == 1
     return
 end
 
@@ -203,13 +240,18 @@ function test_vector_ListOfConstraintIndices()
     MOI.Utilities.add_set(sets, 2, 2)
     MOI.Utilities.add_set(sets, 1, 4)
     MOI.Utilities.add_set(sets, 2, 3)
-    for (x, S) in zip([[0], [0, 2]], MOI.Utilities.set_types(sets))
+    MOI.Utilities.add_set(sets, 3)
+    for (x, S) in zip([[0], [0, 2]], MOI.Utilities.set_types(sets)[1:2])
         ci = MOI.get(
             sets,
             MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},S}(),
         )
         @test ci == MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64},S}.(x)
     end
+    F = MOI.ScalarAffineFunction{Float64}
+    S = MOI.EqualTo{Float64}
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) ==
+          [MOI.ConstraintIndex{F,S}(0)]
     return
 end
 

@@ -116,8 +116,9 @@ Utilities.set_types
 Utilities.add_set
 Utilities.indices
 Utilities.MixOfScalarSets
+Utilities.mix_of_scalar_sets
 Utilities.OrderedProductOfSets
-Utilities.OrderedProductOfScalarSets
+Utilities.product_of_sets
 ```
 
 ## Fallbacks

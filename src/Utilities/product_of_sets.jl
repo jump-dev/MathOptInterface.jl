@@ -48,21 +48,22 @@ function _sets_code(esc_name, T, type_def, set_types...)
     code = Expr(:block, type_def)
     esc_types = esc.(set_types)
     for (i, esc_type) in enumerate(esc_types)
-        method = push!(
+        push!(
             code.args,
             :(
                 function $MOIU.set_index(
-                    ::$esc_name{$T},
-                    ::Type{$esc_type},
+                    ::$esc_name{$(T)},
+                    ::Type{$(esc_type)},
                 ) where {$T}
                     return $i
                 end
             ),
         )
     end
-    push!(code.args, :(function $MOIU.set_types(::$esc_name{$T}) where {$T}
-        return [$(esc_types...)]
-    end))
+    push!(
+        code.args,
+        :($MOIU.set_types(::$esc_name{$T}) where {$T} = [$(esc_types...)]),
+    )
     return code
 end
 
@@ -71,17 +72,41 @@ end
 
 Product of scalar sets in the order the constraints are added, mixing the
 constraints of different types.
+
+Use [`@mix_of_scalar_sets`](@ref) to generate a new subtype.
+
+If the sets are all scalar, use this type instead of [`OrderedProductOfSets`](@ref)
+because it is a more efficient implementation.
 """
 abstract type MixOfScalarSets{T} <: ProductOfSets{T} end
 
+"""
+    @mix_of_scalar_sets(name, set_types...)
+
+Generate a new [`MixOfScalarSets`](@ref) subtype.
+
+## Example
+
+```julia
+@mix_of_scalar_sets(
+    MixedIntegerLinearProgramSets,
+    MOI.GreaterThan{T},
+    MOI.LessThan{T},
+    MOI.EqualTo{T},
+    MOI.Integer,
+)
+```
+"""
 macro mix_of_scalar_sets(name, set_types...)
     esc_name = esc(name)
     T = esc(:T)
-    type_def = :(struct $esc_name{$T} <: $MOIU.MixOfScalarSets{$T}
+    type_def = :(struct $(esc_name){$(T)} <: $(MOIU).MixOfScalarSets{$(T)}
+        """
+        `set_ids[i]` maps the row `i` to the corresponding set type.
+        """
         set_ids::Vector{Int}
-        function $esc_name{$T}() where {$T}
-            return new(Int[])
-        end
+
+        $(esc_name){$(T)}() where {$(T)} = new(Int[])
     end)
     return _sets_code(esc_name, T, type_def, set_types...)
 end
@@ -124,8 +149,8 @@ function MOI.get(
 ) where {F,S}
     i = set_index(sets, S)
     return MOI.ConstraintIndex{F,S}[
-        MOI.ConstraintIndex{F,S}(j)
-        for j in eachindex(sets.set_ids) if sets.set_ids[j] == i
+        MOI.ConstraintIndex{F,S}(j) for
+        j in eachindex(sets.set_ids) if sets.set_ids[j] == i
     ]
 end
 
@@ -144,14 +169,36 @@ end
 
 Product of sets in the order the constraints are added, grouping the
 constraints of the same types contiguously.
+
+Use [`@product_of_sets`](@ref) to generate new subtypes.
+
+If the sets are all scalar, use [`MixOfScalarSets`](@ref) because it is a more
+efficient implementation.
 """
 abstract type OrderedProductOfSets{T} <: ProductOfSets{T} end
 
+"""
+    @product_of_sets(name, set_types...)
+
+Generate a new [`OrderedProductOfSets`](@ref) subtype.
+
+## Example
+
+```julia
+@product_of_sets(
+    LinearOrthants,
+    MOI.Zeros,
+    MOI.Nonnegatives,
+    MOI.Nonpositives,
+    MOI.ZeroOne,
+)
+```
+"""
 macro product_of_sets(name, set_types...)
     esc_name = esc(name)
     T = esc(:T)
     type_def = :(
-        struct $(esc_name){$(T)} <: $MOIU.OrderedProductOfSets{$(T)}
+        struct $(esc_name){$(T)} <: $(MOIU).OrderedProductOfSets{$(T)}
             """
             The number of rows that each set takes.
             """
@@ -190,7 +237,7 @@ function indices(
 ) where {T,S}
     i = set_index(sets, S)
     offset = 0
-    for j = 1:i
+    for j in 1:(i-1)
         offset += sets.num_rows[j]
     end
     return offset + ci.value + 1
@@ -202,10 +249,10 @@ function indices(
 ) where {T,S}
     i = set_index(sets, S)
     offset = ci.value + 1
-    for j = 1:(i-1)
+    for j in 1:(i-1)
         offset += sets.num_rows[j]
     end
-    return offset:(offset + sets.dimension[(i, ci.value)] - 1)
+    return offset:(offset+sets.dimension[(i, ci.value)]-1)
 end
 
 function add_set(sets::OrderedProductOfSets, i)
@@ -285,13 +332,7 @@ function _range(
     if F != _affine_function_type(T, S) || i === nothing
         return nothing
     else
-        return _range_iterator(
-            sets,
-            i,
-            0,
-            sets.num_rows[i],
-            F,
-        )
+        return _range_iterator(sets, i, 0, sets.num_rows[i], F)
     end
 end
 
