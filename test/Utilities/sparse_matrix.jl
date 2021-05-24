@@ -17,14 +17,22 @@ function runtests()
     return
 end
 
+"""
+    test_empty_size()
+
+Julia 1.7 is going to outlaw constructing empty sparse matrices. Test that we
+can still do so.
+"""
 function test_empty_size()
     A = MOI.Utilities.MutableSparseMatrixCSC{
         Float64,
         Int,
         MOI.Utilities.ZeroBasedIndexing,
     }()
-    B = convert(SparseArrays.SparseMatrixCSC{Float64,Int}, A)
-    @test size(B) == (0, 0)
+    MOI.empty!(A)
+    @test A.rowval == Int[]
+    @test A.nzval == Float64[]
+    @test A.colptr == Int[0]
 end
 
 function test_empty_large()
