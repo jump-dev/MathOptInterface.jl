@@ -497,7 +497,19 @@ function MOI.get(
 end
 function MOI.get(
     mock::MockOptimizer,
-    attr::MOI.ConstraintFunction,
+    attr::MOI.CanonicalConstraintFunction,
+    idx::MOI.ConstraintIndex,
+)
+    # If it is thrown by `mock.inner_model`, the index will be xor'ed.
+    MOI.throw_if_not_valid(mock, idx)
+    # After xoring the indices, the order might not be respected anymore
+    return canonical(
+        xor_indices(MOI.get(mock.inner_model, attr, xor_index(idx))),
+    )
+end
+function MOI.get(
+    mock::MockOptimizer,
+    attr::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
     idx::MOI.ConstraintIndex,
 )
     # If it is thrown by `mock.inner_model`, the index will be xor'ed.
