@@ -259,18 +259,36 @@ function test_vector_ListOfConstraintIndices()
     MOI.Utilities.add_set(sets, 2, 3)
     MOI.Utilities.add_set(sets, 3)
     MOI.Utilities.final_touch(sets)
+    VAF = MOI.VectorAffineFunction{Float64}
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{VAF,MOI.Zeros}()) ==
+          MOI.ConstraintIndex{VAF,MOI.Zeros}[]
     for (x, S) in zip([[0], [0, 2]], MOI.Utilities.set_types(sets)[1:2])
-        ci = MOI.get(
-            sets,
-            MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},S}(),
-        )
-        @test ci == MOI.ConstraintIndex{MOI.VectorAffineFunction{Float64},S}.(x)
+        ci = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
+        @test ci == MOI.ConstraintIndex{VAF,S}.(x)
     end
-    F = MOI.ScalarAffineFunction{Float64}
-    S = MOI.EqualTo{Float64}
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
     @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) ==
           [MOI.ConstraintIndex{F,S}(0)]
     return
+end
+
+"""
+    test_vector_ListOfConstraintIndices2()
+
+Test a more complicated sequence of dimensions to check the `_UnevenIterator`
+works appropriately.
+"""
+function test_vector_ListOfConstraintIndices2()
+    sets = _VectorSets{Float64}()
+    MOI.Utilities.add_set(sets, 2, 2)
+    MOI.Utilities.add_set(sets, 2, 3)
+    MOI.Utilities.add_set(sets, 2, 2)
+    MOI.Utilities.add_set(sets, 2, 4)
+    MOI.Utilities.final_touch(sets)
+    S = MOI.Utilities.set_types(sets)[2]
+    VAF = MOI.VectorAffineFunction{Float64}
+    indices = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
+    @test indices == MOI.ConstraintIndex{VAF,S}.([0, 2, 5, 7])
 end
 
 end
