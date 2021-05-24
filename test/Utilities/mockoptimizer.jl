@@ -215,7 +215,12 @@ end
         MOI.get(mock, MOI.CanonicalConstraintFunction(), cx),
     )
     @test !MOIU.is_canonical(MOI.get(mock, MOI.ConstraintFunction(), c))
-    @test MOIU.is_canonical(MOI.get(mock, MOI.CanonicalConstraintFunction(), c))
+    func = MOI.get(mock, MOI.CanonicalConstraintFunction(), c)
+    @test MOIU.is_canonical(func)
+    # Check that indices have been xored
+    for term in func.terms
+        @test MOI.is_valid(mock, term.variable)
+    end
 end
 
 @testset "Conflict access" begin

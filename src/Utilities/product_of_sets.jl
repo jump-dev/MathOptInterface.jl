@@ -5,44 +5,7 @@ Represents a cartesian product of sets of given types.
 """
 abstract type ProductOfSets{T} end
 
-"""
-    set_index(sets::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet}
-
-Return an integer corresponding to the index of the set type in the list given
-by [`set_types`](@ref). If this set is not part of the list then it returns
-`nothing`.
-"""
 set_index(::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet} = nothing
-
-"""
-    set_types(sets::ProductOfSets)
-
-Return the list of the types of the sets allowed in the cartesian product.
-"""
-function set_types end
-
-"""
-    add_set(sets::OrderedProductOfSets, i)
-
-Add a scalar set of type index `i`.
-
-    add_set(sets::OrderedProductOfSets, i, dim)
-
-Add a vector set of type index `i` and dimension `dim`.
-
-Both method return a unique id of the set that
-can be used to reference this set.
-"""
-function add_set end
-
-"""
-    indices(sets::OrderedProductOfSets, ci::MOI.ConstraintIndex)
-
-Return the indices in `1:MOI.dimension(sets)` corresponding to the set of id
-`ci.value`. For scalar sets, this return an integer and for vector sets, this
-return an `UnitRange`.
-"""
-function indices end
 
 function _sets_code(esc_name, T, type_def, set_types...)
     code = Expr(:block, type_def)
@@ -117,7 +80,7 @@ MOI.empty!(sets::MixOfScalarSets) = empty!(sets.set_ids)
 
 MOI.dimension(sets::MixOfScalarSets) = length(sets.set_ids)
 
-indices(::MixOfScalarSets, ci::MOI.ConstraintIndex) = ci.value
+rows(::MixOfScalarSets, ci::MOI.ConstraintIndex) = ci.value
 
 function add_set(sets::MixOfScalarSets, i)
     push!(sets.set_ids, i)
@@ -231,7 +194,7 @@ end
 
 MOI.dimension(sets::OrderedProductOfSets) = sum(sets.num_rows)
 
-function indices(
+function rows(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S},
 ) where {T,S}
@@ -243,7 +206,7 @@ function indices(
     return offset + ci.value + 1
 end
 
-function indices(
+function rows(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S},
 ) where {T,S}
@@ -267,7 +230,7 @@ function add_set(sets::OrderedProductOfSets, i, dim)
     return ci
 end
 
-function _num_indices(sets::OrderedProductOfSets, ::Type{S}) where {S}
+function _num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
     i = set_index(sets, S)
     return sets.num_rows[i]
 end
@@ -278,7 +241,7 @@ function MOI.get(
 ) where {T}
     return Tuple{DataType,DataType}[
         (_affine_function_type(T, S), S) for
-        S in set_types(sets) if !iszero(_num_indices(sets, S))
+        S in set_types(sets) if !iszero(_num_rows(sets, S))
     ]
 end
 
