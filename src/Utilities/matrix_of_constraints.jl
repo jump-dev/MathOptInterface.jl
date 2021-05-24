@@ -80,11 +80,8 @@ end
         coefficients::AT
         constants::BT
         sets::ST
-        caches::Union{Nothing,Vector}
-        are_indices_mapped::Union{Nothing,Vector{BitSet}}
-        function MatrixOfConstraints{T,AT,BT,ST}() where {T,AT,BT,ST}
-            return new{T,AT,BT,ST}(AT(), BT(), ST(), BitSet(), nothing)
-        end
+        caches::Vector
+        are_indices_mapped::Vector{BitSet}
     end
 
 Represents affine constraints in a matrix form where the linear coefficients
@@ -124,10 +121,10 @@ mutable struct MatrixOfConstraints{T,AT,BT,ST} <: MOI.ModelLike
     coefficients::AT
     constants::BT
     sets::ST
-    caches::Union{Nothing,Vector}
-    are_indices_mapped::Union{Nothing,Vector{BitSet}}
+    caches::Vector
+    are_indices_mapped::Vector{BitSet}
     function MatrixOfConstraints{T,AT,BT,ST}() where {T,AT,BT,ST}
-        return new{T,AT,BT,ST}(AT(), BT(), ST(), nothing, nothing)
+        return new{T,AT,BT,ST}(AT(), BT(), ST(), [], BitSet[])
     end
 end
 
@@ -318,7 +315,7 @@ function final_touch(model::MatrixOfConstraints, index_map)
     end
 
     final_touch(model.coefficients)
-    model.caches = nothing
-    model.are_indices_mapped = nothing
+    empty!(model.caches)
+    empty!(model.are_indices_mapped)
     return
 end
