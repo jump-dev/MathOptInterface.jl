@@ -206,7 +206,7 @@ Return the rows in `1:MOI.dimension(sets)` corresponding to the set of id
 For scalar sets, this returns an `Int`. For vector sets, this returns an
 `UnitRange{Int}`.
 """
-function indices end
+function rows end
 
 ###
 ### MatrixOfConstraints
