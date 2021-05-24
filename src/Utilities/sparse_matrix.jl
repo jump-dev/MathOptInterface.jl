@@ -79,24 +79,12 @@ function MOI.empty!(A::MutableSparseMatrixCSC)
     return empty!(A.nzval)
 end
 
-"""
-    add_column(A::MutableSparseMatrixCSC)
-
-Add a column to the matrix `A`.
-"""
 function add_column(A::MutableSparseMatrixCSC)
     A.n += 1
     push!(A.colptr, 0)
     return
 end
 
-"""
-    set_number_of_rows(coefficients, n)
-
-This function sets the number of rows to `coefficients`. This allows it
-to preallocate necessary datastructures before the data is loaded with
-[`load_terms`](@ref).
-"""
 function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     A.m = num_rows
     for i in 3:length(A.colptr)
@@ -106,12 +94,6 @@ function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     return resize!(A.nzval, A.colptr[end])
 end
 
-"""
-    final_touch(A::MutableSparseMatrixCSC)
-
-Informs the matrix `A` that all functions have been added with `load_terms`.
-No more modification is allowed unless `MOI.empty!` is called.
-"""
 function final_touch(A::MutableSparseMatrixCSC)
     for i in length(A.colptr):-1:2
         A.colptr[i] = _shift(A.colptr[i-1], ZeroBasedIndexing(), A.indexing)
@@ -127,13 +109,6 @@ function _allocate_terms(colptr, index_map, terms)
     end
 end
 
-"""
-    allocate_terms(A::MutableSparseMatrixCSC, index_map, func)
-
-Informs `A` that the terms of the function `func` where the variable
-indices are mapped with `index_map` will be loaded with [`load_terms`](@ref).
-The function `func` should be canonicalized, see [`is_canonical`](@ref).
-"""
 function allocate_terms(A::MutableSparseMatrixCSC, index_map, func)
     return _allocate_terms(A.colptr, index_map, func.terms)
 end
@@ -150,14 +125,6 @@ function _load_terms(colptr, rowval, nzval, index_map, terms, offset)
     end
 end
 
-"""
-    load_terms(A::MutableSparseMatrixCSC, index_map, func, offset)
-
-Loads the terms of `func` to `A` mapping the variable indices with `index_map`.
-The `i`th dimension of `func` is loaded at the `(offset + i)`th row of `A`. The
-function should be allocated first with [`allocate_terms`](@ref). The function
-`func` should be canonicalized, see [`is_canonical`](@ref).
-"""
 function load_terms(A::MutableSparseMatrixCSC, index_map, func, offset)
     return _load_terms(
         A.colptr,
