@@ -114,7 +114,7 @@ Utilities.ProductOfSets
 Utilities.set_index
 Utilities.set_types
 Utilities.add_set
-Utilities.indices
+Utilities.rows
 Utilities.MixOfScalarSets
 Utilities.OrderedProductOfSets
 Utilities.OrderedProductOfScalarSets

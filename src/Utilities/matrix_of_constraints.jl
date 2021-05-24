@@ -73,7 +73,7 @@ The `.sets::ST` type must implement:
  * [`MOI.Utilities.set_types`](@ref)
  * [`MOI.Utilities.set_index`](@ref)
  * [`MOI.Utilities.add_set`](@ref)
- * [`MOI.Utilities.indices`](@ref)
+ * [`MOI.Utilities.rows`](@ref)
 """
 mutable struct MatrixOfConstraints{T,AT,BT,ST} <: MOI.ModelLike
     coefficients::AT
