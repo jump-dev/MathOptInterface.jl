@@ -74,6 +74,7 @@ The `.sets::ST` type must implement:
  * [`MOI.Utilities.set_index`](@ref)
  * [`MOI.Utilities.add_set`](@ref)
  * [`MOI.Utilities.rows`](@ref)
+ * [`MOI.Utilities.final_touch`](@ref)
 """
 mutable struct MatrixOfConstraints{T,AT,BT,ST} <: MOI.ModelLike
     coefficients::AT
@@ -135,6 +136,11 @@ function load_terms end
     final_touch(coefficients)::Nothing
 
 Informs the `coefficients` that all functions have been added with `load_terms`.
+No more modification is allowed unless `MOI.empty!` is called.
+
+    final_touch(sets)::Nothing
+
+Informs the `sets` that all functions have been added with `add_set`.
 No more modification is allowed unless `MOI.empty!` is called.
 """
 function final_touch end
@@ -392,6 +398,7 @@ function pass_nonvariable_constraints(
 end
 
 function final_touch(model::MatrixOfConstraints, index_map)
+    final_touch(model.sets)
     num_rows = MOI.dimension(model.sets)
     resize!(model.constants, num_rows)
     set_number_of_rows(model.coefficients, num_rows)

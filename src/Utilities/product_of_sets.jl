@@ -5,27 +5,28 @@ Represents a cartesian product of sets of given types.
 """
 abstract type ProductOfSets{T} end
 
-set_index(sets::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet} = nothing
+set_index(::ProductOfSets, ::Type{S}) where {S<:MOI.AbstractSet} = nothing
 
 function _sets_code(esc_name, T, type_def, set_types...)
     code = Expr(:block, type_def)
     esc_types = esc.(set_types)
     for (i, esc_type) in enumerate(esc_types)
-        method = push!(
+        push!(
             code.args,
             :(
                 function $MOIU.set_index(
-                    ::$esc_name{$T},
-                    ::Type{$esc_type},
+                    ::$esc_name{$(T)},
+                    ::Type{$(esc_type)},
                 ) where {$T}
                     return $i
                 end
             ),
         )
     end
-    push!(code.args, :(function $MOIU.set_types(::$esc_name{$T}) where {$T}
-        return [$(esc_types...)]
-    end))
+    push!(
+        code.args,
+        :($MOIU.set_types(::$esc_name{$T}) where {$T} = [$(esc_types...)]),
+    )
     return code
 end
 
@@ -34,28 +35,57 @@ end
 
 Product of scalar sets in the order the constraints are added, mixing the
 constraints of different types.
+
+Use [`@mix_of_scalar_sets`](@ref) to generate a new subtype.
 """
 abstract type MixOfScalarSets{T} <: ProductOfSets{T} end
+
+"""
+    @mix_of_scalar_sets(name, set_types...)
+
+Generate a new [`MixOfScalarSets`](@ref) subtype.
+
+## Example
+
+```julia
+@mix_of_scalar_sets(
+    MixedIntegerLinearProgramSets,
+    MOI.GreaterThan{T},
+    MOI.LessThan{T},
+    MOI.EqualTo{T},
+    MOI.Integer,
+)
+```
+"""
 macro mix_of_scalar_sets(name, set_types...)
     esc_name = esc(name)
     T = esc(:T)
-    type_def = :(struct $esc_name{$T} <: $MOIU.MixOfScalarSets{$T}
+    type_def = :(struct $(esc_name){$(T)} <: $(MOIU).MixOfScalarSets{$(T)}
+        """
+        `set_ids[i]` maps the row `i` to the corresponding set type.
+        """
         set_ids::Vector{Int}
-        function $esc_name{$T}() where {$T}
-            return new(Int[])
-        end
+
+        $(esc_name){$(T)}() where {$(T)} = new(Int[])
     end)
     return _sets_code(esc_name, T, type_def, set_types...)
 end
 
 MOI.is_empty(sets::MixOfScalarSets) = isempty(sets.set_ids)
+
 MOI.empty!(sets::MixOfScalarSets) = empty!(sets.set_ids)
+
 MOI.dimension(sets::MixOfScalarSets) = length(sets.set_ids)
+
 rows(::MixOfScalarSets, ci::MOI.ConstraintIndex) = ci.value
+
 function add_set(sets::MixOfScalarSets, i)
     push!(sets.set_ids, i)
     return length(sets.set_ids)
 end
+
+final_touch(::MixOfScalarSets) = nothing
+
 function MOI.get(
     sets::MixOfScalarSets{T},
     ::MOI.ListOfConstraintTypesPresent,
@@ -66,6 +96,7 @@ function MOI.get(
         S in set_types(sets) if set_index(sets, S) in present
     ]
 end
+
 function MOI.get(
     sets::MixOfScalarSets,
     ::MOI.NumberOfConstraints{F,S},
@@ -73,27 +104,27 @@ function MOI.get(
     i = set_index(sets, S)
     return count(isequal(i), sets.set_ids)
 end
+
 function MOI.get(
     sets::MixOfScalarSets,
     ::MOI.ListOfConstraintIndices{F,S},
 ) where {F,S}
     i = set_index(sets, S)
-    return LazyMap{MOI.ConstraintIndex{F,S}}(
-        j -> MOI.ConstraintIndex{F,S}(j),
-        Base.Iterators.Filter(
-            j -> sets.set_ids[j] == i,
-            eachindex(sets.set_ids),
-        ),
-    )
+    return MOI.ConstraintIndex{F,S}[
+        MOI.ConstraintIndex{F,S}(ci) for
+        (ci, set_type) in enumerate(sets.set_ids) if set_type == i
+    ]
 end
+
 function MOI.is_valid(
     sets::MixOfScalarSets,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     i = set_index(sets, S)
-    return i !== nothing &&
-           ci.value in eachindex(sets.set_ids) &&
-           sets.set_ids[ci.value] == i
+    if i === nothing
+        return false
+    end
+    return ci.value in eachindex(sets.set_ids) && sets.set_ids[ci.value] == i
 end
 
 """
@@ -101,114 +132,159 @@ end
 
 Product of sets in the order the constraints are added, grouping the
 constraints of the same types contiguously.
+
+Use [`@product_of_sets`](@ref) to generate new subtypes.
 """
 abstract type OrderedProductOfSets{T} <: ProductOfSets{T} end
+
+"""
+    @product_of_sets(name, set_types...)
+
+Generate a new [`OrderedProductOfSets`](@ref) subtype.
+
+## Example
+
+```julia
+@product_of_sets(
+    LinearOrthants,
+    MOI.Zeros,
+    MOI.Nonnegatives,
+    MOI.Nonpositives,
+    MOI.ZeroOne,
+)
+```
+"""
 macro product_of_sets(name, set_types...)
     esc_name = esc(name)
     T = esc(:T)
     type_def = :(
-        struct $esc_name{$T} <: $MOIU.OrderedProductOfSets{$T}
+        mutable struct $(esc_name){$(T)} <: $(MOIU).OrderedProductOfSets{$(T)}
+            """
+            During the copy, this counts the number of rows corresponding to
+            each set. At the end of copy, `final_touch` is called, which
+            converts this list into a cumulative ordering.
+            """
             num_rows::Vector{Int}
+
+            """
+            A dictionary which maps the `set_index` and `offset` of a set to the
+            dimension, i.e., `dimension[(set_index,offset)] → dim`.
+            """
             dimension::Dict{Tuple{Int,Int},Int}
-            function $esc_name{$T}() where {$T}
-                return new(zeros(Int, $(1 + length(set_types))), Dict{Int,Int}())
+
+            """
+            A sanity bit to check that we don't call functions out-of-order.
+            """
+            final_touch::Bool
+
+            function $(esc_name){$(T)}() where {$(T)}
+                return new(
+                    zeros(Int, $(length(set_types))),
+                    Dict{Tuple{Int,Int},Int}(),
+                    false,
+                )
             end
         end
     )
     return _sets_code(esc_name, T, type_def, set_types...)
 end
 
-"""
-    abstract type OrderedProductOfScalarSets{T} <: OrderedProductOfSets{T} end
-
-Same as [`OrderedProductOfSets`](@ref) except that all types are scalar sets,
-which allows a more efficient implementation.
-"""
-abstract type OrderedProductOfScalarSets{T} <: OrderedProductOfSets{T} end
-macro product_of_scalar_sets(name, set_types...)
-    esc_name = esc(name)
-    T = esc(:T)
-    type_def = :(struct $esc_name{$T} <: $MOIU.OrderedProductOfScalarSets{$T}
-        num_rows::Vector{Int}
-        function $esc_name{$T}() where {$T}
-            return new(zeros(Int, $(1 + length(set_types))))
-        end
-    end)
-    return _sets_code(esc_name, T, type_def, set_types...)
-end
-
 MOI.is_empty(sets::OrderedProductOfSets) = all(iszero, sets.num_rows)
+
 function MOI.empty!(sets::OrderedProductOfSets)
     fill!(sets.num_rows, 0)
     empty!(sets.dimension)
-    return
-end
-function MOI.empty!(sets::OrderedProductOfScalarSets)
-    fill!(sets.num_rows, 0)
+    sets.final_touch = false
     return
 end
 
 function MOI.dimension(sets::OrderedProductOfSets)
-    for i in 3:length(sets.num_rows)
-        sets.num_rows[i] += sets.num_rows[i-1]
-    end
+    @assert sets.final_touch
     return sets.num_rows[end]
 end
+
 function rows(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S},
 ) where {T,S}
+    @assert sets.final_touch
     i = set_index(sets, S)
-    return sets.num_rows[i] + ci.value + 1
+    return (i == 1 ? 0 : sets.num_rows[i-1]) + ci.value + 1
 end
+
 function rows(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S},
 ) where {T,S}
+    @assert sets.final_touch
     i = set_index(sets, S)
-    return (sets.num_rows[i] + ci.value) .+ (1:sets.dimension[(i, ci.value)])
+    offset = i == 1 ? 0 : sets.num_rows[i-1]
+    return (ci.value + offset) .+ (1:sets.dimension[(i, ci.value)])
 end
+
 function add_set(sets::OrderedProductOfSets, i)
-    offset = sets.num_rows[i+1]
-    sets.num_rows[i+1] = offset + 1
-    return offset
+    @assert !sets.final_touch
+    sets.num_rows[i] += 1
+    return sets.num_rows[i] - 1
 end
+
 function add_set(sets::OrderedProductOfSets, i, dim)
-    offset = sets.num_rows[i+1]
-    sets.num_rows[i+1] = offset + dim
-    sets.dimension[(i, offset)] = dim
-    return offset
+    @assert !sets.final_touch
+    ci = sets.num_rows[i]
+    sets.dimension[(i, ci)] = dim
+    sets.num_rows[i] += dim
+    return ci
 end
+
+function final_touch(sets::OrderedProductOfSets)
+    @assert !sets.final_touch
+    for i in 2:length(sets.num_rows)
+        sets.num_rows[i] += sets.num_rows[i-1]
+    end
+    sets.final_touch = true
+    return
+end
+
 function _num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
+    @assert sets.final_touch
     i = set_index(sets, S)
-    return sets.num_rows[i+1] - sets.num_rows[i]
+    if i == 1
+        return sets.num_rows[1]
+    end
+    return sets.num_rows[i] - sets.num_rows[i-1]
 end
+
 function MOI.get(
     sets::OrderedProductOfSets{T},
     ::MOI.ListOfConstraintTypesPresent,
 ) where {T}
+    @assert sets.final_touch
     return Tuple{DataType,DataType}[
         (_affine_function_type(T, S), S) for
-        S in set_types(sets) if !iszero(_num_rows(sets, S))
+        S in set_types(sets) if _num_rows(sets, S) > 0
     ]
 end
-struct UnevenIterator
+
+struct _UnevenIterator
     i::Int
     start::Int
     stop::Int
     dimension::Dict{Tuple{Int,Int},Int}
 end
-Base.IteratorSize(::UnevenIterator) = Base.SizeUnknown()
-function Base.iterate(it::UnevenIterator, cur = it.start)
+
+Base.IteratorSize(::_UnevenIterator) = Base.SizeUnknown()
+
+function Base.iterate(it::_UnevenIterator, cur = it.start)
     if cur >= it.stop
         return nothing
-    else
-        return (cur, cur + it.dimension[(it.i, cur)])
     end
+    return (cur, cur + it.dimension[(it.i, cur)])
 end
-function Base.in(x, it::UnevenIterator)
-    return x in it.start:(it.stop-1) && haskey(it.dimension, (it.i, x))
+
+function Base.in(x::Int64, it::_UnevenIterator)
+    return it.start <= x < it.stop && haskey(it.dimension, (it.i, x))
 end
+
 function _range_iterator(
     ::OrderedProductOfSets{T},
     ::Int,
@@ -218,6 +294,7 @@ function _range_iterator(
 ) where {T}
     return start:(stop-1)
 end
+
 function _range_iterator(
     sets::OrderedProductOfSets{T},
     i::Int,
@@ -225,70 +302,51 @@ function _range_iterator(
     stop::Int,
     ::Type{MOI.VectorAffineFunction{T}},
 ) where {T}
-    return UnevenIterator(i, start, stop, sets.dimension)
+    return _UnevenIterator(i, start, stop, sets.dimension)
 end
-function _range(
+
+function _range_iterator(
     sets::OrderedProductOfSets{T},
     ::Type{F},
     ::Type{S},
 ) where {T,F,S}
     i = set_index(sets, S)
-    if F != _affine_function_type(T, S) || i === nothing
-        return nothing
-    else
-        return _range_iterator(
-            sets,
-            i,
-            0,
-            sets.num_rows[i+1] - sets.num_rows[i],
-            F,
-        )
+    if i === nothing || F != _affine_function_type(T, S)
+        return
     end
+    return _range_iterator(sets, i, 0, _num_rows(sets, S), F)
 end
+
+_length(::Nothing) = 0
 _length(r::UnitRange) = length(r)
-_length(r::UnevenIterator) = count(_ -> true, r)
+_length(r::_UnevenIterator) = count(_ -> true, r)
+
 function MOI.get(
     sets::OrderedProductOfSets,
     ::MOI.NumberOfConstraints{F,S},
 ) where {F,S}
-    r = _range(sets, F, S)
-    if r === nothing
-        return 0
-    else
-        return _length(r)
-    end
-end
-function _empty(
-    ::OrderedProductOfSets{T},
-    ::Type{<:MOI.ScalarAffineFunction},
-) where {T}
-    return 1:0
-end
-function _empty(
-    sets::OrderedProductOfSets{T},
-    ::Type{<:MOI.VectorAffineFunction},
-) where {T}
-    return UnevenIterator(1, 1, 0, sets.dimension)
+    @assert sets.final_touch
+    r = _range_iterator(sets, F, S)
+    return _length(r)
 end
 
 function MOI.get(
     sets::OrderedProductOfSets,
     ::MOI.ListOfConstraintIndices{F,S},
 ) where {F,S}
-    rows = _range(sets, F, S)
+    @assert sets.final_touch
+    rows = _range_iterator(sets, F, S)
     if rows === nothing
-        # Empty iterator
-        rows = _empty(sets, F)
+        return MOI.ConstraintIndex{F,S}[]
     end
-    return LazyMap{MOI.ConstraintIndex{F,S}}(
-        i -> MOI.ConstraintIndex{F,S}(i),
-        rows,
-    )
+    return MOI.ConstraintIndex{F,S}.(rows)
 end
+
 function MOI.is_valid(
     sets::OrderedProductOfSets,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    r = _range(sets, F, S)
+    @assert sets.final_touch
+    r = _range_iterator(sets, F, S)
     return r !== nothing && ci.value in r
 end

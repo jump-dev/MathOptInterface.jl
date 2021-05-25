@@ -124,8 +124,9 @@ Utilities.rows
 ```@docs
 Utilities.ProductOfSets
 Utilities.MixOfScalarSets
+Utilities.@mix_of_scalar_sets
 Utilities.OrderedProductOfSets
-Utilities.OrderedProductOfScalarSets
+Utilities.@product_of_sets
 ```
 
 ## Fallbacks
