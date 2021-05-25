@@ -128,9 +128,6 @@ Utilities.rows
 
 ```@docs
 Utilities.ProductOfSets
-Utilities.MixOfScalarSets
-Utilities.@mix_of_scalar_sets
-Utilities.OrderedProductOfSets
 Utilities.@product_of_sets
 ```
 

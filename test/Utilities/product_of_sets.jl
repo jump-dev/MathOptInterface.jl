@@ -16,7 +16,7 @@ function runtests()
     return
 end
 
-MOI.Utilities.@mix_of_scalar_sets(
+MOI.Utilities.@product_of_sets(
     _ScalarSets,
     MOI.EqualTo{T},
     MOI.GreaterThan{T},
@@ -61,18 +61,33 @@ function test_scalar_basic()
         ci_value,
     )
     @test MOI.is_valid(sets, ci)
+    MOI.Utilities.final_touch(sets)
     @test MOI.Utilities.rows(sets, ci) == ci.value
 end
 
 function test_scalar_dimension()
     sets = _ScalarSets{Float64}()
+    MOI.Utilities.final_touch(sets)
     @test MOI.dimension(sets) == 0
+
+    sets = _ScalarSets{Float64}()
     MOI.Utilities.add_set(sets, 1)
+    MOI.Utilities.final_touch(sets)
     @test MOI.dimension(sets) == 1
+
+    sets = _ScalarSets{Float64}()
     MOI.Utilities.add_set(sets, 1)
+    MOI.Utilities.add_set(sets, 1)
+    MOI.Utilities.final_touch(sets)
     @test MOI.dimension(sets) == 2
+
+    sets = _ScalarSets{Float64}()
+    MOI.Utilities.add_set(sets, 1)
+    MOI.Utilities.add_set(sets, 1)
     MOI.Utilities.add_set(sets, 2)
+    MOI.Utilities.final_touch(sets)
     @test MOI.dimension(sets) == 3
+    return
 end
 
 function test_scalar_empty()
@@ -116,7 +131,7 @@ function test_scalar_ListOfConstraintIndices()
     MOI.Utilities.add_set(sets, 2)
     MOI.Utilities.add_set(sets, 4)
     MOI.Utilities.add_set(sets, 1)
-    for (x, S) in zip([[3], [1], [], [2]], MOI.Utilities.set_types(sets))
+    for (x, S) in zip([[1], [1], [], [1]], MOI.Utilities.set_types(sets))
         ci = MOI.get(
             sets,
             MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
