@@ -37,9 +37,6 @@ Product of scalar sets in the order the constraints are added, mixing the
 constraints of different types.
 
 Use [`@mix_of_scalar_sets`](@ref) to generate a new subtype.
-
-If the sets are all scalar, use this type instead of [`OrderedProductOfSets`](@ref)
-because it is a more efficient implementation.
 """
 abstract type MixOfScalarSets{T} <: ProductOfSets{T} end
 
@@ -137,9 +134,6 @@ Product of sets in the order the constraints are added, grouping the
 constraints of the same types contiguously.
 
 Use [`@product_of_sets`](@ref) to generate new subtypes.
-
-If the sets are all scalar, use [`MixOfScalarSets`](@ref) because it is a more
-efficient implementation.
 """
 abstract type OrderedProductOfSets{T} <: ProductOfSets{T} end
 
