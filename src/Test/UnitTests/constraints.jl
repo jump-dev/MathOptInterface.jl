@@ -511,3 +511,49 @@ function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
     end
 end
 unittests["solve_zero_one_with_bounds_3"] = solve_zero_one_with_bounds_3
+
+"""
+    solve_start_soc(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+
+Test combining the [`MOI.VariablePrimalStart`](@ref),
+[`MOI.ConstraintPrimalStart`](@ref) and [`MOI.ConstraintDualStart`](@ref)
+attributes with a `MOI.VectorAffineFunction{T}`-in-`MOI.SecondOrderCone`.
+"""
+function solve_start_soc(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+    if !MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, MOI.SecondOrderCone)
+        return
+    end
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    fx = MOI.SingleVariable(x)
+    o = one(T)
+    c = MOI.add_constraint(
+        model,
+        MOIU.operate(vcat, T, fx, o),
+        MOI.SecondOrderCone(2),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    if MOI.supports(model, MOI.VariablePrimalStart(), typeof(x))
+        MOI.set(model, MOI.VariablePrimalStart(), x, T(2))
+    end
+    if MOI.supports(model, MOI.ConstraintPrimalStart(), typeof(c))
+        MOI.set(model, MOI.ConstraintPrimalStart(), c, T[2, 2])
+    end
+    if MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+        MOI.set(model, MOI.ConstraintDualStart(), c, T[2, -2])
+    end
+    if config.solve
+        MOI.optimize!(model)
+        MOI.Test.test_model_solution(
+            model,
+            config;
+            objective_value = o,
+            variable_primal = [(x, o)],
+            constraint_primal = [(c, [o, o])],
+            constraint_dual = [(c, [o, -o])],
+        )
+    end
+    return
+end
+unittests["solve_start_soc"] = solve_start_soc

@@ -53,6 +53,7 @@ end
                 "solve_zero_one_with_bounds_1",
                 "solve_zero_one_with_bounds_2",
                 "solve_zero_one_with_bounds_3",
+                "solve_start_soc",
                 "solve_unbounded_model",
                 "solve_single_variable_dual_min",
                 "solve_single_variable_dual_max",
@@ -445,6 +446,21 @@ end
         MOIT.solve_zero_one_with_bounds_1(mock, config)
         MOIT.solve_zero_one_with_bounds_2(mock, config)
         MOIT.solve_zero_one_with_bounds_3(mock, config)
+    end
+
+    @testset "solve_start_soc" begin
+        MOIU.set_mock_optimize!(
+            mock,
+            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                (MOI.FEASIBLE_POINT, [1.0]),
+                MOI.FEASIBLE_POINT,
+                (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
+                    [[1.0, -1.0]],
+            ),
+        )
+        MOIT.solve_start_soc(mock, config)
     end
 
     @testset "solve_unbounded_model" begin
