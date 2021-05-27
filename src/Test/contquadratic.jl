@@ -1,6 +1,6 @@
 # Continuous quadratic problems
 
-function qp1test(model::MOI.ModelLike, config::TestConfig)
+function qp1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # homogeneous quadratic objective
@@ -114,7 +114,7 @@ function qp1test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function qp2test(model::MOI.ModelLike, config::TestConfig)
+function qp2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Same as `qp1` but with duplicate terms then change the objective and sense
@@ -274,7 +274,7 @@ function qp2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function qp3test(model::MOI.ModelLike, config::TestConfig)
+function qp3test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # non-homogeneous quadratic objective
@@ -411,7 +411,7 @@ const qptests = Dict("qp1" => qp1test, "qp2" => qp2test, "qp3" => qp3test)
     Quadratically constrained (convex) programs
 =#
 
-function qcp1test(model::MOI.ModelLike, config::TestConfig)
+function qcp1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # quadratic constraint
@@ -546,7 +546,7 @@ function qcp1test(model::MOI.ModelLike, config::TestConfig)
     # @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
 end
 
-function qcp2test(model::MOI.ModelLike, config::TestConfig)
+function qcp2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Max x
@@ -626,7 +626,7 @@ function qcp2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function qcp3test(model::MOI.ModelLike, config::TestConfig)
+function qcp3test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Min -x
@@ -710,7 +710,7 @@ function qcp3test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function _qcp4test(model::MOI.ModelLike, config::TestConfig, less_than::Bool)
+function _qcp4test(model::MOI.ModelLike, config::Config, less_than::Bool)
     atol = config.atol
     rtol = config.rtol
     # Max  x
@@ -808,10 +808,10 @@ function _qcp4test(model::MOI.ModelLike, config::TestConfig, less_than::Bool)
     end
 end
 
-function qcp4test(model::MOI.ModelLike, config::TestConfig)
+function qcp4test(model::MOI.ModelLike, config::Config)
     return _qcp4test(model, config, true)
 end
-function qcp5test(model::MOI.ModelLike, config::TestConfig)
+function qcp5test(model::MOI.ModelLike, config::Config)
     return _qcp4test(model, config, false)
 end
 
@@ -829,7 +829,7 @@ const qcptests = Dict(
     Quadratically constrained (non-convex) programs
 =#
 
-function ncqcp1test(model::MOI.ModelLike, config::TestConfig)
+function ncqcp1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Max 2x + y
@@ -915,7 +915,7 @@ function ncqcp1test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function ncqcp2test(model::MOI.ModelLike, config::TestConfig)
+function ncqcp2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Find x, y
@@ -1004,7 +1004,7 @@ const ncqcptests = Dict("ncqcp1" => ncqcp1test, "ncqcp2" => ncqcp2test)
     SOCP
 =#
 
-function socp1test(model::MOI.ModelLike, config::TestConfig)
+function socp1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # min t

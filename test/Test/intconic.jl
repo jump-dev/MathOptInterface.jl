@@ -5,7 +5,7 @@ const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
 mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "SOC" begin
     mock.optimize! =

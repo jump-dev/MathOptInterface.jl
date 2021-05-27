@@ -56,7 +56,7 @@ end
 
 @testset "Basic constraint tests" begin
     model = MOIU.Model{Float64}()
-    MOIT.basic_constraint_tests(model, MOIT.TestConfig())
+    MOIT.basic_constraint_tests(model, MOIT.Config())
 end
 
 # We need to test this in a module at the top level because it can't be defined
@@ -236,13 +236,13 @@ end
 end
 
 @testset "Continuous Linear tests" begin
-    config = MOIT.TestConfig(solve = false)
+    config = MOIT.Config(solve = false)
     exclude = ["partial_start"] # Model doesn't support VariablePrimalStart.
     MOIT.contlineartest(MOIU.Model{Float64}(), config, exclude)
 end
 
 @testset "Continuous Conic tests" begin
-    config = MOIT.TestConfig(solve = false)
+    config = MOIT.Config(solve = false)
     MOIT.contconictest(MOIU.Model{Float64}(), config)
 end
 

@@ -9,7 +9,7 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "NonposToNonneg" begin
     bridged_mock = MOIB.Variable.NonposToNonneg{Float64}(mock)

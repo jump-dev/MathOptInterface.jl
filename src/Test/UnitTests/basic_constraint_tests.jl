@@ -186,7 +186,7 @@ const BasicConstraintTests = Dict(
 )
 
 """
-    basic_constraint_tests(model::MOI.ModelLike, config::TestConfig;
+    basic_constraint_tests(model::MOI.ModelLike, config::Config;
         delete                  = true,
         get_constraint_function = true,
         get_constraint_set      = true,
@@ -223,7 +223,7 @@ one can be used in each call.
 """
 function basic_constraint_tests(
     model::MOI.ModelLike,
-    config::TestConfig;
+    config::Config;
     delete = true,
     get_constraint_function = true,
     get_constraint_set = true,
@@ -279,7 +279,7 @@ end
 """
     basic_constraint_test_helper(
         model::MOI.ModelLike,
-        config::TestConfig,
+        config::Config,
         func::Function,
         set::MOI.AbstractSet,
         N::Int;
@@ -312,7 +312,7 @@ If `name = true`, it will test the getting and setting of `ConstraintName`.
 """
 function basic_constraint_test_helper(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     func::Function,
     set::MOI.AbstractSet,
     N::Int = 1;

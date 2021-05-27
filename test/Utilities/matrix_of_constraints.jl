@@ -59,7 +59,7 @@ function _test(
     if bridged
         optimizer = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
     end
-    config = MOIT.TestConfig(solve = false, query_number_of_constraints = false)
+    config = MOIT.Config(solve = false, query_number_of_constraints = false)
     test(optimizer, config)
     MOI.Utilities.final_touch(optimizer, MOI.Utilities.IdentityMap())
     _test_matrix_equal(_A(_inner(optimizer)), A)
@@ -134,7 +134,7 @@ function _test(
     return
 end
 
-function _lp(model, ::MOI.Test.TestConfig{T}) where {T}
+function _lp(model, ::MOI.Test.Config{T}) where {T}
     MOI.empty!(model)
     x = MOI.add_variable(model)
     fx = one(T) * MOI.SingleVariable(x)

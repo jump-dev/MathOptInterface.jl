@@ -9,7 +9,7 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "Square" begin
     bridged_mock = MOIB.Constraint.Square{Float64}(mock)

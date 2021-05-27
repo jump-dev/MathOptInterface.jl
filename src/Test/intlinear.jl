@@ -1,5 +1,5 @@
 # MIP01 from CPLEX.jl
-function int1test(model::MOI.ModelLike, config::TestConfig)
+function int1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # an example on mixed integer programming
@@ -155,7 +155,7 @@ function int1test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # sos from CPLEX.jl" begin
-function int2test(model::MOI.ModelLike, config::TestConfig)
+function int2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     @testset "SOSI" begin
@@ -431,7 +431,7 @@ function int2test(model::MOI.ModelLike, config::TestConfig)
 end
 
 # CPLEX #76
-function int3test(model::MOI.ModelLike, config::TestConfig)
+function int3test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # integer knapsack problem
@@ -525,7 +525,7 @@ end
 
 # Mixed-integer linear problems
 
-function knapsacktest(model::MOI.ModelLike, config::TestConfig)
+function knapsacktest(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # integer knapsack problem
@@ -611,7 +611,7 @@ function knapsacktest(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indicator1_test(model::MOI.ModelLike, config::TestConfig)
+function indicator1_test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -723,7 +723,7 @@ function indicator1_test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indicator2_test(model::MOI.ModelLike, config::TestConfig)
+function indicator2_test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -817,7 +817,7 @@ function indicator2_test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indicator3_test(model::MOI.ModelLike, config::TestConfig)
+function indicator3_test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # linear problem with indicator constraint
@@ -932,7 +932,7 @@ function indicator3_test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function indicator4_test(model::MOI.ModelLike, config::TestConfig)
+function indicator4_test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # equivalent to indicator1_test with left-hand-side partially in LHS constant
@@ -1047,7 +1047,7 @@ end
 
 function _semitest(
     model::MOI.ModelLike,
-    config::TestConfig{T},
+    config::Config{T},
     int::Bool,
 ) where {T}
     atol = config.atol
@@ -1260,10 +1260,10 @@ function _semitest(
     end
 end
 
-function semiconttest(model::MOI.ModelLike, config::TestConfig)
+function semiconttest(model::MOI.ModelLike, config::Config)
     return _semitest(model, config, false)
 end
-function semiinttest(model::MOI.ModelLike, config::TestConfig)
+function semiinttest(model::MOI.ModelLike, config::Config)
     return _semitest(model, config, true)
 end
 

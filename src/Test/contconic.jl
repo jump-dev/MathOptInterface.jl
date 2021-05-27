@@ -1,7 +1,7 @@
 # Continuous conic problems
 using LinearAlgebra # for dot
 
-function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # linear conic problem
@@ -134,14 +134,14 @@ function _lin1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     end
 end
 
-function lin1vtest(model::MOI.ModelLike, config::TestConfig)
+function lin1vtest(model::MOI.ModelLike, config::Config)
     return _lin1test(model, config, true)
 end
-function lin1ftest(model::MOI.ModelLike, config::TestConfig)
+function lin1ftest(model::MOI.ModelLike, config::Config)
     return _lin1test(model, config, false)
 end
 
-function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
@@ -337,14 +337,14 @@ function _lin2test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     end
 end
 
-function lin2vtest(model::MOI.ModelLike, config::TestConfig)
+function lin2vtest(model::MOI.ModelLike, config::Config)
     return _lin2test(model, config, true)
 end
-function lin2ftest(model::MOI.ModelLike, config::TestConfig)
+function lin2ftest(model::MOI.ModelLike, config::Config)
     return _lin2test(model, config, false)
 end
 
-function lin3test(model::MOI.ModelLike, config::TestConfig)
+function lin3test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem LIN3 - Infeasible LP
@@ -436,7 +436,7 @@ function lin3test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function lin4test(model::MOI.ModelLike, config::TestConfig)
+function lin4test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem LIN4 - Infeasible LP
@@ -527,7 +527,7 @@ const lintests = Dict(
 
 function _norminf1test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     vecofvars::Bool,
 )
     atol = config.atol
@@ -669,14 +669,14 @@ function _norminf1test(
     end
 end
 
-function norminf1vtest(model::MOI.ModelLike, config::TestConfig)
+function norminf1vtest(model::MOI.ModelLike, config::Config)
     return _norminf1test(model, config, true)
 end
-function norminf1ftest(model::MOI.ModelLike, config::TestConfig)
+function norminf1ftest(model::MOI.ModelLike, config::Config)
     return _norminf1test(model, config, false)
 end
 
-function norminf2test(model::MOI.ModelLike, config::TestConfig)
+function norminf2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormInf2 - Infeasible
@@ -784,7 +784,7 @@ function norminf2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function norminf3test(model::MOI.ModelLike, config::TestConfig)
+function norminf3test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormInf3
@@ -896,7 +896,7 @@ const norminftests = Dict(
 
 function _normone1test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     vecofvars::Bool,
 )
     atol = config.atol
@@ -1034,14 +1034,14 @@ function _normone1test(
     end
 end
 
-function normone1vtest(model::MOI.ModelLike, config::TestConfig)
+function normone1vtest(model::MOI.ModelLike, config::Config)
     return _normone1test(model, config, true)
 end
-function normone1ftest(model::MOI.ModelLike, config::TestConfig)
+function normone1ftest(model::MOI.ModelLike, config::Config)
     return _normone1test(model, config, false)
 end
 
-function normone2test(model::MOI.ModelLike, config::TestConfig)
+function normone2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormOne2 - Infeasible
@@ -1149,7 +1149,7 @@ function normone2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function normone3test(model::MOI.ModelLike, config::TestConfig)
+function normone3test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormOne3
@@ -1258,7 +1258,7 @@ const normonetests = Dict(
 
 @moitestset normone
 
-function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem SOC1
@@ -1382,14 +1382,14 @@ function _soc1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     end
 end
 
-function soc1vtest(model::MOI.ModelLike, config::TestConfig)
+function soc1vtest(model::MOI.ModelLike, config::Config)
     return _soc1test(model, config, true)
 end
-function soc1ftest(model::MOI.ModelLike, config::TestConfig)
+function soc1ftest(model::MOI.ModelLike, config::Config)
     return _soc1test(model, config, false)
 end
 
-function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
+function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem SOC2
@@ -1551,14 +1551,14 @@ function _soc2test(model::MOI.ModelLike, config::TestConfig, nonneg::Bool)
     end
 end
 
-function soc2ntest(model::MOI.ModelLike, config::TestConfig)
+function soc2ntest(model::MOI.ModelLike, config::Config)
     return _soc2test(model, config, true)
 end
-function soc2ptest(model::MOI.ModelLike, config::TestConfig)
+function soc2ptest(model::MOI.ModelLike, config::Config)
     return _soc2test(model, config, false)
 end
 
-function soc3test(model::MOI.ModelLike, config::TestConfig)
+function soc3test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem SOC3 - Infeasible
@@ -1666,7 +1666,7 @@ function soc3test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function soc4test(model::MOI.ModelLike, config::TestConfig)
+function soc4test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem SOC4
@@ -1792,7 +1792,7 @@ const soctests = Dict(
 
 function _rotatedsoc1test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     abvars::Bool,
 )
     atol = config.atol
@@ -1938,14 +1938,14 @@ function _rotatedsoc1test(
     end
 end
 
-function rotatedsoc1vtest(model::MOI.ModelLike, config::TestConfig)
+function rotatedsoc1vtest(model::MOI.ModelLike, config::Config)
     return _rotatedsoc1test(model, config, true)
 end
-function rotatedsoc1ftest(model::MOI.ModelLike, config::TestConfig)
+function rotatedsoc1ftest(model::MOI.ModelLike, config::Config)
     return _rotatedsoc1test(model, config, false)
 end
 
-function rotatedsoc2test(model::MOI.ModelLike, config::TestConfig)
+function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem SOCRotated2 - Infeasible
@@ -2076,7 +2076,7 @@ end
 
 function rotatedsoc3test(
     model::MOI.ModelLike,
-    config::TestConfig;
+    config::Config;
     n = 2,
     ub = 3.0,
 )
@@ -2270,7 +2270,7 @@ end
 
 function rotatedsoc4test(
     model::MOI.ModelLike,
-    config::TestConfig;
+    config::Config;
     n = 2,
     ub = 3.0,
 )
@@ -2380,7 +2380,7 @@ const rsoctests = Dict(
 
 function _geomean1test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     vecofvars,
     n = 3,
 )
@@ -2501,15 +2501,15 @@ function _geomean1test(
     end
 end
 
-function geomean1vtest(model::MOI.ModelLike, config::TestConfig)
+function geomean1vtest(model::MOI.ModelLike, config::Config)
     return _geomean1test(model, config, true)
 end
-function geomean1ftest(model::MOI.ModelLike, config::TestConfig)
+function geomean1ftest(model::MOI.ModelLike, config::Config)
     return _geomean1test(model, config, false)
 end
 
 # addresses bug https://github.com/jump-dev/MathOptInterface.jl/pull/962
-function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
+function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
     atol = config.atol
     rtol = config.rtol
     # Problem GeoMean2
@@ -2627,15 +2627,15 @@ function _geomean2test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     end
 end
 
-function geomean2vtest(model::MOI.ModelLike, config::TestConfig)
+function geomean2vtest(model::MOI.ModelLike, config::Config)
     return _geomean2test(model, config, true)
 end
-function geomean2ftest(model::MOI.ModelLike, config::TestConfig)
+function geomean2ftest(model::MOI.ModelLike, config::Config)
     return _geomean2test(model, config, false)
 end
 
 # Tests case where the dimension of the geometric mean cone is 2
-function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
+function _geomean3test(model::MOI.ModelLike, config::Config, vecofvars)
     atol = config.atol
     rtol = config.rtol
     # Problem GeoMean3
@@ -2740,10 +2740,10 @@ function _geomean3test(model::MOI.ModelLike, config::TestConfig, vecofvars)
     end
 end
 
-function geomean3vtest(model::MOI.ModelLike, config::TestConfig)
+function geomean3vtest(model::MOI.ModelLike, config::Config)
     return _geomean3test(model, config, true)
 end
-function geomean3ftest(model::MOI.ModelLike, config::TestConfig)
+function geomean3ftest(model::MOI.ModelLike, config::Config)
     return _geomean3test(model, config, false)
 end
 
@@ -2758,7 +2758,7 @@ geomeantests = Dict(
 
 @moitestset geomean
 
-function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+function _exp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem EXP1 - ExpPrimal
@@ -2871,14 +2871,14 @@ function _exp1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     end
 end
 
-function exp1vtest(model::MOI.ModelLike, config::TestConfig)
+function exp1vtest(model::MOI.ModelLike, config::Config)
     return _exp1test(model, config, true)
 end
-function exp1ftest(model::MOI.ModelLike, config::TestConfig)
+function exp1ftest(model::MOI.ModelLike, config::Config)
     return _exp1test(model, config, false)
 end
 
-function exp2test(model::MOI.ModelLike, config::TestConfig)
+function exp2test(model::MOI.ModelLike, config::Config)
     # Problem EXP2
     # A problem where ECOS was failing
     atol = config.atol
@@ -3056,7 +3056,7 @@ function exp2test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function exp3test(model::MOI.ModelLike, config::TestConfig)
+function exp3test(model::MOI.ModelLike, config::Config)
     # Problem EXP3
     # A problem where ECOS was failing
     atol = config.atol
@@ -3167,7 +3167,7 @@ exptests = Dict(
 
 function _dualexp1test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     vecofvars::Bool,
 )
     atol = config.atol
@@ -3302,10 +3302,10 @@ function _dualexp1test(
     end
 end
 
-function dualexp1vtest(model::MOI.ModelLike, config::TestConfig)
+function dualexp1vtest(model::MOI.ModelLike, config::Config)
     return _dualexp1test(model, config, true)
 end
-function dualexp1ftest(model::MOI.ModelLike, config::TestConfig)
+function dualexp1ftest(model::MOI.ModelLike, config::Config)
     return _dualexp1test(model, config, false)
 end
 
@@ -3313,7 +3313,7 @@ dualexptests = Dict("dualexp1v" => dualexp1vtest, "dualexp1f" => dualexp1ftest)
 
 @moitestset dualexp
 
-function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
+function _pow1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem POW1
@@ -3432,10 +3432,10 @@ function _pow1test(model::MOI.ModelLike, config::TestConfig, vecofvars::Bool)
     end
 end
 
-function pow1vtest(model::MOI.ModelLike, config::TestConfig)
+function pow1vtest(model::MOI.ModelLike, config::Config)
     return _pow1test(model, config, true)
 end
-function pow1ftest(model::MOI.ModelLike, config::TestConfig)
+function pow1ftest(model::MOI.ModelLike, config::Config)
     return _pow1test(model, config, false)
 end
 
@@ -3445,7 +3445,7 @@ powtests = Dict("pow1v" => pow1vtest, "pow1f" => pow1ftest)
 
 function _dualpow1test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     vecofvars::Bool;
     exponent::Float64 = 0.9,
 )
@@ -3589,10 +3589,10 @@ function _dualpow1test(
     end
 end
 
-function dualpow1vtest(model::MOI.ModelLike, config::TestConfig)
+function dualpow1vtest(model::MOI.ModelLike, config::Config)
     return _dualpow1test(model, config, true)
 end
-function dualpow1ftest(model::MOI.ModelLike, config::TestConfig)
+function dualpow1ftest(model::MOI.ModelLike, config::Config)
     return _dualpow1test(model, config, false)
 end
 
@@ -3600,7 +3600,7 @@ dualpowtests = Dict("dualpow1v" => dualpow1vtest, "dualpow1f" => dualpow1ftest)
 
 @moitestset dualpow
 
-function relentr1test(model::MOI.ModelLike, config::TestConfig)
+function relentr1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem RelEntr1
@@ -3677,7 +3677,7 @@ relentrtests = Dict("relentr1" => relentr1test)
 
 @moitestset relentr
 
-function normspec1test(model::MOI.ModelLike, config::TestConfig)
+function normspec1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormSpec1
@@ -3751,7 +3751,7 @@ function normspec1test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function normspec2test(model::MOI.ModelLike, config::TestConfig)
+function normspec2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormSpec2
@@ -3829,7 +3829,7 @@ normspectests = Dict("normspec1" => normspec1test, "normspec2" => normspec2test)
 
 @moitestset normspec
 
-function normnuc1test(model::MOI.ModelLike, config::TestConfig)
+function normnuc1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormNuc1
@@ -3906,7 +3906,7 @@ function normnuc1test(model::MOI.ModelLike, config::TestConfig)
     end
 end
 
-function normnuc2test(model::MOI.ModelLike, config::TestConfig)
+function normnuc2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Problem NormNuc2
@@ -3991,7 +3991,7 @@ function _psd0test(
     model::MOI.ModelLike,
     vecofvars::Bool,
     psdcone,
-    config::TestConfig,
+    config::Config,
 )
     atol = config.atol
     rtol = config.rtol
@@ -4111,16 +4111,16 @@ function _psd0test(
     end
 end
 
-function psdt0vtest(model::MOI.ModelLike, config::TestConfig)
+function psdt0vtest(model::MOI.ModelLike, config::Config)
     return _psd0test(model, true, MOI.PositiveSemidefiniteConeTriangle, config)
 end
-function psdt0ftest(model::MOI.ModelLike, config::TestConfig)
+function psdt0ftest(model::MOI.ModelLike, config::Config)
     return _psd0test(model, false, MOI.PositiveSemidefiniteConeTriangle, config)
 end
-function psds0vtest(model::MOI.ModelLike, config::TestConfig)
+function psds0vtest(model::MOI.ModelLike, config::Config)
     return _psd0test(model, true, MOI.PositiveSemidefiniteConeSquare, config)
 end
-function psds0ftest(model::MOI.ModelLike, config::TestConfig)
+function psds0ftest(model::MOI.ModelLike, config::Config)
     return _psd0test(model, false, MOI.PositiveSemidefiniteConeSquare, config)
 end
 
@@ -4128,7 +4128,7 @@ function _psd1test(
     model::MOI.ModelLike,
     vecofvars::Bool,
     psdcone,
-    config::TestConfig,
+    config::Config,
 )
     atol = config.atol
     rtol = config.rtol
@@ -4365,20 +4365,20 @@ function _psd1test(
     end
 end
 
-function psdt1vtest(model::MOI.ModelLike, config::TestConfig)
+function psdt1vtest(model::MOI.ModelLike, config::Config)
     return _psd1test(model, true, MOI.PositiveSemidefiniteConeTriangle, config)
 end
-function psdt1ftest(model::MOI.ModelLike, config::TestConfig)
+function psdt1ftest(model::MOI.ModelLike, config::Config)
     return _psd1test(model, false, MOI.PositiveSemidefiniteConeTriangle, config)
 end
-function psds1vtest(model::MOI.ModelLike, config::TestConfig)
+function psds1vtest(model::MOI.ModelLike, config::Config)
     return _psd1test(model, true, MOI.PositiveSemidefiniteConeSquare, config)
 end
-function psds1ftest(model::MOI.ModelLike, config::TestConfig)
+function psds1ftest(model::MOI.ModelLike, config::Config)
     return _psd1test(model, false, MOI.PositiveSemidefiniteConeSquare, config)
 end
 
-function psdt2test(model::MOI.ModelLike, config::TestConfig)
+function psdt2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Caused getdual to fail on SCS and Mosek
@@ -4561,7 +4561,7 @@ end
 function _psd3test(
     model::MOI.ModelLike,
     psdcone,
-    config::TestConfig{T},
+    config::Config{T},
 ) where {T}
     # min x
     # s.t. [x 1 1]
@@ -4686,7 +4686,7 @@ const sdptests = Dict("psdt" => psdttest, "psds" => psdstest)
 
 function _det1test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     vecofvars::Bool,
     detcone,
 )
@@ -4857,20 +4857,20 @@ function _det1test(
     end
 end
 
-function logdett1vtest(model::MOI.ModelLike, config::TestConfig)
+function logdett1vtest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, true, MOI.LogDetConeTriangle)
 end
-function logdett1ftest(model::MOI.ModelLike, config::TestConfig)
+function logdett1ftest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, false, MOI.LogDetConeTriangle)
 end
-function logdets1vtest(model::MOI.ModelLike, config::TestConfig)
+function logdets1vtest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, true, MOI.LogDetConeSquare)
 end
-function logdets1ftest(model::MOI.ModelLike, config::TestConfig)
+function logdets1ftest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, false, MOI.LogDetConeSquare)
 end
 
-function _det2test(model::MOI.ModelLike, config::TestConfig, detcone)
+function _det2test(model::MOI.ModelLike, config::Config, detcone)
     atol = config.atol
     rtol = config.rtol
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
@@ -4959,10 +4959,10 @@ function _det2test(model::MOI.ModelLike, config::TestConfig, detcone)
     end
 end
 
-function logdett2test(model::MOI.ModelLike, config::TestConfig)
+function logdett2test(model::MOI.ModelLike, config::Config)
     return _det2test(model, config, MOI.LogDetConeTriangle)
 end
-function logdets2test(model::MOI.ModelLike, config::TestConfig)
+function logdets2test(model::MOI.ModelLike, config::Config)
     return _det2test(model, config, MOI.LogDetConeSquare)
 end
 
@@ -4986,22 +4986,22 @@ const logdettests = Dict("logdett" => logdetttest, "logdets" => logdetstest)
 
 @moitestset logdet true
 
-function rootdett1vtest(model::MOI.ModelLike, config::TestConfig)
+function rootdett1vtest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, true, MOI.RootDetConeTriangle)
 end
-function rootdett1ftest(model::MOI.ModelLike, config::TestConfig)
+function rootdett1ftest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, false, MOI.RootDetConeTriangle)
 end
-function rootdets1vtest(model::MOI.ModelLike, config::TestConfig)
+function rootdets1vtest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, true, MOI.RootDetConeSquare)
 end
-function rootdets1ftest(model::MOI.ModelLike, config::TestConfig)
+function rootdets1ftest(model::MOI.ModelLike, config::Config)
     return _det1test(model, config, false, MOI.RootDetConeSquare)
 end
-function rootdett2test(model::MOI.ModelLike, config::TestConfig)
+function rootdett2test(model::MOI.ModelLike, config::Config)
     return _det2test(model, config, MOI.RootDetConeTriangle)
 end
-function rootdets2test(model::MOI.ModelLike, config::TestConfig)
+function rootdets2test(model::MOI.ModelLike, config::Config)
     return _det2test(model, config, MOI.RootDetConeSquare)
 end
 

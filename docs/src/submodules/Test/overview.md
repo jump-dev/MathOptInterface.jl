@@ -43,7 +43,7 @@ const OPTIMIZER = MOI.instantiate(OPTIMIZER_CONSTRUCTOR)
 const BRIDGED = MOI.instantiate(
     OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float64
 )
-const CONFIG = MOI.Test.TestConfig(
+const CONFIG = MOI.Test.Config(
     # Modify tolerances as necessary.
     atol = 1e-6,
     rtol = 1e-6,
@@ -200,7 +200,7 @@ To resolve this issue, follow these steps (tested on Julia v1.5):
    add a new test to [src/Test/UnitTests/solve.jl](https://github.com/jump-dev/MathOptInterface.jl/blob/master/src/Test/UnitTests/solve.jl).
    The test should be something like
    ```julia
-   function solve_twice(model::MOI.ModelLike, config::TestConfig)
+   function solve_twice(model::MOI.ModelLike, config::Config)
        MOI.empty!(model)
        x = MOI.add_variable(model)
        c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))

@@ -1,7 +1,7 @@
 # Continuous linear problems
 
 # Basic solver, query, resolve
-function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # simple 2 variable, 1 constraint problem
@@ -600,7 +600,7 @@ function linear1test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # add_variable (one by one)
-function linear2test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear2test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # Min -x
@@ -717,7 +717,7 @@ function linear2test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # Issue #40 from Gurobi.jl
-function linear3test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear3test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # min  x
@@ -866,7 +866,7 @@ function linear3test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # Modify GreaterThan{T} and LessThan{T} sets as bounds
-function linear4test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear4test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
 
@@ -960,7 +960,7 @@ function linear4test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # Change coeffs, del constr, del var
-function linear5test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear5test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     #@test MOI.get(model, MOI.SupportsDeleteVariable())
@@ -1152,7 +1152,7 @@ function linear5test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # Modify GreaterThan{T} and LessThan{T} sets as linear constraints
-function linear6test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear6test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
 
@@ -1274,7 +1274,7 @@ function linear6test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # Modify constants in Nonnegatives and Nonpositives
-function linear7test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
 
@@ -1439,7 +1439,7 @@ function linear7test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # infeasible problem
-function linear8atest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear8atest(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # min x
@@ -1526,7 +1526,7 @@ function linear8atest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # unbounded problem
-function linear8btest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear8btest(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # min -x-y
@@ -1603,7 +1603,7 @@ function linear8btest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # unbounded problem with unique ray
-function linear8ctest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear8ctest(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # min -x-y
@@ -1682,7 +1682,7 @@ function linear8ctest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # add_constraints
-function linear9test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear9test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     #   maximize 1000 x + 350 y
@@ -1795,7 +1795,7 @@ function linear9test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # ranged constraints
-function linear10test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     #   maximize x + y
@@ -2001,7 +2001,7 @@ function linear10test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # inactive ranged constraints
-function linear10btest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear10btest(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     #   minimize x + y
@@ -2093,7 +2093,7 @@ function linear10btest(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # changing constraint sense
-function linear11test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear11test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # simple 2 variable, 1 constraint problem
@@ -2208,7 +2208,7 @@ function linear11test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # infeasible problem with 2 linear constraints
-function linear12test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear12test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # min x
@@ -2300,7 +2300,7 @@ function linear12test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # feasibility problem
-function linear13test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear13test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # find x, y
@@ -2378,7 +2378,7 @@ function linear13test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # Deletion of vector of variables
-function linear14test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear14test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # max x + 2y + 3z + 4
@@ -2543,7 +2543,7 @@ function linear14test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
 end
 
 # Empty vector affine function rows (LQOI Issue #48)
-function linear15test(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # minimize 0
@@ -2611,7 +2611,7 @@ end
 # because copy_to drops start information with a warning.
 function partial_start_test(
     model::MOI.ModelLike,
-    config::TestConfig{T},
+    config::Config{T},
 ) where {T}
     atol = config.atol
     rtol = config.rtol

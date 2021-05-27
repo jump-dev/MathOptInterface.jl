@@ -9,8 +9,8 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
-config_with_basis = MOIT.TestConfig(basis = true)
+config = MOIT.Config()
+config_with_basis = MOIT.Config(basis = true)
 
 @testset "Scalar functionize" begin
     MOI.empty!(mock)

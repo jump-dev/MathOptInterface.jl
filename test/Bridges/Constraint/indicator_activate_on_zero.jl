@@ -17,7 +17,7 @@ include("../utilities.jl")
     #      z2 == 1 ==> x2 + x1/5 <= 9
     #      (1-z1) + z2 >= 1 <=> z2 - z1 >= 0
     model = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
 
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)

@@ -5,7 +5,7 @@ const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
 mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "Linear" begin
     mock.optimize! =
@@ -51,11 +51,11 @@ config = MOIT.TestConfig()
     MOIT.lin3test(mock, config)
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE)
-    MOIT.lin3test(mock, MOIT.TestConfig(infeas_certificates = false))
+    MOIT.lin3test(mock, MOIT.Config(infeas_certificates = false))
     mock.optimize! =
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, MOI.INFEASIBLE_OR_UNBOUNDED)
-    MOIT.lin3test(mock, MOIT.TestConfig(infeas_certificates = false))
+    MOIT.lin3test(mock, MOIT.Config(infeas_certificates = false))
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -66,11 +66,11 @@ config = MOIT.TestConfig()
     MOIT.lin4test(mock, config)
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE)
-    MOIT.lin4test(mock, MOIT.TestConfig(infeas_certificates = false))
+    MOIT.lin4test(mock, MOIT.Config(infeas_certificates = false))
     mock.optimize! =
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, MOI.INFEASIBLE_OR_UNBOUNDED)
-    MOIT.lin4test(mock, MOIT.TestConfig(infeas_certificates = false))
+    MOIT.lin4test(mock, MOIT.Config(infeas_certificates = false))
 end
 @testset "NormInf" begin
     mock.optimize! =

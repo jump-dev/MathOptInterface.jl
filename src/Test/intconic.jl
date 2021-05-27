@@ -1,6 +1,6 @@
 # Integer conic problems
 
-function intsoc1test(model::MOI.ModelLike, config::TestConfig)
+function intsoc1test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
 

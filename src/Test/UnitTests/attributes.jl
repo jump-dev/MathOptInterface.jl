@@ -1,9 +1,9 @@
 """
-    solver_name(model::MOI.ModelLike, config::TestConfig)
+    solver_name(model::MOI.ModelLike, config::Config)
 
 Test that the [`MOI.SolverName`](@ref) attribute is implemented for `model`.
 """
-function solver_name(model::MOI.ModelLike, config::TestConfig)
+function solver_name(model::MOI.ModelLike, config::Config)
     if config.solve
         @test MOI.get(model, MOI.SolverName()) isa AbstractString
     end
@@ -11,11 +11,11 @@ end
 unittests["solver_name"] = solver_name
 
 """
-    silent(model::MOI.ModelLike, config::TestConfig)
+    silent(model::MOI.ModelLike, config::Config)
 
 Test that the [`MOI.Silent`](@ref) attribute is implemented for `model`.
 """
-function silent(model::MOI.ModelLike, config::TestConfig)
+function silent(model::MOI.ModelLike, config::Config)
     if config.solve
         @test MOI.supports(model, MOI.Silent())
         # Get the current value to restore it at the end of the test
@@ -32,11 +32,11 @@ end
 unittests["silent"] = silent
 
 """
-    time_limit_sec(model::MOI.ModelLike, config::TestConfig)
+    time_limit_sec(model::MOI.ModelLike, config::Config)
 
 Test that the [`MOI.TimeLimitSec`](@ref) attribute is implemented for `model`.
 """
-function time_limit_sec(model::MOI.ModelLike, config::TestConfig)
+function time_limit_sec(model::MOI.ModelLike, config::Config)
     if config.solve
         @test MOI.supports(model, MOI.TimeLimitSec())
         # Get the current value to restore it at the end of the test
@@ -52,11 +52,11 @@ end
 unittests["time_limit_sec"] = time_limit_sec
 
 """
-    number_threads(model::MOI.ModelLike, config::TestConfig)
+    number_threads(model::MOI.ModelLike, config::Config)
 
 Test that the [`MOI.NumberOfThreads`](@ref) attribute is implemented for `model`.
 """
-function number_threads(model::MOI.ModelLike, config::TestConfig)
+function number_threads(model::MOI.ModelLike, config::Config)
     if config.solve
         @test MOI.supports(model, MOI.NumberOfThreads())
         # Get the current value to restore it at the end of the test
@@ -72,12 +72,12 @@ end
 unittests["number_threads"] = number_threads
 
 """
-    raw_status_string(model::MOI.ModelLike, config::TestConfig)
+    raw_status_string(model::MOI.ModelLike, config::Config)
 
 Test that the [`MOI.RawStatusString`](@ref) attribute is implemented for
 `model`.
 """
-function raw_status_string(model::MOI.ModelLike, config::TestConfig)
+function raw_status_string(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
@@ -101,11 +101,11 @@ end
 unittests["raw_status_string"] = raw_status_string
 
 """
-    solve_time(model::MOI.ModelLike, config::TestConfig)
+    solve_time(model::MOI.ModelLike, config::Config)
 
 Test that the [`MOI.SolveTimeSec`](@ref) attribute is implemented for `model`.
 """
-function solve_time(model::MOI.ModelLike, config::TestConfig)
+function solve_time(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)

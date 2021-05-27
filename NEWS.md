@@ -18,6 +18,7 @@ Breaking renames and type changes:
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
 - `RawParameter` has been renamed to `RawOptimizerAttribute` and now takes
   `String` instead of `Any` as the only argument
+- `Test.TestConfig` has been renamed to `Test.Config`
 
 Breaking behavior changes:
 

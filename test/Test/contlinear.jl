@@ -5,8 +5,8 @@ const MOIT = MOI.Test
 const MOIU = MOI.Utilities
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig(basis = true)
-config_no_lhs_modif = MOIT.TestConfig(modify_lhs = false)
+config = MOIT.Config(basis = true)
+config_no_lhs_modif = MOIT.Config(modify_lhs = false)
 
 function set_mock_optimize_linear1Test!(mock)
     return MOIU.set_mock_optimize!(
@@ -137,7 +137,7 @@ MOIU.set_mock_optimize!(
     mock,
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE),
 )
-MOIT.linear8atest(mock, MOIT.TestConfig(infeas_certificates = false))
+MOIT.linear8atest(mock, MOIT.Config(infeas_certificates = false))
 MOIU.set_mock_optimize!(
     mock,
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -152,7 +152,7 @@ MOIU.set_mock_optimize!(
     (mock::MOIU.MockOptimizer) ->
         MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
 )
-MOIT.linear8btest(mock, MOIT.TestConfig(infeas_certificates = false))
+MOIT.linear8btest(mock, MOIT.Config(infeas_certificates = false))
 MOIU.set_mock_optimize!(
     mock,
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -167,7 +167,7 @@ MOIU.set_mock_optimize!(
     (mock::MOIU.MockOptimizer) ->
         MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
 )
-MOIT.linear8ctest(mock, MOIT.TestConfig(infeas_certificates = false))
+MOIT.linear8ctest(mock, MOIT.Config(infeas_certificates = false))
 MOIU.set_mock_optimize!(
     mock,
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -269,7 +269,7 @@ MOIU.set_mock_optimize!(
     mock,
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE),
 )
-MOIT.linear12test(mock, MOIT.TestConfig(infeas_certificates = false))
+MOIT.linear12test(mock, MOIT.Config(infeas_certificates = false))
 MOIU.set_mock_optimize!(
     mock,
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(

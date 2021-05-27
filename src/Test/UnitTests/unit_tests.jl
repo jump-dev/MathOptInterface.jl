@@ -6,7 +6,7 @@
 const unittests = Dict{String,Function}()
 
 """
-    test_model_solution(model::MOI.ModelLike, config::TestConfig;
+    test_model_solution(model::MOI.ModelLike, config::Config;
         objective_value   = nothing,
         variable_primal   = nothing,
         constraint_primal = nothing,

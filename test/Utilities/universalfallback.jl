@@ -285,7 +285,7 @@ end
         @test MOI.get(uf, typeof(cx), "EqualTo") === nothing
     end
 end
-config = MOIT.TestConfig(solve = false)
+config = MOIT.Config(solve = false)
 @testset "empty" begin
     MOI.empty!(uf)
     @test MOI.is_empty(uf)

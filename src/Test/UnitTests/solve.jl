@@ -1,9 +1,9 @@
 """
-    solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    solve_objbound_edge_cases(model::MOI.ModelLike, config::Config)
 
 Test a variety of edge cases related to the ObjectiveBound attribute.
 """
-function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
+function solve_objbound_edge_cases(model::MOI.ModelLike, config::Config)
     @testset "Min IP with constant" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
@@ -100,7 +100,7 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_objbound_edge_cases"] = solve_objbound_edge_cases
 
-function solve_unbounded_model(model::MOI.ModelLike, config::TestConfig)
+function solve_unbounded_model(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 5)
     MOI.set(
@@ -118,7 +118,7 @@ unittests["solve_unbounded_model"] = solve_unbounded_model
 
 function solve_single_variable_dual_min(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     x = MOI.add_variable(model)
@@ -148,7 +148,7 @@ unittests["solve_single_variable_dual_min"] = solve_single_variable_dual_min
 
 function solve_single_variable_dual_max(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     x = MOI.add_variable(model)
@@ -176,7 +176,7 @@ function solve_single_variable_dual_max(
 end
 unittests["solve_single_variable_dual_max"] = solve_single_variable_dual_max
 
-function solve_result_index(model::MOI.ModelLike, config::TestConfig)
+function solve_result_index(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     MOI.empty!(model)
@@ -241,7 +241,7 @@ function solve_result_index(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_result_index"] = solve_result_index
 
-function solve_farkas_equalto_upper(model::MOI.ModelLike, config::TestConfig)
+function solve_farkas_equalto_upper(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
@@ -265,7 +265,7 @@ function solve_farkas_equalto_upper(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_farkas_equalto_upper"] = solve_farkas_equalto_upper
 
-function solve_farkas_equalto_lower(model::MOI.ModelLike, config::TestConfig)
+function solve_farkas_equalto_lower(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
@@ -289,7 +289,7 @@ function solve_farkas_equalto_lower(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_farkas_equalto_lower"] = solve_farkas_equalto_lower
 
-function solve_farkas_lessthan(model::MOI.ModelLike, config::TestConfig)
+function solve_farkas_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
@@ -313,7 +313,7 @@ function solve_farkas_lessthan(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_farkas_lessthan"] = solve_farkas_lessthan
 
-function solve_farkas_greaterthan(model::MOI.ModelLike, config::TestConfig)
+function solve_farkas_greaterthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
@@ -337,7 +337,7 @@ function solve_farkas_greaterthan(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_farkas_greaterthan"] = solve_farkas_greaterthan
 
-function solve_farkas_interval_upper(model::MOI.ModelLike, config::TestConfig)
+function solve_farkas_interval_upper(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
@@ -361,7 +361,7 @@ function solve_farkas_interval_upper(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_farkas_interval_upper"] = solve_farkas_interval_upper
 
-function solve_farkas_interval_lower(model::MOI.ModelLike, config::TestConfig)
+function solve_farkas_interval_lower(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
@@ -387,7 +387,7 @@ unittests["solve_farkas_interval_lower"] = solve_farkas_interval_lower
 
 function solve_farkas_variable_lessthan(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
@@ -413,7 +413,7 @@ unittests["solve_farkas_variable_lessthan"] = solve_farkas_variable_lessthan
 
 function solve_farkas_variable_lessthan_max(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
@@ -444,7 +444,7 @@ end
 unittests["solve_farkas_variable_lessthan_max"] =
     solve_farkas_variable_lessthan_max
 
-function solve_twice(model::MOI.ModelLike, config::TestConfig)
+function solve_twice(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))

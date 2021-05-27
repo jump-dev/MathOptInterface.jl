@@ -445,7 +445,7 @@ end
 
 @testset "Continuous Linear" begin
     exclude = ["partial_start"] # VariablePrimalStart not supported.
-    MOIT.contlineartest(bridged_mock, MOIT.TestConfig(solve = false), exclude)
+    MOIT.contlineartest(bridged_mock, MOIT.Config(solve = false), exclude)
 end
 
 @testset "Show" begin
