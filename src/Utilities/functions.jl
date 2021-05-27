@@ -566,15 +566,27 @@ function Base.getindex(
     return MOI.VectorQuadraticFunction(vat, vqt, it.f.constants[output_indices])
 end
 
+"""
+    zero_with_output_dimension(::Type{T}, output_dimension::Integer) where {T}
+
+Create an instance of type `T` with the output dimension `output_dimension`.
+
+This is mostly useful in Bridges, when code needs to be agnostic to the type of
+vector-valued function that is passed in.
+"""
+function zero_with_output_dimension end
+
 function zero_with_output_dimension(::Type{Vector{T}}, n::Integer) where {T}
     return zeros(T, n)
 end
+
 function zero_with_output_dimension(
     ::Type{MOI.VectorAffineFunction{T}},
     n::Integer,
 ) where {T}
     return MOI.VectorAffineFunction{T}(MOI.VectorAffineTerm{T}[], zeros(T, n))
 end
+
 function zero_with_output_dimension(
     ::Type{MOI.VectorQuadraticFunction{T}},
     n::Integer,

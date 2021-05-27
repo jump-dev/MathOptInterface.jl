@@ -1723,3 +1723,39 @@ end
         [0.0, 0.0, 0.0],
     )
 end
+
+@testset "zero_with_output_dimension" begin
+    f = MOI.Utilities.zero_with_output_dimension(Vector{Int}, 2)
+    @test f == [0, 0]
+    @test f isa Vector{Int}
+
+    g = MOI.Utilities.zero_with_output_dimension(Vector{Float64}, 2)
+    @test g == [0.0, 0.0]
+    @test g isa Vector{Float64}
+
+    h = MOI.Utilities.zero_with_output_dimension(
+        MOI.VectorAffineFunction{Int},
+        2,
+    )
+    @test MOI.output_dimension(h) == 2
+    @test isapprox(
+        h,
+        MOI.VectorAffineFunction{Int}(MOI.VectorAffineTerm{Int}[], [0, 0]),
+    )
+    @test h isa MOI.VectorAffineFunction{Int}
+
+    i = MOI.Utilities.zero_with_output_dimension(
+        MOI.VectorQuadraticFunction{Int},
+        2,
+    )
+    @test MOI.output_dimension(i) == 2
+    @test isapprox(
+        i,
+        MOI.VectorQuadraticFunction{Int}(
+            MOI.VectorQuadraticTerm{Int}[],
+            MOI.VectorAffineTerm{Int}[],
+            [0, 0],
+        ),
+    )
+    @test i isa MOI.VectorQuadraticFunction{Int}
+end
