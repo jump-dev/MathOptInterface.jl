@@ -500,10 +500,7 @@ const nlptests = Dict(
 Test the solution of the linear mixed-complementarity problem:
 `F(x) complements x`, where `F(x) = M * x .+ q` and `0 <= x <= 10`.
 """
-function test_linear_mixed_complementarity(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function test_linear_mixed_complementarity(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 4)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))

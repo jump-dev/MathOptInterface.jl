@@ -1045,11 +1045,7 @@ function indicator4_test(model::MOI.ModelLike, config::Config)
     end
 end
 
-function _semitest(
-    model::MOI.ModelLike,
-    config::Config{T},
-    int::Bool,
-) where {T}
+function _semitest(model::MOI.ModelLike, config::Config{T}, int::Bool) where {T}
     atol = config.atol
     rtol = config.rtol
 

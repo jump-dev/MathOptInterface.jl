@@ -525,11 +525,7 @@ const lintests = Dict(
 
 @moitestset lin
 
-function _norminf1test(
-    model::MOI.ModelLike,
-    config::Config,
-    vecofvars::Bool,
-)
+function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem NormInf1
@@ -894,11 +890,7 @@ const norminftests = Dict(
 
 @moitestset norminf
 
-function _normone1test(
-    model::MOI.ModelLike,
-    config::Config,
-    vecofvars::Bool,
-)
+function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem NormOne1
@@ -1790,11 +1782,7 @@ const soctests = Dict(
 
 @moitestset soc
 
-function _rotatedsoc1test(
-    model::MOI.ModelLike,
-    config::Config,
-    abvars::Bool,
-)
+function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem SOCRotated1v
@@ -2074,12 +2062,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     end
 end
 
-function rotatedsoc3test(
-    model::MOI.ModelLike,
-    config::Config;
-    n = 2,
-    ub = 3.0,
-)
+function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     atol = config.atol
     rtol = config.rtol
     # Problem SOCRotated3
@@ -2268,12 +2251,7 @@ function rotatedsoc3test(
     end
 end
 
-function rotatedsoc4test(
-    model::MOI.ModelLike,
-    config::Config;
-    n = 2,
-    ub = 3.0,
-)
+function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     atol = config.atol
     rtol = config.rtol
     # Problem SOCRotated4
@@ -2378,12 +2356,7 @@ const rsoctests = Dict(
 
 @moitestset rsoc
 
-function _geomean1test(
-    model::MOI.ModelLike,
-    config::Config,
-    vecofvars,
-    n = 3,
-)
+function _geomean1test(model::MOI.ModelLike, config::Config, vecofvars, n = 3)
     atol = config.atol
     rtol = config.rtol
     # Problem GeoMean1
@@ -3165,11 +3138,7 @@ exptests = Dict(
 
 @moitestset exp
 
-function _dualexp1test(
-    model::MOI.ModelLike,
-    config::Config,
-    vecofvars::Bool,
-)
+function _dualexp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     atol = config.atol
     rtol = config.rtol
     # Problem dual exp
@@ -4558,11 +4527,7 @@ function psdt2test(model::MOI.ModelLike, config::Config)
     end
 end
 
-function _psd3test(
-    model::MOI.ModelLike,
-    psdcone,
-    config::Config{T},
-) where {T}
+function _psd3test(model::MOI.ModelLike, psdcone, config::Config{T}) where {T}
     # min x
     # s.t. [x 1 1]
     #      [1 x 1] ⪰ 0

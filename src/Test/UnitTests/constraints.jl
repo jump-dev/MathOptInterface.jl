@@ -376,10 +376,7 @@ Test various edge cases relating to deleting affine constraints. This requires
 
 If `config.solve=true` confirm that it solves correctly.
 """
-function solve_affine_deletion_edge_cases(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variable(model)
     # helpers. The function 1.0x + 0.0

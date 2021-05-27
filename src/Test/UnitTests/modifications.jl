@@ -35,10 +35,7 @@ Test set modification SingleVariable-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_set_singlevariable_lessthan(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -127,10 +124,7 @@ Test modifying set of ScalarAffineFunction-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_set_scalaraffine_lessthan(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -171,10 +165,7 @@ Test modifying a variable coefficient in a ScalarAffineFunction-in-LessThan
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_coef_scalaraffine_lessthan(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -214,10 +205,7 @@ Test setting the function in a ScalarAffineFunction-in-LessThan
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_func_scalaraffine_lessthan(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -264,10 +252,7 @@ Test setting the function in a VectorAffineFunction-in-Nonnegatives
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_func_vectoraffine_nonneg(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -325,10 +310,7 @@ Test modifying the constant term in a VectorAffineFunction-in-Nonpositives
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_const_vectoraffine_nonpos(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,

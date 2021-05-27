@@ -2609,10 +2609,7 @@ end
 
 # This test can be passed by solvers that don't support VariablePrimalStart
 # because copy_to drops start information with a warning.
-function partial_start_test(
-    model::MOI.ModelLike,
-    config::Config{T},
-) where {T}
+function partial_start_test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     # maximize 2x + y

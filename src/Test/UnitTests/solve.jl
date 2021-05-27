@@ -116,10 +116,7 @@ function solve_unbounded_model(model::MOI.ModelLike, config::Config)
 end
 unittests["solve_unbounded_model"] = solve_unbounded_model
 
-function solve_single_variable_dual_min(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_single_variable_dual_min(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variable(model)
     xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
@@ -146,10 +143,7 @@ function solve_single_variable_dual_min(
 end
 unittests["solve_single_variable_dual_min"] = solve_single_variable_dual_min
 
-function solve_single_variable_dual_max(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_single_variable_dual_max(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variable(model)
     xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
@@ -385,10 +379,7 @@ function solve_farkas_interval_lower(model::MOI.ModelLike, config::Config)
 end
 unittests["solve_farkas_interval_lower"] = solve_farkas_interval_lower
 
-function solve_farkas_variable_lessthan(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function solve_farkas_variable_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb = MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.LessThan(0.0))
