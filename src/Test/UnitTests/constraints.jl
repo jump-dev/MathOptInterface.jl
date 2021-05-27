@@ -520,7 +520,11 @@ Test combining the [`MOI.VariablePrimalStart`](@ref),
 attributes with a `MOI.VectorAffineFunction{T}`-in-`MOI.SecondOrderCone`.
 """
 function solve_start_soc(model::MOI.ModelLike, config::TestConfig{T}) where {T}
-    if !MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, MOI.SecondOrderCone)
+    if !MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{T},
+        MOI.SecondOrderCone,
+    )
         return
     end
     MOI.empty!(model)
