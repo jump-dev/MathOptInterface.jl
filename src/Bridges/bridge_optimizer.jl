@@ -630,7 +630,7 @@ function reduce_bridged(
     if variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
         value = operate_variable_bridges!(value)
     end
-    # Even it it is not bridged, it may have been force-bridged because one of the
+    # Even if it is not bridged, it may have been force-bridged because one of the
     # variable in the function was bridged.
     if is_bridged(b, F, S) ||
        (variable_function && supports_constraint_bridges(b))
