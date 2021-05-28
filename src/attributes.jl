@@ -928,9 +928,7 @@ struct ObjectiveFunctionType <: AbstractModelAttribute end
 
 A model attribute for the objective value of the primal solution `result_index`.
 
-If multiple results are present, the first result (i.e., `result_index=1`) must
-be an optimal solution. Other results may be alternative optimal solutions; use
-`ObjectiveValue` to compare their objective values.
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct ObjectiveValue <: AbstractModelAttribute
     result_index::Int
@@ -943,9 +941,7 @@ end
 A model attribute for the value of the objective function of the dual problem
 for the `result_index`th dual result.
 
-If multiple results are present, the first result (i.e., `result_index=1`) must
-be an optimal solution. Other results may be alternative optimal solutions; use
-[`ObjectiveValue`](@ref) to compare their objective values.
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct DualObjectiveValue <: AbstractModelAttribute
     result_index::Int
@@ -1008,6 +1004,29 @@ struct RawSolver <: AbstractModelAttribute end
     ResultCount()
 
 A model attribute for the number of results available.
+
+## Order of solutions
+
+A number of attributes contain an index, `result_index`, which is used to refer
+to on of the available results. `result_index` must be an integer between `1`
+and the number of available results.
+
+As a general rule, the first result (`result_index=1`) is the most important
+result (e.g., an optimal solution or an infeasibility certificate). Other
+results will typically be alternate solutions that the solver found during the
+search for the first result.
+
+If a (local) optimal solution is available, i.e., [`TerminationStatus`](@ref) is
+`OPTIMAL` or `LOCALLY_SOLVED`, the first result must correspond to the (locally)
+optimal solution. Other results may be alternative optimal solutions, or they
+may be other suboptimal solutions. Use [`ObjectiveValue`](@ref) to distingiush
+between them.
+
+If a primal or dual infeasibility certificate is available, i.e.,
+[`TerminationStatus`](@ref) is `INFEASIBLE` or `DUAL_INFEASIBLE` and the
+corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
+`INFEASIBILITY_CERTIFICATE`, then the first result must be a certificate. Other
+results may be alternate certificates, or infeasible points.
 """
 struct ResultCount <: AbstractModelAttribute end
 
@@ -1074,9 +1093,7 @@ struct VariablePrimalStart <: AbstractVariableAttribute end
 A variable attribute for the assignment to some primal variable's value in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
-If multiple results are present, the first result (i.e., `result_index=1`) must
-be an optimal solution. Other results may be alternative optimal solutions; use
-[`ObjectiveValue`](@ref) to compare their objective values.
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct VariablePrimal <: AbstractVariableAttribute
     result_index::Int
@@ -1204,9 +1221,7 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
 A constraint attribute for the assignment to some constraint's primal value(s)
 in result `result_index`. If `result_index` is omitted, it is 1 by default.
 
-If multiple results are present, the first result (i.e., `result_index=1`) must
-be an optimal solution. Other results may be alternative optimal solutions; use
-[`ObjectiveValue`](@ref) to compare their objective values.
+See [`ResultCount`](@ref) for information on how the results are ordered.
 
 ## Example
 
@@ -1229,9 +1244,7 @@ end
 A constraint attribute for the assignment to some constraint's dual value(s) in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
-If multiple results are present, the first result (i.e., `result_index=1`) must
-be an optimal solution. Other results may be alternative optimal solutions; use
-[`ObjectiveValue`](@ref) to compare their objective values.
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct ConstraintDual <: AbstractConstraintAttribute
     result_index::Int
@@ -1246,9 +1259,7 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
 `result_index` is omitted, it is 1 by default.
 
-If multiple results are present, the first result (i.e., `result_index=1`) must
-be an optimal solution. Other results may be alternative optimal solutions; use
-[`ObjectiveValue`](@ref) to compare their objective values.
+See [`ResultCount`](@ref) for information on how the results are ordered.
 
 **For the basis status of a variable, query the corresponding `SingleVariable`
 constraint that enforces the variable's bounds.**
